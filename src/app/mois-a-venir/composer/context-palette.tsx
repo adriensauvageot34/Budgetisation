@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Check, Sparkle, ArrowLeftRight, Plus, X, ChevronDown } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
+import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { displayEquipmentGroups, type EquipmentTile } from "./presentation/palette-groups";
 import styles from "./composer.module.css";
@@ -15,7 +16,7 @@ function routeCaption(groupKey: string, slotKey: string, assetKey: string, socke
 
 function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose, configure = false }: {
   tile: EquipmentTile; groupKey: string; card: ComposerContextCardView; model: ComposerUiModel;
-  assets: ReadonlyMap<string, ComposerAssetView>; busy: boolean; choose: (asset: ComposerAssetView, target: DropTarget) => void; configure?: boolean;
+  assets: ReadonlyMap<string, ComposerAssetView>; busy: boolean; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; configure?: boolean;
 }) {
   const interaction = useComposerInteractions();
   const trigger = useRef<HTMLButtonElement>(null), menu = useRef<HTMLDivElement>(null);
@@ -26,14 +27,15 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
     const item = socket.currentItems.find(current => current.optionKey === asset.optionKey && current.kind === asset.optionKind);
     const satelliteKey = `satellite:${card.contextOccurrenceId}:${socket.slotKey}:${item?.selectionId}`;
     const sourceKey = item && model.presentation.dragSources[satelliteKey] ? satelliteKey : asset.assetKey;
-    return [{ asset, target, sourceKey, state: option.state,
+    return [{ asset, target, sourceKey, selection: item, state: option.state,
       caption: routeCaption(groupKey, socket.slotKey, asset.assetKey, socket.label) }];
   });
   if (!routes.length) return null;
   const first = routes[0], multiple = routes.length > 1;
   const state = routes.some(route => route.state === "EQUIPPED") ? "EQUIPPED" : first.state;
-  const action = state === "EQUIPPED" ? "Équipé" : state === "ALTERNATIVE" ? "Remplacer avec" : "Équiper";
-  const equip = (route: typeof first) => interaction && !configure ? interaction.equip(route.sourceKey, route.target) : choose(route.asset, route.target);
+  const action = state === "EQUIPPED" ? "Modifier" : state === "ALTERNATIVE" ? "Remplacer avec" : "Équiper";
+  const equip = (route: typeof first) => route.selection ? choose(route.asset, route.target, route.selection)
+    : interaction && !configure ? interaction.equip(route.sourceKey, route.target) : choose(route.asset, route.target);
   const openChoices = () => {
     const node = menu.current, button = trigger.current;
     if (!node || !button) return;
@@ -73,7 +75,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
 }
 
 export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void;
-  choose: (asset: ComposerAssetView, target: DropTarget) => void; close: () => void;
+  choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
 }) {
   const groups = displayEquipmentGroups(card, model);
   const assets = new Map(model.library.searchableAssets.map(asset => [asset.assetKey, asset]));

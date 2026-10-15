@@ -1,0 +1,2850 @@
+{
+  "scope": "Complete existing Builder mapping inventory: 326 semantic choices plus 44 compatibility aliases, Composer recipes and explicit future intentions. Future lot assignments are proposals, not delivered specialized features.",
+  "counts": {
+    "builderMappingsIncludingAliases": 370,
+    "composerRecipes": 26
+  },
+  "recipes": [
+    {
+      "assetKey": "preset:techno-night",
+      "label": "Soirée techno",
+      "templateKey": "night-out",
+      "status": "LIVRÉ L2-A",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:uber-eats-order",
+      "label": "Uber Eats",
+      "templateKey": "delivery",
+      "status": "LIVRÉ L2-A",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:fishing-day",
+      "label": "Journée pêche",
+      "templateKey": "activity",
+      "status": "LIVRÉ L2-A",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:fontes-family-visit",
+      "label": "Visite Fontès",
+      "templateKey": "family-visit",
+      "status": "LIVRÉ L2-A",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:clothing-shopping",
+      "label": "Acheter des vêtements",
+      "templateKey": "purchase",
+      "status": "LIVRÉ L2-A",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:bar-apero",
+      "label": "Bar / Apéro",
+      "templateKey": "night-out",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:nightclub",
+      "label": "Boîte de nuit",
+      "templateKey": "night-out",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:friends-evening",
+      "label": "Soirée chez des amis",
+      "templateKey": "night-out",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:home-evening",
+      "label": "Soirée chez nous",
+      "templateKey": "night-out",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:chicken-snack",
+      "label": "Snack / Chicken",
+      "templateKey": "fast-food",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:restaurant-for-two",
+      "label": "Restaurant à deux",
+      "templateKey": "restaurant",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:hiking-nature",
+      "label": "Randonnée / Nature",
+      "templateKey": "activity",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:beach-day",
+      "label": "Journée plage",
+      "templateKey": "activity",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:cinema",
+      "label": "Cinéma",
+      "templateKey": "activity",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:spa-relax",
+      "label": "Spa / Détente",
+      "templateKey": "activity",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:servian-family-visit",
+      "label": "Visite Servian",
+      "templateKey": "family-visit",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:visit-friends",
+      "label": "Voir des amis",
+      "templateKey": "friend-visit",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:weekend-gite",
+      "label": "Week-end / Gîte",
+      "templateKey": "short-stay",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:video-game-purchase",
+      "label": "Acheter un jeu vidéo",
+      "templateKey": "purchase",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:amazon-purchase",
+      "label": "Amazon",
+      "templateKey": "purchase",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:shein-purchase",
+      "label": "Shein",
+      "templateKey": "purchase",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:aliexpress-purchase",
+      "label": "AliExpress",
+      "templateKey": "purchase",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:mascara",
+      "label": "Mascara",
+      "templateKey": "beauty-restock",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:hair-wax",
+      "label": "Cire coiffante",
+      "templateKey": "beauty-restock",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:laundry-detergent",
+      "label": "Lessive",
+      "templateKey": "purchase",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    },
+    {
+      "assetKey": "preset:dishwashing-liquid",
+      "label": "Liquide vaisselle",
+      "templateKey": "purchase",
+      "status": "LIVRÉ L2-B",
+      "scope": "Existing Context and sockets; no new specialized financial capacity"
+    }
+  ],
+  "roadmap": [
+    {
+      "label": "Restaurant en groupe",
+      "status": "EXISTANT",
+      "scope": "Restaurant L1, explicit participants; no automatic division"
+    },
+    {
+      "label": "Concert / Festival",
+      "status": "L4",
+      "scope": "Existing Activity base; dedicated recipe and original image deferred"
+    },
+    {
+      "label": "Soirée anniversaire",
+      "status": "L4",
+      "scope": "Existing Night-out base; dedicated recipe and image deferred"
+    },
+    {
+      "label": "Pêche et matériel",
+      "status": "LIVRÉ L2-A",
+      "scope": "Fishing intention; specialized equipment catalog not created"
+    },
+    {
+      "label": "Débardeur / crop top / robe / chaussures",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "scope": "Purchase text/components; no certified SKU or stock"
+    },
+    {
+      "label": "Toner / sérum / crème / eyeliner",
+      "status": "L6",
+      "scope": "Beauty components available; dedicated product/stock workflow deferred"
+    },
+    {
+      "label": "Papier toilette / pastilles lave-vaisselle / sacs poubelle",
+      "status": "L6",
+      "scope": "Purchase home-small available; no false specific search result or stock"
+    },
+    {
+      "label": "Consultation / pharmacie / dentiste",
+      "status": "L5",
+      "scope": "No dedicated Composer clinical capability asserted"
+    },
+    {
+      "label": "Batterie / pneus / contrôle technique",
+      "status": "L5",
+      "scope": "No dedicated maintenance owner exposed by this lot"
+    },
+    {
+      "label": "Trajet autonome",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "scope": "Existing prospective transport sockets, standalone entry not invented"
+    },
+    {
+      "label": "Frais administratifs",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "scope": "Generic context/components; no invented special rule"
+    },
+    {
+      "label": "Cadeaux",
+      "status": "EXISTANT",
+      "scope": "Gift P05 editor and object classification"
+    },
+    {
+      "label": "Projets de voyage",
+      "status": "EXISTANT",
+      "scope": "Short-stay P11 within-month only; savings P08 existing"
+    }
+  ],
+  "builderChoices": [
+    {
+      "assetKey": "intent:restaurant",
+      "label": "Restaurant",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "intent:fast_food",
+      "label": "Fast-food / snack",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "intent:work_meal",
+      "label": "Repas au travail",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "intent:groceries",
+      "label": "Courses",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "intent:party",
+      "label": "Soirée",
+      "ownerFlow": "party",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "intent:visit",
+      "label": "Voir quelqu’un",
+      "ownerFlow": "visit",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "intent:activity",
+      "label": "Activité",
+      "ownerFlow": "activity",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "intent:purchase",
+      "label": "Achat",
+      "ownerFlow": "purchase",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "intent:trip",
+      "label": "Voyage / déplacement",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:bar:beer",
+      "label": "Bière",
+      "ownerFlow": "bar",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:bar:wine",
+      "label": "Verre de vin",
+      "ownerFlow": "bar",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:bar:cocktail",
+      "label": "Cocktail",
+      "ownerFlow": "bar",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:bar:shot",
+      "label": "Shot",
+      "ownerFlow": "bar",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:bar:tapas",
+      "label": "Planche / tapas",
+      "ownerFlow": "bar",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:bar:parking",
+      "label": "Parking",
+      "ownerFlow": "bar",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:bar:entry",
+      "label": "Entrée / cover",
+      "ownerFlow": "bar",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:ticket",
+      "label": "Ticket / entrée",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:alcohol",
+      "label": "Verre alcool",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:shot",
+      "label": "Shot",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:soft",
+      "label": "Boisson sans alcool",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:water",
+      "label": "Eau",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:food",
+      "label": "Nourriture sur place",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:uber_out",
+      "label": "Uber aller",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:uber_back",
+      "label": "Uber retour",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:parking",
+      "label": "Parking",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:cloakroom",
+      "label": "Vestiaire",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:house_party:vodka",
+      "label": "Vodka",
+      "ownerFlow": "house_party",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:house_party:crazy_tiger",
+      "label": "Crazy Tiger sans alcool",
+      "ownerFlow": "house_party",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:house_party:mixer",
+      "label": "Diluant sans alcool",
+      "ownerFlow": "house_party",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:house_party:beer",
+      "label": "Bière",
+      "ownerFlow": "house_party",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:house_party:wine",
+      "label": "Vin",
+      "ownerFlow": "house_party",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:house_party:rum",
+      "label": "Rhum",
+      "ownerFlow": "house_party",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:house_party:snack",
+      "label": "Snack",
+      "ownerFlow": "house_party",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:house_party:chips",
+      "label": "Chips",
+      "ownerFlow": "house_party",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:food",
+      "label": "Courses alimentaires",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:meat",
+      "label": "Viande",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:fish",
+      "label": "Poisson",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:produce",
+      "label": "Fruits / légumes",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:fresh",
+      "label": "Produits frais",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:pantry",
+      "label": "Féculents / épicerie",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:drinks",
+      "label": "Boissons sans alcool",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:snacks",
+      "label": "Goûters",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:dessert",
+      "label": "Dessert à apporter",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:hygiene",
+      "label": "Hygiène / papier",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:special_meal",
+      "label": "Courses pour repas spécial / amis",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:starter",
+      "label": "Entrée",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:main",
+      "label": "Plat",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:dessert",
+      "label": "Dessert",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:wine_glass",
+      "label": "Verre de vin",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:wine_bottle",
+      "label": "Bouteille de vin",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:beer",
+      "label": "Bière",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:cocktail",
+      "label": "Cocktail",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:soft",
+      "label": "Soft",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:coffee",
+      "label": "Café",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:water",
+      "label": "Eau",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:uber",
+      "label": "Uber",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:parking",
+      "label": "Parking",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:meal_total",
+      "label": "Repas et boissons sans alcool",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:alcohol_total",
+      "label": "Alcool",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:menu",
+      "label": "Menu",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:restaurant:digestif",
+      "label": "Digestif / alcool",
+      "ownerFlow": "restaurant",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:burger",
+      "label": "Sandwich / burger",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:thai",
+      "label": "Thaï",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:fries",
+      "label": "Accompagnement",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:drink",
+      "label": "Boisson sans alcool",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:tacos",
+      "label": "Tacos / kebab",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:kebab",
+      "label": "Kebab",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:pizza",
+      "label": "Pizza",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:chicken",
+      "label": "Poulet / autre plat",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:sandwich",
+      "label": "Sandwich",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:dessert",
+      "label": "Dessert",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:delivery_fee",
+      "label": "Frais de livraison",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:service_fee",
+      "label": "Frais de service",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:work_meal:bakery",
+      "label": "Boulangerie",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:work_meal:grand_frais",
+      "label": "Grand Frais",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:work_meal:mcdo",
+      "label": "McDo",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:transport:fuel_usage",
+      "label": "Coût carburant estimé",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:transport:toll",
+      "label": "Péage",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:transport:parking",
+      "label": "Parking",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:transport:train",
+      "label": "Train",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:transport:bus",
+      "label": "Bus",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:transport:uber",
+      "label": "Uber / taxi",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:transport:carpool",
+      "label": "Participation covoiturage",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:transport:other",
+      "label": "Autre déplacement payant",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:visit_family:breakfast",
+      "label": "Petit-déjeuner",
+      "ownerFlow": "visit_family",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:visit_family:brought_groceries",
+      "label": "Courses apportées",
+      "ownerFlow": "visit_family",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:visit_friend:brought_drink",
+      "label": "Boisson sans alcool apportée",
+      "ownerFlow": "visit_friend",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:visit_friend:brought_food",
+      "label": "Nourriture apportée",
+      "ownerFlow": "visit_friend",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:visit_friend:coffee",
+      "label": "Café",
+      "ownerFlow": "visit_friend",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:trip:flight",
+      "label": "Avion",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:trip:rental_car",
+      "label": "Location voiture",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:trip:rental_scooter",
+      "label": "Location scooter",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:trip:hotel",
+      "label": "Hôtel",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:trip:airbnb",
+      "label": "Airbnb",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:trip:breakfast",
+      "label": "Petit-déjeuner",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:trip:visits",
+      "label": "Visites",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:trip:baggage",
+      "label": "Bagage",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:trip:fees",
+      "label": "Frais divers",
+      "ownerFlow": "trip",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:activity:entry",
+      "label": "Entrée",
+      "ownerFlow": "activity",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:activity:ticket",
+      "label": "Billet",
+      "ownerFlow": "activity",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:activity:drink",
+      "label": "Boissons sans alcool",
+      "ownerFlow": "activity",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fishing:bait",
+      "label": "Appâts",
+      "ownerFlow": "fishing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:setting_spray",
+      "label": "Fixateur de maquillage",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:face_mask",
+      "label": "Masque visage",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:mascara",
+      "label": "Mascara",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:eyebrow_pencil",
+      "label": "Crayon à sourcils",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:eyeliner",
+      "label": "Eyeliner",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:lipstick",
+      "label": "Rouge à lèvres",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:gloss",
+      "label": "Gloss",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:foundation",
+      "label": "Fond de teint",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:face_cream",
+      "label": "Crème visage",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:body_cream",
+      "label": "Crème corps",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:toothpaste",
+      "label": "Dentifrice",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:face_cleanser",
+      "label": "Nettoyant visage",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:makeup_remover",
+      "label": "Démaquillant",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:nail_polish",
+      "label": "Vernis",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:shampoo",
+      "label": "Shampoing",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:conditioner",
+      "label": "Après-shampoing",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:shower_gel",
+      "label": "Gel douche",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:cotton_swabs",
+      "label": "Coton-tiges",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:razor_blades",
+      "label": "Lames de rasoir",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:hair_wax",
+      "label": "Cire coiffante",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:perfume",
+      "label": "Parfum",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:hairdresser",
+      "label": "Coiffeur",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:deodorant",
+      "label": "Déodorant",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:tshirt",
+      "label": "T-shirt",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:shirt",
+      "label": "Chemise",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:pants",
+      "label": "Pantalon",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:shorts",
+      "label": "Short",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:dress",
+      "label": "Robe",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:jacket",
+      "label": "Veste",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:coat",
+      "label": "Manteau",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:shoes",
+      "label": "Chaussures",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:sandals",
+      "label": "Sandales",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:socks",
+      "label": "Chaussettes",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:underwear",
+      "label": "Sous-vêtements",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:cap",
+      "label": "Casquette",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:bag",
+      "label": "Sac",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:glasses",
+      "label": "Lunettes",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:jewelry",
+      "label": "Bijou",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:costume",
+      "label": "Déguisement de soirée",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:delivery_fee",
+      "label": "Frais de livraison",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:clothing:service_fee",
+      "label": "Frais de service",
+      "ownerFlow": "clothing",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:laundry",
+      "label": "Lessive",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:dish_soap",
+      "label": "Liquide vaisselle",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:dishwasher",
+      "label": "Pastilles lave-vaisselle",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:sponge",
+      "label": "Éponges",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:floor",
+      "label": "Produit sol",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:toilet",
+      "label": "Produit WC",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:windows",
+      "label": "Produit vitres",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:trash_bags",
+      "label": "Sacs poubelle",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:toilet_paper",
+      "label": "Papier toilette",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:paper_towels",
+      "label": "Essuie-tout",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:household:air_freshener",
+      "label": "Désodorisant",
+      "ownerFlow": "household",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:lamp",
+      "label": "Lampe",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:furniture",
+      "label": "Meuble",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:bedding",
+      "label": "Literie",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:storage",
+      "label": "Rangement",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:decor",
+      "label": "Décoration",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:plant",
+      "label": "Plante",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:kitchen",
+      "label": "Cuisine",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:dishes",
+      "label": "Vaisselle",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:diy",
+      "label": "Bricolage",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:electric",
+      "label": "Électricité / multiprise",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:flowers",
+      "label": "Fleurs",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:jewelry",
+      "label": "Bijou",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:clothes",
+      "label": "Vêtement",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:chocolate",
+      "label": "Chocolats",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:bottle",
+      "label": "Bouteille",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:ticket",
+      "label": "Billet / spectacle",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:gift_card",
+      "label": "Carte cadeau",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:money",
+      "label": "Argent",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:book",
+      "label": "Livre",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:game",
+      "label": "Jeu",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:toy",
+      "label": "Jouet",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:personalized",
+      "label": "Cadeau personnalisé",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:tech:charger",
+      "label": "Chargeur",
+      "ownerFlow": "tech",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:tech:cable",
+      "label": "Câble",
+      "ownerFlow": "tech",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:tech:lighting",
+      "label": "Éclairage",
+      "ownerFlow": "tech",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:tech:video_game",
+      "label": "Jeu vidéo",
+      "ownerFlow": "tech",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:tires",
+      "label": "Pneus",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:motor_oil",
+      "label": "Huile moteur",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:coolant",
+      "label": "Liquide de refroidissement",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:washer_fluid",
+      "label": "Liquide lave-glace",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:bulbs",
+      "label": "Ampoules",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:battery",
+      "label": "Batterie",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:wash",
+      "label": "Lavage",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:part",
+      "label": "Pièce",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:other:administrative",
+      "label": "Administratif",
+      "ownerFlow": "other",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:other:fee",
+      "label": "Frais",
+      "ownerFlow": "other",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:other:contribution",
+      "label": "Participation",
+      "ownerFlow": "other",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:menu",
+      "label": "Menu",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:water",
+      "label": "Eau",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:fast_food:meal_total",
+      "label": "Repas et boissons sans alcool",
+      "ownerFlow": "fast_food",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:work_meal:meal",
+      "label": "Repas / formule",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:work_meal:drink",
+      "label": "Boisson",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:work_meal:coffee",
+      "label": "Café",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:work_meal:dessert",
+      "label": "Dessert",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:work_meal:delivery_fee",
+      "label": "Frais de livraison",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:work_meal:service_fee",
+      "label": "Frais de service",
+      "ownerFlow": "work_meal",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:bread",
+      "label": "Pain / boulangerie",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:cleaning",
+      "label": "Entretien",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:delivery_fee",
+      "label": "Frais de livraison",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:groceries:service_fee",
+      "label": "Frais de service",
+      "ownerFlow": "groceries",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:bar:soft",
+      "label": "Soft",
+      "ownerFlow": "bar",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:bar:water",
+      "label": "Eau",
+      "ownerFlow": "bar",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:activity:food",
+      "label": "Nourriture / snack",
+      "ownerFlow": "activity",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:club:merch",
+      "label": "Souvenir / merch",
+      "ownerFlow": "club",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:transport:flight",
+      "label": "Billet d’avion",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:delivery_fee",
+      "label": "Frais de livraison",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:beauty:service_fee",
+      "label": "Frais de service",
+      "ownerFlow": "beauty",
+      "status": "L6",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:delivery_fee",
+      "label": "Frais de livraison",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:home:service_fee",
+      "label": "Frais de service",
+      "ownerFlow": "home",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:tech:delivery_fee",
+      "label": "Frais de livraison",
+      "ownerFlow": "tech",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:tech:service_fee",
+      "label": "Frais de service",
+      "ownerFlow": "tech",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:delivery_fee",
+      "label": "Frais de livraison",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:automotive:service_fee",
+      "label": "Frais de service",
+      "ownerFlow": "automotive",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:delivery_fee",
+      "label": "Frais de livraison",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "asset:gift:service_fee",
+      "label": "Frais de service",
+      "ownerFlow": "gift",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:cinema",
+      "label": "Cinéma",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:bowling",
+      "label": "Bowling",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:karting",
+      "label": "Karting",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:mini_golf",
+      "label": "Mini-golf",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:billiards",
+      "label": "Billard",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:escape_game",
+      "label": "Escape game",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:canoe_kayak",
+      "label": "Canoë / kayak",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:pool",
+      "label": "Piscine",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:spa",
+      "label": "Spa",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:theme_park",
+      "label": "Parc d’attractions",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:show",
+      "label": "Spectacle",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:match",
+      "label": "Match",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:sport",
+      "label": "Sport",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:fishing",
+      "label": "Pêche",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:creative_workshop",
+      "label": "Atelier / activité créative",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:photo_outing",
+      "label": "Sortie photo",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:activityCategory:other_activity",
+      "label": "Autre activité",
+      "ownerFlow": "activityCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:purchaseCategory:beauty",
+      "label": "Beauté / soin",
+      "ownerFlow": "purchaseCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:purchaseCategory:clothing",
+      "label": "Vêtements",
+      "ownerFlow": "purchaseCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:purchaseCategory:household",
+      "label": "Produits ménagers",
+      "ownerFlow": "purchaseCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:purchaseCategory:home_equipment",
+      "label": "Maison / équipement",
+      "ownerFlow": "purchaseCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:purchaseCategory:gift",
+      "label": "Cadeau",
+      "ownerFlow": "purchaseCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:purchaseCategory:tech",
+      "label": "Tech / matériel",
+      "ownerFlow": "purchaseCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:purchaseCategory:automotive",
+      "label": "Automobile",
+      "ownerFlow": "purchaseCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:purchaseCategory:other_purchase",
+      "label": "Autre achat",
+      "ownerFlow": "purchaseCategory",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:partyKind:bar",
+      "label": "Bar / apéro",
+      "ownerFlow": "partyKind",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:partyKind:club_festival",
+      "label": "Club / boîte",
+      "ownerFlow": "partyKind",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:partyKind:house_party",
+      "label": "Soirée privée",
+      "ownerFlow": "partyKind",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:partyKind:EVENT",
+      "label": "Festival / événement",
+      "ownerFlow": "partyKind",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:groceriesNature:USUAL",
+      "label": "Courses habituelles",
+      "ownerFlow": "groceriesNature",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:groceriesNature:TOP_UP",
+      "label": "Petites courses / complément",
+      "ownerFlow": "groceriesNature",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:groceriesNature:OCCASION",
+      "label": "Repas ou occasion",
+      "ownerFlow": "groceriesNature",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:groceryFocus:FOOD",
+      "label": "Alimentation",
+      "ownerFlow": "groceryFocus",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:groceryFocus:HYGIENE",
+      "label": "Hygiène",
+      "ownerFlow": "groceryFocus",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:groceryFocus:CLEANING",
+      "label": "Entretien",
+      "ownerFlow": "groceryFocus",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:groceryFocus:DRINKS",
+      "label": "Boissons",
+      "ownerFlow": "groceryFocus",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:automotiveKind:PRODUCT",
+      "label": "Pièce ou accessoire",
+      "ownerFlow": "automotiveKind",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:automotiveKind:SERVICE",
+      "label": "Entretien ou service",
+      "ownerFlow": "automotiveKind",
+      "status": "L5",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:tripKind:STAY",
+      "label": "Un séjour",
+      "ownerFlow": "tripKind",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:tripKind:PUNCTUAL",
+      "label": "Un déplacement ponctuel",
+      "ownerFlow": "tripKind",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:participants:BOTH",
+      "label": "Nous deux",
+      "ownerFlow": "participants",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:participants:GROUP",
+      "label": "Avec d’autres personnes",
+      "ownerFlow": "participants",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:channel:STORE",
+      "label": "Sur place / en magasin",
+      "ownerFlow": "channel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:channel:PICKUP",
+      "label": "À emporter / drive / retrait",
+      "ownerFlow": "channel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:channel:DELIVERY",
+      "label": "Livraison",
+      "ownerFlow": "channel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:channel:SECOND_HAND",
+      "label": "Seconde main",
+      "ownerFlow": "channel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:fastFoodChannel:STORE",
+      "label": "Sur place",
+      "ownerFlow": "fastFoodChannel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:groceriesChannel:STORE",
+      "label": "En magasin",
+      "ownerFlow": "groceriesChannel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:workMode:BOUGHT",
+      "label": "Acheté près du travail",
+      "ownerFlow": "workMode",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:workMode:DELIVERED",
+      "label": "Livré au travail",
+      "ownerFlow": "workMode",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:workMode:FROM_HOME",
+      "label": "Apporté de chez nous",
+      "ownerFlow": "workMode",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:format:SIMPLE",
+      "label": "Visite simple / pour nous deux",
+      "ownerFlow": "format",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:format:APERO_PARTY",
+      "label": "Un apéro",
+      "ownerFlow": "format",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:format:MEAL",
+      "label": "Un repas",
+      "ownerFlow": "format",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:format:STAY",
+      "label": "Rester dormir / plusieurs personnes",
+      "ownerFlow": "format",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:groceriesFormat:STAY",
+      "label": "Pour plusieurs personnes",
+      "ownerFlow": "groceriesFormat",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:occasion:BIRTHDAY",
+      "label": "Anniversaire",
+      "ownerFlow": "occasion",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:occasion:VALENTINE",
+      "label": "Saint-Valentin",
+      "ownerFlow": "occasion",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:occasion:REUNION",
+      "label": "Retrouvailles",
+      "ownerFlow": "occasion",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:occasion:CELEBRATION",
+      "label": "Célébration",
+      "ownerFlow": "occasion",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:transport:CAR",
+      "label": "Voiture",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:transport:TRAIN",
+      "label": "Train",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:transport:PLANE",
+      "label": "Avion",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:transport:BUS",
+      "label": "Bus / transport payant",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:transport:TAXI",
+      "label": "Taxi / Uber",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:transport:FREE",
+      "label": "À pied, vélo ou tram gratuit",
+      "ownerFlow": "transport",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:lodging:RELATIVE",
+      "label": "Chez un proche",
+      "ownerFlow": "lodging",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:lodging:HOTEL",
+      "label": "Hôtel",
+      "ownerFlow": "lodging",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:lodging:HOSTEL",
+      "label": "Auberge",
+      "ownerFlow": "lodging",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:lodging:RENTAL",
+      "label": "Appartement / location",
+      "ownerFlow": "lodging",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:provider:DIRECT",
+      "label": "Directement par le commerce",
+      "ownerFlow": "provider",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:visitSubtype:visit_family",
+      "label": "Famille",
+      "ownerFlow": "visitSubtype",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:visitSubtype:visit_friend",
+      "label": "Amis",
+      "ownerFlow": "visitSubtype",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:companions:SOLO",
+      "label": "Seul",
+      "ownerFlow": "companions",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:companions:COUPLE",
+      "label": "À deux",
+      "ownerFlow": "companions",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:companions:GROUP",
+      "label": "À plusieurs",
+      "ownerFlow": "companions",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:channel:IN_STORE",
+      "label": "En magasin",
+      "ownerFlow": "channel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:channel:TAKEAWAY",
+      "label": "Drive / retrait",
+      "ownerFlow": "channel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:channel:ONLINE",
+      "label": "En ligne",
+      "ownerFlow": "channel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:fastFoodChannel:IN_STORE",
+      "label": "Sur place",
+      "ownerFlow": "fastFoodChannel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:fastFoodChannel:TAKEAWAY",
+      "label": "À emporter",
+      "ownerFlow": "fastFoodChannel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:fastFoodChannel:DELIVERY",
+      "label": "Livraison",
+      "ownerFlow": "fastFoodChannel",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:tripKind:trip_stay",
+      "label": "Voyage / séjour",
+      "ownerFlow": "tripKind",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:tripKind:other_trip",
+      "label": "Déplacement ponctuel",
+      "ownerFlow": "tripKind",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "choice:occasion:CHRISTMAS",
+      "label": "Noël",
+      "ownerFlow": "occasion",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:bar",
+      "label": "bar",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:club",
+      "label": "club",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:house_party",
+      "label": "house_party",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:groceries",
+      "label": "groceries",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:restaurant",
+      "label": "restaurant",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:fast_food",
+      "label": "fast_food",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:work_meal",
+      "label": "work_meal",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:transport",
+      "label": "transport",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:visit_family",
+      "label": "visit_family",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:visit_friend",
+      "label": "visit_friend",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:trip",
+      "label": "trip",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:activity",
+      "label": "activity",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:fishing",
+      "label": "fishing",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:beauty",
+      "label": "beauty",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:clothing",
+      "label": "clothing",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:household",
+      "label": "household",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:home",
+      "label": "home",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:gift",
+      "label": "gift",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:tech",
+      "label": "tech",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:automotive",
+      "label": "automotive",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:other",
+      "label": "other",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "module:BRING_ITEMS",
+      "label": "BRING_ITEMS",
+      "ownerFlow": "Tous les flows",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:restaurant",
+      "label": "restaurant",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:fast_food",
+      "label": "fast_food",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:work_meal",
+      "label": "work_meal",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:groceries",
+      "label": "groceries",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:party",
+      "label": "party",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:visit",
+      "label": "visit",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:activity",
+      "label": "activity",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:purchase",
+      "label": "purchase",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:trip",
+      "label": "trip",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:solo",
+      "label": "solo",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:couple",
+      "label": "couple",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:group",
+      "label": "group",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:birthday",
+      "label": "birthday",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:valentine",
+      "label": "valentine",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:spontaneous",
+      "label": "spontaneous",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:partyOccasion",
+      "label": "partyOccasion",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:reunion",
+      "label": "reunion",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:celebration",
+      "label": "celebration",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:occasion",
+      "label": "occasion",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:elsewhere",
+      "label": "elsewhere",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:tram",
+      "label": "tram",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:walk",
+      "label": "walk",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:bike",
+      "label": "bike",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:car",
+      "label": "car",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:train",
+      "label": "train",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:taxi",
+      "label": "taxi",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:bus",
+      "label": "bus",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:transport",
+      "label": "transport",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:starter",
+      "label": "starter",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:main",
+      "label": "main",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:dessert",
+      "label": "dessert",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:wine_glass",
+      "label": "wine_glass",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:wine_bottle",
+      "label": "wine_bottle",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:cocktail",
+      "label": "cocktail",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:soft",
+      "label": "soft",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:water",
+      "label": "water",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:coffee",
+      "label": "coffee",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:menu",
+      "label": "menu",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:digestif",
+      "label": "digestif",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:custom",
+      "label": "custom",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:restaurantExterior",
+      "label": "restaurantExterior",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:road",
+      "label": "road",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:sharing",
+      "label": "sharing",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    },
+    {
+      "assetKey": "scene:room",
+      "label": "room",
+      "ownerFlow": "Compatibilité écrans secondaires",
+      "status": "CAPACITÉ EXISTANTE À EXPOSER",
+      "composerExposure": "Not certified by the Builder illustration inventory; use existing published sockets or future owner work."
+    }
+  ]
+}

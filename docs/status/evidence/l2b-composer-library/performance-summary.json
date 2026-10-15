@@ -1,0 +1,87 @@
+{
+  "conditions": "Local React production minified split, same global CSS/dependencies, 1440x900 measured, empty Semantic Draft, durable fixture enabled, artificial Preview delay 500ms; hot cache, sequential pairs. n=3 descriptive only.",
+  "p95": "NOT_CERTIFIED",
+  "summary": [
+    {
+      "variant": "L2A",
+      "n": 3,
+      "openingFreshP50Ms": 1535.2999999821186,
+      "openingRangeMs": [
+        1196.7000000178814,
+        1752.300000011921
+      ],
+      "dom": 1899,
+      "jsResources": 5,
+      "jsDecodedBytes": 437250,
+      "jsGzipBytes": 138758,
+      "presetImageResources": 5,
+      "presetImageDecodedBytes": 140366,
+      "presetImageTransferBytes": 0,
+      "fixtureBusinessFetches": 2
+    },
+    {
+      "variant": "L2B",
+      "n": 3,
+      "openingFreshP50Ms": 1522.800000011921,
+      "openingRangeMs": [
+        1132.300000011921,
+        1873
+      ],
+      "dom": 1906,
+      "jsResources": 5,
+      "jsDecodedBytes": 450420,
+      "jsGzipBytes": 142373,
+      "presetImageResources": 5,
+      "presetImageDecodedBytes": 149634,
+      "presetImageTransferBytes": 0,
+      "fixtureBusinessFetches": 2
+    }
+  ],
+  "interactions": [
+    {
+      "variant": "L2A",
+      "editorMs": [
+        1013.3000000119209
+      ],
+      "libraryActions": [
+        {
+          "kind": "search",
+          "ms": 22.099999994039536
+        },
+        {
+          "kind": "search",
+          "ms": 28.30000001192093
+        },
+        {
+          "kind": "search",
+          "ms": 1930.4000000059605
+        },
+        {
+          "kind": "search",
+          "ms": 76
+        }
+      ]
+    },
+    {
+      "variant": "L2B",
+      "editorMs": [
+        1195.9000000059605
+      ],
+      "libraryActions": [
+        {
+          "kind": "category",
+          "ms": 130.5
+        },
+        {
+          "kind": "category",
+          "ms": 302.09999999403954
+        },
+        {
+          "kind": "search",
+          "ms": 87.90000000596046
+        }
+      ]
+    }
+  ],
+  "limitations": "Different isolated server processes; host load and task scheduling not controlled. Opening and editor include synthetic server response/JS import. No authenticated real performance certification; no inference of Supabase latency from these fixtures."
+}

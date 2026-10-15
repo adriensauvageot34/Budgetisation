@@ -57,16 +57,17 @@
     "width": 1200,
     "height": 600,
     "quality": 82,
-    "bytes": 51806,
-    "sha256": "0a30445c83085cdbc3f182325f6c646a9ed7ec9efce326b87cec0445047ce640",
-    "originalFile": "exec-77818e89-96c9-41e4-b4e1-b6331dd0e36d.png",
-    "originalSha256": "599d11037003634fb7107ea06410f354486b2090a127a9a19ee6304aed2add7b",
+    "bytes": 30898,
+    "sha256": "2eb5cf96af4054fa166326ca37f2ad9a6345503376633d5a3180fea72a77125c",
+    "originalFile": "exec-fb7cce98-79e3-43b0-b987-4b1499e37642.png",
+    "originalSha256": "e6cdf9a2d7871c00c179025919e2326369ebc7aa3b595c3199460f25d2c549b3",
     "originalWidth": 1774,
     "originalHeight": 887,
     "generator": "built-in image_gen",
-    "generations": 1,
+    "generations": 2,
     "prompt": "prompts/home-evening.txt",
-    "inspection": "Inspected individually: distinctive subject, no text/logo, 2:1, Clay family."
+    "inspection": "Inspected individually: distinctive subject, no text/logo, 2:1, Clay family.",
+    "rejected": "exec-77818e89-96c9-41e4-b4e1-b6331dd0e36d.png: glass pitcher inconsistent with opaque Clay"
   },
   {
     "presetKey": "chicken-snack",

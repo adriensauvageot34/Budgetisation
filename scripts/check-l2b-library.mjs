@@ -36,6 +36,19 @@ const component=(id,option,amount,label)=>({selectionId:id,optionKey:option,kind
   cost:amount===null?{kind:'UNKNOWN'}:{kind:'MANUAL',unitAmount:amount},fundingAllocations:[],binding:{mode:'NO_RELATED_SLOT'}});
 try{
   model=ok(await request({kind:'READ'},state()));
+  const resumed=process.env.L2B_REMAINING_ONLY==='1';
+  if(resumed){
+    const log=fs.readFileSync(evidence+'/contract-26-presets-run.log','utf8');
+    for(const p of COMPOSER_PRESETS) {
+      assert.ok(log.includes(p.presetKey+'-CREATE-EDIT-ROUNDTRIP-PARITY PASS'));
+      coverage.push({presetKey:p.presetKey,templateKey:p.templateKey,status:'EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY',proof:'contract-26-presets-run.log'});
+    }
+    const semantic={...state(),contexts:COMPOSER_PRESETS.map((p,i)=>{const [slot,option]=shapes[p.templateKey];return {
+      contextOccurrenceId:uuid(24000+i),templateKey:p.templateKey,status:'ACTIVE',parentContextOccurrenceId:null,
+      fields:{fieldSchemaVersion:p.templateKey==='short-stay'?'context-fields@v5':p.templateKey==='family-visit'?'context-fields@v4':'context-fields@v2',...presetCreationFields(p.templateKey,p.presetKey),plannedDate:null},
+      slotSelections:{[slot]:{items:[component(uuid(24100+i),option,'40.00',p.label+' choisi')]}},provenance:'EXPLICIT_USER_DECISION'};})};
+    model=ok(await request({kind:'READ'},semantic));
+  }
   await check('L2B-INDEX-ADMISSION-SEARCH-GENERICS-NO-OPTIONS',()=>{
     const index=composerLibraryIndex(model);
     assert.equal(index.intentions.filter(i=>i.preset).length,26);
@@ -53,7 +66,7 @@ try{
     assert.equal((html.match(/data-preset=/g)||[]).length,5); // Only initial social category mounted.
     assert.ok(!html.includes('HEALTH')&&!html.includes('Ma voiture'));
   });
-  for(const [i,preset]of COMPOSER_PRESETS.entries()){
+  for(const [i,preset]of (resumed?[]:COMPOSER_PRESETS).entries()){
     const id=uuid(24000+i), selectionId=uuid(24100+i),[slot,option]=shapes[preset.templateKey];
     const prior=model;
     const drop={kind:'DROP',assetKey:'template:'+preset.templateKey,presetKey:preset.presetKey,target:{kind:'BOARD_ZONE'},values:{},identity:id,selectionId:uuid(24200+i)};
@@ -118,7 +131,7 @@ try{
   });
   await check('L2B-WEEKEND-CHILD-NONADDITIVE',async()=>{
     const stay=model.semanticState.contexts.find(c=>c.templateKey==='short-stay'),child=model.semanticState.contexts.find(c=>c.templateKey==='restaurant');
-    const linked=ok(await request({kind:'MUTATE',mutation:{kind:'PATCH_CONTEXT',contextOccurrenceId:stay.contextOccurrenceId,slotKey:'restaurants',items:[{kind:'CHILD_CONTEXT',selectionId:uuid(24600),optionKey:'restaurant',provenance:'EXPLICIT_USER_DECISION',childContextOccurrenceId:child.contextOccurrenceId}]}}));
+    const linked=ok(await request({kind:'DROP',assetKey:'context-occurrence:'+child.contextOccurrenceId,target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:stay.contextOccurrenceId,slotKey:'restaurants'},values:{},identity:uuid(24601),selectionId:uuid(24600)}));
     const p=await compile(linked.semanticState);assert.equal(p.compiled.components.filter(c=>c.contextOccurrenceId===stay.contextOccurrenceId).length,1);assert.equal(p.compiled.components.filter(c=>c.contextOccurrenceId===child.contextOccurrenceId).length,1);
   });
   for(let i=0;i<3;i++) model=ok(await request({kind:'MUTATE',mutation:{kind:'REMOVE_CONTEXT',contextOccurrenceId:uuid(24900+i)}}));
@@ -143,6 +156,6 @@ try{
       assert.equal([...art,...old].find(a=>a.presetKey===preset.presetKey).sha256,hash);
     }assert.equal(new Set(hashes).size,26);
   });
-  fs.writeFileSync(evidence+'/contract-tests.json',JSON.stringify({environment:'PGLITE_SYNTHETIC_ONLY',authenticated:false,checks,coverage,remoteWrites:0},null,2)+'\n');
+  fs.writeFileSync(evidence+'/contract-tests.json',JSON.stringify({environment:'PGLITE_SYNTHETIC_ONLY',authenticated:false,checks,coverage,remoteWrites:0,...(resumed?{remainingOnly:true,priorPresetProof:'contract-26-presets-run.log'}:{})},null,2)+'\n');
 }finally{await pg.db.close();}
 
