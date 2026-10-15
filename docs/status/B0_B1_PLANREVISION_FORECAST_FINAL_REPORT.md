@@ -21,6 +21,8 @@ Main et Production `83bb1a91da3442e893e5c804fb4f71007f61c467`, déploiement `dpl
 
 Ces montants sont des fixtures synthétiques. Aucun Plan ni paiement personnel n'a été créé pour la certification.
 
+Limite de financement conservée : le Kernel accepte actuellement BANK et refuse Swile/Edenred tant que leur admissibilité n'est pas certifiée. Une réserve d'épargne n'est pas une source d'allocation définie dans `FundingSource`. B0 vérifie donc séparément réservation et financement admissible ; il ne certifie pas un parcours de dépense directement financée par une réserve. Aucun financement de remplacement ni retrait d'épargne n'est inventé. Cette extension de contrat reste hors B1.
+
 ## C. B1 — contrat opérationnel
 
 `official-plan-comparison@v1` est retourné sous `comparison` par le résolveur officiel. Il est transmis par la page Mois à venir à son consommateur serveur existant `AppliedMonthView`, sans route parallèle ni refonte B2.
