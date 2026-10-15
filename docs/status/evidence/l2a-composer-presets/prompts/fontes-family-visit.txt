@@ -1,0 +1,7 @@
+Use case: stylized-concept. Create one ORIGINAL premium 3D soft-clay illustration for Budgetisation Composer V3, asset fontes-family-visit.
+SUBJECT: Symbolic welcoming visit to a southern French village. One small generic cream Mediterranean house with chunky rounded muted terracotta tiled roof, simple recessed doorway with a tiny lavender welcome cushion-like step, a soft winding short clay path and one compact olive tree with muted sage rounded foliage beside it. A subtle spare cup near the doorway suggests welcome without people. A unified miniature sculpture. This is not a real house, not a geographic reproduction of Fontes and not any personal home.
+ART DIRECTION: thick tactile rounded hand-sculpted soft matte clay, gentle contours, substantial volumes, premium warm elegance. Ivory and pearl house, muted terracotta roof, restrained lavender, sage natural foliage. Truly3D, not flat, no glossy plastic or photo.
+LIGHTING: diffuse upper-left studio light, soft shadow lower right.
+COMPOSITION: horizontal2:1; entire house, short path and tree mainly in right55percent, calm40percent left/lower negative space, seamless warm ivory studio backdrop, readable small-card silhouette. No landscape or multiple buildings.
+EXCLUSIONS: no text, letters, house numbers, logos, UI, borders, buttons, badges, prices, watermarks, real people, faces, actual personal home, map, clutter, metallic glare.
+EXPORT TARGET:1200x600WebPquality82, larger native generation fine with2:1 composition.

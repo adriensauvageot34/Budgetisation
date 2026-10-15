@@ -1,0 +1,7 @@
+Use case: stylized-concept. Create one ORIGINAL premium 3D soft-clay illustration for Budgetisation Composer V3, asset fishing-day.
+SUBJECT: One coherent sculpted miniature fishing kit: a slender yet chunky curved fishing rod with a clearly recognizable rounded reel, resting diagonally behind a compact softly rounded closed tackle box. A tiny terracotta-and-cream fishing float beside the box with a delicate curved clay line connects the arrangement. Muted sage rod, pearl reel, cream tackle box with lavender clasp; warm muted float. No fish, fisherman, water or landscape.
+ART DIRECTION: handcrafted miniature in soft matte clay, substantial rounded tactile volumes, gentle contours, premium friendly elegance. Genuine three-dimensional sculpture, no flat vector or glossy plastic.
+LIGHTING: upper-left diffuse studio light, gentle gradients and soft contact shadow lower right.
+COMPOSITION: wide2:1, entire grouped subject contained within right55percent, about40percent calm left/lower negative space. Warm ivory seamless backdrop. Rod must be entirely in frame and recognizable at small size, not a generic stick. New arrangement unlike existing float/spool fishing art.
+EXCLUSIONS: no text, letters, labels, logos, UI, border, button, badge, price, watermark, photo, real person, lake, clutter, shiny plastic, metallic glare.
+EXPORT TARGET:1200x600WebPquality82; larger native image fine with2:1 composition.

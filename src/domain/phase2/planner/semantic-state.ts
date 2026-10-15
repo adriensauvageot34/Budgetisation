@@ -1,5 +1,6 @@
 import { parsePlannerJsonObject, plannerDigest, plannerKeys, plannerMonth, plannerRecord,
   plannerString, plannerUuid, type PlannerJsonObject } from "./json";
+import { presetForContext } from "./composer-presets";
 
 export const PLAN_SEMANTIC_STATE_VERSION = "month-plan-state@v1" as const;
 /** C3/C6 validate each value through its target capability; the core has no category taxonomy. */
@@ -35,6 +36,9 @@ export function parsePlannedContextState(raw: unknown): PlannedContextState {
   plannerKeys(value, [...required, "parentContextOccurrenceId"], required);
   if (value.status !== "ACTIVE" || value.provenance !== "EXPLICIT_USER_DECISION") throw new TypeError("PLANNER_CONTEXT_INVALID");
   const selections = plannerRecord(value.slotSelections);
+  // Reserved, versioned presentation namespace inside the existing C0 JSON envelope.
+  // It grants no capability, price, identity reference or statistical authority.
+  presetForContext({ templateKey: plannerString(value.templateKey), fields: parsePlannerJsonObject(value.fields) });
   return { contextOccurrenceId: plannerUuid(value.contextOccurrenceId), templateKey: plannerString(value.templateKey),
     status: "ACTIVE", parentContextOccurrenceId: value.parentContextOccurrenceId == null ? null : plannerUuid(value.parentContextOccurrenceId),
     fields: parsePlannerJsonObject(value.fields), slotSelections: Object.fromEntries(Object.entries(selections)

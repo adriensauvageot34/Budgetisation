@@ -1,0 +1,7 @@
+Use case: stylized-concept. Create one ORIGINAL premium 3D soft-clay illustration for Budgetisation Composer V3, asset uber-eats-order.
+SUBJECT: A compact delivered takeaway meal: one sculpted cream paper-style takeaway bag with thick rounded folded handles behind a rounded pearl meal box open enough to show a small muted green and warm terracotta food portion. One tiny unmarked lavender folded delivery receipt-shaped clay tab, absolutely blank, as a discreet delivery cue. One unified sculpture arrangement. No scooter or courier.
+ART DIRECTION: handcrafted soft matte clay miniature, substantial thick rounded tactile volumes, gentle contours, premium warm friendly proportions. Truly three-dimensional, not flat icon, no glossy plastic or photorealism. Ivory and pearl objects, restrained lavender details, muted natural food colors.
+LIGHTING: diffuse upper-left studio light; soft contact shadow toward lower right.
+COMPOSITION: horizontal 2:1, all objects in right 55 percent, about 40 percent calm left/lower negative space. Warm ivory seamless backdrop, clear small-card silhouette, entire subject visible. Brand new composition not reproducing existing delivery or food art.
+EXCLUSIONS: no text, letters, logos of any kind including Uber, no UI, border, button, badge, price, watermark, stock imagery, realistic person, crowded scene, shiny plastic.
+EXPORT TARGET:1200x600 WebP quality82; native generation can be larger, preserve exact2:1 composition.

@@ -1,0 +1,7 @@
+Use case: stylized-concept. Create one ORIGINAL premium 3D soft-clay illustration for Budgetisation Composer V3, asset clothing-shopping.
+SUBJECT: a compact gender-neutral clothing purchase sculpture: one cream top draped over a thick rounded lavender hanger, one folded muted sage pair of trousers with a clearly shaped waistband and thick soft folded legs, and one small plain pearl shopping bag at the side. Warm tactile substantial clay folds, elegant harmonious arrangement, not an isolated flat clothing icon.
+ART DIRECTION: hand-sculpted matte soft clay, three-dimensional chunky rounded forms, soft contours, premium friendly appearance, ivory/pearl/cream with restrained lavender and muted sage textile colors. No shiny plastic, metallic glare or photography.
+LIGHTING: diffuse upper-left studio lighting, subtle highlights and soft lower-right contact shadow.
+COMPOSITION: horizontal2:1, whole group mainly in the right55percent, approximately40percent calm left/lower negative space, seamless warm ivory studio backdrop. Clear silhouette at small card scale. A brand-new composition distinct from any folded T-shirt, shoe or clothing icon in an existing collection.
+EXCLUSIONS: no text, letters, labels, brand logos, numbers, UI, borders, buttons, badges, prices, watermark, human body or portrait, gender stereotype, photo, clutter.
+EXPORT TARGET:1200x600WebPquality82; larger native image acceptable preserving2:1 composition.

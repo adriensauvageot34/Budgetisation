@@ -689,3 +689,16 @@
 .durableActions details>div { display:flex; align-items:center; gap:8px; margin-top:6px; }
 .workspace[data-save-state=ERROR] .draftStatus,.workspace[data-save-state=CONFLICT] .draftStatus,.workspace[data-save-state=OFFLINE] .draftStatus { color:#9a442c; }
 .saveMessage { max-width:320px; font-size:11px; color:#9a442c; line-height:1.3; }
+
+/* Original L2 artwork stays static and lazy; this is presentation, not Board geometry. */
+.presetGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+.presetTile { position:relative; min-width:0; padding:0 0 9px; overflow:hidden; border:1px solid #eee5dd; border-radius:14px; background:#fffaf4; text-align:left; cursor:pointer; color:#302b43; }
+.presetTile:hover,.presetTile:focus-visible { border-color:#a886cc; }
+.presetTile:disabled { opacity:.5; cursor:default; }
+.presetIllustration { display:block; width:100%; height:auto; aspect-ratio:2/1; object-fit:contain; }
+.presetTile span { display:block; padding:0 8px; font-size:11px; font-weight:700; line-height:1.3; }
+.contextHero .presetBoardImage { width:118px; height:59px; flex:0 0 auto; border-radius:10px; }
+.presetEditorIntro { display:flex; align-items:center; gap:12px; padding:8px 20px; background:#fffaf4; }
+.presetEditorIntro img { width:160px; flex:0 0 160px; border-radius:12px; }
+.presetEditorIntro p { margin:0; color:#73647f; font-size:12px; line-height:1.5; }
+.restaurantInspector header .presetInspectorImage { width:72px; height:36px; flex:0 0 72px; border-radius:8px; }

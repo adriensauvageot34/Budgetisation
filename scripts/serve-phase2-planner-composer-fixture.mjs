@@ -240,6 +240,10 @@ const server = http.createServer(async (request, response) => {
       response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture ${key}</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
       return;
     }
+    if (/^\/planned-visuals\/composer\/presets\/[a-z-]+\.webp$/.test(url.pathname)) {
+      response.setHeader('Content-Type','image/webp'); response.setHeader('Cache-Control','public,max-age=3600');
+      response.end(fs.readFileSync(path.join('public',url.pathname))); return;
+    }
     if (['/app.js', '/app.css', '/global.css', '/app.js.map', '/app.css.map'].includes(url.pathname) || /^\/chunks\/[a-zA-Z0-9_-]+\.js(?:\.map)?$/.test(url.pathname)) {
       response.setHeader('Cache-Control', 'no-store');
       response.setHeader('Content-Type', url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript'); response.end(fs.readFileSync(path.join(out, url.pathname.slice(1)))); return;

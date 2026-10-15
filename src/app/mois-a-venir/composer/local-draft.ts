@@ -6,6 +6,8 @@ import { editNightOut } from "@/domain/phase2/planner/night-out-edit";
 import { editShortStay } from "@/domain/phase2/planner/short-stay-edit";
 import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
+import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
+import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 
 function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, contextId: string, slotKey: string,
@@ -41,6 +43,7 @@ export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStat
     if (Object.keys(operation.values).some(key => !allowed.has(key))) return null;
     const fields = { fieldSchemaVersion: asset.templateKey === "short-stay" ? "context-fields@v5"
       : asset.templateKey === "family-visit" ? "context-fields@v4" : "context-fields@v2",
+      ...presetCreationFields(asset.templateKey, operation.presetKey),
       ...Object.fromEntries(Object.entries(operation.values).filter(([, value]) => value.trim()).map(([key, value]) => [key, value.trim()])) };
     return parsePlanSemanticState({ ...state, contexts: [...state.contexts, { contextOccurrenceId: operation.identity, templateKey: asset.templateKey,
       status: "ACTIVE", parentContextOccurrenceId: null, fields, slotSelections: {}, provenance: "EXPLICIT_USER_DECISION" }] });
@@ -80,6 +83,13 @@ export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStat
     if (card ? !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly
       : !model.dropCapabilities.some(d => d.sourceAssetKey === "template:restaurant" && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED")) return null;
     return editRestaurant(state, operation.edit);
+  }
+  if (operation.kind === "EDIT_PRESET_CONTEXT") {
+    const context = state.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
+    const card = model.board.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
+    if (!context || (card ? !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly
+      : !model.dropCapabilities.some(d => d.sourceAssetKey === `template:${context.templateKey}` && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED"))) return null;
+    return editGuidedContext(state, operation.edit);
   }
   if (operation.kind === "EDIT_SHORT_STAY") {
     const card = model.board.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
