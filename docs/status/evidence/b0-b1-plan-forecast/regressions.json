@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-15",
+  "environment": "LOCAL_EXISTING_DEPENDENCIES_PGLITE_SYNTHETIC",
+  "checks": {
+    "b0b1": "18_PASS_PGLITE_SYNTHETIC_ONLY",
+    "parity": "22_SCENARIOS_9_HASHES_PASS",
+    "p13": "8_PASS",
+    "kernel": "40_PASS",
+    "simpleLevers": "30_PASS",
+    "typescript": "PASS_EXIT_0",
+    "legacyHeadless": "FAIL_BEFORE_ASSERTIONS_CONTEXT_REFERENCE_OWNER_UNAVAILABLE",
+    "legacyHeadlessExplanation": "Harness and apply.ts unchanged from main; no fixture validateContextReferences. New B1 tests provide bounded reference validation and exercise the affected round-trip."
+  },
+  "build": {
+    "local": "FAIL_TOOLING_JUNCTION_OUTSIDE_TURBOPACK_ROOT",
+    "command": "node node_modules/next/dist/bin/next build",
+    "npmPowerShellLauncher": "NOT_STARTED_UNSIGNED_NPM_PS1",
+    "remote": "PENDING"
+  },
+  "authenticatedPlan": "NOT_RUN_NO_OFFICIAL_PLAN_EXISTS",
+  "productionApply": "NOT_RUN_FORBIDDEN"
+}

@@ -1,4 +1,5 @@
 import type { PlanProjectionV1 } from "@/domain/phase2/planner/projection-contract";
+import type { OfficialPlanComparisonV1 } from "@/domain/phase2/planner/official-comparison-contract";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { AppliedPlanControl } from "@/server/phase2/planner/applied-plan-read";
 import type { MonthEconomicPlan } from "@/server/phase2/month-scenario";
@@ -80,10 +81,10 @@ const giftAssetLabel = (value: unknown) => {
 
 /** Applied financial values come directly from C7, including unknowns. Existing
  * independent resource and external-intent editors retain their owners. */
-export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, evidenceStatus = "EXACT", historicalRemainder = null, composerHref, today, calendarCarryovers = [], persons = [], mobility = [], places = [] }: {
+export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, evidenceStatus = "EXACT", historicalRemainder = null, composerHref, today, calendarCarryovers = [], persons = [], mobility = [], places = [], comparison }: {
   projection: PlanProjectionV1; semanticState: PlanSemanticStateV1; controls?: readonly AppliedPlanControl[]; plan: MonthEconomicPlan | null;
   external?: ComponentProps<typeof PlannedExpensesControl>; revision: number; evidenceStatus?: "EXACT" | "CHANGED_AUTHORITIES" | "NOT_APPLICABLE";
-  historicalRemainder?: string | null; composerHref?: string; today: string;
+  historicalRemainder?: string | null; composerHref?: string; today: string; comparison?: OfficialPlanComparisonV1;
   calendarCarryovers?: readonly PlannedExpenseCard[]; persons?: readonly { personId: string; displayName: string }[];
   mobility?: readonly ComposerMobilitySummary[]; places?: readonly import("@/domain/phase2/planned-places").PlannedPlaceOption[];
 }) {
@@ -91,7 +92,11 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
     ["Besoins & habitudes", projection.economic.needsAndHabits], ["Vie & envies", projection.economic.discretionaryLife],
     ["Contexts explicites", projection.economic.explicitContexts], ["Usage mobilité", projection.economic.mobilityUsageEconomicCost],
     ["Cagnottes réservées", projection.economic.savingsReservations]];
-  return <div data-applied-month className="space-y-7">
+  return <div data-applied-month data-official-comparison={comparison?.version} data-active-revision-status={comparison?.freshness.activeRevision} className="space-y-7">
+    {comparison && comparison.freshness.activeRevision !== "CURRENT_AT_CHECK" && <p role="status" className="text-sm text-amber-800">
+      {comparison.freshness.activeRevision === "SUPERSEDED" ? "Une nouvelle révision a été appliquée pendant la lecture. Les montants ci-dessous restent ceux de la révision indiquée ; rechargez pour consulter le Plan actif."
+        : "La dernière révision active n’a pas pu être vérifiée. Les montants ci-dessous restent ceux de la révision indiquée."}
+    </p>}
     <section className={`${material.glassPremium} p-6`}><p className="text-sm text-slate-600">Plan appliqué · Révision {revision}</p>
       <h2 id="final-projection" className="mt-2 text-2xl font-black">{evidenceStatus === "CHANGED_AUTHORITIES" ? "Projection actuelle de fin de mois" : "Projection de fin de mois"}</h2>
       <p data-applied-remainder className="mt-3 text-4xl font-black">{money(projection.plan.economicMonthEndRemainder)}</p>

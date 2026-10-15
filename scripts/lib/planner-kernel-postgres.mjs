@@ -29,11 +29,11 @@ export async function createKernelPostgres() {
   const tables = new Set(["phase2_month_plans","phase2_month_plan_revisions"]);
   const client = { from(table) {
     if (!tables.has(table)) throw new Error(`UNEXPECTED_TABLE:${table}`);
-    const filters = [];
-    const query = { select(columns) { if(columns!=="*") throw new Error("UNEXPECTED_SELECT"); return query; },
+    const filters = []; let projection = '*';
+    const query = { select(columns) { if(columns!=="*" && columns!=="plan_id,household_id,target_month,active_revision_id,active_revision_number") throw new Error("UNEXPECTED_SELECT"); projection = columns; return query; },
       eq(key,value) { if(!/^[a-z_]+$/u.test(key)) throw new Error("INVALID_COLUMN"); filters.push([key,value]); return query; },
       async maybeSingle() {
-        try { const rows=(await db.query(`select to_jsonb(t) as row from public.${table} t where ${filters.map(([key],i)=>`${key}=$${i+1}`).join(" and ")}`,
+        try { const rows=(await db.query(`select to_jsonb(t) as row from (select ${projection} from public.${table} where ${filters.map(([key],i)=>`${key}=$${i+1}`).join(" and ")}) t`,
           filters.map(([,value])=>value))).rows.map(r=>r.row);
           if(rows.length>1) throw new Error("MULTIPLE_ROWS"); return {data:rows[0]??null,error:null};
         } catch(error) { return {data:null,error}; }
