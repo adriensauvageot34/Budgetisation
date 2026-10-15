@@ -1,0 +1,20 @@
+{
+  "status": "EXECUTED_PASS_SYNTHETIC_OWNER_READER_ONLY",
+  "baselineSha": "34798ffd4f9296d5196fc0d2e95d285ab8186c64",
+  "checks": [
+    "exact evidence parity with pagination, purchase replacement, PARTIAL and UNKNOWN",
+    "standalone timezone, temporal boundaries and permissive history preserve output",
+    "scope is admitted before any downstream read",
+    "metadata failure remains authoritative over concurrent history failure",
+    "independent metadata and history overlap without a request cache"
+  ],
+  "graph": {
+    "referenceRequests": 20,
+    "candidateRequests": 19,
+    "timezoneRequestsAvoided": 1,
+    "independentBarriersOverlap": true,
+    "syntheticDelaysOnly": true
+  },
+  "realPerformanceGain": "NOT_MEASURED",
+  "remoteWrites": 0
+}

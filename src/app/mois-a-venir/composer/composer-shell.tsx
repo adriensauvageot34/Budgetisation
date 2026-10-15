@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useMemo, type DragEvent } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
 import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerCardView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
@@ -20,6 +20,7 @@ import { finishComparison, type ComparisonSnapshot } from "./comparison";
 import { AtomicPopover } from "./atomic-popover";
 import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, composerInteractionReuseEnabled, type PreviewStatus } from "./preview-scheduler";
+import { composerPreviewHttp } from "./preview-http";
 import { editorChunks, type EditorChunkKind, type LoadedEditorChunks } from "./editor-chunks";
 import { NightOutEditor } from "./night-out-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
@@ -36,20 +37,32 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
-export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false }: {
+export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false, previewHttp = false }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null; durableDraftHttp?: boolean;
-  snapshotMetrics?: boolean;
+  snapshotMetrics?: boolean; previewHttp?: boolean;
 }) {
   const draftTransport = durableDraftHttp ? composerDraftHttpTransport : suppliedDraftTransport;
   const transport: ComposerTransport = useCommittedEvent(async (request: ComposerRequest) => {
     const started = performance.now();
-    const response = await suppliedTransport(request);
+    const response = await (previewHttp && (request.kind === "READ" || request.kind === "SUGGESTIONS") ? composerPreviewHttp(request) : suppliedTransport(request));
     if (snapshotMetrics) {
+      const settled = performance.now();
+      // All stamps use the browser's monotonic clock. A resource is attributable
+      // only when exactly one matching fetch occurred inside this action window.
+      const requestPath = previewHttp && (request.kind === "READ" || request.kind === "SUGGESTIONS") ? "/api/composer/preview" : window.location.pathname;
+      const resources = (performance.getEntriesByType("resource") as PerformanceResourceTiming[])
+        .filter(entry => entry.initiatorType === "fetch" && entry.startTime >= started && entry.responseEnd <= settled
+          && new URL(entry.name).origin === window.location.origin
+          && new URL(entry.name).pathname === requestPath)
+        .slice(-8).map(entry => ({ startMs: entry.startTime, requestStartMs: entry.requestStart,
+          responseStartMs: entry.responseStart, responseEndMs: entry.responseEnd,
+          durationMs: entry.duration, decodedBytes: entry.decodedBodySize, transferBytes: entry.transferSize }));
       const metrics = (response as typeof response & { snapMetrics?: unknown }).snapMetrics;
       document.querySelector("[data-composer]")?.setAttribute("data-snap-action", JSON.stringify({
-        kind: request.kind, sequence: request.sequence, responseMs: performance.now() - started,
-        ok: response.ok, metrics,
+        kind: request.kind, sequence: request.sequence, startedMs: started, settledMs: settled, responseMs: settled - started,
+        resources, afterResponseMs: resources.length === 1 ? settled - resources[0].responseEndMs : null,
+        attribution: resources.length === 1 ? "SINGLE_MATCHING_FETCH" : "UNATTRIBUTED", ok: response.ok, metrics,
       }));
     }
     return response;
@@ -58,20 +71,30 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [draftState, setDraftState] = useState(initialModel.semanticState), localDraft = useRef(initialModel.semanticState);
   const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(initialModel.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH");
   const snapshotIntent = useRef<number | null>(null);
+  const snapshotCommit = useRef<{ initialMs: number; statusMs: number } | null>(null);
+  useLayoutEffect(() => {
+    if (snapshotMetrics) { const now = performance.now();
+      snapshotCommit.current = { initialMs: snapshotCommit.current?.initialMs ?? now, statusMs: now }; }
+  }, [snapshotMetrics, previewStatus]);
   useEffect(() => {
     if (!snapshotMetrics) return;
     let frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => {
       const navigation=performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
       if (!performance.getEntriesByName("snap-board-usable").length) performance.mark("snap-board-usable");
       if (previewStatus === "FRESH" && !performance.getEntriesByName("snap-preview-fresh").length) performance.mark("snap-preview-fresh");
+      const fresh = performance.getEntriesByName("snap-preview-fresh")[0];
       document.querySelector("[data-composer]")?.setAttribute("data-snap-browser", JSON.stringify({
         boardMs:performance.getEntriesByName("snap-board-usable")[0]?.startTime,
         freshMs:performance.getEntriesByName("snap-preview-fresh")[0]?.startTime,previewStatus,
+        initialCommitMs:snapshotCommit.current?.initialMs,statusCommitMs:snapshotCommit.current?.statusMs,
+        responseEndToFreshMs:fresh && navigation ? fresh.startTime-navigation.responseEnd : null,
         navigation:navigation?{type:navigation.type,ttfbMs:navigation.responseStart-navigation.requestStart,
+          requestStartMs:navigation.requestStart,responseStartMs:navigation.responseStart,responseEndMs:navigation.responseEnd,
           responseMs:navigation.responseEnd-navigation.requestStart,transferBytes:navigation.transferSize,
           decodedBytes:navigation.decodedBodySize}:null}));
       if (previewStatus === "FRESH" && snapshotIntent.current !== null) {
         document.querySelector("[data-composer]")?.setAttribute("data-snap-intent", JSON.stringify({
+          intentMs:snapshotIntent.current,commitMs:snapshotCommit.current?.statusMs,paintObservedMs:performance.now(),
           visualFreshMs:performance.now()-snapshotIntent.current}));
         snapshotIntent.current=null;
       }

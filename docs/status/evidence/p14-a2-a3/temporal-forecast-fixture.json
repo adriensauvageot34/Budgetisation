@@ -1,0 +1,258 @@
+{
+  "results": [
+    {
+      "id": "ASOF-001",
+      "status": "PASS"
+    },
+    {
+      "id": "ASOF-002",
+      "status": "PASS"
+    },
+    {
+      "id": "ASOF-003",
+      "status": "PASS"
+    },
+    {
+      "id": "ASOF-004",
+      "status": "PASS"
+    },
+    {
+      "id": "ASOF-005-COVERAGE-CUTOFF",
+      "status": "PASS"
+    },
+    {
+      "id": "COV-001",
+      "status": "PASS"
+    },
+    {
+      "id": "COV-002",
+      "status": "PASS"
+    },
+    {
+      "id": "COV-003",
+      "status": "PASS"
+    },
+    {
+      "id": "COV-004",
+      "status": "PASS"
+    },
+    {
+      "id": "COV-005",
+      "status": "PASS"
+    },
+    {
+      "id": "COV-006",
+      "status": "PASS"
+    },
+    {
+      "id": "COV-007",
+      "status": "PASS"
+    },
+    {
+      "id": "PUR-001",
+      "status": "PASS"
+    },
+    {
+      "id": "PUR-002",
+      "status": "PASS"
+    },
+    {
+      "id": "PUR-003",
+      "status": "PASS"
+    },
+    {
+      "id": "DIS-001",
+      "status": "PASS"
+    },
+    {
+      "id": "DIS-002",
+      "status": "PASS"
+    },
+    {
+      "id": "DIS-003",
+      "status": "PASS"
+    },
+    {
+      "id": "DIS-004",
+      "status": "PASS"
+    },
+    {
+      "id": "DIS-005-WEEKEND-SCHEDULE",
+      "status": "PASS"
+    },
+    {
+      "id": "REC-001",
+      "status": "PASS"
+    },
+    {
+      "id": "REC-002",
+      "status": "PASS"
+    },
+    {
+      "id": "REC-003",
+      "status": "PASS"
+    },
+    {
+      "id": "REC-004",
+      "status": "PASS"
+    },
+    {
+      "id": "OCC-001",
+      "status": "PASS"
+    },
+    {
+      "id": "OCC-002",
+      "status": "PASS"
+    },
+    {
+      "id": "OCC-003",
+      "status": "PASS"
+    },
+    {
+      "id": "DD-001",
+      "status": "PASS"
+    },
+    {
+      "id": "DD-002",
+      "status": "PASS"
+    },
+    {
+      "id": "DD-003",
+      "status": "PASS"
+    },
+    {
+      "id": "DD-004",
+      "status": "PASS"
+    },
+    {
+      "id": "DD-005",
+      "status": "PASS"
+    },
+    {
+      "id": "DD-006",
+      "status": "PASS"
+    },
+    {
+      "id": "CASH-001",
+      "status": "PASS"
+    },
+    {
+      "id": "CASH-002",
+      "status": "PASS"
+    },
+    {
+      "id": "CASH-003",
+      "status": "PASS"
+    },
+    {
+      "id": "CASH-004",
+      "status": "PASS"
+    },
+    {
+      "id": "CASH-005-PURCHASE-NOT-BOOKED",
+      "status": "PASS"
+    },
+    {
+      "id": "CASH-006-ROLLOVER-STOCK",
+      "status": "PASS"
+    },
+    {
+      "id": "CASH-007-FUTURE-BALANCE",
+      "status": "PASS"
+    },
+    {
+      "id": "CASH-008-UNPRICED",
+      "status": "PASS"
+    },
+    {
+      "id": "CASH-009-UNLINKED-PURCHASE",
+      "status": "PASS"
+    },
+    {
+      "id": "MATCH-INCOHERENT-LINK",
+      "status": "PASS"
+    },
+    {
+      "id": "MATCH-MIXED-COMPONENTS",
+      "status": "PASS"
+    },
+    {
+      "id": "CALIBRATION-HORIZON-SELECTOR",
+      "status": "PASS"
+    },
+    {
+      "id": "MATCH-AMBIGUOUS",
+      "status": "PASS"
+    },
+    {
+      "id": "CLOSED-UNRESOLVED",
+      "status": "PASS"
+    },
+    {
+      "id": "CALIBRATION-SOURCE-ISOLATION",
+      "status": "PASS"
+    },
+    {
+      "id": "PARITY-001",
+      "status": "PASS"
+    },
+    {
+      "id": "PARITY-002",
+      "status": "PASS"
+    },
+    {
+      "id": "PARITY-003",
+      "status": "PASS"
+    },
+    {
+      "id": "WRITE-001",
+      "status": "PASS"
+    },
+    {
+      "id": "WRITE-002",
+      "status": "PASS"
+    },
+    {
+      "id": "WRITE-003",
+      "status": "PASS"
+    },
+    {
+      "id": "PARITY-MANUAL-LINK-HOUSEHOLD",
+      "status": "PASS"
+    },
+    {
+      "id": "UI-001",
+      "status": "PASS"
+    },
+    {
+      "id": "UI-002",
+      "status": "PASS"
+    },
+    {
+      "id": "UI-003",
+      "status": "PASS"
+    },
+    {
+      "id": "UI-004",
+      "status": "PASS"
+    },
+    {
+      "id": "UI-005",
+      "status": "PASS"
+    },
+    {
+      "id": "UI-006",
+      "status": "PASS"
+    },
+    {
+      "id": "UI-007-OBSERVED-PROJECT",
+      "status": "PASS"
+    },
+    {
+      "id": "ADAPTER-READ-ONLY",
+      "status": "PASS"
+    }
+  ],
+  "historicalWrites": 0,
+  "liveDatabaseWrites": 0
+}

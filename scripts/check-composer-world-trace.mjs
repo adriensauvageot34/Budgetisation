@@ -6,7 +6,10 @@ process.env.COMPOSER_WORLD_TRACE_ENABLED='1';
 process.env.COMPOSER_SNAP_BENCHMARK_READ_ONLY='1';
 process.env.VERCEL_ENV='preview';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-globalThis.fetch=async input=>{await sleep(String(input).includes('slow')?45:25);return new Response('{"privateFixture":"must not be recorded"}',{status:200});};
+globalThis.fetch=async input=>{await sleep(String(input).includes('slow')?45:25);
+ if(String(input).includes('delayed-body'))return new Response(new ReadableStream({start(controller){setTimeout(()=>{
+  controller.enqueue(new TextEncoder().encode('{"privateFixture":"must not be recorded"}'));controller.close();},35);}}));
+ return new Response('{"privateFixture":"must not be recorded"}',{status:200});};
 const {observeSnapshot,snapshotWork,snapshotSync}=require('@/server/phase2/planner/snapshot-observation');
 const run=()=>observeSnapshot(()=>snapshotWork('World',()=>Promise.all([
  snapshotWork('Fast',()=>fetch('https://fixture.invalid/rest/v1/operations?private=do-not-export')),
@@ -32,6 +35,11 @@ const sessions=await Promise.all([run(),run()]);
 assert.notEqual(sessions[0].metrics.traceId,sessions[1].metrics.traceId);
 assert.ok(sessions.every(s=>s.metrics.requests.length===2));
 console.log('TRACE-REQUEST-ISOLATION PASS');
+const drain=await observeSnapshot(()=>fetch('https://fixture.invalid/rest/v1/delayed-body'));
+assert.ok(drain.metrics.metricsDrainMs>=20);
+assert.ok(drain.metrics.responseReadyMs>=drain.metrics.serverMs+drain.metrics.metricsDrainMs-1);
+assert.ok(!JSON.stringify(drain.metrics).includes('privateFixture'));
+console.log('TRACE-METRIC-COLLECTION-DELAY-IS-EXPLICIT PASS');
 await assert.rejects(observeSnapshot(()=>snapshotWork('NoWrite',()=>fetch('https://fixture.invalid/rest/v1/operations',{method:'POST'}))),/SNAP_BENCHMARK_WRITE_REFUSED/);
 console.log('TRACE-BENCHMARK-WRITE-GUARD PASS');
 process.env.COMPOSER_WORLD_TRACE_ENABLED='0';const disabled=await observeSnapshot(()=>snapshotWork('Off',()=>Promise.resolve('unchanged')));

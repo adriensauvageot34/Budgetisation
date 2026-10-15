@@ -65,7 +65,7 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
     {presentation.variant === "SAVINGS" && gauge?.percent !== null && gauge && <div className={styles.reservationGauge}><div className={styles.gaugeTrack} role="progressbar" aria-label={`${card.label}, repère initial du mois`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={gauge.percent} aria-valuetext={`${money(gauge.referenceAmount)} → ${money(card.value.amount)}`}><span style={{ width: `${gauge.percent}%` }} /></div></div>}
     {inlineAmount ? <form className={styles.savingsInline} data-savings-inline={presentation.variant === "SAVINGS" || undefined} data-amount-inline onSubmit={e => { e.preventDefault(); if (!busy && allocation.trim()) mutate(allocationMutation(allocation)); }}>
       <input aria-label={`Montant mensuel de ${card.label}`} inputMode="decimal" pattern="(?:0|[1-9][0-9]{0,8})(?:\.[0-9]{1,2})?" value={allocation} disabled={busy} onFocus={focus}
-        onChange={e => { setAllocation(e.target.value); hover(e.target.value.trim() ? allocationMutation(e.target.value) : null); }} onBlur={() => hover(null)} />
+        onChange={e => { setAllocation(e.target.value); hover(null); }} onBlur={() => hover(null)} />
       <span>€</span><button aria-label={`Prévisualiser le montant de ${card.label}`} disabled={busy || !allocation.trim()}><Check size={14} /></button>
     </form> : !locked ? <button className={styles.compactEdit} disabled={busy} onClick={edit}><SlidersHorizontal size={12} /> Ajuster</button> : null}
     {presentation.variant === "SAVINGS" && <small className={styles.reservationLabel}>

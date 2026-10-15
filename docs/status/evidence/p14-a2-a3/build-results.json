@@ -1,0 +1,13 @@
+{
+  "status": "EXECUTED_PASS_VERCEL_PREVIEW",
+  "command": "npm run build",
+  "deployments": [
+    { "id": "dpl_Hy6YDfpzcV8caTaLfMWy9nGsxQLH", "compiledSeconds": 28.8, "buildCompleted": true, "deploymentCompleted": true },
+    { "id": "dpl_6DN9YC3xgRPAwyAXUpuLeWXt517K", "compiledSeconds": 29.6, "buildCompleted": true, "deploymentCompleted": true },
+    { "id": "dpl_B8GV8PZ28m8neBs85Ho9sS9tWdLz", "compiledSeconds": 29.1, "buildCompleted": true, "deploymentCompleted": true }
+  ],
+  "typescript": "EXECUTED_PASS_LOCAL_EXIT_0",
+  "financialParity": { "cases": 22, "hashesPerCase": 9, "status": "PASS" },
+  "legacyOrchestrationHarness": { "status": "FAIL", "error": "Unstubbed import ./activity-history-artifact", "affectedFilesUnchangedFromMain": true },
+  "authenticatedBrowser": "NOT_RUN"
+}

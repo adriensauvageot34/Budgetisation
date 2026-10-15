@@ -33,9 +33,12 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
   if (scope.error) throw scope.error;
   if (scope.data?.length !== 1 || parseCanonicalHouseholdScope(scope.data[0]) !== householdId)
     throw new TypeError("MONTH_PREDICTION_CANONICAL_SCOPE_INVALID");
-  const household = await snapshotWork("Evidence_Timezone", () => client.from("households").select("timezone").eq("household_id", householdId).maybeSingle());
-  if (household.error) throw household.error;
-  const timezone = options.timezone ?? household.data?.timezone ?? "Europe/Paris";
+  // Composer already supplies the timezone from its authorized request context.
+  // Standalone consumers still resolve it from the household owner.
+  const household = options.timezone == null ? await snapshotWork("Evidence_Timezone", () => client.from("households")
+    .select("timezone").eq("household_id", householdId).maybeSingle()) : null;
+  if (household?.error) throw household.error;
+  const timezone = options.timezone ?? household?.data?.timezone ?? "Europe/Paris";
   const asOf = options.asOfDate ?? planningDate(timezone);
   const boundary = targetMonth < asOf.slice(0, 7) ? targetMonth : asOf.slice(0, 7);
   const latest = await snapshotWork("Evidence_LatestDate", () => client.from("operations").select("date_bancaire").lt("date_bancaire", `${boundary}-01`)
@@ -52,32 +55,23 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
     return snapshotWork(label, async () => {
     const rows: T[] = [];
     for (let offset = 0; ; offset += 1000) {
-      const result = await read(offset); if (result.error) throw result.error;
+      const result = await snapshotWork(`${label}_Page${offset / 1000}`, () => read(offset)); if (result.error) throw result.error;
       rows.push(...(result.data ?? [])); if ((result.data?.length ?? 0) < 1000) return rows;
     }
     });
   }
-  const [subcategories, needs, people, batches, wallets, datasets, balanceRows] = await snapshotWork("Evidence_Metadata", () => Promise.all([
-    client.from("subcategories").select("subcategory_id,nom_canonique"),
-    client.from("needs").select("need_id,name,personne_concernee"),
-    client.from("persons").select("person_id,display_name").eq("household_id", householdId),
-    client.from("import_batches").select("import_batch_id,source_instance_key,source_system,period_start,period_end,coverage_status,status").eq("household_id", householdId),
-    client.from("benefit_wallets").select("benefit_wallet_id,provider,owner_person_id,currency,status,source_instance_key,import_batch_id,coverage_start,coverage_end,opening_balance,opening_balance_status,closing_balance,closing_balance_status").eq("household_id", householdId),
-    client.from("mobility_datasets").select("period_start,period_end").eq("household_id", householdId),
+  const metadataPromise = snapshotWork("Evidence_Metadata", () => Promise.all([
+    snapshotWork("Evidence_Subcategories", () => client.from("subcategories").select("subcategory_id,nom_canonique")),
+    snapshotWork("Evidence_Needs", () => client.from("needs").select("need_id,name,personne_concernee")),
+    snapshotWork("Evidence_Persons", () => client.from("persons").select("person_id,display_name").eq("household_id", householdId)),
+    snapshotWork("Evidence_ImportCoverage", () => client.from("import_batches").select("import_batch_id,source_instance_key,source_system,period_start,period_end,coverage_status,status").eq("household_id", householdId)),
+    snapshotWork("Evidence_WalletDefinitions", () => client.from("benefit_wallets").select("benefit_wallet_id,provider,owner_person_id,currency,status,source_instance_key,import_batch_id,coverage_start,coverage_end,opening_balance,opening_balance_status,closing_balance,closing_balance_status").eq("household_id", householdId)),
+    snapshotWork("Evidence_MobilityCoverage", () => client.from("mobility_datasets").select("period_start,period_end").eq("household_id", householdId)),
     page("Evidence_LiveBalances", offset => client.from("phase2_month_inputs").select("payload,target_month").eq("household_id", householdId)
       .order("target_month", { ascending: false }).range(offset, offset + 999)),
   ]));
-  for (const result of [subcategories, needs, people, batches, wallets, datasets]) if (result.error) throw result.error;
-  // Only the observed stock can cross months. Salaries, wallet resources and assumptions
-  // remain owned by their target month's inputs. The cash helper still requires ledger proof.
-  const manualBankBalanceObservation = balanceRows.map(row => monthInputsSchema.parse(row.payload).openingBalance)
-    .filter((value): value is NonNullable<typeof value> => value !== null && value.asOfDate <= asOf)
-    .sort((a, b) => b.asOfDate.localeCompare(a.asOfDate))[0] ?? null;
-  const names = new Map((subcategories.data ?? []).map(r => [r.subcategory_id, r.nom_canonique]));
-  const needById = new Map((needs.data ?? []).map(r => [r.need_id, r]));
-  const personNamesById = Object.fromEntries((people.data ?? []).map(r => [r.person_id, r.display_name]));
-  const walletById = new Map((wallets.data ?? []).map(r => [r.benefit_wallet_id, r]));
-  const [operations, costs, events, memberships, timings, funding, legs, benefitLedger] = await snapshotWork("Evidence_HistoryBarrier", () => Promise.all([
+  // Both groups depend only on the admitted scope and dates, not on each other.
+  const historyPromise = snapshotWork("Evidence_HistoryBarrier", () => Promise.all([
     page("Evidence_BankOperations", offset => client.from("operations").select("operation_id,date_bancaire,personne_concernee,type_precis,marchand,merchant_id,need_id,montant,flux,recurrence_series_id,reference_contrat,transfert_associe_operation_id,source_system")
       .gte("date_bancaire", startDate).lt("date_bancaire", endExclusive).lte("date_bancaire", asOf).order("operation_id").range(offset, offset + 999)),
     page("Evidence_CanonicalCosts", offset => client.from("financial_economic_cost_canonical").select("operation_id,subcategory_id,canonical_economic_net,canonical_component_key")
@@ -97,6 +91,20 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
       .eq("household_id", householdId).gte("event_date", startDate).lte("event_date", asOf)
       .order("benefit_wallet_ledger_entry_id").range(offset, offset + 999)),
   ]));
+  // Observe early rejection, while preserving the metadata-first failure boundary.
+  historyPromise.catch(() => undefined);
+  const [subcategories, needs, people, batches, wallets, datasets, balanceRows] = await metadataPromise;
+  for (const result of [subcategories, needs, people, batches, wallets, datasets]) if (result.error) throw result.error;
+  // Only the observed stock can cross months. Salaries, wallet resources and assumptions
+  // remain owned by their target month's inputs. The cash helper still requires ledger proof.
+  const manualBankBalanceObservation = balanceRows.map(row => monthInputsSchema.parse(row.payload).openingBalance)
+    .filter((value): value is NonNullable<typeof value> => value !== null && value.asOfDate <= asOf)
+    .sort((a, b) => b.asOfDate.localeCompare(a.asOfDate))[0] ?? null;
+  const names = new Map((subcategories.data ?? []).map(r => [r.subcategory_id, r.nom_canonique]));
+  const needById = new Map((needs.data ?? []).map(r => [r.need_id, r]));
+  const personNamesById = Object.fromEntries((people.data ?? []).map(r => [r.person_id, r.display_name]));
+  const walletById = new Map((wallets.data ?? []).map(r => [r.benefit_wallet_id, r]));
+  const [operations, costs, events, memberships, timings, funding, legs, benefitLedger] = await historyPromise;
   return snapshotSync("Evidence_Join_Coverage", () => {
   const operationById = new Map(operations.map(r => [r.operation_id, r]));
   const bank: EconomicReferenceEntry[] = costs.flatMap(cost => {
