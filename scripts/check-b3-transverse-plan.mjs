@@ -115,6 +115,11 @@ try{
     assert.equal(worldReads,reads+1);assert.equal(workbench.preview.delta,'10.00');
     const ctx=effectiveChoiceContext(await effective()),m=projectMonthControlCenter(ctx);
     assert.equal(m.baseDigest,monthChoiceDigest(ctx));assert.ok(!m.pilotCandidates.some(row=>row.target==='category:groceries'));
+    const legacyCtx={...ctx,inputs:{...ctx.inputs,decision:{...ctx.inputs.decision,categoryTargets:{groceries:'1.00'},assumptions:{groceries:{mode:'CUSTOM',amount:'1.00'}}}}};
+    const effectiveControls=projectMonthControlCenter(legacyCtx);
+    assert.equal(effectiveControls.settings.categoryTargets.groceries,undefined,'an owned legacy target must remain neutralized in presentation');
+    assert.equal(effectiveControls.settings.assumptions.groceries,undefined);
+    assert.equal(effectiveControls.baseDigest,monthChoiceDigest(legacyCtx),'freshness still binds the raw authoritative inputs');
     const reality=value(await a.previewPlannedExpense(month,expenseDraft(restaurant),restaurant.id));
     const rejected=await a.confirmPlannedExpenseReality(month,expenseDraft(restaurant),command(reality,restaurant));
     assert.equal(rejected.ok,false);assert.equal(rejected.issue.code,'PLANNED_EFFECTIVE_REAL_RECONCILIATION_REQUIRED');

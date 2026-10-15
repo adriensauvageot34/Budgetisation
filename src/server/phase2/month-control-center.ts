@@ -27,7 +27,7 @@ const settingsDestination = (focus: string): Destination => ({ section: "update"
 
 /** Interpretation only. Amounts are supplied by the existing scenario owners. */
 export function projectMonthControlCenter(ctx: MonthChoiceContext, effectiveScenario?: ReturnType<typeof deriveMonthScenario>, appliedProjection?: PlanProjectionV1) {
-  const scenario = effectiveScenario ?? deriveChoiceScenario(ctx), inputs = ctx.inputs;
+  const scenario = effectiveScenario ?? deriveChoiceScenario(ctx), inputs = scenario.inputs;
   const settings = parseMonthDecisionSettings(inputs.decision), plan = scenario.economicPlan;
   const update = projectMonthUpdatePresentation(ctx.forecast, scenario);
   const decision = plan ? projectMonthDecision(plan, settings, ctx.forecast.meta.targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory) : null;
