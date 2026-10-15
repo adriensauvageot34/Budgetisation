@@ -1,5 +1,8 @@
 import type { PlanSemanticStateV1 } from "./semantic-state";
 
+/** Bump only with an explicit cross-build compatibility decision. */
+export const COMPOSER_DRAFT_HTTP_CONTRACT = "composer-draft-http@1" as const;
+
 export type StoredComposerDraft = Readonly<{
   draftId: string;
   version: number;

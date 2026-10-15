@@ -9,7 +9,6 @@ import { readComposerDrafts } from "@/server/phase2/planner/composer-draft-servi
 import { plannerComposerEnabled } from "@/server/phase2/planner/cutover";
 import { ComposerShell } from "./composer-shell";
 import { composerInteraction } from "./actions";
-import { composerDraftRead, composerDraftSave, composerDraftArchive, composerDraftRestore } from "./draft-actions";
 import { observeSnapshot } from "@/server/phase2/planner/snapshot-observation";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Composer mon mois" };
@@ -21,14 +20,13 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
     const { deps, householdId, userId, supabase } = await authorizedPlanner();
     if (process.env.COMPOSER_P14_P1_READ_REUSE !== "0") return readComposerOpening(deps, householdId, month,
       () => composerDraftAutosaveEnabledFor(userId) ? readComposerDrafts({ supabase, userId, householdId }, month) : Promise.resolve(null));
-    const drafts = composerDraftAutosaveEnabledFor(userId) ? await composerDraftRead(month) : null;
+    const drafts = composerDraftAutosaveEnabledFor(userId) ? await readComposerDrafts({ supabase, userId, householdId }, month) : null;
     const model = await composerUiModel(deps, householdId,
       await readMonthComposer(deps, householdId, month, drafts?.active?.semanticState));
     return { model, drafts };
   }));
   const { model, drafts } = observed.value;
   return <><ComposerShell initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
-    draftTransport={drafts ? { read: composerDraftRead, save: composerDraftSave,
-      archive: composerDraftArchive, restore: composerDraftRestore } : null} />
+    durableDraftHttp={!!drafts} />
     {observed.metrics && <span hidden data-snap-server={JSON.stringify(observed.metrics)} />}</>;
 }

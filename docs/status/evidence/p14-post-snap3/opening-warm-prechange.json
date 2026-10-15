@@ -1,0 +1,36 @@
+{
+  "status": "AUTHENTICATED_PRECHANGE_DESCRIPTIVE_ONLY",
+  "source": "Read-only DOM metrics from the existing protected SNAP-3 ON Preview before browser access was denied",
+  "deployment": "dpl_61R71xz3bTjUzA8MAdjtyCWv6qXW",
+  "condition": "Ten warm reloads of the same Preview and month; no Apply or financial write; per-sample financial digests were not retained",
+  "metricUnits": "milliseconds",
+  "columns": ["fresh", "navigationResponseDuration", "serverObservation", "world", "predictionEvidence"],
+  "samples": [
+    [8790.0, 6209.8, 5494.0, 4077.5, 3633.2],
+    [7205.7, 4789.7, 4235.7, 3292.1, 3101.0],
+    [6486.1, 4475.7, 3869.2, 2767.7, 2542.0],
+    [6755.2, 4157.9, 3615.1, 2865.2, 2474.3],
+    [5976.1, 3630.8, 3192.6, 2280.3, 2099.3],
+    [6712.0, 4465.6, 3839.5, 2868.4, 2662.7],
+    [6550.9, 4283.4, 3776.8, 2374.7, 2183.5],
+    [6107.8, 3645.9, 3177.2, 2238.6, 2055.0],
+    [6636.4, 4340.6, 3647.1, 2924.6, 2710.0],
+    [6187.4, 3676.2, 3177.1, 2234.5, 2045.3]
+  ],
+  "summaries": {
+    "fresh": {"p50": 6593.65, "p95NearestRank": 8790.0},
+    "navigationResponseDuration": {"p50": 4312.0, "p95NearestRank": 6209.8},
+    "serverObservation": {"p50": 3711.95, "p95NearestRank": 5494.0},
+    "world": {"p50": 2816.45, "p95NearestRank": 4077.5},
+    "predictionEvidence": {"p50": 2508.15, "p95NearestRank": 3633.2}
+  },
+  "supabaseCallsPerRead": 42,
+  "decodedSupabaseBytesPerRead": 2351081,
+  "historicalAdmissions": "Canonical HIT and M7 HIT in all ten captured reads",
+  "limitations": [
+    "P95 is descriptive at n=10, not a reliability certification",
+    "No after-correction browser measurements were permitted once automatic review hit its usage limit",
+    "No edit-to-FRESH or suggestions timeline was captured",
+    "Navigation response duration and server observation are inclusive measurements; do not subtract them to assert network latency"
+  ]
+}

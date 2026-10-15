@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-15",
+  "environment": "protected Vercel Preview; authenticated application session; real Supabase Draft RPCs",
+  "alias": "budgetisation-p14-draft-skew-adriensauvageot34-6137s-projects.vercel.app",
+  "source": "b8d365d24a11d6aab4826a300c2380950d6ceaa1",
+  "buildA": "dpl_CwteHBcNADEL5F5GnrYJRVLaG2Rz",
+  "buildB": "dpl_DD7Uhq3dMiGKL5BXmQFA8EEaG1SA",
+  "configurationCorrection": "Earlier A/B Previews had autosave disabled. These two same-source builds explicitly enable Draft autosave; Production configuration unchanged.",
+  "targetMonth": "2026-12",
+  "initialState": "No active Draft; one pre-existing archive v8 retained unchanged",
+  "steps": [
+    {"step": "A initial save", "status": "PASS", "version": 1, "expectedVersion": 0, "digest": "b27c230d1ce40e44fb772a3beb4c918eed5c7f4b5606949a65a9066f4bddf077"},
+    {"step": "Alias switched to B; old A tab saved again", "status": "PASS", "version": 2, "expectedVersion": 1, "digest": "4d72ffcd3d45328e0154084633997bf82e15b3bbd88bd322880c1c7f9f490a3b"},
+    {"step": "Old A simulation rejected after build switch", "status": "PASS", "preview": "FAILED", "save": "SAVED", "apply": "disabled", "safeReloadButton": true},
+    {"step": "New B tab rereads saved decision", "status": "PASS", "valuePreserved": true},
+    {"step": "B saves next decision", "status": "PASS", "version": 3, "expectedVersion": 2, "digest": "a706a4e12dc7f994968ed527d7e003306c56f463d7274e9b1d8f2ba5a54b6a55"},
+    {"step": "Old A attempts stale v2 save", "status": "PASS", "save": "CONFLICT", "serverVersionRemains": 3, "localDecisionRetained": true},
+    {"step": "Load server version confirmation before fix", "status": "FAIL_OBSERVED", "cause": "beforeunload listener checks skip ref only when registered; callback still prevents navigation after explicit confirmation"},
+    {"step": "Corrected build conflict and confirmed server reload", "status": "PASS", "deployment": "dpl_Em2h7PS34tPfRRfCkS6w8BhETaG6", "source": "9603681359c7c475cb9f26c1e808f73c2b6da241", "serverVersion": 4, "expectedVersion": 3, "saveAfterReload": "SAVED", "serverDigest": "2469ed76deea6af3a0361120a8ec08666d3e70e14fa4bf52382484bada0002f3", "restoredDecisionMatches": true, "note": "The browser tool timed out during navigation; the subsequent successful official reconnect observed the completed reload. No repeat mutation."}
+  ],
+  "gate": "EXECUTED_PASS_AUTHENTICATED_CROSS_DEPLOYMENT_WITH_TARGETED_FIX",
+  "financialApplyExecuted": false,
+  "financialWriteExecuted": false,
+  "realPersonalContentIncluded": false
+}
