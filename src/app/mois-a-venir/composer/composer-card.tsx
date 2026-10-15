@@ -25,7 +25,7 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
   const [allocation, setAllocation] = useState(typeof card.value.amount === "string" ? card.value.amount : "");
   useEffect(() => setAllocation(typeof card.value.amount === "string" ? card.value.amount : ""), [card.value.amount]);
   const allocationMutation = (amount: string): SemanticMutation => ({ kind: "SET_STATE", targetRef: card.targetRef, value: { amount } });
-  return <article className={styles.card} data-control={card.targetRef} data-variant={presentation.variant} data-focused={focused} data-protected={presentation.protectedSavings}
+  return <article className={styles.card} data-control={card.targetRef} data-variant={presentation.variant} data-focused={focused} data-protected={presentation.protectedSavings} data-card-family={locked ? "PROTECTED" : card.kind === "SAVINGS" ? "RESERVATION" : "ADJUSTABLE"}
     data-inline-dirty={inlineAmount && allocation !== (typeof card.value.amount === "string" ? card.value.amount : "") || undefined}
     data-state={card.value.owned ? "chosen" : card.knowledge === "UNKNOWN" ? "unresolved" : "derived"} {...handle}
     data-compatible={assistantTarget} data-unresolved={interaction?.unresolvedRefs.includes(card.targetRef)} data-snap={interaction?.motionTarget === card.targetRef ? interaction.motion : undefined}
