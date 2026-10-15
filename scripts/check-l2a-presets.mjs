@@ -4,7 +4,9 @@ import crypto from 'node:crypto';
 import { require } from './lib/phase2-ts-loader.mjs';
 import { createKernelPostgres } from './lib/planner-kernel-postgres.mjs';
 import { fixture, state, uuid, householdId } from './fixtures/planner-headless.mjs';
-const { COMPOSER_PRESETS, presetForContext, presetIllustrationPath } = require('@/domain/phase2/planner/composer-presets');
+const { COMPOSER_PRESETS: ALL_PRESETS, presetForContext, presetIllustrationPath } = require('@/domain/phase2/planner/composer-presets');
+const L2A_KEYS = ['techno-night','uber-eats-order','fishing-day','fontes-family-visit','clothing-shopping'];
+const COMPOSER_PRESETS = ALL_PRESETS.filter(p=>L2A_KEYS.includes(p.presetKey));
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { stageLocalDecision } = require('@/app/mois-a-venir/composer/local-draft');
@@ -108,6 +110,8 @@ try {
     const protectedState={...model.semanticState,preferences:{anchors:[delivery.contextOccurrenceId],flexibility:{}}};
     assert.throws(()=>stageLocalDecision(model,protectedState,{kind:'EDIT_PRESET_CONTEXT',edit:{contextOccurrenceId:delivery.contextOccurrenceId,fields:{label:'Non'}}}),/LOCKED/);
     const invalid=structuredClone(model.semanticState);invalid.contexts[0].fields.composerPresentation.presetKey='forged';
+    assert.equal(presetForContext(parsePlanSemanticState(invalid).contexts[0]),undefined);
+    invalid.contexts[0].fields.composerPresentation.version='forged';
     assert.throws(()=>parsePlanSemanticState(invalid),/PRESENTATION_INVALID/);
   });
   await check('L2A-DELIVERY-CLOTHING-TOTAL-DETAIL-REPLACEMENT-AND-ENVELOPE',async()=>{

@@ -45,3 +45,4 @@ next-env.d.ts
 
 # L2-A local comparison bundles and archived source reference.
 /outputs/l2a-*
+/outputs/l2b-*

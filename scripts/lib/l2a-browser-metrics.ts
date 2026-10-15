@@ -2,11 +2,16 @@
 export function installL2aFixtureMetrics() {
   let lastDecision: number | null = null, openingFreshMs: number | null = null;
   const decisions: number[] = [], editors: number[] = [];
+  const libraryActions: { kind: string; ms: number }[] = [];
+  const libraryPaint = (kind: string) => {
+    const started = performance.now();
+    requestAnimationFrame(() => requestAnimationFrame(() => { libraryActions.push({kind,ms:performance.now()-started}); write(); }));
+  };
   let editorClick: number | null = null, observedPanel: Element | null = null;
   const write = () => {
     const resources = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
     document.documentElement.setAttribute("data-l2a-metrics", JSON.stringify({
-      openingFreshMs, decisions, editors,
+      openingFreshMs, decisions, editors, libraryActions,
       domNodes: document.querySelectorAll("*").length,
       resources: resources.filter(r => new URL(r.name).origin === location.origin).map(r => ({
         path: new URL(r.name).pathname, type: r.initiatorType, durationMs: r.duration,
@@ -17,9 +22,13 @@ export function installL2aFixtureMetrics() {
   document.addEventListener("click", event => {
     const button = (event.target as Element)?.closest("button");
     if (!button) return;
+    if (button.matches("[data-library-group-toggle]")) libraryPaint("category");
     if (button.matches("[data-preset],[data-context-focus]") || button.getAttribute("data-asset") === "template:restaurant")
       editorClick = performance.now();
     if (button.textContent === "Valider le budget") lastDecision = performance.now();
+  }, true);
+  document.addEventListener("input", event => {
+    if ((event.target as Element)?.matches("[data-library-search]")) libraryPaint("search");
   }, true);
   new MutationObserver(() => {
     const panel = document.querySelector("[data-restaurant-editor],dialog[open] [data-night-editor], [data-catalog-context-editor]");
