@@ -1,0 +1,21 @@
+{
+  "recordedAtUTC": "2026-10-15 15:03:02 UTC",
+  "productionMerge": "9e811cf6eb5cba8500eb230fa0876ef46dbde972",
+  "deployment": "dpl_96TMzDrcUBzj8AMQtqUDyHR71jTT",
+  "mode": "AUTHENTICATED_BROWSER_READ_ONLY_NO_PLAN",
+  "route": "/mois-a-venir?month=2026-10",
+  "result": "EXECUTED_PASS_LIMITED_SMOKE",
+  "checks": {
+    "existingSession": true,
+    "pageReloaded": true,
+    "logoutButton": true,
+    "monthHeading": true,
+    "addExpenseButton": true,
+    "noApplicationErrorPage": true
+  },
+  "inputEdits": 0,
+  "apply": 0,
+  "financialMutations": 0,
+  "authenticatedPlanE2E": "NOT_RUN",
+  "caveat": "Initial CDP locator timed out with browser-tool telemetry network errors. A fresh AX observation after reload verified the rendered private page. No financial data, screenshot, cookie or token recorded."
+}

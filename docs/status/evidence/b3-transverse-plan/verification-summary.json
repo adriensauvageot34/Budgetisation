@@ -134,7 +134,7 @@
     "counterOrder": "INSERT_UPDATE_DELETE"
   },
   "authenticatedPlanE2E": "NOT_RUN",
-  "browser": "NOT_RUN_REVIEW_USAGE_LIMIT_UNTIL_17_LOCAL",
+  "browser": "EXECUTED_PASS_LIMITED_AUTHENTICATED_READ_ONLY_NO_PLAN",
   "remoteBusinessWrites": 0,
   "migrations": 0,
   "crossOwnerSQLAtomicity": "NOT_IMPLEMENTED_NO_NEW_MIGRATION",
@@ -147,8 +147,11 @@
     "production": "dpl_hth5DFsadhkpibeF5PoVx5rBLFgD",
     "state": "READY",
     "productionAnonymousHTTP": "EXECUTED_PASS_3_GET",
-    "productionAuthenticated": "NOT_RUN",
+    "productionAuthenticated": "EXECUTED_PASS_LIMITED_READ_ONLY_NO_PLAN",
     "snapshot3": "ON",
-    "financialCounters": "UNCHANGED"
+    "financialCounters": "UNCHANGED",
+    "finalApplicationSource": "c602e705dc4fd7a2e8b7820b17240be629e1a6ea",
+    "finalApplicationMerge": "9e811cf6eb5cba8500eb230fa0876ef46dbde972",
+    "finalApplicationProduction": "dpl_96TMzDrcUBzj8AMQtqUDyHR71jTT"
   }
 }
