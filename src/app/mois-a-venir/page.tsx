@@ -114,7 +114,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     ? (historicalPlan as Record<string, string>).economicMonthEndRemainder : null;
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
     controlModel={projectMonthControlCenter({ forecast, inputs: scenario.inputs, expenses: plannedExpenses, asOf: today }, effective.owner === "PLAN_V1" ? scenario : undefined, effective.projection ?? undefined)}
-    appliedProjection={effective.projection ?? undefined} appliedSemanticState={effective.semanticState ?? undefined} appliedControls={appliedControls} appliedMobility={effective.revision ? appliedMobilitySummaries(effective.revision.compiledManifest) : undefined} activeRevisionNumber={effective.revision?.revisionNumber}
+    appliedProjection={effective.projection ?? undefined} appliedComparison={effective.comparison ?? undefined} appliedSemanticState={effective.semanticState ?? undefined} appliedControls={appliedControls} appliedMobility={effective.revision ? appliedMobilitySummaries(effective.revision.compiledManifest) : undefined} activeRevisionNumber={effective.revision?.revisionNumber}
     appliedEvidenceStatus={effective.evidenceStatus} historicalRemainder={historicalRemainder}
     composerEnabled={plannerComposerEnabled()} planOwnership={ownership} activePlan={effective.owner === "PLAN_V1"}
     initialSection={control?.section ?? null} initialFocus={control?.focus ?? null}

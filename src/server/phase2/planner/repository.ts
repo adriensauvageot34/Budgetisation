@@ -1,13 +1,16 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parsePlanRevisionRow, parsePlanRow, type PlanRevision, type StoredPlan } from "@/domain/phase2/planner/plan-contract";
-import { plannerMonth, plannerUuid, plannerRecord, plannerKeys } from "@/domain/phase2/planner/json";
+import { plannerMonth, plannerUuid, plannerRecord, plannerKeys, plannerInteger } from "@/domain/phase2/planner/json";
+import type { ActivePlanPointer } from "@/domain/phase2/planner/official-comparison-contract";
 
 export type ApplyPlanRevision = Omit<PlanRevision, "planRevisionId" | "planId" | "revisionNumber" | "parentRevisionId" | "createdBy" | "createdAt">
   & Readonly<{ expectedActiveRevisionId: string | null; expectedActiveRevisionNumber: number }>;
 /** Authenticated household client; the C2 Apply service is the only caller of the atomic writer. */
 export interface PlanReadRepository {
   readActivePlan(householdId: string, targetMonth: string): Promise<StoredPlan | null>;
+  /** Small final freshness check: no revision JSON or second World read. */
+  readActivePointer?(householdId: string, targetMonth: string): Promise<ActivePlanPointer | null>;
   readRevision(householdId: string, targetMonth: string, planId: string, revisionId: string): Promise<PlanRevision | null>;
 }
 export interface PlanRepository extends PlanReadRepository {
@@ -28,7 +31,19 @@ export function createPlanRepository(client: SupabaseClient): PlanReadRepository
       throw new TypeError("PLANNER_REVISION_SCOPE_INVALID");
     return result;
   }
-  return { readRevision, async readActivePlan(householdId, targetMonth) {
+  return { readRevision, async readActivePointer(householdId, targetMonth) {
+    const household = plannerUuid(householdId), month = plannerMonth(targetMonth);
+    const { data, error } = await client.from("phase2_month_plans")
+      .select("plan_id,household_id,target_month,active_revision_id,active_revision_number")
+      .eq("household_id", household).eq("target_month", `${month}-01`).maybeSingle();
+    if (error) throw error;
+    if (data === null) return null;
+    if (data.household_id !== household || data.target_month !== `${month}-01`) throw new TypeError("PLANNER_PLAN_SCOPE_INVALID");
+    const id = data.active_revision_id === null ? null : plannerUuid(data.active_revision_id);
+    const number = plannerInteger(data.active_revision_number);
+    if ((id === null) !== (number === 0)) throw new TypeError("PLANNER_ACTIVE_REVISION_INVALID");
+    return { planId: plannerUuid(data.plan_id), activeRevisionId: id, activeRevisionNumber: number };
+  }, async readActivePlan(householdId, targetMonth) {
     const household = plannerUuid(householdId), month = plannerMonth(targetMonth);
     const { data, error } = await client.from("phase2_month_plans").select("*")
       .eq("household_id", household).eq("target_month", `${month}-01`).maybeSingle();

@@ -1,0 +1,14 @@
+C7-010 PASS
+C7-FIXTURE-A PASS
+C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\phase2\planner\apply.ts:54
+            throw new TypeError("CONTEXT_REFERENCE_OWNER_UNAVAILABLE");
+                  ^
+
+TypeError: CONTEXT_REFERENCE_OWNER_UNAVAILABLE
+    at applyPlanScenario (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\phase2\planner\apply.ts:54:19)
+    at async roundTrip (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-headless.mjs:36:19)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-headless.mjs:56:63
+    at async test (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-headless.mjs:28:35)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-headless.mjs:56:3
+
+Node.js v22.18.0

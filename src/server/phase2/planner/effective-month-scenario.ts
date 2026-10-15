@@ -6,6 +6,8 @@ import type { PlannedExpenseScenarioEntry } from "../planned-expenses";
 import { deriveMonthScenario, type MonthInputs } from "../month-scenario";
 import { evaluatePlanScenario } from "./preview";
 import { assertRevisionEvidence } from "./revision-evidence";
+import { officialPlanComparison } from "./official-comparison";
+import type { ActivePlanPointer } from "@/domain/phase2/planner/official-comparison-contract";
 
 export type DirectMonthFacts = Readonly<{ forecast: MonthForecastSnapshot; monthInputs: MonthInputs;
   externalIntents: readonly PlannedExpenseScenarioEntry[]; asOfDate: string }>;
@@ -21,10 +23,15 @@ export async function resolveEffectiveMonthScenario(deps: EffectiveMonthDependen
     if (direct.forecast.meta.targetMonth !== month) throw new TypeError("PLANNER_DIRECT_SCOPE_INVALID");
     return { owner: "DIRECT_V2" as const, scenario: deriveMonthScenario(direct.forecast, direct.monthInputs, null,
       direct.asOfDate, direct.externalIntents), revision: null, preview: null, semanticState: null, projection: null,
-      evidenceStatus: "NOT_APPLICABLE" as const };
+      evidenceStatus: "NOT_APPLICABLE" as const, comparison: null };
   }
-  const world = await deps.readWorld(household, month), revision = stored.activeRevision;
+  const revision = stored.activeRevision;
+  if (stored.plan.householdId !== household || stored.plan.targetMonth !== month || revision.householdId !== household
+    || revision.targetMonth !== month || revision.planId !== stored.plan.planId
+    || revision.planRevisionId !== stored.plan.activeRevisionId || revision.revisionNumber !== stored.plan.activeRevisionNumber)
+    throw new TypeError("PLANNER_REVISION_SCOPE_INVALID");
   assertRevisionEvidence(revision);
+  const world = await deps.readWorld(household, month);
   if (world.baseline.householdId !== household) throw new TypeError("PLANNER_WORLD_HOUSEHOLD_INVALID");
   const prepared = deps.prepareWorld ? await deps.prepareWorld(world, revision.semanticState) : world;
   const preview = evaluatePlanScenario(prepared, revision.semanticState, { expectedActiveRevisionId: stored.plan.activeRevisionId,
@@ -32,7 +39,17 @@ export async function resolveEffectiveMonthScenario(deps: EffectiveMonthDependen
   const evidence = revision.projectionEvidence;
   const sameAuthorities = preview.compiledManifestDigest === revision.compiledManifestDigest;
   if (sameAuthorities && preview.projectionDigest !== evidence.projectionDigest) throw new TypeError("PLANNER_IMMEDIATE_RELOAD_DIVERGED");
+  let pointer: ActivePlanPointer | null = null, pointerAvailable = true;
+  try {
+    // Older adapters remain compatible. The runtime repository uses a single narrow SELECT.
+    pointer = deps.repository.readActivePointer ? await deps.repository.readActivePointer(household, month)
+      : (await deps.repository.readActivePlan(household, month))?.plan ?? null;
+  } catch (error) {
+    if (error instanceof TypeError) throw error;
+    pointerAvailable = false;
+  }
+  const evidenceStatus = sameAuthorities ? "EXACT" as const : "CHANGED_AUTHORITIES" as const;
   return { owner: "PLAN_V1" as const, scenario: preview.scenario, revision, preview,
     semanticState: revision.semanticState, projection: preview.projection,
-    evidenceStatus: sameAuthorities ? "EXACT" as const : "CHANGED_AUTHORITIES" as const };
+    evidenceStatus, comparison: officialPlanComparison(revision, preview, prepared, evidenceStatus, pointer, pointerAvailable) };
 }
