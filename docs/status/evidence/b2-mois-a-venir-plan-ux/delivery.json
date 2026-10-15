@@ -1,0 +1,158 @@
+{
+  "productHead": "d4901991ebb247097a73e483e0a32da52b88b6a5",
+  "merge": "bec09ccb0016ac3e711c39e6deef3ae44712ce05",
+  "equalTree": "ba9097280e62d89345b1a715c896b67eed6af5ed",
+  "PR": "https://github.com/adriensauvageot34/Budgetisation/pull/37",
+  "deployment": {
+    "id": "dpl_5w6KDytydrgoiLom63vyGRmm7ebY",
+    "state": "READY",
+    "sha": "bec09ccb0016ac3e711c39e6deef3ae44712ce05",
+    "url": "budgetisation-lgor13shw-adriensauvageot34-6137s-projects.vercel.app",
+    "alias": [
+      "budgetisation-tan.vercel.app",
+      "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+      "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+    ]
+  },
+  "supabaseBefore": {
+    "snapshot": {
+      "enabled": true,
+      "revision": 1,
+      "schema_epoch": 2,
+      "writer_coverage": true
+    },
+    "has_active_plan": false,
+    "financial_counters": [
+      {
+        "table": "benefit_wallet_ledger_entries",
+        "delete": 0,
+        "insert": 213,
+        "update": 0
+      },
+      {
+        "table": "benefit_wallets",
+        "delete": 0,
+        "insert": 2,
+        "update": 1
+      },
+      {
+        "table": "mobility_legs",
+        "delete": 0,
+        "insert": 1368,
+        "update": 0
+      },
+      {
+        "table": "operations",
+        "delete": 0,
+        "insert": 0,
+        "update": 0
+      },
+      {
+        "table": "phase2_month_inputs",
+        "delete": 1,
+        "insert": 2,
+        "update": 44
+      },
+      {
+        "table": "phase2_month_plan_revisions",
+        "delete": 0,
+        "insert": 0,
+        "update": 0
+      },
+      {
+        "table": "phase2_month_plans",
+        "delete": 0,
+        "insert": 0,
+        "update": 0
+      },
+      {
+        "table": "phase2_planned_expenses",
+        "delete": 25,
+        "insert": 32,
+        "update": 37
+      },
+      {
+        "table": "purchase_events",
+        "delete": 0,
+        "insert": 200,
+        "update": 0
+      }
+    ]
+  },
+  "supabaseAfter": {
+    "snapshot": {
+      "enabled": true,
+      "revision": 1,
+      "schema_epoch": 2,
+      "writer_coverage": true
+    },
+    "has_active_plan": false,
+    "financial_counters": [
+      {
+        "table": "benefit_wallet_ledger_entries",
+        "delete": 0,
+        "insert": 213,
+        "update": 0
+      },
+      {
+        "table": "benefit_wallets",
+        "delete": 0,
+        "insert": 2,
+        "update": 1
+      },
+      {
+        "table": "mobility_legs",
+        "delete": 0,
+        "insert": 1368,
+        "update": 0
+      },
+      {
+        "table": "operations",
+        "delete": 0,
+        "insert": 0,
+        "update": 0
+      },
+      {
+        "table": "phase2_month_inputs",
+        "delete": 1,
+        "insert": 2,
+        "update": 44
+      },
+      {
+        "table": "phase2_month_plan_revisions",
+        "delete": 0,
+        "insert": 0,
+        "update": 0
+      },
+      {
+        "table": "phase2_month_plans",
+        "delete": 0,
+        "insert": 0,
+        "update": 0
+      },
+      {
+        "table": "phase2_planned_expenses",
+        "delete": 25,
+        "insert": 32,
+        "update": 37
+      },
+      {
+        "table": "purchase_events",
+        "delete": 0,
+        "insert": 200,
+        "update": 0
+      }
+    ]
+  },
+  "financialCountersUnchanged": true,
+  "productionFlags": {
+    "SNAP3": "1",
+    "PREVIEW_HTTP": "1",
+    "P3_HISTORICAL_REUSE": "0",
+    "changedByB2": false
+  },
+  "authenticatedPreviewNoPlan": "EXECUTED_PASS",
+  "authenticatedProductionPostDeploy": "NOT_RUN_AUTO_REVIEW_USAGE_LIMIT",
+  "authenticatedWithPlan": "NOT_RUN",
+  "verdict": "B2_PARTIAL_WITH_BLOCKERS"
+}

@@ -33,3 +33,6 @@ next-env.d.ts
 /outputs/p14-snap2/
 /outputs/p14-snap-real/
 /outputs/p14-snap3/
+
+# Generated B2 browser bundles/logs; reviewed synthetic evidence lives in docs.
+/outputs/b2-*
