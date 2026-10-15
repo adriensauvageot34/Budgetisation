@@ -1,0 +1,35 @@
+STAY-01-IMMEDIATE-LOCAL PASS
+STAY-02-03-DESTINATION-NIGHTLY-OWNER PASS
+STAY-04-05-06-CHILDREN-BASELINE PASS
+STAY-07-ROUNDTRIP-USE-NOT-PAYMENT PASS
+STAY-08-STOPS-AND-SHARED-CHILD PASS
+STAY-09-10-NO-INVENTED-DATES PASS
+STAY-11-UNKNOWN-NOT-ZERO-PARENT-NONADDITIVE PASS
+STAY-12-REMOVE-ONE-CHILD PASS
+STAY-13-REMOVE-PARENT-UNDO-FIDELITY PASS
+STAY-14-15-REPARENT-SECOND-NO-TITLE-MERGE PASS
+EDGE-40-INTERMONTH-REFUSED PASS
+STAY-18-NIGHTS-UNKNOWN-PRICE-CONSERVED PASS
+EDGE-PARTIAL-AMOUNT-EDIT-PRESERVES-ALL PASS
+EDGE-CAR-TRAIN-UNDO-REDO-NO-RESIDUE PASS
+EDGE-PROTECTED-CHILD-REFUSED PASS
+STAY-18-PROVIDER-OUTAGE-UNKNOWN PASS
+EDGE-S2-SUGGESTIONS-NOT-APPLICABLE PASS
+STAY-19-RED-03-EXTERNAL-IDENTITY-NOT-FUSED PASS
+EDGE-OLD-REGISTRIES-IMMUTABLE PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: tarif par nuit
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-p11.mjs:68:1282
+    at async test (file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-p11.mjs:30:39)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-p11.mjs:68:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '=='
+}
+
+Node.js v22.18.0

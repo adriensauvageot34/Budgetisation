@@ -1,0 +1,295 @@
+[
+  {
+    "variant": "L1",
+    "metrics": {
+      "openingFreshMs": 303.40000000596046,
+      "decisions": [
+        836.2000000029802,
+        776.4000000059605,
+        774.7999999970198
+      ],
+      "editors": [
+        164.09999999403954
+      ],
+      "domNodes": 2352,
+      "resources": [
+        {
+          "path": "/global.css",
+          "type": "link",
+          "durationMs": 37.8999999910593,
+          "transferBytes": 76092,
+          "decodedBytes": 75792
+        },
+        {
+          "path": "/app.css",
+          "type": "link",
+          "durationMs": 14.799999997019768,
+          "transferBytes": 74437,
+          "decodedBytes": 74137
+        },
+        {
+          "path": "/app.js",
+          "type": "script",
+          "durationMs": 38.400000005960464,
+          "transferBytes": 329337,
+          "decodedBytes": 329037
+        },
+        {
+          "path": "/chunks/chunk-A5OWXUUW.js",
+          "type": "script",
+          "durationMs": 8.399999991059303,
+          "transferBytes": 26564,
+          "decodedBytes": 26264
+        },
+        {
+          "path": "/chunks/chunk-HQLLJDKR.js",
+          "type": "script",
+          "durationMs": 11,
+          "transferBytes": 1070,
+          "decodedBytes": 770
+        },
+        {
+          "path": "/chunks/chunk-GDS3HSJK.js",
+          "type": "script",
+          "durationMs": 9.5,
+          "transferBytes": 19833,
+          "decodedBytes": 19533
+        },
+        {
+          "path": "/chunks/chunk-72NQ2D74.js",
+          "type": "script",
+          "durationMs": 13.200000002980232,
+          "transferBytes": 54098,
+          "decodedBytes": 53798
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 139.70000000298023,
+          "transferBytes": 314695,
+          "decodedBytes": 314395
+        },
+        {
+          "path": "/favicon.ico",
+          "type": "other",
+          "durationMs": 106.59999999403954,
+          "transferBytes": 655,
+          "decodedBytes": 355
+        },
+        {
+          "path": "/chunks/restaurant-editor-ORLFVPBC.js",
+          "type": "script",
+          "durationMs": 48.599999994039536,
+          "transferBytes": 21172,
+          "decodedBytes": 20872
+        },
+        {
+          "path": "/chunks/chunk-BG5O4HRX.js",
+          "type": "script",
+          "durationMs": 33.79999999701977,
+          "transferBytes": 3351,
+          "decodedBytes": 3051
+        },
+        {
+          "path": "/chunks/chunk-JN2XDPKU.js",
+          "type": "script",
+          "durationMs": 58.400000005960464,
+          "transferBytes": 28521,
+          "decodedBytes": 28221
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 594.7000000029802,
+          "transferBytes": 435200,
+          "decodedBytes": 434900
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 623.7999999970198,
+          "transferBytes": 441442,
+          "decodedBytes": 441142
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 590,
+          "transferBytes": 441442,
+          "decodedBytes": 441142
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 585.3999999910593,
+          "transferBytes": 441442,
+          "decodedBytes": 441142
+        }
+      ]
+    }
+  },
+  {
+    "variant": "L2A",
+    "metrics": {
+      "openingFreshMs": 319.29999999701977,
+      "decisions": [
+        782.9000000059605,
+        804,
+        762
+      ],
+      "editors": [
+        165.70000000298023
+      ],
+      "domNodes": 2352,
+      "resources": [
+        {
+          "path": "/global.css",
+          "type": "link",
+          "durationMs": 22,
+          "transferBytes": 76092,
+          "decodedBytes": 75792
+        },
+        {
+          "path": "/app.css",
+          "type": "link",
+          "durationMs": 23.700000002980232,
+          "transferBytes": 75260,
+          "decodedBytes": 74960
+        },
+        {
+          "path": "/app.js",
+          "type": "script",
+          "durationMs": 41.6000000089407,
+          "transferBytes": 321619,
+          "decodedBytes": 321319
+        },
+        {
+          "path": "/chunks/chunk-EI5FIMF4.js",
+          "type": "script",
+          "durationMs": 4.799999997019768,
+          "transferBytes": 41695,
+          "decodedBytes": 41395
+        },
+        {
+          "path": "/chunks/chunk-GNSHWBQE.js",
+          "type": "script",
+          "durationMs": 6.799999997019768,
+          "transferBytes": 1070,
+          "decodedBytes": 770
+        },
+        {
+          "path": "/chunks/chunk-6PAUDEJA.js",
+          "type": "script",
+          "durationMs": 7.799999997019768,
+          "transferBytes": 54225,
+          "decodedBytes": 53925
+        },
+        {
+          "path": "/chunks/chunk-C6I4YEPT.js",
+          "type": "script",
+          "durationMs": 6,
+          "transferBytes": 19833,
+          "decodedBytes": 19533
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 80.09999999403954,
+          "transferBytes": 314695,
+          "decodedBytes": 314395
+        },
+        {
+          "path": "/favicon.ico",
+          "type": "other",
+          "durationMs": 49.19999998807907,
+          "transferBytes": 655,
+          "decodedBytes": 355
+        },
+        {
+          "path": "/planned-visuals/composer/presets/techno-night.webp",
+          "type": "img",
+          "durationMs": 0,
+          "transferBytes": 0,
+          "decodedBytes": 24682
+        },
+        {
+          "path": "/planned-visuals/composer/presets/uber-eats-order.webp",
+          "type": "img",
+          "durationMs": 0,
+          "transferBytes": 0,
+          "decodedBytes": 21312
+        },
+        {
+          "path": "/planned-visuals/composer/presets/fishing-day.webp",
+          "type": "img",
+          "durationMs": 0,
+          "transferBytes": 0,
+          "decodedBytes": 21864
+        },
+        {
+          "path": "/planned-visuals/composer/presets/fontes-family-visit.webp",
+          "type": "img",
+          "durationMs": 0,
+          "transferBytes": 0,
+          "decodedBytes": 54368
+        },
+        {
+          "path": "/planned-visuals/composer/presets/clothing-shopping.webp",
+          "type": "img",
+          "durationMs": 0,
+          "transferBytes": 0,
+          "decodedBytes": 18140
+        },
+        {
+          "path": "/chunks/restaurant-editor-TE2UFT2R.js",
+          "type": "script",
+          "durationMs": 69.59999999403954,
+          "transferBytes": 22913,
+          "decodedBytes": 22613
+        },
+        {
+          "path": "/chunks/chunk-MDLJBKEY.js",
+          "type": "script",
+          "durationMs": 36.099999994039536,
+          "transferBytes": 3351,
+          "decodedBytes": 3051
+        },
+        {
+          "path": "/chunks/chunk-V6RHRBIV.js",
+          "type": "script",
+          "durationMs": 56.80000001192093,
+          "transferBytes": 28521,
+          "decodedBytes": 28221
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 592.9000000059605,
+          "transferBytes": 435200,
+          "decodedBytes": 434900
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 600.2000000029802,
+          "transferBytes": 441442,
+          "decodedBytes": 441142
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 593.4000000059605,
+          "transferBytes": 441442,
+          "decodedBytes": 441142
+        },
+        {
+          "path": "/interaction",
+          "type": "fetch",
+          "durationMs": 586.0999999940395,
+          "transferBytes": 441442,
+          "decodedBytes": 441142
+        }
+      ]
+    }
+  }
+]

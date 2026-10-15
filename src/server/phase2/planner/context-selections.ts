@@ -149,7 +149,7 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
 }
 export function readContextSelections(context: PlannedContextState, targetMonth: string): ReadonlyMap<string, readonly ComponentSelectionV1[]> {
   const template = resolveContextTemplate(context.templateKey);
-  plannerKeys(plannerRecord(context.fields), template.fields.map(f => f.fieldKey), template.fields.filter(f => f.required).map(f => f.fieldKey));
+  plannerKeys(plannerRecord(context.fields), [...template.fields.map(f => f.fieldKey), "composerPresentation"], template.fields.filter(f => f.required).map(f => f.fieldKey));
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
     if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
       || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"

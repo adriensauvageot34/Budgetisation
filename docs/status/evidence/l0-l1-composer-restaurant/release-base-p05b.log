@@ -1,0 +1,95 @@
+GIFT04-EXPLICIT-CATALOG-IDENTITY PASS
+GIFT04-PARTIAL-EDIT-UNDO-REDO PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Achat · Cadeau · Livre/. Input:
+
+'<div data-applied-month="true" class="appliedMonth"><section id="final-projection" class="hero" aria-labelledby="plan-summary-title"><div class="heroHeading"><span>MON PLAN · RÉVISION 1</span><span>Projection économique</span></div><div class="heroGrid"><div><h2 id="plan-summary-title">Votre mois, avec Mon Plan</h2><p class="amountLabel">Reste prévisionnel du mois</p><p data-applied-remainder="true" class="mainAmount">827,00 €</p></div><dl class="comparison"><div><dt>Sans les modifications du Plan</dt><dd data-plan-reference="true">917,00 €</dd></div><div><dt>Impact du Plan sur le reste</dt><dd data-plan-net-impact="true" data-direction="neutral">-90,00 €</dd></div></dl></div><div class="heroFoot"><p>Une estimation de fin de mois, distincte de l’argent actuellement en banque.</p><div class="actions"><a href="#my-plan-title" class="secondaryAction">Voir les décisions</a></div></div></section><section data-my-plan="true" aria-labelledby="my-plan-title" class="decisions"><div class="sectionHeading"><div><p class="eyebrow">VOS DÉCISIONS OFFICIELLES</p><h2 id="my-plan-title">Ce qui change avec Mon Plan</h2></div><p>Ouvrez une décision pour comprendre son coût et sa couverture.</p></div><details class="decisionGroup" open=""><summary><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg><span>Événements et dépenses ponctuelles</span><small>1</small><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="decisionGrid"><details class="decisionCard" data-plan-context="00000000-0000-4000-8000-000000009701" data-plan-gift="00000000-0000-4000-8000-000000009701"><summary><span class="cardHeading"><strong>Cadeau</strong><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></span><span class="cardValue">Cadeau</span><span class="cardNote">Détails et informations à préciser</span><span class="cardMeta">Date non fixée</span></summary><div class="cardBody"><div class="businessDetail" data-plan-context-detail="00000000-0000-4000-8000-000000009701"><dl class="facts"><div><dt>Occasion</dt><dd>Anniversaire</dd></div><div><dt>Objet</dt><dd>Roman dédicacé</dd></div><div><dt>Type d’objet</dt><dd>Livre</dd></div></dl><section class="partGroup"><h3>Cadeau</h3><ul><li><div class="partHeading"><strong>Roman dédicacé</strong><span>Total non établi</span></div><p></p><p>90,00 € par unité · déclaré · quantité 1</p><p>Banque : 90,00 €</p></li></ul></section><details class="advanced"><summary>Données conservées et provenance</summary><pre>{\n' +
+  '  &quot;fields&quot;: {\n' +
+  '    &quot;occasion&quot;: &quot;Anniversaire&quot;,\n' +
+  '    &quot;objectLabel&quot;: &quot;Roman dédicacé&quot;,\n' +
+  '    &quot;objectAssetRef&quot;: {\n' +
+  '      &quot;assetKey&quot;: &quot;gift:book&quot;,\n' +
+  '      &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+  '      &quot;catalogVersion&quot;: &quot;planned-assets@v1&quot;,\n' +
+  '      &quot;labelAtSelection&quot;: &quot;Livre&quot;\n' +
+  '    },\n' +
+  '    &quot;fieldSchemaVersion&quot;: &quot;context-fields@v3&quot;\n' +
+  '  },\n' +
+  '  &quot;selections&quot;: {\n' +
+  '    &quot;item&quot;: {\n' +
+  '      &quot;items&quot;: [\n' +
+  '        {\n' +
+  '          &quot;cost&quot;: {\n' +
+  '            &quot;kind&quot;: &quot;MANUAL&quot;,\n' +
+  '            &quot;unitAmount&quot;: &quot;90.00&quot;\n' +
+  '          },\n' +
+  '          &quot;kind&quot;: &quot;COMPONENT&quot;,\n' +
+  '          &quot;label&quot;: &quot;Roman dédicacé&quot;,\n' +
+  '          &quot;quantity&quot;: &quot;1&quot;,\n' +
+  '          &quot;optionKey&quot;: &quot;gift&quot;,\n' +
+  '          &quot;unitBasis&quot;: &quot;ITEM&quot;,\n' +
+  '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+  '          &quot;selectionId&quot;: &quot;00000000-0000-4000-8000-000000009702&quot;,\n' +
+  '          &quot;fundingAllocations&quot;: [\n' +
+  '            {\n' +
+  '              &quot;amount&quot;: &quot;90.00&quot;,\n' +
+  '              &quot;source&quot;: &quot;BANK&quot;\n' +
+  '            }\n' +
+  '          ]\n' +
+  '        }\n' +
+  '      ]\n' +
+  '    }\n' +
+  '  }\n' +
+  '}</pre></details></div></div></details></div></details></section><details id="plan-understand" class="projectionDetail"><summary><span><strong>Comprendre ma projection</strong><small>Ressources, dépenses, épargne et limites de l’estimation</small></span><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="projectionBody"><dl class="lenses"><div><dt>Ressources</dt><dd>2 000,00 €</dd></div><div><dt>Engagements certains</dt><dd>500,00 €</dd></div><div><dt>Besoins et habitudes</dt><dd>417,00 €</dd></div><div><dt>Vie et envies</dt><dd>156,00 €</dd></div><div><dt>Épargne réservée</dt><dd>100,00 €</dd></div><div><dt>Usage mobilité</dt><dd>0,00 €</dd></div></dl><p>Ces postes viennent du même scénario financier. Les moments du Plan et leurs composants y sont déjà représentés : ils ne s’ajoutent pas une deuxième fois.</p><p>Financement : à compléter. Montant sans financement établi : 0,00 €.</p><p>Le financement et l’épargne réservée ne sont pas des dépenses économiques supplémentaires.</p><details id="plan-evidence" class="advanced"><summary>Sources et informations techniques</summary><p>Révision 1 · date de connaissance non disponible</p><p>Point bas bancaire : À préciser · date non établie.</p><ul><li>BASELINE_MOBILITY_CONTEXT_UNRESOLVED</li><li>BASELINE_RENEWAL_DUE_STATE_UNKNOWN</li><li>BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED</li><li>MANON_MEAL_FREQUENCY_UNIDENTIFIED</li><li>BASELINE_UNRESOLVED_RESERVE_PRESERVED</li><li>BASELINE_UNRESOLVED_RESERVE_PRESERVED</li><li>BASELINE_UNRESOLVED_RESERVE_PRESERVED</li><li>PLAN_TIMING_UNRESOLVED</li><li>PLAN_CASH_PROJECTION_UNCERTIFIED</li></ul></details></div></details><div class="practicalGrid"><details id="resources-title" class="practical"><summary>Banque et ressources</summary><div class="practicalBody"><p>Les ressources restent accessibles dans le Centre de contrôle.</p></div></details><details id="timeline-title" class="practical"><summary>Calendrier du mois</summary><div class="practicalBody"><p>Calendrier disponible après renseignement des ressources.</p></div></details></div></div>'
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-p05b.mjs:64:12
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-p05b.mjs:24:50)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-p05b.mjs:56:3 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '<div data-applied-month="true" class="appliedMonth"><section id="final-projection" class="hero" aria-labelledby="plan-summary-title"><div class="heroHeading"><span>MON PLAN · RÉVISION 1</span><span>Projection économique</span></div><div class="heroGrid"><div><h2 id="plan-summary-title">Votre mois, avec Mon Plan</h2><p class="amountLabel">Reste prévisionnel du mois</p><p data-applied-remainder="true" class="mainAmount">827,00 €</p></div><dl class="comparison"><div><dt>Sans les modifications du Plan</dt><dd data-plan-reference="true">917,00 €</dd></div><div><dt>Impact du Plan sur le reste</dt><dd data-plan-net-impact="true" data-direction="neutral">-90,00 €</dd></div></dl></div><div class="heroFoot"><p>Une estimation de fin de mois, distincte de l’argent actuellement en banque.</p><div class="actions"><a href="#my-plan-title" class="secondaryAction">Voir les décisions</a></div></div></section><section data-my-plan="true" aria-labelledby="my-plan-title" class="decisions"><div class="sectionHeading"><div><p class="eyebrow">VOS DÉCISIONS OFFICIELLES</p><h2 id="my-plan-title">Ce qui change avec Mon Plan</h2></div><p>Ouvrez une décision pour comprendre son coût et sa couverture.</p></div><details class="decisionGroup" open=""><summary><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg><span>Événements et dépenses ponctuelles</span><small>1</small><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="decisionGrid"><details class="decisionCard" data-plan-context="00000000-0000-4000-8000-000000009701" data-plan-gift="00000000-0000-4000-8000-000000009701"><summary><span class="cardHeading"><strong>Cadeau</strong><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></span><span class="cardValue">Cadeau</span><span class="cardNote">Détails et informations à préciser</span><span class="cardMeta">Date non fixée</span></summary><div class="cardBody"><div class="businessDetail" data-plan-context-detail="00000000-0000-4000-8000-000000009701"><dl class="facts"><div><dt>Occasion</dt><dd>Anniversaire</dd></div><div><dt>Objet</dt><dd>Roman dédicacé</dd></div><div><dt>Type d’objet</dt><dd>Livre</dd></div></dl><section class="partGroup"><h3>Cadeau</h3><ul><li><div class="partHeading"><strong>Roman dédicacé</strong><span>Total non établi</span></div><p></p><p>90,00 € par unité · déclaré · quantité 1</p><p>Banque : 90,00 €</p></li></ul></section><details class="advanced"><summary>Données conservées et provenance</summary><pre>{\n' +
+    '  &quot;fields&quot;: {\n' +
+    '    &quot;occasion&quot;: &quot;Anniversaire&quot;,\n' +
+    '    &quot;objectLabel&quot;: &quot;Roman dédicacé&quot;,\n' +
+    '    &quot;objectAssetRef&quot;: {\n' +
+    '      &quot;assetKey&quot;: &quot;gift:book&quot;,\n' +
+    '      &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+    '      &quot;catalogVersion&quot;: &quot;planned-assets@v1&quot;,\n' +
+    '      &quot;labelAtSelection&quot;: &quot;Livre&quot;\n' +
+    '    },\n' +
+    '    &quot;fieldSchemaVersion&quot;: &quot;context-fields@v3&quot;\n' +
+    '  },\n' +
+    '  &quot;selections&quot;: {\n' +
+    '    &quot;item&quot;: {\n' +
+    '      &quot;items&quot;: [\n' +
+    '        {\n' +
+    '          &quot;cost&quot;: {\n' +
+    '            &quot;kind&quot;: &quot;MANUAL&quot;,\n' +
+    '            &quot;unitAmount&quot;: &quot;90.00&quot;\n' +
+    '          },\n' +
+    '          &quot;kind&quot;: &quot;COMPONENT&quot;,\n' +
+    '          &quot;label&quot;: &quot;Roman dédicacé&quot;,\n' +
+    '          &quot;quantity&quot;: &quot;1&quot;,\n' +
+    '          &quot;optionKey&quot;: &quot;gift&quot;,\n' +
+    '          &quot;unitBasis&quot;: &quot;ITEM&quot;,\n' +
+    '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+    '          &quot;selectionId&quot;: &quot;00000000-0000-4000-8000-000000009702&quot;,\n' +
+    '          &quot;fundingAllocations&quot;: [\n' +
+    '            {\n' +
+    '              &quot;amount&quot;: &quot;90.00&quot;,\n' +
+    '              &quot;source&quot;: &quot;BANK&quot;\n' +
+    '            }\n' +
+    '          ]\n' +
+    '        }\n' +
+    '      ]\n' +
+    '    }\n' +
+    '  }\n' +
+    '}</pre></details></div></div></details></div></details></section><details id="plan-understand" class="projectionDetail"><summary><span><strong>Comprendre ma projection</strong><small>Ressources, dépenses, épargne et limites de l’estimation</small></span><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="projectionBody"><dl class="lenses"><div><dt>Ressources</dt><dd>2 000,00 €</dd></div><div><dt>Engagements certains</dt><dd>500,00 €</dd></div><div><dt>Besoins et habitudes</dt><dd>417,00 €</dd></div><div><dt>Vie et envies</dt><dd>156,00 €</dd></div><div><dt>Épargne réservée</dt><dd>100,00 €</dd></div><div><dt>Usage mobilité</dt><dd>0,00 €</dd></div></dl><p>Ces postes viennent du même scénario financier. Les moments du Plan et leurs composants y sont déjà représentés : ils ne s’ajoutent pas une deuxième fois.</p><p>Financement : à compléter. Montant sans financement établi : 0,00 €.</p><p>Le financement et l’épargne réservée ne sont pas des dépenses économiques supplémentaires.</p><details id="plan-evidence" class="advanced"><summary>Sources et informations techniques</summary><p>Révision 1 · date de connaissance non disponible</p><p>Point bas bancaire : À préciser · date non établie.</p><ul><li>BASELINE_MOBILITY_CONTEXT_UNRESOLVED</li><li>BASELINE_RENEWAL_DUE_STATE_UNKNOWN</li><li>BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED</li><li>MANON_MEAL_FREQUENCY_UNIDENTIFIED</li><li>BASELINE_UNRESOLVED_RESERVE_PRESERVED</li><li>BASELINE_UNRESOLVED_RESERVE_PRESERVED</li><li>BASELINE_UNRESOLVED_RESERVE_PRESERVED</li><li>PLAN_TIMING_UNRESOLVED</li><li>PLAN_CASH_PROJECTION_UNCERTIFIED</li></ul></details></div></details><div class="practicalGrid"><details id="resources-title" class="practical"><summary>Banque et ressources</summary><div class="practicalBody"><p>Les ressources restent accessibles dans le Centre de contrôle.</p></div></details><details id="timeline-title" class="practical"><summary>Calendrier du mois</summary><div class="practicalBody"><p>Calendrier disponible après renseignement des ressources.</p></div></details></div></div>',
+  expected: /Achat · Cadeau · Livre/,
+  operator: 'match'
+}
+
+Node.js v22.18.0

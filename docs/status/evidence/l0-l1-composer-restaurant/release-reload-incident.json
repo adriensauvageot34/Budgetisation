@@ -1,0 +1,19 @@
+{
+  "deployment": "dpl_3W66NxNQYAk3BUnbQ3Um4GSt2BfC",
+  "commit": "3e4eaa7352b33fb094fc83ddd639c0693ef2950a",
+  "ui": "This page could not load; digest 3838116570@E394",
+  "logs": [
+    { "utc": "2026-10-15T19:21:29.914Z", "method": "GET", "path": "/mois-a-venir/composer", "error": "TimeoutError: The operation was aborted due to timeout", "region": "cdg1" },
+    { "utc": "2026-10-15T19:21:36.112Z", "method": "POST", "path": "/api/composer/preview", "error": "canonical_read_error", "source": "timing", "code": "57014", "region": "cdg1" },
+    { "utc": "2026-10-15T19:21:38.887Z", "method": "POST", "path": "/api/composer/preview", "error": "canonical_read_error", "source": "timing", "code": "57014", "region": "cdg1" }
+  ],
+  "classification": "Canonical timeout signature already documented before L1; precise cause of GET abortion not proved",
+  "authoritativeReadAfterError": {
+    "draftVersion": 2,
+    "lifecycle": "ACTIVE",
+    "restaurant60AndUnknownFieldsAndExtraBindingConserved": true,
+    "officialPlanRevision": 0
+  },
+  "blindMutationRetry": false,
+  "boundedPageRetry": 1
+}

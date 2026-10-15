@@ -1,0 +1,15 @@
+{
+  "environment": "VERCEL_PREVIEW_AUTHENTICATED_READ_ONLY",
+  "commit": "8d8a6530f4415e797397135c04fac2bdbd9c6088",
+  "creation": "PASS",
+  "optionalParticipantsPlaceDate": "PASS",
+  "amount60to70": "PASS",
+  "undo60redo70": "PASS",
+  "escapeClose": "PASS",
+  "preview": "COMPLETED_BLOCKED_EXISTING_INCOMPLETE_MONTH",
+  "applyDisabled": true,
+  "officialRevisionBefore": 0,
+  "officialRevisionAfter": 0,
+  "durableSave": "NOT_RUN_PREVIEW_READ_ONLY_GUARD",
+  "consoleErrors": 0
+}

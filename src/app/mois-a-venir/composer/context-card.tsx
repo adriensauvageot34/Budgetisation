@@ -5,6 +5,8 @@ import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner
 import { ContextSocket } from "./context-socket";
 import { knowledgeLabel } from "./display";
 import { PlannerIcon } from "./planner-icons/planner-icon";
+import { presetForContext } from "@/domain/phase2/planner/composer-presets";
+import { PresetIllustration } from "./preset-illustration";
 import styles from "./composer.module.css";
 import { AtomicPopover } from "./atomic-popover";
 import { useComposerInteractions, useDragHandle, leftSurface } from "./interactions";
@@ -29,6 +31,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const preserved = model.semanticState.preferences.flexibility[card.contextOccurrenceId] === "PRESERVE";
   const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
   const presentation = model.presentation.objects[card.contextOccurrenceId];
+  const preset = presetForContext(card);
   const interaction = useComposerInteractions(), handle = useDragHandle(instance);
   const displayPhase = interaction?.grabbed ? "DRAGGING" : focused === card.contextOccurrenceId ? "SELECTED" : "REST";
   const visibleEmpty = visibleEmptySocketKeys(card, model, displayPhase, interaction?.grabbed?.assetKey ?? null);
@@ -51,8 +54,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     {magnetic && interaction?.grabbed && <span className={styles.magneticLabel}>Rattacher à {card.label}</span>}
     <div className={styles.contextComposition}>
     <div className={styles.contextHero}>
-    <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
-    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => card.templateKey === "restaurant" && !card.readOnly && !preserved ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${card.fields.plannedDate}T12:00:00Z`))}</p>}
+    {preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />}
+    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => (card.templateKey === "restaurant" || !!preset) && !card.readOnly && !preserved ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${card.fields.plannedDate}T12:00:00Z`))}</p>}
       <span className={styles.contextState} title={knowledgeLabel(card.knowledge)} aria-label={knowledgeLabel(card.knowledge)}>{preserved ? <LockKeyhole size={12} /> : card.readOnly ? <Link2 size={12} /> : card.knowledge === "UNKNOWN" ? <i /> : null}</span></div>
       <div className={styles.contextTools}>{!card.readOnly && <><button className={styles.iconButton} disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={() => request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved })}><Pin size={15} /></button>
         <button className={styles.iconButton} disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>

@@ -2,6 +2,8 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { PlannerIcon } from "./planner-icons/planner-icon";
+import { presetForContext } from "@/domain/phase2/planner/composer-presets";
+import { PresetIllustration } from "./preset-illustration";
 import type { AtomicNode, VisualClusterNode } from "./presentation/node-types";
 import styles from "./composer.module.css";
 
@@ -9,9 +11,10 @@ export function VisualClusterCard({ node, open }: { node: VisualClusterNode; ope
   return <button type="button" className={styles.visualCluster} data-visual-cluster={node.family} aria-haspopup="dialog" aria-label={`${node.title}, ${node.children.length} éléments. Ouvrir le groupe`} onClick={open}>
     <div className={styles.clusterHero}><PlannerIcon iconKey={node.iconKey} scale="CLUSTER" /></div>
     <div className={styles.clusterInfo}><h3>{node.title}</h3><strong>{node.children.length} éléments</strong><span>Ouvrir les objets</span></div>
-    <div className={styles.clusterMiniatures} aria-hidden="true">{node.children.slice(0, 4).map(child => <span key={child.id}>
-      <PlannerIcon iconKey={child.iconKey} identityRef={child.id} scale="SATELLITE" />
-    </span>)}{node.children.length > 4 && <small>+{node.children.length - 4}</small>}</div>
+    <div className={styles.clusterMiniatures} aria-hidden="true">{node.children.slice(0, 4).map(child => {
+      const preset = child.context && presetForContext(child.context);
+      return <span key={child.id}>{preset ? <PresetIllustration preset={preset} /> : <PlannerIcon iconKey={child.iconKey} identityRef={child.id} scale="SATELLITE" />}</span>;
+    })}{node.children.length > 4 && <small>+{node.children.length - 4}</small>}</div>
   </button>;
 }
 

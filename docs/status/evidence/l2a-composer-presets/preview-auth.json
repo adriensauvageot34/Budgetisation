@@ -1,0 +1,30 @@
+{
+  "deployment": "dpl_CqnG9FHDMUKHandMwue8jyQ187gP",
+  "commit": "232238d6749b2d86ef8e1c88153ce7d95a88e36e",
+  "authenticated": true,
+  "autosaveEnabled": false,
+  "applyExecuted": false,
+  "productionFinancialWrites": 0,
+  "checks": [
+    {
+      "preset": "techno-night",
+      "art": "techno-night",
+      "editorOpen": true
+    },
+    {
+      "preset": "fontes-family-visit",
+      "art": "fontes-family-visit",
+      "editorOpen": true
+    },
+    {
+      "preset": "fishing-day",
+      "art": "fishing-day",
+      "editorOpen": true
+    },
+    {
+      "preset": "clothing-shopping",
+      "art": "clothing-shopping",
+      "editorOpen": true
+    }
+  ]
+}

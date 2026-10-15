@@ -8,6 +8,7 @@ import type { NightOutEdit } from "./night-out-edit";
 import type { ShortStayEdit } from "./short-stay-edit";
 import type { FamilyVisitEdit } from "./family-visit-edit";
 import type { RestaurantEdit } from "./restaurant-edit";
+import type { GuidedContextEdit } from "./guided-context-edit";
 import type { PlannedPlaceOption } from "../planned-places";
 import type { PlannedVehicleEstimate } from "../planned-contract";
 
@@ -85,10 +86,11 @@ export type ComposerApplyReceipt = Readonly<{
 export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; draft?: PlanSemanticStateV1 }> & (
   | Readonly<{ kind: "READ" }>
   | Readonly<{ kind: "MUTATE"; mutation: SemanticMutation }>
-  | Readonly<{ kind: "DROP"; assetKey: string; target: DropTarget; values: Readonly<Record<string, string>>; identity: string; selectionId: string; sourceSocket?: Readonly<{ contextOccurrenceId: string; slotKey: string; selectionId: string }> }>
+  | Readonly<{ kind: "DROP"; assetKey: string; target: DropTarget; values: Readonly<Record<string, string>>; identity: string; selectionId: string; presetKey?: string; sourceSocket?: Readonly<{ contextOccurrenceId: string; slotKey: string; selectionId: string }> }>
   | Readonly<{ kind: "CLEAR_SOCKET"; contextOccurrenceId: string; slotKey: string; selectionId: string }>
   | Readonly<{ kind: "EDIT_CONTEXT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>> }>
   | Readonly<{ kind: "EDIT_RESTAURANT"; edit: RestaurantEdit }>
+  | Readonly<{ kind: "EDIT_PRESET_CONTEXT"; edit: GuidedContextEdit }>
   | Readonly<{ kind: "EDIT_GIFT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>>; item: ComponentSelectionV1 }>
   | Readonly<{ kind: "EDIT_NIGHT_OUT"; edit: NightOutEdit }>
   | Readonly<{ kind: "EDIT_FAMILY_VISIT"; edit: FamilyVisitEdit }>

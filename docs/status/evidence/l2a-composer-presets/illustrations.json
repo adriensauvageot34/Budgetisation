@@ -1,0 +1,72 @@
+[
+  {
+    "presetKey": "techno-night",
+    "file": "public/planned-visuals/composer/presets/techno-night.webp",
+    "width": 1200,
+    "height": 600,
+    "quality": 82,
+    "bytes": 24682,
+    "sha256": "92e406c193800b5f171069f45e68e186e7b70d6a9aceeb181f35761ea96dc7ab",
+    "originalFile": "exec-cedae106-f9dd-4ee5-9662-89d8514d632e.png",
+    "originalSha256": "dc318c8cf5ffae26938ad13ec80a6ccda602ccaf6914759a40cf930e21ebc01b",
+    "generator": "built-in image_gen",
+    "generations": 1,
+    "prompt": "prompts/techno-night.txt"
+  },
+  {
+    "presetKey": "uber-eats-order",
+    "file": "public/planned-visuals/composer/presets/uber-eats-order.webp",
+    "width": 1200,
+    "height": 600,
+    "quality": 82,
+    "bytes": 21312,
+    "sha256": "83bda349e355a4b2f89980f36c8389eb1de305025527a69ee825eb4b193e333c",
+    "originalFile": "exec-7cf92952-0b63-432b-8a87-3d8153681831.png",
+    "originalSha256": "468e946069203e6490bb7dbbdb2cd2e25062b2f91ec5adead7660c4364ddb31d",
+    "generator": "built-in image_gen",
+    "generations": 1,
+    "prompt": "prompts/uber-eats-order.txt"
+  },
+  {
+    "presetKey": "fishing-day",
+    "file": "public/planned-visuals/composer/presets/fishing-day.webp",
+    "width": 1200,
+    "height": 600,
+    "quality": 82,
+    "bytes": 21864,
+    "sha256": "1be14c36fc061808a47f8bc3b6174e3ddd86ddc21ab30dec9dcdfc5daab8a6b4",
+    "originalFile": "exec-7991deed-f19a-4e2f-b9c6-d84c01bdb40e.png",
+    "originalSha256": "de0b49bda825138fd90ed0389eb3472109410828120f4c5528b5156e33f8f791",
+    "generator": "built-in image_gen",
+    "generations": 1,
+    "prompt": "prompts/fishing-day.txt"
+  },
+  {
+    "presetKey": "fontes-family-visit",
+    "file": "public/planned-visuals/composer/presets/fontes-family-visit.webp",
+    "width": 1200,
+    "height": 600,
+    "quality": 82,
+    "bytes": 54368,
+    "sha256": "f06c3ee35ce8a24acd7e4755c03448c875798f53e0d9be92e9af024de0c26201",
+    "originalFile": "exec-b4dec838-53db-448f-b087-734953123774.png",
+    "originalSha256": "dfb56b6a8aeb62eaf0bf7ad5683d2f85aeaacaafdc2780a83c9ffe53501e6ef1",
+    "generator": "built-in image_gen",
+    "generations": 1,
+    "prompt": "prompts/fontes-family-visit.txt"
+  },
+  {
+    "presetKey": "clothing-shopping",
+    "file": "public/planned-visuals/composer/presets/clothing-shopping.webp",
+    "width": 1200,
+    "height": 600,
+    "quality": 82,
+    "bytes": 18140,
+    "sha256": "b58afe89ef0fbb353e79ae95ce448ac35d1f27f91b05ff083d78bb0d7b4ef96c",
+    "originalFile": "exec-aca4705a-eb86-466a-b9ad-e8dfaca96db0.png",
+    "originalSha256": "bb14d716766cde565c68e155db9a4d247144a3d3c6ed6ddb65f8ec0d6d214ae5",
+    "generator": "built-in image_gen",
+    "generations": 1,
+    "prompt": "prompts/clothing-shopping.txt"
+  }
+]

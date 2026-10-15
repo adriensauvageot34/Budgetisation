@@ -1,0 +1,44 @@
+C8-019 PASS
+IGT-001 PASS
+IGT-002 PASS
+C8-011 PASS
+C8-014 PASS
+IGT-005 PASS
+C8-015 PASS
+C8-REPEATING-REPARENT PASS
+IGT-006 PASS
+C8-010 PASS
+C8-012 PASS
+C8-CAPABILITY-FORGERY PASS
+R1-PRESENTATION-COUNTS PASS
+R1-PROJECTION-AND-SAVINGS PASS
+C8-SERIALIZATION PASS
+C8-UNKNOWN PASS
+C8-CONTEXT-METADATA PASS
+C8-QUOTE-FUNDING PASS
+C8-SHARED-KNOWN-PLACES PASS
+C8-PREVIEW-ZERO-WRITES PASS
+C8-APPLY-RELOAD PASS
+C8-018 PASS
+PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'MONTH_WRITE_FAILED'
+- 'PLAN_V3_ACTIVE_READ_ONLY'
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-composer.mjs:134:12
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-composer.mjs:20:48)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-composer.mjs:125:3 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'MONTH_WRITE_FAILED',
+  expected: 'PLAN_V3_ACTIVE_READ_ONLY',
+  operator: 'strictEqual'
+}
+
+Node.js v22.18.0

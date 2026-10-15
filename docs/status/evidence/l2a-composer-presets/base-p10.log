@@ -1,0 +1,32 @@
+VIS-01-IMMEDIATE-LOCAL-STAGING PASS
+VIS-02-04-05-06-EXACT-PLACE-VEHICLE-IDENTITY PASS
+EDGE-EXISTING-ROUTE-DROP-JSON-SHAPE-CONSERVED PASS
+VIS-07-08-12-ROUNDTRIP-UNSCHEDULED PASS
+VIS-03-DESTINATION-TEXT-UNKNOWN PASS
+VIS-09-FALLBACK-DIRECTED-ONLY PASS
+EDGE-HERE-OUTAGE-PRESERVES-FUEL PASS
+EDGE-MANUAL-FUEL-FALLBACK-DIGEST-STABLE PASS
+VIS-10-CAR-TO-TRAIN-NO-FUEL-RESIDUE PASS
+VIS-11-BUS-UNDO-REDO-STRUCTURE PASS
+EDGE-PARTIAL-FIELD-CONSERVATION PASS
+EDGE-INCOMPLETE-NOT-READY-SAVABLE-SHAPE PASS
+EDGE-FOREIGN-PLACE-VEHICLE-REFUSED PASS
+EDGE-PROTECTED-ROOT PASS
+VIS-13-CHILD-NON-ADDITIVE PASS
+VIS-14-SECOND-VISIT-NOT-HISTORICAL-MERGE PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: date non fixée
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/outputs/l2a-base/scripts/check-phase2-planner-p10.mjs:61:1026
+    at async test (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/outputs/l2a-base/scripts/check-phase2-planner-p10.mjs:26:39)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/outputs/l2a-base/scripts/check-phase2-planner-p10.mjs:61:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '=='
+}
+
+Node.js v22.18.0

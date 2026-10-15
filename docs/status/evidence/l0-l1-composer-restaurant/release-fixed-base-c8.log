@@ -1,0 +1,271 @@
+C8-019 PASS
+IGT-001 PASS
+IGT-002 PASS
+C8-011 PASS
+C8-014 PASS
+IGT-005 PASS
+C8-015 PASS
+C8-REPEATING-REPARENT PASS
+IGT-006 PASS
+C8-010 PASS
+C8-012 PASS
+C8-CAPABILITY-FORGERY PASS
+R1-PRESENTATION-COUNTS PASS
+R1-PROJECTION-AND-SAVINGS PASS
+C8-SERIALIZATION PASS
+C8-UNKNOWN PASS
+C8-CONTEXT-METADATA PASS
+C8-QUOTE-FUNDING PASS
+C8-SHARED-KNOWN-PLACES PASS
+C8-PREVIEW-ZERO-WRITES PASS
+C8-APPLY-RELOAD PASS
+C8-018 PASS
+PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo
+C8-018-AUTHENTICATED-OLD-WRITER PASS
+C8-SECOND-REVISION PASS
+C8-STALE-ZERO-WRITES PASS
+C8-ASSISTANT PASS
+C8-PRESERVE PASS
+C8-013 PASS
+C8-CANCEL-NORMALIZED PASS
+C8-LARGE-REVISION-LOG PASS
+C8-ROLLBACK PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Date non établie/. Input:
+
+'<div data-applied-month="true" class="appliedMonth"><section id="final-projection" class="hero" aria-labelledby="plan-summary-title"><div class="heroHeading"><span>MON PLAN · RÉVISION 1</span><span>Projection économique</span></div><div class="heroGrid"><div><h2 id="plan-summary-title">Votre mois, avec Mon Plan</h2><p class="amountLabel">Reste prévisionnel du mois</p><p data-applied-remainder="true" class="mainAmount">À préciser</p></div><dl class="comparison"><div><dt>Sans les modifications du Plan</dt><dd data-plan-reference="true">917,00 €</dd></div><div><dt>Impact du Plan sur le reste</dt><dd data-plan-net-impact="true" data-direction="unknown">À préciser</dd></div></dl></div><div class="heroFoot"><p>Une estimation de fin de mois, distincte de l’argent actuellement en banque.</p><div class="actions"><a href="#my-plan-title" class="secondaryAction">Voir les décisions</a></div></div><p class="uncertainty">Certaines informations manquent pour établir le reste du mois. Les montants déjà connus restent disponibles ci-dessous.</p></section><section data-my-plan="true" aria-labelledby="my-plan-title" class="decisions"><div class="sectionHeading"><div><p class="eyebrow">VOS DÉCISIONS OFFICIELLES</p><h2 id="my-plan-title">Ce qui change avec Mon Plan</h2></div><p>Ouvrez une décision pour comprendre son coût et sa couverture.</p></div><details class="decisionGroup" open=""><summary><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg><span>Événements et dépenses ponctuelles</span><small>1</small><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="decisionGrid"><details class="decisionCard" data-plan-context="00000000-0000-4000-8000-000000000300" data-plan-short-stay="00000000-0000-4000-8000-000000000300"><summary><span class="cardHeading"><strong>Synthetic short-stay</strong><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></span><span class="cardValue">Week-end / séjour</span><span class="cardNote">Hébergement, moments et trajet liés</span><span class="cardMeta">2026-11-12</span></summary><div class="cardBody"><div class="businessDetail" data-plan-context-detail="00000000-0000-4000-8000-000000000300"><dl class="facts"><div><dt>Date</dt><dd>12 novembre 2026</dd></div></dl><section class="partGroup"><h3>Hébergement</h3><ul><li><div class="partHeading"><strong>Synthetic lodging</strong><span>Total non établi</span></div><p></p><p>100,00 € par unité · déclaré · quantité 1</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Courses du séjour</h3><ul><li><div class="partHeading"><strong>Synthetic groceries</strong><span>Total non établi</span></div><p></p><p>20,00 € par unité · déclaré · quantité 1</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Transport</h3><ul><li><strong>Voiture</strong><p>Trajet propre · voir les déplacements du Plan</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Activités</h3><ul><li>Moment rattaché : Synthetic activity</li></ul></section><section class="partGroup"><h3>Restaurants</h3><ul><li>Moment rattaché : Synthetic restaurant</li></ul></section><details class="childDetail" data-plan-child="00000000-0000-4000-8000-000000000200"><summary>Synthetic activity</summary><div class="businessDetail" data-plan-context-detail="00000000-0000-4000-8000-000000000200"><dl class="facts"><div><dt>Date</dt><dd>12 novembre 2026</dd></div></dl><section class="partGroup"><h3>Activité / entrée</h3><ul><li><div class="partHeading"><strong>Synthetic activity</strong><span>Total non établi</span></div><p></p><p>10,00 € par unité · déclaré · quantité 1</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Transport</h3><ul><li><strong>Voiture</strong><p>Trajet partagé · coût porté une seule fois par le trajet lié</p></li></ul></section><details class="advanced"><summary>Données conservées et provenance</summary><pre>{\n' +
+  '  &quot;fields&quot;: {\n' +
+  '    &quot;label&quot;: &quot;Synthetic activity&quot;,\n' +
+  '    &quot;plannedDate&quot;: &quot;2026-11-12&quot;\n' +
+  '  },\n' +
+  '  &quot;selections&quot;: {\n' +
+  '    &quot;main&quot;: {\n' +
+  '      &quot;items&quot;: [\n' +
+  '        {\n' +
+  '          &quot;selectionId&quot;: &quot;activity&quot;,\n' +
+  '          &quot;optionKey&quot;: &quot;activity&quot;,\n' +
+  '          &quot;kind&quot;: &quot;COMPONENT&quot;,\n' +
+  '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+  '          &quot;label&quot;: &quot;Synthetic activity&quot;,\n' +
+  '          &quot;quantity&quot;: &quot;1&quot;,\n' +
+  '          &quot;cost&quot;: {\n' +
+  '            &quot;kind&quot;: &quot;MANUAL&quot;,\n' +
+  '            &quot;unitAmount&quot;: &quot;10.00&quot;\n' +
+  '          }\n' +
+  '        }\n' +
+  '      ]\n' +
+  '    },\n' +
+  '    &quot;transport&quot;: {\n' +
+  '      &quot;items&quot;: [\n' +
+  '        {\n' +
+  '          &quot;selectionId&quot;: &quot;car&quot;,\n' +
+  '          &quot;optionKey&quot;: &quot;car&quot;,\n' +
+  '          &quot;kind&quot;: &quot;MOBILITY_INTENT&quot;,\n' +
+  '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+  '          &quot;origin&quot;: {\n' +
+  '            &quot;kind&quot;: &quot;KNOWN&quot;,\n' +
+  '            &quot;placeId&quot;: &quot;00000000-0000-4000-8000-000000009100&quot;\n' +
+  '          },\n' +
+  '          &quot;destination&quot;: {\n' +
+  '            &quot;kind&quot;: &quot;KNOWN&quot;,\n' +
+  '            &quot;placeId&quot;: &quot;00000000-0000-4000-8000-000000009101&quot;\n' +
+  '          },\n' +
+  '          &quot;journey&quot;: {\n' +
+  '            &quot;relation&quot;: &quot;SHARES_JOURNEY&quot;,\n' +
+  '            &quot;certainty&quot;: &quot;CERTAIN&quot;,\n' +
+  '            &quot;targetIntentId&quot;: &quot;mobility-intent:e99b626e8d7bdb17f7b44144d0f84ba78d7ddd92569ed7e27ccc40f6e09ba9bf&quot;\n' +
+  '          }\n' +
+  '        }\n' +
+  '      ]\n' +
+  '    }\n' +
+  '  }\n' +
+  '}</pre></details></div></details><details class="childDetail" data-plan-child="00000000-0000-4000-8000-000000000100"><summary>Synthetic restaurant</summary><div class="businessDetail" data-plan-context-detail="00000000-0000-4000-8000-000000000100"><dl class="facts"><div><dt>Date</dt><dd>12 novembre 2026</dd></div></dl><section class="partGroup"><h3>Repas</h3><ul><li><div class="partHeading"><strong>Synthetic restaurant</strong><span>Total non établi</span></div><p></p><p>20,00 € par unité · déclaré · quantité 1</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Transport</h3><ul><li><strong>Voiture</strong><p>Trajet partagé · coût porté une seule fois par le trajet lié</p></li></ul></section><details class="advanced"><summary>Données conservées et provenance</summary><pre>{\n' +
+  '  &quot;fields&quot;: {\n' +
+  '    &quot;label&quot;: &quot;Synthetic restaurant&quot;,\n' +
+  '    &quot;plannedDate&quot;: &quot;2026-11-12&quot;\n' +
+  '  },\n' +
+  '  &quot;selections&quot;: {\n' +
+  '    &quot;meal&quot;: {\n' +
+  '      &quot;items&quot;: [\n' +
+  '        {\n' +
+  '          &quot;selectionId&quot;: &quot;restaurant&quot;,\n' +
+  '          &quot;optionKey&quot;: &quot;restaurant&quot;,\n' +
+  '          &quot;kind&quot;: &quot;COMPONENT&quot;,\n' +
+  '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+  '          &quot;label&quot;: &quot;Synthetic restaurant&quot;,\n' +
+  '          &quot;quantity&quot;: &quot;1&quot;,\n' +
+  '          &quot;cost&quot;: {\n' +
+  '            &quot;kind&quot;: &quot;MANUAL&quot;,\n' +
+  '            &quot;unitAmount&quot;: &quot;20.00&quot;\n' +
+  '          }\n' +
+  '        }\n' +
+  '      ]\n' +
+  '    },\n' +
+  '    &quot;transport&quot;: {\n' +
+  '      &quot;items&quot;: [\n' +
+  '        {\n' +
+  '          &quot;selectionId&quot;: &quot;car&quot;,\n' +
+  '          &quot;optionKey&quot;: &quot;car&quot;,\n' +
+  '          &quot;kind&quot;: &quot;MOBILITY_INTENT&quot;,\n' +
+  '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+  '          &quot;origin&quot;: {\n' +
+  '            &quot;kind&quot;: &quot;KNOWN&quot;,\n' +
+  '            &quot;placeId&quot;: &quot;00000000-0000-4000-8000-000000009100&quot;\n' +
+  '          },\n' +
+  '          &quot;destination&quot;: {\n' +
+  '            &quot;kind&quot;: &quot;KNOWN&quot;,\n' +
+  '            &quot;placeId&quot;: &quot;00000000-0000-4000-8000-000000009101&quot;\n' +
+  '          },\n' +
+  '          &quot;journey&quot;: {\n' +
+  '            &quot;relation&quot;: &quot;SHARES_JOURNEY&quot;,\n' +
+  '            &quot;certainty&quot;: &quot;CERTAIN&quot;,\n' +
+  '            &quot;targetIntentId&quot;: &quot;mobility-intent:e99b626e8d7bdb17f7b44144d0f84ba78d7ddd92569ed7e27ccc40f6e09ba9bf&quot;\n' +
+  '          }\n' +
+  '        }\n' +
+  '      ]\n' +
+  '    }\n' +
+  '  }\n' +
+  '}</pre></details></div></details><details class="advanced"><summary>Données conservées et provenance</summary><pre>{\n' +
+  '  &quot;fields&quot;: {\n' +
+  '    &quot;label&quot;: &quot;Synthetic short-stay&quot;,\n' +
+  '    &quot;plannedDate&quot;: &quot;2026-11-12&quot;\n' +
+  '  },\n' +
+  '  &quot;selections&quot;: {\n' +
+  '    &quot;lodging&quot;: {\n' +
+  '      &quot;items&quot;: [\n' +
+  '        {\n' +
+  '          &quot;selectionId&quot;: &quot;lodging&quot;,\n' +
+  '          &quot;optionKey&quot;: &quot;lodging&quot;,\n' +
+  '          &quot;kind&quot;: &quot;COMPONENT&quot;,\n' +
+  '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+  '          &quot;label&quot;: &quot;Synthetic lodging&quot;,\n' +
+  '          &quot;quantity&quot;: &quot;1&quot;,\n' +
+  '          &quot;cost&quot;: {\n' +
+  '            &quot;kind&quot;: &quot;MANUAL&quot;,\n' +
+  '            &quot;unitAmount&quot;: &quot;100.00&quot;\n' +
+  '   '... 4711 more characters
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-composer.mjs:189:74
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-composer.mjs:20:48)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/l1-release-baseline/scripts/check-phase2-planner-composer.mjs:181:3 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '<div data-applied-month="true" class="appliedMonth"><section id="final-projection" class="hero" aria-labelledby="plan-summary-title"><div class="heroHeading"><span>MON PLAN · RÉVISION 1</span><span>Projection économique</span></div><div class="heroGrid"><div><h2 id="plan-summary-title">Votre mois, avec Mon Plan</h2><p class="amountLabel">Reste prévisionnel du mois</p><p data-applied-remainder="true" class="mainAmount">À préciser</p></div><dl class="comparison"><div><dt>Sans les modifications du Plan</dt><dd data-plan-reference="true">917,00 €</dd></div><div><dt>Impact du Plan sur le reste</dt><dd data-plan-net-impact="true" data-direction="unknown">À préciser</dd></div></dl></div><div class="heroFoot"><p>Une estimation de fin de mois, distincte de l’argent actuellement en banque.</p><div class="actions"><a href="#my-plan-title" class="secondaryAction">Voir les décisions</a></div></div><p class="uncertainty">Certaines informations manquent pour établir le reste du mois. Les montants déjà connus restent disponibles ci-dessous.</p></section><section data-my-plan="true" aria-labelledby="my-plan-title" class="decisions"><div class="sectionHeading"><div><p class="eyebrow">VOS DÉCISIONS OFFICIELLES</p><h2 id="my-plan-title">Ce qui change avec Mon Plan</h2></div><p>Ouvrez une décision pour comprendre son coût et sa couverture.</p></div><details class="decisionGroup" open=""><summary><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg><span>Événements et dépenses ponctuelles</span><small>1</small><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="decisionGrid"><details class="decisionCard" data-plan-context="00000000-0000-4000-8000-000000000300" data-plan-short-stay="00000000-0000-4000-8000-000000000300"><summary><span class="cardHeading"><strong>Synthetic short-stay</strong><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></span><span class="cardValue">Week-end / séjour</span><span class="cardNote">Hébergement, moments et trajet liés</span><span class="cardMeta">2026-11-12</span></summary><div class="cardBody"><div class="businessDetail" data-plan-context-detail="00000000-0000-4000-8000-000000000300"><dl class="facts"><div><dt>Date</dt><dd>12 novembre 2026</dd></div></dl><section class="partGroup"><h3>Hébergement</h3><ul><li><div class="partHeading"><strong>Synthetic lodging</strong><span>Total non établi</span></div><p></p><p>100,00 € par unité · déclaré · quantité 1</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Courses du séjour</h3><ul><li><div class="partHeading"><strong>Synthetic groceries</strong><span>Total non établi</span></div><p></p><p>20,00 € par unité · déclaré · quantité 1</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Transport</h3><ul><li><strong>Voiture</strong><p>Trajet propre · voir les déplacements du Plan</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Activités</h3><ul><li>Moment rattaché : Synthetic activity</li></ul></section><section class="partGroup"><h3>Restaurants</h3><ul><li>Moment rattaché : Synthetic restaurant</li></ul></section><details class="childDetail" data-plan-child="00000000-0000-4000-8000-000000000200"><summary>Synthetic activity</summary><div class="businessDetail" data-plan-context-detail="00000000-0000-4000-8000-000000000200"><dl class="facts"><div><dt>Date</dt><dd>12 novembre 2026</dd></div></dl><section class="partGroup"><h3>Activité / entrée</h3><ul><li><div class="partHeading"><strong>Synthetic activity</strong><span>Total non établi</span></div><p></p><p>10,00 € par unité · déclaré · quantité 1</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Transport</h3><ul><li><strong>Voiture</strong><p>Trajet partagé · coût porté une seule fois par le trajet lié</p></li></ul></section><details class="advanced"><summary>Données conservées et provenance</summary><pre>{\n' +
+    '  &quot;fields&quot;: {\n' +
+    '    &quot;label&quot;: &quot;Synthetic activity&quot;,\n' +
+    '    &quot;plannedDate&quot;: &quot;2026-11-12&quot;\n' +
+    '  },\n' +
+    '  &quot;selections&quot;: {\n' +
+    '    &quot;main&quot;: {\n' +
+    '      &quot;items&quot;: [\n' +
+    '        {\n' +
+    '          &quot;selectionId&quot;: &quot;activity&quot;,\n' +
+    '          &quot;optionKey&quot;: &quot;activity&quot;,\n' +
+    '          &quot;kind&quot;: &quot;COMPONENT&quot;,\n' +
+    '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+    '          &quot;label&quot;: &quot;Synthetic activity&quot;,\n' +
+    '          &quot;quantity&quot;: &quot;1&quot;,\n' +
+    '          &quot;cost&quot;: {\n' +
+    '            &quot;kind&quot;: &quot;MANUAL&quot;,\n' +
+    '            &quot;unitAmount&quot;: &quot;10.00&quot;\n' +
+    '          }\n' +
+    '        }\n' +
+    '      ]\n' +
+    '    },\n' +
+    '    &quot;transport&quot;: {\n' +
+    '      &quot;items&quot;: [\n' +
+    '        {\n' +
+    '          &quot;selectionId&quot;: &quot;car&quot;,\n' +
+    '          &quot;optionKey&quot;: &quot;car&quot;,\n' +
+    '          &quot;kind&quot;: &quot;MOBILITY_INTENT&quot;,\n' +
+    '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+    '          &quot;origin&quot;: {\n' +
+    '            &quot;kind&quot;: &quot;KNOWN&quot;,\n' +
+    '            &quot;placeId&quot;: &quot;00000000-0000-4000-8000-000000009100&quot;\n' +
+    '          },\n' +
+    '          &quot;destination&quot;: {\n' +
+    '            &quot;kind&quot;: &quot;KNOWN&quot;,\n' +
+    '            &quot;placeId&quot;: &quot;00000000-0000-4000-8000-000000009101&quot;\n' +
+    '          },\n' +
+    '          &quot;journey&quot;: {\n' +
+    '            &quot;relation&quot;: &quot;SHARES_JOURNEY&quot;,\n' +
+    '            &quot;certainty&quot;: &quot;CERTAIN&quot;,\n' +
+    '            &quot;targetIntentId&quot;: &quot;mobility-intent:e99b626e8d7bdb17f7b44144d0f84ba78d7ddd92569ed7e27ccc40f6e09ba9bf&quot;\n' +
+    '          }\n' +
+    '        }\n' +
+    '      ]\n' +
+    '    }\n' +
+    '  }\n' +
+    '}</pre></details></div></details><details class="childDetail" data-plan-child="00000000-0000-4000-8000-000000000100"><summary>Synthetic restaurant</summary><div class="businessDetail" data-plan-context-detail="00000000-0000-4000-8000-000000000100"><dl class="facts"><div><dt>Date</dt><dd>12 novembre 2026</dd></div></dl><section class="partGroup"><h3>Repas</h3><ul><li><div class="partHeading"><strong>Synthetic restaurant</strong><span>Total non établi</span></div><p></p><p>20,00 € par unité · déclaré · quantité 1</p><p>Financement à préciser</p></li></ul></section><section class="partGroup"><h3>Transport</h3><ul><li><strong>Voiture</strong><p>Trajet partagé · coût porté une seule fois par le trajet lié</p></li></ul></section><details class="advanced"><summary>Données conservées et provenance</summary><pre>{\n' +
+    '  &quot;fields&quot;: {\n' +
+    '    &quot;label&quot;: &quot;Synthetic restaurant&quot;,\n' +
+    '    &quot;plannedDate&quot;: &quot;2026-11-12&quot;\n' +
+    '  },\n' +
+    '  &quot;selections&quot;: {\n' +
+    '    &quot;meal&quot;: {\n' +
+    '      &quot;items&quot;: [\n' +
+    '        {\n' +
+    '          &quot;selectionId&quot;: &quot;restaurant&quot;,\n' +
+    '          &quot;optionKey&quot;: &quot;restaurant&quot;,\n' +
+    '          &quot;kind&quot;: &quot;COMPONENT&quot;,\n' +
+    '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+    '          &quot;label&quot;: &quot;Synthetic restaurant&quot;,\n' +
+    '          &quot;quantity&quot;: &quot;1&quot;,\n' +
+    '          &quot;cost&quot;: {\n' +
+    '            &quot;kind&quot;: &quot;MANUAL&quot;,\n' +
+    '            &quot;unitAmount&quot;: &quot;20.00&quot;\n' +
+    '          }\n' +
+    '        }\n' +
+    '      ]\n' +
+    '    },\n' +
+    '    &quot;transport&quot;: {\n' +
+    '      &quot;items&quot;: [\n' +
+    '        {\n' +
+    '          &quot;selectionId&quot;: &quot;car&quot;,\n' +
+    '          &quot;optionKey&quot;: &quot;car&quot;,\n' +
+    '          &quot;kind&quot;: &quot;MOBILITY_INTENT&quot;,\n' +
+    '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+    '          &quot;origin&quot;: {\n' +
+    '            &quot;kind&quot;: &quot;KNOWN&quot;,\n' +
+    '            &quot;placeId&quot;: &quot;00000000-0000-4000-8000-000000009100&quot;\n' +
+    '          },\n' +
+    '          &quot;destination&quot;: {\n' +
+    '            &quot;kind&quot;: &quot;KNOWN&quot;,\n' +
+    '            &quot;placeId&quot;: &quot;00000000-0000-4000-8000-000000009101&quot;\n' +
+    '          },\n' +
+    '          &quot;journey&quot;: {\n' +
+    '            &quot;relation&quot;: &quot;SHARES_JOURNEY&quot;,\n' +
+    '            &quot;certainty&quot;: &quot;CERTAIN&quot;,\n' +
+    '            &quot;targetIntentId&quot;: &quot;mobility-intent:e99b626e8d7bdb17f7b44144d0f84ba78d7ddd92569ed7e27ccc40f6e09ba9bf&quot;\n' +
+    '          }\n' +
+    '        }\n' +
+    '      ]\n' +
+    '    }\n' +
+    '  }\n' +
+    '}</pre></details></div></details><details class="advanced"><summary>Données conservées et provenance</summary><pre>{\n' +
+    '  &quot;fields&quot;: {\n' +
+    '    &quot;label&quot;: &quot;Synthetic short-stay&quot;,\n' +
+    '    &quot;plannedDate&quot;: &quot;2026-11-12&quot;\n' +
+    '  },\n' +
+    '  &quot;selections&quot;: {\n' +
+    '    &quot;lodging&quot;: {\n' +
+    '      &quot;items&quot;: [\n' +
+    '        {\n' +
+    '          &quot;selectionId&quot;: &quot;lodging&quot;,\n' +
+    '          &quot;optionKey&quot;: &quot;lodging&quot;,\n' +
+    '          &quot;kind&quot;: &quot;COMPONENT&quot;,\n' +
+    '          &quot;provenance&quot;: &quot;EXPLICIT_USER_DECISION&quot;,\n' +
+    '          &quot;label&quot;: &quot;Synthetic lodging&quot;,\n' +
+    '          &quot;quantity&quot;: &quot;1&quot;,\n' +
+    '          &quot;cost&quot;: {\n' +
+    '            &quot;kind&quot;: &quot;MANUAL&quot;,\n' +
+    '            &quot;unitAmount&quot;: &quot;100.00&quot;\n' +
+    '   '... 4711 more characters,
+  expected: /Date non établie/,
+  operator: 'match'
+}
+
+Node.js v22.18.0

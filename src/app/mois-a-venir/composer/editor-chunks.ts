@@ -34,3 +34,9 @@ export function preloadEditorForAsset(asset: ComposerAssetView) {
   const kind = editorChunkForAsset(asset);
   if (kind) void editorChunks[kind]().catch(() => { /* Open-panel retry owns the visible error. */ });
 }
+
+export function preloadEditorForPreset(asset: ComposerAssetView) {
+  if (asset.kind === "CONTEXT_ASSET" && ["delivery", "activity", "purchase"].includes(asset.templateKey ?? ""))
+    void editorChunks.restaurant().catch(() => { /* The normal open-panel retry remains available. */ });
+  else preloadEditorForAsset(asset);
+}

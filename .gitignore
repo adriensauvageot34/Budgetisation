@@ -42,3 +42,6 @@ next-env.d.ts
 
 # L1 generated browser bundles and intermediate logs.
 /outputs/l1-*
+
+# L2-A local comparison bundles and archived source reference.
+/outputs/l2a-*

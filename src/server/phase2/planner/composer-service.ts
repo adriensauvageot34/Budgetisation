@@ -1,5 +1,7 @@
 import "server-only";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
+import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
+import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
 import { snapshotWork } from "./snapshot-observation";
 import { composerMutationDependencies } from "./composer-mutation-world";
 import Big from "big.js";
@@ -111,6 +113,7 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
       parentContextOccurrenceId: null,
       fields: { fieldSchemaVersion: asset.templateKey === "short-stay" ? "context-fields@v5"
         : asset.templateKey === "family-visit" ? "context-fields@v4" : "context-fields@v2",
+      ...presetCreationFields(definition.templateKey, request.presetKey),
       ...Object.fromEntries(definition.fields.filter(f => values[f.fieldKey]?.trim()).map(f => [f.fieldKey, values[f.fieldKey].trim()])) },
       slotSelections: {}, provenance: "EXPLICIT_USER_DECISION" as const };
     return target.kind === "BOARD_ZONE" ? { kind: "ADD_CONTEXT", context } : { kind: "ATTACH_CONTEXT", context,
@@ -227,7 +230,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     }
     // The opt-in historical reader is never passed into Apply or its post-commit reload.
     if (deps.readComposerWorld) deps = { ...deps, readWorld: deps.readComposerWorld };
-    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_RESTAURANT", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
+    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_RESTAURANT", "EDIT_PRESET_CONTEXT", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
     const readDeps = mutationRead && process.env.COMPOSER_P14_P2_SINGLE_WORLD !== "0"
       ? composerMutationDependencies(deps, household, month) : deps;
     // Suggestions and Board describe the same admitted state in this request.
@@ -311,10 +314,11 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
         if (vehicleRef.vehicleId !== priorId && vehicleRef.vehicleId !== options?.vehicle?.vehicleId) throw new TypeError("COMPOSER_VEHICLE_NOT_ADMITTED");
       }
       mutationKind = "PATCH_CONTEXT";
-    } else if (request.kind === "EDIT_RESTAURANT") {
+    } else if (request.kind === "EDIT_RESTAURANT" || request.kind === "EDIT_PRESET_CONTEXT") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);
-      if (card?.templateKey !== "restaurant" || !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
-      state = editRestaurant(state, request.edit);
+      if (!card || (request.kind === "EDIT_RESTAURANT" ? card.templateKey !== "restaurant" : !["delivery", "activity", "purchase"].includes(card.templateKey))
+        || !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+      state = request.kind === "EDIT_RESTAURANT" ? editRestaurant(state, request.edit) : editGuidedContext(state, request.edit);
       const vehicleRef = request.edit.slots?.transport?.[0]?.kind === "MOBILITY_INTENT" ? request.edit.slots.transport[0].route?.vehicleRef : null;
       if (vehicleRef) {
         const old = model.semanticState.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId)?.slotSelections.transport?.items;

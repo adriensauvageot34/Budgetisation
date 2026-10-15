@@ -29,7 +29,7 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
   }
   if (Object.keys(edit.fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "timingNote"].includes(key)))
     throw new TypeError("COMPOSER_NIGHT_OUT_FIELD_INVALID");
-  if (Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "timingNote", "fieldSchemaVersion"].includes(key)))
+  if (Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "timingNote", "fieldSchemaVersion", "composerPresentation"].includes(key)))
     throw new TypeError("COMPOSER_NIGHT_OUT_FIELD_INVALID");
   if (fields.fieldSchemaVersion !== "context-fields@v3" && Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "fieldSchemaVersion"].includes(key)))
     fields.fieldSchemaVersion = "context-fields@v2";
