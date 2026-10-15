@@ -154,7 +154,8 @@ try {
   assert.deepEqual(reloaded.semanticState, edit.semanticState);
   const html = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: applied.board.cockpit,
     semanticState: reloaded.semanticState, revision: 1, plan: null, today: world.asOfDate, persons: deps.householdPersons }));
-  for (const expected of ['data-plan-catalog-context', 'Visite amie', 'Amie fixture', 'Personne fixture', 'Village fixture', 'Après-midi'])
+  // B2 unified the persisted Context reader under data-plan-context.
+  for (const expected of ['data-plan-context', 'Visite amie', 'Amie fixture', 'Personne fixture', 'Village fixture', 'Après-midi'])
     assert.ok(html.includes(expected), expected);
   pass('P12-APPLY-RELOAD-MON-PLAN-PGLITE');
   assert.deepEqual(world, original); await pg.verifyCanaries();

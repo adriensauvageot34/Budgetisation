@@ -3,6 +3,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { require } from './lib/phase2-ts-loader.mjs';
@@ -37,26 +38,35 @@ const mocks = {
   '@/components/runtime': 'import {useRef} from "react"; export function useProductRuntime(){return {backgroundRootRef:useRef(null)}}',
   '@/features/auth/sign-out-button': 'import React from "react"; export const SignOutButton = () => React.createElement("button",{disabled:true},"Déconnexion");'
 };
-const p4Split = p4Measuring && process.env.PLANNER_P14_P4B_SPLIT === '1';
+const p4Split = p4Measuring && process.env.PLANNER_P14_P4B_SPLIT === '1' || process.env.PLANNER_L1_SPLIT === '1';
+const l1Reference = process.env.PLANNER_L1_REFERENCE === '1';
+const l1OriginalUi = new Set(['composer-shell.tsx','composer-board.tsx','composer.module.css','context-card.tsx','context-palette.tsx','editor-chunks.ts','local-draft.ts']);
 const built = await build({ entryPoints: [p4dMeasuring ? 'scripts/lib/planner-composer-p14-p4d-browser-entry.tsx' : p4Measuring ? 'scripts/lib/planner-composer-p14-p4a-browser-entry.tsx' : p2Measuring ? 'scripts/lib/planner-composer-p14-p2-browser-entry.tsx' : 'scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
   define: { 'process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS': JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS ?? '1'),
+    'process.env.NODE_ENV':'"production"',
+    'process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES':JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES ?? 'neighbors'),
     ...(p4Measuring?{'process.env.NODE_ENV':'"production"','process.env.P4_DIAGNOSTICS':JSON.stringify(process.env.PLANNER_P14_P4A_DIAGNOSTICS==='1'),
       'process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES':JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES ?? 'neighbors')}: {}) },
-  minify:p4Measuring,
+  minify:p4Measuring || process.env.PLANNER_L1_SPLIT === '1',
   ...(p4Split ? { outdir:out, entryNames:'app', chunkNames:'chunks/[name]-[hash]', splitting:true, metafile:true } : { outfile: path.join(out, 'app.js') }),
   loader: { '.css': 'local-css' }, sourcemap: true,
   external: ['/planned-visuals/*'],
-  plugins: [p4dFixturePlugin(),p4FixturePlugin(),p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
+  plugins: [...(l1Reference ? [{name:'l1-approved-main-ui',setup(builder){ builder.onLoad({filter:/[\\/]composer[\\/][^\\/]+\.(tsx?|css)$/},args=> {
+    if(!l1OriginalUi.has(path.basename(args.path)))return;
+    const file=path.relative(process.cwd(),args.path).replaceAll('\\','/');
+    return {contents:execFileSync('git',['show',`d965d54713c20d3ab614e3fe730ee70af2876ea8:${file}`],{encoding:'utf8',maxBuffer:4000000}),loader:args.path.endsWith('.css')?'local-css':'tsx',resolveDir:path.dirname(args.path)};
+  });}}] : []),p4dFixturePlugin(),p4FixturePlugin(),p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
     builder.onLoad({filter:/.*/,namespace:'fixture-host'},args=>({contents:mocks[args.path],loader:'js',resolveDir:process.cwd()})); }}] });
 if(p4Split)fs.writeFileSync(path.join(out,'bundle-meta.json'),JSON.stringify(built.metafile,null,2));
 const globalCss = process.env.PLANNER_C8_GLOBAL_CSS
   ? fs.readFileSync(process.env.PLANNER_C8_GLOBAL_CSS, 'utf8')
   : fs.readdirSync('.next/static/chunks').filter(n=>n.endsWith('.css')).map(n=>fs.readFileSync(`.next/static/chunks/${n}`,'utf8')).find(css=>css.includes('.h-dvh{'));
-if (!globalCss?.includes('.h-dvh{')) throw new Error('A production global stylesheet containing h-dvh is required for AppShell checks.');
+if (!globalCss || !/\.h-dvh\s*\{/.test(globalCss)) throw new Error('A production global stylesheet containing h-dvh is required for AppShell checks.');
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
 } else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
 if (process.env.PLANNER_C8_BUILD_ONLY === '1') process.exit(0);
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
+  L1: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P09: () => ({ world: plannerFixture(), semantic: plannerState() }),
@@ -83,14 +93,15 @@ function uiPayloadFields(value) {
 }
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
-    const pg = await createKernelPostgres(), fixture = (p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
+    const pg = await createKernelPostgres(), fixture = (key.startsWith('L1') ? fixtures.L1 : p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
     if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
-      householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' }],
+      householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' },
+        ...(key.startsWith('L1') ? [{ personId: '00000000-0000-4000-8000-000000000002', displayName: 'Camille Fixture' }] : [])],
       readMobilityOptions: async()=>({places:fixture.world.mobilityFacts?.places ?? [],vehicle:fixture.world.mobilityFacts?.vehicle ?? null}),
       validateContextReferences: async (_household, refs) => {
         if (refs.placeIds.some(id=>!fixture.world.mobilityFacts?.places.some(p=>p.placeId===id))) throw new TypeError('CONTEXT_PLACE_NOT_ADMITTED');
-        if (refs.personIds.some(id => id !== '00000000-0000-4000-8000-000000000001')) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
+        if (refs.personIds.some(id => id !== '00000000-0000-4000-8000-000000000001' && !(key.startsWith('L1') && id === '00000000-0000-4000-8000-000000000002'))) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
       }, readWorld: async () => p2World(() => fixture.world),
       prepareWorld: (world, state) => preparePlanningMobility(world, state, owner.value) } };
   })());

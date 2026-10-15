@@ -1,5 +1,42 @@
 /* Presentation only. Layer tokens: board < card < selected < satellites < ghost
    < palette < popover < trash < modal. Native popovers/dialogs use the top layer. */
+.restaurantInspector { position:fixed; z-index:20; top:155px; right:20px; bottom:190px; width:min(350px,calc(100vw - 24px)); min-height:180px; overflow:auto; box-sizing:border-box; padding:18px; border:1px solid #e6d9ec; border-radius:22px; background:#fffdfb; color:#252d48; box-shadow:0 16px 50px #3422412b; font:13px var(--font-sans,Arial,sans-serif); }
+.restaurantInspector * { box-sizing:border-box; }
+.restaurantInspector header { position:sticky; top:-18px; z-index:2; display:flex; gap:10px; align-items:center; margin:-18px -18px 0; padding:14px 18px; background:#fffdfb; border-bottom:1px solid #ebe3ee; }
+.restaurantInspector header > div { flex:1; }
+.restaurantInspector h2 { margin:2px 0; font-size:22px; }
+.restaurantInspector h3 { font-size:16px; margin:14px 0; }
+.restaurantInspector small,.restaurantInspector p,.restaurantInspector footer span { color:#787184; line-height:1.5; }
+.restaurantIntro { margin:12px 0; }
+.restaurantInspector button,.restaurantInspector input,.restaurantInspector select { font:inherit; }
+.restaurantInspector button { cursor:pointer; border:1px solid #e3dce8; background:#fff; color:#42324d; border-radius:10px; padding:9px 11px; }
+.restaurantInspector button:disabled { opacity:.5; cursor:default; }
+.restaurantInspector :is(button,input,select,summary,[tabindex]):focus-visible { outline:2px solid #9b82c1; outline-offset:2px; }
+.restaurantSummary { display:grid; gap:4px; }
+.restaurantSummary > button { display:flex; align-items:center; gap:10px; text-align:left; border-color:transparent; padding:8px; }
+.restaurantSummary > button[aria-current=step] { background:#f5edf9; border-color:#e8d9ef; }
+.restaurantSummary span { flex:1; min-width:0; overflow-wrap:anywhere; }
+.restaurantSummary strong,.restaurantSummary small { display:block; }
+.restaurantSummary strong { font-weight:600; font-size:12px; }
+.restaurantQuestion { border-top:1px solid #ebe3ee; margin-top:12px; }
+.restaurantQuestion label { display:grid; gap:5px; margin:10px 0; min-width:0; }
+.restaurantQuestion input,.restaurantQuestion select { width:100%; min-width:0; border:1px solid #dcd5e4; border-radius:9px; padding:9px; background:white; color:#27243d; }
+.restaurantQuestion > button { margin:4px 4px 4px 0; }
+.restaurantQuestion fieldset { min-width:0; padding:10px; margin:10px 0; border:1px solid #e4dce8; border-radius:12px; }
+.restaurantQuestion fieldset > div { display:grid; grid-template-columns:minmax(0,1fr); }
+.restaurantQuestion p { font-size:12px; }
+.restaurantQuestion .primary { background:#755291; color:white; }
+.restaurantModes { display:flex; gap:6px; }
+.restaurantModes [aria-pressed=true] { background:#eee4f3; border-color:#b49ac6; }
+.restaurantInspector footer { margin-top:14px; padding-top:12px; border-top:1px solid #ebe3ee; display:grid; gap:8px; }
+.restaurantInspector footer span { font-size:11px; }
+.restaurantDiagnostics { margin-top:14px; font-size:11px; }
+.restaurantReference { padding:8px; background:#f7f2e9; border-radius:10px; }
+.restaurantReference small { display:block; }
+.restaurantAnswers { display:flex; align-items:stretch; gap:7px; height:63px; overflow:auto; padding:4px 0; }
+.restaurantAnswers > button { flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:6px; max-width:210px; border:1px solid #e3d4ec; border-radius:12px; padding:8px 12px; background:#fff; color:#493654; font-size:12px; }
+.restaurantAnswers > button[aria-pressed=true] { background:#eee4f3; border-color:#b49ac6; }
+.restaurantPalette header > button { border:0; background:transparent; color:#745b8a; font-size:11px; cursor:pointer; }
 .workspace { --ink:#252d48; --muted:#73788b; --line:#e8e6ed; --violet:#7b65ab; --focus:#9b82c1; --amber:#a77834;
   --z-board:0; --z-card:1; --z-selected:2; --z-satellite:3; --z-ghost:4; --z-palette:5; --z-popover:6; --z-trash:7; --z-modal:8;
   --motion-hover:140ms; --motion-focus:190ms; --motion-palette:190ms; --motion-lift:140ms; --motion-snap:240ms;

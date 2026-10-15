@@ -1,4 +1,5 @@
 import "server-only";
+import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { snapshotWork } from "./snapshot-observation";
 import { composerMutationDependencies } from "./composer-mutation-world";
 import Big from "big.js";
@@ -226,7 +227,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     }
     // The opt-in historical reader is never passed into Apply or its post-commit reload.
     if (deps.readComposerWorld) deps = { ...deps, readWorld: deps.readComposerWorld };
-    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
+    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_RESTAURANT", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
     const readDeps = mutationRead && process.env.COMPOSER_P14_P2_SINGLE_WORLD !== "0"
       ? composerMutationDependencies(deps, household, month) : deps;
     // Suggestions and Board describe the same admitted state in this request.
@@ -308,6 +309,23 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
         const priorId = Array.isArray(old) ? (old[0] as Extract<ComponentSelectionV1, { kind: "MOBILITY_INTENT" }> | undefined)?.route?.vehicleRef?.vehicleId : null;
         const options = await deps.readMobilityOptions?.(household);
         if (vehicleRef.vehicleId !== priorId && vehicleRef.vehicleId !== options?.vehicle?.vehicleId) throw new TypeError("COMPOSER_VEHICLE_NOT_ADMITTED");
+      }
+      mutationKind = "PATCH_CONTEXT";
+    } else if (request.kind === "EDIT_RESTAURANT") {
+      const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);
+      if (card?.templateKey !== "restaurant" || !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+      state = editRestaurant(state, request.edit);
+      const vehicleRef = request.edit.slots?.transport?.[0]?.kind === "MOBILITY_INTENT" ? request.edit.slots.transport[0].route?.vehicleRef : null;
+      if (vehicleRef) {
+        const old = model.semanticState.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId)?.slotSelections.transport?.items;
+        const priorId = Array.isArray(old) ? (old[0] as Extract<ComponentSelectionV1, { kind: "MOBILITY_INTENT" }> | undefined)?.route?.vehicleRef?.vehicleId : null;
+        const options = await deps.readMobilityOptions?.(household);
+        if (vehicleRef.vehicleId !== priorId && vehicleRef.vehicleId !== options?.vehicle?.vehicleId) throw new TypeError("COMPOSER_VEHICLE_NOT_ADMITTED");
+      }
+      const refs = knownContextReferences(state);
+      if (refs.personIds.length || refs.placeIds.length) {
+        if (!deps.validateContextReferences) throw new TypeError("CONTEXT_REFERENCE_OWNER_UNAVAILABLE");
+        await deps.validateContextReferences(household, refs);
       }
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_CONTEXT") {

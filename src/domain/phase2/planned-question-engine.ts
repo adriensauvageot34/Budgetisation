@@ -1,5 +1,6 @@
 /** Contextual orchestration only: canonical money, assets, places and routes keep their owners. */
 import type { PlannedExpenseContext, PlannedExpenseDraft, PlannedProjectContext, ProspectivePersonRef } from "./planned-contract";
+import { nextUnansweredQuestion } from "./question-navigation";
 import { changeBuilderContext, editBuilderDraft, itemizeBuilderCosts, setQuickTotal, type BuilderState } from "./planned-builder";
 import { rootAssetModule, plannedAsset } from "./planned-assets";
 import { intentForDraft, type BuilderIntent } from "./planned-ux";
@@ -115,8 +116,8 @@ export function visibleProjectQuestions(c: QuestionContext) {
 }
 export function nextUsefulQuestion(c: QuestionContext): QuestionContract {
   const questions = visibleProjectQuestions(c);
-  return questions.find(q => q.id === c.session.current) ?? questions.find(q => c.session.answers[q.id] === undefined
-    && (!c.session.editScope || c.session.editScope.includes(q.id))) ?? PROJECT_QUESTIONS.at(-1)!;
+  return nextUnansweredQuestion(questions, c.session.current, id => c.session.answers[id as QuestionId] !== undefined
+    || !!c.session.editScope && !c.session.editScope.includes(id as QuestionId)) ?? PROJECT_QUESTIONS.at(-1)!;
 }
 const dependenciesOf = (id: QuestionId): Set<QuestionId> => {
   const invalid = new Set<QuestionId>([id]);

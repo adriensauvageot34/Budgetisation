@@ -1,0 +1,7 @@
+{
+  "action": "{\"kind\":\"READ\",\"sequence\":6,\"startedMs\":283145.799999997,\"settledMs\":284371.90000000596,\"responseMs\":1226.1000000089407,\"resources\":[],\"afterResponseMs\":null,\"attribution\":\"UNATTRIBUTED\",\"ok\":true}",
+  "browser": "{\"boardMs\":2254.7000000029802,\"freshMs\":2254.7999999970198,\"previewStatus\":\"FRESH\",\"initialCommitMs\":2138.2000000029802,\"statusCommitMs\":284382.700000003,\"responseEndToFreshMs\":2128.199999988079,\"navigation\":{\"type\":\"reload\",\"ttfbMs\":1.2999999970197678,\"requestStartMs\":119.70000000298023,\"responseStartMs\":121,\"responseEndMs\":126.6000000089407,\"responseMs\":6.9000000059604645,\"transferBytes\":655,\"decodedBytes\":355}}",
+  "intent": "{\"intentMs\":282978.90000000596,\"commitMs\":284382.700000003,\"paintObservedMs\":284411,\"visualFreshMs\":1432.2000000029802}",
+  "preview": "FRESH",
+  "save": "SAVED"
+}

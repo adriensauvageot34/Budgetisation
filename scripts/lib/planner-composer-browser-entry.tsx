@@ -12,6 +12,20 @@ async function transport(request: ComposerRequest) {
   return response.json();
 }
 const durableFixture = new URLSearchParams(location.search).get("durable") === "1";
+const measuring = new URLSearchParams(location.search).get("metrics") === "1";
+if (measuring) {
+  let editorClick: number | null = null;
+  document.addEventListener("click", event => {
+    const button = (event.target as Element | null)?.closest("button");
+    if (button && (/Restaurant/u.test(button.textContent ?? "") || /Restaurant/u.test(button.getAttribute("aria-label") ?? ""))) editorClick = performance.now();
+  }, true);
+  new MutationObserver(() => {
+    const panel = document.querySelector("[data-restaurant-editor],[data-catalog-context-editor]");
+    if (!panel || editorClick === null) return;
+    const start = editorClick; editorClick = null;
+    requestAnimationFrame(() => requestAnimationFrame(() => panel.setAttribute("data-l1-editor-ms", String(performance.now() - start))));
+  }).observe(document.getElementById("root")!, { childList: true, subtree: true });
+}
 const draftUrl = `/draft${location.search}`;
 const draftRead = async (): Promise<ComposerDraftSnapshot> => {
   const response = await fetch(draftUrl);
@@ -44,4 +58,4 @@ const model = readyContract ? { ...initial.model, board: { ...initial.model.boar
   cockpit: { ...initial.model.board.cockpit, projectionCompleteness: "COMPLETE", applyReadiness: "READY" } } } : initial.model;
 const fixtureTransport = readyContract ? async (request: ComposerRequest) => ({ ok: false, sequence: request.sequence,
   code: "UI_CONTRACT_ONLY", message: "Fixture de présentation uniquement : aucune application autorisée." }) : transport;
-createRoot(document.getElementById("root")!).render(<AppShell><div data-ui-contract={readyContract ? "ready-presentation-only" : undefined} style={{height:"100%"}}><ComposerShell initialModel={model} transport={fixtureTransport} initialDrafts={initialDrafts} draftTransport={draftTransport} /></div></AppShell>);
+createRoot(document.getElementById("root")!).render(<AppShell><div data-ui-contract={readyContract ? "ready-presentation-only" : undefined} style={{height:"100%"}}><ComposerShell initialModel={model} transport={fixtureTransport} initialDrafts={initialDrafts} draftTransport={draftTransport} snapshotMetrics={measuring} /></div></AppShell>);

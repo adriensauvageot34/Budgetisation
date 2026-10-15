@@ -1,0 +1,15 @@
+{
+  "source": "Vercel deployment metadata and build events, read-only, 2026-10-15",
+  "gitSha": "4d85b74351c5a6d40a1d5e4f8c690260a56ca9d5",
+  "deploymentId": "dpl_6Y3FMGCkXdp7c4fRX2vYVDQ33M34",
+  "url": "https://budgetisation-57qj7ry3g-adriensauvageot34-6137s-projects.vercel.app",
+  "target": "Preview",
+  "state": "READY",
+  "buildEvidence": [
+    "Next.js generated 8/8 static pages",
+    "Build Completed in /vercel/output [1m]",
+    "Deployment completed"
+  ],
+  "githubVercelStatus": "success",
+  "browserOpenedAndAuthenticated": false
+}
