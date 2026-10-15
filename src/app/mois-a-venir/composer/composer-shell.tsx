@@ -512,8 +512,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           ...(asset.templateKey === "night-out" ? { nightContextId: identity } : {}),
           ...(asset.templateKey === "short-stay" ? { stayContextId: identity } : {}),
           ...(asset.templateKey === "family-visit" ? { familyContextId: identity } : {}),
-          ...((["restaurant", "delivery", "activity", "purchase"].includes(asset.templateKey ?? "") && (asset.templateKey === "restaurant" || presetKey)) ? { restaurantContextId: identity, restaurantCreating: true } : {}),
-          ...(!["restaurant", "gift", "night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? "") && !presetKey ? { catalogContextId: identity } : {}),
+          ...((["restaurant", "fast-food", "delivery", "activity", "purchase"].includes(asset.templateKey ?? "") && (asset.templateKey === "restaurant" || presetKey)) ? { restaurantContextId: identity, restaurantCreating: true } : {}),
+          ...(!["restaurant", "gift", "night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? "") && (!["fast-food", "delivery", "activity", "purchase"].includes(asset.templateKey ?? "") || !presetKey) ? { catalogContextId: identity } : {}),
           fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values: {},
           operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: identity, values }) });
         return;
@@ -554,8 +554,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       ...(card.templateKey === "night-out" ? { nightContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "short-stay" ? { stayContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "family-visit" ? { familyContextId: card.contextOccurrenceId } : {}),
-      ...((card.templateKey === "restaurant" || !!presetForContext(card) && ["delivery", "activity", "purchase"].includes(card.templateKey)) ? { restaurantContextId: card.contextOccurrenceId } : {}),
-      ...(!["restaurant", "gift", "night-out", "short-stay", "family-visit"].includes(card.templateKey) && !presetForContext(card) ? { catalogContextId: card.contextOccurrenceId } : {}),
+      ...((card.templateKey === "restaurant" || !!presetForContext(card) && ["fast-food", "delivery", "activity", "purchase"].includes(card.templateKey)) ? { restaurantContextId: card.contextOccurrenceId } : {}),
+      ...(!["restaurant", "gift", "night-out", "short-stay", "family-visit"].includes(card.templateKey) && (!["fast-food", "delivery", "activity", "purchase"].includes(card.templateKey) || !presetForContext(card)) ? { catalogContextId: card.contextOccurrenceId } : {}),
       fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
@@ -649,7 +649,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
-    <div className={styles.columns}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} />
+    <div className={styles.columns}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableFocus} />
       <ComposerBoard model={shown} busy={busy} selected={selected} focused={focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
         add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails}
         contextGuide={editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
@@ -675,7 +675,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     {errorMessage && !editor && <div className={styles.errorNotice} role="alert">{errorMessage}<button className={styles.iconButton} aria-label="Fermer le message" onClick={() => setErrorMessage(null)}><X size={14} /></button></div>}
     <dialog ref={dialog} className={styles.dialog} data-night-editor={!!editor?.nightContextId || !!editor?.familyContextId || !!editor?.stayContextId || undefined} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
-      {editor && (() => { const context = draftState.contexts.find(c => c.contextOccurrenceId === (editor.nightContextId ?? editor.familyContextId)); const preset = context && presetForContext(context); return preset ? <div className={styles.presetEditorIntro}><PresetIllustration preset={preset} /><p>{preset.guidance}</p></div> : null; })()}
+      {editor && (() => { const context = draftState.contexts.find(c => c.contextOccurrenceId === (editor.nightContextId ?? editor.familyContextId ?? editor.stayContextId ?? editor.catalogContextId)); const preset = context && presetForContext(context); return preset ? <div className={styles.presetEditorIntro}><PresetIllustration preset={preset} /><p>{preset.guidance}</p></div> : null; })()}
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
       {editorKind && !loadedEditors[editorKind]
         ? <section className={styles.editorLoading} role={editorLoadError === editorKind ? "alert" : "status"} aria-live="polite" data-editor-loading={editorKind}>

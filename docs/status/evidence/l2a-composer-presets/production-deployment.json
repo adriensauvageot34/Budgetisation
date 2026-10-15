@@ -1,0 +1,38 @@
+{
+  "id": "dpl_TXMpiRaKakPxBtGERkn4sy9eSkv3",
+  "name": "budgetisation",
+  "url": "budgetisation-ewsxivayn-adriensauvageot34-6137s-projects.vercel.app",
+  "type": "LAMBDAS",
+  "state": "READY",
+  "createdAt": 1792095821904,
+  "creator": {
+    "uid": "ItlVoi62mpJ28TeqsxO3j569",
+    "username": "adriensauvageot34-6137"
+  },
+  "project": {
+    "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+    "name": "budgetisation",
+    "framework": "nextjs"
+  },
+  "meta": {
+    "githubCommitRef": "main",
+    "githubCommitSha": "c5d33fc6117417e83d66d2ec6c3348bc7df01937",
+    "githubCommitMessage": "Merge pull request #44: L2-A guided Composer presets and original clay artwork\n\nL2-A — cinq presets Composer guidés et cinq illustrations Clay originales",
+    "githubRepo": "Budgetisation",
+    "githubOrg": "adriensauvageot34"
+  },
+  "alias": [
+    "budgetisation-tan.vercel.app",
+    "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+    "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+  ],
+  "target": "production",
+  "regions": [
+    "iad1"
+  ],
+  "buildingAt": 1792095823060,
+  "ready": 1792095917838,
+  "readyState": "READY",
+  "source": "git",
+  "aliasError": null
+}

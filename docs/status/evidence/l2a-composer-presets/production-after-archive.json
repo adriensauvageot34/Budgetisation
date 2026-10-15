@@ -1,0 +1,19 @@
+{
+  "method": "PRIVILEGED_READ_ONLY_SQL_AFTER_AUTHENTICATED_UI_ARCHIVE",
+  "rows": [
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 3,
+      "matches_confirmed_digest": true,
+      "context_count": 5,
+      "official_revision": 0
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 2,
+      "matches_confirmed_digest": false,
+      "context_count": 0,
+      "official_revision": 0
+    }
+  ]
+}

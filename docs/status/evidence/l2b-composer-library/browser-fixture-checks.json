@@ -1,0 +1,127 @@
+{
+  "environment": "LOCAL_SYNTHETIC_PRODUCTION_REACT",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900,
+      "overflow": 0
+    },
+    {
+      "groups": 1,
+      "height": 900,
+      "overflow": 0,
+      "width": 1728
+    },
+    {
+      "groups": 1,
+      "height": 1080,
+      "overflow": 0,
+      "width": 1920
+    }
+  ],
+  "categoryProof": [
+    {
+      "key": "SOCIAL",
+      "mountedPresets": [],
+      "open": "false",
+      "overflow": 0
+    },
+    {
+      "key": "FOOD",
+      "mountedPresets": [
+        "uber-eats-order",
+        "chicken-snack",
+        "restaurant-for-two"
+      ],
+      "open": "true",
+      "overflow": 0
+    },
+    {
+      "key": "ACTIVITY",
+      "mountedPresets": [
+        "fishing-day",
+        "hiking-nature",
+        "beach-day",
+        "cinema",
+        "spa-relax"
+      ],
+      "open": "true",
+      "overflow": 0
+    },
+    {
+      "key": "PURCHASE",
+      "mountedPresets": [
+        "clothing-shopping",
+        "video-game-purchase",
+        "amazon-purchase",
+        "shein-purchase",
+        "aliexpress-purchase"
+      ],
+      "open": "true",
+      "overflow": 0
+    },
+    {
+      "key": "BEAUTY",
+      "mountedPresets": [
+        "mascara",
+        "hair-wax"
+      ],
+      "open": "true",
+      "overflow": 0
+    },
+    {
+      "key": "VISIT",
+      "mountedPresets": [
+        "fontes-family-visit",
+        "servian-family-visit",
+        "visit-friends"
+      ],
+      "open": "true",
+      "overflow": 0
+    },
+    {
+      "key": "TRAVEL",
+      "mountedPresets": [
+        "weekend-gite"
+      ],
+      "open": "true",
+      "overflow": 0
+    },
+    {
+      "key": "HOME",
+      "mountedPresets": [
+        "laundry-detergent",
+        "dishwashing-liquid"
+      ],
+      "open": "true",
+      "overflow": 0
+    },
+    {
+      "key": "OTHER",
+      "mountedPresets": [],
+      "open": "true",
+      "overflow": 0
+    }
+  ],
+  "coursesBefore": {
+    "count": 1,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85"
+  },
+  "amazonSaved": {
+    "digest": "ed61f70c77ce839bf3a0a83b656e736aabc89d43eb5a0427aeab508f500887ba",
+    "save": "SAVED"
+  },
+  "observed": [
+    "114 option routes covered by deterministic test",
+    "Nine categories, search accents and keyboard Enter",
+    "Favorite Mascara/Spa persisted across Reload then removed",
+    "Courses one existing card and unchanged digest",
+    "Protected control focus without editable modal",
+    "Mascara named component UNKNOWN SAVED FRESH Reload and palette reedit",
+    "Amazon merchant text plus home-small product and 18.00 retained Undo Redo Reload",
+    "Short-stay existing editor loaded",
+    "Friend-visit structured editor loaded",
+    "Generic Gift visible after Tout voir"
+  ],
+  "realRemoteWrites": 0
+}

@@ -1,0 +1,47 @@
+L2B-INDEX-ADMISSION-SEARCH-GENERICS-NO-OPTIONS PASS
+techno-night-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+uber-eats-order-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+fishing-day-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+fontes-family-visit-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+clothing-shopping-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+bar-apero-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+nightclub-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+friends-evening-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+home-evening-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+chicken-snack-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+restaurant-for-two-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+hiking-nature-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+beach-day-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+cinema-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+spa-relax-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+servian-family-visit-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+visit-friends-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+weekend-gite-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+video-game-purchase-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+amazon-purchase-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+shein-purchase-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+aliexpress-purchase-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+mascara-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+hair-wax-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+laundry-detergent-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+dishwashing-liquid-CREATE-EDIT-ROUNDTRIP-PARITY PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: COMPOSER_CONTEXT_LOCKED: Cette action n’est pas disponible. Vérifiez les contraintes et les informations manquantes.
+
+false !== true
+
+    at ok (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l2b-library.mjs:31:21)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l2b-library.mjs:104:19
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l2b-library.mjs:29:30)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l2b-library.mjs:102:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual'
+}
+
+Node.js v22.18.0

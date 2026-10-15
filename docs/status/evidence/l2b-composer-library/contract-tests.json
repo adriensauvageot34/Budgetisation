@@ -1,0 +1,16 @@
+{
+  "environment": "PGLITE_SYNTHETIC_ONLY",
+  "authenticated": false,
+  "checks": [
+    "L2B-INDEX-ADMISSION-SEARCH-GENERICS-NO-OPTIONS",
+    "L2B-FASTFOOD-GUIDE-PARTIAL-ADMISSION-AND-UNKNOWN-FALLBACK",
+    "L2B-ALL-PUBLISHED-OPTIONS-REACHABLE-BY-PARENT",
+    "L2B-WEEKEND-CHILD-NONADDITIVE",
+    "L2B-IMMUTABLE-APPLY-RELOAD-MONPLAN-REEDIT",
+    "L2B-21-NEW-ORIGINALS-PLUS-5-BYTE-PRESERVED"
+  ],
+  "coverage": [],
+  "remoteWrites": 0,
+  "remainingOnly": true,
+  "priorPresetProof": "contract-26-presets-run.log"
+}

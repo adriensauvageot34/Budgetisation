@@ -1,0 +1,20 @@
+{
+  "environment": "LOCAL_SYNTHETIC_PRODUCTION_REACT",
+  "measureSource": "document.documentElement.clientWidth/clientHeight and screenshots",
+  "viewports": [
+    { "requested": [1440, 900], "measured": [1440, 900], "horizontalOverflow": false, "screenshot": "desktop-1440.jpg" },
+    { "requested": [1728, 900], "measured": [1728, 900], "horizontalOverflow": false, "reeditArticlePreserved": true, "screenshot": "desktop-1728-reedit.jpg" },
+    { "requested": [1920, 1080], "measured": [1920, 1080], "horizontalOverflow": false, "previewPendingApplyUnavailable": true, "screenshot": "desktop-1920.jpg" }
+  ],
+  "fivePresetEditorsOpened": true,
+  "imageNaturalDimensions": [1200, 600],
+  "deliveryBudgetExplicit": "32",
+  "fishingBudgetExplicit": "15",
+  "clothingArticlePreservedAfterReload": true,
+  "clothingBudgetEdited": ["45", "50"],
+  "undoWhilePreviewPendingRestored45": true,
+  "redoExecuted": true,
+  "serverDraftSaved": true,
+  "remoteWrites": 0,
+  "mobileRedesign": false
+}

@@ -1,0 +1,318 @@
+{
+  "kind": "PGLITE_SYNTHETIC_ONLY",
+  "checks": [
+    "B3-01_NO_PLAN_LIGHT_PARITY",
+    "B3-EXTRA_FIRST_EXTERNAL_EXPENSE_HANDLER_MOUNTED",
+    "B3-02_EXTRA_PREVIEW_SAVE_RELOAD",
+    "B3-03_RESTAURANT_ABSORBED",
+    "B3-04_EDIT_REPLACES_SAME_ID",
+    "B3-13_OWNED_GUARDS_AND_INDEPENDENT_CHOICES",
+    "B3-05_KNOWN_OBSERVATION_HAS_PRIORITY",
+    "B3-06_AMBIGUOUS_OBSERVATIONS_NO_MATCH",
+    "B3-07_PURCHASE_BANK_SINGLE_COST",
+    "B3-08_COMPOSITE_PARTIAL_GUARD",
+    "B3-09_INCOME_UPDATE_IMMUTABLE_PLAN",
+    "B3-10_FORECAST_GENERATION_RECHECK",
+    "B3-11_R1_R2_KEEP_EXTERNAL_AND_REAL",
+    "B3-12_REPORT_ONE_ROOT_BOTH_MONTHS",
+    "B3-14_STALE_PREVIEW_REVISION_AND_ROW_CAS",
+    "B3-15_UNKNOWN_PRESERVES_KNOWN",
+    "B3-16_MOBILITY_USAGE_IS_NOT_BANK_CASH",
+    "B3-17_SCOPE_REFUSAL",
+    "B3-18_PREVIEW_READ_ZERO_WRITE",
+    "B3-EXTRA_FINANCIAL_ONLY_PREFLIGHT_PARITY",
+    "B3-EXTRA_UNAVAILABLE_NO_DIRECT_FALLBACK",
+    "B3-EXTRA_MONTH_INPUTS_DATABASE_CAS",
+    "B3-EXTRA_PERSISTED_PLAN_QUOTE_BECOMES_UNKNOWN",
+    "B3-EXTRA_DECLARATION_RESTORE_DELETE_WITH_PLAN",
+    "B3-EXTRA_LINKED_ROOT_EDIT_KEEP_REPORT_GUARD",
+    "B3-EXTRA_COMMITTED_RELOAD_ERROR_NO_BLIND_RETRY",
+    "B3-EXTRA_BOUNDED_SIMULATION_COST"
+  ],
+  "timings": [
+    {
+      "id": "B3-01_NO_PLAN_LIGHT_PARITY",
+      "ms": 515.1210000000065
+    },
+    {
+      "id": "B3-EXTRA_FIRST_EXTERNAL_EXPENSE_HANDLER_MOUNTED",
+      "ms": 61805.526
+    },
+    {
+      "id": "B3-02_EXTRA_PREVIEW_SAVE_RELOAD",
+      "ms": 2242.515299999999
+    },
+    {
+      "id": "B3-03_RESTAURANT_ABSORBED",
+      "ms": 6001.542700000005
+    },
+    {
+      "id": "B3-04_EDIT_REPLACES_SAME_ID",
+      "ms": 1536.7710999999836
+    },
+    {
+      "id": "B3-13_OWNED_GUARDS_AND_INDEPENDENT_CHOICES",
+      "ms": 4327.291900000011
+    },
+    {
+      "id": "B3-05_KNOWN_OBSERVATION_HAS_PRIORITY",
+      "ms": 947.8808999999892
+    },
+    {
+      "id": "B3-06_AMBIGUOUS_OBSERVATIONS_NO_MATCH",
+      "ms": 2.788399999990361
+    },
+    {
+      "id": "B3-07_PURCHASE_BANK_SINGLE_COST",
+      "ms": 151.74259999999776
+    },
+    {
+      "id": "B3-08_COMPOSITE_PARTIAL_GUARD",
+      "ms": 494.3955999999889
+    },
+    {
+      "id": "B3-09_INCOME_UPDATE_IMMUTABLE_PLAN",
+      "ms": 664.4139999999898
+    },
+    {
+      "id": "B3-10_FORECAST_GENERATION_RECHECK",
+      "ms": 501.89240000001155
+    },
+    {
+      "id": "B3-11_R1_R2_KEEP_EXTERNAL_AND_REAL",
+      "ms": 396.97609999999986
+    },
+    {
+      "id": "B3-12_REPORT_ONE_ROOT_BOTH_MONTHS",
+      "ms": 415.0871000000043
+    },
+    {
+      "id": "B3-14_STALE_PREVIEW_REVISION_AND_ROW_CAS",
+      "ms": 770.5532999999996
+    },
+    {
+      "id": "B3-15_UNKNOWN_PRESERVES_KNOWN",
+      "ms": 50.35420000000158
+    },
+    {
+      "id": "B3-16_MOBILITY_USAGE_IS_NOT_BANK_CASH",
+      "ms": 145.09330000000773
+    },
+    {
+      "id": "B3-17_SCOPE_REFUSAL",
+      "ms": 95.07190000000992
+    },
+    {
+      "id": "B3-18_PREVIEW_READ_ZERO_WRITE",
+      "ms": 592.9640000000072
+    },
+    {
+      "id": "B3-EXTRA_FINANCIAL_ONLY_PREFLIGHT_PARITY",
+      "ms": 505.171800000011
+    },
+    {
+      "id": "B3-EXTRA_UNAVAILABLE_NO_DIRECT_FALLBACK",
+      "ms": 23.338400000007823
+    },
+    {
+      "id": "B3-EXTRA_MONTH_INPUTS_DATABASE_CAS",
+      "ms": 11.956899999990128
+    },
+    {
+      "id": "B3-EXTRA_PERSISTED_PLAN_QUOTE_BECOMES_UNKNOWN",
+      "ms": 815.4836999999825
+    },
+    {
+      "id": "B3-EXTRA_DECLARATION_RESTORE_DELETE_WITH_PLAN",
+      "ms": 1342.4035999999905
+    },
+    {
+      "id": "B3-EXTRA_LINKED_ROOT_EDIT_KEEP_REPORT_GUARD",
+      "ms": 1071.6424000000115
+    },
+    {
+      "id": "B3-EXTRA_COMMITTED_RELOAD_ERROR_NO_BLIND_RETRY",
+      "ms": 403.74970000001485
+    },
+    {
+      "id": "B3-EXTRA_BOUNDED_SIMULATION_COST",
+      "ms": 992.5104999999749
+    }
+  ],
+  "worldReads": 90,
+  "planRpcCalls": 7,
+  "counts": {
+    "plans": 1,
+    "revisions": 7
+  },
+  "performance": {
+    "samples": [
+      {
+        "sample": 1,
+        "legacyDirectPreflightMs": 24.56960000001709,
+        "effectivePlanPreflightMs": 158.03049999999348,
+        "addedWorldReads": 1,
+        "compiledFinanceCalls": 6,
+        "compilerCalls": 6,
+        "legacyOwner": "DIRECT_V2",
+        "currentOwner": "PLAN_V1",
+        "financialOutputsExpectedToDiffer": true
+      },
+      {
+        "sample": 2,
+        "legacyDirectPreflightMs": 27.239300000015646,
+        "effectivePlanPreflightMs": 172.11169999997946,
+        "addedWorldReads": 1,
+        "compiledFinanceCalls": 6,
+        "compilerCalls": 6,
+        "legacyOwner": "DIRECT_V2",
+        "currentOwner": "PLAN_V1",
+        "financialOutputsExpectedToDiffer": true
+      },
+      {
+        "sample": 3,
+        "legacyDirectPreflightMs": 26.77129999999306,
+        "effectivePlanPreflightMs": 161.2670999999973,
+        "addedWorldReads": 1,
+        "compiledFinanceCalls": 6,
+        "compilerCalls": 6,
+        "legacyOwner": "DIRECT_V2",
+        "currentOwner": "PLAN_V1",
+        "financialOutputsExpectedToDiffer": true
+      },
+      {
+        "sample": 4,
+        "legacyDirectPreflightMs": 30.76640000002226,
+        "effectivePlanPreflightMs": 152.72060000000056,
+        "addedWorldReads": 1,
+        "compiledFinanceCalls": 6,
+        "compilerCalls": 6,
+        "legacyOwner": "DIRECT_V2",
+        "currentOwner": "PLAN_V1",
+        "financialOutputsExpectedToDiffer": true
+      },
+      {
+        "sample": 5,
+        "legacyDirectPreflightMs": 27.426699999981793,
+        "effectivePlanPreflightMs": 148.15260000000126,
+        "addedWorldReads": 1,
+        "compiledFinanceCalls": 6,
+        "compilerCalls": 6,
+        "legacyOwner": "DIRECT_V2",
+        "currentOwner": "PLAN_V1",
+        "financialOutputsExpectedToDiffer": true
+      }
+    ],
+    "note": "Synthetic transport and CPU only; legacy output is financially wrong with Plan. No product-latency gain claim."
+  },
+  "prospectiveWrites": [
+    {
+      "table": "phase2_month_inputs",
+      "operation": "upsert",
+      "affected": 1
+    },
+    {
+      "table": "phase2_month_inputs",
+      "operation": "upsert",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "insert",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "insert",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_month_inputs",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_month_inputs",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_month_inputs",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_month_inputs",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_month_inputs",
+      "operation": "update",
+      "affected": 0
+    },
+    {
+      "table": "phase2_month_inputs",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "insert",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "delete",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "insert",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "update",
+      "affected": 1
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "operation": "insert",
+      "affected": 1
+    }
+  ],
+  "historicalWrites": 0,
+  "realAuthJWT": "NOT_RUN",
+  "atomicCrossOwnerCommit": "NOT_IMPLEMENTED_NO_NEW_MIGRATION"
+}

@@ -316,7 +316,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_RESTAURANT" || request.kind === "EDIT_PRESET_CONTEXT") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);
-      if (!card || (request.kind === "EDIT_RESTAURANT" ? card.templateKey !== "restaurant" : !["delivery", "activity", "purchase"].includes(card.templateKey))
+      if (!card || (request.kind === "EDIT_RESTAURANT" ? card.templateKey !== "restaurant" : !["fast-food", "delivery", "activity", "purchase"].includes(card.templateKey))
         || !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
       state = request.kind === "EDIT_RESTAURANT" ? editRestaurant(state, request.edit) : editGuidedContext(state, request.edit);
       const vehicleRef = request.edit.slots?.transport?.[0]?.kind === "MOBILITY_INTENT" ? request.edit.slots.transport[0].route?.vehicleRef : null;

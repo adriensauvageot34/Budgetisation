@@ -7,15 +7,16 @@ export type GuidedContextEdit = Readonly<{ contextOccurrenceId: string; fields?:
   slots?: Readonly<Partial<Record<"meal" | "main" | "item" | "extras" | "transport", readonly ComponentSelectionV1[]>>> }>;
 export const guidedContextShape = (templateKey: string) => ({
   restaurant: { slot: "meal", option: "restaurant", total: "Addition totale", complement: "Complément de repas", envelope: "Restaurants", participants: true, transport: true },
+  "fast-food": { slot: "meal", option: "fast-food", total: "Repas rapide", complement: "Complément non inclus", envelope: "Fast-food", participants: true, transport: true },
   delivery: { slot: "meal", option: "delivery", total: "Commande livrée", complement: "Frais ou complément non inclus", envelope: "Livraisons", participants: true, transport: false },
   activity: { slot: "main", option: "activity", total: "Budget de la sortie", complement: "Frais ponctuel non inclus", envelope: null, participants: true, transport: true },
-  purchase: { slot: "item", option: "item", total: "Achat de vêtements", complement: "Article ou frais non inclus", envelope: "Vêtements", participants: false, transport: true },
-} as const)[templateKey as "restaurant" | "delivery" | "activity" | "purchase"];
+  purchase: { slot: "item", option: "item", total: "Montant de l’achat", complement: "Article ou frais non inclus", envelope: null, participants: false, transport: true },
+} as const)[templateKey as "restaurant" | "fast-food" | "delivery" | "activity" | "purchase"];
 
 /** Replaces published sockets atomically. Never adds a financial parent total. */
 export function editGuidedContext(raw: PlanSemanticStateV1, edit: GuidedContextEdit): PlanSemanticStateV1 {
   const state = parsePlanSemanticState(raw), context = state.contexts.find(c => c.contextOccurrenceId === edit.contextOccurrenceId);
-  if (!context || !presetForContext(context) || !["delivery", "activity", "purchase"].includes(context.templateKey))
+  if (!context || !presetForContext(context) || !["fast-food", "delivery", "activity", "purchase"].includes(context.templateKey))
     throw new TypeError("COMPOSER_PRESET_CONTEXT_INVALID");
   if (state.preferences.anchors.includes(context.contextOccurrenceId) || state.preferences.flexibility[context.contextOccurrenceId] === "PRESERVE")
     throw new TypeError("COMPOSER_CONTEXT_LOCKED");

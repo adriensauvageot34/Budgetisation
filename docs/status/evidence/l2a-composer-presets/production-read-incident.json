@@ -1,0 +1,18 @@
+{
+  "commit": "c5d33fc6117417e83d66d2ec6c3348bc7df01937",
+  "deployment": "dpl_TXMpiRaKakPxBtGERkn4sy9eSkv3",
+  "source": "Canonical timing",
+  "code": "57014",
+  "httpPaths": [
+    "GET /mois-a-venir/composer",
+    "POST /api/composer/preview"
+  ],
+  "observedAt": "2026-10-15T20:29:10Z",
+  "browserErrorDigest": "3982295859",
+  "draftSavedBeforeRead": true,
+  "sqlConfirmsFivePresetsAndDigest": true,
+  "officialRevision": 0,
+  "preexistingReference": "L1 release-reload-incident.json; unchanged Canonical/SNAP-3 source",
+  "heavyLoop": false,
+  "statementTimeoutChanged": false
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "file": "check-l2a-presets.mjs",
+    "exitCode": 0,
+    "elapsedMs": 105056
+  },
+  {
+    "file": "check-l1-restaurant.mjs",
+    "exitCode": 0,
+    "elapsedMs": 124335
+  },
+  {
+    "file": "check-phase2-planner-composer.mjs",
+    "exitCode": 0,
+    "elapsedMs": 148161
+  },
+  {
+    "file": "check-phase2-planner-p12.mjs",
+    "exitCode": 0,
+    "elapsedMs": 223082
+  },
+  {
+    "file": "check-phase2-planner-p13.mjs",
+    "exitCode": 0,
+    "elapsedMs": 24372
+  },
+  {
+    "file": "check-phase2-planner-kernel.mjs",
+    "exitCode": 0,
+    "elapsedMs": 35687
+  },
+  {
+    "file": "check-composer-post-snap3-draft-http.mjs",
+    "exitCode": 0,
+    "elapsedMs": 1440
+  },
+  {
+    "file": "check-composer-p14-p2-scheduler.mjs",
+    "exitCode": 0,
+    "elapsedMs": 6099
+  },
+  {
+    "file": "check-b3-transverse-plan.mjs",
+    "exitCode": 0,
+    "elapsedMs": 154313
+  },
+  {
+    "file": "check-planner-performance-parity.mjs",
+    "exitCode": 0,
+    "elapsedMs": 7049
+  }
+]

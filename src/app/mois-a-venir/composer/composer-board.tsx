@@ -53,7 +53,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   const focusedInCluster = !!openCluster?.children.some(child => child.id === focusedCard?.contextOccurrenceId);
   const renderAtomic = (item:AtomicNode,inCluster=false)=><InventoryAtomic item={item} inCluster={inCluster} closeCluster={closeCluster}
     model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} editContext={editContext} hover={hover}/>;
-  const palette = focusedCard && <div className={styles.paletteDock} data-palette-dock>{contextGuide ?? <ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} close={() => focus(null)} />}</div>;
+  const palette = focusedCard && <div className={styles.paletteDock} data-palette-dock>{contextGuide ?? <ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} onConfigure={!focusedCard.readOnly ? () => editContext(focusedCard) : undefined} close={() => focus(null)} />}</div>;
   const trashZone = trashVisible && <div className={styles.trash} data-trash data-protected={interaction?.grabbed?.protected} data-compatible={trashAccepts || !!interaction?.grabbed?.removeOperation} data-drag-over={sameTarget(interaction?.overTarget ?? null, trashTarget)}
     role="status" aria-label={interaction?.grabbed?.protected ? "Protégée · retrait interdit" : "Retirer l’élément saisi"}
     onDragOver={e => { e.stopPropagation(); if (!busy && !interaction?.grabbed?.protected) { e.preventDefault(); interaction?.over(trashTarget); } }}
