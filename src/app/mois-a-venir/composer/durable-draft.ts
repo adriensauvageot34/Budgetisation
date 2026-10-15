@@ -118,7 +118,9 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
       if (latest.baseStale || latest.active?.digest !== confirmed.current) {
         blocked.current = true; setStatus("CONFLICT"); setMessage("Une autre version existe. Vos modifications locales sont préservées.");
       } else retry();
-    } catch { setStatus("ERROR"); setMessage("Impossible de relire le brouillon."); }
+    } catch (error) { setStatus("ERROR"); setMessage(error instanceof Error && error.message === "DRAFT_CONTRACT_INCOMPATIBLE"
+      ? "Version du brouillon incompatible. Vos modifications locales restent dans cette page."
+      : "Impossible de relire le brouillon."); }
   };
   const lifecycle = async (kind: "ARCHIVE" | "RESTORE", draft: StoredComposerDraft, discardLocal = false): Promise<boolean> => {
     if (!transport || !navigator.onLine || inFlight.current || !discardLocal && (status === "DIRTY" || status === "ERROR" || status === "OFFLINE")) return false;
@@ -126,7 +128,9 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
     const command = { targetMonth, draftId: draft.draftId, expectedDraftVersion: draft.version, requestId: crypto.randomUUID() };
     try {
       const result = await (kind === "ARCHIVE" ? transport.archive(command) : transport.restore(command));
-      if (!result.ok) { if (result.latest) updateSnapshot(result.latest); setStatus("CONFLICT"); setMessage(result.message); return false; }
+      if (!result.ok) { if (result.latest) updateSnapshot(result.latest);
+        setStatus(["CONFLICT", "BASE_STALE", "ACCESS_DENIED"].includes(result.code) ? "CONFLICT" : "ERROR");
+        setMessage(result.message); return false; }
       // Relire after mutation, including a recovered lost response; never issue it twice blindly.
       const latest = await transport.read(targetMonth);
       updateSnapshot(latest); confirmed.current = latest.active?.digest ?? semanticStateDigest(currentState.current);

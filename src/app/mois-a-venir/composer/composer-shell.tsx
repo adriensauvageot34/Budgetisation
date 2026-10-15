@@ -24,6 +24,7 @@ import { editorChunks, type EditorChunkKind, type LoadedEditorChunks } from "./e
 import { NightOutEditor } from "./night-out-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useDurableDraft, type DraftTransport } from "./durable-draft";
+import { composerDraftHttpTransport } from "./draft-http-transport";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
 import type { ComposerApplyReceipt } from "@/domain/phase2/planner/composer-ui-contract";
@@ -35,11 +36,12 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
-export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport = null, snapshotMetrics = false }: {
+export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
-  initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null;
+  initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null; durableDraftHttp?: boolean;
   snapshotMetrics?: boolean;
 }) {
+  const draftTransport = durableDraftHttp ? composerDraftHttpTransport : suppliedDraftTransport;
   const transport: ComposerTransport = useCommittedEvent(async (request: ComposerRequest) => {
     const started = performance.now();
     const response = await suppliedTransport(request);
@@ -109,12 +111,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [comparison, setComparison] = useState<ComparisonSnapshot | null>(null);
   const durable = useDurableDraft(draftTransport, initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison);
   const skipUnloadWarning = useRef(false);
-  const editorReloadSafe = editorLoadError !== null && !!draftTransport && !comparison && durable.online && durable.status === "SAVED" && !durable.unsaved
+  const savedReloadSafe = !!draftTransport && !comparison && durable.online && durable.status === "SAVED" && !durable.unsaved
     && durable.snapshot?.active?.digest === semanticStateDigest(draftState);
-  function reloadSavedEditor() {
+  const editorReloadSafe = editorLoadError !== null && savedReloadSafe;
+  function reloadSavedComposer() {
     // A browser can remember a failed module import for this document. Reload
     // only a server-confirmed Draft, never an unconfirmed in-memory decision.
-    if (!editorReloadSafe || durable.snapshot?.active?.digest !== semanticStateDigest(localDraft.current)) return;
+    if (!savedReloadSafe || durable.snapshot?.active?.digest !== semanticStateDigest(localDraft.current)) return;
     skipUnloadWarning.current = true;
     window.location.reload();
   }
@@ -181,7 +184,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   }, []);
   useEffect(() => {
     if (!(draftTransport ? durable.unsaved : shown.board.draft.dirty) || skipUnloadWarning.current) return;
-    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    const warn = (event: BeforeUnloadEvent) => { if (!skipUnloadWarning.current) event.preventDefault(); };
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
   }, [durable.unsaved, shown.board.draft.dirty, draftTransport]);
   function archiveDraft(returnToCenter: boolean) {
@@ -609,6 +612,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
               <button disabled={!!durable.snapshot?.active} onClick={() => restoreDraft(draft)}>Restaurer</button></div>)}</details>}
         </div>}
         {draftTransport && ["ERROR", "CONFLICT", "OFFLINE"].includes(durable.status) && <span className={styles.saveMessage} data-save-message role="status">{durable.message}</span>}
+        {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
+          Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
     <div className={styles.columns}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} drag={stableLibraryDrag} />
       <ComposerBoard model={shown} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
@@ -635,7 +640,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           {editorLoadError === editorKind && <>
             <p>{editorReloadSafe ? "Votre brouillon est sauvegardé. Vous pouvez recharger Composer, puis rouvrir cette carte."
               : "Gardez cette page ouverte : un rechargement attend la sauvegarde confirmée de votre brouillon."}</p>
-            {editorReloadSafe && <button type="button" className={styles.secondary} onClick={reloadSavedEditor}>Recharger Composer avec mon brouillon sauvegardé</button>}
+            {editorReloadSafe && <button type="button" className={styles.secondary} onClick={reloadSavedComposer}>Recharger Composer avec mon brouillon sauvegardé</button>}
           </>}
         </section>
         : editor?.stayContextId && ShortStayEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)
