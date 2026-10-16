@@ -11,6 +11,7 @@ import { revisionChangeSet } from "./change-set";
 import { knownContextReferences } from "./context-selections";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
+import type { HistoricalControlAdmission } from "./historical-control-admission";
 
 export type PlannerDependencies = Readonly<{ repository: PlanRepository;
   householdPersons?: readonly Readonly<{ personId: string; displayName: string }>[];
@@ -18,7 +19,7 @@ export type PlannerDependencies = Readonly<{ repository: PlanRepository;
   readWorld(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
   /** Composer opening/READ only. Apply, CHECK_APPLY and official Mon Plan retain readWorld. */
   readComposerWorld?(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
-  prepareWorld?(world: PlanningWorldFacts, state: PlanSemanticStateV1): Promise<PlanningWorldFacts>;
+  prepareWorld?(world: PlanningWorldFacts, state: PlanSemanticStateV1, historical?: HistoricalControlAdmission): Promise<PlanningWorldFacts>;
   validateContextReferences?(householdId: string, refs: Readonly<{ personIds: readonly string[]; placeIds: readonly string[] }>): Promise<void> }>;
 export type AppliedPlanScenario = Readonly<{ revision: PlanRevision; projectionEvidence: PlanRevision["projectionEvidence"]; replayed: boolean }>;
 function replayEvidence(previous: PlanRevision, state: PlanSemanticStateV1, baselineDigest: string, previewDigest: string,

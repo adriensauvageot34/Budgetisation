@@ -9,10 +9,12 @@ import type { ComponentRequest, CompiledComponent, CompiledPlanSlot, BaselineCon
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ContextualEffect } from "@/domain/phase2/planner/component-contract";
 import { compare, emptyValue } from "./baseline-evidence";
-import { allowsUnitOverride, monthlyOccurrenceOverride } from "./control-fields";
+import { allowsUnitOverride, monthlyOccurrenceOverride, controlFields } from "./control-fields";
+import { validateControlFieldNumber } from "@/domain/phase2/planner/control-input";
+import { isHistoricalControl, type HistoricalControlAdmission } from "./historical-control-admission";
 
 const cents = (value: Big): string => value.toFixed(2);
-export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSemanticStateV1, forced: readonly string[] = []): CompiledPlanSlot[] {
+export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSemanticStateV1, forced: readonly string[] = [], historical?: HistoricalControlAdmission): CompiledPlanSlot[] {
   const slots: PlanningPlanSlot[] = [...baseline.slots, ...baseline.structuralFacts.savingsReservations.filter(r => r.reservationId !== "policy:safety-reserve").map(r => {
     const key = `savings:${r.reservationId}`;
     return { planSlotId: planSlotId(key), slotIdentityKey: key, controlKey: key, semanticKey: key, kind: "AMOUNT" as const, scope: { kind: "HOUSEHOLD" as const },
@@ -43,6 +45,15 @@ export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSe
       }
       if (slot.renewalAuthority && (!new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))
         || slot.renewalAuthority.conditional && new Big(decisionAmount(decision.value.count)).gt(1))) throw new TypeError("RENEWAL_OCCURRENCE_COUNT_INVALID");
+      // Use the published owner fields for every new occurrence decision, even
+      // when the caller submits an entire Draft rather than a SET_STATE mutation.
+      // Keep legacy refusal codes above. Amount floors and protected savings
+      // retain their existing BLOCK constraints.
+      if (slot.kind !== "AMOUNT" && !isHistoricalControl(historical, baseline.householdId, baseline.targetMonth, decision)) {
+        const fields = controlFields(slot, false)!;
+        validateControlFieldNumber(fields.count, decision.value.count);
+        if (decision.value.unitAmount !== undefined) validateControlFieldNumber(fields.unitAmount, decision.value.unitAmount);
+      }
       pending.delete(decision.decisionSlotKey);
     }
     const effectiveAmount = slot.kind === "AMOUNT" ? decision ? decisionAmount(decision.value.amount) : slot.baselineValue.amount : null;

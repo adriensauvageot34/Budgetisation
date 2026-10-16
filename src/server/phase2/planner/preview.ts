@@ -10,6 +10,8 @@ import { buildPlanProjection, PLAN_PROJECTION_MODEL } from "./projection";
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { materializePlanSlots } from "./plan-slot-resolver";
 import { snapshotSync } from "./snapshot-observation";
+import type { PlanRevision } from "@/domain/phase2/planner/plan-contract";
+import { historicalControlAdmission, type HistoricalControlAdmission } from "./historical-control-admission";
 
 /** The branches share all authorities/versions. In the audited v6 Compiler,
  * forcedOwnedSlotKeys only affects materialization. Compare both complete slot
@@ -32,18 +34,25 @@ export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: P
   return evaluate(world,semanticState,base,true);
 }
 
+/** Official immutable read only. The proof is tied to the persisted revision's
+ * exact controls; it is never accepted by READ's raw Draft or by a new Apply. */
+export function evaluateHistoricalPlanScenario(world: PlanningWorldFacts, revision: PlanRevision, base: PlannerExpectedBase,
+  includeMarginals = true): PlanScenarioPreview {
+  return evaluate(world, revision.semanticState, base, includeMarginals, historicalControlAdmission(revision));
+}
+
 /** Prospective mutation preflight only. Absolute scenario/constraints remain
  * identical; per-decision attribution is unnecessary. Never used for Apply
  * receipts or official evidence digests. */
 export function evaluatePlanMutation(world:PlanningWorldFacts,semanticState:PlanSemanticStateV1,base:PlannerExpectedBase):PlanScenarioPreview {
   return evaluate(world,semanticState,base,false);
 }
-function evaluate(world:PlanningWorldFacts,semanticState:PlanSemanticStateV1,base:PlannerExpectedBase,includeMarginals:boolean):PlanScenarioPreview {
+function evaluate(world:PlanningWorldFacts,semanticState:PlanSemanticStateV1,base:PlannerExpectedBase,includeMarginals:boolean,historical?:HistoricalControlAdmission):PlanScenarioPreview {
   return snapshotSync("Compiler_Finance_V2", () => {
   const state = parsePlanSemanticState(semanticState);
   const input = { baseline: world.baseline, semanticState: state, externalIntents: world.externalIntents, world,
     compilerVersion: PLANNER_COMPILER_VERSION, modelVersions: { ...world.modelVersions, projection: PLAN_PROJECTION_MODEL } };
-  const compiled = compileSemanticPlan(input);
+  const compiled = compileSemanticPlan(input, historical);
   const referenceState = emptyPlanSemanticState(state.targetMonth);
   const baselineCompiled = isSemanticallyNeutralPlanEvaluation(world, state, referenceState, compiled, input.compilerVersion)
     ? compiled : compileSemanticPlan({ ...input, semanticState: referenceState,
@@ -53,7 +62,7 @@ function evaluate(world:PlanningWorldFacts,semanticState:PlanSemanticStateV1,bas
   const initial = buildPlanProjection(world, state, compiled, scenario, baselineCompiled, baselineScenario);
   const marginal = (targetRef: string, makeState: () => PlanSemanticStateV1) => {
     try {
-      const without = makeState(), alternative = compileSemanticPlan({ ...input, semanticState: without });
+      const without = makeState(), alternative = compileSemanticPlan({ ...input, semanticState: without }, historical);
       const alternativeScenario = deriveCompiledMonthScenario(world, alternative);
       const after = buildPlanProjection(world, without, alternative, alternativeScenario, baselineCompiled, baselineScenario).plan.economicMonthEndRemainder;
       const current = initial.plan.economicMonthEndRemainder;

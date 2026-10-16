@@ -1,7 +1,7 @@
 import Big from "big.js";
 import { decisionAmount } from "../month-decision-contract";
 import type { ComposerCardView } from "./composer-contract";
-import type { ControlDimension } from "./adjustment-contract";
+import type { AdjustmentCapability, ControlDimension } from "./adjustment-contract";
 import type { PlannerJsonObject } from "./json";
 
 /** Input normalization only. Financial totals still come from the Compiler. */
@@ -23,14 +23,21 @@ export function controlInputValue(card: ComposerCardView, dimension: ControlDime
   return { count: card.value.count, unitAmount: value };
 }
 
+export function validateControlFieldNumber(rule: NonNullable<AdjustmentCapability["fields"]>[ControlDimension], input: unknown): void {
+  const amount = new Big(decisionAmount(input));
+  if (!rule || amount.lt(rule.minimum) || amount.gt(rule.maximum) || rule.integer && !amount.round(0).eq(amount))
+    throw new TypeError("COMPOSER_CONTROL_FIELD_NOT_ADMITTED");
+}
+
 export function validateControlValue(card: ComposerCardView, value: PlannerJsonObject): void {
   if (card.capability?.flexibility === "LOCKED" || !card.capability?.actions.length) throw new TypeError("COMPOSER_CONTROL_LOCKED");
   const required = card.capability.actions.includes("SET_SLOT_OCCURRENCES") ? "count" : "amount";
   if (!Object.hasOwn(value, required)) throw new TypeError("COMPOSER_CONTROL_FIELD_REQUIRED");
   for (const [key, input] of Object.entries(value)) {
-    const rule = card.capability.fields?.[key as ControlDimension], amount = new Big(decisionAmount(input));
-    if (!rule || rule.status !== "EDITABLE" || amount.lt(rule.minimum) || amount.gt(rule.maximum) || rule.integer && !amount.round(0).eq(amount))
+    const rule = card.capability.fields?.[key as ControlDimension];
+    if (!rule || rule.status !== "EDITABLE")
       throw new TypeError("COMPOSER_CONTROL_FIELD_NOT_ADMITTED");
+    validateControlFieldNumber(rule, input);
   }
 }
 

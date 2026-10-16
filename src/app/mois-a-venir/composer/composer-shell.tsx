@@ -34,6 +34,7 @@ import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2
 import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
 import type { ComposerApplyReceipt } from "@/domain/phase2/planner/composer-ui-contract";
 import { useCommittedEvent } from "./use-committed-event";
+import { InlineEditContext, useOwnedInlineEdits } from "./inline-edit-registry";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   restaurantContextId?: string; restaurantCreating?: boolean;
@@ -47,6 +48,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null; durableDraftHttp?: boolean;
   snapshotMetrics?: boolean; previewHttp?: boolean;
 }) {
+  const inlineEdits = useOwnedInlineEdits();
   const draftTransport = durableDraftHttp ? composerDraftHttpTransport : suppliedDraftTransport;
   const transport: ComposerTransport = useCommittedEvent(async (request: ComposerRequest) => {
     const started = performance.now();
@@ -149,7 +151,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   function reloadSavedComposer() {
     // A browser can remember a failed module import for this document. Reload
     // only a server-confirmed Draft, never an unconfirmed in-memory decision.
-    if (!savedReloadSafe || durable.snapshot?.active?.digest !== semanticStateDigest(localDraft.current)) return;
+    if (inlineEdits.registry.count() || !savedReloadSafe || durable.snapshot?.active?.digest !== semanticStateDigest(localDraft.current)) return;
     skipUnloadWarning.current = true;
     window.location.reload();
   }
@@ -181,6 +183,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     });
   }
   function stage(operation: ComposerOperation, history: "push" | "undo" | "redo" = "push", restored?: PlanSemanticStateV1) {
+    if (history !== "push") {
+      // Flush an already explicit +/- batch first. Its history entry must exist
+      // before Undo can target it; do not undo an unrelated older decision.
+      if (inlineEdits.registry.flushPending()) return false;
+      if (!inlineEdits.registry.confirmDiscard(window.confirm)) return false;
+    }
     if (snapshotMetrics) snapshotIntent.current=performance.now();
     const before = localDraft.current;
     const next = restored ?? stageLocalDecision(current.current, before, operation);
@@ -215,10 +223,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     window.addEventListener("keydown", escape); return () => window.removeEventListener("keydown", escape);
   }, []);
   useEffect(() => {
-    if (!(draftTransport ? durable.unsaved : shown.board.draft.dirty) || skipUnloadWarning.current) return;
+    if (!(inlineEdits.count || (draftTransport ? durable.unsaved : shown.board.draft.dirty)) || skipUnloadWarning.current) return;
     const warn = (event: BeforeUnloadEvent) => { if (!skipUnloadWarning.current) event.preventDefault(); };
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
-  }, [durable.unsaved, shown.board.draft.dirty, draftTransport]);
+  }, [durable.unsaved, shown.board.draft.dirty, draftTransport, inlineEdits.count]);
   function archiveDraft(returnToCenter: boolean) {
     const active = durable.snapshot?.active;
     if (active) setDraftConfirmation({ kind: returnToCenter ? "ABANDON" : "RESTART", draftId: active.draftId, version: active.version });
@@ -228,6 +236,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     setDraftConfirmation({ kind: "RESTORE", draftId: draft.draftId, version: draft.version });
   }
   async function confirmDraftAction() {
+    if (!inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (inlineEdits.registry.flushPending()) return;
     const action = draftConfirmation;
     if (!action || draftConfirmationBusy) return;
     if (action.kind === "LOAD_SERVER") { skipUnloadWarning.current = true; window.location.reload(); return; }
@@ -388,6 +398,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   function endDrag() { clearHover(); grab.current = null; assistantGrab.current = null; assistantOver.current = null; setGrabbed(null); setSelected(null); setOverTarget(null); overRef.current = null; }
   function startDrag(key: string, event: DragEvent<HTMLElement>) {
     if (busyRef.current) { event.preventDefault(); return; }
+    inlineEdits.registry.flushPending();
+    const cardRef = event.currentTarget.closest<HTMLElement>("[data-control]")?.dataset.control;
+    if (cardRef && !inlineEdits.registry.confirmDiscard(window.confirm, new Set([cardRef]))) { event.preventDefault(); return; }
     clearHover();
     const candidate = key.startsWith("assistant:") ? suggestions?.candidates.find(c => `assistant:${c.candidateId}` === key) : null;
     const source = candidate ? { sourceKey: key, assetKey: key, label: candidate.label, iconKey: shown.presentation.objects[candidate.targetRef]?.iconKey ?? "activity", economicAmount: candidate.impactOnMonthEnd, protected: false }
@@ -568,7 +581,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
   }
   function apply() {
-    if (pendingApply || comparison || grab.current || editor || previewStatus !== "FRESH" || model.board.cockpit.applyReadiness === "BLOCKED"
+    if (inlineEdits.registry.count() || pendingApply || comparison || grab.current || editor || previewStatus !== "FRESH" || model.board.cockpit.applyReadiness === "BLOCKED"
       || semanticStateDigest(localDraft.current) !== model.board.draft.semanticStateDigest
       || draftTransport && (durable.status !== "SAVED" || !navigator.onLine || durable.snapshot?.baseStale)) return;
     if (model.board.cockpit.applyReadiness === "READY_WITH_WARNINGS") {
@@ -579,7 +592,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if (applyAttempt.current?.key !== key) applyAttempt.current = { key, applyRequestId: crypto.randomUUID() };
     void run({ kind: "APPLY", command: { ...model.proof, applyRequestId: applyAttempt.current.applyRequestId } }, "none");
   }
-  const applyDisabled = busy || !!pendingApply || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
+  const applyDisabled = !!inlineEdits.count || busy || !!pendingApply || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
     || !!draftTransport && (durable.status !== "SAVED" || !durable.online || !!durable.snapshot?.baseStale);
   const openProjectionDetails = () => {
     clearHover();
@@ -587,7 +600,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   };
   const showUnresolved = () => { clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
   const navigateDecision = (targetRef: string) => { setFocusedContext(targetRef); setReveal(previous => ({ targetRef, sequence: (previous?.sequence ?? 0) + 1 })); };
-  const applyReason = busy ? "La prévisualisation serveur est en cours." : pendingApply ? "L’issue de la demande précédente doit être vérifiée avant toute nouvelle application."
+  const applyReason = inlineEdits.count ? "Une saisie n’est pas validée ou un réglage attend confirmation. Validez ou annulez la saisie avant de transformer le mois en Plan."
+    : busy ? "La prévisualisation serveur est en cours." : pendingApply ? "L’issue de la demande précédente doit être vérifiée avant toute nouvelle application."
     : draftTransport && (durable.status !== "SAVED" || !durable.online || durable.snapshot?.baseStale)
     ? "Attendez la sauvegarde confirmée du brouillon et une connexion active avant d’appliquer."
     : hoverModel || grabbed ? "Terminez le geste pour appliquer le mois."
@@ -619,7 +633,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stableDetails=useCommittedEvent(openProjectionDetails);
   const stableFocus=useCommittedEvent((id:string|null)=>{setFocusedContext(id);if(editor?.restaurantContextId&&id!==editor.restaurantContextId)setEditor(null);});
   const stableRevealFocus=useCommittedEvent((id:string|null)=>{stableFocus(id);if(id)setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));});
-  return <ComposerInteractionContext.Provider value={interactionView}>
+  return <InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
@@ -636,6 +650,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {comparison ? <div className={styles.compareActions}><button data-compare-keep className={styles.secondary} disabled={busy} onClick={() => compare(true)}>Garder cette variante</button><button data-compare-exit className={styles.textButton} disabled={busy} onClick={() => compare(false)}>Quitter la comparaison</button></div>
           : <><div className={styles.applyControl} tabIndex={applyDisabled ? 0 : undefined} aria-label={applyDisabled ? applyReason : undefined} data-apply-control data-unavailable={applyDisabled}>
               <button className={styles.primary} data-apply disabled={applyDisabled} aria-describedby={applyDisabled ? "apply-disabled-reason" : undefined} onClick={apply}>{busy ? "Validation…" : "Transformer en Plan"}</button>
+              {!!inlineEdits.count && <span className={styles.inlineEditNotice} data-inline-unvalidated role="status">Saisie non validée</span>}
               {applyDisabled && <div className={styles.applyReason} role="group" aria-label="Application indisponible" data-apply-reason><p id="apply-disabled-reason">{applyReason}</p>
                 {!!model.presentation.unresolvedCount && <button data-show-unresolved onClick={showUnresolved}>Afficher les éléments</button>}</div>}
             </div></>}
@@ -755,5 +770,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></ComposerInteractionContext.Provider>;
+  </div></ComposerInteractionContext.Provider></InlineEditContext.Provider>;
 }

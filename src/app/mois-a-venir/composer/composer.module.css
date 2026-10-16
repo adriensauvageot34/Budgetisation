@@ -89,6 +89,7 @@
 .textButton { border:0; background:transparent; padding:5px; color:#78688f; font-size:10px!important; }
 .textButton:hover:not(:disabled) { text-decoration:underline; text-underline-offset:3px; }
 .applyControl { position:relative; border-radius:10px; }
+.inlineEditNotice { position:absolute; top:calc(100% + 2px); right:0; white-space:nowrap; font-size:10px; color:#805125; }
 .applyControl[data-unavailable="true"] .primary { background:#e5e0eb; color:#625c69; box-shadow:none; opacity:1; }
 .coursesReference { margin:0 0 16px; padding:14px; border:1px solid #dfd6e8; border-radius:12px; background:#f7f3fb; color:#342d3d; font-size:13px; line-height:1.5; }
 .coursesReference p { margin:6px 0 0; }

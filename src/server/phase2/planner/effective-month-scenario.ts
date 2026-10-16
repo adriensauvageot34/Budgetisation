@@ -4,7 +4,8 @@ import type { PlannerDependencies } from "./apply";
 import type { MonthForecastSnapshot } from "../month-forecast-snapshot";
 import type { PlannedExpenseScenarioEntry } from "../planned-expenses";
 import { deriveMonthScenario, type MonthInputs } from "../month-scenario";
-import { evaluatePlanScenario } from "./preview";
+import { evaluateHistoricalPlanScenario } from "./preview";
+import { historicalControlAdmission } from "./historical-control-admission";
 import { assertRevisionEvidence } from "./revision-evidence";
 import { officialPlanComparison } from "./official-comparison";
 import type { ActivePlanPointer } from "@/domain/phase2/planner/official-comparison-contract";
@@ -35,8 +36,8 @@ export async function resolveEffectiveMonthScenario(deps: EffectiveMonthDependen
   assertRevisionEvidence(revision);
   const world = await deps.readWorld(household, month);
   if (world.baseline.householdId !== household) throw new TypeError("PLANNER_WORLD_HOUSEHOLD_INVALID");
-  const prepared = deps.prepareWorld ? await deps.prepareWorld(world, revision.semanticState) : world;
-  const preview = evaluatePlanScenario(prepared, revision.semanticState, { expectedActiveRevisionId: stored.plan.activeRevisionId,
+  const prepared = deps.prepareWorld ? await deps.prepareWorld(world, revision.semanticState, historicalControlAdmission(revision)) : world;
+  const preview = evaluateHistoricalPlanScenario(prepared, revision, { expectedActiveRevisionId: stored.plan.activeRevisionId,
     expectedActiveRevisionNumber: stored.plan.activeRevisionNumber });
   const evidence = revision.projectionEvidence;
   const sameAuthorities = preview.compiledManifestDigest === revision.compiledManifestDigest;

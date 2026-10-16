@@ -365,6 +365,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       "PLANNER_IDEMPOTENCY_CONFLICT", "PLANNER_ACTIVE_REVISION_STALE", "PLANNER_PREVIEW_STALE",
       "PLANNER_APPLY_BLOCKED", "PLANNER_PAST_MONTH_READ_ONLY", "PLANNER_EXPECTED_BASE_INVALID",
       "COMPOSER_DRAFT_REQUIRED", "PLANNER_DRAFT_MONTH_INVALID", "CONTEXT_REFERENCE_OWNER_UNAVAILABLE",
+      "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
     ].includes(code)) return { ok: false, sequence: request.sequence, code: "COMPOSER_APPLY_UNCONFIRMED",
       message: "L’issue de l’application reste inconnue. Votre brouillon est conservé ; vérifiez la révision par l’identité de la demande avant toute nouvelle écriture." };
     if (request.kind === "CHECK_APPLY" && code === "COMPOSER_UNAVAILABLE")

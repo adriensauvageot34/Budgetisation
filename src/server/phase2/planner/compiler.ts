@@ -21,6 +21,7 @@ import { compileMobility } from "./mobility-compiler";
 import { JOURNEY_RESOLVER_VERSION } from "./journey-resolver";
 import { PROSPECTIVE_MOBILITY_PRICING_VERSION } from "./prospective-mobility-pricing";
 import { validateRenewalComponentConsumptions } from "./renewal-compiler";
+import type { HistoricalControlAdmission } from "./historical-control-admission";
 
 export const PLANNER_COMPILER_VERSION = "planner-semantic-compiler@v6-headless";
 /** Typed owner outputs may have optional undefined fields. Persist only their JSON representation. */
@@ -44,7 +45,7 @@ function binding(raw: unknown): SlotBinding {
   if (value.relation !== "CONSUMES_SLOT" && (amount !== null || count !== null)) throw new TypeError("PLANNER_BINDING_INVALID");
   return { slotIdentityKey, relation: value.relation as SlotBinding["relation"], displacement: value.displacement as SlotBinding["displacement"], amount, count };
 }
-export function compileSemanticPlan(input: CompilePlanInputV1): CompiledSemanticPlanV1 {
+export function compileSemanticPlan(input: CompilePlanInputV1, historical?: HistoricalControlAdmission): CompiledSemanticPlanV1 {
   const state = parsePlanSemanticState(input.semanticState), { world, baseline } = input;
   if (state.targetMonth !== baseline.targetMonth || world.baseline.digest !== baseline.digest
     || baseline.digest !== planningBaselineDigest(baseline) || world.forecast.meta.targetMonth !== baseline.targetMonth)
@@ -54,7 +55,7 @@ export function compileSemanticPlan(input: CompilePlanInputV1): CompiledSemantic
     throw new TypeError("PLANNER_EXTERNAL_SCOPE_INVALID");
   if (plannerDigest({ external }) !== plannerDigest({ external: [...world.externalIntents].sort((a, b) => compare(a.id, b.id)) }))
     throw new TypeError("PLANNER_EXTERNAL_AUTHORITY_MISMATCH");
-  const slots = materializePlanSlots(baseline, state, input.forcedOwnedSlotKeys), requests: ComponentRequest[] = [], contexts: CompiledContext[] = [];
+  const slots = materializePlanSlots(baseline, state, input.forcedOwnedSlotKeys, historical), requests: ComponentRequest[] = [], contexts: CompiledContext[] = [];
   const composable = expandComposableContexts(state, world, slots);
   requests.push(...composable.requests); contexts.push(...composable.contexts);
   const mobility = compileMobility(composable.mobilityIntents, world);

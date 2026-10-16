@@ -13,6 +13,7 @@ import { resolveComponentCost } from "./cost-resolver";
 import { expandComposableContexts } from "./context-compiler";
 import { materializePlanSlots } from "./plan-slot-resolver";
 import { resolveJourneyRequirements } from "./journey-resolver";
+import type { HistoricalControlAdmission } from "./historical-control-admission";
 
 export const PROSPECTIVE_MOBILITY_PRICING_VERSION = "planner-existing-mobility-pricing@v1";
 export type MobilityProviders = Parameters<typeof estimatePlannedCar>[2];
@@ -52,14 +53,14 @@ export function externalJourneyPrice(journey: PhysicalJourneyRequirement, intent
     snapshot: snapshot ? stableMobilityEvidence(snapshot) : null };
 }
 /** No network inside the deterministic compiler. Read prices first, through existing owners once per physical requirement. */
-export async function preparePlanningMobility(world: PlanningWorldFacts, state: PlanSemanticStateV1, providers?: MobilityProviders): Promise<PlanningWorldFacts> {
+export async function preparePlanningMobility(world: PlanningWorldFacts, state: PlanSemanticStateV1, providers?: MobilityProviders, historical?: HistoricalControlAdmission): Promise<PlanningWorldFacts> {
   const owners = providers ?? { route: new TomTomRouteProvider(), fuel: new FrenchOfficialFuelPriceProvider(), toll: new HereTollProvider() };
   const cutoff = Date.parse(world.baseline.knowledgeCutoff);
   const admittedProviders = { ...owners, fuel: { async getReference(origin: Parameters<NonNullable<MobilityProviders>["fuel"]["getReference"]>[0]) {
     const reference = await owners.fuel.getReference(origin);
     return reference && Number.isFinite(Date.parse(reference.observedAt)) && Date.parse(reference.observedAt) <= cutoff ? reference : null;
   } } };
-  const expansion = expandComposableContexts(state, world, materializePlanSlots(world.baseline, state));
+  const expansion = expandComposableContexts(state, world, materializePlanSlots(world.baseline, state, [], historical));
   const resolved = resolveJourneyRequirements(expansion.mobilityIntents, world), prices: Record<string, JourneyPrice> = {};
   for (const journey of resolved.journeys) {
     const intent = expansion.mobilityIntents.find(i => i.mobilityIntentId === journey.ownerIntentId)!;

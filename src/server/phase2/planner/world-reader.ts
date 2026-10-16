@@ -73,18 +73,18 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
         const options = await mobilityOptions(householdId), places = new Set(options.places.map(place => place.placeId));
         if (refs.placeIds.some(id => !places.has(id))) throw new TypeError("CONTEXT_PLACE_NOT_ADMITTED");
       }
-    }, async prepareWorld(world, state) {
+    }, async prepareWorld(world, state, historical) {
     scope(world.baseline.householdId);
-    const intents = expandComposableContexts(state, world, materializePlanSlots(world.baseline, state)).mobilityIntents;
+    const intents = expandComposableContexts(state, world, materializePlanSlots(world.baseline, state, [], historical)).mobilityIntents;
     if (!intents.length) return world;
     const requirements = resolveJourneyRequirements(intents, world).journeys;
     if (!requirements.some(j => !j.externalExpenseId && !j.relationUnresolved && j.stops.length >= 2
-      && (j.mode === "CAR" || j.stops.some(ref => ref.kind === "KNOWN")))) return preparePlanningMobility(world, state);
+      && (j.mode === "CAR" || j.stops.some(ref => ref.kind === "KNOWN")))) return preparePlanningMobility(world, state, undefined, historical);
     const options = await mobilityOptions(world.baseline.householdId);
     if (!world.mobilityFacts) throw new TypeError("MOBILITY_AUTHORITY_MISSING");
     const vehicle = options.vehicle;
     return preparePlanningMobility({ ...world, mobilityFacts: { ...world.mobilityFacts, places: options.places, vehicle,
-      history: vehicle?.vehicleId ? world.mobilityFacts.vehicleHistory?.[vehicle.vehicleId] ?? [] : [] } }, state);
+      history: vehicle?.vehicleId ? world.mobilityFacts.vehicleHistory?.[vehicle.vehicleId] ?? [] : [] } }, state, undefined, historical);
   }, async readDirectWorld(householdId, targetMonth) {
     scope(householdId);
     const [forecast, inputs, externalIntents] = await Promise.all([readPlanningMonthForecast(canonical.client, householdId, targetMonth),

@@ -16,6 +16,7 @@ import { inventoryItems, inventoryRootRef } from "./inventory-layout";
 import type { AtomicNode, VisualClusterNode, ComposerPresentationNode } from "./presentation/node-types";
 import { VisualClusterCard, VisualClusterOverlay } from "./visual-cluster";
 import { composerRenderIndex } from "./render-index";
+import { useInlineEditRegistry } from "./inline-edit-registry";
 type BoardProps=Parameters<typeof ComposerBoard>[0];
 const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"> & {item:AtomicNode;inCluster:boolean;closeCluster:()=>boolean}) {
   const {model,busy,selected,focused,focus,edit,editContext,choose,drag,drop,request,hover,details}=props,index=composerRenderIndex(model);
@@ -37,7 +38,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
     || model.presentation.dragSources[selected]?.editorDropTarget?.kind === "BOARD_ZONE");
   const trashAccepts = !!selected && model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
   const focusedCard = model.board.contexts.find(c => c.contextOccurrenceId === focused);
-  const interaction = useComposerInteractions();
+  const interaction = useComposerInteractions(), inlineEdits = useInlineEditRegistry();
   const trashVisible = !!interaction?.grabbed && (!!interaction.grabbed.removeOperation || interaction.grabbed.protected);
   const boardTarget: DropTarget = { kind: "BOARD_ZONE" }, trashTarget: DropTarget = { kind: "TRASH" };
   const [openClusterId, setOpenClusterId] = useState<string | null>(null);
@@ -63,10 +64,12 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
     // Keep the intention visible while its guide is open; this is transient layout only.
     return [selected, ...(remaining.length > 1 ? [{ ...item, children: remaining }] : remaining)];
   })];},[model,restaurantFocus,detached]),closeCluster=useCallback(()=>{
-    if (document.querySelector("dialog [data-inline-dirty=true]") && !window.confirm("Cette saisie n’est pas validée. Fermer et l’abandonner ?")) return false;
+    const targets = new Set([...document.querySelectorAll<HTMLElement>("dialog [data-control]")].map(node => node.dataset.control!));
+    if (inlineEdits && !inlineEdits.confirmDiscard(window.confirm, targets)) return false;
+    inlineEdits?.flushPending();
     setOpenClusterId(null);
     return true;
-  },[]);
+  },[inlineEdits]);
   const openCluster = items.find((item): item is VisualClusterNode => item.kind === "CLUSTER" && item.id === openClusterId);
   const lastReveal = useRef<number | null>(null);
   const [selectionReveal, setSelectionReveal] = useState(0);
