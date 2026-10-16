@@ -1,0 +1,520 @@
+{
+  "base": "3bde89c423d38f61f458b643c264f5f9424e1393",
+  "historicalPresets": 26,
+  "newPresets": 21,
+  "totalPresets": 47,
+  "genericContexts": 13,
+  "options": 114,
+  "newRecipes": [
+    {
+      "presetKey": "concert",
+      "label": "Concert",
+      "templateKey": "activity",
+      "categoryKey": "SOCIAL",
+      "illustrationKey": "concert",
+      "searchTerms": [
+        "concert",
+        "spectacle",
+        "musique",
+        "scène"
+      ],
+      "defaults": {
+        "label": "Concert"
+      },
+      "questions": [
+        "Participants",
+        "Lieu",
+        "Date",
+        "Billet facultatif",
+        "Budget"
+      ],
+      "guidance": "Une sortie musicale, sans billet, quantité, date ni trajet ajouté automatiquement."
+    },
+    {
+      "presetKey": "ropes-course",
+      "label": "Accrobranche",
+      "templateKey": "activity",
+      "categoryKey": "ACTIVITY",
+      "illustrationKey": "ropes-course",
+      "searchTerms": [
+        "accrobranche",
+        "arbres",
+        "cordes",
+        "parcours"
+      ],
+      "defaults": {
+        "label": "Accrobranche"
+      },
+      "questions": [
+        "Participants",
+        "Lieu",
+        "Date",
+        "Budget"
+      ],
+      "guidance": "Une activité à configurer ; aucun billet, équipement ou déplacement n’est supposé."
+    },
+    {
+      "presetKey": "museum-exhibition",
+      "label": "Musée / Exposition",
+      "templateKey": "activity",
+      "categoryKey": "ACTIVITY",
+      "illustrationKey": "museum-exhibition",
+      "searchTerms": [
+        "musée",
+        "musee",
+        "exposition",
+        "galerie",
+        "culture"
+      ],
+      "defaults": {
+        "label": "Musée / Exposition"
+      },
+      "questions": [
+        "Participants",
+        "Lieu",
+        "Date",
+        "Budget"
+      ],
+      "guidance": "Précisez la visite et son coût éventuel. Aucune entrée ni gratuité n’est présumée."
+    },
+    {
+      "presetKey": "gift-present",
+      "label": "Cadeau",
+      "templateKey": "gift",
+      "categoryKey": "PURCHASE",
+      "illustrationKey": "gift-present",
+      "searchTerms": [
+        "cadeau",
+        "offrir",
+        "présent",
+        "anniversaire"
+      ],
+      "defaults": {
+        "label": "Cadeau"
+      },
+      "questions": [
+        "Destinataire",
+        "Occasion",
+        "Objet",
+        "Budget",
+        "Date facultative"
+      ],
+      "guidance": "Choisissez le destinataire, l’occasion et l’objet dans l’éditeur Cadeau. Aucun produit ni prix n’est décidé."
+    },
+    {
+      "presetKey": "shoes-purchase",
+      "label": "Chaussures",
+      "templateKey": "purchase",
+      "categoryKey": "PURCHASE",
+      "illustrationKey": "shoes-purchase",
+      "searchTerms": [
+        "chaussures",
+        "baskets",
+        "souliers",
+        "sandales"
+      ],
+      "defaults": {
+        "label": "Chaussures",
+        "productLabel": "Chaussures",
+        "budgetDomain": "clothing"
+      },
+      "questions": [
+        "Article",
+        "Vendeur",
+        "Date",
+        "Budget",
+        "Enveloppe"
+      ],
+      "guidance": "Un achat ponctuel soumis au domaine Vêtements existant, sans quantité, prix ou nouvelle enveloppe."
+    },
+    {
+      "presetKey": "eyeliner",
+      "label": "Eyeliner",
+      "templateKey": "beauty-restock",
+      "categoryKey": "BEAUTY",
+      "illustrationKey": "eyeliner",
+      "searchTerms": [
+        "eyeliner",
+        "eye liner",
+        "maquillage",
+        "yeux"
+      ],
+      "defaults": {
+        "label": "Eyeliner"
+      },
+      "questions": [
+        "Produit et prix",
+        "Date facultative",
+        "Compléments"
+      ],
+      "guidance": "Ce preset nomme l’intention de départ. Choisissez le produit réel et son prix dans le socket officiel ; aucun SKU, montant, quantité, stock ou renouvellement n’est certifié."
+    },
+    {
+      "presetKey": "eyebrow-pencil",
+      "label": "Crayon à sourcils",
+      "templateKey": "beauty-restock",
+      "categoryKey": "BEAUTY",
+      "illustrationKey": "eyebrow-pencil",
+      "searchTerms": [
+        "crayon sourcil",
+        "sourcils",
+        "maquillage"
+      ],
+      "defaults": {
+        "label": "Crayon à sourcils"
+      },
+      "questions": [
+        "Produit et prix",
+        "Date facultative",
+        "Compléments"
+      ],
+      "guidance": "Ce preset nomme l’intention de départ. Choisissez le produit réel et son prix dans le socket officiel ; aucun SKU, montant, quantité, stock ou renouvellement n’est certifié."
+    },
+    {
+      "presetKey": "facial-toner",
+      "label": "Toner / Tonique",
+      "templateKey": "beauty-restock",
+      "categoryKey": "BEAUTY",
+      "illustrationKey": "facial-toner",
+      "searchTerms": [
+        "toner",
+        "tonique",
+        "lotion tonique",
+        "visage"
+      ],
+      "defaults": {
+        "label": "Toner / Tonique"
+      },
+      "questions": [
+        "Produit et prix",
+        "Date facultative",
+        "Compléments"
+      ],
+      "guidance": "Ce preset nomme l’intention de départ. Choisissez le produit réel et son prix dans le socket officiel ; aucun SKU, montant, quantité, stock ou renouvellement n’est certifié."
+    },
+    {
+      "presetKey": "face-serum",
+      "label": "Sérum visage",
+      "templateKey": "beauty-restock",
+      "categoryKey": "BEAUTY",
+      "illustrationKey": "face-serum",
+      "searchTerms": [
+        "sérum",
+        "serum",
+        "visage",
+        "soin"
+      ],
+      "defaults": {
+        "label": "Sérum visage"
+      },
+      "questions": [
+        "Produit et prix",
+        "Date facultative",
+        "Compléments"
+      ],
+      "guidance": "Ce preset nomme l’intention de départ. Choisissez le produit réel et son prix dans le socket officiel ; aucun SKU, montant, quantité, stock ou renouvellement n’est certifié."
+    },
+    {
+      "presetKey": "face-moisturizer",
+      "label": "Crème hydratante",
+      "templateKey": "beauty-restock",
+      "categoryKey": "BEAUTY",
+      "illustrationKey": "face-moisturizer",
+      "searchTerms": [
+        "crème visage",
+        "creme",
+        "hydratante",
+        "hydratation"
+      ],
+      "defaults": {
+        "label": "Crème hydratante"
+      },
+      "questions": [
+        "Produit et prix",
+        "Date facultative",
+        "Compléments"
+      ],
+      "guidance": "Ce preset nomme l’intention de départ. Choisissez le produit réel et son prix dans le socket officiel ; aucun SKU, montant, quantité, stock ou renouvellement n’est certifié."
+    },
+    {
+      "presetKey": "face-cleanser",
+      "label": "Nettoyant visage",
+      "templateKey": "beauty-restock",
+      "categoryKey": "BEAUTY",
+      "illustrationKey": "face-cleanser",
+      "searchTerms": [
+        "nettoyant visage",
+        "nettoyage",
+        "gel visage"
+      ],
+      "defaults": {
+        "label": "Nettoyant visage"
+      },
+      "questions": [
+        "Produit et prix",
+        "Date facultative",
+        "Compléments"
+      ],
+      "guidance": "Ce preset nomme l’intention de départ. Choisissez le produit réel et son prix dans le socket officiel ; aucun SKU, montant, quantité, stock ou renouvellement n’est certifié."
+    },
+    {
+      "presetKey": "care-lotion",
+      "label": "Lotion de soin",
+      "templateKey": "beauty-restock",
+      "categoryKey": "BEAUTY",
+      "illustrationKey": "care-lotion",
+      "searchTerms": [
+        "lotion",
+        "soin",
+        "hygiène",
+        "corps"
+      ],
+      "defaults": {
+        "label": "Lotion de soin"
+      },
+      "questions": [
+        "Produit et prix",
+        "Date facultative",
+        "Compléments"
+      ],
+      "guidance": "Ce preset nomme l’intention de départ. Choisissez le produit réel et son prix dans le socket officiel ; aucun SKU, montant, quantité, stock ou renouvellement n’est certifié."
+    },
+    {
+      "presetKey": "makeup-remover",
+      "label": "Démaquillant",
+      "templateKey": "beauty-restock",
+      "categoryKey": "BEAUTY",
+      "illustrationKey": "makeup-remover",
+      "searchTerms": [
+        "démaquillant",
+        "demaquillage",
+        "coton",
+        "maquillage"
+      ],
+      "defaults": {
+        "label": "Démaquillant"
+      },
+      "questions": [
+        "Produit et prix",
+        "Date facultative",
+        "Compléments"
+      ],
+      "guidance": "Ce preset nomme l’intention de départ. Choisissez le produit réel et son prix dans le socket officiel ; aucun SKU, montant, quantité, stock ou renouvellement n’est certifié."
+    },
+    {
+      "presetKey": "hotel-night",
+      "label": "Nuit à l’hôtel",
+      "templateKey": "short-stay",
+      "categoryKey": "TRAVEL",
+      "illustrationKey": "hotel-night",
+      "searchTerms": [
+        "hôtel",
+        "hotel",
+        "nuit",
+        "chambre",
+        "hébergement"
+      ],
+      "defaults": {
+        "label": "Nuit à l’hôtel",
+        "lodgingKind": "HOTEL"
+      },
+      "questions": [
+        "Dates facultatives",
+        "Destination",
+        "Hébergement",
+        "Budget"
+      ],
+      "guidance": "Une intention de séjour, sans réservation, prix, nuitée chiffrée ni taxe supposée."
+    },
+    {
+      "presetKey": "stay-with-relatives",
+      "label": "Séjour chez des proches",
+      "templateKey": "short-stay",
+      "categoryKey": "TRAVEL",
+      "illustrationKey": "stay-with-relatives",
+      "searchTerms": [
+        "séjour",
+        "proches",
+        "famille",
+        "amis",
+        "hébergement"
+      ],
+      "defaults": {
+        "label": "Séjour chez des proches",
+        "lodgingKind": "RELATIVE"
+      },
+      "questions": [
+        "Dates facultatives",
+        "Destination",
+        "Hébergement",
+        "Repas",
+        "Trajet facultatif"
+      ],
+      "guidance": "Précisez l’hébergement et l’hôte si vous le souhaitez. Aucune gratuité, personne, adresse ni transport n’est confirmé."
+    },
+    {
+      "presetKey": "dishwasher-tablets",
+      "label": "Pastilles lave-vaisselle",
+      "templateKey": "purchase",
+      "categoryKey": "HOME",
+      "illustrationKey": "dishwasher-tablets",
+      "searchTerms": [
+        "pastilles",
+        "lave-vaisselle",
+        "tablettes",
+        "lavage"
+      ],
+      "defaults": {
+        "label": "Pastilles lave-vaisselle",
+        "productLabel": "Pastilles lave-vaisselle",
+        "budgetDomain": "home-small"
+      },
+      "questions": [
+        "Produit",
+        "Date",
+        "Budget",
+        "Enveloppe"
+      ],
+      "guidance": "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement."
+    },
+    {
+      "presetKey": "floor-cleaner",
+      "label": "Nettoyant pour le sol",
+      "templateKey": "purchase",
+      "categoryKey": "HOME",
+      "illustrationKey": "floor-cleaner",
+      "searchTerms": [
+        "nettoyant",
+        "sol",
+        "serpillière",
+        "serpilliere",
+        "ménage"
+      ],
+      "defaults": {
+        "label": "Nettoyant pour le sol",
+        "productLabel": "Nettoyant pour le sol",
+        "budgetDomain": "home-small"
+      },
+      "questions": [
+        "Produit",
+        "Date",
+        "Budget",
+        "Enveloppe"
+      ],
+      "guidance": "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement."
+    },
+    {
+      "presetKey": "sponges",
+      "label": "Éponges",
+      "templateKey": "purchase",
+      "categoryKey": "HOME",
+      "illustrationKey": "sponges",
+      "searchTerms": [
+        "éponge",
+        "eponges",
+        "évier",
+        "menage"
+      ],
+      "defaults": {
+        "label": "Éponges",
+        "productLabel": "Éponges",
+        "budgetDomain": "home-small"
+      },
+      "questions": [
+        "Produit",
+        "Date",
+        "Budget",
+        "Enveloppe"
+      ],
+      "guidance": "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement."
+    },
+    {
+      "presetKey": "trash-bags",
+      "label": "Sacs-poubelle",
+      "templateKey": "purchase",
+      "categoryKey": "HOME",
+      "illustrationKey": "trash-bags",
+      "searchTerms": [
+        "sacs poubelle",
+        "sac-poubelle",
+        "déchets",
+        "ordures"
+      ],
+      "defaults": {
+        "label": "Sacs-poubelle",
+        "productLabel": "Sacs-poubelle",
+        "budgetDomain": "home-small"
+      },
+      "questions": [
+        "Produit",
+        "Date",
+        "Budget",
+        "Enveloppe"
+      ],
+      "guidance": "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement."
+    },
+    {
+      "presetKey": "toilet-paper",
+      "label": "Papier toilette",
+      "templateKey": "purchase",
+      "categoryKey": "HOME",
+      "illustrationKey": "toilet-paper",
+      "searchTerms": [
+        "papier toilette",
+        "wc",
+        "rouleaux",
+        "hygiène"
+      ],
+      "defaults": {
+        "label": "Papier toilette",
+        "productLabel": "Papier toilette",
+        "budgetDomain": "home-small"
+      },
+      "questions": [
+        "Produit",
+        "Date",
+        "Budget",
+        "Enveloppe"
+      ],
+      "guidance": "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement."
+    },
+    {
+      "presetKey": "paper-towels",
+      "label": "Essuie-tout",
+      "templateKey": "purchase",
+      "categoryKey": "HOME",
+      "illustrationKey": "paper-towels",
+      "searchTerms": [
+        "essuie tout",
+        "sopalin",
+        "papier absorbant",
+        "rouleau"
+      ],
+      "defaults": {
+        "label": "Essuie-tout",
+        "productLabel": "Essuie-tout",
+        "budgetDomain": "home-small"
+      },
+      "questions": [
+        "Produit",
+        "Date",
+        "Budget",
+        "Enveloppe"
+      ],
+      "guidance": "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement."
+    }
+  ],
+  "deferred": {
+    "L4": "Conditional complex wizards; none implemented",
+    "L5": [
+      "Health consultation/pharmacy/dentist/specialist/optics",
+      "Car maintenance/tyres/battery/inspection/diagnosis/repair",
+      "Standalone transport",
+      "Specialized administrative expenses"
+    ],
+    "L6": "Inventory and needs",
+    "L7": "Persistent scenarios",
+    "L8": "Arbitrations"
+  },
+  "sourceInventory": "docs/status/evidence/l2b-composer-library/master-asset-inventory.json (historical L2-B scope preserved)"
+}

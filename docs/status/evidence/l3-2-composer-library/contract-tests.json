@@ -1,0 +1,304 @@
+{
+  "environment": "PGLITE_SYNTHETIC_ONLY",
+  "authenticated": false,
+  "checks": [
+    "L32-CATALOG-47-13-HISTORICAL-26-AND-COMPATIBILITY",
+    "L32-SEARCH-EXACT-SYNONYMS-AND-ALL-GENERICS",
+    "concert-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "ropes-course-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "museum-exhibition-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "gift-present-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "shoes-purchase-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "eyeliner-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "eyebrow-pencil-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "facial-toner-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "face-serum-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "face-moisturizer-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "face-cleanser-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "care-lotion-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "makeup-remover-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "hotel-night-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "stay-with-relatives-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "dishwasher-tablets-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "floor-cleaner-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "sponges-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "trash-bags-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "toilet-paper-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "paper-towels-ADMISSION-IDENTITY-EDIT-ROUNDTRIP",
+    "L32-BATCH-FINANCE-PARITY-UNKNOWN-ZERO-NO-DOUBLE-COUNT",
+    "L32-APPLY-RELOAD-MONPLAN-REEDIT-ISOLATED",
+    "L32-ART-HISTORICAL-BYTES-AND-21-NATIVE-ORIGINALS"
+  ],
+  "coverage": [
+    {
+      "presetKey": "concert",
+      "templateKey": "activity",
+      "defaults": {
+        "label": "Concert"
+      },
+      "identity": "00000000-0000-4000-8000-000000035000",
+      "selectionId": "00000000-0000-4000-8000-000000035200",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "ropes-course",
+      "templateKey": "activity",
+      "defaults": {
+        "label": "Accrobranche"
+      },
+      "identity": "00000000-0000-4000-8000-000000035001",
+      "selectionId": "00000000-0000-4000-8000-000000035201",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "museum-exhibition",
+      "templateKey": "activity",
+      "defaults": {
+        "label": "Musée / Exposition"
+      },
+      "identity": "00000000-0000-4000-8000-000000035002",
+      "selectionId": "00000000-0000-4000-8000-000000035202",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "gift-present",
+      "templateKey": "gift",
+      "defaults": {
+        "label": "Cadeau"
+      },
+      "identity": "00000000-0000-4000-8000-000000035003",
+      "selectionId": "00000000-0000-4000-8000-000000035203",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "shoes-purchase",
+      "templateKey": "purchase",
+      "defaults": {
+        "label": "Chaussures",
+        "productLabel": "Chaussures",
+        "budgetDomain": "clothing"
+      },
+      "identity": "00000000-0000-4000-8000-000000035004",
+      "selectionId": "00000000-0000-4000-8000-000000035204",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "eyeliner",
+      "templateKey": "beauty-restock",
+      "defaults": {
+        "label": "Eyeliner"
+      },
+      "identity": "00000000-0000-4000-8000-000000035005",
+      "selectionId": "00000000-0000-4000-8000-000000035205",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "eyebrow-pencil",
+      "templateKey": "beauty-restock",
+      "defaults": {
+        "label": "Crayon à sourcils"
+      },
+      "identity": "00000000-0000-4000-8000-000000035006",
+      "selectionId": "00000000-0000-4000-8000-000000035206",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "facial-toner",
+      "templateKey": "beauty-restock",
+      "defaults": {
+        "label": "Toner / Tonique"
+      },
+      "identity": "00000000-0000-4000-8000-000000035007",
+      "selectionId": "00000000-0000-4000-8000-000000035207",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "face-serum",
+      "templateKey": "beauty-restock",
+      "defaults": {
+        "label": "Sérum visage"
+      },
+      "identity": "00000000-0000-4000-8000-000000035008",
+      "selectionId": "00000000-0000-4000-8000-000000035208",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "face-moisturizer",
+      "templateKey": "beauty-restock",
+      "defaults": {
+        "label": "Crème hydratante"
+      },
+      "identity": "00000000-0000-4000-8000-000000035009",
+      "selectionId": "00000000-0000-4000-8000-000000035209",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "face-cleanser",
+      "templateKey": "beauty-restock",
+      "defaults": {
+        "label": "Nettoyant visage"
+      },
+      "identity": "00000000-0000-4000-8000-000000035010",
+      "selectionId": "00000000-0000-4000-8000-000000035210",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "care-lotion",
+      "templateKey": "beauty-restock",
+      "defaults": {
+        "label": "Lotion de soin"
+      },
+      "identity": "00000000-0000-4000-8000-000000035011",
+      "selectionId": "00000000-0000-4000-8000-000000035211",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "makeup-remover",
+      "templateKey": "beauty-restock",
+      "defaults": {
+        "label": "Démaquillant"
+      },
+      "identity": "00000000-0000-4000-8000-000000035012",
+      "selectionId": "00000000-0000-4000-8000-000000035212",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "hotel-night",
+      "templateKey": "short-stay",
+      "defaults": {
+        "label": "Nuit à l’hôtel",
+        "lodgingKind": "HOTEL"
+      },
+      "identity": "00000000-0000-4000-8000-000000035013",
+      "selectionId": "00000000-0000-4000-8000-000000035213",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "stay-with-relatives",
+      "templateKey": "short-stay",
+      "defaults": {
+        "label": "Séjour chez des proches",
+        "lodgingKind": "RELATIVE"
+      },
+      "identity": "00000000-0000-4000-8000-000000035014",
+      "selectionId": "00000000-0000-4000-8000-000000035214",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "dishwasher-tablets",
+      "templateKey": "purchase",
+      "defaults": {
+        "label": "Pastilles lave-vaisselle",
+        "productLabel": "Pastilles lave-vaisselle",
+        "budgetDomain": "home-small"
+      },
+      "identity": "00000000-0000-4000-8000-000000035015",
+      "selectionId": "00000000-0000-4000-8000-000000035215",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "floor-cleaner",
+      "templateKey": "purchase",
+      "defaults": {
+        "label": "Nettoyant pour le sol",
+        "productLabel": "Nettoyant pour le sol",
+        "budgetDomain": "home-small"
+      },
+      "identity": "00000000-0000-4000-8000-000000035016",
+      "selectionId": "00000000-0000-4000-8000-000000035216",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "sponges",
+      "templateKey": "purchase",
+      "defaults": {
+        "label": "Éponges",
+        "productLabel": "Éponges",
+        "budgetDomain": "home-small"
+      },
+      "identity": "00000000-0000-4000-8000-000000035017",
+      "selectionId": "00000000-0000-4000-8000-000000035217",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "trash-bags",
+      "templateKey": "purchase",
+      "defaults": {
+        "label": "Sacs-poubelle",
+        "productLabel": "Sacs-poubelle",
+        "budgetDomain": "home-small"
+      },
+      "identity": "00000000-0000-4000-8000-000000035018",
+      "selectionId": "00000000-0000-4000-8000-000000035218",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "toilet-paper",
+      "templateKey": "purchase",
+      "defaults": {
+        "label": "Papier toilette",
+        "productLabel": "Papier toilette",
+        "budgetDomain": "home-small"
+      },
+      "identity": "00000000-0000-4000-8000-000000035019",
+      "selectionId": "00000000-0000-4000-8000-000000035219",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    },
+    {
+      "presetKey": "paper-towels",
+      "templateKey": "purchase",
+      "defaults": {
+        "label": "Essuie-tout",
+        "productLabel": "Essuie-tout",
+        "budgetDomain": "home-small"
+      },
+      "identity": "00000000-0000-4000-8000-000000035020",
+      "selectionId": "00000000-0000-4000-8000-000000035220",
+      "unknownPriceAccepted": true,
+      "serverLocalParity": true,
+      "roundTrip": true
+    }
+  ],
+  "remoteWrites": 0,
+  "productionApply": false
+}

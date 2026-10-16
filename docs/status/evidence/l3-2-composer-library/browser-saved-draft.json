@@ -1,0 +1,144 @@
+{
+  "version": 9,
+  "digest": "8edfaaaadc1c7c75c3ccf68caa7c437b5c8eeb8a92edcfdbbad51503b5be78a4",
+  "contexts": [
+    {
+      "contextOccurrenceId": "06c0595e-487a-4434-85d4-b307230124e9",
+      "templateKey": "short-stay",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v5",
+        "label": "Séjour chez des proches",
+        "lodgingKind": "RELATIVE",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "stay-with-relatives"
+        }
+      },
+      "slotSelections": {},
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "3e7e5c1b-4b8a-4198-a4a8-d7e0865006e4",
+      "templateKey": "activity",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Concert",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "concert"
+        }
+      },
+      "slotSelections": {},
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "79beea9b-59ef-4cdd-9f4a-56cd8800d987",
+      "templateKey": "beauty-restock",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Eyeliner",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "eyeliner"
+        }
+      },
+      "slotSelections": {
+        "products": {
+          "items": [
+            {
+              "selectionId": "d6a29fbe-2d65-4b38-b61c-1d5b354cf0e7",
+              "optionKey": "product",
+              "provenance": "EXPLICIT_USER_DECISION",
+              "kind": "COMPONENT",
+              "label": "Eyeliner choisi — fixture",
+              "quantity": "1",
+              "cost": {
+                "kind": "MANUAL",
+                "unitAmount": "12.50"
+              },
+              "binding": {
+                "mode": "AUTO"
+              },
+              "fundingAllocations": []
+            }
+          ]
+        }
+      },
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "c178f220-c7db-44ef-80d6-2ee6cd9d59f2",
+      "templateKey": "purchase",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Pastilles lave-vaisselle",
+        "productLabel": "Pastilles lave-vaisselle",
+        "budgetDomain": "home-small",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "dishwasher-tablets"
+        }
+      },
+      "slotSelections": {},
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "c2053af7-45eb-48af-b711-d266b08352bb",
+      "templateKey": "gift",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Cadeau",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "gift-present"
+        }
+      },
+      "slotSelections": {},
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "e61cfb76-5368-4e54-8a52-a4cabe2f7c58",
+      "templateKey": "beauty-restock",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Sérum visage",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "face-serum"
+        }
+      },
+      "slotSelections": {},
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "f43ff59f-1796-48ee-bd45-6f5ee234ea03",
+      "templateKey": "purchase",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Éponges",
+        "productLabel": "Éponges",
+        "budgetDomain": "home-small",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "sponges"
+        }
+      },
+      "slotSelections": {},
+      "provenance": "EXPLICIT_USER_DECISION"
+    }
+  ]
+}

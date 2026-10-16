@@ -1,0 +1,205 @@
+{
+  "method": "Production React minified, same selected tab 20 alternates local origins, same 17-element fixture, 1440x900, warmups excluded, n=3 pairs, no test suite running, no remote IO. Native performance.now plus two RAF existing probe. No P95 claim.",
+  "pairs": [
+    {
+      "variant": "reference",
+      "pair": 1,
+      "openingFreshMs": 10208,
+      "dom": 1973,
+      "images": 6,
+      "businessRequests": [
+        {
+          "path": "/draft",
+          "ms": 49.599999997764826,
+          "bytes": 104
+        },
+        {
+          "path": "/interaction",
+          "ms": 5591.400000002235,
+          "bytes": 435167
+        }
+      ],
+      "jsResources": 5,
+      "jsDecoded": 460454,
+      "jsGzip": 145241,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    },
+    {
+      "variant": "candidate",
+      "pair": 1,
+      "openingFreshMs": 2621.099999997765,
+      "dom": 1941,
+      "images": 7,
+      "businessRequests": [
+        {
+          "path": "/draft",
+          "ms": 174,
+          "bytes": 104
+        },
+        {
+          "path": "/interaction",
+          "ms": 971.1999999992548,
+          "bytes": 435167
+        }
+      ],
+      "jsResources": 5,
+      "jsDecoded": 472530,
+      "jsGzip": 147501,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    },
+    {
+      "variant": "reference",
+      "pair": 2,
+      "openingFreshMs": 2407.89999999851,
+      "dom": 1973,
+      "images": 6,
+      "businessRequests": [
+        {
+          "path": "/draft",
+          "ms": 12.599999997764826,
+          "bytes": 104
+        },
+        {
+          "path": "/interaction",
+          "ms": 588.8999999985099,
+          "bytes": 435167
+        }
+      ],
+      "jsResources": 5,
+      "jsDecoded": 460454,
+      "jsGzip": 145241,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    },
+    {
+      "variant": "candidate",
+      "pair": 2,
+      "openingFreshMs": 7424.800000000745,
+      "dom": 1941,
+      "images": 7,
+      "businessRequests": [
+        {
+          "path": "/draft",
+          "ms": 40.80000000074506,
+          "bytes": 104
+        },
+        {
+          "path": "/interaction",
+          "ms": 2669.79999999702,
+          "bytes": 435167
+        }
+      ],
+      "jsResources": 5,
+      "jsDecoded": 472530,
+      "jsGzip": 147501,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    },
+    {
+      "variant": "reference",
+      "pair": 3,
+      "openingFreshMs": 2353.20000000298,
+      "dom": 1973,
+      "images": 6,
+      "businessRequests": [
+        {
+          "path": "/draft",
+          "ms": 113.90000000223516,
+          "bytes": 104
+        },
+        {
+          "path": "/interaction",
+          "ms": 518,
+          "bytes": 435167
+        }
+      ],
+      "jsResources": 5,
+      "jsDecoded": 460454,
+      "jsGzip": 145241,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    },
+    {
+      "variant": "candidate",
+      "pair": 3,
+      "openingFreshMs": 820,
+      "dom": 1941,
+      "images": 7,
+      "businessRequests": [
+        {
+          "path": "/draft",
+          "ms": 9.699999999254942,
+          "bytes": 104
+        },
+        {
+          "path": "/interaction",
+          "ms": 285.3999999985099,
+          "bytes": 435167
+        }
+      ],
+      "jsResources": 5,
+      "jsDecoded": 472530,
+      "jsGzip": 147501,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    }
+  ],
+  "variants": [
+    {
+      "variant": "reference",
+      "n": 3,
+      "p50": 2407.89999999851,
+      "range": [
+        2353.20000000298,
+        10208
+      ],
+      "dom": 1973,
+      "images": 6,
+      "jsResources": 5,
+      "jsDecoded": 460454,
+      "jsGzip": 145241
+    },
+    {
+      "variant": "candidate",
+      "n": 3,
+      "p50": 2621.099999997765,
+      "range": [
+        820,
+        7424.800000000745
+      ],
+      "dom": 1941,
+      "images": 7,
+      "jsResources": 5,
+      "jsDecoded": 472530,
+      "jsGzip": 147501
+    }
+  ],
+  "actions": {
+    "reference": {
+      "category": [
+        {
+          "kind": "category",
+          "ms": 23
+        }
+      ],
+      "searchN": 6,
+      "searchP50": 20.59999999962747,
+      "searchRange": [
+        10.299999997019768,
+        26.699999999254942
+      ]
+    },
+    "candidate": {
+      "category": [
+        {
+          "kind": "category",
+          "ms": 131.89999999850988
+        }
+      ],
+      "searchN": 6,
+      "searchP50": 27.550000000745058,
+      "searchRange": [
+        12.800000000745058,
+        118.69999999925494
+      ]
+    }
+  },
+  "p95Certified": false,
+  "productionPerformanceCertified": false
+}

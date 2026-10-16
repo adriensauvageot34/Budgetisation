@@ -4,7 +4,10 @@ import crypto from 'node:crypto';
 import { require } from './lib/phase2-ts-loader.mjs';
 import { createKernelPostgres } from './lib/planner-kernel-postgres.mjs';
 import { fixture,state,uuid,householdId } from './fixtures/planner-headless.mjs';
-const {COMPOSER_PRESETS,presetForContext,presetCreationFields,presetIllustrationPath}=require('@/domain/phase2/planner/composer-presets');
+const {COMPOSER_PRESETS:ALL_PRESETS,presetForContext,presetCreationFields,presetIllustrationPath}=require('@/domain/phase2/planner/composer-presets');
+// Preserve the historical 26-recipe contract; later additions have their own campaign.
+const historicalKeys=new Set([...JSON.parse(fs.readFileSync('docs/status/evidence/l2a-composer-presets/illustrations.json','utf8')),...JSON.parse(fs.readFileSync('docs/status/evidence/l2b-composer-library/illustrations.json','utf8'))].map(a=>a.presetKey));
+const COMPOSER_PRESETS=ALL_PRESETS.filter(p=>historicalKeys.has(p.presetKey));
 const {composerLibraryIndex,filterLibraryIntentions}=require('@/domain/phase2/planner/composer-library-index');
 const {displayEquipmentGroups}=require('@/app/mois-a-venir/composer/presentation/palette-groups');
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
@@ -51,19 +54,20 @@ try{
   }
   await check('L2B-INDEX-ADMISSION-SEARCH-GENERICS-NO-OPTIONS',()=>{
     const index=composerLibraryIndex(model);
-    assert.equal(index.intentions.filter(i=>i.preset).length,26);
+    assert.equal(COMPOSER_PRESETS.length,26);
+    assert.equal(index.intentions.filter(i=>i.preset).length,ALL_PRESETS.length);
     assert.equal(index.intentions.filter(i=>!i.preset).length,13);
     assert.ok(index.intentions.every(i=>i.asset.kind==='CONTEXT_ASSET'));
     for(const [term,key]of [['boite','nightclub'],['club','nightclub'],['apero','bar-apero'],['chicken','chicken-snack'],['uber','uber-eats-order'],['peche','fishing-day'],['marcher','hiking-nature'],['Fontès','fontes-family-visit'],['Servian','servian-family-visit'],['vacances','weekend-gite'],['gîte','weekend-gite'],['pantalon','clothing-shopping'],['Shein','shein-purchase'],['Amazon','amazon-purchase'],['manette','video-game-purchase'],['mascara','mascara'],['lessive','laundry-detergent']]){
       assert.ok(filterLibraryIntentions(index.intentions,term).some(i=>i.preset?.presetKey===key),term);
     }
-    assert.equal(filterLibraryIntentions(index.intentions,'lave-vaisselle').length,0);
+    assert.equal(filterLibraryIntentions(index.intentions,'lave-vaisselle')[0]?.preset?.presetKey,'dishwasher-tablets');
     const denied=composerLibraryIndex({...model,dropCapabilities:model.dropCapabilities.filter(d=>d.sourceAssetKey!=='template:activity')});
     assert.equal(denied.intentions.some(i=>i.preset?.templateKey==='activity'),false);
     const html=renderToStaticMarkup(React.createElement(ComposerLibrary,{model,openToken:0,busy:false,selected:null,choose(){},choosePreset(){},drag(){},inspectContext(){}}));
     assert.ok(html.includes('À ajouter')&&html.includes('À piloter'));
     assert.ok(!html.includes('data-library-group="options"'));
-    assert.equal((html.match(/data-preset=/g)||[]).length,5); // Only initial social category mounted.
+    assert.equal((html.match(/data-preset=/g)||[]).length,6); // Initial social category only, including Concert; free intentions stay secondary.
     assert.ok(!html.includes('HEALTH')&&!html.includes('Ma voiture'));
   });
   for(const [i,preset]of (resumed?[]:COMPOSER_PRESETS).entries()){
