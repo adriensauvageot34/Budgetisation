@@ -1,0 +1,933 @@
+{
+  "scope": "Production React bundle on localhost; real browser, synthetic owners, no JWT",
+  "testedProductSha": "58dc567491fcf13ee5a2496a98ba0bce25d5f539",
+  "method": "Actual innerWidth/innerHeight; bounding rectangles and scrollHeight/clientHeight; visible control bounds/collisions; DOM :modal and Board CSS filters. Screenshots are full viewports.",
+  "samples": [
+    {
+      "name": "calendar",
+      "requested": [
+        1440,
+        900
+      ],
+      "actual": [
+        1440,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1428,
+        "w": 1106,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 3,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 664.1000366210938,
+        "h": 540.1000366210938,
+        "right": 1416,
+        "w": 408,
+        "x": 1008,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "calendar"
+    },
+    {
+      "name": "calendar",
+      "requested": [
+        1728,
+        900
+      ],
+      "actual": [
+        1728,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1716,
+        "w": 1394,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 1,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 664.1000366210938,
+        "h": 540.1000366210938,
+        "right": 1704,
+        "w": 408,
+        "x": 1296,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "calendar"
+    },
+    {
+      "name": "calendar",
+      "requested": [
+        1920,
+        1080
+      ],
+      "actual": [
+        1920,
+        1080
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 1050,
+        "h": 130,
+        "right": 1908,
+        "w": 1586,
+        "x": 322,
+        "y": 920
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 0,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 664.1000366210938,
+        "h": 540.1000366210938,
+        "right": 1896,
+        "w": 408,
+        "x": 1488,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "calendar"
+    },
+    {
+      "name": "friends",
+      "requested": [
+        1440,
+        900
+      ],
+      "actual": [
+        1440,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1428,
+        "w": 1106,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 3,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 600.3999938964844,
+        "h": 476.3999938964844,
+        "right": 1416,
+        "w": 408,
+        "x": 1008,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "people-pick"
+    },
+    {
+      "name": "transport",
+      "requested": [
+        1440,
+        900
+      ],
+      "actual": [
+        1440,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1428,
+        "w": 1106,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 3,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 639,
+        "h": 515,
+        "right": 1416,
+        "w": 408,
+        "x": 1008,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "transport"
+    },
+    {
+      "name": "transport",
+      "requested": [
+        1728,
+        900
+      ],
+      "actual": [
+        1728,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1716,
+        "w": 1394,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 1,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 639,
+        "h": 515,
+        "right": 1704,
+        "w": 408,
+        "x": 1296,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "transport"
+    },
+    {
+      "name": "transport",
+      "requested": [
+        1920,
+        1080
+      ],
+      "actual": [
+        1920,
+        1080
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 1050,
+        "h": 130,
+        "right": 1908,
+        "w": 1586,
+        "x": 322,
+        "y": 920
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 1,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 639,
+        "h": 515,
+        "right": 1896,
+        "w": 408,
+        "x": 1488,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "transport"
+    },
+    {
+      "name": "summary",
+      "requested": [
+        1440,
+        900
+      ],
+      "actual": [
+        1440,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1428,
+        "w": 1106,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 3,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 700.6000366210938,
+        "h": 576.6000366210938,
+        "right": 1416,
+        "w": 408,
+        "x": 1008,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "summary"
+    },
+    {
+      "name": "summary",
+      "requested": [
+        1728,
+        900
+      ],
+      "actual": [
+        1728,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1716,
+        "w": 1394,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 1,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 700.6000366210938,
+        "h": 576.6000366210938,
+        "right": 1704,
+        "w": 408,
+        "x": 1296,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "summary"
+    },
+    {
+      "name": "summary",
+      "requested": [
+        1920,
+        1080
+      ],
+      "actual": [
+        1920,
+        1080
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 1050,
+        "h": 130,
+        "right": 1908,
+        "w": 1586,
+        "x": 322,
+        "y": 920
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 1,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 700.6000366210938,
+        "h": 576.6000366210938,
+        "right": 1896,
+        "w": 408,
+        "x": 1488,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "summary"
+    },
+    {
+      "name": "error",
+      "requested": [
+        1440,
+        900
+      ],
+      "actual": [
+        1440,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1428,
+        "w": 1106,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 3,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 709.9500122070312,
+        "h": 585.9500122070312,
+        "right": 1416,
+        "w": 408,
+        "x": 1008,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "price"
+    },
+    {
+      "name": "error",
+      "requested": [
+        1728,
+        900
+      ],
+      "actual": [
+        1728,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1716,
+        "w": 1394,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 1,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 709.9500122070312,
+        "h": 585.9500122070312,
+        "right": 1704,
+        "w": 408,
+        "x": 1296,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "price"
+    },
+    {
+      "name": "error",
+      "requested": [
+        1920,
+        1080
+      ],
+      "actual": [
+        1920,
+        1080
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 1050,
+        "h": 130,
+        "right": 1908,
+        "w": 1586,
+        "x": 322,
+        "y": 920
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 0,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 709.9500122070312,
+        "h": 585.9500122070312,
+        "right": 1896,
+        "w": 408,
+        "x": 1488,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "price"
+    },
+    {
+      "name": "server-error",
+      "requested": [
+        1440,
+        900
+      ],
+      "actual": [
+        1440,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1428,
+        "w": 1106,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 3,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 670.9500122070312,
+        "h": 546.9500122070312,
+        "right": 1416,
+        "w": 408,
+        "x": 1008,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "transport"
+    },
+    {
+      "name": "server-error",
+      "requested": [
+        1728,
+        900
+      ],
+      "actual": [
+        1728,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1716,
+        "w": 1394,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 1,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 670.9500122070312,
+        "h": 546.9500122070312,
+        "right": 1704,
+        "w": 408,
+        "x": 1296,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "transport"
+    },
+    {
+      "name": "server-error",
+      "requested": [
+        1920,
+        1080
+      ],
+      "actual": [
+        1920,
+        1080
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 1050,
+        "h": 130,
+        "right": 1908,
+        "w": 1586,
+        "x": 322,
+        "y": 920
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 0,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 670.9500122070312,
+        "h": 546.9500122070312,
+        "right": 1896,
+        "w": 408,
+        "x": 1488,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "transport"
+    },
+    {
+      "name": "choices",
+      "requested": [
+        1440,
+        900
+      ],
+      "actual": [
+        1440,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1428,
+        "w": 1106,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 3,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 665.1000366210938,
+        "h": 541.1000366210938,
+        "right": 1416,
+        "w": 408,
+        "x": 1008,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "menu"
+    },
+    {
+      "name": "choices",
+      "requested": [
+        1728,
+        900
+      ],
+      "actual": [
+        1728,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1716,
+        "w": 1394,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 1,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 665.1000366210938,
+        "h": 541.1000366210938,
+        "right": 1704,
+        "w": 408,
+        "x": 1296,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "menu"
+    },
+    {
+      "name": "choices",
+      "requested": [
+        1920,
+        1080
+      ],
+      "actual": [
+        1920,
+        1080
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 1050,
+        "h": 130,
+        "right": 1908,
+        "w": 1586,
+        "x": 322,
+        "y": 920
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 0,
+      "modal": false,
+      "overlap": false,
+      "panel": {
+        "bottom": 665.1000366210938,
+        "h": 541.1000366210938,
+        "right": 1896,
+        "w": 408,
+        "x": 1488,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "menu"
+    }
+  ],
+  "discardedPreFixSamples": [
+    {
+      "name": "error",
+      "requested": [
+        1440,
+        900
+      ],
+      "actual": [
+        1440,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1428,
+        "w": 1106,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 3,
+      "modal": false,
+      "overlap": true,
+      "panel": {
+        "bottom": 740.4000244140625,
+        "h": 616.4000244140625,
+        "right": 1416,
+        "w": 408,
+        "x": 1008,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "price"
+    },
+    {
+      "name": "error",
+      "requested": [
+        1728,
+        900
+      ],
+      "actual": [
+        1728,
+        900
+      ],
+      "collisions": [],
+      "cut": [],
+      "dock": {
+        "bottom": 870,
+        "h": 130,
+        "right": 1716,
+        "w": 1394,
+        "x": 322,
+        "y": 740
+      },
+      "filters": [
+        {
+          "backdrop": "none",
+          "filter": "none"
+        }
+      ],
+      "inert": 1,
+      "modal": false,
+      "overlap": true,
+      "panel": {
+        "bottom": 740.4000244140625,
+        "h": 616.4000244140625,
+        "right": 1704,
+        "w": 408,
+        "x": 1296,
+        "y": 124
+      },
+      "scroll": {
+        "dock": 0,
+        "panel": 0,
+        "question": 0
+      },
+      "step": "price"
+    }
+  ]
+}

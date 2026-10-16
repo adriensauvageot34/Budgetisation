@@ -1,0 +1,25 @@
+{
+  "status": "PASS_LOCAL_HTTP_SYNTHETIC",
+  "gestures": [
+    "calendar open/back",
+    "unknown date without invented value",
+    "friends search",
+    "manual participant buffer"
+  ],
+  "additionalOperations": 0,
+  "before": {
+    "id": "a2b59c60-cd47-45eb-9632-d907b289e916",
+    "version": 1,
+    "digest": "5b463639a0b11454e985435445562d8001992c651bee9d0dfcf1d6551b9eea40"
+  },
+  "after": {
+    "id": "a2b59c60-cd47-45eb-9632-d907b289e916",
+    "version": 1,
+    "digest": "5b463639a0b11454e985435445562d8001992c651bee9d0dfcf1d6551b9eea40"
+  },
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "remoteWrites": 0
+}
