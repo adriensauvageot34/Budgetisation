@@ -7,14 +7,15 @@ import { controlInputValue, normalizeControlInput } from "@/domain/phase2/planne
 import { money, quantityLabel } from "./display";
 import styles from "./composer.module.css";
 import { useInlineEditRegistry } from "./inline-edit-registry";
+import { controlValuePresentation } from "./control-value-presentation";
 
 export function InlineControlValue({ card, dimension, busy, focus, mutate }: {
   card: ComposerCardView; dimension: ControlDimension; busy: boolean; focus: () => void; mutate: (mutation: SemanticMutation) => void;
 }) {
   const rule = card.capability?.fields?.[dimension], admitted = rule?.status === "EDITABLE";
   const inlineEdits = useInlineEditRegistry(), fieldKey = `${card.targetRef}:${dimension}`;
-  const raw = card.value[dimension], value = typeof raw === "string" ? raw : null;
-  const optional = dimension === "amount" && !card.value.decisionValue && card.value.inclusion === "SUGGESTION_ONLY";
+  const presentation = controlValuePresentation(card, dimension), value = presentation.value;
+  const optional = dimension === "amount" && presentation.kind === "UNKNOWN";
   const title = dimension === "count" ? "Nombre d’occurrences" : dimension === "unitAmount" ? "Prix par occurrence" : "Montant du mois";
   const [editing, setEditing] = useState(false), [text, setText] = useState(""), [error, setError] = useState("");
   const [pending, setPending] = useState<string | null>(null), timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -76,23 +77,24 @@ export function InlineControlValue({ card, dimension, busy, focus, mutate }: {
   const displayed = pending ?? value;
   const caption = displayed === null || optional && pending === null ? dimension === "count" ? "Occurrences à définir" : dimension === "unitAmount" ? "Prix à préciser" : "À définir"
     : dimension === "count" ? `${quantityLabel(displayed)} occurrence${new Big(displayed).eq(1) ? "" : "s"}` : money(displayed);
-  return <div className={styles.directValue} data-control-dimension={dimension} data-inline-dirty={editing || pending !== null || undefined} data-inline-editing={editing || undefined} data-value-pending={pending !== null || undefined}
+  return <div className={styles.directValue} data-control-dimension={dimension} data-value-status={presentation.kind} data-inline-dirty={editing || pending !== null || undefined} data-inline-editing={editing || undefined} data-value-pending={pending !== null || undefined}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) flush(); }}>
     {editing ? <form className={styles.directValueForm} onSubmit={event => { event.preventDefault(); commit(); }}>
       <label><span className={styles.visuallyHidden}>{title} de {card.label}</span><input ref={input} aria-label={`${title} de ${card.label}`} inputMode={rule?.integer ? "numeric" : "decimal"} value={text} disabled={busy}
         onChange={event => { setText(event.target.value); setError(""); }} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); discard(); requestAnimationFrame(() => button.current?.focus()); } }} /></label>
       <button type="submit" disabled={busy} aria-label={`Valider ${title} de ${card.label}`}><Check size={15} /></button>
       <button type="button" aria-label={`Annuler la saisie de ${card.label}`} onClick={discard}><X size={14} /></button>
-      <small>Entrée valide · Échap annule · Tab conserve la saisie</small>
+      <small title="Tab conserve la saisie sans la valider">Entrée valide · Échap annule</small>
     </form> : <div className={styles.valueAdjuster}>
       {admitted && <button type="button" className={styles.valueStep} aria-label={`Diminuer ${title} de ${card.label}`} disabled={busy || displayed !== null && new Big(displayed).lte(rule.minimum)} onClick={() => adjust(-1)}><Minus size={13} /></button>}
-      <button ref={button} type="button" className={dimension === "unitAmount" ? styles.unitValueButton : styles.valueButton} data-value-edit data-budget-unknown={displayed === null || optional || undefined}
+      <button ref={button} type="button" className={dimension === "unitAmount" ? styles.unitValueButton : styles.valueButton} data-value-edit data-budget-unknown={displayed === null || optional || undefined} title={presentation.label}
         aria-label={`${title} de ${card.label} : ${caption}`} disabled={!admitted || busy} onClick={() => { const next = pendingRef.current ?? value; inlineEdits?.flushPending(); flush(); focus(); setText(optional ? "" : next ?? ""); setError(""); setEditing(true);
           inlineEdits?.set(fieldKey, { targetRef: card.targetRef, dimension, kind: "RAW", discard, flush }); }}>
         <strong className={dimension === "unitAmount" ? styles.unitValue : styles.cardValue}>{caption}</strong>{dimension === "unitAmount" && <small> / occurrence</small>}
       </button>
       {admitted && <button type="button" className={styles.valueStep} aria-label={`Augmenter ${title} de ${card.label}`} disabled={busy || displayed !== null && new Big(displayed).gte(rule.maximum)} onClick={() => adjust(1)}><Plus size={13} /></button>}
     </div>}
+    {dimension === "unitAmount" && presentation.kind !== "UNKNOWN" && <small className={styles.unitValueOrigin}>{presentation.label}</small>}
     {pending !== null && <small role="status">Réglage en attente…</small>}
     {error && <small role="alert" className={styles.formError}>{error}</small>}
   </div>;

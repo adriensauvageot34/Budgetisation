@@ -1,0 +1,1326 @@
+[
+  {
+    "stage": "beauty1440",
+    "data": {
+      "cells": [
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 187.7624969482422,
+            "x": 1184.8250732421875,
+            "y": 215.8000030517578
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Vêtements",
+              "w": 24,
+              "x": 1184.8250732421875,
+              "y": 216.5500030517578
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Vêtements : À définir",
+              "w": 133.7624969482422,
+              "x": 1211.8250732421875,
+              "y": 215.8000030517578
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Vêtements",
+              "w": 24,
+              "x": 1348.5875244140625,
+              "y": 216.5500030517578
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:clothing",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 133.7624969482422,
+              "x": 1211.8250732421875,
+              "y": 217.8000030517578
+            }
+          ]
+        }
+      ],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 2 sur 212Suivante ",
+      "viewport": [
+        1440,
+        900
+      ]
+    }
+  },
+  {
+    "stage": "final-error1920",
+    "sha": "f9a7fce",
+    "data": {
+      "cells": [
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 194.875,
+            "x": 685.4625244140625,
+            "y": 215.8000030517578
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Courses",
+              "w": 24,
+              "x": 685.4625244140625,
+              "y": 216.5500030517578
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Courses : 325,00 €",
+              "w": 140.875,
+              "x": 712.4625244140625,
+              "y": 215.8000030517578
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Courses",
+              "w": 24,
+              "x": 856.3375244140625,
+              "y": 216.5500030517578
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:groceries",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 140.875,
+              "x": 712.4625244140625,
+              "y": 217.8000030517578
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 194.8625030517578,
+            "x": 449,
+            "y": 395.8000183105469
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Vêtements",
+              "w": 24,
+              "x": 449,
+              "y": 396.5500183105469
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Vêtements : À définir",
+              "w": 140.8625030517578,
+              "x": 476,
+              "y": 395.8000183105469
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Vêtements",
+              "w": 24,
+              "x": 619.8624877929688,
+              "y": 396.5500183105469
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:clothing",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 140.8625030517578,
+              "x": 476,
+              "y": 397.8000183105469
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 86.70000457763672,
+            "w": 178.40000915527344,
+            "x": 795.7999877929688,
+            "y": 408.9500122070313
+          },
+          "buttons": [
+            {
+              "h": 28,
+              "label": "Valider Nombre d’occurrences de Repas travail Manon",
+              "w": 28,
+              "x": 915.2000122070312,
+              "y": 412.75
+            },
+            {
+              "h": 28,
+              "label": "Annuler la saisie de Repas travail Manon",
+              "w": 28,
+              "x": 946.2000122070312,
+              "y": 412.75
+            }
+          ],
+          "dimension": "count",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 35.60000228881836,
+              "text": "2,345",
+              "w": 116.4000015258789,
+              "x": 795.7999877929688,
+              "y": 408.9500122070313
+            },
+            {
+              "h": 31.600000381469727,
+              "text": "",
+              "w": 178.40000915527344,
+              "x": 795.7999877929688,
+              "y": 464.0500183105469
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 41.5,
+            "w": 178.40000915527344,
+            "x": 795.7999877929688,
+            "y": 498.6499938964844
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 795.7999877929688,
+              "y": 499.6499938964844
+            },
+            {
+              "h": 28,
+              "label": "Prix par occurrence de Repas travail Manon : 8,00 €",
+              "w": 124.4000015258789,
+              "x": 822.7999877929688,
+              "y": 498.6499938964844
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 950.2000122070312,
+              "y": 499.6499938964844
+            }
+          ],
+          "dimension": "unitAmount",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 17.600000381469727,
+              "text": "",
+              "w": 35.587501525878906,
+              "x": 822.7999877929688,
+              "y": 504.6499938964844
+            }
+          ]
+        }
+      ],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 1 sur 212Suivante ",
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  },
+  {
+    "stage": "final-error1728",
+    "sha": "f9a7fce",
+    "data": {
+      "cells": [
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 194.875,
+            "x": 685.4625244140625,
+            "y": 215.8000030517578
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Courses",
+              "w": 24,
+              "x": 685.4625244140625,
+              "y": 216.5500030517578
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Courses : 325,00 €",
+              "w": 140.875,
+              "x": 712.4625244140625,
+              "y": 215.8000030517578
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Courses",
+              "w": 24,
+              "x": 856.3375244140625,
+              "y": 216.5500030517578
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:groceries",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 140.875,
+              "x": 712.4625244140625,
+              "y": 217.8000030517578
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 194.8625030517578,
+            "x": 449,
+            "y": 395.8000183105469
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Vêtements",
+              "w": 24,
+              "x": 449,
+              "y": 396.5500183105469
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Vêtements : À définir",
+              "w": 140.8625030517578,
+              "x": 476,
+              "y": 395.8000183105469
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Vêtements",
+              "w": 24,
+              "x": 619.8624877929688,
+              "y": 396.5500183105469
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:clothing",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 140.8625030517578,
+              "x": 476,
+              "y": 397.8000183105469
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 86.70000457763672,
+            "w": 178.40000915527344,
+            "x": 699.7999877929688,
+            "y": 318.95001220703125
+          },
+          "buttons": [
+            {
+              "h": 28,
+              "label": "Valider Nombre d’occurrences de Repas travail Manon",
+              "w": 28,
+              "x": 819.2000122070312,
+              "y": 322.75
+            },
+            {
+              "h": 28,
+              "label": "Annuler la saisie de Repas travail Manon",
+              "w": 28,
+              "x": 850.2000122070312,
+              "y": 322.75
+            }
+          ],
+          "dimension": "count",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 35.60000228881836,
+              "text": "2,345",
+              "w": 116.4000015258789,
+              "x": 699.7999877929688,
+              "y": 318.95001220703125
+            },
+            {
+              "h": 31.600000381469727,
+              "text": "",
+              "w": 178.40000915527344,
+              "x": 699.7999877929688,
+              "y": 374.0500183105469
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 41.5,
+            "w": 178.40000915527344,
+            "x": 699.7999877929688,
+            "y": 408.6499938964844
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 699.7999877929688,
+              "y": 409.6499938964844
+            },
+            {
+              "h": 28,
+              "label": "Prix par occurrence de Repas travail Manon : 8,00 €",
+              "w": 124.4000015258789,
+              "x": 726.7999877929688,
+              "y": 408.6499938964844
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 854.2000122070312,
+              "y": 409.6499938964844
+            }
+          ],
+          "dimension": "unitAmount",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 17.600000381469727,
+              "text": "",
+              "w": 35.587501525878906,
+              "x": 726.7999877929688,
+              "y": 414.6499938964844
+            }
+          ]
+        }
+      ],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 1 sur 3123Suivante ",
+      "viewport": [
+        1728,
+        900
+      ]
+    }
+  },
+  {
+    "stage": "final-error1440",
+    "sha": "f9a7fce",
+    "data": {
+      "cells": [
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 187.77500915527344,
+            "x": 589.4625854492188,
+            "y": 215.8000030517578
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Courses",
+              "w": 24,
+              "x": 589.4625854492188,
+              "y": 216.5500030517578
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Courses : 325,00 €",
+              "w": 133.77500915527344,
+              "x": 616.4625854492188,
+              "y": 215.8000030517578
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Courses",
+              "w": 24,
+              "x": 753.237548828125,
+              "y": 216.5500030517578
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:groceries",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 133.77500915527344,
+              "x": 616.4625854492188,
+              "y": 217.8000030517578
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 187.7624969482422,
+            "x": 353,
+            "y": 395.8000183105469
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Vêtements",
+              "w": 24,
+              "x": 353,
+              "y": 396.5500183105469
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Vêtements : À définir",
+              "w": 133.7624969482422,
+              "x": 380,
+              "y": 395.8000183105469
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Vêtements",
+              "w": 24,
+              "x": 516.7625122070312,
+              "y": 396.5500183105469
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:clothing",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 133.7624969482422,
+              "x": 380,
+              "y": 397.8000183105469
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 86.70000457763672,
+            "w": 178.40000915527344,
+            "x": 555.7999877929688,
+            "y": 318.95001220703125
+          },
+          "buttons": [
+            {
+              "h": 28,
+              "label": "Valider Nombre d’occurrences de Repas travail Manon",
+              "w": 28,
+              "x": 675.2000122070312,
+              "y": 322.75
+            },
+            {
+              "h": 28,
+              "label": "Annuler la saisie de Repas travail Manon",
+              "w": 28,
+              "x": 706.2000122070312,
+              "y": 322.75
+            }
+          ],
+          "dimension": "count",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 35.60000228881836,
+              "text": "2,345",
+              "w": 116.4000015258789,
+              "x": 555.7999877929688,
+              "y": 318.95001220703125
+            },
+            {
+              "h": 31.600000381469727,
+              "text": "",
+              "w": 178.40000915527344,
+              "x": 555.7999877929688,
+              "y": 374.0500183105469
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 41.5,
+            "w": 178.40000915527344,
+            "x": 555.7999877929688,
+            "y": 408.6499938964844
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 555.7999877929688,
+              "y": 409.6499938964844
+            },
+            {
+              "h": 28,
+              "label": "Prix par occurrence de Repas travail Manon : 8,00 €",
+              "w": 124.4000015258789,
+              "x": 582.7999877929688,
+              "y": 408.6499938964844
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 710.2000122070312,
+              "y": 409.6499938964844
+            }
+          ],
+          "dimension": "unitAmount",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 17.600000381469727,
+              "text": "",
+              "w": 35.587501525878906,
+              "x": 582.7999877929688,
+              "y": 414.6499938964844
+            }
+          ]
+        }
+      ],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 1 sur 41234Suivante ",
+      "viewport": [
+        1440,
+        900
+      ]
+    }
+  },
+  {
+    "stage": "final-inspector-palette1440",
+    "sha": "f9a7fce",
+    "data": {
+      "cells": [
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 198.5375061035156,
+            "x": 579.9249877929688,
+            "y": 215.8000030517578
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Vêtements",
+              "w": 24,
+              "x": 579.9249877929688,
+              "y": 216.5500030517578
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Vêtements : À définir",
+              "w": 144.53750610351562,
+              "x": 606.9249877929688,
+              "y": 215.8000030517578
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Vêtements",
+              "w": 24,
+              "x": 754.4625244140625,
+              "y": 216.5500030517578
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:clothing",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 144.53750610351562,
+              "x": 606.9249877929688,
+              "y": 217.8000030517578
+            }
+          ]
+        }
+      ],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 2 sur 6123456Suivante ",
+      "viewport": [
+        1440,
+        900
+      ]
+    }
+  },
+  {
+    "stage": "final-inspector-palette1728",
+    "sha": "f9a7fce",
+    "data": {
+      "cells": [],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 2 sur 512345Suivante ",
+      "viewport": [
+        1728,
+        900
+      ]
+    }
+  },
+  {
+    "stage": "final-inspector-palette1920",
+    "sha": "f9a7fce",
+    "data": {
+      "cells": [
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 198.4750061035156,
+            "x": -656.125,
+            "y": 215.8000030517578
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Courses",
+              "w": 24,
+              "x": -656.125,
+              "y": 216.5500030517578
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Courses : 325,00 €",
+              "w": 144.47500610351562,
+              "x": -629.125,
+              "y": 215.8000030517578
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Courses",
+              "w": 24,
+              "x": -481.6499938964844,
+              "y": 216.5500030517578
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:groceries",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 144.47500610351562,
+              "x": -629.125,
+              "y": 217.8000030517578
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 198.4875030517578,
+            "x": 64.11250305175781,
+            "y": 385.8000183105469
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Vêtements",
+              "w": 24,
+              "x": 64.11250305175781,
+              "y": 386.5500183105469
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Vêtements : À définir",
+              "w": 144.4875030517578,
+              "x": 91.1125030517578,
+              "y": 385.8000183105469
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Vêtements",
+              "w": 24,
+              "x": 238.6000061035156,
+              "y": 386.5500183105469
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:clothing",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 144.4875030517578,
+              "x": 91.1125030517578,
+              "y": 387.8000183105469
+            }
+          ]
+        }
+      ],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 1 sur 3123Suivante ",
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  },
+  {
+    "stage": "latest-group1440",
+    "sha": "8978ac1",
+    "data": {
+      "cells": [
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 187.77500915527344,
+            "x": 573.1625366210938,
+            "y": 215.8000030517578
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Courses",
+              "w": 24,
+              "x": 573.1625366210938,
+              "y": 216.5500030517578
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Courses : 325,00 €",
+              "w": 133.77500915527344,
+              "x": 600.1625366210938,
+              "y": 215.8000030517578
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Courses",
+              "w": 24,
+              "x": 736.9375,
+              "y": 216.5500030517578
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:groceries",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 133.77500915527344,
+              "x": 600.1625366210938,
+              "y": 217.8000030517578
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 187.7624969482422,
+            "x": 343.8000183105469,
+            "y": 555.7999877929688
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Vêtements",
+              "w": 24,
+              "x": 343.8000183105469,
+              "y": 556.5499877929688
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Vêtements : À définir",
+              "w": 133.7624969482422,
+              "x": 370.8000183105469,
+              "y": 555.7999877929688
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Vêtements",
+              "w": 24,
+              "x": 507.5625,
+              "y": 556.5499877929688
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:clothing",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 133.7624969482422,
+              "x": 370.8000183105469,
+              "y": 557.7999877929688
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 44.29999923706055,
+            "w": 178.40000915527344,
+            "x": 555.7999877929688,
+            "y": 333.20001220703125
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Nombre d’occurrences de Repas travail Manon",
+              "w": 24,
+              "x": 555.7999877929688,
+              "y": 342.3500061035156
+            },
+            {
+              "h": 44.29999923706055,
+              "label": "Nombre d’occurrences de Repas travail Manon : Occurrences à définir",
+              "w": 124.4000015258789,
+              "x": 582.7999877929688,
+              "y": 333.20001220703125
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Nombre d’occurrences de Repas travail Manon",
+              "w": 24,
+              "x": 710.2000122070312,
+              "y": 342.3500061035156
+            }
+          ],
+          "dimension": "count",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 40.29999923706055,
+              "text": "",
+              "w": 124.4000015258789,
+              "x": 582.7999877929688,
+              "y": 335.20001220703125
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 41.5,
+            "w": 178.40000915527344,
+            "x": 555.7999877929688,
+            "y": 377.5
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 555.7999877929688,
+              "y": 378.5
+            },
+            {
+              "h": 28,
+              "label": "Prix par occurrence de Repas travail Manon : 8,00 €",
+              "w": 124.4000015258789,
+              "x": 582.7999877929688,
+              "y": 377.5
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 710.2000122070312,
+              "y": 378.5
+            }
+          ],
+          "dimension": "unitAmount",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 17.600000381469727,
+              "text": "",
+              "w": 35.587501525878906,
+              "x": 582.7999877929688,
+              "y": 383.5
+            }
+          ]
+        }
+      ],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 1 sur 41234Suivante ",
+      "viewport": [
+        1440,
+        900
+      ]
+    }
+  },
+  {
+    "stage": "latest-group1728",
+    "sha": "8978ac1",
+    "data": {
+      "cells": [
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 194.875,
+            "x": 588.5001220703125,
+            "y": 215.8000030517578
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Courses",
+              "w": 24,
+              "x": 588.5001220703125,
+              "y": 216.5500030517578
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Courses : 325,00 €",
+              "w": 140.875,
+              "x": 615.5001220703125,
+              "y": 215.8000030517578
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Courses",
+              "w": 24,
+              "x": 759.3751220703125,
+              "y": 216.5500030517578
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:groceries",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 140.875,
+              "x": 615.5001220703125,
+              "y": 217.8000030517578
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 194.875,
+            "x": 1242.4847412109375,
+            "y": 395.8372497558594
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Vêtements",
+              "w": 24,
+              "x": 1242.4847412109375,
+              "y": 396.5872497558594
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Vêtements : À définir",
+              "w": 140.875,
+              "x": 1269.4847412109375,
+              "y": 395.8372497558594
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Vêtements",
+              "w": 24,
+              "x": 1413.3597412109375,
+              "y": 396.5872497558594
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:clothing",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 140.875,
+              "x": 1269.4847412109375,
+              "y": 397.8372497558594
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 44.29999923706055,
+            "w": 178.40000915527344,
+            "x": 699.7999877929688,
+            "y": 334.20001220703125
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Nombre d’occurrences de Repas travail Manon",
+              "w": 24,
+              "x": 699.7999877929688,
+              "y": 343.3500061035156
+            },
+            {
+              "h": 44.29999923706055,
+              "label": "Nombre d’occurrences de Repas travail Manon : Occurrences à définir",
+              "w": 124.4000015258789,
+              "x": 726.7999877929688,
+              "y": 334.20001220703125
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Nombre d’occurrences de Repas travail Manon",
+              "w": 24,
+              "x": 854.2000122070312,
+              "y": 343.3500061035156
+            }
+          ],
+          "dimension": "count",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 40.29999923706055,
+              "text": "",
+              "w": 124.4000015258789,
+              "x": 726.7999877929688,
+              "y": 336.20001220703125
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 41.5,
+            "w": 178.40000915527344,
+            "x": 699.7999877929688,
+            "y": 378.5
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 699.7999877929688,
+              "y": 379.5
+            },
+            {
+              "h": 28,
+              "label": "Prix par occurrence de Repas travail Manon : 8,00 €",
+              "w": 124.4000015258789,
+              "x": 726.7999877929688,
+              "y": 378.5
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 854.2000122070312,
+              "y": 379.5
+            }
+          ],
+          "dimension": "unitAmount",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 17.600000381469727,
+              "text": "",
+              "w": 35.587501525878906,
+              "x": 726.7999877929688,
+              "y": 384.5
+            }
+          ]
+        }
+      ],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 1 sur 3123Suivante ",
+      "viewport": [
+        1728,
+        900
+      ]
+    }
+  },
+  {
+    "stage": "latest-group1920",
+    "sha": "8978ac1",
+    "data": {
+      "cells": [
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 194.875,
+            "x": 589.4625244140625,
+            "y": 215.8000030517578
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Courses",
+              "w": 24,
+              "x": 589.4625244140625,
+              "y": 216.5500030517578
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Courses : 325,00 €",
+              "w": 140.875,
+              "x": 616.4625244140625,
+              "y": 215.8000030517578
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Courses",
+              "w": 24,
+              "x": 760.3375244140625,
+              "y": 216.5500030517578
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:groceries",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 140.875,
+              "x": 616.4625244140625,
+              "y": 217.8000030517578
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 27.512500762939453,
+            "w": 194.875,
+            "x": 1298.875,
+            "y": 385.8000183105469
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Montant du mois de Vêtements",
+              "w": 24,
+              "x": 1298.875,
+              "y": 386.5500183105469
+            },
+            {
+              "h": 27.512500762939453,
+              "label": "Montant du mois de Vêtements : À définir",
+              "w": 140.875,
+              "x": 1325.875,
+              "y": 385.8000183105469
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Montant du mois de Vêtements",
+              "w": 24,
+              "x": 1469.75,
+              "y": 386.5500183105469
+            }
+          ],
+          "dimension": "amount",
+          "id": "HOUSEHOLD:household:clothing",
+          "text": [
+            {
+              "h": 23.512500762939453,
+              "text": "",
+              "w": 140.875,
+              "x": 1325.875,
+              "y": 387.8000183105469
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 44.29999923706055,
+            "w": 178.40000915527344,
+            "x": 795.7999877929688,
+            "y": 424.2000122070313
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Nombre d’occurrences de Repas travail Manon",
+              "w": 24,
+              "x": 795.7999877929688,
+              "y": 433.3500061035156
+            },
+            {
+              "h": 44.29999923706055,
+              "label": "Nombre d’occurrences de Repas travail Manon : Occurrences à définir",
+              "w": 124.4000015258789,
+              "x": 822.7999877929688,
+              "y": 424.2000122070313
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Nombre d’occurrences de Repas travail Manon",
+              "w": 24,
+              "x": 950.2000122070312,
+              "y": 433.3500061035156
+            }
+          ],
+          "dimension": "count",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 40.29999923706055,
+              "text": "",
+              "w": 124.4000015258789,
+              "x": 822.7999877929688,
+              "y": 426.2000122070313
+            }
+          ]
+        },
+        {
+          "box": {
+            "h": 41.5,
+            "w": 178.40000915527344,
+            "x": 795.7999877929688,
+            "y": 468.5
+          },
+          "buttons": [
+            {
+              "h": 26,
+              "label": "Diminuer Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 795.7999877929688,
+              "y": 469.5
+            },
+            {
+              "h": 28,
+              "label": "Prix par occurrence de Repas travail Manon : 8,00 €",
+              "w": 124.4000015258789,
+              "x": 822.7999877929688,
+              "y": 468.5
+            },
+            {
+              "h": 26,
+              "label": "Augmenter Prix par occurrence de Repas travail Manon",
+              "w": 24,
+              "x": 950.2000122070312,
+              "y": 469.5
+            }
+          ],
+          "dimension": "unitAmount",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "h": 17.600000381469727,
+              "text": "",
+              "w": 35.587501525878906,
+              "x": 822.7999877929688,
+              "y": 474.5
+            }
+          ]
+        }
+      ],
+      "issues": [],
+      "overflow": false,
+      "pages": " PrécédentePage 1 sur 212Suivante ",
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  }
+]

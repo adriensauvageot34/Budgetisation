@@ -45,5 +45,5 @@ export function controlAccessLabel(card: ComposerCardView): string {
   if (card.capability?.flexibility === "LOCKED") return "Protégé par une règle du mois";
   if (!card.capability?.actions.length) return "Édition non publiée par la source";
   if (card.capability.rationaleCodes.includes("NEEDS_NEW_INPUT")) return "Informations à compléter · éditable";
-  return "Choix de ce mois";
+  return "Ajustable dans ce mois";
 }

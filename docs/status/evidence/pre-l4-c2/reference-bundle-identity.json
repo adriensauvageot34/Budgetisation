@@ -1,0 +1,21 @@
+{
+  "sha": "fb71ae2deb69a915bdf633b2ce721c4cf904821e",
+  "comparison": "LF_NORMALIZED_SOURCE_CONTENTS",
+  "modules": [
+    "src/app/mois-a-venir/composer/composer-shell.tsx",
+    "src/app/mois-a-venir/composer/composer-library.tsx",
+    "src/app/mois-a-venir/composer/composer-board.tsx",
+    "src/app/mois-a-venir/composer/fixed-charges.tsx",
+    "src/app/mois-a-venir/composer/inline-control-value.tsx",
+    "src/app/mois-a-venir/composer/inline-edit-registry.tsx",
+    "src/app/mois-a-venir/composer/composer-card.tsx",
+    "src/app/mois-a-venir/composer/board-carousel.tsx",
+    "src/app/mois-a-venir/composer/visual-cluster.tsx",
+    "src/app/mois-a-venir/composer/composer-financial-inspector.tsx",
+    "src/app/mois-a-venir/composer/local-draft.ts",
+    "src/app/mois-a-venir/composer/preview-scheduler.ts",
+    "src/app/mois-a-venir/composer/durable-draft.ts",
+    "src/app/mois-a-venir/composer/composer.module.css"
+  ],
+  "bundleSha256": "c20086acd6e3583803895d8492b100eafdac0fa52f79d47fa04207acec8097d5"
+}

@@ -1,0 +1,338 @@
+[
+  {
+    "stage": "before1440",
+    "data": {
+      "controls": [
+        {
+          "buttons": [
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 555.7999877929688,
+                "y": 345.70001220703125
+              },
+              "label": "Diminuer Nombre d’occurrences de Repas travail Manon"
+            },
+            {
+              "box": {
+                "h": 28,
+                "w": 124.4000015258789,
+                "x": 582.7999877929688,
+                "y": 344.70001220703125
+              },
+              "label": "Nombre d’occurrences de Repas travail Manon : Occurrences à définir"
+            },
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 710.2000122070312,
+                "y": 345.70001220703125
+              },
+              "label": "Augmenter Nombre d’occurrences de Repas travail Manon"
+            }
+          ],
+          "cell": {
+            "h": 28,
+            "w": 178.40000915527344,
+            "x": 555.7999877929688,
+            "y": 344.70001220703125
+          },
+          "dim": "count",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "box": {
+                "h": 24,
+                "w": 170.28750610351562,
+                "x": 582.7999877929688,
+                "y": 345.8999938964844
+              },
+              "text": "Occurrences à définir"
+            }
+          ]
+        },
+        {
+          "buttons": [
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 555.7999877929688,
+                "y": 373.7000122070313
+              },
+              "label": "Diminuer Prix par occurrence de Repas travail Manon"
+            },
+            {
+              "box": {
+                "h": 28,
+                "w": 124.4000015258789,
+                "x": 582.7999877929688,
+                "y": 372.7000122070313
+              },
+              "label": "Prix par occurrence de Repas travail Manon : 8,00 €"
+            },
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 710.2000122070312,
+                "y": 373.7000122070313
+              },
+              "label": "Augmenter Prix par occurrence de Repas travail Manon"
+            }
+          ],
+          "cell": {
+            "h": 28,
+            "w": 178.40000915527344,
+            "x": 555.7999877929688,
+            "y": 372.7000122070313
+          },
+          "dim": "unitAmount",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "box": {
+                "h": 17.600000381469727,
+                "w": 35.587501525878906,
+                "x": 582.7999877929688,
+                "y": 378.7000122070313
+              },
+              "text": "8,00 €"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "viewport": [
+        1440,
+        900
+      ]
+    }
+  },
+  {
+    "stage": "before1728",
+    "data": {
+      "controls": [
+        {
+          "buttons": [
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 699.7999877929688,
+                "y": 346.70001220703125
+              },
+              "label": "Diminuer Nombre d’occurrences de Repas travail Manon"
+            },
+            {
+              "box": {
+                "h": 28,
+                "w": 124.4000015258789,
+                "x": 726.7999877929688,
+                "y": 345.70001220703125
+              },
+              "label": "Nombre d’occurrences de Repas travail Manon : Occurrences à définir"
+            },
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 854.2000122070312,
+                "y": 346.70001220703125
+              },
+              "label": "Augmenter Nombre d’occurrences de Repas travail Manon"
+            }
+          ],
+          "cell": {
+            "h": 28,
+            "w": 178.40000915527344,
+            "x": 699.7999877929688,
+            "y": 345.70001220703125
+          },
+          "dim": "count",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "box": {
+                "h": 24,
+                "w": 170.28750610351562,
+                "x": 726.7999877929688,
+                "y": 346.8999938964844
+              },
+              "text": "Occurrences à définir"
+            }
+          ]
+        },
+        {
+          "buttons": [
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 699.7999877929688,
+                "y": 374.7000122070313
+              },
+              "label": "Diminuer Prix par occurrence de Repas travail Manon"
+            },
+            {
+              "box": {
+                "h": 28,
+                "w": 124.4000015258789,
+                "x": 726.7999877929688,
+                "y": 373.7000122070313
+              },
+              "label": "Prix par occurrence de Repas travail Manon : 8,00 €"
+            },
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 854.2000122070312,
+                "y": 374.7000122070313
+              },
+              "label": "Augmenter Prix par occurrence de Repas travail Manon"
+            }
+          ],
+          "cell": {
+            "h": 28,
+            "w": 178.40000915527344,
+            "x": 699.7999877929688,
+            "y": 373.7000122070313
+          },
+          "dim": "unitAmount",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "box": {
+                "h": 17.600000381469727,
+                "w": 35.587501525878906,
+                "x": 726.7999877929688,
+                "y": 379.7000122070313
+              },
+              "text": "8,00 €"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "viewport": [
+        1728,
+        900
+      ]
+    }
+  },
+  {
+    "stage": "before1920",
+    "data": {
+      "controls": [
+        {
+          "buttons": [
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 795.7999877929688,
+                "y": 436.7000122070313
+              },
+              "label": "Diminuer Nombre d’occurrences de Repas travail Manon"
+            },
+            {
+              "box": {
+                "h": 28,
+                "w": 124.4000015258789,
+                "x": 822.7999877929688,
+                "y": 435.7000122070313
+              },
+              "label": "Nombre d’occurrences de Repas travail Manon : Occurrences à définir"
+            },
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 950.2000122070312,
+                "y": 436.7000122070313
+              },
+              "label": "Augmenter Nombre d’occurrences de Repas travail Manon"
+            }
+          ],
+          "cell": {
+            "h": 28,
+            "w": 178.40000915527344,
+            "x": 795.7999877929688,
+            "y": 435.7000122070313
+          },
+          "dim": "count",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "box": {
+                "h": 24,
+                "w": 170.28750610351562,
+                "x": 822.7999877929688,
+                "y": 436.8999938964844
+              },
+              "text": "Occurrences à définir"
+            }
+          ]
+        },
+        {
+          "buttons": [
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 795.7999877929688,
+                "y": 464.7000122070313
+              },
+              "label": "Diminuer Prix par occurrence de Repas travail Manon"
+            },
+            {
+              "box": {
+                "h": 28,
+                "w": 124.4000015258789,
+                "x": 822.7999877929688,
+                "y": 463.7000122070313
+              },
+              "label": "Prix par occurrence de Repas travail Manon : 8,00 €"
+            },
+            {
+              "box": {
+                "h": 26,
+                "w": 24,
+                "x": 950.2000122070312,
+                "y": 464.7000122070313
+              },
+              "label": "Augmenter Prix par occurrence de Repas travail Manon"
+            }
+          ],
+          "cell": {
+            "h": 28,
+            "w": 178.40000915527344,
+            "x": 795.7999877929688,
+            "y": 463.7000122070313
+          },
+          "dim": "unitAmount",
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+          "text": [
+            {
+              "box": {
+                "h": 17.600000381469727,
+                "w": 35.587501525878906,
+                "x": 822.7999877929688,
+                "y": 469.7000122070313
+              },
+              "text": "8,00 €"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  }
+]

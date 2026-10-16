@@ -1,0 +1,872 @@
+{
+  "environment": "LOCAL_REACT_PRODUCTION_SYNTHETIC_ONLY",
+  "testedSha": "8978ac18b0b4dbe0650c044b3ca086a54014ba8b",
+  "phases": {
+    "initialGestures": "3af1b5f",
+    "compactEditingAndC1Replay": "f9a7fce",
+    "finalMarkersAndThreeViewports": "8978ac1"
+  },
+  "checks": [
+    {
+      "id": "courses250",
+      "data": {
+        "applyDisabled": false,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+        "raw": [],
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "courses300raw",
+      "applyEnabled": false,
+      "notice": "Saisie non validée",
+      "data": {
+        "applyDisabled": true,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+        "raw": [
+          {
+            "id": "HOUSEHOLD:household:groceries",
+            "value": "300"
+          }
+        ],
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "courses-raw-inspector-preserved",
+      "data": {
+        "applyDisabled": true,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+        "raw": [
+          {
+            "id": "HOUSEHOLD:household:groceries",
+            "value": "300"
+          }
+        ],
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "coffee-zero",
+      "text": "Café au travail\nAdrien\n0 occurrences\n1,80 € / occurrence\nPrix de référence\nCoût du mois : 0,00 €\nChoix de ce mois\nHabituel 12 occurrence(s)"
+    },
+    {
+      "id": "coffee-restored",
+      "text": "Café au travail\nAdrien\n12 occurrences\n1,80 € / occurrence\nPrix de référence\nCoût du mois : 21,60 €\nChoix de ce mois\nHabituel 12 occurrence(s)\n+9"
+    },
+    {
+      "id": "clothing-zero-inspector",
+      "text": "Vêtements\nChoix de ce mois · Ajustable dans ce mois\n0,00 €",
+      "status": "DECISION"
+    },
+    {
+      "id": "trash-bags4-covered",
+      "idRef": "282abf13-ec78-4ca3-8084-7974cd13bd51",
+      "text": "Sacs-poubelle\n4,00 €\nConsomme l’enveloppe retenue\nMontant de l’achat",
+      "data": {
+        "applyDisabled": false,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b",
+        "raw": [],
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "fixed-before-detach",
+      "data": {
+        "applyDisabled": false,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b",
+        "raw": [],
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "fixed-after-detach",
+      "fact": "obligation:rent",
+      "text": "obligation:rent\n500,00 €\nSocle du mois · lecture seule dans Composer\nVoir la charge\nRemettre dans Charges fixes",
+      "data": {
+        "applyDisabled": false,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b",
+        "raw": [],
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "rail-undecided",
+      "text": "Que veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nRetrouvez la carte déjà présente dans votre mois. Aucun doublon n’est créé.\n\nEnveloppes\nJeux / numérique ponctuel\nÀ définir\nÀ définir · aucun choix retenu · Ajustable dans ce mois"
+    },
+    {
+      "id": "rail-coffee-reference-price",
+      "text": "Que veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nRetrouvez la carte déjà présente dans votre mois. Aucun doublon n’est créé.\n\nHabitudes\nCafé au travail Adrien\n12 occurrence(s) · prix de référence : 1,80 €\nChoix de ce mois · Ajustable dans ce mois"
+    },
+    {
+      "id": "dense-page2",
+      "data": {
+        "applyDisabled": true,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "CLEAN"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+        "raw": [],
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      "cardId": "00000000-0000-4000-8000-000000033011"
+    },
+    {
+      "id": "dense-return-group",
+      "data": {
+        "applyDisabled": true,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "CLEAN"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+        "raw": [],
+        "viewport": [
+          1920,
+          1080
+        ]
+      },
+      "group": "Restauration, 5 éléments",
+      "idRef": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals"
+    },
+    {
+      "id": "beauty1440",
+      "data": {
+        "applyDisabled": false,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "db7cb0cb98fe5cb28c410c9e0ca19139f63ec0e9a64cd0c59e5ac1f6f1d016a9"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "CLEAN"
+          ],
+          [
+            "data-world-version",
+            "e4cc9f1bb4fdee36db805ded590fc6abbe14e3440b43876d33efa04cf0be2525:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "db7cb0cb98fe5cb28c410c9e0ca19139f63ec0e9a64cd0c59e5ac1f6f1d016a9",
+        "raw": [],
+        "viewport": [
+          1440,
+          900
+        ]
+      },
+      "text": "VOS OBJETS DU MOIS\nBeauté\n\n3 objets indépendants · montants dans chaque objet\n\nSynthetic beauty-restock\n\n12 nov.\n\nProduits & besoins\nProduits & besoins\nMascara\nManon\n1 occurrence\n32,00 € / occurrence\nPrix de référence\nCoût restant du poste : 0,00 €\nRéférence du mois · pas une décision\nSourcils\nManon\n1 occurrence\n9,99 € / occurrence\nPrix de référence\nCoût restant du poste : 0,00 €\nRéférence du mois · pas une décision"
+    },
+    {
+      "id": "final-sha-courses250",
+      "sha": "f9a7fce0a231843d1136ce57eff16f7164e880e9",
+      "data": {
+        "applyDisabled": false,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "c260f1567a9b7850e0ddab212bccc494319b0b8caae9d79a2d967aad6dd59c46"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "c260f1567a9b7850e0ddab212bccc494319b0b8caae9d79a2d967aad6dd59c46",
+        "raw": [],
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "final-sha-courses300raw",
+      "applyEnabled": false,
+      "notice": "Saisie non validée",
+      "data": {
+        "applyDisabled": true,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "c260f1567a9b7850e0ddab212bccc494319b0b8caae9d79a2d967aad6dd59c46"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "c260f1567a9b7850e0ddab212bccc494319b0b8caae9d79a2d967aad6dd59c46",
+        "raw": [
+          {
+            "id": "HOUSEHOLD:household:groceries",
+            "value": "300"
+          }
+        ],
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "final-sha-courses300-confirmed",
+      "data": {
+        "applyDisabled": false,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b",
+        "raw": [],
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "final-undo",
+      "text": "Courses\n250,00 €\nChoix de ce mois\nHabituel 325,00 €"
+    },
+    {
+      "id": "final-redo",
+      "text": "Courses\n300,00 €\nChoix de ce mois\nHabituel 325,00 €"
+    },
+    {
+      "id": "final-inspector-undecided",
+      "text": "Vêtements\nÀ définir · aucun choix retenu · Ajustable dans ce mois\nÀ définir"
+    },
+    {
+      "id": "final-visual-only",
+      "data": {
+        "applyDisabled": true,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "CLEAN"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+        "raw": [],
+        "viewport": [
+          1920,
+          1080
+        ]
+      }
+    },
+    {
+      "id": "final-board-error",
+      "data": {
+        "applyDisabled": true,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "SAVED"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "b6e206f82dd94b24575706aa1cc57d53101d21c0158fe82f0d03b3c509b3e49b",
+        "raw": [
+          {
+            "id": "HOUSEHOLD:household:groceries",
+            "value": "2,345"
+          }
+        ],
+        "viewport": [
+          1440,
+          900
+        ]
+      },
+      "geometry": {
+        "cells": [
+          {
+            "box": {
+              "h": 86.70000457763672,
+              "w": 187.77500915527344,
+              "x": 573.1625366210938,
+              "y": 184.8000030517578
+            },
+            "buttons": [
+              {
+                "h": 28,
+                "label": "Valider Montant du mois de Courses",
+                "w": 28,
+                "x": 701.9375,
+                "y": 188.6000061035156
+              },
+              {
+                "h": 28,
+                "label": "Annuler la saisie de Courses",
+                "w": 28,
+                "x": 732.9375,
+                "y": 188.6000061035156
+              }
+            ],
+            "dimension": "amount",
+            "id": "HOUSEHOLD:household:groceries",
+            "text": [
+              {
+                "h": 35.60000228881836,
+                "text": "2,345",
+                "w": 125.7750015258789,
+                "x": 573.1625366210938,
+                "y": 184.8000030517578
+              },
+              {
+                "h": 31.600000381469727,
+                "text": "",
+                "w": 187.77500915527344,
+                "x": 573.1625366210938,
+                "y": 239.90000915527344
+              }
+            ]
+          }
+        ],
+        "issues": [],
+        "overflow": false,
+        "pages": " PrécédentePage 1 sur 212Suivante ",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "marker-final-sha",
+      "sha": "8978ac18b0b4dbe0650c044b3ca086a54014ba8b",
+      "text": "Vêtements\nÀ définir · aucun choix retenu · Ajustable dans ce mois\nÀ définir",
+      "cardState": "unresolved",
+      "data": {
+        "applyDisabled": true,
+        "attributes": [
+          [
+            "data-composer",
+            "true"
+          ],
+          [
+            "data-digest",
+            "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a"
+          ],
+          [
+            "data-preview-state",
+            "FRESH"
+          ],
+          [
+            "data-save-state",
+            "CLEAN"
+          ],
+          [
+            "data-world-version",
+            "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+          ],
+          [
+            "data-dragging",
+            "false"
+          ],
+          [
+            "data-comparing",
+            "false"
+          ],
+          [
+            "data-revision",
+            "0"
+          ]
+        ],
+        "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+        "raw": [],
+        "viewport": [
+          1440,
+          900
+        ]
+      },
+      "accessibleMarker": "À définir · aucun choix retenu"
+    }
+  ],
+  "boardError": {
+    "card": {
+      "bottom": 286.3000030517578,
+      "height": 145.3000030517578,
+      "left": 557.3624877929688,
+      "right": 776.7374877929688,
+      "top": 141,
+      "width": 219.375,
+      "x": 557.3624877929688,
+      "y": 141
+    },
+    "error": {
+      "bottom": 271.50000953674316,
+      "height": 31.600000381469727,
+      "left": 573.1625366210938,
+      "right": 760.9375457763672,
+      "top": 239.90000915527344,
+      "width": 187.77500915527344,
+      "x": 573.1625366210938,
+      "y": 239.90000915527344
+    },
+    "overlapHeadings": []
+  },
+  "console": [
+    {
+      "tab": "16",
+      "errors": []
+    },
+    {
+      "tab": "18",
+      "errors": []
+    },
+    {
+      "tab": "19",
+      "errors": []
+    },
+    {
+      "tab": "20",
+      "errors": []
+    }
+  ],
+  "finalConsole": [],
+  "captures": {
+    "before": "fb71ae2",
+    "D02andD03after": "8978ac1",
+    "rawAndBoardErrorAndBeauty": "f9a7fce",
+    "purchaseAndFixedCharge": "3af1b5f"
+  }
+}
