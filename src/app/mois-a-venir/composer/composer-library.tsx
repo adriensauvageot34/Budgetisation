@@ -34,15 +34,15 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   const tile=(item:LibraryIntention)=>{
     const asset=item.asset, source=model.presentation.dragSources[asset.assetKey];
     const draggable=!item.preset && (!!source?.editorDropTarget || (composerRenderIndex(model).drops.get(asset.assetKey)??[]).some(d=>d.resolution!=="BLOCKED")) && asset.provenance!=="DERIVED_CONSEQUENCE";
-    return <div className={styles.libraryTile} key={item.key}>
-      <button type="button" className={item.preset?styles.presetTile:styles.asset} data-preset={item.preset?.presetKey} data-asset={item.preset?undefined:asset.assetKey}
+    return <div className={item.preset?styles.libraryTile:styles.libraryGenericTile} key={item.key}>
+      <button type="button" className={item.preset?styles.presetTile:styles.libraryGenericChoice} data-preset={item.preset?.presetKey} data-asset={item.preset?undefined:asset.assetKey}
         data-selected={selected===asset.assetKey} disabled={busy}
         onFocus={()=>item.preset?preloadEditorForPreset(asset):preloadEditorForAsset(asset)}
         onClick={()=>activate(item)} draggable={!busy&&draggable} data-drag-source={draggable?asset.assetKey:undefined}
         onDragStart={event=>{if(interaction)interaction.start(asset.assetKey,event);else{event.dataTransfer.setData("application/x-planner-asset",asset.assetKey);drag(asset.assetKey);}}}
         onDragEnd={()=>{interaction?.end();drag(null);}}>
         {item.preset?<PresetIllustration preset={item.preset}/>:<PlannerIcon iconKey={asset.iconKey} identityRef={asset.capabilityRef} scale="LIBRARY" className={styles.assetIcon}/>}
-        <span>{item.label}</span>{!item.preset&&<small>À personnaliser</small>}
+        <span>{item.label}</span>
       </button>
       <button type="button" className={styles.libraryFavorite} aria-label={`${favorites.includes(item.key)?"Retirer":"Épingler"} ${item.label}`} aria-pressed={favorites.includes(item.key)} onClick={()=>toggleFavorite(item.key)}><Star size={13} fill={favorites.includes(item.key)?"currentColor":"none"}/></button>
     </div>;
@@ -54,13 +54,24 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       onKeyDown={e=>{if(e.key==="Enter"&&space==="add"&&query&&matches[0]&&!busy){e.preventDefault();activate(matches[0]);}else if(e.key==="ArrowDown"){e.preventDefault();e.currentTarget.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-scroll] button")?.focus();}}}/></label>
     <div className={styles.libraryScroll} data-library-scroll onKeyDown={e=>{if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key)||!(e.target instanceof HTMLButtonElement))return;e.preventDefault();const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));const at=buttons.indexOf(e.target);buttons[e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowUp"?-1:1)))]?.focus();}}>
     {space==="add"?<>
-      {favoriteItems.length>0&&<section className={styles.assetGroup} data-library-favorites><h3>Épinglés par vous</h3><div className={styles.presetGrid}>{favoriteItems.map(tile)}</div></section>}
+      {favoriteItems.length>0&&<section className={styles.assetGroup} data-library-favorites><h3>Épinglés par vous</h3><div className={styles.presetGrid}>{favoriteItems.filter(i=>i.preset).map(tile)}</div>{favoriteItems.filter(i=>!i.preset).map(tile)}</section>}
       <p className={styles.libraryLocalNote}>Favoris locaux à ce navigateur · aucun budget engagé.{favoriteNotice&&` ${favoriteNotice}`}</p>
-      {categories.map(group=>{const isOpen=!!query.trim()||opened===group.key;const all=!!query.trim()||expanded.has(group.key);return <section className={styles.assetGroup} key={group.key} data-library-group={group.key}>
+      {categories.map(group=>{const searching=!!query.trim(),isOpen=searching||opened===group.key,all=searching||expanded.has(group.key);
+        const primary=group.items.filter(item=>item.preset),generic=group.items.filter(item=>!item.preset),visible=all?primary:primary.slice(0,6);
+        const groups=[...new Set(visible.map(item=>item.group))],freeOpen=searching||!primary.length||expanded.has("free:"+group.key);
+        return <section className={styles.assetGroup} key={group.key} data-library-group={group.key}>
         <h3><button type="button" className={styles.assetGroupToggle} data-library-group-toggle={group.key} aria-expanded={isOpen} aria-controls={`library-${group.key}`} onClick={()=>{if(query)setQuery("");setOpened(opened===group.key?null:group.key);}}>
           <span aria-hidden="true">{isOpen?"▾":"▸"}</span>{group.label}<small>{group.items.length}</small></button></h3>
-        {isOpen&&<div id={`library-${group.key}`}><div className={styles.presetGrid}>{(all?group.items:group.items.slice(0,6)).map(tile)}</div>
-          {!all&&group.items.length>6&&<button type="button" className={styles.libraryShowAll} onClick={()=>setExpanded(old=>new Set([...old,group.key]))}>Tout voir · {group.items.length}</button>}</div>}
+        {isOpen&&<div id={`library-${group.key}`}>
+          {groups.map(subgroup=><div key={subgroup} data-library-subgroup={subgroup}>{subgroup&&<h4 className={styles.librarySubgroupTitle}>{subgroup}</h4>}<div className={styles.presetGrid}>{visible.filter(item=>item.group===subgroup).map(tile)}</div></div>)}
+          {!all&&primary.length>6&&<button type="button" className={styles.libraryShowAll} onClick={()=>setExpanded(old=>new Set([...old,group.key]))}>Tout voir · {primary.length}</button>}
+          {generic.length>0&&<div className={styles.libraryGenericGroup} data-library-generics={group.key}>
+            {!!primary.length&&<button type="button" className={styles.libraryGenericToggle} aria-expanded={freeOpen} aria-controls={`library-free-${group.key}`}
+              onClick={()=>setExpanded(old=>{const next=new Set(old);if(next.has("free:"+group.key))next.delete("free:"+group.key);else next.add("free:"+group.key);return next;})}>
+              <span aria-hidden="true">{freeOpen?"▾":"▸"}</span> Intentions libres · {generic.length}</button>}
+            {freeOpen&&<div id={`library-free-${group.key}`}>{generic.map(tile)}</div>}
+          </div>}
+        </div>}
       </section>;})}
       {!matches.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. Les compléments se trouvent dans la palette de leur carte.</p>}
     </>:<>
