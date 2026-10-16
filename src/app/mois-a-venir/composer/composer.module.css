@@ -307,6 +307,22 @@
 .nightNav button { border:1px solid #e4d8ef; background:#faf6ff; color:#5c3d81; border-radius:7px; font-size:11px; padding:7px 11px; }
 .nightSection:focus { outline:2px solid #9068db; outline-offset:2px; }
 .nightEditorScroll { overflow-y:auto; min-height:0; display:grid; gap:18px; padding:4px 7px 4px 2px; }
+.nightSummary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:2px; min-width:0; }
+.nightSummary > h3,.nightSummary > .nightCost,.nightSummary > button:last-child { grid-column:1 / -1; }
+.nightSummary h3 { margin:0 0 8px; font-size:16px; }
+.nightSummaryRow { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:12px 14px; border:1px solid #e9e0ee; border-radius:12px; text-align:left; background:#fffdff; color:#563e68; min-width:0; }
+.nightSummaryRow > span:first-child { display:grid; gap:4px; min-width:0; overflow-wrap:anywhere; }
+.nightSummaryRow > span:last-child { font-size:11px; flex-shrink:0; color:#7955a8; }
+.nightSummaryRow small { font-size:11px; font-weight:400; line-height:1.5; }
+.nightCost { display:grid; gap:6px; border-radius:12px; background:#f5effa; padding:14px; font-size:13px; }
+.nightCost small { font-weight:400; line-height:1.6; }
+.nightTravelChoices { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+.nightRichEditor { max-height:calc(100dvh - 235px); }
+.nightRichEditor .nightSection form { gap:12px; }
+.nightRichEditor .contextPalette { position:static; width:100%; max-width:100%; margin:0; box-shadow:none; }
+.nightRichEditor footer { align-items:center; gap:14px; margin-top:12px; }
+.nightRichEditor footer .helper { flex:1; margin:0; }
+.nightRichEditor button:focus-visible { outline:2px solid #9068db; outline-offset:2px; }
 .nightSection { border:1px solid #e9e0ee; border-radius:13px; padding:14px; display:grid; gap:11px; min-width:0; }
 .nightSection h3,.nightSection h4 { margin:0; color:#452c67; }
 .nightSection h3 { font-size:15px; }.nightSection h4 { font-size:13px; }

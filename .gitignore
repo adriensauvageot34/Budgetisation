@@ -49,3 +49,6 @@ next-env.d.ts
 
 # L3 isolated production React fixture bundles.
 /outputs/l3-*
+
+# L4-A generated fixtures and intermediate logs; reviewed proofs live in docs/status/evidence.
+/outputs/l4-a-*

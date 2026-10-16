@@ -75,6 +75,12 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
           {!removable && <p>Moment protégé dans ce brouillon.</p>}</div>}</AtomicPopover></>}</div></header>
     {card.readOnly && <p className={styles.externalNote}>Intention déjà connue · comptée une fois</p>}
     </div>
+    {card.templateKey === "night-out" && <div className={styles.purchaseSummary} data-night-board-summary>
+      <button type="button" disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} onClick={() => edit(card)}>
+        {model.board.draft.semanticStateDigest === model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.semanticStateDigest ? money(model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.knownAmount ?? null) : "Projection à actualiser"}
+      </button>
+      <small>{model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.incomplete ? "Coût connu · à compléter" : "Coût connu · modifier ma soirée"}</small>
+    </div>}
     {purchase && <div className={styles.purchaseSummary} data-purchase-summary>
       <button type="button" disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} onClick={() => edit(card)}>{mainAmount !== null ? money(mainAmount) : "Montant à préciser"}</button>
       <small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>

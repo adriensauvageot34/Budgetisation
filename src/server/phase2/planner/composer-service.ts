@@ -17,6 +17,7 @@ import { editNightOut } from "@/domain/phase2/planner/night-out-edit";
 import { editShortStay } from "@/domain/phase2/planner/short-stay-edit";
 import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { mobilitySummaries } from "./mobility-presentation";
+import { nightOutSummaries } from "./night-out-presentation";
 import { knownContextReferences } from "./context-selections";
 import { plannerDigest, plannerKeys, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
@@ -90,6 +91,7 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
       placeId: p.placeId, name: p.name, commune: p.commune, nature: p.nature, usage: p.usage, subtype: p.subtype, privatePlace: p.privatePlace,
       relationships: p.relationships, ...(p.address ? { address: p.address } : {}) })) } } : {}),
     mobilitySummaries: mobilitySummaries(preview.compiled.journeys, preview.compiled.journeyPrices),
+    nightOutSummaries: nightOutSummaries(model),
     presentation: composerPresentation(model), library: { ...view.library,
     searchableAssets: view.library.searchableAssets.map(asset => ({ ...asset, iconKey: composerAssetIcon(asset, model) })), sections: [
     ...groups.map(family => ({ sectionKey: family, assetKeys: templates.filter(t => t.family === family).map(t => `template:${t.templateKey}`) })),
@@ -299,6 +301,11 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       if (card?.templateKey !== "night-out") throw new TypeError("COMPOSER_NIGHT_OUT_TARGET_INVALID");
       if (!card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
       state = editNightOut(state, request.edit);
+      const refs = knownContextReferences(state);
+      if (refs.personIds.length || refs.placeIds.length) {
+        if (!deps.validateContextReferences) throw new TypeError("CONTEXT_REFERENCE_OWNER_UNAVAILABLE");
+        await deps.validateContextReferences(household, refs);
+      }
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_FAMILY_VISIT" || request.kind === "EDIT_SHORT_STAY") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);

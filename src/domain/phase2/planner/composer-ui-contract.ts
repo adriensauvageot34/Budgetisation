@@ -68,6 +68,8 @@ export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly
   householdPersons: readonly Readonly<{ personId: string; displayName: string }>[];
   mobilityOptions?: Readonly<{ places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null }>;
   mobilitySummaries?: readonly ComposerMobilitySummary[];
+  /** Display subtotal of already evaluated Compiler components and owned journeys; never an Apply input. */
+  nightOutSummaries?: readonly Readonly<{contextOccurrenceId: string; semanticStateDigest: string; knownAmount: string | null; incomplete: boolean}>[];
   proof: Omit<PlannerApplyCommand, "applyRequestId">;
   appliedContextIds: readonly string[];
   editors: readonly ComposerEditor[];
