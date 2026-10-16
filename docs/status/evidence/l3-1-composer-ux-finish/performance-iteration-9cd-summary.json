@@ -1,0 +1,43 @@
+{
+  "base": "946303df18b59fc642ff92e9042bfc8e6eb57498",
+  "candidate": "9cd553d68a636fe899d8b72dfac45143dea69551",
+  "condition": "Same deterministic 17-element fixture, warm alternating reloads, React production minified, same dependency and global CSS, viewport actually 1440x900; no remote IO. Existing performance.now + two RAF probe. First warm-up excluded.",
+  "p95Certified": false,
+  "productionPerformanceCertified": false,
+  "summary": [
+    {
+      "variant": "reference",
+      "n": 3,
+      "width": 1440,
+      "height": 900,
+      "openingP50Ms": 447.5999999977648,
+      "rangeMs": [
+        298,
+        459.4000000022352
+      ],
+      "domNodes": 1974,
+      "images": 6,
+      "businessFetches": 2,
+      "jsDecoded": 457023,
+      "jsGzip": 144356,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    },
+    {
+      "variant": "candidate",
+      "n": 3,
+      "width": 1440,
+      "height": 900,
+      "openingP50Ms": 414.1000000014901,
+      "rangeMs": [
+        347.29999999701977,
+        739.6000000014901
+      ],
+      "domNodes": 1973,
+      "images": 6,
+      "businessFetches": 2,
+      "jsDecoded": 460447,
+      "jsGzip": 145244,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "base": "946303df18b59fc642ff92e9042bfc8e6eb57498",
+  "candidate": "38f5cd95e40c1a03aad151b6d0c400c71705ddb1",
+  "condition": "Same selected browser tab 16 alternates both origins, same deterministic 17-element fixture, warm caches, production React minified, measured 1440x900. No test suite running, no remote IO. Existing performance.now + two RAF probe. Three predetermined pairs; no P95 claim.",
+  "summary": [
+    {
+      "variant": "reference",
+      "n": 3,
+      "width": 1440,
+      "height": 900,
+      "openingP50Ms": 222.59999999776483,
+      "rangeMs": [
+        202.60000000149012,
+        274.80000000074506
+      ],
+      "fixturePostP50Ms": 54.5,
+      "domNodes": 1974,
+      "images": 6,
+      "businessFetches": 2,
+      "jsDecoded": 457023,
+      "jsGzip": 144356,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    },
+    {
+      "variant": "candidate",
+      "n": 3,
+      "width": 1440,
+      "height": 900,
+      "openingP50Ms": 205.39999999850988,
+      "rangeMs": [
+        180.40000000223517,
+        211.19999999925497
+      ],
+      "fixturePostP50Ms": 52.400000002235174,
+      "domNodes": 1973,
+      "images": 6,
+      "businessFetches": 2,
+      "jsDecoded": 460454,
+      "jsGzip": 145241,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    }
+  ],
+  "p95Certified": false,
+  "productionPerformanceCertified": false
+}

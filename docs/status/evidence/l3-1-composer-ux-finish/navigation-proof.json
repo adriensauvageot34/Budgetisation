@@ -1,0 +1,28 @@
+{
+  "selectedIdentity": "00000000-0000-4000-8000-000000031001",
+  "returnToSelection": "1",
+  "clusterChild": {
+    "cluster": "FOOD",
+    "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1",
+    "focusedChild": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+    "focusedControl": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+    "page": "0",
+    "save": "CLEAN"
+  },
+  "keyboardHome": {
+    "active": "0",
+    "focusPage": "0",
+    "returnVisible": true
+  },
+  "keyboardEnd": {
+    "active": "1",
+    "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1",
+    "focusPage": "1"
+  },
+  "protected": {
+    "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1",
+    "focused": "PERSON:33333333-3333-4333-8333-333333333333:need:synthetic-cosmetic-need",
+    "hasEditor": false,
+    "save": "CLEAN"
+  }
+}

@@ -1,0 +1,119 @@
+[
+  {
+    "scenario": "L1_L31_COMMON",
+    "counts": {
+      "plans": 0,
+      "revisions": 0
+    },
+    "rpcCalls": 0,
+    "remoteWrites": 0,
+    "historicalCanaryWrites": 0,
+    "drafts": {
+      "active": null,
+      "archives": 0,
+      "events": []
+    },
+    "requestKinds": [
+      "READ",
+      "READ"
+    ]
+  },
+  {
+    "scenario": "L1_L31_DENSE",
+    "counts": {
+      "plans": 0,
+      "revisions": 0
+    },
+    "rpcCalls": 0,
+    "remoteWrites": 0,
+    "historicalCanaryWrites": 0,
+    "drafts": {
+      "active": null,
+      "archives": 0,
+      "events": []
+    },
+    "requestKinds": [
+      "READ",
+      "READ"
+    ]
+  },
+  {
+    "scenario": "L1_L31_DRAG",
+    "counts": {
+      "plans": 0,
+      "revisions": 0
+    },
+    "rpcCalls": 0,
+    "remoteWrites": 0,
+    "historicalCanaryWrites": 0,
+    "drafts": {
+      "active": {
+        "id": "437d67d0-6c38-4d01-ac39-cc46a01b6dcd",
+        "version": 3,
+        "digest": "10d613ecc194e818a2f597cd2dbd20566683f0645aaac95c94edfd284b4a0bba"
+      },
+      "archives": 0,
+      "events": [
+        {
+          "kind": "SAVE",
+          "draftId": "437d67d0-6c38-4d01-ac39-cc46a01b6dcd",
+          "version": 1,
+          "digest": "3e1d94cd4cf7763ad5949750673d5e8005a6a62d6694d313ecfa35450299eff1"
+        },
+        {
+          "kind": "SAVE",
+          "draftId": "437d67d0-6c38-4d01-ac39-cc46a01b6dcd",
+          "version": 2,
+          "digest": "0e710ff577949eef63f7eec65586dd0e6a55eb19ee04f2d2afac71932e343f99"
+        },
+        {
+          "kind": "SAVE",
+          "draftId": "437d67d0-6c38-4d01-ac39-cc46a01b6dcd",
+          "version": 3,
+          "digest": "10d613ecc194e818a2f597cd2dbd20566683f0645aaac95c94edfd284b4a0bba"
+        }
+      ]
+    },
+    "requestKinds": [
+      "READ",
+      "READ",
+      "DROP",
+      "READ",
+      "READ",
+      "READ",
+      "DROP",
+      "READ",
+      "READ"
+    ]
+  },
+  {
+    "scenario": "L1_L31_FINAL_DRAG",
+    "counts": {
+      "plans": 0,
+      "revisions": 0
+    },
+    "rpcCalls": 0,
+    "remoteWrites": 0,
+    "historicalCanaryWrites": 0,
+    "drafts": {
+      "active": {
+        "id": "fb83fed1-b546-4f4a-b889-d04310dadf5a",
+        "version": 1,
+        "digest": "2c73dae7ccf48286a9be51bb8440d832dbd0e7b397a55de68894ded37c7b1b87"
+      },
+      "archives": 0,
+      "events": [
+        {
+          "kind": "SAVE",
+          "draftId": "fb83fed1-b546-4f4a-b889-d04310dadf5a",
+          "version": 1,
+          "digest": "2c73dae7ccf48286a9be51bb8440d832dbd0e7b397a55de68894ded37c7b1b87"
+        }
+      ]
+    },
+    "requestKinds": [
+      "READ",
+      "READ"
+    ]
+  }
+]

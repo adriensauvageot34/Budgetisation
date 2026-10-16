@@ -1,0 +1,126 @@
+{
+  "commit": "9cd553d68a636fe899d8b72dfac45143dea69551",
+  "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+  "digest": "2c73dae7ccf48286a9be51bb8440d832dbd0e7b397a55de68894ded37c7b1b87",
+  "elements": "18 éléments · 4 à préciser",
+  "events": [
+    {
+      "board": false,
+      "prevented": false,
+      "source": "template:night-out",
+      "type": "dragstart",
+      "types": [],
+      "x": 213,
+      "y": 519
+    },
+    {
+      "board": true,
+      "prevented": false,
+      "source": null,
+      "type": "dragenter",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 311,
+      "y": 542
+    },
+    {
+      "board": true,
+      "prevented": true,
+      "source": null,
+      "type": "dragover",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 311,
+      "y": 542
+    },
+    {
+      "board": true,
+      "prevented": false,
+      "source": null,
+      "type": "dragenter",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 410,
+      "y": 564
+    },
+    {
+      "board": true,
+      "prevented": false,
+      "source": null,
+      "type": "dragover",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 508,
+      "y": 587
+    },
+    {
+      "board": true,
+      "prevented": false,
+      "source": null,
+      "type": "dragenter",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 607,
+      "y": 610
+    },
+    {
+      "board": true,
+      "prevented": false,
+      "source": null,
+      "type": "dragenter",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 705,
+      "y": 632
+    },
+    {
+      "board": true,
+      "prevented": true,
+      "source": null,
+      "type": "dragover",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 803,
+      "y": 655
+    },
+    {
+      "board": true,
+      "prevented": true,
+      "source": null,
+      "type": "drop",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 1000,
+      "y": 700
+    },
+    {
+      "board": false,
+      "prevented": false,
+      "source": "template:night-out",
+      "type": "dragend",
+      "types": [
+        "application/x-planner-asset"
+      ],
+      "x": 1000,
+      "y": 700
+    }
+  ],
+  "nightId": "090a25de-534f-4909-a55d-1bf1e760ccf9",
+  "save": "SAVED"
+}

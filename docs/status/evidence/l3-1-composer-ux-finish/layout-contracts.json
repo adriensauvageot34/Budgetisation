@@ -1,0 +1,26 @@
+{
+  "base": "946303df18b59fc642ff92e9042bfc8e6eb57498",
+  "environment": "REAL_COMPILER_SYNTHETIC_ONLY",
+  "checks": [
+    "L31_LAYOUT_BOUNDS_IDENTITIES_AND_ORDER",
+    "L31_DENSITY_WITH_LARGER_READABLE_PALETTE",
+    "L31_SAME_LABEL_DISTINCT_IDENTITIES",
+    "L31_CLUSTER_AND_PARENT_NAVIGATION",
+    "L31_PAGINATION_UNIT_IS_PAGES",
+    "L31_PALETTE_ROUTES_REMAIN_ADMISSIBLE",
+    "L31_OFFICIAL_UNKNOWN_AND_STALE_RENDER",
+    "L31_NO_FINANCIAL_OR_DRAFT_MUTATION"
+  ],
+  "density": {
+    "before": [
+      6,
+      7
+    ],
+    "after": [
+      8,
+      5
+    ]
+  },
+  "remoteWrites": 0,
+  "applyCalls": 0
+}

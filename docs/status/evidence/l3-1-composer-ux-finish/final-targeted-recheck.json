@@ -1,0 +1,17 @@
+{
+  "productCommit": "9cd553d68a636fe899d8b72dfac45143dea69551",
+  "changeAfterFullSuites": "Simple context presentation width 260 -> 230 only",
+  "executed": [
+    {"command": "node scripts/check-l3-1-ux.mjs", "exitCode": 0},
+    {"command": "node scripts/check-composer-r6-p4.mjs", "exitCode": 0},
+    {"command": "node scripts/check-composer-r6-p45.mjs", "exitCode": 0},
+    {"command": "node node_modules/typescript/bin/tsc --noEmit", "exitCode": 0}
+  ],
+  "finalProductCommit": "38f5cd95e40c1a03aad151b6d0c400c71705ddb1",
+  "finalChange": "Opening financial details clears the transient completeness dimming only",
+  "finalTypeScript": {"command": "node node_modules/typescript/bin/tsc --noEmit", "exitCode": 0},
+  "finalBrowser": {"viewports": ["1440x900", "1728x900", "1920x1080"], "normalCardOpacity": true, "semanticDigestUnchanged": true},
+  "reactReview": "Stable semantic handlers preserved; focus effects are identity-based and guarded during drag; one bounded palette ResizeObserver with boolean equality guard and cleanup; no financial calculation, Apply guard or IO added",
+  "financialFilesChanged": false,
+  "remoteWrites": 0
+}

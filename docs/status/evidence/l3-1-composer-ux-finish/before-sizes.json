@@ -1,0 +1,22 @@
+[
+  {
+    "active": "0",
+    "documentWidth": 1728,
+    "nav": "1 / 2 · 3 autres",
+    "palette": true,
+    "viewport": [
+      1728,
+      900
+    ]
+  },
+  {
+    "active": "0",
+    "documentWidth": 1920,
+    "nav": "1 / 1 · 0 autres",
+    "palette": true,
+    "viewport": [
+      1920,
+      1080
+    ]
+  }
+]
