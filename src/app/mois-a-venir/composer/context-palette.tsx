@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Check, Sparkle, ArrowLeftRight, Plus, X, ChevronDown } from "lucide-react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
+import { Check, Sparkle, ArrowLeftRight, Plus, X, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -80,6 +80,20 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const groups = displayEquipmentGroups(card, model);
   const assets = new Map(model.library.searchableAssets.map(asset => [asset.assetKey, asset]));
   const [mode, setMode] = useState<"complete" | "all">("complete"), [query, setQuery] = useState("");
+  const options = useRef<HTMLDivElement>(null), optionsId = useId();
+  const [scroll, setScroll] = useState({ before: false, after: false });
+  const measureScroll = () => {
+    const node = options.current;
+    const next = { before: !!node && node.scrollLeft > 2, after: !!node && node.scrollLeft + node.clientWidth < node.scrollWidth - 2 };
+    setScroll(old => old.before === next.before && old.after === next.after ? old : next);
+  };
+  const hasGroups = groups.length > 0;
+  useLayoutEffect(() => {
+    const node = options.current; if (!node) return;
+    measureScroll(); const observer = new ResizeObserver(measureScroll); observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasGroups]);
+  useLayoutEffect(measureScroll, [card, mode, query]);
   const normalize = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr");
   const visible = groups.map(group => ({ ...group, tiles: group.tiles.filter(tile => !query.trim()
     || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
@@ -89,16 +103,19 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><div><h3>Équiper · {card.label}</h3><p>Choisissez un objet pour ce moment</p></div></div>
       <div className={styles.paletteModes}>{onConfigure && <button type="button" onClick={onConfigure}>Configurer</button>}
         <button type="button" aria-pressed={mode === "complete"} onClick={() => { setMode("complete"); setQuery(""); }}>Compléter</button>
-        <button type="button" aria-pressed={mode === "all"} onClick={() => setMode("all")}>Autres options</button></div>
+        <button type="button" title="Voir tous les compléments admissibles" aria-pressed={mode === "all"} onClick={() => setMode("all")}>Autres options</button></div>
+      {hasGroups && <div className={styles.paletteScrollControls} aria-label="Parcourir les compléments">
+        <button type="button" aria-label="Options précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => options.current?.scrollBy({ left: -320, behavior: "smooth" })}><ChevronLeft size={16} /></button>
+        <button type="button" aria-label="Options suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => options.current?.scrollBy({ left: 320, behavior: "smooth" })}><ChevronRight size={16} /></button>
+      </div>}
       <button className={styles.iconButton} aria-label="Quitter la sélection du moment" onClick={close}><X size={16} /></button></header>
     {mode === "all" && <label className={styles.paletteSearch}>Rechercher un complément<input aria-label="Rechercher un complément" value={query} onChange={event => setQuery(event.target.value)} /></label>}
-    {groups.length ? <div className={styles.paletteOptions} data-palette-options tabIndex={0} aria-label={`Options pour ${card.label}`}
+    {groups.length ? <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options onScroll={measureScroll} tabIndex={0} aria-label={`Options pour ${card.label}`}
       onKeyDown={event => { if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault(); event.currentTarget.scrollBy({ left: event.key === "ArrowRight" ? 150 : -150, behavior: "smooth" }); }}>
       {visible.map(group => <div key={group.key} className={styles.paletteGroup} data-palette-group={group.key}>
         <span>{group.title}</span><div>{(mode === "all" ? group.tiles : group.tiles.slice(0,5)).map(tile => <EquipmentTileButton key={tile.visualKey} tile={tile} groupKey={group.key} card={card} model={model}
           assets={assets} busy={busy} choose={choose} configure={configure} />)}</div>
       </div>)}</div> : <p className={styles.popoverNote}>Ce moment est préservé ou suivi par son éditeur habituel.</p>}
-    {mode === "complete" && groups.some(group => group.tiles.length > 5) && <button type="button" className={styles.libraryShowAll} onClick={() => setMode("all")}>Voir tous les compléments admissibles</button>}
   </section>;
 }

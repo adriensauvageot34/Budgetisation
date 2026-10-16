@@ -22,7 +22,7 @@ export function ComposerFinancialInspector({ model, mode, stale, focused, focus,
     caption: typeof card.value.amount === "string" ? money(card.value.amount) : knowledgeLabel(card.knowledge),
     locked: !card.capability?.actions.length || card.capability.flexibility === "LOCKED",
     hint: card.knowledge === "UNKNOWN" ? "Valeur à préciser" : "Information à compléter" })),
-    ...model.board.contexts.filter(card => !card.parentContextOccurrenceId).map(card => ({ ref: card.contextOccurrenceId, label: card.label,
+    ...model.board.contexts.map(card => ({ ref: card.contextOccurrenceId, label: card.label,
       caption: knowledgeLabel(card.knowledge), locked: card.readOnly,
       hint: card.sockets.filter(socket => socket.visualState === "UNRESOLVED").map(socket => socket.label).filter(Boolean).join(" · ") || "Choix ou coût à préciser" }))];
   const shown = mode === "UNRESOLVED" ? rows.filter(row => model.presentation.unresolvedRefs.includes(row.ref)) : rows;
@@ -37,7 +37,7 @@ export function ComposerFinancialInspector({ model, mode, stale, focused, focus,
         {mode === "FINANCE" && <p>Chaque ligne rejoint sa carte par son identité. Les montants ne sont pas additionnés ici.</p>}
         {shown.map(row => <button key={row.ref} data-inspector-target={row.ref} aria-current={focused === row.ref ? "true" : undefined} onClick={() => focus(row.ref)}>
           <span><strong>{row.label}</strong><small>{row.locked ? "Consultation · source protégée" : mode === "UNRESOLVED" ? row.hint : "Voir la carte"}</small></span>
-          {row.locked && <LockKeyhole size={12} aria-label="Lecture seule" />}<b>{stale && mode === "FINANCE" ? "En attente" : row.caption}</b><ArrowUpRight size={14} /></button>)}
+          {row.locked && <LockKeyhole size={12} aria-label="Lecture seule" />}<b>{stale ? "En attente" : row.caption}</b><ArrowUpRight size={14} /></button>)}
         {!shown.length && <p>Aucun élément à préciser dans cet état du scénario.</p>}
       </section>
     </div>

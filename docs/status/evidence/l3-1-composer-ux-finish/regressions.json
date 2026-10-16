@@ -1,0 +1,79 @@
+[
+  {
+    "file": "check-l3-1-ux.mjs",
+    "exitCode": 0,
+    "elapsedMs": 3021
+  },
+  {
+    "file": "check-l3-workshop.mjs",
+    "exitCode": 0,
+    "elapsedMs": 2796
+  },
+  {
+    "file": "check-composer-r6-p4.mjs",
+    "exitCode": 0,
+    "elapsedMs": 4863
+  },
+  {
+    "file": "check-composer-r6-p45.mjs",
+    "exitCode": 0,
+    "elapsedMs": 4839
+  },
+  {
+    "file": "check-composer-r6-presentation.mjs",
+    "exitCode": 0,
+    "elapsedMs": 4644
+  },
+  {
+    "file": "check-b0-b1-plan-forecast.mjs",
+    "exitCode": 0,
+    "elapsedMs": 9360
+  },
+  {
+    "file": "check-l1-restaurant.mjs",
+    "exitCode": 0,
+    "elapsedMs": 9165
+  },
+  {
+    "file": "check-l2a-presets.mjs",
+    "exitCode": 0,
+    "elapsedMs": 16327
+  },
+  {
+    "file": "check-l2b-library.mjs",
+    "exitCode": 0,
+    "elapsedMs": 51537,
+    "mode": "REMAINING_ONLY",
+    "presetRoundTrips": "Prior full L3 execution retained; unchanged preset recipes/library; no new 26-loop certification"
+  },
+  {
+    "file": "check-phase2-planner-composer.mjs",
+    "exitCode": 0,
+    "elapsedMs": 17949
+  },
+  {
+    "file": "check-phase2-planner-p13.mjs",
+    "exitCode": 0,
+    "elapsedMs": 14283
+  },
+  {
+    "file": "check-phase2-planner-kernel.mjs",
+    "exitCode": 0,
+    "elapsedMs": 14396
+  },
+  {
+    "file": "check-composer-post-snap3-draft-http.mjs",
+    "exitCode": 0,
+    "elapsedMs": 983
+  },
+  {
+    "file": "check-composer-p14-p2-scheduler.mjs",
+    "exitCode": 0,
+    "elapsedMs": 3621
+  },
+  {
+    "file": "check-planner-performance-parity.mjs",
+    "exitCode": 0,
+    "elapsedMs": 4970
+  }
+]

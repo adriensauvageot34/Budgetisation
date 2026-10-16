@@ -1,0 +1,41 @@
+{
+  "condition": "Two separate nonselected tabs; diagnostic only, not isolated active-page latency. All six pairs kept including adverse results; not pooled with active-tab data.",
+  "summary": [
+    {
+      "variant": "reference",
+      "n": 6,
+      "width": 1440,
+      "height": 900,
+      "openingP50Ms": 430.80000000074506,
+      "rangeMs": [
+        350.0999999977648,
+        714.6999999992549
+      ],
+      "fixturePostP50Ms": 109.05000000074506,
+      "domNodes": 1974,
+      "images": 6,
+      "businessFetches": 2,
+      "jsDecoded": 457023,
+      "jsGzip": 144356,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    },
+    {
+      "variant": "candidate",
+      "n": 6,
+      "width": 1440,
+      "height": 900,
+      "openingP50Ms": 561.9000000003725,
+      "rangeMs": [
+        368.79999999701977,
+        925.1999999992548
+      ],
+      "fixturePostP50Ms": 137,
+      "domNodes": 1973,
+      "images": 6,
+      "businessFetches": 2,
+      "jsDecoded": 460454,
+      "jsGzip": 145241,
+      "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1"
+    }
+  ]
+}

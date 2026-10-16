@@ -1,0 +1,48 @@
+{
+  "environment": "AUTHENTICATED_PRODUCTION_READ_ONLY",
+  "productionCommit": "946303df18b59fc642ff92e9042bfc8e6eb57498",
+  "before": {
+    "authComposer": true,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "preview": "BLOCKED",
+    "revision": "0",
+    "save": "CLEAN"
+  },
+  "panel": {
+    "advancedDiagnostics": true,
+    "documentWidth": 1440,
+    "focusInPanel": true,
+    "height": 900,
+    "panelWidth": 340,
+    "preview": "BLOCKED",
+    "save": "CLEAN",
+    "width": 1440
+  },
+  "menu": {
+    "applyDisabled": true,
+    "archivesAvailable": true,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "menuOpen": true,
+    "revision": "0",
+    "save": "CLEAN"
+  },
+  "after": {
+    "applyDisabled": true,
+    "authenticatedComposer": true,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "documentWidth": 1440,
+    "menuClosed": true,
+    "panelClosed": true,
+    "preview": "BLOCKED",
+    "primaryLabel": "Transformer en Plan",
+    "revision": "0",
+    "save": "CLEAN",
+    "width": 1440
+  },
+  "sameDraftDigest": true,
+  "sameRevision": true,
+  "consoleErrors": 0,
+  "consoleWarnings": 0,
+  "actions": "Reload, open financial panel, Escape, open and close Options. No semantic edit, no Apply, no Draft operation.",
+  "limits": "No authenticated mutation or financial-table comparison. BLOCKED was present before L3 and remains after; no FRESH claim for this month. First browser command waited on rendering; following DOM inspection succeeded without a second reload."
+}

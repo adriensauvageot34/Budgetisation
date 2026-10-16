@@ -1,0 +1,143 @@
+{
+  "search": {
+    "active": "0",
+    "board": {
+      "bottom": 636.8000183105469,
+      "height": 495.8000183105469,
+      "right": 1062,
+      "width": 756,
+      "x": 306,
+      "y": 141
+    },
+    "cards": [
+      {
+        "bottom": 274.6999969482422,
+        "height": 133.6999969482422,
+        "id": "HOUSEHOLD:household:groceries",
+        "right": 554.125,
+        "width": 230.125,
+        "x": 324,
+        "y": 141
+      },
+      {
+        "bottom": 295.6999969482422,
+        "height": 154.6999969482422,
+        "id": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+        "right": 794.2624969482422,
+        "width": 230.1374969482422,
+        "x": 564.125,
+        "y": 141
+      },
+      {
+        "bottom": 445.6000061035156,
+        "height": 144.60000610351562,
+        "id": "cluster:food",
+        "right": 794.2625122070312,
+        "width": 470.2625122070313,
+        "x": 324,
+        "y": 301
+      },
+      {
+        "bottom": 274.1999969482422,
+        "height": 133.1999969482422,
+        "id": "PERSON:22222222-2222-4222-8222-222222222222:hairdresser",
+        "right": 1034.4000091552734,
+        "width": 230.1374969482422,
+        "x": 804.2625122070312,
+        "y": 141
+      },
+      {
+        "bottom": 434.6999969482422,
+        "height": 133.6999969482422,
+        "id": "HOUSEHOLD:household:tobacco-vape",
+        "right": 1034.4000091552734,
+        "width": 230.1374969482422,
+        "x": 804.2625122070312,
+        "y": 301
+      }
+    ],
+    "digest": "36f227251254ddfeb6d413bce18ae17e37243fcf6e6fdaab5068ca0a842012f1",
+    "dock": {
+      "bottom": 869.9999847412109,
+      "height": 189.1999969482422,
+      "right": 1050,
+      "width": 732,
+      "x": 318,
+      "y": 680.7999877929688
+    },
+    "documentWidth": 1440,
+    "nav": {
+      "bottom": 680.7999877929688,
+      "height": 44,
+      "right": 1062,
+      "text": " PrécédentePage 1 sur 3123Suivante Voir Amazon · page 2",
+      "width": 756,
+      "x": 306,
+      "y": 636.7999877929688
+    },
+    "options": {
+      "bottom": 862.2000122070312,
+      "clientHeight": 96,
+      "clientWidth": 706,
+      "height": 96,
+      "right": 1037.2000427246094,
+      "scrollHeight": 96,
+      "scrollWidth": 706,
+      "width": 706.4000244140625,
+      "x": 330.8000183105469,
+      "y": 766.2000122070312
+    },
+    "page": {
+      "bottom": 636.8000183105469,
+      "height": 495.8000183105469,
+      "right": 1062,
+      "width": 756,
+      "x": 306,
+      "y": 141
+    },
+    "pages": [
+      {
+        "count": 5,
+        "page": "0"
+      },
+      {
+        "count": 6,
+        "page": "1"
+      },
+      {
+        "count": 2,
+        "page": "2"
+      }
+    ],
+    "panel": {
+      "bottom": 880,
+      "height": 774,
+      "right": 1416,
+      "width": 340,
+      "x": 1076,
+      "y": 106
+    },
+    "returnButton": true,
+    "save": "CLEAN",
+    "tiles": [
+      {
+        "bottom": 852.2000122070312,
+        "height": 64,
+        "label": "Bus",
+        "right": 489.8000183105469,
+        "width": 156,
+        "x": 333.8000183105469,
+        "y": 788.2000122070312
+      }
+    ],
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  "scroll": {
+    "previousEnabled": true,
+    "scrollLeft": 819.2000122070312,
+    "verticalOverflow": false
+  }
+}

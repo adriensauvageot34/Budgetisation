@@ -1,0 +1,141 @@
+{
+  "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+  "equipmentDragTrace": [
+    {
+      "board": false,
+      "prevented": false,
+      "source": "option:night-out:main:main",
+      "type": "dragstart",
+      "types": [],
+      "x": 1094,
+      "y": 810
+    },
+    {
+      "board": false,
+      "prevented": false,
+      "source": null,
+      "type": "dragenter",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 1075,
+      "y": 764
+    },
+    {
+      "board": false,
+      "prevented": false,
+      "source": null,
+      "type": "dragover",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 1075,
+      "y": 764
+    },
+    {
+      "board": false,
+      "prevented": false,
+      "source": null,
+      "type": "dragenter",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 1057,
+      "y": 718
+    },
+    {
+      "board": false,
+      "prevented": false,
+      "source": null,
+      "type": "dragenter",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 1038,
+      "y": 671
+    },
+    {
+      "board": true,
+      "prevented": false,
+      "source": null,
+      "type": "dragenter",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 1019,
+      "y": 625
+    },
+    {
+      "board": true,
+      "prevented": false,
+      "source": null,
+      "type": "dragover",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 1000,
+      "y": 579
+    },
+    {
+      "board": true,
+      "prevented": false,
+      "source": null,
+      "type": "dragenter",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 963,
+      "y": 486
+    },
+    {
+      "board": true,
+      "prevented": true,
+      "source": null,
+      "type": "dragover",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 944,
+      "y": 440
+    },
+    {
+      "board": true,
+      "prevented": true,
+      "source": null,
+      "type": "drop",
+      "types": [
+        "chromium/x-drag-id",
+        "application/x-planner-asset"
+      ],
+      "x": 944,
+      "y": 440
+    },
+    {
+      "board": false,
+      "prevented": false,
+      "source": "option:night-out:main:main",
+      "type": "dragend",
+      "types": [
+        "application/x-planner-asset"
+      ],
+      "x": 944,
+      "y": 440
+    }
+  ],
+  "expectedDigest": "0e710ff577949eef63f7eec65586dd0e6a55eb19ee04f2d2afac71932e343f99",
+  "redoDigest": "0e710ff577949eef63f7eec65586dd0e6a55eb19ee04f2d2afac71932e343f99",
+  "reload": {
+    "digest": "0e710ff577949eef63f7eec65586dd0e6a55eb19ee04f2d2afac71932e343f99",
+    "elements": "18 éléments · 4 à préciser",
+    "nightId": "97b3422f-688a-4349-8265-10259e97f60e",
+    "save": "SAVED"
+  }
+}

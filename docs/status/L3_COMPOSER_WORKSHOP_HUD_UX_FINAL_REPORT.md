@@ -1,8 +1,8 @@
 # L3 — Atelier Composer, HUD et finances latérales
 
-## Verdict au stade de revue — 16 octobre 2026
+## Verdict final — 16 octobre 2026
 
-**L3_IMPLEMENTED_NOT_RELEASED** au moment de cette préparation. Contrôles essentiels locaux PASS, livraison PR #46 en cours. La section G sera complétée après le résultat réel du déploiement.
+**L3_RELEASED_WITH_VALIDATION_LIMITATIONS** — PR #46 fusionnée, Production READY sur `946303df18b59fc642ff92e9042bfc8e6eb57498`. Onze suites ciblées, TypeScript et builds Next PASS ; smoke authentifié de présentation PASS en lecture seule. Aucun Apply ni mutation de Draft Production. Les limites de performance, de drag manuel et de test hors ligne restent explicites.
 
 ## A. État de départ
 
@@ -128,12 +128,18 @@ Preuves brutes : `performance-pairs.json`, résumé `performance-summary.json`, 
 - PR : https://github.com/adriensauvageot34/Budgetisation/pull/46.
 - Produit final testé : `7ef71167004cb7ce1dfb203a7aefaa6dffdb5251`.
 - Preview produit : `dpl_B5mT4UmRhzJtggBh4RJCDL4zpGxW`, READY ; statut GitHub Vercel success. Build Next complet distant ; dépendances réutilisées, pas installation fraîche locale certifiée.
-- Merge et Production : **en attente à ce stade de revue**, à compléter après exécution réelle.
+- Tête PR : `c7a8eafa764b98894c8bcdc70da5b102a23ac9a6`, dont seul le dernier commit est documentaire. Preview correspondante `dpl_9xSxEmDiNNPWVDiUdsiVjpNxjSQE` READY, statut GitHub Vercel success. Aucun workflow Actions ni revue humaine publiés ; aucune protection contournée.
+- PR #46 Ready puis fusionnée par merge normal vers `main` : **`946303df18b59fc642ff92e9042bfc8e6eb57498`**. `git diff --quiet c7a8eaf origin/main` code 0 : arbre exact, aucun changement produit non revu.
+- Production Git automatique : **`dpl_J3CroUqmbuUymYrL5SsoGDEj9Cxx`**, target production, READY, commit `946303d`, alias `https://budgetisation-tan.vercel.app`, région iad1 inchangée. Build Next 16.2.6 complet : compilation 44 s, TypeScript 47 s, huit pages générées ; aucun changement de configuration.
+- Smoke authentifié Production réellement exécuté : chargement du nouvel en-tête et de la bibliothèque, primaire Transformer en Plan, Options et archives accessibles, panneau de 340 px, focus/Escape, pas d’overflow à 1440 × 900. Zéro erreur/avertissement console observé. Digest et révision identiques avant/après, état Draft CLEAN conservé. Aucun geste sémantique exécuté.
+- Le mois personnel consulté était **BLOCKED avant L3 et reste BLOCKED après** ; aucune affirmation de FRESH ni de performance Production. La première commande navigateur a expiré pendant le rendu ; l’inspection suivante a réussi sans second rechargement. Ce délai d’outillage n’est pas une mesure produit.
+- Preuves sans montants personnels : `production-deployment.json`, `production-next-build.log`, `production-readonly-smoke.json`. `fixture-write-boundary.json` atteste séparément zéro Plan/révision/RPC Apply/écriture distante sur le parcours navigateur synthétique et quatre sauvegardes CAS, sans cinquième écriture après conflit.
 - Mutations Draft/financières Production : aucune autorisée ni exécutée. Smoke authentifié final limité au rendu et aux actions de présentation.
+- Rapport et preuves de clôture consignés dans un commit documentaire local après la livraison ; aucune seconde livraison produit nécessaire.
 - Rollback : revert des deux commits produit L3, puis déploiement Git normal (ou rollback Vercel vers le déploiement initial). Aucun schéma, contrat de sauvegarde ou contenu de Draft à convertir/supprimer.
 
 ## H. Limites et décision
 
 Qualité UI : parcours et trois résolutions desktop PASS_LIMITED_FIXTURE, hiérarchie et panneau réellement observés. Justesse financière : suites ciblées et parité PASS_SYNTHETIC_ONLY. Auth/Apply réel Production non revendiqué ; aucune nouvelle PlanRevision personnelle créée. Les réserves de performance Canonical/P14 restent héritées et ne sont pas réauditées ici.
 
-Les gates essentiels permettent la livraison UI indépendante. Le verdict de livraison final sera consigné après le résultat exact de Production. **Arrêt après L3 ; aucun L4 commencé.**
+**Livraison L3 réalisée.** Qualité desktop vérifiée sur les trois fixtures et smoke de présentation authentifié Production PASS. Les tests de mutation authentifiés L3, le drag natif manuel et le mode hors ligne ne sont pas revendiqués ; aucun P95 robuste ni gain de performance réelle certifié. Les fonctionnalités financières et les protections continuent de dépendre de leurs propriétaires existants. **Arrêt après L3 ; aucun L4 commencé.**

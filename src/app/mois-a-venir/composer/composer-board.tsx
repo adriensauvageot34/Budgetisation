@@ -11,7 +11,7 @@ import styles from "./composer.module.css";
 import { useComposerInteractions, sameTarget, leftSurface } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { BoardCarousel } from "./board-carousel";
-import { inventoryItems } from "./inventory-layout";
+import { inventoryItems, inventoryRootRef } from "./inventory-layout";
 import type { AtomicNode, VisualClusterNode, ComposerPresentationNode } from "./presentation/node-types";
 import { VisualClusterCard, VisualClusterOverlay } from "./visual-cluster";
 import { composerRenderIndex } from "./render-index";
@@ -50,13 +50,21 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   }),[model,restaurantFocus]),closeCluster=useCallback(()=>setOpenClusterId(null),[]);
   const openCluster = items.find((item): item is VisualClusterNode => item.kind === "CLUSTER" && item.id === openClusterId);
   const lastReveal = useRef<number | null>(null);
+  const [selectionReveal, setSelectionReveal] = useState(0);
+  const revealFocused = () => {
+    setSelectionReveal(value => value + 1);
+    const root = focused && inventoryRootRef(focused, model);
+    const cluster = items.find(item => item.kind === "CLUSTER" && item.children.some(child => child.id === root));
+    if (cluster) setOpenClusterId(cluster.id);
+  };
   useEffect(() => {
     if (!reveal || lastReveal.current === reveal.sequence) return;
     lastReveal.current = reveal.sequence;
-    const cluster = items.find(item => item.kind === "CLUSTER" && item.children.some(child => child.id === reveal.targetRef));
+    const root = inventoryRootRef(reveal.targetRef, model);
+    const cluster = items.find(item => item.kind === "CLUSTER" && item.children.some(child => child.id === root));
     setOpenClusterId(cluster?.id ?? null);
     // Only an explicit inspector navigation opens a group, never a layout update.
-  }, [reveal, items]);
+  }, [reveal, items, model]);
   useEffect(() => { if (openClusterId && !openCluster) setOpenClusterId(null); }, [openClusterId, openCluster]);
   const focusedInCluster = !!openCluster?.children.some(child => child.id === focusedCard?.contextOccurrenceId);
   const renderAtomic = (item:AtomicNode,inCluster=false)=><InventoryAtomic item={item} inCluster={inCluster} closeCluster={closeCluster}
@@ -70,7 +78,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
     {interaction?.grabbed?.protected ? <LockKeyhole size={17} /> : <Trash2 size={17} />}{interaction?.grabbed?.protected ? "Protégée" : "Retirer"}</div>;
   return <section className={styles.board} aria-label="Board du mois">
     <div className={styles.boardHeading}><h2>Votre mois prend forme</h2><span>Besoins & habitudes · intentions ponctuelles</span></div>
-    <BoardCarousel model={model} inventory={items} focused={focused} emptyClick={() => focus(null)} dropProps={{ "data-compatible": boardAccepts,
+    <BoardCarousel model={model} inventory={items} focused={focused} revealSequence={(reveal?.sequence ?? 0) + selectionReveal} revealFocused={revealFocused} emptyClick={() => focus(null)} dropProps={{ "data-compatible": boardAccepts,
       "data-drag-over": sameTarget(interaction?.overTarget ?? null, boardTarget),
       onDragOver: e => { if (boardAccepts && !busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(boardTarget); } else interaction?.over(null); },
       onDragLeave: e => { if (leftSurface(e)) interaction?.over(null); },
@@ -79,7 +87,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
       {interaction?.grabbed?.pack && <article className={styles.packGhost} data-pack-ghost aria-label={`Aperçu de ${interaction.grabbed.label}`}><PlannerIcon iconKey={interaction.grabbed.iconKey} /><h3>{interaction.grabbed.label}</h3>
           <div>{interaction.grabbed.pack.map((s, index) => <span key={`${s.label}:${index}`} title={`${s.label} · ${s.provenance}`}><PlannerIcon iconKey={s.iconKey} scale="SATELLITE" /><small>{s.label}</small></span>)}</div><p>Estimation après ajout</p></article>}
     </BoardCarousel>
-    {openCluster && <VisualClusterOverlay node={openCluster} close={() => setOpenClusterId(null)} renderChild={item => renderAtomic(item, true)} palette={focusedInCluster ? palette : null} trash={trashZone} />}
+    {openCluster && <VisualClusterOverlay node={openCluster} focused={focused} close={() => setOpenClusterId(null)} renderChild={item => renderAtomic(item, true)} palette={focusedInCluster ? palette : null} trash={trashZone} />}
     {model.presentation.elementCount < 4 && <button data-add-element className={styles.emptyInvitation} disabled={busy} onClick={add}><Plus size={14} /> Ajouter à votre mois</button>}
     {!focusedInCluster && palette}
     {!openCluster && trashZone}

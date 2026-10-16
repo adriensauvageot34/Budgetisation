@@ -2,11 +2,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
-import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";
+import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRef, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";
 import { useComposerInteractions } from "./interactions";
 import styles from "./composer.module.css";
 
-export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;
+export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps, revealSequence, revealFocused }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;
+  revealSequence?: number; revealFocused?: () => void;
   render: (item: InventoryItem) => ReactNode; emptyClick: () => void; children?: ReactNode; dropProps: React.HTMLAttributes<HTMLDivElement> & { [key: `data-${string}`]: boolean | string | number | undefined } }) {
   const viewport = useRef<HTMLDivElement>(null), [size, setSize] = useState({ width: 1000, height: 470 }), [page, setPage] = useState(0);
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
@@ -34,7 +35,8 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   };
   const previousScene = useRef<{ page:number; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });
   const cancelDwell = () => { if (dwell.current) { clearTimeout(dwell.current); dwell.current = null; } };
-  const go = (next: number) => { cancelDwell(); captureDirty(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setDeparting(active); setPage(Math.max(0, Math.min(pages.length - 1, next))); };
+  const browsing = useRef(false);
+  const go = (next: number, manual = true) => { browsing.current = manual; cancelDwell(); captureDirty(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setDeparting(active); setPage(Math.max(0, Math.min(pages.length - 1, next))); };
   useEffect(() => { const timer=setTimeout(()=>setDeparting(active),300);return()=>clearTimeout(timer); },[active]);
   useLayoutEffect(captureDirty,[model]);
   useLayoutEffect(() => {
@@ -46,7 +48,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     if (id) setDragOrigin(layouts.findIndex(layout => layout.some(placement => placement.item.id === id)));
   }, [dragging, interaction?.grabbed?.sourceKey]);
   useLayoutEffect(() => {
-    // Pagination always reserves its 30px strip, even on a single page. The
+    // Pagination reserves the same strip even on a single page. The
     // flex viewport therefore has a stable real height with or without a dock.
     const node = viewport.current; if (!node) return;
     const px = (value: string) => Number(value.replace("px", "")) || 0;
@@ -92,9 +94,31 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       .map(placement => [placement.item.id, placement.item.kind === "CLUSTER" ? placement.item.children.map(child => child.id) : []] as const) ?? []) };
   }, [geometry, active, dragging]);
   const focusPage = inventoryPageFor(pages, focused, model);
-  useEffect(() => { if (focusPage >= 0) setPage(focusPage); }, [focused]);
+  const lastFocus = useRef(focused), lastReveal = useRef(revealSequence);
+  useLayoutEffect(() => {
+    if (lastFocus.current !== focused || lastReveal.current !== revealSequence) {
+      browsing.current = false; lastFocus.current = focused; lastReveal.current = revealSequence;
+    }
+    // Recomposition follows the selection unless the user explicitly browsed
+    // elsewhere. Drag geometry and manual edge navigation remain authoritative.
+    if (!dragging && !browsing.current && focusPage >= 0) setPage(focusPage);
+  }, [focused, focusPage, geometry, dragging, revealSequence]);
   useEffect(() => { const added = items.find(item => !previousIds.current.has(item.id)); previousIds.current = new Set(items.map(item => item.id));
-    if (added) { const index = inventoryPageFor(pages, added.id, model); if (index >= 0) setPage(index); } }, [items, pages, model]);
+    if (added && !dragging) { const index = inventoryPageFor(pages, added.id, model); if (index >= 0) { browsing.current = false; setPage(index); } } }, [items, pages, model, dragging]);
+  const focusedLabel = model.board.contexts.find(card => card.contextOccurrenceId === focused)?.label
+    ?? [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings].find(card => card.targetRef === focused)?.label;
+  const returnToSelection = () => { if (focusPage < 0 || dragging) return; go(focusPage, false); revealFocused?.(); };
+  const focusedRequest = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!focused || !revealSequence || dragging || active !== focusPage || focusedRequest.current === revealSequence) return;
+    const frame = requestAnimationFrame(() => {
+      focusedRequest.current = revealSequence;
+      if (document.querySelector("dialog[open]")) return;
+      const root = inventoryRootRef(focused, model), item = pages[active]?.find(item => item.id === root || item.kind === "CLUSTER" && item.children.some(child => child.id === root));
+      viewport.current?.querySelector<HTMLElement>(`[data-board-page="${active}"] [data-inventory-id="${CSS.escape(item?.id ?? root)}"]`)?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focused, revealSequence, dragging, active, focusPage, model, pages]);
   useEffect(() => { if (!interaction?.grabbed) { cancelDwell(); dwellEdge.current = null; } }, [interaction?.grabbed]);
   useEffect(() => () => cancelDwell(), []);
   const edge = (direction: -1 | 1) => { if (!interaction?.grabbed || dwell.current || dwellEdge.current === direction || active + direction < 0 || active + direction >= pages.length) return;
@@ -108,7 +132,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
           aria-hidden={index !== active} inert={index !== active}>
           <div className={styles.mosaic} data-mosaic data-has-focus={!!focused} data-completeness-focus={interaction?.completenessFocus}
             style={{ "--board-columns":inventoryColumns(layoutSize.width) } as React.CSSProperties}>
-            {inventoryMountedPage(index,active,departing,mode,pinned) && inventory.map(({ item, column, row, columnSpan, rowSpan }) => <div key={item.id} className={styles.inventoryCell} data-inventory-id={item.id}
+            {inventoryMountedPage(index,active,departing,mode,pinned) && inventory.map(({ item, column, row, columnSpan, rowSpan }) => <div key={item.id} className={styles.inventoryCell} data-inventory-id={item.id} tabIndex={-1}
               data-density={item.density} data-spatial-family={item.spatialFamily}
               style={{ gridColumn:`${column} / span ${columnSpan}`, gridRow:`${row} / span ${rowSpan}` }}>{render(item)}</div>)}
           </div>
@@ -123,13 +147,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       </div>)}
     </div>
     <nav className={styles.plateauNavigation} aria-label="Pages du mois" data-carousel-nav data-single-page={pages.length === 1}
-      aria-hidden={pages.length === 1} inert={pages.length === 1}
       onKeyDown={e => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return; e.preventDefault(); const next = e.key === "Home" ? 0 : e.key === "End" ? pages.length - 1 : active + (e.key === "ArrowRight" ? 1 : -1); go(next);
         e.currentTarget.querySelector<HTMLButtonElement>(`[data-page-index="${Math.max(0,Math.min(pages.length-1,next))}"]`)?.focus(); }}>
-      <button className={styles.iconButton} aria-label="Page précédente du mois" disabled={!active} onClick={() => go(active - 1)}><ChevronLeft size={16} /></button>
-      <div>{pages.map((_, index) => <button key={index} data-page-index={index} aria-label={`Afficher la page ${index + 1}`} aria-current={index === active ? "page" : undefined} tabIndex={index === active ? 0 : -1} onClick={() => go(index)}><i /></button>)}</div>
-      <span>{active + 1} / {pages.length} · {items.length - pages[active].length} autres</span>
-      <button className={styles.iconButton} aria-label="Page suivante du mois" disabled={active === pages.length - 1} onClick={() => go(active + 1)}><ChevronRight size={16} /></button>
+      <button className={styles.pageStep} aria-label="Page précédente du mois" disabled={!active} onClick={() => go(active - 1)}><ChevronLeft size={16} /> Précédente</button>
+      <span className={styles.pageStatus} aria-live="polite">Page {active + 1} sur {pages.length}</span>
+      <div>{pages.map((_, index) => <button key={index} data-page-index={index} aria-label={`Afficher la page ${index + 1}`} aria-current={index === active ? "page" : undefined} tabIndex={index === active ? 0 : -1} onClick={() => go(index)}>{index + 1}</button>)}</div>
+      <button className={styles.pageStep} aria-label="Page suivante du mois" disabled={active === pages.length - 1} onClick={() => go(active + 1)}>Suivante <ChevronRight size={16} /></button>
+      {focusedLabel && focusPage >= 0 && focusPage !== active && <button className={styles.returnToCard} data-return-to-card={focused} disabled={dragging} onClick={returnToSelection}>Voir {focusedLabel} · page {focusPage + 1}</button>}
     </nav>
   </>;
 }
