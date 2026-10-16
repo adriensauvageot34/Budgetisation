@@ -137,10 +137,17 @@ Golden : **22 empreintes capabilities seules** changent, pour la publication de 
 - TypeScript local : exit 0. Build fixture React production : PASS.
 - Tentative Next locale `node node_modules/next/dist/bin/next build --webpack` : exit 1, `node:crypto` dans la chaîne History V2 / Exploration existante, hors des fichiers L3.3. Pas de correction hors périmètre.
 - **Build Next complet Vercel du commit 053d741 : PASS**, compilation, TypeScript, collecte, génération et déploiement terminés ; journal intégral `build-vercel-preview.log`. Ce résultat ne transforme pas le build webpack local en PASS et ne certifie pas une installation fraîche des dépendances (cache Vercel réutilisé).
+- **Build Next complet du HEAD final `1ec932d99d687ef057d81f15e7ea3a68fca902be` : PASS/READY**, `dpl_ChTQuVkMqaU5MpEtgKSMXK3gKy8j` ; compilation, TypeScript, génération et déploiement terminés (`build-vercel-final-preview.log`). Inclut le garde d’annulation final.
 
 ## H. Livraison et rollback
 
-PR #49 ouverte ; merge et Production à compléter après les derniers contrôles. Configuration Vercel/Supabase inchangée. SNAP-3, Compiler, Finance V2, Apply autoritaire, CAS et idempotence préservés. Aucune migration.
+PR #49 passée Ready après les contrôles, puis fusionnée sur main : **`5cfb1211d114ddaa574f63372cdb9c4cfc7e660d`**. HEAD vérifié à la fusion : `1ec932d99d687ef057d81f15e7ea3a68fca902be`, Vercel success, aucune GitHub Action associée ni revue externe. `git diff --exit-code` confirme que le merge et le HEAD testé ont exactement le même code produit (`src`, `public`, dépendances, configuration Next et `supabase`).
+
+- Production : **READY**, `dpl_HH6XbfcrYSbgC8eJboEi5vTE7Jxw`, commit de merge ci-dessus, alias `budgetisation-tan.vercel.app` vérifié par Vercel. Build Next complet PASS (`build-vercel-production.log`), statut GitHub Vercel success.
+- **Smoke Production authentifié read-only : EXECUTED_PASS**, novembre 2026. Board, Charges fixes, champs count/prix Café disponibles, absence de débordement horizontal global. Ouverture de la saisie count puis Échap : champ réellement visible, fermeture correcte, aucun état dirty. Zéro erreur console observée dans la collecte du navigateur.
+- Digest avant/après strictement identique (`production-before-readonly.json`, `production-after-readonly.json`), révision officielle toujours 0 et sauvegarde toujours CLEAN. Preview BLOCKED et Apply désactivé **avant comme après** : ce mois incomplet n’est pas une certification FRESH/Apply Production. Aucun geste de mutation, sauvegarde de décision, Apply ni écriture financière réelle n’a été exécuté.
+- Les fichiers SNAP-3, le transport Draft HTTP, le scheduler, les migrations et la configuration Vercel/Supabase sont inchangés. Pas de nouvelle certification runtime HIT SNAP-3 revendiquée dans ce smoke ; sa configuration n’a pas été modifiée. Compiler/Finance V2, Apply autoritaire, CAS et idempotence restent contrôlés par les suites ciblées. Aucune migration.
+- Le rapport et les journaux de clôture sont conservés dans un commit documentaire local post-livraison ; ils ne changent pas le code Production testé. Worktree laissé propre après ce commit.
 
 Rollback : revert de présentation en conservant l’admission serveur des décisions L3.3 déjà enregistrées, par le workflow normal. Aucune restauration de base ni suppression de Draft/Plan. Un retour intégral à L3.2 exige de vérifier la compatibilité des nouveaux overrides unitAmount avant toute réédition ; ne pas réécrire ni éliminer ces décisions pour faciliter un rollback. Conserver les JSON et utiliser un lecteur compatible.
 
@@ -153,4 +160,4 @@ Rollback : revert de présentation en conservant l’admission serveur des déci
 
 ## J. Verdict
 
-`L3_3_IMPLEMENTED_NOT_RELEASED` à ce point de préparation. Verdict et SHA de Production remplacés après le workflow de livraison autorisé ; les limites ci-dessus restent explicites.
+**`L3_3_RELEASED_WITH_VALIDATION_LIMITATIONS`**. PR #49 fusionnée, Production READY et smoke authentifié lecture seule PASS sur `5cfb1211d114ddaa574f63372cdb9c4cfc7e660d`. Contrats, conservation et régressions critiques PASS dans leurs environnements déclarés. Latence P95, refus de confirmation native, drag pendant saisie et écritures authentifiées des nouveaux contrats restent non certifiés. Aucune certification financière globale ou performance nouvelle n’est déduite de ces fixtures. **STOP L3.3 ; L4 non commencé.**
