@@ -725,17 +725,17 @@
 .draftStatus { font-size:10px; padding:3px 7px; background:#f1edf7; color:#6b587e; }
 .draftStatus[data-state=SAVED] { color:#3f7661; background:#edf6f0; }
 .draftStatus:is([data-state=ERROR],[data-state=CONFLICT],[data-state=OFFLINE]) { color:#905a23; background:#fff2df; }
-.hudContainer { flex:0 1 auto; overflow:visible; }
-.financialHud { display:flex; flex-wrap:wrap; align-items:center; width:max-content; max-width:100%; height:auto; min-height:72px; gap:8px 0; padding:9px 6px; background:#fff; border:1px solid #e9e4f0; border-radius:17px; box-shadow:0 4px 16px #35285007; }
+.hudContainer { flex:0 0 auto; overflow:visible; }
+.financialHud { display:flex; flex-wrap:nowrap; align-items:center; width:auto; max-width:100%; height:auto; min-height:72px; gap:8px 0; padding:9px 6px; background:#fff; border:1px solid #e9e4f0; border-radius:17px; box-shadow:0 4px 16px #35285007; }
 .financialHud>div,.financialHud>button { padding:0 12px; border:0; }
-.financialHud .hudMain { flex:0 1 205px; min-width:190px; }
+.financialHud .hudMain { flex:0 0 205px; width:205px; min-width:190px; }
 .financialHud .hudMain span { font-size:10px; letter-spacing:.1px; }
 .financialHud .hudMain strong { font-size:26px; line-height:1.1; }
 .financialHud .hudMetric { flex:0 1 auto; padding:3px 12px; }
 .financialHud .hudMetric span { font-size:9px; }
 .financialHud .hudMetric b { font-size:13px; }
 .financialHud .hudMetric::before { top:0; height:34px; }
-.financialHud .hudEnd { flex:0 0 auto; gap:5px; align-items:flex-end; }
+.financialHud .hudEnd { flex:0 0 150px; width:150px; gap:5px; align-items:flex-end; }
 .financialHud .hudMetric small { font-size:9px; white-space:nowrap; }
 .financialHud .previewStatus { font-size:9px; color:#7a7184; }
 .financialHud[data-stale=true] .previewStatus { color:#926a32; }
@@ -744,6 +744,9 @@
 .toolbar>.iconButton { width:auto; display:flex; gap:5px; padding:8px; font-size:10px; }
 .toolbar .primary { min-height:37px; padding:10px 14px; font-size:11px!important; }
 .toolbar .historyTools { border-right:1px solid #ece7f1; padding-right:8px; }
+.popoverActions[data-workshop-options] { flex-direction:column; flex-wrap:nowrap; gap:3px; }
+.popoverActions[data-workshop-options] button { display:flex; align-items:center; justify-content:flex-start; gap:7px; width:100%; text-align:left; background:transparent; border-color:transparent; padding:9px 8px; font-size:11px; }
+.popoverActions[data-workshop-options] button:hover:not(:disabled) { background:#f6f0fb; }
 .durableActions { display:flex; flex-direction:column; align-items:stretch; gap:6px; border-top:1px solid #e9e2ef; margin-top:6px; padding-top:8px; }
 .durableActions details { font-size:11px; }
 .durableActions details>div { display:flex; align-items:center; gap:10px; margin:6px 0; }

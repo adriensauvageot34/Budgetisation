@@ -638,7 +638,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
               {applyDisabled && <div className={styles.applyReason} role="group" aria-label="Application indisponible" data-apply-reason><p id="apply-disabled-reason">{applyReason}</p>
                 {!!model.presentation.unresolvedCount && <button data-show-unresolved onClick={showUnresolved}>Afficher les éléments</button>}</div>}
             </div></>}
-        <AtomicPopover utility label="Options du mois" state="ACTIONS" focus={() => {}} icon={<><MoreHorizontal size={17} /><span>Options</span></>}>{close => <div className={styles.popoverActions}>
+        <AtomicPopover utility label="Options du mois" state="ACTIONS" focus={() => {}} icon={<><MoreHorizontal size={17} /><span>Options</span></>}>{close => <div className={styles.popoverActions} data-workshop-options>
           {!comparison && <button data-compare disabled={busy || previewStatus !== "FRESH"} onClick={() => { close(); compare(); }}><ArrowLeftRight size={14} /> Comparer temporairement</button>}
           <button data-preview disabled={busy} onClick={() => { close(); void run({ kind: "READ" }, "none"); }}>{previewStatus === "FAILED" || previewStatus === "STALE" ? "Réessayer la simulation" : "Relancer la simulation"}</button>
           <button data-balance disabled={busy} onClick={() => { close(); clearHover(); setBalanceOpen(v => !v); if (!balanceOpen) void run({ kind: "SUGGESTIONS" }, "none"); }}>Suggestions pour mon mois</button>
