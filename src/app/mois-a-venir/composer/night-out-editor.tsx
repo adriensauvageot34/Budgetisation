@@ -239,7 +239,9 @@ export function NightOutEditor({ context, semanticState, householdPersons, knowl
           <small>{isFresh && eventCost ? eventCost.incomplete ? "Des composantes restent à préciser. Ce montant n’est pas un total définitif." : "Coût des composantes retenues, sans supplément pour la carte Soirée." : "Vos nouvelles décisions sont conservées ; la projection du mois est en attente."}</small>
           <small>Impact sur le mois : consulter la projection officielle dans le bandeau.</small></div>
         <button type="button" className={styles.secondary} onClick={() => open("palette")}>Ajouter à ma soirée · autres options</button>
-      </section> : <section ref={focus} tabIndex={-1} className={styles.nightSection} data-night-section={section} key={formKey} onChangeCapture={() => setDirty(true)}>
+      </section> : <section ref={focus} tabIndex={-1} className={styles.nightSection} data-night-section={section} key={formKey} onChangeCapture={event => {
+        if (!(event.target as Element).closest("[data-context-palette]")) setDirty(true);
+      }}>
         <button type="button" className={styles.secondary} onClick={() => open(null)}>← Résumé de la soirée</button>
         {section === "main" && <><h3>Quel budget pour la soirée ou les entrées ?</h3><p className={styles.helper}>Un seul coût principal. Vous pouvez compléter la soirée plus tard.</p>
           {originalMain?.kind === "CHILD_CONTEXT" ? <>{childButton(originalMain)}<p>Les choix de l’événement lié sont conservés.</p></> : <>
