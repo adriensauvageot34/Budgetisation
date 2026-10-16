@@ -37,7 +37,7 @@ import { InlineEditContext, useOwnedInlineEdits } from "./inline-edit-registry";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   restaurantContextId?: string; restaurantCreating?: boolean;
-  giftContextId?: string; nightContextId?: string; nightCreating?: boolean; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
+  giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
   cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
@@ -341,7 +341,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         else if (history === "redo") { setFuture(f => f.slice(0, -1)); setPast(p => [...p, beforeDraft]); }
         setMessage(response.mutationKind === "CANCEL_CONTEXT" ? "Context retiré du brouillon. Son annulation sera conservée à l’application." : changed ? "Brouillon mis à jour et prévisualisé." : "Prévisualisation à jour.");
       }
-      install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null); setEditor(null); setSelected(null);
+      install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
+      setEditor(current => current?.nightContextId && response.model.semanticState.contexts.some(context => context.contextOccurrenceId === current.nightContextId)
+        ? { ...current, nightCreating: false, nightAdmission: (current.nightAdmission ?? 0) + 1 } : null); setSelected(null);
       if (changed) animate(history === "undo" ? "undo" : history === "redo" ? "redo" : "snap", nextMotionTarget.current);
       nextMotionTarget.current = null;
       if (balanceOpen && changed && !response.suggestions && !response.applied) {
@@ -729,7 +731,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.familyContextId)} fresh={previewStatus === "FRESH"}
           knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
         : editor?.nightContextId && NightOutEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)
-        ? <NightOutEditor key={`${editor.nightContextId}:${JSON.stringify(draftState.contexts.filter(context => context.contextOccurrenceId === editor.nightContextId || context.parentContextOccurrenceId === editor.nightContextId))}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
+        ? <NightOutEditor key={`${editor.nightContextId}:${editor.nightAdmission ?? 0}:${JSON.stringify(draftState.contexts.filter(context => context.contextOccurrenceId === editor.nightContextId || context.parentContextOccurrenceId === editor.nightContextId))}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
           semanticState={draftState} householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           model={shown} card={shown.board.contexts.find(card => card.contextOccurrenceId === editor.nightContextId)} fresh={previewStatus === "FRESH"}
           saveStatus={draftTransport ? durable.status : "MEMORY"}

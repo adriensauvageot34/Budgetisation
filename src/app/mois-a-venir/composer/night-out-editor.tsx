@@ -179,7 +179,10 @@ export function NightOutEditor({ context, semanticState, householdPersons, knowl
     reset(); setSection(next); setFormKey(key => key + 1);
   };
   const send = (operation: ComposerOperation) => {
-    if (!onSave(operation)) { setError("Ce choix n’a pas été admis. Votre saisie reste disponible ; vérifiez le message du mois."); return false; }
+    // A false local stage delegates to the existing authoritative server path.
+    // It is not a rejection: keep the input until the response installs the Draft,
+    // or the shell reports the actual failure. Never announce a false save/error.
+    if (!onSave(operation)) { setError(""); return false; }
     registry?.set(`night-editor:${context.contextOccurrenceId}`,null); setDirty(false); setSection(null); setEquipment(null); setError(""); return true;
   };
   const save = () => {
