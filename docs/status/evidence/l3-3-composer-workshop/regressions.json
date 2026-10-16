@@ -1,0 +1,77 @@
+[
+  {
+    "file": "check-l2b-library.mjs",
+    "exitCode": 0,
+    "elapsedMs": 80685
+  },
+  {
+    "file": "check-phase2-planner-simple-levers.mjs",
+    "exitCode": 0,
+    "elapsedMs": 14701
+  },
+  {
+    "file": "check-phase2-planner-renewals.mjs",
+    "exitCode": 0,
+    "elapsedMs": 20450
+  },
+  {
+    "file": "check-phase2-planner-composer.mjs",
+    "exitCode": 0,
+    "elapsedMs": 52702
+  },
+  {
+    "file": "check-phase2-planner-p13.mjs",
+    "exitCode": 0,
+    "elapsedMs": 24534
+  },
+  {
+    "file": "check-phase2-planner-kernel.mjs",
+    "exitCode": 0,
+    "elapsedMs": 24278
+  },
+  {
+    "file": "check-composer-post-snap3-draft-http.mjs",
+    "exitCode": 0,
+    "elapsedMs": 935
+  },
+  {
+    "file": "check-composer-p14-p2-scheduler.mjs",
+    "exitCode": 0,
+    "elapsedMs": 4648
+  },
+  {
+    "file": "check-planner-performance-parity.mjs",
+    "exitCode": 0,
+    "elapsedMs": 7724
+  },
+  {
+    "file": "check-l1-restaurant.mjs",
+    "exitCode": 0,
+    "elapsedMs": 35390
+  },
+  {
+    "file": "check-l2a-presets.mjs",
+    "exitCode": 0,
+    "elapsedMs": 48523
+  },
+  {
+    "file": "check-l3-2-library.mjs",
+    "exitCode": 0,
+    "elapsedMs": 46985
+  },
+  {
+    "file": "check-l3-1-ux.mjs",
+    "exitCode": 0,
+    "elapsedMs": 3166
+  },
+  {
+    "file": "check-l3-workshop.mjs",
+    "exitCode": 0,
+    "elapsedMs": 2613
+  },
+  {
+    "file": "check-composer-r6-presentation.mjs",
+    "exitCode": 0,
+    "elapsedMs": 7204
+  }
+]

@@ -53,7 +53,14 @@ const built = await build({ entryPoints: [p4dMeasuring ? 'scripts/lib/planner-co
   ...(p4Split ? { outdir:out, entryNames:'app', chunkNames:'chunks/[name]-[hash]', splitting:true, metafile:true } : { outfile: path.join(out, 'app.js') }),
   loader: { '.css': 'local-css' }, sourcemap: true,
   external: ['/planned-visuals/*'],
-  plugins: [...(l1Reference ? [{name:'l1-approved-main-ui',setup(builder){ builder.onLoad({filter:/[\\/]composer[\\/][^\\/]+\.(tsx?|css)$/},args=> {
+  plugins: [...(process.env.PLANNER_L33_CLUSTER_TRIAL === '1' ? [{ name:'l33-real-expansion-comparison',setup(builder){
+    builder.onLoad({filter:/[\\/]visual-cluster\.tsx$/},args=>{
+      const original=fs.readFileSync(args.path,'utf8');
+      const before=original.slice(0,original.indexOf('export function VisualClusterOverlay'));
+      const trial=fs.readFileSync('scripts/lib/l33-cluster-expansion-trial.tsx','utf8').replace(/^import .*$/gm,'');
+      return {contents:before+trial,loader:'tsx',resolveDir:path.dirname(args.path)};
+    });
+  }}] : []),...(l1Reference ? [{name:'l1-approved-main-ui',setup(builder){ builder.onLoad({filter:/[\\/]composer[\\/][^\\/]+\.(tsx?|css)$/},args=> {
     if(!l1OriginalUi.has(path.basename(args.path)))return;
     const file=path.relative(process.cwd(),args.path).replaceAll('\\','/');
     return {contents:execFileSync('git',['show',`d965d54713c20d3ab614e3fe730ee70af2876ea8:${file}`],{encoding:'utf8',maxBuffer:4000000}),loader:args.path.endsWith('.css')?'local-css':'tsx',resolveDir:path.dirname(args.path)};

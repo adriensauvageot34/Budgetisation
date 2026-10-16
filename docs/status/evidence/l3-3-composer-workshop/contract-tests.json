@@ -1,0 +1,51 @@
+{
+  "environment": "PGLITE_SYNTHETIC_ONLY",
+  "authenticated": false,
+  "checks": [
+    {
+      "name": "T01-COFFEE-ZERO-KNOWN-UNKNOWN",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "T02-T03-PRICE-COUNT-PRESERVED-AND-OFFICIAL-COST",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "T04-T05-SERVER-ADMISSION-AND-PROTECTIONS",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "T06-LEGACY-COUNT-ONLY-AND-BASELINE-NONMUTATION",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "T07-FRENCH-NORMALIZATION-INVALID-NOT-ZERO",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "T11-T12-T13-EXPLICIT-REUSE-NO-OVERWRITE",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "T04-T05-REAL-FLOOR-EXTERNAL-SAVINGS-AND-RENEWALS",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "T17-T18-PURCHASE-COVERAGE-COST-AND-ROUNDTRIP",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "T15-T16-T20-READONLY-STRUCTURAL-UNKNOWN-AND-PAGINATION",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "L33-SCOPE-EXACT-OWNER-ALLOWLIST",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "T03-APPLY-RELOAD-PRICE-IDENTITY-CAS-ISOLATED",
+      "status": "EXECUTED_PASS"
+    }
+  ],
+  "financialSourceWrites": 0
+}

@@ -6,7 +6,7 @@ import ts from 'typescript';
 import {execFileSync} from 'node:child_process';
 import {require} from './lib/phase2-ts-loader.mjs';
 import {createKernelPostgres} from './lib/planner-kernel-postgres.mjs';
-import {fixture,state,uuid,householdId,rebuild,control} from './fixtures/planner-headless.mjs';
+import {fixture,state,uuid,householdId,rebuild,control,renewalMonth} from './fixtures/planner-headless.mjs';
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
 const {normalizeControlInput,controlInputValue}=require('@/domain/phase2/planner/control-input');
@@ -15,6 +15,9 @@ const {monthReuseProposals}=require('@/domain/phase2/planner/month-reuse');
 const {parsePlanSemanticState,semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const {previewPlanScenario}=require('@/server/phase2/planner/apply');
 const {planningBaselineDigest}=require('@/server/phase2/planner/baseline');
+const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
+const {FixedChargeCard,FixedChargesDetails}=require('@/app/mois-a-venir/composer/fixed-charges');
+const {BoardCarousel}=require('@/app/mois-a-venir/composer/board-carousel');
 const {COMPOSER_PRESETS}=require('@/domain/phase2/planner/composer-presets');
 const pg=await createKernelPostgres(),world=fixture();
 globalThis.fetch=async()=>{throw Error('L33_REMOTE_FORBIDDEN');};
@@ -37,7 +40,10 @@ try {
   floor:slot.baseline.simpleAuthority?.hardFloor??null,renewal:slot.baseline.renewalAuthority??null,
   before:oldCaps.find(cap=>cap.targetRef===c.targetRef)??null,after:c.capability,editor:initial.controlEditors.find(e=>e.targetRef===c.targetRef),
   scope:{month:initial.semanticState.targetMonth,subject:slot.baseline.scope},classification:!c.capability?.actions.length?'BLOCKED_MISSING_OWNER':c.capability.flexibility==='LOCKED'?'INTENDED_CONSTRAINT':'CONFIRMED_CODE'};});
- fs.writeFileSync('docs/status/evidence/l3-3-composer-workshop/capability-matrix.json',JSON.stringify(matrix,null,2));
+ const renewal=renewalMonth().world,renewalDeps={...deps,readWorld:async()=>renewal};
+ const renewalModel=ok(await handleComposerRequest(renewalDeps,householdId,{kind:'READ',sequence:++sequence,targetMonth:'2026-11',draft:state()}));
+ for(const c of cards(renewalModel).filter(c=>!matrix.some(r=>r.identity===c.targetRef))){const slot=renewal.baseline.slots.find(s=>s.slotIdentityKey===c.targetRef);matrix.push({identity:c.targetRef,label:c.label,kind:slot?.kind,baseline:slot?.baselineValue,renewal:slot?.renewalAuthority,baselineCapabilities:slot?.capabilities,after:c.capability,editor:renewalModel.controlEditors.find(e=>e.targetRef===c.targetRef),scope:{month:'2026-11'},classification:c.capability?.flexibility==='LOCKED'?'INTENDED_CONSTRAINT':'CONFIRMED_CODE'});}
+ fs.writeFileSync('docs/status/evidence/l3-3-composer-workshop/capability-matrix.json',JSON.stringify({environment:'SYNTHETIC_ONLY',controls:matrix,obligations:world.baseline.structuralFacts.obligations},null,2));
  const coffee=cards(initial).find(c=>c.label.includes('Café'));
  assert.ok(coffee,'Fixture must have coffee');
  let current=initial;
@@ -107,7 +113,18 @@ try {
   const extra=await previewPlanScenario(deps,householdId,{...model.semanticState,contexts:model.semanticState.contexts.map(c=>c.contextOccurrenceId===id?{...c,slotSelections:{item:{items:[{...item,binding:{mode:'EXTRA_TO_SLOT'}}]}}}:c)});
   assert.equal(extra.compiled.components.filter(c=>c.contextOccurrenceId===id).length,1);assert.equal(extra.compiled.mobilityIntents.length,0);
  });
- await check('L33-SCOPE-EXACT-OWNER-ALLOWLIST',()=>{
+ await check('T15-T16-T20-READONLY-STRUCTURAL-UNKNOWN-AND-PAGINATION',()=>{
+  const facts=[{factKey:'obligation:known',label:'Charge synthétique',value:{low:'50.00',central:'50.00',high:'50.00'},knowledge:'KNOWN',provenance:['CANONICAL_FACT'],sourceRefs:['existing-owner'],dueDate:'2026-11-15',metadata:{ownerAuthority:'Fixture owner'}},
+    {factKey:'obligation:unknown',label:'Charge inconnue',value:{low:null,central:null,high:null},knowledge:'UNKNOWN',provenance:['CANONICAL_FACT'],sourceRefs:['existing-owner'],dueDate:null,metadata:{ownerAuthority:'Fixture owner'}}];
+  const digest=semanticStateDigest(current.semanticState);
+  const html=renderToStaticMarkup(React.createElement(FixedChargeCard,{facts,open(){},reattach(){}}));assert.match(html,/1 montant/);assert.match(html,/1 à préciser/);assert.ok(!html.includes('0,00'));
+  const details=renderToStaticMarkup(React.createElement(FixedChargesDetails,{facts,detached:new Set(),toggle(){},close(){}}));assert.match(details,/2026-11-15/);assert.match(details,/Fixture owner/);assert.match(details,/Charge inconnue/);
+  const card={id:'fixed:group',kind:'FIXED',iconKey:'home',width:230,height:160,density:'NORMAL',spatialFamily:'OTHER',facts,detached:false};
+  const single=renderToStaticMarkup(React.createElement(BoardCarousel,{model:initial,inventory:[card],focused:null,render:()=>null,emptyClick(){},dropProps:{}}));assert.ok(!single.includes('data-carousel-nav'));
+  const many=renderToStaticMarkup(React.createElement(BoardCarousel,{model:initial,inventory:Array.from({length:30},(_,n)=>({...card,id:'fixed:'+n})),focused:null,render:()=>null,emptyClick(){},dropProps:{}}));assert.ok(many.includes('data-carousel-nav'));
+  assert.equal(semanticStateDigest(current.semanticState),digest);
+ });
+ await check('L33-SCOPE-EXACT-OWNER-ALLOWLIST' ,()=>{
   const allowed=new Set(['src/domain/phase2/planner/adjustment-contract.ts','src/domain/phase2/planner/composer-contract.ts','src/domain/phase2/planner/control-input.ts','src/domain/phase2/planner/month-reuse.ts',
    'src/server/phase2/planner/control-fields.ts','src/server/phase2/planner/balance-assistant.ts','src/server/phase2/planner/composer-service.ts','src/server/phase2/planner/constraint-engine.ts','src/server/phase2/planner/plan-slot-resolver.ts','src/server/phase2/planner/read-model.ts']);
   const changed=execFileSync('git',['diff',base,'--name-only','--','src/server','src/domain','supabase','src/app/mois-a-venir/composer/durable-draft.ts','src/app/mois-a-venir/composer/preview-scheduler.ts'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);

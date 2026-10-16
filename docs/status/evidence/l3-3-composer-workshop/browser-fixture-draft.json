@@ -1,0 +1,102 @@
+{
+  "active": {
+    "draftId": "db8719e4-484c-4327-82b6-5de2948b546f",
+    "version": 11,
+    "lifecycle": "ACTIVE",
+    "semanticState": {
+      "version": "month-plan-state@v1",
+      "targetMonth": "2026-11",
+      "controls": [
+        {
+          "decisionId": "789b7741-0211-4491-8ea4-e96c61ae03d8",
+          "decisionSlotKey": "HOUSEHOLD:household:clothing",
+          "kind": "SET_STATE",
+          "value": {
+            "amount": "25.50"
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        },
+        {
+          "decisionId": "b675a06c-5abf-4a95-8444-669de7703eba",
+          "decisionSlotKey": "HOUSEHOLD:household:groceries",
+          "kind": "SET_STATE",
+          "value": {
+            "amount": "325.00"
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        },
+        {
+          "decisionId": "d19e5218-0ed0-46d8-8002-2c4ffd06cd9f",
+          "decisionSlotKey": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+          "kind": "SET_STATE",
+          "value": {
+            "count": "16",
+            "unitAmount": "2.10"
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        }
+      ],
+      "contexts": [
+        {
+          "contextOccurrenceId": "75f7abc4-84d3-47e6-ba36-721c0e7e02fb",
+          "templateKey": "purchase",
+          "status": "ACTIVE",
+          "parentContextOccurrenceId": null,
+          "fields": {
+            "fieldSchemaVersion": "context-fields@v2",
+            "label": "Sacs-poubelle",
+            "productLabel": "Sacs-poubelle",
+            "budgetDomain": "home-small",
+            "composerPresentation": {
+              "version": "composer-context-presentation@v1",
+              "presetKey": "trash-bags"
+            }
+          },
+          "slotSelections": {
+            "item": {
+              "items": [
+                {
+                  "selectionId": "8b129fdc-1bf0-4ba6-9669-b69241de9eb0",
+                  "optionKey": "item",
+                  "kind": "COMPONENT",
+                  "provenance": "EXPLICIT_USER_DECISION",
+                  "label": "Montant de l’achat",
+                  "quantity": "1",
+                  "unitBasis": "SHARED",
+                  "cost": {
+                    "kind": "MANUAL",
+                    "unitAmount": "4"
+                  },
+                  "fundingAllocations": [],
+                  "binding": {
+                    "mode": "CONFIRMED_CONSUMPTION"
+                  }
+                }
+              ]
+            },
+            "extras": {
+              "items": []
+            }
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        }
+      ],
+      "preferences": {
+        "anchors": [],
+        "flexibility": {}
+      }
+    },
+    "digest": "9c570993f7fe0999802ef86e68ccdf17431793bf55939c7ca4a45f4ff16f7ba3",
+    "baseRevisionId": null,
+    "baseRevisionNumber": 0,
+    "lastSavedAt": "2026-10-16T12:30:37.855Z",
+    "archivedAt": null,
+    "lastMutationRequestId": "2f9b0b3f-f1de-4211-a2d8-9f66adf77464",
+    "lastMutationExpectedVersion": 10,
+    "lastMutationKind": "SAVE"
+  },
+  "archives": [],
+  "activePlanRevisionId": null,
+  "activePlanRevisionNumber": 0,
+  "baseStale": false
+}
