@@ -17,15 +17,15 @@ import type { AtomicNode, VisualClusterNode, ComposerPresentationNode } from "./
 import { VisualClusterCard, VisualClusterOverlay } from "./visual-cluster";
 import { composerRenderIndex } from "./render-index";
 type BoardProps=Parameters<typeof ComposerBoard>[0];
-const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"> & {item:AtomicNode;inCluster:boolean;closeCluster:()=>void}) {
+const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"> & {item:AtomicNode;inCluster:boolean;closeCluster:()=>boolean}) {
   const {model,busy,selected,focused,focus,edit,editContext,choose,drag,drop,request,hover,details}=props,index=composerRenderIndex(model);
   // The drag geometry may be held, but card values always use the current model.
-  if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={value=>{if(inCluster)closeCluster();editContext(value);}}/>:null;}
+  if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={value=>{if(inCluster&&!closeCluster())return;editContext(value);}}/>:null;}
   const card=index.controls.get(item.id);if(!card)return null;
   return <ComposerCard card={card} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused===item.id} focus={()=>focus(item.id)}
-    preserved={model.semanticState.preferences.flexibility[item.id]==="PRESERVE"} edit={()=>{if(inCluster)closeCluster();edit(card);}}
+    preserved={model.semanticState.preferences.flexibility[item.id]==="PRESERVE"} edit={()=>{if(inCluster&&!closeCluster())return;edit(card);}}
     preserve={()=>request({kind:"PRESERVE",targetRef:item.id,preserve:model.semanticState.preferences.flexibility[item.id]!=="PRESERVE"})}
-    details={()=>{if(inCluster)closeCluster();focus(item.id);details();}}
+    details={()=>{if(inCluster&&!closeCluster())return;focus(item.id);details();}}
     mutate={mutation=>request({kind:"MUTATE",mutation})} hover={hover}/>;
 });
 export function ComposerBoard({ model, busy, selected, focused, focus, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details, contextGuide, reveal }: { model: ComposerUiModel; busy: boolean; selected: string | null;
@@ -63,8 +63,9 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
     // Keep the intention visible while its guide is open; this is transient layout only.
     return [selected, ...(remaining.length > 1 ? [{ ...item, children: remaining }] : remaining)];
   })];},[model,restaurantFocus,detached]),closeCluster=useCallback(()=>{
-    if (document.querySelector("dialog [data-inline-dirty=true]") && !window.confirm("Cette saisie n’est pas validée. Fermer et l’abandonner ?")) return;
+    if (document.querySelector("dialog [data-inline-dirty=true]") && !window.confirm("Cette saisie n’est pas validée. Fermer et l’abandonner ?")) return false;
     setOpenClusterId(null);
+    return true;
   },[]);
   const openCluster = items.find((item): item is VisualClusterNode => item.kind === "CLUSTER" && item.id === openClusterId);
   const lastReveal = useRef<number | null>(null);
