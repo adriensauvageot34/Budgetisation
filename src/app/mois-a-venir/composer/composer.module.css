@@ -18,6 +18,12 @@
 .restaurantSummary span { flex:1; min-width:0; overflow-wrap:anywhere; }
 .restaurantSummary strong,.restaurantSummary small { display:block; }
 .restaurantSummary strong { font-weight:600; font-size:12px; }
+.restaurantSummaryActions { display:grid; gap:6px; margin:12px 0; }
+.restaurantSummaryActions button { text-align:left; }
+.workshopComponent { display:grid; gap:7px; min-width:0; }
+.workshopTabs { display:flex; gap:5px; }
+.workshopTabs button { flex:1; padding:7px 5px; }
+.workshopTabs button[aria-pressed=true] { background:#eee4f3; border-color:#b49ac6; }
 .restaurantQuestion { border-top:1px solid #ebe3ee; margin-top:12px; }
 .restaurantQuestion label { display:grid; gap:5px; margin:10px 0; min-width:0; }
 .restaurantQuestion input,.restaurantQuestion select { width:100%; min-width:0; border:1px solid #dcd5e4; border-radius:9px; padding:9px; background:white; color:#27243d; }
@@ -906,6 +912,8 @@
 .dialog[data-night-workshop-panel=true]::backdrop { background:transparent; backdrop-filter:none; }
 .dialog[data-night-workshop-panel=true] > header { margin-bottom:10px; }
 .dialog[data-night-workshop-panel=true] > header h2 { font-size:17px; }
+.dialog[data-night-workshop-panel=true] .nightEditor { flex:1; max-height:100%; }
+.dialog[data-night-workshop-panel=true] .nightEditorScroll { overflow-y:auto; }
 .nightWorkshop { display:flex; flex-direction:column; min-height:0; flex:1; gap:10px; font-size:14px; }
 .nightQuestionTop { display:flex; justify-content:space-between; gap:8px; align-items:center; color:#8c739e; font-size:11px; }
 .nightQuestionTop > span { display:flex; align-items:center; gap:7px; }

@@ -1,5 +1,7 @@
 "use client";
 import { useRef, useState, type ReactNode } from "react";
+import { WorkshopDock } from "./workshop-dock";
+import type { ContextPalette } from "./context-palette";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { ComposerMobilitySummary, ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
@@ -10,6 +12,7 @@ import { stopForPlace } from "@/domain/phase2/planned-routes";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import { PlannedContactField } from "../planned-people-fields";
 import { PlannedPlaceField } from "../planned-place-field";
+import { ContactPlaceReference } from "./workshop-place-reference";
 import { PlannedRouteCoordinatesField } from "../planned-route-coordinates-field";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
@@ -23,14 +26,17 @@ const availableRef = (ref?: ProspectivePlaceRef) => ref && (ref.kind === "KNOWN"
 const amount = (raw: string) => decisionAmount(raw.trim().replace(",", "."));
 const modeLabels: Record<string, string> = { car: "Voiture", train: "Train / tram", bus: "Bus", taxi: "Taxi / Uber", free: "À pied / gratuit", other: "Autre transport", unknown: "À préciser" };
 
-export function ProspectiveContextEditor({ stay = false, posts, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, onSave, onCancel }: {
+export function ProspectiveContextEditor({ stay = false, posts, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, dockHost, model, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel }: {
   context: PlannedContextState; householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
   targetMonth: string; stay?: boolean; posts?: ReactNode;
-  summary?: ComposerMobilitySummary; fresh: boolean; knowledge?: CardKnowledgeRead; initialMode?: string; busy: boolean;
-  onSave: (operation: ComposerOperation) => void; onCancel: () => void;
+  summary?: ComposerMobilitySummary; fresh: boolean; knowledge?: CardKnowledgeRead; initialMode?: string; busy: boolean; dockHost?: HTMLElement | null;
+  placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
+  model: ComposerUiModel; choose: Parameters<typeof ContextPalette>[0]["choose"];
+  onSave: (operation: ComposerOperation) => boolean; onCancel: () => void;
 }) {
   const prior = context.slotSelections.transport?.items;
   const original = Array.isArray(prior) && prior[0]?.kind === "MOBILITY_INTENT" ? prior[0] as Transport : undefined;
+  const initialTransport = initialMode !== undefined && initialMode !== original?.optionKey ? undefined : original;
   const [label, setLabel] = useState(text(context.fields.label)), [date, setDate] = useState(text(context.fields.plannedDate));
   const [endDate, setEndDate] = useState(text(context.fields.endDate)), [note, setNote] = useState(text(context.fields.timingNote));
   const [visited, setVisited] = useState(context.fields.personVisitedRef as ProspectivePersonRef | undefined);
@@ -39,18 +45,21 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
   const [origin, setOrigin] = useState(original?.origin ?? undefined), [mode, setMode] = useState(initialMode ?? original?.optionKey ?? "");
   const [returnRequired, setReturnRequired] = useState(original?.returnRequired ?? false);
   const [outTime, setOutTime] = useState(original?.plannedTime ?? ""), [returnTime, setReturnTime] = useState(original?.returnTime ?? "");
-  const [vehicleId, setVehicleId] = useState(original?.route?.vehicleRef?.vehicleId ?? "");
-  const [preference, setPreference] = useState(original?.pricing?.preference ?? "FASTEST");
-  const [fareMode, setFareMode] = useState(original?.pricing?.fare.kind ?? "UNKNOWN"), [fare, setFare] = useState(original?.pricing?.fare.kind === "MANUAL" ? original.pricing.fare.unitAmount : "");
-  const [parkingMode, setParkingMode] = useState(original?.pricing?.parking.kind ?? "UNKNOWN"), [parking, setParking] = useState(original?.pricing?.parking.kind === "MANUAL" ? original.pricing.parking.unitAmount : "");
-  const [tollMode, setTollMode] = useState(original?.route?.toll?.kind ?? "AUTO"), [toll, setToll] = useState(original?.route?.toll?.kind === "MANUAL" ? original.route.toll.unitAmount : "");
-  const [fuelPrice, setFuelPrice] = useState(original?.route?.manualFuelPrice ?? "");
-  const [funding, setFunding] = useState(original?.pricing?.fundingAllocations[0]?.source ?? ""), [fundingAmount, setFundingAmount] = useState(original?.pricing?.fundingAllocations[0]?.amount ?? "");
-  const [ownJourney, setOwnJourney] = useState(!original?.journey || original.journey.relation === "OWNS_JOURNEY");
-  const anchor = original?.route?.stops.findIndex(stop => stop.endpointSource === "ROOT_PLACE") ?? -1;
-  const [outStops, setOutStops] = useState<readonly PlannedRouteStop[]>(anchor > 0 ? original!.route!.stops.slice(1, anchor) : []);
-  const [backStops, setBackStops] = useState<readonly PlannedRouteStop[]>(anchor > 0 && original?.returnRequired ? original.route!.stops.slice(anchor + 1, -1) : []);
+  const [vehicleId, setVehicleId] = useState(initialTransport?.route?.vehicleRef?.vehicleId ?? "");
+  const [preference, setPreference] = useState(initialTransport?.pricing?.preference ?? "FASTEST");
+  const [fareMode, setFareMode] = useState(initialTransport?.pricing?.fare.kind ?? "UNKNOWN"), [fare, setFare] = useState(initialTransport?.pricing?.fare.kind === "MANUAL" ? initialTransport.pricing.fare.unitAmount : "");
+  const [parkingMode, setParkingMode] = useState(initialTransport?.pricing?.parking.kind ?? "UNKNOWN"), [parking, setParking] = useState(initialTransport?.pricing?.parking.kind === "MANUAL" ? initialTransport.pricing.parking.unitAmount : "");
+  const [tollMode, setTollMode] = useState(initialTransport?.route?.toll?.kind ?? "AUTO"), [toll, setToll] = useState(initialTransport?.route?.toll?.kind === "MANUAL" ? initialTransport.route.toll.unitAmount : "");
+  const [fuelPrice, setFuelPrice] = useState(initialTransport?.route?.manualFuelPrice ?? "");
+  const [funding, setFunding] = useState(initialTransport?.pricing?.fundingAllocations[0]?.source ?? ""), [fundingAmount, setFundingAmount] = useState(initialTransport?.pricing?.fundingAllocations[0]?.amount ?? "");
+  const [ownJourney, setOwnJourney] = useState(!initialTransport?.journey || initialTransport.journey.relation === "OWNS_JOURNEY");
+  const anchor = initialTransport?.route?.stops.findIndex(stop => stop.endpointSource === "ROOT_PLACE") ?? -1;
+  const [outStops, setOutStops] = useState<readonly PlannedRouteStop[]>(anchor > 0 ? initialTransport!.route!.stops.slice(1, anchor) : []);
+  const [backStops, setBackStops] = useState<readonly PlannedRouteStop[]>(anchor > 0 && initialTransport?.returnRequired ? initialTransport.route!.stops.slice(anchor + 1, -1) : []);
   const [error, setError] = useState(""); const scroll = useRef<HTMLDivElement>(null);
+  const [section, setSection] = useState<"summary" | "people" | "place" | "timing" | "posts" | "route">(initialMode ? "route" : "summary");
+  const [peoplePage, setPeoplePage] = useState(-1);
+  const [routePage, setRoutePage] = useState<"journey" | "stops" | "cost">("journey");
   const transportInputs = [origin, destination, mode, returnRequired, outTime, returnTime, vehicleId, preference, fareMode, fare,
     parkingMode, parking, tollMode, toll, fuelPrice, funding, fundingAmount, ownJourney, outStops, backStops];
   const initialInputs = useRef(JSON.stringify(transportInputs));
@@ -58,7 +67,7 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
   const home = places.find(place => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
   const physicalLabel = (ref: ProspectivePlaceRef) => ref.kind === "TEXT" ? ref.label : places.find(p => p.placeId === ref.placeId)?.name ?? "Lieu lié indisponible";
   const setTransportMode = (next: string) => {
-    if (next !== mode) { setMode(next); setFareMode("UNKNOWN"); setFare(""); setFunding(""); setFundingAmount(""); setOwnJourney(true); }
+    if (next !== mode) { setMode(next); setFareMode("UNKNOWN"); setFare(""); setParkingMode("UNKNOWN"); setParking(""); setTollMode("AUTO"); setToll(""); setFuelPrice(""); setVehicleId(""); setOutStops([]); setBackStops([]); setFunding(""); setFundingAmount(""); setOwnJourney(true); }
   };
   const save = () => {
     try {
@@ -77,7 +86,7 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
       if (normalizedFuel && !/^[0-9](?:\.[0-9]{1,3})?$/u.test(normalizedFuel)) throw Error("Renseignez un prix carburant positif avec trois décimales au maximum.");
       const pricing = { fare: fareMode === "QUOTE" && original?.pricing?.fare.kind === "QUOTE" ? original.pricing.fare
         : fareMode === "MANUAL" ? { kind: "MANUAL" as const, unitAmount: amount(fare) } : { kind: "UNKNOWN" as const },
-        parking: parkingMode === "QUOTE" && original?.pricing?.parking.kind === "QUOTE" ? original.pricing.parking
+        parking: mode !== "car" ? { kind: "UNKNOWN" as const } : parkingMode === "QUOTE" && original?.pricing?.parking.kind === "QUOTE" ? original.pricing.parking
           : parkingMode === "MANUAL" ? { kind: "MANUAL" as const, unitAmount: amount(parking) } : { kind: "UNKNOWN" as const },
         fundingAllocations: funding === "BANK" ? [{ source: "BANK" as const, amount: amount(fundingAmount) }] : [], preference };
       const route = mode === "car" && ownJourney ? { version: "composer-mobility-route@v1" as const,
@@ -98,38 +107,51 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
       const transportChanged = initialMode !== undefined && initialMode !== original?.optionKey || initialInputs.current !== JSON.stringify(transportInputs)
         || date !== text(context.fields.plannedDate) && !!original?.plannedTime || endDate !== text(context.fields.endDate) && !!original?.returnTime;
       if (!transportChanged && original) transport = original;
-      onSave({ kind: stay ? "EDIT_SHORT_STAY" : "EDIT_FAMILY_VISIT", edit: { contextOccurrenceId: context.contextOccurrenceId, fields,
-        ...(transportChanged ? { transport } : {}) } });
+      if (onSave({ kind: stay ? "EDIT_SHORT_STAY" : "EDIT_FAMILY_VISIT", edit: { contextOccurrenceId: context.contextOccurrenceId, fields,
+        ...(transportChanged ? { transport } : {}) } })) { setError(""); setSection("summary"); }
     } catch (failure) { setError(failure instanceof Error && failure.message === "MONTH_DECISION_AMOUNT_INVALID"
       ? "Précisez un montant positif ou nul avec deux décimales au maximum." : failure instanceof Error ? failure.message : "Vérifiez les champs."); }
   };
   return <div data-short-stay-editor={stay || undefined} data-family-visit-editor={!stay || undefined} className={styles.nightEditor}>
-    <CardKnowledgePanel knowledge={knowledge} />
+    {section !== "summary" && <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
     <p className={styles.helper}>{stay ? "Le séjour regroupe ses postes sans coût supplémentaire. Aucun prix, participant ou date n’est décidé automatiquement. Les séjours intermois sont hors périmètre." : "Une visite est votre intention. Un trajet historique ou un véhicule disponible ne décide ni la visite ni ses participants."}</p>
-    <nav className={styles.nightNav} aria-label={stay ? "Sections du séjour" : "Sections de la visite"}>{[["people", "Personnes"], ["place", "Destination"], ["timing", "Dates"], ...(stay ? [["posts", "Hébergement et postes"]] : []), ["route", "Déplacement"]].map(([key, caption]) =>
-      <button key={key} type="button" onClick={() => { const section = scroll.current?.querySelector<HTMLElement>(`[data-visit-section="${key}"]`); section?.scrollIntoView({ block: "start" }); section?.focus({ preventScroll: true }); }}>{caption}</button>)}</nav>
+    {section === "summary" && <section className={styles.nightSection} data-visit-summary>
+      <h3>{label || (stay ? "Votre séjour" : "Votre visite")}</h3>
+      <p>{stay ? "Choisissez l’hébergement ou un poste quand vous le souhaitez." : "La visite reste enregistrable même sans date ou trajet."}</p>
+      {visited && <p>Proche : {visited.kind === "TEXT" ? visited.label : "Contact lié"}</p>}
+      {destination && <p>Destination : {physicalLabel(destination)}</p>}
+      {(date || note) && <p>Quand : {date || note}</p>}
+      {mode && <p>Déplacement : {modeLabels[mode] ?? mode}</p>}
+      <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection(stay ? "posts" : "people")}>{stay ? "Composer le séjour" : "Préciser la visite"}</button>
+        <button type="button" onClick={() => setSection("route")}>Prévoir le déplacement</button></div>
+    </section>}
     <div ref={scroll} className={styles.nightEditorScroll}>
-      <section className={styles.nightSection} data-visit-section="people" tabIndex={-1}><h3>{stay ? "Votre séjour et ses participants" : "Qui allez-vous voir ?"}</h3>
-        <label>{stay ? "Nom du séjour" : "Nom de la visite"}<input value={label} maxLength={120} onChange={event => setLabel(event.target.value)} /></label>
-        {!stay && <PlannedContactField label="Proche visité" value={visited} householdPersons={householdPersons} onChange={setVisited} />}
-        <h4>Personnes concernées</h4>{people.map((ref, index) => <div key={index} className={styles.nightParticipant}>
+      {section === "people" && <section className={styles.nightSection} data-visit-section="people" tabIndex={-1}><h3>{stay ? "Votre séjour et ses participants" : "Qui allez-vous voir ?"}</h3>
+        {peoplePage === -1 && <><label>{stay ? "Nom du séjour" : "Nom de la visite"}<input value={label} maxLength={120} onChange={event => setLabel(event.target.value)} /></label>
+        {!stay && <PlannedContactField label="Proche visité" value={visited} householdPersons={householdPersons} onChange={setVisited} />}</>}
+        <h4>Voyageurs (indépendants du proche visité)</h4>{people.slice(Math.max(0, peoplePage), peoplePage < 0 ? 0 : peoplePage + 1).map((ref, offset) => { const index = peoplePage + offset; return <div key={index} className={styles.nightParticipant}>
           <PlannedContactField label={`Personne ${index + 1}`} value={ref} householdPersons={householdPersons} onChange={value => setPeople(people.map((p, i) => i === index ? value ?? { kind: "TEXT", label: "" } : p))} />
-          <button type="button" onClick={() => setPeople(people.filter((_, i) => i !== index))}>Retirer cette personne</button></div>)}
-        <button type="button" onClick={() => setPeople([...people, { kind: "TEXT", label: "" }])}>Ajouter une personne</button>
-      </section>
-      <section className={styles.nightSection} data-visit-section="place" tabIndex={-1}><h3>{stay ? "Destination du séjour" : "Où aura lieu la visite ?"}</h3>
+          <button type="button" onClick={() => { setPeople(people.filter((_, i) => i !== index)); setPeoplePage(-1); }}>Retirer cette personne</button></div>; })}
+        {people.length > 0 && <div className={styles.nightPage}><button type="button" disabled={peoplePage < 0} onClick={() => setPeoplePage(page => page - 1)}>Précédent</button><span>{peoplePage < 0 ? "Intention" : `Voyageur ${peoplePage + 1} / ${people.length}`}</span><button type="button" disabled={peoplePage + 1 >= people.length} onClick={() => setPeoplePage(page => page + 1)}>Suivant</button></div>}
+        <button type="button" onClick={() => { setPeoplePage(people.length); setPeople([...people, { kind: "TEXT", label: "" }]); }}>Ajouter une personne</button>
+      </section>}
+      {section === "place" && <section className={styles.nightSection} data-visit-section="place" tabIndex={-1}><h3>{stay ? "Destination du séjour" : "Où aura lieu la visite ?"}</h3>
+        {!stay && <ContactPlaceReference declined={placeDeclines} decline={declinePlace} contact={visited} places={places} value={destination} onChoose={setDestination} />}
         <PlannedPlaceField label={stay ? "Destination du séjour" : "Destination de la visite"} places={places} value={destination} onChange={setDestination} exact />
         {!options && <p role="status">Les lieux admissibles sont en cours de lecture. Une destination libre reste possible.</p>}
-      </section>
-      <section className={styles.nightSection} data-visit-section="timing" tabIndex={-1}><h3>Quand ?</h3><p>Vous pouvez conserver cette intention sans jour fixé. Le retour reste indépendant du départ.</p>
+      </section>}
+      {section === "timing" && <section className={styles.nightSection} data-visit-section="timing" tabIndex={-1}><h3>Quand ?</h3><p>Vous pouvez conserver cette intention sans jour fixé. Le retour reste indépendant du départ.</p>
         <div className={styles.nightComponentGrid}><label>Date de départ (facultative)<input type="date" value={date} onChange={event => { setDate(event.target.value); if (!event.target.value) setOutTime(""); }} /></label>
           <label>Heure de départ<input type="time" disabled={!date} value={outTime} onChange={event => setOutTime(event.target.value)} /></label>
           <label>Date de retour (facultative)<input type="date" value={endDate} onChange={event => { setEndDate(event.target.value); if (!event.target.value) setReturnTime(""); }} /></label>
           <label>Heure de retour<input type="time" disabled={!endDate} value={returnTime} onChange={event => setReturnTime(event.target.value)} /></label>
           <label>Repère de temps<input value={note} maxLength={160} onChange={event => setNote(event.target.value)} placeholder="Par exemple : un dimanche" /></label></div>
-      </section>
-      {stay && <section className={styles.nightSection} data-visit-section="posts" tabIndex={-1}>{posts}</section>}
-      <section className={styles.nightSection} data-visit-section="route" tabIndex={-1}><h3>Déplacement prospectif</h3>
+      </section>}
+      {stay && section === "posts" && <section className={styles.nightSection} data-visit-section="posts" tabIndex={-1}>{posts}</section>}
+      {section === "route" && <section className={styles.nightSection} data-visit-section="route" tabIndex={-1}><h3>Déplacement prospectif</h3>
+        <nav className={styles.nightNav} aria-label="Étapes du déplacement">{([...["journey", "stops", "cost"]] as (typeof routePage)[]).map(key =>
+          <button key={key} type="button" aria-pressed={routePage === key} onClick={() => setRoutePage(key)}>{key === "journey" ? "Trajet" : key === "stops" ? "Véhicule et arrêts" : "Coûts"}</button>)}</nav>
+        {routePage === "journey" && <>
         {original?.journey && original.journey.relation !== "OWNS_JOURNEY" && <><p>Le trajet existant est lié à un autre propriétaire. Ses prix sont conservés.</p>
           <label className={styles.nightCheck}><input type="checkbox" checked={ownJourney} onChange={event => setOwnJourney(event.target.checked)} />Choisir un trajet propre pour cette visite</label></>}
         <label>Mode de transport<select value={mode} onChange={event => setTransportMode(event.target.value)}><option value="">Sans déplacement configuré</option>
@@ -138,7 +160,9 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
           <PlannedPlaceField label="Origine du déplacement" places={places} value={origin} onChange={setOrigin} exact />
           {!origin && home && <button type="button" onClick={() => setOrigin({ kind: "KNOWN", placeId: home.placeId })}>Utiliser comme départ {home.name} · domicile connu</button>}
           <label><input type="checkbox" checked={returnRequired} onChange={event => setReturnRequired(event.target.checked)} />Prévoir l’aller et le retour</label>
-          {mode === "car" ? <>
+        </>}
+        <button type="button" onClick={() => setRoutePage(mode === "car" ? "stops" : "cost")}>Continuer vers {mode === "car" ? "le véhicule" : "les coûts"}</button></>}
+        {routePage === "stops" && (mode === "car" && ownJourney ? <>
             <label>Véhicule<select value={vehicleId} onChange={event => setVehicleId(event.target.value)}><option value="">À préciser</option>
               {vehicle?.vehicleId && <option value={vehicle.vehicleId}>{vehicle.label} · véhicule admissible</option>}
               {vehicleId && vehicleId !== vehicle?.vehicleId && <option value={vehicleId}>{original?.route?.vehicleRef?.labelAtSelection ?? "Véhicule lié"} · indisponible</option>}</select></label>
@@ -149,6 +173,10 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
                 <PlannedRouteCoordinatesField key={JSON.stringify([stop.label, stop.coordinates])} stop={stop} onApply={(latitude, longitude) => setStops(stops.map((p, i) => i === index ? { ...p, coordinates: { latitude, longitude, source: "USER_DECLARED" } } : p))} />
                 <button type="button" onClick={() => setStops(stops.filter((_, i) => i !== index))}>Retirer cet arrêt</button></div>)}
               <button type="button" disabled={outStops.length + backStops.length >= 8} onClick={() => setStops([...stops, { label: "", endpointSource: "DIRECT_PLACE" }])}>Ajouter un arrêt · {caption}</button></div>)}
+            <button type="button" onClick={() => setRoutePage("cost")}>Continuer vers les coûts</button>
+          </> : <p>Choisissez d’abord un trajet en voiture pour préciser les arrêts.</p>)}
+        {routePage === "cost" && !!mode && ownJourney && <>
+          {mode === "car" ? <>
             <div className={styles.nightComponentGrid}><label>Prix déclaré au litre, si aucune référence disponible<input inputMode="decimal" value={fuelPrice} onChange={event => setFuelPrice(event.target.value)} placeholder="Conserver les références du propriétaire" /></label>
               <label>Péages<select value={tollMode} onChange={event => setTollMode(event.target.value)}><option value="AUTO">Estimation du propriétaire</option><option value="UNKNOWN">Encore inconnus</option><option value="MANUAL">Montant total déclaré par moi</option>{tollMode === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
               {tollMode === "MANUAL" && <label>Péages totaux (€)<input inputMode="decimal" value={toll} onChange={event => setToll(event.target.value)} /></label>}
@@ -159,13 +187,16 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
           {mode !== "free" && <><label>Financement des frais payables<select value={funding} onChange={event => setFunding(event.target.value)}><option value="">À préciser</option><option value="BANK">Banque déclarée</option></select></label>
             {funding === "BANK" && <label>Montant Banque (€)<input inputMode="decimal" value={fundingAmount} onChange={event => setFundingAmount(event.target.value)} /></label>}</>}
         </>}
-        {mode === "free" ? <p>Déplacement déclaré gratuit. Aucun coût de trajet ajouté.</p>
-          : <MobilityEstimateSummary summary={summary} fresh={fresh && initialInputs.current === JSON.stringify(transportInputs) && (initialMode === undefined || initialMode === original?.optionKey)} />}
-        <p className={styles.helper}>La simulation utilise Mobility et Finance V2. Carburant utilisé, péages et billet restent distincts. Une panne fournisseur conserve le brouillon et les autres composants.</p>
-      </section>
+        {routePage === "cost" && (mode === "free" ? <p>Déplacement déclaré gratuit. Aucun coût de trajet ajouté.</p>
+          : <MobilityEstimateSummary summary={summary} fresh={fresh && initialInputs.current === JSON.stringify(transportInputs) && (initialMode === undefined || initialMode === original?.optionKey)} />)}
+        {routePage === "cost" && <p className={styles.helper}>La simulation utilise Mobility et Finance V2. Carburant utilisé, péages et billet restent distincts. Une panne fournisseur conserve le brouillon et les autres composants.</p>}
+      </section>}
     </div>
     {error && <p role="alert" className={styles.formError}>{error}</p>}
-    <footer><button type="button" className={styles.secondary} disabled={busy} onClick={onCancel}>Retour au mois</button><button type="button" className={styles.primary} disabled={busy} onClick={save}>{stay ? "Prévisualiser le séjour" : "Prévisualiser la visite"}</button></footer>
+    <footer><button type="button" className={styles.secondary} disabled={busy} onClick={section === "summary" ? onCancel : () => setSection("summary")}>{section === "summary" ? "Retour au mois" : "Retour au résumé"}</button><button type="button" className={styles.primary} disabled={busy} onClick={save}>Conserver et prévisualiser</button></footer>
+    <WorkshopDock host={dockHost} contextId={context.contextOccurrenceId} model={model} busy={busy} choose={choose} summary={() => setSection("summary")}
+      choices={([["summary", "Résumé"], ["people", "Personnes"], ["place", "Destination"], ["timing", "Dates"], ...(stay ? [["posts", "Hébergement et postes"]] : []), ["route", "Déplacement"]] as const).map(([key, label]) =>
+        ({ key, label, iconKey: key === "route" ? "car" : "activity", selected: section === key, choose: () => setSection(key as typeof section) }))} />
   </div>;
 }
 

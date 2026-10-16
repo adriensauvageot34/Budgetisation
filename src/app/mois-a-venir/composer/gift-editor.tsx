@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { WorkshopDock } from "./workshop-dock";
+import type { ContextPalette } from "./context-palette";
 import type { ProspectivePersonRef } from "@/domain/phase2/planned-contract";
 import { assetsForModule, PLANNED_ASSET_CATALOG_VERSION, type PlannedAssetRef } from "@/domain/phase2/planned-assets";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
-import type { ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
+import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
+import { WorkshopComponentRow } from "./workshop-component-row";
+import { fresh, fromSelection, buildComponentRow } from "./night-out-components";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { PlannedContactField } from "../planned-people-fields";
 import { ChoiceTiles, builderInput } from "../planned-builder-primitives";
@@ -16,10 +20,11 @@ const occasionChoices = ["Sans occasion particulière", "Anniversaire", "Noël",
 const giftAssets = assetsForModule("gift").filter(asset => !/(?:delivery_fee|service_fee)$/u.test(asset.assetKey));
 const string = (value: unknown): string => typeof value === "string" ? value : "";
 
-export function GiftEditor({ context, householdPersons, knowledge, busy, onSave, onCancel }: {
+export function GiftEditor({ context, householdPersons, knowledge, busy, dockHost, model, choose, onSave, onCancel }: {
   context: PlannedContextState; householdPersons: readonly { personId: string; displayName: string }[];
   knowledge?: CardKnowledgeRead;
-  busy: boolean; onSave: (operation: ComposerOperation) => void; onCancel: () => void;
+  model: ComposerUiModel; choose: Parameters<typeof ContextPalette>[0]["choose"];
+  busy: boolean; dockHost?: HTMLElement | null; onSave: (operation: ComposerOperation) => boolean; onCancel: () => void;
 }) {
   const existing = (Array.isArray(context.slotSelections.item?.items) ? context.slotSelections.item.items : [])
     .find((entry): entry is ComponentSelectionV1 => !!entry && typeof entry === "object" && !Array.isArray(entry)
@@ -32,43 +37,43 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, onSave,
   const existingAssetRef = rawAssetRef && typeof rawAssetRef === "object" && !Array.isArray(rawAssetRef)
     ? rawAssetRef as PlannedAssetRef : undefined;
   const [assetKey, setAssetKey] = useState(existingAssetRef?.assetKey ?? "");
-  const [objectLabel, setObjectLabel] = useState(string(context.fields.objectLabel) || existing?.label || "");
+  const [objectLabel, setObjectLabel] = useState(string(context.fields.objectLabel) || (existing?.label === "Cadeau" ? "" : existing?.label) || "");
   const [date, setDate] = useState(string(context.fields.plannedDate));
-  const [quantity, setQuantity] = useState(existing?.quantity ?? "1");
-  const [unitBasis, setUnitBasis] = useState<"ITEM" | "PERSON" | "SHARED">(existing?.unitBasis ?? "ITEM");
-  const [costKind, setCostKind] = useState<"MANUAL" | "UNKNOWN" | "QUOTE">(existing?.cost.kind ?? "UNKNOWN");
-  const [amount, setAmount] = useState(existing?.cost.kind === "MANUAL" ? existing.cost.unitAmount : "");
-  const existingFunding = existing?.fundingAllocations ?? [];
-  const [fundingMode, setFundingMode] = useState(existingFunding.some(part => part.source !== "BANK") ? "EXISTING" : existingFunding.length ? "BANK" : "UNDECIDED");
-  const [fundingAmount, setFundingAmount] = useState(existingFunding.find(part => part.source === "BANK")?.amount ?? "");
+  const [row, setRow] = useState(() => existing ? fromSelection(existing) : fresh("Cadeau"));
   const [error, setError] = useState("");
+  const [section, setSection] = useState<"summary" | "recipient" | "occasion" | "object" | "budget" | "date">("summary");
   const selectedAsset = giftAssets.find(asset => asset.assetKey === assetKey);
-  return <form data-gift-editor onSubmit={event => {
-    event.preventDefault();
-    if (recipient?.kind === "TEXT" && !recipient.label.trim()) { setError("Indiquez le nom du destinataire ou retirez cette sélection."); return; }
-    if (!objectLabel.trim()) { setError("Précisez le cadeau ou choisissez un objet proposé."); return; }
-    if (costKind === "MANUAL" && !amount.trim()) { setError("Indiquez le prix unitaire ou choisissez « Prix inconnu »."); return; }
-    if (fundingMode === "BANK" && !fundingAmount.trim()) { setError("Indiquez le montant financé par la banque."); return; }
-    const cost = costKind === "QUOTE" && existing?.cost.kind === "QUOTE" ? existing.cost
-      : costKind === "MANUAL" ? { kind: "MANUAL" as const, unitAmount: amount.trim() } : { kind: "UNKNOWN" as const };
-    const item: ComponentSelectionV1 = { ...existing,
-      selectionId: existing?.selectionId ?? crypto.randomUUID(), optionKey: "gift", kind: "COMPONENT",
-      provenance: "EXPLICIT_USER_DECISION", label: objectLabel.trim(), quantity: quantity.trim(), unitBasis, cost,
-      fundingAllocations: fundingMode === "EXISTING" ? existingFunding : fundingMode === "BANK" ? [{ source: "BANK", amount: fundingAmount.trim() }] : [] };
-    onSave({ kind: "EDIT_GIFT", contextOccurrenceId: context.contextOccurrenceId,
-      values: { recipientRef: recipient ?? "", occasion: occasion.trim(), objectLabel: objectLabel.trim(), plannedDate: date || "",
-        ...(assetKey === (existingAssetRef?.assetKey ?? "") ? {} : { objectAssetRef: assetKey
-          ? { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection: selectedAsset?.label ?? "",
-            provenance: "EXPLICIT_USER_DECISION" } : "" }) }, item });
-  }}>
-    <CardKnowledgePanel knowledge={knowledge} />
-    <p className={styles.helper}>Le cadeau est une intention du Plan. Son coût provient uniquement de l’objet et de ses éventuels compléments.</p>
+  const save = () => { try {
+    if (recipient?.kind === "TEXT" && !recipient.label.trim()) throw Error("Indiquez le nom du destinataire ou retirez cette sélection.");
+    const values = { recipientRef: recipient ?? "", occasion: occasion.trim(), plannedDate: date || "", objectLabel: objectLabel.trim(),
+      ...(assetKey === (existingAssetRef?.assetKey ?? "") ? {} : { objectAssetRef: assetKey
+        ? { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection: selectedAsset?.label ?? "", provenance: "EXPLICIT_USER_DECISION" } : "" }) };
+    const patch = Object.fromEntries(Object.entries(values).filter(([key, value]) => JSON.stringify(value || null) !== JSON.stringify(context.fields[key] ?? null)));
+    const needsItem = !!existing || !!objectLabel.trim() || section === "budget";
+    const item = needsItem ? buildComponentRow({ ...row, label: objectLabel.trim() || "Cadeau",
+      edited: row.edited || (objectLabel.trim() || "Cadeau") !== (existing?.label ?? "") }, "gift") : undefined;
+    const admitted = item ? onSave({ kind: "EDIT_GIFT", contextOccurrenceId: context.contextOccurrenceId, values: patch, item })
+      : !Object.keys(patch).length || onSave({ kind: "EDIT_CONTEXT", contextOccurrenceId: context.contextOccurrenceId, values: patch });
+    if (admitted) { setError(""); setSection("summary"); }
+    else setError("Ce choix n’a pas été admis. Le brouillon local reste disponible.");
+  } catch (failure) { setError(failure instanceof Error && !/^[A-Z_]+$/.test(failure.message) ? failure.message : "Vérifiez le prix, la quantité et le financement. Votre saisie est conservée."); } };
+  return <form data-gift-editor className={styles.nightEditor} onSubmit={event => { event.preventDefault(); save(); }}>
+    {section === "summary" && <section className={styles.nightSection} data-gift-summary><h3>{objectLabel || "Cadeau à préciser"}</h3>
+      <p>Le cadeau reste dans votre brouillon, même si sa date ou son prix sont inconnus.</p>
+      {recipient && <p>Destinataire : {recipient.kind === "TEXT" ? recipient.label : "Personne liée"}</p>}
+      {occasion && <p>Occasion : {occasion}</p>}
+      {existing && <p>Prix : {existing.cost.kind === "MANUAL" ? `${existing.cost.unitAmount} €` : "inconnu ou devis conservé"}</p>}
+      <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection("object")}>Choisir l’objet</button>
+        <button type="button" onClick={() => setSection("budget")}>Préciser le prix</button></div></section>}
+    {section === "budget" && <details><summary>Repères historiques · ne décident aucun prix</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
+    {section !== "summary" && <p className={styles.helper}>Le coût provient uniquement de l’objet et de ses éventuels compléments.</p>}
     <div className={styles.formFields}>
-      <PlannedContactField label="Pour qui est ce cadeau ?" value={recipient} householdPersons={householdPersons} onChange={setRecipient} />
-      <div className={styles.giftOccasion}><ChoiceTiles label="Quelle occasion ?" choices={[...occasionChoices.map((label, index) => ({ key: String(index), label })), { key: "OTHER", label: "Autre" }]}
+      {section === "recipient" && <PlannedContactField label="Pour qui est ce cadeau ?" value={recipient} householdPersons={householdPersons} onChange={setRecipient} />}
+      {section === "occasion" && <div className={styles.giftOccasion}><ChoiceTiles label="Quelle occasion ?" choices={[...occasionChoices.map((label, index) => ({ key: String(index), label })), { key: "OTHER", label: "Autre" }]}
         value={occasionChoices.includes(occasion) ? String(occasionChoices.indexOf(occasion)) : "OTHER"}
         onChange={key => setOccasion(key === "OTHER" ? "" : occasionChoices[Number(key)] ?? "")} />
-        {!occasionChoices.includes(occasion) && <label>Précisez l’occasion<input className={builderInput} value={occasion} onChange={event => setOccasion(event.target.value)} maxLength={120} /></label>}</div>
+        {!occasionChoices.includes(occasion) && <label>Précisez l’occasion<input className={builderInput} value={occasion} onChange={event => setOccasion(event.target.value)} maxLength={120} /></label>}</div>}
+      {section === "object" && <>
       <label>Type d’objet · catalogue Budgetisation<select value={assetKey} onChange={event => {
         const asset = giftAssets.find(candidate => candidate.assetKey === event.target.value);
         setAssetKey(event.target.value);
@@ -77,24 +82,19 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, onSave,
         {assetKey && !selectedAsset && <option value={assetKey}>Référence indisponible · {existingAssetRef?.labelAtSelection ?? assetKey} ({assetKey})</option>}
         {giftAssets.map(asset => <option key={asset.assetKey} value={asset.assetKey}>{asset.label}</option>)}</select></label>
       {assetKey && !selectedAsset && <p role="status" className={styles.helper}>Cette référence de catalogue n’est plus disponible. Elle reste conservée tant que vous ne choisissez pas un autre type.</p>}
-      <label>Quel objet ou produit ?<input value={objectLabel} onChange={event => setObjectLabel(event.target.value)} maxLength={120} /></label>
-      <label>Date prévue (facultative)<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>
-      <label>Quantité<input type="number" min="0.001" max="9999" step="0.001" value={quantity} onChange={event => setQuantity(event.target.value)} required /></label>
-      <label>Unité du prix<select value={unitBasis} onChange={event => setUnitBasis(event.target.value as typeof unitBasis)}>
-        <option value="ITEM">Par objet</option><option value="PERSON">Par personne</option><option value="SHARED">Montant commun</option></select></label>
-      <label>Connaissance du prix<select value={costKind} onChange={event => setCostKind(event.target.value as typeof costKind)}>
-        <option value="UNKNOWN">Prix encore inconnu</option><option value="MANUAL">Prix renseigné par vous</option>
-        {existing?.cost.kind === "QUOTE" && <option value="QUOTE">Conserver le devis existant</option>}</select></label>
-      {costKind === "MANUAL" && <label>Prix unitaire prévu (€)<input inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} required /></label>}
-      <label>Financement déclaré<select value={fundingMode} onChange={event => setFundingMode(event.target.value)}>
-        <option value="UNDECIDED">À préciser</option><option value="BANK">Banque</option>
-        {existingFunding.some(part => part.source !== "BANK") && <option value="EXISTING">Conserver le financement déjà enregistré</option>}</select></label>
-      {fundingMode === "BANK" && <label>Montant financé par la banque (€)<input inputMode="decimal" value={fundingAmount} onChange={event => setFundingAmount(event.target.value)} required /></label>}
-      {fundingMode === "BANK" && <p className={styles.helper}>Si vous modifiez le prix ou la quantité, vérifiez aussi ce montant. Le Planner refusera une répartition incohérente.</p>}
-      <p className={styles.helper}>Swile et Edenred ne sont pas proposés ici tant que leur admissibilité Kernel n’est pas certifiée. Aucun financement bancaire n’est inventé.</p>
+      <label>Quel objet ou produit ?<input value={objectLabel} onChange={event => setObjectLabel(event.target.value)} maxLength={120} /></label></>}
+      {section === "date" && <label>Date prévue (facultative)<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>}
+      {section === "budget" && <WorkshopComponentRow title="Cadeau" row={{ ...row, label: objectLabel || row.label }} onChange={next => {
+        if (next.label !== (objectLabel || row.label)) setObjectLabel(next.label);
+        setRow(next);
+      }} onSave={save} busy={busy} participantCount={0} />}
     </div>
     {error && <p role="alert" className={styles.formError}>{error}</p>}
-    <footer><button type="button" className={styles.secondary} disabled={busy} onClick={onCancel}>Retour au mois</button>
-      <button data-submit className={styles.primary} disabled={busy}>Prévisualiser ce cadeau</button></footer>
+    <footer><button type="button" className={styles.secondary} disabled={busy} onClick={section === "summary" ? onCancel : () => setSection("summary")}>{section === "summary" ? "Retour au mois" : "Retour au résumé"}</button>
+      <button data-submit className={styles.primary} disabled={busy}>{objectLabel.trim() ? "Conserver et prévisualiser" : "Conserver cette intention"}</button></footer>
+    <WorkshopDock host={dockHost} contextId={context.contextOccurrenceId} model={model} busy={busy} choose={choose} summary={() => setSection("summary")}
+      choices={(["summary", "recipient", "occasion", "object", "budget", "date"] as const).map(key => ({ key,
+        label: ({ summary: "Résumé", recipient: "Destinataire", occasion: "Occasion", object: "Objet", budget: "Prix", date: "Date" } as const)[key],
+        iconKey: "gift", selected: section === key, choose: () => setSection(key) }))} />
   </form>;
 }

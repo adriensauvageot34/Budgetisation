@@ -4,7 +4,8 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ShortStayEdit } from "@/domain/phase2/planner/short-stay-edit";
 import { ProspectiveContextEditor } from "./family-visit-editor";
-import { ComponentRow, fresh, fromSelection, buildComponentRow, type Row } from "./night-out-editor";
+import { fresh, fromSelection, buildComponentRow, type Row } from "./night-out-components";
+import { WorkshopComponentRow } from "./workshop-component-row";
 import styles from "./composer.module.css";
 
 type Component = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
@@ -16,6 +17,15 @@ const mainSlot = (key: string) => key === "activity" ? "main" : ["restaurant", "
 const mainOption = (key: string) => key === "purchase" ? "item" : key === "beauty-restock" ? "product" : key;
 const items = (context: PlannedContextState, slot: string) => (context.slotSelections[slot]?.items ?? []) as readonly ComponentSelectionV1[];
 const firstComponent = (context: PlannedContextState, slot: string) => items(context, slot).find((item): item is Component => item.kind === "COMPONENT");
+
+/** Calendar consistency only; pricing and quantity valuation remain in the Compiler. */
+export function validateStayCalendar(fields: PlannedContextState["fields"]) {
+  const start = fields.plannedDate, end = fields.endDate, nights = fields.nightCount;
+  if (typeof start !== "string" || typeof end !== "string" || typeof nights !== "number") return;
+  const calendarNights = (Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000;
+  if (Number.isFinite(calendarNights) && calendarNights !== nights)
+    throw Error(`Les dates indiquent ${calendarNights} nuit(s), mais vous en avez déclaré ${nights}. Corrigez les dates ou la durée ; aucun tarif n’a été recalculé.`);
+}
 
 export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "posts"> & { semanticState: PlanSemanticStateV1 }) {
   const context = props.context, oldLodging = firstComponent(context, "lodging"), oldGroceries = firstComponent(context, "groceries");
@@ -35,6 +45,9 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
     return [{ row: main ? fromSelection(main) : fresh(typeof child.fields.label === "string" ? child.fields.label : ""), templateKey: child.templateKey, child, link: item }];
   })])) as Record<Group, Post[]>);
   const [dirty, setDirty] = useState<Partial<Record<Group, boolean>>>({});
+  const [postSection, setPostSection] = useState<"lodging" | "groceries" | Group>("lodging");
+  const [lodgingPage, setLodgingPage] = useState<"terms" | "price">("terms");
+  const [postPage, setPostPage] = useState(0);
   const update = (slot: Group, values: Post[]) => { setPosts(p => ({ ...p, [slot]: values })); setDirty(d => ({ ...d, [slot]: true })); };
   const prepare = (): Pick<ShortStayEdit, "fields" | "slots" | "children"> => {
     const nightCount = nights.trim() ? Number(nights) : null;
@@ -74,37 +87,46 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
     return { fields, slots, children };
   };
   const content = <>
-    <h3>Hébergement</h3>
+    <nav className={styles.nightNav} aria-label="Postes du séjour">{([...["lodging", "groceries"], ...groups.map(([slot]) => slot)] as ("lodging" | "groceries" | Group)[]).map(key =>
+      <button key={key} type="button" aria-pressed={postSection === key} onClick={() => { setPostSection(key); setPostPage(0); }}>
+        {key === "lodging" ? "Hébergement" : key === "groceries" ? "Courses" : groups.find(([slot]) => slot === key)?.[1]}</button>)}</nav>
+    {postSection === "lodging" && <>
+    <nav className={styles.nightNav} aria-label="Hébergement"><button type="button" aria-pressed={lodgingPage === "terms"} onClick={() => setLodgingPage("terms")}>Type et durée</button><button type="button" aria-pressed={lodgingPage === "price"} onClick={() => setLodgingPage("price")}>Prix</button></nav>
+    {lodgingPage === "terms" && <>
     <div className={styles.nightComponentGrid}><label>Type d’hébergement<select value={lodgingKind} onChange={e => setLodgingKind(e.target.value)}>
       {[["LATER", "À préciser"], ["RELATIVE", "Chez un proche"], ["HOTEL", "Hôtel"], ["HOSTEL", "Auberge"], ["RENTAL", "Location"], ["OTHER", "Autre"]].map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <label>Nombre de nuits (facultatif)<input type="number" min="1" max="366" value={nights} onChange={e => setNights(e.target.value)} placeholder="Inconnu" /></label>
       <label>Base du prix<select value={basis} onChange={e => { setBasis(e.target.value as typeof basis); setLodgingDirty(true); }}>
         <option value="TOTAL">Budget total de l’hébergement</option><option value="PER_NIGHT">Tarif par nuit</option>{basis === "LEGACY" && <option value="LEGACY">Conserver la quantité et le prix antérieurs</option>}</select></label></div>
-    {lodging ? <ComponentRow title="Hébergement" row={lodging} participantCount={0} fixedQuantity={basis !== "LEGACY"}
+    <button type="button" onClick={() => setLodgingPage("price")}>Préciser le prix</button></>}
+    {lodgingPage === "price" && (lodging ? <WorkshopComponentRow title="Hébergement" row={lodging} participantCount={0} fixedQuantity={basis !== "LEGACY"}
       priceLabel={basis === "PER_NIGHT" ? "Tarif par nuit (€)" : "Budget total (€)"}
       onChange={row => { setLodging(row); setLodgingDirty(true); }} onRemove={() => { setLodging(null); setLodgingDirty(true); }} />
-      : <button type="button" onClick={() => { setLodging(fresh("Hébergement")); setLodgingDirty(true); }}>Renseigner l’hébergement</button>}
-    {basis === "PER_NIGHT" && !nights && <p role="status">Le tarif par nuit sera conservé. Le coût total restera inconnu tant que la durée n’est pas décidée.</p>}
+      : <button type="button" onClick={() => { setLodging(fresh("Hébergement")); setLodgingDirty(true); }}>Renseigner l’hébergement</button>)}
+    {basis === "PER_NIGHT" && !nights && <p role="status">Le tarif par nuit sera conservé. Le coût total restera inconnu tant que la durée n’est pas décidée.</p>}</>}
+    {postSection === "groceries" && <>
     <h3>Courses du séjour</h3>
-    {groceries ? <ComponentRow title="Courses du séjour" row={groceries} participantCount={0} bindingChoices
+    {groceries ? <WorkshopComponentRow title="Courses du séjour" row={groceries} participantCount={0} bindingChoices
       onChange={row => { setGroceries(row); setGroceriesDirty(true); }} onRemove={() => { setGroceries(null); setGroceriesDirty(true); }} />
-      : <button type="button" onClick={() => { setGroceries(fresh("Courses du séjour")); setGroceriesDirty(true); }}>Ajouter des courses</button>}
-    {groups.map(([slot, caption, key]) => <div key={slot}><h3>{caption}</h3>
-      {posts[slot].map((post, index) => <div key={post.row.id}>
+      : <button type="button" onClick={() => { setGroceries(fresh("Courses du séjour")); setGroceriesDirty(true); }}>Ajouter des courses</button>}</>}
+    {groups.filter(([slot]) => slot === postSection).map(([slot, caption, key]) => <div key={slot}><h3>{caption}</h3>
+      {posts[slot].slice(postPage, postPage + 1).map(post => { const index = postPage; return <div key={post.row.id}>
         {slot === "restaurants" && !post.link && <label>Type de repas<select value={post.templateKey} onChange={e => update(slot, posts[slot].map((p, i) => i === index ? { ...p, templateKey: e.target.value } : p))}>
           <option value="restaurant">Restaurant</option><option value="fast-food">Restauration rapide</option><option value="delivery">Livraison</option></select></label>}
-        <ComponentRow title={caption} row={post.row} participantCount={0} bindingChoices={slot === "restaurants"}
+        <WorkshopComponentRow title={caption} row={post.row} participantCount={0} bindingChoices={slot === "restaurants"}
           onChange={row => update(slot, posts[slot].map((p, i) => i === index ? { ...p, row } : p))}
-          onRemove={() => update(slot, posts[slot].filter((_, i) => i !== index))} />
+          onRemove={() => { update(slot, posts[slot].filter((_, i) => i !== index)); setPostPage(page => Math.max(0, page - 1)); }} />
         {post.child && <p className={styles.helper}>Moment enfant lié : ses autres informations et équipements sont conservés. Ils restent accessibles depuis la carte R6.</p>}
-      </div>)}
-      <button type="button" onClick={() => update(slot, [...posts[slot], { row: fresh(slot === "activities" ? "Activité" : slot === "purchases" ? "Achat" : slot === "extras" ? "Extra" : "Restaurant"), templateKey: key }])}>Ajouter · {caption}</button>
+      </div>; })}
+      {posts[slot].length > 1 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {posts[slot].length}</span><button type="button" disabled={postPage + 1 >= posts[slot].length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
+      <button type="button" onClick={() => { setPostPage(posts[slot].length); update(slot, [...posts[slot], { row: fresh(slot === "activities" ? "Activité" : slot === "purchases" ? "Achat" : slot === "extras" ? "Extra" : "Restaurant"), templateKey: key }]); }}>Ajouter · {caption}</button>
     </div>)}
     <p className={styles.helper}>Un jacuzzi peut être une activité ou un extra explicitement ajouté. Les transports des enfants liés doivent déclarer leur relation au trajet du séjour ; aucune fusion n’est déduite d’un libellé.</p>
   </>;
   return <ProspectiveContextEditor {...props} stay posts={content} onSave={operation => {
-    if (operation.kind !== "EDIT_SHORT_STAY") return;
+    if (operation.kind !== "EDIT_SHORT_STAY") return false;
     const prepared = prepare();
-    props.onSave({ ...operation, edit: { ...operation.edit, ...prepared, fields: { ...operation.edit.fields, ...prepared.fields } } });
+    validateStayCalendar({ ...context.fields, ...operation.edit.fields, ...prepared.fields });
+    return props.onSave({ ...operation, edit: { ...operation.edit, ...prepared, fields: { ...operation.edit.fields, ...prepared.fields } } });
   }} />;
 }
