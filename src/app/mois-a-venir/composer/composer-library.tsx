@@ -1,3 +1,5 @@
+import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
+import { money, quantityLabel } from "./display";
 import { memo, useState, useRef, useEffect, useMemo } from "react";
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import { composerLibraryIndex, filterLibraryIntentions, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
@@ -57,18 +59,18 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       {favoriteItems.length>0&&<section className={styles.assetGroup} data-library-favorites><h3>Épinglés par vous</h3><div className={styles.presetGrid}>{favoriteItems.filter(i=>i.preset).map(tile)}</div>{favoriteItems.filter(i=>!i.preset).map(tile)}</section>}
       <p className={styles.libraryLocalNote}>Favoris locaux à ce navigateur · aucun budget engagé.{favoriteNotice&&` ${favoriteNotice}`}</p>
       {categories.map(group=>{const searching=!!query.trim(),isOpen=searching||opened===group.key,all=searching||expanded.has(group.key);
-        const primary=group.items.filter(item=>item.preset),generic=group.items.filter(item=>!item.preset),visible=all?primary:primary.slice(0,6);
+        const primary=group.items.filter(item=>item.preset),generic=group.items.filter(item=>!item.preset),visible=all||primary.length===7?primary:primary.slice(0,6);
         const groups=[...new Set(visible.map(item=>item.group))],freeOpen=searching||!primary.length||expanded.has("free:"+group.key);
         return <section className={styles.assetGroup} key={group.key} data-library-group={group.key}>
         <h3><button type="button" className={styles.assetGroupToggle} data-library-group-toggle={group.key} aria-expanded={isOpen} aria-controls={`library-${group.key}`} onClick={()=>{if(query)setQuery("");setOpened(opened===group.key?null:group.key);}}>
           <span aria-hidden="true">{isOpen?"▾":"▸"}</span>{group.label}<small>{group.items.length}</small></button></h3>
         {isOpen&&<div id={`library-${group.key}`}>
           {groups.map(subgroup=><div key={subgroup} data-library-subgroup={subgroup}>{subgroup&&<h4 className={styles.librarySubgroupTitle}>{subgroup}</h4>}<div className={styles.presetGrid}>{visible.filter(item=>item.group===subgroup).map(tile)}</div></div>)}
-          {!all&&primary.length>6&&<button type="button" className={styles.libraryShowAll} onClick={()=>setExpanded(old=>new Set([...old,group.key]))}>Tout voir · {primary.length}</button>}
+          {!all&&primary.length>7&&<button type="button" className={styles.libraryShowAll} onClick={()=>setExpanded(old=>new Set([...old,group.key]))}>Tout voir · {primary.length}</button>}
           {generic.length>0&&<div className={styles.libraryGenericGroup} data-library-generics={group.key}>
             {!!primary.length&&<button type="button" className={styles.libraryGenericToggle} aria-expanded={freeOpen} aria-controls={`library-free-${group.key}`}
               onClick={()=>setExpanded(old=>{const next=new Set(old);if(next.has("free:"+group.key))next.delete("free:"+group.key);else next.add("free:"+group.key);return next;})}>
-              <span aria-hidden="true">{freeOpen?"▾":"▸"}</span> Intentions libres · {generic.length}</button>}
+              <span aria-hidden="true">{freeOpen?"▾":"▸"}</span> Autre intention · {generic.length}</button>}
             {freeOpen&&<div id={`library-free-${group.key}`}>{generic.map(tile)}</div>}
           </div>}
         </div>}
@@ -76,12 +78,17 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       {!matches.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. Les compléments se trouvent dans la palette de leur carte.</p>}
     </>:<>
       <p className={styles.libraryLocalNote}>Retrouvez la carte déjà présente dans votre mois. Aucun doublon n’est créé.</p>
-      <div className={styles.assetGrid}>{index.controls.filter(asset=>!query||normalizeLibrarySearch(asset.label).includes(normalizeLibrarySearch(query))).map(asset=>{
-        const control=composerRenderIndex(model).controls.get(asset.capabilityRef);
-        const consult=!control?.capability?.actions.length||control.capability.flexibility==="LOCKED";
-        return <button type="button" className={styles.asset} key={asset.assetKey} data-asset={asset.assetKey} disabled={busy} onClick={()=>choose(asset)}>
-          <PlannerIcon iconKey={asset.iconKey} scale="LIBRARY" className={styles.assetIcon}/><span>{asset.label}</span><small>{consult?"Consulter · protégé":"Ajuster la carte"}</small></button>;
-      })}</div>
+      {(["Habitudes", "Enveloppes", "Réservations", "Autres références"] as const).map(group => {
+        const controls=index.controls.filter(asset=>{const c=composerRenderIndex(model).controls.get(asset.capabilityRef);
+          const family=c?.kind==="SAVINGS" ? "Réservations" : !c?.capability?.actions.length ? "Autres références" : c.capability.fields?.count ? "Habitudes" : "Enveloppes";
+          return family===group&&(!query||normalizeLibrarySearch(asset.label).includes(normalizeLibrarySearch(query)));});
+        return controls.length ? <section key={group} className={styles.manageGroup}><h3>{group}</h3><div className={styles.assetGrid}>{controls.map(asset=>{
+          const control=composerRenderIndex(model).controls.get(asset.capabilityRef);
+          const caption=control ? control.value.count !== null ? `${quantityLabel(control.value.count)} occurrence(s)` : !control.value.decisionValue&&control.value.inclusion==="SUGGESTION_ONLY" ? "Enveloppe à définir" : money(control.value.amount) : "Référence indisponible";
+          return <button type="button" className={styles.asset} key={asset.assetKey} data-asset={asset.assetKey} disabled={busy} onClick={()=>inspectContext(asset.capabilityRef)}>
+            <PlannerIcon iconKey={asset.iconKey} scale="LIBRARY" className={styles.assetIcon}/><span>{asset.label}</span><small>{caption}</small><small>{control?controlAccessLabel(control):"Édition indisponible"}</small></button>;
+        })}</div></section> : null;
+      })}
       {model.board.contexts.filter(c=>c.readOnly&&(!query||normalizeLibrarySearch(c.label).includes(normalizeLibrarySearch(query)))).map(c=><button type="button" className={styles.asset} key={c.contextOccurrenceId} onClick={()=>inspectContext(c.contextOccurrenceId)}>{c.label}<small>Référence externe · lecture seule</small></button>)}
     </>}
     </div>

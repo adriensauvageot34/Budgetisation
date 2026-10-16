@@ -33,7 +33,7 @@ export function VisualClusterOverlay({ node, focused, close, renderChild, palett
   useEffect(() => { if (focused) dialog.current?.querySelector<HTMLElement>(`[data-cluster-child="${CSS.escape(focused)}"]`)?.focus({ preventScroll: true }); }, [focused, node.id]);
   return <dialog ref={dialog} className={styles.clusterDialog} data-cluster-overlay={node.family} aria-label={`${node.title}, ${node.children.length} éléments`}
     onClose={close} onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === event.currentTarget) close(); }}>
-    <header><div><span className={styles.clusterEyebrow}>Groupe visuel</span><h2>{node.title}</h2><p>{node.children.length} objets indépendants · montants dans chaque objet</p></div>
+    <header><div><span className={styles.clusterEyebrow}>Vos objets du mois</span><h2>{node.family === "FOOD" ? "Mes restaurants et repas" : node.title}</h2><p>{node.children.length} objets indépendants · montants dans chaque objet</p></div>
       <button type="button" className={styles.iconButton} aria-label={`Fermer ${node.title}`} onClick={close}><X size={20} /></button></header>
     <div className={styles.clusterChildren}>{node.children.map(child => <div key={child.id} className={styles.clusterChildCell} data-cluster-child={child.id} tabIndex={-1} style={{ width: child.width, minHeight: child.height }}>{renderChild(child)}</div>)}</div>
     {palette}

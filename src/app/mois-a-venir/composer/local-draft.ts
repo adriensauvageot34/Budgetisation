@@ -1,3 +1,5 @@
+import type { PlannerJsonObject } from "@/domain/phase2/planner/json";
+import { validateControlValue } from "@/domain/phase2/planner/control-input";
 import { parsePlanSemanticState, semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import { plannerDigest } from "@/domain/phase2/planner/json";
 import type { PlannerJson } from "@/domain/phase2/planner/json";
@@ -127,6 +129,7 @@ export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStat
     const targetRef = operation.mutation.targetRef;
     const card = [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings].find(c => c.targetRef === targetRef);
     if (!card?.capability?.actions.length || card.capability.flexibility === "LOCKED") return null;
+    validateControlValue(card, operation.mutation.value);
     const prior = state.controls.find(c => c.decisionSlotKey === targetRef);
     const hash = plannerDigest({ owner: "planner-headless-control", month: state.targetMonth, slot: targetRef });
     const decisionId = prior?.decisionId ?? `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-8${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
@@ -177,7 +180,11 @@ export function visualDraftModel(model: ComposerUiModel, draft: PlanSemanticStat
     parentContextOccurrenceId: c.parentContextOccurrenceId ?? null, childContextOccurrenceIds: [], externalIntentId: null,
     readOnly: false, fields: c.fields, components: [], knowledge: "UNKNOWN" as const, capabilityRefs: ["PATCH_CONTEXT", "REMOVE_CONTEXT"], sockets: [] }))];
   const values = new Map(draft.controls.map(c => [c.decisionSlotKey, c.value]));
-  const patchControls = (cards: ComposerUiModel["board"]["baselineControls"]) => cards.map(c => values.has(c.targetRef) ? { ...c, value: { ...c.value, ...values.get(c.targetRef)! } } : c);
+  const patchControls = (cards: ComposerUiModel["board"]["baselineControls"]) => cards.map(c => values.has(c.targetRef) ? { ...c,
+    value: { ...c.value, ...values.get(c.targetRef)!,
+      ...(values.get(c.targetRef)!.count !== undefined ? { unitAmount: values.get(c.targetRef)!.unitAmount ?? (c.value.referenceValue as PlannerJsonObject | null)?.unitAmount ?? null } : {}),
+      decisionValue: values.get(c.targetRef)!, owned: true, economicAmount: null, projectionPending:true } }
+    : c.value.decisionValue ? { ...c, value:{ ...c.value, ...(c.value.referenceValue as PlannerJsonObject ?? {}), decisionValue:null, owned:false, economicAmount:null, projectionPending:true } } : c);
   const objects = { ...model.presentation.objects };
   const dragSources = { ...model.presentation.dragSources };
   const sockets = { ...model.presentation.sockets };

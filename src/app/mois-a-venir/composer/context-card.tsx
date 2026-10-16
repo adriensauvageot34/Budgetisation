@@ -3,7 +3,7 @@ import type { ComposerContextCardView, DropTarget, ComposerAssetView } from "@/d
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { ContextSocket } from "./context-socket";
-import { knowledgeLabel } from "./display";
+import { money, knowledgeLabel } from "./display";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import { PresetIllustration } from "./preset-illustration";
@@ -32,6 +32,10 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const preset = presetForContext(card);
+  const purchase = card.templateKey === "purchase", main = card.sockets.find(s => s.slotKey === "item");
+  const mainAmount = main?.evaluations?.length === 1 ? main.evaluations[0].economicAmount : null;
+  const mainSelection = main?.currentItems.find(i => i.kind === "COMPONENT");
+  const coverage = mainSelection?.kind === "COMPONENT" ? mainSelection.binding?.mode : null;
   const interaction = useComposerInteractions(), handle = useDragHandle(instance);
   const displayPhase = interaction?.grabbed ? "DRAGGING" : focused === card.contextOccurrenceId ? "SELECTED" : "REST";
   const visibleEmpty = visibleEmptySocketKeys(card, model, displayPhase, interaction?.grabbed?.assetKey ?? null);
@@ -71,15 +75,19 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
           {!removable && <p>Moment protégé dans ce brouillon.</p>}</div>}</AtomicPopover></>}</div></header>
     {card.readOnly && <p className={styles.externalNote}>Intention déjà connue · comptée une fois</p>}
     </div>
+    {purchase && <div className={styles.purchaseSummary} data-purchase-summary>
+      <button type="button" disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} onClick={() => edit(card)}>{mainAmount !== null ? money(mainAmount) : "Montant à préciser"}</button>
+      <small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>
+    </div>}
     <div className={styles.contextEquipmentRow} data-context-equipment-row aria-label={`Équipements de ${card.label}`}>
     {sockets.map(socket => {
       const socketPresentation = model.presentation.sockets[`${card.contextOccurrenceId}:${socket.slotKey}`];
       const assets = socketPresentation.options.map(o => index.assets.get(o.assetKey)!);
       const compatible = !!selected && (index.drops.get(selected) ?? []).some(d => d.target.kind === "CONTEXT_SOCKET"
         && d.target.contextOccurrenceId === card.contextOccurrenceId && d.target.slotKey === socket.slotKey && d.resolution !== "BLOCKED");
-      const showEmpty = visibleEmpty.has(socket.slotKey);
+      const showEmpty = visibleEmpty.has(socket.slotKey) && !purchase;
       if (!socketPresentation.satellites.length && !showEmpty) return null;
-      return <ContextSocket key={socket.slotKey} socket={socket} presentation={socketPresentation} focus={() => focus(card.contextOccurrenceId)} busy={busy} compatible={compatible} showEmpty={showEmpty} assets={assets} drop={drop} choose={choose}
+      return <ContextSocket key={socket.slotKey} socket={socket} presentation={socketPresentation} focus={() => focus(card.contextOccurrenceId)} busy={busy} compatible={compatible} showEmpty={showEmpty && !purchase} assets={assets} drop={drop} choose={choose}
         moveTargets={socketPresentation.satellites.flatMap(item => (index.drops.get(item.editableAssetKey ?? "") ?? []).filter(d => d.target.kind === "CONTEXT_SOCKET"
           && d.resolution !== "BLOCKED" && (d.target.contextOccurrenceId !== card.contextOccurrenceId || d.target.slotKey !== socket.slotKey))
           .map(d => ({ selectionId: item.selectionId, target: d.target, label: `${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.label} · ${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.sockets.find(s => s.slotKey === d.target.slotKey)?.label}` })))}

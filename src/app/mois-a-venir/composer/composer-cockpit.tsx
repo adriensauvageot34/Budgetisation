@@ -18,7 +18,7 @@ export function ComposerCockpit({ projection, goalMargin, temporary, pending, st
     {hasImpact && <div className={styles.hudMetric} data-gesture-impact={temporary || undefined} data-tone={stale ? "unknown" : tone(impact)} title={temporary ? "Impact de ce geste, calculé par le serveur" : "Impact consolidé par rapport à la référence"}><span>{temporary ? "Impact du geste" : "Impact de mes choix"}</span><b>{stale ? "—" : signedMoney(impact)}</b></div>}
     {hasSavings && <div className={styles.hudMetric} title="Somme réservée dans le scénario, pas un mouvement bancaire"><span>Cagnottes réservées</span><b>{stale ? "—" : money(projection.economic.savingsReservations)}</b></div>}
     {projection.goal.targetMonthEnd !== null && <div className={styles.hudMetric}><span>Objectif</span><b>{stale ? "—" : money(projection.goal.targetMonthEnd)}</b><small data-tone={stale ? "unknown" : tone(goalMargin)}>Marge sur l’objectif {stale ? "—" : signedMoney(goalMargin)}</small></div>}
-    <div className={styles.hudEnd}><span className={styles.previewStatus} data-hud-status>{pending ? "Simulation en cours…" : stale ? staleLabel ?? "Projection à recalculer" : projection.projectionCompleteness === "COMPLETE" ? "Projection à jour" : "À jour · partielle"}</span>
+    <div className={styles.hudEnd}><span className={styles.previewStatus} data-hud-status>{pending ? "Simulation en cours…" : stale ? staleLabel ?? "Projection à recalculer" : projection.projectionCompleteness === "COMPLETE" ? "Projection actualisée" : "Projection actualisée · montants incomplets"}</span>
       <button className={styles.financialLink} data-open-finances onClick={details}>Les finances du mois <ArrowUpRight size={15} /></button></div>
   </div>;
 }

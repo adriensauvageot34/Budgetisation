@@ -146,7 +146,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
         {direction === 1 ? <><span>Page suivante</span><ChevronRight size={19} /></> : <><ChevronLeft size={19} /><span>Page précédente</span></>}
       </div>)}
     </div>
-    <nav className={styles.plateauNavigation} aria-label="Pages du mois" data-carousel-nav data-single-page={pages.length === 1}
+    {pages.length > 1 && <nav className={styles.plateauNavigation} aria-label="Pages du mois" data-carousel-nav data-single-page={pages.length === 1}
       onKeyDown={e => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return; e.preventDefault(); const next = e.key === "Home" ? 0 : e.key === "End" ? pages.length - 1 : active + (e.key === "ArrowRight" ? 1 : -1); go(next);
         e.currentTarget.querySelector<HTMLButtonElement>(`[data-page-index="${Math.max(0,Math.min(pages.length-1,next))}"]`)?.focus(); }}>
       <button className={styles.pageStep} aria-label="Page précédente du mois" disabled={!active} onClick={() => go(active - 1)}><ChevronLeft size={16} /> Précédente</button>
@@ -154,6 +154,6 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       <div>{pages.map((_, index) => <button key={index} data-page-index={index} aria-label={`Afficher la page ${index + 1}`} aria-current={index === active ? "page" : undefined} tabIndex={index === active ? 0 : -1} onClick={() => go(index)}>{index + 1}</button>)}</div>
       <button className={styles.pageStep} aria-label="Page suivante du mois" disabled={active === pages.length - 1} onClick={() => go(active + 1)}>Suivante <ChevronRight size={16} /></button>
       {focusedLabel && focusPage >= 0 && focusPage !== active && <button className={styles.returnToCard} data-return-to-card={focused} disabled={dragging} onClick={returnToSelection}>Voir {focusedLabel} · page {focusPage + 1}</button>}
-    </nav>
+    </nav>}
   </>;
 }
