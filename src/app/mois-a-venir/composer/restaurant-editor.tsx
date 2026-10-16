@@ -278,4 +278,3 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
                     })}</>}
         </div></section>}</>;
 }
-

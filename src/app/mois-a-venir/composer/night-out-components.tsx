@@ -1,5 +1,6 @@
 "use client";
 import type { PlannedAsset, PlannedAssetRef } from "@/domain/phase2/planned-assets";
+import { PLANNED_ASSET_CATALOG_VERSION } from "@/domain/phase2/planned-assets";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import { declareComponentQuantity } from "@/domain/phase2/planner/component-quantity";
