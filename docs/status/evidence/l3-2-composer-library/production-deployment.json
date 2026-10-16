@@ -1,0 +1,43 @@
+{
+  "id": "dpl_93HTZZEnQJ7wSop8VXQAkZ2jiheJ",
+  "name": "budgetisation",
+  "url": "budgetisation-55fpbgdz4-adriensauvageot34-6137s-projects.vercel.app",
+  "type": "LAMBDAS",
+  "state": "READY",
+  "createdAt": 1792149113677,
+  "creator": {
+    "uid": "ItlVoi62mpJ28TeqsxO3j569",
+    "username": "adriensauvageot34-6137"
+  },
+  "project": {
+    "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+    "name": "budgetisation",
+    "framework": "nextjs"
+  },
+  "meta": {
+    "githubCommitRef": "main",
+    "githubCommitSha": "b777374fe8399e7abf22967c98caef2013876507",
+    "githubCommitMessage": "Merge pull request #48: L3.2 Composer library rationalization\n\nL3.2 — intentions libres secondaires et 21 nouveaux presets Clay",
+    "githubRepo": "Budgetisation",
+    "githubOrg": "adriensauvageot34"
+  },
+  "alias": [
+    "budgetisation-tan.vercel.app",
+    "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+    "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+  ],
+  "target": "production",
+  "regions": [
+    "iad1"
+  ],
+  "buildingAt": 1792149114947,
+  "ready": 1792149219029,
+  "readyState": "READY",
+  "source": "git",
+  "aliasError": null,
+  "pr": 48,
+  "prHead": "c3e68e0ae38c542af525a9115974b85a86019ee7",
+  "productCommit": "045d64926fa77fb054269e1ac157c0e55e1092cc",
+  "mergeTreeMatchesPrHead": true,
+  "productUnchangedAfter045": true
+}

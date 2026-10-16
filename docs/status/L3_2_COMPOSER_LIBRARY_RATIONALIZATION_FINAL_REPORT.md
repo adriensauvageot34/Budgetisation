@@ -1,8 +1,8 @@
 # L3.2 — Rationalisation et enrichissement de la bibliothèque Composer
 
-## Verdict de préparation — 16 octobre 2026
+## Verdict final — 16 octobre 2026
 
-**L3_2_IMPLEMENTED_NOT_RELEASED** au stade de clôture de la PR #48. Les 21 nouveaux presets sont admis, illustrés individuellement et vérifiés sur fixtures. Build Next du produit `045d64926fa77fb054269e1ac157c0e55e1092cc` PASS/READY. Livraison et smoke à consigner après exécution réelle.
+**L3_2_RELEASED_WITH_VALIDATION_LIMITATIONS**. PR #48 fusionnée ; Production READY sur **`b777374fe8399e7abf22967c98caef2013876507`**. Les 21 nouveaux presets sont admis, illustrés individuellement et vérifiés sur fixtures. Build Next complet et smoke Production authentifié en lecture seule PASS. La persistance authentifiée des nouvelles recettes et les performances temporelles générales restent non certifiées.
 
 ## A. État de départ
 
@@ -138,7 +138,13 @@ Surcoût initial **+2 260 octets gzip** et **une** illustration de plus (Concert
 - Produit testé : `045d64926fa77fb054269e1ac157c0e55e1092cc`.
 - Commits distincts : `dd8fcbb` rationalisation/recherche/favoris ; `c8cdc00` recettes ; `045d649` illustrations. Tests/preuves dans un commit séparé.
 - Preview produit : `dpl_BZH7SJPyJuftkKejwHAeK424nfZy`, **READY**, build Next complet incluant TypeScript, génération des pages et déploiement (`preview-next-build.log`).
-- Merge, Production et smoke : en attente de la clôture effective.
+- HEAD de PR : `c3e68e0ae38c542af525a9115974b85a86019ee7`, Vercel success, aucun workflow GitHub Actions associé ni review externe. PR passée Ready puis fusionnée avec vérification du HEAD attendu, sans conflit.
+- Merge/main : **`b777374fe8399e7abf22967c98caef2013876507`**. Arbre intégral identique à la tête de PR (`git diff --quiet c3e68e0 origin/main`, code 0), puis synchronisation locale par fast-forward. Le commit de preuves ne change pas le produit testé en `045d649`.
+- Production : **`dpl_93HTZZEnQJ7wSop8VXQAkZ2jiheJ`**, **READY**, cible Production et alias `https://budgetisation-tan.vercel.app` confirmés sur le SHA du merge ; région `iad1` conservée. Build Next complet et TypeScript PASS ; `production-next-build.log` et `production-deployment.json`.
+- Smoke **EXECUTED_PASS_AUTHENTICATED_READ_ONLY** : vrai Composer, neuf catégories, six presets sociaux visibles dont Concert, génériques non montés au repos ; Beauté expose ses dix produits et quatre sous-familles ; recherche Éponges correcte et image réellement chargée en 1200 × 600 ; recherche soirée libre retrouve le générique avec son drag. Aucun clic de création de carte, montant, favori, sauvegarde ou Apply personnel.
+- Avant/après : même digest `7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85`, révision 0 et état CLEAN. Projection BLOCKED déjà présente avant livraison, Apply reste désactivé. Viewport effectif 1440 × 900, document 1440 px ; aucune erreur console capturée. Pas de nouvel audit de base. Preuve sans données financières personnelles : `production-readonly-smoke.json`.
+- Le premier appel de navigation navigateur a dépassé le délai de l’outil ; le même onglet a terminé son chargement sans deuxième navigation. La vignette Éponges, initialement non chargée au premier rendu, a ensuite été vérifiée après peinture. Aucun délai de l’outil n’est utilisé comme métrique produit.
+- Clôture et preuves Production conservées dans un commit documentaire local après le merge, sans code produit supplémentaire ni nouveau déploiement documentaire.
 - Rollback : masquer les nouvelles recettes de création si nécessaire, tout en conservant le lecteur v1, les **47 clés**, les champs déjà enregistrés et les fichiers d’illustration. La présentation peut revenir séparément au layout antérieur. Aucun DELETE de Draft, migration ou conversion financière. Ne pas supprimer les clés de Plans existants.
 
 ## H. Décisions reportées
