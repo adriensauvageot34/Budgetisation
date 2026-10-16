@@ -1,0 +1,552 @@
+{
+  "productSha": "35171e31a2cea31d0659a3274b85e56f2cf71774",
+  "method": "Fully visible control rectangles, excluding closed popovers and clipping by scroll ancestors. Requested dimensions are not proofs: use actual viewport. Earlier v1 and repeated mismatched requested widths are non-certifying; final captures overwritten only after actual correct width.",
+  "measurements": [
+    {
+      "name": "summary",
+      "controlOverlaps": [],
+      "controlsMeasured": 9,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "controlOverlaps": [],
+      "controlsMeasured": 9,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 454,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "controlOverlaps": [],
+      "controlsMeasured": 9,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 550,
+        "y": 125.01250457763672
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "name": "summary",
+      "controlOverlaps": [],
+      "controlsMeasured": 9,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "detail",
+      "controlOverlaps": [
+        [
+          "",
+          "Retour au mois"
+        ]
+      ],
+      "controlsMeasured": 17,
+      "dialog": {
+        "height": 840,
+        "width": 820,
+        "x": 310,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "SECTION",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "detail",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 15,
+      "dialog": {
+        "height": 840,
+        "width": 820,
+        "x": 310,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "SECTION",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "detail",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 15,
+      "dialog": {
+        "height": 840,
+        "width": 820,
+        "x": 454,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "SECTION",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "name": "detail",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 20,
+      "dialog": {
+        "height": 1020,
+        "width": 820,
+        "x": 550,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "SECTION",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "name": "unknown-return",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "creation",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 7,
+      "dialog": {
+        "height": 741,
+        "width": 820,
+        "x": 310,
+        "y": 79.5
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 34,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "creation",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 7,
+      "dialog": {
+        "height": 741,
+        "width": 820,
+        "x": 454,
+        "y": 79.5
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 34,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "name": "creation",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 7,
+      "dialog": {
+        "height": 741,
+        "width": 820,
+        "x": 550,
+        "y": 169.5
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 34,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "BUTTON",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "BUTTON",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "BUTTON",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "BUTTON",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 454,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 550,
+        "y": 125.01250457763672
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "name": "validation-error",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 7,
+      "dialog": {
+        "height": 785.7999877929688,
+        "width": 820,
+        "x": 310,
+        "y": 57.10000228881836
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 35,
+      "focusTag": "BUTTON",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 454,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 550,
+        "y": 125.01250457763672
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "name": "detail",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 12,
+      "dialog": {
+        "height": 840,
+        "width": 820,
+        "x": 310,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "detail",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 12,
+      "dialog": {
+        "height": 840,
+        "width": 820,
+        "x": 454,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "name": "detail",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 20,
+      "dialog": {
+        "height": 1020,
+        "width": 820,
+        "x": 550,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  ]
+}

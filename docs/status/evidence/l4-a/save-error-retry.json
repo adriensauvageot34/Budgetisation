@@ -1,0 +1,23 @@
+{
+  "status": "PASS_BROWSER_HTTP_SYNTHETIC_ONLY",
+  "events": [
+    {
+      "kind": "SAVE_FAILED_BEFORE_COMMIT",
+      "version": 0
+    },
+    {
+      "kind": "SAVE",
+      "draftId": "32d3193d-ebb8-4f72-96da-99be5eac73a5",
+      "version": 1,
+      "digest": "9574d5824da5d3107f5db2d286cff3e436241a7777d80fc7cb54578f8b77014c"
+    }
+  ],
+  "version": 1,
+  "oneNight": true,
+  "digest": "9574d5824da5d3107f5db2d286cff3e436241a7777d80fc7cb54578f8b77014c",
+  "planCounts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "remoteWrites": 0
+}

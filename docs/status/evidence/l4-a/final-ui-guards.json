@@ -1,0 +1,37 @@
+{
+  "paletteSearch": {
+    "query": "Taxi",
+    "observedStatus": "Brouillon sauvegardé · Projection actualisée",
+    "rawCreated": false
+  },
+  "productSha": "35171e31a2cea31d0659a3274b85e56f2cf71774",
+  "native": "PARTIAL",
+  "auth": "NOT_RUN_AUTH",
+  "richFixture": {
+    "active": {
+      "id": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+      "version": 18,
+      "digest": "0f62c70c4b73b252c93cb79c9a1bd71f27e9fe03b336d032c9031acb7ec2db53"
+    },
+    "counts": {
+      "plans": 0,
+      "revisions": 0
+    },
+    "historicalCanaryWrites": 0,
+    "remoteWrites": 0
+  },
+  "previewFixture": {
+    "savedVersion": 1,
+    "counts": {
+      "plans": 0,
+      "revisions": 0
+    },
+    "remoteWrites": 0
+  },
+  "invalidBudget": {
+    "observedApplyDisabled": true,
+    "versionAfter": 1,
+    "savedStateContainsNegativeAmount": false,
+    "input": "-1"
+  }
+}

@@ -1,0 +1,235 @@
+{
+  "status": "PASS_BROWSER_LOCAL_HTTP_ONLY",
+  "openedSections": 4,
+  "additionalHttpOperations": 0,
+  "draftBefore": {
+    "active": {
+      "id": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+      "version": 17,
+      "digest": "1e958ff0af87539565abd12601efd3ca6584dc43d2a4af0eecc924f7790ae488"
+    },
+    "archives": 0,
+    "events": [
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 1,
+        "digest": "151657d16094971d6c9fd941d385bc983f6bf61371483e3b771baaf8329592f6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 2,
+        "digest": "2226c2978b5df8a2be6443c7bafa3d723affc5cce86857fe0f6255a388bbc3d9"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 3,
+        "digest": "0d7d43824e5ce7b261f50f1e03c20341f64e1238ae70ee23a024d7d24e9b8d76"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 4,
+        "digest": "7be59c09fdf72fd4f2b9d3a0a04f439c75e068d5ed82ec6538ed7dec8dbf49e4"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 5,
+        "digest": "c35626acb084c4c6a1458c879fcdfb8fff094729b108f1fa34bbd6619d439b5e"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 6,
+        "digest": "e3cdb26a761c360f1f1d45c38280c4c580acbb2a0cbf319944fb9324a126eacc"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 7,
+        "digest": "a1606473256c5c5db0f00bd9171880b89823cfba88de9887df013f48474ed388"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 8,
+        "digest": "13b78fee3fb6ad8f72406e63535e18314d096dfb14eed8d6e7107c84eede29b0"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 9,
+        "digest": "e6b8cd076a46161c0adc6af518f12db261f668920a45f70ef88a39b126b257e6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 10,
+        "digest": "4d0172ae3595de7eead6a90bdea7cf2b95375a00497f311f85a9292c694fb88f"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 11,
+        "digest": "ac0998f239b7fc3baa658c3a1077af3cb4a5b00fdc7c13ecbe17b99eb58721e6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 12,
+        "digest": "4d0172ae3595de7eead6a90bdea7cf2b95375a00497f311f85a9292c694fb88f"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 13,
+        "digest": "ac0998f239b7fc3baa658c3a1077af3cb4a5b00fdc7c13ecbe17b99eb58721e6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 14,
+        "digest": "34444c4f2e4049090c655d89d79ff4396013f6a5d36be85952fa1fda613749f6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 15,
+        "digest": "ac0998f239b7fc3baa658c3a1077af3cb4a5b00fdc7c13ecbe17b99eb58721e6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 16,
+        "digest": "17d93898ba37a20bd76fa2bc82e6ca291460c909237e78fefd2ccc5950f16d81"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 17,
+        "digest": "1e958ff0af87539565abd12601efd3ca6584dc43d2a4af0eecc924f7790ae488"
+      }
+    ]
+  },
+  "draftAfter": {
+    "active": {
+      "id": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+      "version": 17,
+      "digest": "1e958ff0af87539565abd12601efd3ca6584dc43d2a4af0eecc924f7790ae488"
+    },
+    "archives": 0,
+    "events": [
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 1,
+        "digest": "151657d16094971d6c9fd941d385bc983f6bf61371483e3b771baaf8329592f6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 2,
+        "digest": "2226c2978b5df8a2be6443c7bafa3d723affc5cce86857fe0f6255a388bbc3d9"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 3,
+        "digest": "0d7d43824e5ce7b261f50f1e03c20341f64e1238ae70ee23a024d7d24e9b8d76"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 4,
+        "digest": "7be59c09fdf72fd4f2b9d3a0a04f439c75e068d5ed82ec6538ed7dec8dbf49e4"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 5,
+        "digest": "c35626acb084c4c6a1458c879fcdfb8fff094729b108f1fa34bbd6619d439b5e"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 6,
+        "digest": "e3cdb26a761c360f1f1d45c38280c4c580acbb2a0cbf319944fb9324a126eacc"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 7,
+        "digest": "a1606473256c5c5db0f00bd9171880b89823cfba88de9887df013f48474ed388"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 8,
+        "digest": "13b78fee3fb6ad8f72406e63535e18314d096dfb14eed8d6e7107c84eede29b0"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 9,
+        "digest": "e6b8cd076a46161c0adc6af518f12db261f668920a45f70ef88a39b126b257e6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 10,
+        "digest": "4d0172ae3595de7eead6a90bdea7cf2b95375a00497f311f85a9292c694fb88f"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 11,
+        "digest": "ac0998f239b7fc3baa658c3a1077af3cb4a5b00fdc7c13ecbe17b99eb58721e6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 12,
+        "digest": "4d0172ae3595de7eead6a90bdea7cf2b95375a00497f311f85a9292c694fb88f"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 13,
+        "digest": "ac0998f239b7fc3baa658c3a1077af3cb4a5b00fdc7c13ecbe17b99eb58721e6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 14,
+        "digest": "34444c4f2e4049090c655d89d79ff4396013f6a5d36be85952fa1fda613749f6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 15,
+        "digest": "ac0998f239b7fc3baa658c3a1077af3cb4a5b00fdc7c13ecbe17b99eb58721e6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 16,
+        "digest": "17d93898ba37a20bd76fa2bc82e6ca291460c909237e78fefd2ccc5950f16d81"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+        "version": 17,
+        "digest": "1e958ff0af87539565abd12601efd3ca6584dc43d2a4af0eecc924f7790ae488"
+      }
+    ]
+  },
+  "remoteWrites": 0,
+  "historicalCanaryWrites": 0,
+  "planCounts": {
+    "plans": 0,
+    "revisions": 0
+  }
+}
