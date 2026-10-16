@@ -1,0 +1,179 @@
+[
+  {
+    "board": {
+      "bottom": 880,
+      "height": 772.75,
+      "right": 1062,
+      "width": 756,
+      "x": 306,
+      "y": 107.25
+    },
+    "documentWidth": 1440,
+    "header": {
+      "bottom": 107.25,
+      "height": 95.25,
+      "right": 1416,
+      "width": 1392,
+      "x": 24,
+      "y": 12
+    },
+    "hud": {
+      "bottom": 91.625,
+      "height": 72,
+      "right": 1101.3000183105469,
+      "width": 472.5500183105469,
+      "x": 628.75,
+      "y": 19.625
+    },
+    "palette": {
+      "bottom": 870,
+      "height": 114,
+      "right": 1050,
+      "width": 732,
+      "x": 318,
+      "y": 756
+    },
+    "panel": {
+      "bottom": 880,
+      "height": 772.75,
+      "right": 1416,
+      "width": 340,
+      "x": 1076,
+      "y": 107.25
+    },
+    "scrollAreas": [
+      {
+        "className": "Jt",
+        "clientHeight": 629,
+        "scrollHeight": 839
+      },
+      {
+        "className": "Go",
+        "clientHeight": 686,
+        "scrollHeight": 1637
+      }
+    ],
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "board": {
+      "bottom": 880,
+      "height": 772.75,
+      "right": 1350,
+      "width": 1044,
+      "x": 306,
+      "y": 107.25
+    },
+    "documentWidth": 1728,
+    "header": {
+      "bottom": 107.25,
+      "height": 95.25,
+      "right": 1704,
+      "width": 1680,
+      "x": 24,
+      "y": 12
+    },
+    "hud": {
+      "bottom": 91.625,
+      "height": 72,
+      "right": 1389.3000183105469,
+      "width": 472.5500183105469,
+      "x": 916.75,
+      "y": 19.625
+    },
+    "palette": {
+      "bottom": 870,
+      "height": 114,
+      "right": 1338,
+      "width": 1020,
+      "x": 318,
+      "y": 756
+    },
+    "panel": {
+      "bottom": 880,
+      "height": 772.75,
+      "right": 1704,
+      "width": 340,
+      "x": 1364,
+      "y": 107.25
+    },
+    "scrollAreas": [
+      {
+        "className": "Jt",
+        "clientHeight": 629,
+        "scrollHeight": 839
+      },
+      {
+        "className": "Go",
+        "clientHeight": 686,
+        "scrollHeight": 1637
+      }
+    ],
+    "viewport": [
+      1728,
+      900
+    ]
+  },
+  {
+    "board": {
+      "bottom": 1060,
+      "height": 952.75,
+      "right": 1542,
+      "width": 1236,
+      "x": 306,
+      "y": 107.25
+    },
+    "documentWidth": 1920,
+    "header": {
+      "bottom": 107.25,
+      "height": 95.25,
+      "right": 1896,
+      "width": 1872,
+      "x": 24,
+      "y": 12
+    },
+    "hud": {
+      "bottom": 91.625,
+      "height": 72,
+      "right": 1581.3000183105469,
+      "width": 472.5500183105469,
+      "x": 1108.75,
+      "y": 19.625
+    },
+    "palette": {
+      "bottom": 1050,
+      "height": 114,
+      "right": 1530,
+      "width": 1212,
+      "x": 318,
+      "y": 936
+    },
+    "panel": {
+      "bottom": 1060,
+      "height": 952.75,
+      "right": 1896,
+      "width": 340,
+      "x": 1556,
+      "y": 107.25
+    },
+    "scrollAreas": [
+      {
+        "className": "Jt",
+        "clientHeight": 809,
+        "scrollHeight": 839
+      },
+      {
+        "className": "Go",
+        "clientHeight": 866,
+        "scrollHeight": 1637
+      }
+    ],
+    "viewport": [
+      1920,
+      1080
+    ]
+  }
+]

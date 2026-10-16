@@ -1,0 +1,43 @@
+{
+  "deployment": {
+    "id": "dpl_B5mT4UmRhzJtggBh4RJCDL4zpGxW",
+    "name": "budgetisation",
+    "url": "budgetisation-6qvh043ik-adriensauvageot34-6137s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1792134262657,
+    "creator": {
+      "uid": "ItlVoi62mpJ28TeqsxO3j569",
+      "username": "adriensauvageot34-6137"
+    },
+    "project": {
+      "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+      "name": "budgetisation",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "codex/composer-v3-l3-workshop-hud-ux",
+      "githubCommitSha": "7ef71167004cb7ce1dfb203a7aefaa6dffdb5251",
+      "githubCommitMessage": "fix(composer): keep financial HUD horizontal and align secondary options",
+      "githubRepo": "Budgetisation",
+      "githubOrg": "adriensauvageot34"
+    },
+    "alias": [
+      "budgetisation-git-codex-f44096-adriensauvageot34-6137s-projects.vercel.app"
+    ],
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1792134263666,
+    "ready": 1792134343370,
+    "readyState": "READY",
+    "source": "git",
+    "aliasError": null
+  },
+  "typeScript": {
+    "command": "node node_modules/typescript/bin/tsc --noEmit",
+    "exitCode": 0
+  },
+  "scope": "L3 final product 7ef7116. No production mutation."
+}

@@ -1,0 +1,260 @@
+{
+  "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+  "checks": [
+    "T1_NO_PLAN_DIRECT_V2",
+    "T2_UNAPPLIED_DRAFT_HAS_NO_OFFICIAL_EFFECT",
+    "T3_GROCERIES_350_TO_320",
+    "T4_GROCERIES_325_TO_350",
+    "T5_RESTAURANT_CONSUMES_CAPACITY",
+    "T6_RESTAURANT_EXTRA_TO_SLOT",
+    "T7_PARENT_CHILD_SINGLE_ECONOMIC_CONTRIBUTION",
+    "T8_SAVINGS_NOT_CONSUMPTION_OR_DUPLICATE_FUNDING",
+    "T9_MOBILITY_USAGE_IS_NOT_FUEL_PAYMENT",
+    "T10_UNKNOWN_PARTIAL_PRESERVE_KNOWN_INFORMATION",
+    "T11_CONCURRENT_REVISION_NEVER_FALSE_CURRENT",
+    "T12_CHANGED_AUTHORITIES_COHERENT_CURRENT_COMPARISON",
+    "T13_APPLY_REPLAY_NO_DUPLICATE_IMPACT",
+    "T14_REPOSITORY_RLS_AND_SCOPE_REFUSALS_SYNTHETIC",
+    "T15_NON_ADDITIVE_SHARED_CAPACITY",
+    "T16_POINTER_UNAVAILABLE_KEEPS_REVISION_NOT_FALSE_FRESH",
+    "T17_NO_ADDITIONAL_COMPILER_FINANCE_OR_WORLD_IN_VIEW",
+    "T18_CONSOLIDATED_BUDGET_AND_NEW_CONTEXT"
+  ],
+  "examples": [
+    {
+      "revision": 1,
+      "preview": "57809b0248deec894c464b4b128789ade3bb897032405ba33cd03feeb6bb3ccd",
+      "projection": "d0d283dfc71a6e57711b6e9465ec4681d9a43313eda61980661af520d7a1a1c7",
+      "baseline": "3e09a7f6528cc98efa9a1be621618fe64f2f63b72f63c1f97998d474f0149238",
+      "impact": "30.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "marginal": "30.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 2,
+      "preview": "39ecc3853238e26735d57da8501499ee577cda6bc170e13cc1527d17905338ef",
+      "projection": "af236b63a6fe691719657112bc3123ba6086b1990d1ca72fb09562257b820c45",
+      "baseline": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
+      "impact": "-25.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "marginal": "-25.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 3,
+      "preview": "45aa2a96b6a3d345e5d5e40717c65ab25b6230468c524b8269bcea82563feb3f",
+      "projection": "61551f6239e8895195242bc769674853422f4d569f2d3292f98ae637fd0d56ed",
+      "baseline": "f398f8734c0f49e4f65629fae54e16269d27d26862e7c14255758190de907f36",
+      "impact": "0.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000100",
+          "marginal": "0.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 4,
+      "preview": "aabc46fb321449cd41e1d8972d61ee06fe49c001c83b464b69a08f94e2443161",
+      "projection": "dabb34ff6925fa890f9360fbdbf37d853a6dd4784eb83c1a3eb3f43bbbcfeb72",
+      "baseline": "f398f8734c0f49e4f65629fae54e16269d27d26862e7c14255758190de907f36",
+      "impact": "-40.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000100",
+          "marginal": "-40.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 5,
+      "preview": "a18283ae2a4cdf3d51d91caef6f644f6b1c5522e84bb3129bdb0d84e48726891",
+      "projection": "ddd59abd4547161ef5121ee025a20241dc82919b27810004769a305cc1839fb1",
+      "baseline": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
+      "impact": "-112.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000100",
+          "marginal": null,
+          "attribution": "UNRESOLVED"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000200",
+          "marginal": null,
+          "attribution": "UNRESOLVED"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000300",
+          "marginal": "-112.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 6,
+      "preview": "41de89d5b19db42c134535f401fa307a78009842952d066eab6c52ed342606da",
+      "projection": "56e2cc8da4988c9a566ea157a2cb6916713fae18329482223dc726318ef65c89",
+      "baseline": "fb75b906756cf55203ac1b5f45a44ac674d193813628f20f40ae6993ef146399",
+      "impact": "40.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "marginal": "40.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 7,
+      "preview": "694d0c378eabd78f39d5f0127c67120ecd1ad073674c6d5c27db317f486a5a44",
+      "projection": "eab60b009ae977a897fd94d2b5729fd4ba5976d686996da8aafcb4c8fcee0dc5",
+      "baseline": "fb75b906756cf55203ac1b5f45a44ac674d193813628f20f40ae6993ef146399",
+      "impact": "-50.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000100",
+          "marginal": "-50.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 8,
+      "preview": "2b758dc10c44e11eb398f3e57e2507a82ab9050c1ed64489881b6542924021c4",
+      "projection": "ddd59abd4547161ef5121ee025a20241dc82919b27810004769a305cc1839fb1",
+      "baseline": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
+      "impact": "-112.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000100",
+          "marginal": null,
+          "attribution": "UNRESOLVED"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000200",
+          "marginal": null,
+          "attribution": "UNRESOLVED"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000300",
+          "marginal": "-112.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 9,
+      "preview": "a11c58a3734fe0cb3ff1d902b63d993a2654b6ae6d26a091c673e3ea1134bbe2",
+      "projection": "c8b07951378e61ed17e0df81c38065ec66a7a350649020a8e13c760c594cf033",
+      "baseline": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
+      "impact": null,
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "marginal": null,
+          "attribution": "UNRESOLVED"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000200",
+          "marginal": null,
+          "attribution": "UNRESOLVED"
+        }
+      ]
+    },
+    {
+      "revision": 10,
+      "preview": "ef3f0d981c200ea6d5cd004117970ff156a061db58a0743b9abbb95d262472e0",
+      "projection": "76acaf74c10a724b195348057552fb26efe70c1d757e30ef14e140f935fe6539",
+      "baseline": "fb75b906756cf55203ac1b5f45a44ac674d193813628f20f40ae6993ef146399",
+      "impact": "-10.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "marginal": "-10.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 12,
+      "preview": "fd2075171cc6509b4ce6512add80c7567208f1f0b736f1e1c31ab3988006fe56",
+      "projection": "20dec86256920565e1a632b9cbac5e0dbaab7e275882d23d7e1436e5185080af",
+      "baseline": "fb75b906756cf55203ac1b5f45a44ac674d193813628f20f40ae6993ef146399",
+      "impact": "-30.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "marginal": "-30.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 13,
+      "preview": "59730d5eedc3426b5e4414c14359a6ea12dbdd80fae58945e6974c6d4206e3c4",
+      "projection": "dfdab5343271d48b7d56c42d4e7463c94313656fb0d20c59f61470aeb0682440",
+      "baseline": "f398f8734c0f49e4f65629fae54e16269d27d26862e7c14255758190de907f36",
+      "impact": "40.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "marginal": "40.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000100",
+          "marginal": "-40.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000101",
+          "marginal": "-40.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    },
+    {
+      "revision": 14,
+      "preview": "553f868b59420f8f4d23647e2083eea28eb2e2278a68c9ea92a4dcffb498204c",
+      "projection": "10c6e350e17ea77d37681b714c87ece764aed77daeb2df93466e99e3ebfc420c",
+      "baseline": "3e09a7f6528cc98efa9a1be621618fe64f2f63b72f63c1f97998d474f0149238",
+      "impact": "-70.00",
+      "decisions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "marginal": "30.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000100",
+          "marginal": "-100.00",
+          "attribution": "CONDITIONAL_MARGINAL_NOT_ADDITIVE"
+        }
+      ]
+    }
+  ],
+  "performance": {
+    "sampleCount": 50,
+    "p50Ms": 0.07840000000578584,
+    "p95DescriptiveMs": 0.23879999999917345,
+    "additionalCompilerCalls": 0,
+    "additionalFinanceCalls": 0,
+    "additionalWorldReads": 0,
+    "additionalPointerSelects": "ONE_WITH_PLAN_ZERO_WITHOUT_PLAN",
+    "note": "CPU interpretation only; not authenticated network latency"
+  },
+  "authenticatedApply": "NOT_RUN",
+  "remoteWrites": 0,
+  "historicalCanaries": "UNCHANGED"
+}

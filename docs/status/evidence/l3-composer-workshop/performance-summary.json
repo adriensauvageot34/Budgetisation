@@ -1,0 +1,46 @@
+{
+  "method": "Existing L2A DOM probe: performance.now after matching FRESH and two animation frames; exact production React minified fixtures, no Codex tool duration",
+  "condition": "Warm reloads, alternating reference/candidate, same synthetic scenario, viewport 1440x900, same dependencies. First compilation/cold warm-up excluded. delayRead=500 does not delay initial READ in fixture implementation.",
+  "base": "ddfcf4b41d36b1ee024d4aecb0698907d7144cca",
+  "candidateProduct": "7ef71167004cb7ce1dfb203a7aefaa6dffdb5251",
+  "authenticated": false,
+  "p95Certified": false,
+  "summary": [
+    {
+      "variant": "reference",
+      "n": 3,
+      "width": 1440,
+      "height": 900,
+      "openingFreshP50Ms": 178.80000000074506,
+      "openingRangeMs": [
+        174.29999999701977,
+        198.5
+      ],
+      "domNodes": 1906,
+      "images": 5,
+      "businessFetches": 2,
+      "jsDecodedBytes": 450420,
+      "jsGzipBytes": 142373,
+      "cssDecodedBytes": 152301,
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85"
+    },
+    {
+      "variant": "candidate",
+      "n": 3,
+      "width": 1440,
+      "height": 900,
+      "openingFreshP50Ms": 198.40000000223517,
+      "openingRangeMs": [
+        195.30000000074503,
+        286.80000000074506
+      ],
+      "domNodes": 1900,
+      "images": 5,
+      "businessFetches": 2,
+      "jsDecodedBytes": 457023,
+      "jsGzipBytes": 144356,
+      "cssDecodedBytes": 156954,
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85"
+    }
+  ]
+}

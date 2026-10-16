@@ -1,0 +1,19 @@
+A_UNCHANGED PASS
+B_GROCERIES_350 PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: C_RESTAURANT_COVERED: PLANNER_CONTEXT_TEMPLATE_UNSUPPORTED:kernel.generic: Cette proposition n’a pas pu être validée. Votre brouillon est conservé ; vérifiez les champs et réessayez.
+
+false !== true
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l3-workshop.mjs:41:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual'
+}
+
+Node.js v22.18.0
