@@ -1,0 +1,45 @@
+{
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "rpcCalls": 0,
+  "log": [
+    {
+      "kind": "READ",
+      "sequence": 0,
+      "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a"
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 0
+    },
+    {
+      "kind": "READ",
+      "sequence": 0,
+      "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a"
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 0
+    },
+    {
+      "kind": "READ",
+      "sequence": 0,
+      "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a"
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 0
+    },
+    {
+      "kind": "READ",
+      "sequence": 0,
+      "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a"
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 0
+    }
+  ]
+}

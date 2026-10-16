@@ -1,0 +1,98 @@
+2026-10-16T16:08:23.768Z stdout Running build in Washington, D.C., USA (East) – iad1
+2026-10-16T16:08:23.768Z stdout Build machine configuration: 2 cores, 8 GB
+2026-10-16T16:08:23.921Z stdout Cloning github.com/adriensauvageot34/Budgetisation (Branch: codex/composer-v3-pre-l4-c2-workshop-ux, Commit: 3af1b5f)
+2026-10-16T16:08:28.286Z stdout Cloning completed: 4.364s
+2026-10-16T16:08:28.461Z stdout Found .vercelignore
+2026-10-16T16:08:28.539Z stdout Removed 28 ignored files defined in .vercelignore
+2026-10-16T16:08:28.540Z stdout   /.env.example
+2026-10-16T16:08:28.540Z stdout   /.git/config
+2026-10-16T16:08:28.540Z stdout   /.git/description
+2026-10-16T16:08:28.541Z stdout   /.git/FETCH_HEAD
+2026-10-16T16:08:28.541Z stdout   /.git/HEAD
+2026-10-16T16:08:28.541Z stdout   /.git/hooks/applypatch-msg.sample
+2026-10-16T16:08:28.541Z stdout   /.git/hooks/commit-msg.sample
+2026-10-16T16:08:28.542Z stdout   /.git/hooks/fsmonitor-watchman.sample
+2026-10-16T16:08:28.542Z stdout   /.git/hooks/post-update.sample
+2026-10-16T16:08:28.542Z stdout   /.git/hooks/pre-applypatch.sample
+2026-10-16T16:08:28.643Z stdout Restored build cache from previous deployment (HH6XbfcrYSbgC8eJboEi5vTE7Jxw)
+2026-10-16T16:08:29.188Z stdout Running "vercel build"
+2026-10-16T16:08:29.206Z stderr Vercel CLI 64.0.2
+2026-10-16T16:08:29.823Z stdout Installing dependencies...
+2026-10-16T16:08:30.492Z stderr npm warn Unknown env config "cache-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+2026-10-16T16:08:30.788Z stdout
+2026-10-16T16:08:30.788Z stdout up to date in 784ms
+2026-10-16T16:08:30.788Z stdout
+2026-10-16T16:08:30.788Z stdout 23 packages are looking for funding
+2026-10-16T16:08:30.789Z stdout   run `npm fund` for details
+2026-10-16T16:08:30.790Z stderr npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
+2026-10-16T16:08:30.790Z stderr npm warn install-scripts   sharp@0.34.5 (install: node install/check.js || npm run build)
+2026-10-16T16:08:30.790Z stderr npm warn install-scripts
+2026-10-16T16:08:30.790Z stderr npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+2026-10-16T16:08:30.827Z stdout Detected Next.js version: 16.2.6
+2026-10-16T16:08:30.831Z stdout Running "npm run build"
+2026-10-16T16:08:30.944Z stderr npm warn Unknown env config "cache-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+2026-10-16T16:08:30.965Z stdout
+2026-10-16T16:08:30.965Z stdout > budgetisation@0.1.0 build
+2026-10-16T16:08:30.965Z stdout > next build
+2026-10-16T16:08:30.965Z stdout
+2026-10-16T16:08:31.662Z stdout   Applying modifyConfig from Vercel
+2026-10-16T16:08:31.819Z stdout ▲ Next.js 16.2.6 (Turbopack)
+2026-10-16T16:08:31.822Z stdout
+2026-10-16T16:08:31.870Z stdout   Creating an optimized production build ...
+2026-10-16T16:09:07.187Z stdout ✓ Compiled successfully in 35.0s
+2026-10-16T16:09:07.191Z stdout   Running TypeScript ...
+2026-10-16T16:09:45.980Z stdout   Finished TypeScript in 38.8s ...
+2026-10-16T16:09:45.984Z stdout   Collecting page data using 1 worker ...
+2026-10-16T16:09:47.328Z stdout   Generating static pages using 1 worker (0/8) ...
+2026-10-16T16:09:47.699Z stdout   Generating static pages using 1 worker (2/8)
+2026-10-16T16:09:47.699Z stdout   Generating static pages using 1 worker (4/8)
+2026-10-16T16:09:47.699Z stdout   Generating static pages using 1 worker (6/8)
+2026-10-16T16:09:47.700Z stdout ✓ Generating static pages using 1 worker (8/8) in 371ms
+2026-10-16T16:09:47.706Z stdout   Finalizing page optimization ...
+2026-10-16T16:09:47.798Z stdout   Running onBuildComplete from Vercel
+2026-10-16T16:09:47.987Z stdout
+2026-10-16T16:09:47.990Z stdout Route (app)
+2026-10-16T16:09:47.990Z stdout ┌ ƒ /
+2026-10-16T16:09:47.990Z stdout ├ ○ /_not-found
+2026-10-16T16:09:47.991Z stdout ├ ○ /acces-refuse
+2026-10-16T16:09:47.991Z stdout ├ ○ /analyse
+2026-10-16T16:09:47.991Z stdout ├ ƒ /analyse-globale
+2026-10-16T16:09:47.991Z stdout ├ ƒ /api/composer/activity-history
+2026-10-16T16:09:47.992Z stdout ├ ƒ /api/composer/drafts
+2026-10-16T16:09:47.992Z stdout ├ ƒ /api/composer/historical-basis
+2026-10-16T16:09:47.992Z stdout ├ ƒ /api/composer/preview
+2026-10-16T16:09:47.993Z stdout ├ ƒ /api/cron/composer-history
+2026-10-16T16:09:47.993Z stdout ├ ƒ /api/global-v2/query
+2026-10-16T16:09:47.993Z stdout ├ ƒ /api/persona-portrait/[name]
+2026-10-16T16:09:47.993Z stdout ├ ƒ /api/places/autocomplete
+2026-10-16T16:09:47.994Z stdout ├ ƒ /api/places/details
+2026-10-16T16:09:47.994Z stdout ├ ƒ /api/places/photo
+2026-10-16T16:09:47.994Z stdout ├ ƒ /api/query
+2026-10-16T16:09:47.994Z stdout ├ ƒ /categorie/[slug]
+2026-10-16T16:09:47.994Z stdout ├ ○ /connexion
+2026-10-16T16:09:47.995Z stdout ├ ƒ /diagnostic
+2026-10-16T16:09:47.995Z stdout ├ ƒ /historique
+2026-10-16T16:09:47.995Z stdout ├ ƒ /historique/[month]
+2026-10-16T16:09:47.995Z stdout ├ ƒ /historique/analyse/global
+2026-10-16T16:09:47.995Z stdout ├ ○ /imports
+2026-10-16T16:09:47.995Z stdout ├ ○ /mentions-places
+2026-10-16T16:09:47.995Z stdout ├ ƒ /mois-a-venir
+2026-10-16T16:09:47.995Z stdout ├ ƒ /mois-a-venir/composer
+2026-10-16T16:09:47.996Z stdout ├ ƒ /mois-a-venir/composer/preparer-historique
+2026-10-16T16:09:47.996Z stdout ├ ƒ /mois-a-venir/composer/preparer-socle
+2026-10-16T16:09:47.996Z stdout ├ ƒ /operations
+2026-10-16T16:09:47.996Z stdout └ ○ /parametres
+2026-10-16T16:09:47.996Z stdout
+2026-10-16T16:09:47.997Z stdout
+2026-10-16T16:09:47.997Z stdout ƒ Proxy (Middleware)
+2026-10-16T16:09:47.997Z stdout
+2026-10-16T16:09:47.998Z stdout ○  (Static)   prerendered as static content
+2026-10-16T16:09:47.998Z stdout ƒ  (Dynamic)  server-rendered on demand
+2026-10-16T16:09:47.998Z stdout
+2026-10-16T16:09:48.588Z stderr Build Completed in /vercel/output [1m]
+2026-10-16T16:09:48.612Z stdout Deploying outputs...
+2026-10-16T16:09:56.306Z stdout Deployment completed
+2026-10-16T16:09:56.318Z stdout Creating build cache...
+2026-10-16T16:10:08.628Z stdout Created build cache: 12s
+2026-10-16T16:10:08.629Z stdout Uploading build cache [172.40 MB]
+2026-10-16T16:10:11.052Z stdout Build cache uploaded: 2.423s

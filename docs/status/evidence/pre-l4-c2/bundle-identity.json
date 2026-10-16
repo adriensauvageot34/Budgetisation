@@ -1,0 +1,68 @@
+{
+  "testedSha": "8978ac18b0b4dbe0650c044b3ca086a54014ba8b",
+  "mode": "PRODUCTION_MINIFIED_REACT_ESBUILD_FIXTURE",
+  "comparison": "LF_NORMALIZED_SOURCE_CONTENTS",
+  "bundleSha256": "953987eb8e65576795ddb7a6991d974f901f98c7a4ddd3ca8d6c333b26ecf5d4",
+  "modules": [
+    {
+      "file": "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/control-value-presentation.ts",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer-library.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer-board.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/fixed-charges.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/inline-control-value.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/inline-edit-registry.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer-card.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/visual-cluster.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer-financial-inspector.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/local-draft.ts",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/preview-scheduler.ts",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/durable-draft.ts",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer.module.css",
+      "sourceMatches": true
+    }
+  ]
+}

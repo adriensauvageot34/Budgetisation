@@ -1,0 +1,92 @@
+{
+  "environment": "REAL_SERVICES_SYNTHETIC_READ_ONLY_REPOSITORY",
+  "rows": [
+    {
+      "name": "Vêtements absent",
+      "id": "HOUSEHOLD:household:clothing",
+      "status": "UNKNOWN",
+      "label": "À définir · aucun choix retenu",
+      "summary": "À définir"
+    },
+    {
+      "name": "Vêtements zéro explicite",
+      "id": "HOUSEHOLD:household:clothing",
+      "status": "DECISION",
+      "label": "Choix de ce mois",
+      "summary": "0,00 €"
+    },
+    {
+      "name": "Maison petit absent",
+      "id": "HOUSEHOLD:household:home-small",
+      "status": "UNKNOWN",
+      "label": "À définir · aucun choix retenu",
+      "summary": "À définir"
+    },
+    {
+      "name": "Maison petit zéro explicite",
+      "id": "HOUSEHOLD:household:home-small",
+      "status": "DECISION",
+      "label": "Choix de ce mois",
+      "summary": "0,00 €"
+    },
+    {
+      "name": "Jeux / numérique ponctuel absent",
+      "id": "HOUSEHOLD:household:games-digital",
+      "status": "UNKNOWN",
+      "label": "À définir · aucun choix retenu",
+      "summary": "À définir"
+    },
+    {
+      "name": "Jeux / numérique ponctuel zéro explicite",
+      "id": "HOUSEHOLD:household:games-digital",
+      "status": "DECISION",
+      "label": "Choix de ce mois",
+      "summary": "0,00 €"
+    },
+    {
+      "name": "Café référence",
+      "id": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+      "status": "REFERENCE",
+      "label": "Référence du mois · pas une décision",
+      "summary": "12 occurrence(s) · prix de référence : 1,80 €"
+    },
+    {
+      "name": "Café count choisi prix historique",
+      "id": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+      "status": "DECISION",
+      "label": "Choix de ce mois",
+      "summary": "13 occurrence(s) · prix de référence : 1,80 €"
+    },
+    {
+      "name": "Café count et prix choisis",
+      "id": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+      "status": "DECISION",
+      "label": "Choix de ce mois",
+      "summary": "13 occurrence(s) · prix choisi : 2,10 €"
+    },
+    {
+      "name": "Coiffeur fréquence connue",
+      "id": "PERSON:22222222-2222-4222-8222-222222222222:hairdresser",
+      "status": "REFERENCE",
+      "label": "Référence du mois · pas une décision",
+      "summary": "1 occurrence(s) · prix à préciser"
+    },
+    {
+      "name": "REFERENCE_ONLY non adoptable",
+      "id": "PERSON:33333333-3333-4333-8333-333333333333:mobility:WORK",
+      "status": "REFERENCE",
+      "label": "Référence du mois · pas une décision",
+      "summary": "1 occurrence(s) · prix à préciser"
+    },
+    {
+      "name": "Savings protégée",
+      "id": "savings:00000000-0000-4000-8000-000000000700",
+      "status": "REFERENCE",
+      "label": "Référence du mois · pas une décision",
+      "summary": "100,00 €"
+    }
+  ],
+  "presentationReads": 0,
+  "financialWriters": 0,
+  "modelUnchanged": true
+}
