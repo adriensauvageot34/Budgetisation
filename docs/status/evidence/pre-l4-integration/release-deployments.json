@@ -1,0 +1,80 @@
+{
+  "checkedAt": "2026-10-16T18:52:00.675Z",
+  "deployments": [
+    {
+      "id": "dpl_J92d7BezNXRtY2cVq6nQvjSQzHwy",
+      "url": "budgetisation-8p7pqj37r-adriensauvageot34-6137s-projects.vercel.app",
+      "target": "production",
+      "state": "READY",
+      "sha": "dc84adad4dd7fbcf8b478e9e5749dc7b4fa8bf06",
+      "readyAt": "2026-10-16T18:42:17.498Z",
+      "alias": [
+        "budgetisation-tan.vercel.app",
+        "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+        "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+      ]
+    },
+    {
+      "id": "dpl_7HPv4jH9ZGLWEgg6NE2iLRERQ3uH",
+      "url": "budgetisation-pj5s5j7cx-adriensauvageot34-6137s-projects.vercel.app",
+      "target": "production",
+      "state": "READY",
+      "sha": "bab615a0f3b6ae75e69b7fe7e8726d738ee388f6",
+      "readyAt": "2026-10-16T18:44:53.568Z",
+      "alias": [
+        "budgetisation-tan.vercel.app",
+        "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+        "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+      ]
+    },
+    {
+      "id": "dpl_5hg1dYL2dJtUmXfGgDxU9Dwjdexm",
+      "url": "budgetisation-lnlcbk0lj-adriensauvageot34-6137s-projects.vercel.app",
+      "target": "production",
+      "state": "READY",
+      "sha": "7765bc532511d777ef3e3c80ff0b48826a4e465e",
+      "readyAt": "2026-10-16T18:47:57.083Z",
+      "alias": [
+        "budgetisation-tan.vercel.app",
+        "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+        "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+      ]
+    }
+  ],
+  "finalPublicAlias": {
+    "hostname": "budgetisation-tan.vercel.app",
+    "deploymentId": "dpl_5hg1dYL2dJtUmXfGgDxU9Dwjdexm",
+    "sha": "7765bc532511d777ef3e3c80ff0b48826a4e465e",
+    "state": "READY"
+  },
+  "finalCommitStatuses": [
+    {
+      "context": "Vercel",
+      "state": "success",
+      "target_url": "https://vercel.com/adriensauvageot34-6137s-projects/budgetisation/5hg1dYL2dJtUmXfGgDxU9Dwjdexm"
+    }
+  ],
+  "pullRequests": [
+    {
+      "number": 50,
+      "url": "https://github.com/adriensauvageot34/Budgetisation/pull/50",
+      "state": "closed",
+      "merged": true,
+      "mergeCommit": "dc84adad4dd7fbcf8b478e9e5749dc7b4fa8bf06"
+    },
+    {
+      "number": 51,
+      "url": "https://github.com/adriensauvageot34/Budgetisation/pull/51",
+      "state": "closed",
+      "merged": true,
+      "mergeCommit": "bab615a0f3b6ae75e69b7fe7e8726d738ee388f6"
+    },
+    {
+      "number": 52,
+      "url": "https://github.com/adriensauvageot34/Budgetisation/pull/52",
+      "state": "closed",
+      "merged": true,
+      "mergeCommit": "7765bc532511d777ef3e3c80ff0b48826a4e465e"
+    }
+  ]
+}

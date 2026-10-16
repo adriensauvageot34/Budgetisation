@@ -1,0 +1,9 @@
+{
+  "main": "bab615a0f3b6ae75e69b7fe7e8726d738ee388f6",
+  "c2": "0fc3d0882a649bf023b80edc83724aec43644d30",
+  "c3": "9270478950f9814df07b9e33d30e4c6ec7bf73fe",
+  "diffExactlyEqualsOriginalC2toC3": true,
+  "productDiff": [],
+  "mergeTree": "d1d55d591285fe52b56799f494bce7db8441e4f3",
+  "mergeSimulationMatchesC3": true
+}
