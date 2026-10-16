@@ -126,7 +126,7 @@ type NightSection = "main" | "participants" | "extras" | "before" | "food" | "de
 type Equipment = { asset: import("@/domain/phase2/planner/composer-contract").ComposerAssetView; target: import("@/domain/phase2/planner/composer-contract").DropTarget; selection?: ComponentSelectionV1 };
 const selectionCaption = (selection: ComponentSelectionV1) => selection.kind === "COMPONENT"
   ? `${selection.label} · ${selection.quantityPerPerson ? `${selection.quantityPerPerson} par personne (${selection.pricedParticipantCount} personnes)` : `${selection.quantity} ${selection.unitBasis === "SHARED" ? "lot(s) partagé(s)" : "unité(s)"}`} · ${selection.cost.kind === "MANUAL" ? money(selection.cost.unitAmount) : selection.cost.kind === "QUOTE" ? "Devis conservé" : "Prix à préciser"}${selection.provenance === "PERSONAL_SUGGESTION" ? " · suggestion non retenue" : ""}`
-  : selection.kind === "MOBILITY_INTENT" ? `${({car:"Voiture",train:"Train / tram",bus:"Bus",taxi:"Taxi",free:"Déplacement gratuit déclaré",other:"Autre transport",unknown:"Mode à préciser"} as Record<string,string>)[selection.optionKey] ?? "Transport"} · ${selection.pricing?.fare.kind === "MANUAL" ? money(selection.pricing.fare.unitAmount) : "Prix évalué par Mobility ou à préciser"}`
+  : selection.kind === "MOBILITY_INTENT" ? `${({car:"Voiture",train:"Train / tram",bus:"Bus",taxi:"Taxi",free:"Déplacement gratuit déclaré",other:"Autre transport",unknown:"Mode à préciser"} as Record<string,string>)[selection.optionKey] ?? "Transport"} · ${selection.journey?.relation === "SHARES_JOURNEY" ? "Coût porté par le trajet lié" : selection.pricing?.fare.kind === "MANUAL" ? money(selection.pricing.fare.unitAmount) : "Estimation du trajet à confirmer"}`
   : selection.kind === "CHILD_CONTEXT" ? "Moment lié, conservé avec ses propres choix" : "À préciser";
 
 /** A presentation pilot over the existing semantic adapter, not a questionnaire engine. */
@@ -236,7 +236,7 @@ export function NightOutEditor({ context, semanticState, householdPersons, knowl
         {summaryRow("travel","Aller et retour",[...(["outbound","return"] as const).map((slot,index) => `${index ? "Retour" : "Aller"} · ${items(context,slot)[0] ? selectionCaption(items(context,slot)[0]) : "Non prévu"}`)])}
         {summaryRow("details","Date, lieu et nom",[context.fields.plannedDate ? String(context.fields.plannedDate) : "Date non renseignée", originalPlace?.kind === "TEXT" ? originalPlace.label : originalPlace?.kind === "KNOWN" ? "Lieu enregistré" : "Lieu non renseigné"])}
         <div className={styles.nightCost} data-night-official-cost><strong>Coût connu de l’événement : {isFresh && eventCost ? money(eventCost.knownAmount) : "Actualisation en cours"}</strong>
-          <small>{isFresh && eventCost ? eventCost.incomplete ? "Des composantes restent à préciser. Ce montant n’est pas un total définitif." : "Composantes évaluées par le Compiler, sans coût supplémentaire du parent." : "Vos nouvelles décisions sont conservées ; la simulation autoritaire est en attente."}</small>
+          <small>{isFresh && eventCost ? eventCost.incomplete ? "Des composantes restent à préciser. Ce montant n’est pas un total définitif." : "Coût des composantes retenues, sans supplément pour la carte Soirée." : "Vos nouvelles décisions sont conservées ; la projection du mois est en attente."}</small>
           <small>Impact sur le mois : consulter la projection officielle dans le bandeau.</small></div>
         <button type="button" className={styles.secondary} onClick={() => open("palette")}>Ajouter à ma soirée · autres options</button>
       </section> : <section ref={focus} tabIndex={-1} className={styles.nightSection} data-night-section={section} key={formKey} onChangeCapture={() => setDirty(true)}>
@@ -292,9 +292,14 @@ export function NightOutEditor({ context, semanticState, householdPersons, knowl
               {field.choices?.map(choice=><option key={choice.value} value={choice.value}>{choice.label.replace(" · outbound"," · Aller").replace(" · return"," · Retour")}</option>)}{field.key==="funding" && transportValues.funding==="EXISTING" && <option value="EXISTING">Conserver le financement antérieur</option>}</select>
               : <input name={field.key} defaultValue={transportValues[field.key] ?? field.initial ?? ""} inputMode={field.kind==="AMOUNT" ? "decimal" : undefined} />}</label>)}
             <button type="submit" className={styles.primary} disabled={busy}>Confirmer ce trajet</button></form>}
-          {section==="palette" && card && model && <ContextPalette card={card} model={model} busy={busy} close={()=>open(null)} choose={(asset,target,selection)=>{
+          {section==="palette" && card && model && <ContextPalette card={card} model={model} busy={busy} configure close={()=>open(null)} choose={(asset,target,selection)=>{
             if(asset.optionKind==="MOBILITY_INTENT"){choose(asset,target,selection);return;}
-            if(asset.kind==="CONTEXT_ASSET"){if(target.slotKey && items(context,target.slotKey).some(item=>item.kind!=="UNRESOLVED") && !window.confirm("Remplacer ce choix par un moment lié ? Les autres rubriques seront conservées."))return; send({kind:"DROP",assetKey:asset.assetKey,target,values:{},identity:crypto.randomUUID(),selectionId:crypto.randomUUID()});return;}
+            if(asset.kind==="CONTEXT_ASSET"){
+              const linked = target.slotKey ? items(context,target.slotKey).find(item=>item.kind==="CHILD_CONTEXT" && semanticState.contexts.some(child=>child.contextOccurrenceId===item.childContextOccurrenceId && child.templateKey===asset.templateKey)) : undefined;
+              if(linked?.kind==="CHILD_CONTEXT"){onOpenChild?.(linked.childContextOccurrenceId);return;}
+              if(target.slotKey && items(context,target.slotKey).some(item=>item.kind!=="UNRESOLVED") && !window.confirm("Remplacer ce choix par un moment lié ? Les autres rubriques seront conservées."))return;
+              send({kind:"DROP",assetKey:asset.assetKey,target,values:{},identity:crypto.randomUUID(),selectionId:crypto.randomUUID()});return;
+            }
             open(target.slotKey==="extras" ? "extras" : target.slotKey==="before" ? "before" : target.slotKey==="food" ? "food" : "main");
           }} />}</>}
       </section>}

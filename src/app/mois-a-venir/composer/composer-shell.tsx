@@ -492,7 +492,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       const stay = owner?.templateKey === "short-stay" ? owner : shown.board.contexts.find(card => card.contextOccurrenceId === owner?.parentContextOccurrenceId && card.templateKey === "short-stay");
       if (stay) { editContext(stay); return; }
     }
-    if (selection?.kind === "COMPONENT" && selection.quantityPerPerson) {
+    if (selection?.kind === "COMPONENT") {
       const owner = shown.board.contexts.find(card => card.contextOccurrenceId === target.contextOccurrenceId);
       const parent = owner?.templateKey === "night-out" ? owner : shown.board.contexts.find(card => card.contextOccurrenceId === owner?.parentContextOccurrenceId && card.templateKey === "night-out"
         && card.sockets.find(socket => socket.slotKey === "before")?.currentItems.some(item => item.kind === "CHILD_CONTEXT" && item.childContextOccurrenceId === owner?.contextOccurrenceId));
@@ -733,7 +733,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         : editor?.nightContextId && NightOutEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)
         ? <NightOutEditor key={`${editor.nightContextId}:${editor.nightAdmission ?? 0}:${JSON.stringify(draftState.contexts.filter(context => context.contextOccurrenceId === editor.nightContextId || context.parentContextOccurrenceId === editor.nightContextId))}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
           semanticState={draftState} householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
-          model={shown} card={shown.board.contexts.find(card => card.contextOccurrenceId === editor.nightContextId)} fresh={previewStatus === "FRESH"}
+          model={shown} card={shown.board.contexts.find(card => card.contextOccurrenceId === editor.nightContextId)} fresh={previewStatus === "FRESH" || previewStatus === "BLOCKED"}
           saveStatus={draftTransport ? durable.status : "MEMORY"}
           onOpenChild={id => { const child = shown.board.contexts.find(card => card.contextOccurrenceId === id); if (child) editContext(child); }}
           creating={editor.nightCreating} busy={busy} onCancel={closeDialog} onSave={operation => { const admitted = stage(operation); if (admitted) setEditor(current => current ? { ...current, nightCreating: false } : current); return admitted; }} />
