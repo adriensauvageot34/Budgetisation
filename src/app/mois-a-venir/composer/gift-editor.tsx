@@ -4,6 +4,7 @@ import { useState } from "react";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette } from "./context-palette";
 import type { ProspectivePersonRef } from "@/domain/phase2/planned-contract";
+import { prospectivePersonLabel } from "@/domain/phase2/planned-product";
 import { assetsForModule, PLANNED_ASSET_CATALOG_VERSION, type PlannedAssetRef } from "@/domain/phase2/planned-assets";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
@@ -60,7 +61,7 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
   return <form data-gift-editor className={styles.nightEditor} onSubmit={event => { event.preventDefault(); save(); }}>
     {section === "summary" && <section className={styles.nightSection} data-gift-summary><h3>{objectLabel || "Cadeau à préciser"}</h3>
       <p>Le cadeau reste dans votre brouillon, même si sa date ou son prix sont inconnus.</p>
-      {recipient && <p>Destinataire : {recipient.kind === "TEXT" ? recipient.label : "Personne liée"}</p>}
+      {recipient && <p>Destinataire : {recipient.kind === "HOUSEHOLD_PERSON" ? householdPersons.find(person => person.personId === recipient.personId)?.displayName ?? "Personne indisponible" : prospectivePersonLabel(recipient) ?? "Contact indisponible"}</p>}
       {occasion && <p>Occasion : {occasion}</p>}
       {existing && <p>Prix : {existing.cost.kind === "MANUAL" ? `${existing.cost.unitAmount} €` : "inconnu ou devis conservé"}</p>}
       <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection("object")}>Choisir l’objet</button>
@@ -91,7 +92,7 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
     </div>
     {error && <p role="alert" className={styles.formError}>{error}</p>}
     <footer><button type="button" className={styles.secondary} disabled={busy} onClick={section === "summary" ? onCancel : () => setSection("summary")}>{section === "summary" ? "Retour au mois" : "Retour au résumé"}</button>
-      <button data-submit className={styles.primary} disabled={busy}>{objectLabel.trim() ? "Conserver et prévisualiser" : "Conserver cette intention"}</button></footer>
+      {section !== "budget" && <button data-submit className={styles.primary} disabled={busy}>{objectLabel.trim() ? "Conserver et prévisualiser" : "Conserver cette intention"}</button>}</footer>
     <WorkshopDock host={dockHost} contextId={context.contextOccurrenceId} model={model} busy={busy} choose={choose} summary={() => setSection("summary")}
       choices={(["summary", "recipient", "occasion", "object", "budget", "date"] as const).map(key => ({ key,
         label: ({ summary: "Résumé", recipient: "Destinataire", occasion: "Occasion", object: "Objet", budget: "Prix", date: "Date" } as const)[key],

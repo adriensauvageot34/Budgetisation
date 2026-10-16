@@ -10,6 +10,7 @@ import type { PlannerJson } from "@/domain/phase2/planner/json";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import { stopForPlace } from "@/domain/phase2/planned-routes";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
+import { prospectivePersonLabel } from "@/domain/phase2/planned-product";
 import { PlannedContactField } from "../planned-people-fields";
 import { PlannedPlaceField } from "../planned-place-field";
 import { ContactPlaceReference } from "./workshop-place-reference";
@@ -59,7 +60,10 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
   const [error, setError] = useState(""); const scroll = useRef<HTMLDivElement>(null);
   const [section, setSection] = useState<"summary" | "people" | "place" | "timing" | "posts" | "route">(initialMode ? "route" : "summary");
   const [peoplePage, setPeoplePage] = useState(-1);
-  const [routePage, setRoutePage] = useState<"journey" | "stops" | "cost">("journey");
+  const [routePage, setRoutePage] = useState<"journey" | "origin" | "stops" | "cost">("journey");
+  const [timingPage, setTimingPage] = useState<"out" | "back" | "note">("out");
+  const [costPage, setCostPage] = useState("estimate");
+  const [stopTab, setStopTab] = useState<"vehicle" | "out" | "back">("vehicle"), [stopPage, setStopPage] = useState(0);
   const transportInputs = [origin, destination, mode, returnRequired, outTime, returnTime, vehicleId, preference, fareMode, fare,
     parkingMode, parking, tollMode, toll, fuelPrice, funding, fundingAmount, ownJourney, outStops, backStops];
   const initialInputs = useRef(JSON.stringify(transportInputs));
@@ -67,7 +71,7 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
   const home = places.find(place => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
   const physicalLabel = (ref: ProspectivePlaceRef) => ref.kind === "TEXT" ? ref.label : places.find(p => p.placeId === ref.placeId)?.name ?? "Lieu lié indisponible";
   const setTransportMode = (next: string) => {
-    if (next !== mode) { setMode(next); setFareMode("UNKNOWN"); setFare(""); setParkingMode("UNKNOWN"); setParking(""); setTollMode("AUTO"); setToll(""); setFuelPrice(""); setVehicleId(""); setOutStops([]); setBackStops([]); setFunding(""); setFundingAmount(""); setOwnJourney(true); }
+    if (next !== mode) { setMode(next); setCostPage("estimate"); setFareMode("UNKNOWN"); setFare(""); setParkingMode("UNKNOWN"); setParking(""); setTollMode("AUTO"); setToll(""); setFuelPrice(""); setVehicleId(""); setOutStops([]); setBackStops([]); setFunding(""); setFundingAmount(""); setOwnJourney(true); }
   };
   const save = () => {
     try {
@@ -118,7 +122,7 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
     {section === "summary" && <section className={styles.nightSection} data-visit-summary>
       <h3>{label || (stay ? "Votre séjour" : "Votre visite")}</h3>
       <p>{stay ? "Choisissez l’hébergement ou un poste quand vous le souhaitez." : "La visite reste enregistrable même sans date ou trajet."}</p>
-      {visited && <p>Proche : {visited.kind === "TEXT" ? visited.label : "Contact lié"}</p>}
+      {visited && <p>Proche : {visited.kind === "HOUSEHOLD_PERSON" ? householdPersons.find(person => person.personId === visited.personId)?.displayName ?? "Personne indisponible" : prospectivePersonLabel(visited) ?? "Contact indisponible"}</p>}
       {destination && <p>Destination : {physicalLabel(destination)}</p>}
       {(date || note) && <p>Quand : {date || note}</p>}
       {mode && <p>Déplacement : {modeLabels[mode] ?? mode}</p>}
@@ -140,17 +144,19 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
         <PlannedPlaceField label={stay ? "Destination du séjour" : "Destination de la visite"} places={places} value={destination} onChange={setDestination} exact />
         {!options && <p role="status">Les lieux admissibles sont en cours de lecture. Une destination libre reste possible.</p>}
       </section>}
-      {section === "timing" && <section className={styles.nightSection} data-visit-section="timing" tabIndex={-1}><h3>Quand ?</h3><p>Vous pouvez conserver cette intention sans jour fixé. Le retour reste indépendant du départ.</p>
-        <div className={styles.nightComponentGrid}><label>Date de départ (facultative)<input type="date" value={date} onChange={event => { setDate(event.target.value); if (!event.target.value) setOutTime(""); }} /></label>
-          <label>Heure de départ<input type="time" disabled={!date} value={outTime} onChange={event => setOutTime(event.target.value)} /></label>
-          <label>Date de retour (facultative)<input type="date" value={endDate} onChange={event => { setEndDate(event.target.value); if (!event.target.value) setReturnTime(""); }} /></label>
-          <label>Heure de retour<input type="time" disabled={!endDate} value={returnTime} onChange={event => setReturnTime(event.target.value)} /></label>
-          <label>Repère de temps<input value={note} maxLength={160} onChange={event => setNote(event.target.value)} placeholder="Par exemple : un dimanche" /></label></div>
+      {section === "timing" && <section className={styles.nightSection} data-visit-section="timing" tabIndex={-1}><h3>Quand ?</h3>
+        <nav className={styles.nightNav} aria-label="Préciser le calendrier">{([["out", "Départ"], ["back", "Retour"], ["note", "Repère souple"]] as const).map(([key,label]) => <button key={key} type="button" aria-pressed={timingPage === key} onClick={() => setTimingPage(key)}>{label}</button>)}</nav>
+        <p>Le jour et l’heure peuvent rester inconnus.</p>
+        {timingPage === "out" && <><label>Date de départ (facultative)<input type="date" value={date} onChange={event => { setDate(event.target.value); if (!event.target.value) setOutTime(""); }} /></label>
+          <label>Heure de départ<input type="time" disabled={!date} value={outTime} onChange={event => setOutTime(event.target.value)} /></label></>}
+        {timingPage === "back" && <><label>Date de retour (facultative)<input type="date" value={endDate} onChange={event => { setEndDate(event.target.value); if (!event.target.value) setReturnTime(""); }} /></label>
+          <label>Heure de retour<input type="time" disabled={!endDate} value={returnTime} onChange={event => setReturnTime(event.target.value)} /></label></>}
+        {timingPage === "note" && <label>Repère de temps<input value={note} maxLength={160} onChange={event => setNote(event.target.value)} placeholder="Par exemple : un dimanche" /></label>}
       </section>}
       {stay && section === "posts" && <section className={styles.nightSection} data-visit-section="posts" tabIndex={-1}>{posts}</section>}
       {section === "route" && <section className={styles.nightSection} data-visit-section="route" tabIndex={-1}><h3>Déplacement prospectif</h3>
-        <nav className={styles.nightNav} aria-label="Étapes du déplacement">{([...["journey", "stops", "cost"]] as (typeof routePage)[]).map(key =>
-          <button key={key} type="button" aria-pressed={routePage === key} onClick={() => setRoutePage(key)}>{key === "journey" ? "Trajet" : key === "stops" ? "Véhicule et arrêts" : "Coûts"}</button>)}</nav>
+        <nav className={styles.nightNav} aria-label="Étapes du déplacement">{([...["journey", "origin", "stops", "cost"]] as (typeof routePage)[]).map(key =>
+          <button key={key} type="button" aria-pressed={routePage === key} onClick={() => setRoutePage(key)}>{key === "journey" ? "Trajet" : key === "origin" ? "Départ" : key === "stops" ? "Véhicule / arrêts" : "Coûts"}</button>)}</nav>
         {routePage === "journey" && <>
         {original?.journey && original.journey.relation !== "OWNS_JOURNEY" && <><p>Le trajet existant est lié à un autre propriétaire. Ses prix sont conservés.</p>
           <label className={styles.nightCheck}><input type="checkbox" checked={ownJourney} onChange={event => setOwnJourney(event.target.checked)} />Choisir un trajet propre pour cette visite</label></>}
@@ -161,35 +167,43 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
           {!origin && home && <button type="button" onClick={() => setOrigin({ kind: "KNOWN", placeId: home.placeId })}>Utiliser comme départ {home.name} · domicile connu</button>}
           <label><input type="checkbox" checked={returnRequired} onChange={event => setReturnRequired(event.target.checked)} />Prévoir l’aller et le retour</label>
         </>}
-        <button type="button" onClick={() => setRoutePage(mode === "car" ? "stops" : "cost")}>Continuer vers {mode === "car" ? "le véhicule" : "les coûts"}</button></>}
+        <button type="button" onClick={() => setRoutePage("origin")}>Préciser le départ</button></>}
+        {routePage === "origin" && <><PlannedPlaceField label="Origine du déplacement" places={places} value={origin} onChange={setOrigin} exact />
+          {!origin && home && <button type="button" onClick={() => setOrigin({ kind: "KNOWN", placeId: home.placeId })}>Utiliser comme départ {home.name} · domicile connu</button>}
+          <button type="button" onClick={() => setRoutePage(mode === "car" ? "stops" : "cost")}>Continuer</button></>}
         {routePage === "stops" && (mode === "car" && ownJourney ? <>
+            <nav className={styles.nightNav} aria-label="Configurer les étapes">{([["vehicle", "Véhicule"], ["out", "Arrêts aller"], ...(returnRequired ? [["back", "Arrêts retour"]] : [])] as const).map(([key,label]) => <button key={key} type="button" aria-pressed={stopTab === key} onClick={() => { setStopTab(key as typeof stopTab); setStopPage(0); }}>{label}</button>)}</nav>
+            {stopTab === "vehicle" && <>
             <label>Véhicule<select value={vehicleId} onChange={event => setVehicleId(event.target.value)}><option value="">À préciser</option>
               {vehicle?.vehicleId && <option value={vehicle.vehicleId}>{vehicle.label} · véhicule admissible</option>}
               {vehicleId && vehicleId !== vehicle?.vehicleId && <option value={vehicleId}>{original?.route?.vehicleRef?.labelAtSelection ?? "Véhicule lié"} · indisponible</option>}</select></label>
             <label>Itinéraire<select value={preference} onChange={event => setPreference(event.target.value as typeof preference)}><option value="FASTEST">Le plus rapide</option><option value="AVOID_TOLLS">Éviter les péages</option></select></label>
-            {([["Aller", outStops, setOutStops], ...(returnRequired ? [["Retour", backStops, setBackStops] as const] : [])] as const).map(([caption, stops, setStops]) => <div key={caption}><h4>Arrêts supplémentaires · {caption}</h4>
-              {stops.map((stop, index) => <div key={index}><PlannedPlaceField label={`Arrêt ${caption} ${index + 1}`} places={places} value={stop.placeId ? { kind: "KNOWN", placeId: stop.placeId } : { kind: "TEXT", label: stop.label }} exact
+            </>}
+            {(stopTab === "out" ? [["Aller", outStops, setOutStops] as const] : stopTab === "back" && returnRequired ? [["Retour", backStops, setBackStops] as const] : []).map(([caption, stops, setStops]) => <div key={caption}><h4>Arrêts supplémentaires · {caption}</h4>
+              {stops.slice(stopPage, stopPage + 1).map((stop, offset) => { const index = stopPage + offset; return <div key={index}><PlannedPlaceField label={`Arrêt ${caption} ${index + 1}`} places={places} value={stop.placeId ? { kind: "KNOWN", placeId: stop.placeId } : { kind: "TEXT", label: stop.label }} exact
                 onChange={ref => setStops(stops.map((p, i) => i === index ? ref ? stopForPlace(ref, physicalLabel(ref), "DIRECT_PLACE") : { label: "", endpointSource: "DIRECT_PLACE" } : p))} />
                 <PlannedRouteCoordinatesField key={JSON.stringify([stop.label, stop.coordinates])} stop={stop} onApply={(latitude, longitude) => setStops(stops.map((p, i) => i === index ? { ...p, coordinates: { latitude, longitude, source: "USER_DECLARED" } } : p))} />
-                <button type="button" onClick={() => setStops(stops.filter((_, i) => i !== index))}>Retirer cet arrêt</button></div>)}
-              <button type="button" disabled={outStops.length + backStops.length >= 8} onClick={() => setStops([...stops, { label: "", endpointSource: "DIRECT_PLACE" }])}>Ajouter un arrêt · {caption}</button></div>)}
+                <button type="button" onClick={() => { setStops(stops.filter((_, i) => i !== index)); setStopPage(page => Math.max(0, page - 1)); }}>Retirer cet arrêt</button></div>; })}
+              {stops.length > 1 && <div className={styles.nightPage}><button type="button" disabled={!stopPage} onClick={() => setStopPage(page => page - 1)}>Précédent</button><span>{stopPage + 1} / {stops.length}</span><button type="button" disabled={stopPage + 1 >= stops.length} onClick={() => setStopPage(page => page + 1)}>Suivant</button></div>}
+              <button type="button" disabled={outStops.length + backStops.length >= 8} onClick={() => { setStopPage(stops.length); setStops([...stops, { label: "", endpointSource: "DIRECT_PLACE" }]); }}>Ajouter un arrêt · {caption}</button></div>)}
             <button type="button" onClick={() => setRoutePage("cost")}>Continuer vers les coûts</button>
           </> : <p>Choisissez d’abord un trajet en voiture pour préciser les arrêts.</p>)}
-        {routePage === "cost" && !!mode && ownJourney && <>
-          {mode === "car" ? <>
-            <div className={styles.nightComponentGrid}><label>Prix déclaré au litre, si aucune référence disponible<input inputMode="decimal" value={fuelPrice} onChange={event => setFuelPrice(event.target.value)} placeholder="Conserver les références du propriétaire" /></label>
-              <label>Péages<select value={tollMode} onChange={event => setTollMode(event.target.value)}><option value="AUTO">Estimation du propriétaire</option><option value="UNKNOWN">Encore inconnus</option><option value="MANUAL">Montant total déclaré par moi</option>{tollMode === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
-              {tollMode === "MANUAL" && <label>Péages totaux (€)<input inputMode="decimal" value={toll} onChange={event => setToll(event.target.value)} /></label>}
-              <label>Parking<select value={parkingMode} onChange={event => setParkingMode(event.target.value as typeof parkingMode)}><option value="UNKNOWN">Encore inconnu</option><option value="MANUAL">Montant total déclaré, 0 si aucun</option>{parkingMode === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
-              {parkingMode === "MANUAL" && <label>Parking total (€)<input inputMode="decimal" value={parking} onChange={event => setParking(event.target.value)} /></label>}</div>
-          </> : mode !== "free" && <><label>Prix du trajet complet {returnRequired ? "aller-retour" : "aller"}<select value={fareMode} onChange={event => setFareMode(event.target.value as typeof fareMode)}><option value="UNKNOWN">Encore inconnu</option><option value="MANUAL">Montant total déclaré</option>{fareMode === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
-            {fareMode === "MANUAL" && <label>Billet / course total (€)<input inputMode="decimal" value={fare} onChange={event => setFare(event.target.value)} /></label>}</>}
-          {mode !== "free" && <><label>Financement des frais payables<select value={funding} onChange={event => setFunding(event.target.value)}><option value="">À préciser</option><option value="BANK">Banque déclarée</option></select></label>
-            {funding === "BANK" && <label>Montant Banque (€)<input inputMode="decimal" value={fundingAmount} onChange={event => setFundingAmount(event.target.value)} /></label>}</>}
+        {routePage === "cost" && <>
+          <nav className={styles.nightNav} aria-label="Frais du trajet">{[...(mode === "car" ? [["fuel", "Carburant"], ["toll", "Péages"], ["parking", "Parking"]] : [["fare", "Billet / course"]]), ["funding", "Financement"], ["estimate", "Estimation"]].map(([key,label]) => <button key={key} type="button" aria-pressed={costPage === key} onClick={() => setCostPage(key)}>{label}</button>)}</nav>
+          {!!mode && ownJourney && <>
+            {mode === "car" && costPage === "fuel" && <label>Prix déclaré au litre, si aucune référence disponible<input inputMode="decimal" value={fuelPrice} onChange={event => setFuelPrice(event.target.value)} placeholder="Conserver les références du propriétaire" /></label>}
+            {mode === "car" && costPage === "toll" && <><label>Péages<select value={tollMode} onChange={event => setTollMode(event.target.value)}><option value="AUTO">Estimation du propriétaire</option><option value="UNKNOWN">Encore inconnus</option><option value="MANUAL">Montant total déclaré par moi</option>{tollMode === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
+              {tollMode === "MANUAL" && <label>Péages totaux (€)<input inputMode="decimal" value={toll} onChange={event => setToll(event.target.value)} /></label>}</>}
+            {mode === "car" && costPage === "parking" && <><label>Parking<select value={parkingMode} onChange={event => setParkingMode(event.target.value as typeof parkingMode)}><option value="UNKNOWN">Encore inconnu</option><option value="MANUAL">Montant total déclaré, 0 si aucun</option>{parkingMode === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
+              {parkingMode === "MANUAL" && <label>Parking total (€)<input inputMode="decimal" value={parking} onChange={event => setParking(event.target.value)} /></label>}</>}
+            {mode !== "car" && mode !== "free" && costPage === "fare" && <><label>Prix du trajet complet {returnRequired ? "aller-retour" : "aller"}<select value={fareMode} onChange={event => setFareMode(event.target.value as typeof fareMode)}><option value="UNKNOWN">Encore inconnu</option><option value="MANUAL">Montant total déclaré</option>{fareMode === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
+              {fareMode === "MANUAL" && <label>Billet / course total (€)<input inputMode="decimal" value={fare} onChange={event => setFare(event.target.value)} /></label>}</>}
+            {mode !== "free" && costPage === "funding" && <><label>Financement des frais payables<select value={funding} onChange={event => setFunding(event.target.value)}><option value="">À préciser</option><option value="BANK">Banque déclarée</option></select></label>
+              {funding === "BANK" && <label>Montant Banque (€)<input inputMode="decimal" value={fundingAmount} onChange={event => setFundingAmount(event.target.value)} /></label>}</>}
+          </>}
+          {costPage === "estimate" && (mode === "free" ? <p>Déplacement déclaré gratuit. Aucun coût de trajet ajouté.</p> : <MobilityEstimateSummary summary={summary} fresh={fresh && initialInputs.current === JSON.stringify(transportInputs) && (initialMode === undefined || initialMode === original?.optionKey)} />)}
+          {costPage === "estimate" && <p className={styles.helper}>Mobility et Finance V2 restent propriétaires du coût. Une panne fournisseur conserve le brouillon.</p>}
         </>}
-        {routePage === "cost" && (mode === "free" ? <p>Déplacement déclaré gratuit. Aucun coût de trajet ajouté.</p>
-          : <MobilityEstimateSummary summary={summary} fresh={fresh && initialInputs.current === JSON.stringify(transportInputs) && (initialMode === undefined || initialMode === original?.optionKey)} />)}
-        {routePage === "cost" && <p className={styles.helper}>La simulation utilise Mobility et Finance V2. Carburant utilisé, péages et billet restent distincts. Une panne fournisseur conserve le brouillon et les autres composants.</p>}
       </section>}
     </div>
     {error && <p role="alert" className={styles.formError}>{error}</p>}

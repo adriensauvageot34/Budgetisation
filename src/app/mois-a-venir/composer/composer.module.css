@@ -908,7 +908,7 @@
 /* L4-A.1: one nonmodal question, sharing the Board's existing answer dock. */
 .columns[data-night-workshop-open=true] { padding-right:426px; }
 .columns[data-night-workshop-open=true] .paletteDock { width:calc(100% + 426px); height:122px; flex-basis:122px; overflow:visible; }
-.dialog[data-night-workshop-panel=true] { position:absolute; inset:112px 0 176px auto; margin:0; width:408px; max-height:none; padding:17px; border-radius:20px; overflow:visible; z-index:var(--z-popover); background:#fffefa; box-shadow:0 10px 30px #38294c13; }
+.dialog[data-night-workshop-panel=true] { position:absolute; inset:112px 0 176px auto; margin:0; width:408px; max-height:calc(100% - 288px); padding:17px; border-radius:20px; overflow:visible; z-index:var(--z-popover); background:#fffefa; box-shadow:0 10px 30px #38294c13; }
 .dialog[data-night-workshop-panel=true]::backdrop { background:transparent; backdrop-filter:none; }
 .dialog[data-night-workshop-panel=true] > header { margin-bottom:10px; }
 .dialog[data-night-workshop-panel=true] > header h2 { font-size:17px; }
