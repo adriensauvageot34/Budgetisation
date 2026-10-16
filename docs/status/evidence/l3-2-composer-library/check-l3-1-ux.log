@@ -1,0 +1,10 @@
+L31_LAYOUT_BOUNDS_IDENTITIES_AND_ORDER PASS
+L31_DENSITY_WITH_LARGER_READABLE_PALETTE PASS
+L31_SAME_LABEL_DISTINCT_IDENTITIES PASS
+L31_CLUSTER_AND_PARENT_NAVIGATION PASS
+L31_PAGINATION_UNIT_IS_PAGES PASS
+L31_PALETTE_ROUTES_REMAIN_ADMISSIBLE PASS
+L31_OFFICIAL_UNKNOWN_AND_STALE_RENDER PASS
+L31_NO_FINANCIAL_OR_DRAFT_MUTATION PASS
+warning: in the working copy of 'src/domain/phase2/planner/composer-library-index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/domain/phase2/planner/composer-presets.ts', LF will be replaced by CRLF the next time Git touches it

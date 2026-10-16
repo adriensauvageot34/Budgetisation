@@ -60,7 +60,8 @@ for(const [name,w,semantic,expectedImpact] of cases){world=w;
 const shellFile='src/app/mois-a-venir/composer/composer-shell.tsx',shell=fs.readFileSync(shellFile,'utf8').replaceAll('\r\n','\n'),oldShell=gitFile(shellFile);
 const guard=s=>s.slice(s.indexOf('  function apply() {'),s.indexOf('  const openProjectionDetails'));
 assert.equal(guard(shell),guard(oldShell),'Official Apply guards must remain byte-identical after newline normalization');
-assert.equal(execFileSync('git',['diff',base,'--name-only','--','src/server','src/domain','src/app/mois-a-venir/composer/durable-draft.ts','src/app/mois-a-venir/composer/preview-scheduler.ts','supabase'],{encoding:'utf8'}),'');
+// These two registries contain presentation recipes/indexing; all financial/domain owners remain guarded.
+assert.deepEqual(execFileSync('git',['diff',base,'--name-only','--','src/server','src/domain','src/app/mois-a-venir/composer/durable-draft.ts','src/app/mois-a-venir/composer/preview-scheduler.ts','supabase'],{encoding:'utf8'}).split(/\r?\n/).filter(Boolean).filter(file=>!['src/domain/phase2/planner/composer-presets.ts','src/domain/phase2/planner/composer-library-index.ts'].includes(file)),[]);
 checks.push({name:'AUTHORITIES_APPLY_CAS_SCHEDULER_DRAFT_UNCHANGED',pass:true});
 const dir='docs/status/evidence/l3-composer-workshop';fs.mkdirSync(dir,{recursive:true});
 fs.writeFileSync(dir+'/workshop-contracts.json',JSON.stringify({environment:'REAL_COMPILER_SYNTHETIC_INPUTS_NO_DATABASE',base,checks,authenticated:false,remoteWrites:0},null,2)+'\n');

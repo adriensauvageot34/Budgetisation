@@ -1,0 +1,7 @@
+{
+  "command": "node node_modules/typescript/bin/tsc --noEmit",
+  "exitCode": 0,
+  "environment": "Local reused dependencies",
+  "finalSourceChangeAfterRun": "Formatting of the 21 recipe records only; no semantic change",
+  "nextBuild": "Tracked separately in Vercel build evidence"
+}

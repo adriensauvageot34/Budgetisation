@@ -1,0 +1,114 @@
+{
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "rpcCalls": 0,
+  "remoteWrites": 0,
+  "historicalCanaryWrites": 0,
+  "drafts": {
+    "active": {
+      "id": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+      "version": 11,
+      "digest": "8edfaaaadc1c7c75c3ccf68caa7c437b5c8eeb8a92edcfdbbad51503b5be78a4"
+    },
+    "archives": 0,
+    "events": [
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 1,
+        "digest": "a2e1ae0d18d032c8ba5ce4013e1a26d228769cbc7f79046da31bb747b629a746"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 2,
+        "digest": "7f5a71db368e00e4f12773fb52adee1a22f57229dff92a21cb2fcb1e7b627dd9"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 3,
+        "digest": "46c85ac691d16677556b0384fe55d284af2cdc26eac1f9a6be4fa7d0afbf91c5"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 4,
+        "digest": "5452a3e0e584da39949d027ae918ac0827d10e5ee6fc7a8d6b78568e6dfc6180"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 5,
+        "digest": "ab45d2847bfbd0506897c753542022ed7ab085c80a295aef94e7aa1ee7ff9768"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 6,
+        "digest": "e00c75af8f84b1743f870e046fe1907da6dbc8d374e7f12ba918639a3175bfe6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 7,
+        "digest": "91458bc2f8d517d374067b6cc6ffd8febae64088a4e25ae3261c981acb8cfe8c"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 8,
+        "digest": "b1deace4dd923e21113740c0b29e72e2d694d088d806fa658cb39d6cd572b189"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 9,
+        "digest": "8edfaaaadc1c7c75c3ccf68caa7c437b5c8eeb8a92edcfdbbad51503b5be78a4"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 10,
+        "digest": "b1deace4dd923e21113740c0b29e72e2d694d088d806fa658cb39d6cd572b189"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "c0591c25-1007-4616-9223-68a07ee0e5a2",
+        "version": 11,
+        "digest": "8edfaaaadc1c7c75c3ccf68caa7c437b5c8eeb8a92edcfdbbad51503b5be78a4"
+      }
+    ]
+  },
+  "activePlan": null,
+  "interactionKinds": [
+    "READ",
+    "RESPONSE",
+    "READ",
+    "RESPONSE",
+    "DROP",
+    "RESPONSE",
+    "DROP",
+    "RESPONSE",
+    "READ",
+    "RESPONSE",
+    "READ",
+    "RESPONSE",
+    "READ",
+    "RESPONSE",
+    "READ",
+    "RESPONSE",
+    "READ",
+    "RESPONSE",
+    "READ",
+    "RESPONSE",
+    "READ",
+    "RESPONSE",
+    "READ",
+    "RESPONSE",
+    "READ",
+    "RESPONSE"
+  ]
+}

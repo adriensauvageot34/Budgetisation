@@ -1,0 +1,181 @@
+{
+  "environment": "ISOLATED_SYNTHETIC_FIXTURE",
+  "authenticated": false,
+  "steps": [
+    {
+      "key": "face-serum",
+      "dialogs": [
+        "    - textbox \"Rechercher une intention\":",
+        "        - textbox \"Montant mensuel de Courses\": \"325.00\"",
+        "        - textbox \"Montant mensuel de Tabac / vape\": \"60.00\"",
+        "        - textbox \"Montant mensuel de Synthetic adjustable saving\": \"100.00\"",
+        "        - textbox \"Montant mensuel de Vêtements\": \"0.00\"",
+        "        - textbox \"Montant mensuel de Maison petit\": \"0.00\"",
+        "  - dialog \"Configurer Sérum visage\":",
+        "    - heading \"Configurer Sérum visage\" [level=2]",
+        "    - button \"Fermer\" [active]:",
+        "    - textbox \"Nom de l’intention\": Sérum visage",
+        "    - textbox \"Date prévue (facultative)\""
+      ]
+    },
+    {
+      "key": "dishwasher-tablets",
+      "dialogs": [
+        "    - textbox \"Rechercher une intention\":",
+        "        - textbox \"Montant mensuel de Jeux / numérique ponctuel\": \"0.00\""
+      ]
+    },
+    {
+      "key": "sponges",
+      "dialogs": [
+        "    - textbox \"Rechercher une intention\":",
+        "        - textbox: \"325.00\"",
+        "        - textbox: \"60.00\"",
+        "        - textbox: \"100.00\"",
+        "        - textbox: \"0.00\"",
+        "        - textbox \"Montant mensuel de Maison petit\": \"0.00\"",
+        "        - textbox \"Montant mensuel de Jeux / numérique ponctuel\": \"0.00\"",
+        "- dialog \"Éponges\":",
+        "    - button \"Fermer Éponges\":"
+      ]
+    },
+    {
+      "key": "gift-present",
+      "dialogs": [
+        "    - textbox \"Rechercher une intention\":",
+        "        - textbox \"Montant mensuel de Courses\": \"325.00\"",
+        "        - textbox \"Montant mensuel de Tabac / vape\": \"60.00\"",
+        "        - textbox \"Montant mensuel de Synthetic adjustable saving\": \"100.00\"",
+        "        - textbox: \"0.00\"",
+        "        - textbox: \"0.00\"",
+        "        - textbox: \"0.00\"",
+        "  - dialog \"Configurer Cadeau\":",
+        "    - button \"Fermer\" [active]:"
+      ]
+    },
+    {
+      "key": "concert",
+      "dialogs": [
+        "    - textbox \"Rechercher une intention\":",
+        "        - textbox: \"325.00\"",
+        "        - textbox: \"60.00\"",
+        "        - textbox: \"100.00\"",
+        "        - textbox: \"0.00\"",
+        "        - textbox: \"0.00\"",
+        "        - textbox \"Montant mensuel de Jeux / numérique ponctuel\": \"0.00\"",
+        "- dialog \"Concert\":",
+        "    - button \"Fermer Concert\":"
+      ]
+    }
+  ],
+  "desktop": [
+    {
+      "documentWidth": 1440,
+      "height": 900,
+      "libraryWidth": 268,
+      "openGroups": [
+        "BEAUTY"
+      ],
+      "width": 1440
+    },
+    {
+      "documentWidth": 1728,
+      "height": 900,
+      "libraryWidth": 268,
+      "subgroups": [
+        "Choisir un achat",
+        "Acheter chez…"
+      ],
+      "width": 1728
+    },
+    {
+      "documentWidth": 1920,
+      "height": 1080,
+      "homeCount": 8,
+      "libraryWidth": 268,
+      "width": 1920
+    }
+  ],
+  "beforeReload": {
+    "digest": "8edfaaaadc1c7c75c3ccf68caa7c437b5c8eeb8a92edcfdbbad51503b5be78a4",
+    "favorites": [
+      "mascara",
+      "face-serum"
+    ],
+    "ids": [
+      "06c0595e-487a-4434-85d4-b307230124e9",
+      "3e7e5c1b-4b8a-4198-a4a8-d7e0865006e4",
+      "79beea9b-59ef-4cdd-9f4a-56cd8800d987",
+      "c178f220-c7db-44ef-80d6-2ee6cd9d59f2",
+      "c2053af7-45eb-48af-b711-d266b08352bb",
+      "e61cfb76-5368-4e54-8a52-a4cabe2f7c58",
+      "f43ff59f-1796-48ee-bd45-6f5ee234ea03"
+    ]
+  },
+  "afterReload": {
+    "digest": "8edfaaaadc1c7c75c3ccf68caa7c437b5c8eeb8a92edcfdbbad51503b5be78a4",
+    "favorites": [
+      "mascara",
+      "face-serum"
+    ],
+    "ids": [
+      "06c0595e-487a-4434-85d4-b307230124e9",
+      "3e7e5c1b-4b8a-4198-a4a8-d7e0865006e4",
+      "79beea9b-59ef-4cdd-9f4a-56cd8800d987",
+      "c178f220-c7db-44ef-80d6-2ee6cd9d59f2",
+      "c2053af7-45eb-48af-b711-d266b08352bb",
+      "e61cfb76-5368-4e54-8a52-a4cabe2f7c58",
+      "f43ff59f-1796-48ee-bd45-6f5ee234ea03"
+    ],
+    "images": [
+      {
+        "key": "stay-with-relatives",
+        "loaded": true,
+        "width": 1200
+      },
+      {
+        "key": "gift-present",
+        "loaded": true,
+        "width": 1200
+      },
+      {
+        "key": "eyeliner",
+        "loaded": true,
+        "width": 1200
+      },
+      {
+        "key": "face-serum",
+        "loaded": true,
+        "width": 1200
+      },
+      {
+        "key": "concert",
+        "loaded": true,
+        "width": 1200
+      },
+      {
+        "key": "dishwasher-tablets",
+        "loaded": true,
+        "width": 1200
+      },
+      {
+        "key": "sponges",
+        "loaded": true,
+        "width": 1200
+      }
+    ]
+  },
+  "undoChanged": true,
+  "redoRestored": true,
+  "favoritesPreserved": [
+    "mascara",
+    "face-serum"
+  ],
+  "favoritesDoNotChangeDigest": true,
+  "productionWrites": 0,
+  "limitations": [
+    "Cadeau close response expired; re-read confirmed closed, no repeated mutation",
+    "First Séjour click never dispatched; no card present on read, one subsequent click created it",
+    "Native browser actions and fixtures do not certify real authenticated persistence"
+  ]
+}
