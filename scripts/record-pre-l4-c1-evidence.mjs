@@ -15,6 +15,9 @@ for(const scenario of scenarios){
   drafts:evidence.drafts,storedControls:draft.active?.semanticState.controls??null,
   archives:draft.archives.map(archive=>({id:archive.draftId,version:archive.version,digest:archive.digest,controls:archive.semanticState.controls}))});
 }
+const recovered=snapshots.find(item=>item.scenario==='L1_L33_C1_ASYNC');
+assert.equal(recovered.drafts.active,null);assert.equal(recovered.archives.length,1);
+assert.deepEqual(recovered.archives[0].controls[0].value,{count:'16',unitAmount:'2.20'});
 fs.writeFileSync(out+'/browser-server-state.json',JSON.stringify({environment:'LOCAL_SYNTHETIC_ONLY',snapshots},null,2)+'\n');
 const bundle='outputs/pre-l4-c1-candidate',meta=JSON.parse(fs.readFileSync(bundle+'/bundle-meta.json','utf8'));
 const wanted=['composer-shell.tsx','composer-board.tsx','composer.module.css','inline-control-value.tsx','inline-edit-registry.tsx','board-carousel.tsx','visual-cluster.tsx','local-draft.ts','preview-scheduler.ts','durable-draft.ts'];

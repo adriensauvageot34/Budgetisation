@@ -1,0 +1,551 @@
+{
+  "environment": "LOCAL_SYNTHETIC_ONLY",
+  "snapshots": [
+    {
+      "scenario": "L1_L33_C1",
+      "counts": {
+        "plans": 0,
+        "revisions": 0
+      },
+      "rpcCalls": 0,
+      "remoteWrites": 0,
+      "historicalCanaryWrites": 0,
+      "reads": [
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 2,
+          "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 2,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 2,
+          "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 2,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 4,
+          "digest": "c340e0aef793e485aa5179ae0b6379baf5f5a1e4a0248b55f6efbb04dd6d76af",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 4,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 6,
+          "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 6,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 8,
+          "digest": "c340e0aef793e485aa5179ae0b6379baf5f5a1e4a0248b55f6efbb04dd6d76af",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 8,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 10,
+          "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 10,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 12,
+          "digest": "d639d667e18886bd33015a9b95a23d5cd97a1d84ab285a07c032f0b86738ac23",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 12,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "d639d667e18886bd33015a9b95a23d5cd97a1d84ab285a07c032f0b86738ac23",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 14,
+          "digest": "b790de47e880fac44c5216bff3d409ad3855873ada94987efca239815c3cf2e6",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 14,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 2,
+          "digest": "e42b160bed73b0adb2b43448749e0b570e26cec6af07e3b7c28f32e8eb331f20",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 2,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "b790de47e880fac44c5216bff3d409ad3855873ada94987efca239815c3cf2e6",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        }
+      ],
+      "drafts": {
+        "active": {
+          "id": "d05d51e7-3f7b-499a-9c90-c458e869f783",
+          "version": 8,
+          "digest": "b790de47e880fac44c5216bff3d409ad3855873ada94987efca239815c3cf2e6"
+        },
+        "archives": 0,
+        "events": [
+          {
+            "kind": "SAVE",
+            "draftId": "d05d51e7-3f7b-499a-9c90-c458e869f783",
+            "version": 1,
+            "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "d05d51e7-3f7b-499a-9c90-c458e869f783",
+            "version": 2,
+            "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "d05d51e7-3f7b-499a-9c90-c458e869f783",
+            "version": 3,
+            "digest": "c340e0aef793e485aa5179ae0b6379baf5f5a1e4a0248b55f6efbb04dd6d76af"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "d05d51e7-3f7b-499a-9c90-c458e869f783",
+            "version": 4,
+            "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "d05d51e7-3f7b-499a-9c90-c458e869f783",
+            "version": 5,
+            "digest": "c340e0aef793e485aa5179ae0b6379baf5f5a1e4a0248b55f6efbb04dd6d76af"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "d05d51e7-3f7b-499a-9c90-c458e869f783",
+            "version": 6,
+            "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "d05d51e7-3f7b-499a-9c90-c458e869f783",
+            "version": 7,
+            "digest": "d639d667e18886bd33015a9b95a23d5cd97a1d84ab285a07c032f0b86738ac23"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "d05d51e7-3f7b-499a-9c90-c458e869f783",
+            "version": 8,
+            "digest": "b790de47e880fac44c5216bff3d409ad3855873ada94987efca239815c3cf2e6"
+          }
+        ]
+      },
+      "storedControls": [
+        {
+          "decisionId": "b675a06c-5abf-4a95-8444-669de7703eba",
+          "decisionSlotKey": "HOUSEHOLD:household:groceries",
+          "kind": "SET_STATE",
+          "value": {
+            "amount": "260.00"
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        }
+      ],
+      "archives": []
+    },
+    {
+      "scenario": "L1_L33_DENSE_C1",
+      "counts": {
+        "plans": 0,
+        "revisions": 0
+      },
+      "rpcCalls": 0,
+      "remoteWrites": 0,
+      "historicalCanaryWrites": 0,
+      "reads": [
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 2,
+          "digest": "f92cd9d5b9ffe375361256cfb673ea18eab497ba6d5a1604c0c0929847b69c4f",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 2,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 4,
+          "digest": "32c8afe377ceb34afbe24c842cbe4e17d47f7d6ff33479d015a1a486667cba01",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 4,
+          "ok": true
+        }
+      ],
+      "drafts": {
+        "active": {
+          "id": "f5184cc4-ed36-4c94-a723-b9c3d9ef6877",
+          "version": 2,
+          "digest": "32c8afe377ceb34afbe24c842cbe4e17d47f7d6ff33479d015a1a486667cba01"
+        },
+        "archives": 0,
+        "events": [
+          {
+            "kind": "SAVE",
+            "draftId": "f5184cc4-ed36-4c94-a723-b9c3d9ef6877",
+            "version": 1,
+            "digest": "f92cd9d5b9ffe375361256cfb673ea18eab497ba6d5a1604c0c0929847b69c4f"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "f5184cc4-ed36-4c94-a723-b9c3d9ef6877",
+            "version": 2,
+            "digest": "32c8afe377ceb34afbe24c842cbe4e17d47f7d6ff33479d015a1a486667cba01"
+          }
+        ]
+      },
+      "storedControls": [
+        {
+          "decisionId": "b675a06c-5abf-4a95-8444-669de7703eba",
+          "decisionSlotKey": "HOUSEHOLD:household:groceries",
+          "kind": "SET_STATE",
+          "value": {
+            "amount": "340.00"
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        }
+      ],
+      "archives": []
+    },
+    {
+      "scenario": "L1_L33_C1_GROUP",
+      "counts": {
+        "plans": 0,
+        "revisions": 0
+      },
+      "rpcCalls": 0,
+      "remoteWrites": 0,
+      "historicalCanaryWrites": 0,
+      "reads": [
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 2,
+          "digest": "7027d1b3d0899060fc0a88bb643b91802ae72b14b887518cde20bd88c34d4c03",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 2,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 4,
+          "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 4,
+          "ok": true
+        }
+      ],
+      "drafts": {
+        "active": {
+          "id": "1768aa9d-5c01-4be6-b592-fab113bd0f10",
+          "version": 2,
+          "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85"
+        },
+        "archives": 0,
+        "events": [
+          {
+            "kind": "SAVE",
+            "draftId": "1768aa9d-5c01-4be6-b592-fab113bd0f10",
+            "version": 1,
+            "digest": "7027d1b3d0899060fc0a88bb643b91802ae72b14b887518cde20bd88c34d4c03"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "1768aa9d-5c01-4be6-b592-fab113bd0f10",
+            "version": 2,
+            "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85"
+          }
+        ]
+      },
+      "storedControls": [],
+      "archives": []
+    },
+    {
+      "scenario": "L1_L33_C1_ASYNC",
+      "counts": {
+        "plans": 0,
+        "revisions": 0
+      },
+      "rpcCalls": 0,
+      "remoteWrites": 0,
+      "historicalCanaryWrites": 0,
+      "reads": [
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 2,
+          "digest": "9166e9e792909ad854d4f631c750e84d484eb1d7f39058508e021f86f8365a5e",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 2,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 4,
+          "digest": "2c1002a8f36819f9ffe50835e54285bef9cfe2ad46939af034492a06a8112749",
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 6,
+          "digest": "c03da745bd5a54f6f89f1fe76ab3659daebf9eef689307927009c6bf10cd91e7",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 4,
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 6,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 8,
+          "digest": "d39bf3385cbfbea7e2959b956735cefc32edc14136bbad12fc0b75a2e1558da9",
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 10,
+          "digest": "bd3b4189813312fac327bdfdb6d497431b8e8415742c1a3ee40256a3afa05d68",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 8,
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 10,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "bd3b4189813312fac327bdfdb6d497431b8e8415742c1a3ee40256a3afa05d68",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 6,
+          "digest": "63b2ed71bfec5dacdd9505de0713b93935bce80ce3b2e076c73ed42f16bed6f3",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 6,
+          "ok": true
+        }
+      ],
+      "drafts": {
+        "active": null,
+        "archives": 1,
+        "events": [
+          {
+            "kind": "SAVE",
+            "draftId": "016fbcf4-8cce-471a-b291-13d4528401a7",
+            "version": 1,
+            "digest": "9166e9e792909ad854d4f631c750e84d484eb1d7f39058508e021f86f8365a5e"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "016fbcf4-8cce-471a-b291-13d4528401a7",
+            "version": 2,
+            "digest": "c03da745bd5a54f6f89f1fe76ab3659daebf9eef689307927009c6bf10cd91e7"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "016fbcf4-8cce-471a-b291-13d4528401a7",
+            "version": 3,
+            "digest": "d39bf3385cbfbea7e2959b956735cefc32edc14136bbad12fc0b75a2e1558da9"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "016fbcf4-8cce-471a-b291-13d4528401a7",
+            "version": 4,
+            "digest": "bd3b4189813312fac327bdfdb6d497431b8e8415742c1a3ee40256a3afa05d68"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "016fbcf4-8cce-471a-b291-13d4528401a7",
+            "version": 5,
+            "digest": "63b2ed71bfec5dacdd9505de0713b93935bce80ce3b2e076c73ed42f16bed6f3"
+          },
+          {
+            "kind": "ARCHIVE",
+            "draftId": "016fbcf4-8cce-471a-b291-13d4528401a7",
+            "version": 6,
+            "digest": "63b2ed71bfec5dacdd9505de0713b93935bce80ce3b2e076c73ed42f16bed6f3"
+          }
+        ]
+      },
+      "storedControls": null,
+      "archives": [
+        {
+          "id": "016fbcf4-8cce-471a-b291-13d4528401a7",
+          "version": 6,
+          "digest": "63b2ed71bfec5dacdd9505de0713b93935bce80ce3b2e076c73ed42f16bed6f3",
+          "controls": [
+            {
+              "decisionId": "d19e5218-0ed0-46d8-8002-2c4ffd06cd9f",
+              "decisionSlotKey": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+              "kind": "SET_STATE",
+              "value": {
+                "count": "16",
+                "unitAmount": "2.20"
+              },
+              "provenance": "EXPLICIT_USER_DECISION"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

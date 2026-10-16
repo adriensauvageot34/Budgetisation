@@ -1,0 +1,49 @@
+{
+  "productCommit": "6d9d2bee085437cfc087647b6de7d77278a098dd",
+  "mode": "production",
+  "minified": true,
+  "bundleSha256": "c20086acd6e3583803895d8492b100eafdac0fa52f79d47fa04207acec8097d5",
+  "modules": [
+    {
+      "file": "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer-board.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/inline-control-value.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/inline-edit-registry.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/visual-cluster.tsx",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/local-draft.ts",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/preview-scheduler.ts",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/durable-draft.ts",
+      "sourceMatches": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer.module.css",
+      "sourceMatches": true
+    }
+  ],
+  "comparison": "LF_NORMALIZED_SOURCE_CONTENTS"
+}

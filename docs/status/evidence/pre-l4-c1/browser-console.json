@@ -1,0 +1,22 @@
+[
+  {
+    "name": "central",
+    "errors": []
+  },
+  {
+    "name": "dense",
+    "errors": []
+  },
+  {
+    "name": "group",
+    "errors": []
+  },
+  {
+    "name": "cas",
+    "errors": []
+  },
+  {
+    "name": "lifecycle",
+    "errors": []
+  }
+]
