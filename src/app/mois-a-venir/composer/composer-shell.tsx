@@ -582,7 +582,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     || !!draftTransport && (durable.status !== "SAVED" || !durable.online || !!durable.snapshot?.baseStale);
   const openProjectionDetails = () => {
     clearHover();
-    setEditor(null); setUnresolvedOpen(false); setProjectionOpen(true);
+    setEditor(null); setUnresolvedOpen(false); setCompletenessFocus(false); setProjectionOpen(true);
   };
   const showUnresolved = () => { clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
   const navigateDecision = (targetRef: string) => { setFocusedContext(targetRef); setReveal(previous => ({ targetRef, sequence: (previous?.sequence ?? 0) + 1 })); };
