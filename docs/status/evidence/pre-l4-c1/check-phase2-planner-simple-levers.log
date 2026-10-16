@@ -1,0 +1,45 @@
+C3-001 PASS
+C3-002 PASS
+C3-003 PASS
+C3-004 PASS
+C3-005 PASS
+C3-006 PASS
+C3-007 PASS
+C3-008 PASS
+C3-009 PASS
+C3-010 PASS
+C3-011 PASS
+C3-EXTRA-HOME-BOUNDARY PASS
+C3-EXTRA-GAMES-OPTIONAL PASS
+C3-EXTRA-ADRIEN-MEAL PASS
+C3-EXTRA-NO-PAYMENT-OCCURRENCE PASS
+C3-EXTRA-EXPLICIT-MISSING-PRICE PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER/u. Input:
+
+'TypeError: COMPOSER_CONTROL_FIELD_NOT_ADMITTED'
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-simple-levers.mjs:132:56
+    at test (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-simple-levers.mjs:19:54)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-simple-levers.mjs:132:9 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: TypeError: COMPOSER_CONTROL_FIELD_NOT_ADMITTED
+      at validateControlFieldNumber (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\domain\phase2\planner\control-input.ts:39:15)
+      at C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\phase2\planner\plan-slot-resolver.ts:53:64
+      at Array.map (<anonymous>)
+      at materializePlanSlots (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\phase2\planner\plan-slot-resolver.ts:34:28)
+      at compileSemanticPlan (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\phase2\planner\compiler.ts:67:65)
+      at C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\phase2\planner\preview.ts:54:61
+      at snapshotSync (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\phase2\planner\snapshot-observation.ts:93:16)
+      at evaluate (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\phase2\planner\preview.ts:50:52)
+      at evaluatePlanScenario (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\phase2\planner\preview.ts:36:12)
+      at evaluate (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-simple-levers.mjs:16:49),
+  expected: /SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER/u,
+  operator: 'throws'
+}
+
+Node.js v22.18.0

@@ -1,0 +1,60 @@
+{
+  "testedProductCommit": "e49fe038ab75d8d117f13158abec32ca797642f2",
+  "browserUiCommit": "6d9d2bee085437cfc087647b6de7d77278a098dd",
+  "browserUiUnchangedAtTestedCommit": true,
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "D04_ADMISSION": "FIXED",
+  "D01_RAW_EDIT": "FIXED",
+  "AUTH_CYCLE": "NOT_RUN_AUTH",
+  "HISTORICAL_COMPATIBILITY": "PASS_PGLITE_SYNTHETIC_ONLY",
+  "FINANCIAL_PARITY": { "status": "EXECUTED_PASS", "cases": 22, "domainsPerCase": 9, "changedGoldens": 0, "log": "parity-final.log" },
+  "typecheck": { "exitCode": 0, "log": "typecheck-final.log" },
+  "contracts": { "exitCode": 0, "groups": 6, "log": "contracts-final.log" },
+  "kernel": { "exitCode": 0, "checks": 40, "log": "kernel-final.log" },
+  "p13": { "exitCode": 0, "checks": 8, "log": "check-phase2-planner-p13-final.log" },
+  "simpleLevers": {
+    "initialExitCode": 1,
+    "initialFailure": "Legacy integer refusal code changed by validation order",
+    "resolved": true,
+    "rerunExitCode": 0,
+    "checks": 30,
+    "log": "check-phase2-planner-simple-levers-rerun.log"
+  },
+  "otherExecutedSuites": {
+    "renewal": "EXECUTED_PASS_32",
+    "l33": "EXECUTED_PASS_11",
+    "l31": "EXECUTED_PASS_8",
+    "scheduler": "EXECUTED_PASS_5_SYNTHETIC_ONLY",
+    "draftHttp": "EXECUTED_PASS_5_LOCAL_MOCKED_SERVICE_ONLY"
+  },
+  "browser": {
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "observations": 27,
+    "draftCas": "EXECUTED_PASS_LOCAL_MOCKED_SERVER_ONLY",
+    "nativeConfirm": "NOT_RUN",
+    "nativeBeforeUnload": "NOT_RUN",
+    "nativeDrag": "NOT_RUN",
+    "productionAuthenticatedWrites": 0,
+    "newPlansInBrowserFixtures": 0,
+    "newPlanRevisionsInBrowserFixtures": 0
+  },
+  "build": {
+    "status": "EXECUTED_PASS_FULL_NEXT_VERCEL_PREVIEW_REUSED_CACHE",
+    "command": "npm run build / next build",
+    "nextVersion": "16.2.6",
+    "deploymentId": "dpl_58AdQKMVoKeLxgFMnNpw6wrMqe2o",
+    "deploymentState": "READY",
+    "target": "preview",
+    "log": "vercel-next-build-final.log"
+  },
+  "productionAfter": {
+    "sha": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+    "deploymentId": "dpl_HH6XbfcrYSbgC8eJboEi5vTE7Jxw",
+    "state": "READY",
+    "unchanged": true
+  },
+  "pr": "https://github.com/adriensauvageot34/Budgetisation/pull/50",
+  "migrationExecuted": false,
+  "productionReleaseExecuted": false,
+  "C2Started": false
+}

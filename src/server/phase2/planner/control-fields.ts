@@ -2,6 +2,10 @@ import "server-only";
 import type { AdjustmentCapability } from "@/domain/phase2/planner/adjustment-contract";
 import type { PlanningPlanSlot } from "@/domain/phase2/planner/baseline-contract";
 
+/** Raised only while materializing input, before any Apply writer. Keep this
+ * distinct from a parse/evidence failure after a successful commit. */
+export class ControlDecisionAdmissionError extends TypeError {}
+
 /** Field admission is published from the same slot capabilities used by the Compiler.
  * These are monthly decisions; no historical reference or source is changed. */
 export function monthlyOccurrenceOverride(slot: PlanningPlanSlot): boolean {

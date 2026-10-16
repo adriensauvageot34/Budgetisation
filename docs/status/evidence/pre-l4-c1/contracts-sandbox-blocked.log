@@ -1,0 +1,31 @@
+D04-SAME-OWNER-LIMITS-ALL-NEW-DECISION-PATHS PASS
+FLOORS-PROTECTED-SAVINGS-CONDITIONAL-RENEWAL PASS
+node:internal/child_process:1120
+    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);
+                   ^
+
+<ref *1> Error: spawnSync git EPERM
+    at Object.spawnSync (node:internal/child_process:1120:20)
+    at spawnSync (node:child_process:901:24)
+    at execFileSync (node:child_process:944:15)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-pre-l4-c1.mjs:90:22
+    at check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-pre-l4-c1.mjs:27:62)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-pre-l4-c1.mjs:85:8 {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'spawnSync git',
+  path: 'git',
+  spawnargs: [
+    'show',
+    '0e7c892184391f5b434d2d926dbb6e1c60092ce5:src/server/phase2/planner/plan-slot-resolver.ts'
+  ],
+  error: [Circular *1],
+  status: null,
+  signal: null,
+  output: null,
+  pid: 0,
+  stdout: undefined,
+  stderr: undefined
+}
+
+Node.js v22.18.0

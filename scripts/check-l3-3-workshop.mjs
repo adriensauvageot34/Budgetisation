@@ -126,7 +126,11 @@ try {
  });
  await check('L33-SCOPE-EXACT-OWNER-ALLOWLIST' ,()=>{
   const allowed=new Set(['src/domain/phase2/planner/adjustment-contract.ts','src/domain/phase2/planner/composer-contract.ts','src/domain/phase2/planner/control-input.ts','src/domain/phase2/planner/month-reuse.ts',
-   'src/server/phase2/planner/control-fields.ts','src/server/phase2/planner/balance-assistant.ts','src/server/phase2/planner/composer-service.ts','src/server/phase2/planner/constraint-engine.ts','src/server/phase2/planner/plan-slot-resolver.ts','src/server/phase2/planner/read-model.ts']);
+   'src/server/phase2/planner/control-fields.ts','src/server/phase2/planner/balance-assistant.ts','src/server/phase2/planner/composer-service.ts','src/server/phase2/planner/constraint-engine.ts','src/server/phase2/planner/plan-slot-resolver.ts','src/server/phase2/planner/read-model.ts',
+   // PRE-L4 C1: exact server admission and immutable historical-read paths.
+   'src/server/phase2/planner/historical-control-admission.ts','src/server/phase2/planner/apply.ts','src/server/phase2/planner/compiler.ts',
+   'src/server/phase2/planner/preview.ts','src/server/phase2/planner/draft-reader.ts','src/server/phase2/planner/effective-month-scenario.ts',
+   'src/server/phase2/planner/effective-simulation.ts','src/server/phase2/planner/world-reader.ts','src/server/phase2/planner/prospective-mobility-pricing.ts']);
   const changed=execFileSync('git',['diff',base,'--name-only','--','src/server','src/domain','supabase','src/app/mois-a-venir/composer/durable-draft.ts','src/app/mois-a-venir/composer/preview-scheduler.ts'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
   assert.deepEqual(changed.filter(f=>!allowed.has(f)),[]);
  });

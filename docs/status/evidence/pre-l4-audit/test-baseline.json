@@ -1,0 +1,117 @@
+{
+  "productBase": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+  "provenance": "INHERITED_L33; no full regression rerun in A0",
+  "suites": [
+    {
+      "file": "check-l2b-library.mjs",
+      "exitCode": 0,
+      "elapsedMs": 80685
+    },
+    {
+      "file": "check-phase2-planner-simple-levers.mjs",
+      "exitCode": 0,
+      "elapsedMs": 14701
+    },
+    {
+      "file": "check-phase2-planner-renewals.mjs",
+      "exitCode": 0,
+      "elapsedMs": 20450
+    },
+    {
+      "file": "check-phase2-planner-composer.mjs",
+      "exitCode": 0,
+      "elapsedMs": 52702
+    },
+    {
+      "file": "check-phase2-planner-p13.mjs",
+      "exitCode": 0,
+      "elapsedMs": 24534
+    },
+    {
+      "file": "check-phase2-planner-kernel.mjs",
+      "exitCode": 0,
+      "elapsedMs": 24278
+    },
+    {
+      "file": "check-composer-post-snap3-draft-http.mjs",
+      "exitCode": 0,
+      "elapsedMs": 935
+    },
+    {
+      "file": "check-composer-p14-p2-scheduler.mjs",
+      "exitCode": 0,
+      "elapsedMs": 4648
+    },
+    {
+      "file": "check-planner-performance-parity.mjs",
+      "exitCode": 0,
+      "elapsedMs": 7724
+    },
+    {
+      "file": "check-l1-restaurant.mjs",
+      "exitCode": 0,
+      "elapsedMs": 35390
+    },
+    {
+      "file": "check-l2a-presets.mjs",
+      "exitCode": 0,
+      "elapsedMs": 48523
+    },
+    {
+      "file": "check-l3-2-library.mjs",
+      "exitCode": 0,
+      "elapsedMs": 46985
+    },
+    {
+      "file": "check-l3-1-ux.mjs",
+      "exitCode": 0,
+      "elapsedMs": 3166
+    },
+    {
+      "file": "check-l3-workshop.mjs",
+      "exitCode": 0,
+      "elapsedMs": 2613
+    },
+    {
+      "file": "check-composer-r6-presentation.mjs",
+      "exitCode": 0,
+      "elapsedMs": 7204
+    }
+  ],
+  "allInheritedPass": true,
+  "parityScenarios": 22,
+  "hashesPerScenario": 9,
+  "previousChange": "22 capabilities only; other 176 hashes identical",
+  "l2bLimit": "REMAINING_ONLY: six checks rerun L33; not a new replay of all26 earlier loops",
+  "goldenAndContracts": [
+    {
+      "file": "scripts/fixtures/planner-performance-parity.json",
+      "sha256": "be460de231ed54b89c58d07e4a081828ca6c99976f5c0551555c7fe52224ce2c"
+    },
+    {
+      "file": "scripts/check-l3-3-workshop.mjs",
+      "sha256": "0e3c7faf42a0945b6f30a01c50aca734b93330d3affec467fd9c49069ee387c1"
+    },
+    {
+      "file": "docs/status/evidence/l3-3-composer-workshop/golden-capability-delta.json",
+      "sha256": "caeeafde7763f9fc3d01db63ecffacbe44f1f6d6f6a907f50bf86b9ce6a56608"
+    },
+    {
+      "file": "src/domain/phase2/planner/adjustment-contract.ts",
+      "sha256": "cecf35a9e6ea110e6cc6c1490b7a9cd5051c42d0a4c2fa50282fa2451b9e45ef"
+    },
+    {
+      "file": "src/domain/phase2/planner/composer-draft-contract.ts",
+      "sha256": "e0646685bf9fa86b9e2c5bec6c4c46011c016c0ab23c4db16f4f8ad22d1f4e44"
+    },
+    {
+      "file": "src/server/phase2/planner/context-registry.ts",
+      "sha256": "8f6ab6b3a5955644309419342913051d8991c8b84c5fe062d9a59e025aa65847"
+    }
+  ],
+  "build": {
+    "localWebpack": "PREEXISTING_FAIL_NODE_CRYPTO",
+    "normalNextVercel": "INHERITED_EXECUTED_PASS_FULL_NEXT_READY",
+    "newA0Build": "NOT_RUN_PRODUCT_UNCHANGED"
+  }
+}

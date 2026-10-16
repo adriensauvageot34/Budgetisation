@@ -1,5 +1,6 @@
 import "server-only";
 import { validateControlValue } from "@/domain/phase2/planner/control-input";
+import { ControlDecisionAdmissionError } from "./control-fields";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
@@ -361,7 +362,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     return { ok: true, sequence: request.sequence, model: await composerUiModel(deps, household, next), suggestions, mutationKind, interactionImpact };
   } catch (error) {
     const code = error instanceof TypeError ? error.message : "COMPOSER_UNAVAILABLE";
-    if (request.kind === "APPLY" && ![
+    if (request.kind === "APPLY" && !(error instanceof ControlDecisionAdmissionError) && ![
       "PLANNER_IDEMPOTENCY_CONFLICT", "PLANNER_ACTIVE_REVISION_STALE", "PLANNER_PREVIEW_STALE",
       "PLANNER_APPLY_BLOCKED", "PLANNER_PAST_MONTH_READ_ONLY", "PLANNER_EXPECTED_BASE_INVALID",
       "COMPOSER_DRAFT_REQUIRED", "PLANNER_DRAFT_MONTH_INVALID", "CONTEXT_REFERENCE_OWNER_UNAVAILABLE",

@@ -1,0 +1,18 @@
+{
+  "environment": "PRODUCTION_AUTHENTICATED_READ_ONLY",
+  "deployment": "dpl_HH6XbfcrYSbgC8eJboEi5vTE7Jxw",
+  "commit": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+  "inlineOpenCancel": "EXECUTED_PASS",
+  "semanticWriteActions": 0,
+  "applyActions": 0,
+  "metadata": {
+    "applyDisabled": true,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "hasBoard": true,
+    "hasCharges": true,
+    "inlineDirty": false,
+    "preview": "BLOCKED",
+    "revision": "0",
+    "save": "CLEAN"
+  }
+}

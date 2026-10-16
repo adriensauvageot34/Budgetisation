@@ -1,0 +1,85 @@
+{
+  "pr": "https://github.com/adriensauvageot34/Budgetisation/pull/49",
+  "testedHead": "1ec932d99d687ef057d81f15e7ea3a68fca902be",
+  "merge": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+  "preview": {
+    "id": "dpl_ChTQuVkMqaU5MpEtgKSMXK3gKy8j",
+    "name": "budgetisation",
+    "url": "budgetisation-nhsu9g28b-adriensauvageot34-6137s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1792156004599,
+    "creator": {
+      "uid": "ItlVoi62mpJ28TeqsxO3j569",
+      "username": "adriensauvageot34-6137"
+    },
+    "project": {
+      "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+      "name": "budgetisation",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "codex/composer-v3-l3-3-finalize-workshop",
+      "githubCommitSha": "1ec932d99d687ef057d81f15e7ea3a68fca902be",
+      "githubCommitMessage": "test(composer): document L3.3 desktop evidence and release limits",
+      "githubRepo": "Budgetisation",
+      "githubOrg": "adriensauvageot34"
+    },
+    "alias": [
+      "budgetisation-git-codex-4b5a55-adriensauvageot34-6137s-projects.vercel.app"
+    ],
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1792156006339,
+    "ready": 1792156123106,
+    "readyState": "READY",
+    "source": "git",
+    "aliasError": null
+  },
+  "production": {
+    "id": "dpl_HH6XbfcrYSbgC8eJboEi5vTE7Jxw",
+    "name": "budgetisation",
+    "url": "budgetisation-l6iy67uy8-adriensauvageot34-6137s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1792156148295,
+    "creator": {
+      "uid": "ItlVoi62mpJ28TeqsxO3j569",
+      "username": "adriensauvageot34-6137"
+    },
+    "project": {
+      "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+      "name": "budgetisation",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "main",
+      "githubCommitSha": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+      "githubCommitMessage": "Merge pull request #49: L3.3 Composer workshop finalization\n\nL3.3 — édition directe et finalisation de l’atelier Composer",
+      "githubRepo": "Budgetisation",
+      "githubOrg": "adriensauvageot34"
+    },
+    "alias": [
+      "budgetisation-tan.vercel.app",
+      "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+      "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+    ],
+    "target": "production",
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1792156149293,
+    "ready": 1792156251698,
+    "readyState": "READY",
+    "source": "git",
+    "aliasError": null
+  },
+  "productTreeEqual": true,
+  "workflowRuns": 0,
+  "externalReviews": 0,
+  "productionConsoleErrorsObserved": 0,
+  "productionSmoke": "EXECUTED_PASS_AUTHENTICATED_READ_ONLY",
+  "verdict": "L3_3_RELEASED_WITH_VALIDATION_LIMITATIONS"
+}

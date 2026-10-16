@@ -1,0 +1,298 @@
+{
+  "environment": "PGLITE_SYNTHETIC_ONLY",
+  "authenticated": false,
+  "checks": [
+    {
+      "name": "D04-SAME-OWNER-LIMITS-ALL-NEW-DECISION-PATHS",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "FLOORS-PROTECTED-SAVINGS-CONDITIONAL-RENEWAL",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "HISTORICAL-10000-IMMUTABLE-READ-NOT-NEW-APPLY",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "INLINE-IDENTITY-PENDING-ONCE-AND-DISCARD-CONTRACT",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "WRITER-ERROR-WITH-SAME-CODE-REMAINS-UNCONFIRMED",
+      "status": "EXECUTED_PASS"
+    },
+    {
+      "name": "FINANCIAL-CANARIES-UNCHANGED",
+      "status": "EXECUTED_PASS"
+    }
+  ],
+  "matrix": [
+    {
+      "name": "HOUSEHOLD-count-9999",
+      "value": {
+        "count": "9999"
+      },
+      "scope": {
+        "kind": "HOUSEHOLD"
+      },
+      "mutate": "ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "READY_WITH_WARNINGS",
+      "preview": "READY_WITH_WARNINGS",
+      "apply": "APPLIED",
+      "rpcCalls": 1
+    },
+    {
+      "name": "HOUSEHOLD-count-10000",
+      "value": {
+        "count": "10000"
+      },
+      "scope": {
+        "kind": "HOUSEHOLD"
+      },
+      "mutate": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "materialize": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "read": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "preview": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "apply": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "rpcCalls": 0
+    },
+    {
+      "name": "HOUSEHOLD-fraction",
+      "value": {
+        "count": "1.5"
+      },
+      "scope": {
+        "kind": "HOUSEHOLD"
+      },
+      "mutate": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "materialize": "SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER",
+      "read": "SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER",
+      "preview": "SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER",
+      "apply": "SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER",
+      "rpcCalls": 0
+    },
+    {
+      "name": "HOUSEHOLD-zero",
+      "value": {
+        "count": "0"
+      },
+      "scope": {
+        "kind": "HOUSEHOLD"
+      },
+      "mutate": "ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "READY_WITH_WARNINGS",
+      "preview": "READY_WITH_WARNINGS",
+      "apply": "APPLIED",
+      "rpcCalls": 1
+    },
+    {
+      "name": "PERSON-count-price",
+      "value": {
+        "count": "12",
+        "unitAmount": "2.10"
+      },
+      "scope": {
+        "kind": "PERSON",
+        "personId": "22222222-2222-4222-8222-222222222222"
+      },
+      "mutate": "ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "READY_WITH_WARNINGS",
+      "preview": "READY_WITH_WARNINGS",
+      "apply": "APPLIED",
+      "rpcCalls": 1
+    },
+    {
+      "name": "PERSON-10000",
+      "value": {
+        "count": "10000"
+      },
+      "scope": {
+        "kind": "PERSON",
+        "personId": "22222222-2222-4222-8222-222222222222"
+      },
+      "mutate": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "materialize": "PLANNER_OCCURRENCE_COUNT_INVALID",
+      "read": "PLANNER_OCCURRENCE_COUNT_INVALID",
+      "preview": "PLANNER_OCCURRENCE_COUNT_INVALID",
+      "apply": "PLANNER_OCCURRENCE_COUNT_INVALID",
+      "rpcCalls": 0
+    },
+    {
+      "name": "PERSON-legacy-count-only",
+      "value": {
+        "count": "2"
+      },
+      "scope": {
+        "kind": "PERSON",
+        "personId": "22222222-2222-4222-8222-222222222222"
+      },
+      "mutate": "ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "READY_WITH_WARNINGS",
+      "preview": "READY_WITH_WARNINGS",
+      "apply": "APPLIED",
+      "rpcCalls": 1
+    },
+    {
+      "name": "UNKNOWN-price-positive-count",
+      "value": {
+        "count": "2"
+      },
+      "scope": {
+        "kind": "PERSON",
+        "personId": "22222222-2222-4222-8222-222222222222"
+      },
+      "mutate": "ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "BLOCKED",
+      "preview": "BLOCKED",
+      "apply": "PLANNER_APPLY_BLOCKED",
+      "rpcCalls": 0
+    },
+    {
+      "name": "UNKNOWN-price-zero-count",
+      "value": {
+        "count": "0"
+      },
+      "scope": {
+        "kind": "PERSON",
+        "personId": "22222222-2222-4222-8222-222222222222"
+      },
+      "mutate": "ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "READY_WITH_WARNINGS",
+      "preview": "READY_WITH_WARNINGS",
+      "apply": "APPLIED",
+      "rpcCalls": 1
+    },
+    {
+      "name": "UNKNOWN-price-explicit-price",
+      "value": {
+        "count": "2",
+        "unitAmount": "1.80"
+      },
+      "scope": {
+        "kind": "PERSON",
+        "personId": "22222222-2222-4222-8222-222222222222"
+      },
+      "mutate": "ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "READY_WITH_WARNINGS",
+      "preview": "READY_WITH_WARNINGS",
+      "apply": "APPLIED",
+      "rpcCalls": 1
+    },
+    {
+      "name": "UNKNOWN-count-no-decision",
+      "read": "ADMITTED_REFERENCE_UNKNOWN",
+      "explicitDecision": false
+    },
+    {
+      "name": "Noneditable-unit-price",
+      "value": {
+        "count": "2",
+        "unitAmount": "1.80"
+      },
+      "scope": {
+        "kind": "HOUSEHOLD"
+      },
+      "mutate": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "materialize": "PLANNER_FIELDS_INVALID",
+      "read": "PLANNER_FIELDS_INVALID",
+      "preview": "PLANNER_FIELDS_INVALID",
+      "apply": "PLANNER_FIELDS_INVALID",
+      "rpcCalls": 0
+    },
+    {
+      "name": "Floor-allowed",
+      "value": {
+        "amount": "100.00"
+      },
+      "scope": {
+        "kind": "HOUSEHOLD"
+      },
+      "mutate": "ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "READY_WITH_WARNINGS",
+      "preview": "READY_WITH_WARNINGS",
+      "apply": "APPLIED",
+      "rpcCalls": 1
+    },
+    {
+      "name": "Floor-refused",
+      "value": {
+        "amount": "99.00"
+      },
+      "scope": {
+        "kind": "HOUSEHOLD"
+      },
+      "mutate": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "BLOCKED",
+      "preview": "BLOCKED",
+      "apply": "PLANNER_APPLY_BLOCKED",
+      "rpcCalls": 0
+    },
+    {
+      "name": "Protected-savings",
+      "value": {
+        "amount": "0.00"
+      },
+      "scope": {
+        "kind": "SAVINGS"
+      },
+      "mutate": "COMPOSER_CONTROL_LOCKED",
+      "materialize": "ADMITTED",
+      "read": "BLOCKED",
+      "preview": "BLOCKED",
+      "apply": "PLANNER_APPLY_BLOCKED",
+      "rpcCalls": 0
+    },
+    {
+      "name": "Conditional-renewal-over-one",
+      "value": {
+        "count": "2"
+      },
+      "scope": {
+        "kind": "PERSON",
+        "personId": "22222222-2222-4222-8222-222222222222"
+      },
+      "mutate": "COMPOSER_CONTROL_FIELD_NOT_ADMITTED",
+      "materialize": "RENEWAL_OCCURRENCE_COUNT_INVALID",
+      "read": "RENEWAL_OCCURRENCE_COUNT_INVALID",
+      "preview": "RENEWAL_OCCURRENCE_COUNT_INVALID",
+      "apply": "RENEWAL_OCCURRENCE_COUNT_INVALID",
+      "rpcCalls": 0
+    },
+    {
+      "name": "Conditional-renewal-zero",
+      "value": {
+        "count": "0"
+      },
+      "scope": {
+        "kind": "PERSON",
+        "personId": "22222222-2222-4222-8222-222222222222"
+      },
+      "mutate": "ADMITTED",
+      "materialize": "ADMITTED",
+      "read": "READY_WITH_WARNINGS",
+      "preview": "READY_WITH_WARNINGS",
+      "apply": "APPLIED",
+      "rpcCalls": 1
+    },
+    {
+      "name": "Immutable-history-10000",
+      "officialRead": "PASS_EXACT",
+      "rawDraftRead": "REFUSED",
+      "newApply": "REFUSED",
+      "oldRequestReplay": "PASS_NO_WRITE",
+      "forgedProof": "REFUSED",
+      "changedControl": "REFUSED"
+    }
+  ],
+  "remoteCalls": 0
+}

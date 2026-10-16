@@ -8,7 +8,8 @@ import type { PlannedExpense } from "../planned-expenses";
 import type { MonthChoiceContext } from "../month-choices";
 import type { EffectiveMonthDependencies, DirectMonthFacts } from "./effective-month-scenario";
 import { assertRevisionEvidence } from "./revision-evidence";
-import { evaluatePlanScenario, evaluatePlanMutation } from "./preview";
+import { evaluateHistoricalPlanScenario } from "./preview";
+import { historicalControlAdmission } from "./historical-control-admission";
 import { slotReferenceKeys } from "./plan-slot-resolver";
 import type { CompiledPlanSlot } from "@/domain/phase2/planner/compiler-contract";
 import type { PlanReadRepository } from "./repository";
@@ -27,8 +28,8 @@ export function planEffectiveSimulation(stored: StoredPlan, world: PlanningWorld
     const digest = key(inputs, expenses);
     let result = cache.get(digest);
     if (!result) {
-      result = evaluatePlanMutation({...world,monthInputs:inputs,externalIntents:expenses}, revision.semanticState,
-        {expectedActiveRevisionId:revision.planRevisionId,expectedActiveRevisionNumber:revision.revisionNumber});
+      result = evaluateHistoricalPlanScenario({...world,monthInputs:inputs,externalIntents:expenses}, revision,
+        {expectedActiveRevisionId:revision.planRevisionId,expectedActiveRevisionNumber:revision.revisionNumber}, false);
       cache.set(digest,result);
     }
     return {scenario:result.scenario,economicKnown:result.projection.plan.economicMonthEndRemainder !== null,preview:result};
@@ -85,8 +86,8 @@ export async function loadEffectiveMonthSimulation(deps: EffectiveMonthDependenc
   assertRevisionEvidence(revision);
   const read=await deps.readWorld(household,month);
   if(read.baseline.householdId!==household||read.baseline.targetMonth!==month||read.forecast.meta.targetMonth!==month)throw new TypeError("PLANNED_EFFECTIVE_SCOPE_INVALID");
-  const world=deps.prepareWorld?await deps.prepareWorld(read,revision.semanticState):read;
-  const current=evaluatePlanScenario(world,revision.semanticState,{expectedActiveRevisionId:revision.planRevisionId,expectedActiveRevisionNumber:revision.revisionNumber});
+  const world=deps.prepareWorld?await deps.prepareWorld(read,revision.semanticState,historicalControlAdmission(revision)):read;
+  const current=evaluateHistoricalPlanScenario(world,revision,{expectedActiveRevisionId:revision.planRevisionId,expectedActiveRevisionNumber:revision.revisionNumber});
   if(current.compiledManifestDigest===revision.compiledManifestDigest&&current.projectionDigest!==revision.projectionEvidence.projectionDigest)
     throw new TypeError("PLANNER_IMMEDIATE_RELOAD_DIVERGED");
   return planEffectiveSimulation(stored,world,current,deps.repository);

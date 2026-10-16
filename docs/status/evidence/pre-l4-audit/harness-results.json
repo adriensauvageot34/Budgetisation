@@ -1,0 +1,14 @@
+{
+  "contractAssertions": {
+    "executed": 7,
+    "passed": 7,
+    "proof": "targeted-contracts.json"
+  },
+  "initialProcessExit": 1,
+  "initialProcessFailure": "Metadata fingerprint collector spawnSync git EPERM AFTER all7PASS",
+  "repair": "Filesystem-only collector; fingerprints-only command exit0",
+  "reranSuccessfulAssertions": false,
+  "admissionProbe": "CONFIRMED_DEFECT_D04",
+  "productMutations": 0,
+  "remoteIO": "Only Vercel read metadata and existing authenticated DOM; no database SQL scan or write"
+}

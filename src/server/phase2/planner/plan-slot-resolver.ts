@@ -9,10 +9,12 @@ import type { ComponentRequest, CompiledComponent, CompiledPlanSlot, BaselineCon
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ContextualEffect } from "@/domain/phase2/planner/component-contract";
 import { compare, emptyValue } from "./baseline-evidence";
-import { allowsUnitOverride, monthlyOccurrenceOverride } from "./control-fields";
+import { allowsUnitOverride, monthlyOccurrenceOverride, controlFields, ControlDecisionAdmissionError } from "./control-fields";
+import { validateControlFieldNumber } from "@/domain/phase2/planner/control-input";
+import { isHistoricalControl, type HistoricalControlAdmission } from "./historical-control-admission";
 
 const cents = (value: Big): string => value.toFixed(2);
-export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSemanticStateV1, forced: readonly string[] = []): CompiledPlanSlot[] {
+export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSemanticStateV1, forced: readonly string[] = [], historical?: HistoricalControlAdmission): CompiledPlanSlot[] {
   const slots: PlanningPlanSlot[] = [...baseline.slots, ...baseline.structuralFacts.savingsReservations.filter(r => r.reservationId !== "policy:safety-reserve").map(r => {
     const key = `savings:${r.reservationId}`;
     return { planSlotId: planSlotId(key), slotIdentityKey: key, controlKey: key, semanticKey: key, kind: "AMOUNT" as const, scope: { kind: "HOUSEHOLD" as const },
@@ -30,19 +32,33 @@ export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSe
     if (decision) {
       if (assigned.has(decision.decisionSlotKey)) throw new TypeError("PLANNER_CONTROL_TARGET_AMBIGUOUS");
       assigned.add(decision.decisionSlotKey);
-      const action = slot.kind === "AMOUNT" ? "SET_AMOUNT" : "SET_COUNT";
-      const protectedSaving = slot.slotIdentityKey.startsWith("savings:") && !slot.capabilities.length;
-      if (!protectedSaving && !slot.capabilities.some(c => c.action === action && c.availability === "AVAILABLE")) throw new TypeError("PLANNER_SLOT_CONTROL_UNAVAILABLE");
-      const allowPriceInput = allowsUnitOverride(slot);
-      plannerKeys(plannerRecord(decision.value), slot.kind === "AMOUNT" ? ["amount"] : allowPriceInput ? ["count", "unitAmount"] : ["count"],
-        slot.kind === "AMOUNT" ? ["amount"] : ["count"]);
-      if (slot.simpleAuthority && slot.kind !== "AMOUNT" && !new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))) throw new TypeError("SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER");
-      if (monthlyOccurrenceOverride(slot)) {
-        const count = new Big(decisionAmount(decision.value.count));
-        if (!count.round(0).eq(count) || count.gt(9999)) throw new TypeError("PLANNER_OCCURRENCE_COUNT_INVALID");
+      try {
+        const action = slot.kind === "AMOUNT" ? "SET_AMOUNT" : "SET_COUNT";
+        const protectedSaving = slot.slotIdentityKey.startsWith("savings:") && !slot.capabilities.length;
+        if (!protectedSaving && !slot.capabilities.some(c => c.action === action && c.availability === "AVAILABLE")) throw new TypeError("PLANNER_SLOT_CONTROL_UNAVAILABLE");
+        const allowPriceInput = allowsUnitOverride(slot);
+        plannerKeys(plannerRecord(decision.value), slot.kind === "AMOUNT" ? ["amount"] : allowPriceInput ? ["count", "unitAmount"] : ["count"],
+          slot.kind === "AMOUNT" ? ["amount"] : ["count"]);
+        if (slot.simpleAuthority && slot.kind !== "AMOUNT" && !new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))) throw new TypeError("SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER");
+        if (monthlyOccurrenceOverride(slot)) {
+          const count = new Big(decisionAmount(decision.value.count));
+          if (!count.round(0).eq(count) || count.gt(9999)) throw new TypeError("PLANNER_OCCURRENCE_COUNT_INVALID");
+        }
+        if (slot.renewalAuthority && (!new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))
+          || slot.renewalAuthority.conditional && new Big(decisionAmount(decision.value.count)).gt(1))) throw new TypeError("RENEWAL_OCCURRENCE_COUNT_INVALID");
+        // Use the published owner fields for every new occurrence decision, even
+        // when the caller submits an entire Draft rather than a SET_STATE mutation.
+        // Keep legacy refusal codes above. Amount floors and protected savings
+        // retain their existing BLOCK constraints.
+        if (slot.kind !== "AMOUNT" && !isHistoricalControl(historical, baseline.householdId, baseline.targetMonth, decision)) {
+          const fields = controlFields(slot, false)!;
+          validateControlFieldNumber(fields.count, decision.value.count);
+          if (decision.value.unitAmount !== undefined) validateControlFieldNumber(fields.unitAmount, decision.value.unitAmount);
+        }
+      } catch (error) {
+        if (error instanceof TypeError) throw new ControlDecisionAdmissionError(error.message);
+        throw error;
       }
-      if (slot.renewalAuthority && (!new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))
-        || slot.renewalAuthority.conditional && new Big(decisionAmount(decision.value.count)).gt(1))) throw new TypeError("RENEWAL_OCCURRENCE_COUNT_INVALID");
       pending.delete(decision.decisionSlotKey);
     }
     const effectiveAmount = slot.kind === "AMOUNT" ? decision ? decisionAmount(decision.value.amount) : slot.baselineValue.amount : null;

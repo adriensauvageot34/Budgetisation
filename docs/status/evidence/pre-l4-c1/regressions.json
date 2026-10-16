@@ -1,0 +1,47 @@
+[
+  {
+    "file": "check-phase2-planner-simple-levers.mjs",
+    "exitCode": 1,
+    "elapsedMs": 13643
+  },
+  {
+    "file": "check-phase2-planner-renewals.mjs",
+    "exitCode": 0,
+    "elapsedMs": 17758
+  },
+  {
+    "file": "check-phase2-planner-kernel.mjs",
+    "exitCode": 0,
+    "elapsedMs": 25258
+  },
+  {
+    "file": "check-phase2-planner-p13.mjs",
+    "exitCode": 0,
+    "elapsedMs": 21826
+  },
+  {
+    "file": "check-composer-post-snap3-draft-http.mjs",
+    "exitCode": 0,
+    "elapsedMs": 651
+  },
+  {
+    "file": "check-composer-p14-p2-scheduler.mjs",
+    "exitCode": 0,
+    "elapsedMs": 2547
+  },
+  {
+    "file": "check-l3-3-workshop.mjs",
+    "exitCode": 0,
+    "elapsedMs": 10000
+  },
+  {
+    "file": "check-planner-performance-parity.mjs",
+    "exitCode": 0,
+    "elapsedMs": 3378
+  },
+  {
+    "file": "check-l3-1-ux.mjs",
+    "exitCode": 0,
+    "elapsedMs": 2956
+  }
+]

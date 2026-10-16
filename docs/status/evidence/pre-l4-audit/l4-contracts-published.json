@@ -1,0 +1,1387 @@
+[
+  {
+    "preset": {
+      "presetKey": "techno-night",
+      "label": "Soirée techno",
+      "templateKey": "night-out",
+      "categoryKey": "SOCIAL",
+      "illustrationKey": "techno-night",
+      "searchTerms": [
+        "techno",
+        "club",
+        "musique",
+        "soirée"
+      ],
+      "defaults": {
+        "label": "Soirée techno"
+      },
+      "questions": [
+        "Entrée",
+        "Boissons",
+        "Before",
+        "Repas",
+        "Aller et retour"
+      ],
+      "guidance": "Entrée, boissons, before ou transport : ajoutez seulement ce que vous prévoyez. Une bouteille partagée reste un seul coût."
+    },
+    "template": {
+      "templateKey": "night-out",
+      "label": "Soirée",
+      "family": "SOCIAL",
+      "version": "night-out@v1",
+      "fields": [
+        {
+          "fieldKey": "label",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "plannedDate",
+          "kind": "DATE",
+          "required": false
+        },
+        {
+          "fieldKey": "fieldSchemaVersion",
+          "kind": "CHOICE",
+          "required": false,
+          "choices": [
+            "context-fields@v2",
+            "context-fields@v3"
+          ]
+        },
+        {
+          "fieldKey": "endDate",
+          "kind": "DATE",
+          "required": false
+        },
+        {
+          "fieldKey": "participantRefs",
+          "kind": "PERSON_REFS",
+          "required": false
+        },
+        {
+          "fieldKey": "placeRef",
+          "kind": "PLACE_REF",
+          "required": false
+        },
+        {
+          "fieldKey": "timingNote",
+          "kind": "TEXT",
+          "required": false
+        }
+      ],
+      "componentSlots": [
+        {
+          "slotKey": "before",
+          "role": "before",
+          "cardinality": "OPTIONAL_ONE",
+          "optionSource": "CHILD_CONTEXT",
+          "options": [
+            {
+              "optionKey": "before",
+              "label": "Before",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": [
+            "activity",
+            "friend-visit"
+          ]
+        },
+        {
+          "slotKey": "main",
+          "role": "main",
+          "cardinality": "REQUIRED_ONE",
+          "optionSource": "CHILD_CONTEXT",
+          "options": [
+            {
+              "optionKey": "main",
+              "label": "Entrée ou événement",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": [
+            "activity"
+          ]
+        },
+        {
+          "slotKey": "food",
+          "role": "food",
+          "cardinality": "OPTIONAL_ONE",
+          "optionSource": "CHILD_CONTEXT",
+          "options": [
+            {
+              "optionKey": "restaurant",
+              "label": "restaurant",
+              "kind": "COMPONENT",
+              "baselineDomain": "restaurants",
+              "bindingPolicy": "CERTAIN_DOMAIN"
+            },
+            {
+              "optionKey": "fast-food",
+              "label": "fast-food",
+              "kind": "COMPONENT",
+              "baselineDomain": "fast-food",
+              "bindingPolicy": "CERTAIN_DOMAIN"
+            },
+            {
+              "optionKey": "delivery",
+              "label": "delivery",
+              "kind": "COMPONENT",
+              "baselineDomain": "delivery",
+              "bindingPolicy": "CERTAIN_DOMAIN"
+            }
+          ],
+          "allowedChildTemplates": [
+            "restaurant",
+            "fast-food",
+            "delivery"
+          ]
+        },
+        {
+          "slotKey": "outbound",
+          "role": "outbound",
+          "cardinality": "OPTIONAL_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "car",
+              "label": "CAR",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "CAR"
+            },
+            {
+              "optionKey": "train",
+              "label": "TRAIN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TRAIN"
+            },
+            {
+              "optionKey": "bus",
+              "label": "BUS",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "BUS"
+            },
+            {
+              "optionKey": "taxi",
+              "label": "TAXI",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TAXI"
+            },
+            {
+              "optionKey": "free",
+              "label": "FREE",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "FREE"
+            },
+            {
+              "optionKey": "other",
+              "label": "OTHER",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "OTHER"
+            },
+            {
+              "optionKey": "unknown",
+              "label": "UNKNOWN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "UNKNOWN"
+            }
+          ],
+          "allowedChildTemplates": [],
+          "mobilityRole": "PRIMARY"
+        },
+        {
+          "slotKey": "return",
+          "role": "return",
+          "cardinality": "OPTIONAL_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "car",
+              "label": "CAR",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "CAR"
+            },
+            {
+              "optionKey": "train",
+              "label": "TRAIN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TRAIN"
+            },
+            {
+              "optionKey": "bus",
+              "label": "BUS",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "BUS"
+            },
+            {
+              "optionKey": "taxi",
+              "label": "TAXI",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TAXI"
+            },
+            {
+              "optionKey": "free",
+              "label": "FREE",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "FREE"
+            },
+            {
+              "optionKey": "other",
+              "label": "OTHER",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "OTHER"
+            },
+            {
+              "optionKey": "unknown",
+              "label": "UNKNOWN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "UNKNOWN"
+            }
+          ],
+          "allowedChildTemplates": [],
+          "mobilityRole": "RETURN"
+        },
+        {
+          "slotKey": "extras",
+          "role": "extras",
+          "cardinality": "REPEATING",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "extra",
+              "label": "Vestiaire, boissons ou complément",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": []
+        }
+      ],
+      "capabilities": [
+        {
+          "slotKey": "before",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "before"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "before",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "ATTACH_CHILD_CONTEXT",
+          "optionKeys": [],
+          "childTemplateKeys": [
+            "activity",
+            "friend-visit"
+          ]
+        },
+        {
+          "slotKey": "main",
+          "cardinality": "REQUIRED_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "main"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "main",
+          "cardinality": "REQUIRED_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "ATTACH_CHILD_CONTEXT",
+          "optionKeys": [],
+          "childTemplateKeys": [
+            "activity"
+          ]
+        },
+        {
+          "slotKey": "food",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "restaurant",
+            "fast-food",
+            "delivery"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "food",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "ATTACH_CHILD_CONTEXT",
+          "optionKeys": [],
+          "childTemplateKeys": [
+            "restaurant",
+            "fast-food",
+            "delivery"
+          ]
+        },
+        {
+          "slotKey": "outbound",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_MOBILITY_INTENT",
+          "optionKeys": [
+            "car",
+            "train",
+            "bus",
+            "taxi",
+            "free",
+            "other",
+            "unknown"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "return",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_MOBILITY_INTENT",
+          "optionKeys": [
+            "car",
+            "train",
+            "bus",
+            "taxi",
+            "free",
+            "other",
+            "unknown"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "extras",
+          "cardinality": "REPEATING",
+          "selectionMode": "MANY",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "extra"
+          ],
+          "childTemplateKeys": []
+        }
+      ],
+      "minimumEconomicSelections": 0,
+      "structuralDefaults": {
+        "main": {
+          "items": [
+            {
+              "selectionId": "structural:main",
+              "optionKey": "unresolved",
+              "kind": "UNRESOLVED",
+              "provenance": "STRUCTURAL_DEFAULT"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "preset": {
+      "presetKey": "weekend-gite",
+      "label": "Week-end / Gîte",
+      "templateKey": "short-stay",
+      "categoryKey": "TRAVEL",
+      "illustrationKey": "weekend-gite",
+      "searchTerms": [
+        "weekend",
+        "week-end",
+        "gîte",
+        "gite",
+        "vacances",
+        "séjour"
+      ],
+      "defaults": {
+        "label": "Week-end / Gîte"
+      },
+      "questions": [
+        "Dates",
+        "Destination",
+        "Hébergement",
+        "Repas",
+        "Trajet facultatif"
+      ],
+      "guidance": "L’hébergement peut être un total. Aucun petit-déjeuner, taxe ou restaurant n’est ajouté ; les enfants ne doublent pas le parent."
+    },
+    "template": {
+      "templateKey": "short-stay",
+      "label": "Séjour court",
+      "family": "TRAVEL",
+      "version": "short-stay@v2",
+      "fields": [
+        {
+          "fieldKey": "label",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "plannedDate",
+          "kind": "DATE",
+          "required": false
+        },
+        {
+          "fieldKey": "fieldSchemaVersion",
+          "kind": "CHOICE",
+          "required": false,
+          "choices": [
+            "context-fields@v2",
+            "context-fields@v3",
+            "context-fields@v5"
+          ]
+        },
+        {
+          "fieldKey": "endDate",
+          "kind": "DATE",
+          "required": false
+        },
+        {
+          "fieldKey": "participantRefs",
+          "kind": "PERSON_REFS",
+          "required": false
+        },
+        {
+          "fieldKey": "destinationRef",
+          "kind": "PLACE_REF",
+          "required": false
+        },
+        {
+          "fieldKey": "nightCount",
+          "kind": "COUNT",
+          "required": false
+        },
+        {
+          "fieldKey": "lodgingKind",
+          "kind": "CHOICE",
+          "required": false,
+          "choices": [
+            "RELATIVE",
+            "HOTEL",
+            "HOSTEL",
+            "RENTAL",
+            "OTHER",
+            "LATER"
+          ]
+        },
+        {
+          "fieldKey": "timingNote",
+          "kind": "TEXT",
+          "required": false
+        }
+      ],
+      "componentSlots": [
+        {
+          "slotKey": "lodging",
+          "role": "lodging",
+          "cardinality": "REQUIRED_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "lodging",
+              "label": "Hébergement",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": []
+        },
+        {
+          "slotKey": "groceries",
+          "role": "groceries",
+          "cardinality": "OPTIONAL_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "groceries",
+              "label": "Courses du séjour",
+              "kind": "COMPONENT",
+              "baselineDomain": "groceries",
+              "bindingPolicy": "REQUIRES_CONFIRMATION"
+            }
+          ],
+          "allowedChildTemplates": []
+        },
+        {
+          "slotKey": "restaurants",
+          "role": "restaurants",
+          "cardinality": "REPEATING",
+          "optionSource": "CHILD_CONTEXT",
+          "options": [
+            {
+              "optionKey": "restaurant",
+              "label": "restaurant",
+              "kind": "COMPONENT",
+              "baselineDomain": "restaurants",
+              "bindingPolicy": "CERTAIN_DOMAIN"
+            },
+            {
+              "optionKey": "fast-food",
+              "label": "fast-food",
+              "kind": "COMPONENT",
+              "baselineDomain": "fast-food",
+              "bindingPolicy": "CERTAIN_DOMAIN"
+            },
+            {
+              "optionKey": "delivery",
+              "label": "delivery",
+              "kind": "COMPONENT",
+              "baselineDomain": "delivery",
+              "bindingPolicy": "CERTAIN_DOMAIN"
+            }
+          ],
+          "allowedChildTemplates": [
+            "restaurant",
+            "fast-food",
+            "delivery"
+          ]
+        },
+        {
+          "slotKey": "activities",
+          "role": "activities",
+          "cardinality": "REPEATING",
+          "optionSource": "CHILD_CONTEXT",
+          "options": [],
+          "allowedChildTemplates": [
+            "activity"
+          ]
+        },
+        {
+          "slotKey": "purchases",
+          "role": "purchases",
+          "cardinality": "REPEATING",
+          "optionSource": "CHILD_CONTEXT",
+          "options": [],
+          "allowedChildTemplates": [
+            "purchase",
+            "gift",
+            "beauty-restock"
+          ]
+        },
+        {
+          "slotKey": "transport",
+          "role": "transport",
+          "cardinality": "OPTIONAL_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "car",
+              "label": "CAR",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "CAR"
+            },
+            {
+              "optionKey": "train",
+              "label": "TRAIN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TRAIN"
+            },
+            {
+              "optionKey": "bus",
+              "label": "BUS",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "BUS"
+            },
+            {
+              "optionKey": "taxi",
+              "label": "TAXI",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TAXI"
+            },
+            {
+              "optionKey": "free",
+              "label": "FREE",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "FREE"
+            },
+            {
+              "optionKey": "other",
+              "label": "OTHER",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "OTHER"
+            },
+            {
+              "optionKey": "unknown",
+              "label": "UNKNOWN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "UNKNOWN"
+            }
+          ],
+          "allowedChildTemplates": [],
+          "mobilityRole": "PRIMARY"
+        },
+        {
+          "slotKey": "extras",
+          "role": "extras",
+          "cardinality": "REPEATING",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "extra",
+              "label": "Extra du séjour",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": []
+        }
+      ],
+      "capabilities": [
+        {
+          "slotKey": "lodging",
+          "cardinality": "REQUIRED_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "lodging"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "groceries",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "groceries"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "restaurants",
+          "cardinality": "REPEATING",
+          "selectionMode": "MANY",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "restaurant",
+            "fast-food",
+            "delivery"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "restaurants",
+          "cardinality": "REPEATING",
+          "selectionMode": "MANY",
+          "action": "ATTACH_CHILD_CONTEXT",
+          "optionKeys": [],
+          "childTemplateKeys": [
+            "restaurant",
+            "fast-food",
+            "delivery"
+          ]
+        },
+        {
+          "slotKey": "activities",
+          "cardinality": "REPEATING",
+          "selectionMode": "MANY",
+          "action": "ATTACH_CHILD_CONTEXT",
+          "optionKeys": [],
+          "childTemplateKeys": [
+            "activity"
+          ]
+        },
+        {
+          "slotKey": "purchases",
+          "cardinality": "REPEATING",
+          "selectionMode": "MANY",
+          "action": "ATTACH_CHILD_CONTEXT",
+          "optionKeys": [],
+          "childTemplateKeys": [
+            "purchase",
+            "gift",
+            "beauty-restock"
+          ]
+        },
+        {
+          "slotKey": "transport",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_MOBILITY_INTENT",
+          "optionKeys": [
+            "car",
+            "train",
+            "bus",
+            "taxi",
+            "free",
+            "other",
+            "unknown"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "extras",
+          "cardinality": "REPEATING",
+          "selectionMode": "MANY",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "extra"
+          ],
+          "childTemplateKeys": []
+        }
+      ],
+      "minimumEconomicSelections": 0,
+      "structuralDefaults": {
+        "lodging": {
+          "items": [
+            {
+              "selectionId": "structural:lodging",
+              "optionKey": "unresolved",
+              "kind": "UNRESOLVED",
+              "provenance": "STRUCTURAL_DEFAULT"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "preset": {
+      "presetKey": "fontes-family-visit",
+      "label": "Visite Fontès",
+      "templateKey": "family-visit",
+      "categoryKey": "VISIT",
+      "illustrationKey": "fontes-family-visit",
+      "searchTerms": [
+        "fontès",
+        "famille",
+        "visite"
+      ],
+      "defaults": {
+        "label": "Visite Fontès"
+      },
+      "questions": [
+        "Personne visitée",
+        "Participants",
+        "Lieu",
+        "Date",
+        "Déplacement"
+      ],
+      "guidance": "Choisissez le lieu exact et les personnes concernées. Aucun domicile, proche ou véhicule n’est déduit du nom Fontès."
+    },
+    "template": {
+      "templateKey": "family-visit",
+      "label": "family-visit",
+      "family": "VISIT",
+      "version": "family-visit@v2",
+      "fields": [
+        {
+          "fieldKey": "label",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "plannedDate",
+          "kind": "DATE",
+          "required": false
+        },
+        {
+          "fieldKey": "fieldSchemaVersion",
+          "kind": "CHOICE",
+          "required": false,
+          "choices": [
+            "context-fields@v2",
+            "context-fields@v3",
+            "context-fields@v4"
+          ]
+        },
+        {
+          "fieldKey": "personVisitedRef",
+          "kind": "PERSON_REF",
+          "required": false
+        },
+        {
+          "fieldKey": "participantRefs",
+          "kind": "PERSON_REFS",
+          "required": false
+        },
+        {
+          "fieldKey": "placeRef",
+          "kind": "PLACE_REF",
+          "required": false
+        },
+        {
+          "fieldKey": "timingNote",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "endDate",
+          "kind": "DATE",
+          "required": false
+        }
+      ],
+      "componentSlots": [
+        {
+          "slotKey": "hospitality",
+          "role": "hospitality",
+          "cardinality": "OPTIONAL_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "hospitality",
+              "label": "Contribution à la visite",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": []
+        },
+        {
+          "slotKey": "activities",
+          "role": "activities",
+          "cardinality": "REPEATING",
+          "optionSource": "CHILD_CONTEXT",
+          "options": [],
+          "allowedChildTemplates": [
+            "activity",
+            "restaurant",
+            "fast-food",
+            "delivery",
+            "purchase",
+            "gift"
+          ]
+        },
+        {
+          "slotKey": "transport",
+          "role": "transport",
+          "cardinality": "OPTIONAL_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "car",
+              "label": "CAR",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "CAR"
+            },
+            {
+              "optionKey": "train",
+              "label": "TRAIN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TRAIN"
+            },
+            {
+              "optionKey": "bus",
+              "label": "BUS",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "BUS"
+            },
+            {
+              "optionKey": "taxi",
+              "label": "TAXI",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TAXI"
+            },
+            {
+              "optionKey": "free",
+              "label": "FREE",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "FREE"
+            },
+            {
+              "optionKey": "other",
+              "label": "OTHER",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "OTHER"
+            },
+            {
+              "optionKey": "unknown",
+              "label": "UNKNOWN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "UNKNOWN"
+            }
+          ],
+          "allowedChildTemplates": [],
+          "mobilityRole": "PRIMARY"
+        }
+      ],
+      "capabilities": [
+        {
+          "slotKey": "hospitality",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "hospitality"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "activities",
+          "cardinality": "REPEATING",
+          "selectionMode": "MANY",
+          "action": "ATTACH_CHILD_CONTEXT",
+          "optionKeys": [],
+          "childTemplateKeys": [
+            "activity",
+            "restaurant",
+            "fast-food",
+            "delivery",
+            "purchase",
+            "gift"
+          ]
+        },
+        {
+          "slotKey": "transport",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_MOBILITY_INTENT",
+          "optionKeys": [
+            "car",
+            "train",
+            "bus",
+            "taxi",
+            "free",
+            "other",
+            "unknown"
+          ],
+          "childTemplateKeys": []
+        }
+      ],
+      "minimumEconomicSelections": 0,
+      "structuralDefaults": {}
+    }
+  },
+  {
+    "preset": {
+      "presetKey": "clothing-shopping",
+      "label": "Acheter des vêtements",
+      "templateKey": "purchase",
+      "categoryKey": "PURCHASE",
+      "illustrationKey": "clothing-shopping",
+      "searchTerms": [
+        "vêtements",
+        "shopping",
+        "achat",
+        "habit",
+        "pantalon"
+      ],
+      "defaults": {
+        "label": "Acheter des vêtements",
+        "budgetDomain": "clothing"
+      },
+      "questions": [
+        "Article",
+        "Vendeur facultatif",
+        "Date",
+        "Budget",
+        "Enveloppe"
+      ],
+      "guidance": "Un achat lié à l’enveloppe Vêtements. Choisissez le total ou les articles, puis seulement les frais qui ne sont pas déjà inclus."
+    },
+    "template": {
+      "templateKey": "purchase",
+      "label": "Achat",
+      "family": "PURCHASE",
+      "version": "purchase@v1",
+      "fields": [
+        {
+          "fieldKey": "label",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "plannedDate",
+          "kind": "DATE",
+          "required": false
+        },
+        {
+          "fieldKey": "fieldSchemaVersion",
+          "kind": "CHOICE",
+          "required": false,
+          "choices": [
+            "context-fields@v2",
+            "context-fields@v3"
+          ]
+        },
+        {
+          "fieldKey": "budgetDomain",
+          "kind": "CHOICE",
+          "required": false,
+          "choices": [
+            "clothing",
+            "home-small",
+            "games-digital",
+            "other"
+          ]
+        },
+        {
+          "fieldKey": "productLabel",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "merchantLabel",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "placeRef",
+          "kind": "PLACE_REF",
+          "required": false
+        }
+      ],
+      "componentSlots": [
+        {
+          "slotKey": "item",
+          "role": "item",
+          "cardinality": "REQUIRED_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "item",
+              "label": "Achat",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": []
+        },
+        {
+          "slotKey": "extras",
+          "role": "extras",
+          "cardinality": "REPEATING",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "extra",
+              "label": "Frais ou complément",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": []
+        },
+        {
+          "slotKey": "transport",
+          "role": "transport",
+          "cardinality": "OPTIONAL_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "car",
+              "label": "CAR",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "CAR"
+            },
+            {
+              "optionKey": "train",
+              "label": "TRAIN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TRAIN"
+            },
+            {
+              "optionKey": "bus",
+              "label": "BUS",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "BUS"
+            },
+            {
+              "optionKey": "taxi",
+              "label": "TAXI",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "TAXI"
+            },
+            {
+              "optionKey": "free",
+              "label": "FREE",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "FREE"
+            },
+            {
+              "optionKey": "other",
+              "label": "OTHER",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "OTHER"
+            },
+            {
+              "optionKey": "unknown",
+              "label": "UNKNOWN",
+              "kind": "MOBILITY_INTENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE",
+              "mobilityMode": "UNKNOWN"
+            }
+          ],
+          "allowedChildTemplates": [],
+          "mobilityRole": "PRIMARY"
+        }
+      ],
+      "capabilities": [
+        {
+          "slotKey": "item",
+          "cardinality": "REQUIRED_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "item"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "extras",
+          "cardinality": "REPEATING",
+          "selectionMode": "MANY",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "extra"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "transport",
+          "cardinality": "OPTIONAL_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_MOBILITY_INTENT",
+          "optionKeys": [
+            "car",
+            "train",
+            "bus",
+            "taxi",
+            "free",
+            "other",
+            "unknown"
+          ],
+          "childTemplateKeys": []
+        }
+      ],
+      "minimumEconomicSelections": 0,
+      "structuralDefaults": {
+        "item": {
+          "items": [
+            {
+              "selectionId": "structural:item",
+              "optionKey": "unresolved",
+              "kind": "UNRESOLVED",
+              "provenance": "STRUCTURAL_DEFAULT"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "preset": {
+      "presetKey": "gift-present",
+      "label": "Cadeau",
+      "templateKey": "gift",
+      "categoryKey": "PURCHASE",
+      "illustrationKey": "gift-present",
+      "searchTerms": [
+        "cadeau",
+        "offrir",
+        "présent",
+        "anniversaire"
+      ],
+      "defaults": {
+        "label": "Cadeau"
+      },
+      "questions": [
+        "Destinataire",
+        "Occasion",
+        "Objet",
+        "Budget",
+        "Date facultative"
+      ],
+      "guidance": "Choisissez le destinataire, l’occasion et l’objet dans l’éditeur Cadeau. Aucun produit ni prix n’est décidé."
+    },
+    "template": {
+      "templateKey": "gift",
+      "label": "Cadeau",
+      "family": "PURCHASE",
+      "version": "gift@v2",
+      "fields": [
+        {
+          "fieldKey": "label",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "plannedDate",
+          "kind": "DATE",
+          "required": false
+        },
+        {
+          "fieldKey": "fieldSchemaVersion",
+          "kind": "CHOICE",
+          "required": false,
+          "choices": [
+            "context-fields@v2",
+            "context-fields@v3"
+          ]
+        },
+        {
+          "fieldKey": "recipientRef",
+          "kind": "PERSON_REF",
+          "required": false
+        },
+        {
+          "fieldKey": "occasion",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "objectLabel",
+          "kind": "TEXT",
+          "required": false
+        },
+        {
+          "fieldKey": "objectAssetRef",
+          "kind": "PLANNED_ASSET_REF",
+          "required": false
+        }
+      ],
+      "componentSlots": [
+        {
+          "slotKey": "item",
+          "role": "item",
+          "cardinality": "REQUIRED_ONE",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "gift",
+              "label": "Cadeau",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": []
+        },
+        {
+          "slotKey": "extras",
+          "role": "extras",
+          "cardinality": "REPEATING",
+          "optionSource": "CAPABILITY_PROVIDER",
+          "options": [
+            {
+              "optionKey": "extra",
+              "label": "Complément",
+              "kind": "COMPONENT",
+              "baselineDomain": null,
+              "bindingPolicy": "NONE"
+            }
+          ],
+          "allowedChildTemplates": []
+        }
+      ],
+      "capabilities": [
+        {
+          "slotKey": "item",
+          "cardinality": "REQUIRED_ONE",
+          "selectionMode": "ONE_OF",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "gift"
+          ],
+          "childTemplateKeys": []
+        },
+        {
+          "slotKey": "extras",
+          "cardinality": "REPEATING",
+          "selectionMode": "MANY",
+          "action": "SELECT_COMPONENT",
+          "optionKeys": [
+            "extra"
+          ],
+          "childTemplateKeys": []
+        }
+      ],
+      "minimumEconomicSelections": 0,
+      "structuralDefaults": {
+        "item": {
+          "items": [
+            {
+              "selectionId": "structural:item",
+              "optionKey": "unresolved",
+              "kind": "UNRESOLVED",
+              "provenance": "STRUCTURAL_DEFAULT"
+            }
+          ]
+        }
+      }
+    }
+  }
+]

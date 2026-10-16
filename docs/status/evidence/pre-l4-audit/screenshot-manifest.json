@@ -1,0 +1,50 @@
+[
+  {
+    "file": "apply-during-raw-edit.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "c14e2b27b8b49934bcf6e170d20751f84cf7961d8e325d3353e47026a7cfef91",
+    "personalFinancialData": false
+  },
+  {
+    "file": "count-unknown-overlap.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "d3a777fda18716e043d81f194f3b8b14dad3730e4253d1a6d9f90a6fd6813e6f",
+    "personalFinancialData": false
+  },
+  {
+    "file": "dense-inspector-1440.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "9a1cf9a90b9666283ae2e1d91754c8031974f9a25d26b1dcc5cd602f0db3b3a5",
+    "personalFinancialData": false
+  },
+  {
+    "file": "group-refusal-fixture.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "767245247ff85d77cd1dc48e905533e18fd61ebb8bd4d9ec05344e66401cddf1",
+    "personalFinancialData": false
+  },
+  {
+    "file": "inspector-undecided.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "0207eaaa1db16fbb0d96077b370aa4f6bb8334ce5d4a714b19c2e62f421b4314",
+    "personalFinancialData": false
+  },
+  {
+    "file": "save-error.jpg",
+    "width": 1280,
+    "height": 720,
+    "format": "JPEG",
+    "sha256": "9fcd9e80e64c695018eafda4b0a9eab4597f7f31dd492ff2b8b3fe4344be8d02",
+    "personalFinancialData": false
+  }
+]

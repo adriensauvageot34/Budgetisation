@@ -1,0 +1,342 @@
+{
+  "environment": "REAL_BROWSER_PRODUCTION_REACT_SYNTHETIC_PGLITE_ONLY",
+  "authenticated": false,
+  "productCommit": "6d9d2bee085437cfc087647b6de7d77278a098dd",
+  "checks": [
+    {
+      "name": "D01_RAW_300_OLD_250",
+      "before": {
+        "apply": true,
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+        "preview": "FRESH",
+        "save": "SAVED"
+      },
+      "after": {
+        "applyDisabled": true,
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+        "preview": "FRESH",
+        "save": "SAVED",
+        "text": "300",
+        "unvalidated": "Saisie non validée · validez ou annulez"
+      },
+      "pass": true
+    },
+    {
+      "name": "TAB_BLUR_INSPECTOR_RESIZE",
+      "observed": {
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+        "disabled": true,
+        "text": "300",
+        "width": 1440
+      },
+      "pass": true
+    },
+    {
+      "name": "ESCAPE_DISCARD_300",
+      "observed": {
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+        "rawFields": 0
+      },
+      "pass": true
+    },
+    {
+      "name": "INVALID_NOT_ZERO",
+      "observed": "Saisissez un montant positif, avec deux décimales au maximum.",
+      "pass": true
+    },
+    {
+      "name": "ENTER_300_REQUIRES_FRESH_AND_SAVED",
+      "observed": {
+        "apply": true,
+        "course": "Détails de CoursesCourses300,00 €Prévu · votre choix du moisHabituel 325,00 €",
+        "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+        "preview": "FRESH",
+        "save": "SAVED"
+      },
+      "pass": true
+    },
+    {
+      "name": "RAFALEx2_FLUSH_UNDO",
+      "pending": {
+        "applyDisabled": true,
+        "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+        "pending": "310,00 €Réglage en attente…"
+      },
+      "pass": true
+    },
+    {
+      "name": "DENSE40_RAW_PAGE_PIN",
+      "observed": {
+        "active": "2",
+        "disabled": true,
+        "raw": "333",
+        "width": 1728
+      },
+      "pass": true
+    },
+    {
+      "name": "DENSE40_PANEL_RESIZE",
+      "observed": {
+        "disabled": true,
+        "raw": "333",
+        "width": 1440
+      },
+      "pass": true
+    },
+    {
+      "name": "DENSE40_RAPID_PLUS_PAGE",
+      "pending": {
+        "disabled": true,
+        "pending": "335,00 €Réglage en attente…"
+      },
+      "after": {
+        "course": "Détails de CoursesCourses335,00 €Prévu · votre choix du moisHabituel 325,00 €",
+        "save": "SAVED"
+      },
+      "pass": true
+    },
+    {
+      "name": "PENDING_TO_MANUAL",
+      "pending": {
+        "pending": "340,00 €Réglage en attente…"
+      },
+      "after": {
+        "pendingFields": 0,
+        "raw": "340.00",
+        "unvalidated": true
+      },
+      "pass": true
+    },
+    {
+      "name": "GROUP_CLOSE_DECLINED_REACT_STUB",
+      "observed": {
+        "calls": "1",
+        "dialog": true,
+        "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+        "mode": "decline",
+        "raw": "5"
+      },
+      "native": false,
+      "pass": true
+    },
+    {
+      "name": "GROUP_DETAILS_DECLINED_REACT_STUB",
+      "observed": {
+        "calls": "2",
+        "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+        "group": true,
+        "inspector": false,
+        "raw": "5"
+      },
+      "native": false,
+      "pass": true
+    },
+    {
+      "name": "GROUP_ADJUST_DECLINED_REACT_STUB",
+      "observed": {
+        "calls": "3",
+        "dialogs": [
+          "Restauration, 5 éléments"
+        ],
+        "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+        "raw": "5"
+      },
+      "native": false,
+      "pass": true
+    },
+    {
+      "name": "SAME_HEADING_DISTINCT_IDENTITIES",
+      "observed": {
+        "applyDisabled": true,
+        "fields": [
+          {
+            "dimension": "count",
+            "identity": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-meals",
+            "text": "5"
+          },
+          {
+            "dimension": "count",
+            "identity": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+            "text": "7"
+          }
+        ],
+        "headings": [
+          "Repas travail",
+          "Repas travail",
+          "Livraison",
+          "Fast-food",
+          "Enveloppe Restaurants"
+        ]
+      },
+      "pass": true
+    },
+    {
+      "name": "EDIT_DURING_PENDING",
+      "before": {
+        "preview": "PENDING",
+        "save": "SAVED"
+      },
+      "after": {
+        "applyDisabled": true,
+        "digest": "c03da745bd5a54f6f89f1fe76ab3659daebf9eef689307927009c6bf10cd91e7",
+        "preview": "PENDING",
+        "save": "DIRTY"
+      },
+      "pass": true
+    },
+    {
+      "name": "GROUP_CLOSE_ACCEPTED_NO_MUTATION_REACT_STUB",
+      "observed": {
+        "calls": "1",
+        "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+        "group": false,
+        "mode": "accept",
+        "rawFields": 0
+      },
+      "native": false,
+      "pass": true
+    },
+    {
+      "name": "RAW_DURING_SAVING",
+      "before": {
+        "preview": "PENDING",
+        "save": "SAVING"
+      },
+      "after": {
+        "applyDisabled": true,
+        "raw": "2.20",
+        "save": "SAVING"
+      },
+      "pass": true
+    },
+    {
+      "name": "PENDING_UNMOUNT_REMOUNT_EXACTLY_ONCE_SAME_LABELS",
+      "pending": {
+        "events": "[]",
+        "pending": "255,00 €Réglage en attente…"
+      },
+      "after": {
+        "A": "255,00 €",
+        "B": "50,00 €",
+        "edits": "0",
+        "events": [
+          {
+            "kind": "SET_STATE",
+            "targetRef": "A",
+            "value": {
+              "amount": "255.00"
+            }
+          }
+        ]
+      },
+      "pass": true
+    },
+    {
+      "name": "SYNTHETIC_DURABLE_RELOAD_COUNT_PRICE",
+      "observed": {
+        "count": "15 occurrences",
+        "digest": "bd3b4189813312fac327bdfdb6d497431b8e8415742c1a3ee40256a3afa05d68",
+        "price": "2,20 € / occurrence",
+        "revision": "0",
+        "save": "SAVED"
+      },
+      "authenticated": false,
+      "pass": true
+    },
+    {
+      "name": "COUNT_ONLY_UNDO_REDO_DURING_PENDING_KEEP_PRICE",
+      "undo": {
+        "coffee": "Détails de Café au travail AdrienCafé au travailAdrien15 occurrences2,20 € / occurrenceCoût du mois : 33,00 €Prévu · votre choix du moisHabituel 12 occurrence(s)+12",
+        "digest": "bd3b4189813312fac327bdfdb6d497431b8e8415742c1a3ee40256a3afa05d68",
+        "preview": "PENDING"
+      },
+      "redo": {
+        "coffee": "Détails de Café au travail AdrienCafé au travailAdrien16 occurrences2,20 € / occurrenceCoût du mois : simulation en coursPrévu · votre choix du moisHabituel 12 occurrence(s)",
+        "preview": "PENDING"
+      },
+      "pass": true
+    },
+    {
+      "name": "D01_FINAL_PRODUCT_6d9d2be",
+      "before": {
+        "apply": true,
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+        "preview": "FRESH",
+        "save": "SAVED"
+      },
+      "after": {
+        "applyDisabled": true,
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+        "notice": "Saisie non validée",
+        "preview": "FRESH",
+        "save": "SAVED",
+        "text": "300"
+      },
+      "pass": true
+    },
+    {
+      "name": "PENDING_GROUP_CLOSE_REMOUNT",
+      "before": {
+        "calls": "1",
+        "pending": "3 occurrencesRéglage en attente…"
+      },
+      "after": {
+        "calls": "1",
+        "text": "3 occurrences"
+      },
+      "pass": true
+    },
+    {
+      "name": "UNDO_DISCARDS_RAW_ONLY_AFTER_EXPLICIT_CONFIRM_REACT_STUB",
+      "observed": {
+        "calls": "2",
+        "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+        "raw": 0
+      },
+      "native": false,
+      "pass": true
+    },
+    {
+      "name": "VALIDATE_BUTTON_EXPLICIT_MUTATION",
+      "observed": {
+        "amount": "255,00 €",
+        "applyDisabled": true,
+        "preview": "PENDING",
+        "rawFields": 0
+      },
+      "pass": true
+    },
+    {
+      "name": "RECOVERABLE_ARCHIVE_GUI_SYNTHETIC_ONLY",
+      "observed": {
+        "url": "http://127.0.0.1:3216/mois-a-venir?month=2026-11&control=center",
+        "text": "Aucune révision appliquée sur cette fixture."
+      },
+      "authenticated": false,
+      "pass": true
+    },
+    {
+      "name": "DRAFT_CAS_TWO_BROWSER_CLIENTS_MOCK_SERVER",
+      "observed": {
+        "applyDisabled": true,
+        "course": "Détails de CoursesCourses275,00 €Prévu · votre choix du moisHabituel 325,00 €",
+        "save": "CONFLICT"
+      },
+      "authenticated": false,
+      "pass": true
+    },
+    {
+      "name": "DRAFT_CAS_EXPLICIT_SERVER_RECOVERY_MOCK",
+      "observed": {
+        "course": "Détails de CoursesCourses260,00 €Prévu · votre choix du moisHabituel 325,00 €",
+        "save": "SAVED"
+      },
+      "authenticated": false,
+      "pass": true
+    }
+  ],
+  "nativeConfirm": "NOT_RUN",
+  "nativeDrag": "NOT_RUN",
+  "nativeBeforeUnload": "NOT_RUN",
+  "financialSourceWrites": 0
+}

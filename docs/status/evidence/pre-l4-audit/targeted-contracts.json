@@ -1,0 +1,51 @@
+{
+  "checks": [
+    {
+      "id": "A0-P01-COURSES-250-300-SUBSTITUTION",
+      "status": "EXECUTED_PASS",
+      "environment": "REAL_SERVICES_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "id": "A0-P02-COFFEE-SEQUENCE-ZERO-AND-RESTORE",
+      "status": "EXECUTED_PASS",
+      "environment": "REAL_SERVICES_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "id": "A0-P03-COUNT-DOES-NOT-ADOPT-HISTORICAL-PRICE",
+      "status": "EXECUTED_PASS",
+      "environment": "REAL_SERVICES_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "id": "A0-P04-OPTIONAL-UNDECIDED-AND-VOLUNTARY-ZERO",
+      "status": "EXECUTED_PASS",
+      "environment": "REAL_SERVICES_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "id": "A0-P05-CURRENT-VS-FUTURE-MONTH-SCOPE",
+      "status": "EXECUTED_PASS",
+      "environment": "REAL_SERVICES_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "id": "A0-P08-REUSE-NO-OVERWRITE-AND-POLICY",
+      "status": "EXECUTED_PASS",
+      "environment": "REAL_SERVICES_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "id": "A0-P11-OFFICIAL-PLAN-ISOLATED-AND-IDENTITY",
+      "status": "EXECUTED_PASS",
+      "environment": "REAL_SERVICES_PGLITE_SYNTHETIC_ONLY"
+    }
+  ],
+  "observations": [
+    {
+      "id": "A0-D02",
+      "classification": "CONFIRMED_DEFECT",
+      "environment": "SOURCE_AND_REAL_REACT_SSR",
+      "problem": "Editable reference with no explicit decision is labelled Choix de ce mois in inspector and manage library",
+      "decisionValue": null,
+      "baselineAmount": "0.00"
+    }
+  ],
+  "remoteCalls": 0,
+  "productionWrites": 0
+}
