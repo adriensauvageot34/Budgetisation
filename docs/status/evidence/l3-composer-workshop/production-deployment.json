@@ -1,0 +1,44 @@
+{
+  "pr": 46,
+  "product": "7ef71167004cb7ce1dfb203a7aefaa6dffdb5251",
+  "merge": "946303df18b59fc642ff92e9042bfc8e6eb57498",
+  "mergeTreeIdentical": true,
+  "deployment": {
+    "id": "dpl_J3CroUqmbuUymYrL5SsoGDEj9Cxx",
+    "name": "budgetisation",
+    "url": "budgetisation-pvh0idnmx-adriensauvageot34-6137s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1792134775574,
+    "creator": {
+      "uid": "ItlVoi62mpJ28TeqsxO3j569",
+      "username": "adriensauvageot34-6137"
+    },
+    "project": {
+      "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+      "name": "budgetisation",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "main",
+      "githubCommitSha": "946303df18b59fc642ff92e9042bfc8e6eb57498",
+      "githubCommitMessage": "Merge pull request #46: L3 Composer workshop and financial inspector\n\nL3 — Atelier Composer, HUD compact et finances latérales",
+      "githubRepo": "Budgetisation",
+      "githubOrg": "adriensauvageot34"
+    },
+    "alias": [
+      "budgetisation-tan.vercel.app",
+      "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+      "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+    ],
+    "target": "production",
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1792134776885,
+    "ready": 1792134883535,
+    "readyState": "READY",
+    "source": "git",
+    "aliasError": null
+  }
+}

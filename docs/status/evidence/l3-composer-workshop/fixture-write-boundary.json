@@ -1,0 +1,58 @@
+{
+  "environment": "LOCAL_SYNTHETIC_NO_SUPABASE",
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "rpcCalls": 0,
+  "remoteWrites": 0,
+  "historicalCanaryWrites": 0,
+  "drafts": {
+    "active": {
+      "id": "b2d310e5-ddbb-4c83-a933-58ac7164701a",
+      "version": 4,
+      "digest": "457f5ef7262934f93511ff7d9b633678a057dad580be1ea6726ab4fc451309b4"
+    },
+    "archives": 0,
+    "events": [
+      {
+        "kind": "SAVE",
+        "draftId": "b2d310e5-ddbb-4c83-a933-58ac7164701a",
+        "version": 1,
+        "digest": "9fd0c809dd12b571145fe3ff10da9fb702a7cab768113807c6cd303b0d2a1f49"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "b2d310e5-ddbb-4c83-a933-58ac7164701a",
+        "version": 2,
+        "digest": "1ddec9bbfc9c0561cad1f94030f93ff25f7bd377b7796dc8d597c71d8479c503"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "b2d310e5-ddbb-4c83-a933-58ac7164701a",
+        "version": 3,
+        "digest": "a7a7fc9f99dbfd79abb37bdc7b14b6773b8543a7dbea6072ea332a4a079c1e76"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "b2d310e5-ddbb-4c83-a933-58ac7164701a",
+        "version": 4,
+        "digest": "457f5ef7262934f93511ff7d9b633678a057dad580be1ea6726ab4fc451309b4"
+      }
+    ]
+  },
+  "activePlan": null,
+  "businessKinds": [
+    "READ",
+    "READ",
+    "READ",
+    "READ",
+    "READ",
+    "READ",
+    "READ",
+    "READ",
+    "READ",
+    "READ",
+    "READ"
+  ]
+}
