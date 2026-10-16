@@ -20,7 +20,7 @@
 .restaurantSummary strong { font-weight:600; font-size:12px; }
 .restaurantSummaryActions { display:grid; gap:6px; margin:12px 0; }
 .restaurantSummaryActions button { text-align:left; }
-.workshopComponent { display:grid; gap:7px; min-width:0; }
+.workshopComponent { display:grid; gap:6px; min-width:0; }
 .workshopTabs { display:flex; gap:5px; }
 .workshopTabs button { flex:1; padding:7px 5px; }
 .workshopTabs button[aria-pressed=true] { background:#eee4f3; border-color:#b49ac6; }
@@ -914,6 +914,7 @@
 .dialog[data-night-workshop-panel=true] > header h2 { font-size:17px; }
 .dialog[data-night-workshop-panel=true] .nightEditor { flex:1; max-height:100%; }
 .dialog[data-night-workshop-panel=true] .nightEditorScroll { overflow-y:auto; }
+[data-short-stay-editor] .nightSection { padding:8px; gap:5px; }
 .nightWorkshop { display:flex; flex-direction:column; min-height:0; flex:1; gap:10px; font-size:14px; }
 .nightQuestionTop { display:flex; justify-content:space-between; gap:8px; align-items:center; color:#8c739e; font-size:11px; }
 .nightQuestionTop > span { display:flex; align-items:center; gap:7px; }
