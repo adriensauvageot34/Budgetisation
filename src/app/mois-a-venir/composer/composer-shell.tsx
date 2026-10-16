@@ -714,7 +714,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     <dialog ref={dialog} className={styles.dialog} data-night-workshop-panel={!!editor?.nightContextId || undefined} data-night-editor={!!editor?.nightContextId || !!editor?.familyContextId || !!editor?.stayContextId || undefined} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {editor && !editor.nightContextId && (() => { const context = draftState.contexts.find(c => c.contextOccurrenceId === (editor.familyContextId ?? editor.stayContextId ?? editor.catalogContextId)); const preset = context && presetForContext(context); return preset ? <div className={styles.presetEditorIntro}><PresetIllustration preset={preset} /><p>{preset.guidance}</p></div> : null; })()}
-      {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
+      {errorMessage && !editor?.nightContextId && <p role="alert" className={styles.formError}>{errorMessage}</p>}
       {editorKind && !loadedEditors[editorKind]
         ? <section className={styles.editorLoading} role={editorLoadError === editorKind ? "alert" : "status"} aria-live="polite" data-editor-loading={editorKind}>
           <p>{editorLoadError === editorKind ? "Le formulaire n’a pas pu être chargé. Votre brouillon et votre carte sont conservés." : "Chargement du formulaire…"}</p>
@@ -739,7 +739,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         ? <NightOutEditor key={editor.nightContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
           semanticState={draftState} householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           model={shown} card={shown.board.contexts.find(card => card.contextOccurrenceId === editor.nightContextId)} fresh={previewStatus === "FRESH" || previewStatus === "BLOCKED"}
-          saveStatus={draftTransport ? durable.status : "MEMORY"} dockHost={nightDockHost} admission={editor.nightAdmission ?? 0}
+          saveStatus={draftTransport ? durable.status : "MEMORY"} dockHost={nightDockHost} admission={editor.nightAdmission ?? 0} serverError={errorMessage}
           onOpenChild={id => { const child = shown.board.contexts.find(card => card.contextOccurrenceId === id); if (child) editContext(child); }}
           creating={editor.nightCreating} busy={busy} onCancel={closeDialog} onSave={operation => { const admitted = stage(operation); if (admitted) setEditor(current => current ? { ...current, nightCreating: false } : current); return admitted; }} />
         : editor?.giftContextId && GiftEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
