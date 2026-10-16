@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ProspectivePersonRef, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { prospectivePersonIdentity } from "@/domain/phase2/planned-product";
+import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import { declareComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 import { assetsForModule, PLANNED_ASSET_CATALOG_VERSION, type PlannedAsset, type PlannedAssetRef } from "@/domain/phase2/planned-assets";
@@ -12,8 +13,13 @@ import type { ComposerOperation } from "@/domain/phase2/planner/composer-ui-cont
 import type { NightOutBeforeEdit } from "@/domain/phase2/planner/night-out-edit";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import type { PlannerJson } from "@/domain/phase2/planner/json";
+import { ContextPalette } from "./context-palette";
+import { selectionValues } from "./interactions";
+import { PlannedPlaceField } from "../planned-place-field";
 import { PlannedContactField } from "../planned-people-fields";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
+import { useInlineEditRegistry } from "./inline-edit-registry";
+import { money } from "./display";
 import styles from "./composer.module.css";
 
 type Component = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
@@ -42,7 +48,7 @@ export const fromSelection = (selection: Component): Row => ({ id: selection.sel
   binding: selection.binding?.mode ?? "AUTO", assetRef: selection.productAssetRef });
 const refLabel = (ref: ProspectivePersonRef, persons: readonly { personId: string; displayName: string }[]) =>
   ref.kind === "TEXT" ? ref.label : ref.kind === "HOUSEHOLD_PERSON" ? persons.find(person => person.personId === ref.personId)?.displayName ?? "Personne liée indisponible"
-    : ref.contactKey;
+    : SOCIAL_CONTACTS_V1.find(contact => contact.key === ref.contactKey)?.label ?? "Proche lié indisponible";
 const isPerson = (value: unknown): value is ProspectivePersonRef => !!record(value) && ["TEXT", "HOUSEHOLD_PERSON", "CONTACT"].includes(String(record(value)?.kind));
 
 export function ComponentRow({ title, row, participantCount, onChange, onRemove, removable = true, bindingChoices = false, productAssets = [], fixedQuantity = false, priceLabel }: {
@@ -116,142 +122,191 @@ export const buildComponentRow = (row: Row, optionKey: string): Component => {
       binding: { mode: row.binding } };
   };
 
-export function NightOutEditor({ context, semanticState, householdPersons, knowledge, busy, onSave, onCancel }: {
+type NightSection = "main" | "participants" | "extras" | "before" | "food" | "details" | "travel" | "palette" | null;
+type Equipment = { asset: import("@/domain/phase2/planner/composer-contract").ComposerAssetView; target: import("@/domain/phase2/planner/composer-contract").DropTarget; selection?: ComponentSelectionV1 };
+const selectionCaption = (selection: ComponentSelectionV1) => selection.kind === "COMPONENT"
+  ? `${selection.label} · ${selection.quantityPerPerson ? `${selection.quantityPerPerson} par personne (${selection.pricedParticipantCount} personnes)` : `${selection.quantity} ${selection.unitBasis === "SHARED" ? "lot(s) partagé(s)" : "unité(s)"}`} · ${selection.cost.kind === "MANUAL" ? money(selection.cost.unitAmount) : selection.cost.kind === "QUOTE" ? "Devis conservé" : "Prix à préciser"}${selection.provenance === "PERSONAL_SUGGESTION" ? " · suggestion non retenue" : ""}`
+  : selection.kind === "MOBILITY_INTENT" ? `${({car:"Voiture",train:"Train / tram",bus:"Bus",taxi:"Taxi",free:"Déplacement gratuit déclaré",other:"Autre transport",unknown:"Mode à préciser"} as Record<string,string>)[selection.optionKey] ?? "Transport"} · ${selection.journey?.relation === "SHARES_JOURNEY" ? "Coût porté par le trajet lié" : selection.pricing?.fare.kind === "MANUAL" ? money(selection.pricing.fare.unitAmount) : "Estimation du trajet à confirmer"}`
+  : selection.kind === "CHILD_CONTEXT" ? "Moment lié, conservé avec ses propres choix" : "À préciser";
+
+/** A presentation pilot over the existing semantic adapter, not a questionnaire engine. */
+export function NightOutEditor({ context, semanticState, householdPersons, knowledge, creating = false, model, card, fresh: isFresh = false, saveStatus = "MEMORY", busy, onSave, onCancel, onOpenChild }: {
   context: PlannedContextState; semanticState: PlanSemanticStateV1;
   householdPersons: readonly { personId: string; displayName: string }[]; knowledge?: CardKnowledgeRead;
-  busy: boolean; onSave: (operation: ComposerOperation) => void; onCancel: () => void;
+  creating?: boolean; model?: import("@/domain/phase2/planner/composer-ui-contract").ComposerUiModel;
+  card?: import("@/domain/phase2/planner/composer-contract").ComposerContextCardView; fresh?: boolean;
+  saveStatus?: string;
+  busy: boolean; onSave: (operation: ComposerOperation) => boolean; onCancel: () => void; onOpenChild?: (id: string) => void;
 }) {
-  const originalBefore = items(context, "before")[0];
-  const beforeChild = originalBefore?.kind === "CHILD_CONTEXT"
-    ? semanticState.contexts.find(c => c.contextOccurrenceId === originalBefore.childContextOccurrenceId && c.templateKey === "activity") : undefined;
-  const originalBottle = beforeChild ? component(items(beforeChild, "main")[0]) : originalBefore?.kind === "COMPONENT" ? originalBefore : undefined;
-  const [label, setLabel] = useState(typeof context.fields.label === "string" ? context.fields.label : "");
-  const [plannedDate, setPlannedDate] = useState(typeof context.fields.plannedDate === "string" ? context.fields.plannedDate : "");
-  const [endDate, setEndDate] = useState(typeof context.fields.endDate === "string" ? context.fields.endDate : "");
-  const [timingNote, setTimingNote] = useState(typeof context.fields.timingNote === "string" ? context.fields.timingNote : "");
-  const [participants, setParticipants] = useState<ProspectivePersonRef[]>(Array.isArray(context.fields.participantRefs)
-    ? context.fields.participantRefs.filter(isPerson) : []);
+  const originalMain = items(context, "main")[0], originalFood = items(context, "food")[0], originalBefore = items(context, "before")[0];
+  const beforeChild = originalBefore?.kind === "CHILD_CONTEXT" ? semanticState.contexts.find(c => c.contextOccurrenceId === originalBefore.childContextOccurrenceId) : undefined;
+  const originalBottle = beforeChild?.templateKey === "activity" ? component(items(beforeChild, "main")[0]) : component(originalBefore);
+  const mainRow = () => originalMain?.kind === "COMPONENT" ? fromSelection(originalMain) : { ...fresh("Entrées et événement"), unitBasis: "SHARED" as const, costMode: "MANUAL" as const };
+  const originalPeople = Array.isArray(context.fields.participantRefs) ? context.fields.participantRefs.filter(isPerson) : [];
+  const [section, setSection] = useState<NightSection>(creating && originalMain?.kind !== "COMPONENT" ? "main" : null);
+  const [main, setMain] = useState<Row>(mainRow), [detailed, setDetailed] = useState(originalMain?.kind === "COMPONENT" && (originalMain.unitBasis !== "SHARED" || !["1", "1.00"].includes(originalMain.quantity)));
+  const [participants, setParticipants] = useState<ProspectivePersonRef[]>(originalPeople);
+  const [extras, setExtras] = useState<Row[]>(() => items(context, "extras").flatMap(item => item.kind === "COMPONENT" ? [fromSelection(item)] : []));
+  const [food, setFood] = useState<Row | null>(() => originalFood?.kind === "COMPONENT" ? fromSelection(originalFood) : null);
+  const [foodOption, setFoodOption] = useState(originalFood?.optionKey ?? "restaurant");
+  const [beforeEnabled, setBeforeEnabled] = useState(!!originalBefore && originalBefore.kind !== "UNRESOLVED");
+  const [bottle, setBottle] = useState<Row>(() => originalBottle ? fromSelection(originalBottle) : { ...fresh("Avant la soirée"), unitBasis:"SHARED", costMode:"MANUAL" });
+  const [diluents, setDiluents] = useState<Row[]>(() => beforeChild ? items(beforeChild, "extras").flatMap(item => item.kind === "COMPONENT" ? [fromSelection(item)] : []) : []);
+  const [beforeIdentity] = useState(() => ({ child: beforeChild?.contextOccurrenceId ?? crypto.randomUUID(), link: originalBefore?.selectionId ?? crypto.randomUUID(), promoted: crypto.randomUUID() }));
+  const [details, setDetails] = useState({ label: String(context.fields.label ?? ""), plannedDate: String(context.fields.plannedDate ?? ""), endDate: String(context.fields.endDate ?? ""), timingNote: String(context.fields.timingNote ?? "") });
   const originalPlace = record(context.fields.placeRef) as ProspectivePlaceRef | null;
-  const [placeMode, setPlaceMode] = useState(originalPlace?.kind === "KNOWN" ? "KNOWN" : originalPlace?.kind === "TEXT" ? "TEXT" : "UNKNOWN");
-  const [placeText, setPlaceText] = useState(originalPlace?.kind === "TEXT" ? originalPlace.label : "");
-  const [beforeEnabled, setBeforeEnabled] = useState(!!originalBottle);
-  const [bottle, setBottle] = useState<Row>(() => originalBottle ? fromSelection(originalBottle) : fresh("Bouteille"));
-  const [diluents, setDiluents] = useState<Row[]>(beforeChild ? items(beforeChild, "extras").flatMap(item => item.kind === "COMPONENT" ? [fromSelection(item)] : []) : []);
-  const [beforeDirty, setBeforeDirty] = useState(false);
-  const existingMain = items(context, "main")[0];
-  const [main, setMain] = useState<Row | null>(existingMain?.kind === "COMPONENT" ? fromSelection(existingMain) : null);
-  const [mainDirty, setMainDirty] = useState(false);
-  const existingFood = items(context, "food")[0];
-  const [food, setFood] = useState<{ optionKey: string; row: Row } | null>(existingFood?.kind === "COMPONENT" ? { optionKey: existingFood.optionKey, row: fromSelection(existingFood) } : null);
-  const [foodDirty, setFoodDirty] = useState(false);
-  const [extras, setExtras] = useState<Row[]>(items(context, "extras").flatMap(item => item.kind === "COMPONENT" ? [fromSelection(item)] : []));
-  const [extrasDirty, setExtrasDirty] = useState(false);
-  const [error, setError] = useState("");
-  const scroll = useRef<HTMLDivElement>(null);
-  const changeRow = (rows: Row[], setRows: (rows: Row[]) => void, id: string, updated: Row) => setRows(rows.map(row => row.id === id ? updated : row));
-  const build = buildComponentRow;
+  const [place, setPlace] = useState<ProspectivePlaceRef | undefined>(originalPlace ?? undefined);
+  const [equipment, setEquipment] = useState<Equipment | null>(null), [formKey, setFormKey] = useState(0);
+  const [dirty, setDirty] = useState(false), [error, setError] = useState("");
+  const registry = useInlineEditRegistry(), focus = useRef<HTMLElement>(null);
+  const reset = () => {
+    setMain(mainRow()); setParticipants(originalPeople); setExtras(items(context,"extras").flatMap(item => item.kind === "COMPONENT" ? [fromSelection(item)] : []));
+    setFood(originalFood?.kind === "COMPONENT" ? fromSelection(originalFood) : null); setFoodOption(originalFood?.optionKey ?? "restaurant");
+    setBeforeEnabled(!!originalBefore && originalBefore.kind !== "UNRESOLVED"); setBottle(originalBottle ? fromSelection(originalBottle) : { ...fresh("Avant la soirée"), unitBasis:"SHARED", costMode:"MANUAL" });
+    setDiluents(beforeChild ? items(beforeChild,"extras").flatMap(item => item.kind === "COMPONENT" ? [fromSelection(item)] : []) : []);
+    setDetails({label:String(context.fields.label ?? ""),plannedDate:String(context.fields.plannedDate ?? ""),endDate:String(context.fields.endDate ?? ""),timingNote:String(context.fields.timingNote ?? "")});
+    setPlace(originalPlace ?? undefined); setEquipment(null); setDirty(false); setError("");
+  };
+  const discard = useRef(() => {}); discard.current = () => { reset(); setSection(null); };
+  useEffect(() => {
+    const key = `night-editor:${context.contextOccurrenceId}`;
+    registry?.set(key, dirty ? { targetRef:context.contextOccurrenceId, dimension:"night-editor", kind:"RAW", discard:() => discard.current(), flush:() => {} } : null);
+    return () => registry?.set(key,null);
+  }, [registry,dirty,context.contextOccurrenceId]);
+  useEffect(() => { if (section === "main") focus.current?.querySelector<HTMLInputElement>("input")?.focus(); else focus.current?.focus(); }, [section,formKey]);
+  const open = (next: NightSection) => {
+    if (dirty && !(registry ? registry.confirmDiscard(window.confirm) : window.confirm("Abandonner la saisie non confirmée ?"))) return;
+    reset(); setSection(next); setFormKey(key => key + 1);
+  };
+  const send = (operation: ComposerOperation) => {
+    // A false local stage delegates to the existing authoritative server path.
+    // It is not a rejection: keep the input until the response installs the Draft,
+    // or the shell reports the actual failure. Never announce a false save/error.
+    if (!onSave(operation)) { setError(""); return false; }
+    registry?.set(`night-editor:${context.contextOccurrenceId}`,null); setDirty(false); setSection(null); setEquipment(null); setError(""); return true;
+  };
   const save = () => {
     try {
-      setError("");
-      if (participants.some(ref => ref.kind === "TEXT" && !ref.label.trim())) throw new Error("Terminez le nom des participants ou retirez la ligne vide.");
-      if (new Set(participants.map(prospectivePersonIdentity)).size !== participants.length) throw new Error("Un participant figure plusieurs fois.");
-      if (placeMode === "TEXT" && !placeText.trim()) throw new Error("Indiquez le lieu ou sélectionnez « à préciser ».");
-      if ([plannedDate, endDate].some(date => date && !date.startsWith(`${semanticState.targetMonth}-`)))
-        throw new Error("Les dates doivent rester dans le mois composé. Les soirées intermois restent à préciser.");
-      if (plannedDate && endDate && endDate < plannedDate) throw new Error("La fin de la soirée doit suivre son début.");
-      const fields: Record<string, PlannerJson> = {};
-      for (const [key, value] of Object.entries({ label: label.trim(), plannedDate, endDate, timingNote: timingNote.trim() })) {
-        if (value !== (typeof context.fields[key] === "string" ? context.fields[key] : "")) fields[key] = value;
-      }
-      if (JSON.stringify(participants) !== JSON.stringify(Array.isArray(context.fields.participantRefs) ? context.fields.participantRefs : [])) fields.participantRefs = participants;
-      const nextPlace = placeMode === "KNOWN" ? originalPlace : placeMode === "TEXT"
-        ? { kind: "TEXT" as const, label: placeText.trim(), provenance: "USER_DECLARED_PROSPECTIVE" as const } : null;
-      if (JSON.stringify(nextPlace) !== JSON.stringify(originalPlace)) fields.placeRef = nextPlace ?? "";
-      const slots: Record<string, readonly ComponentSelectionV1[]> = {};
-      if (mainDirty) slots.main = main ? [build(main, "main")] : [];
-      if (foodDirty) slots.food = food ? [build(food.row, food.optionKey)] : [];
-      if (extrasDirty) slots.extras = extras.map(row => build(row, "extra"));
+      const fields: Record<string,PlannerJson> = {}, slots: Record<string, readonly ComponentSelectionV1[]> = {};
       let before: NightOutBeforeEdit | null | undefined;
-      if (beforeDirty) before = beforeEnabled ? {
-        childContextOccurrenceId: beforeChild?.contextOccurrenceId ?? crypto.randomUUID(),
-        selectionId: originalBefore?.selectionId ?? crypto.randomUUID(),
-        bottle: { ...build(bottle, "activity"), ...(originalBefore?.kind === "COMPONENT" && !beforeChild ? { selectionId: crypto.randomUUID() } : {}) },
-        extras: diluents.map(row => build(row, "extra")) } : null;
-      onSave({ kind: "EDIT_NIGHT_OUT", edit: { contextOccurrenceId: context.contextOccurrenceId, fields, slots,
-        ...(before === undefined ? {} : { before }) } });
-    } catch (failure) { setError(failure instanceof Error ? failure.message === "MONTH_DECISION_AMOUNT_INVALID"
-      ? "Renseignez un nombre positif ou nul, avec deux décimales au maximum."
-      : failure.message === "PLANNER_QUANTITY_INVALID" ? "La quantité totale doit être positive et ne pas dépasser 9 999 unités."
-      : failure.message === "COMPOSER_CONTEXT_LOCKED" ? "Ce moment est préservé. Libérez-le avant de modifier ses composants."
-      : failure.message === "CONTEXT_PRODUCT_ASSET_UNKNOWN" ? "Le type sélectionné n’est plus disponible dans le catalogue. Choisissez un type actuel ou un libellé libre."
-      : failure.message : "Vérifiez les choix de la soirée."); }
+      if (section === "main") slots.main = [buildComponentRow({...main,edited:true},"main")];
+      if (section === "participants") {
+        if (participants.some(ref => ref.kind === "TEXT" && !ref.label.trim())) throw Error("Terminez le nom des personnes ou retirez la ligne vide.");
+        if (new Set(participants.map(prospectivePersonIdentity)).size !== participants.length) throw Error("Une personne figure plusieurs fois.");
+        fields.participantRefs = participants;
+      }
+      if (section === "extras") slots.extras = [...items(context,"extras").filter(item => item.kind !== "COMPONENT"), ...extras.map(row => buildComponentRow(row,"extra"))];
+      if (section === "food" && originalFood?.kind !== "CHILD_CONTEXT") slots.food = food ? [buildComponentRow(food,foodOption)] : [];
+      if (section === "before") before = beforeEnabled ? { childContextOccurrenceId:beforeIdentity.child, selectionId:beforeIdentity.link,
+        bottle:{...buildComponentRow(bottle,"activity"), ...(originalBefore?.kind === "COMPONENT" ? {selectionId:beforeIdentity.promoted} : {})},
+        extras:[...(beforeChild ? items(beforeChild,"extras").filter(item => item.kind !== "COMPONENT") : []), ...diluents.map(row => buildComponentRow(row,"extra"))] } : null;
+      if (section === "details") {
+        if ([details.plannedDate,details.endDate].some(date => date && !date.startsWith(`${semanticState.targetMonth}-`))) throw Error("Choisissez des dates dans ce mois, ou gardez-les à préciser. Les soirées intermois sont différées.");
+        if (details.plannedDate && details.endDate && details.endDate < details.plannedDate) throw Error("La fin doit suivre le début de la soirée.");
+        for (const [key,value] of Object.entries(details)) if (value !== String(context.fields[key] ?? "")) fields[key] = value.trim();
+        if (JSON.stringify(place ?? null) !== JSON.stringify(originalPlace)) fields.placeRef = place as unknown as PlannerJson ?? "";
+      }
+      send({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields,slots,...(before === undefined ? {} : {before})}});
+    } catch (failure) { const message = failure instanceof Error ? failure.message : "Vérifiez vos choix.";
+      setError(({MONTH_DECISION_AMOUNT_INVALID:"Indiquez un montant positif ou nul avec deux décimales au maximum.", PLANNER_QUANTITY_INVALID:"La quantité doit être positive et ne pas dépasser 9 999 unités."} as Record<string,string>)[message] ?? message); }
   };
-  return <div data-night-out-editor className={styles.nightEditor}>
-    <CardKnowledgePanel knowledge={knowledge} />
-    <p className={styles.helper}>La soirée regroupe ses composants ; elle n’ajoute aucun coût propre. Les suggestions restent exploratoires jusqu’à votre validation.</p>
-    <nav className={styles.nightNav} aria-label="Sections de la soirée">{[["context", "Participants"], ["before", "Before"], ["main", "Activité et repas"], ["extras", "Boissons"], ["travel", "Transports"]].map(([key, label]) =>
-      <button type="button" key={key} onClick={() => {
-        const section = scroll.current?.querySelector<HTMLElement>(`[data-night-section="${key}"]`);
-        section?.scrollIntoView({ block: "start" }); section?.focus({ preventScroll: true });
-      }}>{label}</button>)}</nav>
-    <div ref={scroll} className={styles.nightEditorScroll}>
-      <section className={styles.nightSection} data-night-section="context" tabIndex={-1}><h3>Qui, où et quand ?</h3>
-        <div className={styles.nightComponentGrid}>
-          <label>Nom de la soirée<input value={label} onChange={event => setLabel(event.target.value)} maxLength={120} /></label>
-          <label>Date (facultative)<input type="date" value={plannedDate} onChange={event => setPlannedDate(event.target.value)} /></label>
-          <label>Date de fin (facultative)<input type="date" value={endDate} onChange={event => setEndDate(event.target.value)} /></label>
-          <label>Lieu<select value={placeMode} onChange={event => setPlaceMode(event.target.value)}>
-            <option value="UNKNOWN">À préciser</option>{originalPlace?.kind === "KNOWN" && <option value="KNOWN">Conserver le lieu lié</option>}
-            <option value="TEXT">Saisir un lieu</option></select></label>
-          {placeMode === "TEXT" && <label>Lieu prévu<input value={placeText} onChange={event => setPlaceText(event.target.value)} maxLength={160} /></label>}
-          <label>Repère de temps<input value={timingNote} onChange={event => setTimingNote(event.target.value)} maxLength={160} placeholder="Par exemple : après le dîner" /></label>
-        </div>
-        <div className={styles.nightParticipants}><h4>Participants</h4>
-          {participants.map((ref, index) => <div key={index} className={styles.nightParticipant}>
-            <PlannedContactField label={`Personne ${index + 1}`} value={ref} householdPersons={householdPersons}
-              onChange={next => setParticipants(current => next ? current.map((item, position) => position === index ? next : item) : current.filter((_, position) => position !== index))} />
-            <button type="button" className={styles.secondary} onClick={() => setParticipants(current => current.filter((_, position) => position !== index))}>Retirer {refLabel(ref, householdPersons)}</button>
-          </div>)}
-          <button type="button" className={styles.secondary} onClick={() => setParticipants(current => [...current, { kind: "TEXT", label: "" }])}>Ajouter une personne</button>
-        </div>
-      </section>
-      <section className={styles.nightSection} data-night-section="before" tabIndex={-1}><h3>Before</h3>
-        <p className={styles.helper}>Bouteille et diluant sont deux composants distincts d’une activité enfant autorisée.</p>
-        {originalBefore?.kind === "CHILD_CONTEXT" && !beforeChild && <p role="alert">Le before lié n’est plus disponible. Il reste conservé tant que vous ne le modifiez pas.</p>}
-        <label className={styles.nightCheck}><input type="checkbox" checked={beforeEnabled} onChange={event => { setBeforeEnabled(event.target.checked); setBeforeDirty(true); }} /> Préparer un before</label>
-        {beforeEnabled && <><ComponentRow title="Bouteille ou élément principal" row={bottle} participantCount={participants.length} productAssets={beforeAssets}
-          onChange={row => { setBottle(row); setBeforeDirty(true); }} onRemove={() => { setBeforeEnabled(false); setBeforeDirty(true); }} />
-          {diluents.map(row => <ComponentRow key={row.id} title="Diluant ou complément" row={row} participantCount={participants.length} productAssets={beforeAssets}
-            onChange={next => { changeRow(diluents, setDiluents, row.id, next); setBeforeDirty(true); }}
-            onRemove={() => { setDiluents(current => current.filter(item => item.id !== row.id)); setBeforeDirty(true); }} />)}
-          <button type="button" className={styles.secondary} onClick={() => { setDiluents(current => [...current, fresh("Diluant")]); setBeforeDirty(true); }}>Ajouter un diluant ou complément</button></>}
-      </section>
-      <section className={styles.nightSection} data-night-section="main" tabIndex={-1}><h3>Activité principale et repas</h3>
-        {existingMain?.kind === "CHILD_CONTEXT" ? <p className={styles.helper}>L’activité enfant reste liée et se configure avec ses propres équipements R6 après fermeture.</p>
-          : main ? <ComponentRow title="Entrée ou activité" row={main} participantCount={participants.length} productAssets={eventAssets}
-            onChange={row => { setMain(row); setMainDirty(true); }} onRemove={() => { setMain(null); setMainDirty(true); }} />
-          : <button type="button" className={styles.secondary} onClick={() => { setMain(fresh("Entrée ou activité")); setMainDirty(true); }}>Ajouter une entrée ou activité</button>}
-        {existingFood?.kind === "CHILD_CONTEXT" ? <p className={styles.helper}>Le repas enfant reste lié et se configure avec ses propres équipements R6 après fermeture.</p>
-          : food ? <><label>Type de repas<select value={food.optionKey} onChange={event => { setFood({ ...food, optionKey: event.target.value }); setFoodDirty(true); }}>
-            <option value="restaurant">Restaurant</option><option value="fast-food">Restauration rapide</option><option value="delivery">Livraison</option></select></label>
-            <ComponentRow title="Repas" row={food.row} participantCount={participants.length} bindingChoices
-              onChange={row => { setFood({ ...food, row }); setFoodDirty(true); }} onRemove={() => { setFood(null); setFoodDirty(true); }} /></>
-          : <button type="button" className={styles.secondary} onClick={() => { setFood({ optionKey: "restaurant", row: fresh("Restaurant") }); setFoodDirty(true); }}>Ajouter un repas</button>}
-      </section>
-      <section className={styles.nightSection} data-night-section="extras" tabIndex={-1}><h3>Boissons et autres extras</h3>
-        <p className={styles.helper}>Choisissez des unités au total, par personne ou partagées. Un budget global utilise une seule unité. Aucun prix historique n’est appliqué automatiquement.</p>
-        {extras.map(row => <ComponentRow key={row.id} title="Boisson ou extra" row={row} participantCount={participants.length} productAssets={extraAssets}
-          onChange={next => { changeRow(extras, setExtras, row.id, next); setExtrasDirty(true); }}
-          onRemove={() => { setExtras(current => current.filter(item => item.id !== row.id)); setExtrasDirty(true); }} />)}
-        <button type="button" className={styles.secondary} onClick={() => { setExtras(current => [...current, fresh("Boisson")]); setExtrasDirty(true); }}>Ajouter une boisson ou un extra</button>
-      </section>
-      <section className={styles.nightSection} data-night-section="travel" tabIndex={-1}><h3>Aller et retour</h3>
-        <p className={styles.helper}>Les transports se choisissent séparément dans les équipements en bas de la carte Soirée. Un retour ne remplace pas l’aller. Le prix reste évalué par Mobility/Compiler.</p>
-        <p>{items(context, "outbound").length ? "Aller configuré" : "Aller à préciser"} · {items(context, "return").length ? "Retour configuré" : "Retour à préciser"}</p>
-      </section>
+  const permitted = (slot: string) => !card || !!model?.presentation.sockets[`${context.contextOccurrenceId}:${slot}`]?.canAdd;
+  const choose = (asset: Equipment["asset"], target: Equipment["target"], selection?: ComponentSelectionV1) => {
+    if (dirty && !registry?.confirmDiscard(window.confirm)) return;
+    reset(); setSection("travel"); setEquipment({asset,target,selection}); setFormKey(key => key+1);
+  };
+  const childButton = (selection: ComponentSelectionV1 | undefined) => selection?.kind === "CHILD_CONTEXT" && <button type="button" className={styles.secondary}
+    disabled={!onOpenChild || dirty || busy} onClick={() => onOpenChild?.(selection.childContextOccurrenceId)}>Ouvrir {semanticState.contexts.find(c => c.contextOccurrenceId === selection.childContextOccurrenceId)?.fields.label as string ?? "le moment lié"}</button>;
+  const summaryRow = (key: Exclude<NightSection,null>, title: string, lines: readonly string[]) => <button type="button" className={styles.nightSummaryRow} onClick={() => open(key)}>
+    <span><strong>{title}</strong>{lines.map((line,index) => <small key={index}>{line}</small>)}</span><span>Modifier</span></button>;
+  const currentTransport = equipment?.selection?.kind === "MOBILITY_INTENT" ? equipment.selection : undefined;
+  const transportValues = currentTransport ? selectionValues(currentTransport) : {};
+  const sameTransport = currentTransport?.optionKey === equipment?.asset.optionKey;
+  if (!sameTransport) for (const key of ["amount","funding","fundingAmount","targetIntentId","parkingAmount","parkingMode","preference"]) delete transportValues[key];
+  const eventCost = model?.nightOutSummaries?.find(item => item.contextOccurrenceId === context.contextOccurrenceId);
+  return <div data-night-out-editor className={`${styles.nightEditor} ${styles.nightRichEditor}`}>
+    <div className={styles.nightEditorScroll}>
+      {section === null ? <section data-night-summary className={styles.nightSummary}>
+        <h3 ref={focus as React.RefObject<HTMLHeadingElement>} tabIndex={-1}>Votre soirée, en un coup d’œil</h3>
+        {summaryRow("main","Entrées et événement",items(context,"main").length ? items(context,"main").map(selectionCaption) : ["Budget ou entrée à préciser"])}
+        {summaryRow("participants","Participants",originalPeople.length ? originalPeople.map(ref => refLabel(ref,householdPersons)) : ["Non définis · facultatifs"])}
+        {summaryRow("extras","Boissons et compléments",items(context,"extras").length ? items(context,"extras").map(selectionCaption) : ["Aucun complément ajouté"])}
+        {summaryRow("before","Avant la soirée",originalBefore && originalBefore.kind !== "UNRESOLVED" ? [originalBottle ? selectionCaption(originalBottle) : "Moment lié",...diluents.map(row=>row.label)] : ["Aucune dépense ajoutée"])}
+        {summaryRow("food","Repas",originalFood ? [selectionCaption(originalFood)] : ["Aucun repas ajouté"])}
+        {summaryRow("travel","Aller et retour",[...(["outbound","return"] as const).map((slot,index) => `${index ? "Retour" : "Aller"} · ${items(context,slot)[0] ? selectionCaption(items(context,slot)[0]) : "Non prévu"}`)])}
+        {summaryRow("details","Date, lieu et nom",[context.fields.plannedDate ? String(context.fields.plannedDate) : "Date non renseignée", originalPlace?.kind === "TEXT" ? originalPlace.label : originalPlace?.kind === "KNOWN" ? "Lieu enregistré" : "Lieu non renseigné"])}
+        <div className={styles.nightCost} data-night-official-cost><strong>Coût connu de l’événement : {isFresh && eventCost ? money(eventCost.knownAmount) : "Actualisation en cours"}</strong>
+          <small>{isFresh && eventCost ? eventCost.incomplete ? "Des composantes restent à préciser. Ce montant n’est pas un total définitif." : "Coût des composantes retenues, sans supplément pour la carte Soirée." : "Vos nouvelles décisions sont conservées ; la projection du mois est en attente."}</small>
+          <small>Impact sur le mois : consulter la projection officielle dans le bandeau.</small></div>
+        <button type="button" className={styles.secondary} onClick={() => open("palette")}>Ajouter à ma soirée · autres options</button>
+      </section> : <section ref={focus} tabIndex={-1} className={styles.nightSection} data-night-section={section} key={formKey} onChangeCapture={event => {
+        if (!(event.target as Element).closest("[data-context-palette]")) setDirty(true);
+      }}>
+        <button type="button" className={styles.secondary} onClick={() => open(null)}>← Résumé de la soirée</button>
+        {section === "main" && <><h3>Quel budget pour la soirée ou les entrées ?</h3><p className={styles.helper}>Un seul coût principal. Vous pouvez compléter la soirée plus tard.</p>
+          {originalMain?.kind === "CHILD_CONTEXT" ? <>{childButton(originalMain)}<p>Les choix de l’événement lié sont conservés.</p></> : <>
+            {!detailed ? <><label>Budget principal (€)<input autoFocus inputMode="decimal" value={main.amount} onChange={event => setMain({...main,edited:true,amount:event.target.value,costMode:"MANUAL"})} /></label>
+              <label className={styles.nightCheck}><input type="checkbox" checked={main.costMode === "UNKNOWN"} onChange={event => setMain({...main,edited:true,costMode:event.target.checked ? "UNKNOWN" : "MANUAL"})} />Prix encore inconnu</label></>
+              : <ComponentRow title="Entrées et événement" row={main} participantCount={participants.length} productAssets={eventAssets} onChange={setMain} removable={false} onRemove={() => {}} />}
+            <button type="button" className={styles.secondary} onClick={() => {
+              if (detailed && !window.confirm("Remplacer le détail des entrées par un budget global à préciser ? Les autres composantes restent conservées.")) return;
+              setDetailed(!detailed); setDirty(true); if (detailed) setMain({...main,edited:true,unitBasis:"SHARED",quantity:"1",personCount:"",amount:"",costMode:"UNKNOWN"});
+            }}>{detailed ? "Revenir à un budget global" : "Détailler les entrées ou le prix par personne"}</button>
+            {main.unitBasis === "PERSON" && participants.length !== Number(main.personCount) && <p className={styles.helper}>Les participants et le nombre de personnes tarifées sont distincts. Confirmez ce dernier dans « Personnes concernées » si votre programme change.</p>}
+            <button type="button" className={styles.primary} disabled={busy || !permitted("main")} onClick={save}>Confirmer le budget</button></>}
+          <CardKnowledgePanel knowledge={knowledge} /></>}
+        {section === "participants" && <><h3>Qui participe ?</h3><p className={styles.helper}>Facultatif. Les quantités partagées restent inchangées. Les prix par personne gardent leur nombre tarifé jusqu’à une modification explicite des entrées ou consommations.</p>
+          {participants.map((ref,index) => <div key={index} className={styles.nightParticipant}><PlannedContactField label={`Personne ${index+1}`} value={ref} householdPersons={householdPersons} onChange={next => {setParticipants(current => next ? current.map((item,position)=>position===index ? next : item) : current.filter((_,position)=>position!==index));setDirty(true);}} />
+            <button type="button" onClick={() => {setParticipants(current=>current.filter((_,position)=>position!==index));setDirty(true);}}>Retirer cette personne</button></div>)}
+          <button type="button" className={styles.secondary} onClick={() => {setParticipants(current=>[...current,{kind:"TEXT",label:""}]);setDirty(true);}}>Ajouter une personne</button>
+          <button type="button" className={styles.primary} disabled={busy} onClick={save}>Confirmer les participants</button></>}
+        {section === "extras" && <><h3>Boissons et compléments</h3><p className={styles.helper}>Ces choix s’ajoutent au budget principal : renseignez uniquement ce qui n’est pas déjà compris. Une bouteille commune utilise un lot partagé, indépendant du nombre de participants.</p>
+          {extras.map(row=><ComponentRow key={row.id} title={row.label || "Consommation"} row={row} participantCount={participants.length} productAssets={extraAssets} onChange={next=>setExtras(current=>current.map(item=>item.id===row.id ? next : item))} onRemove={()=>{setExtras(current=>current.filter(item=>item.id!==row.id));setDirty(true);}} />)}
+          <button type="button" className={styles.secondary} disabled={!permitted("extras")} onClick={()=>{setExtras(current=>[...current,{...fresh("Consommation"),costMode:"MANUAL"}]);setDirty(true);}}>Ajouter une consommation individuelle</button>
+          <button type="button" className={styles.secondary} disabled={!permitted("extras")} onClick={()=>{setExtras(current=>[...current,{...fresh("Bouteille commune"),unitBasis:"SHARED",costMode:"MANUAL"}]);setDirty(true);}}>Ajouter une bouteille partagée</button>
+          <button type="button" className={styles.primary} disabled={busy} onClick={save}>Confirmer les boissons et compléments</button></>}
+        {section === "before" && <><h3>Prévoir un moment avant la soirée ?</h3><p className={styles.helper}>Facultatif : seuls les éléments retenus ajoutent leur propre coût.</p>
+          {beforeChild && beforeChild.templateKey !== "activity" ? <>{childButton(originalBefore)}<p>Ce moment possède son propre éditeur ; ses réponses restent conservées.</p></> : <>
+            <label className={styles.nightCheck}><input type="checkbox" checked={beforeEnabled} onChange={event=>{
+              if (!event.target.checked && originalBefore && !window.confirm("Retirer le moment avant la soirée et ses composants ? Les entrées, boissons, repas et trajets indépendants seront conservés. Vous pourrez annuler cette décision.")) return;
+              setBeforeEnabled(event.target.checked);setDirty(true);
+            }} />Prévoir un before</label>
+            {beforeEnabled && <><ComponentRow title="Avant la soirée" row={bottle} participantCount={participants.length} productAssets={beforeAssets} onChange={setBottle} removable={false} onRemove={()=>{}} />
+              {diluents.map(row=><ComponentRow key={row.id} title="Complément avant la soirée" row={row} participantCount={participants.length} productAssets={beforeAssets} onChange={next=>setDiluents(current=>current.map(item=>item.id===row.id ? next : item))} onRemove={()=>{setDiluents(current=>current.filter(item=>item.id!==row.id));setDirty(true);}} />)}
+              <button type="button" className={styles.secondary} onClick={()=>{setDiluents(current=>[...current,fresh("Diluant")]);setDirty(true);}}>Ajouter un diluant ou complément</button></>}
+            <button type="button" className={styles.primary} disabled={busy} onClick={save}>Confirmer le moment avant la soirée</button></> }</>}
+        {section === "food" && <><h3>Un repas en plus ?</h3>{originalFood?.kind === "CHILD_CONTEXT" ? <>{childButton(originalFood)}<p>Ce repas est un seul objet économique, conservé avec ses propres choix.</p></> : <>
+          {food ? <><label>Type de repas<select value={foodOption} onChange={event=>setFoodOption(event.target.value)}>{["restaurant","fast-food","delivery"].filter(option=>!card || model?.library.searchableAssets.some(asset=>asset.assetKey===`option:night-out:food:${option}` && model.dropCapabilities.some(drop=>drop.sourceAssetKey===asset.assetKey && drop.target.contextOccurrenceId===context.contextOccurrenceId && drop.resolution!=="BLOCKED"))).map(option=><option key={option} value={option}>{{restaurant:"Restaurant","fast-food":"Restauration rapide",delivery:"Livraison"}[option]}</option>)}</select></label>
+            <ComponentRow title="Repas" row={food} participantCount={participants.length} bindingChoices onChange={setFood} onRemove={()=>{setFood(null);setDirty(true);}} /></>
+            : <button type="button" className={styles.secondary} disabled={!permitted("food")} onClick={()=>{setFood({...fresh("Restaurant"),costMode:"MANUAL"});setDirty(true);}}>Ajouter un repas</button>}
+          <button type="button" className={styles.primary} disabled={busy} onClick={save}>Confirmer le repas</button></>}</>}
+        {section === "details" && <><h3>Nom, date et lieu · facultatifs</h3>{([['label','Nom de la soirée'],['plannedDate','Date'],['endDate','Date de fin'],['timingNote','Repère de temps']] as const).map(([key,title])=><label key={key}>{title}<input type={key.includes('Date') ? 'date' : 'text'} value={details[key]} maxLength={160} onChange={event=>setDetails(current=>({...current,[key]:event.target.value}))} /></label>)}
+          <PlannedPlaceField label="Lieu prévu" value={place} places={model?.mobilityOptions?.places ?? []} onChange={next=>{setPlace(next);setDirty(true);}} />
+          <button type="button" className={styles.primary} disabled={busy} onClick={save}>Confirmer ces précisions</button></>}
+        {(section === "travel" || section === "palette") && <><h3>{section === "travel" ? "Aller et retour indépendants" : "Ajouter à ma soirée"}</h3><p className={styles.helper}>Choisissez seulement les compléments utiles. Un coût d’usage de voiture n’est pas un plein bancaire ; les distances ou tarifs absents restent inconnus.</p>
+          {section === "travel" && !equipment && (["outbound","return"] as const).map(slot=><div key={slot}><strong>{slot === "outbound" ? "Aller" : "Retour"}</strong><p>{items(context,slot).map(selectionCaption).join(" · ") || "Aucun trajet ajouté"}</p>
+            <div className={styles.nightTravelChoices}>{card && model?.library.searchableAssets.filter(asset=>asset.optionKind==="MOBILITY_INTENT" && asset.assetKey.startsWith(`option:night-out:${slot}:`) && model.dropCapabilities.some(drop=>drop.sourceAssetKey===asset.assetKey && drop.target.contextOccurrenceId===context.contextOccurrenceId && drop.target.slotKey===slot && drop.resolution!=="BLOCKED")).map(asset=><button key={asset.assetKey} type="button" className={styles.secondary} onClick={()=>choose(asset,{kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:slot},items(context,slot)[0])}>{asset.label}</button>)}</div>
+            {items(context,slot).length>0 && <button type="button" className={styles.secondary} onClick={()=>send({kind:"CLEAR_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:slot,selectionId:items(context,slot)[0].selectionId})}>Retirer {slot==="outbound" ? "l’aller" : "le retour"}</button>}</div>)}
+          {equipment && <form key={formKey} onSubmit={event=>{event.preventDefault();try{send({kind:"DROP",assetKey:equipment.asset.assetKey,target:equipment.target,values:Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<string,string>,identity:crypto.randomUUID(),selectionId:equipment.selection?.selectionId ?? crypto.randomUUID()});}catch{setError("Vérifiez les informations du trajet. Votre saisie est conservée.");}}}>
+            <h4>{equipment.target.slotKey === "return" ? "Retour" : "Aller"} · {equipment.asset.label}</h4>
+            {!sameTransport && currentTransport && <p>Ce mode remplace le précédent sur ce trajet uniquement. Son ancien prix ne sera pas repris.</p>}
+            {model?.editors.find(editor=>editor.assetKey===equipment.asset.assetKey)?.fields.map(field=><label key={field.key}>{field.label}{field.kind==="CHOICE" ? <select name={field.key} defaultValue={transportValues[field.key] ?? field.choices?.[0]?.value ?? ""}>
+              {field.choices?.map(choice=><option key={choice.value} value={choice.value}>{choice.label.replace(" · outbound"," · Aller").replace(" · return"," · Retour")}</option>)}{field.key==="funding" && transportValues.funding==="EXISTING" && <option value="EXISTING">Conserver le financement antérieur</option>}</select>
+              : <input name={field.key} defaultValue={transportValues[field.key] ?? field.initial ?? ""} inputMode={field.kind==="AMOUNT" ? "decimal" : undefined} />}</label>)}
+            <button type="submit" className={styles.primary} disabled={busy}>Confirmer ce trajet</button></form>}
+          {section==="palette" && card && model && <ContextPalette card={card} model={model} busy={busy} configure close={()=>open(null)} choose={(asset,target,selection)=>{
+            if(asset.optionKind==="MOBILITY_INTENT"){choose(asset,target,selection);return;}
+            if(asset.kind==="CONTEXT_ASSET"){
+              const linked = target.slotKey ? items(context,target.slotKey).find(item=>item.kind==="CHILD_CONTEXT" && semanticState.contexts.some(child=>child.contextOccurrenceId===item.childContextOccurrenceId && child.templateKey===asset.templateKey)) : undefined;
+              if(linked?.kind==="CHILD_CONTEXT"){onOpenChild?.(linked.childContextOccurrenceId);return;}
+              if(target.slotKey && items(context,target.slotKey).some(item=>item.kind!=="UNRESOLVED") && !window.confirm("Remplacer ce choix par un moment lié ? Les autres rubriques seront conservées."))return;
+              send({kind:"DROP",assetKey:asset.assetKey,target,values:{},identity:crypto.randomUUID(),selectionId:crypto.randomUUID()});return;
+            }
+            open(target.slotKey==="extras" ? "extras" : target.slotKey==="before" ? "before" : target.slotKey==="food" ? "food" : "main");
+          }} />}</>}
+      </section>}
     </div>
     {error && <p role="alert" className={styles.formError}>{error}</p>}
-    <footer><button type="button" className={styles.secondary} disabled={busy} onClick={onCancel}>Retour au mois</button>
-      <button type="button" data-night-save className={styles.primary} disabled={busy} onClick={save}>Prévisualiser la soirée</button></footer>
+    <footer><p className={styles.helper} role="status" data-night-persistence>{dirty ? "Saisie non confirmée · aucun nouveau choix enregistré" : ({SAVED:"Brouillon sauvegardé",SAVING:"Sauvegarde en cours",ERROR:"Erreur de sauvegarde · choix conservés dans cette page",CONFLICT:"Conflit de sauvegarde · version à vérifier",MEMORY:"Brouillon en mémoire"} as Record<string,string>)[saveStatus] ?? "Modifications à sauvegarder"} · {isFresh ? "Projection actualisée" : "Projection à actualiser"}</p><button type="button" className={styles.secondary} disabled={busy} onClick={onCancel}>Retour au mois</button></footer>
   </div>;
 }

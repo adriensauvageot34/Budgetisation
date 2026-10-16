@@ -1,0 +1,50 @@
+{
+  "status": "PASS_BROWSER_HTTP_SYNTHETIC_ONLY",
+  "uiObservedBefore": {
+    "preview": "FAILED",
+    "draft": "SAVED",
+    "applyDisabled": true
+  },
+  "uiObservedAfterRetry": {
+    "preview": "FRESH",
+    "draft": "SAVED"
+  },
+  "trace": [
+    {
+      "kind": "READ",
+      "sequence": 0,
+      "ok": true,
+      "digest": "bf33b6050d8e5640788b247d793425355431cb3d29cef44b058aa3dcc00dcac2"
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 0,
+      "ok": true
+    },
+    {
+      "kind": "NETWORK_FAILURE",
+      "sequence": 2
+    },
+    {
+      "kind": "READ",
+      "sequence": 5,
+      "ok": true,
+      "digest": "90739f81be87c61295dd7815ebc03c8648608ae541967324b62d5a9bc938d92b"
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 5,
+      "ok": true
+    }
+  ],
+  "draft": {
+    "id": "e4ca2a37-6467-4506-a576-a1263edb1a1d",
+    "version": 1,
+    "digest": "90739f81be87c61295dd7815ebc03c8648608ae541967324b62d5a9bc938d92b"
+  },
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "remoteWrites": 0
+}

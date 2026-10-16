@@ -1,0 +1,10 @@
+{
+  "status": "PASS_ESBUILD_PRODUCTION_FIXTURE_ONLY",
+  "productSha": "35171e31a2cea31d0659a3274b85e56f2cf71774",
+  "entryBytes": 352378,
+  "initialStaticJsBytes": 466068,
+  "nightLazyJsBytes": 66988,
+  "nightAbsentFromInitialStaticGraph": true,
+  "cssSharedWithExistingEditors": true,
+  "nextChunkPerformance": "NOT_MEASURED"
+}

@@ -26,7 +26,6 @@ import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, composerInteractionReuseEnabled, type PreviewStatus } from "./preview-scheduler";
 import { composerPreviewHttp } from "./preview-http";
 import { editorChunks, type EditorChunkKind, type LoadedEditorChunks } from "./editor-chunks";
-import { NightOutEditor } from "./night-out-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useDurableDraft, type DraftTransport } from "./durable-draft";
 import { composerDraftHttpTransport } from "./draft-http-transport";
@@ -38,7 +37,7 @@ import { InlineEditContext, useOwnedInlineEdits } from "./inline-edit-registry";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   restaurantContextId?: string; restaurantCreating?: boolean;
-  giftContextId?: string; nightContextId?: string; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
+  giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
   cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
@@ -119,7 +118,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [editorLoadError, setEditorLoadError] = useState<EditorChunkKind | null>(null);
   const [editorLoadRetry, setEditorLoadRetry] = useState(0);
   const editorKind: EditorChunkKind | null = editor?.restaurantContextId ? "restaurant" : editor?.stayContextId ? "stay" : editor?.familyContextId ? "family"
-    : editor?.giftContextId ? "gift" : editor?.catalogContextId ? "catalog" : null;
+    : editor?.giftContextId ? "gift" : editor?.nightContextId ? "night" : editor?.catalogContextId ? "catalog" : null;
   useEffect(() => {
     if (!editorKind || loadedEditors[editorKind]) return;
     let current = true;
@@ -133,6 +132,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const RestaurantEditor = loadedEditors.restaurant;
   useEffect(() => { if (editor?.restaurantContextId && !draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)) setEditor(null); }, [draftState.contexts, editor?.restaurantContextId]);
   const ShortStayEditor = loadedEditors.stay, GiftEditor = loadedEditors.gift, CatalogContextEditor = loadedEditors.catalog;
+  const NightOutEditor = loadedEditors.night;
   const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
   const [unresolvedOpen, setUnresolvedOpen] = useState(false);
   const [reveal, setReveal] = useState<{ targetRef: string; sequence: number } | null>(null);
@@ -341,7 +341,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         else if (history === "redo") { setFuture(f => f.slice(0, -1)); setPast(p => [...p, beforeDraft]); }
         setMessage(response.mutationKind === "CANCEL_CONTEXT" ? "Context retiré du brouillon. Son annulation sera conservée à l’application." : changed ? "Brouillon mis à jour et prévisualisé." : "Prévisualisation à jour.");
       }
-      install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null); setEditor(null); setSelected(null);
+      install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
+      setEditor(current => current?.nightContextId && response.model.semanticState.contexts.some(context => context.contextOccurrenceId === current.nightContextId)
+        ? { ...current, nightCreating: false, nightAdmission: (current.nightAdmission ?? 0) + 1 } : null); setSelected(null);
       if (changed) animate(history === "undo" ? "undo" : history === "redo" ? "redo" : "snap", nextMotionTarget.current);
       nextMotionTarget.current = null;
       if (balanceOpen && changed && !response.suggestions && !response.applied) {
@@ -490,7 +492,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       const stay = owner?.templateKey === "short-stay" ? owner : shown.board.contexts.find(card => card.contextOccurrenceId === owner?.parentContextOccurrenceId && card.templateKey === "short-stay");
       if (stay) { editContext(stay); return; }
     }
-    if (selection?.kind === "COMPONENT" && selection.quantityPerPerson) {
+    if (selection?.kind === "COMPONENT") {
       const owner = shown.board.contexts.find(card => card.contextOccurrenceId === target.contextOccurrenceId);
       const parent = owner?.templateKey === "night-out" ? owner : shown.board.contexts.find(card => card.contextOccurrenceId === owner?.parentContextOccurrenceId && card.templateKey === "night-out"
         && card.sockets.find(socket => socket.slotKey === "before")?.currentItems.some(item => item.kind === "CHILD_CONTEXT" && item.childContextOccurrenceId === owner?.contextOccurrenceId));
@@ -527,7 +529,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         setEditor({ title: `Configurer ${presetKey ? composerPreset(presetKey)!.label : asset.label}`, side: !["night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? ""),
           cardKey: asset.assetKey,
           ...(asset.templateKey === "gift" ? { giftContextId: identity } : {}),
-          ...(asset.templateKey === "night-out" ? { nightContextId: identity } : {}),
+          ...(asset.templateKey === "night-out" ? { nightContextId: identity, nightCreating: true } : {}),
           ...(asset.templateKey === "short-stay" ? { stayContextId: identity } : {}),
           ...(asset.templateKey === "family-visit" ? { familyContextId: identity } : {}),
           ...((["restaurant", "fast-food", "delivery", "activity", "purchase"].includes(asset.templateKey ?? "") && (asset.templateKey === "restaurant" || presetKey)) ? { restaurantContextId: identity, restaurantCreating: true } : {}),
@@ -562,7 +564,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       values: Object.fromEntries(["amount", "count", "unitAmount"].map(key => [key, typeof card.value[key] === "string" ? card.value[key] as string : ""])),
       operation: values => ({ kind: "MUTATE", mutation: { kind: "SET_STATE", targetRef: card.targetRef, value: Object.fromEntries(model.controlEditors.find(e => e.targetRef === card.targetRef)!.fields.map(f => [f.key, values[f.key]])) } }) });
   }
-  const closeDialog = () => { if (!busyRef.current) { setEditor(null); setProjectionOpen(false); setErrorMessage(null); } };
+  const closeDialog = () => { if (!busyRef.current) { if (editor?.nightContextId && !inlineEdits.registry.confirmDiscard(window.confirm)) return; setEditor(null); setProjectionOpen(false); setErrorMessage(null); } };
   function editContext(card: ComposerContextCardView) {
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
@@ -728,10 +730,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           targetMonth={draftState.targetMonth} householdPersons={model.householdPersons} options={model.mobilityOptions} initialMode={editor.familyMode}
           summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.familyContextId)} fresh={previewStatus === "FRESH"}
           knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
-        : editor?.nightContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)
-        ? <NightOutEditor key={editor.nightContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
+        : editor?.nightContextId && NightOutEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)
+        ? <NightOutEditor key={`${editor.nightContextId}:${editor.nightAdmission ?? 0}:${JSON.stringify(draftState.contexts.filter(context => context.contextOccurrenceId === editor.nightContextId || context.parentContextOccurrenceId === editor.nightContextId))}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
           semanticState={draftState} householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
-          busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
+          model={shown} card={shown.board.contexts.find(card => card.contextOccurrenceId === editor.nightContextId)} fresh={previewStatus === "FRESH" || previewStatus === "BLOCKED"}
+          saveStatus={draftTransport ? durable.status : "MEMORY"}
+          onOpenChild={id => { const child = shown.board.contexts.find(card => card.contextOccurrenceId === id); if (child) editContext(child); }}
+          creating={editor.nightCreating} busy={busy} onCancel={closeDialog} onSave={operation => { const admitted = stage(operation); if (admitted) setEditor(current => current ? { ...current, nightCreating: false } : current); return admitted; }} />
         : editor?.giftContextId && GiftEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
         ? <GiftEditor key={editor.giftContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)!}
           householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}

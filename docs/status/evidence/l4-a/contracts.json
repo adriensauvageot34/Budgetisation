@@ -1,0 +1,88 @@
+{
+  "status": "EXECUTED_PASS_SYNTHETIC_ONLY",
+  "checks": [
+    {
+      "name": "01_CREATE_PRESET_NO_INVENTED_FACTS",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "A_MINIMAL_30_RELOAD_35_SAME_IDS",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "02_PERSON_ENTRIES_30_NO_GLOBAL_DUPLICATE",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "03_INDIVIDUAL_DRINKS_10",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "04_SHARED_BOTTLE_20",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "05_BEFORE_10_EXPLICIT_CHILD",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "06_LEGS_INDEPENDENT_IDS",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "07_ORACLE_95_PARENT_NON_ADDITIVE",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "08_PEOPLE_CHANGE_NO_RETROACTIVE_MULTIPLICATION",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "09_ONLY_DRINK_PRICE_PATCH",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "10_REMOVE_BEFORE_ONLY_OMITTED_PRESERVED",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "11_TRANSPORT_SWITCH_INVALIDATES_OLD_FARE_UNKNOWN",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "12_SEMANTIC_SERIALIZATION_FIELDS_AND_LEGACY",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "13_LOCAL_HISTORY_SNAPSHOTS",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "14_REJECTED_MUTATION_ORIGINAL_INTACT",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "15_OUT_OF_ORDER_GATE",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "16_RAW_NOT_FLUSHED_IMPLICITLY",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "FOOD_EXISTING_CHILD_UNCHANGED_BY_NIGHT_EDIT",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "EXPLORATORY_UNRELATED_PRICE_PRESERVES_PROVENANCE",
+      "status": "PASS_CONTRACT_PGLITE_SYNTHETIC_ONLY"
+    }
+  ],
+  "readWorldCalls": 16,
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "remoteWrites": 0,
+  "auth": "NOT_RUN_AUTH"
+}

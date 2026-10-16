@@ -1,0 +1,36 @@
+P09 baseline source 7765bc532511d777ef3e3c80ff0b48826a4e465e: 7 source files restored in-memory
+CTX-001 PASS
+CTX-002 PASS
+C4-001 PASS
+C4-002 PASS
+C4-003 PASS
+C4-004 PASS
+C4-005 PASS
+C4-006 PASS
+C4-007 PASS
+C4-008 PASS
+C4-009 PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    'readActivePlan',
++   'readActivePointer',
+    'readRevision'
+  ]
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-contexts.mjs:136:12
+    at async test (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-contexts.mjs:18:48)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-phase2-planner-contexts.mjs:131:3 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [ 'readActivePlan', 'readActivePointer', 'readRevision' ],
+  expected: [ 'readActivePlan', 'readRevision' ],
+  operator: 'deepStrictEqual'
+}
+
+Node.js v22.18.0

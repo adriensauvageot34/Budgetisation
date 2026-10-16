@@ -1,0 +1,80 @@
+[
+  {
+    "file": "check-l4-a-minimal.mjs",
+    "startedAt": "2026-10-16T19:32:49.544Z",
+    "finishedAt": "2026-10-16T19:33:08.403Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-l4-a-base-p09.mjs",
+    "startedAt": "2026-10-16T19:33:08.411Z",
+    "finishedAt": "2026-10-16T19:36:30.184Z",
+    "exitCode": 1
+  },
+  {
+    "file": "check-phase2-planner-p09.mjs",
+    "startedAt": "2026-10-16T19:36:30.223Z",
+    "finishedAt": "2026-10-16T19:39:15.675Z",
+    "exitCode": 1
+  },
+  {
+    "file": "check-pre-l4-c1.mjs",
+    "startedAt": "2026-10-16T19:39:15.675Z",
+    "finishedAt": "2026-10-16T19:40:49.690Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-pre-l4-c2.mjs",
+    "startedAt": "2026-10-16T19:40:49.692Z",
+    "finishedAt": "2026-10-16T19:41:18.956Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-composer-post-snap3-draft-http.mjs",
+    "startedAt": "2026-10-16T19:41:18.961Z",
+    "finishedAt": "2026-10-16T19:41:21.321Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-composer-p14-p2-scheduler.mjs",
+    "startedAt": "2026-10-16T19:41:21.321Z",
+    "finishedAt": "2026-10-16T19:41:35.085Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-phase2-planner-p13.mjs",
+    "startedAt": "2026-10-16T19:41:35.086Z",
+    "finishedAt": "2026-10-16T19:44:00.878Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-phase2-planner-mobility.mjs",
+    "startedAt": "2026-10-16T19:44:00.879Z",
+    "finishedAt": "2026-10-16T19:46:06.195Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-phase2-planner-contexts.mjs",
+    "startedAt": "2026-10-16T19:46:06.201Z",
+    "finishedAt": "2026-10-16T19:48:18.043Z",
+    "exitCode": 1
+  },
+  {
+    "file": "check-phase2-planner-kernel.mjs",
+    "startedAt": "2026-10-16T19:48:18.046Z",
+    "finishedAt": "2026-10-16T19:50:34.456Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-l1-restaurant.mjs",
+    "startedAt": "2026-10-16T19:50:34.457Z",
+    "finishedAt": "2026-10-16T19:51:07.727Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-planner-performance-parity.mjs",
+    "startedAt": "2026-10-16T19:51:07.727Z",
+    "finishedAt": "2026-10-16T19:51:19.115Z",
+    "exitCode": 0
+  }
+]

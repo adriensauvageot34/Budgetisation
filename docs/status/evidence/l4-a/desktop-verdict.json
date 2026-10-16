@@ -1,0 +1,195 @@
+{
+  "status": "EXECUTED_PASS_LIMITED_REACT_FIXTURE",
+  "productSha": "35171e31a2cea31d0659a3274b85e56f2cf71774",
+  "measurements": [
+    {
+      "name": "creation",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 7,
+      "dialog": {
+        "height": 741,
+        "width": 820,
+        "x": 310,
+        "y": 79.5
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 34,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "creation",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 7,
+      "dialog": {
+        "height": 741,
+        "width": 820,
+        "x": 454,
+        "y": 79.5
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 34,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "name": "creation",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 7,
+      "dialog": {
+        "height": 741,
+        "width": 820,
+        "x": 550,
+        "y": 169.5
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 34,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 310,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 454,
+        "y": 35.01250076293945
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "name": "summary",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 10,
+      "dialog": {
+        "height": 829.9750366210938,
+        "width": 820,
+        "x": 550,
+        "y": 125.01250457763672
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 60,
+      "focusTag": "H3",
+      "horizontalOverflow": false,
+      "summary": true,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "name": "detail",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 12,
+      "dialog": {
+        "height": 840,
+        "width": 820,
+        "x": 310,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "name": "detail",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 12,
+      "dialog": {
+        "height": 840,
+        "width": 820,
+        "x": 454,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "name": "detail",
+      "method": "visible-unclipped-controls-v2",
+      "controlOverlaps": [],
+      "controlsMeasured": 20,
+      "dialog": {
+        "height": 1020,
+        "width": 820,
+        "x": 550,
+        "y": 30
+      },
+      "dialogWithinViewport": true,
+      "editorNodes": 107,
+      "focusTag": "INPUT",
+      "horizontalOverflow": false,
+      "summary": false,
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  ]
+}

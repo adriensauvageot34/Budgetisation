@@ -1,0 +1,18 @@
+{
+  "status": "PASS_BROWSER_HTTP_SYNTHETIC_ONLY",
+  "sameDraftId": true,
+  "sameContextId": true,
+  "versions": [
+    10,
+    11,
+    14
+  ],
+  "digests": [
+    "4d0172ae3595de7eead6a90bdea7cf2b95375a00497f311f85a9292c694fb88f",
+    "ac0998f239b7fc3baa658c3a1077af3cb4a5b00fdc7c13ecbe17b99eb58721e6",
+    "34444c4f2e4049090c655d89d79ff4396013f6a5d36be85952fa1fda613749f6"
+  ],
+  "partialEditPreserved": true,
+  "beforeRemovalPreservedOthers": true,
+  "auth": "NOT_RUN_AUTH"
+}

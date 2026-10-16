@@ -1,0 +1,53 @@
+{
+  "status": "EXECUTED_PASS_REAL_REACT_LOCAL_HTTP_SYNTHETIC_ONLY",
+  "target": "127.0.0.1:3197 scenario=P09",
+  "authenticated": "NOT_RUN_AUTH",
+  "contextOccurrenceId": "395caf76-8ef9-41ea-995e-bed286136d3c",
+  "selectionId": "9a627018-5e24-4e83-9d4a-0dc0698f51ee",
+  "templateKey": "night-out",
+  "fields": {
+    "fieldSchemaVersion": "context-fields@v2",
+    "label": "Soirée techno",
+    "composerPresentation": {
+      "version": "composer-context-presentation@v1",
+      "presetKey": "techno-night"
+    }
+  },
+  "finalAmount": "35",
+  "provenance": "EXPLICIT_USER_DECISION",
+  "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+  "draftVersion": 3,
+  "digest": "0d7d43824e5ce7b261f50f1e03c20341f64e1238ae70ee23a024d7d24e9b8d76",
+  "observedSequence": [
+    "CREATE",
+    "30_CONFIRMED",
+    "SAVED",
+    "FULL_RELOAD",
+    "SUMMARY_REOPEN",
+    "35_CONFIRMED",
+    "SAVED_READBACK"
+  ],
+  "draftEvents": [
+    {
+      "kind": "SAVE",
+      "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+      "version": 1,
+      "digest": "151657d16094971d6c9fd941d385bc983f6bf61371483e3b771baaf8329592f6"
+    },
+    {
+      "kind": "SAVE",
+      "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+      "version": 2,
+      "digest": "2226c2978b5df8a2be6443c7bafa3d723affc5cce86857fe0f6255a388bbc3d9"
+    },
+    {
+      "kind": "SAVE",
+      "draftId": "40191171-7fd5-4bfc-8cf5-d99511e04b96",
+      "version": 3,
+      "digest": "0d7d43824e5ce7b261f50f1e03c20341f64e1238ae70ee23a024d7d24e9b8d76"
+    }
+  ],
+  "remoteWrites": 0,
+  "historicalCanaryWrites": 0,
+  "officialPlan": null
+}
