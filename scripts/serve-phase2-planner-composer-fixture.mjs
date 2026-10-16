@@ -14,6 +14,7 @@ import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtur
 import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
 import { p10Month } from './fixtures/planner-p10.mjs';
 import { p09CompatibilityMonth, p09ReadbackMonth } from './fixtures/planner-p09.mjs';
+import { l33Month } from './fixtures/planner-l3-3.mjs';
 import { l31Month } from './fixtures/planner-l3-1.mjs';
 import { p2Measuring, p2FixturePlugin, p2World, p2Interaction } from './lib/planner-p14-p2-fixture-tools.mjs';
 import { p4Measuring, p4FixturePlugin } from './lib/planner-p14-p4a-fixture-tools.mjs';
@@ -94,7 +95,7 @@ function uiPayloadFields(value) {
 }
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
-    const pg = await createKernelPostgres(), fixture = (key.startsWith('L1_L31') ? () => l31Month(key.includes('DENSE')) : key.startsWith('L1') ? fixtures.L1 : p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
+    const pg = await createKernelPostgres(), fixture = (key.startsWith('L1_L33') ? () => l33Month(key.includes('DENSE')) : key.startsWith('L1_L31') ? () => l31Month(key.includes('DENSE')) : key.startsWith('L1') ? fixtures.L1 : p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
     if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' },

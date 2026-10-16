@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+const out='docs/status/evidence/l3-3-composer-workshop';
+const files=['check-l2b-library.mjs','check-phase2-planner-simple-levers.mjs','check-phase2-planner-renewals.mjs','check-phase2-planner-composer.mjs','check-phase2-planner-p13.mjs','check-phase2-planner-kernel.mjs','check-composer-post-snap3-draft-http.mjs','check-composer-p14-p2-scheduler.mjs','check-planner-performance-parity.mjs','check-l1-restaurant.mjs','check-l2a-presets.mjs','check-l3-2-library.mjs','check-l3-1-ux.mjs','check-l3-workshop.mjs','check-composer-r6-presentation.mjs'];
+const before=new Map();for(const dir of ['l0-l1-composer-restaurant','l2b-composer-library','l2a-composer-presets','l3-2-composer-library','l3-1-composer-ux-finish','l3-composer-workshop'])for(const name of fs.readdirSync('docs/status/evidence/'+dir)){const p='docs/status/evidence/'+dir+'/'+name;if(fs.statSync(p).isFile())before.set(p,fs.readFileSync(p));}
+const results=[];
+const previous=fs.existsSync(out+'/regressions.json')?JSON.parse(fs.readFileSync(out+'/regressions.json','utf8')):[];
+try{for(const file of files){if(process.argv.includes('--resume')&&previous.some(r=>r.file===file&&r.exitCode===0)){results.push(previous.find(r=>r.file===file));continue;}const start=Date.now(),r=spawnSync(process.execPath,['scripts/'+file],{encoding:'utf8',maxBuffer:5000000,env:{...process.env,L2B_REMAINING_ONLY:'1',PLANNER_C8_REPORT_PATH:out+'/c8.json',P14_P2_SCHEDULER_REPORT:out+'/scheduler.json'}});fs.writeFileSync(out+'/'+file.replace('.mjs','.log'),(r.stdout??'')+(r.stderr??'')+(r.error?.message??''));results.push({file,exitCode:r.status,elapsedMs:Date.now()-start});fs.writeFileSync(out+'/regressions.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results.at(-1)));}}
+finally{for(const[p,bytes]of before){if(!fs.readFileSync(p).equals(bytes)){fs.copyFileSync(p,out+'/rerun-'+p.split('/').slice(-2).join('-'));fs.writeFileSync(p,bytes);}}}
+process.exitCode=results.some(r=>r.exitCode!==0)?1:0;
