@@ -1,0 +1,41 @@
+{
+  "sourceSha": "eb78bb2d4ad201360df3d45cbfc1cec572115ead",
+  "results": [
+    {
+      "file": "check-pre-l4-c1.mjs",
+      "start": "2026-10-16T18:24:34.916Z",
+      "end": "2026-10-16T18:25:06.328Z",
+      "exitCode": 0
+    },
+    {
+      "file": "check-pre-l4-c2.mjs",
+      "start": "2026-10-16T18:25:06.330Z",
+      "end": "2026-10-16T18:25:12.740Z",
+      "exitCode": 0
+    },
+    {
+      "file": "check-composer-post-snap3-draft-http.mjs",
+      "start": "2026-10-16T18:25:12.740Z",
+      "end": "2026-10-16T18:25:13.460Z",
+      "exitCode": 0
+    },
+    {
+      "file": "check-composer-p14-p2-scheduler.mjs",
+      "start": "2026-10-16T18:25:13.460Z",
+      "end": "2026-10-16T18:25:16.319Z",
+      "exitCode": 0
+    },
+    {
+      "file": "check-phase2-planner-p13.mjs",
+      "start": "2026-10-16T18:25:16.319Z",
+      "end": "2026-10-16T18:25:48.532Z",
+      "exitCode": 0
+    },
+    {
+      "file": "check-planner-performance-parity.mjs",
+      "start": "2026-10-16T18:25:48.533Z",
+      "end": "2026-10-16T18:25:53.155Z",
+      "exitCode": 0
+    }
+  ]
+}

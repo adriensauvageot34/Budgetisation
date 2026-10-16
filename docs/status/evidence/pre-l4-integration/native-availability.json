@@ -1,0 +1,12 @@
+{
+  "NATIVE_INTERACTIONS": "PARTIAL",
+  "currentInventory": "Only DOM-capable IAB and MCP Apps browsers; no connected Chrome browser provider; no isolated authenticated test tab",
+  "officialWindowsCheck": "Browser window inventory only. Attempt to create a new blank Chrome window with Ctrl+N stopped because user input was detected. Subsequent inventory showed no dedicated Composer window.",
+  "unrelatedWindowContentsRead": false,
+  "confirm": "NOT_RUN_NATIVE",
+  "beforeUnload": "NOT_RUN_NATIVE",
+  "heldPointerDrag": "NOT_RUN_NATIVE",
+  "rapidBatchBefore350ms": "NOT_RUN_NATIVE",
+  "carriedProof": "C1 registry/pending tests, C3 DOM keyboard/paging/inspector/Undo/Redo and manual native protocol; no new native PASS",
+  "bypassOrRepeatedInput": false
+}

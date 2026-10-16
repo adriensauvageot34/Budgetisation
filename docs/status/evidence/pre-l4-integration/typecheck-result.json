@@ -1,0 +1,6 @@
+{
+  "command": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
+  "sourceSha": "eb78bb2d4ad201360df3d45cbfc1cec572115ead",
+  "exitCode": 0,
+  "log": "typecheck.log"
+}

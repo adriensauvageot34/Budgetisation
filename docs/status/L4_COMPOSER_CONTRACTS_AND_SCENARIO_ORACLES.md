@@ -102,3 +102,60 @@ Pour chaque pilote: capacités serveur exactes; aucune question sans champ/adapt
 Ordre recommandé: **Soirée techno pilote**, puis Cadeau/Achat, Visite, Séjour composite. Valider chaque parcours avant le suivant. Les questions doivent se limiter au chemin choisi; la réédition ouvre le résumé des choix existants, sans rejouer un questionnaire d’onboarding. Une duplication future devra créer des IDs neufs et remapper tout le sous-graphe; elle n’est pas livrée ici.
 
 Avant livraison réelle: fermeture/drag natifs et cycle Draft JWT isolé demeurent des gates ciblés; preuves C1/C2/C3 synthétiques ne les remplacent pas. Aucun nouveau moteur de questionnaire, cache, owner ou migration proposé par ce document.
+
+## 8. Contrat UX commun — création, réédition, complément
+
+Préparation PRE-L4 Integration, 16 octobre 2026. Ce contrat guide L4-A; il ne décrit pas une nouvelle fonctionnalité livrée. Les trois situations partagent le même Semantic Draft et les adaptateurs existants.
+
+| Situation | Première surface | Geste et issue attendue |
+|---|---|---|
+| Création | Carte immédiatement sur le Board et panneau latéral; preset déjà reconnu | Proposer la première décision pertinente, puis des ajouts volontaires. Ne pas redemander le type « techno » déjà fourni; ne pas exiger date/lieu/prix/participants absents si le contrat accepte l’incomplet. Fermer conserve les décisions admises, sans Apply. |
+| Réédition | Résumé des réponses réellement persistées, avec inconnues et provenance | « Modifier Boissons » ouvre cette rubrique seulement. La mise à jour conserve les autres champs, IDs, financements, UNKNOWN et liens. Aucun redémarrage automatique de toutes les questions. |
+| Complément | Palette contextuelle de la carte sélectionnée | Proposer seulement les routes et actions admises par le serveur. Une option équipée propose sa modification, une alternative annonce un remplacement. « Autres options » garde les choix rares accessibles; ne pas monter les114 équipements au repos. |
+
+**Ordre des questions:** (1) reprendre les choix du Draft; (2) reconnaître les défauts exacts du preset; (3) afficher les références utiles comme références; (4) proposer la décision principale; (5) demander les précisions dont ce choix dépend; (6) laisser ajouter les compléments. Connu ne veut pas dire confirmé: un prix historique reste REFERENCE jusqu’à adoption explicite; une décision existante ne doit pas être écrasée par une référence plus récente.
+
+**Question ou dépense:** choisir une personne, un lieu, une date ou un mode d’affichage ne crée pas de composant chiffré. Ajouter une bouteille, un billet ou des frais peut créer une sélection économique distincte. Avant chaque question métier, identifier le chemin qui survivra au reload. Sans champ/route admissible, ne pas présenter la réponse comme un choix sauvegardable. Une aide de présentation doit annoncer sa portée locale.
+
+### Dépendances et conservation
+
+| Changement | Dépendance à traiter explicitement | Réponses à préserver |
+|---|---|---|
+| TOTAL → PER_PERSON | Participants nécessaires pour la conversion; preuve de quantité mise à jour seulement après décision. Participants connus avec prix inconnu restent sauvegardables. | Composants SHARED, dates, lieu, before; aucune multiplication automatique du graphe |
+| Voiture → train | Remplacer l’union de pricing/route incompatible de l’intention visée; billet UNKNOWN si absent | IDs compatibles de la visite, participants, cadeau/entrée indépendants; aucun coût carburant résiduel |
+| Destination/date modifiée | Ne plus considérer un devis incompatible comme actuel; repasser par la validation propriétaire | Réponses indépendantes; pas de remise à zéro globale |
+| Logement total → par nuit | Une seule représentation économique `lodgingPricing` et sa quantité; ne pas conserver total+nuits additifs | Restaurants et activités enfants, autres sélections et identités |
+| Prix/quantité d’un composant | Rééditer la sélection existante, en conservant sa provenance et son financement compatibles | `selectionId`, `contextOccurrenceId`, autres sockets et champs UNKNOWN |
+| Retrait d’un before/enfant | Annoncer l’abandon des réponses dépendantes avant de supprimer ce sous-graphe; respecter les ancres protégées | Tout le graphe indépendant. `before:undefined` conserve; `before:null` retire selon l’adaptateur, ce n’est pas un PATCH neutre |
+
+Aucune dépendance ne justifie d’inventer un montant, une fréquence, une date ou une personne. Annuler un champ RAW l’abandonne; une mutation confirmée entre dans Undo/Redo. Une saisie ou un lot PENDING garde Apply interdit selon C1. **Décision locale, SAVED, FRESH et APPLIED sont quatre faits distincts.** La reprise après erreur/CAS doit dire ce qui est confirmé et proposer la récupération existante, sans écrasement silencieux ni retry aveugle d’Apply.
+
+### Réemploi immédiat, sans moteur nouveau
+
+Les chemins sont relatifs à la racine du dépôt. Chaque helper reste limité à ses templates et champs admis; sa réutilisation ne lui donne pas de nouvelles capabilities.
+
+| Besoin UX | Mécanisme déjà présent et limite |
+|---|---|
+| Question conditionnelle, réponse connue, édition d’une rubrique | `restaurant-editor.tsx` (L1) et `guided-context-edit.ts`: résumé/sections et PATCH ciblé. `editRestaurant` pour Restaurant; `editGuidedContext` seulement fast-food/delivery/activity/purchase, pas Soirée/Cadeau/Visite/Séjour. Réutiliser les composants de choix/prix du panneau, pas cloner un deuxième état métier. |
+| Éditer Soirée/Visite/Séjour/Cadeau | `night-out-editor.tsx`, `family-visit-editor.tsx`, `short-stay-editor.tsx`, `gift-editor.tsx` et leurs mutations/adaptateurs déjà utilisés. Pour Soirée, `editNightOut` préserve les sockets omis; transport emprunte sa route spécialisée existante, pas un champ ajouté à `NightOutEdit.slots`. |
+| Complément facultatif | `context-palette.tsx` + `presentation/palette-groups.ts`, `DropTarget` avec Context/socket exacts, assets et routes du modèle publié. La présence d’un libellé ne crée pas une option persistable. |
+| Quantité partagée/par personne | `component-contract.ts`, `component-quantity.ts`: SHARED/ITEM/PERSON et preuve de conversion explicite. Le prix/mois/impact reste issu Compiler/Finance V2. |
+| Prix, incertitude et référence | Choix de coût/provenance existants, CardKnowledge et présentation par dimension C2. Ne pas copier les droits d’un contrôle mensuel à un composant différent. |
+| Conserver champ, identité et graphe | `semantic-state.ts`, `context-registry.ts`, sélections composantes et adaptateurs spécialisés. Un PATCH de socket remplace son tableau: reconstruire à partir des sélections existantes, pas de nouveaux UUID à chaque render. |
+| Sauvegarde partielle et reprise | `durable-draft.ts`, `/api/composer/drafts`, service Draft et RPC CAS/idempotents existants. Auteur/foyer dérivés serveur; sans READY permis, sans C0/admission refusé. Le transport ne doit pas être remplacé par un writer PlannedExpense. |
+| Retour arrière et éditions rapides | Réducteur/Undo/Redo existants dans `local-draft.ts`, registre inline C1 et lot350ms des contrôles concernés. Ne pas créer un deuxième historique du Semantic Draft dans l’éditeur. |
+| Réactivité et recalcul | `preview-scheduler.ts`, modèle déjà chargé et `editor-chunks.ts`. Pas de World par question/vignette, pas de Preview pour panneau/palette. Chargement progressif conservé; Soirée est actuellement dans l’entrée fréquente, les autres chunks suivent la stratégie existante, sans nouveau bundling anticipé. |
+
+`restaurant-editor.tsx`, `context-palette.tsx`, `durable-draft.ts`, `local-draft.ts`, `preview-scheduler.ts`, `editor-chunks.ts` sont sous `src/app/mois-a-venir/composer/`; les helpers de contrat/édition sous `src/domain/phase2/planner/`; le registre sous `src/server/phase2/planner/`.
+
+### Matrice UX des cinq futurs pilotes
+
+| Famille | Déjà persistable et première décision utile | Questions conditionnelles / compléments | Extension future, pas un choix promis |
+|---|---|---|---|
+| Soirée `night-out@v1` | Label du preset; entrée/budget principal par sélection; participants/lieu/dates si connus | Participants si PER_PERSON; boissons explicites via extras/before admissibles, repas, aller et retour via slots réels | Rubrique visuelle « Boissons » à raccorder aux sélections existantes; pas de champ arbitraire drinks/payeurs. Vestiaire/billet seulement si route publiée correspondante, pas parce que l’exemple UX les cite. |
+| Achat `purchase@v1` | Produit, vendeur texte, montant/détail, budgetDomain et binding admis | Quantité si détail; frais supplémentaires seulement non inclus; date/lieu/transport facultatifs | Livraison e-commerce, tracking et vendeur certifié n’ont pas de modèle dédié |
+| Cadeau `gift@v2` | Destinataire admissible/texte, occasion, objet/catalogue et budget | Quantité/prix et complément explicites; date facultative | Contribution commune nominative/payeur distinct non modélisés |
+| Visite `family-visit@v2` | Personne visitée, participants et lieu si connus; aucun déplacement implicite | Mode puis informations Mobility seulement si trajet ajouté; hospitality/activité volontaires | Pas d’économie alimentaire automatique ni de nouveau slot retour inventé |
+| Week-end `short-stay@v2` | Hébergement TOTAL ou PER_NIGHT, destination/dates/participants facultatifs | Nuits si mode requis; restaurants/activités/achats/transport volontaires | Jacuzzi inclus non structuré; intermois différé, aucune troncature |
+
+**Geste simple:** quantité/prix accessibles directement, sans parcours de navigation imposé. **Intention riche:** approfondissement volontaire, résumé compact d’abord à la réouverture. L4-A devra prouver création → sauvegarde partielle → reload → réédition ciblée, sans perdre les champs non modifiés, et les oracles de la section2. Ce contrat ne crée aucun `WizardEngine`, cache, owner ou état financier local.

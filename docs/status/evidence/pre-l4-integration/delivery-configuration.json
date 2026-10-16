@@ -1,0 +1,15 @@
+{
+  "authoritativeObservedDeployment": "dpl_HH6XbfcrYSbgC8eJboEi5vTE7Jxw",
+  "source": "git",
+  "branch": "main",
+  "target": "production",
+  "alias": "budgetisation-tan.vercel.app",
+  "sha": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+  "currentAutoDeploySwitch": "NOT_EXPOSED_BY_MCP_OR_PROJECT_INSPECT",
+  "cliCommand": "node <existing-vercel-cli> project inspect budgetisation --scope adriensauvageot34-6137s-projects --non-interactive --format json",
+  "cliProjectConfirmed": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+  "cliAuxiliaryIssue": "get latest worker timeout/EPIPE; project inspection still returned id/name, no git settings fields",
+  "decision": "Treat all merges into main as triggering Production; explicit Production GO required",
+  "configModified": false,
+  "mergeExecuted": false
+}

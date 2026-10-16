@@ -1,0 +1,15 @@
+{
+  "environment": "SUPABASE_MAIN_READ_ONLY_METADATA_ONLY",
+  "scope": "Only membership of reserved synthetic H1/H2; at most four distinct users; no personal account, token, secret or session payload read",
+  "queryMode": "BEGIN READ ONLY; SET LOCAL statement_timeout=3s; aggregate; COMMIT",
+  "reserved_accounts": 3,
+  "currently_banned": 3,
+  "marked_for_fixture_access": 0,
+  "eligible_fixture_accounts": 0,
+  "AUTH_CYCLE": "NOT_RUN_AUTH",
+  "authenticationProven": false,
+  "accountsChanged": false,
+  "rlsChanged": false,
+  "draftWrites": 0,
+  "financialWrites": 0
+}
