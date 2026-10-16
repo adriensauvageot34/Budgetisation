@@ -18,7 +18,7 @@ export function VisualClusterCard({ node, open }: { node: VisualClusterNode; ope
   </button>;
 }
 
-export function VisualClusterOverlay({ node, close, renderChild, palette, trash }: { node: VisualClusterNode; close: () => void; renderChild: (child: AtomicNode) => ReactNode; palette?: ReactNode; trash?: ReactNode }) {
+export function VisualClusterOverlay({ node, focused, close, renderChild, palette, trash }: { node: VisualClusterNode; focused?: string | null; close: () => void; renderChild: (child: AtomicNode) => ReactNode; palette?: ReactNode; trash?: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { const element = dialog.current, opener = document.activeElement as HTMLElement | null; element?.showModal();
     return () => { if (element?.open) element.close(); requestAnimationFrame(() => {
@@ -30,11 +30,12 @@ export function VisualClusterOverlay({ node, close, renderChild, palette, trash 
         if (target) { target.focus(); break; }
       }
     }); }; }, [node.id]);
+  useEffect(() => { if (focused) dialog.current?.querySelector<HTMLElement>(`[data-cluster-child="${CSS.escape(focused)}"]`)?.focus({ preventScroll: true }); }, [focused, node.id]);
   return <dialog ref={dialog} className={styles.clusterDialog} data-cluster-overlay={node.family} aria-label={`${node.title}, ${node.children.length} éléments`}
     onClose={close} onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === event.currentTarget) close(); }}>
     <header><div><span className={styles.clusterEyebrow}>Groupe visuel</span><h2>{node.title}</h2><p>{node.children.length} objets indépendants · montants dans chaque objet</p></div>
       <button type="button" className={styles.iconButton} aria-label={`Fermer ${node.title}`} onClick={close}><X size={20} /></button></header>
-    <div className={styles.clusterChildren}>{node.children.map(child => <div key={child.id} className={styles.clusterChildCell} style={{ width: child.width, minHeight: child.height }}>{renderChild(child)}</div>)}</div>
+    <div className={styles.clusterChildren}>{node.children.map(child => <div key={child.id} className={styles.clusterChildCell} data-cluster-child={child.id} tabIndex={-1} style={{ width: child.width, minHeight: child.height }}>{renderChild(child)}</div>)}</div>
     {palette}
     {trash}
   </dialog>;

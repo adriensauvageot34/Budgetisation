@@ -22,13 +22,15 @@ export function inventoryMountedPage(index: number, active: number, departing: n
 }
 const columnGap = 10, rowGap = 5, rowTrack = 5;
 
-export const inventoryColumns = (width: number) => Math.max(2, Math.min(16, Math.floor((Math.max(212, width) + columnGap) / 83)));
+// Finer tracks let three ordinary cards fit a ~710px shelf instead of
+// rounding each 230px card up to ~260px. CSS and packing use the same cap.
+export const inventoryColumns = (width: number) => Math.max(2, Math.min(18, Math.floor((Math.max(212, Math.min(1330, width)) + columnGap) / 76)));
 
 export function inventoryLayoutPages(items: readonly InventoryItem[], width: number, height: number): InventoryPlacement[][] {
   const availableWidth = Math.max(212, Math.min(1330, width));
   const columns = inventoryColumns(availableWidth), columnWidth = (availableWidth - (columns - 1) * columnGap) / columns;
-  // Reserve room for intrinsic context content and the carousel's quiet bottom edge.
-  const maxTracks = Math.max(23, Math.floor((Math.max(218, height) - 35 + rowGap) / (rowTrack + rowGap)));
+  // The measured viewport already excludes pagination and the palette.
+  const maxTracks = Math.max(23, Math.floor((Math.max(218, height) - 8 + rowGap) / (rowTrack + rowGap)));
   const pages: InventoryPlacement[][] = [];
   let page: InventoryPlacement[] = [], occupied = new Set<number>();
   const flushPage = () => { if (page.length) pages.push(page); page = []; occupied = new Set(); };
@@ -59,9 +61,13 @@ export function inventoryPages(items: readonly InventoryItem[], width: number, h
   return inventoryLayoutPages(items, width, height).map(page => page.map(placement => placement.item));
 }
 
-export function inventoryPageFor(pages: readonly (readonly InventoryItem[])[], ref: string | null, model: ComposerUiModel) {
-  if (!ref) return -1;
+export function inventoryRootRef(ref: string, model: ComposerUiModel) {
   let root = ref, context = model.board.contexts.find(c => c.contextOccurrenceId === ref);
   while (context?.parentContextOccurrenceId) { root = context.parentContextOccurrenceId; context = model.board.contexts.find(c => c.contextOccurrenceId === root); }
+  return root;
+}
+export function inventoryPageFor(pages: readonly (readonly InventoryItem[])[], ref: string | null, model: ComposerUiModel) {
+  if (!ref) return -1;
+  const root = inventoryRootRef(ref, model);
   return pages.findIndex(page => page.some(item => item.id === root || item.kind === "CLUSTER" && item.children.some(child => child.id === root)));
 }

@@ -14,6 +14,7 @@ import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtur
 import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
 import { p10Month } from './fixtures/planner-p10.mjs';
 import { p09CompatibilityMonth, p09ReadbackMonth } from './fixtures/planner-p09.mjs';
+import { l31Month } from './fixtures/planner-l3-1.mjs';
 import { p2Measuring, p2FixturePlugin, p2World, p2Interaction } from './lib/planner-p14-p2-fixture-tools.mjs';
 import { p4Measuring, p4FixturePlugin } from './lib/planner-p14-p4a-fixture-tools.mjs';
 import { p4Fixture, p4Extra } from './fixtures/planner-p14-p4a.mjs';
@@ -93,7 +94,7 @@ function uiPayloadFields(value) {
 }
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
-    const pg = await createKernelPostgres(), fixture = (key.startsWith('L1') ? fixtures.L1 : p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
+    const pg = await createKernelPostgres(), fixture = (key.startsWith('L1_L31') ? () => l31Month(key.includes('DENSE')) : key.startsWith('L1') ? fixtures.L1 : p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
     if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' },
@@ -109,6 +110,13 @@ async function store(key) {
 }
 const assetOrigin = process.env.PLANNER_C8_ASSET_ORIGIN ?? '';
 const host = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Composer mon mois — fixtures C8</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="${assetOrigin}/app.css"></head><body><div id="root"></div><script type="module" src="${assetOrigin}/app.js?v=${encodeURIComponent(process.env.PLANNER_C8_ASSET_VERSION ?? 'base')}"></script></body></html>`;
+// Opt-in, bounded native-drag evidence on synthetic localhost only. No events
+// are dispatched, and no domain payload, credentials or remote IO are read.
+const l31DragTrace = `<script>(()=>{const events=[];for(const type of ['dragstart','dragenter','dragover','drop','dragend'])document.addEventListener(type,e=>{
+const item={type,x:e.clientX,y:e.clientY,source:e.target.closest?.('[data-drag-source]')?.getAttribute('data-drag-source')??null,board:!!e.target.closest?.('[data-board-scroll]'),types:Array.from(e.dataTransfer?.types??[])};
+if(type==='dragover'&&events.at(-1)?.type===type&&events.at(-1)?.board===item.board)return;events.push(item);if(events.length>60)events.shift();
+setTimeout(()=>{item.prevented=e.defaultPrevented;document.documentElement.setAttribute('data-l31-drag-trace',JSON.stringify(events));},0);
+},true);})();</script>`;
 const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://127.0.0.1');
@@ -250,7 +258,8 @@ const server = http.createServer(async (request, response) => {
     }
     const variantOrigin = p4Measuring && assetOrigin ? url.searchParams.get('ui') === 'P4A' ? process.env.PLANNER_C8_REFERENCE_ASSET_ORIGIN
       : url.searchParams.get('ui') === 'FAULT' ? process.env.PLANNER_C8_FAULT_ASSET_ORIGIN : null : null;
-    response.setHeader('Content-Type', 'text/html'); response.end(variantOrigin ? host.replaceAll(assetOrigin, variantOrigin) : host);
+    const documentHost = url.searchParams.get('l31Trace') === '1' ? host.replace('</body>', l31DragTrace + '</body>') : host;
+    response.setHeader('Content-Type', 'text/html'); response.end(variantOrigin ? documentHost.replaceAll(assetOrigin, variantOrigin) : documentHost);
   } catch (error) { console.error(error.message); response.writeHead(500); response.end('Fixture failed'); }
 });
 await store('A');

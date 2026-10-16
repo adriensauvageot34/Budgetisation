@@ -71,7 +71,7 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
         const view = model.presentation.objects[control.targetRef], density = controlDensity(control, model);
         const spatialFamily = controlFamily(control, view.iconKey);
         return { id:control.targetRef, kind:"CONTROL" as const, control, density, spatialFamily, iconKey:view.iconKey,
-          width:control.kind === "SAVINGS" ? 290 : spatialFamily === "DAILY" ? 230 : density === "SPARSE" ? 210 : 230,
+          width:control.kind === "SAVINGS" ? 260 : spatialFamily === "DAILY" ? 230 : density === "SPARSE" ? 210 : 230,
           height:control.kind === "SAVINGS" ? 165 : density === "SPARSE" ? 128 : density === "RICH" ? 155 : 142 };
       }),
   ];
