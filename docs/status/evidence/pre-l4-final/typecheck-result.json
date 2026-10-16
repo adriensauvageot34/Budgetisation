@@ -1,0 +1,8 @@
+{
+  "command": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
+  "exitCode": 0,
+  "sourceHeadBeforeEvidenceCommit": "0fc3d0882a649bf023b80edc83724aec43644d30",
+  "productSourceSha": "8978ac18b0b4dbe0650c044b3ca086a54014ba8b",
+  "sameProductSourceAtTestedSha": "9bdeb5022929bd55078f66c8d9c93708b0f75c29",
+  "log": "typecheck.log"
+}

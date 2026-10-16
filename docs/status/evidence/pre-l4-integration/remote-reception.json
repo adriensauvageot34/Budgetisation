@@ -1,0 +1,107 @@
+{
+  "verifiedAt": "2026-10-16",
+  "pullRequests": [
+    {
+      "number": 50,
+      "state": "open",
+      "merged": false,
+      "draft": false,
+      "base": "main",
+      "base_sha": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+      "head": "codex/composer-v3-pre-l4-c1-decision-integrity",
+      "head_sha": "fb71ae2deb69a915bdf633b2ce721c4cf904821e",
+      "mergeable": true,
+      "url": "https://github.com/adriensauvageot34/Budgetisation/pull/50"
+    },
+    {
+      "number": 51,
+      "state": "open",
+      "merged": false,
+      "draft": false,
+      "base": "codex/composer-v3-pre-l4-c1-decision-integrity",
+      "base_sha": "fb71ae2deb69a915bdf633b2ce721c4cf904821e",
+      "head": "codex/composer-v3-pre-l4-c2-workshop-ux",
+      "head_sha": "0fc3d0882a649bf023b80edc83724aec43644d30",
+      "mergeable": true,
+      "url": "https://github.com/adriensauvageot34/Budgetisation/pull/51"
+    },
+    {
+      "number": 52,
+      "state": "open",
+      "merged": false,
+      "draft": false,
+      "base": "codex/composer-v3-pre-l4-c2-workshop-ux",
+      "base_sha": "0fc3d0882a649bf023b80edc83724aec43644d30",
+      "head": "codex/composer-v3-pre-l4-c3-final-gate",
+      "head_sha": "eb78bb2d4ad201360df3d45cbfc1cec572115ead",
+      "mergeable": true,
+      "url": "https://github.com/adriensauvageot34/Budgetisation/pull/52"
+    }
+  ],
+  "mergeMethods": {
+    "merge": true,
+    "squash": true,
+    "rebase": true
+  },
+  "recommendedMethod": "merge",
+  "production": {
+    "id": "dpl_HH6XbfcrYSbgC8eJboEi5vTE7Jxw",
+    "url": "budgetisation-l6iy67uy8-adriensauvageot34-6137s-projects.vercel.app",
+    "aliases": [
+      "budgetisation-tan.vercel.app",
+      "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+      "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+    ],
+    "target": "production",
+    "state": "READY",
+    "source": "git",
+    "sha": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+    "branch": "main"
+  },
+  "preview": {
+    "id": "dpl_CbFE8C5jUAsT34RZrrghUhhxZm9y",
+    "url": "budgetisation-qi5nssu5k-adriensauvageot34-6137s-projects.vercel.app",
+    "target": null,
+    "state": "READY",
+    "sha": "eb78bb2d4ad201360df3d45cbfc1cec572115ead"
+  },
+  "statuses": [
+    {
+      "name": "C1",
+      "result": {
+        "statuses": [
+          {
+            "context": "Vercel",
+            "state": "success",
+            "target_url": "https://vercel.com/adriensauvageot34-6137s-projects/budgetisation/dZzbfmajJ23BVAHZbpjew9y8KAXW"
+          }
+        ]
+      }
+    },
+    {
+      "name": "C2",
+      "result": {
+        "statuses": [
+          {
+            "context": "Vercel",
+            "state": "success",
+            "target_url": "https://vercel.com/adriensauvageot34-6137s-projects/budgetisation/BtPLapD4Y8WNYzosuRUhVpLwKNC9"
+          }
+        ]
+      }
+    },
+    {
+      "name": "C3",
+      "result": {
+        "statuses": [
+          {
+            "context": "Vercel",
+            "state": "success",
+            "target_url": "https://vercel.com/adriensauvageot34-6137s-projects/budgetisation/CbFE8C5jUAsT34RZrrghUhhxZm9y"
+          }
+        ]
+      }
+    }
+  ],
+  "mainAutoProductionRisk": "Git-sourced main production deployment and production aliases observed; treat every merge to main as a Production release requiring explicit GO."
+}

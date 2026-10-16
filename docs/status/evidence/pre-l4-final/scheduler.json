@@ -1,0 +1,266 @@
+{
+  "status": "PASS_SYNTHETIC_SCHEDULER_ONLY",
+  "checks": [
+    "P2-IDENTICAL-PENDING-INTENT-ONE-DISPATCH",
+    "P2-TEN-EDITS-UNSENT-COALESCED-LAST-HAS-PRIORITY",
+    "P2-DIFFERENT-INTENT-DOES-NOT-WAIT-FOR-OLD-SQL",
+    "P2-VERSION-CHANGE-UNDO-AND-DISPOSE-REJECT-OLD",
+    "P2-COMPLETED-READ-NOT-CACHED"
+  ],
+  "comparisons": [
+    {
+      "variant": "P1",
+      "case": "identical-pending",
+      "requests": 3,
+      "alreadyStarted": 3,
+      "accepted": 1,
+      "lastIntentToFreshMs": 99.90449999999987,
+      "trace": [
+        {
+          "event": "intent",
+          "digest": "8a853b5e9ae5f618e02b00f15de655a004bc6608f3530b8770f830254c71279b",
+          "at": 1800.5996
+        },
+        {
+          "event": "sent",
+          "sequence": 1,
+          "at": 1811.2961
+        },
+        {
+          "event": "intent",
+          "digest": "8a853b5e9ae5f618e02b00f15de655a004bc6608f3530b8770f830254c71279b",
+          "at": 1811.4826
+        },
+        {
+          "event": "sent",
+          "sequence": 2,
+          "at": 1827.8523
+        },
+        {
+          "event": "intent",
+          "digest": "8a853b5e9ae5f618e02b00f15de655a004bc6608f3530b8770f830254c71279b",
+          "at": 1828.0295
+        },
+        {
+          "event": "sent",
+          "sequence": 3,
+          "at": 1843.9607
+        },
+        {
+          "event": "server-finished",
+          "sequence": 1,
+          "at": 1894.2779
+        },
+        {
+          "event": "server-finished",
+          "sequence": 2,
+          "at": 1911.0096
+        },
+        {
+          "event": "server-finished",
+          "sequence": 3,
+          "at": 1927.5181
+        },
+        {
+          "event": "accepted",
+          "sequence": 3,
+          "at": 1927.934
+        }
+      ]
+    },
+    {
+      "variant": "P2",
+      "case": "identical-pending",
+      "requests": 1,
+      "alreadyStarted": 1,
+      "accepted": 1,
+      "lastIntentToFreshMs": 69.94460000000004,
+      "trace": [
+        {
+          "event": "intent",
+          "digest": "8a853b5e9ae5f618e02b00f15de655a004bc6608f3530b8770f830254c71279b",
+          "at": 1928.6294
+        },
+        {
+          "event": "sent",
+          "sequence": 1,
+          "at": 1945.9249
+        },
+        {
+          "event": "intent",
+          "digest": "8a853b5e9ae5f618e02b00f15de655a004bc6608f3530b8770f830254c71279b",
+          "at": 1946.4921
+        },
+        {
+          "event": "intent",
+          "digest": "8a853b5e9ae5f618e02b00f15de655a004bc6608f3530b8770f830254c71279b",
+          "at": 1960.9409
+        },
+        {
+          "event": "server-finished",
+          "sequence": 1,
+          "at": 2029.9622
+        },
+        {
+          "event": "accepted",
+          "sequence": 1,
+          "at": 2030.8855
+        }
+      ]
+    },
+    {
+      "variant": "P1",
+      "case": "ten-rapid-distinct",
+      "requests": 1,
+      "unsentIntents": 9,
+      "accepted": 1,
+      "lastIntentToFreshMs": 112.44569999999976,
+      "trace": [
+        {
+          "event": "intent",
+          "digest": "8a853b5e9ae5f618e02b00f15de655a004bc6608f3530b8770f830254c71279b",
+          "at": 2064.0859
+        },
+        {
+          "event": "intent",
+          "digest": "fd5f097c2f37c73df2e29c7426a6538c19963df052959c7920e3bf7abd517fc2",
+          "at": 2064.2736
+        },
+        {
+          "event": "intent",
+          "digest": "8c6405edf71723d7a15d94b43e661711c746276926dc2621265585c3a3c3cafb",
+          "at": 2064.4516
+        },
+        {
+          "event": "intent",
+          "digest": "a5bebd49f5a8eb0692f5f9abda9c83f0b885fc4790504dd8c391cf985eef8ddf",
+          "at": 2064.577
+        },
+        {
+          "event": "intent",
+          "digest": "7bc13a79891fc8bbd3342d541f440db4300e8ff8864ecc272077e3a2e12c5631",
+          "at": 2064.6708
+        },
+        {
+          "event": "intent",
+          "digest": "5131cd10daba64dd3bef7acd7152a219a97ddc7cd0cd915743dd8e2b97f525ee",
+          "at": 2064.8299
+        },
+        {
+          "event": "intent",
+          "digest": "31286e5e266b469a0b5fd9c834bcf30b37cdab1583adb24df695361fe4fecd6e",
+          "at": 2064.9301
+        },
+        {
+          "event": "intent",
+          "digest": "d48bb83cbbbc39bc34f39ee3ceba9073c75e3527e37e9f3c86a29fa23610b477",
+          "at": 2065.022
+        },
+        {
+          "event": "intent",
+          "digest": "dafe52fe2261860db893c3fdd4ce4244aaa2f921be8ad2e7e28a74a6acf1ff63",
+          "at": 2065.119
+        },
+        {
+          "event": "intent",
+          "digest": "87098db2c2d2b1ce3ecddde994d95ebd73b7b06be1aa3dd9ed83d950e2348f8f",
+          "at": 2065.1999
+        },
+        {
+          "event": "sent",
+          "sequence": 10,
+          "at": 2096.8666
+        },
+        {
+          "event": "server-finished",
+          "sequence": 10,
+          "at": 2177.3275
+        },
+        {
+          "event": "accepted",
+          "sequence": 10,
+          "at": 2177.6456
+        }
+      ]
+    },
+    {
+      "variant": "P2",
+      "case": "ten-rapid-distinct",
+      "requests": 1,
+      "unsentIntents": 9,
+      "accepted": 1,
+      "lastIntentToFreshMs": 105.1944999999996,
+      "trace": [
+        {
+          "event": "intent",
+          "digest": "8a853b5e9ae5f618e02b00f15de655a004bc6608f3530b8770f830254c71279b",
+          "at": 2177.8128
+        },
+        {
+          "event": "intent",
+          "digest": "fd5f097c2f37c73df2e29c7426a6538c19963df052959c7920e3bf7abd517fc2",
+          "at": 2177.8816
+        },
+        {
+          "event": "intent",
+          "digest": "8c6405edf71723d7a15d94b43e661711c746276926dc2621265585c3a3c3cafb",
+          "at": 2177.948
+        },
+        {
+          "event": "intent",
+          "digest": "a5bebd49f5a8eb0692f5f9abda9c83f0b885fc4790504dd8c391cf985eef8ddf",
+          "at": 2177.9994
+        },
+        {
+          "event": "intent",
+          "digest": "7bc13a79891fc8bbd3342d541f440db4300e8ff8864ecc272077e3a2e12c5631",
+          "at": 2178.0487
+        },
+        {
+          "event": "intent",
+          "digest": "5131cd10daba64dd3bef7acd7152a219a97ddc7cd0cd915743dd8e2b97f525ee",
+          "at": 2178.1126
+        },
+        {
+          "event": "intent",
+          "digest": "31286e5e266b469a0b5fd9c834bcf30b37cdab1583adb24df695361fe4fecd6e",
+          "at": 2178.1662
+        },
+        {
+          "event": "intent",
+          "digest": "d48bb83cbbbc39bc34f39ee3ceba9073c75e3527e37e9f3c86a29fa23610b477",
+          "at": 2178.2882
+        },
+        {
+          "event": "intent",
+          "digest": "dafe52fe2261860db893c3fdd4ce4244aaa2f921be8ad2e7e28a74a6acf1ff63",
+          "at": 2178.3409
+        },
+        {
+          "event": "intent",
+          "digest": "87098db2c2d2b1ce3ecddde994d95ebd73b7b06be1aa3dd9ed83d950e2348f8f",
+          "at": 2178.3877
+        },
+        {
+          "event": "sent",
+          "sequence": 10,
+          "at": 2212.253
+        },
+        {
+          "event": "server-finished",
+          "sequence": 10,
+          "at": 2283.2526
+        },
+        {
+          "event": "accepted",
+          "sequence": 10,
+          "at": 2283.5822
+        }
+      ]
+    }
+  ],
+  "pendingSqlCancellation": "NOT_IMPLEMENTED_NOT_CLAIMED",
+  "differentStatesStillDispatchImmediatelyAfterDebounce": true,
+  "queueStrategy": "single-flight for different states rejected: it waits for a previous read; latest intent is not delayed",
+  "remoteWrites": 0
+}

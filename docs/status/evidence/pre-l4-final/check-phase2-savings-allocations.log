@@ -1,0 +1,2 @@
+PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo
+PASS SAVINGS_ALLOCATIONS: 21 checks; legacy, budget layers, both modes, bank scope guard, actions, Preview/Save/reload, checkpoints, calendar and UI; zero historical/live writes

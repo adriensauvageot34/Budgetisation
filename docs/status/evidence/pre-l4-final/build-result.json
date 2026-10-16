@@ -1,0 +1,15 @@
+{
+  "environment": "VERCEL_PREVIEW_ONLY",
+  "deploymentId": "dpl_G6hPv1Tn19fmSkMPKKFbvFRd3Gde",
+  "url": "https://budgetisation-40befapa5-adriensauvageot34-6137s-projects.vercel.app",
+  "status": "READY",
+  "sha": "9bdeb5022929bd55078f66c8d9c93708b0f75c29",
+  "command": "npm run build -> next build",
+  "framework": "Next.js 16.2.6",
+  "fullBuild": true,
+  "dependencies": "NORMAL_INSTALL_REUSED_VERCEL_CACHE",
+  "compilationSeconds": 48,
+  "typeScriptSeconds": 54,
+  "staticPages": "8/8",
+  "productionPromoted": false
+}

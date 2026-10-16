@@ -1,0 +1,98 @@
+[
+  {
+    "file": "check-pre-l4-c1.mjs",
+    "startedAt": "2026-10-16T17:03:13.017Z",
+    "finishedAt": "2026-10-16T17:03:39.845Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-pre-l4-c2.mjs",
+    "startedAt": "2026-10-16T17:03:39.851Z",
+    "finishedAt": "2026-10-16T17:04:22.029Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-l3-3-workshop.mjs",
+    "startedAt": "2026-10-16T17:04:22.030Z",
+    "finishedAt": "2026-10-16T17:09:17.560Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-phase2-planner-kernel.mjs",
+    "startedAt": "2026-10-16T17:09:17.561Z",
+    "finishedAt": "2026-10-16T17:09:31.215Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-phase2-planner-simple-levers.mjs",
+    "startedAt": "2026-10-16T17:09:31.216Z",
+    "finishedAt": "2026-10-16T17:09:39.549Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-phase2-planner-renewals.mjs",
+    "startedAt": "2026-10-16T17:09:39.552Z",
+    "finishedAt": "2026-10-16T17:09:48.014Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-phase2-savings-allocations.mjs",
+    "startedAt": "2026-10-16T17:09:48.099Z",
+    "finishedAt": "2026-10-16T17:09:53.905Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-b3-transverse-plan.mjs",
+    "startedAt": "2026-10-16T17:09:53.906Z",
+    "finishedAt": "2026-10-16T17:10:07.607Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-composer-post-snap3-draft-http.mjs",
+    "startedAt": "2026-10-16T17:10:07.607Z",
+    "finishedAt": "2026-10-16T17:10:08.400Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-phase2-planner-p13.mjs",
+    "startedAt": "2026-10-16T17:10:08.424Z",
+    "finishedAt": "2026-10-16T17:10:16.534Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-composer-p14-p2-scheduler.mjs",
+    "startedAt": "2026-10-16T17:10:16.535Z",
+    "finishedAt": "2026-10-16T17:10:19.311Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-l1-restaurant.mjs",
+    "startedAt": "2026-10-16T17:10:19.311Z",
+    "finishedAt": "2026-10-16T17:10:31.219Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-l3-1-ux.mjs",
+    "startedAt": "2026-10-16T17:10:31.219Z",
+    "finishedAt": "2026-10-16T17:10:36.602Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-composer-r6-presentation.mjs",
+    "startedAt": "2026-10-16T17:10:36.602Z",
+    "finishedAt": "2026-10-16T17:10:41.942Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-phase2-planner-composer.mjs",
+    "startedAt": "2026-10-16T17:10:41.942Z",
+    "finishedAt": "2026-10-16T17:11:04.141Z",
+    "exitCode": 0
+  },
+  {
+    "file": "check-planner-performance-parity.mjs",
+    "startedAt": "2026-10-16T17:11:04.141Z",
+    "finishedAt": "2026-10-16T17:11:07.476Z",
+    "exitCode": 0
+  }
+]

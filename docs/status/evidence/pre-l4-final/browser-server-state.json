@@ -1,0 +1,391 @@
+{
+  "environment": "LOCAL_SYNTHETIC_ONLY",
+  "snapshots": [
+    {
+      "scenario": "L1_L33_C3_FLOW",
+      "counts": {
+        "plans": 0,
+        "revisions": 0
+      },
+      "rpcCalls": 0,
+      "remoteWrites": 0,
+      "historicalCanaryWrites": 0,
+      "log": [
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 2,
+          "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 2,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 4,
+          "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 4,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 2,
+          "digest": "4f189ff2cf3e4769c287519c9f4bb4fac84e30bc7cd3ba7229f8389009494ca3",
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 4,
+          "digest": "b44c6b43abc64a5e404143de1915213f8f7bee814244d9750ef1effe27d9fd82",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 2,
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 4,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 6,
+          "digest": "4f189ff2cf3e4769c287519c9f4bb4fac84e30bc7cd3ba7229f8389009494ca3",
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 8,
+          "digest": "b44c6b43abc64a5e404143de1915213f8f7bee814244d9750ef1effe27d9fd82",
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 10,
+          "digest": "5e7fa3bacbc5e37c999539cb0fc4568b1971f52553ea32dcfc88192ef4e7c468",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 6,
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 8,
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 10,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 12,
+          "digest": "d34c3e2bd9baef0dbb8fc48c2069c2fd38da845104d58a376dfbdadd3df0dab6",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 12,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 14,
+          "digest": "472e518f289b29f1a0326863f44af7c93a4362b523ab8c3402a2b55994e03277",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 14,
+          "ok": true
+        },
+        {
+          "kind": "READ",
+          "sequence": 16,
+          "digest": "35699a8987bb264df1ef537ceb97b863f148de1a7c4de0d0efc4c86afb0d6082",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 16,
+          "ok": true
+        }
+      ],
+      "drafts": {
+        "active": {
+          "id": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+          "version": 7,
+          "digest": "35699a8987bb264df1ef537ceb97b863f148de1a7c4de0d0efc4c86afb0d6082"
+        },
+        "archives": 0,
+        "events": [
+          {
+            "kind": "SAVE",
+            "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+            "version": 1,
+            "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+            "version": 2,
+            "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+            "version": 3,
+            "digest": "b44c6b43abc64a5e404143de1915213f8f7bee814244d9750ef1effe27d9fd82"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+            "version": 4,
+            "digest": "5e7fa3bacbc5e37c999539cb0fc4568b1971f52553ea32dcfc88192ef4e7c468"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+            "version": 5,
+            "digest": "d34c3e2bd9baef0dbb8fc48c2069c2fd38da845104d58a376dfbdadd3df0dab6"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+            "version": 6,
+            "digest": "472e518f289b29f1a0326863f44af7c93a4362b523ab8c3402a2b55994e03277"
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+            "version": 7,
+            "digest": "35699a8987bb264df1ef537ceb97b863f148de1a7c4de0d0efc4c86afb0d6082"
+          }
+        ]
+      },
+      "semanticState": {
+        "version": "month-plan-state@v1",
+        "targetMonth": "2026-11",
+        "controls": [
+          {
+            "decisionId": "789b7741-0211-4491-8ea4-e96c61ae03d8",
+            "decisionSlotKey": "HOUSEHOLD:household:clothing",
+            "kind": "SET_STATE",
+            "value": {
+              "amount": "0.00"
+            },
+            "provenance": "EXPLICIT_USER_DECISION"
+          },
+          {
+            "decisionId": "b675a06c-5abf-4a95-8444-669de7703eba",
+            "decisionSlotKey": "HOUSEHOLD:household:groceries",
+            "kind": "SET_STATE",
+            "value": {
+              "amount": "300.00"
+            },
+            "provenance": "EXPLICIT_USER_DECISION"
+          },
+          {
+            "decisionId": "d19e5218-0ed0-46d8-8002-2c4ffd06cd9f",
+            "decisionSlotKey": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+            "kind": "SET_STATE",
+            "value": {
+              "count": "13",
+              "unitAmount": "2.10"
+            },
+            "provenance": "EXPLICIT_USER_DECISION"
+          }
+        ],
+        "contexts": [
+          {
+            "contextOccurrenceId": "70bb2a7e-5e63-40e9-9a80-535d22d996e2",
+            "templateKey": "purchase",
+            "status": "ACTIVE",
+            "parentContextOccurrenceId": null,
+            "fields": {
+              "fieldSchemaVersion": "context-fields@v2",
+              "label": "Sacs-poubelle",
+              "productLabel": "Sacs-poubelle",
+              "budgetDomain": "home-small",
+              "composerPresentation": {
+                "version": "composer-context-presentation@v1",
+                "presetKey": "trash-bags"
+              }
+            },
+            "slotSelections": {
+              "item": {
+                "items": [
+                  {
+                    "selectionId": "906b26ac-038a-4375-bbd6-13675d7fbaf8",
+                    "optionKey": "item",
+                    "kind": "COMPONENT",
+                    "provenance": "EXPLICIT_USER_DECISION",
+                    "label": "Montant de l’achat",
+                    "quantity": "1",
+                    "unitBasis": "SHARED",
+                    "cost": {
+                      "kind": "MANUAL",
+                      "unitAmount": "4"
+                    },
+                    "fundingAllocations": [],
+                    "binding": {
+                      "mode": "CONFIRMED_CONSUMPTION"
+                    }
+                  }
+                ]
+              },
+              "extras": {
+                "items": []
+              }
+            },
+            "provenance": "EXPLICIT_USER_DECISION"
+          }
+        ],
+        "preferences": {
+          "anchors": [],
+          "flexibility": {}
+        }
+      }
+    },
+    {
+      "scenario": "L1_L33_C3_ERROR",
+      "counts": {
+        "plans": 0,
+        "revisions": 0
+      },
+      "rpcCalls": 0,
+      "remoteWrites": 0,
+      "historicalCanaryWrites": 0,
+      "log": [
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        },
+        {
+          "kind": "NETWORK_FAILURE",
+          "sequence": 2
+        },
+        {
+          "kind": "READ",
+          "sequence": 4,
+          "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 4,
+          "ok": true
+        }
+      ],
+      "drafts": {
+        "active": {
+          "id": "9779c7a2-fb7b-4253-9c1b-c9eb130c26b3",
+          "version": 1,
+          "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d"
+        },
+        "archives": 0,
+        "events": [
+          {
+            "kind": "SAVE_FAILED_BEFORE_COMMIT",
+            "version": 0
+          },
+          {
+            "kind": "SAVE",
+            "draftId": "9779c7a2-fb7b-4253-9c1b-c9eb130c26b3",
+            "version": 1,
+            "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d"
+          }
+        ]
+      },
+      "semanticState": {
+        "version": "month-plan-state@v1",
+        "targetMonth": "2026-11",
+        "controls": [
+          {
+            "decisionId": "b675a06c-5abf-4a95-8444-669de7703eba",
+            "decisionSlotKey": "HOUSEHOLD:household:groceries",
+            "kind": "SET_STATE",
+            "value": {
+              "amount": "250.00"
+            },
+            "provenance": "EXPLICIT_USER_DECISION"
+          }
+        ],
+        "contexts": [],
+        "preferences": {
+          "anchors": [],
+          "flexibility": {}
+        }
+      }
+    },
+    {
+      "scenario": "L1_L33_DENSE_C3",
+      "counts": {
+        "plans": 0,
+        "revisions": 0
+      },
+      "rpcCalls": 0,
+      "remoteWrites": 0,
+      "historicalCanaryWrites": 0,
+      "log": [
+        {
+          "kind": "READ",
+          "sequence": 0,
+          "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+          "ok": true
+        },
+        {
+          "kind": "RESPONSE",
+          "sequence": 0,
+          "ok": true
+        }
+      ],
+      "drafts": {
+        "active": null,
+        "archives": 0,
+        "events": []
+      },
+      "semanticState": null
+    }
+  ]
+}

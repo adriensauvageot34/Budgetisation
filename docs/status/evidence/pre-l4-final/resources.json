@@ -1,0 +1,35 @@
+{
+  "scope": "ONE_VISUAL_CYCLE_SAME_VIEWPORT_NOT_A_PERFORMANCE_CAMPAIGN",
+  "samples": [
+    {
+      "id": "closed1920-before",
+      "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+      "dom": 4278,
+      "images": 6,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "id": "open1920",
+      "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+      "dom": 4734,
+      "images": 6,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "id": "closed1920-after",
+      "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+      "dom": 4278,
+      "images": 6,
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  ]
+}

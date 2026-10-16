@@ -1,0 +1,195 @@
+{
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "rpcCalls": 0,
+  "remoteWrites": 0,
+  "historicalCanaryWrites": 0,
+  "drafts": {
+    "active": {
+      "id": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+      "version": 7,
+      "digest": "35699a8987bb264df1ef537ceb97b863f148de1a7c4de0d0efc4c86afb0d6082"
+    },
+    "archives": 0,
+    "events": [
+      {
+        "kind": "SAVE",
+        "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+        "version": 1,
+        "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+        "version": 2,
+        "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+        "version": 3,
+        "digest": "b44c6b43abc64a5e404143de1915213f8f7bee814244d9750ef1effe27d9fd82"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+        "version": 4,
+        "digest": "5e7fa3bacbc5e37c999539cb0fc4568b1971f52553ea32dcfc88192ef4e7c468"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+        "version": 5,
+        "digest": "d34c3e2bd9baef0dbb8fc48c2069c2fd38da845104d58a376dfbdadd3df0dab6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+        "version": 6,
+        "digest": "472e518f289b29f1a0326863f44af7c93a4362b523ab8c3402a2b55994e03277"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "9fc93425-419a-43ef-b162-e3ade0da8c5c",
+        "version": 7,
+        "digest": "35699a8987bb264df1ef537ceb97b863f148de1a7c4de0d0efc4c86afb0d6082"
+      }
+    ]
+  },
+  "log": [
+    {
+      "kind": "READ",
+      "sequence": 0,
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 0,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 2,
+      "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 2,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 4,
+      "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 4,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 0,
+      "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 0,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 2,
+      "digest": "4f189ff2cf3e4769c287519c9f4bb4fac84e30bc7cd3ba7229f8389009494ca3",
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 4,
+      "digest": "b44c6b43abc64a5e404143de1915213f8f7bee814244d9750ef1effe27d9fd82",
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 2,
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 4,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 6,
+      "digest": "4f189ff2cf3e4769c287519c9f4bb4fac84e30bc7cd3ba7229f8389009494ca3",
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 8,
+      "digest": "b44c6b43abc64a5e404143de1915213f8f7bee814244d9750ef1effe27d9fd82",
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 10,
+      "digest": "5e7fa3bacbc5e37c999539cb0fc4568b1971f52553ea32dcfc88192ef4e7c468",
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 6,
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 8,
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 10,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 12,
+      "digest": "d34c3e2bd9baef0dbb8fc48c2069c2fd38da845104d58a376dfbdadd3df0dab6",
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 12,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 14,
+      "digest": "472e518f289b29f1a0326863f44af7c93a4362b523ab8c3402a2b55994e03277",
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 14,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 16,
+      "digest": "35699a8987bb264df1ef537ceb97b863f148de1a7c4de0d0efc4c86afb0d6082",
+      "ok": true
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 16,
+      "ok": true
+    }
+  ]
+}

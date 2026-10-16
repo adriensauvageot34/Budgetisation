@@ -1,0 +1,432 @@
+{
+  "environment": "LOCAL_REACT_PRODUCTION_SYNTHETIC_ONLY",
+  "testedSha": "9bdeb5022929bd55078f66c8d9c93708b0f75c29",
+  "productSourceSha": "8978ac18b0b4dbe0650c044b3ca086a54014ba8b",
+  "checks": [
+    {
+      "id": "courses250-saved-fresh",
+      "state": {
+        "applyDisabled": false,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n16 éléments · 2 à préciser\nReste prévisionnel du mois\n992,00 €\nImpact de mes choix\n+75,00 €\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "courses300-raw",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [
+          {
+            "label": "Montant du mois de Courses",
+            "value": "300"
+          }
+        ],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n16 éléments · 2 à préciser\nReste prévisionnel du mois\n992,00 €\nImpact de mes choix\n+75,00 €\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nSaisie non validée\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "courses300-escape",
+      "state": {
+        "applyDisabled": false,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n16 éléments · 2 à préciser\nReste prévisionnel du mois\n992,00 €\nImpact de mes choix\n+75,00 €\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "courses300-preview-pending",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+          "data-dragging": "false",
+          "data-preview-state": "PENDING",
+          "data-revision": "0",
+          "data-save-state": "DIRTY",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nModifications locales\n16 éléments · Précisions en cours…\nReste prévisionnel du mois\n—\nImpact de mes choix\n—\nCagnottes réservées\n—\nSimulation en cours…\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n▸\nWEEK-ENDS & SÉJOURS\n4\n▸",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "courses300-saved-fresh",
+      "state": {
+        "applyDisabled": false,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n16 éléments · 2 à préciser\nReste prévisionnel du mois\n942,00 €\nImpact de mes choix\n+25,00 €\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "courses300-reload",
+      "state": {
+        "applyDisabled": false,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n16 éléments · 2 à préciser\nReste prévisionnel du mois\n942,00 €\nImpact de mes choix\n+25,00 €\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "coffee13-price210-pending",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "b44c6b43abc64a5e404143de1915213f8f7bee814244d9750ef1effe27d9fd82",
+          "data-dragging": "false",
+          "data-preview-state": "PENDING",
+          "data-revision": "0",
+          "data-save-state": "DIRTY",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nModifications locales\n16 éléments · Précisions en cours…\nReste prévisionnel du mois\n—\nImpact de mes choix\n—\nCagnottes réservées\n—\nSimulation en cours…\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n▸\nWEEK-ENDS & SÉJOURS\n4\n▸",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "coffee13-price210-saved",
+      "state": {
+        "applyDisabled": false,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "b44c6b43abc64a5e404143de1915213f8f7bee814244d9750ef1effe27d9fd82",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n16 éléments · 2 à préciser\nReste prévisionnel du mois\n915,70 €\nImpact de mes choix\n+19,30 €\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "coffee-undo-price",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "4f189ff2cf3e4769c287519c9f4bb4fac84e30bc7cd3ba7229f8389009494ca3",
+          "data-dragging": "false",
+          "data-preview-state": "PENDING",
+          "data-revision": "0",
+          "data-save-state": "DIRTY",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nModifications locales\n16 éléments · Précisions en cours…\nReste prévisionnel du mois\n—\nImpact de mes choix\n—\nCagnottes réservées\n—\nSimulation en cours…\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n▸\nWEEK-ENDS & SÉJOURS\n4\n▸",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "purchase4-covered",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "35699a8987bb264df1ef537ceb97b863f148de1a7c4de0d0efc4c86afb0d6082",
+          "data-dragging": "false",
+          "data-preview-state": "PENDING",
+          "data-revision": "0",
+          "data-save-state": "DIRTY",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nModifications locales\n17 éléments · Précisions en cours…\nReste prévisionnel du mois\n—\nImpact de mes choix\n—\nCagnottes réservées\n—\nSimulation en cours…\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n▸\nWEEK-ENDS & SÉJOURS\n4\n▸",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "inspector-decisions",
+      "state": {
+        "applyDisabled": false,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "35699a8987bb264df1ef537ceb97b863f148de1a7c4de0d0efc4c86afb0d6082",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n17 éléments · 2 à préciser\nReste prévisionnel du mois\n911,70 €\nImpact de mes choix\n+15,30 €\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "visual-same-digest",
+      "state": {
+        "applyDisabled": false,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "35699a8987bb264df1ef537ceb97b863f148de1a7c4de0d0efc4c86afb0d6082",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n17 éléments · 2 à préciser\nReste prévisionnel du mois\n911,70 €\nImpact de mes choix\n+15,30 €\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "save-error-preview-failed",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "data-dragging": "false",
+          "data-preview-state": "FAILED",
+          "data-revision": "0",
+          "data-save-state": "ERROR",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegarde non confirmée\n16 éléments · Précisions en cours…\nReste prévisionnel du mois\n—\nCagnottes réservées\n—\nProjection indisponible après un échec de simulation\nLes finances du mois\nTransformer en Plan\nOptions\nRéponse non confirmée.\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR U",
+        "viewport": [
+          1280,
+          720
+        ]
+      }
+    },
+    {
+      "id": "saved-but-preview-failed",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "data-dragging": "false",
+          "data-preview-state": "FAILED",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n16 éléments · Précisions en cours…\nReste prévisionnel du mois\n—\nCagnottes réservées\n—\nProjection indisponible après un échec de simulation\nLes finances du mois\nTransformer en Plan\nOptions\nOptions du mois\nComparer temporairement\nRéessayer la simulation\nSuggestions pour mon mois\nReprendre mon mois habituel\nLes finances du mois\nAbandonner mes essais\nRepartir du Plan actif\nRecharger avec mon brouillon sauvegardé\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée t",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "preview-recovered-saved-fresh",
+      "state": {
+        "applyDisabled": false,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "SAVED",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nSauvegardé\n16 éléments · 2 à préciser\nReste prévisionnel du mois\n992,00 €\nImpact de mes choix\n+75,00 €\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n",
+        "viewport": [
+          1440,
+          900
+        ]
+      }
+    },
+    {
+      "id": "dense-raw-after-page",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "CLEAN",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [
+          {
+            "label": "Montant du mois de Courses",
+            "value": "300"
+          }
+        ],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nAucun brouillon enregistré\n40 éléments · 26 à préciser\nReste prévisionnel du mois\nMontant à préciser\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nSaisie non validée\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\n",
+        "viewport": [
+          1920,
+          1080
+        ]
+      }
+    },
+    {
+      "id": "dense-raw-after-inspector",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "CLEAN",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [
+          {
+            "label": "Montant du mois de Courses",
+            "value": "300"
+          }
+        ],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nAucun brouillon enregistré\n40 éléments · 26 à préciser\nReste prévisionnel du mois\nMontant à préciser\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nSaisie non validée\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\n",
+        "viewport": [
+          1920,
+          1080
+        ]
+      }
+    },
+    {
+      "id": "dense-final-no-mutation",
+      "state": {
+        "applyDisabled": true,
+        "composer": {
+          "data-comparing": "false",
+          "data-composer": "true",
+          "data-digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+          "data-dragging": "false",
+          "data-preview-state": "FRESH",
+          "data-revision": "0",
+          "data-save-state": "CLEAN",
+          "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+        },
+        "raw": [],
+        "summary": "Centre de contrôle\nComposer · novembre 2026\nAucun brouillon enregistré\n40 éléments · 26 à préciser\nReste prévisionnel du mois\nMontant à préciser\nCagnottes réservées\n100,00 €\nProjection actualisée · montants incomplets\nLes finances du mois\nTransformer en Plan\nOptions\nQue veux-tu prévoir ?\nÀ ajouter\nÀ piloter\n\nFavoris locaux à ce navigateur · aucun budget engagé.\n\n▾\nSORTIR & FAIRE LA FÊTE\n7\nSoirée techno\nBar / Apéro\nBoîte de nuit\nSoirée chez des amis\nSoirée chez nous\nConcert\n▸\nAutre intention · 1\n▸\nMANGER & COMMANDER\n6\n▸\nACTIVITÉS & LOISIRS\n8\n▸\nACHETER\n9\n▸\nBEAUTÉ & SOINS\n11\n▸\nVOIR UN PROCHE\n5\n▸\n",
+        "viewport": [
+          1920,
+          1080
+        ]
+      }
+    }
+  ],
+  "console": [
+    {
+      "name": "flow",
+      "entries": []
+    },
+    {
+      "name": "errors",
+      "entries": []
+    },
+    {
+      "name": "dense",
+      "entries": []
+    }
+  ]
+}
