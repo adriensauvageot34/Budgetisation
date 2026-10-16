@@ -7,11 +7,13 @@ import {execFileSync} from 'node:child_process';
 import {require} from './lib/phase2-ts-loader.mjs';
 import {fixture,state,control,uuid,householdId,renewalMonth} from './fixtures/planner-headless.mjs';
 import {createKernelPostgres} from './lib/planner-kernel-postgres.mjs';
+import {providers} from './fixtures/planner-mobility.mjs';
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {previewPlanScenario,applyPlanScenario}=require('@/server/phase2/planner/apply');
 const {resolveEffectiveMonthScenario}=require('@/server/phase2/planner/effective-month-scenario');
 const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
 const {planningBaselineDigest}=require('@/server/phase2/planner/baseline');
+const {preparePlanningMobility}=require('@/server/phase2/planner/prospective-mobility-pricing');
 const resolver=require('@/server/phase2/planner/plan-slot-resolver');
 const {historicalControlAdmission}=require('@/server/phase2/planner/historical-control-admission');
 const {InlineEditRegistry}=require('@/app/mois-a-venir/composer/inline-edit-registry');
@@ -19,6 +21,7 @@ globalThis.fetch=async()=>{throw Error('C1_REMOTE_FORBIDDEN');};
 const out='docs/status/evidence/pre-l4-c1';fs.mkdirSync(out,{recursive:true});
 const pg=await createKernelPostgres();let world=fixture(),sequence=0,requestId=46000;
 const deps={repository:createPlanApplyRepository(pg.client),readWorld:async()=>world,householdPersons:[],
+  prepareWorld:(world,semantic,historical)=>preparePlanningMobility(world,semantic,providers().value,historical),
   readDirectWorld:async()=>{throw Error('C1_OFFICIAL_READ_EXPECTED');}};
 const req=(op,draft)=>handleComposerRequest(deps,householdId,{sequence:++sequence,targetMonth:'2026-11',...op,...(draft?{draft}:{})});
 const ok=r=>{assert.equal(r.ok,true,JSON.stringify(r));return r.model;};
@@ -39,7 +42,7 @@ async function paths(name,key,value,{numericRejected=false,blocked=false,mutatio
     read:read.ok?read.model.board.cockpit.applyReadiness:read.code,
     preview:preview?preview.projection.applyReadiness:error,apply:apply.ok?'APPLIED':apply.code,rpcCalls:pg.rpcCalls-before};
   matrix.push(row);
-  if(numericRejected){assert.equal(mutation.ok,false);assert.equal(read.ok,false);assert.equal(materialized,false);assert.equal(preview,null);assert.equal(apply.ok,false);assert.equal(pg.rpcCalls,before);}
+  if(numericRejected){assert.equal(mutation.ok,false);assert.equal(read.ok,false);assert.equal(materialized,false);assert.equal(preview,null);assert.equal(apply.ok,false);assert.notEqual(apply.code,'COMPOSER_APPLY_UNCONFIRMED');assert.equal(pg.rpcCalls,before);}
   else if(blocked){assert.equal(mutation.ok,mutationAdmitted);assert.equal(read.ok,true);assert.equal(preview.projection.applyReadiness,'BLOCKED');assert.equal(apply.ok,false);assert.equal(pg.rpcCalls,before);}
   else {assert.equal(mutation.ok,true);assert.equal(read.ok,true);assert.ok(preview);assert.equal(apply.ok,true,JSON.stringify(row));assert.equal(pg.rpcCalls,before+1);}
   assert.equal(world.baseline.digest,baselineDigest);
@@ -116,6 +119,13 @@ try {
   assert.equal(registry.confirmDiscard(()=>false,new Set(['PERSON:A'])),false);assert.equal(registry.count(),2);assert.equal(discards,0);
   assert.equal(registry.confirmDiscard(()=>true,new Set(['PERSON:A'])),true);assert.equal(registry.count(),1);assert.equal(discards,1);
   assert.equal(registry.confirmDiscard(()=>true),true);assert.equal(registry.count(),0);assert.equal(discards,2);
+ });
+ await check('WRITER-ERROR-WITH-SAME-CODE-REMAINS-UNCONFIRMED',async()=>{
+  world=fixture();const key=world.baseline.slots.find(s=>s.semanticKey==='restaurants').slotIdentityKey;
+  const semantic=state([control(key,{count:'2'},450)]),preview=await previewPlanScenario(deps,householdId,semantic);
+  const uncertain={...deps,repository:{...deps.repository,async applyRevision(){throw new TypeError('PLANNER_FIELDS_INVALID');}}};
+  const result=await handleComposerRequest(uncertain,householdId,{kind:'APPLY',sequence:++sequence,targetMonth:'2026-11',draft:semantic,command:command(preview)});
+  assert.equal(result.ok,false);assert.equal(result.code,'COMPOSER_APPLY_UNCONFIRMED');
  });
  await check('FINANCIAL-CANARIES-UNCHANGED',async()=>{await pg.verifyCanaries();});
 } finally {
