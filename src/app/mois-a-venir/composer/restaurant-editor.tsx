@@ -19,7 +19,7 @@ import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 
 import { PlannedContactField } from "../planned-people-fields";
 import { PlannedPlaceField } from "../planned-place-field";
-import { ComponentRow, fresh, fromSelection, buildComponentRow, type Row } from "./night-out-editor";
+import { ComponentRow, fresh, fromSelection, buildComponentRow, type Row } from "./night-out-components";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { ContextPalette } from "./context-palette";
 import { PlannerIcon } from "./planner-icons/planner-icon";
@@ -278,3 +278,4 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
                     })}</>}
         </div></section>}</>;
 }
+

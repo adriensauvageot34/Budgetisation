@@ -74,10 +74,12 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
   </>;
 }
 
-export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void;
+export type PaletteQuestion = { title: string; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; choose: () => void }[];
+  search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string };
+export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
 }) {
-  const groups = displayEquipmentGroups(card, model);
+  const groups = question ? [] : displayEquipmentGroups(card, model);
   const assets = new Map(model.library.searchableAssets.map(asset => [asset.assetKey, asset]));
   const [mode, setMode] = useState<"complete" | "all">("complete"), [query, setQuery] = useState("");
   const options = useRef<HTMLDivElement>(null), optionsId = useId();
@@ -87,18 +89,31 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     const next = { before: !!node && node.scrollLeft > 2, after: !!node && node.scrollLeft + node.clientWidth < node.scrollWidth - 2 };
     setScroll(old => old.before === next.before && old.after === next.after ? old : next);
   };
-  const hasGroups = groups.length > 0;
+  const hasGroups = !!question || groups.length > 0;
   useLayoutEffect(() => {
     const node = options.current; if (!node) return;
     measureScroll(); const observer = new ResizeObserver(measureScroll); observer.observe(node);
     return () => observer.disconnect();
   }, [hasGroups]);
-  useLayoutEffect(measureScroll, [card, mode, query]);
+  useLayoutEffect(measureScroll, [card, mode, query, question]);
   const normalize = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr");
   const visible = groups.map(group => ({ ...group, tiles: group.tiles.filter(tile => !query.trim()
     || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
     .filter(group => group.tiles.length);
   const iconKey = model.presentation.objects[card.contextOccurrenceId]?.iconKey ?? "activity";
+  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette}`} data-context-palette={card.contextOccurrenceId} data-question-dock aria-label={question.title}>
+    <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>
+      {question.search && <input aria-label={question.search.label} placeholder={question.search.label} value={question.search.value} onChange={event => question.search!.change(event.target.value)} />}
+      <div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
+        <button type="button" aria-label="Réponses précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => options.current?.scrollBy({left:-300,behavior:"smooth"})}><ChevronLeft size={18} /></button>
+        <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => options.current?.scrollBy({left:300,behavior:"smooth"})}><ChevronRight size={18} /></button>
+      </div></header>
+    <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options onScroll={measureScroll} tabIndex={0} aria-label={question.title}
+      onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();event.currentTarget.scrollBy({left:event.key==="ArrowRight"?180:-180,behavior:"smooth"});}}}>
+      {question.choices.map(choice => <button type="button" key={choice.key} className={styles.questionAnswer} aria-pressed={choice.selected} disabled={busy} onClick={choice.choose}>
+        <PlannerIcon iconKey={choice.iconKey} scale="PALETTE" /><span><strong>{choice.label}</strong>{choice.hint && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>)}
+      {!question.choices.length && <p>{question.emptyLabel??"Aucun résultat. Vous pouvez saisir votre choix."}</p>}
+    </div></section>;
   return <section className={styles.contextPalette} data-context-palette={card.contextOccurrenceId} aria-label={`Équiper ${card.label}`}>
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><div><h3>Équiper · {card.label}</h3><p>Choisissez un objet pour ce moment</p></div></div>
       <div className={styles.paletteModes}>{onConfigure && <button type="button" onClick={onConfigure}>Configurer</button>}
