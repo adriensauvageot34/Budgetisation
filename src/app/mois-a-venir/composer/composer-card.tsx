@@ -4,7 +4,7 @@ import type { SemanticMutation } from "@/domain/phase2/planner/adjustment-contra
 import type { ComposerObjectPresentation } from "@/domain/phase2/planner/composer-ui-contract";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { AtomicPopover } from "./atomic-popover";
-import { money, knowledgeLabel, quantityLabel } from "./display";
+import { money, quantityLabel } from "./display";
 import styles from "./composer.module.css";
 import { useComposerInteractions, useDragHandle, leftSurface } from "./interactions";
 import { InlineControlValue } from "./inline-control-value";
@@ -21,15 +21,15 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
   const assistantTarget = interaction?.canTarget(card.targetRef);
   const label = presentationLabel(card.label), valuePresentation = controlValuePresentation(card);
   return <article className={styles.card} data-control={card.targetRef} data-variant={presentation.variant} data-focused={focused} data-protected={presentation.protectedSavings} data-card-family={locked ? "PROTECTED" : card.kind === "SAVINGS" ? "RESERVATION" : "ADJUSTABLE"}
-    data-state={card.value.owned ? "chosen" : card.knowledge === "UNKNOWN" ? "unresolved" : "derived"} data-value-status={valuePresentation.kind} {...handle}
+    data-state={valuePresentation.kind === "DECISION" ? "chosen" : valuePresentation.kind === "UNKNOWN" ? "unresolved" : "derived"} data-value-status={valuePresentation.kind} {...handle}
     data-compatible={assistantTarget} data-unresolved={interaction?.unresolvedRefs.includes(card.targetRef)} data-snap={interaction?.motionTarget === card.targetRef ? interaction.motion : undefined}
     data-recoil={interaction?.motion === "recoil" && interaction.motionTarget === `control:${card.targetRef}`}
     onClick={e => { if (e.target instanceof Element && !e.target.closest("button,input,select,a,[popover]")) focus(); }}
     onDragOver={e => { e.stopPropagation(); if (assistantTarget && !busy) { e.preventDefault(); interaction?.overAssistant(card.targetRef); } else interaction?.over(null); }}
     onDragLeave={e => { e.stopPropagation(); if (leftSurface(e)) interaction?.overAssistant(null); }}
     onDrop={e => { e.preventDefault(); e.stopPropagation(); if (assistantTarget && !busy) interaction?.placeAssistant(card.targetRef); }}>
-    <div className={styles.cardTop}><span className={styles.cardState} title={card.value.decisionValue ? "Votre choix" : knowledgeLabel(card.knowledge)} aria-label={card.value.decisionValue ? "Votre choix" : knowledgeLabel(card.knowledge)}>
-      {card.knowledge === "UNKNOWN" && !card.value.owned ? <i /> : !card.value.owned ? <Link2 size={11} /> : null}</span>
+    <div className={styles.cardTop}><span className={styles.cardState} title={valuePresentation.label} aria-label={valuePresentation.label}>
+      {valuePresentation.kind === "UNKNOWN" ? <i /> : valuePresentation.kind === "REFERENCE" ? <Link2 size={11} /> : null}</span>
       <div className={styles.cardUtility}>{locked && !preserved ? <LockKeyhole size={14} aria-label="Réservation ou contrainte protégée" />
         : <button disabled={busy} className={styles.iconButton} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={preserve}>{preserved ? <LockKeyhole size={14} /> : <Pin size={14} />}</button>}
         <AtomicPopover utility label={`Détails de ${card.label}`} state="DETAILS" focus={focus} icon={<MoreHorizontal size={15} />}>{close => <>

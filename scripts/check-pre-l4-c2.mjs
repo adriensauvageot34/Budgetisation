@@ -10,6 +10,7 @@ const {controlAccessLabel,controlInputValue}=require('@/domain/phase2/planner/co
 const {InlineControlValue}=require('@/app/mois-a-venir/composer/inline-control-value');
 const {ComposerFinancialInspector}=require('@/app/mois-a-venir/composer/composer-financial-inspector');
 const {ComposerLibrary}=require('@/app/mois-a-venir/composer/composer-library');
+const {ComposerCard}=require('@/app/mois-a-venir/composer/composer-card');
 const React=require('react'),{renderToStaticMarkup:render}=require('react-dom/server');
 globalThis.fetch=async()=>{throw Error('C2_REMOTE_FORBIDDEN');};
 let {world,semantic}=l33Month(),reads=0,seq=0;
@@ -36,6 +37,10 @@ const external=cards(initial).find(c=>c.label==='Trajets travail fixes');assert.
 const saving=world.baseline.structuralFacts.savingsReservations.find(r=>r.reservationId!=='policy:safety-reserve');saving.adjustability='PROTECTED';world.baseline.digest=planningBaselineDigest(world.baseline);
 const protectedModel=await req({kind:'READ'},semantic),s=cards(protectedModel).find(c=>c.targetRef==='savings:'+saving.reservationId);record('Savings protégée',s,'REFERENCE');assert.equal(s.capability.flexibility,'LOCKED');assert.match(controlAccessLabel(s),/Protégé/);
 const before=JSON.stringify(initial),readCount=reads;
+for(const m of [initial,current,protectedModel])for(const card of cards(m)){
+ const html=render(React.createElement(ComposerCard,{card,presentation:m.presentation.objects[card.targetRef],busy:false,preserved:false,focus(){},details(){},edit(){},preserve(){},mutate:deny,hover(){}}));
+ assert.match(html,new RegExp(`data-state="${present(card).kind==='DECISION'?'chosen':present(card).kind==='UNKNOWN'?'unresolved':'derived'}" data-value-status="${present(card).kind}"`));
+}
 for(const card of cards(initial))for(const dimension of ['amount','count','unitAmount']){
  const html=render(React.createElement(InlineControlValue,{card,dimension,busy:false,focus(){},mutate:deny}));assert.match(html,new RegExp(`data-value-status="${present(card,dimension).kind}"`));
 }
