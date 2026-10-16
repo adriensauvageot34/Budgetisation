@@ -815,7 +815,7 @@
 .financeDecisions button>span { flex:1; min-width:0; }
 .financeDecisions strong { display:block; font-size:12px; font-weight:600; overflow-wrap:anywhere; }
 .financeDecisions small { display:block; font-size:11px; color:#756280; margin-top:4px; }
-.financeDecisions b { font-size:11px; font-weight:500; white-space:nowrap; }
+.financeDecisions b { flex:0 1 46%; min-width:0; font-size:11px; font-weight:500; white-space:normal; overflow-wrap:anywhere; text-align:right; }
 .card h3 { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; line-height:1.25; }
 .objectIdentity>div { flex:1; }
 .paletteModes { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
@@ -827,19 +827,23 @@
 /* L3.3: one editing surface, at the published value. No financial total here. */
 .directValue { position:relative; min-width:0; }
 .valueAdjuster { display:flex; align-items:center; gap:3px; min-width:0; }
+.valueAdjuster strong { display:block; overflow-wrap:anywhere; white-space:normal; }
 .valueAdjuster .valueButton { min-width:0; padding:2px 0; flex:1; text-align:left; }
 .valueStep { visibility:hidden; flex:0 0 24px; width:24px; height:26px; border:1px solid #dfddd7; border-radius:8px; background:#fffdf8; display:grid; place-items:center; color:#425a50; cursor:pointer; }
 .card:hover .valueStep,.directValue:focus-within .valueStep { visibility:visible; }
 .valueStep:disabled { opacity:.35; cursor:default; }
-.unitValueButton { border:0; background:none; color:inherit; cursor:pointer; padding:2px 0; flex:1; text-align:left; }
+.unitValueButton { min-width:0; border:0; background:none; color:inherit; cursor:pointer; padding:2px 0; flex:1; text-align:left; }
 .unitValueButton:disabled { cursor:default; }
 .unitValue { font-size:13px; font-weight:600; }
+.unitValueButton .unitValue { display:inline; }
 .unitValueButton small { font-size:10px; }
-.directValueForm { display:flex; flex-wrap:wrap; gap:3px; align-items:center; }
-.directValueForm label { flex:1; min-width:55px; }
+.directValueForm { display:grid; grid-template-columns:minmax(0,1fr) 28px 28px; gap:3px; align-items:center; min-width:0; }
+.directValueForm label { min-width:0; }
 .directValueForm input { width:100%; min-width:0; box-sizing:border-box; font-size:20px; font-weight:600; padding:2px 5px; border:1px solid #5d826f; border-radius:6px; }
-.directValueForm button { border:0; border-radius:5px; padding:4px; cursor:pointer; background:#eaf0e8; }
-.directValueForm small { flex-basis:100%; font-size:9px; }
+.directValueForm button { min-height:28px; border:0; border-radius:5px; padding:4px; cursor:pointer; background:#eaf0e8; display:grid; place-items:center; }
+.directValueForm small { grid-column:1/-1; font-size:9px; overflow-wrap:anywhere; }
+.directValue>small { display:block; overflow-wrap:anywhere; }
+.unitValueOrigin { font-size:9px; color:#68716b; margin-left:27px; }
 .valueScope { display:block; font-size:10px; color:#68716b; }
 .visuallyHidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
@@ -871,6 +875,6 @@
 .officialSlotCost { display:block; font-size:11px; color:#525e7c; margin-top:4px; }
 .card:has([data-value-pending=true]) .officialSlotCost { visibility:hidden; }
 
-[data-control-dimension=count] .cardValue { font-size:18px; white-space:nowrap; }
+[data-control-dimension=count] .cardValue { font-size:18px; white-space:normal; }
 
 .manageGroup h3 { font-size:12px; color:#536477; margin:14px 0 8px; }

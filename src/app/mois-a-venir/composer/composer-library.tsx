@@ -1,5 +1,5 @@
 import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
-import { money, quantityLabel } from "./display";
+import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { memo, useState, useRef, useEffect, useMemo } from "react";
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import { composerLibraryIndex, filterLibraryIntentions, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
@@ -84,9 +84,9 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
           return family===group&&(!query||normalizeLibrarySearch(asset.label).includes(normalizeLibrarySearch(query)));});
         return controls.length ? <section key={group} className={styles.manageGroup}><h3>{group}</h3><div className={styles.assetGrid}>{controls.map(asset=>{
           const control=composerRenderIndex(model).controls.get(asset.capabilityRef);
-          const caption=control ? control.value.count !== null ? `${quantityLabel(control.value.count)} occurrence(s)` : !control.value.decisionValue&&control.value.inclusion==="SUGGESTION_ONLY" ? "Enveloppe à définir" : money(control.value.amount) : "Référence indisponible";
-          return <button type="button" className={styles.asset} key={asset.assetKey} data-asset={asset.assetKey} disabled={busy} onClick={()=>inspectContext(asset.capabilityRef)}>
-            <PlannerIcon iconKey={asset.iconKey} scale="LIBRARY" className={styles.assetIcon}/><span>{asset.label}</span><small>{caption}</small><small>{control?controlAccessLabel(control):"Édition indisponible"}</small></button>;
+          const caption=control ? controlValueSummary(control) : "Référence indisponible";
+          return <button type="button" className={styles.asset} key={asset.assetKey} data-asset={asset.assetKey} data-value-status={control ? controlValuePresentation(control).kind : undefined} disabled={busy} onClick={()=>inspectContext(asset.capabilityRef)}>
+            <PlannerIcon iconKey={asset.iconKey} scale="LIBRARY" className={styles.assetIcon}/><span>{asset.label}</span><small>{caption}</small><small>{control?`${controlValuePresentation(control).label} · ${controlAccessLabel(control)}`:"Édition indisponible"}</small></button>;
         })}</div></section> : null;
       })}
       {model.board.contexts.filter(c=>c.readOnly&&(!query||normalizeLibrarySearch(c.label).includes(normalizeLibrarySearch(query)))).map(c=><button type="button" className={styles.asset} key={c.contextOccurrenceId} onClick={()=>inspectContext(c.contextOccurrenceId)}>{c.label}<small>Référence externe · lecture seule</small></button>)}

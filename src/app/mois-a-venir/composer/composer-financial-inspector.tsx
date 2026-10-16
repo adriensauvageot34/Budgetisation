@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import { ArrowUpRight, LockKeyhole, X } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { ComposerProjectionDetails } from "./composer-cockpit";
-import { knowledgeLabel, money } from "./display";
+import { knowledgeLabel } from "./display";
+import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import styles from "./composer.module.css";
 import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
@@ -21,11 +22,11 @@ export function ComposerFinancialInspector({ model, mode, stale, focused, focus,
   }, []);
   const controls = [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings];
   const rows = [...controls.map(card => ({ ref: card.targetRef, label: card.label,
-    caption: typeof card.value.amount === "string" ? money(card.value.amount) : knowledgeLabel(card.knowledge),
-    locked: card.capability?.flexibility === "LOCKED", access: controlAccessLabel(card),
+    caption: controlValueSummary(card), valueStatus: controlValuePresentation(card).kind,
+    locked: card.capability?.flexibility === "LOCKED", access: `${controlValuePresentation(card).label} · ${controlAccessLabel(card)}`,
     hint: card.knowledge === "UNKNOWN" ? "Valeur à préciser" : "Information à compléter" })),
     ...model.board.contexts.map(card => ({ ref: card.contextOccurrenceId, label: card.label,
-      caption: knowledgeLabel(card.knowledge), locked: card.readOnly, access: card.readOnly ? "Source externe · lecture seule" : "Voir la carte",
+      caption: knowledgeLabel(card.knowledge), valueStatus: undefined, locked: card.readOnly, access: card.readOnly ? "Source externe · lecture seule" : "Voir la carte",
       hint: card.sockets.filter(socket => socket.visualState === "UNRESOLVED").map(socket => socket.label).filter(Boolean).join(" · ") || "Choix ou coût à préciser" }))];
   const shown = mode === "UNRESOLVED" ? rows.filter(row => model.presentation.unresolvedRefs.includes(row.ref)) : rows;
   return <aside ref={panel} className={styles.financialInspector} data-financial-inspector data-mode={mode} aria-labelledby="composer-finances-title"
@@ -41,7 +42,7 @@ export function ComposerFinancialInspector({ model, mode, stale, focused, focus,
       <section className={styles.financeDecisions} aria-label={mode === "FINANCE" ? "Retrouver une décision sur le Board" : "Décisions à préciser"}>
         <h3>{mode === "FINANCE" ? "Retrouver mes décisions" : `${shown.length} élément(s) à regarder`}</h3>
         {mode === "FINANCE" && <p>Chaque ligne rejoint sa carte par son identité. Les montants ne sont pas additionnés ici.</p>}
-        {shown.map(row => <button key={row.ref} data-inspector-target={row.ref} aria-current={focused === row.ref ? "true" : undefined} onClick={() => focus(row.ref)}>
+        {shown.map(row => <button key={row.ref} data-inspector-target={row.ref} data-value-status={row.valueStatus} aria-current={focused === row.ref ? "true" : undefined} onClick={() => focus(row.ref)}>
           <span><strong>{row.label}</strong><small>{mode === "UNRESOLVED" && !row.locked ? row.hint : row.access}</small></span>
           {row.locked && <LockKeyhole size={12} aria-label="Lecture seule" />}<b>{stale ? "En attente" : row.caption}</b><ArrowUpRight size={14} /></button>)}
         {!shown.length && <p>Aucun élément à préciser dans cet état du scénario.</p>}

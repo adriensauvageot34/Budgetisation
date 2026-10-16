@@ -10,6 +10,7 @@ import { useComposerInteractions, useDragHandle, leftSurface } from "./interacti
 import { InlineControlValue } from "./inline-control-value";
 import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { presentationLabel } from "./presentation-label";
+import { controlMainDimension, controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 
 export function ComposerCard({ card, presentation, busy, preserved, focused = false, focus = () => {}, edit, preserve, mutate, hover, details }: {
   card: ComposerCardView; presentation: ComposerObjectPresentation; busy: boolean; preserved: boolean; focused?: boolean; focus?: () => void;
@@ -18,9 +19,9 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
   const gauge = presentation.reservationGauge ?? presentation.choiceGauge;
   const interaction = useComposerInteractions(), handle = useDragHandle(presentation.protectedSavings || preserved ? `control:${card.targetRef}` : undefined);
   const assistantTarget = interaction?.canTarget(card.targetRef);
-  const label = presentationLabel(card.label);
+  const label = presentationLabel(card.label), valuePresentation = controlValuePresentation(card);
   return <article className={styles.card} data-control={card.targetRef} data-variant={presentation.variant} data-focused={focused} data-protected={presentation.protectedSavings} data-card-family={locked ? "PROTECTED" : card.kind === "SAVINGS" ? "RESERVATION" : "ADJUSTABLE"}
-    data-state={card.value.owned ? "chosen" : card.knowledge === "UNKNOWN" ? "unresolved" : "derived"} {...handle}
+    data-state={card.value.owned ? "chosen" : card.knowledge === "UNKNOWN" ? "unresolved" : "derived"} data-value-status={valuePresentation.kind} {...handle}
     data-compatible={assistantTarget} data-unresolved={interaction?.unresolvedRefs.includes(card.targetRef)} data-snap={interaction?.motionTarget === card.targetRef ? interaction.motion : undefined}
     data-recoil={interaction?.motion === "recoil" && interaction.motionTarget === `control:${card.targetRef}`}
     onClick={e => { if (e.target instanceof Element && !e.target.closest("button,input,select,a,[popover]")) focus(); }}
@@ -32,9 +33,10 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
       <div className={styles.cardUtility}>{locked && !preserved ? <LockKeyhole size={14} aria-label="Réservation ou contrainte protégée" />
         : <button disabled={busy} className={styles.iconButton} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={preserve}>{preserved ? <LockKeyhole size={14} /> : <Pin size={14} />}</button>}
         <AtomicPopover utility label={`Détails de ${card.label}`} state="DETAILS" focus={focus} icon={<MoreHorizontal size={15} />}>{close => <>
-          <p className={styles.popoverAmount}>{count != null ? `${quantityLabel(count)} occurrence(s) · ${money(card.value.unitAmount)} / occurrence` : money(card.value.amount)}</p>
+          <p className={styles.popoverAmount}>{controlValueSummary(card)}</p>
+          <p className={styles.popoverNote}>{valuePresentation.label}</p>
           {presentation.variant === "HABIT" && <p className={styles.popoverNote}>Habituel : {presentation.baselineCount !== null ? `${quantityLabel(presentation.baselineCount)} occurrence(s)` : money(presentation.baselineAmount)}</p>}
-          {gauge && <p className={styles.popoverNote}>Repère initial : {money(gauge.referenceAmount)} → choix du mois : {money(card.value.amount)}</p>}
+          {gauge && <p className={styles.popoverNote}>Repère initial : {money(gauge.referenceAmount)} → {card.value.decisionValue ? "choix du mois" : "réservation du mois"} : {money(card.value.amount)}</p>}
           {presentation.variant === "SAVINGS" && <p className={styles.popoverNote}>
             {card.value.reservationSource === "ANNUAL_PLAN" ? "Objectif annuel" : "Déclaration du mois"} ·
             {locked ? " réservation protégée, lecture seule" : " réservation ajustable pour ce scénario"}.
@@ -48,10 +50,10 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
       </div></div>
     <div className={styles.objectIdentity}><PlannerIcon iconKey={presentation.iconKey} identityRef={card.targetRef} className={styles.objectIcon} />
       <div><h3 title={card.label}>{label.title}</h3>{label.person && <span className={styles.personChip}>{label.person}</span>}</div></div>
-    <InlineControlValue card={card} dimension={card.capability?.fields?.count || count != null ? "count" : "amount"} busy={busy} focus={focus} mutate={mutate} />
+    <InlineControlValue card={card} dimension={controlMainDimension(card)} busy={busy} focus={focus} mutate={mutate} />
     {card.capability?.fields?.count?.status === "EDITABLE" && <><InlineControlValue card={card} dimension="unitAmount" busy={busy} focus={focus} mutate={mutate} />
       <small className={styles.officialSlotCost}>{card.value.remainingCount !== card.value.count && !card.value.projectionPending ? "Coût restant du poste" : "Coût du mois"} : {card.value.projectionPending ? "simulation en cours" : money(card.value.economicAmount)}</small></>}
-    {presentation.variant !== "SAVINGS" && <small className={styles.valueScope}>{card.value.decisionValue ? "Prévu · votre choix du mois" : card.value.inclusion === "SUGGESTION_ONLY" ? "Aucune enveloppe retenue" : "Référence du mois · pas une décision"}</small>}
+    {presentation.variant !== "SAVINGS" && <small className={styles.valueScope}>{valuePresentation.label}</small>}
     {presentation.variant === "HABIT" && card.value.inclusion !== "SUGGESTION_ONLY" && (presentation.baselineAmount !== null || presentation.baselineCount !== null) && <small className={styles.habitReference}>Habituel {presentation.baselineCount !== null ? `${quantityLabel(presentation.baselineCount)} occurrence(s)` : money(presentation.baselineAmount)}</small>}
     {presentation.occurrenceStack && !card.value.projectionPending && <div className={styles.occurrenceStack} data-occurrence-stack aria-label={`${quantityLabel(count)} occurrences · ${presentation.occurrenceStack.links.length ? "reliées à des moments explicites" : "enveloppe du mois"}`}>
       {presentation.occurrenceStack.bubbles.map((state, index) => <span key={index} data-occurrence-state={state} title={state === "LINKED" ? presentation.occurrenceStack!.links.map(l => l.label).join(" · ") : "Occurrence disponible"}>{state === "LINKED" && <Link2 size={11} />}</span>)}

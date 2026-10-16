@@ -20,6 +20,7 @@ export function FixedChargesDetails({ facts, detached, toggle, close }: { facts:
   return <dialog ref={dialog} className={styles.reuseDialog} aria-label="Charges fixes du mois" onCancel={event => { event.preventDefault(); close(); }}>
     <header><h2>Charges fixes du mois</h2><button type="button" aria-label="Fermer les charges fixes" onClick={close}><X size={18} /></button></header>
     <p>Faits publiés par les propriétaires du mois. Aucun nouveau coût ni total n’est ajouté. Une charge peut être résiliable auprès de sa source.</p>
+    <small>Afficher séparément change seulement la disposition dans ce navigateur.</small>
     {facts.map(fact => <section key={fact.factKey} data-fixed-fact={fact.factKey}><h3>{fact.label} · {money(fact.value.central)}</h3>
       <p>{knowledgeLabel(fact.knowledge)} · {fact.dueDate ? `Échéance : ${fact.dueDate}` : "Échéance à préciser"}</p>
       <small>Source : {String(fact.metadata.ownerAuthority ?? fact.sourceRefs.join(", "))}</small>
