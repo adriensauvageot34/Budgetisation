@@ -16,6 +16,7 @@ export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, p
   const [page, setPage] = useState<Page>(initialPage);
   const update = <K extends keyof Row>(key: K, value: Row[K]) => onChange({ ...row, [key]: value, edited: true });
   return <section className={styles.workshopComponent} data-workshop-component={title} data-workshop-page={page}>
+    {row.existing?.provenance === "PERSONAL_SUGGESTION" && <p className={styles.helper}>Proposition exploratoire conservée · ce poste n’est pas encore une décision applicable.</p>}
     <div className={styles.workshopTabs} aria-label={`Configurer ${title}`}>
       {!fixedQuantity && <button type="button" aria-pressed={page === "quantity"} onClick={() => setPage("quantity")}>Quantité</button>}
       <button type="button" aria-pressed={page === "price"} onClick={() => setPage("price")}>Prix</button>

@@ -90,7 +90,7 @@ try {
     assert.deepEqual(accepted(await request({ kind: 'READ' })).semanticState, priced.semanticState);
     assert.equal(applied.activeRevisionNumber, index + 1);
     rows.push({ presetKey: preset.presetKey, templateKey: preset.templateKey, scenario: scenarioFor(preset),
-      editor: editorFor(preset.templateKey), mainSlot: shape?.slot ?? null,
+      editor: editorFor(preset.templateKey), mainSlot: shape?.slot ?? null, testedSlot: socket.slotKey, testedOption: option.optionKey,
       create: 'EXECUTED_PASS_PGLITE', editLabel: 'EXECUTED_PASS_PGLITE', serializeReload: 'EXECUTED_PASS_PGLITE',
       priceAndEquipment: 'EXECUTED_PASS_PGLITE', applyReload: 'EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY', browser: 'NOT_RUN_THIS_MATRIX', authenticated: 'NOT_RUN' });
     console.log(`${preset.presetKey} ${scenarioFor(preset)} CONTRACT_PASS`);

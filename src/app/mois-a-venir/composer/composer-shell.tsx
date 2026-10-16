@@ -658,6 +658,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if (admitted) setEditor(current => current ? { ...current, familyMode: undefined } : current);
     return admitted;
   };
+  const editorKnowledge = editor?.cardKey ? <CardKnowledgePanel knowledge={model.cardKnowledge[editor.cardKey]} onPrefill={(field, value) => {
+          if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value } } : current);
+          else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
+        }} /> : null;
   return <InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
@@ -778,10 +782,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           {editor.equipment?.repeating && <button type="button" className={styles.primary} onClick={() => choose(editor.equipment!.asset, editor.equipment!.target)}>Ajouter encore</button>}
           <button type="button" onClick={() => { const owner = shown.board.contexts.find(card => card.contextOccurrenceId === editor.equipment?.target.contextOccurrenceId); if (owner) editContext(owner); else closeDialog(); }}>Retour au résumé</button>
         </section> : <>
-        {editor.cardKey && <CardKnowledgePanel knowledge={model.cardKnowledge[editor.cardKey]} onPrefill={(field, value) => {
-          if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value } } : current);
-          else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
-        }} />}
+        {editor.equipment ? <details><summary>Repères et provenance</summary>{editorKnowledge}</details> : editorKnowledge}
         {editor.cardKey?.startsWith("control:savings:") ? <p className={styles.helper} data-savings-editor-origin>
           Réservation {model.board.savings.find(card => `control:${card.targetRef}` === editor.cardKey)?.value.reservationSource === "ANNUAL_PLAN" ? "issue d’un objectif annuel" : "déclarée pour le mois"}.
           Le montant choisi modifie seulement ce scénario ; aucun mouvement bancaire n’est créé. La projection sera recalculée par Finance V2.

@@ -118,7 +118,7 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
   };
   return <div data-short-stay-editor={stay || undefined} data-family-visit-editor={!stay || undefined} className={styles.nightEditor}>
     {section !== "summary" && <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
-    <p className={styles.helper}>{stay ? "Le séjour regroupe ses postes sans coût supplémentaire. Aucun prix, participant ou date n’est décidé automatiquement. Les séjours intermois sont hors périmètre." : "Une visite est votre intention. Un trajet historique ou un véhicule disponible ne décide ni la visite ni ses participants."}</p>
+    {section === "summary" && <p className={styles.helper}>{stay ? "Le séjour regroupe ses postes sans coût supplémentaire. Aucun prix, participant ou date n’est décidé automatiquement. Les séjours intermois sont hors périmètre." : "Une visite est votre intention. Un trajet historique ou un véhicule disponible ne décide ni la visite ni ses participants."}</p>}
     {section === "summary" && <section className={styles.nightSection} data-visit-summary>
       <h3>{label || (stay ? "Votre séjour" : "Votre visite")}</h3>
       <p>{stay ? "Choisissez l’hébergement ou un poste quand vous le souhaitez." : "La visite reste enregistrable même sans date ou trajet."}</p>

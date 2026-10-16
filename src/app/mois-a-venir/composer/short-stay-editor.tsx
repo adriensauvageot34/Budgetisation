@@ -87,9 +87,9 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
     return { fields, slots, children };
   };
   const content = <>
-    <nav className={styles.nightNav} aria-label="Postes du séjour">{([...["lodging", "groceries"], ...groups.map(([slot]) => slot)] as ("lodging" | "groceries" | Group)[]).map(key =>
-      <button key={key} type="button" aria-pressed={postSection === key} onClick={() => { setPostSection(key); setPostPage(0); }}>
-        {key === "lodging" ? "Hébergement" : key === "groceries" ? "Courses" : groups.find(([slot]) => slot === key)?.[1]}</button>)}</nav>
+    <label>Poste du séjour<select value={postSection} onChange={event => { setPostSection(event.target.value as typeof postSection); setPostPage(0); }}>
+      <option value="lodging">Hébergement</option><option value="groceries">Courses</option>{groups.map(([key,label]) => <option key={key} value={key}>{label}</option>)}
+    </select></label>
     {postSection === "lodging" && <>
     <nav className={styles.nightNav} aria-label="Hébergement"><button type="button" aria-pressed={lodgingPage === "terms"} onClick={() => setLodgingPage("terms")}>Type et durée</button><button type="button" aria-pressed={lodgingPage === "price"} onClick={() => setLodgingPage("price")}>Prix</button></nav>
     {lodgingPage === "terms" && <>
@@ -121,7 +121,7 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
       {posts[slot].length > 1 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {posts[slot].length}</span><button type="button" disabled={postPage + 1 >= posts[slot].length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
       <button type="button" onClick={() => { setPostPage(posts[slot].length); update(slot, [...posts[slot], { row: fresh(slot === "activities" ? "Activité" : slot === "purchases" ? "Achat" : slot === "extras" ? "Extra" : "Restaurant"), templateKey: key }]); }}>Ajouter · {caption}</button>
     </div>)}
-    <p className={styles.helper}>Un jacuzzi peut être une activité ou un extra explicitement ajouté. Les transports des enfants liés doivent déclarer leur relation au trajet du séjour ; aucune fusion n’est déduite d’un libellé.</p>
+    <details><summary>À savoir sur les postes</summary><p className={styles.helper}>Un jacuzzi peut être une activité ou un extra explicitement ajouté. Les transports des enfants liés doivent déclarer leur relation au trajet du séjour ; aucune fusion n’est déduite d’un libellé.</p></details>
   </>;
   return <ProspectiveContextEditor {...props} stay posts={content} onSave={operation => {
     if (operation.kind !== "EDIT_SHORT_STAY") return false;
