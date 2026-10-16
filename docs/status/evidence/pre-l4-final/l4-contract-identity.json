@@ -1,0 +1,49 @@
+{
+  "publishedMatchesA0": true,
+  "scenarioCount": 5,
+  "servian": {
+    "presetKey": "servian-family-visit",
+    "label": "Visite Servian",
+    "templateKey": "family-visit",
+    "categoryKey": "VISIT",
+    "illustrationKey": "servian-family-visit",
+    "searchTerms": [
+      "servian",
+      "famille",
+      "visite"
+    ],
+    "defaults": {
+      "label": "Visite Servian"
+    },
+    "questions": [
+      "Proche",
+      "Participants",
+      "Lieu",
+      "Date",
+      "Déplacement"
+    ],
+    "guidance": "Choisissez la personne et le lieu exacts. Le nom Servian ne prouve ni domicile ni relation familiale."
+  },
+  "files": [
+    {
+      "file": "src/server/phase2/planner/context-registry.ts",
+      "sha256": "8f6ab6b3a5955644309419342913051d8991c8b84c5fe062d9a59e025aa65847"
+    },
+    {
+      "file": "src/domain/phase2/planner/composer-presets.ts",
+      "sha256": "6804720354b04d4395c582610e76cd52b9d9baf694816b82aba5947d0f3b21a7"
+    },
+    {
+      "file": "src/domain/phase2/planner/semantic-state.ts",
+      "sha256": "eb133f418b46f7cfe613a46598bd632dddb29cf13ca082a70be0dacd5043a2c1"
+    },
+    {
+      "file": "src/domain/phase2/planner/component-contract.ts",
+      "sha256": "b3fb688294fba965bf8ac508d333d40df2b74f561155d3cbffabd2caa3cad3d5"
+    },
+    {
+      "file": "src/domain/phase2/planner/component-quantity.ts",
+      "sha256": "1c377962fdd58e5013bd3d7d6cb8de0edbdf11569d8c26cc803d947371575d66"
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+# L4 — Contrats publiés et oracles des cinq parcours
+
+16 octobre2026, réception C3, base C2 `0fc3d0882a649bf023b80edc83724aec43644d30`. **Spécification de travail, aucun développement L4.**
+
+## 1. Source de vérité et règles communes
+
+La capture A0 [des cinq templates](evidence/pre-l4-audit/l4-contracts-published.json) est comparée intégralement aux presets et au registre actuels par `scripts/record-pre-l4-c3-contracts.mjs`. [Identité et preset Servian](evidence/pre-l4-final/l4-contract-identity.json). Les champs ci-dessous sont ceux réellement publiés, pas une promesse de nouveaux champs.
+
+| Responsabilité | Contrat / propriétaire à réutiliser |
+|---|---|
+| Présentation et défauts du preset | `composer-presets.ts`; le nom du preset ne prouve aucun fait personnel |
+| Champs, slots, cardinalités, actions admises | `context-registry.ts`, publication des capabilities serveur |
+| Admission, versions et graphe | `semantic-state.ts`, `context-state`, validateurs des références du foyer; JSON C0 existant |
+| Édition partielle | `guided-context-edit`, adaptateurs `night-out-edit`, `short-stay-edit`, Family Visit et Cadeau existants |
+| Quantité économique | `component-contract.ts`, `component-quantity.ts`, preuve `component-quantity@v1` pour la conversion explicite par personne |
+| Prix, budget, enveloppe et financement | sélection admise, Compiler/Kernel puis Finance V2; aucun calcul économique React |
+| Trajet futur et devis | Mobility prospective: intentions, modes, identités et provenance propriétaires |
+| Sauvegarde | Draft HTTP existant, CAS/idempotence; aucun Apply ni readWorld causé par une simple sauvegarde |
+
+Identités à conserver: `contextOccurrenceId`, `templateKey/templateVersion`, `selectionId`, liens `parentContextOccurrenceId/parentSlotKey`, IDs des décisions et intentions/devis. Modifier un montant ne crée pas une nouvelle occurrence. Le client doit présenter les capabilities actuelles et envoyer l’identité exacte, pas un libellé comme clé.
+
+Les champs communs publiés sont `label`, `plannedDate`, `fieldSchemaVersion`. Les champs propres sont listés par scénario. Le schéma versionné admet des informations incomplètes: date absente, sélection structurale UNRESOLVED, prix UNKNOWN et équipement non choisi. **Draft SAVED n’exige pas READY.** Un zéro explicite, une absence et UNKNOWN ne sont pas interchangeables.
+
+Les composants utilisent la sélection existante avec `quantity`, `unitBasis`, prix/provenance et financement admis. `TOTAL_BUDGET` et `TOTAL_UNITS` sont des modes d’éditeur de conversion; ne pas inventer un champ persistant `quantityMode`. Pour PER_PERSON, conserver `quantityEvidenceVersion`, `quantityPerPerson`, `pricedParticipantCount`; le Compiler exploite la quantité totale stockée. Les anciens composants sans cette preuve gardent leur quantité totale, sans multiplication rétroactive.
+
+Réédition: PATCH des seuls champs modifiés, conservation des autres champs connus ou UNKNOWN et des sockets omis. Une réponse explicitement effacée doit suivre le contrat de clearing existant; ne pas remplacer une omission par `null`. Ne retirer que les réponses incompatibles après décision explicite et validation owner. Une source historique rafraîchie ne remplace jamais un choix accepté.
+
+Persistance pour **chacun des cinq scénarios**: création → décision partielle admise → SAVED confirmé → reload complet → mêmes IDs/versions/valeurs/provenances → modification d’un champ → autres réponses intactes → Undo/Redo → SAVED/reload. Comparer le digest demandé au digest relu, traiter le CAS par récupération explicite, distinguer ERROR et réponse après commit UNCONFIRMED. Ce sont les gates du futur parcours L4; C3 ne prétend pas les avoir tous réexécutés en JWT.
+
+## 2. Soirée techno à deux
+
+**Publié:** `night-out@v1`, preset `techno-night`. Seul défaut: `label="Soirée techno"`. Versions de champs admises v2/v3. Champs propres: `endDate`, `participantRefs`, `placeRef`, `timingNote`. Ni lieu, ni personnes, ni date, ni prix ne viennent du nom « techno ».
+
+**Capabilities/slots:** `before` optionnel (composant ou enfant activity/friend-visit), `main` requis structurellement (composant ou enfant activity), `food` optionnel (composant ou enfant restaurant/fast-food/delivery), `extras` répétables; `outbound` PRIMARY et `return` RETURN optionnels, modes Mobility publiés CAR/TRAIN/BUS/TAXI/FREE/OTHER/UNKNOWN. Chaque slot garde son identité; une sélection UNRESOLVED est sauvegardable.
+
+**Questions minimales:** entrée ou budget principal si connu; participants seulement si choisis ou nécessaires à une quantité par personne; proposer before/boissons/repas/trajet comme compléments facultatifs. Demander un prix par personne uniquement après ce choix, la quantité de bouteilles uniquement après l’ajout d’un complément partagé. La date et le lieu restent facultatifs. Aucune question voiture si aucun trajet n’est demandé.
+
+**Oracle économique proposé:** entrée2×15=30, boissons individuelles2×5=10, bouteille commune1×20=20, before explicite10, aller12 et retour13 indépendants: connu95, parent0. Ce jeu chiffré est un oracle futur, pas une mesure C3. Une même bouteille n’est pas deux boissons individuelles. Si un devis aller-retour couvre déjà les deux legs, conserver la preuve de parcours partagé et ne pas compter les deux sélections une deuxième fois.
+
+**Réédition/incompatibles:** passer de2 à3 participants ne multiplie pas les éléments SHARED/TOTAL. Recalculer la quantité PERSON seulement par conversion explicite et preuve mise à jour. Remplacer un mode de transport retire le pricing incompatible de cette intention, pas le before ou l’entrée. Date inconnue reste absente; fournisseur indisponible donne UNKNOWN/PARTIAL.
+
+**Limites L4:** UX du before, boissons et résumé guidé à compléter avec les composants existants. Aucun modèle publié de payeur nommé, partage arbitraire entre amis ou contribution commune. Ne recueillir aucune réponse qui disparaîtrait du contrat.
+
+## 3. Week-end en gîte
+
+**Publié:** `short-stay@v2`, preset `weekend-gite`; seul défaut actuel: `label="Week-end / Gîte"` (**pas** `lodgingKind=RENTAL` implicite). Champs v2/v3/v5; propres: `endDate`, `participantRefs`, `destinationRef`, `nightCount`, `lodgingKind` (RELATIVE/HOTEL/HOSTEL/RENTAL/OTHER/LATER), `timingNote`.
+
+**Capabilities/slots:** `lodging` requis structurellement; `groceries` optionnel avec confirmation d’enveloppe; `restaurants` répétable, enfants restaurant/fast-food/delivery ou sélection publiée; `activities` enfants activity; `purchases` enfants purchase/gift/beauty-restock; `extras` répétables; `transport` optionnel Mobility PRIMARY. Compiler/Kernel décide coût et couverture, Food/Forecast fournit les références admissibles.
+
+**Questions:** hébergement total OU mode par nuit, nombre de nuits seulement si nécessaire à ce mode; dates/destination/participants si connus; repas et activités uniquement ajoutés volontairement. Le mode total garde une seule quantité économique, le mode par nuit conserve les nuits et le pricing prévus dans le contrat Séjour existant. Ne pas appliquer les deux.
+
+**Oracle futur:** logement total240 pour2nuits, jacuzzi inclus0 additionnel, Restaurant enfant60, activité30: connu330 et parent0. Changer uniquement le Restaurant conserve le logement, les nuits, le lien parent/enfant et le reste. Le Restaurant enfant est un objet économique unique, pas une copie indépendante sur le Board. Courses couvertes: utiliser le binding explicite, pas une économie alimentaire présumée.
+
+**Incompatibles/inconnus:** changement de mode logement invalide seulement sa représentation de prix incompatible; ne pas effacer les enfants. Sans dates, conserver l’intention souple. Intermois reste différé: conserver l’information admissible et signaler la limite, jamais tronquer un séjour. Prix/transport inconnus ne rendent pas faux les montants connus.
+
+**Limite L4:** aucun champ structuré `jacuzziIncluded` n’est publié. Un libellé/note explicite peut conserver l’information admissible, mais ne prouve ni équipement catalogue ni prestation chiffrée. Ne pas ajouter automatiquement une activité « jacuzzi » payante. Une évolution structurée éventuelle devra être revue et versionnée séparément.
+
+## 4. Visite Fontès / Servian
+
+**Publié:** `family-visit@v2`; presets `fontes-family-visit` et `servian-family-visit`, défauts de libellé seulement. Champs v2/v3/v4; propres: `personVisitedRef`, `participantRefs`, `placeRef`, `timingNote`, `endDate`.
+
+**Capabilities:** `hospitality` composant optionnel; `activities` enfants répétables activity/restaurant/fast-food/delivery/purchase/gift; `transport` optionnel Mobility PRIMARY. L’éditeur Visit et le contrat Mobility existants portent l’aller/retour du trajet, ses legs/partage et devis; ne pas inventer un slot `return` sur Family Visit.
+
+**Questions:** personne visitée et participants sont distincts, facultatifs tant qu’inconnus; lieu existant admissible ou destination au format permis, date facultative; demander le mode puis les informations nécessaires seulement si un déplacement est ajouté. Un ancien trajet ou une voiture connue ne prouve pas cette visite future. Fontès et Servian ne fournissent ni coordonnées ni proche par simple texte.
+
+**Oracle:** trajet aller+retour propriétaire coût usage8 et péages4, contribution hospitality10, connu22; parent0. `estimatedMobilityFuelCost` n’est pas `fuelPaidAmount`: aucune dépense de plein créée. Passage voiture→train: retirer l’ancien coût automobile; billet explicite20 remplace12, connu30; billet inconnu conserve hospitality10 et mobilité UNKNOWN/PARTIAL, pas30 inventé.
+
+Réédition conserve personne/lieu/date/participants et IDs compatibles. Un changement de destination invalide un devis périmé; il ne supprime pas le cadeau enfant. Panne de fournisseur: ne pas bloquer tout le Board, ne pas fabriquer distance/péage/prix. **Aucune économie de Courses automatique du fait d’une visite.**
+
+**Limites L4:** présentation conditionnelle et oracles de changement mode/devis à éprouver avec les services existants. Référence à un contact extérieur au foyer: seulement la représentation déjà admissible, jamais élargir les permissions pour l’éditeur.
+
+## 5. Achat de vêtements en ligne
+
+**Publié:** `purchase@v1`, preset `clothing-shopping`, défauts `label` et `budgetDomain="clothing"`. Champs v2/v3; propres `budgetDomain` (clothing/home-small/games-digital/other), `productLabel`, `merchantLabel`, `placeRef`.
+
+**Capabilities:** `item` requis structurellement, `extras` répétables, `transport` Mobility optionnel. Aucun enfant Context attachable dans ce template. Quantité/unité/prix sont sur les sélections composantes. `merchantLabel` est un texte, pas une identité de vendeur certifiée.
+
+**Questions:** article et budget suffisent pour commencer; quantité/prix unitaire seulement si détail demandé, vendeur/date facultatifs. Choisir explicitement consommation de l’enveloppe ou dépense supplémentaire via le guide de binding admis. Demander des frais seulement s’ils ne sont pas déjà inclus dans le montant total. Une livraison ne crée pas un trajet personnel.
+
+**Oracle:** enveloppe Vêtements100, article40, frais supplémentaires5: si les45 sont explicitement couverts et le contrat les admet, conserver enveloppe100, pas145; s’ils sont EXTRA, coût prévu145; relation non décidée reste UNRESOLVED. L4 doit faire confirmer la portée de couverture des compléments au lieu de la déduire du nom du produit.
+
+Réédition du seul montant conserve produit, vendeur, quantity et binding/IDs. Une bascule total/détail doit remplacer la représentation économique incompatible, pas additionner les deux. Article sans prix reste UNKNOWN; zéro de contrôle mensuel explicite ne permet pas une quantité composant nulle (contrats différents).
+
+**Limites L4:** aucun champ dédié de commande e-commerce, état de livraison, adresse de livraison, tracking ou canal n’est publié. Des frais peuvent être un complément explicite admissible; ne pas promettre un modèle logistique ou stocker des champs dans une note arbitraire pour masquer leur absence.
+
+## 6. Cadeau d’anniversaire
+
+**Publié:** `gift@v2`, preset `gift-present`, seul défaut `label="Cadeau"`. Champs v2/v3; propres `recipientRef`, `occasion`, `objectLabel`, `objectAssetRef`. Classification produit et référence structurée `objectAssetRef` utilisent le catalogue propriétaire P05-B (exemple gift:book); le libellé libre reste indépendant, sans catégorie déduite du texte.
+
+**Capabilities:** `item` requis structurellement (option gift), `extras` répétables. Pas de slot transport ni enfant Context sur Cadeau; il peut lui-même être enfant d’un autre Context admissible. Prix/funding/quantité/provenance sur les composants existants; le Kernel garde l’admissibilité de financement.
+
+**Questions:** destinataire si connu, occasion libre, objet ou produit admissible, budget si connu; date facultative. Une référence de personne n’est utilisable que dans sa portée admise; un texte libre admissible n’invente pas un contact propriétaire.
+
+**Oracle:** objet40, complément emballage5, total connu45, parent0. Modifier seulement40→45 conserve destinataire, occasion, classification, quantité, identité et date absente; nouveau total50. Un prix UNKNOWN laisse les5 connus et une projection partielle, jamais objet0 implicite.
+
+**Contribution commune:** destinataire ≠ payeur ≠ participant. Les allocations de financement admises ne constituent pas un modèle de personnes payeuses. Aucun champ dédié de contribution commune nominative n’existe. Demander seulement le montant à charge dans le mode déjà publié si l’utilisateur le décide explicitement; sinon conserver UNKNOWN et annoncer que la répartition commune structurée exige une évolution L4. Ne pas collecter la liste des contributeurs pour la perdre au reload.
+
+## 7. Réception future et ordre proposé
+
+Pour chaque pilote: capacités serveur exactes; aucune question sans champ/adaptateur de round-trip; défaut de preset ≠ décision; parent0; un seul objet par identité; UNKNOWN conservés; sources et droits inchangés; réponses hors ordre rejetées; RAW/PENDING garde Apply; Draft SAVED indépendant de FRESH/APPLIED. Ne pas modifier un Plan officiel pour certifier l’éditeur.
+
+Ordre recommandé: **Soirée techno pilote**, puis Cadeau/Achat, Visite, Séjour composite. Valider chaque parcours avant le suivant. Les questions doivent se limiter au chemin choisi; la réédition ouvre le résumé des choix existants, sans rejouer un questionnaire d’onboarding. Une duplication future devra créer des IDs neufs et remapper tout le sous-graphe; elle n’est pas livrée ici.
+
+Avant livraison réelle: fermeture/drag natifs et cycle Draft JWT isolé demeurent des gates ciblés; preuves C1/C2/C3 synthétiques ne les remplacent pas. Aucun nouveau moteur de questionnaire, cache, owner ou migration proposé par ce document.

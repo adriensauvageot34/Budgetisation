@@ -90,7 +90,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   SPARSE:sparseMonth, UNREADY:unreadyMonth };
 const draftStores = new Map();
 function draftStore(key) {
-  if (!draftStores.has(key)) draftStores.set(key, { active: null, archives: [], lostOnce: false, log: [] });
+  if (!draftStores.has(key)) draftStores.set(key, { active: null, archives: [], lostOnce: false, failedOnce: false, log: [] });
   return draftStores.get(key);
 }
 function draftSnapshot(s) { return { active: s.active, archives: s.archives,
@@ -165,6 +165,13 @@ const server = http.createServer(async (request, response) => {
           response.end(JSON.stringify(conflict())); return;
         }
         if (url.searchParams.get('draftFail') === '1') { response.writeHead(503); response.end('Fixture network failure'); return; }
+        // C3: one pre-commit failure followed by a genuine UI retry on the same
+        // local Draft. No domain writer or production transport is replaced.
+        if (url.searchParams.get('draftFailOnce') === '1' && !s.failedOnce) {
+          s.failedOnce = true;
+          s.log.push({ kind:'SAVE_FAILED_BEFORE_COMMIT', version:old?.version ?? 0 });
+          response.writeHead(503); response.end('Synthetic one-shot save failure'); return;
+        }
         row = { draftId: old?.draftId ?? crypto.randomUUID(), version:(old?.version ?? 0)+1,
           lifecycle:'ACTIVE', semanticState, digest:command.digest, baseRevisionId:null, baseRevisionNumber:0,
           lastSavedAt:new Date().toISOString(), archivedAt:null, lastMutationRequestId:command.requestId,
