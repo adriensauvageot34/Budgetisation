@@ -1,6 +1,6 @@
 # L4 — Contrats publiés et oracles des cinq parcours
 
-16 octobre2026, réception C3, base C2 `0fc3d0882a649bf023b80edc83724aec43644d30`. **Spécification de travail, aucun développement L4.**
+16 octobre 2026, réception C3, base C2 `0fc3d0882a649bf023b80edc83724aec43644d30`. **Spécification de travail, aucun développement L4.**
 
 ## 1. Source de vérité et règles communes
 
@@ -17,13 +17,13 @@ La capture A0 [des cinq templates](evidence/pre-l4-audit/l4-contracts-published.
 | Trajet futur et devis | Mobility prospective: intentions, modes, identités et provenance propriétaires |
 | Sauvegarde | Draft HTTP existant, CAS/idempotence; aucun Apply ni readWorld causé par une simple sauvegarde |
 
-Identités à conserver: `contextOccurrenceId`, `templateKey/templateVersion`, `selectionId`, liens `parentContextOccurrenceId/parentSlotKey`, IDs des décisions et intentions/devis. Modifier un montant ne crée pas une nouvelle occurrence. Le client doit présenter les capabilities actuelles et envoyer l’identité exacte, pas un libellé comme clé.
+Identités à conserver: `contextOccurrenceId`, `templateKey`, `selectionId`, `parentContextOccurrenceId` et la sélection CHILD_CONTEXT du socket parent (`slotSelections[slotKey]`, `childContextOccurrenceId`), IDs des décisions et intentions/devis. La version du template est publiée par le registre/manifeste, pas un champ `templateVersion` à ajouter au Context; il n’existe pas non plus de champ Context `parentSlotKey`. Modifier un montant ne crée pas une nouvelle occurrence. Le client doit présenter les capabilities actuelles et envoyer l’identité exacte, pas un libellé comme clé.
 
 Les champs communs publiés sont `label`, `plannedDate`, `fieldSchemaVersion`. Les champs propres sont listés par scénario. Le schéma versionné admet des informations incomplètes: date absente, sélection structurale UNRESOLVED, prix UNKNOWN et équipement non choisi. **Draft SAVED n’exige pas READY.** Un zéro explicite, une absence et UNKNOWN ne sont pas interchangeables.
 
-Les composants utilisent la sélection existante avec `quantity`, `unitBasis`, prix/provenance et financement admis. `TOTAL_BUDGET` et `TOTAL_UNITS` sont des modes d’éditeur de conversion; ne pas inventer un champ persistant `quantityMode`. Pour PER_PERSON, conserver `quantityEvidenceVersion`, `quantityPerPerson`, `pricedParticipantCount`; le Compiler exploite la quantité totale stockée. Les anciens composants sans cette preuve gardent leur quantité totale, sans multiplication rétroactive.
+Les composants utilisent la sélection existante avec `quantity`, `unitBasis` (ITEM/PERSON/SHARED), `cost`, `fundingAllocations` et provenance admise. Le champ `pricing` appartient aux intentions Mobility, pas aux composants ordinaires. `TOTAL_BUDGET` et `TOTAL_UNITS` sont des modes d’éditeur de conversion; ne pas inventer un champ persistant `quantityMode`. Pour PER_PERSON, conserver `quantityEvidenceVersion`, `quantityPerPerson`, `pricedParticipantCount`; le Compiler exploite la quantité totale stockée. Les anciens composants sans cette preuve gardent leur quantité totale, sans multiplication rétroactive. Pour le logement, la sélection peut porter `lodgingPricing={version:"lodging-pricing@v1",basis:"TOTAL"|"PER_NIGHT",nightCount:number|null}`.
 
-Réédition: PATCH des seuls champs modifiés, conservation des autres champs connus ou UNKNOWN et des sockets omis. Une réponse explicitement effacée doit suivre le contrat de clearing existant; ne pas remplacer une omission par `null`. Ne retirer que les réponses incompatibles après décision explicite et validation owner. Une source historique rafraîchie ne remplace jamais un choix accepté.
+Réédition: PATCH des seuls champs modifiés, conservation des autres champs connus ou UNKNOWN et des sockets omis. Une réponse explicitement effacée doit suivre le contrat de clearing existant; ne pas remplacer une omission par `null`. Ne retirer que les réponses incompatibles après décision explicite et validation owner. Une source historique rafraîchie ne remplace jamais un choix accepté. S2 conserve l’exploration hypothétique séparée des choix retenus, avec ses statuts/digests; toute projection passe par le Compiler, toute adoption exige un choix explicite.
 
 Persistance pour **chacun des cinq scénarios**: création → décision partielle admise → SAVED confirmé → reload complet → mêmes IDs/versions/valeurs/provenances → modification d’un champ → autres réponses intactes → Undo/Redo → SAVED/reload. Comparer le digest demandé au digest relu, traiter le CAS par récupération explicite, distinguer ERROR et réponse après commit UNCONFIRMED. Ce sont les gates du futur parcours L4; C3 ne prétend pas les avoir tous réexécutés en JWT.
 

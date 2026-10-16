@@ -1,0 +1,375 @@
+{
+  "environment": "LOCAL_SYNTHETIC",
+  "geometry": [
+    {
+      "id": "food1440",
+      "dom": 2786,
+      "focusOutline": "solid",
+      "focused": "Augmenter Nombre d’occurrences de Repas travail Manon",
+      "images": 7,
+      "overflow": false,
+      "values": [
+        {
+          "label": "Montant du mois de Courses : 300,00 €",
+          "textWidth": 133.77500915527344,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Nombre d’occurrences de Café au travail Adrien : 13 occurrences",
+          "textWidth": 133.77500915527344,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Prix par occurrence de Café au travail Adrien : 2,10 €",
+          "textWidth": 33.60000228881836,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Nombre d’occurrences de Coiffeur : 1 occurrence",
+          "textWidth": 133.7624969482422,
+          "width": 133.7624969482422
+        },
+        {
+          "label": "Prix par occurrence de Coiffeur : Prix à préciser",
+          "textWidth": 82.5250015258789,
+          "width": 133.7624969482422
+        },
+        {
+          "label": "Montant du mois de Tabac / vape : 60,00 €",
+          "textWidth": 133.77500915527344,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Montant du mois de Synthetic adjustable saving : 100,00 €",
+          "textWidth": 210.2250061035156,
+          "width": 210.2250061035156
+        },
+        {
+          "label": "Montant du mois de Vêtements : 0,00 €",
+          "textWidth": 133.7624969482422,
+          "width": 133.7624969482422
+        },
+        {
+          "label": "Montant du mois de Maison petit : À définir",
+          "textWidth": 133.77500915527344,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Montant du mois de Jeux / numérique ponctuel : À définir",
+          "textWidth": 133.7624969482422,
+          "width": 133.7624969482422
+        },
+        {
+          "label": "Nombre d’occurrences de Visites famille · mobilité : 1 occurrence",
+          "textWidth": 187.7624969482422,
+          "width": 187.7624969482422
+        },
+        {
+          "label": "Nombre d’occurrences de Trajets travail fixes : 1 occurrence",
+          "textWidth": 187.77500915527344,
+          "width": 187.77500915527344
+        },
+        {
+          "label": "Nombre d’occurrences de Besoin à préciser : Occurrences à définir",
+          "textWidth": 187.7624969482422,
+          "width": 187.7624969482422
+        },
+        {
+          "label": "Nombre d’occurrences de Repas travail Adrien : 2 occurrences",
+          "textWidth": 144.40000915527344,
+          "width": 144.40000915527344
+        },
+        {
+          "label": "Prix par occurrence de Repas travail Adrien : 8,00 €",
+          "textWidth": 35.587501525878906,
+          "width": 144.40000915527344
+        },
+        {
+          "label": "Nombre d’occurrences de Repas travail Manon : Occurrences à définir",
+          "textWidth": 124.4000015258789,
+          "width": 124.4000015258789
+        },
+        {
+          "label": "Prix par occurrence de Repas travail Manon : 8,00 €",
+          "textWidth": 35.587501525878906,
+          "width": 124.4000015258789
+        },
+        {
+          "label": "Nombre d’occurrences de Livraison : 1 occurrence",
+          "textWidth": 144.40000915527344,
+          "width": 144.40000915527344
+        },
+        {
+          "label": "Prix par occurrence de Livraison : 15,00 €",
+          "textWidth": 40.8125,
+          "width": 198.40000915527344
+        },
+        {
+          "label": "Nombre d’occurrences de Fast-food : 1 occurrence",
+          "textWidth": 144.40000915527344,
+          "width": 144.40000915527344
+        },
+        {
+          "label": "Prix par occurrence de Fast-food : 10,00 €",
+          "textWidth": 40.8125,
+          "width": 198.40000915527344
+        },
+        {
+          "label": "Nombre d’occurrences de Enveloppe Restaurants : 2 occurrences",
+          "textWidth": 144.40000915527344,
+          "width": 144.40000915527344
+        },
+        {
+          "label": "Prix par occurrence de Enveloppe Restaurants : 20,00 €",
+          "textWidth": 42.79999923706055,
+          "width": 198.40000915527344
+        }
+      ],
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "id": "visual-after-close",
+      "dom": 2019,
+      "focusOutline": "none",
+      "focused": null,
+      "images": 7,
+      "overflow": false,
+      "values": [
+        {
+          "label": "Montant du mois de Courses : 300,00 €",
+          "textWidth": 133.77500915527344,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Nombre d’occurrences de Café au travail Adrien : 13 occurrences",
+          "textWidth": 133.77500915527344,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Prix par occurrence de Café au travail Adrien : 2,10 €",
+          "textWidth": 33.60000228881836,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Nombre d’occurrences de Coiffeur : 1 occurrence",
+          "textWidth": 133.7624969482422,
+          "width": 133.7624969482422
+        },
+        {
+          "label": "Prix par occurrence de Coiffeur : Prix à préciser",
+          "textWidth": 82.5250015258789,
+          "width": 133.7624969482422
+        },
+        {
+          "label": "Montant du mois de Tabac / vape : 60,00 €",
+          "textWidth": 133.77500915527344,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Montant du mois de Synthetic adjustable saving : 100,00 €",
+          "textWidth": 210.2250061035156,
+          "width": 210.2250061035156
+        },
+        {
+          "label": "Montant du mois de Vêtements : 0,00 €",
+          "textWidth": 133.7624969482422,
+          "width": 133.7624969482422
+        },
+        {
+          "label": "Montant du mois de Maison petit : À définir",
+          "textWidth": 133.77500915527344,
+          "width": 133.77500915527344
+        },
+        {
+          "label": "Montant du mois de Jeux / numérique ponctuel : À définir",
+          "textWidth": 133.7624969482422,
+          "width": 133.7624969482422
+        },
+        {
+          "label": "Nombre d’occurrences de Visites famille · mobilité : 1 occurrence",
+          "textWidth": 187.7624969482422,
+          "width": 187.7624969482422
+        },
+        {
+          "label": "Nombre d’occurrences de Trajets travail fixes : 1 occurrence",
+          "textWidth": 187.77500915527344,
+          "width": 187.77500915527344
+        },
+        {
+          "label": "Nombre d’occurrences de Besoin à préciser : Occurrences à définir",
+          "textWidth": 187.7624969482422,
+          "width": 187.7624969482422
+        }
+      ],
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "id": "dense-error1440",
+      "buttons": [
+        {
+          "label": "Valider Nombre d’occurrences de Repas travail Manon",
+          "rect": {
+            "height": 28,
+            "width": 28,
+            "x": 675.2000122070312,
+            "y": 322.75
+          }
+        },
+        {
+          "label": "Annuler la saisie de Repas travail Manon",
+          "rect": {
+            "height": 28,
+            "width": 28,
+            "x": 706.2000122070312,
+            "y": 322.75
+          }
+        }
+      ],
+      "card": {
+        "height": 223.0500030517578,
+        "width": 210,
+        "x": 540,
+        "y": 259.3999938964844
+      },
+      "composer": {
+        "data-comparing": "false",
+        "data-composer": "true",
+        "data-digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+        "data-dragging": "false",
+        "data-preview-state": "FRESH",
+        "data-revision": "0",
+        "data-save-state": "CLEAN",
+        "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+      },
+      "dom": 3500,
+      "errorText": "Détails de Repas travail ManonRepas travailManonNombre d’occurrences de Repas travail ManonEntrée valide · Échap annuleSaisissez un montant positif, avec deux décimales au maximum.8,00 € / occurrencePrix de référenceCoût du mois : À préciserÀ définir · aucun choix retenu",
+      "images": 6,
+      "input": {
+        "height": 35.60000228881836,
+        "width": 116.4000015258789,
+        "x": 555.7999877929688,
+        "y": 318.95001220703125
+      },
+      "overflow": false,
+      "raw": "2,345",
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "id": "dense-error1728",
+      "buttons": [
+        {
+          "label": "Valider Nombre d’occurrences de Repas travail Manon",
+          "rect": {
+            "height": 28,
+            "width": 28,
+            "x": 819.2000122070312,
+            "y": 322.75
+          }
+        },
+        {
+          "label": "Annuler la saisie de Repas travail Manon",
+          "rect": {
+            "height": 28,
+            "width": 28,
+            "x": 850.2000122070312,
+            "y": 322.75
+          }
+        }
+      ],
+      "card": {
+        "height": 223.0500030517578,
+        "width": 210,
+        "x": 684,
+        "y": 259.3999938964844
+      },
+      "composer": {
+        "data-comparing": "false",
+        "data-composer": "true",
+        "data-digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+        "data-dragging": "false",
+        "data-preview-state": "FRESH",
+        "data-revision": "0",
+        "data-save-state": "CLEAN",
+        "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+      },
+      "dom": 3985,
+      "errorText": "Détails de Repas travail ManonRepas travailManonNombre d’occurrences de Repas travail ManonEntrée valide · Échap annuleSaisissez un montant positif, avec deux décimales au maximum.8,00 € / occurrencePrix de référenceCoût du mois : À préciserÀ définir · aucun choix retenu",
+      "images": 6,
+      "input": {
+        "height": 35.60000228881836,
+        "width": 116.4000015258789,
+        "x": 699.7999877929688,
+        "y": 318.95001220703125
+      },
+      "overflow": false,
+      "raw": "2,345",
+      "viewport": [
+        1728,
+        900
+      ]
+    },
+    {
+      "id": "dense-error1920",
+      "buttons": [
+        {
+          "label": "Valider Nombre d’occurrences de Repas travail Manon",
+          "rect": {
+            "height": 28,
+            "width": 28,
+            "x": 915.2000122070312,
+            "y": 412.75
+          }
+        },
+        {
+          "label": "Annuler la saisie de Repas travail Manon",
+          "rect": {
+            "height": 28,
+            "width": 28,
+            "x": 946.2000122070312,
+            "y": 412.75
+          }
+        }
+      ],
+      "card": {
+        "height": 223.0500030517578,
+        "width": 210,
+        "x": 780,
+        "y": 349.3999938964844
+      },
+      "composer": {
+        "data-comparing": "false",
+        "data-composer": "true",
+        "data-digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+        "data-dragging": "false",
+        "data-preview-state": "FRESH",
+        "data-revision": "0",
+        "data-save-state": "CLEAN",
+        "data-world-version": "4cbee5241d2c2fcbe1aa008efaec7b55058eae4540aa573f3bf4f0686ec7308e:null:0"
+      },
+      "dom": 5211,
+      "errorText": "Détails de Repas travail ManonRepas travailManonNombre d’occurrences de Repas travail ManonEntrée valide · Échap annuleSaisissez un montant positif, avec deux décimales au maximum.8,00 € / occurrencePrix de référenceCoût du mois : À préciserÀ définir · aucun choix retenu",
+      "images": 6,
+      "input": {
+        "height": 35.60000228881836,
+        "width": 116.4000015258789,
+        "x": 795.7999877929688,
+        "y": 408.9500122070313
+      },
+      "overflow": false,
+      "raw": "2,345",
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  ]
+}

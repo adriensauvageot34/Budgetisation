@@ -2020,7 +2020,7 @@
       "observation": "Next Vercel complet READY ; webpack local node:crypto préexistant, aucun build nouveau nécessaire avec code produit inchangé.",
       "userRisk": "Couverture limitée à compléter de façon ciblée, sans réaudit général.",
       "priorStatus": "PARTIAL_OR_LIMITED",
-      "finalEvidence": "Build Next complet C2 sur8978ac1 réutilisable (src inchangé); résultat du build Preview C3 indiqué dans le rapport final, sans généraliser le build local bloqué."
+      "finalEvidence": "Build Next complet C3 sur9bdeb50: dpl_G6hPv1Tn19fmSkMPKKFbvFRd3Gde READY, npm run build/Next/TypeScript/pages/optimisation terminés; cache normal réutilisé, pas une installation fraîche ni un build local."
     },
     {
       "id": "AV-100",

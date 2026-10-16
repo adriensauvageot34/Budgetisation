@@ -1,0 +1,26 @@
+{
+  "testedSha": "9bdeb5022929bd55078f66c8d9c93708b0f75c29",
+  "productSourceSha": "8978ac18b0b4dbe0650c044b3ca086a54014ba8b",
+  "sameProductAsC2": true,
+  "mode": "PRODUCTION_MINIFIED_REACT_ESBUILD_FIXTURE",
+  "sourceContentsMatches": [
+    "composer-shell.tsx",
+    "control-value-presentation.ts",
+    "composer-library.tsx",
+    "composer-board.tsx",
+    "fixed-charges.tsx",
+    "inline-control-value.tsx",
+    "inline-edit-registry.tsx",
+    "composer-card.tsx",
+    "board-carousel.tsx",
+    "visual-cluster.tsx",
+    "composer-financial-inspector.tsx",
+    "local-draft.ts",
+    "preview-scheduler.ts",
+    "durable-draft.ts",
+    "composer.module.css"
+  ],
+  "bundleSha256": "953987eb8e65576795ddb7a6991d974f901f98c7a4ddd3ca8d6c333b26ecf5d4",
+  "goldenUnchanged": true,
+  "goldenSha256LF": "be460de231ed54b89c58d07e4a081828ca6c99976f5c0551555c7fe52224ce2c"
+}

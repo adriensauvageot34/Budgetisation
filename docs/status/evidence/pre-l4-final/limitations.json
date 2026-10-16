@@ -1,0 +1,16 @@
+{
+  "AUTH_CYCLE": "NOT_RUN_AUTH",
+  "reason": "No existing active isolated authenticated Draft account identified in the authorized context; known F0 accounts disabled; personal Draft writes prohibited.",
+  "NATIVE_INTERACTIONS": "PARTIAL",
+  "nativeConfirm": "NOT_RUN_NATIVE",
+  "nativeBeforeUnload": "NOT_RUN_NATIVE",
+  "nativeHeldPointerDrag": "NOT_RUN_NATIVE",
+  "domKeyboardPagingInspector": "EXECUTED_PASS_LIMITED_SYNTHETIC",
+  "nativeAccess": "Chrome browser provider unavailable. Auto-review rejected reading unrelated Chrome content; no contents read. Official request to create a dedicated blank window timed out awaiting app approval. No retries or bypass.",
+  "productionWrites": 0,
+  "f0Reactivation": false,
+  "rlsChanges": false,
+  "migrations": false,
+  "p95Campaign": false,
+  "L4Implemented": false
+}

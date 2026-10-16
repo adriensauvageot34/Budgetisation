@@ -28,7 +28,7 @@ const rows=source.rows.map(r=>{
  if([19,24,85,88,89,91].includes(r.number))proof+=' Rejeu C3: suites critiques et 198 empreintes inchangées.';
  if([20,22,23,84,87,90,101].includes(r.number)){status='VERIFIED_WITH_LIMITATION';proof+=' C1/L3.3/P13/B3 et parcours C3 synthétiques; aucun nouveau JWT isolé.';}
  if([25,27,28,29,30,31,32,34,39,80,93,94,95].includes(r.number)){status='VERIFIED_WITH_LIMITATION';proof+=' C2 géométrie réutilisée; C3 browser-checks/geometry/browser-server-state. Échantillon local, pas toutes les combinaisons possibles.';}
- if(r.number===99){status='VERIFIED_WITH_LIMITATION';proof='Build Next complet C2 sur8978ac1 réutilisable (src inchangé); résultat du build Preview C3 indiqué dans le rapport final, sans généraliser le build local bloqué.';}
+ if(r.number===99){status='VERIFIED_WITH_LIMITATION';proof='Build Next complet C3 sur9bdeb50: dpl_G6hPv1Tn19fmSkMPKKFbvFRd3Gde READY, npm run build/Next/TypeScript/pages/optimisation terminés; cache normal réutilisé, pas une installation fraîche ni un build local.';}
  if(r.number===102){status='VERIFIED_WITH_LIMITATION';proof='Rollback conservateur documenté: garder C1/C2 pour rollback C3, ne pas retourner à une UI qui réécrit les nouveaux overrides. Compatibilité historique C1/L3.3 rejouée; downgrade d’une session réelle NOT_RUN.';}
  return {...r,priorStatus:r.status,status,evidence:r.evidence,finalEvidence:proof};
 });
