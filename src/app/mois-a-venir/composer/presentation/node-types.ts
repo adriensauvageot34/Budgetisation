@@ -1,4 +1,5 @@
 import type { ComposerCardView, ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
+import type { BaselineStructuralFact } from "@/domain/phase2/planner/baseline-contract";
 
 export type ContentDensity = "SPARSE" | "NORMAL" | "RICH";
 export type SpatialFamily = "DAILY" | "FOOD" | "MOMENTS" | "PERSONAL_CARE" | "SAVINGS" | "PURCHASES" | "HOME" | "OTHER";
@@ -19,4 +20,6 @@ export type VisualClusterNode = Readonly<{
   amount: null;
 }>;
 
-export type ComposerPresentationNode = AtomicNode | VisualClusterNode;
+export type FixedChargesNode = Readonly<{ id: string; kind: "FIXED"; iconKey: "home"; width: number; height: number;
+  density: "NORMAL"; spatialFamily: "OTHER"; facts: readonly BaselineStructuralFact[]; detached: boolean }>;
+export type ComposerPresentationNode = AtomicNode | VisualClusterNode | FixedChargesNode;

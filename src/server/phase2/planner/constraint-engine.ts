@@ -1,4 +1,5 @@
 import "server-only";
+import { monthlyOccurrenceOverride } from "./control-fields";
 import Big from "big.js";
 import type { ConstraintResult } from "@/domain/phase2/planner/diagnostics";
 import type { CompiledComponent, CompiledPlanSlot, PlanningWorldFacts } from "@/domain/phase2/planner/compiler-contract";
@@ -25,7 +26,8 @@ export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readon
       const simple = slot.baseline.simpleAuthority;
       const renewal = slot.baseline.renewalAuthority;
       const explicitInput = !!slot.decisionId && slot.remainingEconomicAmount !== null;
-      if (slot.baseline.inclusion !== "CENTRAL" && !renewal && !simple?.optionalBudget && !(simple?.gate === "NEEDS_NEW_INPUT" && explicitInput))
+      if (slot.baseline.inclusion !== "CENTRAL" && !renewal && !simple?.optionalBudget
+        && !((simple?.gate === "NEEDS_NEW_INPUT" || monthlyOccurrenceOverride(slot.baseline)) && explicitInput))
         add("BLOCK", "OWNED_SLOT_CONDITION_UNRESOLVED", slot.baseline.planSlotId, slot.baseline.sourceRefs);
       if (simple?.hardFloor && slot.effectiveAmount !== null && new Big(slot.effectiveAmount).lt(simple.hardFloor.amount))
         add("BLOCK", "SIMPLE_REAL_HARD_FLOOR_VIOLATED", slot.baseline.planSlotId, simple.hardFloor.evidenceRefs);

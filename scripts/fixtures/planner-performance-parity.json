@@ -8,7 +8,7 @@
       "projection": "6d0878b567179b8a6e2bb43ebeeb757142ede28839af33874e8f42bb9d9bba66",
       "preview": "282c9ff9520bf747c4078cd615f3e1805067674cf8a2835236ca248200401598",
       "fullBusiness": "4964511c2d26fbb44ba082666051d6daaea597f5dadb3ab62244919d58d246da",
-      "capabilities": "a9714d53b8665638d04ce632c90cf4f1cba478cbb9beb8c8270740f8eaa03d79",
+      "capabilities": "34d6f26ae87a9115d72677077c4bb82ce45538416fe6a841602e97091815ed81",
       "knowledge": "35d2e73aa06c8984997d48ef4e8d605b2100abd6f09ca78779da8410920299de",
       "identities": "52a7b1fbb559e34366351242649994824bf743e7551ad6f522f783893fa2778c"
     },
@@ -19,7 +19,7 @@
       "projection": "6d0878b567179b8a6e2bb43ebeeb757142ede28839af33874e8f42bb9d9bba66",
       "preview": "6b2e70e7536e939079d72e9b6c55bd468fcf5078fa38d907c4a33ad90ab799cc",
       "fullBusiness": "4b4ac76b153c48dfdd55c36da83a0401d18181bcae0d14f45bc1451bc0e32ef8",
-      "capabilities": "a9714d53b8665638d04ce632c90cf4f1cba478cbb9beb8c8270740f8eaa03d79",
+      "capabilities": "34d6f26ae87a9115d72677077c4bb82ce45538416fe6a841602e97091815ed81",
       "knowledge": "35d2e73aa06c8984997d48ef4e8d605b2100abd6f09ca78779da8410920299de",
       "identities": "764982928e5ab32b8419b9efd5677554c865feeff958e669b6518797d0e23f9d"
     },
@@ -30,7 +30,7 @@
       "projection": "5143e06df1984b2a8875da70bf8243f972d9bdbc293ce13d97e5781a99b2ff7f",
       "preview": "17c9ac86675c407a6a4d657edc6b7abd06994e772d2e806bafaedcfcf6ef418a",
       "fullBusiness": "fb0abd165d48944cc507106229b4711c4fe0b8eeef778a01612f4ddcf4fcda9d",
-      "capabilities": "2ac42561a86005d9961b9ea1a1b397d1ef174641354dfa4e75552313821771e8",
+      "capabilities": "266f74d9eb9e438c43b2da9b22dc52b0322c73d1f197f0a9f062beaa42351c7f",
       "knowledge": "0ff54d649069d666cca3165305d46d3b438634f5c0ecc7144695f8253d50b1a1",
       "identities": "f799f16d3e28b797e99035e3a28e8155cdb2d4a2fc2e68cbc6e1c4bf2c90ed99"
     },
@@ -41,7 +41,7 @@
       "projection": "fb7061ed4ed6295cae26388d15f285c5e0dc2ce65261fba0a3283b519ed00849",
       "preview": "9456f9b2b4aa636ba664d6eaf7c738db01c306f3f4ef458a73e4dd3106ecd30b",
       "fullBusiness": "3a2fdfd7259e37b8569d4864f58ac2c37ce7a31c33c7fa59bde7c5584e2d4e8d",
-      "capabilities": "3e3b6059dfac5dc14cc06ad666531d501aeda82d60cec4061e215c47f0d92921",
+      "capabilities": "6fee06bcaa6e087b664cb156f0629488567853d0d1011a0247557d4ebdeef63e",
       "knowledge": "60bf8dd4f6f04a8f6d29a2c64d4348dbd4f844c5e3f3f6dd9256d5bf2578016f",
       "identities": "8ac12866682d9b23365097d20df590ef4d625d77eb6c7afc61fc5aa47e6c9800"
     },
@@ -52,7 +52,7 @@
       "projection": "9374b65d3ff6f0c3ad7d17278ffffa40c23cb470351d5426c73203a46abe2b06",
       "preview": "ad00d69627bb214000b8452cfa2e058fee9ce2747fb16d25a0ad38bc05ca61fe",
       "fullBusiness": "ff0b4fa825f4191a971b1cae3d64cb3a0e4b9c195228fdaabe44b8d74a516faf",
-      "capabilities": "125bb23e1c50c8563d1ceaf785d693f4b9fc472ec5b011981129a79a40784674",
+      "capabilities": "1186fc06578efc6cb46e1bb152b0893955738c96bae284e408bf1ae4808fa84e",
       "knowledge": "35d2e73aa06c8984997d48ef4e8d605b2100abd6f09ca78779da8410920299de",
       "identities": "496e030f6b7914172d31828c96135ee8db61c3b01b816576c8fb5478d5b35ac6"
     },
@@ -63,7 +63,7 @@
       "projection": "6d0b000a6127786fd8836daefc14b0d2396997525c18a5a7450eba2b12e58c0e",
       "preview": "f9865b0fff4bbe978b3a8f5c208fca6a360f2c37d568bbf4dd6ef6d3d4022027",
       "fullBusiness": "6fb2c3a82f88e7495593ae79776013d1a038968544790f9ae5145e710b8c5e9f",
-      "capabilities": "6cee80cfd40c17069fca9cb38433aa9113430da614317a01556df36a8a7280ea",
+      "capabilities": "bbe7847d8b8d540023933d9ca3333e3d6abe9ddb9543de147f7817874657079c",
       "knowledge": "c5bfcb330de9b886d0bec00e434e1b715812247076e3ceb044e06cef30ea24f8",
       "identities": "69ee53b79ad32a48ee7e1d1d6d7d401069a76cb894ed69a499b4fa095b03bc32"
     },
@@ -74,7 +74,7 @@
       "projection": "a07991c67a1eea84339ea8145017f64db77d86c21b51e60bc592ae88dbc6fdd5",
       "preview": "e1951643c520ddc3e584f39e03470c2f7742d89256d164958b33bfed2a4f22d3",
       "fullBusiness": "4e972a8f6557b7a87f51d80a636f51573f23e4e64adef0a1b17a80c2a9535919",
-      "capabilities": "6cee80cfd40c17069fca9cb38433aa9113430da614317a01556df36a8a7280ea",
+      "capabilities": "bbe7847d8b8d540023933d9ca3333e3d6abe9ddb9543de147f7817874657079c",
       "knowledge": "c5bfcb330de9b886d0bec00e434e1b715812247076e3ceb044e06cef30ea24f8",
       "identities": "8401f6efa1e18021d8bd0edfda8885c03c5eff5c559a1a6fdaad34c44eda7023"
     },
@@ -85,7 +85,7 @@
       "projection": "020329f449c145e07e1e9e1578e13bce9364f7ecc586a1f1c0ad5318f2482c34",
       "preview": "ae52d43a8bd13caa12ec0618f3c80a669008048f416b3779252dbbf7123e22ca",
       "fullBusiness": "00a18763abb888b11a6d9a5a1dfae21ad5576eb87786343f8ea8e02641882dd6",
-      "capabilities": "f52682ec72627e61e49cc9158cda8b1a6793138fb4eabda96d132de9aa26a897",
+      "capabilities": "65f06593cbd7fdc94babde821e3e63a1950890751ed458bcb9cfb696c16d3041",
       "knowledge": "3aba162176190f5ab84d3f654a0e413cd8b3e9cf8391e63f3e0912ef971aeaba",
       "identities": "41265134ad14cbe7252d96611bfaeffa1fbda88c4a62ec62d954348590bff40b"
     },
@@ -96,7 +96,7 @@
       "projection": "ddd59abd4547161ef5121ee025a20241dc82919b27810004769a305cc1839fb1",
       "preview": "063de59a064b5752d488800d8317118a964cb8eb6316f47e17a5d9076c688e53",
       "fullBusiness": "3ebf622955fea28f393dc9666a0c010def3a11f3c295bcfcd5c3057218a35937",
-      "capabilities": "f52682ec72627e61e49cc9158cda8b1a6793138fb4eabda96d132de9aa26a897",
+      "capabilities": "65f06593cbd7fdc94babde821e3e63a1950890751ed458bcb9cfb696c16d3041",
       "knowledge": "f561ad5ba80e3454ed2f3d5f435bf0643038daa5f43e3df06235ecf5d1c09b74",
       "identities": "f004308d62469c05feedc2f0bf0c8420da2443c72faa4e2daf00cde055059dd6"
     },
@@ -107,7 +107,7 @@
       "projection": "4da8f8aaac58e5e728d4cab9e3cfd690109f7f4a2d4ba66afcea1454a9187cf1",
       "preview": "00e9b7a40c68b0fbd57def8772593bbe9b1e107b4bfe40fc20123a14a271bd33",
       "fullBusiness": "496fa545cee33436750f3168e08d47e3b30d4b500304cbb0e9c67c3cdb9237e2",
-      "capabilities": "13ff2e109759a0d992268893ecff13c9f94c196256e883993496cb485a50ddd2",
+      "capabilities": "29db31d4e302bd980af0004e6987be7ab0d40dd8e7e6e218591b478d11143c7e",
       "knowledge": "0eca0659f62f947069945e8afdf3b8d1792834651f6f541affc144b83a3308f5",
       "identities": "6da9960d41c5e41991ed27ae6ad843650cae30614a4c00703297da1f2aa37ab5"
     },
@@ -118,7 +118,7 @@
       "projection": "9e924b0c8fa09a7e493c8ec1dc39d5f422fc69ac641b7ff35e660b4283309d8d",
       "preview": "56b7ce0134b80758749d5ebad73217191760486e21b5d4f86921a83a3ee71b68",
       "fullBusiness": "b717ff5cf12bfc86b1f921241c2706940457b5d9ccc4812cd1bf497e14c31545",
-      "capabilities": "2bbad12123a2f4d7a82603c3ca6e7720f6443047fcdcf98433024d288163d805",
+      "capabilities": "96db378de4641ab905a0fde2cd6214dc882fb09dfb00a8b780f72192a41d1f67",
       "knowledge": "bbdf1bc520e8cd7088845e68d51f5d3196fff55f15c3e52839de20175b214697",
       "identities": "1d6985222d49469f469425edff9443093f191b8be8bd0d99798533a4d9259174"
     },
@@ -129,7 +129,7 @@
       "projection": "3354f2667bd3aec8512c42931cf956f7722444882eddc50af2527e71f8eae48c",
       "preview": "77510886ff9f9c2be4933fb50eff2c6d12a309e9311f63e4f02780da0444a651",
       "fullBusiness": "c3c6d7f4889d8062b9f9b5dd11e505d4fe9d92037c3528557b39052bf5b44206",
-      "capabilities": "a9714d53b8665638d04ce632c90cf4f1cba478cbb9beb8c8270740f8eaa03d79",
+      "capabilities": "34d6f26ae87a9115d72677077c4bb82ce45538416fe6a841602e97091815ed81",
       "knowledge": "ffadc183a8855cc672e872ae29c93999fe8f9a9f1daac029ac2c717643e9ac0d",
       "identities": "6f27a57c0a02d65284bf6c249c6d0a2fb46120130a013e584d2e6cc534fcebb6"
     },
@@ -140,7 +140,7 @@
       "projection": "14d3e3d6fd5a8fc8694dcaa4046adae7c93dbd3623f8f03264ba9b61b69225db",
       "preview": "ecc9a8409b6b9cbc2929e37438cff283322e5cd03af9bdd256ba2befe124c81d",
       "fullBusiness": "5411aef36bf93698101cc6e58eda68d57c29846350454609b5e0227b2cfcda5e",
-      "capabilities": "fecccbbeb7fd425dcb32f9b9e6e38a41eb298ed2c6bf0a2c8adbe9ba73b3f1eb",
+      "capabilities": "e3d92418b90af584efcf90cf388062cebdf987ee0eb0171a73f6547184700976",
       "knowledge": "9f4f8b14cb65cf2202289a2c9aa71645375f0035569155d6b02d77b58d37e451",
       "identities": "632443371a87fc50c72d042fca589b98656440a6c2345b244374c508130b74ef"
     },
@@ -151,7 +151,7 @@
       "projection": "14d3e3d6fd5a8fc8694dcaa4046adae7c93dbd3623f8f03264ba9b61b69225db",
       "preview": "14dabbabd3bb0c070152a93612a82c3d4615b4837f12531efab9de084ca77d2f",
       "fullBusiness": "fe6c9c19675d349e53e35be21c98868e0921cd84d50adcc00bfb4e7b054f7f35",
-      "capabilities": "d74ce6c34ea4a9af54f4817793c2dcde6e2e5792b24c8ef4345836b324c39c0e",
+      "capabilities": "0bcfa34e0cf873ae6207d68b39f584ee56ad6eb2e8db08a5bd6ef4ac1c3ae616",
       "knowledge": "9f4f8b14cb65cf2202289a2c9aa71645375f0035569155d6b02d77b58d37e451",
       "identities": "632443371a87fc50c72d042fca589b98656440a6c2345b244374c508130b74ef"
     },
@@ -162,7 +162,7 @@
       "projection": "8341ac0a7a52b8519a6406c904a7ac8ed337b9b3a4d68697570d8bbf00286b97",
       "preview": "20032f09c656dbd4ba8e1c0771ca7d0f9fe1f39af32e5aba613d124d8b4ea175",
       "fullBusiness": "8de46cde2ca94942069974a63abdaddf1fb2213aa58e5d50bf28391f244cba9e",
-      "capabilities": "8e8ad0834fae9a99c3ac02485f734fa0fe181e6cdf1d043e95cb43bba37cd9b5",
+      "capabilities": "0a166a3b11982bce68f132792444efc07403c883dcec0f4a58fee9a702bc9d0a",
       "knowledge": "11b10579c955b30276fd003eeb95b0c070d9ce9974faa43e9117f2ad94d886b5",
       "identities": "5b8476060e4197afde328e51e757967b498f6ae6a9e64cdcc86f101fa7af263f"
     },
@@ -173,7 +173,7 @@
       "projection": "4f270ad0d3fc90b751df5539b541b06f8f11f49c570c9edc572cb874a1c37833",
       "preview": "34823fcc16ee4ac6c011f134af2a3e78dbf930809f3e8b5a37aafbc5df52e6fd",
       "fullBusiness": "5f18fc2d2d96cb75f99dedaab0064458925e0592cc117fea36a04f916ba527ba",
-      "capabilities": "b8adb53399fd23f8872c7570e584864dabb6f0b0cb0754401c2e020f4f4a63b5",
+      "capabilities": "9b653812be28a5084a4ef6ec289e45ab2e6bc51eb4bd9ddbee12950dbd973d49",
       "knowledge": "ef71a3797b4fc7f7f946bd84db5719582651b6f311cbfaa8490bd838ebd42bb4",
       "identities": "6193cb90f2a4bcfecaa5eb7b2d9dacbfc615d7466f9e51882e1b41c8f062c2e1"
     },
@@ -184,7 +184,7 @@
       "projection": "1a5addff0b6ef6e5d30cab7bef4a47a0f1ddc69bc727e73e349dca88c719f466",
       "preview": "4c9fc98365344f8b458d4000fac2d7f25420128c5eaf7df6dd2946b8304c1c50",
       "fullBusiness": "df6abc74a7027c95688bed9ecf6e40b000ce04be67bb43458a69214053a278ec",
-      "capabilities": "b8adb53399fd23f8872c7570e584864dabb6f0b0cb0754401c2e020f4f4a63b5",
+      "capabilities": "9b653812be28a5084a4ef6ec289e45ab2e6bc51eb4bd9ddbee12950dbd973d49",
       "knowledge": "e009c4345b585f612a61a0488d3380358e7f12a0d9bd10b026f749c9106b3303",
       "identities": "7a9ba5a77a5cceebc6027abe36d749d558c4c45951c41d9e12b6bf0cbe8018e2"
     },
@@ -195,7 +195,7 @@
       "projection": "f993b3d727c4b59f01285181465779f3055e722089e815d939109f61c5967871",
       "preview": "3eb2f89aef22db09247bb9bc29a470c303d2f5cbee0a0204d0dd588f0c4479c6",
       "fullBusiness": "c802671a6e3b2524b67ac5209b7246c4d0d30e922581f41a7930195fde685736",
-      "capabilities": "b8adb53399fd23f8872c7570e584864dabb6f0b0cb0754401c2e020f4f4a63b5",
+      "capabilities": "9b653812be28a5084a4ef6ec289e45ab2e6bc51eb4bd9ddbee12950dbd973d49",
       "knowledge": "644277d6c8d800f37a078088072d2475b5c2b512fdf0c3dfe1470858fb01582e",
       "identities": "7a9ba5a77a5cceebc6027abe36d749d558c4c45951c41d9e12b6bf0cbe8018e2"
     },
@@ -206,7 +206,7 @@
       "projection": "0ae0838fe7a9010e961fc3e6fa1573eb811ad88250beab9ece83de3fde30a0cd",
       "preview": "0488aa767615f8e95af031e2d9bbda623567b22e9c95f52f9b0d9faba7605583",
       "fullBusiness": "59f70f41649b9dd6b577eca522e0646a5e2cd8057cbd57218c09ef07ef250c25",
-      "capabilities": "3e3b6059dfac5dc14cc06ad666531d501aeda82d60cec4061e215c47f0d92921",
+      "capabilities": "6fee06bcaa6e087b664cb156f0629488567853d0d1011a0247557d4ebdeef63e",
       "knowledge": "60bf8dd4f6f04a8f6d29a2c64d4348dbd4f844c5e3f3f6dd9256d5bf2578016f",
       "identities": "25e1ae7c9ca4834d3a5b32a6ebe6fd157f3e776033561b70448e7fb7a15b3d99"
     },
@@ -217,7 +217,7 @@
       "projection": "f529ef301cad5aede458539233b5ee1f4519b2605fd698047bae067d3ab0916b",
       "preview": "460443cc1beb2bddb30eb0c5d39428215f2e48a31676be790b8b07cb943ad308",
       "fullBusiness": "9e0861b4620b4cb47e211d2bbd88c55f3a45a7a03d26affa070eda2cfc361ba6",
-      "capabilities": "6cee80cfd40c17069fca9cb38433aa9113430da614317a01556df36a8a7280ea",
+      "capabilities": "bbe7847d8b8d540023933d9ca3333e3d6abe9ddb9543de147f7817874657079c",
       "knowledge": "070fbea3f1ffda04024c0a460f32c74df5bed13b2f3085eb0b472c38ecb961c8",
       "identities": "69ee53b79ad32a48ee7e1d1d6d7d401069a76cb894ed69a499b4fa095b03bc32"
     },
@@ -228,7 +228,7 @@
       "projection": "491f1b2844c8df5fa01543677b14e0cbb5302dbddf8108fdd6af7ec59ffdc084",
       "preview": "69832dfe67e0df94832bccc1204367a763d789d7f7959afd7befdac95b3422d0",
       "fullBusiness": "6511f3e1657025ba5168cedf60e53c70b5c051554a446a163530bc93241e68dc",
-      "capabilities": "6cee80cfd40c17069fca9cb38433aa9113430da614317a01556df36a8a7280ea",
+      "capabilities": "bbe7847d8b8d540023933d9ca3333e3d6abe9ddb9543de147f7817874657079c",
       "knowledge": "c5bfcb330de9b886d0bec00e434e1b715812247076e3ceb044e06cef30ea24f8",
       "identities": "69ee53b79ad32a48ee7e1d1d6d7d401069a76cb894ed69a499b4fa095b03bc32"
     },
@@ -239,7 +239,7 @@
       "projection": "6d0878b567179b8a6e2bb43ebeeb757142ede28839af33874e8f42bb9d9bba66",
       "preview": "479c031163fa5902556d63557e78b6975c5129b8a1674639483f7e793d0cb715",
       "fullBusiness": "b95cb99ea4aa8a7ff1a0b1a55732a0211a611b0b33988aec653910e89710559b",
-      "capabilities": "001582c3ed81731c23cd583a90a9d143fdf7dfa14a75a578745723ed17fe027e",
+      "capabilities": "444bd8d222a65ef2997445c074acd8388e30a4d8bdf4e8d3a71b1aa5baf20fb1",
       "knowledge": "35d2e73aa06c8984997d48ef4e8d605b2100abd6f09ca78779da8410920299de",
       "identities": "52a7b1fbb559e34366351242649994824bf743e7551ad6f522f783893fa2778c"
     }

@@ -11,8 +11,14 @@ export type SemanticMutation =
   | Readonly<{ kind: "ATTACH_CONTEXT"; context: PlannedContextState; parentContextOccurrenceId: string; slotKey: string; selectionId: string }>
   | Readonly<{ kind: "REPARENT_CONTEXT"; contextOccurrenceId: string; parentContextOccurrenceId: string; slotKey: string; selectionId: string }>;
 export type AdjustmentPreset = Readonly<{ label: string; semanticMutation: SemanticMutation }>;
+export type ControlDimension = "amount" | "count" | "unitAmount";
+export type ControlFieldCapability = Readonly<{
+  status: "EDITABLE" | "PROTECTED_BY_RULE" | "READ_ONLY_EXTERNAL_OWNER" | "NEEDS_INPUT_GATE" | "NO_PUBLISHED_CAPABILITY" | "STALE_OR_UNAVAILABLE";
+  minimum: string; maximum: string; step: string; integer: boolean;
+}>;
 export type AdjustmentCapability = Readonly<{ targetRef: string; label: string;
-  actions: readonly ("SET_SLOT_AMOUNT" | "SET_SLOT_OCCURRENCES" | "SET_SAVINGS_ALLOCATION" | "REMOVE_CONTEXT" | "PATCH_CONTEXT" | "ADD_CONTEXT")[];
+  actions: readonly ("SET_SLOT_AMOUNT" | "SET_SLOT_OCCURRENCES" | "SET_SLOT_UNIT_AMOUNT" | "SET_SAVINGS_ALLOCATION" | "REMOVE_CONTEXT" | "PATCH_CONTEXT" | "ADD_CONTEXT")[];
+  fields?: Readonly<Partial<Record<ControlDimension, ControlFieldCapability>>>;
   flexibility: "LOCKED" | "SAFE_FLEX" | "STRETCH_FLEX" | "FREE"; knowledge: PlannerKnowledge;
   hardReducibleRoom: string | null; softReducibleRoom: string | null;
   naturalPresets: readonly AdjustmentPreset[]; rationaleCodes: readonly string[] }>;

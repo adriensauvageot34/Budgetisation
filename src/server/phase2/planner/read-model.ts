@@ -51,9 +51,12 @@ export function composerFromDraftRead(read: Awaited<ReturnType<typeof readPlanne
     const discretionary = !!slot.baseline.simpleAuthority && ["restaurants", "fast-food", "delivery", "clothing", "home-small", "games-digital"].includes(slot.baseline.simpleAuthority.domain);
     const kind = slot.role === "SAVINGS" ? "SAVINGS" as const : discretionary ? "DISCRETIONARY_CONTROL" as const : "BASELINE_CONTROL" as const;
     const card: ComposerCardView = { cardId: slot.baseline.planSlotId, targetRef: slot.baseline.slotIdentityKey,
-      label: semanticLabels[slot.baseline.semanticKey] ?? (slot.baseline.semanticKey.startsWith("need:") ? composerNeedLabel(slot.baseline.semanticKey.slice(5)) : capability?.label ?? prepared.forecast.components.find(c => c.key === slot.baseline.semanticKey)?.label ?? "Poste du mois"), kind, knowledge: slot.baseline.knowledge, capability,
+      label: slot.baseline.semanticKey === "restaurants" ? "Enveloppe Restaurants" : semanticLabels[slot.baseline.semanticKey] ?? (slot.baseline.semanticKey.startsWith("need:") ? composerNeedLabel(slot.baseline.semanticKey.slice(5)) : capability?.label ?? prepared.forecast.components.find(c => c.key === slot.baseline.semanticKey)?.label ?? "Poste du mois"), kind, knowledge: slot.baseline.knowledge, capability,
       historicalReferences: slot.baseline.historicalReferences ? jsonEnvelope(slot.baseline.historicalReferences) : null,
       value: jsonEnvelope({ amount: slot.effectiveAmount, count: slot.effectiveCount, unitAmount: slot.effectiveUnitAmount,
+        referenceValue: slot.baseline.baselineValue,
+        economicAmount: slot.remainingEconomicAmount,
+        decisionValue: state.controls.find(c => c.decisionId === slot.decisionId)?.value ?? null,
         remainingAmount: slot.remainingAmount, remainingCount: slot.remainingCount, conditionalAccepted: slot.conditionalAccepted ?? null,
         owned: slot.owned, inclusion: slot.baseline.inclusion, dueState: slot.baseline.baselineValue.dueState,
         ...(reservation ? { reservationSource: reservation.source, reservationAdjustability: reservation.adjustability,
@@ -125,7 +128,8 @@ export function composerFromDraftRead(read: Awaited<ReturnType<typeof readPlanne
       { sectionKey: "options", assetKeys: assets.filter(a => a.kind === "SLOT_OPTION_ASSET").map(a => a.assetKey) },
       { sectionKey: "controls", assetKeys: assets.filter(a => a.kind === "PLAN_CONTROL" || a.kind === "RESERVATION_CONTROL").map(a => a.assetKey) }],
       searchableAssets: assets },
-    board: { targetMonth, baselineControls, discretionaryControls, contexts, savings, cockpit: preview.projection, diagnostics: preview.projection.diagnostics,
+    board: { targetMonth, baselineControls, discretionaryControls, contexts, savings,
+      structuralObligations: prepared.baseline.structuralFacts.obligations, cockpit: preview.projection, diagnostics: preview.projection.diagnostics,
       draft: { dirty: semanticStateDigest(original) !== preview.semanticStateDigest, semanticStateDigest: preview.semanticStateDigest, undoCount: 0, redoCount: 0 } },
     dropCapabilities: drops, preview, activeRevisionId: read.base.expectedActiveRevisionId, activeRevisionNumber: read.base.expectedActiveRevisionNumber };
 }

@@ -1,0 +1,13 @@
+{
+  "environment": "LOCAL_REACT_PRODUCTION_FIXTURE",
+  "observed": {
+    "rawInput": "5",
+    "dirtyAttribute": "true",
+    "insideOpenCluster": true,
+    "semanticMutation": false
+  },
+  "nativeConfirmationRefusal": "NOT_RUN_TOOL_DID_NOT_EXPOSE_DIALOG",
+  "targetedFix": "ee3ecee193054353013c39bf4cfe8e700e76c645",
+  "typescript": "EXECUTED_PASS",
+  "browserRefusalPassClaimed": false
+}

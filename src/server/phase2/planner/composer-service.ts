@@ -1,4 +1,5 @@
 import "server-only";
+import { validateControlValue } from "@/domain/phase2/planner/control-input";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
@@ -72,9 +73,9 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
   const controlEditors = [...view.board.baselineControls, ...view.board.discretionaryControls, ...view.board.savings].map(card => {
     const slot = preview.compiled.planSlots.find(s => s.baseline.slotIdentityKey === card.targetRef)!;
     const fields: ComposerField[] = [field(slot.baseline.kind === "AMOUNT" ? "amount" : "count", slot.baseline.kind === "AMOUNT" ? "Montant du mois (€)" : "Occurrences restantes", "AMOUNT", true)];
-    if (slot.baseline.kind !== "AMOUNT" && (slot.baseline.simpleAuthority?.gate === "NEEDS_NEW_INPUT" || !!slot.baseline.renewalAuthority && slot.baseline.baselineValue.unitAmount === null))
-      fields.push(field("unitAmount", "Montant d’une occurrence (€)", "AMOUNT", true));
-    return { targetRef: card.targetRef, fields };
+    if (card.capability?.fields?.unitAmount?.status === "EDITABLE")
+      fields.push(field("unitAmount", "Prix d’une occurrence, pour ce mois (€)", "AMOUNT"));
+    return { targetRef: card.targetRef, fields: fields.filter(f => card.capability?.fields?.[f.key as "amount" | "count" | "unitAmount"]?.status === "EDITABLE") };
   });
   const groups = [...new Set(templates.map(t => t.family))];
   const friendlyCard = (card: ComposerCardView): ComposerCardView => ({ ...card, capability: card.capability ? { ...card.capability,
@@ -247,6 +248,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       if (mutation.kind === "SET_STATE") {
         const card = [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings].find(c => c.targetRef === mutation.targetRef);
         if (!card?.capability?.actions.length || card.capability.flexibility === "LOCKED") throw new TypeError("COMPOSER_CONTROL_LOCKED");
+        validateControlValue(card, mutation.value);
         if (card.kind === "SAVINGS") {
           if (!card.capability.actions.includes("SET_SAVINGS_ALLOCATION")) throw new TypeError("COMPOSER_SAVINGS_CAPABILITY_UNAVAILABLE");
           plannerKeys(plannerRecord(mutation.value), ["amount"], ["amount"]);

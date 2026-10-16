@@ -1,0 +1,26 @@
+[
+  {
+    "cardOverflow": [],
+    "height": 900,
+    "nav": false,
+    "overflow": false,
+    "pages": 1,
+    "width": 1728
+  },
+  {
+    "cardOverflow": [],
+    "height": 1080,
+    "nav": false,
+    "overflow": false,
+    "pages": 1,
+    "width": 1920
+  },
+  {
+    "cardOverflow": [],
+    "height": 900,
+    "nav": false,
+    "overflow": false,
+    "pages": 1,
+    "width": 1440
+  }
+]

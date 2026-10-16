@@ -42,6 +42,7 @@ function contextFamily(templateKey: string): SpatialFamily {
 
 /** Stable affinity order; it never reads a user-facing label or financial amount. */
 export function semanticRank(node: ComposerPresentationNode): number {
+  if (node.kind === "FIXED") return -10;
   if (node.kind === "CLUSTER") return node.family === "FOOD" ? 15 : 80;
   if (node.context) return ({ "night-out":40, "short-stay":50, gift:60, "family-visit":70 } as Record<string, number>)[node.context.templateKey]
     ?? ({ FOOD:18, PERSONAL_CARE:82, MOMENTS:72, PURCHASES:110, HOME:120, OTHER:140 } as Partial<Record<SpatialFamily, number>>)[node.spatialFamily] ?? 140;
@@ -72,7 +73,7 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
         const spatialFamily = controlFamily(control, view.iconKey);
         return { id:control.targetRef, kind:"CONTROL" as const, control, density, spatialFamily, iconKey:view.iconKey,
           width:control.kind === "SAVINGS" ? 260 : spatialFamily === "DAILY" ? 230 : density === "SPARSE" ? 210 : 230,
-          height:control.kind === "SAVINGS" ? 165 : density === "SPARSE" ? 128 : density === "RICH" ? 155 : 142 };
+          height:control.kind === "SAVINGS" ? 165 : control.capability?.fields?.count?.status === "EDITABLE" ? 205 : density === "SPARSE" ? 128 : density === "RICH" ? 155 : 142 };
       }),
   ];
   const groups: Record<ClusterFamily, AtomicNode[]> = { BEAUTY:[], FOOD:[] };

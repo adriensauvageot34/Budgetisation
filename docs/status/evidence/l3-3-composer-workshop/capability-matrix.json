@@ -1,0 +1,1875 @@
+{
+  "environment": "SYNTHETIC_ONLY",
+  "controls": [
+    {
+      "identity": "HOUSEHOLD:household:clothing",
+      "label": "Vêtements",
+      "kind": "AMOUNT",
+      "owner": [
+        "planner-simple-mappings@v1"
+      ],
+      "sourceRefs": [
+        "simple:optional-policy"
+      ],
+      "baseline": {
+        "amount": "0.00",
+        "count": null,
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_AMOUNT",
+          "availability": "AVAILABLE",
+          "reason": "OPTIONAL_USER_BUDGET"
+        }
+      ],
+      "gate": "AVAILABLE",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "HOUSEHOLD:household:clothing",
+        "label": "Vêtements",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "flexibility": "FREE",
+        "knowledge": "NOT_APPLICABLE",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "HOUSEHOLD:household:clothing",
+        "label": "Vêtements",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "fields": {
+          "amount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "5.00"
+          }
+        },
+        "flexibility": "FREE",
+        "knowledge": "NOT_APPLICABLE",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "HOUSEHOLD:household:clothing",
+        "fields": [
+          {
+            "key": "amount",
+            "label": "Montant du mois (€)",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "HOUSEHOLD"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "HOUSEHOLD:household:delivery",
+      "label": "Livraison",
+      "kind": "OCCURRENCE",
+      "owner": [
+        "planner-simple-occurrences@v1"
+      ],
+      "sourceRefs": [
+        "simple:delivery"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": "1.00",
+        "unitAmount": "15.00",
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "gate": "AVAILABLE",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "HOUSEHOLD:household:delivery",
+        "label": "Livraison",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "1.00",
+        "naturalPresets": [
+          {
+            "label": "une occurrence de moins",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "HOUSEHOLD:household:delivery",
+              "value": {
+                "count": "0"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "HOUSEHOLD:household:delivery",
+        "label": "Livraison",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "1.00",
+        "naturalPresets": [
+          {
+            "label": "une occurrence de moins",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "HOUSEHOLD:household:delivery",
+              "value": {
+                "count": "0"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "HOUSEHOLD:household:delivery",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "HOUSEHOLD"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "HOUSEHOLD:household:fast-food",
+      "label": "Fast-food",
+      "kind": "OCCURRENCE",
+      "owner": [
+        "planner-simple-occurrences@v1"
+      ],
+      "sourceRefs": [
+        "simple:fast-food"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": "1.00",
+        "unitAmount": "10.00",
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "gate": "AVAILABLE",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "HOUSEHOLD:household:fast-food",
+        "label": "Fast-food",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "1.00",
+        "naturalPresets": [
+          {
+            "label": "une occurrence de moins",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "HOUSEHOLD:household:fast-food",
+              "value": {
+                "count": "0"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "HOUSEHOLD:household:fast-food",
+        "label": "Fast-food",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "1.00",
+        "naturalPresets": [
+          {
+            "label": "une occurrence de moins",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "HOUSEHOLD:household:fast-food",
+              "value": {
+                "count": "0"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "HOUSEHOLD:household:fast-food",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "HOUSEHOLD"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "HOUSEHOLD:household:games-digital",
+      "label": "Jeux / numérique ponctuel",
+      "kind": "AMOUNT",
+      "owner": [
+        "planner-simple-mappings@v1"
+      ],
+      "sourceRefs": [
+        "simple:optional-policy"
+      ],
+      "baseline": {
+        "amount": "0.00",
+        "count": null,
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_AMOUNT",
+          "availability": "AVAILABLE",
+          "reason": "OPTIONAL_USER_BUDGET"
+        }
+      ],
+      "gate": "AVAILABLE",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "HOUSEHOLD:household:games-digital",
+        "label": "Jeux / numérique ponctuel",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "flexibility": "FREE",
+        "knowledge": "NOT_APPLICABLE",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "HOUSEHOLD:household:games-digital",
+        "label": "Jeux / numérique ponctuel",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "fields": {
+          "amount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "5.00"
+          }
+        },
+        "flexibility": "FREE",
+        "knowledge": "NOT_APPLICABLE",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "HOUSEHOLD:household:games-digital",
+        "fields": [
+          {
+            "key": "amount",
+            "label": "Montant du mois (€)",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "HOUSEHOLD"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "HOUSEHOLD:household:groceries",
+      "label": "Courses",
+      "kind": "AMOUNT",
+      "owner": [
+        "global_food_rhythm@v2-purchase-aware"
+      ],
+      "sourceRefs": [
+        "food:groceries"
+      ],
+      "baseline": {
+        "amount": "325.00",
+        "count": null,
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_AMOUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "gate": "AVAILABLE",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "HOUSEHOLD:household:groceries",
+        "label": "Courses",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "12.50",
+        "naturalPresets": [
+          {
+            "label": "low",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "HOUSEHOLD:household:groceries",
+              "value": {
+                "amount": "312.50"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "HOUSEHOLD:household:groceries",
+        "label": "Courses",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "fields": {
+          "amount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "5.00"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "12.50",
+        "naturalPresets": [
+          {
+            "label": "Repère bas",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "HOUSEHOLD:household:groceries",
+              "value": {
+                "amount": "312.50"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "HOUSEHOLD:household:groceries",
+        "fields": [
+          {
+            "key": "amount",
+            "label": "Montant du mois (€)",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "HOUSEHOLD"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "HOUSEHOLD:household:home-small",
+      "label": "Maison petit",
+      "kind": "AMOUNT",
+      "owner": [
+        "planner-simple-mappings@v1"
+      ],
+      "sourceRefs": [
+        "simple:optional-policy"
+      ],
+      "baseline": {
+        "amount": "0.00",
+        "count": null,
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_AMOUNT",
+          "availability": "AVAILABLE",
+          "reason": "OPTIONAL_USER_BUDGET"
+        }
+      ],
+      "gate": "AVAILABLE",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "HOUSEHOLD:household:home-small",
+        "label": "Maison petit",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "flexibility": "FREE",
+        "knowledge": "NOT_APPLICABLE",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "HOUSEHOLD:household:home-small",
+        "label": "Maison petit",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "fields": {
+          "amount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "5.00"
+          }
+        },
+        "flexibility": "FREE",
+        "knowledge": "NOT_APPLICABLE",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "HOUSEHOLD:household:home-small",
+        "fields": [
+          {
+            "key": "amount",
+            "label": "Montant du mois (€)",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "HOUSEHOLD"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "HOUSEHOLD:household:restaurants",
+      "label": "Enveloppe Restaurants",
+      "kind": "OCCURRENCE",
+      "owner": [
+        "planner-simple-occurrences@v1"
+      ],
+      "sourceRefs": [
+        "simple:restaurants"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": "2.00",
+        "unitAmount": "20.00",
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "gate": "AVAILABLE",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "HOUSEHOLD:household:restaurants",
+        "label": "Restaurants",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "1.00",
+        "naturalPresets": [
+          {
+            "label": "une occurrence de moins",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "HOUSEHOLD:household:restaurants",
+              "value": {
+                "count": "1"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "HOUSEHOLD:household:restaurants",
+        "label": "Restaurants",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "1.00",
+        "naturalPresets": [
+          {
+            "label": "une occurrence de moins",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "HOUSEHOLD:household:restaurants",
+              "value": {
+                "count": "1"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "HOUSEHOLD:household:restaurants",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "HOUSEHOLD"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "HOUSEHOLD:household:tobacco-vape",
+      "label": "Tabac / vape",
+      "kind": "AMOUNT",
+      "owner": [
+        "CanonicalEconomicHistory"
+      ],
+      "sourceRefs": [
+        "simple:tobacco-vape"
+      ],
+      "baseline": {
+        "amount": "60.00",
+        "count": null,
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_AMOUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "gate": "AVAILABLE",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "HOUSEHOLD:household:tobacco-vape",
+        "label": "Tabac / vape",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "HOUSEHOLD:household:tobacco-vape",
+        "label": "Tabac / vape",
+        "actions": [
+          "SET_SLOT_AMOUNT"
+        ],
+        "fields": {
+          "amount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "5.00"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "HOUSEHOLD:household:tobacco-vape",
+        "fields": [
+          {
+            "key": "amount",
+            "label": "Montant du mois (€)",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "HOUSEHOLD"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+      "label": "Café au travail Adrien",
+      "kind": "OCCURRENCE",
+      "owner": [
+        "global_food_rhythm@v2-purchase-aware"
+      ],
+      "sourceRefs": [
+        "food:adrien-work-coffee"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": "1.00",
+        "unitAmount": "1.00",
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "gate": null,
+      "floor": null,
+      "renewal": null,
+      "before": null,
+      "after": {
+        "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+        "label": "adrien-work-coffee",
+        "actions": [
+          "SET_SLOT_OCCURRENCES",
+          "SET_SLOT_UNIT_AMOUNT"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.10"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          },
+          {
+            "key": "unitAmount",
+            "label": "Prix d’une occurrence, pour ce mois (€)",
+            "kind": "AMOUNT",
+            "required": false
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "PERSON",
+          "personId": "22222222-2222-4222-8222-222222222222"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-meals",
+      "label": "Repas travail Adrien",
+      "kind": "OCCURRENCE",
+      "owner": [
+        "global_food_rhythm@v2-purchase-aware"
+      ],
+      "sourceRefs": [
+        "food:adrien-work-meals"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": "2.00",
+        "unitAmount": "8.00",
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "gate": "AVAILABLE",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-meals",
+        "label": "Repas travail Adrien",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "1.00",
+        "naturalPresets": [
+          {
+            "label": "une occurrence de moins",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-meals",
+              "value": {
+                "count": "1"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-meals",
+        "label": "Repas travail Adrien",
+        "actions": [
+          "SET_SLOT_OCCURRENCES",
+          "SET_SLOT_UNIT_AMOUNT"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": "1.00",
+        "naturalPresets": [
+          {
+            "label": "une occurrence de moins",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-meals",
+              "value": {
+                "count": "1"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-meals",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          },
+          {
+            "key": "unitAmount",
+            "label": "Prix d’une occurrence, pour ce mois (€)",
+            "kind": "AMOUNT",
+            "required": false
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "PERSON",
+          "personId": "22222222-2222-4222-8222-222222222222"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "PERSON:22222222-2222-4222-8222-222222222222:hairdresser",
+      "label": "Coiffeur",
+      "kind": "OCCURRENCE",
+      "owner": [
+        "person_habit_assertions"
+      ],
+      "sourceRefs": [
+        "habit:22222222-2222-4222-8222-222222222222:hairdresser"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": "2",
+        "unitAmount": "14.00",
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "gate": null,
+      "floor": null,
+      "renewal": null,
+      "before": null,
+      "after": {
+        "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:hairdresser",
+        "label": "hairdresser",
+        "actions": [
+          "SET_SLOT_OCCURRENCES",
+          "SET_SLOT_UNIT_AMOUNT"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "DECLARED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:hairdresser",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          },
+          {
+            "key": "unitAmount",
+            "label": "Prix d’une occurrence, pour ce mois (€)",
+            "kind": "AMOUNT",
+            "required": false
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "PERSON",
+          "personId": "22222222-2222-4222-8222-222222222222"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+      "label": "Repas travail Manon",
+      "kind": "OCCURRENCE",
+      "owner": [
+        "global_food_rhythm@v2-purchase-aware"
+      ],
+      "sourceRefs": [
+        "food:manon-work-meals"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": null,
+        "unitAmount": "8.00",
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "gate": "NEEDS_NEW_INPUT",
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+        "label": "Repas travail Manon",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "UNKNOWN",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "NEEDS_NEW_INPUT"
+        ]
+      },
+      "after": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+        "label": "Repas travail Manon",
+        "actions": [
+          "SET_SLOT_OCCURRENCES",
+          "SET_SLOT_UNIT_AMOUNT"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "UNKNOWN",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "NEEDS_NEW_INPUT"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          },
+          {
+            "key": "unitAmount",
+            "label": "Prix d’une occurrence, pour ce mois (€)",
+            "kind": "AMOUNT",
+            "required": false
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "PERSON:33333333-3333-4333-8333-333333333333:mobility:FAMILY_VISIT",
+      "label": "Visites famille · mobilité",
+      "kind": "OCCURRENCE",
+      "owner": [
+        "global_m7_personal_mobility@v1"
+      ],
+      "sourceRefs": [
+        "mobility:33333333-3333-4333-8333-333333333333:FAMILY_VISIT"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": "1.00",
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "REVIEW_REFERENCE",
+          "availability": "AVAILABLE",
+          "reason": "CONTEXTUAL_GROSS_USAGE_NOT_INCREMENTAL_COST"
+        }
+      ],
+      "gate": null,
+      "floor": null,
+      "renewal": null,
+      "before": null,
+      "after": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:mobility:FAMILY_VISIT",
+        "label": "mobility:FAMILY_VISIT",
+        "actions": [],
+        "fields": {
+          "count": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:mobility:FAMILY_VISIT",
+        "fields": []
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        }
+      },
+      "classification": "BLOCKED_MISSING_OWNER"
+    },
+    {
+      "identity": "PERSON:33333333-3333-4333-8333-333333333333:mobility:WORK",
+      "label": "Trajets travail fixes",
+      "kind": "OCCURRENCE",
+      "owner": [
+        "global_m7_personal_mobility@v1"
+      ],
+      "sourceRefs": [
+        "mobility:33333333-3333-4333-8333-333333333333:WORK"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": "1.00",
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "REVIEW_REFERENCE",
+          "availability": "AVAILABLE",
+          "reason": "CURRENT_WORK_PATTERN_STRUCTURAL"
+        }
+      ],
+      "gate": null,
+      "floor": null,
+      "renewal": null,
+      "before": null,
+      "after": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:mobility:WORK",
+        "label": "mobility:WORK",
+        "actions": [],
+        "fields": {
+          "count": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:mobility:WORK",
+        "fields": []
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        }
+      },
+      "classification": "BLOCKED_MISSING_OWNER"
+    },
+    {
+      "identity": "PERSON:33333333-3333-4333-8333-333333333333:need:synthetic-cosmetic-need",
+      "label": "Besoin à préciser",
+      "kind": "CONDITIONAL_OCCURRENCE",
+      "owner": [
+        "Needs+ProductObservations"
+      ],
+      "sourceRefs": [
+        "need-observations:33333333-3333-4333-8333-333333333333:synthetic-cosmetic-need"
+      ],
+      "baseline": {
+        "amount": null,
+        "count": null,
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": "UNKNOWN"
+      },
+      "baselineCapabilities": [
+        {
+          "action": "REVIEW_REFERENCE",
+          "availability": "AVAILABLE",
+          "reason": "RENEWAL_PROFILE_NOT_BUILT"
+        }
+      ],
+      "gate": null,
+      "floor": null,
+      "renewal": null,
+      "before": null,
+      "after": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:need:synthetic-cosmetic-need",
+        "label": "need:synthetic-cosmetic-need",
+        "actions": [],
+        "fields": {
+          "count": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0",
+            "maximum": "9999",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "UNKNOWN",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:need:synthetic-cosmetic-need",
+        "fields": []
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        }
+      },
+      "classification": "BLOCKED_MISSING_OWNER"
+    },
+    {
+      "identity": "savings:00000000-0000-4000-8000-000000000700",
+      "label": "Synthetic adjustable saving",
+      "kind": "AMOUNT",
+      "owner": [
+        "phase2_month_inputs"
+      ],
+      "sourceRefs": [
+        "month-inputs:facts"
+      ],
+      "baseline": {
+        "amount": "100.00",
+        "count": null,
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": null
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_AMOUNT",
+          "availability": "AVAILABLE",
+          "reason": "ADJUSTABLE"
+        }
+      ],
+      "gate": null,
+      "floor": null,
+      "renewal": null,
+      "before": {
+        "targetRef": "savings:00000000-0000-4000-8000-000000000700",
+        "label": "Synthetic adjustable saving",
+        "actions": [
+          "SET_SAVINGS_ALLOCATION"
+        ],
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "KNOWN",
+        "hardReducibleRoom": "100.00",
+        "softReducibleRoom": "100.00",
+        "naturalPresets": [
+          {
+            "label": "allocation × 0.75",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "savings:00000000-0000-4000-8000-000000000700",
+              "value": {
+                "amount": "75.00"
+              }
+            }
+          },
+          {
+            "label": "allocation × 0.5",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "savings:00000000-0000-4000-8000-000000000700",
+              "value": {
+                "amount": "50.00"
+              }
+            }
+          },
+          {
+            "label": "allocation × 0",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "savings:00000000-0000-4000-8000-000000000700",
+              "value": {
+                "amount": "0.00"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "after": {
+        "targetRef": "savings:00000000-0000-4000-8000-000000000700",
+        "label": "Synthetic adjustable saving",
+        "actions": [
+          "SET_SAVINGS_ALLOCATION"
+        ],
+        "fields": {
+          "amount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "5.00"
+          }
+        },
+        "flexibility": "SAFE_FLEX",
+        "knowledge": "KNOWN",
+        "hardReducibleRoom": "100.00",
+        "softReducibleRoom": "100.00",
+        "naturalPresets": [
+          {
+            "label": "Réserver 75,00 €",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "savings:00000000-0000-4000-8000-000000000700",
+              "value": {
+                "amount": "75.00"
+              }
+            }
+          },
+          {
+            "label": "Réserver 50,00 €",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "savings:00000000-0000-4000-8000-000000000700",
+              "value": {
+                "amount": "50.00"
+              }
+            }
+          },
+          {
+            "label": "Réserver 0,00 €",
+            "semanticMutation": {
+              "kind": "SET_STATE",
+              "targetRef": "savings:00000000-0000-4000-8000-000000000700",
+              "value": {
+                "amount": "0.00"
+              }
+            }
+          }
+        ],
+        "rationaleCodes": [
+          "EXISTING_OWNER_CAPABILITY"
+        ]
+      },
+      "editor": {
+        "targetRef": "savings:00000000-0000-4000-8000-000000000700",
+        "fields": [
+          {
+            "key": "amount",
+            "label": "Montant du mois (€)",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11",
+        "subject": {
+          "kind": "HOUSEHOLD"
+        }
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "PERSON:22222222-2222-4222-8222-222222222222:need:cire_adrien",
+      "label": "Cire coiffante Adrien",
+      "kind": "CONDITIONAL_OCCURRENCE",
+      "baseline": {
+        "amount": null,
+        "count": null,
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": "UNKNOWN"
+      },
+      "renewal": {
+        "needId": "synthetic-need:wax",
+        "needOccurrenceId": "need-occurrence:b92c1bdb9834dd9ebad49b4e50b3d52d80162ed564bbd154deea031cfa2a7569",
+        "autoEligible": false,
+        "conditional": true,
+        "referenceKeys": [],
+        "priceBasis": "OBSERVED_PRODUCT_REFERENCE_PRICE"
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": "NEEDS_NEW_INPUT"
+        }
+      ],
+      "after": {
+        "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:need:cire_adrien",
+        "label": "need:cire_adrien",
+        "actions": [
+          "SET_SLOT_OCCURRENCES",
+          "SET_SLOT_UNIT_AMOUNT"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "1",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "STRETCH_FLEX",
+        "knowledge": "UNKNOWN",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "NEED_CONFIRMATION_REQUIRES_EXPLICIT_DECISION"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:22222222-2222-4222-8222-222222222222:need:cire_adrien",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          },
+          {
+            "key": "unitAmount",
+            "label": "Prix d’une occurrence, pour ce mois (€)",
+            "kind": "AMOUNT",
+            "required": false
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11"
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_eyeliner",
+      "label": "Eyeliner Manon",
+      "kind": "CONDITIONAL_OCCURRENCE",
+      "baseline": {
+        "amount": null,
+        "count": null,
+        "unitAmount": null,
+        "minimumAmount": null,
+        "dueState": "UNKNOWN"
+      },
+      "renewal": {
+        "needId": "synthetic-need:eyeliner",
+        "needOccurrenceId": "need-occurrence:897f7edb4d13e5b9ea1e6d3e6a4abaec42948069c97c93204b5bbac0bfa8e285",
+        "autoEligible": false,
+        "conditional": true,
+        "referenceKeys": [],
+        "priceBasis": "OBSERVED_PRODUCT_REFERENCE_PRICE"
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": "NEEDS_NEW_INPUT"
+        }
+      ],
+      "after": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_eyeliner",
+        "label": "need:maquillage_manon_eyeliner",
+        "actions": [
+          "SET_SLOT_OCCURRENCES",
+          "SET_SLOT_UNIT_AMOUNT"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "1",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "EDITABLE",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "STRETCH_FLEX",
+        "knowledge": "UNKNOWN",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "NEED_CONFIRMATION_REQUIRES_EXPLICIT_DECISION"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_eyeliner",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          },
+          {
+            "key": "unitAmount",
+            "label": "Prix d’une occurrence, pour ce mois (€)",
+            "kind": "AMOUNT",
+            "required": false
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11"
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_mascara",
+      "label": "Mascara Manon",
+      "kind": "CONDITIONAL_OCCURRENCE",
+      "baseline": {
+        "amount": null,
+        "count": "1.00",
+        "unitAmount": "32.00",
+        "minimumAmount": null,
+        "dueState": "EARLY"
+      },
+      "renewal": {
+        "needId": "synthetic-need:mascara",
+        "needOccurrenceId": "need-occurrence:7436c492e3739d57cc15b9638041f80b660e8c5873b26d4e00893d09ed94912d",
+        "autoEligible": true,
+        "conditional": true,
+        "referenceKeys": [],
+        "priceBasis": "OBSERVED_PRODUCT_REFERENCE_PRICE"
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "after": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_mascara",
+        "label": "need:maquillage_manon_mascara",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "1",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "STRETCH_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "NEED_CONFIRMATION_REQUIRES_EXPLICIT_DECISION"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_mascara",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11"
+      },
+      "classification": "CONFIRMED_CODE"
+    },
+    {
+      "identity": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_sourcils",
+      "label": "Sourcils Manon",
+      "kind": "CONDITIONAL_OCCURRENCE",
+      "baseline": {
+        "amount": null,
+        "count": "1.00",
+        "unitAmount": "9.99",
+        "minimumAmount": null,
+        "dueState": "LATE"
+      },
+      "renewal": {
+        "needId": "synthetic-need:brows",
+        "needOccurrenceId": "need-occurrence:32a5bda756588a1cda5e172ac1e85088a34b599cacfd78a28072c2b0afed0c78",
+        "autoEligible": true,
+        "conditional": true,
+        "referenceKeys": [],
+        "priceBasis": "OBSERVED_PRODUCT_REFERENCE_PRICE"
+      },
+      "baselineCapabilities": [
+        {
+          "action": "SET_COUNT",
+          "availability": "AVAILABLE",
+          "reason": null
+        }
+      ],
+      "after": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_sourcils",
+        "label": "need:maquillage_manon_sourcils",
+        "actions": [
+          "SET_SLOT_OCCURRENCES"
+        ],
+        "fields": {
+          "count": {
+            "status": "EDITABLE",
+            "minimum": "0",
+            "maximum": "1",
+            "integer": true,
+            "step": "1"
+          },
+          "unitAmount": {
+            "status": "NO_PUBLISHED_CAPABILITY",
+            "minimum": "0.00",
+            "maximum": "999999999.99",
+            "integer": false,
+            "step": "0.50"
+          }
+        },
+        "flexibility": "STRETCH_FLEX",
+        "knowledge": "ESTIMATED",
+        "hardReducibleRoom": null,
+        "softReducibleRoom": null,
+        "naturalPresets": [],
+        "rationaleCodes": [
+          "NEED_CONFIRMATION_REQUIRES_EXPLICIT_DECISION"
+        ]
+      },
+      "editor": {
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_sourcils",
+        "fields": [
+          {
+            "key": "count",
+            "label": "Occurrences restantes",
+            "kind": "AMOUNT",
+            "required": true
+          }
+        ]
+      },
+      "scope": {
+        "month": "2026-11"
+      },
+      "classification": "CONFIRMED_CODE"
+    }
+  ],
+  "obligations": [
+    {
+      "factKey": "obligation:rent",
+      "label": "obligation:rent",
+      "value": {
+        "low": "500.00",
+        "central": "500.00",
+        "high": "500.00"
+      },
+      "knowledge": "ESTIMATED",
+      "provenance": [
+        "CANONICAL_FACT"
+      ],
+      "sourceRefs": [
+        "forecast:structural"
+      ],
+      "dueDate": null,
+      "metadata": {
+        "ownerAuthority": "synthetic-existing-owner@v1",
+        "nature": "CONTRACTUAL_EXPECTED",
+        "fundingPlan": "BANK_OR_OTHER"
+      }
+    }
+  ]
+}

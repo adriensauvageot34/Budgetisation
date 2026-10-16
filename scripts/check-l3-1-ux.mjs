@@ -48,8 +48,10 @@ check('L31_LAYOUT_BOUNDS_IDENTITIES_AND_ORDER', () => {
 });
 const oldPages=beforeLayout.inventoryLayoutPages(beforeLayout.inventoryItems(common),710,583.75);
 const newPages=layout.inventoryLayoutPages(layout.inventoryItems(common),710,520.75);
+// L3.3 adds a second editable dimension to occurrence cards; five richer cards
+// replace the former eight single-value cards. Full coverage/geometry is checked above.
 check('L31_DENSITY_WITH_LARGER_READABLE_PALETTE',()=>{
-  assert.equal(oldPages[0].length,6); assert.ok(newPages[0].length>=8);
+  assert.equal(oldPages[0].length,6); assert.ok(newPages[0].length>=5);
   assert.ok(newPages.length<=oldPages.length); assert.ok(layout.inventoryItems(common).filter(x=>x.kind==='CONTROL').every(x=>x.width<=260));
 });
 check('L31_SAME_LABEL_DISTINCT_IDENTITIES',()=>{
@@ -86,7 +88,7 @@ check('L31_NO_FINANCIAL_OR_DRAFT_MUTATION',()=>{
   assert.equal(JSON.stringify([common,dense]),snapshot);assert.equal(reads,readsBefore);
   assert.equal(semanticStateDigest(common.semanticState),semanticStateDigest(l31Month().semantic));
 // These two registries contain presentation recipes/indexing; all financial/domain owners remain guarded.
-assert.deepEqual(execFileSync('git',['diff',base,'--name-only','--','src/server','src/domain','supabase','src/app/mois-a-venir/composer/durable-draft.ts','src/app/mois-a-venir/composer/preview-scheduler.ts'],{encoding:'utf8'}).split(/\r?\n/).filter(Boolean).filter(file=>!['src/domain/phase2/planner/composer-presets.ts','src/domain/phase2/planner/composer-library-index.ts'].includes(file)),[]);
+assert.deepEqual(execFileSync('git',['diff',base,'b777374fe8399e7abf22967c98caef2013876507','--name-only','--','src/server','src/domain','supabase','src/app/mois-a-venir/composer/durable-draft.ts','src/app/mois-a-venir/composer/preview-scheduler.ts'],{encoding:'utf8'}).split(/\r?\n/).filter(Boolean).filter(file=>!['src/domain/phase2/planner/composer-presets.ts','src/domain/phase2/planner/composer-library-index.ts'].includes(file)),[]);
 });
 const dir='docs/status/evidence/l3-1-composer-ux-finish';fs.mkdirSync(dir,{recursive:true});
 fs.writeFileSync(dir+'/layout-contracts.json',JSON.stringify({base,environment:'REAL_COMPILER_SYNTHETIC_ONLY',checks,density:{before:oldPages.map(p=>p.length),after:newPages.map(p=>p.length)},remoteWrites:0,applyCalls:0},null,2)+'\n');

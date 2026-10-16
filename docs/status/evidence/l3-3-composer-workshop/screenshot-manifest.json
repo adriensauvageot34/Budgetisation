@@ -1,0 +1,234 @@
+[
+  {
+    "file": "board-1440.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "a61d2a512ed9557036e50ddc2b18c6b1a539e193709ea3ed3c26d582cb962a14",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "board-1728.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "09d685d9edab503afb5c38f0144f7facb629dd099ba62491b776adc4c58e7dd8",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "board-1920-full.png",
+    "width": 1920,
+    "height": 1080,
+    "format": "JPEG",
+    "sha256": "80af6fd76f5c9be26f8e24dea26dc7655059dbc9b1b0abcc99084ec5d9d139be",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "board-1920.png",
+    "width": 1584,
+    "height": 1000,
+    "format": "JPEG",
+    "sha256": "3ac6fd83a097e70e62ff1f623489dd359e9a8e6136979aec0d72db9f59f75c1d",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "board-final-1440-native.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "00a0a7ae5fac6c94e58c36dfcbdc4c1e877ab6aa19aacdb2cf37d9a080af02ec",
+    "intermediateOrLimited": false
+  },
+  {
+    "file": "board-final-1440.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "d4fea2a6af4057f3263416084f170111d780e031cda8d5b302107faabc68fcb8",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "board-final-1728.jpg",
+    "width": 1728,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "091d4bc46ead78766d0fb4bd17e79096c5a52d116d1e27947342920bd002ac9a",
+    "intermediateOrLimited": false
+  },
+  {
+    "file": "board-final-1920.jpg",
+    "width": 1920,
+    "height": 1080,
+    "format": "JPEG",
+    "sha256": "39a6e773c9d5fb55900e8fc659a6daa069f2a929a5f02cc7150ed09f30e66bfd",
+    "intermediateOrLimited": false
+  },
+  {
+    "file": "board-first-1440.png",
+    "width": 1440,
+    "height": 810,
+    "format": "JPEG",
+    "sha256": "755aa7974703139f91ffb40fe4f88b27a5e963856a9660446f12914bc5ce8bf8",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "clothing-edit.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "293af31382bf10d0e8d2b56335d6c8f693108885a5f3df01234adc366664e886",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "clothing-inline-final.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "726e4146f66db0129d660058f811e1d5ab8af6ce220ec574ed97a5288d2f1c04",
+    "intermediateOrLimited": false
+  },
+  {
+    "file": "cluster-1728.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "fe5796ebd1e40b24d4ed36e34faff500e01896b1e2dd64064b4a21f14a3c754e",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "cluster-board-expansion-trial.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "67adf4dc90b9936fe14c7cfa724bb012d8dde5ab731b18de74c1ca45fa0bbffc",
+    "intermediateOrLimited": false
+  },
+  {
+    "file": "cluster-compact-final-1440.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "1b61b63e355c56631b1b56b2748112b754ef1ea479fdb49a7e4c4146ce4e0db9",
+    "intermediateOrLimited": false
+  },
+  {
+    "file": "cluster-compact.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "e09d81dcec1d19c857980a247333e110327e5252116d53eb36da9834b813d697",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "cluster-final-1920.jpg",
+    "width": 1920,
+    "height": 1080,
+    "format": "JPEG",
+    "sha256": "17d607834067a3524ef62f3b41f750c6c90d3ffd199da7418298903f00c3a27f",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "coffee-error.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "be0b0f1561829b386ab24c20c8407efa4840fe6d80c55c085cf3d3465bd9af2f",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "coffee-price-count.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "8408b001ae002abb51425d0570f56740a4606ed98b6d5ec7290b24739f8419ef",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "coffee-zero-final.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "fb712625559834886569b9789c925f27b849b6278320df994e8b3af0aa3fd761",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "coffee-zero.png",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "718046a2528d335d4e26ba2333e8f9330cd8dc8bd0ef87ba21abedb884eb861b",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "fixed-detached.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "fbe4c049fc3a45b020c33f35e0d64951d37be3460b157f73ae91425b77757b86",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "fixed-open.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "ef90ce3178e3885c0cd774641ffa8107defd3ca2e95fe5aa5a0d50ff1ed889be",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "fixed-reattached.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "19e5308e1db08ddb0a8325602d565a67bbcfdf72fdda9d4e0284c480abbde281",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "incomplete-final.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "ff8f968107d2e2d61447b5af581f4bfdf9dfae6afdeac98d7a1e1e44106cc2d9",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "manage-final-1440.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "d00412063f97013294585f4f6512b8c890f5d641bfd52cb4fcc7dd811bd77b1b",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "month-reuse-proposal.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "43157c61bb1e01b0d2784c6b0b5e8b98c0a61ab4b7bee3095d1f331dda194543",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "pagination-two-pages.jpg",
+    "width": 1440,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "e123487be63069571c1a6f2516598c05745b05187cf322810b76e12d7e68c63a",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "purchase-configured.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "a32a67d860a76fa7d1c36428b7468c92a680dc88962359a9e70941ce02ef1b5d",
+    "intermediateOrLimited": true
+  },
+  {
+    "file": "purchase-start.png",
+    "width": 1426,
+    "height": 900,
+    "format": "JPEG",
+    "sha256": "51231451c6a8773fe423b78021428099721bc07c4a8268d53888fcd403856360",
+    "intermediateOrLimited": true
+  }
+]

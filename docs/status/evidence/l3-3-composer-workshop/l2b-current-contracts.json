@@ -1,0 +1,173 @@
+{
+  "environment": "PGLITE_SYNTHETIC_ONLY",
+  "authenticated": false,
+  "checks": [
+    "L2B-INDEX-ADMISSION-SEARCH-GENERICS-NO-OPTIONS",
+    "L2B-FASTFOOD-GUIDE-PARTIAL-ADMISSION-AND-UNKNOWN-FALLBACK",
+    "L2B-ALL-PUBLISHED-OPTIONS-REACHABLE-BY-PARENT",
+    "L2B-WEEKEND-CHILD-NONADDITIVE",
+    "L2B-IMMUTABLE-APPLY-RELOAD-MONPLAN-REEDIT",
+    "L2B-21-NEW-ORIGINALS-PLUS-5-BYTE-PRESERVED"
+  ],
+  "coverage": [
+    {
+      "presetKey": "techno-night",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "uber-eats-order",
+      "templateKey": "delivery",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "fishing-day",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "fontes-family-visit",
+      "templateKey": "family-visit",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "clothing-shopping",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "bar-apero",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "nightclub",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "friends-evening",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "home-evening",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "chicken-snack",
+      "templateKey": "fast-food",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "restaurant-for-two",
+      "templateKey": "restaurant",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "hiking-nature",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "beach-day",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "cinema",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "spa-relax",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "servian-family-visit",
+      "templateKey": "family-visit",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "visit-friends",
+      "templateKey": "friend-visit",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "weekend-gite",
+      "templateKey": "short-stay",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "video-game-purchase",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "amazon-purchase",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "shein-purchase",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "aliexpress-purchase",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "mascara",
+      "templateKey": "beauty-restock",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "hair-wax",
+      "templateKey": "beauty-restock",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "laundry-detergent",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "dishwashing-liquid",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    }
+  ],
+  "remoteWrites": 0,
+  "remainingOnly": true,
+  "priorPresetProof": "contract-26-presets-run.log"
+}

@@ -49,7 +49,8 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const baseShape = guidedContextShape(context.templateKey), preset = presetForContext(context);
   const purchaseEnvelope = context.fields.budgetDomain === "clothing" ? "Vêtements" : context.fields.budgetDomain === "home-small" ? "Petits achats maison" : context.fields.budgetDomain === "games-digital" ? "Jeux/Numérique" : null;
   const shape = { ...baseShape, envelope: context.templateKey === "purchase" ? purchaseEnvelope : baseShape.envelope };
-  const mainSlot = shape.slot, heading = card.label;
+  const quickPurchase = context.templateKey === "purchase" && !!preset && !isDetailed(context);
+  const mainSlot = shape.slot, heading = typeof context.fields.productLabel === "string" ? context.fields.productLabel : card.label;
   const operation = (edit: GuidedContextEdit): ComposerOperation => context.templateKey === "restaurant" ? { kind: "EDIT_RESTAURANT", edit: edit as RestaurantEdit } : { kind: "EDIT_PRESET_CONTEXT", edit };
   const questions: readonly {id: Exclude<Step,null>; key: string; title:string}[] = [
     ...(context.templateKey === "purchase" ? [{id:"product" as const,key:"productLabel",title:"Quel article ou achat préparez-vous ?"}] : []),
@@ -58,12 +59,12 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const answered = (id: string) => id === "budget" ? !!main && main.provenance === "EXPLICIT_USER_DECISION"
     : id === "binding" ? !!main?.binding && main.binding.mode !== "AUTO"
       : Object.hasOwn(context.fields, questions.find(q => q.id === id)!.key);
-  const [step, setStep] = useState<Step>(() => creating ? nextUnansweredQuestion(questions, null, answered)?.id ?? "complete" : null);
+  const [step, setStep] = useState<Step>(() => quickPurchase ? "budget" : creating ? nextUnansweredQuestion(questions, null, answered)?.id ?? "complete" : null);
   const [formKey, setFormKey] = useState(0);
   const [person, setPerson] = useState<ProspectivePersonRef>();
   const [place, setPlace] = useState<ProspectivePlaceRef | undefined>(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
   const [date, setDate] = useState(String(context.fields.plannedDate ?? ""));
-  const [row, setRow] = useState<Row>(() => main ? fromSelection(main) : { ...fresh(shape.total), unitBasis: "SHARED" });
+  const [row, setRow] = useState<Row>(() => main ? fromSelection(main) : { ...fresh(shape.total), unitBasis: "SHARED", ...(quickPurchase ? { costMode: "MANUAL" } : {}) });
   const [detail, setDetail] = useState(isDetailed(context));
   const [extraRow, setExtraRow] = useState<Row | null>(null);
   const [equipment, setEquipment] = useState<{ asset: ComposerAssetView; target: DropTarget } | null>(null);
@@ -106,7 +107,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   };
   const advance = (answeredStep: Step) => {
     const position = questions.findIndex(q => q.id === answeredStep);
-    setStep(creating ? questions.slice(position + 1).find(q => !answered(q.id))?.id ?? "complete" : null);
+    setStep(quickPurchase ? answeredStep === "budget" && shape.envelope ? "binding" : "complete" : creating ? questions.slice(position + 1).find(q => !answered(q.id))?.id ?? "complete" : null);
   };
   const fields = (patch: Record<string, PlannerJson>, id: Step) => {
     if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, fields: patch }))) advance(id);
@@ -154,8 +155,9 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     <header>{preset ? <PresetIllustration preset={preset} className={styles.presetInspectorImage} /> : <PlannerIcon iconKey="restaurant" scale="SATELLITE" />}<div><small>Votre mois, à votre façon</small><h2 id="restaurant-heading" tabIndex={-1}>{heading}</h2></div>
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
     <p className={styles.restaurantIntro}>{creating ? "Quelques choix suffisent. Vous pouvez compléter plus tard." : "Retrouvez vos choix et modifiez seulement ce qui change."}</p>
-    {preset && <p className={styles.restaurantIntro}>{preset.guidance}</p>}
-    <nav aria-label={`Choix de ${heading}`} className={styles.restaurantSummary}>
+    {preset && !quickPurchase && <p className={styles.restaurantIntro}>{preset.guidance}</p>}
+    {quickPurchase && <p className={styles.restaurantIntro}>Montant et enveloppe d’abord. Vendeur, lieu, date et transport restent facultatifs.</p>}
+    <nav aria-label={`Choix de ${heading}`} className={styles.restaurantSummary} data-quick-purchase={quickPurchase || undefined}>
       {[...(context.templateKey === "purchase" ? [["product", <Receipt key="p" size={16}/>, "Article et vendeur", context.fields.productLabel ? String(context.fields.productLabel) : "À préciser"]] : []),
       ...(shape.participants ? [["participants", <Users key="i" size={16} />, "Participants", refs.length ? refs.map(personLabel).join(", ") : "À préciser"]] : []),
         ["place", <MapPin key="i" size={16} />, "Lieu", placeLabel?.kind === "TEXT" ? placeLabel.label : placeLabel?.kind === "KNOWN"
@@ -166,10 +168,10 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
         ...(shape.transport ? [["complete", <MapPin key="i" size={16} />, "Transport", currentTransport
           ? model.library.searchableAssets.find(a => a.templateKey === context.templateKey && a.optionKey === currentTransport.optionKey && a.optionKind === "MOBILITY_INTENT")?.label ?? "Trajet à préciser"
           : "Aucun trajet ajouté"]] : [])].map(([id, icon, label, caption]) => <button key={String(id)} type="button" aria-current={step === id ? "step" : undefined}
-          onClick={() => open(id as Step)}>{icon}<span><small>{label}</small><strong>{caption}</strong></span><ChevronRight size={14} /></button>)}
+          data-secondary-choice={quickPurchase && ["product","place","date","complete"].includes(String(id)) || undefined} onClick={() => open(id as Step)}>{icon}<span><small>{label}</small><strong>{caption}</strong></span><ChevronRight size={14} /></button>)}
     </nav>
     <div className={styles.restaurantQuestion} key={`${step}:${formKey}`}>
-      <h3 data-restaurant-focus tabIndex={-1}>{questions.find(q => q.id === step)?.title ?? (step === "complete" ? "Les petits plus" : "Votre intention est dans le brouillon")}</h3>
+      <h3 data-restaurant-focus tabIndex={-1}>{quickPurchase && step === "budget" ? "Quel montant souhaitez-vous prévoir ?" : questions.find(q => q.id === step)?.title ?? (step === "complete" ? "Les petits plus" : "Votre intention est dans le brouillon")}</h3>
       {step === "product" && <><label>Article ou commande<input defaultValue={String(context.fields.productLabel ?? "")} name="productLabel" /></label><label>Vendeur facultatif<input defaultValue={String(context.fields.merchantLabel ?? "")} name="merchantLabel" /></label>
         <label>Budget de cet achat<select name="budgetDomain" defaultValue={String(context.fields.budgetDomain ?? "")}><option value="">À préciser</option>
           {model.editors.find(editor => editor.assetKey === "template:purchase")?.fields.find(field => field.key === "budgetDomain")?.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select></label>

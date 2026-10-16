@@ -1,0 +1,99 @@
+{
+  "verdict": "EXECUTED_PASS_AUTHENTICATED_READ_ONLY",
+  "productionCommit": "b777374fe8399e7abf22967c98caef2013876507",
+  "deployment": "dpl_93HTZZEnQJ7wSop8VXQAkZ2jiheJ",
+  "before": {
+    "authenticated": true,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "preview": "BLOCKED",
+    "revision": "0",
+    "save": "CLEAN"
+  },
+  "loaded": {
+    "authenticated": true,
+    "categories": [
+      "SOCIAL",
+      "FOOD",
+      "ACTIVITY",
+      "PURCHASE",
+      "BEAUTY",
+      "VISIT",
+      "TRAVEL",
+      "HOME",
+      "OTHER"
+    ],
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "documentWidth": 1440,
+    "genericMounted": 0,
+    "height": 900,
+    "presetKeys": [
+      "techno-night",
+      "bar-apero",
+      "nightclub",
+      "friends-evening",
+      "home-evening",
+      "concert"
+    ],
+    "preview": "BLOCKED",
+    "revision": "0",
+    "save": "CLEAN",
+    "width": 1440
+  },
+  "beauty": {
+    "genericMounted": 0,
+    "groups": [
+      "Maquillage",
+      "Cheveux",
+      "Visage",
+      "Autres soins"
+    ],
+    "keys": [
+      "mascara",
+      "eyeliner",
+      "eyebrow-pencil",
+      "makeup-remover",
+      "hair-wax",
+      "facial-toner",
+      "face-serum",
+      "face-moisturizer",
+      "face-cleanser",
+      "care-lotion"
+    ]
+  },
+  "spongeSearch": [
+    {
+      "imageWidth": 0,
+      "key": "sponges",
+      "label": "Éponges"
+    }
+  ],
+  "spongeImageAfterPaint": {
+    "height": 600,
+    "loaded": true,
+    "width": 1200
+  },
+  "genericDraggable": "true",
+  "after": {
+    "applyDisabled": true,
+    "authenticated": true,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "documentWidth": 1440,
+    "editorOpen": false,
+    "height": 900,
+    "preview": "BLOCKED",
+    "revision": "0",
+    "save": "CLEAN",
+    "width": 1440
+  },
+  "errorCount": 0,
+  "semanticEdits": 0,
+  "personalDraftSaves": 0,
+  "applyExecuted": false,
+  "financialWritesExecuted": false,
+  "limits": [
+    "New recipe authenticated save/Reload NOT_RUN; existing auth only used for read-only catalogue smoke",
+    "Initial browser navigation exceeded tool deadline; same tab loaded without another navigation",
+    "Image initial width 0 before paint, then actual 1200x600 verified"
+  ],
+  "databaseAuditRepeated": false
+}

@@ -8,6 +8,7 @@ import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/p
 import type { SemanticMutation, PlanBalanceSuggestions } from "@/domain/phase2/planner/adjustment-contract";
 import { composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import { PresetIllustration } from "./preset-illustration";
+import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
 import { ComposerBoard } from "./composer-board";
 import { ComposerCockpit } from "./composer-cockpit";
@@ -598,8 +599,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       : "La projection est calculée, mais des contraintes empêchent l’application. Consultez le détail financier."
     : previewStatus !== "FRESH" ? "La projection du brouillon attend une simulation serveur fraîche."
     : !model.board.draft.dirty ? model.activeRevisionNumber ? "Le mois est déjà appliqué. Modifiez un élément pour créer une nouvelle révision." : `Composez un premier choix pour appliquer votre mois.${model.presentation.unresolvedCount ? ` ${model.presentation.unresolvedCount} éléments à préciser.` : ""}`
-    : model.presentation.unresolvedCount ? `${model.presentation.unresolvedCount} éléments restent à préciser avant l’application.`
-    : "Les contraintes signalées doivent être précisées avant l’application.";
+    : "La projection officielle détermine les contraintes à préciser avant l’application.";
   const stableStart=useCommittedEvent(startDrag),stableEnd=useCommittedEvent(endDrag),stableOver=useCommittedEvent(over),stablePlace=useCommittedEvent(place),stableEquip=useCommittedEvent(equip);
   const stableCanTarget=useCommittedEvent((ref:string)=>assistantGrab.current?.targetRef===ref);
   const stableReject=useCommittedEvent(()=>animate("recoil",grab.current?.sourceKey??null));
@@ -643,6 +643,11 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           {!comparison && <button data-compare disabled={busy || previewStatus !== "FRESH"} onClick={() => { close(); compare(); }}><ArrowLeftRight size={14} /> Comparer temporairement</button>}
           <button data-preview disabled={busy} onClick={() => { close(); void run({ kind: "READ" }, "none"); }}>{previewStatus === "FAILED" || previewStatus === "STALE" ? "Réessayer la simulation" : "Relancer la simulation"}</button>
           <button data-balance disabled={busy} onClick={() => { close(); clearHover(); setBalanceOpen(v => !v); if (!balanceOpen) void run({ kind: "SUGGESTIONS" }, "none"); }}>Suggestions pour mon mois</button>
+          <MonthReuse model={shown} adopt={mutations => {
+            let next = localDraft.current;
+            for (const mutation of mutations) { const admitted = stageLocalDecision(current.current, next, { kind: "MUTATE", mutation }); if (!admitted) return; next = admitted; }
+            stage({ kind: "READ" }, "push", next);
+          }} />
           <button data-financial-menu onClick={() => { close(); openProjectionDetails(); }}>Les finances du mois</button>
         {draftTransport && <div className={styles.durableActions}>
           {(durable.status === "ERROR" || durable.status === "OFFLINE") && <button data-save-retry onClick={durable.retry}>Réessayer la sauvegarde</button>}

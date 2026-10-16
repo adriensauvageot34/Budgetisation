@@ -1,0 +1,137 @@
+{
+  "reason": "L3.3 field-level admission publication only; all eight financial/identity/knowledge digests per scenario byte-identical",
+  "changes": [
+    {
+      "name": "empty-no-plan",
+      "field": "capabilities",
+      "before": "a9714d53b8665638d04ce632c90cf4f1cba478cbb9beb8c8270740f8eaa03d79",
+      "after": "34d6f26ae87a9115d72677077c4bb82ce45538416fe6a841602e97091815ed81"
+    },
+    {
+      "name": "explicit-neutral-revision",
+      "field": "capabilities",
+      "before": "a9714d53b8665638d04ce632c90cf4f1cba478cbb9beb8c8270740f8eaa03d79",
+      "after": "34d6f26ae87a9115d72677077c4bb82ce45538416fe6a841602e97091815ed81"
+    },
+    {
+      "name": "simple-month",
+      "field": "capabilities",
+      "before": "2ac42561a86005d9961b9ea1a1b397d1ef174641354dfa4e75552313821771e8",
+      "after": "266f74d9eb9e438c43b2da9b22dc52b0322c73d1f197f0a9f062beaa42351c7f"
+    },
+    {
+      "name": "category-target",
+      "field": "capabilities",
+      "before": "3e3b6059dfac5dc14cc06ad666531d501aeda82d60cec4061e215c47f0d92921",
+      "after": "6fee06bcaa6e087b664cb156f0629488567853d0d1011a0247557d4ebdeef63e"
+    },
+    {
+      "name": "savings-adjustment",
+      "field": "capabilities",
+      "before": "125bb23e1c50c8563d1ceaf785d693f4b9fc472ec5b011981129a79a40784674",
+      "after": "1186fc06578efc6cb46e1bb152b0893955738c96bae284e408bf1ae4808fa84e"
+    },
+    {
+      "name": "night-out-uber",
+      "field": "capabilities",
+      "before": "6cee80cfd40c17069fca9cb38433aa9113430da614317a01556df36a8a7280ea",
+      "after": "bbe7847d8b8d540023933d9ca3333e3d6abe9ddb9543de147f7817874657079c"
+    },
+    {
+      "name": "night-out-tram",
+      "field": "capabilities",
+      "before": "6cee80cfd40c17069fca9cb38433aa9113430da614317a01556df36a8a7280ea",
+      "after": "bbe7847d8b8d540023933d9ca3333e3d6abe9ddb9543de147f7817874657079c"
+    },
+    {
+      "name": "short-stay-unresolved",
+      "field": "capabilities",
+      "before": "f52682ec72627e61e49cc9158cda8b1a6793138fb4eabda96d132de9aa26a897",
+      "after": "65f06593cbd7fdc94babde821e3e63a1950890751ed458bcb9cfb696c16d3041"
+    },
+    {
+      "name": "short-stay-confirmed-consumption",
+      "field": "capabilities",
+      "before": "f52682ec72627e61e49cc9158cda8b1a6793138fb4eabda96d132de9aa26a897",
+      "after": "65f06593cbd7fdc94babde821e3e63a1950890751ed458bcb9cfb696c16d3041"
+    },
+    {
+      "name": "needs-two-in-one-purchase",
+      "field": "capabilities",
+      "before": "13ff2e109759a0d992268893ecff13c9f94c196256e883993496cb485a50ddd2",
+      "after": "29db31d4e302bd980af0004e6987be7ab0d40dd8e7e6e218591b478d11143c7e"
+    },
+    {
+      "name": "empty-renewal-authority",
+      "field": "capabilities",
+      "before": "2bbad12123a2f4d7a82603c3ca6e7720f6443047fcdcf98433024d288163d805",
+      "after": "96db378de4641ab905a0fde2cd6214dc882fb09dfb00a8b780f72192a41d1f67"
+    },
+    {
+      "name": "external-intent",
+      "field": "capabilities",
+      "before": "a9714d53b8665638d04ce632c90cf4f1cba478cbb9beb8c8270740f8eaa03d79",
+      "after": "34d6f26ae87a9115d72677077c4bb82ce45538416fe6a841602e97091815ed81"
+    },
+    {
+      "name": "family-visit-mobility",
+      "field": "capabilities",
+      "before": "fecccbbeb7fd425dcb32f9b9e6e38a41eb298ed2c6bf0a2c8adbe9ba73b3f1eb",
+      "after": "e3d92418b90af584efcf90cf388062cebdf987ee0eb0171a73f6547184700976"
+    },
+    {
+      "name": "friend-visit-mobility",
+      "field": "capabilities",
+      "before": "d74ce6c34ea4a9af54f4817793c2dcde6e2e5792b24c8ef4345836b324c39c0e",
+      "after": "0bcfa34e0cf873ae6207d68b39f584ee56ad6eb2e8db08a5bd6ef4ac1c3ae616"
+    },
+    {
+      "name": "unknown-context-cost",
+      "field": "capabilities",
+      "before": "8e8ad0834fae9a99c3ac02485f734fa0fe181e6cdf1d043e95cb43bba37cd9b5",
+      "after": "0a166a3b11982bce68f132792444efc07403c883dcec0f4a58fee9a702bc9d0a"
+    },
+    {
+      "name": "legacy-neutralized-once",
+      "field": "capabilities",
+      "before": "b8adb53399fd23f8872c7570e584864dabb6f0b0cb0754401c2e020f4f4a63b5",
+      "after": "9b653812be28a5084a4ef6ec289e45ab2e6bc51eb4bd9ddbee12950dbd973d49"
+    },
+    {
+      "name": "unresolved-displacement",
+      "field": "capabilities",
+      "before": "b8adb53399fd23f8872c7570e584864dabb6f0b0cb0754401c2e020f4f4a63b5",
+      "after": "9b653812be28a5084a4ef6ec289e45ab2e6bc51eb4bd9ddbee12950dbd973d49"
+    },
+    {
+      "name": "occurrence-consumption",
+      "field": "capabilities",
+      "before": "b8adb53399fd23f8872c7570e584864dabb6f0b0cb0754401c2e020f4f4a63b5",
+      "after": "9b653812be28a5084a4ef6ec289e45ab2e6bc51eb4bd9ddbee12950dbd973d49"
+    },
+    {
+      "name": "accepted-adjustment",
+      "field": "capabilities",
+      "before": "3e3b6059dfac5dc14cc06ad666531d501aeda82d60cec4061e215c47f0d92921",
+      "after": "6fee06bcaa6e087b664cb156f0629488567853d0d1011a0247557d4ebdeef63e"
+    },
+    {
+      "name": "unknown-funding",
+      "field": "capabilities",
+      "before": "6cee80cfd40c17069fca9cb38433aa9113430da614317a01556df36a8a7280ea",
+      "after": "bbe7847d8b8d540023933d9ca3333e3d6abe9ddb9543de147f7817874657079c"
+    },
+    {
+      "name": "month-end-context",
+      "field": "capabilities",
+      "before": "6cee80cfd40c17069fca9cb38433aa9113430da614317a01556df36a8a7280ea",
+      "after": "bbe7847d8b8d540023933d9ca3333e3d6abe9ddb9543de147f7817874657079c"
+    },
+    {
+      "name": "preferences-only",
+      "field": "capabilities",
+      "before": "001582c3ed81731c23cd583a90a9d143fdf7dfa14a75a578745723ed17fe027e",
+      "after": "444bd8d222a65ef2997445c074acd8388e30a4d8bdf4e8d3a71b1aa5baf20fb1"
+    }
+  ]
+}

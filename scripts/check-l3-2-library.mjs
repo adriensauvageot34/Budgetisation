@@ -40,7 +40,7 @@ await check('L32-CATALOG-47-13-HISTORICAL-26-AND-COMPATIBILITY',()=>{
  const future={templateKey:'purchase',fields:{composerPresentation:{version:'composer-context-presentation@v1',presetKey:'future-compatible'}}};assert.equal(presetForContext(future),undefined);
  assert.equal(presetForContext({templateKey:'purchase',fields:{}}),undefined);assert.throws(()=>presetCreationFields('purchase','concert'),/MISMATCH/);
  const html=renderToStaticMarkup(React.createElement(ComposerLibrary,{model:initial,openToken:0,busy:false,selected:null,choose(){},choosePreset(){},drag(){},inspectContext(){}}));
- assert.equal((html.match(/data-preset=/g)||[]).length,6);assert.ok(html.includes('Intentions libres'));assert.ok(!html.includes('data-asset="template:night-out"'));
+ assert.equal((html.match(/data-preset=/g)||[]).length,6);assert.ok(html.includes('Autre intention'));assert.ok(!html.includes('data-asset="template:night-out"'));
  assert.ok(!html.includes('Ma voiture')&&!html.includes('>Santé<'));assert.equal(libraryPresetGroup(COMPOSER_PRESETS.find(p=>p.presetKey==='shein-purchase')),'Acheter chez…');
  assert.equal(libraryPresetGroup(COMPOSER_PRESETS.find(p=>p.presetKey==='clothing-shopping')),'Choisir un achat');
 });
