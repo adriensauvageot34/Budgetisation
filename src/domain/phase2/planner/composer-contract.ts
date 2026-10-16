@@ -6,6 +6,7 @@ import type { PlanProjectionV1 } from "./projection-contract";
 import type { PlanScenarioPreview } from "./compiler-contract";
 import type { ComponentSelectionV1, ComponentSlotDefinition } from "./component-contract";
 import type { SemanticMutation, AdjustmentCapability } from "./adjustment-contract";
+import type { BaselineStructuralFact } from "./baseline-contract";
 export type ComposerAssetView = Readonly<{ assetKey: string; kind: "CONTEXT_ASSET" | "SLOT_OPTION_ASSET" | "PLAN_CONTROL" | "RESERVATION_CONTROL";
   label: string; iconKey: string; capabilityRef: string; provenance: "STRUCTURAL_DEFAULT" | "PERSONAL_SUGGESTION" | "EXPLICIT_USER_DECISION" | "DERIVED_CONSEQUENCE";
   templateKey?: string; optionKey?: string; optionKind?: "COMPONENT" | "MOBILITY_INTENT" }>;
@@ -25,6 +26,7 @@ export type ComposerContextCardView = Readonly<{ contextOccurrenceId: string; te
   knowledge: PlannerKnowledge; capabilityRefs: readonly string[]; sockets: readonly ContextSocketView[] }>;
 export type ComposerCockpitView = PlanProjectionV1;
 export type ComposerBoardView = Readonly<{ targetMonth: string; baselineControls: readonly ComposerCardView[];
+  structuralObligations?: readonly BaselineStructuralFact[];
   discretionaryControls: readonly ComposerCardView[]; contexts: readonly ComposerContextCardView[]; savings: readonly ComposerCardView[];
   cockpit: ComposerCockpitView; diagnostics: readonly PlannerDiagnostic[];
   draft: Readonly<{ dirty: boolean; semanticStateDigest: string; undoCount: number; redoCount: number }> }>;

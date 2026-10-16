@@ -9,6 +9,7 @@ import type { ComponentRequest, CompiledComponent, CompiledPlanSlot, BaselineCon
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ContextualEffect } from "@/domain/phase2/planner/component-contract";
 import { compare, emptyValue } from "./baseline-evidence";
+import { allowsUnitOverride, monthlyOccurrenceOverride } from "./control-fields";
 
 const cents = (value: Big): string => value.toFixed(2);
 export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSemanticStateV1, forced: readonly string[] = []): CompiledPlanSlot[] {
@@ -32,10 +33,14 @@ export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSe
       const action = slot.kind === "AMOUNT" ? "SET_AMOUNT" : "SET_COUNT";
       const protectedSaving = slot.slotIdentityKey.startsWith("savings:") && !slot.capabilities.length;
       if (!protectedSaving && !slot.capabilities.some(c => c.action === action && c.availability === "AVAILABLE")) throw new TypeError("PLANNER_SLOT_CONTROL_UNAVAILABLE");
-      const allowPriceInput = slot.kind !== "AMOUNT" && (slot.simpleAuthority?.gate === "NEEDS_NEW_INPUT" || !!slot.renewalAuthority && slot.baselineValue.unitAmount === null);
+      const allowPriceInput = allowsUnitOverride(slot);
       plannerKeys(plannerRecord(decision.value), slot.kind === "AMOUNT" ? ["amount"] : allowPriceInput ? ["count", "unitAmount"] : ["count"],
         slot.kind === "AMOUNT" ? ["amount"] : ["count"]);
       if (slot.simpleAuthority && slot.kind !== "AMOUNT" && !new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))) throw new TypeError("SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER");
+      if (monthlyOccurrenceOverride(slot)) {
+        const count = new Big(decisionAmount(decision.value.count));
+        if (!count.round(0).eq(count) || count.gt(9999)) throw new TypeError("PLANNER_OCCURRENCE_COUNT_INVALID");
+      }
       if (slot.renewalAuthority && (!new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))
         || slot.renewalAuthority.conditional && new Big(decisionAmount(decision.value.count)).gt(1))) throw new TypeError("RENEWAL_OCCURRENCE_COUNT_INVALID");
       pending.delete(decision.decisionSlotKey);

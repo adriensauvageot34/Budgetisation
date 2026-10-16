@@ -10,6 +10,7 @@ import { publishContextRegistry } from "./context-registry";
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { evaluatePlanScenario } from "./preview";
 import { readPlannerDraft } from "./draft-reader";
+import { controlFields, allowsUnitOverride } from "./control-fields";
 export const BALANCE_ASSISTANT_MODEL = "planner-balance-assistant@v1";
 const protectedRef = (state: PlanSemanticStateV1, refs: readonly string[]) =>
   refs.some(r => state.preferences.anchors.includes(r) || state.preferences.flexibility[r] === "PRESERVE");
@@ -49,11 +50,16 @@ export function publishAdjustmentCapabilities(world: PlanningWorldFacts, state: 
       const n = choice.value.amount ?? choice.value.count;
       if (n === undefined || new Big(n).gte(current) || new Big(n).lt(0) || choice.value.amount !== undefined && floor !== null && new Big(n).lt(floor)) return [];
       const key = plannerDigest(choice.value); if (seen.has(key)) return []; seen.add(key);
-      return [{ label: choice.label, semanticMutation: { kind: "SET_STATE" as const, targetRef: controlTarget, value: choice.value } }];
+      const prior = state.controls.find(c => c.decisionSlotKey === controlTarget);
+      const value = choice.value.count !== undefined && typeof prior?.value.unitAmount === "string"
+        ? { ...choice.value, unitAmount: prior.value.unitAmount } : choice.value;
+      return [{ label: choice.label, semanticMutation: { kind: "SET_STATE" as const, targetRef: controlTarget, value } }];
     });
     const minimum = presets.map(p => p.semanticMutation.kind === "SET_STATE" ? p.semanticMutation.value.amount ?? p.semanticMutation.value.count : null)
       .filter((v): v is string => typeof v === "string").sort((a, b) => new Big(a).cmp(b))[0];
-    return { targetRef: simple.slotIdentityKey, label: simple.label, actions: locked ? [] : simple.actions,
+    return { targetRef: simple.slotIdentityKey, label: simple.label,
+      actions: locked ? [] : [...simple.actions, ...(allowsUnitOverride(slot.baseline) ? ["SET_SLOT_UNIT_AMOUNT" as const] : [])],
+      fields: controlFields(slot.baseline, locked),
       flexibility: locked ? "LOCKED" : simple.flexibility, knowledge: simple.knowledge,
       hardReducibleRoom: locked ? "0.00" : null,
       softReducibleRoom: locked ? "0.00" : current !== null && minimum !== undefined ? new Big(current).minus(minimum).toFixed(2) : null,
@@ -69,12 +75,27 @@ export function publishAdjustmentCapabilities(world: PlanningWorldFacts, state: 
       const room = new Big(current).minus(floor); result[i] = { ...cap, hardReducibleRoom: room.gt(0) ? room.toFixed(2) : "0.00" };
     }
   }
+  // The FOOD/person habit owner already admits SET_COUNT; publish it instead of
+  // mistaking a missing simpleAuthority for a structural lock.
+  for (const slot of preview.compiled.planSlots.filter(s => !s.baseline.simpleAuthority && s.role !== "SAVINGS" && !s.baseline.renewalAuthority)) {
+    const locked = protectedRef(state, [slot.baseline.slotIdentityKey, slot.baseline.planSlotId, slot.baseline.controlKey ?? "", slot.decisionId ?? ""]);
+    const fields = controlFields(slot.baseline, locked);
+    result.push({ targetRef: slot.baseline.slotIdentityKey, label: slot.baseline.semanticKey,
+      actions: locked ? [] : [...(fields?.amount?.status === "EDITABLE" ? ["SET_SLOT_AMOUNT" as const] : []),
+        ...(fields?.count?.status === "EDITABLE" ? ["SET_SLOT_OCCURRENCES" as const] : []),
+        ...(fields?.unitAmount?.status === "EDITABLE" ? ["SET_SLOT_UNIT_AMOUNT" as const] : [])], fields,
+      flexibility: locked ? "LOCKED" : "SAFE_FLEX", knowledge: slot.baseline.knowledge,
+      hardReducibleRoom: null, softReducibleRoom: null, naturalPresets: [],
+      rationaleCodes: locked ? ["PRESERVE_OR_STRUCTURAL_LOCK"] : ["EXISTING_OWNER_CAPABILITY"] });
+  }
   for (const slot of preview.compiled.planSlots.filter(s => s.baseline.renewalAuthority)) {
     const locked = !slot.baseline.renewalAuthority!.conditional || protectedRef(state,
       [slot.baseline.slotIdentityKey, slot.baseline.planSlotId, slot.baseline.semanticKey,
         slot.baseline.renewalAuthority!.needOccurrenceId, slot.decisionId ?? ""]);
     result.push({ targetRef: slot.baseline.slotIdentityKey, label: slot.baseline.semanticKey,
-      actions: locked ? [] : slot.baseline.capabilities.some(c => c.action === "SET_COUNT" && c.availability === "AVAILABLE") ? ["SET_SLOT_OCCURRENCES"] : [],
+      actions: locked ? [] : slot.baseline.capabilities.some(c => c.action === "SET_COUNT" && c.availability === "AVAILABLE")
+        ? ["SET_SLOT_OCCURRENCES", ...(allowsUnitOverride(slot.baseline) ? ["SET_SLOT_UNIT_AMOUNT" as const] : [])] : [],
+      fields: controlFields(slot.baseline, locked),
       flexibility: locked ? "LOCKED" : "STRETCH_FLEX", knowledge: slot.baseline.knowledge,
       hardReducibleRoom: locked ? "0.00" : null, softReducibleRoom: null, naturalPresets: [],
       rationaleCodes: locked ? ["STRUCTURAL_NEED_OR_PRESERVE"] : ["NEED_CONFIRMATION_REQUIRES_EXPLICIT_DECISION"] });
