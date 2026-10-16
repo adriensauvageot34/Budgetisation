@@ -1,0 +1,75 @@
+{
+  "method": "Read targeted sources and branches; execution only where attached proofs explicitly say so",
+  "paths": {
+    "localEdit": [
+      "src/app/mois-a-venir/composer/inline-control-value.tsx:18",
+      "src/app/mois-a-venir/composer/inline-control-value.tsx:59",
+      "src/app/mois-a-venir/composer/composer-shell.tsx:217",
+      "src/app/mois-a-venir/composer/composer-shell.tsx:570",
+      "src/app/mois-a-venir/composer/composer-shell.tsx:582"
+    ],
+    "closeAndPage": [
+      "src/app/mois-a-venir/composer/composer-board.tsx:65",
+      "src/app/mois-a-venir/composer/composer-board.tsx:78",
+      "src/app/mois-a-venir/composer/visual-cluster.tsx:24",
+      "src/app/mois-a-venir/composer/board-carousel.tsx:24",
+      "src/app/mois-a-venir/composer/interactions.tsx:51"
+    ],
+    "admission": [
+      "src/server/phase2/planner/control-fields.ts:20",
+      "src/domain/phase2/planner/control-input.ts:27",
+      "src/server/phase2/planner/plan-slot-resolver.ts:39",
+      "src/server/phase2/planner/composer-service.ts:245",
+      "src/server/phase2/planner/constraint-engine.ts:17"
+    ],
+    "labelsAndGeometry": [
+      "src/domain/phase2/planner/control-input.ts:41",
+      "src/app/mois-a-venir/composer/composer-financial-inspector.tsx:23",
+      "src/app/mois-a-venir/composer/composer-library.tsx:82",
+      "src/app/mois-a-venir/composer/composer.module.css:827",
+      "src/app/mois-a-venir/composer/composer.module.css:873",
+      "src/app/mois-a-venir/composer/context-card.tsx:80"
+    ],
+    "draftAndApply": [
+      "src/app/api/composer/drafts/route.ts",
+      "src/app/mois-a-venir/composer/draft-http-transport.ts",
+      "src/app/mois-a-venir/composer/durable-draft.ts",
+      "src/server/phase2/planner/composer-draft-service.ts",
+      "src/server/phase2/planner/runtime.ts",
+      "src/server/phase2/planner/apply.ts",
+      "src/server/phase2/planner/draft-reader.ts",
+      "src/server/phase2/planner/repository.ts",
+      "supabase/migrations/20261011150830_p07_composer_draft_access_v2.sql",
+      "src/server/phase2/planner/compiler.ts:57",
+      "src/server/phase2/planner/compiler.ts:127",
+      "src/server/phase2/planner/preview.ts:26",
+      "src/server/phase2/planner/apply.ts:58",
+      "src/server/phase2/planner/apply.ts:66"
+    ],
+    "previewAndKnowledge": [
+      "src/app/mois-a-venir/composer/preview-scheduler.ts",
+      "src/app/mois-a-venir/composer/draft-controller.ts",
+      "src/domain/phase2/planner/month-reuse.ts",
+      "src/app/mois-a-venir/composer/month-reuse.tsx",
+      "src/app/mois-a-venir/composer/fixed-charges.tsx",
+      "src/server/phase2/planner/read-model.ts"
+    ],
+    "L4": [
+      "src/server/phase2/planner/context-registry.ts",
+      "src/server/phase2/planner/context-state.ts",
+      "src/domain/phase2/planner/component-contract.ts",
+      "src/domain/phase2/planner/night-out-edit.ts",
+      "src/domain/phase2/planner/short-stay-edit.ts",
+      "src/domain/phase2/planner/family-visit-edit.ts",
+      "src/domain/phase2/planner/guided-context-edit.ts",
+      "src/app/mois-a-venir/composer/restaurant-editor.tsx",
+      "src/app/mois-a-venir/composer/gift-editor.tsx"
+    ]
+  },
+  "hypothesesNotProven": [
+    "Raw local text could be lost if an element is remounted under a different page parent; sampled inspector/resize transitions preserved it",
+    "Native drag during raw editing not executed",
+    "No new RLS/permission failure demonstrated"
+  ],
+  "doctrine": "No product code, financial source, schema, snapshot, scheduler or auth grant changed"
+}

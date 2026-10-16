@@ -1,0 +1,19 @@
+{
+  "environment": "REAL_OWNER_MODULES_AND_READ_SERVICE_SYNTHETIC_NO_SQL",
+  "targetRef": "HOUSEHOLD:household:restaurants",
+  "publishedMaximum": "9999",
+  "probeValue": {
+    "count": "10000"
+  },
+  "mutationRefused": true,
+  "compilerAccepted": true,
+  "wholeDraftRead": {
+    "ok": true,
+    "code": null,
+    "count": "10000"
+  },
+  "error": null,
+  "classification": "CONFIRMED_ADMISSION_INCONSISTENCY",
+  "limit": "No Apply issued; this is not proof of bypassing Savings or financial floors",
+  "remoteCalls": 0
+}

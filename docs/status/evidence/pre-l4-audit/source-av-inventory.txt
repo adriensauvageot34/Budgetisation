@@ -1,0 +1,632 @@
+# Budgetisation — Grand bilan avant L4
+
+## Tous les enseignements acquis et toutes les améliorations envisageables avant de commencer les éditeurs complexes
+
+Après avoir repris les cinq synthèses, l'inventaire des 416 idées initiales et le rapport final de L3.3, je pense qu'il faut distinguer deux questions :
+
+1\. Qu'avons-nous réellement appris de toute la construction de Composer ?
+
+2\. Qu'est-ce qui mérite encore d'être amélioré, vérifié ou préparé avant de commencer L4 ?
+
+C'est important, parce que notre historique contient déjà plusieurs situations où nous avons enchaîné les correctifs, les audits et les optimisations alors que la valeur supplémentaire devenait très faible.
+
+Ma conclusion est la suivante :
+
+L3.3 a suffisamment renforcé les fondations pour envisager L4. Mais il reste des améliorations intéressantes avant de construire les événements complexes, particulièrement autour de la validation des interactions réelles, de la lisibilité financière et de la préparation des contrats de création et de réédition.
+
+En revanche, je ne ferais pas une nouvelle refonte générale ni un nouveau programme de performance.
+
+## 1. Notre situation actuelle
+
+Presets disponibles
+
+# 47
+
+Avec leurs illustrations Clay
+
+Options historiques
+
+# 114
+
+Conservées dans la palette
+
+Suites L3.3
+
+# 15
+
+PASS dans les environnements déclarés
+
+Dernière livraison confirmée
+
+## L3.3
+
+PR #49, commit `5cfb121`
+
+État documenté au 16 octobre 2026. La Production était READY ; cela ne certifie pas les parcours de sauvegarde authentifiée non exécutés.
+
+| Fondation             | État                                           | Ce que cela signifie pour L4                     |
+| --------------------- | ---------------------------------------------- | ------------------------------------------------ |
+| Finance V2, Compiler  | Conservés, parité testée                       | Pas besoin de nouveau moteur financier           |
+| SNAP-3, P14           | Livrés avec réserves                           | Protéger les acquis, ne pas tout réoptimiser     |
+| Draft HTTP, Undo/Redo | Existants, suites ciblées PASS                 | Réutiliser la persistance et les mutations       |
+| Restaurant L1         | Pilote livré                                   | Référence pour les éditeurs conditionnels        |
+| L2-A, L2-B, L3.2      | Bibliothèque enrichie                          | Ne pas refaire le catalogue                      |
+| L3, L3.1              | Atelier et navigation améliorés                | Vérifier surtout les usages réels                |
+| L3.3                  | Capacités par champ et édition directe livrées | Réutiliser ces contrats dans les futurs éditeurs |
+| L4                    | Non commencé dans les documents                | Prochaine évolution métier                       |
+
+Le rapport L3.3 est précis : les 22 empreintes de capabilities évoluent comme prévu, les 176 autres empreintes restent identiques, mais la sauvegarde authentifiée des nouvelles décisions, certains gestes de drag et la latence P95 restent non certifiés.&#x20;
+
+L3_3_COMPOSER_WORKSHOP_FINAL_REPORT.md
+
+
+
+# Partie I — Les grands enseignements de toute notre expérience
+
+Plutôt que répéter mot à mot les centaines d'enseignements précédents, je les regroupe ici en 36 principes fondateurs, en conservant ce qu'ils changent concrètement pour les prochains développements.
+
+## A. Ce que P14 nous a appris sur la suringénierie
+
+1\. Mesurer le résultat utilisateur avant d'optimiser les composants. Réduire des appels, le DOM ou le CPU ne garantit pas que Composer s'ouvre plus rapidement.
+
+2\. Chercher le véritable chemin critique. SNAP-3 a été efficace parce qu'il a déplacé la barrière Canonical/M7, là où des caches plus petits avaient été peu utiles.
+
+3\. Une optimisation locale réussie peut dégrader le parcours complet. Les expériences SNAP-REAL et P4D ont suffisamment démontré cette possibilité.
+
+4\. Les résultats défavorables sont des connaissances à conserver, pas des mesures à écarter.
+
+5\. Une même fonctionnalité doit produire la même vérité économique avant et après optimisation. Accélérer un scénario en ignorant le Plan actif n'est pas un gain légitime.
+
+6\. Il faut savoir renoncer à une architecture pourtant réalisable. Les caches partagés, nouveaux snapshots et réorganisations majeures doivent démontrer leur rentabilité.
+
+7\. La maintenance est une partie du coût. SNAP-3 est performant à la lecture, mais l'invalidation et la republication de ses artifacts restent des enjeux opérationnels.
+
+8\. Une fois une phase suffisamment aboutie, la priorité doit redevenir le produit. Ne pas chercher indéfiniment les dernières millisecondes.
+
+## B. Ce que B1–B3 nous a appris sur la finance
+
+9\. Composer ne crée pas une deuxième vérité financière. Il propose des décisions ; Finance V2 en calcule les conséquences.
+
+10\. Un coût brut, un impact marginal et une somme réellement supplémentaire sont différents. Un achat de 40 € couvert par une enveloppe peut ne créer aucune dépense additionnelle.
+
+11\. Les conséquences de plusieurs décisions ne sont pas nécessairement additives. Il faut utiliser le scénario consolidé.
+
+12\. Les réservations, financements, dépenses prévues et opérations réalisées doivent rester distincts.
+
+13\. Un devis prospectif de trajet n'est pas un plein de carburant.
+
+14\. Une dépense réalisée ne doit pas être ajoutée une seconde fois à la dépense prévue lorsqu'une identité de rapprochement fiable existe. La réconciliation complète reste néanmoins un chantier distinct.
+
+15\. Une information inconnue ne devient jamais zéro par facilité.
+
+16\. Une simulation correcte mais incomplète doit être présentée honnêtement, avec les faits connus et les incertitudes restantes.
+
+## C. Ce que L1–L3.2 nous a appris sur le produit
+
+17\. Les utilisateurs pensent en situations concrètes, pas en `ContextType`, `PlanSlot` ou autres objets internes.
+
+18\. Un preset est une porte d'entrée visuelle, pas un nouveau type économique.
+
+19\. La reconnaissance d'une intention ne suffit pas : il faut pouvoir la configurer. C'est la limite révélée par la croissance du catalogue.
+
+20\. Une grande bibliothèque doit rester compacte et accessible. Les catégories, la recherche, les favoris et la palette contextuelle ont plus de valeur qu'une longue liste d'assets.
+
+21\. Le Board, la palette, la pagination et les panneaux forment un seul système d'interaction. Une modification de hauteur peut rendre tout le reste moins utilisable.
+
+22\. Une bonne disposition ne se prouve pas par un test TypeScript. Les captures et les parcours navigateur sont indispensables.
+
+23\. Le drag-and-drop ne doit jamais être l'unique moyen d'agir. Les actions par clic et clavier restent essentielles.
+
+24\. Une nouvelle illustration ne doit pas déclencher une nouvelle lecture des finances.
+
+25\. Le meilleur formulaire est celui qui connaît déjà une partie des réponses, n'impose pas les questions facultatives et permet une réédition directe.
+
+26\. Les groupes visuels ne doivent pas devenir des postes financiers additionnels.
+
+## D. Ce que L3.3 nous a appris sur la conception d'une vraie décision
+
+27\. La connaissance n'est pas la décision. Un prix historique fiable peut être affiché sans devenir automatiquement le prix prévu.
+
+28\. Une capacité doit être publiée par son propriétaire et contrôlée par le serveur. L'interface ne doit pas inventer de droits.
+
+29\. L'éditabilité appartient à chaque dimension. Fréquence, prix unitaire et montant global peuvent avoir des permissions distinctes.
+
+30\. Le zéro volontaire est une information économique réelle. Zéro café prévu ne signifie pas café gratuit.
+
+31\. La mutation doit préserver toutes les dimensions non modifiées. Avec `SET_STATE`, changer la fréquence ne doit pas effacer un prix explicitement choisi.
+
+32\. La saisie doit se faire près de la valeur présentée. L'édition directe a plus de sens qu'un second champ caché ailleurs.
+
+33\. La simplicité d'un achat doit déterminer son parcours. Les sacs-poubelle n'ont pas besoin d'un questionnaire de voyage.
+
+34\. Les faits structurels du foyer ont leur place dans Composer, sans devenir de nouvelles dépenses ou de nouveaux slots.
+
+35\. Les préférences de présentation ne sont pas des mutations financières. Détacher une charge ou changer de page ne doit pas modifier le digest.
+
+36\. Une livraison avec réserves documentées peut être clôturée. La bonne réaction consiste à cibler les vérifications utiles, pas à lancer automatiquement L3.4.
+
+Ces principes sont cohérents avec la progression que tu as documentée : performance et justesse financière d'abord, catalogue et atelier ensuite, puis publication des capacités réelles et édition directe.&#x20;
+
+Texte collé (4).txt
+
+
+
+# Partie II — Inventaire des améliorations possibles avant L4
+
+Je distingue quatre niveaux de priorité :
+
+P0
+
+À vérifier avant les nouveaux éditeurs — risque de perte de saisie, mauvaise admission ou incohérence.
+
+P1
+
+Amélioration à forte valeur — à faire si l'expérience réelle révèle encore le problème.
+
+P2
+
+Confort ou opportunité — utile, mais ne doit pas retarder L4.
+
+À reporter
+
+Nouvelle capacité fonctionnelle — relève plutôt de L4, L5 ou des chantiers suivants.
+
+Cette liste contient des actions déjà identifiées comme non certifiées, mais aussi des possibilités nouvelles que je déduis des enseignements. Une possibilité n'est pas un défaut avéré : elle doit être retenue uniquement si l'observation confirme le besoin.
+
+## A. Sécuriser les derniers gestes de L3.3
+
+P0 — Validation ciblée, sans refonte générale
+
+1\. AV-01 — Vérifier le refus de fermeture d'une saisie non validée. Saisir une nouvelle valeur, tenter de fermer le groupe et refuser la confirmation. Le champ et son texte doivent rester présents, sans mutation du Draft.
+
+2\. AV-02 — Vérifier l'acceptation de la fermeture. Si l'utilisateur accepte explicitement d'abandonner la saisie, fermer proprement l'éditeur sans commiter une valeur qu'il n'a pas validée.
+
+3\. AV-03 — Vérifier le passage par une autre action du groupe. Tester Détails, Éditer, fermeture et sélection d'un enfant lorsque la saisie est en cours. Le garde d'annulation ajouté en fin de L3.3 doit couvrir ces chemins.
+
+4\. AV-04 — Tester le drag natif pendant l'édition d'un montant. Vérifier qu'une tentative de déplacement ne confirme, ne perd ou ne modifie pas accidentellement la valeur.
+
+5\. AV-05 — Tester le drag natif d'une carte depuis un groupe compact. La navigation clavier et l'ouverture des enfants ont été testées ; le geste natif reste une réserve de L3.3.
+
+6\. AV-06 — Tester le changement de page pendant une saisie. Une valeur provisoire ne doit ni disparaître ni devenir une décision à l'insu de l'utilisateur.
+
+7\. AV-07 — Tester l'ouverture et la fermeture de l'inspecteur pendant une édition. Le même contrat de conservation doit s'appliquer.
+
+8\. AV-08 — Tester un changement de sélection en pleine saisie. Passer de Café à Courses puis revenir à Café doit produire un résultat explicite et prévisible.
+
+9\. AV-09 — Tester les clics rapides réellement exécutés par un utilisateur. Vérifier que les boutons `+` et `−` regroupent correctement une rafale et que Undo/Redo restaure le bon état.
+
+10\. AV-10 — Tester une saisie invalide puis sa correction. Par exemple `2,345`, une valeur négative ou un champ vide. Aucune valeur invalide ne doit être transformée en zéro.
+
+11\. AV-11 — Vérifier les bornes et pas réels de plusieurs contrôles. Café, Courses, Vêtements et une réservation d'épargne n'ont pas les mêmes dimensions ni les mêmes protections.
+
+12\. AV-12 — Vérifier le comportement du bouton de validation pendant `SAVING` ou une Preview en attente. Il faut éviter les doubles actions et les états graphiques contradictoires.
+
+Ces contrôles n'ont pas tous besoin de nouveaux tests automatisés permanents. Un test navigateur natif ciblé peut suffire pour les gestes qui n'ont pas pu être reproduits par l'outil d'automatisation.
+
+Pourquoi cette catégorie est prioritaire : L4 introduira des éditeurs avec davantage de changements de questions, de sélections et de sous-composants. Une gestion incertaine des saisies non confirmées sera beaucoup plus gênante dans une Soirée à dix choix que dans un montant Café.
+
+## B. Certifier un cycle réel de décision L3.3
+
+P0 — Priorité élevée pour la confiance, sous autorisation d'écriture appropriée
+
+Les simulations PGlite et les fixtures ont déjà validé une grande partie des contrats. Il serait donc inutile de les refaire intégralement.
+
+Ce qu'il manque, c'est surtout un passage précis à travers l'application authentifiée.
+
+13\. AV-13 — Effectuer un test authentifié de modification d'un contrôle. Modifier le nombre de cafés dans un brouillon de test, puis vérifier que la nouvelle décision est admise.
+
+14\. AV-14 — Modifier également le prix unitaire. Faire coexister une fréquence et un prix explicitement choisis pour vérifier le nouveau contrat L3.3.
+
+15\. AV-15 — Sauvegarder le brouillon et confirmer `SAVED`. Ne pas considérer une Preview FRESH comme une preuve que l'écriture a réussi.
+
+16\. AV-16 — Recharger entièrement Composer. Confirmer la conservation de `count`, `unitAmount`, des identités et des décisions.
+
+17\. AV-17 — Rééditer uniquement la fréquence après rechargement. Vérifier que le prix précédemment décidé est conservé.
+
+18\. AV-18 — Vérifier Undo/Redo après les modifications pertinentes. Le retour arrière doit restaurer la décision sémantique correcte.
+
+19\. AV-19 — Contrôler que la Baseline historique n'a pas été modifiée. Un choix mensuel ne doit pas réécrire la référence du foyer.
+
+20\. AV-20 — Vérifier la différence entre scénario sauvegardé et Plan officiel. Le test doit pouvoir s'arrêter avec un Draft durable sans aucune nouvelle PlanRevision.
+
+21\. AV-21 — Nettoyer le brouillon de test selon le mécanisme existant. Privilégier un compte ou périmètre isolé et une archive récupérable. Ne pas effectuer d'Apply personnel pour obtenir artificiellement une preuve supplémentaire.
+
+22\. AV-22 — Vérifier un scénario avec Plan actif si un environnement de test approprié existe. B3 a montré que les chemins avec et sans Plan ne sont pas économiquement équivalents. Il ne faut pas supposer qu'un seul couvre les deux.
+
+23\. AV-23 — Vérifier séparément un mois courant et un mois futur. C'est le sous-cas T14 non exécuté dans L3.3. Il est particulièrement important de ne pas confondre budget du mois entier et dépenses restant réellement à effectuer.
+
+24\. AV-24 — Vérifier les refus serveur sur les mutations sensibles. Les réserves protégées, les prix non admis et les floors doivent rester protégés même si un appel contourne l'interface. Les tests synthétiques existants constituent la base ; une validation supplémentaire doit cibler un risque non couvert plutôt que répéter toute la matrice.
+
+Important : je ne ferais aucune écriture financière sur tes données personnelles sans autorisation spécifique. L'intérêt d'un test authentifié est de compléter la preuve, pas de risquer ton Plan réel.
+
+## C. Examiner le résultat visuel final dans des situations de vie réelles
+
+P1 — Très utile avant d'agrandir les éditeurs
+
+L'historique L3 → L3.1 → L3.2 nous a montré quelque chose de récurrent : les captures utilisateurs découvrent encore des problèmes que les tests de contrat ne peuvent pas voir.
+
+Je proposerais donc une dernière revue produit, sans présupposer qu'une nouvelle refonte sera nécessaire.
+
+25\. AV-25 — Ouvrir un mois représentatif avec toutes les familles de cartes. Charges fixes, habitudes, réservations, intentions ponctuelles et groupes.
+
+26\. AV-26 — Évaluer le premier écran à 1440 × 900. Ce viewport est particulièrement contraignant parce que bibliothèque, HUD, Board, inspecteur et palette se partagent la hauteur et la largeur.
+
+27\. AV-27 — Vérifier également 1728 et 1920 px. Une interface agréable uniquement sur un très grand écran n'est pas suffisante.
+
+28\. AV-28 — Vérifier la densité quand l'inspecteur est ouvert. L'ouverture du panneau ne doit pas rendre le Board presque inutilisable.
+
+29\. AV-29 — Vérifier la palette lorsqu'elle contient de nombreuses options. Les 114 options sont disponibles, mais les questions utiles doivent rester accessibles rapidement.
+
+30\. AV-30 — Regarder la pagination d'un mois chargé. Vérifier que l'utilisateur comprend pourquoi certaines cartes sont sur une autre page.
+
+31\. AV-31 — Vérifier le retour à une carte sélectionnée hors de la page actuelle. Le mécanisme L3.1 doit rester fiable avec les nouveaux composants L3.3.
+
+32\. AV-32 — Vérifier les groupes Restauration et Beauté après L3.3. La modale compacte retenue doit rester lisible avec peu et beaucoup d'enfants.
+
+33\. AV-33 — Examiner le rapport taille d'illustration / information financière. Une carte Clay doit rester reconnaissable sans cacher le montant ou les actions.
+
+34\. AV-34 — Tester la lecture des titres longs. Les textes sur plusieurs lignes ne doivent pas écraser les valeurs ou boutons.
+
+35\. AV-35 — Rechercher les dernières formulations techniques visibles. Par exemple des libellés comme « Groupe visuel », `UNKNOWN`, `Context`, codes de capability ou diagnostics bruts.
+
+36\. AV-36 — Vérifier que les actions disponibles se comprennent sans tutoriel. En particulier : modifier un montant, ouvrir une carte, revenir en arrière, consulter un détail, changer de page.
+
+37\. AV-37 — Vérifier la lisibilité des états temporaires. Une carte en cours de calcul doit être identifiable sans donner l'impression que sa valeur précédente est définitivement vraie.
+
+38\. AV-38 — Vérifier les comportements clavier. Recherche, sélection, édition, Tab, Enter, Escape, pagination et fermeture des panneaux.
+
+39\. AV-39 — Vérifier les interactions après une erreur de Preview. Le Board doit rester manipulable lorsque le calcul financier distant échoue, sans annoncer un FRESH fictif.
+
+40\. AV-40 — Comparer le parcours réel à la capture initiale de L3. La question n'est pas de mesurer combien de pixels ont changé, mais de savoir si les gestes essentiels sont devenus plus simples.
+
+Pour rendre cette revue utile, je ferais passer les mêmes cinq tâches dans l'interface actuelle :
+
+- Modifier Courses de 250 € à 300 €.
+- Passer Café à zéro, puis rétablir des occurrences.
+- Prévoir 4 € de sacs-poubelle en choisissant si l'achat est couvert ou supplémentaire.
+- Consulter une charge fixe et la détacher visuellement.
+- Retrouver une carte présente dans un groupe ou sur une autre page.
+
+Si ces cinq gestes sont clairs, fiables et rapides à comprendre, c'est un signal beaucoup plus intéressant pour passer à L4 qu'une nouvelle refonte purement esthétique.
+
+## D. Améliorer encore la lecture financière, sans toucher au moteur
+
+P1 — À retenir si l'affichage actuel reste ambigu
+
+Ici, je ne recommande aucune nouvelle formule financière. Il s'agit uniquement de mieux exploiter les résultats et les informations déjà publiés.
+
+41\. AV-41 — Vérifier la distinction entre prix, coût et impact. Un café à 2,10 €, une habitude à 25,20 € et l'impact global du scénario ne sont pas trois expressions interchangeables.
+
+42\. AV-42 — Rendre évident qu'une enveloppe n'est pas un achat. « Enveloppe Restaurants » et « Restaurant à deux » doivent se comprendre comme deux objets différents.
+
+43\. AV-43 — Afficher le rattachement budgétaire des petits achats. Un achat couvert par Courses devrait être identifiable sans ouvrir quatre panneaux.
+
+44\. AV-44 — Expliquer la conséquence de `CONSUMES_SLOT` sans employer le terme technique. Par exemple « Compris dans le budget Courses » plutôt qu'un code de binding.
+
+45\. AV-45 — Distinguer une dépense supplémentaire. L'utilisateur doit comprendre pourquoi elle augmente le coût prévisionnel du mois au lieu de consommer un budget déjà prévu.
+
+46\. AV-46 — Conserver les montants partiellement connus. Si une carte comporte des éléments chiffrés et un transport inconnu, ne pas effacer les informations fiables.
+
+47\. AV-47 — Distinguer zéro choisi et montant non renseigné. Ce point est maintenant pris en charge dans plusieurs contrats L3.3 ; il reste à apprécier si la présentation est claire partout.
+
+48\. AV-48 — Vérifier la lisibilité des prix unitaires. Pour Café, Coiffeur et repas de travail, le prix unitaire et la fréquence ne doivent pas ressembler à deux dépenses additionnelles.
+
+49\. AV-49 — Afficher correctement les prix historiques. Si le prix affiché vient d'une référence, son caractère indicatif doit être compréhensible.
+
+50\. AV-50 — Séparer les références anciennes et les décisions mensuelles. Un utilisateur qui lit « 1,80 € habituellement » puis décide « 2,10 € ce mois » doit savoir quelle valeur sera appliquée au calcul.
+
+51\. AV-51 — Améliorer les raisons d'une carte non éditable. « Protégée », « À confirmer » ou « À modifier dans le module source » sont plus utiles qu'un cadenas sans explication.
+
+52\. AV-52 — Vérifier le compteur « À préciser ». Il doit aider à retrouver les véritables informations manquantes sans présenter toute option facultative comme un problème bloquant.
+
+53\. AV-53 — Expliquer les véritables blocages de validation. Le statut Apply ne doit jamais être déduit simplement du nombre de `unresolvedRefs`.
+
+54\. AV-54 — Préserver la lisibilité de la barre d'épargne. Une réservation supplémentaire ne doit pas être présentée comme une cagnotte entièrement financée.
+
+55\. AV-55 — Vérifier le rôle des charges fixes dans le HUD. Le groupe Charges fixes peut fournir de la compréhension sans autoriser une nouvelle somme locale non réconciliée.
+
+56\. AV-56 — Rendre visibles les limites d'une Preview. Un calcul FRESH et une projection complète ne signifient pas la même chose. Il peut rester des inconnues.
+
+57\. AV-57 — Éviter les faux comparatifs avant/après. Si le scénario de référence est périmé ou différent, mieux vaut signaler le problème que montrer un écart trompeur.
+
+58\. AV-58 — Conserver une distinction claire entre mois prévisionnel et dépenses réellement réalisées. Cela évite de créer prématurément une pseudo-réconciliation Plan → Réel dans Composer.
+
+Mon avis : plusieurs de ces sujets ont déjà été travaillés dans L3.3. Je ne les relancerais pas en bloc. Je chercherais seulement les deux ou trois formulations qui restent réellement incompréhensibles sur le Board final.
+
+## E. Mieux utiliser les références et les habitudes du foyer
+
+P1/P2 — Valeur produit intéressante, attention au périmètre
+
+« Reprendre mon mois habituel » est une avancée, mais ce n'est pas encore le système de personnalisation complet que tu avais imaginé.
+
+59\. AV-59 — Examiner la qualité des propositions existantes. Les références proposées correspondent-elles réellement aux décisions pertinentes pour le mois cible ?
+
+60\. AV-60 — Vérifier la couverture historique présentée. Une référence sur deux mois doit être identifiable comme telle et ne pas apparaître avec la même assurance qu'une série bien établie.
+
+61\. AV-61 — Tester une reprise partielle. Sélectionner Courses, mais pas Café ni Vêtements, puis vérifier que seules les décisions choisies apparaissent.
+
+62\. AV-62 — Tester le refus de reprise. Fermer la proposition sans aucune mutation ni réapparition intrusive immédiate.
+
+63\. AV-63 — Tester la reprise lorsque des décisions existent déjà. L'utilisateur ne doit pas perdre les ajustements qu'il a commencés.
+
+64\. AV-64 — Vérifier que les références `REFERENCE_ONLY` restent visibles lorsque c'est utile. Elles doivent informer, sans devenir des valeurs adoptables.
+
+65\. AV-65 — Vérifier que la provenance est lisible. Le propriétaire, la période et la couverture doivent être accessibles sans saturer chaque carte.
+
+66\. AV-66 — Évaluer l'intérêt d'une indication « Dernier choix connu ». Cette idée reste à étudier : L3.3 ne l'a pas créée faute de lecteur autoritaire déjà admissible.
+
+67\. AV-67 — Évaluer l'intérêt des habitudes individuelles mieux différenciées. Les propositions concernant Adrien, Manon et le foyer doivent conserver leurs scopes. Une suggestion pour l'un ne devient pas une habitude commune.
+
+68\. AV-68 — Évaluer une présentation discrète de la confiance. « Prix confirmé », « Estimation historique » ou « Référence partielle » pourraient être plus utiles que des codes de provenance, si les contrats permettent réellement cette distinction.
+
+69\. AV-69 — Vérifier que les références sont utiles avant d'en construire davantage. Si l'utilisateur ne consulte jamais les repères disponibles, ajouter un moteur de préférences persistant ne résoudra pas nécessairement le problème.
+
+70\. AV-70 — Ne pas commencer tout de suite la synchronisation des préférences entre appareils. Ce besoin peut être légitime plus tard, mais il ne doit pas devenir une condition artificielle du premier L4.
+
+Une vraie distinction s'impose ici : les propositions 59–65 sont principalement des vérifications du fonctionnement déjà livré. Les propositions 66–70 sont plutôt des évolutions éventuelles.
+
+Les sources sont explicites : L3.3 a volontairement réutilisé les références Baseline/CardKnowledge sans ajouter de nouveau lecteur, de cache ni de propriétaire de préférences.&#x20;
+
+L3_3_COMPOSER_WORKSHOP_FINAL_REPORT.md
+
+
+
+## F. Faire un dernier contrôle de cohérence du catalogue et de la palette
+
+P2 — Pas de nouvelle vague d'illustrations
+
+71\. AV-71 — Vérifier les 47 presets dans leurs bonnes catégories. Pas besoin de les regénérer ; simplement vérifier que les derniers libellés et regroupements restent cohérents.
+
+72\. AV-72 — Vérifier que les 13 Contexts génériques sont toujours accessibles, en tant que recours secondaires.
+
+73\. AV-73 — Vérifier la recherche par synonymes et accents pour les situations courantes : soirée, vêtements, café, soins, ménage.
+
+74\. AV-74 — Vérifier que les favoris ne sont jamais considérés comme une habitude financière.
+
+75\. AV-75 — Vérifier que les préférences enregistrées localement sont annoncées comme telles. Cela concerne les favoris et certaines préférences de présentation.
+
+76\. AV-76 — Vérifier l'absence de doublons visibles entre intentions concrètes et Contexts génériques. Un doublon économique et un raccourci de recherche légitime ne sont pas la même chose.
+
+77\. AV-77 — Examiner les derniers presets qui demandent une information déjà connue. Par exemple, choisir « Sacs-poubelle » ne devrait pas conduire à redemander immédiatement le nom du produit.
+
+78\. AV-78 — Vérifier les options déjà ajoutées à une carte. Les redéposer ne doit pas créer un doublon lorsqu'il s'agit de modifier un composant existant.
+
+79\. AV-79 — Vérifier que la palette change bien selon le Context sélectionné.
+
+80\. AV-80 — Vérifier que les illustrations ne sont pas toutes chargées au repos. Les catégories fermées ne doivent pas annuler les gains P14/P4B.
+
+81\. AV-81 — Vérifier les états de recherche vide. Une recherche qui ne trouve aucun preset spécialisé doit permettre de retrouver une intention générique pertinente lorsque cela est réellement possible.
+
+82\. AV-82 — Vérifier que le rail « À piloter » révèle la vraie carte existante, sans création d'une deuxième identité financière.
+
+Je ne ferais pas davantage de travail sur la bibliothèque si ces points sont déjà satisfaisants.
+
+Le catalogue est assez fourni pour développer des parcours profonds. Le problème n'est plus de trouver un nom ou une illustration pour une Soirée, un Week-end ou un Achat.
+
+## G. Consolider les garde-fous techniques avant d'augmenter la complexité
+
+P0/P1 pour les risques de régression ; P2 pour la maintenance générale
+
+La priorité n'est pas d'inventer une nouvelle architecture. C'est de s'assurer que les prochains éditeurs ne contournent pas les protections acquises.
+
+83\. AV-83 — Figer une référence technique post-L3.3. Conserver le SHA fusionné, le commit testé, les preuves de parité et les contrats de capabilities comme baseline de départ pour L4.
+
+84\. AV-84 — Vérifier la compatibilité des nouveaux `unitAmount` avec les anciens Drafts et Plans. Le rollback ne doit pas supprimer ces décisions simplement parce qu'un ancien composant ne les affichait pas.
+
+85\. AV-85 — Conserver les scénarios de non-régression du couple fréquence/prix. Ce test doit devenir une protection permanente pour les futurs éditeurs de décisions quantitatives.
+
+86\. AV-86 — Conserver la matrice par champ comme référence de capabilities. Elle permettra de vérifier qu'un nouvel éditeur n'affiche pas une action interdite ou ne cache pas une action admissible.
+
+87\. AV-87 — Vérifier les scopes des décisions. Une décision personnelle, commune ou liée à un autre propriétaire doit rester correctement ciblée.
+
+88\. AV-88 — Préserver les protections Savings, les règles Renewal et les floors. Ajouter des éditeurs complexes ne doit pas rendre ces contrôles modifiables indirectement.
+
+89\. AV-89 — Préserver le résultat de parité sur les 22 scénarios de référence. Le changement de capacités L3.3 était intentionnel, contrairement aux autres empreintes financières et identitaires.
+
+90\. AV-90 — Vérifier le chemin Draft HTTP en situation d'échec. Le travail local ne doit pas être perdu lors d'une erreur réseau ou d'un conflit de version.
+
+91\. AV-91 — Vérifier que la dernière Preview affichée correspond à la dernière décision. Une réponse réseau arrivée en retard ne doit pas écraser un état plus récent.
+
+92\. AV-92 — Préserver la distinction `SAVED` / `FRESH` / `APPLIED`. Cette frontière devient encore plus importante lorsque plusieurs sous-composants sont modifiés successivement.
+
+93\. AV-93 — Éviter une nouvelle lecture World par carte ou par question. Un éditeur L4 devrait réutiliser le modèle déjà disponible et les chemins officiels de Preview.
+
+94\. AV-94 — Protéger le lazy loading des éditeurs. La présence de 47 presets ne doit pas provoquer le montage de 47 interfaces de configuration.
+
+95\. AV-95 — Conserver une métrique de croissance du DOM, des images et du JavaScript. Il suffit d'un contrôle léger à chaque lot significatif ; pas d'une nouvelle campagne P14 complète.
+
+96\. AV-96 — Ne pas reprendre les optimisations SQL, les caches ou SNAP-3 sans signal nouveau. Les anciens essais ont montré qu'une bonne réduction locale pouvait être sans effet sur FRESH.
+
+97\. AV-97 — Garder les timeouts Canonical `57014` dans un registre opérationnel. Les investiguer s'ils réapparaissent avec des traces pertinentes, sans attribuer leur origine au prochain éditeur sur simple corrélation temporelle.
+
+98\. AV-98 — Vérifier séparément la maintenance opérationnelle de SNAP-3 si nécessaire. Le dernier dossier de performance précisait qu'aucune republication automatique n'était établie ; cela mérite un suivi de maintenance, mais pas de bloquer L4 sans incident concret.
+
+99\. AV-99 — Ne pas transformer l'échec du build webpack local en preuve d'échec Production. Le build Next Vercel de L3.3 était réussi. L'anomalie locale préexistante `node:crypto` peut être traitée lorsqu'elle bloque réellement un workflow nécessaire.
+
+100\. AV-100 — Ne pas demander un P95 certifié pour chaque retouche UX. Une nouvelle campagne de latence réelle est justifiée si le parcours concerné change significativement ou si une régression est observée.
+
+101\. AV-101 — Prévoir des tests de permissions adaptés aux futures données personnelles. Les Contexts comportant personnes, lieux ou participations nécessitent de conserver les règles d'accès, pas de supposer que leur affichage est libre.
+
+102\. AV-102 — Documenter les contrats de rollback utiles à L4. Un retour sur l'interface ne doit jamais rendre illisibles les choix déjà persistés.
+
+L'enseignement de P14 s'applique directement : une mesure négative, une anomalie locale ou une incertitude opérationnelle doit produire une action proportionnée, pas une nouvelle architecture systématique.
+
+## H. Préparer intelligemment L4 sans commencer son développement
+
+P1 — C'est la meilleure préparation fonctionnelle possible
+
+C'est un volet que j'ajouterais à une éventuelle courte phase de transition.
+
+L3.3 a rendu les contrôles simples plus fiables. Mais pour construire une Soirée ou un Week-end, nous devons savoir précisément ce qui est déjà représentable et ce qui manque.
+
+Je ferais donc une préparation orientée scénarios, pas un grand audit général de toute l'application.
+
+103\. AV-103 — Identifier les Contexts exacts qui serviront de base à L4. Soirée, Séjour, Visite, Achat et Cadeau ne nécessitent pas nécessairement de nouveaux types économiques.
+
+104\. AV-104 — Dresser une matrice des champs réellement persistables. Date, lieu, participant, quantité, prix, canal, vendeur, transport et financement doivent être classés comme disponibles, conditionnels ou non supportés.
+
+105\. AV-105 — Recenser les capacités de L1 Restaurant réutilisables. Questions conditionnelles, total vs détail, création, réédition, palette et validation.
+
+106\. AV-106 — Définir les informations connues dès le choix d'un preset. « Soirée chez nous » renseigne une nature d'événement ; cela ne doit pas obliger à confirmer de nouveau la même chose.
+
+107\. AV-107 — Définir les questions minimales à poser pour chaque famille. Une Soirée et un Achat n'ont pas besoin du même point de départ.
+
+108\. AV-108 — Définir les questions qui doivent être ignorées. Une commande livrée ne nécessite pas un trajet personnel ; une soirée à domicile n'en nécessite pas automatiquement non plus.
+
+109\. AV-109 — Définir les dépendances entre réponses. Changer le lieu, le mode de transport ou le type de repas doit rendre certaines questions inutiles et en ouvrir d'autres.
+
+110\. AV-110 — Décider comment conserver les anciennes réponses compatibles. Changer un détail ne doit pas réinitialiser la totalité de l'événement.
+
+111\. AV-111 — Définir la politique des réponses devenues incompatibles. Passer voiture → train ne doit pas conserver comme coût actif le trajet en voiture.
+
+112\. AV-112 — Définir séparément création et réédition. La création accompagne ; la réédition présente directement un résumé modifiable.
+
+113\. AV-113 — Définir comment l'édition directe L3.3 sera réutilisée dans les composants L4. Prix, quantité et montant doivent avoir une logique commune, sans suppression de leurs capabilities propres.
+
+114\. AV-114 — Préparer les règles parent/enfant. Un Restaurant dans un Week-end conserve une identité et ne devient pas un second achat à chaque rattachement.
+
+115\. AV-115 — Définir les règles de partage des coûts. Qui participe, qui paie et qui bénéficie de l'achat ne doivent pas être confondus.
+
+116\. AV-116 — Définir le mode total vs détail. Une bouteille de 20 € partagée par deux personnes coûte 20 € au total, pas 40 €.
+
+117\. AV-117 — Préparer le traitement des enveloppes. Une dépense intégrée à un événement peut être couverte par une enveloppe, supplémentaire ou non encore résolue.
+
+118\. AV-118 — Préparer la relation avec Mobility. Un événement peut avoir plusieurs déplacements, mais la carte ne doit pas fabriquer elle-même des prix ou des trajets.
+
+119\. AV-119 — Définir les inconnues acceptables. Un événement peut être sauvegardé avec un lieu ou un prix encore inconnu lorsque les contrats l'autorisent.
+
+120\. AV-120 — Préparer les erreurs de configuration actionnables. Plutôt que montrer une liste de codes techniques, pointer vers le champ ou composant concerné.
+
+121\. AV-121 — Définir les identités qui doivent survivre à la réédition. Une modification de prix ne doit pas créer une nouvelle intention.
+
+122\. AV-122 — Définir les conditions de duplication. Dupliquer volontairement une Soirée doit créer une nouvelle identité, contrairement à une simple réédition.
+
+123\. AV-123 — Préparer un scénario de non-additivité pour chaque famille. Restaurant dans Week-end, bouteille partagée, achat couvert par enveloppe et trajet existant sont de bons cas d'essai.
+
+124\. AV-124 — Définir les attentes de persistance. Chaque parcours L4 devra prouver au moins un cycle création → sauvegarde → rechargement → réédition.
+
+125\. AV-125 — Définir les tests de clavier, d'annulation et de fermeture. L4 ne doit pas répéter les fragilités rencontrées avec les petites saisies L3.3.
+
+126\. AV-126 — Préparer une revue UX du nombre de questions. L'objectif est de demander uniquement ce qui change réellement le scénario ou apporte une valeur pratique.
+
+127\. AV-127 — Refuser un nouveau moteur général de questionnaires sans justification. La logique conditionnelle de L1 et les capacités existantes doivent d'abord être examinées.
+
+128\. AV-128 — Définir l'ordre des premiers pilotes L4. Il vaut mieux compléter une famille représentative et la vérifier entièrement que développer cinq éditeurs superficiels.
+
+Je recommande de préparer cinq parcours de référence, sur le papier et dans une matrice de contrats :
+
+| Parcours L4 à préparer       | Décisions qui doivent fonctionner                                          | Principaux risques à cadrer                                |
+| ---------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Soirée techno à deux         | Before, boissons individuelles, bouteille commune, entrée, aller et retour | Double comptage, participants, transports                  |
+| Week-end en gîte             | Logement global, nuits, jacuzzi inclus, Restaurant, activités              | Inclus vs supplémentaire, imbrication, période             |
+| Visite à Fontès ou Servian   | Lieu, personne, voiture, aller-retour, repas éventuel                      | Associations historiques non certifiées, coûts prospectifs |
+| Achat de vêtements via Shein | Article, vendeur, quantité, livraison, enveloppe                           | Duplication achat/enveloppe, données non persistables      |
+| Cadeau d'anniversaire        | Destinataire, occasion, achat, paiement commun éventuel                    | Confusion destinataire/payeur, projet vs achat             |
+
+Ce ne sont pas cinq nouveaux éditeurs à construire avant L4. Ce sont cinq oracles fonctionnels à préparer pour éviter de construire L4 dans une mauvaise direction.
+
+# Partie III — Ce que je choisirais réellement de faire avant L4
+
+Nous avons maintenant 128 pistes de vérification, d'amélioration ou de préparation. Mais 128 pistes ne doivent surtout pas devenir 128 tickets Codex.
+
+Ce serait précisément reproduire la dérive que les phases P14 nous ont appris à éviter.
+
+Je distinguerais donc trois groupes.
+
+## 1. Le petit socle de stabilisation que je recommande
+
+Préparation pré-L4
+
+Recommandé
+
+Un chantier borné, pas une refonte L3.4.
+
+Sécuriser les saisies non validées
+
+Refus de fermeture, navigation, changement de page et interactions avec le groupe
+
+Compléter la preuve de persistance
+
+Cycle autorisé count/prix → Draft SAVED → rechargement → réédition, sans Apply personnel
+
+Vérifier le vrai zéro et l'inconnu
+
+Café, Coiffeur, Vêtements et références historiques sans adoption implicite
+
+Vérifier l'admission serveur
+
+Réserves protégées, floors, prix non autorisés et préservation du scope
+
+Faire une revue UX sur cinq gestes
+
+Courses, Café, petit achat, charge fixe, recherche d'une carte
+
+Préparer les scénarios L4
+
+Matrice des capacités et parcours Soirée, Séjour, Visite, Achat et Cadeau
+
+0 sur 6 points cochés Copier la checklist
+
+Cette checklist est une proposition de validation ; elle ne signifie pas que ces tests ont déjà été exécutés.
+
+### Les critères qui devraient suffire pour passer à L4
+
+| Critère      | Résultat attendu                                                 |
+| ------------ | ---------------------------------------------------------------- |
+| Données      | Aucune saisie confirmée perdue sur les parcours contrôlés        |
+| Sécurité     | Aucun contournement des capabilities                             |
+| Finance      | Aucun changement économique non intentionnel                     |
+| Brouillon    | Décisions rééditables après rechargement                         |
+| Interactions | Aucun défaut bloquant de focus ou de fermeture                   |
+| UX           | Cinq gestes de base compréhensibles et utilisables               |
+| Performances | Aucun nouveau travail World déclenché par la simple présentation |
+| L4           | Premiers scénarios et contrats préparés                          |
+
+Ces critères n'exigent pas un P95 global certifié, un Apply personnel ou la suppression de toutes les dettes anciennes.
+
+## 2. Les améliorations qui peuvent attendre
+
+Ces possibilités sont intéressantes, mais je ne les intégrerais pas à la transition pré-L4 sans preuve d'un besoin bloquant.
+
+| Idée                                            | Pourquoi la reporter                                                       |
+| ----------------------------------------------- | -------------------------------------------------------------------------- |
+| Dernier mois comparable et préférences durables | Nouveau lecteur ou propriétaire à justifier                                |
+| Favoris et présentation synchronisés            | Confort secondaire, pas indispensable aux éditeurs                         |
+| Nouveau moteur de recommandations historiques   | Les références admises offrent déjà une première utilité                   |
+| Nouvelle vague d'illustrations Clay             | Le catalogue comporte déjà 47 presets                                      |
+| Nouveau système de placement libre du Board     | La pagination et les groupes disposent déjà d'un fonctionnement utilisable |
+| Réécriture de tous les groupes visuels          | La comparaison L3.3 a retenu une modale compacte pour de bonnes raisons    |
+| Nouveau système de calcul financier frontend    | Contredirait Finance V2                                                    |
+| Nouveau cache global ou SNAP-4                  | Aucun gain nouveau démontré                                                |
+| Objectif P95 comme précondition de L4           | P14 a déjà été clôturé avec des réserves assumées                          |
+| Gestion complète du mois courant réalisé        | Dépend de questions plus vastes de Plan → Réel                             |
+
+Il reste également les chantiers explicitement prévus plus loin : nouveaux Contexts santé et automobile, inventaire et besoins, plusieurs brouillons persistants, arbitrages intelligents et réconciliation complète. Ils ne sont pas oubliés ; ils ont simplement d'autres dépendances et objectifs.
+
+## 3. La décision de passage à L4
+
+GO fonctionnel pour préparer L4
+
+L3.3 est livré en Production. Les capacités essentielles sont en place et les suites ciblées ont préservé la parité économique. Il n'existe, dans les preuves fournies, aucun résultat imposant une nouvelle refonte générale avant L4.
+
+Ce qui manque, c'est un petit complément de validation authentifiée et comportementale pour les interactions non certifiées, pas une nouvelle fondation.
+
+Je ferais donc de la transition un travail court et fermé, avec une règle simple : si une vérification révèle un défaut important, on corrige ce défaut précisément. Si elle passe, on avance. On n'ouvre pas un nouveau chantier simplement parce qu'une idée supplémentaire serait techniquement réalisable.
+
+# Conclusion : ce que toute cette histoire nous a vraiment appris
+
+Notre vision de Composer a évolué en profondeur.
+
+Au départ, nous voulions construire visuellement un mois avec des cartes élégantes. Ensuite, nous avons compris qu'il fallait des calculs financiers justes, une bibliothèque de situations concrètes et une surface de travail lisible.
+
+Avec L3.3, nous avons franchi un nouveau cap : les cartes commencent à devenir de véritables instruments de décision.
+
+Le prochain changement de niveau n'est pas de créer encore plus de cartes, mais de faire en sorte qu'elles puissent représenter des événements composés et leurs conséquences croisées.
+
+L'exemple le plus parlant reste une visite familiale : un déplacement peut entraîner un coût d'usage automobile et éventuellement remplacer certains repas habituels. Mais Composer ne doit ni inventer le trajet, ni fabriquer une économie alimentaire, ni compter deux fois les dépenses.
+
+C'est cette capacité à comprendre les relations entre les choix, plutôt qu'à additionner des montants, qui représente la promesse la plus ambitieuse de ta vision initiale.
+
+Ma recommandation finale : clôturer L3.3, réaliser les six contrôles ciblés de préparation, figer les contrats de référence de L4, puis démarrer L4 sans L3.4 généraliste.
+
+Nous aurons ainsi utilisé tous les enseignements accumulés pour construire les fonctionnalités réellement attendues, sans consacrer une nouvelle succession de missions à perfectionner indéfiniment les fondations.

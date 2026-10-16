@@ -1,0 +1,48 @@
+{
+  "productCommit": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+  "mode": "minified React production build, esbuild fixture, no Next auth claim",
+  "bundleSha256": "4c98d28e33dba40d09e74a7e87b0925eacd5ed37c7e92cf2fce6cd1f5bce38c8",
+  "bundleBytes": 348490,
+  "criticalSources": [
+    {
+      "file": "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "sourceMapEqualsCurrentNormalizedNewlines": true,
+      "sha256": "9b8a7edaeac01df177407ed53bdd0c70e206cf48fe411bd16de7b6b0087d7115"
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer-board.tsx",
+      "sourceMapEqualsCurrentNormalizedNewlines": true,
+      "sha256": "1b257319cfb0f3972d3f10ab4357918e8658ef05d3a709f014d9b0d7d11db9a0"
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer-card.tsx",
+      "sourceMapEqualsCurrentNormalizedNewlines": true,
+      "sha256": "5bc6cbdf8ce237dc872e689cd29925d2ed6603b1eae1dcf3e5f1c2adce26e27b"
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/inline-control-value.tsx",
+      "sourceMapEqualsCurrentNormalizedNewlines": true,
+      "sha256": "86b904f4b17ab8a75308fbe685039dfe45ba1671c6f6a2e73c24d590b83edf71"
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/visual-cluster.tsx",
+      "sourceMapEqualsCurrentNormalizedNewlines": true,
+      "sha256": "0b603891abf906b27b30cbf78d2935565ab1b401bd4d2031c2ba61c05effce27"
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "sourceMapEqualsCurrentNormalizedNewlines": true,
+      "sha256": "6c7af6580cb9b7f1fef3c431fc9cf6dcf715ebf8e822d298a31c232bd7557b4b"
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/month-reuse.tsx",
+      "sourceMapEqualsCurrentNormalizedNewlines": true,
+      "sha256": "2c9855b7eefa36d24b3fe0e8990a99d2affce3adf9ba53e235ee82bea2bc2132"
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/context-card.tsx",
+      "sourceMapEqualsCurrentNormalizedNewlines": true,
+      "sha256": "f0e0484e5932b69121e6a011a7f6d004261122ae41f8e20bbaad4c99a250e9ff"
+    }
+  ]
+}

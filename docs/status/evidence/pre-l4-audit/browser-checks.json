@@ -1,0 +1,197 @@
+{
+  "environment": "LOCAL_PRODUCTION_REACT_SYNTHETIC",
+  "productCode": "5cfb121",
+  "nativeConfirmation": "NOT_RUN; confirm return stub used only in isolated synthetic host",
+  "checks": [
+    {
+      "id": "A0-GUARD-CLOSE",
+      "environment": "REAL_REACT_PRODUCTION_FIXTURE_WITH_CONFIRM_STUB",
+      "clusterOpen": true,
+      "confirmationCalls": "1",
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+      "inspector": false,
+      "raw": "5"
+    },
+    {
+      "id": "A0-GUARD-DETAILS",
+      "environment": "REAL_REACT_PRODUCTION_FIXTURE_WITH_CONFIRM_STUB",
+      "clusterOpen": true,
+      "confirmationCalls": "2",
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+      "inspector": false,
+      "raw": "5"
+    },
+    {
+      "id": "A0-D02",
+      "classification": "CONFIRMED_DEFECT",
+      "environment": "REAL_REACT_PRODUCTION_FIXTURE",
+      "evidence": "Vêtements Choix de ce mois 0,00 € despite no decision"
+    },
+    {
+      "id": "A0-RESIZE-RAW",
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+      "height": 900,
+      "overflow": false,
+      "page": "0",
+      "raw": "99,90",
+      "width": 1728
+    },
+    {
+      "id": "A0-PANEL-RAW",
+      "before": {
+        "page": "0",
+        "raw": "88,80"
+      },
+      "after": {
+        "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+        "inspector": true,
+        "page": "0",
+        "raw": "88,80",
+        "width": 1728
+      }
+    },
+    {
+      "id": "A0-REFLOW-RAW",
+      "before": {
+        "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+        "inspector": true,
+        "page": "0",
+        "raw": "88,80",
+        "width": 1728
+      },
+      "after": {
+        "cardPage": "0",
+        "confirmCalls": "2",
+        "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+        "height": 900,
+        "inspector": true,
+        "raw": "88,80",
+        "width": 1440
+      }
+    },
+    {
+      "id": "A0-D01",
+      "classification": "CONFIRMED_DEFECT",
+      "applyDisabled": false,
+      "digest": "7bb4fea933adda57825003fa88b29363e9bd2540083a74c75790c8077bafbf3d",
+      "dirty": true,
+      "preview": "FRESH",
+      "raw": "300",
+      "save": "SAVED",
+      "width": 1440,
+      "limit": "Apply not clicked; previous admitted 250 remains authoritative"
+    },
+    {
+      "id": "A0-CHECK-EDITING-GEOMETRY",
+      "classification": "NO_DEFECT_PROVEN",
+      "cards": [],
+      "errors": [
+        "Saisissez un montant positif, avec deux décimales au maximum."
+      ],
+      "height": 900,
+      "overflow": false,
+      "width": 1440,
+      "methodLimit": "No protruding card recorded by this selector; not a full geometric certification"
+    },
+    {
+      "id": "A0-D03",
+      "classification": "CONFIRMED_DEFECT",
+      "buttonWidth": 124.4000015258789,
+      "nextButtonLeft": 710.2000122070312,
+      "overlapNext": true,
+      "textRight": 753.0874938964844,
+      "textWidth": 170.28750610351562
+    },
+    {
+      "id": "A0-GUARD-ACCEPT",
+      "environment": "REAL_REACT_PRODUCTION_FIXTURE_WITH_CONFIRM_STUB",
+      "beforeDigest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+      "clusterOpen": false,
+      "confirmationCalls": "1",
+      "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+      "rawPresent": false
+    },
+    {
+      "id": "A0-ERROR-PREVIEW-SAVED",
+      "environment": "REAL_REACT_PRODUCTION_FIXTURE",
+      "applyDisabled": true,
+      "preview": "FAILED",
+      "save": "SAVED"
+    },
+    {
+      "id": "A0-CHECK-DENSE-REFLOW",
+      "before": {
+        "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+        "page": "0",
+        "raw": "55,50"
+      },
+      "after": {
+        "digest": "2a7d1d9af6f043f07dd867af7dd754d8c32c41e44ee6ee38b4f841948d1c751a",
+        "dirty": true,
+        "height": 900,
+        "inspector": true,
+        "overflow": false,
+        "page": "0",
+        "raw": "55,50",
+        "width": 1440
+      },
+      "classification": "NO_DEFECT_PROVEN"
+    },
+    {
+      "id": "A0-ERROR-PREVIEW-RECOVERED",
+      "environment": "REAL_REACT_PRODUCTION_FIXTURE",
+      "applyDisabled": false,
+      "preview": "FRESH",
+      "save": "SAVED"
+    },
+    {
+      "id": "A0-RETURN-SELECTION",
+      "environment": "DENSE_FIXTURE",
+      "activePage": "0",
+      "focused": "true"
+    },
+    {
+      "id": "A0-REUSE-REFUSED",
+      "beforeDigest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+      "digest": "8847c43cd0462e422be7300d7b59dd4ca184b3f5c8ce02d72a8f5cb3b69767ac",
+      "proposalOpen": false
+    },
+    {
+      "id": "A0-ERROR-SAVE",
+      "environment": "ISOLATED_SYNTHETIC_DRAFT_TRANSPORT_NOT_HTTP_AUTH",
+      "applyDisabled": true,
+      "digest": "e42b160bed73b0adb2b43448749e0b570e26cec6af07e3b7c28f32e8eb331f20",
+      "preview": "FRESH",
+      "retry": true,
+      "save": "ERROR"
+    }
+  ],
+  "desktop": [
+    {
+      "dom": 2573,
+      "height": 900,
+      "images": 6,
+      "overflow": false,
+      "pages": 4,
+      "width": 1440
+    },
+    {
+      "dom": 3637,
+      "height": 900,
+      "images": 6,
+      "overflow": false,
+      "pages": 3,
+      "width": 1728
+    },
+    {
+      "dom": 4287,
+      "height": 1080,
+      "images": 6,
+      "overflow": false,
+      "pages": 2,
+      "width": 1920
+    }
+  ],
+  "latency": "NOT_CERTIFIED",
+  "remoteWrites": 0
+}
