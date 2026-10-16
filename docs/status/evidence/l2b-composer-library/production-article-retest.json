@@ -1,0 +1,50 @@
+{
+  "scope": "ONE_EXPLICITLY_REAUTHORIZED_ARTICLE_RETEST",
+  "environment": "AUTHENTICATED_PRODUCTION",
+  "month": "2026-12",
+  "productionCommit": "ddfcf4b41d36b1ee024d4aecb0698907d7144cca",
+  "inputConfirmedBeforeSubmission": true,
+  "localAdmission": {
+    "summaryMatches": true,
+    "digest": "18a4eb5e51c44332a6f84d08bbf34661d89ddbd0e0fbbc06e926a5b16c7cc524"
+  },
+  "autosave": {
+    "state": "SAVED",
+    "officialRevision": 0,
+    "applyDisabled": true
+  },
+  "durableRead": {
+    "method": "PRIVILEGED_SQL_READ_ONLY_NOT_RLS_PROOF",
+    "rows": [
+      {
+        "draft_version": 2,
+        "matches_confirmed_digest": true,
+        "context_count": 1,
+        "has_test_product": true,
+        "has_declared_merchant": true,
+        "no_economic_selection": true
+      }
+    ]
+  },
+  "reload": {
+    "status": "EXECUTED_PASS_AUTHENTICATED_PRODUCTION",
+    "saveState": "SAVED",
+    "sameDigest": true,
+    "officialRevision": 0,
+    "applyDisabled": true,
+    "reopenedEditorArticleSummaryMatches": true,
+    "screenshot": "production-article-reloaded.jpg",
+    "limit": "Server/browser reload was prolonged; no product latency or P95 certified."
+  },
+  "recoverableArchive": {
+    "status": "EXECUTED_PASS_AUTHENTICATED_UI_AND_READ_ONLY_CORROBORATION",
+    "lifecycle": "ABANDONED",
+    "draftVersion": 3,
+    "sameDigest": true,
+    "articlePreserved": true,
+    "activeRemaining": 0,
+    "priorArchivesPreserved": true
+  },
+  "applyExecuted": false,
+  "economicSelections": 0
+}

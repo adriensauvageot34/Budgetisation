@@ -1,0 +1,36 @@
+{
+  "authenticated": true,
+  "month": "2026-12",
+  "before": {
+    "digest": "1750a5c830e3459c4d8ac85b130b349c391829f24627dbb7be8c3f119c1071c5",
+    "revision": "0",
+    "save": "CLEAN",
+    "visibleContexts": 0
+  },
+  "after": {
+    "applyDisabled": true,
+    "digest": "92d1c5232dcb75632307e2e99b47537e0aa86adf35151c9db3c47b872605abe2",
+    "images": [
+      {
+        "file": "home-evening.webp",
+        "height": 600,
+        "width": 1200
+      },
+      {
+        "file": "amazon-purchase.webp",
+        "height": 600,
+        "width": 1200
+      }
+    ],
+    "revision": "0",
+    "save": "SAVED",
+    "state": "PENDING"
+  },
+  "createdKeys": [
+    "amazon-purchase",
+    "mascara",
+    "home-evening"
+  ],
+  "amountsEntered": false,
+  "applyExecuted": false
+}

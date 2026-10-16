@@ -9,7 +9,138 @@
     "L2B-IMMUTABLE-APPLY-RELOAD-MONPLAN-REEDIT",
     "L2B-21-NEW-ORIGINALS-PLUS-5-BYTE-PRESERVED"
   ],
-  "coverage": [],
+  "coverage": [
+    {
+      "presetKey": "techno-night",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "uber-eats-order",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "fishing-day",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "fontes-family-visit",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "clothing-shopping",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "bar-apero",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "nightclub",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "friends-evening",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "home-evening",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "chicken-snack",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "restaurant-for-two",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "hiking-nature",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "beach-day",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "cinema",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "spa-relax",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "servian-family-visit",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "visit-friends",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "weekend-gite",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "video-game-purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "amazon-purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "shein-purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "aliexpress-purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "mascara",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "hair-wax",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "laundry-detergent",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    },
+    {
+      "presetKey": "dishwashing-liquid",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "proof": "contract-26-presets-run.log"
+    }
+  ],
   "remoteWrites": 0,
   "remainingOnly": true,
   "priorPresetProof": "contract-26-presets-run.log"

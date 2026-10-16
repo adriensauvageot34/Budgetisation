@@ -1,0 +1,47 @@
+{
+  "environment": "REAL_COMPILER_SYNTHETIC_INPUTS_NO_DATABASE",
+  "base": "ddfcf4b41d36b1ee024d4aecb0698907d7144cca",
+  "checks": [
+    {
+      "name": "A_UNCHANGED",
+      "impact": "0.00",
+      "projectionCompleteness": "PARTIAL",
+      "inputUnchanged": true,
+      "additionalWorldReads": 0
+    },
+    {
+      "name": "B_GROCERIES_350",
+      "impact": "-25.00",
+      "projectionCompleteness": "PARTIAL",
+      "inputUnchanged": true,
+      "additionalWorldReads": 0
+    },
+    {
+      "name": "C_RESTAURANT_COVERED",
+      "impact": "0.00",
+      "projectionCompleteness": "PARTIAL",
+      "inputUnchanged": true,
+      "additionalWorldReads": 0
+    },
+    {
+      "name": "D_RESTAURANT_EXTRA",
+      "impact": "-40.00",
+      "projectionCompleteness": "PARTIAL",
+      "inputUnchanged": true,
+      "additionalWorldReads": 0
+    },
+    {
+      "name": "E_PARTIAL_UNKNOWN",
+      "impact": null,
+      "projectionCompleteness": "UNKNOWN",
+      "inputUnchanged": true,
+      "additionalWorldReads": 0
+    },
+    {
+      "name": "AUTHORITIES_APPLY_CAS_SCHEDULER_DRAFT_UNCHANGED",
+      "pass": true
+    }
+  ],
+  "authenticated": false,
+  "remoteWrites": 0
+}

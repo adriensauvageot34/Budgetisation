@@ -1,0 +1,9 @@
+{
+  "businessRequests": [
+    "/draft",
+    "/interaction"
+  ],
+  "domNodes": 2129,
+  "height": 900,
+  "width": 1440
+}

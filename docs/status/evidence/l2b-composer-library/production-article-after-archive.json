@@ -1,0 +1,52 @@
+{
+  "method": "PRIVILEGED_SQL_READ_ONLY_NOT_RLS_PROOF",
+  "scope": "same authorized author / 2026-12",
+  "archivedByAuthenticatedUI": true,
+  "rows": [
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 3,
+      "matches_retest_digest": true,
+      "context_count": 1,
+      "archived_article_preserved": true
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 3,
+      "matches_retest_digest": false,
+      "context_count": 3,
+      "archived_article_preserved": null
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 3,
+      "matches_retest_digest": false,
+      "context_count": 5,
+      "archived_article_preserved": null
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 2,
+      "matches_retest_digest": false,
+      "context_count": 0,
+      "archived_article_preserved": null
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 6,
+      "matches_retest_digest": false,
+      "context_count": 0,
+      "archived_article_preserved": null
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 8,
+      "matches_retest_digest": false,
+      "context_count": 1,
+      "archived_article_preserved": null
+    }
+  ],
+  "activeRemaining": 0,
+  "destructiveDeletes": 0,
+  "applyExecuted": false
+}

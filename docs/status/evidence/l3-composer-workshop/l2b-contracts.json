@@ -1,0 +1,223 @@
+{
+  "environment": "PGLITE_SYNTHETIC_ONLY",
+  "authenticated": false,
+  "checks": [
+    "L2B-INDEX-ADMISSION-SEARCH-GENERICS-NO-OPTIONS",
+    "techno-night-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "uber-eats-order-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "fishing-day-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "fontes-family-visit-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "clothing-shopping-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "bar-apero-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "nightclub-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "friends-evening-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "home-evening-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "chicken-snack-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "restaurant-for-two-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "hiking-nature-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "beach-day-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "cinema-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "spa-relax-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "servian-family-visit-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "visit-friends-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "weekend-gite-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "video-game-purchase-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "amazon-purchase-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "shein-purchase-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "aliexpress-purchase-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "mascara-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "hair-wax-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "laundry-detergent-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "dishwashing-liquid-CREATE-EDIT-ROUNDTRIP-PARITY",
+    "L2B-FASTFOOD-GUIDE-PARTIAL-ADMISSION-AND-UNKNOWN-FALLBACK",
+    "L2B-ALL-PUBLISHED-OPTIONS-REACHABLE-BY-PARENT",
+    "L2B-WEEKEND-CHILD-NONADDITIVE",
+    "L2B-IMMUTABLE-APPLY-RELOAD-MONPLAN-REEDIT",
+    "L2B-21-NEW-ORIGINALS-PLUS-5-BYTE-PRESERVED"
+  ],
+  "coverage": [
+    {
+      "presetKey": "techno-night",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024000",
+      "selectionId": "00000000-0000-4000-8000-000000024100"
+    },
+    {
+      "presetKey": "uber-eats-order",
+      "templateKey": "delivery",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024001",
+      "selectionId": "00000000-0000-4000-8000-000000024101"
+    },
+    {
+      "presetKey": "fishing-day",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024002",
+      "selectionId": "00000000-0000-4000-8000-000000024102"
+    },
+    {
+      "presetKey": "fontes-family-visit",
+      "templateKey": "family-visit",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024003",
+      "selectionId": "00000000-0000-4000-8000-000000024103"
+    },
+    {
+      "presetKey": "clothing-shopping",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024004",
+      "selectionId": "00000000-0000-4000-8000-000000024104"
+    },
+    {
+      "presetKey": "bar-apero",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024005",
+      "selectionId": "00000000-0000-4000-8000-000000024105"
+    },
+    {
+      "presetKey": "nightclub",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024006",
+      "selectionId": "00000000-0000-4000-8000-000000024106"
+    },
+    {
+      "presetKey": "friends-evening",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024007",
+      "selectionId": "00000000-0000-4000-8000-000000024107"
+    },
+    {
+      "presetKey": "home-evening",
+      "templateKey": "night-out",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024008",
+      "selectionId": "00000000-0000-4000-8000-000000024108"
+    },
+    {
+      "presetKey": "chicken-snack",
+      "templateKey": "fast-food",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024009",
+      "selectionId": "00000000-0000-4000-8000-000000024109"
+    },
+    {
+      "presetKey": "restaurant-for-two",
+      "templateKey": "restaurant",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024010",
+      "selectionId": "00000000-0000-4000-8000-000000024110"
+    },
+    {
+      "presetKey": "hiking-nature",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024011",
+      "selectionId": "00000000-0000-4000-8000-000000024111"
+    },
+    {
+      "presetKey": "beach-day",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024012",
+      "selectionId": "00000000-0000-4000-8000-000000024112"
+    },
+    {
+      "presetKey": "cinema",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024013",
+      "selectionId": "00000000-0000-4000-8000-000000024113"
+    },
+    {
+      "presetKey": "spa-relax",
+      "templateKey": "activity",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024014",
+      "selectionId": "00000000-0000-4000-8000-000000024114"
+    },
+    {
+      "presetKey": "servian-family-visit",
+      "templateKey": "family-visit",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024015",
+      "selectionId": "00000000-0000-4000-8000-000000024115"
+    },
+    {
+      "presetKey": "visit-friends",
+      "templateKey": "friend-visit",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024016",
+      "selectionId": "00000000-0000-4000-8000-000000024116"
+    },
+    {
+      "presetKey": "weekend-gite",
+      "templateKey": "short-stay",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024017",
+      "selectionId": "00000000-0000-4000-8000-000000024117"
+    },
+    {
+      "presetKey": "video-game-purchase",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024018",
+      "selectionId": "00000000-0000-4000-8000-000000024118"
+    },
+    {
+      "presetKey": "amazon-purchase",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024019",
+      "selectionId": "00000000-0000-4000-8000-000000024119"
+    },
+    {
+      "presetKey": "shein-purchase",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024020",
+      "selectionId": "00000000-0000-4000-8000-000000024120"
+    },
+    {
+      "presetKey": "aliexpress-purchase",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024021",
+      "selectionId": "00000000-0000-4000-8000-000000024121"
+    },
+    {
+      "presetKey": "mascara",
+      "templateKey": "beauty-restock",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024022",
+      "selectionId": "00000000-0000-4000-8000-000000024122"
+    },
+    {
+      "presetKey": "hair-wax",
+      "templateKey": "beauty-restock",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024023",
+      "selectionId": "00000000-0000-4000-8000-000000024123"
+    },
+    {
+      "presetKey": "laundry-detergent",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024024",
+      "selectionId": "00000000-0000-4000-8000-000000024124"
+    },
+    {
+      "presetKey": "dishwashing-liquid",
+      "templateKey": "purchase",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "identity": "00000000-0000-4000-8000-000000024025",
+      "selectionId": "00000000-0000-4000-8000-000000024125"
+    }
+  ],
+  "remoteWrites": 0
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "TEMPORARY_COMPARISON",
+    "pass": true,
+    "digestUnchanged": true,
+    "applyAbsent": true
+  },
+  {
+    "name": "L2B_MANAGE_AND_PROTECTION",
+    "pass": true,
+    "coursesCount": 1,
+    "protectedConsultationWithoutEditor": true,
+    "digestUnchanged": true
+  },
+  {
+    "name": "SAVING_INDEPENDENT_OF_PREVIEW",
+    "observed": {
+      "applyDisabled": true,
+      "preview": "PENDING",
+      "save": "SAVING",
+      "status": "Sauvegarde en cours…"
+    }
+  },
+  {
+    "name": "DRAFT_UNDO_REDO_RELOAD_REEDIT",
+    "pass": true,
+    "digestBeforeAndAfter": "a7a7fc9f99dbfd79abb37bdc7b14b6773b8543a7dbea6072ea332a4a079c1e76",
+    "article": "Article de test L3",
+    "image": [
+      1200,
+      600
+    ],
+    "fixtureOnly": true,
+    "applyExecuted": false
+  },
+  {
+    "name": "ERROR_RECOVERY_ACTION",
+    "applyDisabled": true,
+    "documentWidth": 1440,
+    "height": 900,
+    "preview": "FRESH",
+    "retry": true,
+    "save": "ERROR",
+    "status": "Sauvegarde non confirmée",
+    "width": 1440,
+    "fixtureOnly": true
+  },
+  {
+    "name": "CONFLICT_OPTIONS",
+    "fixtureOnly": true,
+    "applyDisabled": true,
+    "recoveryButtons": [
+      "Relire le brouillon",
+      "Charger la version sauvegardée"
+    ],
+    "save": "CONFLICT"
+  },
+  {
+    "name": "CONFLICT_LOAD_SERVER_CONFIRMED",
+    "fixtureOnly": true,
+    "amount": "370",
+    "digest": "457f5ef7262934f93511ff7d9b633678a057dad580be1ea6726ab4fc451309b4",
+    "save": "SAVED"
+  }
+]

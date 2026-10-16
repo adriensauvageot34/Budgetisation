@@ -1,0 +1,719 @@
+[
+  {
+    "variant": "reference",
+    "run": 1,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "domNodes": 1906,
+    "height": 900,
+    "images": 5,
+    "metrics": {
+      "decisions": [],
+      "domNodes": 1906,
+      "editors": [],
+      "libraryActions": [],
+      "openingFreshMs": 178.80000000074506,
+      "resources": [
+        {
+          "decodedBytes": 75792,
+          "durationMs": 15.699999999254942,
+          "path": "/global.css",
+          "transferBytes": 76092,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 76509,
+          "durationMs": 17.399999998509884,
+          "path": "/app.css",
+          "transferBytes": 76809,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 324077,
+          "durationMs": 18.800000000745055,
+          "path": "/app.js",
+          "transferBytes": 324377,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 51524,
+          "durationMs": 4.699999999254942,
+          "path": "/chunks/chunk-73T3EAPL.js",
+          "transferBytes": 51824,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 19533,
+          "durationMs": 5.399999998509884,
+          "path": "/chunks/chunk-CCCRIOTT.js",
+          "transferBytes": 19833,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 770,
+          "durationMs": 6.400000002235174,
+          "path": "/chunks/chunk-GNSHWBQE.js",
+          "transferBytes": 1070,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 54516,
+          "durationMs": 7.300000000745058,
+          "path": "/chunks/chunk-UIFUYLB3.js",
+          "transferBytes": 54816,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 104,
+          "durationMs": 2,
+          "path": "/draft",
+          "transferBytes": 404,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 314395,
+          "durationMs": 54.19999999925494,
+          "path": "/interaction",
+          "transferBytes": 314695,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 355,
+          "durationMs": 53.79999999701977,
+          "path": "/favicon.ico",
+          "transferBytes": 655,
+          "type": "other"
+        },
+        {
+          "decodedBytes": 24682,
+          "durationMs": 20.099999997764822,
+          "path": "/planned-visuals/composer/presets/techno-night.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 20890,
+          "durationMs": 47.20000000298023,
+          "path": "/planned-visuals/composer/presets/bar-apero.webp",
+          "transferBytes": 0,
+          "type": "img"
+        }
+      ]
+    },
+    "width": 1440
+  },
+  {
+    "variant": "candidate",
+    "run": 1,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "domNodes": 1900,
+    "height": 900,
+    "images": 5,
+    "metrics": {
+      "decisions": [],
+      "domNodes": 1900,
+      "editors": [],
+      "libraryActions": [],
+      "openingFreshMs": 286.80000000074506,
+      "resources": [
+        {
+          "decodedBytes": 75792,
+          "durationMs": 23.699999999254945,
+          "path": "/global.css",
+          "transferBytes": 76092,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 81162,
+          "durationMs": 24.599999997764822,
+          "path": "/app.css",
+          "transferBytes": 81462,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 330321,
+          "durationMs": 27.600000001490116,
+          "path": "/app.js",
+          "transferBytes": 330621,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 19533,
+          "durationMs": 11.399999998509884,
+          "path": "/chunks/chunk-WLA2OOOP.js",
+          "transferBytes": 19833,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 51524,
+          "durationMs": 9.5,
+          "path": "/chunks/chunk-SROR32KI.js",
+          "transferBytes": 51824,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 770,
+          "durationMs": 12.300000000745058,
+          "path": "/chunks/chunk-GNSHWBQE.js",
+          "transferBytes": 1070,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 54875,
+          "durationMs": 13.600000001490116,
+          "path": "/chunks/chunk-O64MR7TD.js",
+          "transferBytes": 55175,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 104,
+          "durationMs": 6,
+          "path": "/draft",
+          "transferBytes": 404,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 314395,
+          "durationMs": 64.69999999925494,
+          "path": "/interaction",
+          "transferBytes": 314695,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 355,
+          "durationMs": 64,
+          "path": "/favicon.ico",
+          "transferBytes": 655,
+          "type": "other"
+        },
+        {
+          "decodedBytes": 24682,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/techno-night.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 20890,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/bar-apero.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 23776,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/nightclub.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 28480,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/friends-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 30898,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/home-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        }
+      ]
+    },
+    "width": 1440
+  },
+  {
+    "variant": "reference",
+    "run": 2,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "domNodes": 1906,
+    "height": 900,
+    "images": 5,
+    "metrics": {
+      "decisions": [],
+      "domNodes": 1906,
+      "editors": [],
+      "libraryActions": [],
+      "openingFreshMs": 198.5,
+      "resources": [
+        {
+          "decodedBytes": 75792,
+          "durationMs": 20.199999999254945,
+          "path": "/global.css",
+          "transferBytes": 76092,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 76509,
+          "durationMs": 18.799999997019768,
+          "path": "/app.css",
+          "transferBytes": 76809,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 324077,
+          "durationMs": 21.099999997764822,
+          "path": "/app.js",
+          "transferBytes": 324377,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 19533,
+          "durationMs": 9.700000002980232,
+          "path": "/chunks/chunk-CCCRIOTT.js",
+          "transferBytes": 19833,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 51524,
+          "durationMs": 7.5,
+          "path": "/chunks/chunk-73T3EAPL.js",
+          "transferBytes": 51824,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 770,
+          "durationMs": 11.699999999254942,
+          "path": "/chunks/chunk-GNSHWBQE.js",
+          "transferBytes": 1070,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 54516,
+          "durationMs": 13.199999999254942,
+          "path": "/chunks/chunk-UIFUYLB3.js",
+          "transferBytes": 54816,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 104,
+          "durationMs": 3.699999999254942,
+          "path": "/draft",
+          "transferBytes": 404,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 314395,
+          "durationMs": 46.5,
+          "path": "/interaction",
+          "transferBytes": 314695,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 355,
+          "durationMs": 46.19999999925494,
+          "path": "/favicon.ico",
+          "transferBytes": 655,
+          "type": "other"
+        },
+        {
+          "decodedBytes": 24682,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/techno-night.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 20890,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/bar-apero.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 23776,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/nightclub.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 28480,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/friends-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 30898,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/home-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        }
+      ]
+    },
+    "width": 1440
+  },
+  {
+    "variant": "candidate",
+    "run": 2,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "domNodes": 1900,
+    "height": 900,
+    "images": 5,
+    "metrics": {
+      "decisions": [],
+      "domNodes": 1900,
+      "editors": [],
+      "libraryActions": [],
+      "openingFreshMs": 198.40000000223517,
+      "resources": [
+        {
+          "decodedBytes": 75792,
+          "durationMs": 20.5,
+          "path": "/global.css",
+          "transferBytes": 76092,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 81162,
+          "durationMs": 21.400000002235178,
+          "path": "/app.css",
+          "transferBytes": 81462,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 330321,
+          "durationMs": 23.800000000745055,
+          "path": "/app.js",
+          "transferBytes": 330621,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 19533,
+          "durationMs": 6.800000000745058,
+          "path": "/chunks/chunk-WLA2OOOP.js",
+          "transferBytes": 19833,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 51524,
+          "durationMs": 5.300000000745058,
+          "path": "/chunks/chunk-SROR32KI.js",
+          "transferBytes": 51824,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 770,
+          "durationMs": 8.099999997764826,
+          "path": "/chunks/chunk-GNSHWBQE.js",
+          "transferBytes": 1070,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 54875,
+          "durationMs": 8.800000000745058,
+          "path": "/chunks/chunk-O64MR7TD.js",
+          "transferBytes": 55175,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 104,
+          "durationMs": 2.599999997764826,
+          "path": "/draft",
+          "transferBytes": 404,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 314395,
+          "durationMs": 40.79999999701977,
+          "path": "/interaction",
+          "transferBytes": 314695,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 355,
+          "durationMs": 41.900000002235174,
+          "path": "/favicon.ico",
+          "transferBytes": 655,
+          "type": "other"
+        },
+        {
+          "decodedBytes": 24682,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/techno-night.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 20890,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/bar-apero.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 23776,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/nightclub.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 28480,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/friends-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 30898,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/home-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        }
+      ]
+    },
+    "width": 1440
+  },
+  {
+    "variant": "reference",
+    "run": 3,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "domNodes": 1906,
+    "height": 900,
+    "images": 5,
+    "metrics": {
+      "decisions": [],
+      "domNodes": 1906,
+      "editors": [],
+      "libraryActions": [],
+      "openingFreshMs": 174.29999999701977,
+      "resources": [
+        {
+          "decodedBytes": 75792,
+          "durationMs": 14.600000001490116,
+          "path": "/global.css",
+          "transferBytes": 76092,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 76509,
+          "durationMs": 16.399999998509884,
+          "path": "/app.css",
+          "transferBytes": 76809,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 324077,
+          "durationMs": 19,
+          "path": "/app.js",
+          "transferBytes": 324377,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 51524,
+          "durationMs": 4.600000001490116,
+          "path": "/chunks/chunk-73T3EAPL.js",
+          "transferBytes": 51824,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 770,
+          "durationMs": 6.900000002235174,
+          "path": "/chunks/chunk-GNSHWBQE.js",
+          "transferBytes": 1070,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 54516,
+          "durationMs": 7.900000002235174,
+          "path": "/chunks/chunk-UIFUYLB3.js",
+          "transferBytes": 54816,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 19533,
+          "durationMs": 5.700000002980232,
+          "path": "/chunks/chunk-CCCRIOTT.js",
+          "transferBytes": 19833,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 104,
+          "durationMs": 2,
+          "path": "/draft",
+          "transferBytes": 404,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 314395,
+          "durationMs": 40.29999999701977,
+          "path": "/interaction",
+          "transferBytes": 314695,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 355,
+          "durationMs": 38.30000000074506,
+          "path": "/favicon.ico",
+          "transferBytes": 655,
+          "type": "other"
+        },
+        {
+          "decodedBytes": 24682,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/techno-night.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 20890,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/bar-apero.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 23776,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/nightclub.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 28480,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/friends-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 30898,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/home-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        }
+      ]
+    },
+    "width": 1440
+  },
+  {
+    "variant": "candidate",
+    "run": 3,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "domNodes": 1900,
+    "height": 900,
+    "images": 5,
+    "metrics": {
+      "decisions": [],
+      "domNodes": 1900,
+      "editors": [],
+      "libraryActions": [],
+      "openingFreshMs": 195.30000000074503,
+      "resources": [
+        {
+          "decodedBytes": 75792,
+          "durationMs": 14.899999998509884,
+          "path": "/global.css",
+          "transferBytes": 76092,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 81162,
+          "durationMs": 16.400000002235174,
+          "path": "/app.css",
+          "transferBytes": 81462,
+          "type": "link"
+        },
+        {
+          "decodedBytes": 330321,
+          "durationMs": 18.800000000745055,
+          "path": "/app.js",
+          "transferBytes": 330621,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 19533,
+          "durationMs": 9,
+          "path": "/chunks/chunk-WLA2OOOP.js",
+          "transferBytes": 19833,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 51524,
+          "durationMs": 7.899999998509884,
+          "path": "/chunks/chunk-SROR32KI.js",
+          "transferBytes": 51824,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 770,
+          "durationMs": 9.600000001490116,
+          "path": "/chunks/chunk-GNSHWBQE.js",
+          "transferBytes": 1070,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 54875,
+          "durationMs": 11.199999999254942,
+          "path": "/chunks/chunk-O64MR7TD.js",
+          "transferBytes": 55175,
+          "type": "script"
+        },
+        {
+          "decodedBytes": 104,
+          "durationMs": 2.300000000745058,
+          "path": "/draft",
+          "transferBytes": 404,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 314395,
+          "durationMs": 44.19999999925494,
+          "path": "/interaction",
+          "transferBytes": 314695,
+          "type": "fetch"
+        },
+        {
+          "decodedBytes": 355,
+          "durationMs": 43.5,
+          "path": "/favicon.ico",
+          "transferBytes": 655,
+          "type": "other"
+        },
+        {
+          "decodedBytes": 24682,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/techno-night.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 20890,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/bar-apero.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 23776,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/nightclub.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 28480,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/friends-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        },
+        {
+          "decodedBytes": 30898,
+          "durationMs": 0,
+          "path": "/planned-visuals/composer/presets/home-evening.webp",
+          "transferBytes": 0,
+          "type": "img"
+        }
+      ]
+    },
+    "width": 1440
+  }
+]
