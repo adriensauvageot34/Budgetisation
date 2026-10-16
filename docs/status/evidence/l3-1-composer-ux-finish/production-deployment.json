@@ -1,0 +1,52 @@
+{
+  "id": "dpl_9heoGujRbeSMy67t9s27p72BMSTs",
+  "name": "budgetisation",
+  "url": "budgetisation-bzacox8ad-adriensauvageot34-6137s-projects.vercel.app",
+  "type": "LAMBDAS",
+  "state": "READY",
+  "createdAt": 1792142209747,
+  "creator": {
+    "uid": "ItlVoi62mpJ28TeqsxO3j569",
+    "username": "adriensauvageot34-6137"
+  },
+  "project": {
+    "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+    "name": "budgetisation",
+    "framework": "nextjs"
+  },
+  "meta": {
+    "githubCommitRef": "main",
+    "githubCommitSha": "3bde89c423d38f61f458b643c264f5f9424e1393",
+    "githubCommitMessage": "Merge pull request #47: L3.1 Composer desktop UX polish\n\nL3.1 — Board plus dense, pagination explicite et palette complète",
+    "githubRepo": "Budgetisation",
+    "githubOrg": "adriensauvageot34"
+  },
+  "alias": [
+    "budgetisation-tan.vercel.app",
+    "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+    "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+  ],
+  "target": "production",
+  "regions": [
+    "iad1"
+  ],
+  "buildingAt": 1792142210809,
+  "ready": 1792142303984,
+  "readyState": "READY",
+  "source": "git",
+  "aliasError": null,
+  "pr": 47,
+  "prHead": "c422f114e7548adf05c89e89a06e2e92e6e064fc",
+  "productCommit": "38f5cd95e40c1a03aad151b6d0c400c71705ddb1",
+  "mergeTreeMatchesPrHead": true,
+  "productTreeUnchangedAfter38f": true,
+  "githubActionsRuns": [],
+  "reviews": [],
+  "githubChecks": [
+    {
+      "context": "Vercel",
+      "state": "success",
+      "target_url": "https://vercel.com/adriensauvageot34-6137s-projects/budgetisation/9heoGujRbeSMy67t9s27p72BMSTs"
+    }
+  ]
+}

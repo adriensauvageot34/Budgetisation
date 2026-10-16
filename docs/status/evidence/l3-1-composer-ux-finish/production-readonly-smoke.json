@@ -1,0 +1,89 @@
+{
+  "deployment": "dpl_9heoGujRbeSMy67t9s27p72BMSTs",
+  "productionCommit": "3bde89c423d38f61f458b643c264f5f9424e1393",
+  "verdict": "EXECUTED_PASS_READ_ONLY_AUTHENTICATED",
+  "before": {
+    "authenticated": true,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "preview": "BLOCKED",
+    "revision": "0",
+    "save": "CLEAN"
+  },
+  "loaded": {
+    "applyDisabled": true,
+    "authenticated": true,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "documentWidth": 1440,
+    "height": 900,
+    "pagination": " PrécédentePage 1 sur 11Suivante ",
+    "preview": "BLOCKED",
+    "revision": "0",
+    "save": "CLEAN",
+    "width": 1440
+  },
+  "unresolved": {
+    "completenessFocus": "true",
+    "inspectorOpen": "true",
+    "save": "CLEAN"
+  },
+  "financial": {
+    "completenessFocus": "false",
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "documentWidth": 1440,
+    "financialHeading": true,
+    "incompleteSummary": true,
+    "pageButtons": 1,
+    "pagination": " PrécédentePage 1 sur 11Suivante ",
+    "preview": "BLOCKED",
+    "revision": "0",
+    "save": "CLEAN",
+    "width": 1440
+  },
+  "geometries": [
+    {
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+      "documentWidth": 1440,
+      "height": 900,
+      "inspectorOpen": "true",
+      "revision": "0",
+      "save": "CLEAN",
+      "width": 1440
+    },
+    {
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+      "documentWidth": 1728,
+      "height": 900,
+      "inspectorOpen": "true",
+      "revision": "0",
+      "save": "CLEAN",
+      "width": 1728
+    },
+    {
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+      "documentWidth": 1920,
+      "height": 1080,
+      "inspectorOpen": "true",
+      "revision": "0",
+      "save": "CLEAN",
+      "width": 1920
+    }
+  ],
+  "end": {
+    "authenticated": true,
+    "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+    "inspectorOpen": "false",
+    "preview": "BLOCKED",
+    "revision": "0",
+    "save": "CLEAN"
+  },
+  "errorCount": 0,
+  "semanticChange": false,
+  "applyExecuted": false,
+  "personalDraftWriteExecuted": false,
+  "databaseMutationProof": "Read-only UI actions only; stable digest/revision/CLEAN. No database-wide audit repeated.",
+  "limits": [
+    "Production save/Reload and Apply intentionally NOT_RUN; fixture coverage recorded separately",
+    "Initial browser navigation exceeded tool deadline; page then loaded without a second navigation",
+    "No production performance result inferred"
+  ]
+}

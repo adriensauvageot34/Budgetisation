@@ -1,8 +1,8 @@
 # L3.1 — Finition de l’atelier Composer
 
-## Verdict de préparation — 16 octobre 2026
+## Verdict final — 16 octobre 2026
 
-**L3_1_IMPLEMENTED_NOT_RELEASED** à ce stade de revue. Correctifs implémentés, quinze suites ciblées PASS, contrôles complémentaires de placement PASS et navigateur desktop exécuté. Livraison PR #47 en cours ; résultat final à consigner après Production.
+**L3_1_RELEASED_WITH_VALIDATION_LIMITATIONS**. PR #47 fusionnée ; Production READY sur `3bde89c423d38f61f458b643c264f5f9424e1393`. Quinze suites ciblées PASS, TypeScript/build PASS, navigateur desktop de fixtures exécuté et smoke Production authentifié en lecture seule PASS. Les gestes de drag continus non exécutables par l’outil et la performance générale restent non certifiés.
 
 ## A. Situation initiale
 
@@ -110,7 +110,12 @@ Pas de nouvelle reconstruction World lors de la pagination, de la palette ou du 
 - PR : https://github.com/adriensauvageot34/Budgetisation/pull/47.
 - Produit final : `38f5cd95e40c1a03aad151b6d0c400c71705ddb1`.
 - Preview finale produit : `dpl_4HDEB3uYDjVvMiGj9MVY5Xc4JZf5`, READY. Build Next complet distant : compilation, TypeScript, génération des pages, déploiement ; journal `preview-final-next-build.log`. Aucune installation fraîche locale certifiée.
-- Merge / Production / smoke : **en attente au stade de revue**, à compléter après exécution réelle.
+- HEAD PR : `c422f114e7548adf05c89e89a06e2e92e6e064fc`, Vercel success, aucun workflow GitHub Actions associé ni review externe. PR passée Ready puis fusionnée sans conflit, avec vérification du HEAD attendu.
+- Merge : **`3bde89c423d38f61f458b643c264f5f9424e1393`**. `git diff --quiet c422f11 origin/main` : code 0, arbre intégral identique. Les commits documentaires n’altèrent pas l’arbre produit `38f5cd9`.
+- Production : **`dpl_9heoGujRbeSMy67t9s27p72BMSTs`**, **READY**, cible Production, alias `https://budgetisation-tan.vercel.app`, commit du merge confirmé. Build Next complet et TypeScript PASS, journal `production-next-build.log` ; région `iad1` conservée.
+- Smoke Production **EXECUTED_PASS_READ_ONLY_AUTHENTICATED** : chargement du vrai Composer, nouvelle pagination visible, ouverture À préciser puis finances, disparition de l’atténuation, fermeture du panneau. Largeurs effectives 1440, 1728 et 1920 : aucune largeur de document supérieure au viewport. Aucune erreur console capturée. Digest, révision et état CLEAN identiques avant/après. Projection BLOCKED déjà présente avant livraison, UNKNOWN affiché honnêtement, Apply toujours désactivé. Aucune édition, sauvegarde personnelle, Apply ou mutation financière exécutée ; aucun nouvel audit des tables de production. Preuve non sensible `production-readonly-smoke.json`.
+- Le premier appel de navigation navigateur a dépassé son délai d’outil ; la page a ensuite terminé son chargement sans deuxième navigation. Ce délai n’est ni une mesure produit ni une erreur serveur constatée.
+- Rapport et preuves de clôture ajoutés dans un commit documentaire local après le merge. Aucun code produit supplémentaire et aucun nouveau déploiement nécessaire pour ces pièces de clôture.
 - Rollback compatible : revert des trois commits produit L3.1 ou retour au déploiement L3 initial, via workflow Git/Vercel normal. Aucune migration, conversion ni suppression de Draft nécessaire.
 
 ## H. Décision
