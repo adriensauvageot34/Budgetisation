@@ -84,7 +84,7 @@ export function InlineControlValue({ card, dimension, busy, focus, mutate }: {
         onChange={event => { setText(event.target.value); setError(""); }} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); discard(); requestAnimationFrame(() => button.current?.focus()); } }} /></label>
       <button type="submit" disabled={busy} aria-label={`Valider ${title} de ${card.label}`}><Check size={15} /></button>
       <button type="button" aria-label={`Annuler la saisie de ${card.label}`} onClick={discard}><X size={14} /></button>
-      <small>Entrée valide · Échap annule · Tab conserve la saisie</small>
+      <small title="Tab conserve la saisie sans la valider">Entrée valide · Échap annule</small>
     </form> : <div className={styles.valueAdjuster}>
       {admitted && <button type="button" className={styles.valueStep} aria-label={`Diminuer ${title} de ${card.label}`} disabled={busy || displayed !== null && new Big(displayed).lte(rule.minimum)} onClick={() => adjust(-1)}><Minus size={13} /></button>}
       <button ref={button} type="button" className={dimension === "unitAmount" ? styles.unitValueButton : styles.valueButton} data-value-edit data-budget-unknown={displayed === null || optional || undefined} title={presentation.label}

@@ -843,6 +843,10 @@
 .directValueForm button { min-height:28px; border:0; border-radius:5px; padding:4px; cursor:pointer; background:#eaf0e8; display:grid; place-items:center; }
 .directValueForm small { grid-column:1/-1; font-size:9px; overflow-wrap:anywhere; }
 .directValue>small { display:block; overflow-wrap:anywhere; }
+.directValue>.formError { padding:3px 4px; margin:3px 0; font-size:10px; line-height:1.2; }
+.card:has([data-inline-editing=true]) .habitReference,.card:has([data-inline-editing=true]) .valueScope { display:none; }
+.card:has([data-inline-editing=true]) .objectIcon,.card:has([data-inline-editing=true]) .objectIcon svg { width:28px; height:28px; flex-basis:28px; }
+.card:has([data-inline-editing=true]) .objectIdentity { min-height:0; }
 .unitValueOrigin { font-size:9px; color:#68716b; margin-left:27px; }
 .valueScope { display:block; font-size:10px; color:#68716b; }
 .visuallyHidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
