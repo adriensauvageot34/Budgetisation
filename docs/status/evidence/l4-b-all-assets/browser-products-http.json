@@ -1,0 +1,114 @@
+{
+  "environment": "ISOLATED_HTTP_SYNTHETIC_ONLY",
+  "rawSha256": "cfdbfed9d2900079fcb4f89ebeaaaa1ea45a092f348ebd54c7753a425db60688",
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "rpcCalls": 0,
+  "remoteWrites": 0,
+  "historicalCanaryWrites": 0,
+  "drafts": {
+    "active": {
+      "id": "15722ad4-3f05-4219-ad70-0b9b01a01103",
+      "version": 3,
+      "digest": "688c569950d2c904b218125e7ead1693f986ded900b132d88cdae4e6ec50cf2d"
+    },
+    "archives": 0,
+    "events": [
+      {
+        "kind": "SAVE",
+        "draftId": "15722ad4-3f05-4219-ad70-0b9b01a01103",
+        "version": 1,
+        "digest": "e448dd6a5e2fdf65b4de52225e715da3466b7f917388a47a68ee037a62065b6f"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "15722ad4-3f05-4219-ad70-0b9b01a01103",
+        "version": 2,
+        "digest": "343ce3e671112236dc83cf512e6e287318a7ff8bd090b3d90e39540b37bc1ea7"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "15722ad4-3f05-4219-ad70-0b9b01a01103",
+        "version": 3,
+        "digest": "688c569950d2c904b218125e7ead1693f986ded900b132d88cdae4e6ec50cf2d"
+      }
+    ]
+  },
+  "activePlan": null,
+  "requests": [
+    {
+      "kind": "READ",
+      "sequence": 0,
+      "ok": true,
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+      "mutationKind": null,
+      "gesture": null
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 0,
+      "commandKind": "READ",
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 2,
+      "ok": true,
+      "digest": "e448dd6a5e2fdf65b4de52225e715da3466b7f917388a47a68ee037a62065b6f",
+      "mutationKind": null,
+      "gesture": null
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 2,
+      "commandKind": "READ",
+      "ok": true
+    },
+    {
+      "kind": "DROP",
+      "sequence": 6,
+      "ok": true,
+      "digest": "343ce3e671112236dc83cf512e6e287318a7ff8bd090b3d90e39540b37bc1ea7",
+      "mutationKind": "PATCH_CONTEXT",
+      "gesture": {
+        "assetKey": "option:beauty-restock:products:product",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "ca55997a-2593-4cfe-a656-0577e1bbc7b0",
+          "slotKey": "products"
+        },
+        "sourceSocket": null
+      }
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 6,
+      "commandKind": "DROP",
+      "ok": true
+    },
+    {
+      "kind": "DROP",
+      "sequence": 9,
+      "ok": true,
+      "digest": "688c569950d2c904b218125e7ead1693f986ded900b132d88cdae4e6ec50cf2d",
+      "mutationKind": "PATCH_CONTEXT",
+      "gesture": {
+        "assetKey": "option:beauty-restock:products:product",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "ca55997a-2593-4cfe-a656-0577e1bbc7b0",
+          "slotKey": "products"
+        },
+        "sourceSocket": null
+      }
+    },
+    {
+      "kind": "RESPONSE",
+      "sequence": 9,
+      "commandKind": "DROP",
+      "ok": true
+    }
+  ]
+}

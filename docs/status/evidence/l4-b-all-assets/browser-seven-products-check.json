@@ -1,0 +1,14 @@
+{
+  "environment": "HTTP_SYNTHETIC_ONLY",
+  "status": "PASS",
+  "count": 7,
+  "changedOnly": "Produit 2 choisi: 5 -> 15",
+  "digest": "1fcfe22d29e3206492a3833f930b367f1a7104a1bb9151991259e36ffbee695a",
+  "version": 3,
+  "financialWrites": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "remoteWrites": 0,
+  "canaryWrites": 0
+}

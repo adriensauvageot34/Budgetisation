@@ -1,0 +1,59 @@
+{
+  "sourceSha": "b7c3127d3db1f808108ab5422631523359939af1",
+  "environment": "ISOLATED_HTTP_SYNTHETIC_ONLY",
+  "status": "PASS",
+  "failedBeforeCommit": 1,
+  "saves": [
+    {
+      "kind": "SAVE",
+      "draftId": "1807746d-81da-4294-99b7-62d57e21ba13",
+      "version": 1,
+      "digest": "d07f214a53acb22d26b1745a28c1ff35251c673f9c3893fac71ed8f12bd05022"
+    },
+    {
+      "kind": "SAVE",
+      "draftId": "1807746d-81da-4294-99b7-62d57e21ba13",
+      "version": 2,
+      "digest": "208e6d04f534ed9977fa4557327ae8b3cc9f52618312f90114d792ceb9355778"
+    },
+    {
+      "kind": "SAVE",
+      "draftId": "1807746d-81da-4294-99b7-62d57e21ba13",
+      "version": 3,
+      "digest": "246be33e394d46f39bd1d6a851cad1550307949f3ceb572e31ddd5f673cb715e"
+    },
+    {
+      "kind": "SAVE",
+      "draftId": "1807746d-81da-4294-99b7-62d57e21ba13",
+      "version": 4,
+      "digest": "92eae2914541f5d8a25e21df32510eab4de1c22248d98138f087560d9acc5dd1"
+    },
+    {
+      "kind": "SAVE",
+      "draftId": "1807746d-81da-4294-99b7-62d57e21ba13",
+      "version": 5,
+      "digest": "8c61483acc92be23f44292e9c82529474976e03b40c8f95f21463dabd0e3bd26"
+    },
+    {
+      "kind": "SAVE",
+      "draftId": "1807746d-81da-4294-99b7-62d57e21ba13",
+      "version": 6,
+      "digest": "f07af2468d493ca4a78340333e8a82a0c3142b43320ac31e17f202b8385e3a9c"
+    }
+  ],
+  "version": 6,
+  "digest": "f07af2468d493ca4a78340333e8a82a0c3142b43320ac31e17f202b8385e3a9c",
+  "lodging": {
+    "basis": "TOTAL",
+    "amount": "240",
+    "quantity": "1",
+    "nights": 2
+  },
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "remoteWrites": 0,
+  "canaryWrites": 0,
+  "authenticated": "NOT_RUN_AUTH"
+}
