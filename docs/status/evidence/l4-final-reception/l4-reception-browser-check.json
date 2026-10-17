@@ -1,0 +1,33 @@
+{
+  "productSHA": "004a6651c5ba8a6bbb4354a8c28deafebcfcf92a",
+  "environment": "LOCAL_HTTP_IN_MEMORY_SYNTHETIC",
+  "activeDraftVersion": 11,
+  "digest": "c5e46c2008b49cba1c80a292b6b4205fd9db15d77e2f2a998cf3df89d9b223f4",
+  "contextCount": 5,
+  "gift": {
+    "object": "Livre réception final",
+    "occasion": "Anniversaire",
+    "price": "26",
+    "id": "e9c3fdd6-0305-4b71-8549-cadceab35bf3"
+  },
+  "friend": {
+    "timingNote": "Un dimanche, encore à préciser",
+    "id": "8db611f0-828e-435e-a015-1f6393034c3f"
+  },
+  "family": {
+    "mode": "train",
+    "parking": "UNKNOWN",
+    "fare": "UNKNOWN",
+    "route": "ABSENT",
+    "date": "ABSENT",
+    "id": "1de83bc4-3fce-4685-b96c-eb1276506eb7"
+  },
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "rpcCalls": 0,
+  "remoteWrites": 0,
+  "historicalCanaryWrites": 0,
+  "authenticated": "NOT_RUN_AUTH"
+}

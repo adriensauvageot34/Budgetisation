@@ -1,0 +1,27 @@
+S1 shared_partial_and_independent_return PASS
+S2 shared_partial_and_independent_return PASS
+A1 quantity_partial_and_later_extra PASS
+A2 quantity_partial_and_later_extra PASS
+R1 total_detail_unknown_and_later_extra PASS
+R2 total_detail_unknown_and_later_extra PASS
+R3 total_detail_unknown_and_later_extra PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: CONTEXT_SLOT_UNKNOWN: Cette proposition n’a pas pu être validée. Votre brouillon est conservé ; vérifiez les champs et réessayez.
+
+false !== true
+
+    at request (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-final-reception.mjs:22:10)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-final-reception.mjs:107:9
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-final-reception.mjs:56:27)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-final-reception.mjs:99:114 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual'
+}
+
+Node.js v22.18.0

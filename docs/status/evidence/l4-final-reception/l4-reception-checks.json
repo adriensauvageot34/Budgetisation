@@ -1,0 +1,57 @@
+[
+  {
+    "name": "typecheck",
+    "command": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
+    "exitCode": 0
+  },
+  {
+    "name": "night",
+    "command": "node scripts/check-l4-a.mjs",
+    "exitCode": 0
+  },
+  {
+    "name": "restaurant",
+    "command": "node scripts/check-l1-restaurant.mjs",
+    "exitCode": 0
+  },
+  {
+    "name": "gift",
+    "command": "node scripts/check-phase2-planner-p05b.mjs",
+    "exitCode": 0
+  },
+  {
+    "name": "visits",
+    "command": "node scripts/check-phase2-planner-p10.mjs",
+    "exitCode": 0
+  },
+  {
+    "name": "stay",
+    "command": "node scripts/check-phase2-planner-p11.mjs",
+    "exitCode": 0
+  },
+  {
+    "name": "catalog",
+    "command": "node scripts/check-phase2-planner-p12.mjs",
+    "exitCode": 0
+  },
+  {
+    "name": "preview",
+    "command": "node scripts/check-composer-p03-interaction.mjs",
+    "exitCode": 0
+  },
+  {
+    "name": "apply",
+    "command": "node scripts/check-phase2-planner-p13.mjs",
+    "exitCode": 0
+  },
+  {
+    "name": "draft",
+    "command": "node scripts/check-composer-post-snap3-draft-http.mjs",
+    "exitCode": 0
+  },
+  {
+    "name": "c8",
+    "command": "node scripts/check-pre-l4-c2-c8-source.mjs",
+    "exitCode": 0
+  }
+]

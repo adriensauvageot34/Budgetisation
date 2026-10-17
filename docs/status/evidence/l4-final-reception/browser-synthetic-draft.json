@@ -1,0 +1,168 @@
+{
+  "version": "month-plan-state@v1",
+  "targetMonth": "2026-11",
+  "controls": [],
+  "contexts": [
+    {
+      "contextOccurrenceId": "1de83bc4-3fce-4685-b96c-eb1276506eb7",
+      "templateKey": "family-visit",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v4",
+        "label": "Visite Fontès",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "fontes-family-visit"
+        },
+        "participantRefs": []
+      },
+      "slotSelections": {
+        "transport": {
+          "items": [
+            {
+              "kind": "MOBILITY_INTENT",
+              "optionKey": "train",
+              "selectionId": "b70c5eaf-236b-4bc0-a39f-9229aeec9917",
+              "provenance": "EXPLICIT_USER_DECISION",
+              "origin": null,
+              "destination": null,
+              "returnRequired": false,
+              "plannedTime": null,
+              "returnTime": null,
+              "pricing": {
+                "fare": {
+                  "kind": "UNKNOWN"
+                },
+                "parking": {
+                  "kind": "UNKNOWN"
+                },
+                "fundingAllocations": [],
+                "preference": "FASTEST"
+              }
+            }
+          ]
+        }
+      },
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "24e0514d-7e5b-4fa3-afa5-16fe9758082a",
+      "templateKey": "restaurant",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Restaurant à deux",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "restaurant-for-two"
+        }
+      },
+      "slotSelections": {
+        "meal": {
+          "items": [
+            {
+              "selectionId": "20a032a2-8092-44f6-a4de-d4f65c916498",
+              "optionKey": "restaurant",
+              "kind": "COMPONENT",
+              "provenance": "EXPLICIT_USER_DECISION",
+              "label": "Addition totale",
+              "quantity": "1",
+              "unitBasis": "SHARED",
+              "cost": {
+                "kind": "MANUAL",
+                "unitAmount": "60"
+              },
+              "fundingAllocations": [],
+              "binding": {
+                "mode": "AUTO"
+              }
+            }
+          ]
+        },
+        "extras": {
+          "items": []
+        }
+      },
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "8db611f0-828e-435e-a015-1f6393034c3f",
+      "templateKey": "friend-visit",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Voir des amis",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "visit-friends"
+        },
+        "timingNote": "Un dimanche, encore à préciser"
+      },
+      "slotSelections": {},
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "a580192e-5ae9-4248-a4a8-4a3720990b56",
+      "templateKey": "restaurant",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Restaurant à deux",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "restaurant-for-two"
+        }
+      },
+      "slotSelections": {},
+      "provenance": "EXPLICIT_USER_DECISION"
+    },
+    {
+      "contextOccurrenceId": "e9c3fdd6-0305-4b71-8549-cadceab35bf3",
+      "templateKey": "gift",
+      "status": "ACTIVE",
+      "parentContextOccurrenceId": null,
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Cadeau",
+        "composerPresentation": {
+          "version": "composer-context-presentation@v1",
+          "presetKey": "gift-present"
+        },
+        "occasion": "Anniversaire",
+        "objectLabel": "Livre réception final"
+      },
+      "slotSelections": {
+        "item": {
+          "items": [
+            {
+              "selectionId": "fdee221a-c4aa-45d1-8eec-886e06c5af90",
+              "optionKey": "gift",
+              "kind": "COMPONENT",
+              "provenance": "EXPLICIT_USER_DECISION",
+              "label": "Livre réception final",
+              "quantity": "1",
+              "unitBasis": "ITEM",
+              "cost": {
+                "kind": "MANUAL",
+                "unitAmount": "26"
+              },
+              "fundingAllocations": [],
+              "binding": {
+                "mode": "AUTO"
+              }
+            }
+          ]
+        }
+      },
+      "provenance": "EXPLICIT_USER_DECISION"
+    }
+  ],
+  "preferences": {
+    "anchors": [],
+    "flexibility": {}
+  }
+}

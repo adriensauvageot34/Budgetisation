@@ -2,6 +2,8 @@
 
 Date : 17 octobre 2026. Verdict : **READY_FOR_REVIEW_LIMITED_FIXTURE / V5 PARTIAL**.
 
+Réception complémentaire : voir [L4-A / L4-B — réception finale](L4_A_B_FINAL_RECEPTION_REPORT.md), produit `11ac9d7`. Son verdict `NOT_READY` pour le gate natif non clôturé prévaut sur la préparation d’intégration ; les résultats historiques ci-dessous restent conservés à leurs SHA d’origine.
+
 La PR [#55](https://github.com/adriensauvageot34/Budgetisation/pull/55) généralise réellement le résumé immédiat, le panneau non modal, les choix ciblés et le dock R6. Aucun nouveau moteur de coût, writer financier, schéma, migration ou changement SNAP-3. Aucune fusion ni promotion Production.
 
 ## Références et portée
