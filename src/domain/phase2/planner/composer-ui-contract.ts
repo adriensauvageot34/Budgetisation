@@ -12,7 +12,7 @@ import type { GuidedContextEdit } from "./guided-context-edit";
 import type { PlannedPlaceOption } from "../planned-places";
 import type { PlannedVehicleEstimate } from "../planned-contract";
 
-export type ComposerMobilitySummary = Readonly<{ contextOccurrenceId: string; journeyId: string; requestDigest: string;
+export type ComposerMobilitySummary = Readonly<{ contextOccurrenceId: string; journeyId: string; ownerIntentId?: string; requestDigest: string;
   status: "RESOLVED" | "PARTIAL" | "UNKNOWN"; distanceKm: string | null; economicFuel: string | null;
   toll: string | null; parking: string | null; fare: string | null; cashTransport: string | null;
   routeSource: string | null; fuelSource: string | null; tollSource: string | null; vehicleLabel: string | null;

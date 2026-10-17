@@ -594,7 +594,15 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       values: Object.fromEntries(["amount", "count", "unitAmount"].map(key => [key, typeof card.value[key] === "string" ? card.value[key] as string : ""])),
       operation: values => ({ kind: "MUTATE", mutation: { kind: "SET_STATE", targetRef: card.targetRef, value: Object.fromEntries(model.controlEditors.find(e => e.targetRef === card.targetRef)!.fields.map(f => [f.key, values[f.key]])) } }) });
   }
-  const closeDialog = () => { if (!busyRef.current) { if (editor && !inlineEdits.registry.guard(closeDialog)) return; setEditor(null); setProjectionOpen(false); setErrorMessage(null); } };
+  const closeDialog = () => { if (!busyRef.current) {
+    if (editor && !inlineEdits.registry.guard(closeDialog)) return;
+    setEditor(null); setProjectionOpen(false); setErrorMessage(null);
+    if (livingBarId) {
+      setReveal(previous=>({targetRef:livingBarId,sequence:(previous?.sequence??0)+1}));
+      // Repacking can remount the card on another page: its old ref is gone.
+      requestAnimationFrame(()=>document.querySelector<HTMLButtonElement>(`[data-bar-living-card][data-context="${livingBarId}"] h3 button`)?.focus({preventScroll:true}));
+    }
+  } };
   function editContext(card: ComposerContextCardView, barTarget?:BarTarget) {
     if (editor && !inlineEdits.registry.guard(() => editContext(card,barTarget))) return;
     clearHover();
@@ -725,7 +733,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
-    <div className={styles.columns} data-workshop-columns data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} />
+    <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} />
       <ComposerBoard livingBar={livingBarId ? {id:livingBarId,open:stableEditContext,close:closeDialog,content:BarLivingEditor ? <BarLivingEditor key={livingBarId+":"+(editor?.barTarget??"default")} initialTarget={editor?.barTarget}
           context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}
           model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} saveStatus={draftTransport?durable.status:"MEMORY"}

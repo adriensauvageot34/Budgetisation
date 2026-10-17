@@ -1026,3 +1026,53 @@
 .barLivingQuestion [data-night-workshop] { min-height:0; height:auto; padding:0; background:transparent; }
 .barLivingQuestion [data-night-workshop] fieldset { min-height:0; height:auto; overflow:visible; padding:0; }
 .barLivingQuestion [data-night-workshop] h3 { font-size:15px; }
+/* V8: an inline atelier must never reserve the legacy side panel. */
+.columns[data-bar-living-open=true] { padding-right:0; }
+.columns[data-bar-living-open=true] .paletteDock { width:auto; overflow:hidden; }
+.columns[data-bar-living-open=true] .plateau { min-width:0; }
+.barLivingCard { box-sizing:border-box; }
+.barLivingHeader { position:sticky; top:0; z-index:1; background:#fffdfa; }
+.barLivingCard[data-expanded=true] .barLivingHeader { border-bottom:1px solid #f0e8df; }
+.barLivingHeader>div:not(.barLivingTools) { min-width:0; }
+.barLivingHeader h3 button { overflow-wrap:anywhere; }
+.barLivingImage { width:88px; height:64px; object-fit:cover; border-radius:12px; }
+.barLivingMetadata button { display:inline-flex; align-items:center; gap:6px; }
+.barLivingMetadata .barPeople { background:transparent; border:0; padding:2px; }
+.barPeople>span { display:inline-flex; align-items:center; gap:4px; font-size:11px; }
+.barPeople i { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:#eee4f5; color:#6e4d85; font-style:normal; font-size:9px; }
+.barLivingRoutes { display:flex; flex-direction:column; gap:5px; }
+.barRouteLine { display:flex; flex-wrap:wrap; align-items:center; gap:5px 10px; min-width:0; border:1px solid #e7e1db; background:#f9f7f4; border-radius:10px; padding:8px 10px; text-align:left; font-size:11px; }
+.barRouteLine>b { width:42px; flex:none; }
+.barRouteLine>span,.barRouteStops>span { display:inline-flex; align-items:center; gap:6px; min-width:0; flex-wrap:wrap; }
+.barRouteStops { flex:1; overflow-wrap:anywhere; }
+.barRouteStops>span { color:#775a36; font-size:10px; }
+.barRouteLine>small { width:100%; margin-left:52px; font-size:10px; color:#736b60; }
+.barLivingTiles { align-items:flex-start; }
+.barLivingTiles>button { display:flex; flex-direction:column; align-items:center; gap:3px; text-align:center; min-height:100px; background:linear-gradient(155deg,#fffbef,#f9efdc); }
+.barLivingTiles>.barAddSlot { background:transparent; border:1.5px dashed #ccb795; color:#8a6e40; justify-content:center; font-size:24px; }
+.barProductSymbol { display:block; font-size:30px; line-height:1.2; }
+.barChoiceSymbol { flex:none; font-size:32px; line-height:1; }
+.barActiveTile { flex:1 1 285px; min-width:0; max-width:100%; border:1px solid #c4a367; border-radius:15px; padding:11px; background:#fff9e9; box-shadow:0 5px 16px #79592813; }
+.barActiveTile>header { display:flex; align-items:center; gap:10px; padding-bottom:7px; }
+.barActiveTile>header strong { font-size:13px; }
+.barActiveTile [data-bar-short-row]>strong { display:none; }
+.barActiveTile input { max-width:120px; }
+.barActiveTile button { border:1px solid #dfcda9; border-radius:8px; background:#fffdf6; padding:6px 9px; }
+.barLivingShortcuts { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:7px; }
+.barLivingShortcuts button { border:0; border-radius:8px; padding:5px 8px; background:#f6f0e4; font-size:11px; }
+.barLivingQuestion:empty { display:none; }
+.barInlineCalendar { max-width:340px; }
+.barInlineCalendar h4 { margin:5px 0 10px; text-transform:capitalize; font-size:14px; }
+.barInlineCalendar>div { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+.barInlineCalendar button { border:0; background:#f6f1e8; border-radius:8px; min-height:28px; }
+.barInlineCalendar button[aria-pressed=true] { background:#7958a1; color:white; }
+.barLivingError { margin:6px 0; color:#963c3c; font-size:12px; }
+.barPlaceContext { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:11px; }
+.barEconomicTile { flex:0 1 125px; min-width:0; }
+.barEconomicTile>button { display:flex; flex-direction:column; align-items:center; width:100%; min-height:105px; gap:4px; padding:10px; border:1px solid #e5dccb; border-radius:13px; background:linear-gradient(155deg,#fffbef,#f9efdc); text-align:center; font-size:12px; }
+.barActiveTile>button:first-child { display:flex; align-items:center; width:100%; gap:8px; border:0; background:transparent; text-align:left; }
+.barActiveTile>button:first-child>small { margin-left:auto; }
+.barActiveTile [data-bar-short-row] { border-top:1px solid #e8d7b7; padding-top:10px; }
+/* Grid rows own cell height. The old flex-start inheritance otherwise lets an
+ * intrinsic card exceed its allocated tracks and cover the next row. */
+.inventoryCell { align-self:stretch; }
