@@ -99,6 +99,17 @@ await check('V2_PRESERVE_READONLY_PRESENTS_REASON_AND_NO_MUTATION',async()=>{
 await check('V2_LAYOUT_PURE_DENSE_NONOVERLAP_COLLAPSE_NOT_BROWSER',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);const original=inventoryItems(model),bar=original.find(n=>n.id===id);assert.ok(bar);for(const count of [5,16,30,50])for(const [width,height] of [[720,380],[1000,470],[1200,470],[1330,550]]){const items=[bar,...Array.from({length:count-1},(_,i)=>({...bar,id:'fixture:'+i}))];const before=inventoryLayoutPages(items,width,height),open=inventoryLayoutPages(items,width,height,id);assert.deepEqual(inventoryLayoutPages(items,width,height),before);assert.deepEqual(open.flat().map(p=>p.item.id),items.map(i=>i.id));for(const page of open){const used=new Set();for(const box of page)for(let x=box.column;x<box.column+box.columnSpan;x++)for(let y=box.row;y<box.row+box.rowSpan;y++){const key=x+':'+y;assert.equal(used.has(key),false);used.add(key);}}}
 });
+await check('V2_MEASURED_EXPANSION_REPACKS_AND_CAPS_WITHOUT_DATA_CHANGES',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);const original=inventoryItems(model),bar=original.find(n=>n.id===id);
+ const items=[bar,...Array.from({length:39},(_,i)=>({...bar,id:'fixture:'+i}))],before=structuredClone(items);
+ for(const [width,height] of [[720,380],[1000,470],[1330,550]]){
+  const ordinary=inventoryLayoutPages(items,width,height),small=inventoryLayoutPages(items,width,height,id,300),large=inventoryLayoutPages(items,width,height,id,2000);
+  assert.ok(small.flat().find(p=>p.item.id===id).rowSpan<large.flat().find(p=>p.item.id===id).rowSpan);
+  for(const pages of [small,large]){assert.deepEqual(pages.flat().map(p=>p.item.id),items.map(i=>i.id));for(const page of pages){const used=new Set();for(const box of page)for(let x=box.column;x<box.column+box.columnSpan;x++)for(let y=box.row;y<box.row+box.rowSpan;y++){const key=x+':'+y;assert.equal(used.has(key),false);used.add(key);}}}
+  assert.deepEqual(inventoryLayoutPages(items,width,height,undefined,300),ordinary);
+ }
+ assert.deepEqual(items,before);
+});
 
 
 await check('V2_CLEAN_OUTSIDE_AND_ESCAPE_KEEP_ADMITTED_CARD',async()=>{

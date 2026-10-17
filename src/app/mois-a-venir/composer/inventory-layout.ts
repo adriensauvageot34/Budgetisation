@@ -26,7 +26,7 @@ const columnGap = 10, rowGap = 5, rowTrack = 5;
 // rounding each 230px card up to ~260px. CSS and packing use the same cap.
 export const inventoryColumns = (width: number) => Math.max(2, Math.min(18, Math.floor((Math.max(212, Math.min(1330, width)) + columnGap) / 76)));
 
-export function inventoryLayoutPages(items: readonly InventoryItem[], width: number, height: number, expandedId?: string): InventoryPlacement[][] {
+export function inventoryLayoutPages(items: readonly InventoryItem[], width: number, height: number, expandedId?: string, expandedHeight = 520): InventoryPlacement[][] {
   const availableWidth = Math.max(212, Math.min(1330, width));
   const columns = inventoryColumns(availableWidth), columnWidth = (availableWidth - (columns - 1) * columnGap) / columns;
   // The measured viewport already excludes pagination and the palette.
@@ -37,7 +37,7 @@ export function inventoryLayoutPages(items: readonly InventoryItem[], width: num
   for (const item of items) {
     const columnSpan = Math.max(1, Math.min(columns, Math.round(((item.id === expandedId ? Math.min(760, availableWidth) : item.width) + columnGap) / (columnWidth + columnGap))
       + (item.kind === "CLUSTER" && item.family === "BEAUTY" && columns >= 15 ? 1 : 0)));
-    const rowSpan = Math.max(1, Math.min(maxTracks, Math.ceil(((item.id === expandedId ? Math.min(520, height - 8) : item.height) + rowGap) / (rowTrack + rowGap))));
+    const rowSpan = Math.max(1, Math.min(maxTracks, Math.ceil(((item.id === expandedId ? Math.min(expandedHeight, height - 8) : item.height) + rowGap) / (rowTrack + rowGap))));
     const findSlot = () => {
       for (let row = 0; row <= maxTracks - rowSpan; row++) for (let column = 0; column <= columns - columnSpan; column++) {
         let free = true;

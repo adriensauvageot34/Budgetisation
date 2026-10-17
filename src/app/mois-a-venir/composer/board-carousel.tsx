@@ -10,16 +10,19 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   expandedId?: string; revealSequence?: number; revealFocused?: () => void;
   render: (item: InventoryItem) => ReactNode; emptyClick: () => void; children?: ReactNode; dropProps: React.HTMLAttributes<HTMLDivElement> & { [key: `data-${string}`]: boolean | string | number | undefined } }) {
   const viewport = useRef<HTMLDivElement>(null), [size, setSize] = useState({ width: 1000, height: 470 }), [page, setPage] = useState(0);
+  const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number } | null>(null);
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
   const projected = useMemo(() => inventory ?? inventoryItems(model), [model,inventory]);
   const stableItems = useRef(projected), stableSize = useRef(size), stableExpanded = useRef(expandedId);
+  const stableExpandedHeight = useRef<number | undefined>(undefined);
   const dragging = !!interaction?.grabbed;
   const items = dragging ? stableItems.current : projected, layoutSize = dragging ? stableSize.current : size;
   const spatialKey = inventorySpatialKey(items);
-  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId]);
+  const expandedHeight = dragging ? stableExpandedHeight.current : expandedMeasure && expandedMeasure.id === expandedId ? expandedMeasure.height : undefined;
+  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight]);
   const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);
   const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);
-  useLayoutEffect(() => { if (!dragging) { stableItems.current = projected; stableSize.current = size; stableExpanded.current = expandedId; } }, [dragging, projected, size, expandedId]);
+  useLayoutEffect(() => { if (!dragging) { stableItems.current = projected; stableSize.current = size; stableExpanded.current = expandedId; stableExpandedHeight.current = expandedHeight; } }, [dragging, projected, size, expandedId, expandedHeight]);
   const active = Math.min(page, pages.length - 1), previousIds = useRef(new Set(items.map(item => item.id)));
   const [departing,setDeparting] = useState(0), [dirtyItems,setDirtyItems] = useState<readonly string[]>([]);
   const [dragOrigin,setDragOrigin] = useState<number|null>(null);
@@ -39,6 +42,34 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const go = (next: number, manual = true) => { browsing.current = manual; cancelDwell(); captureDirty(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setDeparting(active); setPage(Math.max(0, Math.min(pages.length - 1, next))); };
   useEffect(() => { const timer=setTimeout(()=>setDeparting(active),300);return()=>clearTimeout(timer); },[active]);
   useLayoutEffect(captureDirty,[model]);
+  useLayoutEffect(() => {
+    if (!expandedId || dragging) return;
+    // Measure only the living Bar's rendered content. The grid owns the outer
+    // rectangle and still caps it to the available shelf; no overlay or data edit.
+    const cell = [...viewport.current?.querySelectorAll<HTMLElement>("[data-inventory-id]") ?? []]
+      .find(node => node.dataset.inventoryId === expandedId);
+    const card = cell?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
+    if (!card) return;
+    let frame = 0;
+    const resize = new ResizeObserver(schedule);
+    const observeContent = () => {
+      resize.disconnect(); resize.observe(card);
+      for (const child of card.children) if (child instanceof HTMLElement) resize.observe(child);
+    };
+    function measure() {
+      frame = 0;
+      const editor = card?.querySelector<HTMLElement>("[data-bar-living-editor]");
+      const header = card?.querySelector<HTMLElement>("header");
+      if (!editor || !header) return; // Keep the previous geometry while the editor loads.
+      const height = Math.max(240, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + 2));
+      setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height ? previous : { id: expandedId!, height });
+    }
+    function schedule() { if (!frame) frame = requestAnimationFrame(measure); }
+    const mutations = new MutationObserver(() => { observeContent(); schedule(); });
+    mutations.observe(card, { childList: true, subtree: true, characterData: true });
+    observeContent(); schedule();
+    return () => { resize.disconnect(); mutations.disconnect(); if (frame) cancelAnimationFrame(frame); };
+  }, [expandedId, dragging, size.width, spatialKey]);
   useLayoutEffect(() => {
     if (!dragging) { setDragOrigin(null); return; }
     const sourceKey = interaction?.grabbed?.sourceKey;
