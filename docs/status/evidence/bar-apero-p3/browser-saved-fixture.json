@@ -1,0 +1,176 @@
+{
+  "method": "LOOPBACK_SYNTHETIC_DRAFT_AFTER_CODEX_BROWSER_INTERACTIONS_NOT_SUPABASE",
+  "version": 6,
+  "digest": "323601349aac9aa268fb09ab638e50c81312761bfe498ed309a17fdfe235995b",
+  "context": {
+    "contextOccurrenceId": "535c76b1-e8f7-47a3-b212-906a297a3b89",
+    "templateKey": "night-out",
+    "status": "ACTIVE",
+    "parentContextOccurrenceId": null,
+    "fields": {
+      "fieldSchemaVersion": "context-fields@v2",
+      "label": "Bar / Apéro",
+      "composerPresentation": {
+        "version": "composer-context-presentation@v1",
+        "presetKey": "bar-apero"
+      },
+      "placeRef": {
+        "kind": "KNOWN",
+        "placeId": "00000000-0000-4000-8000-000000099203"
+      }
+    },
+    "slotSelections": {
+      "outbound": {
+        "items": [
+          {
+            "kind": "MOBILITY_INTENT",
+            "selectionId": "2d8eb0eb-2e9d-4cd6-a6f3-a60c3861f105",
+            "optionKey": "car",
+            "provenance": "EXPLICIT_USER_DECISION",
+            "returnRequired": false,
+            "origin": {
+              "kind": "KNOWN",
+              "placeId": "00000000-0000-4000-8000-000000009100"
+            },
+            "destination": {
+              "kind": "KNOWN",
+              "placeId": "00000000-0000-4000-8000-000000099201"
+            },
+            "journey": {
+              "relation": "OWNS_JOURNEY",
+              "certainty": "CERTAIN",
+              "targetIntentId": null,
+              "externalExpenseId": null,
+              "externalCostLineIds": [],
+              "choice": null,
+              "stopIndex": null,
+              "accessLegIndex": null
+            },
+            "pricing": {
+              "fare": {
+                "kind": "UNKNOWN"
+              },
+              "parking": {
+                "kind": "UNKNOWN"
+              },
+              "fundingAllocations": [],
+              "preference": "FASTEST"
+            },
+            "route": {
+              "version": "composer-mobility-route@v1",
+              "vehicleRef": {
+                "vehicleId": "00000000-0000-4000-8000-000000009150",
+                "labelAtSelection": "Peugeot 207",
+                "provenance": "EXPLICIT_USER_DECISION"
+              },
+              "stops": [
+                {
+                  "label": "Synthetic place 0",
+                  "placeId": "00000000-0000-4000-8000-000000009100",
+                  "endpointSource": "DIRECT_PLACE",
+                  "distanceToNextKm": null
+                },
+                {
+                  "label": "Bar des Trois Jours",
+                  "placeId": "00000000-0000-4000-8000-000000099201",
+                  "endpointSource": "ROOT_PLACE",
+                  "distanceToNextKm": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "return": {
+        "items": [
+          {
+            "kind": "MOBILITY_INTENT",
+            "selectionId": "4cac5757-1899-417b-9b35-9ee74828439f",
+            "optionKey": "car",
+            "provenance": "EXPLICIT_USER_DECISION",
+            "origin": {
+              "kind": "KNOWN",
+              "placeId": "00000000-0000-4000-8000-000000099201"
+            },
+            "destination": {
+              "kind": "KNOWN",
+              "placeId": "00000000-0000-4000-8000-000000009100"
+            },
+            "returnRequired": false,
+            "journey": {
+              "relation": "OWNS_JOURNEY",
+              "certainty": "CERTAIN",
+              "targetIntentId": null,
+              "externalExpenseId": null,
+              "externalCostLineIds": [],
+              "choice": null,
+              "stopIndex": null,
+              "accessLegIndex": null
+            },
+            "pricing": {
+              "fare": {
+                "kind": "UNKNOWN"
+              },
+              "parking": {
+                "kind": "UNKNOWN"
+              },
+              "fundingAllocations": [],
+              "preference": "FASTEST"
+            },
+            "route": {
+              "version": "composer-mobility-route@v1",
+              "vehicleRef": {
+                "vehicleId": "00000000-0000-4000-8000-000000009150",
+                "labelAtSelection": "Peugeot 207",
+                "provenance": "EXPLICIT_USER_DECISION"
+              },
+              "stops": [
+                {
+                  "label": "Départ du retour",
+                  "placeId": "00000000-0000-4000-8000-000000099201",
+                  "endpointSource": "DIRECT_PLACE",
+                  "distanceToNextKm": null
+                },
+                {
+                  "label": "Arrivée du retour",
+                  "placeId": "00000000-0000-4000-8000-000000009100",
+                  "endpointSource": "ROOT_PLACE",
+                  "distanceToNextKm": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "extras": {
+        "items": [
+          {
+            "selectionId": "65929791-d501-48b0-98aa-fa5b92f9d57a",
+            "optionKey": "extra",
+            "kind": "COMPONENT",
+            "provenance": "EXPLICIT_USER_DECISION",
+            "label": "Bière",
+            "quantity": "1",
+            "unitBasis": "ITEM",
+            "cost": {
+              "kind": "MANUAL",
+              "unitAmount": "8"
+            },
+            "fundingAllocations": [],
+            "binding": {
+              "mode": "AUTO"
+            },
+            "productAssetRef": {
+              "catalogVersion": "planned-assets@v1",
+              "assetKey": "bar:beer",
+              "labelAtSelection": "Bière",
+              "provenance": "EXPLICIT_USER_DECISION"
+            }
+          }
+        ]
+      }
+    },
+    "provenance": "EXPLICIT_USER_DECISION"
+  },
+  "activePlanRevisionNumber": 0
+}

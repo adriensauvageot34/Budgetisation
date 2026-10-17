@@ -1,0 +1,39 @@
+{
+  "productSha": "70b2fa5e587f1dff0b1ab309a4634f7577c738c6",
+  "baseSha": "d6379bcbfdc217ee51c05989f2036407329eb2fd",
+  "typecheckExitCode": 0,
+  "parity": {
+    "cases": 22,
+    "hashesPerCase": 9,
+    "status": "PASS",
+    "goldensChanged": false
+  },
+  "browser": {
+    "kind": "CODEX_IN_APP_LOCAL_SYNTHETIC",
+    "finalProductViewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "priorProductViewports": [
+      {
+        "width": 1440,
+        "height": 900
+      },
+      {
+        "width": 1728,
+        "height": 900
+      }
+    ],
+    "authenticated": "NOT_RUN_AUTH_P3",
+    "providers": "NOT_RUN_PROVIDER",
+    "productionWrites": 0
+  },
+  "deployment": {
+    "id": "dpl_Hfd6Sr7ZiPD4D7inJVFunpuC72rM",
+    "state": "READY",
+    "target": null,
+    "commit": "70b2fa5e587f1dff0b1ab309a4634f7577c738c6",
+    "url": "https://budgetisation-hex56h7yu-adriensauvageot34-6137s-projects.vercel.app"
+  },
+  "verdict": "READY_FOR_HUMAN_REVIEW_WITH_LIMITS"
+}

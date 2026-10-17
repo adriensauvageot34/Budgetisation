@@ -1,0 +1,14 @@
+{
+  "method": "LOCALHOST_SYNTHETIC_NOT_AUTH",
+  "sameContext": true,
+  "sameVersion": true,
+  "sameDigest": true,
+  "contextOccurrenceId": "535c76b1-e8f7-47a3-b212-906a297a3b89",
+  "version": 6,
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "rpcCalls": 0,
+  "remoteWrites": 0
+}
