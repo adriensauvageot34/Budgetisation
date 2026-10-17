@@ -1,0 +1,29 @@
+{
+  "method": "REAL_REACT_HANDLERS_IN_PROCESS_NOT_BROWSER_NOT_AUTH",
+  "checks": [
+    {
+      "name": "P1-NAV-01_ALREADY_OPEN_NO_MUTATION",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PLACE-01_02_03_NO_INFERRED_BINDING",
+      "status": "FAIL",
+      "message": "central place must not rewrite independent route slots"
+    },
+    {
+      "name": "P1-PRICE-01_REJECT_SILENT_FARE_LOSS",
+      "status": "FAIL",
+      "message": "Missing expected exception."
+    },
+    {
+      "name": "P1-PRICE-03_EXTERNAL_ROUTE_NOT_REOWNED",
+      "status": "FAIL",
+      "message": "Missing expected exception."
+    },
+    {
+      "name": "P1-RAW-01_SAVE_AND_RESUME_DATE",
+      "status": "FAIL",
+      "message": "RAW guard must offer an explicit save choice"
+    }
+  ]
+}
