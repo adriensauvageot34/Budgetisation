@@ -1129,5 +1129,10 @@
 .barCompositionDock .questionAnswer:focus-visible { outline:3px solid #b29058; outline-offset:2px; }
 .barCompositionDock .questionAnswer strong { font-size:12px; }
 .barCompositionDock .questionAnswer small { font-size:10px; }
+/* Owner provenance can span several lines. Let Bar choices own their height
+ * rather than spilling out of the generic, fixed-height question strip. */
+.barCompositionDock .paletteOptions { height:auto; align-items:stretch; }
+.barCompositionDock .questionAnswer:has(small) { min-width:200px; max-width:240px; flex-basis:220px; }
+.barCompositionDock .questionAnswer > span { overflow-wrap:anywhere; }
 .barCompositionDock .barChoiceSymbol { font-size:29px; }
 .barEditableBody { display:contents; border:0; padding:0; margin:0; min-inline-size:0; }

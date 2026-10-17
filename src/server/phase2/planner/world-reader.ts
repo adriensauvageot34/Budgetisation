@@ -31,7 +31,7 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
   // One owner read within this server request, shared by validation, pricing and editor options. No persistent cache.
   let optionsPromise: ReturnType<typeof readPlannedContextOptions> | undefined;
   const mobilityOptions = (householdId: string) => { scope(householdId); return optionsPromise ??=
-    snapshotWork("Mobility_EditorOptions", () => readPlannedContextOptions(canonical.client, householdId, canonical.context.persons)); };
+    snapshotWork("Mobility_EditorOptions", () => readPlannedContextOptions(canonical.client, householdId, canonical.context.persons, true)); };
   const loadWorldWithStore = async (householdId: string, targetMonth: string, history?: ActivityHistoryStore, basis?: HistoricalBasisStore) => {
     return snapshotWork("World", async () => {
     scope(householdId);

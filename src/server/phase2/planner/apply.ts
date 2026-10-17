@@ -9,13 +9,12 @@ import { evaluatePlanScenario } from "./preview";
 import { assertRevisionEvidence } from "./revision-evidence";
 import { revisionChangeSet } from "./change-set";
 import { knownContextReferences } from "./context-selections";
-import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
-import type { PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
+import type { PlannedMobilityOptions } from "@/domain/phase2/planned-places";
 import type { HistoricalControlAdmission } from "./historical-control-admission";
 
 export type PlannerDependencies = Readonly<{ repository: PlanRepository;
   householdPersons?: readonly Readonly<{ personId: string; displayName: string }>[];
-  readMobilityOptions?(householdId: string): Promise<Readonly<{ places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null }>>;
+  readMobilityOptions?(householdId: string): Promise<PlannedMobilityOptions>;
   readWorld(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
   /** Composer opening/READ only. Apply, CHECK_APPLY and official Mon Plan retain readWorld. */
   readComposerWorld?(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;

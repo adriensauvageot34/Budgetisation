@@ -9,8 +9,7 @@ import type { ShortStayEdit } from "./short-stay-edit";
 import type { FamilyVisitEdit } from "./family-visit-edit";
 import type { RestaurantEdit } from "./restaurant-edit";
 import type { GuidedContextEdit } from "./guided-context-edit";
-import type { PlannedPlaceOption } from "../planned-places";
-import type { PlannedVehicleEstimate } from "../planned-contract";
+import type { PlannedMobilityOptions } from "../planned-places";
 
 export type ComposerMobilitySummary = Readonly<{ contextOccurrenceId: string; journeyId: string; ownerIntentId?: string; requestDigest: string;
   status: "RESOLVED" | "PARTIAL" | "UNKNOWN"; distanceKm: string | null; economicFuel: string | null;
@@ -66,7 +65,7 @@ export type ComposerDragSource = Readonly<{
 /** Excludes Baseline snapshots, canonical evidence and financial adapter entries. */
 export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly<{
   householdPersons: readonly Readonly<{ personId: string; displayName: string }>[];
-  mobilityOptions?: Readonly<{ places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null }>;
+  mobilityOptions?: PlannedMobilityOptions;
   mobilitySummaries?: readonly ComposerMobilitySummary[];
   /** Display subtotal of already evaluated Compiler components and owned journeys; never an Apply input. */
   nightOutSummaries?: readonly Readonly<{contextOccurrenceId: string; semanticStateDigest: string; knownAmount: string | null; incomplete: boolean}>[];

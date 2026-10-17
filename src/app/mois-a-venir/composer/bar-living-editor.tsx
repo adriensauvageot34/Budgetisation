@@ -18,12 +18,12 @@ import {useCommittedEvent} from "./use-committed-event";
 import {useWorkshopRaw} from "./inline-edit-registry";
 import {useWorkshopConfirmation} from "./workshop-confirmation";
 import {useComposerInteractions} from "./interactions";
+import {barPlaces,barPlaceHint,barEndpointPlaces,barHomePlaces} from "./bar-place-knowledge";
 import {BarPlaceSearch} from "./bar-place-search";
 import {money} from "./display";
 import {BarMetadata,BarRouteLine,BarComponentFace,barPersonLabel} from "./bar-living-details";
 import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
 import {prospectivePersonIdentity} from "@/domain/phase2/planned-product";
-import {derivePlannedPlaceRoles} from "@/domain/phase2/planned-place-rules";
 import {Trash2} from "lucide-react";
 import styles from "./composer.module.css";
 
@@ -38,7 +38,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const [page,setPage]=useState<Page>(()=>initialSelection?.kind==="COMPONENT"?"row":props.initialTarget?.startsWith("component:")?"summary":props.initialTarget as Page??"summary");
   const [legacy,setLegacy]=useState<"people"|"calendar"|"menu"|"main">("menu"),[legacyKey,setLegacyKey]=useState(0);
   const [row,setRow]=useState<Row>(()=>initialSelection?.kind==="COMPONENT"?fromSelection(initialSelection):fresh()),[slot,setSlot]=useState(initialComponent?.[1]??"extras"),[dirty,setDirty]=useState(false);
-  const [advancedRow,setAdvancedRow]=useState(false),[manual,setManual]=useState(""),[query,setQuery]=useState(""),[error,setError]=useState("");
+  const [advancedRow,setAdvancedRow]=useState(false),[manual,setManual]=useState(""),[query,setQuery]=useState(""),[allPlaces,setAllPlaces]=useState(false),[error,setError]=useState("");
   const [fare,setFare]=useState("");
   const [people,setPeople]=useState<ProspectivePersonRef[]>(()=>Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);
   const [personName,setPersonName]=useState("");
@@ -69,6 +69,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const resumeQuick=useCommittedEvent(()=>startQuick());
   const resumeEndpoint=useCommittedEvent((key:"origin"|"destination")=>targetEndpoint(key));
   const resumeTogglePerson=useCommittedEvent((person:ProspectivePersonRef)=>togglePerson(person));
+  const resumeEndpointChoice=useCommittedEvent((place:ProspectivePlaceRef|null)=>chooseEndpoint(place));
   const resumeFare=useCommittedEvent(()=>targetFare());
   // Resume after the admitted Draft has committed, using current handlers rather
   // than a closure that still contains the pre-save slot arrays.
@@ -80,7 +81,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   function canSaveBuffer(){try{
     if(busy)return false;
     if(page==="row"){buildComponentRow(row,row.existing?.optionKey??"extra");return true;}
-    if(page==="manual-place")return !!manual.trim();
+    if(page==="manual-place"||page==="endpoint")return !!manual.trim();
     if(page==="people")return !personName.trim();
     if(page==="fare"){decisionAmount(fare.trim().replace(",","."));return !!fare.trim();}
     if(page==="quick"){decisionAmount(quickAmount.trim().replace(",","."));return !!quickAmount.trim()&&!(quickTotal&&barItems(context,"extras").length);}
@@ -94,7 +95,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(current?.kind==="COMPONENT")setRow(previous=>previous.id===row.id?fromSelection(current):previous);else setPage("drinks");
   },[context.slotSelections,page,slot,dirty,row.id]);
   if(!model||!card)return <p role="status">Chargement de la carte…</p>;
-  const move=(next:Page)=>{setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setError("");setQuery("");};
+  const move=(next:Page)=>{setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setError("");setQuery("");setAllPlaces(false);};
   const go=(next:Page)=>{if(guard(()=>resumeGo(next)))move(next);};
   const decide=(operation:ComposerOperation,next:Page="summary")=>{
     try{if(busy){setError("Cette carte est protégée ou une opération est en cours. Aucun choix n’a été admis.");return false;}if(onSave(operation)){setDirty(false);move(next);return true;}setError("Ce choix n’a pas été admis. Votre saisie est conservée ; vérifiez le message du Board.");}
@@ -108,8 +109,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     move(target as Page);
   };
   const selectedPlace=context.fields.placeRef as ProspectivePlaceRef|undefined;
-  const homeCities=[...new Set((model.mobilityOptions?.places??[]).filter(place=>derivePlannedPlaceRoles(place).includes("OWN_HOME")).map(place=>place.commune?.trim()).filter((value):value is string=>!!value))];
-  const searchCity=selectedPlace?.kind==="KNOWN"?model.mobilityOptions?.places.find(place=>place.placeId===selectedPlace.placeId)?.commune??undefined:homeCities.length===1?homeCities[0]:undefined;
+  const homes=barHomePlaces(model.mobilityOptions?.places??[]);
+  const homeCities=[...new Set(homes.map(place=>place.commune?.trim()).filter((value):value is string=>!!value))];
+  const searchCity=selectedPlace?.kind==="KNOWN"?model.mobilityOptions?.places.find(place=>place.placeId===selectedPlace.placeId)?.commune??undefined:homes.length===1&&homeCities.length===1?homeCities[0]:undefined;
   const choosePlace=(place:ProspectivePlaceRef)=>decide(barPlaceOperation(context,place),"summary");
   const editComponent=(target:string,selection:Component)=>{if(!guard(()=>resumeEdit(target,selection.selectionId)))return;setSlot(target);setAdvancedRow(false);setRow(fromSelection(selection));move("row");};
   const add=(asset:PlannedAsset,included?:boolean)=>{
@@ -139,12 +141,12 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   };
   const leg=barLeg(context,direction);
   const patchLeg=(value:BarLeg,next:Page="summary")=>{try{if(leg&&leg.selectionId===value.selectionId&&JSON.stringify(leg)!==JSON.stringify(value))assertBarRouteEditable(leg);return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:barItems(context,direction).some(item=>item.selectionId===value.selectionId)?barItems(context,direction).map(item=>item.selectionId===value.selectionId?value:item):[...barItems(context,direction),value]}}},next);}catch(failure){setError((failure as Error).message);return false;}};
-  const chooseEndpoint=(place:ProspectivePlaceRef|null)=>{if(!leg)return;try{
+  const chooseEndpoint=(place:ProspectivePlaceRef|null,fromBuffer=false)=>{if(!leg)return false;if(!fromBuffer&&!guard(()=>resumeEndpointChoice(place)))return false;try{
     // Validate representability before proposing any destructive price choice.
     const costs=barEndpointCosts(leg,endpoint);
     const next=barEndpoint(leg,endpoint,place,"UNKNOWN");
-    if(next!==leg&&costs.length){setPendingEndpoint({leg,key:endpoint,place});return;}
-    patchLeg(next,direction);
+    if(next!==leg&&costs.length){setPendingEndpoint({leg,key:endpoint,place});return false;}
+    return patchLeg(next,direction);
   }catch(failure){setError(failure instanceof Error?failure.message:"Ce lieu ne peut pas être retenu. Le trajet est conservé.");}};
   const resolveEndpoint=(choice:"UNKNOWN"|"RETAIN_MANUAL")=>{if(!pendingEndpoint||!leg)return;
     if(JSON.stringify(leg)!==JSON.stringify(pendingEndpoint.leg)){setPendingEndpoint(null);setError("Ce trajet a changé entre-temps. Relisez-le avant de choisir son nouveau prix.");return;}
@@ -153,13 +155,14 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const saveFare=()=>{if(!leg)return false;try{return patchLeg({...leg,pricing:{fare:{kind:"MANUAL",unitAmount:decisionAmount(fare.trim().replace(",","."))},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);}catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez le prix.");return false;}};
   function saveBuffer():boolean {
     if(page==="row")return !!saveRow();
+    if(page==="endpoint")return !!chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true);
     if(page==="manual-place")return choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"});
     if(page==="people")return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:people}}},"summary");
     if(page==="fare")return saveFare();
     if(page==="quick")return !!saveQuick();
     return false;
   }
-  const targetEndpoint=(key:"origin"|"destination")=>{if(!guard(()=>resumeEndpoint(key)))return;setEndpoint(key);move("endpoint");};
+  const targetEndpoint=(key:"origin"|"destination")=>{if(!guard(()=>resumeEndpoint(key)))return;setEndpoint(key);setManual("");move("endpoint");};
   const targetFare=()=>{if(!guard(resumeFare))return;setFare(leg?.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:"");move("fare");};
   const chooseVehicle=()=>{
     const vehicle=model.mobilityOptions?.vehicle;if(!leg||!vehicle?.vehicleId)return;
@@ -172,15 +175,16 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       }):leg.origin&&leg.destination?[stopForPlace(leg.origin,barPlaceLabel(leg.origin,model),"DIRECT_PLACE"),stopForPlace(leg.destination,barPlaceLabel(leg.destination,model),"ROOT_PLACE")]:[]}},direction);
     if(leg.route?.vehicleRef&&leg.route.vehicleRef.vehicleId!==vehicle.vehicleId)confirm({message:`Changer de véhicule conserve les lieux et les arrêts. Mobility réestimera le coût d’usage avec le véhicule choisi.${leg.route?.toll?.kind==="MANUAL"?` Le péage de ${leg.route.toll.unitAmount} € sera conservé comme estimation déclarée ; aucune classe tarifaire n’est attestée ici.`:""}`,acceptLabel:"Changer de véhicule",accept:apply});else apply();
   };
-  const chooseMode=(optionKey:string)=>{
+  const chooseMode=(optionKey:string,fromHome=false)=>{
+    if(fromHome&&(leg||homes.length!==1||selectedPlace?.kind!=="KNOWN"||!model.mobilityOptions?.vehicleIsUnique||!model.mobilityOptions.vehicle?.vehicleId))return;
     if(leg&&leg.optionKey!==optionKey){try{assertBarRouteEditable(leg);
       if((leg.route?.stops.length??0)>2||leg.pricing?.fundingAllocations.length)throw Error("Ce trajet possède des arrêts intermédiaires ou un financement. Utilisez les options détaillées ; ils sont conservés.");
     }catch(failure){setError((failure as Error).message);return;}}
     const value:BarLeg=leg?.optionKey===optionKey?leg:{kind:"MOBILITY_INTENT",selectionId:leg?.selectionId??crypto.randomUUID(),optionKey,provenance:"EXPLICIT_USER_DECISION",returnRequired:false,
       ...(leg?.plannedTime!==undefined?{plannedTime:leg.plannedTime}:{}),...(leg?.returnTime!==undefined?{returnTime:leg.returnTime}:{}),
-      origin:leg?(leg.origin??null):(direction==="return"?selectedPlace:null)??null,destination:leg?(leg.destination??null):(direction==="outbound"?selectedPlace:null)??null,
+      origin:leg?(leg.origin??null):fromHome?{kind:"KNOWN",placeId:homes[0]!.placeId}:(direction==="return"?selectedPlace:null)??null,destination:leg?(leg.destination??null):(direction==="outbound"?selectedPlace:null)??null,
       journey:{relation:"OWNS_JOURNEY",certainty:"CERTAIN",targetIntentId:null,externalExpenseId:null,externalCostLineIds:[],choice:null,stopIndex:null,accessLegIndex:null},
-      pricing:{fare:{kind:"UNKNOWN"},parking:{kind:"UNKNOWN"},fundingAllocations:[],preference:"FASTEST"},...(optionKey==="car"?{route:{version:"composer-mobility-route@v1" as const,vehicleRef:null,stops:[]}}:{})};
+      pricing:{fare:{kind:"UNKNOWN"},parking:{kind:"UNKNOWN"},fundingAllocations:[],preference:"FASTEST"},...(optionKey==="car"?{route:{version:"composer-mobility-route@v1" as const,vehicleRef:fromHome?{vehicleId:model.mobilityOptions!.vehicle!.vehicleId!,labelAtSelection:model.mobilityOptions!.vehicle!.label,provenance:"EXPLICIT_USER_DECISION" as const}:null,stops:fromHome?[stopForPlace({kind:"KNOWN",placeId:homes[0]!.placeId},homes[0]!.name,"DIRECT_PLACE"),stopForPlace(selectedPlace!,barPlaceLabel(selectedPlace,model),"ROOT_PLACE")]:[]}}:{})};
     const apply=()=>patchLeg(value,direction);
     if(leg&&leg.optionKey!==optionKey)confirm({message:`Changer de mode pour ${direction==="outbound"?"l’aller":"le retour"} remet ses prix à préciser et retire les données propres à son ancien mode. Les lieux et l’autre trajet sont conservés.${leg.pricing?.fare.kind==="MANUAL"?` Tarif concerné : ${leg.pricing.fare.unitAmount} € déclaré.`:leg.pricing?.fare.kind==="QUOTE"?" Le devis de ce trajet sera retiré.":""}`,acceptLabel:"Changer de mode",accept:apply});else apply();
   };
@@ -198,20 +202,27 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const neutralChoices=[choice("place","Lieu",()=>open("place"),"activity",undefined,"📍"),beerChoice,
     choice("date","Date",()=>open("date"),"activity",undefined,"📅"),choice("quick","Montant direct",startQuick,"night-out",undefined,"◈"),choice("more","Autre",()=>startLegacy("menu"),"activity",undefined,"＋")];
   let question:PaletteQuestion={title:"Composer",choices:neutralChoices};
+  const knownBars=barPlaces(model.mobilityOptions?.places??[],query);
+  if(page==="summary"&&selectedPlace)question={title:"La suite de ta sortie",choices:[choice(barLeg(context,"outbound")?"return":"outbound",barLeg(context,"outbound")?barLeg(context,"return")?"Modifier le retour":"Retour":"Aller",()=>open(barLeg(context,"outbound")?"return":"outbound"),"activity"),choice("drinks","Boissons",()=>go("drinks")),...neutralChoices.filter(c=>!["place",beer.assetKey].includes(c.key))]};
   if(page==="place")question={title:"Où prendre un verre ?",search:{value:query,change:setQuery,label:"Chercher parmi les lieux enregistrés"},choices:[
-    ...(model.mobilityOptions?.places??[]).filter(place=>`${place.name} ${place.commune??""}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))).map(place=>choice(place.placeId,place.name,()=>choosePlace({kind:"KNOWN",placeId:place.placeId}),"activity",place.commune??undefined)),
+    ...knownBars.slice(0,query.trim()||allPlaces?knownBars.length:3).map(place=>choice(place.placeId,place.name,()=>choosePlace({kind:"KNOWN",placeId:place.placeId}),"activity",barPlaceHint(place,model.mobilityOptions?.placeKnowledge))),
+    ...(!query.trim()&&!allPlaces&&knownBars.length>3?[choice("all","Tous les bars enregistrés",()=>setAllPlaces(true),"activity")]:[]),
     choice("google","Chercher un bar",()=>go("google"),"activity"),choice("manual","Nom libre",()=>{if(guard(()=>go("manual-place"))){setManual("");move("manual-place");}},"activity"),later,
     choice("drinks","Commencer par les consommations",()=>go("drinks")),choice("quick","Saisir un coût direct",startQuick)]};
   if(page==="drinks")question={title:"Consommations",choices:[...catalog.map(asset=>choice(asset.assetKey,asset.label,()=>add(asset),"night-out",undefined,asset.icon)),choice("quick","Saisir un coût direct",startQuick),choice("more","Repas, before et autres choix",()=>startLegacy("menu"))]};
   if(page==="outbound"||page==="return"){
     const actualDirection=page; // setDirection also keeps endpoint editing attached to this leg.
     question={title:page==="outbound"?"Aller":"Retour",choices:[
+      ...(page==="outbound"&&!leg&&homes.length===1&&selectedPlace?.kind==="KNOWN"&&barPlaces(model.mobilityOptions?.places??[]).some(p=>p.placeId===selectedPlace.placeId)&&model.mobilityOptions?.vehicleIsUnique&&model.mobilityOptions.vehicle?.vehicleId&&model.dropCapabilities.some(drop=>drop.sourceAssetKey==="option:night-out:outbound:car"&&drop.target.contextOccurrenceId===context.contextOccurrenceId&&drop.resolution!=="BLOCKED")?[choice("home-car",`Maison → ${barPlaceLabel(selectedPlace,model)} · ${model.mobilityOptions.vehicle.label}`,()=>chooseMode("car",true),"car","Voiture · aller uniquement · coût à estimer")]:[]),
       ...(page==="return"&&barLeg(context,"outbound")&&!barItems(context,"return").length?[choice("same","Même mode au retour",()=>{try{decide(barSameModeReturn(context,crypto.randomUUID()),"return");}catch(failure){setError((failure as Error).message);}})]:[]),
       ...model.library.searchableAssets.filter(asset=>asset.optionKind==="MOBILITY_INTENT"&&asset.assetKey.startsWith(`option:night-out:${actualDirection}:`)
         &&model.dropCapabilities.some(drop=>drop.sourceAssetKey===asset.assetKey&&drop.target.contextOccurrenceId===context.contextOccurrenceId&&drop.target.slotKey===actualDirection&&drop.resolution!=="BLOCKED"))
         .map(asset=>({...choice(asset.assetKey,asset.label,()=>chooseMode(asset.optionKey!),asset.iconKey,undefined,({car:"🚗",taxi:"🚕",train:"🚆",bus:"🚌",free:"🚶",other:"↗",unknown:"?"} as Record<string,string>)[asset.optionKey??""]),selected:leg?.optionKey===asset.optionKey})),later]};
   }
-  if(page==="endpoint")question={title:endpoint==="origin"?"Point de départ":"Destination",choices:[...(model.mobilityOptions?.places??[]).map(place=>choice(place.placeId,place.name,()=>chooseEndpoint({kind:"KNOWN",placeId:place.placeId}),"activity")),
+  if(page==="endpoint")question={title:endpoint==="origin"?"Point de départ":"Destination",search:{value:query,change:setQuery,label:"Chercher un point du trajet"},choices:[
+    ...(selectedPlace?.kind==="TEXT"?[choice("bar-text",selectedPlace.label,()=>chooseEndpoint(selectedPlace),"activity","Repère libre de cette sortie · itinéraire à préciser")]:[]),
+    ...(selectedPlace?.kind==="KNOWN"&&model.mobilityOptions?.places.some(p=>p.placeId===selectedPlace.placeId)?[choice("bar-known",barPlaceLabel(selectedPlace,model),()=>chooseEndpoint(selectedPlace),"activity","Lieu retenu pour cette sortie · choix de ce point uniquement")]:[]),
+    ...barEndpointPlaces(model.mobilityOptions?.places??[],model.householdPersons).filter(({place})=>selectedPlace?.kind!=="KNOWN"||place.placeId!==selectedPlace.placeId).filter(({place})=>`${place.name} ${place.commune??""}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))).map(({place,hint})=>choice(place.placeId,place.name,()=>chooseEndpoint({kind:"KNOWN",placeId:place.placeId}),"activity",hint)),
     choice("unknown","Garder à préciser",()=>chooseEndpoint(null),"activity")]};
   if(page==="date")question={title:"Date",choices:neutralChoices};
   if(page==="people"){
@@ -267,6 +278,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       </section>;
     })}
     <section className={styles.barLivingQuestion} aria-label="Décision en cours">
+      {page==="place"&&<p data-bar-knowledge>{model.mobilityOptions?.placeKnowledge?`Jours distincts enregistrés dans les données disponibles du foyer · ${model.mobilityOptions.placeKnowledge.fromDate} au ${model.mobilityOptions.placeKnowledge.throughDate}. Ce n’est pas une fréquentation exhaustive.${model.mobilityOptions.placeKnowledge.placesTruncated?" Catalogue limité aux 500 lieux chargés.":""}`:"Historique non disponible : lieux enregistrés, sans classement de fréquentation certifié."}</p>}
       {page==="row"?null:page==="legacy"?<NightOutEditor {...props} key={legacyKey} embedded initialView={legacy} onSave={operation=>{const admitted=!busy&&onSave(operation);if(admitted){setDirty(false);move(legacy==="calendar"?"drinks":"summary");}return admitted;}} onCancel={()=>go("summary")}/>
         :page==="quick"?<section data-bar-quick><label>Coût prévu (€)<input autoFocus inputMode="decimal" value={quickAmount} onChange={e=>{setQuickAmount(e.target.value);setDirty(true);}}/></label><p>{quickTotal?"Les détails des consommations seront remplacés, sans double compte. Repas, before et trajets sont en plus.":"Entrées ou contribution, hors consommations, repas et trajets. Ce n’est ni un plafond ni un paiement."}</p><button type="button" disabled={busy||!quickAmount.trim()} onClick={saveQuick}>Retenir ce coût</button></section>
         :page==="date"?<div className={styles.barInlineCalendar} data-bar-calendar><h4>{new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(props.semanticState.targetMonth+"-01T12:00:00Z"))}</h4><div>
@@ -275,8 +287,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
           {Array.from({length:new Date(Number(props.semanticState.targetMonth.slice(0,4)),Number(props.semanticState.targetMonth.slice(5)),0).getDate()},(_,i)=>{const date=props.semanticState.targetMonth+"-"+String(i+1).padStart(2,"0");return <button type="button" key={date} aria-label={date} aria-pressed={context.fields.plannedDate===date} onClick={()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:date}}},"drinks")}>{i+1}</button>;})}
         </div>{context.fields.plannedDate&&<button type="button" className={styles.barInlineAdd} disabled={busy} onClick={()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:null}}},"date")}>Retirer la date</button>}</div>
         :page==="people"?<section data-bar-people><h4>Personnes</h4><div className={styles.barLivingMetadata}>{people.map(p=><button type="button" key={prospectivePersonIdentity(p)} onClick={()=>togglePerson(p)}>{barPersonLabel(p,model)} ×</button>)}</div><label>Autre prénom<input value={personName} maxLength={120} onChange={e=>{setPersonName(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!personName.trim()} onClick={()=>{const person={kind:"TEXT" as const,label:personName.trim()};if(!people.some(p=>prospectivePersonIdentity(p)===prospectivePersonIdentity(person))){const next=[...people,person];if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:next}}},"people")){setPeople(next);setPersonName("");}}}}>Ajouter ce prénom</button></section>
-        :page==="google"?<BarPlaceSearch initialCity={searchCity} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})}/>
+        :page==="google"?<BarPlaceSearch initialCity={searchCity} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})} onText={label=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"})}/>
         :page==="manual-place"?<><label>Nom ou adresse libre<input autoFocus maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={!manual.trim()||busy} onClick={()=>choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"})}>Retenir ce repère</button><small>Repère textuel uniquement · distance et itinéraire à préciser.</small></>
+        :page==="endpoint"?<><label>Autre point du trajet<input maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!manual.trim()} onClick={()=>chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true)}>Retenir ce point libre</button><small>Repère textuel uniquement · itinéraire et distance à préciser.</small></>
         :page==="fare"&&leg?<><label>Coût prévu du billet ou de la course (€)<input autoFocus inputMode="decimal" value={fare} placeholder="Encore inconnu" onChange={event=>{setFare(event.target.value);setDirty(true);}}/></label>
           {leg.pricing?.fare.kind==="QUOTE"&&<p>Le devis reste conservé tant qu’un prix de remplacement n’est pas validé.</p>}
           <button type="button" disabled={busy||!fare.trim()} onClick={saveFare}>Retenir le coût du trajet</button>
