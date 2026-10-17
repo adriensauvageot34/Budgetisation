@@ -9,7 +9,7 @@ const {handleComposerRequest}=require('@/server/phase2/planner/composer-service'
 const {preparePlanningMobility}=require('@/server/phase2/planner/prospective-mobility-pricing');
 const {previewPlanScenario}=require('@/server/phase2/planner/apply');
 const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
-const {barPlaceOperation,barSameModeReturn}=require('@/app/mois-a-venir/composer/bar-living-operations');
+const {barPlaceOperation,barSameModeReturn,barEndpoint}=require('@/app/mois-a-venir/composer/bar-living-operations');
 const pg=await createKernelPostgres(),fixture=p10Month(),world=fixture.world,before=structuredClone(world),provider=providers();
 globalThis.fetch=async()=>{throw Error('L4D_REMOTE_NETWORK_FORBIDDEN');};
 const deps={repository:createPlanApplyRepository(pg.client),readWorld:async()=>world,householdPersons:[],
@@ -34,6 +34,17 @@ try{
   assert.equal(p.compiled.components.filter(c=>c.label==='Bar / Apéro').length,0);
  });
  const carState=structuredClone(model.semanticState),out=current().slotSelections.outbound.items[0],back=current().slotSelections.return.items[0];
+ await check('BAR_CLEAR_ENDPOINT_UNKNOWN_REMAINS_SERVER_ADMISSIBLE',async()=>{
+  const unknown=barEndpoint(out,'origin',null);assert.deepEqual(unknown.route.stops,[]);assert.deepEqual(unknown.route.vehicleRef,out.route.vehicleRef);
+  model=await request({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{outbound:[unknown]}}});
+  assert.equal(current().slotSelections.outbound.items[0].origin,null);assert.deepEqual(current().slotSelections.return.items[0],back);
+  assert.ok(model.mobilitySummaries.some(item=>item.economicFuel===null));
+  model=await request({kind:'READ'},carState);
+  const roundTrip={...out,returnRequired:true,route:{...p10Route()}};
+  const changed=barEndpoint(roundTrip,'origin',{kind:'TEXT',label:'Autre départ fixture'});
+  assert.equal(changed.route.stops[0].label,'Autre départ fixture');assert.equal(changed.route.stops.at(-1).label,'Autre départ fixture');
+  assert.throws(()=>barEndpoint(roundTrip,'origin',null),/arrêts/);
+ });
  await check('BAR_RETURN_TAXI_ONLY_REMOVES_RETURN_FUEL',async()=>{
   const taxi={kind:'MOBILITY_INTENT',selectionId:back.selectionId,optionKey:'taxi',provenance:'EXPLICIT_USER_DECISION',origin:back.origin,destination:back.destination,returnRequired:false,
    pricing:{fare:{kind:'MANUAL',unitAmount:'12'},parking:{kind:'UNKNOWN'},fundingAllocations:[],preference:'FASTEST'}};

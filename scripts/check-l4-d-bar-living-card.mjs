@@ -139,6 +139,10 @@ await check('V7_OWNED_RETURN_AND_PLACE_INVALIDATION_ATOMIC_UNDO',async()=>{
  assert.throws(()=>barSameModeReturn({...current(),slotSelections:{outbound:{items:[{...car,returnRequired:true}]}}},crypto.randomUUID()),/aller-retour/);
 });
 await check('V7_RETURN_MODE_CHANGE_NO_RESIDUAL_CAR_COST',async()=>{
+ const configured=structuredClone(current().slotSelections.outbound.items[0]);
+ model={...model,mobilityOptions:{places:[],vehicle:{vehicleId:configured.route.vehicleRef.vehicleId,label:configured.route.vehicleRef.labelAtSelection,consumptionL100Km:'8',fuelPricePerLiter:'1.8',fuelPriceSource:'Synthetic'}}};await sync();
+ await act(async()=>controls(n=>n.type==='button'&&text(n).startsWith('Aller ·'))[0].props.onClick());await click('Utiliser '+configured.route.vehicleRef.labelAtSelection);await sync();
+ assert.deepEqual(current().slotSelections.outbound.items[0].route.stops,configured.route.stops);assert.equal(current().slotSelections.outbound.items[0].route.manualFuelPrice,configured.route.manualFuelPrice);assert.deepEqual(current().slotSelections.outbound.items[0].route.toll,configured.route.toll);
  const before=structuredClone(current().slotSelections.outbound.items[0]);await act(async()=>{root.unmount();root=create(render());});
  const routeButtons=controls(n=>n.type==='button'&&text(n).startsWith('Retour ·'));assert.equal(routeButtons.length,1);await act(async()=>routeButtons[0].props.onClick());
  const taxis=controls(n=>n.type==='button'&&text(n)==='Taxi / Uber');assert.ok(taxis.length);await act(async()=>taxis[0].props.onClick());await click('Changer de mode');await sync();

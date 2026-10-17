@@ -19,9 +19,11 @@ const samePlace = (a: ProspectivePlaceRef | null | undefined, b: ProspectivePlac
  * resolve the retained canonical endpoints again on the next Preview. */
 export function barEndpoint(leg: BarLeg, key: "origin" | "destination", place: ProspectivePlaceRef | null): BarLeg {
   if (samePlace(leg[key], place)) return leg;
-  const affected = new Set(leg.route?.stops.flatMap((stop,index) => key === "origin" ? index===0?[index]:[]
+  if (!place && (leg.returnRequired || (leg.route?.stops.length ?? 0)>2))
+    throw Error("Ce trajet contient un aller-retour ou des arrêts intermédiaires. Choisissez un lieu de remplacement ou rééditez le trajet détaillé ; ses arrêts sont conservés.");
+  const affected = new Set(leg.route?.stops.flatMap((stop,index) => key === "origin" ? index===0 || leg.returnRequired && index===leg.route!.stops.length-1?[index]:[]
     : leg.returnRequired ? stop.endpointSource==="ROOT_PLACE"?[index]:[] : index===leg.route!.stops.length-1?[index]:[]) ?? []);
-  const route=leg.route&&{...leg.route,toll:{kind:"UNKNOWN" as const},stops:leg.route.stops.map((stop,index)=>{
+  const route=leg.route&&{...leg.route,toll:{kind:"UNKNOWN" as const},stops:!place?[]:leg.route.stops.map((stop,index)=>{
     if(affected.has(index))return place?stopForPlace(place,place.kind==="TEXT"?place.label:"Lieu enregistré",stop.endpointSource??"DIRECT_PLACE",stop.childModule):{label:"",endpointSource:stop.endpointSource};
     if(affected.has(index+1)){const {distanceToNextKm:_d,distanceSource:_s,estimatedFuelLiters:_l,evidence:_e,...intent}=stop;return intent;}
     return stop;

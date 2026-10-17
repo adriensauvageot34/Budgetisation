@@ -74,6 +74,18 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   }catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez la saisie.");}};
   const leg=barLeg(context,direction);
   const patchLeg=(value:BarLeg,next:Page="summary")=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:[value]}}},next);
+  const chooseEndpoint=(place:ProspectivePlaceRef|null)=>{if(!leg)return;try{patchLeg(barEndpoint(leg,endpoint,place),direction);}catch(failure){setError(failure instanceof Error?failure.message:"Ce lieu ne peut pas être retenu. Le trajet est conservé.");}};
+  const chooseVehicle=()=>{
+    const vehicle=model.mobilityOptions?.vehicle;if(!leg||!vehicle?.vehicleId)return;
+    if(leg.returnRequired){setError("Ce trajet couvre déjà l’aller-retour. Rééditez son véhicule dans les options détaillées ; ses arrêts restent conservés.");return;}
+    const apply=()=>patchLeg({...leg,route:{version:"composer-mobility-route@v1",vehicleRef:{vehicleId:vehicle.vehicleId!,labelAtSelection:vehicle.label,provenance:"EXPLICIT_USER_DECISION"},
+      ...(leg.route?.manualFuelPrice?{manualFuelPrice:leg.route.manualFuelPrice}:{}),
+      ...(leg.route?.toll?{toll:leg.route.toll}:{}),stops:leg.route?.stops.length?leg.route.stops.map(stop=>{
+        if(leg.route?.vehicleRef?.vehicleId===vehicle.vehicleId)return stop;
+        const {estimatedFuelLiters:_fuel,...retained}=stop;return retained;
+      }):leg.origin&&leg.destination?[stopForPlace(leg.origin,barPlaceLabel(leg.origin,model),"DIRECT_PLACE"),stopForPlace(leg.destination,barPlaceLabel(leg.destination,model),"ROOT_PLACE")]:[]}},direction);
+    if(leg.route?.vehicleRef&&leg.route.vehicleRef.vehicleId!==vehicle.vehicleId)confirm({message:"Changer de véhicule conserve les lieux et les arrêts. Mobility réestimera le coût d’usage avec le véhicule choisi.",acceptLabel:"Changer de véhicule",accept:apply});else apply();
+  };
   const chooseMode=(optionKey:string)=>{
     if(leg?.returnRequired){setError("Cet ancien trajet couvre déjà l’aller-retour. Rééditez sa relation depuis les options détaillées avant de le remplacer.");return;}
     const value:BarLeg=leg?.optionKey===optionKey?leg:{kind:"MOBILITY_INTENT",selectionId:leg?.selectionId??crypto.randomUUID(),optionKey,provenance:"EXPLICIT_USER_DECISION",returnRequired:false,
@@ -99,8 +111,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
         &&model.dropCapabilities.some(drop=>drop.sourceAssetKey===asset.assetKey&&drop.target.contextOccurrenceId===context.contextOccurrenceId&&drop.target.slotKey===actualDirection&&drop.resolution!=="BLOCKED"))
         .map(asset=>choice(asset.assetKey,asset.label,()=>chooseMode(asset.optionKey!),asset.iconKey)),later]};
   }
-  if(page==="endpoint")question={title:endpoint==="origin"?"Point de départ":"Destination",choices:[...(model.mobilityOptions?.places??[]).map(place=>choice(place.placeId,place.name,()=>leg&&patchLeg(barEndpoint(leg,endpoint,{kind:"KNOWN",placeId:place.placeId}),direction),"activity")),
-    choice("unknown","Garder à préciser",()=>leg&&patchLeg(barEndpoint(leg,endpoint,null),direction),"activity")]};
+  if(page==="endpoint")question={title:endpoint==="origin"?"Point de départ":"Destination",choices:[...(model.mobilityOptions?.places??[]).map(place=>choice(place.placeId,place.name,()=>chooseEndpoint({kind:"KNOWN",placeId:place.placeId}),"activity")),
+    choice("unknown","Garder à préciser",()=>chooseEndpoint(null),"activity")]};
   if(page==="date")question={title:"Quand sortir ?",choices:[choice("date","Choisir une date",()=>startLegacy("calendar"),"activity"),choice("later","Pas encore décidé",()=>go("drinks"),"activity")]};
   if(page==="people")question={title:"Avec qui ?",choices:[choice("people","Choisir les personnes",()=>startLegacy("people"),"family-visit"),later]};
   if(page==="manual-place"||page==="google")question={title:"Le lieu de ta sortie",choices:[choice("known","Lieux enregistrés",()=>go("place"),"activity"),choice("manual","Nom libre",()=>{if(guard(()=>go("manual-place")))move("manual-place");},"activity"),later]};
@@ -143,7 +155,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
           <p>Prix du billet ou de la course, hors carburant estimé, péage et stationnement. Le financement existant reste à vérifier.</p></>
         :page==="outbound"||page==="return"?<><p>{page==="outbound"?"Choisis le mode dans le dock. Le retour restera une décision distincte.":"Même mode, autre mode ou plus tard : le retour n’est jamais supposé."}</p>
           {leg&&<div className={styles.barLivingMetadata}>{(["origin","destination"] as const).map(key=><button type="button" key={key} onClick={()=>{setEndpoint(key);go("endpoint");}}>{key==="origin"?"Départ":"Arrivée"} · {barPlaceLabel(leg[key],model)}</button>)}
-            {leg.optionKey==="car"&&model.mobilityOptions?.vehicle?.vehicleId&&<button type="button" onClick={()=>{const vehicle=model.mobilityOptions!.vehicle!;patchLeg({...leg,route:{version:"composer-mobility-route@v1",vehicleRef:{vehicleId:vehicle.vehicleId!,labelAtSelection:vehicle.label,provenance:"EXPLICIT_USER_DECISION"},stops:leg.origin&&leg.destination?[stopForPlace(leg.origin,barPlaceLabel(leg.origin,model),"DIRECT_PLACE"),stopForPlace(leg.destination,barPlaceLabel(leg.destination,model),"ROOT_PLACE")]:[]}},direction);}}>Utiliser {model.mobilityOptions.vehicle.label}</button>}
+            {leg.optionKey==="car"&&model.mobilityOptions?.vehicle?.vehicleId&&<button type="button" onClick={chooseVehicle}>Utiliser {model.mobilityOptions.vehicle.label}</button>}
             <button type="button" onClick={()=>confirm({message:"Retirer uniquement ce trajet ? Les consommations et l’autre sens restent conservés.",acceptLabel:"Retirer le trajet",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:barItems(context,direction).filter(item=>item.selectionId!==leg.selectionId)}}})})}>Retirer ce trajet</button>
             <button type="button" onClick={()=>{setFare(leg.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:"");go("fare");}}>Préciser le prix du trajet</button>
             <button type="button" onClick={()=>startLegacy("menu")}>Financement ou relation détaillée</button></div>}</>
