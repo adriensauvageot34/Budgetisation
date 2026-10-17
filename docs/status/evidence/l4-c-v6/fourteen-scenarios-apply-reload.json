@@ -1,0 +1,99 @@
+{
+  "environment": "PGLITE_SYNTHETIC_ONLY",
+  "scenarios": 14,
+  "results": [
+    {
+      "scenario": "S1",
+      "name": "shared_partial_and_independent_return",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "S2",
+      "name": "shared_partial_and_independent_return",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "A1",
+      "name": "quantity_partial_and_later_extra",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "A2",
+      "name": "quantity_partial_and_later_extra",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "R1",
+      "name": "total_detail_unknown_and_later_extra",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "R2",
+      "name": "total_detail_unknown_and_later_extra",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "R3",
+      "name": "total_detail_unknown_and_later_extra",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "V1",
+      "name": "family-visit_native_contract_preserved",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "V1",
+      "name": "friend-visit_native_contract_preserved",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "W1",
+      "name": "composite_lodging_child_and_targeted_edit",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "P1",
+      "name": "purchase_domain_and_household_quantity",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "P2",
+      "name": "purchase_domain_and_household_quantity",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "M1",
+      "name": "purchase_domain_and_household_quantity",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "P3",
+      "name": "recipient_classification_price_independent",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "scenario": "B1",
+      "name": "manual_products_no_renewal_identity_invented",
+      "branches": "EXECUTED_PASS",
+      "applyReloadReedit": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    }
+  ],
+  "rawRegistry": "PASS",
+  "realFinancialWrites": 0,
+  "authenticated": "NOT_RUN_AUTH"
+}

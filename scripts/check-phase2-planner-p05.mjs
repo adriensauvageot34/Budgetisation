@@ -11,11 +11,12 @@ const { AppliedMonthView } = require('@/app/mois-a-venir/applied-month-view');
 const { SOCIAL_CONTACTS_V1 } = require('@/domain/phase2/planned-rules');
 const React = require('react'), { renderToStaticMarkup } = require('react-dom/server');
 const pg = await createKernelPostgres(), world = fixture(), repository = createPlanApplyRepository(pg.client);
+let rejectedHouseholdChecks = 0;
 const deps = { repository, householdPersons: [{ personId: uuid(1), displayName: 'Alice Fixture' }],
   readWorld: async () => world, readDirectWorld: async () => ({ forecast: world.forecast, monthInputs: world.monthInputs,
     externalIntents: world.externalIntents, asOfDate: world.asOfDate }),
   validateContextReferences: async (_household, refs) => {
-    if (refs.personIds.some(id => id !== uuid(1))) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
+    if (refs.personIds.some(id => id !== uuid(1))) { rejectedHouseholdChecks++; throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD'); }
   } };
 let sequence = 0;
 const request = (operation, draft) => handleComposerRequest(deps, householdId,
@@ -130,9 +131,13 @@ try {
   await check('GIFT-INVALID-HOUSEHOLD-REF-APPLY-REJECTED', async () => {
     const candidate = ok(await request({ ...amountOnly,
       values: { recipientRef: { kind: 'HOUSEHOLD_PERSON', personId: uuid(9999) } } }, amended.semanticState));
+    const rejectedChecksBeforeApply = rejectedHouseholdChecks;
     const rejected = await request({ kind: 'APPLY', command: { ...candidate.proof, applyRequestId: uuid(9511) } }, candidate.semanticState);
     assert.equal(rejected.ok, false);
-    assert.match(rejected.code, /CONTEXT_PERSON_NOT_IN_HOUSEHOLD/);
+    // P13 never reports an ambiguous Apply as a proven failed commit. Verify the owner refusal and receipt absence separately.
+    assert.equal(rejected.code, 'COMPOSER_APPLY_UNCONFIRMED');
+    assert.equal(rejectedHouseholdChecks, rejectedChecksBeforeApply + 1);
+    assert.equal(await repository.readAppliedRequest(householdId, '2026-11', uuid(9511)), null);
     assert.deepEqual(await pg.counts(), { plans: 1, revisions: 1 });
   });
   await check('GIFT-12-REEDIT-NEW-REVISION-SAME-ID', async () => {

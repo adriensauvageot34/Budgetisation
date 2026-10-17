@@ -1,0 +1,94 @@
+{
+  "method": "ACTUAL_REACT_HANDLERS_IN_PROCESS_NOT_BROWSER",
+  "baseline": null,
+  "results": [
+    {
+      "scenario": "A1",
+      "template": "activity",
+      "simpleGestures": 3,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 1,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "A2",
+      "template": "activity",
+      "simpleGestures": 3,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 1,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "R1",
+      "template": "restaurant",
+      "simpleGestures": 3,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 1,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "R2",
+      "template": "fast-food",
+      "simpleGestures": 3,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 1,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "R3",
+      "template": "delivery",
+      "simpleGestures": 3,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 1,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "P1",
+      "template": "purchase",
+      "simpleGestures": 3,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 1,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "P2",
+      "template": "purchase",
+      "simpleGestures": 3,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 1,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "M1",
+      "template": "purchase",
+      "simpleGestures": 3,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 1,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+[
+  {
+    "name": "check-l4-b-presets.mjs",
+    "exitCode": 0,
+    "durationMs": 33829
+  },
+  {
+    "name": "check-l4-b-oracles.mjs",
+    "exitCode": 0,
+    "durationMs": 7386
+  },
+  {
+    "name": "check-l4-a.mjs",
+    "exitCode": 0,
+    "durationMs": 6035
+  },
+  {
+    "name": "check-l1-restaurant.mjs",
+    "exitCode": 0,
+    "durationMs": 12000
+  },
+  {
+    "name": "check-phase2-planner-p05b.mjs",
+    "exitCode": 0,
+    "durationMs": 9400
+  },
+  {
+    "name": "check-phase2-planner-p10.mjs",
+    "exitCode": 0,
+    "durationMs": 9518
+  },
+  {
+    "name": "check-phase2-planner-p11.mjs",
+    "exitCode": 0,
+    "durationMs": 12033
+  },
+  {
+    "name": "check-phase2-planner-p12.mjs",
+    "exitCode": 1,
+    "durationMs": 26031
+  },
+  {
+    "name": "check-phase2-planner-p13.mjs",
+    "exitCode": 0,
+    "durationMs": 10580
+  },
+  {
+    "name": "check-composer-p14-p2-scheduler.mjs",
+    "exitCode": 0,
+    "durationMs": 2902
+  },
+  {
+    "name": "check-composer-post-snap3-draft-http.mjs",
+    "exitCode": 0,
+    "durationMs": 681
+  },
+  {
+    "name": "check-pre-l4-c2-c8-source.mjs",
+    "exitCode": 0,
+    "durationMs": 129
+  },
+  {
+    "name": "check-phase2-planner-p06.mjs",
+    "exitCode": 0,
+    "durationMs": 2451
+  }
+]

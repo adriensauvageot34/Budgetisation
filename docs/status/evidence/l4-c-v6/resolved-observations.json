@@ -1,0 +1,26 @@
+[
+  {
+    "issue": "Restaurant revient au total après le premier poste détaillé",
+    "initial": "Le scénario 45 puis Dessert ouvre Supplément réel au lieu de la saisie du deuxième poste.",
+    "fix": "Mode de composition conservé tant que la signature canonique du premier poste correspond à la propre admission. Undo ou une autre décision remplace ce mode.",
+    "proof": "RESTAURANT_TOTAL_DETAIL_45_PLUS_15_AND_CANCEL"
+  },
+  {
+    "issue": "Réédition DROP complète des autres composants",
+    "initial": "Test sept produits : le dernier produit UNKNOWN reçoit binding AUTO dans les currentItems projetés, sans édition de cette ligne. Diff sauvegardé.",
+    "fix": "Réédition du composant par le PATCH_CONTEXT existant, construit à partir du Semantic Draft complet. Les six autres composants sont conservés exactement ; aucun writer serveur modifié.",
+    "proof": "B1_COMPONENT_EDITOR_SEVEN_PRODUCTS_PRICE_ONLY_REPLAY"
+  },
+  {
+    "issue": "P12 SSR sans les props publiées par L4-B",
+    "initial": "TypeError model.dropCapabilities : le test SSR ne fournit pas model/choose.",
+    "fix": "Fixture SSR reçoit model edit et choose sans affaiblir les assertions.",
+    "proof": "p12-final.log"
+  },
+  {
+    "issue": "P05 assertions antérieures à B2/P13",
+    "initial": "Non fixée / Rééditer mon Plan puis erreur directe CONTEXT_PERSON_NOT_IN_HOUSEHOLD attendues. B2 affiche Date non fixée / Modifier dans Composer ; P13 encapsule Apply en COMPOSER_APPLY_UNCONFIRMED.",
+    "fix": "Libellés actualisés ; refus effectif du validateur compté + absence de reçu pour request9511 + nombre de révisions inchangé vérifiés. Aucun changement AppliedMonthView ou serveur depuis be61864.",
+    "proof": "p05-final.log"
+  }
+]

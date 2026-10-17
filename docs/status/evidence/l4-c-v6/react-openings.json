@@ -1,0 +1,331 @@
+[
+  {
+    "preset": "techno-night",
+    "template": "night-out",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "uber-eats-order",
+    "template": "delivery",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "fishing-day",
+    "template": "activity",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "fontes-family-visit",
+    "template": "family-visit",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "clothing-shopping",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "bar-apero",
+    "template": "night-out",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "nightclub",
+    "template": "night-out",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "friends-evening",
+    "template": "night-out",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "home-evening",
+    "template": "night-out",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "chicken-snack",
+    "template": "fast-food",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "restaurant-for-two",
+    "template": "restaurant",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "hiking-nature",
+    "template": "activity",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "beach-day",
+    "template": "activity",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "cinema",
+    "template": "activity",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "spa-relax",
+    "template": "activity",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "servian-family-visit",
+    "template": "family-visit",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "visit-friends",
+    "template": "friend-visit",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "weekend-gite",
+    "template": "short-stay",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "video-game-purchase",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "amazon-purchase",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "shein-purchase",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "aliexpress-purchase",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "mascara",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "hair-wax",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "laundry-detergent",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "dishwashing-liquid",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "concert",
+    "template": "activity",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "ropes-course",
+    "template": "activity",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "museum-exhibition",
+    "template": "activity",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "gift-present",
+    "template": "gift",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "shoes-purchase",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "eyeliner",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "eyebrow-pencil",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "facial-toner",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "face-serum",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "face-moisturizer",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "face-cleanser",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "care-lotion",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "makeup-remover",
+    "template": "beauty-restock",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "hotel-night",
+    "template": "short-stay",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "stay-with-relatives",
+    "template": "short-stay",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "dishwasher-tablets",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "floor-cleaner",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "sponges",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "trash-bags",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "toilet-paper",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  },
+  {
+    "preset": "paper-towels",
+    "template": "purchase",
+    "status": "SUMMARY_RENDERED_REACT_ONLY",
+    "inputs": 0,
+    "selects": 0
+  }
+]

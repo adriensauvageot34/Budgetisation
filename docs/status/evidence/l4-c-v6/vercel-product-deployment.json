@@ -1,0 +1,10 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"result\": {\n    \"deployment\": {\n      \"id\": \"dpl_GysUX9FcDJePWEpbhxHVvnSuNiCM\",\n      \"name\": \"budgetisation\",\n      \"url\": \"budgetisation-ma3k725kt-adriensauvageot34-6137s-projects.vercel.app\",\n      \"type\": \"LAMBDAS\",\n      \"state\": \"READY\",\n      \"createdAt\": 1792225008979,\n      \"creator\": {\n        \"uid\": \"ItlVoi62mpJ28TeqsxO3j569\",\n        \"username\": \"adriensauvageot34-6137\"\n      },\n      \"project\": {\n        \"id\": \"prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ\",\n        \"name\": \"budgetisation\",\n        \"framework\": \"nextjs\"\n      },\n      \"meta\": {\n        \"githubCommitRef\": \"codex/composer-v3-l4-c-v6-experience\",\n        \"githubCommitSha\": \"ecbc8f59f0cf60a9d2725a34ceb8da4f9204bdec\",\n        \"githubCommitMessage\": \"feat(composer): build V6 choice dock and guarded workshop interactions\",\n        \"githubRepo\": \"Budgetisation\",\n        \"githubOrg\": \"adriensauvageot34\"\n      },\n      \"alias\": [\n        \"budgetisation-git-codex-3e3b7b-adriensauvageot34-6137s-projects.vercel.app\"\n      ],\n      \"target\": null,\n      \"regions\": [\n        \"iad1\"\n      ],\n      \"buildingAt\": 1792225010093,\n      \"ready\": 1792225132191,\n      \"readyState\": \"READY\",\n      \"source\": \"git\",\n      \"aliasError\": null\n    }\n  }\n}"
+    }
+  ],
+  "structuredContent": null,
+  "isError": false
+}
