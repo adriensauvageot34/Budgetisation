@@ -17,31 +17,51 @@ const samePlace = (a: ProspectivePlaceRef | null | undefined, b: ProspectivePlac
 /** An endpoint change invalidates route-dependent evidence. No price is inferred here.
  * Drop route evidence rather than persisting stale coordinates/tolls; the owner may
  * resolve the retained canonical endpoints again on the next Preview. */
-export function barEndpoint(leg: BarLeg, key: "origin" | "destination", place: ProspectivePlaceRef | null): BarLeg {
+export function barEndpoint(leg: BarLeg, key: "origin" | "destination", place: ProspectivePlaceRef | null,
+  priceChoice?: "UNKNOWN" | "RETAIN_MANUAL"): BarLeg {
   if (samePlace(leg[key], place)) return leg;
+  assertBarRouteEditable(leg);
+  const boundary = key === "origin" ? leg.route?.stops[0] : leg.route?.stops.at(-1);
+  if (boundary && (!leg[key] || !samePlace(leg[key], boundary.placeId
+    ? {kind:"KNOWN",placeId:boundary.placeId} : {kind:"TEXT",label:boundary.label})))
+    throw Error("Le point du trajet et son arrêt détaillé ne correspondent pas. Rééditez les arrêts dans les options détaillées ; aucun arrêt n’est remplacé.");
+  if (leg.pricing?.fundingAllocations.length)
+    throw Error("Ce trajet possède un financement. Rééditez ce financement et son périmètre dans les options détaillées avant de changer le point ; il est conservé.");
+  const affectedCosts = barEndpointCosts(leg, key);
+  if (affectedCosts.length && !priceChoice)
+    throw Error(`Ce changement affecte ${affectedCosts.join(", ")}. Choisissez explicitement les prix à préciser avant de modifier le trajet.`);
+  if (priceChoice === "RETAIN_MANUAL" && (leg.pricing?.fare.kind !== "MANUAL" || affectedCosts.length !== 1))
+    throw Error("Ce prix ne peut pas être repris seul. Les autres coûts nécessitent une décision dans les options détaillées.");
   if (!place && (leg.returnRequired || (leg.route?.stops.length ?? 0)>2))
     throw Error("Ce trajet contient un aller-retour ou des arrêts intermédiaires. Choisissez un lieu de remplacement ou rééditez le trajet détaillé ; ses arrêts sont conservés.");
   const affected = new Set(leg.route?.stops.flatMap((stop,index) => key === "origin" ? index===0 || leg.returnRequired && index===leg.route!.stops.length-1?[index]:[]
     : leg.returnRequired ? stop.endpointSource==="ROOT_PLACE"?[index]:[] : index===leg.route!.stops.length-1?[index]:[]) ?? []);
-  const route=leg.route&&{...leg.route,toll:{kind:"UNKNOWN" as const},stops:!place?[]:leg.route.stops.map((stop,index)=>{
+  const route=leg.route&&{...leg.route,...(leg.route.toll?{toll:{kind:"UNKNOWN" as const}}:{}),stops:!place?[]:leg.route.stops.map((stop,index)=>{
     if(affected.has(index))return place?stopForPlace(place,place.kind==="TEXT"?place.label:"Lieu enregistré",stop.endpointSource??"DIRECT_PLACE",stop.childModule):{label:"",endpointSource:stop.endpointSource};
     if(affected.has(index+1)){const {distanceToNextKm:_d,distanceSource:_s,estimatedFuelLiters:_l,evidence:_e,...intent}=stop;return intent;}
     return stop;
   })};
-  return {...leg, [key]: place, ...(route?{route}:{}), pricing: {fare:{kind:"UNKNOWN"}, parking:{kind:"UNKNOWN"},
-    fundingAllocations:[], preference:leg.pricing?.preference ?? "FASTEST"},
-    ...(leg.journey && leg.journey.relation !== "OWNS_JOURNEY" && leg.journey.relation !== "NO_ADDITIONAL_MOBILITY"
-      ? {journey:{...leg.journey, certainty:"POSSIBLE", choice:null}} : {})};
+  return {...leg, [key]: place, ...(route?{route}:{}), ...(leg.pricing?{pricing:{...leg.pricing,
+    fare:priceChoice==="RETAIN_MANUAL"?leg.pricing.fare:{kind:"UNKNOWN" as const},
+    // Parking at the unchanged destination does not depend on a new origin.
+    parking:key==="origin"?leg.pricing.parking:{kind:"UNKNOWN" as const}}}:{})};
 }
-/** The central venue owns the outbound destination and return origin only.
- * No other semantic field or selection is reconstructed. */
+/** No published durable venue/endpoint binding exists. Even equal IDs do not
+ * establish one: changing the venue alone preserves every route byte-for-byte.
+ * Users may subsequently edit a particular endpoint through its own writer. */
 export function barPlaceOperation(context: PlannedContextState, place: ProspectivePlaceRef): ComposerOperation {
-  const slots = Object.fromEntries((["outbound","return"] as const).flatMap(slot => {
-    const previous = barItems(context, slot);
-    return previous.length ? [[slot, previous.map(item => item.kind === "MOBILITY_INTENT"
-      ? barEndpoint(item, slot === "outbound" ? "destination" : "origin", place) : item)]] : [];
-  }));
-  return {kind:"EDIT_NIGHT_OUT", edit:{contextOccurrenceId:context.contextOccurrenceId, fields:{placeRef:place}, slots}};
+  return {kind:"EDIT_NIGHT_OUT", edit:{contextOccurrenceId:context.contextOccurrenceId, fields:{placeRef:place}}};
+}
+export function assertBarRouteEditable(leg: BarLeg) {
+  if (leg.journey && leg.journey.relation !== "OWNS_JOURNEY")
+    throw Error("Ce trajet est lié à un propriétaire externe ou à une relation spécifique. Utilisez la relation détaillée ; aucun trajet payant local ne sera créé.");
+  if (leg.returnRequired)
+    throw Error("Cet ancien trajet couvre un aller-retour. Utilisez son édition détaillée ; tous ses arrêts et prix sont conservés.");
+}
+export function barEndpointCosts(leg: BarLeg, key: "origin" | "destination"): string[] {
+  return [leg.pricing?.fare && leg.pricing.fare.kind!=="UNKNOWN" ? "le tarif du billet ou de la course" : null,
+    key==="destination" && leg.pricing?.parking && leg.pricing.parking.kind!=="UNKNOWN" ? "le stationnement à l’arrivée" : null,
+    leg.route?.toll && leg.route.toll.kind!=="UNKNOWN" ? "le péage de cet itinéraire" : null].filter((value):value is string=>value!==null);
 }
 /** Explicit user action only. A new independent leg never inherits a fare,
  * parking, funding or quote. Existing returns require a separate replacement choice. */

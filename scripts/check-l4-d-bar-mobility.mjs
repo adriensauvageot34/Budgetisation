@@ -41,9 +41,8 @@ try{
   assert.ok(model.mobilitySummaries.some(item=>item.economicFuel===null));
   model=await request({kind:'READ'},carState);
   const roundTrip={...out,returnRequired:true,route:{...p10Route()}};
-  const changed=barEndpoint(roundTrip,'origin',{kind:'TEXT',label:'Autre départ fixture'});
-  assert.equal(changed.route.stops[0].label,'Autre départ fixture');assert.equal(changed.route.stops.at(-1).label,'Autre départ fixture');
-  assert.throws(()=>barEndpoint(roundTrip,'origin',null),/arrêts/);
+  const retained=structuredClone(roundTrip);assert.throws(()=>barEndpoint(roundTrip,'origin',{kind:'TEXT',label:'Autre départ fixture'}),/aller-retour/);assert.deepEqual(roundTrip,retained);
+  assert.throws(()=>barEndpoint(roundTrip,'origin',null),/aller-retour/);
  });
  await check('BAR_RETURN_TAXI_ONLY_REMOVES_RETURN_FUEL',async()=>{
   const taxi={kind:'MOBILITY_INTENT',selectionId:back.selectionId,optionKey:'taxi',provenance:'EXPLICIT_USER_DECISION',origin:back.origin,destination:back.destination,returnRequired:false,
@@ -54,10 +53,10 @@ try{
   assert.equal(p.compiled.journeyPrices.filter(price=>price.cashTransport==='12.00').length,1);
   assert.ok(p.compiled.journeyPrices.some(price=>price.economicFuel==='2.00'));
  });
- await check('BAR_PLACE_TEXT_INVALIDATES_BOTH_DERIVATIONS_NOT_INDEPENDENT_COMPONENTS',async()=>{
+ await check('BAR_PLACE_TEXT_PRESERVES_INDEPENDENT_LEGS_AND_PRICES',async()=>{
   const components=structuredClone(current().slotSelections.extras);model=await request(barPlaceOperation(current(),{kind:'TEXT',label:'Lieu libre synthétique',provenance:'USER_DECLARED_PROSPECTIVE'}));
   const p=await previewPlanScenario(deps,householdId,model.semanticState);assert.equal(p.compiled.journeys.length,2);
-  assert.equal(p.compiled.journeyPrices.some(price=>price.economicFuel==='2.00'),false);assert.equal(p.compiled.journeyPrices.some(price=>price.cashTransport==='12.00'),false);
+  assert.equal(p.compiled.journeyPrices.some(price=>price.economicFuel==='2.00'),true);assert.equal(p.compiled.journeyPrices.some(price=>price.cashTransport==='12.00'),true);
   assert.deepEqual(current().slotSelections.extras,components);assert.equal(current().slotSelections.return.items[0].destination.placeId,home.placeId);
  });
  await check('BAR_PROVIDER_OUTAGE_NOT_BOARD_FAILURE_AND_RESTORE_DIGEST',async()=>{

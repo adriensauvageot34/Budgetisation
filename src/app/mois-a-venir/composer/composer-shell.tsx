@@ -58,7 +58,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
 }) {
   const inlineEdits = useOwnedInlineEdits();
   const confirmationRequest = useRef<Parameters<typeof WorkshopConfirmationProvider>[0]["requestRef"]["current"]>(() => {});
-  useEffect(() => { inlineEdits.registry.requestConfirmation = (message, accept) => confirmationRequest.current({ message, accept, acceptLabel: "Abandonner cette saisie" }); }, [inlineEdits.registry]);
+  useEffect(() => { inlineEdits.registry.requestConfirmation = (message, accept, save) => confirmationRequest.current({ message, accept, save, acceptLabel: "Abandonner cette saisie" }); }, [inlineEdits.registry]);
   const draftTransport = durableDraftHttp ? composerDraftHttpTransport : suppliedDraftTransport;
   const transport: ComposerTransport = useCommittedEvent(async (request: ComposerRequest) => {
     const started = performance.now();
