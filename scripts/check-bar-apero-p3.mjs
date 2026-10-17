@@ -34,7 +34,16 @@ let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
 const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
-const click=async label=>{await act(async()=>button(label).props.onClick());steps++;};
+const click=async label=>{
+  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));
+  for(let i=0;i<12&&!matches().length;i++){
+    const next=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled)[0];
+    if(next){await act(async()=>next.props.onClick());steps++;continue;}
+    const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];
+    if(back&&['Montant direct','Autre'].includes(label)){await act(async()=>back.props.onClick());steps++;continue;}break;
+  }
+  await act(async()=>button(label).props.onClick());steps++;
+};
 const input=label=>{const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
 const change=async(label,value)=>{await act(async()=>{const node=input(label);for(let p=node.parent;p;p=p.parent)p.props.onChangeCapture?.({target:{value}});node.props.onChange({target:{value}});});steps++;};
 const props=()=>({context:model.semanticState.contexts.find(c=>c.contextOccurrenceId===id),model,card:model.board.contexts.find(c=>c.contextOccurrenceId===id),semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],options:model.mobilityOptions,busy:false,fresh:true,dockHost:{},host:{},choose:()=>{},close:()=>{},onCancel:()=>{},onSave:admit,decide:admit,saveStatus:'MEMORY',editor:model.editors.find(e=>e.assetKey==='template:'+model.semanticState.contexts.find(c=>c.contextOccurrenceId===id).templateKey),...overrides});
@@ -46,6 +55,8 @@ const current=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===i
 const save=async()=>{await click('Terminé');await sync();};
 const shortInput=label=>input(label);
 const tile=label=>controls(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&(text(c)===label||text(c).startsWith(label+' ×'))).length)[0];
+const openTile=async label=>{if(!tile(label))await click('← Ma sortie');await act(async()=>tile(label).props.onClick());};
+const navigateRoute=async dir=>{let nodes=controls(n=>n.props['data-bar-route']===dir||n.props['data-bar-add-route']===dir);if(!nodes.length){await click('← Ma sortie');nodes=controls(n=>n.props['data-bar-route']===dir||n.props['data-bar-add-route']===dir);}assert.ok(nodes.length,'Route '+dir);await act(async()=>nodes[0].props.onClick());};
 
 
 const {BarLivingCard}=require('@/app/mois-a-venir/composer/bar-living-card');
@@ -54,7 +65,7 @@ const step=()=>controls(n=>n.props['data-bar-living-editor']!==undefined)[0].pro
 const snapshot=name=>{fs.mkdirSync('outputs/bar-p2/react-structure',{recursive:true});fs.writeFileSync('outputs/bar-p2/react-structure/'+name+'.json',JSON.stringify({proof:'REACT_RENDERED_STRUCTURE_NOT_SCREENSHOT_NOT_BROWSER',tree:root.toJSON()},null,2));};
 const dock=()=>controls(n=>n.props['data-question-dock']!==undefined)[0];
 const labels=()=>dock().findAll(n=>n.type==='button'&&n.findAll(c=>c.type==='strong').length).map(n=>text(n).trim());
-const onRoute=async dir=>{await act(async()=>controls(n=>n.props["data-bar-route"]===dir||n.props["data-bar-add-route"]===dir)[0].props.onClick());};
+const onRoute=navigateRoute;
 const {barPlaces,barPlaceHint,barHomePlaces,barEndpointPlaces}=require('@/app/mois-a-venir/composer/bar-place-knowledge');
 const place=(n,name,extra={})=>({placeId:uuid(n),name,commune:'Ville fixture',nature:'Commerce',usage:'Bar',subtype:null,privatePlace:false,relationships:[],...extra});
 const knowledge={source:'RECORDED_PERSON_DAYS',fromDate:'2025-10-17',throughDate:'2026-10-17',coverage:'AVAILABLE_RECORDS',placeLimit:500,placesTruncated:false};
@@ -68,7 +79,7 @@ await check('P3_01_05_PUBLIC_RANKING_HOMONYMS_AND_HONEST_COVERAGE',async()=>{
  assert.deepEqual(barPlaces([c,b,a,home]).map(p=>p.placeId),[a,b,c].map(p=>p.placeId));assert.equal(barPlaces([home]).length,0);
  assert.deepEqual(barPlaces([b,{...a,visits12Months:1,lastVisitDate:b.lastVisitDate}]).map(p=>p.placeId),[a.placeId,b.placeId]);
  assert.ok(barPlaceHint(a,knowledge).includes('3 jour(s)'));assert.ok(!barPlaceHint(c,knowledge).includes('jamais'));assert.ok(barPlaceHint(a).includes('non établi'));
- await seed();assert.equal(pendingOps.length,0);await click('Lieu');assert.equal(pendingOps.length,0);assert.ok(!labels().some(s=>s.includes('Maison fixture')));assert.ok(controls(n=>n.props['data-bar-knowledge']!==undefined).map(text).join('').includes('pas une fréquentation exhaustive'));
+ await seed();assert.equal(pendingOps.length,0);await click('Lieu');assert.equal(pendingOps.length,0);assert.ok(!labels().some(s=>s.includes('Maison fixture')));assert.ok(controls(n=>n.props['data-bar-knowledge']!==undefined).map(text).join('').includes('couverture non exhaustive'));
  const matches=dock().findAll(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&text(c)==='Bar jumeau').length);assert.equal(matches.length,2);await act(async()=>matches[1].props.onClick());assert.equal(current().fields.placeRef.placeId,b.placeId);
 });
 await check('P3_11_EXPLICIT_HOME_CAR_ATOMIC_NO_PRICE_OR_RETURN',async()=>{

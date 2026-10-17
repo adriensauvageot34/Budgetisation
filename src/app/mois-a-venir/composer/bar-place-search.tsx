@@ -3,6 +3,7 @@ import {useEffect,useRef,useState} from "react";
 import {RestaurantSearchSession,validGooglePlaceId,type RestaurantSuggestion,type SelectedRestaurantPlace} from "@/domain/phase2/restaurant-places";
 import type {PlannedPlaceOption} from "@/domain/phase2/planned-places";
 import {GoogleMapsAttribution} from "../restaurant-place-search";
+import {BarPageControls} from "./bar-pages";
 import styles from "./composer.module.css";
 
 /** Provider data stays transient. Only an already published canonical identity
@@ -10,16 +11,16 @@ import styles from "./composer.module.css";
 export function BarPlaceSearch({places,onKnown,onText,initialCity}: {places:readonly PlannedPlaceOption[];onKnown:(placeId:string)=>void;onText?:(label:string)=>void;initialCity?:string}) {
   const [query,setQuery]=useState(""),[city,setCity]=useState(initialCity??""),[editCity,setEditCity]=useState(!initialCity),[results,setResults]=useState<RestaurantSuggestion[]>([]);
   const [detail,setDetail]=useState<SelectedRestaurantPlace|null>(null),[status,setStatus]=useState("");
+  const [resultPage,setResultPage]=useState(0);
   const [attempt,setAttempt]=useState(0),[failed,setFailed]=useState(false),[detailRetry,setDetailRetry]=useState<RestaurantSuggestion|null>(null);
   const session=useRef(new RestaurantSearchSession()),abort=useRef<AbortController|null>(null),generation=useRef(0);
   useEffect(()=>{
-    const ticket=++generation.current;abort.current?.abort();setDetail(null);setResults([]);setStatus("");setFailed(false);setDetailRetry(null);
-    if(!city.trim()){session.current.cancel();return;}
+    const ticket=++generation.current;abort.current?.abort();setDetail(null);setResults([]);setResultPage(0);setStatus("");setFailed(false);setDetailRetry(null);
     session.current.schedule(query,city,(request,current)=>{
       const controller=new AbortController();abort.current=controller;setStatus("Recherche…");
-      void fetch("/api/places/autocomplete",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({input:request.input,sessionToken:request.sessionToken,context:{city:request.city,country:"FR",kind:"VENUE"}})})
-        .then(async response=>{if(!response.ok)throw Error(response.status===429?"Recherche temporairement limitée. Réessayez plus tard ou saisissez un lieu.":"Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles.");try{return await response.json();}catch{throw Error("Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles.");}})
-        .then(raw=>{if(current()&&generation.current===ticket){if(!raw||!Array.isArray(raw.suggestions))throw Error("Réponse de recherche invalide. Réessayez ou utilisez un nom libre.");setResults(raw.suggestions.filter((item:RestaurantSuggestion)=>item&&item.source==="google_places"&&validGooglePlaceId(item.placeId)&&typeof item.primaryText==="string"));setStatus("Recherche terminée");}})
+      void fetch("/api/places/autocomplete",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({input:request.input,sessionToken:request.sessionToken,context:{city:request.city,country:"FR",kind:"BAR_APERO"}})})
+        .then(async response=>{if(!response.ok)throw Error(response.status===401?"Connectez-vous pour rechercher avec Google Maps.":response.status===403?"Accès à la recherche refusé. Vérifiez votre session ; votre sortie est conservée.":response.status===429?"Recherche temporairement limitée. Réessayez plus tard ou saisissez un lieu.":"Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles.");try{return await response.json();}catch{throw Error("Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles.");}})
+        .then(raw=>{if(current()&&generation.current===ticket){if(!raw||!Array.isArray(raw.suggestions))throw Error("Réponse de recherche invalide. Réessayez ou utilisez un nom libre.");setResults(raw.suggestions.filter((item:RestaurantSuggestion)=>item&&item.source==="google_places"&&validGooglePlaceId(item.placeId)&&typeof item.primaryText==="string"));setStatus(raw.suggestions.length?"Résultats Google Maps":"Aucun résultat Google pour cette recherche. Essayez une autre ville ou un nom libre.");}})
         .catch(error=>{if(current()&&generation.current===ticket&&!controller.signal.aborted){setStatus(error.message);setFailed(true);}});
     });
     return()=>{session.current.cancel();abort.current?.abort();};
@@ -28,7 +29,7 @@ export function BarPlaceSearch({places,onKnown,onText,initialCity}: {places:read
   const select=async(suggestion:RestaurantSuggestion)=>{
     const ticket=++generation.current;session.current.cancel();abort.current?.abort();const controller=new AbortController();abort.current=controller;setDetail(null);setDetailRetry(null);setFailed(false);setStatus("Lecture du lieu…");
     try{
-      const response=await fetch("/api/places/details",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({placeId:suggestion.placeId,sessionToken:session.current.sessionToken(),context:{kind:"VENUE"}})});
+      const response=await fetch("/api/places/details",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({placeId:suggestion.placeId,sessionToken:session.current.sessionToken(),context:{kind:"BAR_APERO"}})});
       if(!response.ok)throw Error("Ce lieu n’a pas pu être vérifié. Réessayez ou saisissez son nom librement.");
       let payload:{place:SelectedRestaurantPlace};
       try{payload=await response.json();}catch{throw Error("Ce lieu n’a pas pu être vérifié. Réessayez ou saisissez son nom librement.");}
@@ -42,12 +43,15 @@ export function BarPlaceSearch({places,onKnown,onText,initialCity}: {places:read
   return <section data-bar-google-search aria-label="Chercher un bar avec Google Maps">
     <label>Chercher un bar<input autoFocus maxLength={120} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom du lieu…"/></label>
     {editCity?<label>Ville<input maxLength={100} value={city} onChange={e=>setCity(e.target.value)}/></label>
-      :<div className={styles.barPlaceContext}>Autour de {city} · lieu enregistré <button type="button" onClick={()=>setEditCity(true)}>Modifier la ville</button></div>}
+      :<div className={styles.barPlaceContext}>Autour de {city} <button type="button" onClick={()=>setEditCity(true)}>Modifier la ville</button></div>}
+    <button type="button" onClick={()=>{setCity("");setEditCity(true);}}>Chercher ailleurs, sans ville imposée</button>
+    {!city.trim()&&<small>Recherche en France · ajoutez une ville au nom pour préciser.</small>}
     <GoogleMapsAttribution/>{status&&<p role="status">{status}</p>}
     {failed&&<button type="button" onClick={()=>{session.current.complete();setAttempt(value=>value+1);}}>Réessayer la recherche</button>}
     {detailRetry&&<button type="button" onClick={()=>void select(detailRetry)}>Réessayer ce lieu</button>}
-    {results.map(result=><button type="button" key={result.placeId} onClick={()=>void select(result)}>{result.primaryText} · {result.secondaryText}</button>)}
+    {results.slice(resultPage*3,(resultPage+1)*3).map(result=><button type="button" key={result.placeId} onClick={()=>void select(result)}>{result.primaryText} · {result.secondaryText}</button>)}
+    <BarPageControls index={resultPage} count={Math.ceil(results.length/3)} onChange={setResultPage} label="Résultats Google"/>
     {detail&&<div><strong>{detail.displayName}</strong><p>{detail.formattedAddress}</p>{known.length?known.map(place=><button type="button" key={place.placeId} onClick={()=>onKnown(place.placeId)}>{known.length===1?"Retenir ce lieu enregistré":`Retenir ${place.name} · ${place.commune??"commune à préciser"} · ${place.address??place.placeId.slice(-6)}`}</button>)
-      :<><p role="status">Ce résultat n’est pas encore un lieu enregistré dans Budgetisation. Sa promotion n’est pas disponible ici. Seul son nom peut être retenu librement ; ses coordonnées et son trajet resteront à préciser.</p>{onText&&detail.displayName.trim().length<=120&&<button type="button" onClick={()=>onText(detail.displayName.trim())}>Retenir comme nom libre</button>}</>}</div>}
+      :<><p role="status">Ce lieu n’est pas encore enregistré. Vous pouvez garder son nom ; l’itinéraire restera à préciser.</p>{onText&&detail.displayName.trim().length<=120&&<button type="button" onClick={()=>onText(detail.displayName.trim())}>Retenir comme nom libre</button>}</>}</div>}
   </section>;
 }

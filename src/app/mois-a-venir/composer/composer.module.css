@@ -1004,10 +1004,10 @@
 .barLivingImage { width:64px; height:64px; flex:none; object-fit:contain; }
 .barLivingTools { display:flex; align-self:flex-start; gap:4px; margin-left:auto; }
 .barLivingTools button { display:grid; place-items:center; width:28px; height:28px; border:0; border-radius:50%; background:#f1eef5; }
-.barLivingCompact { padding:0 12px 12px; display:flex; flex-direction:column; gap:6px; min-height:0; overflow:auto; }
+.barLivingCompact { padding:0 12px 12px; display:flex; flex-direction:column; gap:6px; min-height:0; overflow:visible; }
 .barLivingCompact>div:not(.barLivingTiles) { display:flex; gap:6px; }
 .barLivingCompact>button,.barLivingCompact>div>button { text-align:left; border:0; background:#f4f1f6; padding:7px 9px; border-radius:10px; font-size:11px; }
-.barLivingEditor { display:flex; flex-direction:column; gap:9px; padding:0 14px 14px; min-height:0; overflow:auto; overscroll-behavior:contain; }
+.barLivingEditor { display:flex; flex-direction:column; gap:9px; padding:0 14px 14px; min-height:0; overflow:visible; }
 .barLivingMetadata { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
 .barLivingMetadata button { border:1px solid #ded8e6; background:#f5f1f9; padding:6px 10px; border-radius:20px; font-size:12px; }
 .barLivingRoutes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
@@ -1080,19 +1080,19 @@
 /* Grid rows own cell height. The old flex-start inheritance otherwise lets an
  * intrinsic card exceed its allocated tracks and cover the next row. */
 .inventoryCell { align-self:stretch; }
-.barLivingMount { display:flex; flex:1; flex-direction:column; min-height:0; overflow:hidden; }
+.barLivingMount { display:flex; flex:none; flex-direction:column; min-height:0; overflow:visible; }
 .barLivingHost { display:contents; }
 
 /* P2: only the Bar card and its explicitly scoped palette use these rules. */
 .barLivingCard .barImageTrigger { flex:none; border:0; padding:0; background:transparent; border-radius:12px; }
 .barLivingCard .barInlineAdd { display:inline-flex; align-items:center; gap:6px; width:fit-content; max-width:100%; border:1px dashed #d8cbb4; border-radius:10px; padding:6px 9px; background:#fffaf0; color:#76603f; font-size:11px; }
 .barLivingCard .barMoreCount { flex:0 0 auto; align-self:center; border:1px solid #dfd4bd; border-radius:50%; min-width:34px; min-height:34px; background:#f8efdf; font-size:12px; }
-.barLivingCompact { gap:8px; overflow-y:auto; overflow-x:hidden; }
+.barLivingCompact { gap:8px; overflow:visible; }
 .barLivingCompact .barLivingTiles { flex-wrap:nowrap; gap:6px; }
 .barLivingCompact .barLivingTiles>button { flex:1 1 0; min-height:82px; padding:7px; font-size:11px; }
 .barLivingCompact .barLivingTiles>.barMoreCount { flex:0 0 32px; min-height:32px; padding:0; }
 .barLivingCompact .barProductSymbol { font-size:24px; }
-.barLivingEditor { gap:12px; padding:12px 14px 14px; overflow-x:hidden; }
+.barLivingEditor { gap:12px; padding:12px 14px 14px; overflow:visible; }
 .barLivingMetadata button[aria-pressed=true],.barRouteLine[aria-pressed=true] { border-color:#a98a54; background:#fbf0d9; }
 .barLivingRoutes:empty { display:none; }
 .barLivingCard .barRouteLine { width:100%; box-sizing:border-box; border-radius:12px; }
@@ -1136,3 +1136,29 @@
 .barCompositionDock .questionAnswer > span { overflow-wrap:anywhere; }
 .barCompositionDock .barChoiceSymbol { font-size:29px; }
 .barEditableBody { display:contents; border:0; padding:0; margin:0; min-inline-size:0; }
+
+/* Bar scenes own their contents; only the surrounding Board/page may scroll. */
+.barLivingCard { height:auto; min-height:100%; overflow:visible; }
+.barLivingHeader strong { font-size:23px; font-variant-numeric:tabular-nums; }
+.barLivingHeader { position:relative; border-radius:22px 22px 0 0; }
+.barLivingCompact section { min-width:0; }
+.barLivingCompact .barLivingTiles { display:flex; flex-wrap:wrap; }
+.barLivingCompact .barLivingTiles>button { min-width:0; min-height:70px; padding:5px; flex:1 1 0; }
+.barManage { position:relative; }
+.barManage summary { cursor:pointer; padding:3px 7px; list-style:none; }
+.barManage[open] { background:#fff; z-index:3; }
+.barLivingTools .barManage button { display:block; width:auto; height:auto; border-radius:8px; padding:8px; white-space:nowrap; }
+.barSceneBack { border:0; background:transparent; color:#655078; padding:4px 0; text-align:left; font-size:12px; }
+.barPagination { display:flex; align-items:center; justify-content:flex-end; gap:9px; margin:6px 0; font-size:12px; }
+.barPagination button { border:1px solid #ddd1e7; border-radius:8px; padding:5px 10px; background:#fff; }
+.barCompositionDock .paletteOptions { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); overflow:visible; gap:9px; }
+.barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { min-width:0; max-width:none; width:100%; box-sizing:border-box; height:auto; min-height:65px; }
+.barLivingQuestion [data-bar-local-places]>button,.barLivingCard [data-bar-google-search]>button { display:block; width:100%; padding:7px; margin:3px 0; border:1px solid #e6dcec; border-radius:10px; background:#fff; text-align:left; }
+.barLivingQuestion [data-bar-local-places] input { width:100%; box-sizing:border-box; }
+.barLivingCard [data-bar-item-details] { display:inline-block; margin:5px; font-size:12px; }
+.barLivingCard [data-bar-item-details] summary { cursor:pointer; }
+.barLivingCard [data-bar-removal-pending] { padding:10px; margin:4px 12px; background:#f4eff9; border-radius:10px; }
+.barLivingCard[data-removing=true] { opacity:.75; }
+.barLivingCard [data-bar-calendar] { max-width:350px; margin:auto; }
+.barLivingCard [data-bar-calendar] h4 { margin:4px 0; }
+.barLivingCard .barProductSymbol img { display:block; width:40px; height:40px; object-fit:contain; }
