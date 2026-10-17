@@ -1,0 +1,61 @@
+{
+  "checks": [
+    {
+      "name": "P4_BEFORE_DIRECT_CHILD_TILE_REEDIT",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_P5_BEFORE_RICH_UI_PARTIAL_PATCH_SAME_IDS_AND_OWNER_SUM",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_P5_SAME_PRODUCT_TWO_CONTEXTS_NO_MERGE_NO_PARENT_COST",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_BEFORE_REMOVE_EXTRA_CARDINALITY_GROUP_CONFIRM_AND_UNDO",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_BEFORE_PRESERVE_AND_STALE_CONFIRMATION_REJECT",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_BEFORE_RAW_REJECTION_CONTINUE_AND_SAVE_RETARGET",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_P4_ITEM_PERSON_SHARED_PRESENTS_INDEPENDENT_AND_ZERO",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_GLOBAL_DETAILS_EXACT_CONSENT_CANCEL_REPLACE_UNDO",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_SHARED_TOTAL_COLLISION_CANNOT_BYPASS_COVERAGE",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_QUOTE_UNTOUCHED_REEDIT_PRESERVES_UNKNOWN_FIELDS",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_OUTSIDE_MONTH_REJECTED_AND_PROTECTED_OWNER",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_FUNDING_OVER_COST_BLOCKED_WITHOUT_REWRITING_PRICE",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_D2_RESPONSE_GATE_AND_SEMANTIC_ROUNDTRIP_NO_APPLY",
+      "status": "PASS"
+    },
+    {
+      "name": "P4_RICH_BEFORE_PREVIEW_APPLY_RELOAD_MON_PLAN_SAME_IDS",
+      "status": "PASS"
+    }
+  ],
+  "method": "REACT_SYNTHETIC"
+}

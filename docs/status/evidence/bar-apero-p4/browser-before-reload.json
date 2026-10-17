@@ -1,0 +1,175 @@
+{
+  "active": {
+    "draftId": "a64b6109-307f-488b-a1c6-fee481968d62",
+    "version": 14,
+    "lifecycle": "ACTIVE",
+    "semanticState": {
+      "version": "month-plan-state@v1",
+      "targetMonth": "2026-11",
+      "controls": [],
+      "contexts": [
+        {
+          "contextOccurrenceId": "004ac708-44fa-439a-9f30-a4abd2fb5a71",
+          "templateKey": "activity",
+          "status": "ACTIVE",
+          "parentContextOccurrenceId": "8d1f4be9-fca6-41bf-9b57-006b95cc8fcd",
+          "fields": {
+            "fieldSchemaVersion": "context-fields@v2",
+            "label": "Before"
+          },
+          "slotSelections": {
+            "main": {
+              "items": [
+                {
+                  "selectionId": "2065ded4-a419-45c9-a89a-b0ad783f23c5",
+                  "optionKey": "activity",
+                  "kind": "COMPONENT",
+                  "provenance": "EXPLICIT_USER_DECISION",
+                  "label": "Vodka",
+                  "quantity": "1",
+                  "unitBasis": "SHARED",
+                  "cost": {
+                    "kind": "MANUAL",
+                    "unitAmount": "26"
+                  },
+                  "fundingAllocations": [],
+                  "binding": {
+                    "mode": "AUTO"
+                  },
+                  "productAssetRef": {
+                    "catalogVersion": "planned-assets@v1",
+                    "assetKey": "house_party:vodka",
+                    "labelAtSelection": "Vodka",
+                    "provenance": "EXPLICIT_USER_DECISION"
+                  }
+                }
+              ]
+            },
+            "extras": {
+              "items": [
+                {
+                  "selectionId": "2b0cac83-833a-47dc-9779-44afd2304899",
+                  "optionKey": "extra",
+                  "kind": "COMPONENT",
+                  "provenance": "EXPLICIT_USER_DECISION",
+                  "label": "Diluant sans alcool",
+                  "quantity": "1",
+                  "unitBasis": "ITEM",
+                  "cost": {
+                    "kind": "MANUAL",
+                    "unitAmount": "4"
+                  },
+                  "fundingAllocations": [],
+                  "binding": {
+                    "mode": "AUTO"
+                  },
+                  "productAssetRef": {
+                    "catalogVersion": "planned-assets@v1",
+                    "assetKey": "house_party:mixer",
+                    "labelAtSelection": "Diluant sans alcool",
+                    "provenance": "EXPLICIT_USER_DECISION"
+                  }
+                },
+                {
+                  "selectionId": "f42e3151-158b-47c2-b643-f2961742310c",
+                  "optionKey": "extra",
+                  "kind": "COMPONENT",
+                  "provenance": "EXPLICIT_USER_DECISION",
+                  "label": "Snack",
+                  "quantity": "1",
+                  "unitBasis": "ITEM",
+                  "cost": {
+                    "kind": "MANUAL",
+                    "unitAmount": "3"
+                  },
+                  "fundingAllocations": [],
+                  "binding": {
+                    "mode": "AUTO"
+                  },
+                  "productAssetRef": {
+                    "catalogVersion": "planned-assets@v1",
+                    "assetKey": "house_party:snack",
+                    "labelAtSelection": "Snack",
+                    "provenance": "EXPLICIT_USER_DECISION"
+                  }
+                }
+              ]
+            }
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        },
+        {
+          "contextOccurrenceId": "8d1f4be9-fca6-41bf-9b57-006b95cc8fcd",
+          "templateKey": "night-out",
+          "status": "ACTIVE",
+          "parentContextOccurrenceId": null,
+          "fields": {
+            "fieldSchemaVersion": "context-fields@v2",
+            "label": "Bar / Apéro",
+            "composerPresentation": {
+              "version": "composer-context-presentation@v1",
+              "presetKey": "bar-apero"
+            }
+          },
+          "slotSelections": {
+            "before": {
+              "items": [
+                {
+                  "selectionId": "309bb506-88c4-4912-82ba-192dc1a88ddf",
+                  "optionKey": "activity",
+                  "kind": "CHILD_CONTEXT",
+                  "childContextOccurrenceId": "004ac708-44fa-439a-9f30-a4abd2fb5a71",
+                  "provenance": "EXPLICIT_USER_DECISION"
+                }
+              ]
+            },
+            "extras": {
+              "items": [
+                {
+                  "selectionId": "11ddefc6-7da5-42d9-bce3-c6c625f465d8",
+                  "optionKey": "extra",
+                  "kind": "COMPONENT",
+                  "provenance": "EXPLICIT_USER_DECISION",
+                  "label": "Bière",
+                  "quantity": "1",
+                  "unitBasis": "ITEM",
+                  "cost": {
+                    "kind": "MANUAL",
+                    "unitAmount": "6"
+                  },
+                  "fundingAllocations": [],
+                  "binding": {
+                    "mode": "AUTO"
+                  },
+                  "productAssetRef": {
+                    "catalogVersion": "planned-assets@v1",
+                    "assetKey": "bar:beer",
+                    "labelAtSelection": "Bière",
+                    "provenance": "EXPLICIT_USER_DECISION"
+                  }
+                }
+              ]
+            }
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        }
+      ],
+      "preferences": {
+        "anchors": [],
+        "flexibility": {}
+      }
+    },
+    "digest": "18fca8e71223a45db79b9e4318a385285bf2dc82472dbaacfd6153e66b7bab61",
+    "baseRevisionId": null,
+    "baseRevisionNumber": 0,
+    "lastSavedAt": "2026-10-17T19:53:24.265Z",
+    "archivedAt": null,
+    "lastMutationRequestId": "fcee987f-2f62-4aef-b426-2c0ec41e2f94",
+    "lastMutationExpectedVersion": 13,
+    "lastMutationKind": "SAVE"
+  },
+  "archives": [],
+  "activePlanRevisionId": null,
+  "activePlanRevisionNumber": 0,
+  "baseStale": false
+}

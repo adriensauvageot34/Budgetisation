@@ -1,0 +1,3535 @@
+{
+  "status": "EXECUTED_PASS_LOOPBACK_HTTP_SYNTHETIC_ONLY",
+  "auth": "NOT_RUN_AUTH_P4",
+  "scenario": "P4_HTTP_d04446e3-2d31-49d8-9b10-2cce168449fd",
+  "parentId": "3c5872c2-69dc-487a-9193-15fb8c3b8109",
+  "childId": "b64809d7-a29a-4fd0-8df2-2ace363f789b",
+  "linkId": "5a48525a-ed6c-438b-a084-f9c8f59710f9",
+  "selectionIds": [
+    "e5a4ba1a-b6af-48b8-a84c-0756b9a813be",
+    "219efa48-8f0e-4c9b-95c0-4f3bb2d9456b",
+    "0a5c53f5-d0ce-4b07-8ccb-24f972fe902e",
+    "c91f1a51-2275-494c-bcf7-f19dcdf63d97"
+  ],
+  "checks": [
+    "rich Before with UNKNOWN and absent date round-trip",
+    "lost response read before idempotent replay; no extra version",
+    "two sessions same version: one write and one conflict",
+    "Undo and Redo serialized under CAS",
+    "only child bottle amount changed; other fields and IDs exact",
+    "official Compiler known 38.00 plus incomplete; no parent double count",
+    "zero Apply/remote/financial writes"
+  ],
+  "successfulSaves": 4,
+  "finalVersion": 4,
+  "digest": "761b820438da8434f9494fbe9a3cb0023f9dd163841a0a327c6961509ae51ea3",
+  "summary": {
+    "contextOccurrenceId": "3c5872c2-69dc-487a-9193-15fb8c3b8109",
+    "semanticStateDigest": "761b820438da8434f9494fbe9a3cb0023f9dd163841a0a327c6961509ae51ea3",
+    "knownAmount": "38.00",
+    "incomplete": true
+  },
+  "evidence": {
+    "counts": {
+      "plans": 0,
+      "revisions": 0
+    },
+    "rpcCalls": 0,
+    "remoteWrites": 0,
+    "historicalCanaryWrites": 0,
+    "log": [
+      {
+        "kind": "READ",
+        "sequence": 1,
+        "mutationKind": null,
+        "gesture": null,
+        "interactionImpact": "0.00",
+        "uiPayloadFields": [],
+        "ok": true,
+        "digest": "bf33b6050d8e5640788b247d793425355431cb3d29cef44b058aa3dcc00dcac2",
+        "projection": {
+          "version": "plan-projection@v1",
+          "targetMonth": "2026-11",
+          "baseline": {
+            "digest": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
+            "economicMonthEndRemainder": "917.00"
+          },
+          "plan": {
+            "economicMonthEndRemainder": "1002.00",
+            "impactOnMonthEnd": "85.00"
+          },
+          "economic": {
+            "resources": "2000.00",
+            "certainCommitments": "500.00",
+            "savingsReservations": "60.00",
+            "needsAndHabits": "392.00",
+            "discretionaryLife": "46.00",
+            "explicitContexts": "0.00",
+            "mobilityUsageEconomicCost": "0.00",
+            "unresolvedEconomicAmount": null
+          },
+          "funding": {
+            "status": "PARTIAL",
+            "financialOwner": {
+              "bankAllocated": "0.00",
+              "bankReserved": "0.00",
+              "bankUsedDeclared": "0.00",
+              "fundingToComplete": "0.00",
+              "swile": {
+                "resource": "0.00",
+                "reserved": "0.00",
+                "usedDeclared": "0.00",
+                "availableAfter": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00"
+              },
+              "edenred": {
+                "resource": "0.00",
+                "reserved": "0.00",
+                "usedDeclared": "0.00",
+                "availableAfter": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00"
+              }
+            },
+            "benefitWallets": {
+              "SWILE": {
+                "eligibleDaysRemaining": 25,
+                "calendarCapacity": "625.00",
+                "usableStock": null,
+                "futureKnownLoading": "0.00",
+                "usableCapacity": null,
+                "plannedReserved": "0.00",
+                "plannedSupported": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00",
+                "availableCapacity": null,
+                "dayCapacity": {},
+                "fundsAvailableByDate": {},
+                "limitations": [
+                  "BENEFIT_BALANCE_UNOBSERVED",
+                  "BENEFIT_LOADING_DATE_UNKNOWN",
+                  "BENEFIT_OWNER_UNKNOWN"
+                ],
+                "provider": "SWILE",
+                "ownerPersonId": null,
+                "latestObservation": null,
+                "currentBalanceKnowledge": {
+                  "status": "UNKNOWN",
+                  "amount": null,
+                  "asOfDate": "2026-10-05",
+                  "latestObservation": null,
+                  "provenance": [],
+                  "limitations": [
+                    "BENEFIT_BALANCE_UNOBSERVED"
+                  ]
+                },
+                "expectedLoading": {
+                  "amount": "0.00",
+                  "expectedDate": null
+                },
+                "policy": {
+                  "dailyCap": "25.00",
+                  "currency": "EUR",
+                  "eligibleWeekdays": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ]
+                },
+                "forecastExpectedUse": {
+                  "low": "0.00",
+                  "central": "0.00",
+                  "high": "0.00"
+                },
+                "remainingCapacityAfterForecast": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                }
+              },
+              "EDENRED": {
+                "eligibleDaysRemaining": 25,
+                "calendarCapacity": "625.00",
+                "usableStock": null,
+                "futureKnownLoading": "0.00",
+                "usableCapacity": null,
+                "plannedReserved": "0.00",
+                "plannedSupported": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00",
+                "availableCapacity": null,
+                "dayCapacity": {},
+                "fundsAvailableByDate": {},
+                "limitations": [
+                  "BENEFIT_BALANCE_UNOBSERVED",
+                  "BENEFIT_LOADING_DATE_UNKNOWN",
+                  "BENEFIT_OWNER_UNKNOWN"
+                ],
+                "provider": "EDENRED",
+                "ownerPersonId": null,
+                "latestObservation": null,
+                "currentBalanceKnowledge": {
+                  "status": "UNKNOWN",
+                  "amount": null,
+                  "asOfDate": "2026-10-05",
+                  "latestObservation": null,
+                  "provenance": [],
+                  "limitations": [
+                    "BENEFIT_BALANCE_UNOBSERVED"
+                  ]
+                },
+                "expectedLoading": {
+                  "amount": "0.00",
+                  "expectedDate": null
+                },
+                "policy": {
+                  "dailyCap": "25.00",
+                  "currency": "EUR",
+                  "eligibleWeekdays": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ]
+                },
+                "forecastExpectedUse": {
+                  "low": "0.00",
+                  "central": "0.00",
+                  "high": "0.00"
+                },
+                "remainingCapacityAfterForecast": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                }
+              }
+            },
+            "bankCash": {
+              "currentRealBankBalance": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_UNOBSERVED"
+              },
+              "futureKnownBankIncome": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "INCOME_TIMING_OR_MATCH_UNCERTAIN"
+              },
+              "remainingCertainBankOutflows": {
+                "status": "KNOWN",
+                "amount": "500.00",
+                "provenance": [
+                  "remainingFixedOccurrences"
+                ]
+              },
+              "pendingBankOutflows": {
+                "status": "KNOWN",
+                "amount": "0.00",
+                "provenance": [
+                  "DECLARED_OR_PURCHASE_BANK_NOT_BOOKED"
+                ]
+              },
+              "plannedBankCashRemaining": {
+                "status": "KNOWN",
+                "amount": "0.00",
+                "provenance": [
+                  "unobservedPlannedBANKAllocations"
+                ]
+              },
+              "remainingEssentialBankCash": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "remainingOptionalBankCash": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "afterCertain": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_PROJECTION_INPUT_UNKNOWN"
+              },
+              "savingsBudgetReservation": {
+                "status": "KNOWN",
+                "amount": "60.00",
+                "provenance": [
+                  "monthlySavingsBudgetIntent"
+                ]
+              },
+              "afterSavings": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED"
+              },
+              "plannedAvailable": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED"
+              },
+              "afterEssential": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "endOfMonth": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "incomeOccurrences": [
+                {
+                  "key": "income:Digital Learning Contest",
+                  "amount": "1000.00",
+                  "date": null,
+                  "state": "UNCERTAIN",
+                  "observedRef": null
+                },
+                {
+                  "key": "income:Promotrans",
+                  "amount": "1000.00",
+                  "date": null,
+                  "state": "UNCERTAIN",
+                  "observedRef": null
+                }
+              ],
+              "calibrated": false,
+              "limitations": [
+                "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED",
+                "BANK_BALANCE_UNOBSERVED",
+                "EXPECTED_BANK_FUNDING_UNKNOWN",
+                "INCOME_TIMING_OR_MATCH_UNCERTAIN",
+                "OTHER_MONTH_BANK_BRIDGE_UNCERTIFIED"
+              ]
+            },
+            "knownSyntheticCostWithUnknownFunding": "345.00",
+            "unallocatedEconomicAmount": "345.00",
+            "fundingToComplete": "0.00",
+            "anonymousSlotFunding": "UNKNOWN",
+            "unresolvedReserves": [
+              {
+                "reserveKey": "economic:UNRESOLVED",
+                "reason": "BEHAVIOR_NOT_YET_MODELED",
+                "value": {
+                  "low": "80.00",
+                  "central": "80.00",
+                  "high": "80.00"
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "ECONOMIC_AMOUNT",
+                  "requiredSources": [
+                    "BANK"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-01"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-02"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-03"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-04"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-05"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-06"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "80.00",
+                    "central": "80.00",
+                    "high": "80.00"
+                  },
+                  "evidenceRefs": [
+                    "operation:tech-2026-01",
+                    "operation:tech-2026-02",
+                    "operation:tech-2026-03",
+                    "operation:tech-2026-04",
+                    "operation:tech-2026-05",
+                    "operation:tech-2026-06"
+                  ],
+                  "hardFloor": false
+                },
+                "knowledge": "ESTIMATED",
+                "sourceRefs": [
+                  "economic:UNRESOLVED"
+                ],
+                "replacesSlotKey": null
+              },
+              {
+                "reserveKey": "mobility:UNRESOLVED",
+                "replacesSlotKey": null,
+                "reason": "MOBILITY_CONTEXT_UNRESOLVED",
+                "value": {
+                  "low": "5.00",
+                  "central": "5.00",
+                  "high": "5.00"
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "GROSS_MOBILITY_USAGE",
+                  "requiredSources": [
+                    "MOBILITY"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-01-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-02-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-03-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-04-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-05-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-06-unresolved"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "5.00",
+                    "central": "5.00",
+                    "high": "5.00"
+                  },
+                  "evidenceRefs": [
+                    "mobility-leg:leg-2026-01-unresolved",
+                    "mobility-leg:leg-2026-02-unresolved",
+                    "mobility-leg:leg-2026-03-unresolved",
+                    "mobility-leg:leg-2026-04-unresolved",
+                    "mobility-leg:leg-2026-05-unresolved",
+                    "mobility-leg:leg-2026-06-unresolved"
+                  ],
+                  "hardFloor": false
+                },
+                "knowledge": "ESTIMATED",
+                "sourceRefs": [
+                  "mobility:UNRESOLVED"
+                ]
+              },
+              {
+                "reserveKey": "unresolved:manon-work-meals",
+                "replacesSlotKey": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+                "reason": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+                "knowledge": "UNKNOWN",
+                "value": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "OCCURRENCE_COUNT",
+                  "requiredSources": [
+                    "BANK",
+                    "EDENRED"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-01",
+                        "purchase:meal-Manon-2026-01-0",
+                        "purchase:meal-Manon-2026-01-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-02",
+                        "purchase:meal-Manon-2026-02-0",
+                        "purchase:meal-Manon-2026-02-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-03",
+                        "purchase:meal-Manon-2026-03-0",
+                        "purchase:meal-Manon-2026-03-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-04",
+                        "purchase:meal-Manon-2026-04-0",
+                        "purchase:meal-Manon-2026-04-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-05",
+                        "purchase:meal-Manon-2026-05-0",
+                        "purchase:meal-Manon-2026-05-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-06",
+                        "purchase:meal-Manon-2026-06-0",
+                        "purchase:meal-Manon-2026-06-1"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "2.00",
+                    "central": "2.00",
+                    "high": "2.00"
+                  },
+                  "evidenceRefs": [
+                    "food-month:2026-01",
+                    "food-month:2026-02",
+                    "food-month:2026-03",
+                    "food-month:2026-04",
+                    "food-month:2026-05",
+                    "food-month:2026-06",
+                    "purchase:meal-Manon-2026-01-0",
+                    "purchase:meal-Manon-2026-01-1",
+                    "purchase:meal-Manon-2026-02-0",
+                    "purchase:meal-Manon-2026-02-1",
+                    "purchase:meal-Manon-2026-03-0",
+                    "purchase:meal-Manon-2026-03-1",
+                    "purchase:meal-Manon-2026-04-0",
+                    "purchase:meal-Manon-2026-04-1",
+                    "purchase:meal-Manon-2026-05-0",
+                    "purchase:meal-Manon-2026-05-1",
+                    "purchase:meal-Manon-2026-06-0",
+                    "purchase:meal-Manon-2026-06-1"
+                  ],
+                  "hardFloor": false
+                },
+                "sourceRefs": [
+                  "food:manon-work-meals"
+                ]
+              }
+            ],
+            "timing": [
+              {
+                "ownerRef": "planner:08c7c05ae5baefe70304dbf8eff633dc",
+                "lineId": "planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:a756595f61e374366fd3eefd321635c3",
+                "lineId": "planner:a756595f61e374366fd3eefd321635c3:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:f9c7ed2efcc7338d93e2a8172a91c075",
+                "lineId": "planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:fe8d581abf41664f126f5154e031fb98",
+                "lineId": "planner:fe8d581abf41664f126f5154e031fb98:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              }
+            ],
+            "conditionalNeeds": [],
+            "structuralMobility": "0.00",
+            "economicLenses": {
+              "explicitContexts": "GROSS_CONTEXTS_ALREADY_INCLUDED_IN_NEEDS_OR_DISCRETIONARY",
+              "otherExternalImpact": "0.00",
+              "otherExternalClassification": "EXPLICIT_INTENT_INCREMENT",
+              "modelVersion": "planner-projection@v2-headless"
+            }
+          },
+          "cash": {
+            "knowledge": "UNKNOWN",
+            "openingBalance": null,
+            "lowPointAmount": null,
+            "lowPointDate": null
+          },
+          "mobility": {
+            "usageEconomicCost": "0.00",
+            "cashTransportCosts": "0.00",
+            "journeyCount": 0,
+            "unresolvedJourneyCount": 0
+          },
+          "goal": {
+            "targetMonthEnd": null,
+            "gapToGoal": null
+          },
+          "impacts": [
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000001",
+              "marginalImpactOnMonthEnd": "25.00",
+              "rationaleCode": "REAL_COMPILER_MARGINAL",
+              "comparisonSemanticStateDigest": "3ea5272de424b3d656edcf718860660ae8937710c82926348bcb6bcc62c00d2e"
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000002",
+              "marginalImpactOnMonthEnd": "20.00",
+              "rationaleCode": "REAL_COMPILER_MARGINAL",
+              "comparisonSemanticStateDigest": "8caffa217f2f8bc9f6bd99ceefcc199bd050f48bc6da0bc641f5375022db4b24"
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000003",
+              "marginalImpactOnMonthEnd": "40.00",
+              "rationaleCode": "REAL_COMPILER_MARGINAL",
+              "comparisonSemanticStateDigest": "2aeb38fecaa261104b31c85dc5960eda246a4a411dc2afcabf7b6210bd0aaa65"
+            }
+          ],
+          "diagnostics": [
+            {
+              "code": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": "mobility:UNRESOLVED",
+              "message": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-01-unresolved",
+                "mobility-leg:leg-2026-02-unresolved",
+                "mobility-leg:leg-2026-03-unresolved",
+                "mobility-leg:leg-2026-04-unresolved",
+                "mobility-leg:leg-2026-05-unresolved",
+                "mobility-leg:leg-2026-06-unresolved"
+              ]
+            },
+            {
+              "code": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "need-observations:33333333-3333-4333-8333-333333333333:synthetic-cosmetic-need",
+              "message": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+              "evidenceRefs": [
+                "product:0",
+                "product:1"
+              ]
+            },
+            {
+              "code": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "economic:UNRESOLVED",
+              "message": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+              "evidenceRefs": [
+                "operation:tech-2026-01",
+                "operation:tech-2026-02",
+                "operation:tech-2026-03",
+                "operation:tech-2026-04",
+                "operation:tech-2026-05",
+                "operation:tech-2026-06",
+                "operation:tobacco-2026-01",
+                "operation:tobacco-2026-02",
+                "operation:tobacco-2026-03",
+                "operation:tobacco-2026-04",
+                "operation:tobacco-2026-05",
+                "operation:tobacco-2026-06"
+              ]
+            },
+            {
+              "code": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+              "severity": "WARN",
+              "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+              "message": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+              "evidenceRefs": [
+                "food:manon-work-meals"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "economic:UNRESOLVED",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "economic:UNRESOLVED"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "mobility:UNRESOLVED",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "mobility:UNRESOLVED"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "unresolved:manon-work-meals",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "food:manon-work-meals"
+              ]
+            },
+            {
+              "code": "PLAN_FUNDING_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_FUNDING_UNRESOLVED",
+              "evidenceRefs": [
+                "planner:08c7c05ae5baefe70304dbf8eff633dc:planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "planner:a756595f61e374366fd3eefd321635c3:planner:a756595f61e374366fd3eefd321635c3:cost",
+                "planner:f9c7ed2efcc7338d93e2a8172a91c075:planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "planner:fe8d581abf41664f126f5154e031fb98:planner:fe8d581abf41664f126f5154e031fb98:cost"
+              ]
+            },
+            {
+              "code": "PLAN_TIMING_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_TIMING_UNRESOLVED",
+              "evidenceRefs": [
+                "planner:08c7c05ae5baefe70304dbf8eff633dc:planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "planner:a756595f61e374366fd3eefd321635c3:planner:a756595f61e374366fd3eefd321635c3:cost",
+                "planner:f9c7ed2efcc7338d93e2a8172a91c075:planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "planner:fe8d581abf41664f126f5154e031fb98:planner:fe8d581abf41664f126f5154e031fb98:cost"
+              ]
+            },
+            {
+              "code": "PLAN_CASH_PROJECTION_UNCERTIFIED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_CASH_PROJECTION_UNCERTIFIED",
+              "evidenceRefs": [
+                "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED",
+                "BANK_BALANCE_UNOBSERVED",
+                "EXPECTED_BANK_FUNDING_UNKNOWN",
+                "INCOME_TIMING_OR_MATCH_UNCERTAIN",
+                "OTHER_MONTH_BANK_BRIDGE_UNCERTIFIED"
+              ]
+            }
+          ],
+          "projectionCompleteness": "PARTIAL",
+          "applyReadiness": "READY_WITH_WARNINGS"
+        }
+      },
+      {
+        "kind": "RESPONSE",
+        "commandKind": "READ",
+        "sequence": 1,
+        "at": 1792268419544,
+        "ok": true
+      },
+      {
+        "kind": "DROP",
+        "sequence": 2,
+        "mutationKind": "ADD_CONTEXT",
+        "gesture": {
+          "assetKey": "template:night-out",
+          "target": {
+            "kind": "BOARD_ZONE"
+          },
+          "sourceSocket": null
+        },
+        "interactionImpact": null,
+        "uiPayloadFields": [],
+        "ok": true,
+        "digest": "d14c8c4240a74776b5e462e52a8c993a9614f7006cc7c787acae59bb84d4d7b2",
+        "projection": {
+          "version": "plan-projection@v1",
+          "targetMonth": "2026-11",
+          "baseline": {
+            "digest": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
+            "economicMonthEndRemainder": "917.00"
+          },
+          "plan": {
+            "economicMonthEndRemainder": null,
+            "impactOnMonthEnd": null
+          },
+          "economic": {
+            "resources": "2000.00",
+            "certainCommitments": "500.00",
+            "savingsReservations": "60.00",
+            "needsAndHabits": "392.00",
+            "discretionaryLife": "46.00",
+            "explicitContexts": null,
+            "mobilityUsageEconomicCost": "0.00",
+            "unresolvedEconomicAmount": null
+          },
+          "funding": {
+            "status": "PARTIAL",
+            "financialOwner": {
+              "bankAllocated": "0.00",
+              "bankReserved": "0.00",
+              "bankUsedDeclared": "0.00",
+              "fundingToComplete": "0.00",
+              "swile": {
+                "resource": "0.00",
+                "reserved": "0.00",
+                "usedDeclared": "0.00",
+                "availableAfter": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00"
+              },
+              "edenred": {
+                "resource": "0.00",
+                "reserved": "0.00",
+                "usedDeclared": "0.00",
+                "availableAfter": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00"
+              }
+            },
+            "benefitWallets": {
+              "SWILE": {
+                "eligibleDaysRemaining": 25,
+                "calendarCapacity": "625.00",
+                "usableStock": null,
+                "futureKnownLoading": "0.00",
+                "usableCapacity": null,
+                "plannedReserved": "0.00",
+                "plannedSupported": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00",
+                "availableCapacity": null,
+                "dayCapacity": {},
+                "fundsAvailableByDate": {},
+                "limitations": [
+                  "BENEFIT_BALANCE_UNOBSERVED",
+                  "BENEFIT_LOADING_DATE_UNKNOWN",
+                  "BENEFIT_OWNER_UNKNOWN"
+                ],
+                "provider": "SWILE",
+                "ownerPersonId": null,
+                "latestObservation": null,
+                "currentBalanceKnowledge": {
+                  "status": "UNKNOWN",
+                  "amount": null,
+                  "asOfDate": "2026-10-05",
+                  "latestObservation": null,
+                  "provenance": [],
+                  "limitations": [
+                    "BENEFIT_BALANCE_UNOBSERVED"
+                  ]
+                },
+                "expectedLoading": {
+                  "amount": "0.00",
+                  "expectedDate": null
+                },
+                "policy": {
+                  "dailyCap": "25.00",
+                  "currency": "EUR",
+                  "eligibleWeekdays": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ]
+                },
+                "forecastExpectedUse": {
+                  "low": "0.00",
+                  "central": "0.00",
+                  "high": "0.00"
+                },
+                "remainingCapacityAfterForecast": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                }
+              },
+              "EDENRED": {
+                "eligibleDaysRemaining": 25,
+                "calendarCapacity": "625.00",
+                "usableStock": null,
+                "futureKnownLoading": "0.00",
+                "usableCapacity": null,
+                "plannedReserved": "0.00",
+                "plannedSupported": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00",
+                "availableCapacity": null,
+                "dayCapacity": {},
+                "fundsAvailableByDate": {},
+                "limitations": [
+                  "BENEFIT_BALANCE_UNOBSERVED",
+                  "BENEFIT_LOADING_DATE_UNKNOWN",
+                  "BENEFIT_OWNER_UNKNOWN"
+                ],
+                "provider": "EDENRED",
+                "ownerPersonId": null,
+                "latestObservation": null,
+                "currentBalanceKnowledge": {
+                  "status": "UNKNOWN",
+                  "amount": null,
+                  "asOfDate": "2026-10-05",
+                  "latestObservation": null,
+                  "provenance": [],
+                  "limitations": [
+                    "BENEFIT_BALANCE_UNOBSERVED"
+                  ]
+                },
+                "expectedLoading": {
+                  "amount": "0.00",
+                  "expectedDate": null
+                },
+                "policy": {
+                  "dailyCap": "25.00",
+                  "currency": "EUR",
+                  "eligibleWeekdays": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ]
+                },
+                "forecastExpectedUse": {
+                  "low": "0.00",
+                  "central": "0.00",
+                  "high": "0.00"
+                },
+                "remainingCapacityAfterForecast": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                }
+              }
+            },
+            "bankCash": {
+              "currentRealBankBalance": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_UNOBSERVED"
+              },
+              "futureKnownBankIncome": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "INCOME_TIMING_OR_MATCH_UNCERTAIN"
+              },
+              "remainingCertainBankOutflows": {
+                "status": "KNOWN",
+                "amount": "500.00",
+                "provenance": [
+                  "remainingFixedOccurrences"
+                ]
+              },
+              "pendingBankOutflows": {
+                "status": "KNOWN",
+                "amount": "0.00",
+                "provenance": [
+                  "DECLARED_OR_PURCHASE_BANK_NOT_BOOKED"
+                ]
+              },
+              "plannedBankCashRemaining": {
+                "status": "KNOWN",
+                "amount": "0.00",
+                "provenance": [
+                  "unobservedPlannedBANKAllocations"
+                ]
+              },
+              "remainingEssentialBankCash": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "remainingOptionalBankCash": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "afterCertain": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_PROJECTION_INPUT_UNKNOWN"
+              },
+              "savingsBudgetReservation": {
+                "status": "KNOWN",
+                "amount": "60.00",
+                "provenance": [
+                  "monthlySavingsBudgetIntent"
+                ]
+              },
+              "afterSavings": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED"
+              },
+              "plannedAvailable": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED"
+              },
+              "afterEssential": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "endOfMonth": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "incomeOccurrences": [
+                {
+                  "key": "income:Digital Learning Contest",
+                  "amount": "1000.00",
+                  "date": null,
+                  "state": "UNCERTAIN",
+                  "observedRef": null
+                },
+                {
+                  "key": "income:Promotrans",
+                  "amount": "1000.00",
+                  "date": null,
+                  "state": "UNCERTAIN",
+                  "observedRef": null
+                }
+              ],
+              "calibrated": false,
+              "limitations": [
+                "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED",
+                "BANK_BALANCE_UNOBSERVED",
+                "EXPECTED_BANK_FUNDING_UNKNOWN",
+                "INCOME_TIMING_OR_MATCH_UNCERTAIN",
+                "OTHER_MONTH_BANK_BRIDGE_UNCERTIFIED"
+              ]
+            },
+            "knownSyntheticCostWithUnknownFunding": "345.00",
+            "unallocatedEconomicAmount": "345.00",
+            "fundingToComplete": "0.00",
+            "anonymousSlotFunding": "UNKNOWN",
+            "unresolvedReserves": [
+              {
+                "reserveKey": "economic:UNRESOLVED",
+                "reason": "BEHAVIOR_NOT_YET_MODELED",
+                "value": {
+                  "low": "80.00",
+                  "central": "80.00",
+                  "high": "80.00"
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "ECONOMIC_AMOUNT",
+                  "requiredSources": [
+                    "BANK"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-01"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-02"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-03"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-04"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-05"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-06"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "80.00",
+                    "central": "80.00",
+                    "high": "80.00"
+                  },
+                  "evidenceRefs": [
+                    "operation:tech-2026-01",
+                    "operation:tech-2026-02",
+                    "operation:tech-2026-03",
+                    "operation:tech-2026-04",
+                    "operation:tech-2026-05",
+                    "operation:tech-2026-06"
+                  ],
+                  "hardFloor": false
+                },
+                "knowledge": "ESTIMATED",
+                "sourceRefs": [
+                  "economic:UNRESOLVED"
+                ],
+                "replacesSlotKey": null
+              },
+              {
+                "reserveKey": "mobility:UNRESOLVED",
+                "replacesSlotKey": null,
+                "reason": "MOBILITY_CONTEXT_UNRESOLVED",
+                "value": {
+                  "low": "5.00",
+                  "central": "5.00",
+                  "high": "5.00"
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "GROSS_MOBILITY_USAGE",
+                  "requiredSources": [
+                    "MOBILITY"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-01-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-02-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-03-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-04-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-05-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-06-unresolved"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "5.00",
+                    "central": "5.00",
+                    "high": "5.00"
+                  },
+                  "evidenceRefs": [
+                    "mobility-leg:leg-2026-01-unresolved",
+                    "mobility-leg:leg-2026-02-unresolved",
+                    "mobility-leg:leg-2026-03-unresolved",
+                    "mobility-leg:leg-2026-04-unresolved",
+                    "mobility-leg:leg-2026-05-unresolved",
+                    "mobility-leg:leg-2026-06-unresolved"
+                  ],
+                  "hardFloor": false
+                },
+                "knowledge": "ESTIMATED",
+                "sourceRefs": [
+                  "mobility:UNRESOLVED"
+                ]
+              },
+              {
+                "reserveKey": "unresolved:manon-work-meals",
+                "replacesSlotKey": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+                "reason": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+                "knowledge": "UNKNOWN",
+                "value": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "OCCURRENCE_COUNT",
+                  "requiredSources": [
+                    "BANK",
+                    "EDENRED"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-01",
+                        "purchase:meal-Manon-2026-01-0",
+                        "purchase:meal-Manon-2026-01-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-02",
+                        "purchase:meal-Manon-2026-02-0",
+                        "purchase:meal-Manon-2026-02-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-03",
+                        "purchase:meal-Manon-2026-03-0",
+                        "purchase:meal-Manon-2026-03-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-04",
+                        "purchase:meal-Manon-2026-04-0",
+                        "purchase:meal-Manon-2026-04-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-05",
+                        "purchase:meal-Manon-2026-05-0",
+                        "purchase:meal-Manon-2026-05-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-06",
+                        "purchase:meal-Manon-2026-06-0",
+                        "purchase:meal-Manon-2026-06-1"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "2.00",
+                    "central": "2.00",
+                    "high": "2.00"
+                  },
+                  "evidenceRefs": [
+                    "food-month:2026-01",
+                    "food-month:2026-02",
+                    "food-month:2026-03",
+                    "food-month:2026-04",
+                    "food-month:2026-05",
+                    "food-month:2026-06",
+                    "purchase:meal-Manon-2026-01-0",
+                    "purchase:meal-Manon-2026-01-1",
+                    "purchase:meal-Manon-2026-02-0",
+                    "purchase:meal-Manon-2026-02-1",
+                    "purchase:meal-Manon-2026-03-0",
+                    "purchase:meal-Manon-2026-03-1",
+                    "purchase:meal-Manon-2026-04-0",
+                    "purchase:meal-Manon-2026-04-1",
+                    "purchase:meal-Manon-2026-05-0",
+                    "purchase:meal-Manon-2026-05-1",
+                    "purchase:meal-Manon-2026-06-0",
+                    "purchase:meal-Manon-2026-06-1"
+                  ],
+                  "hardFloor": false
+                },
+                "sourceRefs": [
+                  "food:manon-work-meals"
+                ]
+              }
+            ],
+            "timing": [
+              {
+                "ownerRef": "planner:08c7c05ae5baefe70304dbf8eff633dc",
+                "lineId": "planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:a756595f61e374366fd3eefd321635c3",
+                "lineId": "planner:a756595f61e374366fd3eefd321635c3:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:f9c7ed2efcc7338d93e2a8172a91c075",
+                "lineId": "planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:fe8d581abf41664f126f5154e031fb98",
+                "lineId": "planner:fe8d581abf41664f126f5154e031fb98:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              }
+            ],
+            "conditionalNeeds": [],
+            "structuralMobility": "0.00",
+            "economicLenses": {
+              "explicitContexts": "GROSS_CONTEXTS_ALREADY_INCLUDED_IN_NEEDS_OR_DISCRETIONARY",
+              "otherExternalImpact": "0.00",
+              "otherExternalClassification": "EXPLICIT_INTENT_INCREMENT",
+              "modelVersion": "planner-projection@v2-headless"
+            }
+          },
+          "cash": {
+            "knowledge": "UNKNOWN",
+            "openingBalance": null,
+            "lowPointAmount": null,
+            "lowPointDate": null
+          },
+          "mobility": {
+            "usageEconomicCost": "0.00",
+            "cashTransportCosts": "0.00",
+            "journeyCount": 0,
+            "unresolvedJourneyCount": 0
+          },
+          "goal": {
+            "targetMonthEnd": null,
+            "gapToGoal": null
+          },
+          "impacts": [
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000001",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "23e927a575bc8ea464b288fae9ba89a2a93bed9626f692a4a5a6c9ac41dcf9d7"
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000002",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "c54604fbc23834bbb6eebd5d827a8e015f3c25853c7a04247788806273e40aa9"
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000003",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "723dea2812c5bf5041bfd5d2ed7efcc5ca7d1096de12d7aeda2d109a86d64e8e"
+            },
+            {
+              "targetRef": "3c5872c2-69dc-487a-9193-15fb8c3b8109",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "bf33b6050d8e5640788b247d793425355431cb3d29cef44b058aa3dcc00dcac2"
+            }
+          ],
+          "diagnostics": [
+            {
+              "code": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": "mobility:UNRESOLVED",
+              "message": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-01-unresolved",
+                "mobility-leg:leg-2026-02-unresolved",
+                "mobility-leg:leg-2026-03-unresolved",
+                "mobility-leg:leg-2026-04-unresolved",
+                "mobility-leg:leg-2026-05-unresolved",
+                "mobility-leg:leg-2026-06-unresolved"
+              ]
+            },
+            {
+              "code": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "need-observations:33333333-3333-4333-8333-333333333333:synthetic-cosmetic-need",
+              "message": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+              "evidenceRefs": [
+                "product:0",
+                "product:1"
+              ]
+            },
+            {
+              "code": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "economic:UNRESOLVED",
+              "message": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+              "evidenceRefs": [
+                "operation:tech-2026-01",
+                "operation:tech-2026-02",
+                "operation:tech-2026-03",
+                "operation:tech-2026-04",
+                "operation:tech-2026-05",
+                "operation:tech-2026-06",
+                "operation:tobacco-2026-01",
+                "operation:tobacco-2026-02",
+                "operation:tobacco-2026-03",
+                "operation:tobacco-2026-04",
+                "operation:tobacco-2026-05",
+                "operation:tobacco-2026-06"
+              ]
+            },
+            {
+              "code": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+              "severity": "WARN",
+              "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+              "message": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+              "evidenceRefs": [
+                "food:manon-work-meals"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "economic:UNRESOLVED",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "economic:UNRESOLVED"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "mobility:UNRESOLVED",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "mobility:UNRESOLVED"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "unresolved:manon-work-meals",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "food:manon-work-meals"
+              ]
+            },
+            {
+              "code": "CONTEXT_COMPONENT_SLOT_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": "3c5872c2-69dc-487a-9193-15fb8c3b8109:main",
+              "message": "CONTEXT_COMPONENT_SLOT_UNRESOLVED",
+              "evidenceRefs": []
+            },
+            {
+              "code": "PLAN_FUNDING_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_FUNDING_UNRESOLVED",
+              "evidenceRefs": [
+                "planner:08c7c05ae5baefe70304dbf8eff633dc:planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "planner:a756595f61e374366fd3eefd321635c3:planner:a756595f61e374366fd3eefd321635c3:cost",
+                "planner:f9c7ed2efcc7338d93e2a8172a91c075:planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "planner:fe8d581abf41664f126f5154e031fb98:planner:fe8d581abf41664f126f5154e031fb98:cost"
+              ]
+            },
+            {
+              "code": "PLAN_TIMING_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_TIMING_UNRESOLVED",
+              "evidenceRefs": [
+                "planner:08c7c05ae5baefe70304dbf8eff633dc:planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "planner:a756595f61e374366fd3eefd321635c3:planner:a756595f61e374366fd3eefd321635c3:cost",
+                "planner:f9c7ed2efcc7338d93e2a8172a91c075:planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "planner:fe8d581abf41664f126f5154e031fb98:planner:fe8d581abf41664f126f5154e031fb98:cost"
+              ]
+            },
+            {
+              "code": "PLAN_CASH_PROJECTION_UNCERTIFIED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_CASH_PROJECTION_UNCERTIFIED",
+              "evidenceRefs": [
+                "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED",
+                "BANK_BALANCE_UNOBSERVED",
+                "EXPECTED_BANK_FUNDING_UNKNOWN",
+                "INCOME_TIMING_OR_MATCH_UNCERTAIN",
+                "OTHER_MONTH_BANK_BRIDGE_UNCERTIFIED"
+              ]
+            }
+          ],
+          "projectionCompleteness": "UNKNOWN",
+          "applyReadiness": "READY_WITH_WARNINGS"
+        }
+      },
+      {
+        "kind": "RESPONSE",
+        "commandKind": "DROP",
+        "sequence": 2,
+        "at": 1792268420244,
+        "ok": true
+      },
+      {
+        "kind": "EDIT_NIGHT_OUT",
+        "sequence": 3,
+        "mutationKind": "PATCH_CONTEXT",
+        "gesture": null,
+        "interactionImpact": null,
+        "uiPayloadFields": [],
+        "ok": true,
+        "digest": "cfc108a5424ed7200a8c947ff64290cef2b39242f877a35d91e210523521c7a6",
+        "projection": {
+          "version": "plan-projection@v1",
+          "targetMonth": "2026-11",
+          "baseline": {
+            "digest": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
+            "economicMonthEndRemainder": "917.00"
+          },
+          "plan": {
+            "economicMonthEndRemainder": null,
+            "impactOnMonthEnd": null
+          },
+          "economic": {
+            "resources": "2000.00",
+            "certainCommitments": "500.00",
+            "savingsReservations": "60.00",
+            "needsAndHabits": "392.00",
+            "discretionaryLife": null,
+            "explicitContexts": null,
+            "mobilityUsageEconomicCost": "0.00",
+            "unresolvedEconomicAmount": null
+          },
+          "funding": {
+            "status": "PARTIAL",
+            "financialOwner": {
+              "bankAllocated": "0.00",
+              "bankReserved": "0.00",
+              "bankUsedDeclared": "0.00",
+              "fundingToComplete": "0.00",
+              "swile": {
+                "resource": "0.00",
+                "reserved": "0.00",
+                "usedDeclared": "0.00",
+                "availableAfter": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00"
+              },
+              "edenred": {
+                "resource": "0.00",
+                "reserved": "0.00",
+                "usedDeclared": "0.00",
+                "availableAfter": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00"
+              }
+            },
+            "benefitWallets": {
+              "SWILE": {
+                "eligibleDaysRemaining": 25,
+                "calendarCapacity": "625.00",
+                "usableStock": null,
+                "futureKnownLoading": "0.00",
+                "usableCapacity": null,
+                "plannedReserved": "0.00",
+                "plannedSupported": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00",
+                "availableCapacity": null,
+                "dayCapacity": {},
+                "fundsAvailableByDate": {},
+                "limitations": [
+                  "BENEFIT_BALANCE_UNOBSERVED",
+                  "BENEFIT_LOADING_DATE_UNKNOWN",
+                  "BENEFIT_OWNER_UNKNOWN"
+                ],
+                "provider": "SWILE",
+                "ownerPersonId": null,
+                "latestObservation": null,
+                "currentBalanceKnowledge": {
+                  "status": "UNKNOWN",
+                  "amount": null,
+                  "asOfDate": "2026-10-05",
+                  "latestObservation": null,
+                  "provenance": [],
+                  "limitations": [
+                    "BENEFIT_BALANCE_UNOBSERVED"
+                  ]
+                },
+                "expectedLoading": {
+                  "amount": "0.00",
+                  "expectedDate": null
+                },
+                "policy": {
+                  "dailyCap": "25.00",
+                  "currency": "EUR",
+                  "eligibleWeekdays": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ]
+                },
+                "forecastExpectedUse": {
+                  "low": "0.00",
+                  "central": "0.00",
+                  "high": "0.00"
+                },
+                "remainingCapacityAfterForecast": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                }
+              },
+              "EDENRED": {
+                "eligibleDaysRemaining": 25,
+                "calendarCapacity": "625.00",
+                "usableStock": null,
+                "futureKnownLoading": "0.00",
+                "usableCapacity": null,
+                "plannedReserved": "0.00",
+                "plannedSupported": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00",
+                "availableCapacity": null,
+                "dayCapacity": {},
+                "fundsAvailableByDate": {},
+                "limitations": [
+                  "BENEFIT_BALANCE_UNOBSERVED",
+                  "BENEFIT_LOADING_DATE_UNKNOWN",
+                  "BENEFIT_OWNER_UNKNOWN"
+                ],
+                "provider": "EDENRED",
+                "ownerPersonId": null,
+                "latestObservation": null,
+                "currentBalanceKnowledge": {
+                  "status": "UNKNOWN",
+                  "amount": null,
+                  "asOfDate": "2026-10-05",
+                  "latestObservation": null,
+                  "provenance": [],
+                  "limitations": [
+                    "BENEFIT_BALANCE_UNOBSERVED"
+                  ]
+                },
+                "expectedLoading": {
+                  "amount": "0.00",
+                  "expectedDate": null
+                },
+                "policy": {
+                  "dailyCap": "25.00",
+                  "currency": "EUR",
+                  "eligibleWeekdays": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ]
+                },
+                "forecastExpectedUse": {
+                  "low": "0.00",
+                  "central": "0.00",
+                  "high": "0.00"
+                },
+                "remainingCapacityAfterForecast": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                }
+              }
+            },
+            "bankCash": {
+              "currentRealBankBalance": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_UNOBSERVED"
+              },
+              "futureKnownBankIncome": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "INCOME_TIMING_OR_MATCH_UNCERTAIN"
+              },
+              "remainingCertainBankOutflows": {
+                "status": "KNOWN",
+                "amount": "500.00",
+                "provenance": [
+                  "remainingFixedOccurrences"
+                ]
+              },
+              "pendingBankOutflows": {
+                "status": "KNOWN",
+                "amount": "0.00",
+                "provenance": [
+                  "DECLARED_OR_PURCHASE_BANK_NOT_BOOKED"
+                ]
+              },
+              "plannedBankCashRemaining": {
+                "status": "KNOWN",
+                "amount": "0.00",
+                "provenance": [
+                  "unobservedPlannedBANKAllocations"
+                ]
+              },
+              "remainingEssentialBankCash": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "remainingOptionalBankCash": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "afterCertain": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_PROJECTION_INPUT_UNKNOWN"
+              },
+              "savingsBudgetReservation": {
+                "status": "KNOWN",
+                "amount": "60.00",
+                "provenance": [
+                  "monthlySavingsBudgetIntent"
+                ]
+              },
+              "afterSavings": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED"
+              },
+              "plannedAvailable": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED"
+              },
+              "afterEssential": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "endOfMonth": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "incomeOccurrences": [
+                {
+                  "key": "income:Digital Learning Contest",
+                  "amount": "1000.00",
+                  "date": null,
+                  "state": "UNCERTAIN",
+                  "observedRef": null
+                },
+                {
+                  "key": "income:Promotrans",
+                  "amount": "1000.00",
+                  "date": null,
+                  "state": "UNCERTAIN",
+                  "observedRef": null
+                }
+              ],
+              "calibrated": false,
+              "limitations": [
+                "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED",
+                "BANK_BALANCE_UNOBSERVED",
+                "EXPECTED_BANK_FUNDING_UNKNOWN",
+                "INCOME_TIMING_OR_MATCH_UNCERTAIN",
+                "OTHER_MONTH_BANK_BRIDGE_UNCERTIFIED"
+              ]
+            },
+            "knownSyntheticCostWithUnknownFunding": "382.00",
+            "unallocatedEconomicAmount": "382.00",
+            "fundingToComplete": "0.00",
+            "anonymousSlotFunding": "UNKNOWN",
+            "unresolvedReserves": [
+              {
+                "reserveKey": "economic:UNRESOLVED",
+                "reason": "BEHAVIOR_NOT_YET_MODELED",
+                "value": {
+                  "low": "80.00",
+                  "central": "80.00",
+                  "high": "80.00"
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "ECONOMIC_AMOUNT",
+                  "requiredSources": [
+                    "BANK"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-01"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-02"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-03"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-04"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-05"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-06"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "80.00",
+                    "central": "80.00",
+                    "high": "80.00"
+                  },
+                  "evidenceRefs": [
+                    "operation:tech-2026-01",
+                    "operation:tech-2026-02",
+                    "operation:tech-2026-03",
+                    "operation:tech-2026-04",
+                    "operation:tech-2026-05",
+                    "operation:tech-2026-06"
+                  ],
+                  "hardFloor": false
+                },
+                "knowledge": "ESTIMATED",
+                "sourceRefs": [
+                  "economic:UNRESOLVED"
+                ],
+                "replacesSlotKey": null
+              },
+              {
+                "reserveKey": "mobility:UNRESOLVED",
+                "replacesSlotKey": null,
+                "reason": "MOBILITY_CONTEXT_UNRESOLVED",
+                "value": {
+                  "low": "5.00",
+                  "central": "5.00",
+                  "high": "5.00"
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "GROSS_MOBILITY_USAGE",
+                  "requiredSources": [
+                    "MOBILITY"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-01-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-02-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-03-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-04-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-05-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-06-unresolved"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "5.00",
+                    "central": "5.00",
+                    "high": "5.00"
+                  },
+                  "evidenceRefs": [
+                    "mobility-leg:leg-2026-01-unresolved",
+                    "mobility-leg:leg-2026-02-unresolved",
+                    "mobility-leg:leg-2026-03-unresolved",
+                    "mobility-leg:leg-2026-04-unresolved",
+                    "mobility-leg:leg-2026-05-unresolved",
+                    "mobility-leg:leg-2026-06-unresolved"
+                  ],
+                  "hardFloor": false
+                },
+                "knowledge": "ESTIMATED",
+                "sourceRefs": [
+                  "mobility:UNRESOLVED"
+                ]
+              },
+              {
+                "reserveKey": "unresolved:manon-work-meals",
+                "replacesSlotKey": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+                "reason": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+                "knowledge": "UNKNOWN",
+                "value": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "OCCURRENCE_COUNT",
+                  "requiredSources": [
+                    "BANK",
+                    "EDENRED"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-01",
+                        "purchase:meal-Manon-2026-01-0",
+                        "purchase:meal-Manon-2026-01-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-02",
+                        "purchase:meal-Manon-2026-02-0",
+                        "purchase:meal-Manon-2026-02-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-03",
+                        "purchase:meal-Manon-2026-03-0",
+                        "purchase:meal-Manon-2026-03-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-04",
+                        "purchase:meal-Manon-2026-04-0",
+                        "purchase:meal-Manon-2026-04-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-05",
+                        "purchase:meal-Manon-2026-05-0",
+                        "purchase:meal-Manon-2026-05-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-06",
+                        "purchase:meal-Manon-2026-06-0",
+                        "purchase:meal-Manon-2026-06-1"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "2.00",
+                    "central": "2.00",
+                    "high": "2.00"
+                  },
+                  "evidenceRefs": [
+                    "food-month:2026-01",
+                    "food-month:2026-02",
+                    "food-month:2026-03",
+                    "food-month:2026-04",
+                    "food-month:2026-05",
+                    "food-month:2026-06",
+                    "purchase:meal-Manon-2026-01-0",
+                    "purchase:meal-Manon-2026-01-1",
+                    "purchase:meal-Manon-2026-02-0",
+                    "purchase:meal-Manon-2026-02-1",
+                    "purchase:meal-Manon-2026-03-0",
+                    "purchase:meal-Manon-2026-03-1",
+                    "purchase:meal-Manon-2026-04-0",
+                    "purchase:meal-Manon-2026-04-1",
+                    "purchase:meal-Manon-2026-05-0",
+                    "purchase:meal-Manon-2026-05-1",
+                    "purchase:meal-Manon-2026-06-0",
+                    "purchase:meal-Manon-2026-06-1"
+                  ],
+                  "hardFloor": false
+                },
+                "sourceRefs": [
+                  "food:manon-work-meals"
+                ]
+              }
+            ],
+            "timing": [
+              {
+                "ownerRef": "planner:08c7c05ae5baefe70304dbf8eff633dc",
+                "lineId": "planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:94035fa41a8abc2ab23aa0c06048046d",
+                "lineId": "planner:94035fa41a8abc2ab23aa0c06048046d:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:a2b281b1081aac56bf97991df1050cf4",
+                "lineId": "planner:a2b281b1081aac56bf97991df1050cf4:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:a756595f61e374366fd3eefd321635c3",
+                "lineId": "planner:a756595f61e374366fd3eefd321635c3:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:ee096cc56b028e104262096752ee72ed",
+                "lineId": "planner:ee096cc56b028e104262096752ee72ed:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:f9c7ed2efcc7338d93e2a8172a91c075",
+                "lineId": "planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:fe8d581abf41664f126f5154e031fb98",
+                "lineId": "planner:fe8d581abf41664f126f5154e031fb98:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              }
+            ],
+            "conditionalNeeds": [],
+            "structuralMobility": "0.00",
+            "economicLenses": {
+              "explicitContexts": "GROSS_CONTEXTS_ALREADY_INCLUDED_IN_NEEDS_OR_DISCRETIONARY",
+              "otherExternalImpact": "0.00",
+              "otherExternalClassification": "EXPLICIT_INTENT_INCREMENT",
+              "modelVersion": "planner-projection@v2-headless"
+            }
+          },
+          "cash": {
+            "knowledge": "UNKNOWN",
+            "openingBalance": null,
+            "lowPointAmount": null,
+            "lowPointDate": null
+          },
+          "mobility": {
+            "usageEconomicCost": "0.00",
+            "cashTransportCosts": "0.00",
+            "journeyCount": 0,
+            "unresolvedJourneyCount": 0
+          },
+          "goal": {
+            "targetMonthEnd": null,
+            "gapToGoal": null
+          },
+          "impacts": [
+            {
+              "componentId": "component:12b50f9d2e3f95abcbd2b47082020e3c958b250205661c26c0fb10ef11d007ac",
+              "baselinePlanSlotId": null,
+              "slotRelation": "NO_RELATED_SLOT",
+              "economicRelation": "UNKNOWN",
+              "grossAmount": null,
+              "displacedAmount": "0.00",
+              "incrementalAmount": null,
+              "knowledge": "UNKNOWN",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:activity:extras:extra",
+                "decision:b64809d7-a29a-4fd0-8df2-2ace363f789b:extras:0a5c53f5-d0ce-4b07-8ccb-24f972fe902e"
+              ]
+            },
+            {
+              "componentId": "component:6a6c86e2ea45aa3749175bf8d0cb3fd56ff9006241b2e33bb436c8fd1c6ac201",
+              "baselinePlanSlotId": null,
+              "slotRelation": "NO_RELATED_SLOT",
+              "economicRelation": "INCREMENTAL",
+              "grossAmount": "4.00",
+              "displacedAmount": "0.00",
+              "incrementalAmount": "4.00",
+              "knowledge": "DECLARED",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:activity:extras:extra",
+                "decision:b64809d7-a29a-4fd0-8df2-2ace363f789b:extras:219efa48-8f0e-4c9b-95c0-4f3bb2d9456b"
+              ]
+            },
+            {
+              "componentId": "component:d57e498d8a33ab6ee2475cface9f12488ca2276da820106e94c72917583baf94",
+              "baselinePlanSlotId": null,
+              "slotRelation": "NO_RELATED_SLOT",
+              "economicRelation": "INCREMENTAL",
+              "grossAmount": "8.00",
+              "displacedAmount": "0.00",
+              "incrementalAmount": "8.00",
+              "knowledge": "DECLARED",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:night-out:extras:extra",
+                "decision:3c5872c2-69dc-487a-9193-15fb8c3b8109:extras:c91f1a51-2275-494c-bcf7-f19dcdf63d97"
+              ]
+            },
+            {
+              "componentId": "component:e1ff024b2b19f80f33291314d9a0d29637074b945dc3e1e390546fbc448a30b7",
+              "baselinePlanSlotId": null,
+              "slotRelation": "NO_RELATED_SLOT",
+              "economicRelation": "INCREMENTAL",
+              "grossAmount": "25.00",
+              "displacedAmount": "0.00",
+              "incrementalAmount": "25.00",
+              "knowledge": "DECLARED",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:activity:main:activity",
+                "decision:b64809d7-a29a-4fd0-8df2-2ace363f789b:main:e5a4ba1a-b6af-48b8-a84c-0756b9a813be"
+              ]
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000001",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "f91ba95bba323f2a293ce961b5573a55b12b80bf559e0741203299b4ce929d9b"
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000002",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "ac00514f12ba2ee1af3334254d2e3210f46490c35a5d9eaf4bf6c265f0e1df49"
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000003",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "77dab84c29befb178bafda7c7fbf8aed54c8b096b1baefa5dc29379e2fd679cc"
+            },
+            {
+              "targetRef": "3c5872c2-69dc-487a-9193-15fb8c3b8109",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "bf33b6050d8e5640788b247d793425355431cb3d29cef44b058aa3dcc00dcac2"
+            },
+            {
+              "targetRef": "b64809d7-a29a-4fd0-8df2-2ace363f789b",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "f1eaef3c60b4c2580977b9348a02f368a1bd69d4ae17cdb1ea0bb2c72314aa72"
+            }
+          ],
+          "diagnostics": [
+            {
+              "code": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": "mobility:UNRESOLVED",
+              "message": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-01-unresolved",
+                "mobility-leg:leg-2026-02-unresolved",
+                "mobility-leg:leg-2026-03-unresolved",
+                "mobility-leg:leg-2026-04-unresolved",
+                "mobility-leg:leg-2026-05-unresolved",
+                "mobility-leg:leg-2026-06-unresolved"
+              ]
+            },
+            {
+              "code": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "need-observations:33333333-3333-4333-8333-333333333333:synthetic-cosmetic-need",
+              "message": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+              "evidenceRefs": [
+                "product:0",
+                "product:1"
+              ]
+            },
+            {
+              "code": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "economic:UNRESOLVED",
+              "message": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+              "evidenceRefs": [
+                "operation:tech-2026-01",
+                "operation:tech-2026-02",
+                "operation:tech-2026-03",
+                "operation:tech-2026-04",
+                "operation:tech-2026-05",
+                "operation:tech-2026-06",
+                "operation:tobacco-2026-01",
+                "operation:tobacco-2026-02",
+                "operation:tobacco-2026-03",
+                "operation:tobacco-2026-04",
+                "operation:tobacco-2026-05",
+                "operation:tobacco-2026-06"
+              ]
+            },
+            {
+              "code": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+              "severity": "WARN",
+              "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+              "message": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+              "evidenceRefs": [
+                "food:manon-work-meals"
+              ]
+            },
+            {
+              "code": "COMPONENT_COST_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:12b50f9d2e3f95abcbd2b47082020e3c958b250205661c26c0fb10ef11d007ac",
+              "message": "COMPONENT_COST_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "COMPONENT_FUNDING_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:12b50f9d2e3f95abcbd2b47082020e3c958b250205661c26c0fb10ef11d007ac",
+              "message": "COMPONENT_FUNDING_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "COMPONENT_FUNDING_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:6a6c86e2ea45aa3749175bf8d0cb3fd56ff9006241b2e33bb436c8fd1c6ac201",
+              "message": "COMPONENT_FUNDING_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "COMPONENT_FUNDING_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:d57e498d8a33ab6ee2475cface9f12488ca2276da820106e94c72917583baf94",
+              "message": "COMPONENT_FUNDING_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "COMPONENT_FUNDING_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:e1ff024b2b19f80f33291314d9a0d29637074b945dc3e1e390546fbc448a30b7",
+              "message": "COMPONENT_FUNDING_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "DISPLACEMENT_UNKNOWN_NO_SUBTRACTION",
+              "severity": "WARN",
+              "targetRef": "component:12b50f9d2e3f95abcbd2b47082020e3c958b250205661c26c0fb10ef11d007ac",
+              "message": "DISPLACEMENT_UNKNOWN_NO_SUBTRACTION",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:activity:extras:extra",
+                "decision:b64809d7-a29a-4fd0-8df2-2ace363f789b:extras:0a5c53f5-d0ce-4b07-8ccb-24f972fe902e"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "economic:UNRESOLVED",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "economic:UNRESOLVED"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "mobility:UNRESOLVED",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "mobility:UNRESOLVED"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "unresolved:manon-work-meals",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "food:manon-work-meals"
+              ]
+            },
+            {
+              "code": "CONTEXT_COMPONENT_SLOT_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": "3c5872c2-69dc-487a-9193-15fb8c3b8109:main",
+              "message": "CONTEXT_COMPONENT_SLOT_UNRESOLVED",
+              "evidenceRefs": []
+            },
+            {
+              "code": "PLAN_FUNDING_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_FUNDING_UNRESOLVED",
+              "evidenceRefs": [
+                "planner:08c7c05ae5baefe70304dbf8eff633dc:planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "planner:94035fa41a8abc2ab23aa0c06048046d:planner:94035fa41a8abc2ab23aa0c06048046d:cost",
+                "planner:a2b281b1081aac56bf97991df1050cf4:planner:a2b281b1081aac56bf97991df1050cf4:cost",
+                "planner:a756595f61e374366fd3eefd321635c3:planner:a756595f61e374366fd3eefd321635c3:cost",
+                "planner:ee096cc56b028e104262096752ee72ed:planner:ee096cc56b028e104262096752ee72ed:cost",
+                "planner:f9c7ed2efcc7338d93e2a8172a91c075:planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "planner:fe8d581abf41664f126f5154e031fb98:planner:fe8d581abf41664f126f5154e031fb98:cost"
+              ]
+            },
+            {
+              "code": "PLAN_TIMING_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_TIMING_UNRESOLVED",
+              "evidenceRefs": [
+                "planner:08c7c05ae5baefe70304dbf8eff633dc:planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "planner:94035fa41a8abc2ab23aa0c06048046d:planner:94035fa41a8abc2ab23aa0c06048046d:cost",
+                "planner:a2b281b1081aac56bf97991df1050cf4:planner:a2b281b1081aac56bf97991df1050cf4:cost",
+                "planner:a756595f61e374366fd3eefd321635c3:planner:a756595f61e374366fd3eefd321635c3:cost",
+                "planner:ee096cc56b028e104262096752ee72ed:planner:ee096cc56b028e104262096752ee72ed:cost",
+                "planner:f9c7ed2efcc7338d93e2a8172a91c075:planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "planner:fe8d581abf41664f126f5154e031fb98:planner:fe8d581abf41664f126f5154e031fb98:cost"
+              ]
+            },
+            {
+              "code": "PLAN_CASH_PROJECTION_UNCERTIFIED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_CASH_PROJECTION_UNCERTIFIED",
+              "evidenceRefs": [
+                "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED",
+                "BANK_BALANCE_UNOBSERVED",
+                "EXPECTED_BANK_FUNDING_UNKNOWN",
+                "INCOME_TIMING_OR_MATCH_UNCERTAIN",
+                "OTHER_MONTH_BANK_BRIDGE_UNCERTIFIED"
+              ]
+            }
+          ],
+          "projectionCompleteness": "UNKNOWN",
+          "applyReadiness": "READY_WITH_WARNINGS"
+        }
+      },
+      {
+        "kind": "RESPONSE",
+        "commandKind": "EDIT_NIGHT_OUT",
+        "sequence": 3,
+        "at": 1792268420867,
+        "ok": true
+      },
+      {
+        "kind": "READ",
+        "sequence": 4,
+        "mutationKind": null,
+        "gesture": null,
+        "interactionImpact": null,
+        "uiPayloadFields": [],
+        "ok": true,
+        "digest": "761b820438da8434f9494fbe9a3cb0023f9dd163841a0a327c6961509ae51ea3",
+        "projection": {
+          "version": "plan-projection@v1",
+          "targetMonth": "2026-11",
+          "baseline": {
+            "digest": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
+            "economicMonthEndRemainder": "917.00"
+          },
+          "plan": {
+            "economicMonthEndRemainder": null,
+            "impactOnMonthEnd": null
+          },
+          "economic": {
+            "resources": "2000.00",
+            "certainCommitments": "500.00",
+            "savingsReservations": "60.00",
+            "needsAndHabits": "392.00",
+            "discretionaryLife": null,
+            "explicitContexts": null,
+            "mobilityUsageEconomicCost": "0.00",
+            "unresolvedEconomicAmount": null
+          },
+          "funding": {
+            "status": "PARTIAL",
+            "financialOwner": {
+              "bankAllocated": "0.00",
+              "bankReserved": "0.00",
+              "bankUsedDeclared": "0.00",
+              "fundingToComplete": "0.00",
+              "swile": {
+                "resource": "0.00",
+                "reserved": "0.00",
+                "usedDeclared": "0.00",
+                "availableAfter": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00"
+              },
+              "edenred": {
+                "resource": "0.00",
+                "reserved": "0.00",
+                "usedDeclared": "0.00",
+                "availableAfter": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00"
+              }
+            },
+            "benefitWallets": {
+              "SWILE": {
+                "eligibleDaysRemaining": 25,
+                "calendarCapacity": "625.00",
+                "usableStock": null,
+                "futureKnownLoading": "0.00",
+                "usableCapacity": null,
+                "plannedReserved": "0.00",
+                "plannedSupported": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00",
+                "availableCapacity": null,
+                "dayCapacity": {},
+                "fundsAvailableByDate": {},
+                "limitations": [
+                  "BENEFIT_BALANCE_UNOBSERVED",
+                  "BENEFIT_LOADING_DATE_UNKNOWN",
+                  "BENEFIT_OWNER_UNKNOWN"
+                ],
+                "provider": "SWILE",
+                "ownerPersonId": null,
+                "latestObservation": null,
+                "currentBalanceKnowledge": {
+                  "status": "UNKNOWN",
+                  "amount": null,
+                  "asOfDate": "2026-10-05",
+                  "latestObservation": null,
+                  "provenance": [],
+                  "limitations": [
+                    "BENEFIT_BALANCE_UNOBSERVED"
+                  ]
+                },
+                "expectedLoading": {
+                  "amount": "0.00",
+                  "expectedDate": null
+                },
+                "policy": {
+                  "dailyCap": "25.00",
+                  "currency": "EUR",
+                  "eligibleWeekdays": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ]
+                },
+                "forecastExpectedUse": {
+                  "low": "0.00",
+                  "central": "0.00",
+                  "high": "0.00"
+                },
+                "remainingCapacityAfterForecast": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                }
+              },
+              "EDENRED": {
+                "eligibleDaysRemaining": 25,
+                "calendarCapacity": "625.00",
+                "usableStock": null,
+                "futureKnownLoading": "0.00",
+                "usableCapacity": null,
+                "plannedReserved": "0.00",
+                "plannedSupported": null,
+                "shortfall": "0.00",
+                "fundingToComplete": "0.00",
+                "availableCapacity": null,
+                "dayCapacity": {},
+                "fundsAvailableByDate": {},
+                "limitations": [
+                  "BENEFIT_BALANCE_UNOBSERVED",
+                  "BENEFIT_LOADING_DATE_UNKNOWN",
+                  "BENEFIT_OWNER_UNKNOWN"
+                ],
+                "provider": "EDENRED",
+                "ownerPersonId": null,
+                "latestObservation": null,
+                "currentBalanceKnowledge": {
+                  "status": "UNKNOWN",
+                  "amount": null,
+                  "asOfDate": "2026-10-05",
+                  "latestObservation": null,
+                  "provenance": [],
+                  "limitations": [
+                    "BENEFIT_BALANCE_UNOBSERVED"
+                  ]
+                },
+                "expectedLoading": {
+                  "amount": "0.00",
+                  "expectedDate": null
+                },
+                "policy": {
+                  "dailyCap": "25.00",
+                  "currency": "EUR",
+                  "eligibleWeekdays": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ]
+                },
+                "forecastExpectedUse": {
+                  "low": "0.00",
+                  "central": "0.00",
+                  "high": "0.00"
+                },
+                "remainingCapacityAfterForecast": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                }
+              }
+            },
+            "bankCash": {
+              "currentRealBankBalance": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_UNOBSERVED"
+              },
+              "futureKnownBankIncome": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "INCOME_TIMING_OR_MATCH_UNCERTAIN"
+              },
+              "remainingCertainBankOutflows": {
+                "status": "KNOWN",
+                "amount": "500.00",
+                "provenance": [
+                  "remainingFixedOccurrences"
+                ]
+              },
+              "pendingBankOutflows": {
+                "status": "KNOWN",
+                "amount": "0.00",
+                "provenance": [
+                  "DECLARED_OR_PURCHASE_BANK_NOT_BOOKED"
+                ]
+              },
+              "plannedBankCashRemaining": {
+                "status": "KNOWN",
+                "amount": "0.00",
+                "provenance": [
+                  "unobservedPlannedBANKAllocations"
+                ]
+              },
+              "remainingEssentialBankCash": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "remainingOptionalBankCash": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "afterCertain": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_PROJECTION_INPUT_UNKNOWN"
+              },
+              "savingsBudgetReservation": {
+                "status": "KNOWN",
+                "amount": "60.00",
+                "provenance": [
+                  "monthlySavingsBudgetIntent"
+                ]
+              },
+              "afterSavings": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED"
+              },
+              "plannedAvailable": {
+                "status": "UNKNOWN",
+                "amount": null,
+                "reason": "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED"
+              },
+              "afterEssential": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "endOfMonth": {
+                "low": null,
+                "central": null,
+                "high": null
+              },
+              "incomeOccurrences": [
+                {
+                  "key": "income:Digital Learning Contest",
+                  "amount": "1000.00",
+                  "date": null,
+                  "state": "UNCERTAIN",
+                  "observedRef": null
+                },
+                {
+                  "key": "income:Promotrans",
+                  "amount": "1000.00",
+                  "date": null,
+                  "state": "UNCERTAIN",
+                  "observedRef": null
+                }
+              ],
+              "calibrated": false,
+              "limitations": [
+                "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED",
+                "BANK_BALANCE_UNOBSERVED",
+                "EXPECTED_BANK_FUNDING_UNKNOWN",
+                "INCOME_TIMING_OR_MATCH_UNCERTAIN",
+                "OTHER_MONTH_BANK_BRIDGE_UNCERTIFIED"
+              ]
+            },
+            "knownSyntheticCostWithUnknownFunding": "383.00",
+            "unallocatedEconomicAmount": "383.00",
+            "fundingToComplete": "0.00",
+            "anonymousSlotFunding": "UNKNOWN",
+            "unresolvedReserves": [
+              {
+                "reserveKey": "economic:UNRESOLVED",
+                "reason": "BEHAVIOR_NOT_YET_MODELED",
+                "value": {
+                  "low": "80.00",
+                  "central": "80.00",
+                  "high": "80.00"
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "ECONOMIC_AMOUNT",
+                  "requiredSources": [
+                    "BANK"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-01"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-02"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-03"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-04"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-05"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "80.00",
+                      "minimum": "80.00",
+                      "evidenceRefs": [
+                        "operation:tech-2026-06"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "80.00",
+                    "central": "80.00",
+                    "high": "80.00"
+                  },
+                  "evidenceRefs": [
+                    "operation:tech-2026-01",
+                    "operation:tech-2026-02",
+                    "operation:tech-2026-03",
+                    "operation:tech-2026-04",
+                    "operation:tech-2026-05",
+                    "operation:tech-2026-06"
+                  ],
+                  "hardFloor": false
+                },
+                "knowledge": "ESTIMATED",
+                "sourceRefs": [
+                  "economic:UNRESOLVED"
+                ],
+                "replacesSlotKey": null
+              },
+              {
+                "reserveKey": "mobility:UNRESOLVED",
+                "replacesSlotKey": null,
+                "reason": "MOBILITY_CONTEXT_UNRESOLVED",
+                "value": {
+                  "low": "5.00",
+                  "central": "5.00",
+                  "high": "5.00"
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "GROSS_MOBILITY_USAGE",
+                  "requiredSources": [
+                    "MOBILITY"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-01-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-02-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-03-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-04-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-05-unresolved"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "5.00",
+                      "minimum": "5.00",
+                      "evidenceRefs": [
+                        "mobility-leg:leg-2026-06-unresolved"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "5.00",
+                    "central": "5.00",
+                    "high": "5.00"
+                  },
+                  "evidenceRefs": [
+                    "mobility-leg:leg-2026-01-unresolved",
+                    "mobility-leg:leg-2026-02-unresolved",
+                    "mobility-leg:leg-2026-03-unresolved",
+                    "mobility-leg:leg-2026-04-unresolved",
+                    "mobility-leg:leg-2026-05-unresolved",
+                    "mobility-leg:leg-2026-06-unresolved"
+                  ],
+                  "hardFloor": false
+                },
+                "knowledge": "ESTIMATED",
+                "sourceRefs": [
+                  "mobility:UNRESOLVED"
+                ]
+              },
+              {
+                "reserveKey": "unresolved:manon-work-meals",
+                "replacesSlotKey": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+                "reason": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+                "knowledge": "UNKNOWN",
+                "value": {
+                  "low": null,
+                  "central": null,
+                  "high": null
+                },
+                "historicalReferences": {
+                  "policyVersion": "planner-closed-local-reference@v1",
+                  "basis": "OCCURRENCE_COUNT",
+                  "requiredSources": [
+                    "BANK",
+                    "EDENRED"
+                  ],
+                  "comparableMonths": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03",
+                    "2026-04",
+                    "2026-05",
+                    "2026-06"
+                  ],
+                  "samples": [
+                    {
+                      "month": "2026-01",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-01",
+                        "purchase:meal-Manon-2026-01-0",
+                        "purchase:meal-Manon-2026-01-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-02",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-02",
+                        "purchase:meal-Manon-2026-02-0",
+                        "purchase:meal-Manon-2026-02-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-03",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-03",
+                        "purchase:meal-Manon-2026-03-0",
+                        "purchase:meal-Manon-2026-03-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-04",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-04",
+                        "purchase:meal-Manon-2026-04-0",
+                        "purchase:meal-Manon-2026-04-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-05",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-05",
+                        "purchase:meal-Manon-2026-05-0",
+                        "purchase:meal-Manon-2026-05-1"
+                      ]
+                    },
+                    {
+                      "month": "2026-06",
+                      "value": "2",
+                      "minimum": null,
+                      "evidenceRefs": [
+                        "food-month:2026-06",
+                        "purchase:meal-Manon-2026-06-0",
+                        "purchase:meal-Manon-2026-06-1"
+                      ]
+                    }
+                  ],
+                  "range": {
+                    "low": "2.00",
+                    "central": "2.00",
+                    "high": "2.00"
+                  },
+                  "evidenceRefs": [
+                    "food-month:2026-01",
+                    "food-month:2026-02",
+                    "food-month:2026-03",
+                    "food-month:2026-04",
+                    "food-month:2026-05",
+                    "food-month:2026-06",
+                    "purchase:meal-Manon-2026-01-0",
+                    "purchase:meal-Manon-2026-01-1",
+                    "purchase:meal-Manon-2026-02-0",
+                    "purchase:meal-Manon-2026-02-1",
+                    "purchase:meal-Manon-2026-03-0",
+                    "purchase:meal-Manon-2026-03-1",
+                    "purchase:meal-Manon-2026-04-0",
+                    "purchase:meal-Manon-2026-04-1",
+                    "purchase:meal-Manon-2026-05-0",
+                    "purchase:meal-Manon-2026-05-1",
+                    "purchase:meal-Manon-2026-06-0",
+                    "purchase:meal-Manon-2026-06-1"
+                  ],
+                  "hardFloor": false
+                },
+                "sourceRefs": [
+                  "food:manon-work-meals"
+                ]
+              }
+            ],
+            "timing": [
+              {
+                "ownerRef": "planner:08c7c05ae5baefe70304dbf8eff633dc",
+                "lineId": "planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:94035fa41a8abc2ab23aa0c06048046d",
+                "lineId": "planner:94035fa41a8abc2ab23aa0c06048046d:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:a2b281b1081aac56bf97991df1050cf4",
+                "lineId": "planner:a2b281b1081aac56bf97991df1050cf4:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:a756595f61e374366fd3eefd321635c3",
+                "lineId": "planner:a756595f61e374366fd3eefd321635c3:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:ee096cc56b028e104262096752ee72ed",
+                "lineId": "planner:ee096cc56b028e104262096752ee72ed:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:f9c7ed2efcc7338d93e2a8172a91c075",
+                "lineId": "planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              },
+              {
+                "ownerRef": "planner:fe8d581abf41664f126f5154e031fb98",
+                "lineId": "planner:fe8d581abf41664f126f5154e031fb98:cost",
+                "plannedDate": null,
+                "certainty": "UNKNOWN",
+                "cashTreatment": "PAYABLE"
+              }
+            ],
+            "conditionalNeeds": [],
+            "structuralMobility": "0.00",
+            "economicLenses": {
+              "explicitContexts": "GROSS_CONTEXTS_ALREADY_INCLUDED_IN_NEEDS_OR_DISCRETIONARY",
+              "otherExternalImpact": "0.00",
+              "otherExternalClassification": "EXPLICIT_INTENT_INCREMENT",
+              "modelVersion": "planner-projection@v2-headless"
+            }
+          },
+          "cash": {
+            "knowledge": "UNKNOWN",
+            "openingBalance": null,
+            "lowPointAmount": null,
+            "lowPointDate": null
+          },
+          "mobility": {
+            "usageEconomicCost": "0.00",
+            "cashTransportCosts": "0.00",
+            "journeyCount": 0,
+            "unresolvedJourneyCount": 0
+          },
+          "goal": {
+            "targetMonthEnd": null,
+            "gapToGoal": null
+          },
+          "impacts": [
+            {
+              "componentId": "component:12b50f9d2e3f95abcbd2b47082020e3c958b250205661c26c0fb10ef11d007ac",
+              "baselinePlanSlotId": null,
+              "slotRelation": "NO_RELATED_SLOT",
+              "economicRelation": "UNKNOWN",
+              "grossAmount": null,
+              "displacedAmount": "0.00",
+              "incrementalAmount": null,
+              "knowledge": "UNKNOWN",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:activity:extras:extra",
+                "decision:b64809d7-a29a-4fd0-8df2-2ace363f789b:extras:0a5c53f5-d0ce-4b07-8ccb-24f972fe902e"
+              ]
+            },
+            {
+              "componentId": "component:6a6c86e2ea45aa3749175bf8d0cb3fd56ff9006241b2e33bb436c8fd1c6ac201",
+              "baselinePlanSlotId": null,
+              "slotRelation": "NO_RELATED_SLOT",
+              "economicRelation": "INCREMENTAL",
+              "grossAmount": "4.00",
+              "displacedAmount": "0.00",
+              "incrementalAmount": "4.00",
+              "knowledge": "DECLARED",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:activity:extras:extra",
+                "decision:b64809d7-a29a-4fd0-8df2-2ace363f789b:extras:219efa48-8f0e-4c9b-95c0-4f3bb2d9456b"
+              ]
+            },
+            {
+              "componentId": "component:d57e498d8a33ab6ee2475cface9f12488ca2276da820106e94c72917583baf94",
+              "baselinePlanSlotId": null,
+              "slotRelation": "NO_RELATED_SLOT",
+              "economicRelation": "INCREMENTAL",
+              "grossAmount": "8.00",
+              "displacedAmount": "0.00",
+              "incrementalAmount": "8.00",
+              "knowledge": "DECLARED",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:night-out:extras:extra",
+                "decision:3c5872c2-69dc-487a-9193-15fb8c3b8109:extras:c91f1a51-2275-494c-bcf7-f19dcdf63d97"
+              ]
+            },
+            {
+              "componentId": "component:e1ff024b2b19f80f33291314d9a0d29637074b945dc3e1e390546fbc448a30b7",
+              "baselinePlanSlotId": null,
+              "slotRelation": "NO_RELATED_SLOT",
+              "economicRelation": "INCREMENTAL",
+              "grossAmount": "26.00",
+              "displacedAmount": "0.00",
+              "incrementalAmount": "26.00",
+              "knowledge": "DECLARED",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:activity:main:activity",
+                "decision:b64809d7-a29a-4fd0-8df2-2ace363f789b:main:e5a4ba1a-b6af-48b8-a84c-0756b9a813be"
+              ]
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000001",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "8d606e7517e5e1aca32b004ebde59f62d581f7de05d130864751d09b23b5a6ae"
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000002",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "a168cef4a45d365d20cbde4f894d8f9664e6c978e0d65f7fcdf771ebf5e16da8"
+            },
+            {
+              "targetRef": "00000000-0000-4000-8000-000000000003",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "d865ac589cbbc3bd716d5b6840f813809d9931975861663f9d02b3d3a1486905"
+            },
+            {
+              "targetRef": "3c5872c2-69dc-487a-9193-15fb8c3b8109",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "bf33b6050d8e5640788b247d793425355431cb3d29cef44b058aa3dcc00dcac2"
+            },
+            {
+              "targetRef": "b64809d7-a29a-4fd0-8df2-2ace363f789b",
+              "marginalImpactOnMonthEnd": null,
+              "rationaleCode": "MARGINAL_UNRESOLVED",
+              "comparisonSemanticStateDigest": "f1eaef3c60b4c2580977b9348a02f368a1bd69d4ae17cdb1ea0bb2c72314aa72"
+            }
+          ],
+          "diagnostics": [
+            {
+              "code": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": "mobility:UNRESOLVED",
+              "message": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-01-unresolved",
+                "mobility-leg:leg-2026-02-unresolved",
+                "mobility-leg:leg-2026-03-unresolved",
+                "mobility-leg:leg-2026-04-unresolved",
+                "mobility-leg:leg-2026-05-unresolved",
+                "mobility-leg:leg-2026-06-unresolved"
+              ]
+            },
+            {
+              "code": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "need-observations:33333333-3333-4333-8333-333333333333:synthetic-cosmetic-need",
+              "message": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+              "evidenceRefs": [
+                "product:0",
+                "product:1"
+              ]
+            },
+            {
+              "code": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "economic:UNRESOLVED",
+              "message": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+              "evidenceRefs": [
+                "operation:tech-2026-01",
+                "operation:tech-2026-02",
+                "operation:tech-2026-03",
+                "operation:tech-2026-04",
+                "operation:tech-2026-05",
+                "operation:tech-2026-06",
+                "operation:tobacco-2026-01",
+                "operation:tobacco-2026-02",
+                "operation:tobacco-2026-03",
+                "operation:tobacco-2026-04",
+                "operation:tobacco-2026-05",
+                "operation:tobacco-2026-06"
+              ]
+            },
+            {
+              "code": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+              "severity": "WARN",
+              "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+              "message": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+              "evidenceRefs": [
+                "food:manon-work-meals"
+              ]
+            },
+            {
+              "code": "COMPONENT_COST_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:12b50f9d2e3f95abcbd2b47082020e3c958b250205661c26c0fb10ef11d007ac",
+              "message": "COMPONENT_COST_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "COMPONENT_FUNDING_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:12b50f9d2e3f95abcbd2b47082020e3c958b250205661c26c0fb10ef11d007ac",
+              "message": "COMPONENT_FUNDING_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "COMPONENT_FUNDING_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:6a6c86e2ea45aa3749175bf8d0cb3fd56ff9006241b2e33bb436c8fd1c6ac201",
+              "message": "COMPONENT_FUNDING_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "COMPONENT_FUNDING_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:d57e498d8a33ab6ee2475cface9f12488ca2276da820106e94c72917583baf94",
+              "message": "COMPONENT_FUNDING_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "COMPONENT_FUNDING_UNKNOWN",
+              "severity": "WARN",
+              "targetRef": "component:e1ff024b2b19f80f33291314d9a0d29637074b945dc3e1e390546fbc448a30b7",
+              "message": "COMPONENT_FUNDING_UNKNOWN",
+              "evidenceRefs": []
+            },
+            {
+              "code": "DISPLACEMENT_UNKNOWN_NO_SUBTRACTION",
+              "severity": "WARN",
+              "targetRef": "component:12b50f9d2e3f95abcbd2b47082020e3c958b250205661c26c0fb10ef11d007ac",
+              "message": "DISPLACEMENT_UNKNOWN_NO_SUBTRACTION",
+              "evidenceRefs": [
+                "capability:planner-context-registry@v3-renewals:activity:extras:extra",
+                "decision:b64809d7-a29a-4fd0-8df2-2ace363f789b:extras:0a5c53f5-d0ce-4b07-8ccb-24f972fe902e"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "economic:UNRESOLVED",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "economic:UNRESOLVED"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "mobility:UNRESOLVED",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "mobility:UNRESOLVED"
+              ]
+            },
+            {
+              "code": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "severity": "WARN",
+              "targetRef": "unresolved:manon-work-meals",
+              "message": "BASELINE_UNRESOLVED_RESERVE_PRESERVED",
+              "evidenceRefs": [
+                "food:manon-work-meals"
+              ]
+            },
+            {
+              "code": "CONTEXT_COMPONENT_SLOT_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": "3c5872c2-69dc-487a-9193-15fb8c3b8109:main",
+              "message": "CONTEXT_COMPONENT_SLOT_UNRESOLVED",
+              "evidenceRefs": []
+            },
+            {
+              "code": "PLAN_FUNDING_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_FUNDING_UNRESOLVED",
+              "evidenceRefs": [
+                "planner:08c7c05ae5baefe70304dbf8eff633dc:planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "planner:94035fa41a8abc2ab23aa0c06048046d:planner:94035fa41a8abc2ab23aa0c06048046d:cost",
+                "planner:a2b281b1081aac56bf97991df1050cf4:planner:a2b281b1081aac56bf97991df1050cf4:cost",
+                "planner:a756595f61e374366fd3eefd321635c3:planner:a756595f61e374366fd3eefd321635c3:cost",
+                "planner:ee096cc56b028e104262096752ee72ed:planner:ee096cc56b028e104262096752ee72ed:cost",
+                "planner:f9c7ed2efcc7338d93e2a8172a91c075:planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "planner:fe8d581abf41664f126f5154e031fb98:planner:fe8d581abf41664f126f5154e031fb98:cost"
+              ]
+            },
+            {
+              "code": "PLAN_TIMING_UNRESOLVED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_TIMING_UNRESOLVED",
+              "evidenceRefs": [
+                "planner:08c7c05ae5baefe70304dbf8eff633dc:planner:08c7c05ae5baefe70304dbf8eff633dc:cost",
+                "planner:94035fa41a8abc2ab23aa0c06048046d:planner:94035fa41a8abc2ab23aa0c06048046d:cost",
+                "planner:a2b281b1081aac56bf97991df1050cf4:planner:a2b281b1081aac56bf97991df1050cf4:cost",
+                "planner:a756595f61e374366fd3eefd321635c3:planner:a756595f61e374366fd3eefd321635c3:cost",
+                "planner:ee096cc56b028e104262096752ee72ed:planner:ee096cc56b028e104262096752ee72ed:cost",
+                "planner:f9c7ed2efcc7338d93e2a8172a91c075:planner:f9c7ed2efcc7338d93e2a8172a91c075:cost",
+                "planner:fe8d581abf41664f126f5154e031fb98:planner:fe8d581abf41664f126f5154e031fb98:cost"
+              ]
+            },
+            {
+              "code": "PLAN_CASH_PROJECTION_UNCERTIFIED",
+              "severity": "WARN",
+              "targetRef": null,
+              "message": "PLAN_CASH_PROJECTION_UNCERTIFIED",
+              "evidenceRefs": [
+                "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED",
+                "BANK_BALANCE_UNOBSERVED",
+                "EXPECTED_BANK_FUNDING_UNKNOWN",
+                "INCOME_TIMING_OR_MATCH_UNCERTAIN",
+                "OTHER_MONTH_BANK_BRIDGE_UNCERTIFIED"
+              ]
+            }
+          ],
+          "projectionCompleteness": "UNKNOWN",
+          "applyReadiness": "READY_WITH_WARNINGS"
+        }
+      },
+      {
+        "kind": "RESPONSE",
+        "commandKind": "READ",
+        "sequence": 4,
+        "at": 1792268421706,
+        "ok": true
+      }
+    ],
+    "drafts": {
+      "active": {
+        "id": "8f5c5dab-aa2b-4339-957a-1b8996cc2c6d",
+        "version": 4,
+        "digest": "761b820438da8434f9494fbe9a3cb0023f9dd163841a0a327c6961509ae51ea3"
+      },
+      "archives": 0,
+      "events": [
+        {
+          "kind": "SAVE",
+          "draftId": "8f5c5dab-aa2b-4339-957a-1b8996cc2c6d",
+          "version": 1,
+          "digest": "cfc108a5424ed7200a8c947ff64290cef2b39242f877a35d91e210523521c7a6"
+        },
+        {
+          "kind": "SAVE",
+          "draftId": "8f5c5dab-aa2b-4339-957a-1b8996cc2c6d",
+          "version": 2,
+          "digest": "761b820438da8434f9494fbe9a3cb0023f9dd163841a0a327c6961509ae51ea3"
+        },
+        {
+          "kind": "SAVE",
+          "draftId": "8f5c5dab-aa2b-4339-957a-1b8996cc2c6d",
+          "version": 3,
+          "digest": "cfc108a5424ed7200a8c947ff64290cef2b39242f877a35d91e210523521c7a6"
+        },
+        {
+          "kind": "SAVE",
+          "draftId": "8f5c5dab-aa2b-4339-957a-1b8996cc2c6d",
+          "version": 4,
+          "digest": "761b820438da8434f9494fbe9a3cb0023f9dd163841a0a327c6961509ae51ea3"
+        }
+      ]
+    },
+    "active": null
+  }
+}

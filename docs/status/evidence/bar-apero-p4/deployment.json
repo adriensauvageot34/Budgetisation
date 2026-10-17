@@ -1,0 +1,36 @@
+{
+  "id": "dpl_BFhCWNBx6xeVnTipFzZE6M8DAL8z",
+  "name": "budgetisation",
+  "url": "budgetisation-g65oaogd8-adriensauvageot34-6137s-projects.vercel.app",
+  "type": "LAMBDAS",
+  "state": "READY",
+  "createdAt": 1792267444419,
+  "creator": {
+    "uid": "ItlVoi62mpJ28TeqsxO3j569",
+    "username": "adriensauvageot34-6137"
+  },
+  "project": {
+    "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+    "name": "budgetisation",
+    "framework": "nextjs"
+  },
+  "meta": {
+    "githubCommitRef": "codex/bar-apero-p4-integrated-reception",
+    "githubCommitSha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf",
+    "githubCommitMessage": "fix(composer): require RAW consent before removing Before extras",
+    "githubRepo": "Budgetisation",
+    "githubOrg": "adriensauvageot34"
+  },
+  "alias": [
+    "budgetisation-git-codex-09714a-adriensauvageot34-6137s-projects.vercel.app"
+  ],
+  "target": null,
+  "regions": [
+    "iad1"
+  ],
+  "buildingAt": 1792267445307,
+  "ready": 1792267525225,
+  "readyState": "READY",
+  "source": "git",
+  "aliasError": null
+}
