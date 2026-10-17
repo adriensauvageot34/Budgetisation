@@ -8,6 +8,7 @@ function once<T>(importer: () => Promise<T>) {
 }
 
 export const editorChunks = {
+  bar: once(async () => (await import("./bar-living-editor")).BarLivingEditor),
   night: once(async () => (await import("./night-out-editor")).NightOutEditor),
   restaurant: once(async () => (await import("./restaurant-editor")).RestaurantEditor),
   family: once(async () => (await import("./family-visit-editor")).FamilyVisitEditor),

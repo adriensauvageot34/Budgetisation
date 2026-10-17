@@ -1,4 +1,5 @@
 "use client";
+import type {BarTarget} from "./bar-living-operations";
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
 import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
@@ -44,7 +45,7 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean; selection?: ComponentSelectionV1 }; page?: number; saved?: boolean; raw?: boolean;
   restaurantContextId?: string; restaurantCreating?: boolean;
   giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
-  cardKey?: string;
+  barTarget?:BarTarget; cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
@@ -128,8 +129,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [loadedEditors, setLoadedEditors] = useState<LoadedEditorChunks>({});
   const [editorLoadError, setEditorLoadError] = useState<EditorChunkKind | null>(null);
   const [editorLoadRetry, setEditorLoadRetry] = useState(0);
+  const livingBarContext = editor?.nightContextId ? draftState.contexts.find(c=>c.contextOccurrenceId===editor.nightContextId) : undefined;
+  const livingBarId = livingBarContext && presetForContext(livingBarContext)?.presetKey === "bar-apero" ? livingBarContext.contextOccurrenceId : undefined;
   const editorKind: EditorChunkKind | null = editor?.restaurantContextId ? "restaurant" : editor?.stayContextId ? "stay" : editor?.familyContextId ? "family"
-    : editor?.giftContextId ? "gift" : editor?.nightContextId ? "night" : editor?.catalogContextId ? "catalog" : null;
+    : editor?.giftContextId ? "gift" : livingBarId ? "bar" : editor?.nightContextId ? "night" : editor?.catalogContextId ? "catalog" : null;
   useEffect(() => {
     if (!editorKind || loadedEditors[editorKind]) return;
     let current = true;
@@ -143,7 +146,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const RestaurantEditor = loadedEditors.restaurant;
   useEffect(() => { if (editor?.restaurantContextId && !draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)) setEditor(null); }, [draftState.contexts, editor?.restaurantContextId]);
   const ShortStayEditor = loadedEditors.stay, GiftEditor = loadedEditors.gift, CatalogContextEditor = loadedEditors.catalog;
-  const NightOutEditor = loadedEditors.night;
+  const NightOutEditor = loadedEditors.night, BarLivingEditor = loadedEditors.bar;
+  useEffect(()=>{if(editor?.nightContextId&&!draftState.contexts.some(c=>c.contextOccurrenceId===editor.nightContextId))setEditor(null);},[draftState.contexts,editor?.nightContextId]);
   const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
   const [unresolvedOpen, setUnresolvedOpen] = useState(false);
   const [reveal, setReveal] = useState<{ targetRef: string; sequence: number } | null>(null);
@@ -274,12 +278,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     else if (!draftConfirmation && confirmationDialog.current?.open) confirmationDialog.current.close();
   }, [draftConfirmation]);
   useEffect(() => {
-    if (editor?.restaurantContextId) { dialog.current?.close(); return; }
+    if (editor?.restaurantContextId || livingBarId) { dialog.current?.close(); return; }
     if (editor) { invoker.current = document.activeElement as HTMLElement;
       if (dialog.current?.open) dialog.current.close();
       if (editor.side) dialog.current?.show(); else dialog.current?.showModal(); }
     else { dialog.current?.close(); invoker.current?.focus(); }
-  }, [!!editor, editor?.side, editor?.restaurantContextId]);
+  }, [!!editor, editor?.side, editor?.restaurantContextId, livingBarId]);
   async function checkApply(pending: PendingApply) {
     const ticket = gate.current.next(semanticStateDigest(localDraft.current));
     try {
@@ -591,13 +595,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       operation: values => ({ kind: "MUTATE", mutation: { kind: "SET_STATE", targetRef: card.targetRef, value: Object.fromEntries(model.controlEditors.find(e => e.targetRef === card.targetRef)!.fields.map(f => [f.key, values[f.key]])) } }) });
   }
   const closeDialog = () => { if (!busyRef.current) { if (editor && !inlineEdits.registry.guard(closeDialog)) return; setEditor(null); setProjectionOpen(false); setErrorMessage(null); } };
-  function editContext(card: ComposerContextCardView) {
-    if (editor && !inlineEdits.registry.guard(() => editContext(card))) return;
+  function editContext(card: ComposerContextCardView, barTarget?:BarTarget) {
+    if (editor && !inlineEdits.registry.guard(() => editContext(card,barTarget))) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
     setFocusedContext(card.contextOccurrenceId);
     prepareDialogFocus();
-     setEditor({ title: `Modifier ${card.label}`, side: true,
+     setEditor({ title: `Modifier ${card.label}`, side: true, barTarget,
       cardKey: `template:${card.templateKey}`,
       ...(card.templateKey === "gift" ? { giftContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "night-out" ? { nightContextId: card.contextOccurrenceId } : {}),
@@ -662,7 +666,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stablePreview=useCommittedEvent(()=>void run({kind:"READ"},"none"));
   const stableBalance=useCommittedEvent(()=>{clearHover();setBalanceOpen(v=>!v);if(!balanceOpen)void run({kind:"SUGGESTIONS"},"none");});
   const stableDetails=useCommittedEvent(openProjectionDetails);
-  const stableFocus=useCommittedEvent((id:string|null)=>{if(editor?.restaurantContextId&&id!==editor.restaurantContextId&&!inlineEdits.registry.guard(()=>stableFocus(id)))return;setFocusedContext(id);if(editor?.restaurantContextId&&id!==editor.restaurantContextId)setEditor(null);});
+  const stableFocus=useCommittedEvent((id:string|null)=>{if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId)&&!inlineEdits.registry.guard(()=>stableFocus(id)))return;setFocusedContext(id);if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId))setEditor(null);});
   const stableRevealFocus=useCommittedEvent((id:string|null)=>{stableFocus(id);if(id)setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));});
   // Accepted context changes (also Undo/Redo and child edits) replace workshop buffers.
   // Preview responses with the same semantic content leave RAW inputs untouched.
@@ -722,7 +726,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
     <div className={styles.columns} data-workshop-columns data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} />
-      <ComposerBoard model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
+      <ComposerBoard livingBar={livingBarId ? {id:livingBarId,open:stableEditContext,close:closeDialog,content:BarLivingEditor ? <BarLivingEditor key={livingBarId+":"+(editor?.barTarget??"default")} initialTarget={editor?.barTarget}
+          context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}
+          model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} saveStatus={draftTransport?durable.status:"MEMORY"}
+          dockHost={nightDockHost} busy={busy || draftState.preferences.anchors.includes(livingBarId) || draftState.preferences.flexibility[livingBarId]==="PRESERVE"} creating={editor?.nightCreating} admission={editor?.nightAdmission??0} serverError={errorMessage}
+          onSave={stage} onCancel={closeDialog} onOpenChild={id=>{const child=shown.board.contexts.find(c=>c.contextOccurrenceId===id);if(child)editContext(child);}} />
+          : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>}
+          : {open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
         add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} reveal={reveal}
          contextGuide={editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment?.asset.optionKind === "COMPONENT" ? <div ref={setNightDockHost} data-night-dock-host /> : editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
           && draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)
@@ -751,7 +761,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
 
       {errorMessage && !editor?.nightContextId && <p role="alert" className={styles.formError}>{errorMessage}</p>}
-      {editorKind && !loadedEditors[editorKind]
+      {!livingBarId && (editorKind && !loadedEditors[editorKind]
         ? <section className={styles.editorLoading} role={editorLoadError === editorKind ? "alert" : "status"} aria-live="polite" data-editor-loading={editorKind}>
           <p>{editorLoadError === editorKind ? "Le formulaire n’a pas pu être chargé. Votre brouillon et votre carte sont conservés." : "Chargement du formulaire…"}</p>
           {editorLoadError === editorKind && <button type="button" className={styles.secondary} onClick={() => setEditorLoadRetry(value => value + 1)}>Réessayer le chargement</button>}
@@ -819,7 +829,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           <span>{(editor.page ?? 0) + 1} / {Math.ceil(editor.fields.length / 3)}</span><button type="button" disabled={((editor.page ?? 0) + 1) * 3 >= editor.fields.length} onClick={() => setEditor(current => current ? { ...current, page: (current.page ?? 0) + 1 } : current)}>Suivant</button></nav>}
         <footer><button type="button" className={styles.secondary} disabled={busy} onClick={closeDialog}>Retour au mois</button><button data-submit className={styles.primary} disabled={busy}>Conserver et prévisualiser</button></footer>
         </>}
-      </form> : null}
+      </form> : null)}
     </dialog>
     <dialog ref={confirmationDialog} className={styles.dialog} data-compact-editor aria-labelledby="draft-confirmation-title"
       onCancel={e => { e.preventDefault(); if (!draftConfirmationBusy) setDraftConfirmation(null); }}>

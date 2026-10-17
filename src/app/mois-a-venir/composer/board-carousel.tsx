@@ -6,20 +6,20 @@ import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRe
 import { useComposerInteractions } from "./interactions";
 import styles from "./composer.module.css";
 
-export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps, revealSequence, revealFocused }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;
-  revealSequence?: number; revealFocused?: () => void;
+export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps, revealSequence, revealFocused, expandedId }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;
+  expandedId?: string; revealSequence?: number; revealFocused?: () => void;
   render: (item: InventoryItem) => ReactNode; emptyClick: () => void; children?: ReactNode; dropProps: React.HTMLAttributes<HTMLDivElement> & { [key: `data-${string}`]: boolean | string | number | undefined } }) {
   const viewport = useRef<HTMLDivElement>(null), [size, setSize] = useState({ width: 1000, height: 470 }), [page, setPage] = useState(0);
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
   const projected = useMemo(() => inventory ?? inventoryItems(model), [model,inventory]);
-  const stableItems = useRef(projected), stableSize = useRef(size);
+  const stableItems = useRef(projected), stableSize = useRef(size), stableExpanded = useRef(expandedId);
   const dragging = !!interaction?.grabbed;
   const items = dragging ? stableItems.current : projected, layoutSize = dragging ? stableSize.current : size;
   const spatialKey = inventorySpatialKey(items);
-  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height), [spatialKey,layoutSize.width,layoutSize.height]);
+  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId]);
   const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);
   const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);
-  useLayoutEffect(() => { if (!dragging) { stableItems.current = projected; stableSize.current = size; } }, [dragging, projected, size]);
+  useLayoutEffect(() => { if (!dragging) { stableItems.current = projected; stableSize.current = size; stableExpanded.current = expandedId; } }, [dragging, projected, size, expandedId]);
   const active = Math.min(page, pages.length - 1), previousIds = useRef(new Set(items.map(item => item.id)));
   const [departing,setDeparting] = useState(0), [dirtyItems,setDirtyItems] = useState<readonly string[]>([]);
   const [dragOrigin,setDragOrigin] = useState<number|null>(null);
@@ -86,7 +86,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       }
       if (!origin) continue;
       const dx = origin.x - currentRect.x, dy = origin.y - currentRect.y;
-      if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && !entering) continue;
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && !entering) {
+        // Real Grid tracks already reflowed. Reveal the new surface without
+        // scaling its text or placing an editor over the neighboring cards.
+        if (id === expandedId && (Math.abs(origin.width-currentRect.width)>2 || Math.abs(origin.height-currentRect.height)>2))
+          cell.animate([{clipPath:`inset(0 ${Math.max(0,currentRect.width-origin.width)}px ${Math.max(0,currentRect.height-origin.height)}px 0 round 22px)`},{clipPath:"inset(0 round 22px)"}],{duration:220,easing:"ease-out"});
+        continue;
+      }
       cell.animate([{ transform:`translate(${dx}px, ${dy}px) scale(${entering ? .95 : 1})`, opacity:entering ? .45 : 1 },
         { transform:"translate(0, 0) scale(1)", opacity:1 }], { duration:entering ? 290 : 220, easing:"cubic-bezier(.2,.75,.25,1)" });
     }
