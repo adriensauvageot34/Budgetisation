@@ -1,0 +1,21 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Missing button Bière
+    at button (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:45:89)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:46:46
+    at process.env.NODE_ENV.exports.act (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\outputs\l4c-test-tools\node_modules\react\cjs\react.development.js:890:22)
+    at click (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:46:33)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:62:55
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:41:31)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:59:1 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: true,
+  operator: '=='
+}
+
+Node.js v22.18.0

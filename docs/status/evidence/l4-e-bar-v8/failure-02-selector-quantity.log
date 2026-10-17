@@ -1,0 +1,28 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_ADD_REMOVE_BEFORE_FIRST_SOCKET_PROJECTION PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V6_V8_COMPARABLE_UNKNOWN_BEER_ADMISSION_EFFORT PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_PLACE_FIRST_AND_QUICK_UNKNOWN_ADMISSION PASS
+V8_RAW_CANCEL_ESCAPE_DISCARD_PRESERVES_ADMITTED_UNKNOWN PASS
+V8_DIRECT_REEDIT_8_PLUS_12_AND_QUANTITY_IDENTITY PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+2 !== 1
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:110:9
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:41:31)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:107:1 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 1,
+  operator: 'strictEqual'
+}
+
+Node.js v22.18.0

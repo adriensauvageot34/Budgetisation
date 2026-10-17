@@ -1,0 +1,183 @@
+{
+  "source": "LOCAL_SYNTHETIC_ONLY",
+  "active": {
+    "draftId": "6a5b1f86-355f-4d24-8d81-af0b45769fe8",
+    "version": 11,
+    "lifecycle": "ACTIVE",
+    "semanticState": {
+      "version": "month-plan-state@v1",
+      "targetMonth": "2026-11",
+      "controls": [],
+      "contexts": [
+        {
+          "contextOccurrenceId": "d8e2b983-1686-42cd-8162-164d4948fb48",
+          "templateKey": "night-out",
+          "status": "ACTIVE",
+          "parentContextOccurrenceId": null,
+          "fields": {
+            "fieldSchemaVersion": "context-fields@v2",
+            "label": "Bar / Apéro",
+            "composerPresentation": {
+              "version": "composer-context-presentation@v1",
+              "presetKey": "bar-apero"
+            },
+            "placeRef": {
+              "kind": "TEXT",
+              "label": "Bar alternatif fixture",
+              "provenance": "USER_DECLARED_PROSPECTIVE"
+            }
+          },
+          "slotSelections": {
+            "outbound": {
+              "items": [
+                {
+                  "kind": "MOBILITY_INTENT",
+                  "selectionId": "86d1e155-7c53-4609-bccc-85dc0b59bfc5",
+                  "optionKey": "car",
+                  "provenance": "EXPLICIT_USER_DECISION",
+                  "returnRequired": false,
+                  "origin": {
+                    "kind": "KNOWN",
+                    "placeId": "00000000-0000-4000-8000-000000009102"
+                  },
+                  "destination": {
+                    "kind": "TEXT",
+                    "label": "Bar alternatif fixture",
+                    "provenance": "USER_DECLARED_PROSPECTIVE"
+                  },
+                  "journey": {
+                    "relation": "OWNS_JOURNEY",
+                    "certainty": "CERTAIN",
+                    "targetIntentId": null,
+                    "externalExpenseId": null,
+                    "externalCostLineIds": [],
+                    "choice": null,
+                    "stopIndex": null,
+                    "accessLegIndex": null
+                  },
+                  "pricing": {
+                    "fare": {
+                      "kind": "UNKNOWN"
+                    },
+                    "parking": {
+                      "kind": "UNKNOWN"
+                    },
+                    "fundingAllocations": [],
+                    "preference": "FASTEST"
+                  },
+                  "route": {
+                    "version": "composer-mobility-route@v1",
+                    "vehicleRef": {
+                      "vehicleId": "00000000-0000-4000-8000-000000009150",
+                      "labelAtSelection": "Peugeot 207",
+                      "provenance": "EXPLICIT_USER_DECISION"
+                    },
+                    "toll": {
+                      "kind": "UNKNOWN"
+                    },
+                    "stops": [
+                      {
+                        "label": "Lieu enregistré",
+                        "placeId": "00000000-0000-4000-8000-000000009102",
+                        "endpointSource": "DIRECT_PLACE"
+                      },
+                      {
+                        "label": "Bar alternatif fixture",
+                        "endpointSource": "ROOT_PLACE",
+                        "distanceToNextKm": null
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "return": {
+              "items": [
+                {
+                  "kind": "MOBILITY_INTENT",
+                  "selectionId": "492870b5-3e1e-4959-ae09-1a98e33e87ea",
+                  "optionKey": "taxi",
+                  "provenance": "EXPLICIT_USER_DECISION",
+                  "returnRequired": false,
+                  "origin": {
+                    "kind": "TEXT",
+                    "label": "Bar alternatif fixture",
+                    "provenance": "USER_DECLARED_PROSPECTIVE"
+                  },
+                  "destination": {
+                    "kind": "KNOWN",
+                    "placeId": "00000000-0000-4000-8000-000000009100"
+                  },
+                  "journey": {
+                    "relation": "OWNS_JOURNEY",
+                    "certainty": "CERTAIN",
+                    "targetIntentId": null,
+                    "externalExpenseId": null,
+                    "externalCostLineIds": [],
+                    "choice": null,
+                    "stopIndex": null,
+                    "accessLegIndex": null
+                  },
+                  "pricing": {
+                    "fare": {
+                      "kind": "UNKNOWN"
+                    },
+                    "parking": {
+                      "kind": "UNKNOWN"
+                    },
+                    "fundingAllocations": [],
+                    "preference": "FASTEST"
+                  }
+                }
+              ]
+            },
+            "extras": {
+              "items": [
+                {
+                  "selectionId": "3acbc9b1-6f4e-4bbb-ad8f-a8a56d1d099e",
+                  "optionKey": "extra",
+                  "kind": "COMPONENT",
+                  "provenance": "EXPLICIT_USER_DECISION",
+                  "label": "Bière",
+                  "quantity": "1",
+                  "unitBasis": "ITEM",
+                  "cost": {
+                    "kind": "MANUAL",
+                    "unitAmount": "8"
+                  },
+                  "fundingAllocations": [],
+                  "binding": {
+                    "mode": "AUTO"
+                  },
+                  "productAssetRef": {
+                    "catalogVersion": "planned-assets@v1",
+                    "assetKey": "bar:beer",
+                    "labelAtSelection": "Bière",
+                    "provenance": "EXPLICIT_USER_DECISION"
+                  }
+                }
+              ]
+            }
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        }
+      ],
+      "preferences": {
+        "anchors": [],
+        "flexibility": {}
+      }
+    },
+    "digest": "111d99ea7945f28c91847a01b6a509aeed658ff152db474fea2c6c17ab61fb50",
+    "baseRevisionId": null,
+    "baseRevisionNumber": 0,
+    "lastSavedAt": "2026-10-17T13:17:43.687Z",
+    "archivedAt": null,
+    "lastMutationRequestId": "3df15e73-2bee-4326-9edf-781ea72101ca",
+    "lastMutationExpectedVersion": 10,
+    "lastMutationKind": "SAVE"
+  },
+  "archives": [],
+  "activePlanRevisionId": null,
+  "activePlanRevisionNumber": 0,
+  "baseStale": false
+}

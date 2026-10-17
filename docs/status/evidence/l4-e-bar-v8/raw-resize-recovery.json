@@ -1,0 +1,26 @@
+{
+  "before": {
+    "dirty": "true",
+    "price": "8",
+    "step": "row",
+    "viewport": [
+      1728,
+      900
+    ]
+  },
+  "after": {
+    "dirty": "true",
+    "focus": null,
+    "price": "8",
+    "step": "row",
+    "viewport": [
+      1152,
+      720
+    ]
+  },
+  "previousFailure": {
+    "commit": "1527db2",
+    "result": "step=summary, dirty=false, input absent after resize; RAW 8 lost"
+  },
+  "method": "REAL_BROWSER_LOCAL_SYNTHETIC"
+}

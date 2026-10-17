@@ -1,0 +1,36 @@
+{
+  "id": "dpl_23EAich52MsxgkVhTfZ5wZuC1uVo",
+  "name": "budgetisation",
+  "url": "budgetisation-bk1easv8t-adriensauvageot34-6137s-projects.vercel.app",
+  "type": "LAMBDAS",
+  "state": "READY",
+  "createdAt": 1792243892553,
+  "creator": {
+    "uid": "ItlVoi62mpJ28TeqsxO3j569",
+    "username": "adriensauvageot34-6137"
+  },
+  "project": {
+    "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+    "name": "budgetisation",
+    "framework": "nextjs"
+  },
+  "meta": {
+    "githubCommitRef": "codex/composer-v3-l4-e-bar-v8",
+    "githubCommitSha": "ac90e5d17ab03f7b1fa7b6b636e80801a37eedc1",
+    "githubCommitMessage": "fix(composer): keep unadmitted Bar input across Board repacking",
+    "githubRepo": "Budgetisation",
+    "githubOrg": "adriensauvageot34"
+  },
+  "alias": [
+    "budgetisation-git-codex-e0fc5e-adriensauvageot34-6137s-projects.vercel.app"
+  ],
+  "target": null,
+  "regions": [
+    "iad1"
+  ],
+  "buildingAt": 1792243894465,
+  "ready": 1792244008038,
+  "readyState": "READY",
+  "source": "git",
+  "aliasError": null
+}
