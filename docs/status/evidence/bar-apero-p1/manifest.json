@@ -1,0 +1,138 @@
+{
+  "base": "0c0bfea03f5d6e30298eb04120c77ec684e7abc0",
+  "productCommit": "6e08d6858554b67d40ed10013d7445267be7e926",
+  "proofScope": "See report for per-command SHA and synthetic/browser/auth distinctions",
+  "textNormalization": "UTF-8, LF, trailing whitespace stripped; information retained",
+  "files": [
+    {
+      "file": "baseline-p1.json",
+      "bytes": 767,
+      "sha256": "623cfd24312c873bc648a2ffd19908609864c3f95fc45d47cd7df178912c8ea2"
+    },
+    {
+      "file": "baseline-p1.log",
+      "bytes": 622,
+      "sha256": "5a0f3deb4b615cb78428b4c4f26bff6d8ddbafa3822fc9006b3492ae817877c4"
+    },
+    {
+      "file": "baseline-tsc.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "baseline-v8.log",
+      "bytes": 2901,
+      "sha256": "885584abce650877e7385cbdd85dfd0715cf788312b08384326ca0fdb3fe1f10"
+    },
+    {
+      "file": "c1-authorized.log",
+      "bytes": 293,
+      "sha256": "83539dab100255afb9943e73c93bd0b543b5e31f30cd49954ad7f12b920ee15c"
+    },
+    {
+      "file": "check-composer-p14-p2-scheduler.log",
+      "bytes": 1045,
+      "sha256": "dfa1ce60f28714d0bbd6e7bc07f043aeec7a7f227ae35539ad63c49568edbfdc"
+    },
+    {
+      "file": "check-composer-post-snap3-draft-http.log",
+      "bytes": 392,
+      "sha256": "07f3237e075199e6121a2db9a28db0e7da2d34088785c7db8487f9908baa38d3"
+    },
+    {
+      "file": "check-l4-a.log",
+      "bytes": 788,
+      "sha256": "eea99b9a7dd5e83c54f30404277b30ca12403e1318951490a21cfef81d965ac6"
+    },
+    {
+      "file": "check-l4-b-presets.log",
+      "bytes": 1527,
+      "sha256": "9b805c04f9840eb2c11394e15012cb476e42a2163f2136e0f795f9aa0bafdbe0"
+    },
+    {
+      "file": "check-l4-c-v6-interactions.log",
+      "bytes": 6143,
+      "sha256": "62d3d505c0dda4c6b51f8a11f2c1d2914479b7ebf4cfcfa524dd61e60d77e5da"
+    },
+    {
+      "file": "check-l4-final-reception.log",
+      "bytes": 698,
+      "sha256": "34f7184acb20852d617feca836cffcb251ec5752a6a7c55c8079afc47b14e9fd"
+    },
+    {
+      "file": "check-pre-l4-c1.log",
+      "bytes": 1119,
+      "sha256": "e7c74ddb0f280974a60a272fda769341e4c3faaa71c44c36226a40eca8f26fe8"
+    },
+    {
+      "file": "check-pre-l4-c2-c8-source.log",
+      "bytes": 49,
+      "sha256": "09e0d1e3ae8be456a928a465e244b4bada639eabe32f24ee09a8323300c84921"
+    },
+    {
+      "file": "final-check-l4-d-bar-mobility.log",
+      "bytes": 343,
+      "sha256": "6c4f908a99ab10d331deee8a9696c455d440650279820bf88f78f4a3b9aa12b1"
+    },
+    {
+      "file": "final-check-l4-e-bar-v8.log",
+      "bytes": 2901,
+      "sha256": "885584abce650877e7385cbdd85dfd0715cf788312b08384326ca0fdb3fe1f10"
+    },
+    {
+      "file": "final-check-planner-performance-parity.log",
+      "bytes": 64,
+      "sha256": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+    },
+    {
+      "file": "http-final.log",
+      "bytes": 463,
+      "sha256": "4b68400c91ddf3550b3bd2c1cafef715763567a91c7b1f6407a9f516dfe6493a"
+    },
+    {
+      "file": "http-results.json",
+      "bytes": 516,
+      "sha256": "3a89a0d219a1660959cba1c006745791c56da8ea471a43b2305c0e6cbc80d710"
+    },
+    {
+      "file": "next-build.log",
+      "bytes": 2938,
+      "sha256": "9b5c2483ee890b0d61b6619a8b548ee8dcde26ba02a6a0207d5492e2f2fcea9d"
+    },
+    {
+      "file": "p1-final-25.log",
+      "bytes": 3464,
+      "sha256": "ef40a48582c4a83372f7f80e853f22c5777b68fe05f63e876bc5266252223c08"
+    },
+    {
+      "file": "p1-results.json",
+      "bytes": 2515,
+      "sha256": "5494a9c9f325f6bf86d39d68424abeacf9e10fba5973c59b29410d45442040d0"
+    },
+    {
+      "file": "preview-6e08d68.json",
+      "bytes": 328,
+      "sha256": "b19addb3f9a4a0556731b4098040b66d180faf78a66a2ec97e858f86d5bc1bbf"
+    },
+    {
+      "file": "scheduler-authorized.log",
+      "bytes": 5001,
+      "sha256": "4899864a6d968782c3856841e8fdbb5ec2870c02bc0d1ae841968a8d51cf298c"
+    },
+    {
+      "file": "tsc-final-25.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "vercel-111a395-build.log",
+      "bytes": 5643,
+      "sha256": "fc9d1698253d6e0b371aa25abd0825ae848083af0f59d2447648882811512cee"
+    },
+    {
+      "file": "vercel-6e08d68-build.log",
+      "bytes": 5644,
+      "sha256": "08251090aaa610e51fbde20a9442fc10b23f94363d081a02c7a09b9e40b8b867"
+    }
+  ]
+}

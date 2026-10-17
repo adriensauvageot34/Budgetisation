@@ -50,7 +50,7 @@ const props=()=>({context:model.semanticState.contexts.find(c=>c.contextOccurren
 const admit=operation=>{if(rejectNext){rejectNext=false;return false;}const semantic=stageLocalDecision(model,model.semanticState,operation);if(!semantic)return false;pendingOps.push(operation);model=visualDraftModel(model,semantic);root?.update(render());return true;};
 const render=()=>React.createElement(WorkshopConfirmationProvider,{requestRef},React.createElement(WorkshopChoicesProvider,null,React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(kind,props()))));
 const sync=async()=>{await act(async()=>root.update(render()));};
-const init=async(template,preset,component)=>{if(root)await act(async()=>root.unmount());registry=new InlineEditRegistry();requestRef={current:()=>{}};registry.requestConfirmation=(message,accept)=>requestRef.current({message,accept,acceptLabel:'Abandonner cette saisie'});pendingOps=[];steps=0;id=crypto.randomUUID();kind=component;const r=await handleComposerRequest({repository,readWorld:async()=>fixture(),householdPersons:[]},householdId,{sequence:1,targetMonth:'2026-11',draft:state(),kind:'DROP',assetKey:'template:'+template,presetKey:preset,target:{kind:'BOARD_ZONE'},values:{},identity:id,selectionId:crypto.randomUUID()});assert.equal(r.ok,true,JSON.stringify(r));model=r.model;await act(async()=>{root=create(render(),{createNodeMock:element=>element.type==='dialog'?{open:false,showModal(){this.open=true;},close(){this.open=false;},querySelector(){return{focus(){}};},contains(){return false;}}:null});});};
+const init=async(template,preset,component)=>{if(root)await act(async()=>root.unmount());registry=new InlineEditRegistry();requestRef={current:()=>{}};registry.requestConfirmation=(message,accept,save)=>requestRef.current({message,accept,save,acceptLabel:'Abandonner cette saisie'});pendingOps=[];steps=0;id=crypto.randomUUID();kind=component;const r=await handleComposerRequest({repository,readWorld:async()=>fixture(),householdPersons:[]},householdId,{sequence:1,targetMonth:'2026-11',draft:state(),kind:'DROP',assetKey:'template:'+template,presetKey:preset,target:{kind:'BOARD_ZONE'},values:{},identity:id,selectionId:crypto.randomUUID()});assert.equal(r.ok,true,JSON.stringify(r));model=r.model;await act(async()=>{root=create(render(),{createNodeMock:element=>element.type==='dialog'?{open:false,showModal(){this.open=true;},close(){this.open=false;},querySelector(){return{focus(){}};},contains(){return false;}}:null});});};
 const current=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
 const save=async()=>{await click('Terminé');await sync();};
 const shortInput=label=>input(label);
@@ -129,13 +129,14 @@ await check('V8_OWNED_RETURN_AND_PLACE_INVALIDATION_ATOMIC_UNDO',async()=>{
  const before=structuredClone(model.semanticState),food=structuredClone(current().slotSelections.extras);
  assert.equal(admit(barPlaceOperation(current(),{kind:'TEXT',label:'Autre bar fixture',provenance:'USER_DECLARED_PROSPECTIVE'})),true);await sync();
  const after=current(),out=after.slotSelections.outbound.items[0],ret=after.slotSelections.return.items[0];
- assert.equal(out.destination.label,'Autre bar fixture');assert.equal(ret.origin.label,'Autre bar fixture');assert.deepEqual(out.origin,home);assert.deepEqual(ret.destination,home);
- assert.equal(out.pricing.fare.kind,'UNKNOWN');assert.equal(out.pricing.parking.kind,'UNKNOWN');assert.deepEqual(out.pricing.fundingAllocations,[]);
- assert.deepEqual(out.route.vehicleRef,car.route.vehicleRef);assert.equal(out.route.manualFuelPrice,'1.80');assert.equal(out.route.toll.kind,'UNKNOWN');
- assert.ok(!out.route.stops[0].distanceToNextKm);assert.ok(!out.route.stops[1].coordinates);assert.deepEqual(after.slotSelections.extras,food);
+ assert.deepEqual(out,car);assert.deepEqual(ret,back);
+ const explicit=barEndpoint({...car,pricing:{...car.pricing,fundingAllocations:[]}},'destination',{kind:'TEXT',label:'Autre bar fixture'},'UNKNOWN');assert.deepEqual(out.origin,home);assert.deepEqual(ret.destination,home);
+ assert.equal(explicit.pricing.fare.kind,'UNKNOWN');assert.equal(explicit.pricing.parking.kind,'UNKNOWN');assert.deepEqual(explicit.pricing.fundingAllocations,[]);
+ assert.deepEqual(out.route.vehicleRef,car.route.vehicleRef);assert.equal(out.route.manualFuelPrice,'1.80');assert.equal(explicit.route.toll.kind,'UNKNOWN');
+ assert.ok(!explicit.route.stops[0].distanceToNextKm);assert.ok(!explicit.route.stops[1].coordinates);assert.deepEqual(after.slotSelections.extras,food);
  model=visualDraftModel(model,before);await sync();assert.deepEqual(current().slotSelections.outbound.items[0],car);
  const linked={...car,journey:{relation:'SHARES_JOURNEY',certainty:'CERTAIN',targetIntentId:uuid(99006),externalExpenseId:null,externalCostLineIds:[],choice:'MERGE',stopIndex:null,accessLegIndex:null}};
- const invalidated=barEndpoint(linked,'destination',{kind:'TEXT',label:'Nouveau repère'});assert.equal(invalidated.journey.relation,'SHARES_JOURNEY');assert.equal(invalidated.journey.certainty,'POSSIBLE');assert.equal(invalidated.journey.choice,null);
+ assert.throws(()=>barEndpoint(linked,'destination',{kind:'TEXT',label:'Nouveau repère'}),/externe/);assert.equal(linked.journey.relation,'SHARES_JOURNEY');assert.equal(linked.journey.certainty,'CERTAIN');
  assert.throws(()=>barSameModeReturn({...current(),slotSelections:{outbound:{items:[{...car,returnRequired:true}]}}},crypto.randomUUID()),/aller-retour/);
 });
 await check('V8_RETURN_MODE_CHANGE_NO_RESIDUAL_CAR_COST',async()=>{

@@ -1,0 +1,11 @@
+{
+  "deploymentId": "dpl_9qCrHxAMBQDQ297SiGrazkpBBRE8",
+  "commit": "6e08d6858554b67d40ed10013d7445267be7e926",
+  "state": "READY",
+  "target": null,
+  "url": "https://budgetisation-bl471tui4-adriensauvageot34-6137s-projects.vercel.app",
+  "region": [
+    "iad1"
+  ],
+  "validation": "BUILD_ONLY_NOT_RUNTIME_BROWSER_NOT_AUTH"
+}

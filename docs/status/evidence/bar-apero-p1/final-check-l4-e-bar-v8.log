@@ -1,0 +1,57 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_ADD_REMOVE_BEFORE_FIRST_SOCKET_PROJECTION PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V6_V8_COMPARABLE_UNKNOWN_BEER_ADMISSION_EFFORT PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_PLACE_FIRST_AND_QUICK_UNKNOWN_ADMISSION PASS
+V8_RAW_CANCEL_ESCAPE_DISCARD_PRESERVES_ADMITTED_UNKNOWN PASS
+V8_DIRECT_REEDIT_8_PLUS_12_AND_QUANTITY_IDENTITY PASS
+V8_REMOVE_UNDO_RESTORE_IDENTITIES_AND_PRICE PASS
+V8_REJECTED_SAVE_RETRY_AND_ZERO_DISTINCT_FROM_UNKNOWN PASS
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+V8_OWNED_RETURN_AND_PLACE_INVALIDATION_ATOMIC_UNDO PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_RETURN_MODE_CHANGE_NO_RESIDUAL_CAR_COST PASS
+V8_LAYOUT_EXPANSION_DENSE_PAGES_AND_EXACT_COLLAPSE PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_SYNTHETIC_APPLY_READ_REEDIT_COMPLETE_COST PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_COMPACT_COMPONENT_DIRECT_TARGET_REOPEN_AND_PROTECTION PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_GOOGLE_OFFICIAL_VENUE_TRANSIENT_STALE_AND_FAILURE PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_INLINE_CALENDAR_PEOPLE_AND_SUMMARY_NO_FINANCE_MULTIPLICATION PASS
+V8_TOTAL_DETAIL_CONFIRM_CANCEL_ACCEPT_AND_UNDO_PRESERVES_IDS PASS
+V8_PARTIAL_EDIT_PRESERVES_UNKNOWN_AND_INDEPENDENT_FIELDS PASS
+V8 16 groups PASS; browser/auth NOT_RUN

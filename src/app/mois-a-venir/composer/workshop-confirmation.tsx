@@ -2,7 +2,8 @@
 import { createContext, useContext, useEffect, useCallback, useRef, useState, type ReactNode } from "react";
 import styles from "./composer.module.css";
 
-type Confirmation = { message: string; accept: () => void; acceptLabel?: string; cancelLabel?: string };
+type Confirmation = { message: string; accept: () => void; acceptLabel?: string; cancelLabel?: string;
+  save?: { label: string; run(): boolean } };
 type RequestConfirmation = (confirmation: Confirmation) => void;
 const ConfirmationContext = createContext<RequestConfirmation>(() => {});
 export const useWorkshopConfirmation = () => useContext(ConfirmationContext);
@@ -26,12 +27,13 @@ export function WorkshopConfirmationProvider({ children, requestRef }: { childre
   useEffect(() => {
     if (pending && !dialog.current?.open) { dialog.current?.showModal(); dialog.current?.querySelector<HTMLButtonElement>("[data-keep-editing]")?.focus(); }
   }, [pending]);
-  const respond = (accepted: boolean) => {
+  const respond = (accepted: boolean | "save") => {
     const action = pendingRef.current; if (!action) return;
     pendingRef.current = null;
     dialog.current?.close(); setPending(null);
     const invoker = origin.current;
-    if (accepted) action.accept();
+    if (accepted==="save") { if (!action.save?.run() && invoker?.isConnected) invoker.focus({preventScroll:true}); }
+    else if (accepted) action.accept();
     // Layout effects may move focus after admission. Only cancellation restores the RAW field.
     else if (invoker?.isConnected) invoker.focus({ preventScroll: true });
   };
@@ -42,6 +44,7 @@ export function WorkshopConfirmationProvider({ children, requestRef }: { childre
       <h2 id="workshop-confirmation-title">Avant de continuer</h2>
       <p id="workshop-confirmation-message">{pending?.message}</p>
       <footer><button type="button" data-keep-editing autoFocus onClick={() => respond(false)}>{pending?.cancelLabel ?? "Continuer à modifier"}</button>
+        {pending?.save&&<button type="button" data-save-workshop onClick={()=>respond("save")}>{pending.save.label}</button>}
         <button type="button" data-confirm-workshop onClick={() => respond(true)}>{pending?.acceptLabel ?? "Confirmer"}</button></footer>
     </dialog>
   </ConfirmationContext.Provider>;

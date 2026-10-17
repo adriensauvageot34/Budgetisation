@@ -1,0 +1,8 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+P1-NAV-01_ALREADY_OPEN_NO_MUTATION PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+P1-PLACE-01_02_03_NO_INFERRED_BINDING FAIL: central place must not rewrite independent route slots
+P1-PRICE-01_REJECT_SILENT_FARE_LOSS FAIL: Missing expected exception.
+P1-PRICE-03_EXTERNAL_ROUTE_NOT_REOWNED FAIL: Missing expected exception.
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+P1-RAW-01_SAVE_AND_RESUME_DATE FAIL: RAW guard must offer an explicit save choice

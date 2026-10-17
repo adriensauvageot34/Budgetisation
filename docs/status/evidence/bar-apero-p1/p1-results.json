@@ -1,0 +1,105 @@
+{
+  "method": "REAL_REACT_HANDLERS_IN_PROCESS_NOT_BROWSER_NOT_AUTH",
+  "checks": [
+    {
+      "name": "P1-NAV-01_ALREADY_OPEN_NO_MUTATION",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PLACE-01_02_03_NO_INFERRED_BINDING",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PRICE-01_REJECT_SILENT_FARE_LOSS",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PRICE-03_EXTERNAL_ROUTE_NOT_REOWNED",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-RAW-01_SAVE_AND_RESUME_DATE",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PLACE-01_UI_NO_LEGS_NO_CONFIRMATION",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PLACE-04_MULTI_STOP_LEGACY_EXTERNAL_PRESERVED",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-ROUTE-01_MODE_ONE_LEG_AND_NO_AUTOFILL",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-ROUTE-02_SAME_MODE_CREATION_NO_LATER_SYNC",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PRICE-01_UI_EXPLICIT_MANUAL_REDECLARATION_OR_UNKNOWN",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PRICE-02_VEHICLE_TOLL_STOPS_MANUAL_FUEL_RETAINED",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PRICE-03_EXTERNAL_MODE_BLOCKED_AND_FUNDED_ENDPOINT_BLOCKED",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-RAW-01_CANCEL_DISCARD_REJECT_INVALID_AND_RETRY",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-RAW-02_ESCAPE_RERENDER_PRESERVE_EXACT_BUFFER",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-RAW-03_MANUAL_ZERO_REOPEN",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-RAW_ALL_OTHER_BUFFERS_CONTINUE_TO_ORIGINAL_TARGET",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-UNDO-01_EXACT_FUNDED_BEER_ID_BINDING",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-UNDO-02_ATOMIC_VENUE_ENDPOINT_PRICES_REDO",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-NET_CONFIRMATION_REJECTS_CHANGED_CONTEXT",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-NET_RAW_DIALOG_CANNOT_SAVE_CHANGED_BUFFER",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-NAV-03_LOCKED_NO_LOCAL_ADMISSION",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-NAV-02_COMPACT_EXACT_COMPONENT_TARGET",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-PRICE_TARGETED_PARKING_QUOTE_AND_MISMATCH",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-RAW_SAVE_THEN_ADD_PRESERVES_JUST_ADMITTED_PRICE",
+      "status": "PASS"
+    },
+    {
+      "name": "P1-RAW_UNDO_DOES_NOT_SAVE_THEN_RESTORE_STALE_HISTORY",
+      "status": "PASS"
+    }
+  ]
+}

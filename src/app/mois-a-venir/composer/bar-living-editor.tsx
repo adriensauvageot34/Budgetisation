@@ -9,11 +9,12 @@ import type {ComponentSelectionV1} from "@/domain/phase2/planner/component-contr
 import type {ComposerOperation} from "@/domain/phase2/planner/composer-ui-contract";
 import {NightOutEditor} from "./night-out-workshop";
 import {ContextPalette,type PaletteQuestion} from "./context-palette";
-import {barItems,barLeg,barEndpoint,barPlaceOperation,barSameModeReturn,type BarTarget,type BarLeg} from "./bar-living-operations";
+import {barItems,barLeg,barEndpoint,barPlaceOperation,barSameModeReturn,assertBarRouteEditable,barEndpointCosts,type BarTarget,type BarLeg} from "./bar-living-operations";
 import {barPlaceLabel,barModeLabel,barPeopleLabel} from "./bar-living-card";
 import {fresh,fromSelection,buildComponentRow,type Row} from "./night-out-components";
 import {WorkshopComponentRow} from "./workshop-component-row";
 import {useActiveWorkshopQuestion} from "./workshop-choices";
+import {useCommittedEvent} from "./use-committed-event";
 import {useWorkshopRaw} from "./inline-edit-registry";
 import {useWorkshopConfirmation} from "./workshop-confirmation";
 import {useComposerInteractions} from "./interactions";
@@ -30,7 +31,8 @@ type Page=Exclude<BarTarget,`component:${string}:${string}`>|"manual-place"|"goo
 type Component=Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;
 const catalog=assetsForModule("bar").filter(asset=>!/(?:parking|entry)$/u.test(asset.assetKey));
 export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget}) {
-  const {context,model,card,dockHost,busy,onSave,serverError}=props;
+  const {context,model,card,dockHost,onSave,serverError}=props;
+  const busy=props.busy||!!card?.readOnly||props.semanticState.preferences.anchors.includes(context.contextOccurrenceId)||props.semanticState.preferences.flexibility[context.contextOccurrenceId]==="PRESERVE";
   const initialComponent=props.initialTarget?.startsWith("component:")?props.initialTarget.split(":"):null;
   const initialSelection=initialComponent?barItems(context,initialComponent[1]).find(item=>item.selectionId===initialComponent[2]):undefined;
   const [page,setPage]=useState<Page>(()=>initialSelection?.kind==="COMPONENT"?"row":props.initialTarget?.startsWith("component:")?"summary":props.initialTarget as Page??"place");
@@ -42,18 +44,42 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const [personName,setPersonName]=useState("");
   const [quickAmount,setQuickAmount]=useState(""),[quickTotal,setQuickTotal]=useState(false),[pendingAsset,setPendingAsset]=useState<PlannedAsset|null>(null);
   const [direction,setDirection]=useState<"outbound"|"return">(props.initialTarget==="return"?"return":"outbound"),[endpoint,setEndpoint]=useState<"origin"|"destination">("origin");
-  const confirm=useWorkshopConfirmation(),activeQuestion=useActiveWorkshopQuestion(),interaction=useComposerInteractions();
-  const guard=useWorkshopRaw(context.contextOccurrenceId,dirty,()=>{setDirty(false);setManual("");},"bar-living");
+  const requestConfirmation=useWorkshopConfirmation(),activeQuestion=useActiveWorkshopQuestion(),interaction=useComposerInteractions();
+  const currentContext=useCommittedEvent(()=>context);
+  const confirm=(question:Parameters<typeof requestConfirmation>[0])=>{
+    const expected=JSON.stringify(context);
+    requestConfirmation({...question,accept:()=>{
+      if(JSON.stringify(currentContext())!==expected){setError("La carte a changé entre-temps. Relisez la décision avant de confirmer ; aucune modification supplémentaire n’a été admise.");return;}
+      question.accept();
+    }});
+  };
+  const guard=useWorkshopRaw(context.contextOccurrenceId,dirty,()=>{
+    const original=barItems(context,slot).find(item=>item.selectionId===row.id);
+    if(original?.kind==="COMPONENT")setRow(fromSelection(original));
+    setManual("");setPersonName("");setPeople(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);
+    setFare("");setQuickAmount("");setDirty(false);
+  },"bar-living",canSaveBuffer()?{label:page==="row"&&row.costMode==="MANUAL"?`Enregistrer ${row.amount} €`:"Enregistrer cette saisie",run:()=>saveBuffer(),
+    bufferKey:JSON.stringify({page,row,slot,manual,people,personName,fare,quickAmount,quickTotal,direction,slots:context.slotSelections,fields:context.fields,busy})}:undefined);
+  const [pendingEndpoint,setPendingEndpoint]=useState<{leg:BarLeg;key:"origin"|"destination";place:ProspectivePlaceRef|null}|null>(null);
+  function canSaveBuffer(){try{
+    if(busy)return false;
+    if(page==="row"){buildComponentRow(row,row.existing?.optionKey??"extra");return true;}
+    if(page==="manual-place")return !!manual.trim();
+    if(page==="people")return !personName.trim();
+    if(page==="fare"){decisionAmount(fare.trim().replace(",","."));return !!fare.trim();}
+    if(page==="quick"){decisionAmount(quickAmount.trim().replace(",","."));return !!quickAmount.trim()&&!(quickTotal&&barItems(context,"extras").length);}
+    return false;
+  }catch{return false;}}
   useEffect(()=>{
     if(page!=="row"||dirty)return;
     const current=barItems(context,slot).find(item=>item.selectionId===row.id);
     if(current?.kind==="COMPONENT")setRow(fromSelection(current));else setPage("drinks");
   },[context.slotSelections,page,slot,dirty,row.id]);
   if(!model||!card)return <p role="status">Chargement de la carte…</p>;
-  const move=(next:Page)=>{if(next==="outbound"||next==="return")setDirection(next);setPage(next);setError("");setQuery("");};
+  const move=(next:Page)=>{setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setError("");setQuery("");};
   const go=(next:Page)=>{if(guard(()=>go(next)))move(next);};
   const decide=(operation:ComposerOperation,next:Page="summary")=>{
-    try{if(onSave(operation)){setDirty(false);move(next);return true;}setError("Ce choix n’a pas été admis. Votre saisie est conservée ; vérifiez le message du Board.");}
+    try{if(busy){setError("Cette carte est protégée ou une opération est en cours. Aucun choix n’a été admis.");return false;}if(onSave(operation)){setDirty(false);move(next);return true;}setError("Ce choix n’a pas été admis. Votre saisie est conservée ; vérifiez le message du Board.");}
     catch(failure){setError(failure instanceof Error?failure.message:"Choix non admis. Votre saisie est conservée.");}
     return false;
   };
@@ -61,15 +87,12 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const open=(target:BarTarget)=>{if(!guard(()=>open(target)))return;
     if(target==="people"){setPeople(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);move("people");return;}
     if(target.startsWith("component:")){const [,slot,id]=target.split(":");const item=barItems(context,slot).find(item=>item.selectionId===id);if(item?.kind==="COMPONENT")editComponent(slot,item);return;}
-    if(target==="outbound"||target==="return")setDirection(target);move(target as Page);
+    move(target as Page);
   };
   const selectedPlace=context.fields.placeRef as ProspectivePlaceRef|undefined;
   const homeCities=[...new Set((model.mobilityOptions?.places??[]).filter(place=>derivePlannedPlaceRoles(place).includes("OWN_HOME")).map(place=>place.commune?.trim()).filter((value):value is string=>!!value))];
   const searchCity=selectedPlace?.kind==="KNOWN"?model.mobilityOptions?.places.find(place=>place.placeId===selectedPlace.placeId)?.commune??undefined:homeCities.length===1?homeCities[0]:undefined;
-  const choosePlace=(place:ProspectivePlaceRef)=>{
-    const apply=()=>decide(barPlaceOperation(context,place),"outbound");
-    if(barLeg(context,"outbound")||barLeg(context,"return"))confirm({message:"Changer le lieu actualisera la destination de l’aller et le départ du retour. Leurs devis, frais et financements liés seront remis à préciser. Modes, autres décisions et historique Undo sont conservés.",acceptLabel:"Changer le lieu",accept:apply});else apply();
-  };
+  const choosePlace=(place:ProspectivePlaceRef)=>decide(barPlaceOperation(context,place),"summary");
   const editComponent=(target:string,selection:Component)=>{if(!guard(()=>editComponent(target,selection)))return;setSlot(target);setAdvancedRow(false);setRow(fromSelection(selection));move("row");};
   const add=(asset:PlannedAsset,included?:boolean)=>{
     if(!guard(()=>add(asset)))return;
@@ -82,43 +105,67 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     const original=barItems(context,"main")[0];if(original&&original.kind!=="COMPONENT"){setError("Un moment lié occupe les entrées. Rééditez-le depuis Autres choix avant de le remplacer.");return;}
     const value=buildComponentRow({...fresh(quickTotal?"Consommations regroupées":"Entrées / contribution"),...(original?.kind==="COMPONENT"?{id:original.selectionId,existing:original}:{}),unitBasis:"SHARED",quantity:"1",costMode:"MANUAL",amount:quickAmount},"main");
     const apply=()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{main:[value],...(quickTotal?{extras:[]}: {})}}},"drinks");
-    if(quickTotal&&barItems(context,"extras").length)confirm({message:"Remplacer les consommations détaillées par ce total ? Leur coût ne sera pas additionné. Repas, before et trajets restent indépendants et conservés. Undo permet de revenir aux détails.",acceptLabel:"Remplacer par le total",accept:apply});else apply();
-  }catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez le montant.");}};
+    if(quickTotal&&barItems(context,"extras").length){confirm({message:"Remplacer les consommations détaillées par ce total ? Leur coût ne sera pas additionné. Repas, before et trajets restent indépendants et conservés. Undo permet de revenir aux détails.",acceptLabel:"Remplacer par le total",accept:apply});return false;}return apply();
+  }catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez le montant.");return false;}};
   const remove=()=>{const apply=()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).filter(item=>item.selectionId!==row.id)}}},"drinks");if(dirty)confirm({message:"Retirer ce poste et abandonner sa saisie non validée ? Undo permet de rétablir la dernière décision conservée.",acceptLabel:"Retirer",accept:apply});else apply();};
   const saveRow=()=>{try{
     if(!barItems(context,slot).some(item=>item.selectionId===row.id)){setError("Ce poste n’existe plus. Revenez à la carte ; il ne sera pas recréé silencieusement.");return;}
     const value=buildComponentRow(row,row.existing?.optionKey??"extra");
-    decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).map(item=>item.selectionId===row.id?value:item)}}},"drinks");
-  }catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez la saisie.");}};
+    return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).map(item=>item.selectionId===row.id?value:item)}}},"drinks");
+  }catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez la saisie.");return false;}};
   const leg=barLeg(context,direction);
-  const patchLeg=(value:BarLeg,next:Page="summary")=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:[value]}}},next);
-  const chooseEndpoint=(place:ProspectivePlaceRef|null)=>{if(!leg)return;try{patchLeg(barEndpoint(leg,endpoint,place),direction);}catch(failure){setError(failure instanceof Error?failure.message:"Ce lieu ne peut pas être retenu. Le trajet est conservé.");}};
+  const patchLeg=(value:BarLeg,next:Page="summary")=>{try{if(leg&&leg.selectionId===value.selectionId&&JSON.stringify(leg)!==JSON.stringify(value))assertBarRouteEditable(leg);return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:barItems(context,direction).some(item=>item.selectionId===value.selectionId)?barItems(context,direction).map(item=>item.selectionId===value.selectionId?value:item):[...barItems(context,direction),value]}}},next);}catch(failure){setError((failure as Error).message);return false;}};
+  const chooseEndpoint=(place:ProspectivePlaceRef|null)=>{if(!leg)return;try{
+    // Validate representability before proposing any destructive price choice.
+    const costs=barEndpointCosts(leg,endpoint);
+    const next=barEndpoint(leg,endpoint,place,"UNKNOWN");
+    if(next!==leg&&costs.length){setPendingEndpoint({leg,key:endpoint,place});return;}
+    patchLeg(next,direction);
+  }catch(failure){setError(failure instanceof Error?failure.message:"Ce lieu ne peut pas être retenu. Le trajet est conservé.");}};
+  const resolveEndpoint=(choice:"UNKNOWN"|"RETAIN_MANUAL")=>{if(!pendingEndpoint||!leg)return;
+    if(JSON.stringify(leg)!==JSON.stringify(pendingEndpoint.leg)){setPendingEndpoint(null);setError("Ce trajet a changé entre-temps. Relisez-le avant de choisir son nouveau prix.");return;}
+    try{patchLeg(barEndpoint(leg,pendingEndpoint.key,pendingEndpoint.place,choice),direction);}catch(failure){setError((failure as Error).message);}
+  };
+  const saveFare=()=>{if(!leg)return false;try{return patchLeg({...leg,pricing:{fare:{kind:"MANUAL",unitAmount:decisionAmount(fare.trim().replace(",","."))},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);}catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez le prix.");return false;}};
+  function saveBuffer():boolean {
+    if(page==="row")return !!saveRow();
+    if(page==="manual-place")return choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"});
+    if(page==="people")return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:people}}},"summary");
+    if(page==="fare")return saveFare();
+    if(page==="quick")return !!saveQuick();
+    return false;
+  }
+  const targetEndpoint=(key:"origin"|"destination")=>{if(!guard(()=>targetEndpoint(key)))return;setEndpoint(key);move("endpoint");};
+  const targetFare=()=>{if(!guard(targetFare))return;setFare(leg?.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:"");move("fare");};
   const chooseVehicle=()=>{
     const vehicle=model.mobilityOptions?.vehicle;if(!leg||!vehicle?.vehicleId)return;
-    if(leg.returnRequired){setError("Ce trajet couvre déjà l’aller-retour. Rééditez son véhicule dans les options détaillées ; ses arrêts restent conservés.");return;}
+    try{assertBarRouteEditable(leg);}catch(failure){setError((failure as Error).message);return;}
     const apply=()=>patchLeg({...leg,route:{version:"composer-mobility-route@v1",vehicleRef:{vehicleId:vehicle.vehicleId!,labelAtSelection:vehicle.label,provenance:"EXPLICIT_USER_DECISION"},
       ...(leg.route?.manualFuelPrice?{manualFuelPrice:leg.route.manualFuelPrice}:{}),
       ...(leg.route?.toll?{toll:leg.route.toll}:{}),stops:leg.route?.stops.length?leg.route.stops.map(stop=>{
         if(leg.route?.vehicleRef?.vehicleId===vehicle.vehicleId)return stop;
         const {estimatedFuelLiters:_fuel,...retained}=stop;return retained;
       }):leg.origin&&leg.destination?[stopForPlace(leg.origin,barPlaceLabel(leg.origin,model),"DIRECT_PLACE"),stopForPlace(leg.destination,barPlaceLabel(leg.destination,model),"ROOT_PLACE")]:[]}},direction);
-    if(leg.route?.vehicleRef&&leg.route.vehicleRef.vehicleId!==vehicle.vehicleId)confirm({message:"Changer de véhicule conserve les lieux et les arrêts. Mobility réestimera le coût d’usage avec le véhicule choisi.",acceptLabel:"Changer de véhicule",accept:apply});else apply();
+    if(leg.route?.vehicleRef&&leg.route.vehicleRef.vehicleId!==vehicle.vehicleId)confirm({message:`Changer de véhicule conserve les lieux et les arrêts. Mobility réestimera le coût d’usage avec le véhicule choisi.${leg.route?.toll?.kind==="MANUAL"?` Le péage de ${leg.route.toll.unitAmount} € sera conservé comme estimation déclarée ; aucune classe tarifaire n’est attestée ici.`:""}`,acceptLabel:"Changer de véhicule",accept:apply});else apply();
   };
   const chooseMode=(optionKey:string)=>{
-    if(leg?.returnRequired){setError("Cet ancien trajet couvre déjà l’aller-retour. Rééditez sa relation depuis les options détaillées avant de le remplacer.");return;}
+    if(leg&&leg.optionKey!==optionKey){try{assertBarRouteEditable(leg);
+      if((leg.route?.stops.length??0)>2||leg.pricing?.fundingAllocations.length)throw Error("Ce trajet possède des arrêts intermédiaires ou un financement. Utilisez les options détaillées ; ils sont conservés.");
+    }catch(failure){setError((failure as Error).message);return;}}
     const value:BarLeg=leg?.optionKey===optionKey?leg:{kind:"MOBILITY_INTENT",selectionId:leg?.selectionId??crypto.randomUUID(),optionKey,provenance:"EXPLICIT_USER_DECISION",returnRequired:false,
-      origin:leg?.origin??(direction==="return"?selectedPlace:null)??null,destination:leg?.destination??(direction==="outbound"?selectedPlace:null)??null,
+      ...(leg?.plannedTime!==undefined?{plannedTime:leg.plannedTime}:{}),...(leg?.returnTime!==undefined?{returnTime:leg.returnTime}:{}),
+      origin:leg?(leg.origin??null):(direction==="return"?selectedPlace:null)??null,destination:leg?(leg.destination??null):(direction==="outbound"?selectedPlace:null)??null,
       journey:{relation:"OWNS_JOURNEY",certainty:"CERTAIN",targetIntentId:null,externalExpenseId:null,externalCostLineIds:[],choice:null,stopIndex:null,accessLegIndex:null},
       pricing:{fare:{kind:"UNKNOWN"},parking:{kind:"UNKNOWN"},fundingAllocations:[],preference:"FASTEST"},...(optionKey==="car"?{route:{version:"composer-mobility-route@v1" as const,vehicleRef:null,stops:[]}}:{})};
     const apply=()=>patchLeg(value,direction==="outbound"?"return":leg?"summary":"date");
-    if(leg&&leg.optionKey!==optionKey)confirm({message:"Changer de mode retire les coûts, devis et liens de l’ancien mode. Les lieux sont conservés ; aucun nouveau prix ne sera inventé.",acceptLabel:"Changer de mode",accept:apply});else apply();
+    if(leg&&leg.optionKey!==optionKey)confirm({message:`Changer de mode pour ${direction==="outbound"?"l’aller":"le retour"} remet ses prix à préciser et retire les données propres à son ancien mode. Les lieux et l’autre trajet sont conservés.${leg.pricing?.fare.kind==="MANUAL"?` Tarif concerné : ${leg.pricing.fare.unitAmount} € déclaré.`:leg.pricing?.fare.kind==="QUOTE"?" Le devis de ce trajet sera retiré.":""}`,acceptLabel:"Changer de mode",accept:apply});else apply();
   };
   const choice=(key:string,label:string,choose:()=>void,iconKey="night-out",hint?:string,symbol?:string)=>({key,label,choose,iconKey,hint,symbol});
   const later=choice("later","Plus tard",()=>go("drinks"),"activity");
   let question:PaletteQuestion={title:"Que veux-tu prévoir ?",choices:[choice("place","Lieu",()=>open("place"),"activity"),choice("drinks","Consommations",()=>go("drinks")),choice("quick","Montant rapide",startQuick),choice("more","Autres choix",()=>startLegacy("menu"))]};
   if(page==="place")question={title:"Où prendre un verre ?",search:{value:query,change:setQuery,label:"Chercher parmi les lieux enregistrés"},choices:[
     ...(model.mobilityOptions?.places??[]).filter(place=>`${place.name} ${place.commune??""}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))).map(place=>choice(place.placeId,place.name,()=>choosePlace({kind:"KNOWN",placeId:place.placeId}),"activity",place.commune??undefined)),
-    choice("google","Chercher un bar",()=>go("google"),"activity"),choice("manual","Nom libre",()=>{setManual("");go("manual-place");},"activity"),later,
+    choice("google","Chercher un bar",()=>go("google"),"activity"),choice("manual","Nom libre",()=>{if(guard(()=>go("manual-place"))){setManual("");move("manual-place");}},"activity"),later,
     choice("drinks","Commencer par les consommations",()=>go("drinks")),choice("quick","Saisir un coût direct",startQuick)]};
   if(page==="drinks")question={title:"Quelles consommations ?",choices:[...catalog.map(asset=>choice(asset.assetKey,asset.label,()=>add(asset),"night-out",undefined,asset.icon)),choice("quick","Saisir un coût direct",startQuick),choice("more","Repas, before et autres choix",()=>startLegacy("menu"))]};
   if(page==="outbound"||page==="return"){
@@ -158,6 +205,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   return <div className={styles.barLivingEditor} data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
     onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();props.onCancel();}}}>
     <BarMetadata fields={context.fields} model={model} open={open} editing disabled={busy}/>
+    {(barLeg(context,"outbound")||barLeg(context,"return"))&&page==="summary"&&<p>Lieu de sortie et itinéraires sont indépendants. Pour adapter un trajet au nouveau lieu, modifiez son départ ou son arrivée.</p>}
     <div className={styles.barLivingShortcuts}><button type="button" onClick={()=>go("drinks")}>Consommations</button><button type="button" onClick={startQuick}>Montant rapide</button><button type="button" onClick={()=>startLegacy("menu")}>Autres choix</button></div>
     <div className={styles.barLivingRoutes}>{(["outbound","return"] as const).map(key=><BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} open={()=>open(key)}/>)}</div>
     <div className={styles.barLivingTiles} aria-label="Composants économiques">{Object.entries(economic).flatMap(([key])=>barItems(context,key).filter(item=>item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT").map(item=><div key={item.selectionId} data-bar-tile={item.selectionId} className={page==="row"&&item.selectionId===row.id?styles.barActiveTile:styles.barEconomicTile}><button type="button"
@@ -169,7 +217,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
 </button>{page==="row"&&item.selectionId===row.id&&activeRow}</div>))}
       <button type="button" className={styles.barAddSlot} onClick={()=>go("drinks")} aria-label="Ajouter une consommation">+<small>Consommation</small></button></div>
     <section className={styles.barLivingQuestion} aria-label="Décision en cours">
-      {page==="row"?null:page==="legacy"?<NightOutEditor {...props} key={legacyKey} embedded initialView={legacy} onSave={operation=>{const admitted=onSave(operation);if(admitted){setDirty(false);move(legacy==="calendar"?"drinks":"summary");}return admitted;}} onCancel={()=>go("summary")}/>
+      {page==="row"?null:page==="legacy"?<NightOutEditor {...props} key={legacyKey} embedded initialView={legacy} onSave={operation=>{const admitted=!busy&&onSave(operation);if(admitted){setDirty(false);move(legacy==="calendar"?"drinks":"summary");}return admitted;}} onCancel={()=>go("summary")}/>
         :page==="quick"?<section data-bar-quick><label>Coût prévu (€)<input autoFocus inputMode="decimal" value={quickAmount} onChange={e=>{setQuickAmount(e.target.value);setDirty(true);}}/></label><p>{quickTotal?"Les détails des consommations seront remplacés, sans double compte. Repas, before et trajets sont en plus.":"Entrées ou contribution, hors consommations, repas et trajets. Ce n’est ni un plafond ni un paiement."}</p><button type="button" disabled={busy||!quickAmount.trim()} onClick={saveQuick}>Retenir ce coût</button></section>
         :page==="date"?<div className={styles.barInlineCalendar} data-bar-calendar><h4>{new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(props.semanticState.targetMonth+"-01T12:00:00Z"))}</h4><div>
           {["L","M","M","J","V","S","D"].map((label,index)=><small key={index}>{label}</small>)}
@@ -181,15 +229,21 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
         :page==="manual-place"?<><label>Nom ou adresse libre<input autoFocus maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={!manual.trim()||busy} onClick={()=>choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"})}>Retenir ce repère</button><small>Repère textuel uniquement · distance et itinéraire à préciser.</small></>
         :page==="fare"&&leg?<><label>Coût prévu du billet ou de la course (€)<input autoFocus inputMode="decimal" value={fare} placeholder="Encore inconnu" onChange={event=>{setFare(event.target.value);setDirty(true);}}/></label>
           {leg.pricing?.fare.kind==="QUOTE"&&<p>Le devis reste conservé tant qu’un prix de remplacement n’est pas validé.</p>}
-          <button type="button" disabled={busy||!fare.trim()} onClick={()=>{try{patchLeg({...leg,pricing:{fare:{kind:"MANUAL",unitAmount:decisionAmount(fare.trim().replace(",","."))},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);}catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez le prix.");}}}>Retenir le coût du trajet</button>
+          <button type="button" disabled={busy||!fare.trim()} onClick={saveFare}>Retenir le coût du trajet</button>
           <p>Prix du billet ou de la course, hors carburant estimé, péage et stationnement. Le financement existant reste à vérifier.</p></>
         :page==="outbound"||page==="return"?<><p>{page==="outbound"?"Choisis le mode dans le dock. Le retour restera une décision distincte.":"Même mode, autre mode ou plus tard : le retour n’est jamais supposé."}</p>
-          {leg&&<div className={styles.barLivingMetadata}>{(["origin","destination"] as const).map(key=><button type="button" key={key} onClick={()=>{setEndpoint(key);go("endpoint");}}>{key==="origin"?"Départ":"Arrivée"} · {barPlaceLabel(leg[key],model)}</button>)}
+          {leg&&<div className={styles.barLivingMetadata}>{(["origin","destination"] as const).map(key=><button type="button" key={key} onClick={()=>targetEndpoint(key)}>{key==="origin"?"Départ":"Arrivée"} · {barPlaceLabel(leg[key],model)}</button>)}
             {leg.optionKey==="car"&&model.mobilityOptions?.vehicle?.vehicleId&&<button type="button" onClick={chooseVehicle}>Utiliser {model.mobilityOptions.vehicle.label}</button>}
             <button type="button" onClick={()=>confirm({message:"Retirer uniquement ce trajet ? Les consommations et l’autre sens restent conservés.",acceptLabel:"Retirer le trajet",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:barItems(context,direction).filter(item=>item.selectionId!==leg.selectionId)}}})})}>Retirer ce trajet</button>
-            <button type="button" onClick={()=>{setFare(leg.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:"");go("fare");}}>Préciser le prix du trajet</button>
+            <button type="button" onClick={targetFare}>Préciser le prix du trajet</button>
             <button type="button" onClick={()=>startLegacy("menu")}>Financement ou relation détaillée</button></div>}</>
         :null}
+      {pendingEndpoint&&<section data-bar-price-arbitration aria-label="Prix affectés de ce trajet">
+        <p>Ce point change pour {direction==="outbound"?"l’aller":"le retour"}. À revoir : {barEndpointCosts(pendingEndpoint.leg,pendingEndpoint.key).join(", ")}. Le trajet et ses prix sont encore inchangés.</p>
+        {pendingEndpoint.leg.pricing?.fare.kind==="MANUAL"&&barEndpointCosts(pendingEndpoint.leg,pendingEndpoint.key).length===1&&<button type="button" disabled={busy} onClick={()=>resolveEndpoint("RETAIN_MANUAL")}>Retenir {pendingEndpoint.leg.pricing.fare.unitAmount} € comme nouvelle estimation</button>}
+        <button type="button" disabled={busy} onClick={()=>resolveEndpoint("UNKNOWN")}>Mettre ces prix à préciser</button>
+        <button type="button" onClick={()=>setPendingEndpoint(null)}>Conserver cet itinéraire</button>
+      </section>}
       {(error||serverError)&&<p role="alert">{error||serverError}</p>}
     </section>
     {page!=="legacy"&&dockHost&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure question={question} choose={()=>{}} close={()=>go("summary")}/>,dockHost)}

@@ -58,7 +58,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
 }) {
   const inlineEdits = useOwnedInlineEdits();
   const confirmationRequest = useRef<Parameters<typeof WorkshopConfirmationProvider>[0]["requestRef"]["current"]>(() => {});
-  useEffect(() => { inlineEdits.registry.requestConfirmation = (message, accept) => confirmationRequest.current({ message, accept, acceptLabel: "Abandonner cette saisie" }); }, [inlineEdits.registry]);
+  useEffect(() => { inlineEdits.registry.requestConfirmation = (message, accept, save) => confirmationRequest.current({ message, accept, save, acceptLabel: "Abandonner cette saisie" }); }, [inlineEdits.registry]);
   const draftTransport = durableDraftHttp ? composerDraftHttpTransport : suppliedDraftTransport;
   const transport: ComposerTransport = useCommittedEvent(async (request: ComposerRequest) => {
     const started = performance.now();
@@ -205,7 +205,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       // Flush an already explicit +/- batch first. Its history entry must exist
       // before Undo can target it; do not undo an unrelated older decision.
       if (inlineEdits.registry.flushPending()) return false;
-      if (!inlineEdits.registry.guard(() => stage(operation, history, restored))) return false;
+      // Saving RAW would add a history entry and invalidate this Undo/Redo target.
+      // Keep editing or discard the RAW first; never save then restore a stale entry.
+      if (!inlineEdits.registry.guard(() => stage(operation, history, restored), undefined, false)) return false;
     }
     if (snapshotMetrics) snapshotIntent.current=performance.now();
     const before = localDraft.current;
