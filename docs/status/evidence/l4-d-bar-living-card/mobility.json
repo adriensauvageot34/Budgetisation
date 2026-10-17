@@ -1,0 +1,35 @@
+{
+  "checks": [
+    {
+      "name": "BAR_DIRECTED_CAR_AND_EXPLICIT_RETURN_COMPILER_2_LEGS",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "BAR_CLEAR_ENDPOINT_UNKNOWN_REMAINS_SERVER_ADMISSIBLE",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "BAR_RETURN_TAXI_ONLY_REMOVES_RETURN_FUEL",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "BAR_PLACE_TEXT_INVALIDATES_BOTH_DERIVATIONS_NOT_INDEPENDENT_COMPONENTS",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "BAR_PROVIDER_OUTAGE_NOT_BOARD_FAILURE_AND_RESTORE_DIGEST",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "BAR_TWO_LEGS_APPLY_RELOAD_C0_IDENTITIES_NO_OWNER_WRITES",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    }
+  ],
+  "remoteWrites": 0,
+  "providers": "SYNTHETIC",
+  "authenticated": "NOT_RUN_AUTH",
+  "counts": {
+    "plans": 1,
+    "revisions": 1
+  }
+}
