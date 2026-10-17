@@ -155,7 +155,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
           : <><WorkshopComponentRow title={row.label} row={row} onChange={next=>{setRow(next);setDirty(true);}} onSave={saveRow} onRemove={remove} busy={busy}/><button type="button" onClick={()=>go("drinks")}>Terminé</button></>}</>;
   const economic=context.slotSelections;
   const freshProjection=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===context.contextOccurrenceId)?.semanticStateDigest===model.board.draft.semanticStateDigest;
-  return <div className={styles.barLivingEditor} data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}>
+  return <div className={styles.barLivingEditor} data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
+    onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();props.onCancel();}}}>
     <BarMetadata fields={context.fields} model={model} open={open} editing disabled={busy}/>
     <div className={styles.barLivingShortcuts}><button type="button" onClick={()=>go("drinks")}>Consommations</button><button type="button" onClick={startQuick}>Montant rapide</button><button type="button" onClick={()=>startLegacy("menu")}>Autres choix</button></div>
     <div className={styles.barLivingRoutes}>{(["outbound","return"] as const).map(key=><BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} open={()=>open(key)}/>)}</div>

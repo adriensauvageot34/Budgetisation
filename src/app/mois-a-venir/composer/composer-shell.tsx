@@ -1,5 +1,7 @@
 "use client";
 import type {BarTarget} from "./bar-living-operations";
+import {createPortal} from "react-dom";
+import {BarLivingMount,useBarLivingHost} from "./bar-living-mount";
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
 import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
@@ -131,6 +133,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [editorLoadRetry, setEditorLoadRetry] = useState(0);
   const livingBarContext = editor?.nightContextId ? draftState.contexts.find(c=>c.contextOccurrenceId===editor.nightContextId) : undefined;
   const livingBarId = livingBarContext && presetForContext(livingBarContext)?.presetKey === "bar-apero" ? livingBarContext.contextOccurrenceId : undefined;
+  const barHost=useBarLivingHost(livingBarId);
   const editorKind: EditorChunkKind | null = editor?.restaurantContextId ? "restaurant" : editor?.stayContextId ? "stay" : editor?.familyContextId ? "family"
     : editor?.giftContextId ? "gift" : livingBarId ? "bar" : editor?.nightContextId ? "night" : editor?.catalogContextId ? "catalog" : null;
   useEffect(() => {
@@ -734,13 +737,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
     <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} />
-      <ComposerBoard livingBar={livingBarId ? {id:livingBarId,open:stableEditContext,close:closeDialog,content:BarLivingEditor ? <BarLivingEditor key={livingBarId+":"+(editor?.barTarget??"default")} initialTarget={editor?.barTarget}
+      {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId+":"+(editor?.barTarget??"default")} initialTarget={editor?.barTarget}
           context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}
           model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} saveStatus={draftTransport?durable.status:"MEMORY"}
           dockHost={nightDockHost} busy={busy || draftState.preferences.anchors.includes(livingBarId) || draftState.preferences.flexibility[livingBarId]==="PRESERVE"} creating={editor?.nightCreating} admission={editor?.nightAdmission??0} serverError={errorMessage}
           onSave={stage} onCancel={closeDialog} onOpenChild={id=>{const child=shown.board.contexts.find(c=>c.contextOccurrenceId===id);if(child)editContext(child);}} />
-          : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>}
-          : {open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
+          : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>,barHost.node,livingBarId+":"+(editor?.barTarget??"default"))}
+      <ComposerBoard livingBar={livingBarId ? {id:livingBarId,open:stableEditContext,close:closeDialog,content:<BarLivingMount host={barHost}/>} : {open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
         add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} reveal={reveal}
          contextGuide={editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment?.asset.optionKind === "COMPONENT" ? <div ref={setNightDockHost} data-night-dock-host /> : editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
           && draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)

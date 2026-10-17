@@ -1076,3 +1076,5 @@
 /* Grid rows own cell height. The old flex-start inheritance otherwise lets an
  * intrinsic card exceed its allocated tracks and cover the next row. */
 .inventoryCell { align-self:stretch; }
+.barLivingMount { display:flex; flex:1; flex-direction:column; min-height:0; overflow:hidden; }
+.barLivingHost { display:contents; }

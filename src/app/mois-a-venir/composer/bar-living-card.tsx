@@ -23,7 +23,10 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
   const handle=useDragHandle(`context-occurrence:${card.contextOccurrenceId}`), expanded=living.id===card.contextOccurrenceId;
   const root=useRef<HTMLElement>(null),wasExpanded=useRef(false);
   useEffect(()=>{
-    if(expanded||wasExpanded.current){const frame=requestAnimationFrame(()=>root.current?.querySelector<HTMLButtonElement>(expanded?'button[aria-label="Replier la carte"]':"h3 button")?.focus({preventScroll:true}));wasExpanded.current=expanded;return()=>cancelAnimationFrame(frame);}
+    if(expanded||wasExpanded.current){const frame=requestAnimationFrame(()=>{
+      if(expanded&&root.current?.contains(document.activeElement)&&document.activeElement?.matches("input,textarea,select"))return;
+      root.current?.querySelector<HTMLButtonElement>(expanded?'button[aria-label="Replier la carte"]':"h3 button")?.focus({preventScroll:true});
+    });wasExpanded.current=expanded;return()=>cancelAnimationFrame(frame);}
   },[expanded]);
   const summary=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===card.contextOccurrenceId);
   const fresh=summary?.semanticStateDigest===model.board.draft.semanticStateDigest;
