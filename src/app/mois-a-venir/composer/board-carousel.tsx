@@ -116,15 +116,23 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const returnToSelection = () => { if (focusPage < 0 || dragging) return; go(focusPage, false); revealFocused?.(); };
   const focusedRequest = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (!focused || !revealSequence || dragging || active !== focusPage || focusedRequest.current === revealSequence) return;
+    if (!focused || !revealSequence || dragging || active !== focusPage) return;
     const frame = requestAnimationFrame(() => {
-      focusedRequest.current = revealSequence;
       if (document.querySelector("dialog[open]")) return;
       const root = inventoryRootRef(focused, model), item = pages[active]?.find(item => item.id === root || item.kind === "CLUSTER" && item.children.some(child => child.id === root));
-      viewport.current?.querySelector<HTMLElement>(`[data-board-page="${active}"] [data-inventory-id="${CSS.escape(item?.id ?? root)}"]`)?.focus({ preventScroll: true });
+      const cell = viewport.current?.querySelector<HTMLElement>(`[data-board-page="${active}"] [data-inventory-id="${CSS.escape(item?.id ?? root)}"]`);
+      const barTitle = cell?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="false"] h3 button');
+      // Folding removes the dock, then repacks/remounts the card. Restore only
+      // a lost body focus after that second layout, never a user's new focus.
+      const lostBarFocus = barTitle && document.activeElement === document.body;
+      if (focusedRequest.current === revealSequence && !lostBarFocus) return;
+      const target = barTitle ?? cell;
+      if (!target || target.closest('[inert]')) return;
+      target.focus({ preventScroll: true });
+      if (document.activeElement === target) focusedRequest.current = revealSequence;
     });
     return () => cancelAnimationFrame(frame);
-  }, [focused, revealSequence, dragging, active, focusPage, model, pages]);
+  }, [focused, revealSequence, dragging, active, focusPage, model, pages, departing]);
   useEffect(() => { if (!interaction?.grabbed) { cancelDwell(); dwellEdge.current = null; } }, [interaction?.grabbed]);
   useEffect(() => () => cancelDwell(), []);
   const edge = (direction: -1 | 1) => { if (!interaction?.grabbed || dwell.current || dwellEdge.current === direction || active + direction < 0 || active + direction >= pages.length) return;

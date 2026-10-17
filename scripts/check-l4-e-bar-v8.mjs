@@ -153,14 +153,14 @@ await check('V8_RETURN_MODE_CHANGE_NO_RESIDUAL_CAR_COST',async()=>{
 });
 await check('V8_LAYOUT_EXPANSION_DENSE_PAGES_AND_EXACT_COLLAPSE',()=>{
  const original=inventoryItems(model);const bar=original.find(n=>n.id===id)??original.find(n=>n.kind!=='FIXED');assert.ok(bar);
- const dense=[bar,...Array.from({length:39},(_,i)=>({...bar,id:'neighbor:'+i,width:230,height:240}))];
+ for(const count of [5,16,30,50]){const dense=[bar,...Array.from({length:count-1},(_,i)=>({...bar,id:'neighbor:'+i,width:230,height:240}))];
  for(const [width,height] of [[1000,470],[1200,470],[1330,550]]){
   const baseline=inventoryLayoutPages(dense,width,height),open=inventoryLayoutPages(dense,width,height,bar.id),closed=inventoryLayoutPages(dense,width,height);
-  assert.deepEqual(closed,baseline);assert.ok(open.length>1);
+  assert.deepEqual(closed,baseline);if(count>=16)assert.ok(open.length>1);
   const a=baseline.flat().find(p=>p.item.id===bar.id),b=open.flat().find(p=>p.item.id===bar.id);assert.ok(b.columnSpan>a.columnSpan);assert.ok(b.rowSpan>a.rowSpan);
   for(const page of open){const cells=new Set();for(const p of page)for(let x=p.column;x<p.column+p.columnSpan;x++)for(let y=p.row;y<p.row+p.rowSpan;y++){const key=x+':'+y;assert.equal(cells.has(key),false);cells.add(key);}}
   assert.deepEqual(open.flat().map(p=>p.item.id),dense.map(n=>n.id));
- }
+ }}
 });
 await check('V8_SYNTHETIC_APPLY_READ_REEDIT_COMPLETE_COST',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','8');await save();await click('Cocktail');await change('Prix unitaire (€)','12');await save();
@@ -205,6 +205,7 @@ await check('V8_GOOGLE_OFFICIAL_VENUE_TRANSIENT_STALE_AND_FAILURE',async()=>{
   await click('Nouveau bar · ');await act(async()=>pending[4].resolve({ok:true,json:async()=>({place:{provider:'google_places',placeId:'new_google_123',displayName:'Nouveau bar',formattedAddress:'Adresse synthétique',types:['bar']}})}));
   assert.equal(controls(n=>n.type==='button'&&text(n)==='Retenir ce lieu enregistré').length,0);assert.ok(controls(n=>n.type==='p'&&text(n).includes('promotion n’est pas disponible')).length);assert.equal(adopted.length,1);
   await change('Chercher un bar','Delta');await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending[5].resolve({ok:false,status:429}));assert.ok(controls(n=>n.props.role==='status'&&text(n).includes('limitée')).length);
+  await change('Chercher un bar','Epsilon');await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending[6].resolve({ok:true,json:async()=>{throw new SyntaxError('Unexpected token <');}}));assert.ok(controls(n=>n.props.role==='status'&&text(n).includes('Recherche indisponible')).length);assert.equal(adopted.length,1);
  }finally{globalThis.fetch=previous;}
 });
 

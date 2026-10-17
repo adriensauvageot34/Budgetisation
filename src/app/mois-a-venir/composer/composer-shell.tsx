@@ -599,8 +599,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     setEditor(null); setProjectionOpen(false); setErrorMessage(null);
     if (livingBarId) {
       setReveal(previous=>({targetRef:livingBarId,sequence:(previous?.sequence??0)+1}));
-      // Repacking can remount the card on another page: its old ref is gone.
-      requestAnimationFrame(()=>document.querySelector<HTMLButtonElement>(`[data-bar-living-card][data-context="${livingBarId}"] h3 button`)?.focus({preventScroll:true}));
+      // Repacking can remount the card on another page: the carousel restores
+      // focus after revealing its compact title, rather than using a stale ref.
     }
   } };
   function editContext(card: ComposerContextCardView, barTarget?:BarTarget) {

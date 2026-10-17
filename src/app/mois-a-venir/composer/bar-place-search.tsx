@@ -17,7 +17,7 @@ export function BarPlaceSearch({places,onKnown,initialCity}: {places:readonly Pl
     session.current.schedule(query,city,(request,current)=>{
       const controller=new AbortController();abort.current=controller;setStatus("Recherche…");
       void fetch("/api/places/autocomplete",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({input:request.input,sessionToken:request.sessionToken,context:{city:request.city,country:"FR",kind:"VENUE"}})})
-        .then(async response=>{if(!response.ok)throw Error(response.status===429?"Recherche temporairement limitée. Réessayez plus tard ou saisissez un lieu.":"Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles.");return response.json();})
+        .then(async response=>{if(!response.ok)throw Error(response.status===429?"Recherche temporairement limitée. Réessayez plus tard ou saisissez un lieu.":"Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles.");try{return await response.json();}catch{throw Error("Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles.");}})
         .then(raw=>{if(current()&&generation.current===ticket){setResults(Array.isArray(raw.suggestions)?raw.suggestions.filter((item:RestaurantSuggestion)=>item.source==="google_places"&&validGooglePlaceId(item.placeId)&&typeof item.primaryText==="string"):[]);setStatus("Recherche terminée");}})
         .catch(error=>{if(current()&&generation.current===ticket&&!controller.signal.aborted)setStatus(error.message);});
     });
@@ -29,7 +29,9 @@ export function BarPlaceSearch({places,onKnown,initialCity}: {places:readonly Pl
     try{
       const response=await fetch("/api/places/details",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({placeId:suggestion.placeId,sessionToken:session.current.sessionToken(),context:{kind:"VENUE"}})});
       if(!response.ok)throw Error("Ce lieu n’a pas pu être vérifié. Réessayez ou saisissez son nom librement.");
-      const {place}=await response.json() as {place:SelectedRestaurantPlace};
+      let payload:{place:SelectedRestaurantPlace};
+      try{payload=await response.json();}catch{throw Error("Ce lieu n’a pas pu être vérifié. Réessayez ou saisissez son nom librement.");}
+      const {place}=payload;
       if(!place||place.provider!=="google_places"||!validGooglePlaceId(place.placeId)||typeof place.displayName!=="string")throw Error("Lieu non admissible. Saisissez un repère libre.");
       if(generation.current!==ticket||controller.signal.aborted)return;
       setDetail(place);setStatus("");setResults([]);session.current.complete();

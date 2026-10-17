@@ -18,6 +18,7 @@ import type { AtomicNode, VisualClusterNode, ComposerPresentationNode } from "./
 import { VisualClusterCard, VisualClusterOverlay } from "./visual-cluster";
 import { composerRenderIndex } from "./render-index";
 import { useInlineEditRegistry } from "./inline-edit-registry";
+import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 type BoardProps=Parameters<typeof ComposerBoard>[0];
 const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"|"livingBar"> & {item:AtomicNode;inCluster:boolean;closeCluster:(after?:()=>void)=>boolean}) {
   const {model,busy,selected,focused,focus,edit,editContext,choose,drag,drop,request,hover,details,livingBar}=props,index=composerRenderIndex(model);
@@ -92,7 +93,10 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   const focusedInCluster = !!openCluster?.children.some(child => child.id === focusedCard?.contextOccurrenceId);
   const renderAtomic = (item:AtomicNode,inCluster=false)=><InventoryAtomic item={item} inCluster={inCluster} closeCluster={closeCluster}
     model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} editContext={editContext} hover={hover} details={details} livingBar={livingBar}/>;
-  const palette = focusedCard && <div className={styles.paletteDock} data-palette-dock>{contextGuide ?? <ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} onConfigure={!focusedCard.readOnly ? () => editContext(focusedCard) : undefined} close={() => focus(null)} />}</div>;
+  // The compact living card already exposes its direct entry points. Do not
+  // leave the generic equipment dock behind after folding it: that changes
+  // the Board's available height and prevents an exact return to its layout.
+  const palette = focusedCard && (presetForContext(focusedCard)?.presetKey !== "bar-apero" || livingBar?.id === focusedCard.contextOccurrenceId) && <div className={styles.paletteDock} data-palette-dock>{contextGuide ?? <ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} onConfigure={!focusedCard.readOnly ? () => editContext(focusedCard) : undefined} close={() => focus(null)} />}</div>;
   const trashZone = trashVisible && <div className={styles.trash} data-trash data-protected={interaction?.grabbed?.protected} data-compatible={trashAccepts || !!interaction?.grabbed?.removeOperation} data-drag-over={sameTarget(interaction?.overTarget ?? null, trashTarget)}
     role="status" aria-label={interaction?.grabbed?.protected ? "Protégée · retrait interdit" : "Retirer l’élément saisi"}
     onDragOver={e => { e.stopPropagation(); if (!busy && !interaction?.grabbed?.protected) { e.preventDefault(); interaction?.over(trashTarget); } }}
