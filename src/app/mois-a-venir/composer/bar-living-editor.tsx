@@ -89,7 +89,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   useEffect(()=>{
     if(page!=="row"||dirty)return;
     const current=barItems(context,slot).find(item=>item.selectionId===row.id);
-    if(current?.kind==="COMPONENT")setRow(fromSelection(current));else setPage("drinks");
+    // A RAW continuation may already have selected a new tile in this commit.
+    // Refresh only the row this effect observed, never overwrite that new target.
+    if(current?.kind==="COMPONENT")setRow(previous=>previous.id===row.id?fromSelection(current):previous);else setPage("drinks");
   },[context.slotSelections,page,slot,dirty,row.id]);
   if(!model||!card)return <p role="status">Chargement de la carte…</p>;
   const move=(next:Page)=>{setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setError("");setQuery("");};
