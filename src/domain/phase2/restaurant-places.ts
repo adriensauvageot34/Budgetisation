@@ -9,8 +9,11 @@ export type SelectedRestaurantPlace = Readonly<{ provider: "google_places"; plac
   formattedAddress: string | null; lat: number | null; lng: number | null; primaryType: string | null; types: readonly string[];
   photoAvailable: boolean; photoAttributions: readonly PhotoAuthor[] }>;
 export type RestaurantPhoto = Readonly<{ photoIndex: number; photoUri: string; authors: readonly PhotoAuthor[]; googleMapsUri: string | null }>;
-export type ProjectPlaceKind = "RESTAURANT" | "ACTIVITY" | "VENUE" | "DESTINATION" | "RETAIL";
+export type ProjectPlaceKind = "RESTAURANT" | "ACTIVITY" | "VENUE" | "BAR_APERO" | "DESTINATION" | "RETAIL";
 export function projectPlaceTypeCompatible(types: readonly string[], kind: ProjectPlaceKind) {
+  // Discovery only: mixed cafes/restaurants may host an aperitif. Choosing a
+  // result does not reclassify a canonical place or publish a Google identity.
+  if (kind === "BAR_APERO") return isRestaurantType(types) || types.some(t => ["bar", "night_club"].includes(t));
   if (kind === "RESTAURANT") return isRestaurantType(types);
   if (kind === "DESTINATION") return types.some(t => ["locality", "administrative_area_level_1", "administrative_area_level_2", "natural_feature", "tourist_attraction"].includes(t));
   if (kind === "RETAIL") return types.some(t => t.endsWith("store") || ["shopping_mall", "supermarket", "pharmacy", "car_repair", "beauty_salon"].includes(t));

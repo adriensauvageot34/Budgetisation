@@ -1,0 +1,13 @@
+diff --git a/src/app/mois-a-venir/composer/bar-living-editor.tsx b/src/app/mois-a-venir/composer/bar-living-editor.tsx
+index 2f0d124..c937e22 100644
+--- a/src/app/mois-a-venir/composer/bar-living-editor.tsx
++++ b/src/app/mois-a-venir/composer/bar-living-editor.tsx
+@@ -137,7 +137,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
+       if(decide(barBeforePatch(props.semanticState,context,before?.bottle??value,before?[...before.extras,value]:[]),"row")){setSlot(before?"before-extras":"before-main");setAdvancedRow(false);setRow(fromSelection(value));}
+     }catch(failure){setError((failure as Error).message);}
+   };
+-  const removeBefore=()=>{if(!guard(resumeRemoveBefore)||!before)return;confirm({message:"Retirer le Before, tous ses postes et ses éventuels trajets liés ? Les choix du bar restent conservés. Undo restitue le groupe et ses identités.",acceptLabel:"Retirer le Before",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},before:null}})});};
++  const removeBefore=()=>{if(!guard(resumeRemoveBefore)||!before)return;confirm({message:`Retirer le Before et ses ${1+before.extras.length} éléments, ainsi que ses éventuels trajets liés ? Les choix du bar restent conservés. Undo restitue le groupe et ses identités.`,acceptLabel:"Retirer le Before",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},before:null}})});};
+   const addShared=(included?:boolean)=>{if(!guard(()=>resumeShared(included)))return;if(included===undefined&&barItems(context,"main").some(item=>item.kind==="COMPONENT")){setPendingShared(true);setPendingAsset(null);move("coverage");return;}const value=buildComponentRow({...fresh("Bouteille partagée"),unitBasis:"SHARED"},"extra");if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{...(included?{main:[]}:{}),extras:[...barItems(context,"extras"),value]}}},"row")){setPendingShared(false);setSlot("extras");setAdvancedRow(false);setRow(fromSelection(value));}};
+   const saveQuick=()=>{try{
+     const original=barItems(context,"main")[0];if(original&&original.kind!=="COMPONENT"){setError("Un moment lié occupe les entrées. Rééditez-le depuis Autres choix avant de le remplacer.");return;}

@@ -35,13 +35,13 @@ export async function restaurantPlacesRequest(request: Request, kind: "autocompl
     if (!body || typeof body !== "object" || Array.isArray(body)) throw new TypeError();
     const provider = new GoogleRestaurantPlaces();
     const placeKind = (body.context as { kind?: unknown } | undefined)?.kind ?? "RESTAURANT";
-    if (!["RESTAURANT", "ACTIVITY", "VENUE", "DESTINATION", "RETAIL"].includes(String(placeKind))) throw new TypeError();
+    if (!["RESTAURANT", "ACTIVITY", "VENUE", "BAR_APERO", "DESTINATION", "RETAIL"].includes(String(placeKind))) throw new TypeError();
     const token = body.sessionToken;
     if (token !== undefined && (typeof token !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu.test(token))) throw new TypeError();
     if (kind === "autocomplete") {
       const context = body.context as { city?: unknown } | undefined;
       const city = context?.city ?? "Montpellier";
-      if (typeof body.input !== "string" || body.input.trim().length < 2 || body.input.length > 120 || !token || typeof city !== "string" || !city.trim() || city.length > 100) throw new TypeError();
+      if (typeof body.input !== "string" || body.input.trim().length < 2 || body.input.length > 120 || !token || typeof city !== "string" || (!city.trim() && placeKind !== "BAR_APERO") || city.length > 100) throw new TypeError();
       return reply({ suggestions: await provider.autocomplete(body.input.trim(), String(token), city.trim(), placeKind as ProjectPlaceKind) });
     }
     if (!validGooglePlaceId(body.placeId)) throw new TypeError();

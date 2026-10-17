@@ -1,0 +1,89 @@
+{
+  "scope": "MOCKED_PROVIDER_REAL_OWNER_CODE_NOT_AUTHENTICATED",
+  "tests": [
+    {
+      "id": "FINAL-MAPS-01",
+      "status": "PASS_DOMAIN_MOCK",
+      "oldVenue": 2,
+      "existingExpense": 4,
+      "barApero": 6
+    },
+    {
+      "id": "FINAL-MAPS-02",
+      "status": "PASS_DOMAIN_MOCK",
+      "types": [
+        {
+          "type": "bar",
+          "admitted": true
+        },
+        {
+          "type": "cafe",
+          "admitted": true
+        },
+        {
+          "type": "coffee_shop",
+          "admitted": true
+        },
+        {
+          "type": "bar_and_grill",
+          "admitted": true
+        },
+        {
+          "type": "restaurant",
+          "admitted": true
+        },
+        {
+          "type": "night_club",
+          "admitted": true
+        },
+        {
+          "type": "bank",
+          "admitted": false
+        },
+        {
+          "type": "gas_station",
+          "admitted": false
+        }
+      ],
+      "mutableCity": true,
+      "noCityGeocode": true,
+      "exactDetails": true
+    },
+    {
+      "id": "MATCH_CANONICAL_EXISTANT",
+      "status": "UNCHANGED_EXACT_ID_ONLY",
+      "textNeverPromoted": true
+    },
+    {
+      "id": "PROMOTION_CANONICAL_NOUVEAU",
+      "status": "BLOCKED_OWNER"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/v1/places:autocomplete",
+      "mask": "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types",
+      "input": "café fixture",
+      "hasBias": true
+    },
+    {
+      "path": "/v1/places:autocomplete",
+      "mask": "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types",
+      "input": "café fixture",
+      "hasBias": true
+    },
+    {
+      "path": "/v1/places:autocomplete",
+      "mask": "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types",
+      "input": "café Hossegor",
+      "hasBias": false
+    },
+    {
+      "path": "/v1/places/fixture_place_1",
+      "mask": "id,displayName,formattedAddress,addressComponents,location,primaryType,types,photos",
+      "hasBias": false
+    }
+  ],
+  "realProvider": "NOT_RUN_PROVIDER",
+  "financialWrites": 0
+}

@@ -1,0 +1,955 @@
+{
+  "scope": "135 IDEAS INDEXED, NOT 135 PASS",
+  "summary": {
+    "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED": 63,
+    "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED": 46,
+    "PARTIAL_OR_NOT_IMPLEMENTED": 26
+  },
+  "ideas": [
+    {
+      "id": 1,
+      "request": "Remplacer « Moment lié » par une vraie miniature du Before. Cette mention générique est l'un des plus gros défauts visibles. Elle ne raconte absolument pas ce que contient le sous-contexte.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 2,
+      "request": "Créer des mini-sections « Avant de sortir » et « Au bar ». Dans chacune, montrer deux ou trois illustrations des consommations présentes, puis éventuellement +N.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 3,
+      "request": "Adapter automatiquement la composition au nombre d'informations disponibles. Une carte vide ne doit pas ressembler à une carte riche contenant une seule ligne perdue dans un grand espace.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 4,
+      "request": "Donner au montant une vraie importance visuelle. Dans tes captures, 65,00 € est parfois presque aussi petit que le titre Bar / Apéro. Il devrait devenir un élément majeur de la carte.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 5,
+      "request": "Afficher distinctement les montants connus et les coûts encore inconnus. Par exemple : « 65 € connus · déplacements à estimer », uniquement lorsque l'autorité financière le confirme.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 6,
+      "request": "Utiliser des capsules pour le lieu et la date, comme c'est déjà commencé, mais avec une présentation unifiée.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 7,
+      "request": "Regrouper élégamment les participants dans une courte rangée de pastilles avec initiales ou portraits autorisés.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 8,
+      "request": "Ne jamais afficher une rubrique vide dans la carte compacte. Pas de faux Retour, de faux prix, ni de liste « à préciser ».",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 9,
+      "request": "Afficher les modes Aller et Retour sur une même ligne compacte lorsqu'ils sont connus, sans perdre leur indépendance.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 10,
+      "request": "Mettre une icône différente pour voiture, tram, taxi et marche, plutôt que de présenter tous les transports comme une simple étiquette.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 11,
+      "request": "Faire ressortir le lieu choisi, car c'est probablement l'information qui identifie le mieux la soirée après son titre.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 12,
+      "request": "Améliorer l'illustration principale. L'image actuelle évoque plutôt un assortiment de smoothies qu'une sortie Bar / Apéro. Il faudrait une illustration mieux adaptée, tout en restant dans la direction artistique du catalogue.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 13,
+      "request": "Supprimer définitivement la grande bande « Retirer ce moment » au bas de la carte fermée. Elle consomme de l'espace et ressemble à une action principale alors qu'elle est destructive.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 14,
+      "request": "Conserver une commande discrète de gestion via ⋯, notamment pour clavier, tactile et accessibilité, même si la corbeille par drag-and-drop reste le geste visuel principal.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 15,
+      "request": "Afficher les quantités directement dans les miniatures, par exemple 🍺 ×4, lorsqu'elles sont plus informatives qu'un simple nombre de composants.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 16,
+      "request": "Rendre chaque zone directement cliquable. Toucher la miniature Before ouvre Before ; toucher Cocktail ouvre ce cocktail ; toucher Date ouvre Date.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 17,
+      "request": "Éviter qu'une miniature Before mène à un menu générique. Elle doit ouvrir le groupe correspondant, sans détour.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 18,
+      "request": "Utiliser des formats compacts adaptatifs : carte vide, carte partiellement remplie, carte riche. Pas de hauteur arbitraire unique.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 19,
+      "request": "Ne pas confondre densité et remplissage décoratif. Pour une carte vide, une belle illustration et une invitation à la composer suffisent. Pas besoin de remplir cinq blocs avec des informations inexistantes.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 20,
+      "request": "Préserver le contenu lors du repli. Ce qui était visible en développé devient une synthèse intelligente, pas une représentation complètement différente du même objet.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 21,
+      "request": "Créer une page d'accueil de la carte, montrant uniquement la synthèse générale de la sortie.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 22,
+      "request": "Faire de Lieu, Date, Personnes, Déplacements, Before et Au bar des pages internes accessibles directement, sans les transformer en étapes obligatoires d'un wizard.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 23,
+      "request": "Garder l'en-tête stable lors des changements de page : illustration, titre, montant, repli.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 24,
+      "request": "Afficher un petit titre de contexte dans le corps, par exemple « Date de la sortie » ou « Avant de sortir ».",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 25,
+      "request": "Placer un retour discret ← Ma soirée sur les sous-pages, au lieu de forcer le passage par Résumé.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 26,
+      "request": "Afficher l'élément actif en premier, jamais sous les composants appartenant aux autres sections.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 27,
+      "request": "Ne plus rendre simultanément toutes les sections dans chaque page. C'est le défaut structurel à éliminer.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 28,
+      "request": "Adapter le corps à l'action en cours. Sur Date : calendrier. Sur Before : consommations du Before. Sur Lieu : recherche de lieu. Sur Aller : trajet Aller.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 29,
+      "request": "Afficher une grille paginée lorsqu'une section contient trop de composants. Par exemple, 6 consommations visibles puis une seconde page.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 30,
+      "request": "Éviter toute hauteur figée excessive. La carte ouverte doit utiliser l'espace nécessaire à la page active, dans les limites du viewport et du packing du Board.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 31,
+      "request": "Garder une hauteur maximale maîtrisée, afin qu'ouvrir Before ne fasse pas disparaître les cartes voisines ou la pagination du Board.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 32,
+      "request": "Réduire les espaces vides qui n'apportent rien. Dans tes captures avec un seul montant de 43 €, la carte pourrait être nettement moins haute.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 33,
+      "request": "Agrémenter les pages avec des groupes visuels plutôt que du texte seul. Une page Before doit ressembler à une composition de bouteilles et de boissons, pas à une feuille de paramètres.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 34,
+      "request": "Ne jamais afficher des messages techniques comme « Ce contrat ne publie pas de lieu distinct ». Ce sont des limitations d'architecture, pas des instructions destinées à l'utilisateur.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 35,
+      "request": "Créer un état visuel « modification en cours », mais discret, au niveau de la bonne tuile, sans transformer le haut du Composer en panneau d'avertissement permanent.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 36,
+      "request": "Ne jamais déplacer la page lorsque l'utilisateur clique sur un autre objet. Seul le contenu de la zone de composition doit changer ; la carte doit conserver son ancrage et son identité.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 37,
+      "request": "Supprimer les barres de scroll horizontales du dock. C'est une vraie règle de conception, pas seulement une préférence esthétique.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 38,
+      "request": "Limiter les options visibles à ce qui tient réellement : par exemple quatre cartes sur un desktop intermédiaire, davantage si l'espace le permet.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 39,
+      "request": "Afficher une pagination claire, comme 1 / 3 ou des flèches, lorsque plusieurs choix existent.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 40,
+      "request": "Rendre les flèches réellement fonctionnelles comme changement de page, et non comme un scroll déguisé de quelques pixels.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 41,
+      "request": "Utiliser des grilles stables pour les options, afin que les cartes aient une largeur cohérente.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 42,
+      "request": "Éviter de couper une carte à moitié sur le bord droit, ce qu'on voit actuellement à plusieurs endroits.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 43,
+      "request": "Afficher une vraie illustration ou une icône spécifique pour chaque proposition : Vodka, bière, cocktail, taxi, lieu, etc.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 44,
+      "request": "Ne plus utiliser la même illustration générique pour tous les lieux enregistrés. Une catégorie visuelle connue doit être identifiable.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 45,
+      "request": "Faire varier le dock avec la page active. Sur Date, ne pas continuer à présenter Lieu, Bière, Date, Montant direct et Autre comme si aucune cible n'avait été choisie.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 46,
+      "request": "Réduire les intitulés à une ou deux lignes maximum, en privilégiant le nom de l'action.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 47,
+      "request": "Déplacer les explications de provenance dans un détail secondaire. « 4 jours enregistrés · dernier 2026-04-24 » n'a pas forcément besoin d'être répété en intégralité dans chaque carte de suggestion.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 48,
+      "request": "Conserver un choix « Autre » ou une recherche, pour ne jamais enfermer l'utilisateur dans les premières propositions.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 49,
+      "request": "Faire apparaître la sélection immédiatement dans le corps de la carte, sans retour à une liste, sans écran de confirmation de confort.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 50,
+      "request": "Au clic sur Date, remplacer immédiatement le corps de composition par le calendrier.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 51,
+      "request": "Le calendrier commence dans le premier tiers visible de la carte, pas après les consommations.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 52,
+      "request": "Utiliser une largeur adaptée à la carte : ni un calendrier minuscule perdu à gauche, ni une grille gigantesque.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 53,
+      "request": "Mettre clairement en évidence la date sélectionnée.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 54,
+      "request": "Afficher le jour complet choisi dans l'en-tête de la carte après validation.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 55,
+      "request": "Prévoir une sélection du jour en un clic, sans Continuer ni Terminé.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 56,
+      "request": "Ajouter une action discrète « Retirer la date », distincte de la navigation.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 57,
+      "request": "Gérer les dates hors du mois affiché uniquement lorsque le contrat de planification le permet réellement.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 58,
+      "request": "Le dock peut devenir neutre ou proposer des raccourcis contextuels, mais ne doit pas répéter les options de composition générales pendant l'utilisation du calendrier.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 59,
+      "request": "Unifier visuellement les recherches de lieux avec les composants éprouvés du parcours Déclarer une dépense, plutôt que conserver deux expériences divergentes.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 60,
+      "request": "Présenter en haut de la page Lieu un grand champ de recherche unique.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 61,
+      "request": "Afficher la ville de contexte dans une capsule modifiable, par exemple Montpellier ×, sans en faire une contrainte invisible.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 62,
+      "request": "Distinguer les résultats « Déjà fréquentés », « Enregistrés » et « Google Maps » sans faire trois recherches manuelles successives.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 63,
+      "request": "Mettre trois lieux connus prioritaires en première page, puis accéder aux autres par recherche ou pagination.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 64,
+      "request": "Montrer le nom, la commune et éventuellement l'adresse courte dans chaque résultat, afin de distinguer les homonymes.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 65,
+      "request": "Ne pas supprimer de la recherche les cafés-bars parce qu'ils sont catégorisés café ou restaurant par Google, lorsque ce sont des établissements pertinents pour Bar / Apéro.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 66,
+      "request": "Si aucun résultat n'est trouvé, proposer clairement la recherche élargie et le nom libre, sans faire croire que les établissements n'existent pas.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 67,
+      "request": "Une fois le lieu retenu, remplacer la recherche par une présentation compacte du lieu choisi. Le champ n'a pas à rester ouvert.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 68,
+      "request": "Ne pas inventer une identité Canonical. Un lieu Google nouveau peut être affiché comme résultat de recherche, mais ses capacités durables doivent respecter les contrats réels.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 69,
+      "request": "Afficher des pastilles de participants avec initiales lisibles, sans trop réduire la taille du texte.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 70,
+      "request": "Sur la carte fermée, montrer trois ou quatre personnes au maximum, puis +N.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 71,
+      "request": "Sur la page Personnes, afficher les participants déjà retenus dans une rangée claire.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 72,
+      "request": "Présenter les contacts proposés avec des cartes visuelles et une recherche paginée.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 73,
+      "request": "Utiliser un état sélectionné évident pour les personnes effectivement ajoutées.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 74,
+      "request": "Permettre de retirer un participant directement depuis sa pastille, sans ouvrir une nouvelle page de confirmation si aucun risque réel n'existe.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 75,
+      "request": "Ne pas confondre présence et paiement. Trois personnes à la soirée ne signifient jamais automatiquement trois bières payées ou trois parts financées.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 76,
+      "request": "Créer une page Before visuellement identifiable, avec le titre « Avant de sortir » et les objets retenus.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 77,
+      "request": "Présenter la bouteille principale, les diluants et les autres consommations comme un groupe cohérent.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 78,
+      "request": "Éviter les mentions « composant principal partagé » répétées dans chaque carte du dock.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 79,
+      "request": "Remplacer cette expression par un langage naturel : « Vodka », « Diluant », « Soft », « Snack », avec une information d'unité seulement quand elle est pertinente.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 80,
+      "request": "Une fois le Before composé, montrer sur sa page une grille de vraies tuiles, pas une ligne « Moment lié ».",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 81,
+      "request": "Le bouton « Compléter le Before » peut devenir un petit + Ajouter directement dans la page Before.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 82,
+      "request": "L'action « Retirer le Before » doit quitter la surface principale et rejoindre un menu secondaire contextualisé.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 83,
+      "request": "Sur la carte fermée, afficher les vraies miniatures des objets du Before.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 84,
+      "request": "Permettre une édition directe de la quantité et du prix en ouvrant la bonne tuile, sans scroller jusqu'à un formulaire.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 85,
+      "request": "Si trop de composants sont présents, passer à plusieurs pages de Before sans perdre la composition ni les identités.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 86,
+      "request": "Conserver la distinction entre bouteille partagée et consommations individuelles, sans multiplier automatiquement une bouteille par le nombre de participants.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 87,
+      "request": "Rendre chaque consommation visuellement reconnaissable au premier coup d'œil : bière, cocktail, shot, verre de vin, bouteille.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 88,
+      "request": "Augmenter la qualité des icônes et harmoniser leurs proportions : dans tes captures, certaines sont grandes et détaillées, d'autres semblent minuscules ou génériques.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 89,
+      "request": "Mettre la quantité en évidence à côté du nom, par exemple « Cocktail ×2 ».",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 90,
+      "request": "Afficher le prix sous la forme la plus naturelle : 10 € / verre, 20 € / bouteille, ou Prix à préciser.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 91,
+      "request": "Utiliser un fond légèrement différent pour la tuile active plutôt que modifier brutalement son volume ou lui ajouter beaucoup de bordures.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 92,
+      "request": "Préserver l'édition directement dans la tuile, mais basculer sur une page dédiée à ce composant lorsque l'espace est insuffisant, sans scroll vertical.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 93,
+      "request": "Mettre le stepper quantité − 2 + et le champ prix sur une même ligne ou dans une disposition compacte.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 94,
+      "request": "Supprimer les boutons techniques permanents « Unité, financement et nom » de l'édition simple ; les garder accessibles dans les détails.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 95,
+      "request": "Conserver un raccourci + pour ajouter une consommation depuis la page Au bar.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 96,
+      "request": "Ne jamais fusionner visuellement deux consommations de même nom quand elles correspondent à deux sélections différentes ou à des prix différents.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 97,
+      "request": "Faire des trajets deux cartes de parcours horizontales lisibles, plutôt que de simples boutons remplis de texte.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 98,
+      "request": "Mettre une icône de transport au premier plan.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 99,
+      "request": "Donner plus d'importance aux deux endpoints qu'à l'étiquette « Voiture ».",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 100,
+      "request": "Différencier visuellement Aller et Retour, sans leur donner deux systèmes graphiques incompatibles.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 101,
+      "request": "Afficher le coût à droite lorsqu'il est connu, et À estimer lorsqu'il ne l'est pas.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 102,
+      "request": "Une fois le bar sélectionné, proposer des trajets contextuels admissibles, mais sans choisir un départ arbitraire.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 103,
+      "request": "Sur la page Aller, ne montrer que les options nécessaires pour l'Aller ; sur Retour, celles du Retour.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 104,
+      "request": "Si le départ est inconnu, l'indiquer explicitement, sans faire croire que le coût carburant peut déjà être déterminé.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 105,
+      "request": "En compact, résumer les deux trajets en deux lignes sobres, ou sur une ligne lorsqu'il y a suffisamment d'espace.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 106,
+      "request": "Utiliser un gros montant officiel dans l'en-tête, accompagné d'un sous-titre honnête.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 107,
+      "request": "Distinguer visuellement « Montant connu », « Estimation », « Devis » et « Prix à préciser », sans multiplier les badges.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 108,
+      "request": "Ne pas appeler « coût total » une somme qui laisse des dépenses inconnues.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 109,
+      "request": "Mieux expliquer « Consommations regroupées » dans la présentation : il s'agit d'un montant couvrant des consommations, pas nécessairement d'un supplément.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 110,
+      "request": "Éviter que « Entrées / coût direct » ressemble à la catégorie naturelle de toutes les consommations : ce sont des portées économiques différentes.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 111,
+      "request": "Séparer les montants du Before, du bar et des trajets uniquement lorsque les autorités fournissent ces contributions de manière fiable.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 112,
+      "request": "Mettre les explications avancées de couverture et de financement dans les détails, pas au milieu d'une composition simple.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 113,
+      "request": "Utiliser un format monétaire stable et lisible dans toute la carte.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 114,
+      "request": "Ne jamais convertir automatiquement un prix manquant en zéro, ni un coût d'usage carburant en dépense bancaire.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 115,
+      "request": "Retirer le bouton permanent « Retirer ce moment » de la carte compacte.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 116,
+      "request": "Garder la corbeille du Board comme interaction principale lors du déplacement de la carte.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 117,
+      "request": "Afficher clairement cette corbeille uniquement pendant le drag d'un objet qui peut être retiré.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 118,
+      "request": "Ajouter une commande de retrait secondaire via un menu ⋯, indispensable pour les utilisateurs qui ne font pas de drag-and-drop.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 119,
+      "request": "Différencier « Replier la carte » et « Supprimer la carte ». La croix en haut doit conserver un sens non ambigu.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 120,
+      "request": "Faire réagir l'interface immédiatement au retrait, sans attendre une longue simulation pour modifier la présentation.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 121,
+      "request": "Si la suppression n'est pas encore confirmée, présenter un état transitoire clair et réversible ; ne pas annoncer une réussite durable prématurément.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 122,
+      "request": "Après suppression, proposer Undo via le système existant, sans ajouter une confirmation générique systématique.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 123,
+      "request": "Uniformiser les arrondis entre la carte, les sous-tuiles et le dock. Les captures utilisent plusieurs degrés de rondeur qui ne semblent pas appartenir à une échelle clairement définie.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 124,
+      "request": "Construire une palette plus cohérente : fond ivoire très léger, surfaces blanches, beige chaleureux pour les consommations et violet Budgetisation pour les interactions.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 125,
+      "request": "Réduire le nombre de bordures pointillées. Elles sont utiles pour un emplacement vide, mais pas sur presque chaque action Ajouter.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 126,
+      "request": "Mieux gérer les blancs : une respiration autour des tuiles est utile, une moitié de carte blanche ne l'est pas.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 127,
+      "request": "Limiter le nombre de tailles de texte, avec une véritable hiérarchie titre / montant / information / détail.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 128,
+      "request": "Augmenter légèrement le contraste de certains petits textes beiges et gris.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 129,
+      "request": "Réduire le nombre de libellés techniques tels que « occurrence », « contrat », « composant principal » ou « référence », lorsqu'ils ne sont pas nécessaires à l'action.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    },
+    {
+      "id": 130,
+      "request": "Utiliser une illustration de qualité constante entre la bibliothèque d'assets, la carte et le dock.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 131,
+      "request": "Ne pas recourir systématiquement aux emojis natifs pour les icônes finales. Ils sont pratiques comme fallback, mais changent d'apparence selon la plateforme.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 132,
+      "request": "Ajouter des transitions courtes et discrètes entre les pages internes, sans déplacer le contenu hors écran.",
+      "status": "PARTIAL_OR_NOT_IMPLEMENTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Limite restante de présentation ou capacité non développée dans cette tranche ; aucune fonctionnalité fictive ajoutée."
+    },
+    {
+      "id": 133,
+      "request": "Garder un focus clavier très visible tout en harmonisant le contour avec la charte graphique.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 134,
+      "request": "Éviter les effets de survol qui font grossir les tuiles et provoquent des collisions.",
+      "status": "EXISTING_OR_PRESERVED_NOT_GLOBALLY_RECERTIFIED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Capacité réutilisée ; vérifier le groupe de tests pertinent, aucune revendication de preuve complète pour chaque proposition."
+    },
+    {
+      "id": 135,
+      "request": "Faire du montant et des objets de la soirée les protagonistes visuels, pas des boutons de réglages ou de retrait.",
+      "status": "IMPLEMENTED_CODE_NOT_VISUALLY_ACCEPTED",
+      "browser": "NOT_RUN_BROWSER",
+      "note": "Voir réception, scènes/dock/Maps/miniatures/retrait ; preuve locale selon matrice FINAL, jamais certification visuelle implicite."
+    }
+  ]
+}

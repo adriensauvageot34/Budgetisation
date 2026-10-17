@@ -1,0 +1,603 @@
+{
+  "source": "BAR_APERO_SPEC_TECHNIQUE_REFERENCE_POST_V8_2026-10-17.md",
+  "sha256": "842c5bfbe91f057a24e15641e0517c03754503bd0736060a14c1f1a4acb5ca97",
+  "scenarios": [
+    {
+      "id": "ADV-01",
+      "title": "Bière sans bar, date ni trajet",
+      "sourceText": "- **Contexte/action :** carte Bar vide ; choisir Bière ; ne toucher à aucun prix ni lieu ; fermer et rouvrir.\n- **Conserver :** `contextOccurrenceId`, Bière `selectionId`, quantité `1`, unité `ITEM`, coût `UNKNOWN`. Aucun champ `placeRef`, aucun leg.\n- **Requalifier :** aucune dérivation. Le résumé peut rester « coût à préciser » ; il n'existe pas de « coût total = 0 ».\n- **Interaction :** la bière apparaît immédiatement ; clic extérieur replie uniquement sa tuile ; la carte peut être quittée en un geste.\n- **Oracle :** lecture du Draft après sauvegarde = une Bière UNKNOWN ; 0 demande de lieu/date/personne/transport ; pas de composant économique créé par défaut.",
+      "precondition": "- **Contexte/action :** carte Bar vide ; choisir Bière ; ne toucher à aucun prix ni lieu ; fermer et rouvrir.",
+      "assertion": "- **Oracle :** lecture du Draft après sauvegarde = une Bière UNKNOWN ; 0 demande de lieu/date/personne/transport ; pas de composant économique créé par défaut."
+    },
+    {
+      "id": "ADV-02",
+      "title": "Rejeter le bar habituel et poursuivre",
+      "sourceText": "- **Contexte/action :** Bière présente ; ouvrir Lieu ; un bar favori est proposé ; choisir « Un autre bar ».\n- **Conserver :** Bière et sa quantité, prix, provenance, autres décisions. Le bar favori n'avait pas été admis.\n- **Requalifier :** seulement le tri ou l'affichage des résultats de **cette recherche** ; aucun refus durable supposé.\n- **Interaction :** recherche et options alternatives prennent le dessus sans écran « confirmer refus ».\n- **Oracle :** aucun changement du Semantic Draft ou de ses digests pour le simple refus ; pas de re-proposition intrusive dans la même sous-édition.",
+      "precondition": "- **Contexte/action :** Bière présente ; ouvrir Lieu ; un bar favori est proposé ; choisir « Un autre bar ».",
+      "assertion": "- **Oracle :** aucun changement du Semantic Draft ou de ses digests pour le simple refus ; pas de re-proposition intrusive dans la même sous-édition."
+    },
+    {
+      "id": "ADV-03",
+      "title": "Bar canonique et Maison proposée",
+      "sourceText": "- **Contexte/action :** choisir un Bar A canonique ; l'UI connaît éventuellement Maison comme candidat d'origine.\n- **Conserver :** tous les composants. Admettre seulement le `placeRef` du Bar A.\n- **Requalifier :** destination candidate de l'Aller et origine candidate du Retour, **pas des legs décidés**.\n- **Interaction :** Lieu affiche Bar A ; dock « Préparer l'aller », « Consommations » ; Maison apparaît comme proposition lorsque la ligne Aller s'ouvre.\n- **Oracle :** `outbound` et `return` restent absents après seul clic sur Bar A.",
+      "precondition": "- **Contexte/action :** choisir un Bar A canonique ; l'UI connaît éventuellement Maison comme candidat d'origine.",
+      "assertion": "- **Oracle :** `outbound` et `return` restent absents après seul clic sur Bar A."
+    },
+    {
+      "id": "ADV-04",
+      "title": "Nouveau lieu Google non admis dans le canonique",
+      "sourceText": "- **Contexte/action :** recherche Google `VENUE` : nouveau Bar B trouvé, détails et adresse disponibles, mais aucun owner de promotion.\n- **Conserver :** toute intention déjà composée ; données Google seulement transitoires ; aucun faux `KNOWN placeId`.\n- **Requalifier :** si l'utilisateur choisit explicitement « Garder le nom comme repère », écrire `TEXT` avec provenance ; route/distance toujours inconnue sans identité routable officielle.\n- **Interaction :** une phrase courte « Ce bar n'est pas encore enregistré. Conserver son nom seulement ? » ; options **Repère texte**, **Autre lieu**, **Plus tard**.\n- **Oracle :** le Draft ne contient ni ID Google encodé dans un label ni coordonnées tierces non admises. Aucun devis TomTom fondé sur du texte approximatif. Capacité durable Google = `BLOCKED_CAPABILITY`, pas PASS.",
+      "precondition": "- **Contexte/action :** recherche Google `VENUE` : nouveau Bar B trouvé, détails et adresse disponibles, mais aucun owner de promotion.",
+      "assertion": "- **Oracle :** le Draft ne contient ni ID Google encodé dans un label ni coordonnées tierces non admises. Aucun devis TomTom fondé sur du texte approximatif. Capacité durable Google = `BLOCKED_CAPABILITY`, pas PASS."
+    },
+    {
+      "id": "ADV-05",
+      "title": "Deux bars homonymes",
+      "sourceText": "- **Contexte/action :** Google ou lieux canoniques présentent deux « Le Central » dans des communes/adresses différentes.\n- **Conserver :** tout ce qui est déjà décidé ; aucun choix automatique du premier résultat.\n- **Requalifier :** aucun coût routier tant que l'identité exacte n'est pas retenue.\n- **Interaction :** deux cartes de résultat distinctes : nom, quartier/commune, adresse secondaire, éventuelle provenance ; aucune fiche répétée.\n- **Oracle :** un choix explicite conduit à un identifiant précis ; l'égalité du texte n'entraîne pas de fusion.",
+      "precondition": "- **Contexte/action :** Google ou lieux canoniques présentent deux « Le Central » dans des communes/adresses différentes.",
+      "assertion": "- **Oracle :** un choix explicite conduit à un identifiant précis ; l'égalité du texte n'entraîne pas de fusion."
+    },
+    {
+      "id": "ADV-06",
+      "title": "Deux domiciles canoniques admissibles",
+      "sourceText": "- **Contexte/action :** l'autorité publie deux références `OWN_HOME` éligibles comme origine.\n- **Conserver :** le bar et tout leg existant ; aucun domicile n'est présélectionné arbitrairement.\n- **Requalifier :** Maison devient une liste désambiguïsée de candidats ; éventuellement noms secondaires autorisés.\n- **Interaction :** dock « D'où pars-tu ? » puis deux cartes Maison avec repère bref, plus Autre. Pas d'adresse personnelle recopiée dans du code.\n- **Oracle :** avant sélection, origine inconnue ; le calcul kilométrique ne prend pas le premier lieu par défaut.",
+      "precondition": "- **Contexte/action :** l'autorité publie deux références `OWN_HOME` éligibles comme origine.",
+      "assertion": "- **Oracle :** avant sélection, origine inconnue ; le calcul kilométrique ne prend pas le premier lieu par défaut."
+    },
+    {
+      "id": "ADV-07",
+      "title": "« Travail de Manon » n'est qu'un repère de repas",
+      "sourceText": "- **Contexte/action :** une relation `WORK_MEAL_ANCHOR` existe sans preuve qu'il s'agit du lieu d'emploi de Manon.\n- **Conserver :** le lieu de repas comme fait canonique, les éventuelles références préexistantes.\n- **Requalifier :** **ne pas exposer** le raccourci « Travail de Manon » sur la seule base de cette relation. Il peut figurer dans « Autre lieu connu » sous son vrai nom si admissible.\n- **Interaction :** éviter de demander à l'utilisateur de corriger une déduction que le système n'était pas autorisé à faire.\n- **Oracle :** aucune assertion `workPlace == workMealAnchor` ; provenance de la relation vérifiable. La présence exacte de cette adresse dans le foyer reste à confirmer.",
+      "precondition": "- **Contexte/action :** une relation `WORK_MEAL_ANCHOR` existe sans preuve qu'il s'agit du lieu d'emploi de Manon.",
+      "assertion": "- **Oracle :** aucune assertion `workPlace == workMealAnchor` ; provenance de la relation vérifiable. La présence exacte de cette adresse dans le foyer reste à confirmer."
+    },
+    {
+      "id": "ADV-08",
+      "title": "Voiture retenue, origine non connue",
+      "sourceText": "- **Contexte/action :** choisir Voiture pour Aller vers un bar dont l'identité peut être connue ; aucune origine choisie.\n- **Conserver :** leg Aller `MOBILITY_INTENT` avec mode Voiture, identifiant, destination éventuelle, origine `null`.\n- **Requalifier :** distance/litres/coût d'usage `UNKNOWN` tant que la route n'est pas résolue ; aucun km fictif.\n- **Interaction :** ligne `🚗 Aller · départ à choisir → Bar` ; Maison candidate si elle existe, sans blocage pour continuer aux bières.\n- **Oracle :** Preview partielle admissible ; aucun coût calculé d'après un lieu inventé.",
+      "precondition": "- **Contexte/action :** choisir Voiture pour Aller vers un bar dont l'identité peut être connue ; aucune origine choisie.",
+      "assertion": "- **Oracle :** Preview partielle admissible ; aucun coût calculé d'après un lieu inventé."
+    },
+    {
+      "id": "ADV-09",
+      "title": "Aller Voiture 10 km, Retour Taxi",
+      "sourceText": "- **Contexte/action :** itinéraire dirigé Aller = 10 km ; coût carburant exemple 2 € ; Retour Taxi avec tarif explicite 12 €.\n- **Conserver :** deux legs et IDs distincts ; un seul coût d'usage Voiture, un coût de course Taxi selon l'autorité ; Bière/Date intacts.\n- **Requalifier :** pas de litres ou péage voiture pour Taxi ; ne pas doubler les 10 km par présomption d'A/R.\n- **Interaction :** `🚗 Aller Maison → Bar` et `🚕 Retour Bar → Maison` ; coûts sous chaque trajet ; résumé économique officiel sans addition naïve des types de coûts.\n- **Oracle :** coût carburant du seul Aller ; Taxi présent une fois ; pas de second carburant ni de plein bancaire. C'est un **exemple numérique**, pas une donnée personnelle.",
+      "precondition": "- **Contexte/action :** itinéraire dirigé Aller = 10 km ; coût carburant exemple 2 € ; Retour Taxi avec tarif explicite 12 €.",
+      "assertion": "- **Oracle :** coût carburant du seul Aller ; Taxi présent une fois ; pas de second carburant ni de plein bancaire. C'est un **exemple numérique**, pas une donnée personnelle."
+    },
+    {
+      "id": "ADV-10",
+      "title": "Retour « Même mode » puis destination personnalisée",
+      "sourceText": "- **Contexte/action :** utilisateur adopte le raccourci Même mode et inverse les endpoints de l'Aller ; ensuite il modifie volontairement la destination Retour vers Chez un ami.\n- **Conserver :** mode Retour décidé, ID Retour, destination personnalisée, Aller intact.\n- **Requalifier :** coûts/distance du Retour. Surtout, **l'ancienne suggestion d'inversion ne reste pas un ordre de synchronisation**.\n- **Interaction :** la ligne Retour affiche l'adresse personnalisée, et la suggère à l'utilisateur comme fait déjà décidé à la réouverture.\n- **Oracle :** modifier ensuite l'origine de l'Aller ne doit pas écraser l'arrivée Chez un ami. Sans lien durable explicite, traiter le Retour comme indépendant.",
+      "precondition": "- **Contexte/action :** utilisateur adopte le raccourci Même mode et inverse les endpoints de l'Aller ; ensuite il modifie volontairement la destination Retour vers Chez un ami.",
+      "assertion": "- **Oracle :** modifier ensuite l'origine de l'Aller ne doit pas écraser l'arrivée Chez un ami. Sans lien durable explicite, traiter le Retour comme indépendant."
+    },
+    {
+      "id": "ADV-11",
+      "title": "Bar A → Bar B avec deux legs déjà renseignés",
+      "sourceText": "- **Contexte/action :** Aller Maison→Bar A en voiture ; Retour Bar A→Maison en Taxi ; Bière ×2 à 6 €/unité, date samedi ; changer le lieu central vers Bar B.\n- **Conserver :** `contextOccurrenceId`, Bière ID/quantité/prix, date, participants, modes Aller/Retour et leurs IDs, départ Maison Aller et arrivée Maison Retour **si indépendants**.\n- **Requalifier :** seuls endpoints prouvés liés au bar ; distance et carburant Aller ; devis Taxi/parking dépendants. Si un endpoint a été personnalisé, le préserver ou demander clairement s'il doit suivre Bar B.\n- **Interaction :** confirmation courte **uniquement si** une donnée de trajet/quote admissible est menacée : « Les trajets vers le bar seront mis à jour ; les montants associés pourraient devoir être revus. » Proposer **Changer le bar** / **Conserver Bar A**, plus traitement des endpoints ambigus si nécessaire.\n- **Oracle :** la Bière reste 12 € de dépense prévue, le Retour reste Taxi ; nouveau coût voiture appartient uniquement à l'Aller ; aucune modification silencieuse d'un endpoint indépendant.",
+      "precondition": "- **Contexte/action :** Aller Maison→Bar A en voiture ; Retour Bar A→Maison en Taxi ; Bière ×2 à 6 €/unité, date samedi ; changer le lieu central vers Bar B.",
+      "assertion": "- **Oracle :** la Bière reste 12 € de dépense prévue, le Retour reste Taxi ; nouveau coût voiture appartient uniquement à l'Aller ; aucune modification silencieuse d'un endpoint indépendant."
+    },
+    {
+      "id": "ADV-12",
+      "title": "Changer seulement le véhicule de l'Aller",
+      "sourceText": "- **Contexte/action :** Aller Voiture avec véhicule V1, route et prix carburant éventuellement déclarés ; passer explicitement à véhicule V2.\n- **Conserver :** endpoints, arrêts indépendants, leg ID, mode Aller, leg Retour et tous autres composants ; prix manuel du litre si son autorité permet de le conserver.\n- **Requalifier :** consommation estimée, litres, coût d'usage du véhicule V2, preuves calculées V1 ; pas le tarif de la bière ni le taxi Retour.\n- **Interaction :** micro-indication « Le coût carburant sera recalculé avec le nouveau véhicule » ; confirmation si données significatives risquent d'être remplacées.\n- **Oracle :** invariants d'IDs, arrêts, source de prix carburant déclarée et séparation des legs.",
+      "precondition": "- **Contexte/action :** Aller Voiture avec véhicule V1, route et prix carburant éventuellement déclarés ; passer explicitement à véhicule V2.",
+      "assertion": "- **Oracle :** invariants d'IDs, arrêts, source de prix carburant déclarée et séparation des legs."
+    },
+    {
+      "id": "ADV-13",
+      "title": "Retour Voiture → Taxi",
+      "sourceText": "- **Contexte/action :** les deux sens étaient en Voiture ; changer seulement le mode du Retour en Taxi.\n- **Conserver :** Aller Voiture et son coût officiel, endpoints compatibles du Retour, identité de l'occurrence, tous produits.\n- **Requalifier :** retirer du **seul Retour** les dérivations véhicule, carburant, parking et péages qui ne s'appliquent plus ; demander un tarif de Taxi facultatif, `UNKNOWN` sinon.\n- **Interaction :** le Retour bascule visuellement vers 🚕 et ne demande pas de rechoisir l'Aller.\n- **Oracle :** une unique ligne carburant Aller (si résolue) ; aucun carburant Retour ; aucun montant Taxi inventé.",
+      "precondition": "- **Contexte/action :** les deux sens étaient en Voiture ; changer seulement le mode du Retour en Taxi.",
+      "assertion": "- **Oracle :** une unique ligne carburant Aller (si résolue) ; aucun carburant Retour ; aucun montant Taxi inventé."
+    },
+    {
+      "id": "ADV-14",
+      "title": "Changer la date après un devis de trajet",
+      "sourceText": "- **Contexte/action :** trajet défini avec devis daté D1 ; date de sortie D2 sélectionnée.\n- **Conserver :** lieu, personnes, endpoints, mode, véhicule, identité leg, prix Bière MANUAL.\n- **Requalifier :** devis dont validité temporelle est expirée, trafic/fournisseur/prix carburant/péages sensibles à D2 ; **ne pas effacer** les déclarations manifestement indépendantes de date.\n- **Interaction :** la nouvelle date apparaît immédiatement ; dans le bloc Trajets : « Tarif à vérifier » uniquement si l'ancien tarif était daté/incompatible. Si D2 sort du mois contractuel, refuser l'admission de date en conservant D1 et proposer une voie honnête.\n- **Oracle :** le coût de trajet affiché comme actuel a un digest compatible avec la date décidée ; pas d'ancienne quote FRESH recyclée.",
+      "precondition": "- **Contexte/action :** trajet défini avec devis daté D1 ; date de sortie D2 sélectionnée.",
+      "assertion": "- **Oracle :** le coût de trajet affiché comme actuel a un digest compatible avec la date décidée ; pas d'ancienne quote FRESH recyclée."
+    },
+    {
+      "id": "ADV-15",
+      "title": "Deux personnes deviennent quatre, Bière ITEM ×2",
+      "sourceText": "- **Contexte/action :** 2 participants puis ajout de 2 personnes ; Bière ×2 au total, prix unitaire 6 €.\n- **Conserver :** Bière = 2 unités et coût 12 € ; participants existants, nouvelles pastilles ajoutées ; transports inchangés.\n- **Requalifier :** aucune quantité ITEM. Des autres lignes PERSON peuvent devoir être vérifiées localement.\n- **Interaction :** les quatre pastilles apparaissent, aucune demande sur Bière.\n- **Oracle :** le poste ITEM n'est pas multiplié par quatre ; son `selectionId` et son unité restent stables.",
+      "precondition": "- **Contexte/action :** 2 participants puis ajout de 2 personnes ; Bière ×2 au total, prix unitaire 6 €.",
+      "assertion": "- **Oracle :** le poste ITEM n'est pas multiplié par quatre ; son `selectionId` et son unité restent stables."
+    },
+    {
+      "id": "ADV-16",
+      "title": "Cocktail PERSON avec nombre tarifé distinct des présents",
+      "sourceText": "- **Contexte/action :** Cocktail = 2 par personne × 2 personnes tarifées à 8 €, alors que 4 personnes sont affichées comme présentes ; retirer une présence ou en ajouter une.\n- **Conserver :** la quantité tarifée et sa preuve (`quantityPerPerson`, `pricedParticipantCount`) si les personnes *tarifées* étaient déclarées indépendamment ; les quatre pastilles ne sont pas des preuves de paiement.\n- **Requalifier :** seulement si la décision liait explicitement le nombre tarifé au groupe présent et que son périmètre n'est plus vrai ; sinon aucun recalcul.\n- **Interaction :** une micro-question sur **Cocktail** si lien réellement affecté : « Toujours pour 2 personnes ? » ; jamais un wizard pour toutes les boissons.\n- **Oracle :** valeur illustrative 2 × 2 × 8 = **32 €** selon le Compiler ; ajouter deux présences ne conduit pas automatiquement à 64 €.",
+      "precondition": "- **Contexte/action :** Cocktail = 2 par personne × 2 personnes tarifées à 8 €, alors que 4 personnes sont affichées comme présentes ; retirer une présence ou en ajouter une.",
+      "assertion": "- **Oracle :** valeur illustrative 2 × 2 × 8 = **32 €** selon le Compiler ; ajouter deux présences ne conduit pas automatiquement à 64 €."
+    },
+    {
+      "id": "ADV-17",
+      "title": "Bouteille SHARED pour cinq personnes",
+      "sourceText": "- **Contexte/action :** 1 bouteille partagée à 25 €, puis 5 participants sont sélectionnés ; plus tard un sixième arrive.\n- **Conserver :** 1 lot `SHARED` à 25 €, un seul poste économique. Personnes et finance séparées.\n- **Requalifier :** jamais le prix de la bouteille du fait du nombre de présents ; les contributions financières éventuelles relèvent d'une autre décision.\n- **Interaction :** tuile « Bouteille · partagée · 25 € » ; aucune saisie « nombre de personnes » nécessaire à son prix.\n- **Oracle :** l'agrégat du poste reste 25 € ; pas ×5 ni ×6.",
+      "precondition": "- **Contexte/action :** 1 bouteille partagée à 25 €, puis 5 participants sont sélectionnés ; plus tard un sixième arrive.",
+      "assertion": "- **Oracle :** l'agrégat du poste reste 25 € ; pas ×5 ni ×6."
+    },
+    {
+      "id": "ADV-18",
+      "title": "Prix historique fantôme de Bière",
+      "sourceText": "- **Contexte/action :** aucune source spécifique Bière/Bar publiée ; l'UX tente de suggérer « habituellement 6 € ».\n- **Conserver :** Bière ×1 UNKNOWN ; absence de prix exact. Les références mensuelles Restaurants restent hors contexte.\n- **Requalifier :** la suggestion chiffrée doit être supprimée de l'interface, pas présentée avec une provenance générique.\n- **Interaction :** champ court « Prix à préciser » ; possibilité de continuer sans montant.\n- **Oracle :** aucune valeur `MANUAL`, `QUOTE` ou `ESTIMATED` fabriquée par le frontend ; CardKnowledge `night-out` reste le verdict de la source.",
+      "precondition": "- **Contexte/action :** aucune source spécifique Bière/Bar publiée ; l'UX tente de suggérer « habituellement 6 € ».",
+      "assertion": "- **Oracle :** aucune valeur `MANUAL`, `QUOTE` ou `ESTIMATED` fabriquée par le frontend ; CardKnowledge `night-out` reste le verdict de la source."
+    },
+    {
+      "id": "ADV-19",
+      "title": "Prix exact admissible refusé, puis 8 € saisis",
+      "sourceText": "- **Contexte/action hypothétique futur :** une référence exacte est publiée pour un article, l'utilisateur clique « Saisir moi-même » puis décide 8 €.\n- **Conserver :** prix MANUAL 8 €, ID/quantité, provenance décision explicite. La suggestion refusée est une décision UX locale, pas une entrée métier financière.\n- **Requalifier :** toute nouvelle observation de prix survenant après ne doit pas écraser 8 €.\n- **Interaction :** la tuile n'ouvre plus spontanément « veux-tu utiliser le prix recommandé ? » à chaque réouverture.\n- **Oracle :** source prix stockée correctement, absence de remplacement silencieux ; cas noté `C2 / FUTURE`, pas fonctionnalité actuelle Bar.",
+      "precondition": "- **Contexte/action hypothétique futur :** une référence exacte est publiée pour un article, l'utilisateur clique « Saisir moi-même » puis décide 8 €.",
+      "assertion": "- **Oracle :** source prix stockée correctement, absence de remplacement silencieux ; cas noté `C2 / FUTURE`, pas fonctionnalité actuelle Bar."
+    },
+    {
+      "id": "ADV-20",
+      "title": "Montant global 30 € puis deux bières 8 € chacune",
+      "sourceText": "- **Contexte/action :** un montant global annoncé à 30 €, puis deux bières à 8 € sont détaillées.\n- **Conserver :** le coût global décidé et les deux bières distinctes, sans changer leurs identités.\n- **Requalifier :** **la relation**, pas les nombres : 30 € couvre-t-il les 16 € de bières ? Les 16 € sont-ils extras ? Ou 30 € désigne-t-il une contribution/entrée différente ?\n- **Interaction :** une seule clarification visuelle lorsque le conflit existe : « Les bières sont-elles comprises dans ces 30 € ? » Réponses admissibles **Comprises** / **En plus** / **Je ne sais pas** ; si le contrat ne sait pas persister précisément la réponse, bloquer la somme unique et conserver les lignes avec diagnostics.\n- **Oracle :** interdit d'afficher 46 € comme total certain sans preuve de caractère additif ; interdit aussi de remplacer automatiquement la dépense par 30 € en cachant les bières. Couverture assurée par Compiler, non par addition React.",
+      "precondition": "- **Contexte/action :** un montant global annoncé à 30 €, puis deux bières à 8 € sont détaillées.",
+      "assertion": "- **Oracle :** interdit d'afficher 46 € comme total certain sans preuve de caractère additif ; interdit aussi de remplacer automatiquement la dépense par 30 € en cachant les bières. Couverture assurée par Compiler, non par addition React."
+    },
+    {
+      "id": "ADV-21",
+      "title": "« Maximum 40 € » pris pour un coût",
+      "sourceText": "- **Contexte/action :** utilisateur dit « je veux me limiter à 40 € », ce qui est un **plafond**, non une estimation des dépenses.\n- **Conserver :** les dépenses connues et inconnues sans toucher à leur montant.\n- **Requalifier :** ne pas écrire `main=40 €` en prétendant que 40 € seront dépensés. Un vrai plafond requiert un contrat produit dédié C3, ou reste une intention non enregistrable honnêtement.\n- **Interaction :** clarifier à ce moment « Tu veux prévoir une dépense de 40 €, ou seulement ne pas dépasser 40 € ? » Si plafond non persistable : dire brièvement que Composer ne peut pas encore le conserver comme plafond, sans créer de faux coût.\n- **Oracle :** aucune dépense supplémentaire 40 € au Compiler/Finance V2. Le test ne doit pas être neutralisé par un simple changement de libellé.",
+      "precondition": "- **Contexte/action :** utilisateur dit « je veux me limiter à 40 € », ce qui est un **plafond**, non une estimation des dépenses.",
+      "assertion": "- **Oracle :** aucune dépense supplémentaire 40 € au Compiler/Finance V2. Le test ne doit pas être neutralisé par un simple changement de libellé."
+    },
+    {
+      "id": "ADV-22",
+      "title": "Prix Bière RAW puis clic sur Date",
+      "sourceText": "- **Contexte/action :** champ Bière passé de UNKNOWN à texte `6,50` non admis ; clic sur la date.\n- **Conserver :** Bière admise avec prix antérieur UNKNOWN ; texte RAW `6,50` tant que l'utilisateur n'a pas choisi son issue ; Date antérieure intacte.\n- **Requalifier :** aucune Preview officielle n'utilise 6,50 tant que le writer ne l'a pas admis.\n- **Interaction :** micro-gardien au niveau de Bière : **Enregistrer 6,50 €** / **Continuer à modifier** / **Abandonner la saisie** ; après l'issue, ouvrir directement le calendrier, sans revenir au menu principal.\n- **Oracle :** choisir Continuer ne modifie pas la date ; Abandonner conserve Bière UNKNOWN ; Enregistrer admet un prix puis permet une seule navigation Date.",
+      "precondition": "- **Contexte/action :** champ Bière passé de UNKNOWN à texte `6,50` non admis ; clic sur la date.",
+      "assertion": "- **Oracle :** choisir Continuer ne modifie pas la date ; Abandonner conserve Bière UNKNOWN ; Enregistrer admet un prix puis permet une seule navigation Date."
+    },
+    {
+      "id": "ADV-23",
+      "title": "Preview STALE pendant des modifications rapides",
+      "sourceText": "- **Contexte/action :** Bière prix 6 €, puis 8 € ; mise à jour du trajet ; réponses serveur désordonnées.\n- **Conserver :** le Draft et son ordre de décisions le plus récent ; états RAW ; dernier résultat officiel uniquement identifié comme ancien si son digest ne correspond pas.\n- **Requalifier :** toute Preview d'un digest précédent ne doit pas être affichée comme résultat actuel, ni remplacer la décision la plus récente.\n- **Interaction :** montant ancien éventuellement visible « Dernier calcul · actualisation… » ; l'objet Bière montre sa valeur **admise** 8 € ; pas de faux « 6 € actuels ».\n- **Oracle :** le résultat final `FRESH` est corrélé au digest final ; aucune valeur de serveur tardive ne détruit la saisie ou l'identité.",
+      "precondition": "- **Contexte/action :** Bière prix 6 €, puis 8 € ; mise à jour du trajet ; réponses serveur désordonnées.",
+      "assertion": "- **Oracle :** le résultat final `FRESH` est corrélé au digest final ; aucune valeur de serveur tardive ne détruit la saisie ou l'identité."
+    },
+    {
+      "id": "ADV-24",
+      "title": "Google 429 et résultat obsolète arrivé tard",
+      "sourceText": "- **Contexte/action :** saisir « Le C... », changer rapidement la requête ; l'ancienne réponse arrive ; la nouvelle demande échoue en 429.\n- **Conserver :** lieu déjà admis, toutes les décisions du Draft, texte de recherche présent.\n- **Requalifier :** les résultats transitoires d'une requête dépassée doivent être ignorés ; 429 n'invalide pas le bar déjà choisi.\n- **Interaction :** « Recherche indisponible, essaie plus tard ou choisis un lieu connu » et actions disponibles ; pas de page d'erreur bloquante.\n- **Oracle :** token/génération et abort protègent le choix ; impossible d'admettre l'ancien résultat par accident.",
+      "precondition": "- **Contexte/action :** saisir « Le C... », changer rapidement la requête ; l'ancienne réponse arrive ; la nouvelle demande échoue en 429.",
+      "assertion": "- **Oracle :** token/génération et abort protègent le choix ; impossible d'admettre l'ancien résultat par accident."
+    },
+    {
+      "id": "ADV-25",
+      "title": "TomTom / route / carburant indisponible",
+      "sourceText": "- **Contexte/action :** Aller Voiture avec endpoints canoniques et véhicule ; fournisseur retourne une erreur.\n- **Conserver :** choix Aller, véhicule, lieux, date, prix manuels indépendants et autres postes économiques.\n- **Requalifier :** distance/temps/litres/carburant officiel inconnus ou partiels. Ne pas inventer une route depuis un bar TEXT.\n- **Interaction :** ligne Aller « Itinéraire à estimer · Réessayer », sans fermer la carte ni bloquer l'ajout de Bière.\n- **Oracle :** aucun `0 €` présenté comme absence de carburant ; Preview peut rester PARTIAL/UNKNOWN sans détruite l'intention.",
+      "precondition": "- **Contexte/action :** Aller Voiture avec endpoints canoniques et véhicule ; fournisseur retourne une erreur.",
+      "assertion": "- **Oracle :** aucun `0 €` présenté comme absence de carburant ; Preview peut rester PARTIAL/UNKNOWN sans détruite l'intention."
+    },
+    {
+      "id": "ADV-26",
+      "title": "Ouvrir un ancien trajet aller-retour combiné",
+      "sourceText": "- **Contexte/action :** ancien modèle `returnRequired=true`, arrêts intermédiaires, coût et véhicule renseignés ; utilisateur clique « Modifier le retour » dans la nouvelle UI.\n- **Conserver :** trajet complet, endpoints, stops, véhicule, devis, montants, identité et relation propriétaire existants.\n- **Requalifier :** la conversion 1 leg combiné → 2 legs indépendants reste **non démontrée** ; pas de découpage destructif pour pouvoir afficher deux cartes de trajet.\n- **Interaction :** bloc « Trajet aller-retour existant » avec options détaillées et message bref au besoin « Modification séparée indisponible pour cet ancien trajet » ; l'utilisateur doit pouvoir revoir ses données.\n- **Oracle :** une tentative non représentable ne modifie pas le Draft. La règle de protection est préférable à une UI qui affiche une moitié manquante comme si elle était décidée.",
+      "precondition": "- **Contexte/action :** ancien modèle `returnRequired=true`, arrêts intermédiaires, coût et véhicule renseignés ; utilisateur clique « Modifier le retour » dans la nouvelle UI.",
+      "assertion": "- **Oracle :** une tentative non représentable ne modifie pas le Draft. La règle de protection est préférable à une UI qui affiche une moitié manquante comme si elle était décidée."
+    },
+    {
+      "id": "ADV-27",
+      "title": "Supprimer Bière puis Undo",
+      "sourceText": "- **Contexte/action :** Bière ×2 à 6 €, `selectionId=S`, financement éventuel, binding ; clic corbeille ; Undo.\n- **Conserver :** tous autres `selectionId`, legs et champs.\n- **Requalifier :** agrégation officielle après retrait puis après restitution, sans somme React concurrente.\n- **Interaction :** Bière disparaît directement ; Undo contextualisé disponible ; restaurer au même emplacement logique si possible.\n- **Oracle :** après Undo, `selectionId=S`, coût, unité, quantité, source et binding rigoureusement identiques. Si historique Undo n'est pas disponible après rechargement, ne pas le promettre.",
+      "precondition": "- **Contexte/action :** Bière ×2 à 6 €, `selectionId=S`, financement éventuel, binding ; clic corbeille ; Undo.",
+      "assertion": "- **Oracle :** après Undo, `selectionId=S`, coût, unité, quantité, source et binding rigoureusement identiques. Si historique Undo n'est pas disponible après rechargement, ne pas le promettre."
+    },
+    {
+      "id": "ADV-28",
+      "title": "Nouvelle session authentifiée, retour Taxi réédité",
+      "sourceText": "- **Contexte/action :** fermer l'application après sauvegarde durable ; nouvelle session autorisée ; rouvrir le même Bar, cliquer sur Retour Taxi.\n- **Conserver :** date, Bière, lieu, aller, voiture, participants ; identité Retour et tarif déclaré éventuel.\n- **Requalifier :** Preview selon les sources fraîchement autorisées, sans remplacer le Draft.\n- **Interaction :** directement Retour Taxi, endpoints affichés et prix accessible ; pas d'écran initial « Quel lieu ? ».\n- **Oracle :** Apply/READ/réédition et vraie sauvegarde HTTP/Supabase avec JWT/RLS exigent une recette authentifiée. Tant qu'elle n'a pas lieu : `NOT_RUN_AUTH`, même si PGlite synthétique est PASS.",
+      "precondition": "- **Contexte/action :** fermer l'application après sauvegarde durable ; nouvelle session autorisée ; rouvrir le même Bar, cliquer sur Retour Taxi.",
+      "assertion": "- **Oracle :** Apply/READ/réédition et vraie sauvegarde HTTP/Supabase avec JWT/RLS exigent une recette authentifiée. Tant qu'elle n'a pas lieu : `NOT_RUN_AUTH`, même si PGlite synthétique est PASS."
+    },
+    {
+      "id": "ADV-29",
+      "title": "Carte dense, largeur réduite et clavier",
+      "sourceText": "- **Contexte/action :** 8+ consommations, Before, 2 legs, 5 personnes ; ouverture sur petit desktop et sur mobile ; navigation clavier.\n- **Conserver :** identité, valeurs et place logique de chaque sous-asset ; scroll courant et focus si possible.\n- **Requalifier :** seule la présentation, jamais les montants financiers.\n- **Interaction :** une tuile active, autres tuiles compactes ; dock accessible ; un seul scroll vertical dominant ; pas de coupe horizontale ou carte voisine superposée ; Esc ferme tuile puis carte, avec RAW protégé.\n- **Oracle :** rectangles DOM et captures en plusieurs résolutions, vérification zoom et drag natif. Tests de `inventory-layout.ts` purs ≠ certification réelle.",
+      "precondition": "- **Contexte/action :** 8+ consommations, Before, 2 legs, 5 personnes ; ouverture sur petit desktop et sur mobile ; navigation clavier.",
+      "assertion": "- **Oracle :** rectangles DOM et captures en plusieurs résolutions, vérification zoom et drag natif. Tests de `inventory-layout.ts` purs ≠ certification réelle."
+    },
+    {
+      "id": "ADV-30",
+      "title": "Bar, Plan mensuel et autre paiement/financement",
+      "sourceText": "- **Contexte/action :** la soirée est partiellement couverte par une enveloppe mensuelle ; une autre opération bancaire réelle intervient ailleurs ; l'utilisateur consulte l'impact.\n- **Conserver :** le coût brut réel de l'intention, la source et l'identité de chaque décision, les autres opérations observées séparées.\n- **Requalifier :** seule la contribution marginale selon Compiler/Finance V2 ; l'enveloppe n'est pas ajoutée comme coût et le paiement réel n'est pas écrit par Composer.\n- **Interaction :** en-tête « coût prévu connu » ; impact sur le mois consultable ailleurs selon la restitution du produit ; pas de fausse « dépense supplémentaire » si le coût est déjà couvert.\n- **Oracle :** pas de double comptage entre projection Bar, réserve du Plan, couverture, paiement et carburant d'usage.",
+      "precondition": "- **Contexte/action :** la soirée est partiellement couverte par une enveloppe mensuelle ; une autre opération bancaire réelle intervient ailleurs ; l'utilisateur consulte l'impact.",
+      "assertion": "- **Oracle :** pas de double comptage entre projection Bar, réserve du Plan, couverture, paiement et carburant d'usage."
+    },
+    {
+      "id": "ADV-31",
+      "title": "Lieu du Bar remplacé après personnalisation d'un seul endpoint",
+      "sourceText": "- **Situation :** Bar A est central ; l'Aller finit volontairement chez un ami, puis on va ensemble au bar. Retour part bien de Bar A. On choisit Bar B comme lieu central.\n- **Risque :** appliquer aveuglément « Bar B = destination de l'Aller » détruit l'étape chez l'ami ; ne pas changer l'origine Retour peut aussi rendre le trajet incohérent.\n- **Décision V-R4 :** conserver l'Aller personnalisé ; ne mettre à jour que le Retour si son ancrage Bar est prouvé, sinon demander **sur cette ligne**. Un éventuel itinéraire multi-arrêts doit utiliser le contrat existant, pas être écrasé en deux endpoints simples.\n- **Micro-UX :** « Ton aller passe par un autre endroit. Le conserver ? » uniquement si le remplacement toucherait les arrêts. Pas de double formulaire d'adresses.",
+      "precondition": "- **Situation :** Bar A est central ; l'Aller finit volontairement chez un ami, puis on va ensemble au bar. Retour part bien de Bar A. On choisit Bar B comme lieu central.",
+      "assertion": "- **Décision V-R4 :** conserver l'Aller personnalisé ; ne mettre à jour que le Retour si son ancrage Bar est prouvé, sinon demander **sur cette ligne**. Un éventuel itinéraire multi-arrêts doit utiliser le contrat existant, pas être écrasé en deux endpoints simples."
+    },
+    {
+      "id": "ADV-32",
+      "title": "Faire « Retour comme à l'aller », puis changer seulement l'Aller",
+      "sourceText": "- **Situation :** Aller Maison→Bar Voiture ; raccourci Retour même mode crée Bar→Maison Voiture ; ensuite Aller part de Travail.\n- **Risque :** le Retour se retrouve Travail par simple copie tardive, bien que l'utilisateur ait déjà décidé Maison comme arrivée.\n- **Décision V-R4 :** le raccourci de création ne vaut pas lien de synchronisation perpétuelle. Conserver Maison Retour, sauf lien explicite et choix de mise à jour ; les deux legs restent indépendants.\n- **Micro-UX :** afficher l'arrivée du Retour déjà décidée ; action « Faire aussi rentrer au nouveau départ » seulement à la demande.",
+      "precondition": "- **Situation :** Aller Maison→Bar Voiture ; raccourci Retour même mode crée Bar→Maison Voiture ; ensuite Aller part de Travail.",
+      "assertion": "- **Décision V-R4 :** le raccourci de création ne vaut pas lien de synchronisation perpétuelle. Conserver Maison Retour, sauf lien explicite et choix de mise à jour ; les deux legs restent indépendants."
+    },
+    {
+      "id": "ADV-33",
+      "title": "Taxi à 12 € déclaré manuellement, puis autre bar",
+      "sourceText": "- **Situation :** Retour Taxi 12 € pour Bar A→Maison ; changement de Bar A vers Bar B.\n- **Risque :** (a) recopier 12 € comme un prix confirmé pour B ; (b) effacer 12 € sans avertir, puis l'utilisateur ne sait plus quel devis il avait indiqué.\n- **Décision V-R4 :** afficher l'impact avant mutation : « Le prix du taxi peut changer ». Deux issues compatibles à **valider par le propriétaire** : **Garder 12 € comme nouvelle estimation déclarée pour B** (geste explicite) ou **Mettre le prix à préciser**. En absence de moyen sûr de conserver un ancien repère hors calcul, ne pas prétendre qu'il persistera après rechargement.\n- **Micro-UX :** deux cartes de choix dans le bloc Retour, pas une page de formulaire sur les financements.",
+      "precondition": "- **Situation :** Retour Taxi 12 € pour Bar A→Maison ; changement de Bar A vers Bar B.",
+      "assertion": "- **Décision V-R4 :** afficher l'impact avant mutation : « Le prix du taxi peut changer ». Deux issues compatibles à **valider par le propriétaire** : **Garder 12 € comme nouvelle estimation déclarée pour B** (geste explicite) ou **Mettre le prix à préciser**. En absence de moyen sûr de conserver un ancien repère hors calcul, ne pas prétendre qu'il persistera après rechargement."
+    },
+    {
+      "id": "ADV-34",
+      "title": "Tarif de péage exact mais nouveau véhicule",
+      "sourceText": "- **Situation :** même itinéraire, même date, péage manuel 4 € ; changement du véhicule.\n- **Risque :** effacer les 4 € parce que le carburant est recalculé, ou les confondre avec un devis de carburant.\n- **Décision V-R4 :** conserver un péage manuel indépendant du véhicule si route/classes tarifaires restent compatibles selon le contrat ; requalifier uniquement si classe de véhicule ou route modifiée rend le montant incertain. Jamais une invalidation « tous les frais de Voiture » par défaut.\n- **Micro-UX :** l'Aller montre « Carburant en recalcul · Péage 4 € déclaré » lorsqu'il y a réellement indépendance.",
+      "precondition": "- **Situation :** même itinéraire, même date, péage manuel 4 € ; changement du véhicule.",
+      "assertion": "- **Décision V-R4 :** conserver un péage manuel indépendant du véhicule si route/classes tarifaires restent compatibles selon le contrat ; requalifier uniquement si classe de véhicule ou route modifiée rend le montant incertain. Jamais une invalidation « tous les frais de Voiture » par défaut."
+    },
+    {
+      "id": "ADV-35",
+      "title": "Réponse Google homonyme pendant fermeture de carte",
+      "sourceText": "- **Situation :** recherche VENUE en cours ; utilisateur quitte la carte, revient et tape un autre lieu.\n- **Risque :** ancienne requête complète le mauvais champ ou déclenche une suggestion trompeuse.\n- **Décision V-R4 :** annuler les requêtes et invalider la génération de résultats à la fermeture/changement de lieu ; aucun résultat asynchrone n'admet une décision sans nouveau clic.\n- **Micro-UX :** le nouveau champ de recherche affiche la requête actuelle, jamais les anciennes suggestions de la carte précédente.",
+      "precondition": "- **Situation :** recherche VENUE en cours ; utilisateur quitte la carte, revient et tape un autre lieu.",
+      "assertion": "- **Décision V-R4 :** annuler les requêtes et invalider la génération de résultats à la fermeture/changement de lieu ; aucun résultat asynchrone n'admet une décision sans nouveau clic."
+    },
+    {
+      "id": "ADV-36",
+      "title": "Prix saisi « 0 » volontairement",
+      "sourceText": "- **Situation :** Bière à prix UNKNOWN ; utilisateur entre `0` et confirme.\n- **Risque :** traiter 0 comme une absence de prix ou marquer la Bière « inconnue » après rechargement.\n- **Décision V-R4 :** `MANUAL 0` explicite persiste comme zéro déclaré ; entrée vide est `UNKNOWN` uniquement après choix adéquat.\n- **Micro-UX :** « 0 € déclaré » éventuellement « gratuit » seulement si la sémantique l'autorise ; ne pas afficher « prix à préciser » pour un zéro validé.",
+      "precondition": "- **Situation :** Bière à prix UNKNOWN ; utilisateur entre `0` et confirme.",
+      "assertion": "- **Décision V-R4 :** `MANUAL 0` explicite persiste comme zéro déclaré ; entrée vide est `UNKNOWN` uniquement après choix adéquat."
+    },
+    {
+      "id": "ADV-37",
+      "title": "Bière ×1 à 6 €, puis une deuxième à 8 € dans le même bar",
+      "sourceText": "- **Situation :** deux achats prévus de même type mais à des prix différents.\n- **Risque :** fusion automatique Bière ×2 à 6 €, ou remplacement du premier prix.\n- **Décision V-R4 :** deux lignes avec deux `selectionId`, prix propres, sauf regroupement expressément décidé et compatible. Un re-clic peut augmenter la quantité seulement lorsque tous les attributs pertinents concordent.\n- **Micro-UX :** la tuile active offre `+ quantité` ; dans le dock un choix « Nouvelle bière » permet un autre prix sans effacer la première.",
+      "precondition": "- **Situation :** deux achats prévus de même type mais à des prix différents.",
+      "assertion": "- **Décision V-R4 :** deux lignes avec deux `selectionId`, prix propres, sauf regroupement expressément décidé et compatible. Un re-clic peut augmenter la quantité seulement lorsque tous les attributs pertinents concordent."
+    },
+    {
+      "id": "ADV-38",
+      "title": "Un before et une consommation au bar utilisent le même produit",
+      "sourceText": "- **Situation :** Bouteille dans Before à 25 €, puis Bouteille dans le bar à 40 €.\n- **Risque :** dédoublonnage par nom/assetKey, ou parent Before économiquement ajouté à ses propres sous-composants.\n- **Décision V-R4 :** conserver deux identités, deux emplacements et deux intentions de paiement. Le parent Before ne rajoute aucun montant si l'enfant porte déjà le coût.\n- **Micro-UX :** groupe « Avant de sortir » distinct de « Au bar » ; icônes semblables autorisées mais groupe et quantité visibles.",
+      "precondition": "- **Situation :** Bouteille dans Before à 25 €, puis Bouteille dans le bar à 40 €.",
+      "assertion": "- **Décision V-R4 :** conserver deux identités, deux emplacements et deux intentions de paiement. Le parent Before ne rajoute aucun montant si l'enfant porte déjà le coût."
+    },
+    {
+      "id": "ADV-39",
+      "title": "Suppression d'un Before ayant plusieurs enfants",
+      "sourceText": "- **Situation :** Before contient Bouteille, Diluant et autre élément, avec sources distinctes.\n- **Risque :** supprimer l'ensemble en croyant retirer une seule tuile ; Undo partiel des enfants.\n- **Décision V-R4 :** au clic corbeille du **groupe**, confirmation spécifique « Retirer le Before et ses 3 éléments ? » ; sur la **tuile Bouteille**, suppression de la Bouteille seulement si contrat du sous-contexte le permet. Undo du groupe restitue structure et IDs.\n- **Micro-UX :** la confirmation nomme exactement ce qui part ; pas d'option cachée dans « Autres actions et détails ».",
+      "precondition": "- **Situation :** Before contient Bouteille, Diluant et autre élément, avec sources distinctes.",
+      "assertion": "- **Décision V-R4 :** au clic corbeille du **groupe**, confirmation spécifique « Retirer le Before et ses 3 éléments ? » ; sur la **tuile Bouteille**, suppression de la Bouteille seulement si contrat du sous-contexte le permet. Undo du groupe restitue structure et IDs."
+    },
+    {
+      "id": "ADV-40",
+      "title": "Un total et une ligne détaillée changent d'unité tarifaire",
+      "sourceText": "- **Situation :** 30 € couvre deux cocktails au total ; l'utilisateur bascule Cocktail de ITEM à PERSON.\n- **Risque :** Compiler reçoit à la fois 30 € couvrant un périmètre et un nombre tarifé incompatible, ou multiplie 30 € par les participants.\n- **Décision V-R4 :** préserver le total 30 € ; demander **sur Cocktail** son nouveau nombre tarifé si nécessaire, puis requalifier la couverture si le périmètre des détails ne correspond plus. Refuser l'agrégat certain tant que le contrat de binding ne prouve pas la relation.\n- **Micro-UX :** pas de menu global Prix / Unité / Budget successif ; clarification locale uniquement.",
+      "precondition": "- **Situation :** 30 € couvre deux cocktails au total ; l'utilisateur bascule Cocktail de ITEM à PERSON.",
+      "assertion": "- **Décision V-R4 :** préserver le total 30 € ; demander **sur Cocktail** son nouveau nombre tarifé si nécessaire, puis requalifier la couverture si le périmètre des détails ne correspond plus. Refuser l'agrégat certain tant que le contrat de binding ne prouve pas la relation."
+    },
+    {
+      "id": "ADV-41",
+      "title": "Une source de financement dépasse le nouveau coût",
+      "sourceText": "- **Situation :** Bière déclarée 12 €, allocation admissible éventuelle 12 € ; prix passe à 8 €.\n- **Risque :** conserver une allocation de 12 € sur coût 8 € ou réduire silencieusement un financement sans consentement.\n- **Décision V-R4 :** réévaluer la validité de l'allocation via le propriétaire ; si conflit, demander de corriger **cette allocation** ou revenir à l'ancienne décision, sans modifier le coût brut 8 € de manière arbitraire.\n- **Micro-UX :** message bref attaché au financement : « Allocation 12 € supérieure au coût 8 €. À ajuster. » Réparation ciblée, pas formulaire de l'ensemble de la soirée.",
+      "precondition": "- **Situation :** Bière déclarée 12 €, allocation admissible éventuelle 12 € ; prix passe à 8 €.",
+      "assertion": "- **Décision V-R4 :** réévaluer la validité de l'allocation via le propriétaire ; si conflit, demander de corriger **cette allocation** ou revenir à l'ancienne décision, sans modifier le coût brut 8 € de manière arbitraire."
+    },
+    {
+      "id": "ADV-42",
+      "title": "Le retour Taxi a été déclaré « trajet partagé » avec une autre intention",
+      "sourceText": "- **Situation :** le Retour référence un owner externe du trajet (`targetIntentId` / relation), puis l'utilisateur change le bar.\n- **Risque :** transformer la relation en `OWNS_JOURNEY`, ajouter un prix local et doubler le propriétaire externe.\n- **Décision V-R4 :** conserver la relation et la requalifier `POSSIBLE` lorsqu'elle n'est plus prouvée ; demander une réparation du lien, pas créer automatiquement un nouveau Taxi payant.\n- **Micro-UX :** une pastille « Trajet lié · à vérifier » sur Retour, avec choix **Voir le trajet lié** / **Modifier la relation** si publiés.",
+      "precondition": "- **Situation :** le Retour référence un owner externe du trajet (`targetIntentId` / relation), puis l'utilisateur change le bar.",
+      "assertion": "- **Décision V-R4 :** conserver la relation et la requalifier `POSSIBLE` lorsqu'elle n'est plus prouvée ; demander une réparation du lien, pas créer automatiquement un nouveau Taxi payant."
+    },
+    {
+      "id": "ADV-43",
+      "title": "Date modifiée au-delà de la fin du mois du Plan",
+      "sourceText": "- **Situation :** sortie prévue en octobre, utilisateur choisit un jour de novembre depuis un calendrier de carte.\n- **Risque :** changer le mois par simple date, ou accepter une intention qui sort silencieusement de la portée actuelle.\n- **Décision V-R4 :** la mutation doit respecter le contrat de mois ; si hors périmètre, conserver l'ancienne date et afficher « Cette soirée appartient à un autre mois » avec une action officielle de déplacement si elle existe. Sinon signaler limite sans faux enregistrement.\n- **Micro-UX :** prévenir au moment du jour incompatible ; pas de perte du reste du Bar.",
+      "precondition": "- **Situation :** sortie prévue en octobre, utilisateur choisit un jour de novembre depuis un calendrier de carte.",
+      "assertion": "- **Décision V-R4 :** la mutation doit respecter le contrat de mois ; si hors périmètre, conserver l'ancienne date et afficher « Cette soirée appartient à un autre mois » avec une action officielle de déplacement si elle existe. Sinon signaler limite sans faux enregistrement."
+    },
+    {
+      "id": "ADV-44",
+      "title": "Context protégé ou lecture seule",
+      "sourceText": "- **Situation :** Bar est `PRESERVE`, ancré ou en mode read-only ; l'utilisateur veut cliquer sur Bière pour changer le prix.\n- **Risque :** une tuile semble éditable mais le serveur rejette, puis la valeur locale donne l'illusion d'être sauvegardée.\n- **Décision V-R4 :** tout reste consultable, actions de mutation clairement indisponibles avec explication courte ; aucune valeur RAW présentée comme durable.\n- **Micro-UX :** le clic ouvre un détail en lecture seule ; une action « Modifier la protection » n'existe que si capacité autorisée.",
+      "precondition": "- **Situation :** Bar est `PRESERVE`, ancré ou en mode read-only ; l'utilisateur veut cliquer sur Bière pour changer le prix.",
+      "assertion": "- **Décision V-R4 :** tout reste consultable, actions de mutation clairement indisponibles avec explication courte ; aucune valeur RAW présentée comme durable."
+    },
+    {
+      "id": "ADV-45",
+      "title": "Appuyer sur Retour, Actualiser et Undo pendant un réseau instable",
+      "sourceText": "- **Situation :** sauvegarde du prix en cours ; utilisateur clique Undo puis ferme ; réponse HTTP de l'ancienne demande arrive ensuite.\n- **Risque :** réponse tardive écrase Undo, modification appliquée deux fois ou statut « sauvegardé » mensonger.\n- **Décision V-R4 :** ordre officiel, digests, idempotence et lecture de résolution sont prioritaires. Si issue incertaine, l'interface protège l'action future et demande une vérification de l'état durable, plutôt que rejouer destructivement.\n- **Micro-UX :** « Vérification de la sauvegarde… » lorsqu'il y a un vrai conflit, avec dernière décision visible et chemin de reprise ; pas d'alerte intrusive à chaque Preview normale.",
+      "precondition": "- **Situation :** sauvegarde du prix en cours ; utilisateur clique Undo puis ferme ; réponse HTTP de l'ancienne demande arrive ensuite.",
+      "assertion": "- **Décision V-R4 :** ordre officiel, digests, idempotence et lecture de résolution sont prioritaires. Si issue incertaine, l'interface protège l'action future et demande une vérification de l'état durable, plutôt que rejouer destructivement."
+    }
+  ],
+  "oracles": [
+    {
+      "id": "O-01",
+      "title": "O-01 identité",
+      "precondition": "Bière, Retour et Context déjà admis",
+      "assertion": "Un changement de Bar ne change aucun `selectionId` indépendant",
+      "gate": "Métier",
+      "originalRow": "| O-01 identité | Bière, Retour et Context déjà admis | Un changement de Bar ne change aucun `selectionId` indépendant | Métier |"
+    },
+    {
+      "id": "O-02",
+      "title": "O-02 partialité",
+      "precondition": "Bière UNKNOWN",
+      "assertion": "Bière persistée ; coût `UNKNOWN`, pas `MANUAL 0`",
+      "gate": "Finance",
+      "originalRow": "| O-02 partialité | Bière UNKNOWN | Bière persistée ; coût `UNKNOWN`, pas `MANUAL 0` | Finance |"
+    },
+    {
+      "id": "O-03",
+      "title": "O-03 prix MANUAL zéro",
+      "precondition": "Bière explicitement confirmée à 0",
+      "assertion": "0 persisté et distinct de prix absent",
+      "gate": "Finance",
+      "originalRow": "| O-03 prix MANUAL zéro | Bière explicitement confirmée à 0 | 0 persisté et distinct de prix absent | Finance |"
+    },
+    {
+      "id": "O-04",
+      "title": "O-04 unité ITEM",
+      "precondition": "2 bières à 6 €, cinq participants",
+      "assertion": "Sous-total de la Bière = 12 €",
+      "gate": "Finance",
+      "originalRow": "| O-04 unité ITEM | 2 bières à 6 €, cinq participants | Sous-total de la Bière = 12 € | Finance |"
+    },
+    {
+      "id": "O-05",
+      "title": "O-05 unité PERSON",
+      "precondition": "2 × 2 × 8, autres participants présents",
+      "assertion": "Sous-total = 32 € tant que nombre tarifé autonome",
+      "gate": "Finance",
+      "originalRow": "| O-05 unité PERSON | 2 × 2 × 8, autres participants présents | Sous-total = 32 € tant que nombre tarifé autonome | Finance |"
+    },
+    {
+      "id": "O-06",
+      "title": "O-06 unité SHARED",
+      "precondition": "Bouteille 25 €, six invités",
+      "assertion": "25 €, pas 150 €",
+      "gate": "Finance",
+      "originalRow": "| O-06 unité SHARED | Bouteille 25 €, six invités | 25 €, pas 150 € | Finance |"
+    },
+    {
+      "id": "O-07",
+      "title": "O-07 global-couverture",
+      "precondition": "Global 30 €, détails 16 €",
+      "assertion": "Pas de somme additive 46 € sans relation admise",
+      "gate": "Finance",
+      "originalRow": "| O-07 global-couverture | Global 30 €, détails 16 € | Pas de somme additive 46 € sans relation admise | Finance |"
+    },
+    {
+      "id": "O-08",
+      "title": "O-08 enveloppe",
+      "precondition": "Plafond 40 € exprimé comme tel",
+      "assertion": "Pas d'écriture de 40 € comme dépense",
+      "gate": "Finance",
+      "originalRow": "| O-08 enveloppe | Plafond 40 € exprimé comme tel | Pas d'écriture de 40 € comme dépense | Finance |"
+    },
+    {
+      "id": "O-09",
+      "title": "O-09 trajet dirigé",
+      "precondition": "Aller 10 km voiture, Retour taxi",
+      "assertion": "Carburant usage Aller une fois ; aucune voiture Retour",
+      "gate": "Mobility",
+      "originalRow": "| O-09 trajet dirigé | Aller 10 km voiture, Retour taxi | Carburant usage Aller une fois ; aucune voiture Retour | Mobility |"
+    },
+    {
+      "id": "O-10",
+      "title": "O-10 même mode",
+      "precondition": "Retour créé explicitement",
+      "assertion": "Nouveau leg/ID, tarifs non copiés",
+      "gate": "Mobility",
+      "originalRow": "| O-10 même mode | Retour créé explicitement | Nouveau leg/ID, tarifs non copiés | Mobility |"
+    },
+    {
+      "id": "O-11",
+      "title": "O-11 endpoint personnalisé",
+      "precondition": "Retour modifié après raccourci",
+      "assertion": "Départ/arrivée personnalisés conservés lors de modifications non liées",
+      "gate": "Métier",
+      "originalRow": "| O-11 endpoint personnalisé | Retour modifié après raccourci | Départ/arrivée personnalisés conservés lors de modifications non liées | Métier |"
+    },
+    {
+      "id": "O-12",
+      "title": "O-12 voiture→taxi Retour",
+      "precondition": "Deux legs voiture initiaux",
+      "assertion": "Aucun carburant Retour et aucun changement Aller",
+      "gate": "Mobility",
+      "originalRow": "| O-12 voiture→taxi Retour | Deux legs voiture initiaux | Aucun carburant Retour et aucun changement Aller | Mobility |"
+    },
+    {
+      "id": "O-13",
+      "title": "O-13 véhicule",
+      "precondition": "Carburant manuel et arrêts",
+      "assertion": "Préservation des éléments pertinents, dérivations recalculées",
+      "gate": "Mobility",
+      "originalRow": "| O-13 véhicule | Carburant manuel et arrêts | Préservation des éléments pertinents, dérivations recalculées | Mobility |"
+    },
+    {
+      "id": "O-14",
+      "title": "O-14 date et devis",
+      "precondition": "Quote D1 puis date D2",
+      "assertion": "Quote jamais présentée FRESH sans compatibilité",
+      "gate": "Finance / Mobility",
+      "originalRow": "| O-14 date et devis | Quote D1 puis date D2 | Quote jamais présentée FRESH sans compatibilité | Finance / Mobility |"
+    },
+    {
+      "id": "O-15",
+      "title": "O-15 prestataire mort",
+      "precondition": "TomTom indisponible",
+      "assertion": "Intentions maintenues, montant inconnu",
+      "gate": "Résilience",
+      "originalRow": "| O-15 prestataire mort | TomTom indisponible | Intentions maintenues, montant inconnu | Résilience |"
+    },
+    {
+      "id": "O-16",
+      "title": "O-16 Google ambigu",
+      "precondition": "Deux bars du même nom",
+      "assertion": "Choix exact, aucun remapping fuzzy",
+      "gate": "Identité",
+      "originalRow": "| O-16 Google ambigu | Deux bars du même nom | Choix exact, aucun remapping fuzzy | Identité |"
+    },
+    {
+      "id": "O-17",
+      "title": "O-17 Google bloqué",
+      "precondition": "Nouveau Google Place",
+      "assertion": "Aucune référence canonique fictive ni distance à partir du label",
+      "gate": "Identité",
+      "originalRow": "| O-17 Google bloqué | Nouveau Google Place | Aucune référence canonique fictive ni distance à partir du label | Identité |"
+    },
+    {
+      "id": "O-18",
+      "title": "O-18 refus suggestion",
+      "precondition": "Maison proposée puis écartée",
+      "assertion": "Aucune mutation de la carte",
+      "gate": "UX",
+      "originalRow": "| O-18 refus suggestion | Maison proposée puis écartée | Aucune mutation de la carte | UX |"
+    },
+    {
+      "id": "O-19",
+      "title": "O-19 RAW",
+      "precondition": "Prix en cours puis clic Date",
+      "assertion": "Trois issues honnêtes, aucune perte silencieuse",
+      "gate": "UX / données",
+      "originalRow": "| O-19 RAW | Prix en cours puis clic Date | Trois issues honnêtes, aucune perte silencieuse | UX / données |"
+    },
+    {
+      "id": "O-20",
+      "title": "O-20 admission rejetée",
+      "precondition": "Server refuse une mutation",
+      "assertion": "RAW intact, Draft précédent conservé",
+      "gate": "Résilience",
+      "originalRow": "| O-20 admission rejetée | Server refuse une mutation | RAW intact, Draft précédent conservé | Résilience |"
+    },
+    {
+      "id": "O-21",
+      "title": "O-21 réponses inversées",
+      "precondition": "Deux modifications rapides",
+      "assertion": "Digest final aligné sur dernière décision admise",
+      "gate": "Concurrentiel",
+      "originalRow": "| O-21 réponses inversées | Deux modifications rapides | Digest final aligné sur dernière décision admise | Concurrentiel |"
+    },
+    {
+      "id": "O-22",
+      "title": "O-22 Undo Bière",
+      "precondition": "Retrait puis Undo",
+      "assertion": "Même `selectionId`, mêmes prix et unités",
+      "gate": "Historique",
+      "originalRow": "| O-22 Undo Bière | Retrait puis Undo | Même `selectionId`, mêmes prix et unités | Historique |"
+    },
+    {
+      "id": "O-23",
+      "title": "O-23 Undo lieu",
+      "precondition": "Changement atomique de Bar/route",
+      "assertion": "Même ancienne paire lieu/endpoints rétablie",
+      "gate": "Historique",
+      "originalRow": "| O-23 Undo lieu | Changement atomique de Bar/route | Même ancienne paire lieu/endpoints rétablie | Historique |"
+    },
+    {
+      "id": "O-24",
+      "title": "O-24 avant/enfant",
+      "precondition": "Before à trois items",
+      "assertion": "Suppression/restauration hiérarchiques sans parent additionnel",
+      "gate": "Métier / finance",
+      "originalRow": "| O-24 avant/enfant | Before à trois items | Suppression/restauration hiérarchiques sans parent additionnel | Métier / finance |"
+    },
+    {
+      "id": "O-25",
+      "title": "O-25 vieux trajet",
+      "precondition": "`returnRequired=true`, stops",
+      "assertion": "Aucune conversion silencieuse ni perte",
+      "gate": "Rétrocompatibilité",
+      "originalRow": "| O-25 vieux trajet | `returnRequired=true`, stops | Aucune conversion silencieuse ni perte | Rétrocompatibilité |"
+    },
+    {
+      "id": "O-26",
+      "title": "O-26 sauvegarde HTTP",
+      "precondition": "Fermer / recharger",
+      "assertion": "Même Context, composants, legs et prix admis",
+      "gate": "Persistance",
+      "originalRow": "| O-26 sauvegarde HTTP | Fermer / recharger | Même Context, composants, legs et prix admis | Persistance |"
+    },
+    {
+      "id": "O-27",
+      "title": "O-27 auth réelle",
+      "precondition": "Nouvelle session JWT autorisée",
+      "assertion": "Même données, droits RLS et réédition ciblée",
+      "gate": "Auth, NON CERTIFIÉ",
+      "originalRow": "| O-27 auth réelle | Nouvelle session JWT autorisée | Même données, droits RLS et réédition ciblée | Auth, NON CERTIFIÉ |"
+    },
+    {
+      "id": "O-28",
+      "title": "O-28 Preview finale",
+      "precondition": "Draft digest D2",
+      "assertion": "Source montant = Preview FRESH de D2, pas D1",
+      "gate": "Finance",
+      "originalRow": "| O-28 Preview finale | Draft digest D2 | Source montant = Preview FRESH de D2, pas D1 | Finance |"
+    },
+    {
+      "id": "O-29",
+      "title": "O-29 présentation dense",
+      "precondition": "8+ items, plusieurs pages",
+      "assertion": "Pas d'overlap horizontal, focus/tuiles retrouvables",
+      "gate": "Navigateur, NON CERTIFIÉ",
+      "originalRow": "| O-29 présentation dense | 8+ items, plusieurs pages | Pas d'overlap horizontal, focus/tuiles retrouvables | Navigateur, NON CERTIFIÉ |"
+    },
+    {
+      "id": "O-30",
+      "title": "O-30 clavier/souris",
+      "precondition": "Calendrier, corbeille, dock, RAW",
+      "assertion": "Échap/focus/Enter et drag natif cohérents",
+      "gate": "Navigateur",
+      "originalRow": "| O-30 clavier/souris | Calendrier, corbeille, dock, RAW | Échap/focus/Enter et drag natif cohérents | Navigateur |"
+    },
+    {
+      "id": "O-31",
+      "title": "O-31 financière",
+      "precondition": "Plan, couverture, financement",
+      "assertion": "Coût brut non altéré, impact marginal officié, aucune opération payée créée",
+      "gate": "Finance",
+      "originalRow": "| O-31 financière | Plan, couverture, financement | Coût brut non altéré, impact marginal officié, aucune opération payée créée | Finance |"
+    },
+    {
+      "id": "O-32",
+      "title": "O-32 scope mois",
+      "precondition": "Date hors mois accepté par UI ?",
+      "assertion": "Refus/sélection conforme au contrat, autres décisions intactes",
+      "gate": "Validation",
+      "originalRow": "| O-32 scope mois | Date hors mois accepté par UI ? | Refus/sélection conforme au contrat, autres décisions intactes | Validation |"
+    },
+    {
+      "id": "O-33",
+      "title": "O-33 sécurité lecture seule",
+      "precondition": "Context protégé",
+      "assertion": "Aucune édition affichée comme sauvée",
+      "gate": "Contrat",
+      "originalRow": "| O-33 sécurité lecture seule | Context protégé | Aucune édition affichée comme sauvée | Contrat |"
+    },
+    {
+      "id": "O-34",
+      "title": "O-34 montage/démontage",
+      "precondition": "Choix Bière puis reflow rapide",
+      "assertion": "Tuile identité stable, pas de double admission",
+      "gate": "React/DOM",
+      "originalRow": "| O-34 montage/démontage | Choix Bière puis reflow rapide | Tuile identité stable, pas de double admission | React/DOM |"
+    },
+    {
+      "id": "O-35",
+      "title": "O-35 réouverture d'un coût",
+      "precondition": "Tuile existante sélectionnée",
+      "assertion": "Édition directe de cette identité, pas ajout d'un clone",
+      "gate": "UX / métier",
+      "originalRow": "| O-35 réouverture d'un coût | Tuile existante sélectionnée | Édition directe de cette identité, pas ajout d'un clone | UX / métier |"
+    }
+  ]
+}

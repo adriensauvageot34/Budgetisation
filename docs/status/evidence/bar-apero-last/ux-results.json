@@ -1,0 +1,42 @@
+{
+  "proof": "REACT_TRANSITIONS_NOT_BROWSER_GEOMETRY",
+  "checks": [
+    {
+      "name": "FINAL-UX-01_06_DATE_SCENE_NO_DENSE_ITEMS_CONTEXTUAL_DOCK",
+      "status": "PASS"
+    },
+    {
+      "name": "FINAL-UX-02_VENUE_PRIMARY_SEARCH_NOT_AFTER_ITEMS",
+      "status": "PASS"
+    },
+    {
+      "name": "FINAL-UX-04_PAGED_15_DRINKS_9_BEFORE_REACH_ALL_IDS",
+      "status": "PASS"
+    },
+    {
+      "name": "FINAL-UX-03_TARGETED_REEDIT_CLEAN_CARD_NO_CLONE",
+      "status": "PASS"
+    },
+    {
+      "name": "FINAL-UX-04_LAST_PARTICIPANT_PAGE_REMOVE_RETAINS_ACCESS",
+      "status": "PASS"
+    },
+    {
+      "name": "FINAL-UX-05_BEFORE_MINIATURE_DIRECT_CHILD_TARGET",
+      "status": "PASS"
+    },
+    {
+      "name": "FINAL-DELETE-01_02_SECONDARY_ACCESSIBLE_REMOVAL_PENDING_HONEST",
+      "status": "PASS"
+    },
+    {
+      "name": "FINAL-DELETE-05_REAL_SHELL_PENDING_REJECTION_SUCCESS_UNDO",
+      "status": "PASS"
+    }
+  ],
+  "remoteWrites": 0,
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  }
+}

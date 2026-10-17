@@ -1,0 +1,18 @@
+diff --git a/src/app/mois-a-venir/composer/bar-living-editor.tsx b/src/app/mois-a-venir/composer/bar-living-editor.tsx
+index c937e22..8098beb 100644
+--- a/src/app/mois-a-venir/composer/bar-living-editor.tsx
++++ b/src/app/mois-a-venir/composer/bar-living-editor.tsx
+@@ -145,7 +145,12 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
+     const apply=()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{main:[value],...(quickTotal?{extras:[]}: {})}}},"drinks");
+     if(quickTotal&&barItems(context,"extras").length){confirm({message:"Remplacer les consommations détaillées par ce total ? Leur coût ne sera pas additionné. Repas, before et trajets restent indépendants et conservés. Undo permet de revenir aux détails.",acceptLabel:"Remplacer par le total",accept:apply});return false;}return apply();
+   }catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez le montant.");return false;}};
+-  const remove=()=>{if(slot.startsWith("before-")){if(slot==="before-main"){setError("Le Before exige un composant principal. Modifiez-le ou retirez le groupe entier avec sa confirmation.");return;}if(before)decide(barBeforePatch(props.semanticState,context,before.bottle,before.extras.filter(item=>item.selectionId!==row.id)),"before");return;}const apply=()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).filter(item=>item.selectionId!==row.id)}}},"drinks");if(dirty)confirm({message:"Retirer ce poste et abandonner sa saisie non validée ? Undo permet de rétablir la dernière décision conservée.",acceptLabel:"Retirer",accept:apply});else apply();};
++  const remove=()=>{
++    if(slot==="before-main"){setError("Le Before exige un composant principal. Modifiez-le ou retirez le groupe entier avec sa confirmation.");return;}
++    const apply=()=>slot==="before-extras"?before&&decide(barBeforePatch(props.semanticState,context,before.bottle,before.extras.filter(item=>item.selectionId!==row.id)),"before")
++      :decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).filter(item=>item.selectionId!==row.id)}}},"drinks");
++    if(dirty)confirm({message:"Retirer ce poste et abandonner sa saisie non validée ? Undo permet de rétablir la dernière décision conservée.",acceptLabel:"Retirer",accept:apply});else apply();
++  };
+   const saveRow=(candidate:Row=row,next:Page="drinks")=>{try{
+     if(!rowItems(slot).some(item=>item.selectionId===row.id)){setError("Ce poste n’existe plus. Revenez à la carte ; il ne sera pas recréé silencieusement.");return;}
+     const value=buildComponentRow(candidate,candidate.existing?.optionKey??"extra");

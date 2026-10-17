@@ -43,7 +43,15 @@ const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
 const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
-const click=async label=>{await act(async()=>button(label).props.onClick());steps++;};
+const click=async label=>{
+  for(let i=0;i<12&&!controls(n=>n.type==='button'&&text(n).trim()===label.trim()).length;i++){
+    const next=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled)[0];
+    if(next){await act(async()=>next.props.onClick());steps++;continue;} const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];if(back&&['Montant direct','Autre'].includes(label)){await act(async()=>back.props.onClick());steps++;continue;}break;
+  }
+  await act(async()=>button(label).props.onClick());steps++;
+};
+const openRoute=async direction=>{if(!controls(n=>n.props['data-bar-route']===direction).length){const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];if(back)await act(async()=>back.props.onClick());}await act(async()=>controls(n=>n.props['data-bar-route']===direction)[0].props.onClick());};
+const openTile=async label=>{if(!tile(label)){const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];if(back)await act(async()=>back.props.onClick());}assert.ok(tile(label),'Missing component '+label);await act(async()=>tile(label).props.onClick());};
 const input=label=>{const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
 const change=async(label,value)=>{await act(async()=>{const node=input(label);for(let p=node.parent;p;p=p.parent)p.props.onChangeCapture?.({target:{value}});node.props.onChange({target:{value}});});steps++;};
 const props=()=>({context:model.semanticState.contexts.find(c=>c.contextOccurrenceId===id),model,card:model.board.contexts.find(c=>c.contextOccurrenceId===id),semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],options:model.mobilityOptions,busy:false,fresh:true,dockHost:{},host:{},choose:()=>{},close:()=>{},onCancel:()=>{},onSave:admit,decide:admit,saveStatus:'MEMORY',editor:model.editors.find(e=>e.assetKey==='template:'+model.semanticState.contexts.find(c=>c.contextOccurrenceId===id).templateKey)});
@@ -84,7 +92,7 @@ await check('V8_P2_NEUTRAL_ENTRY_AND_QUICK_UNKNOWN_ADMISSION',async()=>{
  assert.ok(!current().fields.plannedDate);assert.ok(!current().slotSelections.outbound?.items.length);
 });
 await check('V8_RAW_CANCEL_ESCAPE_DISCARD_PRESERVES_ADMITTED_UNKNOWN',async()=>{
- await act(async()=>tile('Bière').props.onClick());await change('Prix unitaire (€)','8');
+ await openTile('Bière');await change('Prix unitaire (€)','8');
  const digest=semanticStateDigest(model.semanticState),before=pendingOps.length;
  await act(async()=>controls(n=>n.type==='button'&&n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());assert.equal(registry.count(),1);assert.equal(shortInput('Prix unitaire (€)').props.value,'8');
  await click('Continuer à modifier');assert.equal(shortInput('Prix unitaire (€)').props.value,'8');
@@ -94,24 +102,24 @@ await check('V8_RAW_CANCEL_ESCAPE_DISCARD_PRESERVES_ADMITTED_UNKNOWN',async()=>{
  assert.equal(current().slotSelections.extras.items[0].cost.kind,'UNKNOWN');
 });
 await check('V8_DIRECT_REEDIT_8_PLUS_12_AND_QUANTITY_IDENTITY',async()=>{
- await act(async()=>tile('Bière').props.onClick());await change('Prix unitaire (€)','8');await save();
+ await openTile('Bière');await change('Prix unitaire (€)','8');await save();
  const first=current().slotSelections.extras.items[0];await click('Cocktail');await change('Prix unitaire (€)','12');await save();
  assert.equal(current().slotSelections.extras.items[0].selectionId,first.selectionId);
  const response=await handleComposerRequest({repository,readWorld:async()=>fixture(),householdPersons:[]},householdId,{kind:'READ',sequence:20,targetMonth:'2026-11',draft:model.semanticState});
  assert.equal(response.ok,true,response.code);model=response.model;await sync();
  const amounts=model.board.contexts.find(c=>c.contextOccurrenceId===id).sockets.find(s=>s.slotKey==='extras').evaluations.map(e=>e.economicAmount).sort();
  assert.deepEqual(amounts,['12.00','8.00']);
- await act(async()=>tile('Bière').props.onClick());await act(async()=>controls(n=>n.type==='button'&&n.props['aria-label']==='Augmenter la quantité')[0].props.onClick());await save();
+ await openTile('Bière');await act(async()=>controls(n=>n.type==='button'&&n.props['aria-label']==='Augmenter la quantité')[0].props.onClick());await save();
  assert.equal(current().slotSelections.extras.items[0].quantity,'2');assert.equal(current().slotSelections.extras.items[0].selectionId,first.selectionId);
 });
 await check('V8_REMOVE_UNDO_RESTORE_IDENTITIES_AND_PRICE',async()=>{
  const before=structuredClone(model.semanticState),beer=before.contexts.find(c=>c.contextOccurrenceId===id).slotSelections.extras.items[0];
- await act(async()=>tile('Bière').props.onClick());await click('Retirer');await sync();
+ await openTile('Bière');await click('Retirer');await sync();
  assert.equal(current().slotSelections.extras.items.length,1);assert.equal(current().slotSelections.extras.items[0].label,'Cocktail');
  model=visualDraftModel(model,before);await sync();assert.deepEqual(current().slotSelections.extras.items[0],beer);
 });
 await check('V8_REJECTED_SAVE_RETRY_AND_ZERO_DISTINCT_FROM_UNKNOWN',async()=>{
- await act(async()=>tile('Bière').props.onClick());await change('Prix unitaire (€)','0');rejectNext=true;await click('Enregistrer');
+ await openTile('Bière');await change('Prix unitaire (€)','0');rejectNext=true;await click('Enregistrer');
  assert.equal(registry.count(),1);assert.equal(shortInput('Prix unitaire (€)').props.value,'0');assert.ok(controls(n=>n.props.role==='alert').length);
  await save();assert.equal(current().slotSelections.extras.items[0].cost.kind,'MANUAL');assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'0');
 });
@@ -142,7 +150,7 @@ await check('V8_OWNED_RETURN_AND_PLACE_INVALIDATION_ATOMIC_UNDO',async()=>{
 await check('V8_RETURN_MODE_CHANGE_NO_RESIDUAL_CAR_COST',async()=>{
  const configured=structuredClone(current().slotSelections.outbound.items[0]);
  model={...model,mobilityOptions:{places:[],vehicle:{vehicleId:configured.route.vehicleRef.vehicleId,label:configured.route.vehicleRef.labelAtSelection,consumptionL100Km:'8',fuelPricePerLiter:'1.8',fuelPriceSource:'Synthetic'}}};await sync();
- await act(async()=>controls(n=>n.type==='button'&&n.props['data-bar-route']==='outbound')[0].props.onClick());await click('Utiliser '+configured.route.vehicleRef.labelAtSelection);await sync();
+ await openRoute('outbound');await click('Utiliser '+configured.route.vehicleRef.labelAtSelection);await sync();
  assert.deepEqual(current().slotSelections.outbound.items[0].route.stops,configured.route.stops);assert.equal(current().slotSelections.outbound.items[0].route.manualFuelPrice,configured.route.manualFuelPrice);assert.deepEqual(current().slotSelections.outbound.items[0].route.toll,configured.route.toll);
  const before=structuredClone(current().slotSelections.outbound.items[0]);await act(async()=>{root.unmount();root=create(render());});
  const routeButtons=controls(n=>n.type==='button'&&(n.props['data-bar-route']==='return'||n.props['data-bar-add-route']==='return'));assert.equal(routeButtons.length,1);await act(async()=>routeButtons[0].props.onClick());
@@ -173,14 +181,14 @@ await check('V8_SYNTHETIC_APPLY_READ_REEDIT_COMPLETE_COST',async()=>{
  const reload=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:92,targetMonth:'2026-11'});assert.equal(reload.ok,true,reload.code);
  const reloaded=reload.model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);assert.deepEqual(reloaded.slotSelections,current().slotSelections);
  assert.deepEqual(reloaded.fields,current().fields);model=reload.model;await sync();
- await act(async()=>tile('Bière').props.onClick());await change('Prix unitaire (€)','9');await save();assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'9');
+ await openTile('Bière');await change('Prix unitaire (€)','9');await save();assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'9');
 });
 await check('V8_COMPACT_COMPONENT_DIRECT_TARGET_REOPEN_AND_PROTECTION',async()=>{
  const {BarLivingCard}=require('@/app/mois-a-venir/composer/bar-living-card');
  if(root)await act(async()=>root.unmount());let target;
  const value=model.board.contexts.find(c=>c.contextOccurrenceId===id),selection=current().slotSelections.extras.items[0];
  await act(async()=>{root=create(React.createElement(BarLivingCard,{card:value,model,living:{open:(_,next)=>target=next,close(){}},busy:false,preserved:false,preserve(){},drag(){}}));});
- await act(async()=>tile('Bière').props.onClick());assert.equal(target,`component:extras:${selection.selectionId}`);
+ await openTile('Bière');assert.equal(target,`component:extras:${selection.selectionId}`);
  await act(async()=>root.unmount());const previousProps=props;
  await act(async()=>{root=create(React.createElement(WorkshopConfirmationProvider,{requestRef},React.createElement(WorkshopChoicesProvider,null,React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(BarLivingEditor,{...previousProps(),initialTarget:target})))));});
  assert.equal(input('Prix unitaire (€)').props.value,'9');assert.equal(current().slotSelections.extras.items[0].selectionId,selection.selectionId);
@@ -191,7 +199,7 @@ await check('V8_COMPACT_COMPONENT_DIRECT_TARGET_REOPEN_AND_PROTECTION',async()=>
 await check('V8_GOOGLE_OFFICIAL_VENUE_TRANSIENT_STALE_AND_FAILURE',async()=>{
  if(root)await act(async()=>root.unmount());
  const {BarPlaceSearch}=require('@/app/mois-a-venir/composer/bar-place-search');const calls=[],pending=[];let adopted=[];
- const previous=globalThis.fetch;globalThis.fetch=async(path,options)=>{assert.ok(['/api/places/autocomplete','/api/places/details'].includes(path));const body=JSON.parse(options.body);assert.equal(body.context.kind,'VENUE');calls.push({path,body});return await new Promise(resolve=>pending.push({resolve,signal:options.signal}));};
+ const previous=globalThis.fetch;globalThis.fetch=async(path,options)=>{assert.ok(['/api/places/autocomplete','/api/places/details'].includes(path));const body=JSON.parse(options.body);assert.equal(body.context.kind,'BAR_APERO');calls.push({path,body});return await new Promise(resolve=>pending.push({resolve,signal:options.signal}));};
  const mount=()=>React.createElement(BarPlaceSearch,{places:[{placeId:uuid(98001),name:'Bar fixture connu',googlePlaceId:'known_google_123',relationships:[]}],onKnown:placeId=>adopted.push(placeId)});
  try{
   await act(async()=>{root=create(mount());});await change('Ville','Ville fixture');await change('Chercher un bar','Alpha');await act(async()=>new Promise(r=>setTimeout(r,330)));assert.equal(calls.length,1);const token=calls[0].body.sessionToken;
@@ -204,9 +212,16 @@ await check('V8_GOOGLE_OFFICIAL_VENUE_TRANSIENT_STALE_AND_FAILURE',async()=>{
   await change('Chercher un bar','Gamma');await act(async()=>new Promise(r=>setTimeout(r,330)));assert.notEqual(calls[3].body.sessionToken,token);
   await act(async()=>pending[3].resolve({ok:true,json:async()=>({suggestions:[{source:'google_places',placeId:'new_google_123',primaryText:'Nouveau bar',secondaryText:null}]})}));
   await click('Nouveau bar · ');await act(async()=>pending[4].resolve({ok:true,json:async()=>({place:{provider:'google_places',placeId:'new_google_123',displayName:'Nouveau bar',formattedAddress:'Adresse synthétique',types:['bar']}})}));
-  assert.equal(controls(n=>n.type==='button'&&text(n)==='Retenir ce lieu enregistré').length,0);assert.ok(controls(n=>n.type==='p'&&text(n).includes('promotion n’est pas disponible')).length);assert.equal(adopted.length,1);
+  assert.equal(controls(n=>n.type==='button'&&text(n)==='Retenir ce lieu enregistré').length,0);assert.ok(controls(n=>n.type==='p'&&text(n).includes('Ce lieu n’est pas encore enregistré')).length);assert.equal(adopted.length,1);
   await change('Chercher un bar','Delta');await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending[5].resolve({ok:false,status:429}));assert.ok(controls(n=>n.props.role==='status'&&text(n).includes('limitée')).length);
   await change('Chercher un bar','Epsilon');await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending[6].resolve({ok:true,json:async()=>{throw new SyntaxError('Unexpected token <');}}));assert.ok(controls(n=>n.props.role==='status'&&text(n).includes('Recherche indisponible')).length);assert.equal(adopted.length,1);
+  for(const [status,query,expected] of [[401,'Zeta','Connectez-vous'],[403,'Eta','Accès à la recherche refusé']]){
+    await change('Chercher un bar',query);await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending.at(-1).resolve({ok:false,status}));
+    assert.ok(controls(n=>n.props.role==='status'&&text(n).includes(expected)).length);assert.equal(adopted.length,1);
+  }
+  await change('Chercher un bar','Theta');await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending.at(-1).resolve({ok:true,json:async()=>({suggestions:[{source:'google_places',placeId:'invalid_details_123',primaryText:'Détail fixture',secondaryText:'Ville fixture'}]})}));
+  await click('Détail fixture · Ville fixture');await act(async()=>pending.at(-1).resolve({ok:true,json:async()=>({place:{provider:'google_places',placeId:'wrong_details_123',displayName:'Autre identité'}})}));
+  assert.ok(controls(n=>n.props.role==='status'&&text(n).includes('Lieu non admissible')).length);assert.equal(adopted.length,1);
  }finally{globalThis.fetch=previous;}
 });
 
@@ -232,7 +247,7 @@ await check('V8_TOTAL_DETAIL_CONFIRM_CANCEL_ACCEPT_AND_UNDO_PRESERVES_IDS',async
  model=visualDraftModel(model,details);await sync();assert.deepEqual(current().slotSelections.extras.items.map(x=>x.selectionId),ids);
 });
 await check('V8_PARTIAL_EDIT_PRESERVES_UNKNOWN_AND_INDEPENDENT_FIELDS',async()=>{
- const before=structuredClone(current());await act(async()=>tile('Bière').props.onClick());await change('Prix unitaire (€)','12');await save();assert.deepEqual(current().fields,before.fields);assert.equal(current().slotSelections.extras.items[0].selectionId,before.slotSelections.extras.items[0].selectionId);assert.deepEqual(current().slotSelections.extras.items[1],before.slotSelections.extras.items[1]);
+ const before=structuredClone(current());await openTile('Bière');await change('Prix unitaire (€)','12');await save();assert.deepEqual(current().fields,before.fields);assert.equal(current().slotSelections.extras.items[0].selectionId,before.slotSelections.extras.items[0].selectionId);assert.deepEqual(current().slotSelections.extras.items[1],before.slotSelections.extras.items[1]);
 });
 fs.mkdirSync('outputs/l4e',{recursive:true});fs.writeFileSync('outputs/l4e/interactions.json',JSON.stringify({method:'REACT_IN_PROCESS_PORTALS_AND_REFS_SIMULATED_NOT_BROWSER',checks},null,2));
 console.log('V8 '+checks.length+' groups PASS; browser/auth NOT_RUN');

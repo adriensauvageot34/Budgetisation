@@ -120,6 +120,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   }, [snapshotMetrics, previewStatus]);
   const scheduler = useRef(new ComposerPreviewScheduler());
   const [busy, setBusy] = useState(false), busyRef = useRef(false);
+  const [removingBarId,setRemovingBarId]=useState<string|undefined>();
   const [selected, setSelected] = useState<string | null>(null), [message, setMessage] = useState("");
   const [focusedContext, setFocusedContext] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -201,6 +202,14 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     });
   }
   function stage(operation: ComposerOperation, history: "push" | "undo" | "redo" = "push", restored?: PlanSemanticStateV1) {
+    if(operation.kind==="DROP"&&operation.target.kind==="TRASH") {
+      const context=current.current.board.contexts.find(card=>operation.assetKey===`context-occurrence:${card.contextOccurrenceId}`);
+      if(context&&presetForContext(context)?.presetKey==="bar-apero") {
+        const targets=new Set([context.contextOccurrenceId]);
+        for(const child of localDraft.current.contexts)if(child.parentContextOccurrenceId&&targets.has(child.parentContextOccurrenceId))targets.add(child.contextOccurrenceId);
+        if(!inlineEdits.registry.guard(()=>stage(operation,history,restored),targets,false))return false;
+      }
+    }
     if (history !== "push") {
       // Flush an already explicit +/- batch first. Its history entry must exist
       // before Undo can target it; do not undo an unrelated older decision.
@@ -326,6 +335,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if (busyRef.current) return;
     if (snapshotMetrics) snapshotIntent.current=performance.now();
     scheduler.current.cancel();
+    const removal=operation.kind==="DROP"&&operation.target.kind==="TRASH"
+      ?current.current.board.contexts.find(c=>operation.assetKey===`context-occurrence:${c.contextOccurrenceId}`):undefined;
+    if(removal&&presetForContext(removal)?.presetKey==="bar-apero")setRemovingBarId(removal.contextOccurrenceId);
     clearHover(); busyRef.current = true; setBusy(true); setSuggestions(null); setErrorMessage(null);
     const beforeDraft = localDraft.current, sourceDigest = semanticStateDigest(beforeDraft), ticket = gate.current.next(sourceDigest);
     setPreviewStatus("PENDING");
@@ -385,7 +397,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       } else { const message = "Connexion interrompue. Votre brouillon est conservé ; rechargez la prévisualisation avant de réessayer.";
         setPreviewStatus("FAILED"); setMessage(message); setErrorMessage(message); }
     }
-    finally { busyRef.current = false; setBusy(false); }
+    finally { busyRef.current = false; setBusy(false); setRemovingBarId(undefined); }
   }
   function hover(mutation: SemanticMutation | null) {
     previewGesture(mutation ? { kind: "MUTATE", mutation } : null);
@@ -745,7 +757,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           dockHost={nightDockHost} busy={busy || draftState.preferences.anchors.includes(livingBarId) || draftState.preferences.flexibility[livingBarId]==="PRESERVE"} creating={editor?.nightCreating} admission={editor?.nightAdmission??0} serverError={errorMessage}
           onSave={stage} onCancel={closeDialog} onOpenChild={id=>{const child=shown.board.contexts.find(c=>c.contextOccurrenceId===id);if(child)editContext(child);}} />
           : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>,barHost.node,livingBarId+":"+(editor?.barTarget??"default"))}
-      <ComposerBoard livingBar={livingBarId ? {id:livingBarId,open:stableEditContext,close:closeDialog,content:<BarLivingMount host={barHost}/>} : {open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
+      <ComposerBoard livingBar={livingBarId ? {id:livingBarId,removingId:removingBarId,open:stableEditContext,close:closeDialog,content:<BarLivingMount host={barHost}/>} : {removingId:removingBarId,open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
         add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} reveal={reveal}
          contextGuide={editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment?.asset.optionKind === "COMPONENT" ? <div ref={setNightDockHost} data-night-dock-host /> : editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
           && draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)

@@ -8,9 +8,17 @@ export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commu
   nature: string | null; usage: string | null; subtype: string | null; privatePlace: boolean;
   visits12Months?: number; lastVisitDate?: string | null;
   carVisitDates12Months?: readonly string[];
+  /** Current, owner-published links. Never authorize by a display name. */
+  currentRelationships?: readonly { personId: string; role: string }[];
   brandLabel?: string | null;
   address?: string | null; coordinates?: import("./planned-car").RouteCoordinates; googlePlaceId?: string;
   relationships: readonly { personName: string; role: string }[] }>;
+export type PlannedPlaceKnowledge = Readonly<{ source: "RECORDED_PERSON_DAYS";
+  fromDate: string; throughDate: string; coverage: "AVAILABLE_RECORDS";
+  placeLimit: number; placesTruncated: boolean }>;
+export type PlannedMobilityOptions = Readonly<{ places: readonly PlannedPlaceOption[];
+  vehicle: import("./planned-contract").PlannedVehicleEstimate | null;
+  vehicleIsUnique?: boolean; placeKnowledge?: PlannedPlaceKnowledge }>;
 export type RankedPlannedPlace = Readonly<{ place: PlannedPlaceOption; roles: readonly PlaceRole[];
   rankingTier: "PRIMARY" | "SECONDARY"; reason: "CONTACT_HOME" | "WORK_MEAL_ANCHOR" | "PLACE_ROLE" }>;
 

@@ -87,9 +87,11 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
   const mobilityOptions = view.semanticState.contexts.some(c => resolveContextTemplate(c.templateKey).fields.some(f => f.kind === "PLACE_REF")) && deps.readMobilityOptions
     ? await deps.readMobilityOptions(household) : undefined;
   return { ...view, householdPersons: deps.householdPersons ?? [],
-    ...(mobilityOptions ? { mobilityOptions: { vehicle: mobilityOptions.vehicle, places: mobilityOptions.places.map(p => ({
+    ...(mobilityOptions ? { mobilityOptions: { vehicle: mobilityOptions.vehicle, vehicleIsUnique: mobilityOptions.vehicleIsUnique, placeKnowledge: mobilityOptions.placeKnowledge, places: mobilityOptions.places.map(p => ({
       placeId: p.placeId, name: p.name, commune: p.commune, nature: p.nature, usage: p.usage, subtype: p.subtype, privatePlace: p.privatePlace,
-      relationships: p.relationships, ...(p.address ? { address: p.address } : {}) })) } } : {}),
+      relationships: p.relationships,
+      ...(mobilityOptions.placeKnowledge ? { currentRelationships: p.currentRelationships, ...(!p.privatePlace ? { visits12Months: p.visits12Months, lastVisitDate: p.lastVisitDate } : {}) } : {}),
+      ...(!p.privatePlace && p.address ? { address: p.address } : {}) })) } } : {}),
     mobilitySummaries: mobilitySummaries(preview.compiled.journeys, preview.compiled.journeyPrices),
     nightOutSummaries: nightOutSummaries(model),
     presentation: composerPresentation(model), library: { ...view.library,

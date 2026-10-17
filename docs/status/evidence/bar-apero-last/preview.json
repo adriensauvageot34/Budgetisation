@@ -1,0 +1,38 @@
+{
+  "id": "dpl_EFVT5mEtag5U5hhdUbQ9jkh62wkG",
+  "name": "budgetisation",
+  "url": "budgetisation-dkfx69bof-adriensauvageot34-6137s-projects.vercel.app",
+  "type": "LAMBDAS",
+  "state": "READY",
+  "createdAt": 1792272727244,
+  "creator": {
+    "uid": "ItlVoi62mpJ28TeqsxO3j569",
+    "username": "adriensauvageot34-6137"
+  },
+  "project": {
+    "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+    "name": "budgetisation",
+    "framework": "nextjs"
+  },
+  "meta": {
+    "githubCommitRef": "codex/bar-apero-final-ux-functional",
+    "githubCommitSha": "841219d2ab57164d5e7879a257e62a8aa6b97c49",
+    "githubCommitMessage": "fix(composer): isolate Bar scenes, page choices and protect removal",
+    "githubRepo": "Budgetisation",
+    "githubOrg": "adriensauvageot34"
+  },
+  "alias": [
+    "budgetisation-git-codex-04042c-adriensauvageot34-6137s-projects.vercel.app"
+  ],
+  "target": null,
+  "regions": [
+    "iad1"
+  ],
+  "buildingAt": 1792272728168,
+  "ready": 1792272826207,
+  "readyState": "READY",
+  "source": "git",
+  "aliasError": null,
+  "scope": "PREVIEW_NOT_PRODUCTION",
+  "productCodeSha": "841219d2ab57164d5e7879a257e62a8aa6b97c49"
+}

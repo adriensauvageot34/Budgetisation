@@ -1,0 +1,47 @@
+{
+  "method": "SYNTHETIC_REACT_OWNER_CLIENT_NOT_AUTHENTICATED_NOT_BROWSER",
+  "checks": [
+    {
+      "name": "P3_01_05_PUBLIC_RANKING_HOMONYMS_AND_HONEST_COVERAGE",
+      "status": "PASS"
+    },
+    {
+      "name": "P3_11_EXPLICIT_HOME_CAR_ATOMIC_NO_PRICE_OR_RETURN",
+      "status": "PASS"
+    },
+    {
+      "name": "P3_12_AMBIGUOUS_HOME_OR_VEHICLE_NO_SHORTCUT",
+      "status": "PASS"
+    },
+    {
+      "name": "P3_13_14_CURRENT_WORK_IDENTITY_NOT_MEAL_OR_NAME",
+      "status": "PASS"
+    },
+    {
+      "name": "P3_15_17_DIRECTED_RETURN_AND_PLACE_ONLY_MUTATION",
+      "status": "PASS"
+    },
+    {
+      "name": "P3_19_RAW_BEFORE_PLACE_CANCEL_AND_SAVE",
+      "status": "FAIL",
+      "message": "Expected values to be strictly equal:\n\n'8' !== '8.00'\n"
+    },
+    {
+      "name": "P3_18_22_TEXT_FALLBACK_NO_COORDINATE_AND_LATER",
+      "status": "PASS"
+    },
+    {
+      "name": "P3_20_OWNER_SCOPE_ROLE_DATES_PERSON_FILTER_AND_COMPLETE_PAGINATION",
+      "status": "PASS"
+    },
+    {
+      "name": "P3_DTO_KNOWLEDGE_ADMITTED_NO_PRIVATE_ADDRESS_COORDINATES_OR_FAKE_GOOGLE",
+      "status": "PASS"
+    },
+    {
+      "name": "P3_06_10_GOOGLE_EXACT_AMBIGUOUS_RETRY_TEXT_STALE_NO_AUTO_CHOICE",
+      "status": "FAIL",
+      "message": "Cannot read properties of undefined (reading 'resolve')"
+    }
+  ]
+}

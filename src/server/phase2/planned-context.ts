@@ -3,10 +3,11 @@ const OBSERVED_PRICE_ASSETS_V1: Record<string, string> = {
   maquillage_manon_fixateur: "beauty:setting_spray", skincare_manon_masque: "beauty:face_mask",
 };
 import "server-only";
+import { parseCanonicalHouseholdScope } from "@/analytics/facts/canonical";
 
 import Big from "big.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
+import type { PlannedPlaceOption, PlannedPlaceKnowledge } from "@/domain/phase2/planned-places";
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import type { PlannedPriceSuggestion, PlannedVehicleEstimate, PlannedWalletOption } from "@/domain/phase2/planned-contract";
@@ -42,9 +43,19 @@ async function readRecentLocations(client: SupabaseClient, personIds: readonly s
 }
 
 export async function readPlannedContextOptions(client: SupabaseClient, householdId: string,
-  persons: readonly { personId: string; displayName: string }[]): Promise<{
-    places: PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null; prices: PlannedPriceSuggestion[]; wallets: PlannedWalletOption[] }> {
-  const cutoffDate = new Date(); cutoffDate.setUTCFullYear(cutoffDate.getUTCFullYear() - 1);
+  persons: readonly { personId: string; displayName: string }[], composerKnowledge = false): Promise<{
+    places: PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null; prices: PlannedPriceSuggestion[]; wallets: PlannedWalletOption[];
+    vehicleIsUnique?: boolean; placeKnowledge?: PlannedPlaceKnowledge }> {
+  // The Canonical client is privileged. Knowledge must retain its mono-household
+  // admission, including when editor options are requested without a World read.
+  if (composerKnowledge) {
+    const { data, error } = await client.from("canonical_household_scope_control")
+      .select("household_count,household_id,status").limit(2);
+    if (error || data?.length !== 1 || parseCanonicalHouseholdScope(data[0]) !== householdId)
+      throw new Error("Connaissances de lieux indisponibles : périmètre Canonical non admis.");
+  }
+  const cutoffDate = new Date(), today = cutoffDate.toISOString().slice(0, 10);
+  cutoffDate.setUTCFullYear(cutoffDate.getUTCFullYear() - 1);
   const { data: vehicles, error: vehicleError } = await client.from("vehicles")
     .select("vehicle_id,label,fuel_type,consumption_l_100km")
     .eq("household_id", householdId).eq("status", "active").order("valid_from", { ascending: false }).limit(5);
@@ -53,7 +64,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
   const [placesResult, rolesResult, legsResult, pricesResult, productResult, walletsResult, locations, brandsResult] = await Promise.all([
     client.from("referentiel_lieu").select("place_id,nom_canonique,commune,nature_lieu,usage_principal,sous_type,private_place,adresse,latitude_canonique,longitude_canonique")
       .order("nom_canonique").limit(500),
-    persons.length ? client.from("person_place_roles").select("person_id,place_id,role")
+    persons.length ? client.from("person_place_roles").select("person_id,place_id,role,valid_from,valid_to")
       .in("person_id", persons.map((person) => person.personId)) : Promise.resolve({ data: [], error: null }),
     vehicle ? readVehicleLegs(client, householdId, vehicle.vehicle_id).then((data) => ({ data, error: null }))
       : Promise.resolve({ data: [], error: null }),
@@ -80,6 +91,11 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
     placeId: place.place_id, name: place.nom_canonique, commune: place.commune,
     nature: place.nature_lieu, usage: place.usage_principal, subtype: place.sous_type,
     privatePlace: place.private_place,
+    ...(composerKnowledge ? { currentRelationships: roles.filter(role => role.place_id === place.place_id
+      && persons.some(person => person.personId === role.person_id)
+      && role.valid_from <= today)
+      .filter(role => !role.valid_to || role.valid_to > today)
+      .map(role => ({ personId: role.person_id, role: role.role })) } : {}),
     address: place.adresse,
     ...(place.latitude_canonique != null && place.longitude_canonique != null ? { coordinates: { latitude: Number(place.latitude_canonique), longitude: Number(place.longitude_canonique), source: "CANONICAL" as const } } : {}),
     visits12Months: visits.get(place.place_id)?.size ?? 0,
@@ -92,7 +108,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
   })).filter((place) => !place.privatePlace || derivePlannedPlaceRoles(place).includes("OWN_HOME") || place.relationships.length > 0
     || SOCIAL_CONTACTS_V1.some((contact) => contact.places.some((link) => link.placeId === place.placeId)));
   const home = places.find((place) => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
-  const cutoff = cutoffDate.toISOString().slice(0, 10), today = new Date().toISOString().slice(0, 10);
+  const cutoff = cutoffDate.toISOString().slice(0, 10);
   for (let index = 0; index < places.length; index++) {
     const place = places[index]!;
     places[index] = { ...place, carVisitDates12Months: [...new Set((legsResult.data ?? [])
@@ -124,7 +140,11 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
   });
   const wallets: PlannedWalletOption[] = (walletsResult.data ?? []).flatMap((row) => ["SWILE", "EDENRED"].includes(row.provider)
     && row.status !== "INACTIVE" ? [{ source: row.provider as "SWILE" | "EDENRED", ownerPersonId: row.owner_person_id }] : []);
-  return { places, vehicle: estimatedVehicle, prices, wallets: wallets.filter((wallet, index) => wallets.findIndex((part) => part.source === wallet.source && part.ownerPersonId === wallet.ownerPersonId) === index) };
+  return { places, vehicle: estimatedVehicle, prices,
+    ...(composerKnowledge ? { vehicleIsUnique: vehicles?.length === 1, placeKnowledge: {
+      source: "RECORDED_PERSON_DAYS" as const, fromDate: cutoff, throughDate: today,
+      coverage: "AVAILABLE_RECORDS" as const, placeLimit: 500, placesTruncated: placesResult.data?.length === 500 } } : {}),
+    wallets: wallets.filter((wallet, index) => wallets.findIndex((part) => part.source === wallet.source && part.ownerPersonId === wallet.ownerPersonId) === index) };
 }
 
 export async function readPlannedRouteHistory(client: SupabaseClient, householdId: string): Promise<HistoricalRouteLeg[]> {

@@ -1,0 +1,75 @@
+[
+  {
+    "log": "final-check-bar-apero-p4.log",
+    "exitCode": 0,
+    "command": "node scripts/check-bar-apero-p4.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-check-bar-apero-p1.log",
+    "exitCode": 0,
+    "command": "node scripts/check-bar-apero-p1.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-check-bar-apero-p2.log",
+    "exitCode": 0,
+    "command": "node scripts/check-bar-apero-p2.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-check-bar-apero-p3.log",
+    "exitCode": 0,
+    "command": "node scripts/check-bar-apero-p3.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-check-l4-e-bar-v8.log",
+    "exitCode": 0,
+    "command": "node scripts/check-l4-e-bar-v8.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-check-l4-d-bar-mobility.log",
+    "exitCode": 0,
+    "command": "node scripts/check-l4-d-bar-mobility.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-check-l4-a.log",
+    "exitCode": 0,
+    "command": "node scripts/check-l4-a.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-check-l4-b-presets.log",
+    "exitCode": 0,
+    "command": "node scripts/check-l4-b-presets.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-check-planner-performance-parity.log",
+    "exitCode": 0,
+    "command": "node scripts/check-planner-performance-parity.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-check-pre-l4-c2-c8-source.log",
+    "exitCode": 0,
+    "command": "node scripts/check-pre-l4-c2-c8-source.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "log": "final-typecheck.log",
+    "exitCode": 0,
+    "command": "node node_modules/typescript/bin/tsc --noEmit",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf"
+  },
+  {
+    "command": "node scripts/check-bar-apero-p4-http.mjs",
+    "sha": "ccfefe0f4ee06e76c02eeaeb74e824cb587ebacf",
+    "exitCode": 0,
+    "log": "final-http.log",
+    "scope": "Loopback HTTP synthetic only"
+  }
+]

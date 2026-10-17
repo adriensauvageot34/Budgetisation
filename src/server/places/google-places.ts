@@ -38,9 +38,9 @@ export class GoogleRestaurantPlaces {
   async autocomplete(input: string, sessionToken: string, city: string, kind: ProjectPlaceKind = "RESTAURANT") {
     const local = city.trim().toLocaleLowerCase("fr") === "montpellier";
     let center = local ? { latitude: 43.6108, longitude: 3.8767 } : undefined;
-    if (!local) try { center = await (this.options.geocode ?? ((city) => new TomTomRouteProvider().geocode(`${city}, France`)))(city); } catch { /* Town text still guides search if city geocoding is unavailable. */ }
+    if (!local && city.trim()) try { center = await (this.options.geocode ?? ((city) => new TomTomRouteProvider().geocode(`${city}, France`)))(city); } catch { /* Town text still guides search if city geocoding is unavailable. */ }
     const raw = await this.request("places:autocomplete", AUTOCOMPLETE_MASK, {
-      input: center ? input : `${input}, ${city}`, sessionToken, languageCode: "fr", regionCode: "fr", includedRegionCodes: ["fr"],
+      input: center || !city.trim() ? input : `${input}, ${city}`, sessionToken, languageCode: "fr", regionCode: "fr", includedRegionCodes: ["fr"],
       ...(center ? { locationBias: { circle: { center: { latitude: center.latitude, longitude: center.longitude }, radius: 20000 } } } : {}),
     });
     // Filtering response types includes specialized *_restaurant types without an incomplete primary-type restriction.

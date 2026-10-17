@@ -1,6 +1,7 @@
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { composePresentationNodes } from "./presentation/adapter";
 import type { ComposerPresentationNode } from "./presentation/node-types";
+import {presetForContext} from "@/domain/phase2/planner/composer-presets";
 
 /** All geometry is a deterministic, transient CSS Grid projection. */
 export type InventoryItem = ComposerPresentationNode;
@@ -37,9 +38,14 @@ export function inventoryLayoutPages(items: readonly InventoryItem[], width: num
   for (const item of items) {
     const columnSpan = Math.max(1, Math.min(columns, Math.round(((item.id === expandedId ? Math.min(760, availableWidth) : item.width) + columnGap) / (columnWidth + columnGap))
       + (item.kind === "CLUSTER" && item.family === "BEAUTY" && columns >= 15 ? 1 : 0)));
-    const rowSpan = Math.max(1, Math.min(maxTracks, Math.ceil(((item.id === expandedId ? Math.min(expandedHeight, height - 8) : item.height) + rowGap) / (rowTrack + rowGap))));
+    const livingBar=item.kind==="CONTEXT"&&!!item.context&&presetForContext(item.context)?.presetKey==="bar-apero";
+    // Only the living Bar may exceed the shelf. Its real content is packed,
+    // and the existing outer Board/page scrollbar keeps it reachable.
+    const requested=Math.ceil(((item.id===expandedId?expandedHeight:item.height)+rowGap)/(rowTrack+rowGap));
+    const rowSpan = Math.max(1,livingBar?requested:Math.min(maxTracks,requested));
+    const trackLimit=Math.max(maxTracks,rowSpan);
     const findSlot = () => {
-      for (let row = 0; row <= maxTracks - rowSpan; row++) for (let column = 0; column <= columns - columnSpan; column++) {
+      for (let row = 0; row <= trackLimit - rowSpan; row++) for (let column = 0; column <= columns - columnSpan; column++) {
         let free = true;
         for (let y = row; free && y < row + rowSpan; y++) for (let x = column; x < column + columnSpan; x++)
           if (occupied.has(y * columns + x)) { free = false; break; }
