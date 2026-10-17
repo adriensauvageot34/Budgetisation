@@ -1,0 +1,19 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_ADD_REMOVE_BEFORE_FIRST_SOCKET_PROJECTION PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V6_V8_COMPARABLE_UNKNOWN_BEER_ADMISSION_EFFORT PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V8_P2_NEUTRAL_ENTRY_AND_QUICK_UNKNOWN_ADMISSION PASS
+file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:87
+ await act(async()=>tile('Bière').props.onClick());await change('Prix unitaire (€)','8');
+                                 ^
+
+TypeError: Cannot read properties of undefined (reading 'props')
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:87:34
+    at process.env.NODE_ENV.exports.act (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\outputs\l4c-test-tools\node_modules\react\cjs\react.development.js:890:22)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:87:8
+    at check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:41:37)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-e-bar-v8.mjs:86:7
+
+Node.js v22.18.0

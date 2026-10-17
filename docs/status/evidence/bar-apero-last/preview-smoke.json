@@ -1,0 +1,9 @@
+{
+  "url": "https://budgetisation-dkfx69bof-adriensauvageot34-6137s-projects.vercel.app/mois-a-venir/composer?month=2026-11",
+  "httpStatus": 200,
+  "title": "Connexion · Budgetisation",
+  "status": "PASS_HTTP_AUTH_GATE_ONLY",
+  "authenticatedComposer": "NOT_RUN_AUTH",
+  "writes": 0,
+  "browser": "NOT_RUN_BROWSER_LOCAL_USE_DISABLED_IN_WORK_SETTINGS"
+}

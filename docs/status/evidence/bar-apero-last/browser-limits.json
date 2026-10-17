@@ -1,0 +1,16 @@
+{
+  "executed": "cua.getState()",
+  "result": {
+    "apps": [],
+    "browsers": [],
+    "errors": [
+      "Browsers: Error: Local browser use is disabled in Work settings"
+    ]
+  },
+  "status": "NOT_RUN_BROWSER",
+  "screenshots": [],
+  "geometry": [],
+  "realProvider": "NOT_RUN_PROVIDER",
+  "realPersistence": "NOT_RUN_AUTH",
+  "noBypass": true
+}

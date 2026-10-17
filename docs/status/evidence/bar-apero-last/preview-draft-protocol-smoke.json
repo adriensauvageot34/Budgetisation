@@ -1,0 +1,9 @@
+{
+  "url": "https://budgetisation-dkfx69bof-adriensauvageot34-6137s-projects.vercel.app/api/composer/drafts?month=2026-11",
+  "httpStatus": 409,
+  "body": {
+    "code": "DRAFT_CONTRACT_INCOMPATIBLE"
+  },
+  "explanation": "Requête GET sans X-Composer-Draft-Contract : refus409 attendu avant le contrôle Auth ; ce n’est pas un test de persistance ni une preuve RLS.",
+  "writes": 0
+}

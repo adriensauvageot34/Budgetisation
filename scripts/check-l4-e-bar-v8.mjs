@@ -215,6 +215,13 @@ await check('V8_GOOGLE_OFFICIAL_VENUE_TRANSIENT_STALE_AND_FAILURE',async()=>{
   assert.equal(controls(n=>n.type==='button'&&text(n)==='Retenir ce lieu enregistré').length,0);assert.ok(controls(n=>n.type==='p'&&text(n).includes('Ce lieu n’est pas encore enregistré')).length);assert.equal(adopted.length,1);
   await change('Chercher un bar','Delta');await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending[5].resolve({ok:false,status:429}));assert.ok(controls(n=>n.props.role==='status'&&text(n).includes('limitée')).length);
   await change('Chercher un bar','Epsilon');await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending[6].resolve({ok:true,json:async()=>{throw new SyntaxError('Unexpected token <');}}));assert.ok(controls(n=>n.props.role==='status'&&text(n).includes('Recherche indisponible')).length);assert.equal(adopted.length,1);
+  for(const [status,query,expected] of [[401,'Zeta','Connectez-vous'],[403,'Eta','Accès à la recherche refusé']]){
+    await change('Chercher un bar',query);await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending.at(-1).resolve({ok:false,status}));
+    assert.ok(controls(n=>n.props.role==='status'&&text(n).includes(expected)).length);assert.equal(adopted.length,1);
+  }
+  await change('Chercher un bar','Theta');await act(async()=>new Promise(r=>setTimeout(r,330)));await act(async()=>pending.at(-1).resolve({ok:true,json:async()=>({suggestions:[{source:'google_places',placeId:'invalid_details_123',primaryText:'Détail fixture',secondaryText:'Ville fixture'}]})}));
+  await click('Détail fixture · Ville fixture');await act(async()=>pending.at(-1).resolve({ok:true,json:async()=>({place:{provider:'google_places',placeId:'wrong_details_123',displayName:'Autre identité'}})}));
+  assert.ok(controls(n=>n.props.role==='status'&&text(n).includes('Lieu non admissible')).length);assert.equal(adopted.length,1);
  }finally{globalThis.fetch=previous;}
 });
 
