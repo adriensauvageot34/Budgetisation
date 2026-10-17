@@ -86,8 +86,8 @@ await check('P1-PLACE-04_MULTI_STOP_LEGACY_EXTERNAL_PRESERVED',async()=>{
  const changed=barEndpoint(car,'destination',other,'UNKNOWN');assert.equal(changed.route.stops.length,3);assert.deepEqual(changed.route.stops[0],car.route.stops[0]);assert.equal(changed.route.stops[1].placeId,car.route.stops[1].placeId);assert.ok(!changed.route.stops[1].distanceToNextKm);
 });
 await check('P1-ROUTE-01_MODE_ONE_LEG_AND_NO_AUTOFILL',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);const direct={...car,route:{...car.route,stops:[]},origin:null};await installLegs(direct,taxi);const back=structuredClone(current().slotSelections.return);
- await onRoute('outbound');await click('Taxi / Uber');await click('Changer de mode');assert.equal(current().slotSelections.outbound.items[0].optionKey,'taxi');assert.equal(current().slotSelections.outbound.items[0].origin,null);assert.deepEqual(current().slotSelections.return,back);assert.equal(current().slotSelections.outbound.items[0].selectionId,direct.selectionId);
+ await init('night-out','bar-apero',BarLivingEditor);const direct={...car,route:{...car.route,stops:[]},origin:null,plannedTime:'18:30',returnTime:null};await installLegs(direct,taxi);const back=structuredClone(current().slotSelections.return);
+ await onRoute('outbound');await click('Taxi / Uber');await click('Changer de mode');assert.equal(current().slotSelections.outbound.items[0].optionKey,'taxi');assert.equal(current().slotSelections.outbound.items[0].origin,null);assert.equal(current().slotSelections.outbound.items[0].plannedTime,'18:30');assert.equal(current().slotSelections.outbound.items[0].returnTime,null);assert.deepEqual(current().slotSelections.return,back);assert.equal(current().slotSelections.outbound.items[0].selectionId,direct.selectionId);
 });
 await check('P1-ROUTE-02_SAME_MODE_CREATION_NO_LATER_SYNC',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);await installLegs({...car,pricing:unknownPricing,route:car.route&&{...car.route,stops:[],toll:{kind:'UNKNOWN'}}});await act(async()=>admit(barSameModeReturn(current(),uuid(99011))));const back=structuredClone(current().slotSelections.return);
@@ -152,6 +152,19 @@ await check('P1-PRICE_TARGETED_PARKING_QUOTE_AND_MISMATCH',()=>{
  const parking={...taxi,pricing:{...taxi.pricing,fare:{kind:'UNKNOWN'},parking:{kind:'MANUAL',unitAmount:'3'}}};const next=barEndpoint(parking,'origin',other);assert.deepEqual(next.pricing.parking,parking.pricing.parking);assert.equal(next.pricing.fare.kind,'UNKNOWN');
  const quote={...taxi,pricing:{...taxi.pricing,fare:{kind:'QUOTE',quoteKey:'synthetic-quote-only'}}};assert.throws(()=>barEndpoint(quote,'origin',other),/prix/);assert.throws(()=>barEndpoint(quote,'origin',other,'RETAIN_MANUAL'),/prix/);assert.equal(barEndpoint(quote,'origin',other,'UNKNOWN').pricing.fare.kind,'UNKNOWN');assert.equal(quote.pricing.fare.kind,'QUOTE');
  assert.throws(()=>barEndpoint({...car,destination:{kind:'TEXT',label:'Endpoint autonome différent'}},'destination',other,'UNKNOWN'),/correspondent/);
+});
+
+
+await check('P1-RAW_SAVE_THEN_ADD_PRESERVES_JUST_ADMITTED_PRICE',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','6,50');
+ await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await saveGuard();await click('Cocktail');assert.equal(current().slotSelections.extras.items.length,2);assert.equal(current().slotSelections.extras.items[0].cost.kind,'MANUAL');assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'6.50');assert.equal(current().slotSelections.extras.items[1].label,'Cocktail');
+});
+
+
+await check('P1-RAW_UNDO_DOES_NOT_SAVE_THEN_RESTORE_STALE_HISTORY',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','8');const before=structuredClone(current());let continued=false;
+ await act(async()=>assert.equal(registry.guard(()=>{continued=true;},undefined,false),false));assert.equal(controls(n=>n.props['data-save-workshop']!==undefined).length,0);await click('Continuer à modifier');assert.equal(continued,false);assert.deepEqual(current(),before);assert.equal(input('Prix unitaire (€)').props.value,'8');
+ await act(async()=>registry.guard(()=>{continued=true;},undefined,false));await click('Abandonner cette saisie');assert.equal(continued,true);assert.deepEqual(current(),before);
 });
 
 fs.mkdirSync('outputs/bar-p1',{recursive:true});fs.writeFileSync('outputs/bar-p1/p1-results.json',JSON.stringify({method:'REAL_REACT_HANDLERS_IN_PROCESS_NOT_BROWSER_NOT_AUTH',checks},null,2));

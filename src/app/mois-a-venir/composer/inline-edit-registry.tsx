@@ -31,7 +31,7 @@ export class InlineEditRegistry {
     for (const [key, edit] of raw) { this.set(key, null); edit.discard(); }
     return true;
   }
-  guard(continueAfterDiscard: () => void, targets?: ReadonlySet<string>): boolean {
+  guard(continueAfterDiscard: () => void, targets?: ReadonlySet<string>, allowSave = true): boolean {
     const raw = [...this.fields.entries()].filter(([, edit]) => edit.kind === "RAW" && (!targets || targets.has(edit.targetRef)));
     if (!raw.length) return true;
     const unchanged = () => raw.every(([key, edit]) => this.fields.get(key) === edit);
@@ -40,7 +40,7 @@ export class InlineEditRegistry {
       if (raw.some(([key, edit]) => this.fields.get(key) !== edit)) return;
       for (const [key, edit] of raw) { this.set(key, null); edit.discard(); }
       continueAfterDiscard();
-    }, raw.length===1 && raw[0][1].save ? {label:raw[0][1].save.label,run:()=>{
+    }, allowSave && raw.length===1 && raw[0][1].save ? {label:raw[0][1].save.label,run:()=>{
       if (!unchanged() || !raw[0][1].save!.run()) return false;
       this.set(raw[0][0],null);
       continueAfterDiscard();

@@ -153,6 +153,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       if((leg.route?.stops.length??0)>2||leg.pricing?.fundingAllocations.length)throw Error("Ce trajet possède des arrêts intermédiaires ou un financement. Utilisez les options détaillées ; ils sont conservés.");
     }catch(failure){setError((failure as Error).message);return;}}
     const value:BarLeg=leg?.optionKey===optionKey?leg:{kind:"MOBILITY_INTENT",selectionId:leg?.selectionId??crypto.randomUUID(),optionKey,provenance:"EXPLICIT_USER_DECISION",returnRequired:false,
+      ...(leg?.plannedTime!==undefined?{plannedTime:leg.plannedTime}:{}),...(leg?.returnTime!==undefined?{returnTime:leg.returnTime}:{}),
       origin:leg?(leg.origin??null):(direction==="return"?selectedPlace:null)??null,destination:leg?(leg.destination??null):(direction==="outbound"?selectedPlace:null)??null,
       journey:{relation:"OWNS_JOURNEY",certainty:"CERTAIN",targetIntentId:null,externalExpenseId:null,externalCostLineIds:[],choice:null,stopIndex:null,accessLegIndex:null},
       pricing:{fare:{kind:"UNKNOWN"},parking:{kind:"UNKNOWN"},fundingAllocations:[],preference:"FASTEST"},...(optionKey==="car"?{route:{version:"composer-mobility-route@v1" as const,vehicleRef:null,stops:[]}}:{})};

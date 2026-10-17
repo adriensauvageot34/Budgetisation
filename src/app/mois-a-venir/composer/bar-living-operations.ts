@@ -53,7 +53,8 @@ export function barPlaceOperation(context: PlannedContextState, place: Prospecti
   return {kind:"EDIT_NIGHT_OUT", edit:{contextOccurrenceId:context.contextOccurrenceId, fields:{placeRef:place}}};
 }
 export function assertBarRouteEditable(leg: BarLeg) {
-  if (leg.journey && leg.journey.relation !== "OWNS_JOURNEY")
+  if (leg.journey && (leg.journey.relation !== "OWNS_JOURNEY" || leg.journey.targetIntentId
+    || leg.journey.externalExpenseId || leg.journey.externalCostLineIds.length))
     throw Error("Ce trajet est lié à un propriétaire externe ou à une relation spécifique. Utilisez la relation détaillée ; aucun trajet payant local ne sera créé.");
   if (leg.returnRequired)
     throw Error("Cet ancien trajet couvre un aller-retour. Utilisez son édition détaillée ; tous ses arrêts et prix sont conservés.");
