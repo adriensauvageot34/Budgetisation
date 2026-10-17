@@ -65,7 +65,11 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
       const bar = presetForContext(context)?.presetKey === "bar-apero";
       const tileCount = context.sockets.reduce((n, s) => n + s.currentItems.filter(i => i.kind === "COMPONENT" || i.kind === "CHILD_CONTEXT").length, 0);
       // Geometry only: keep the small, empty intention compact; grow with its visible content.
-      const barHeight = Math.min(430, 300 + (context.fields.placeRef || context.fields.plannedDate || (Array.isArray(context.fields.participantRefs) && context.fields.participantRefs.length) ? 35 : 0) + Math.floor(tileCount / 2) * 105);
+      const barRoutes = context.sockets.filter(socket=>["outbound","return"].includes(socket.slotKey)&&socket.currentItems.some(item=>item.kind==="MOBILITY_INTENT")).length;
+      // Compact Bar shows at most two products. Its allocated tracks must not
+      // grow with fifteen hidden previews or reserve absent route rows.
+      const barHeight = Math.min(430, 160 + (context.fields.placeRef || context.fields.plannedDate || (Array.isArray(context.fields.participantRefs) && context.fields.participantRefs.length) ? 40 : 0)
+        + barRoutes*65 + (tileCount?105:0));
       return { id:context.contextOccurrenceId, kind:"CONTEXT" as const, context, density, spatialFamily:contextFamily(template),
         iconKey:model.presentation.objects[context.contextOccurrenceId].iconKey,
         width:template === "short-stay" ? 400 : template === "night-out" ? 350 : ["gift", "family-visit"].includes(template) ? 240 : 230,

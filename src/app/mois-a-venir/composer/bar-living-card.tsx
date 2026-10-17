@@ -32,13 +32,16 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
   const fresh=summary?.semanticStateDigest===model.board.draft.semanticStateDigest;
 
   const open=(target:BarTarget)=>living.open(card,target), locked=busy||preserved||card.readOnly;
+  const components=card.sockets.flatMap(socket=>socket.currentItems.filter(item=>item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT").map(item=>({slot:socket.slotKey,item,amount:socket.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount})));
+  const route=(slot:"outbound"|"return")=>card.sockets.find(s=>s.slotKey===slot)?.currentItems.find(s=>s.kind==="MOBILITY_INTENT");
   return <article {...surfaceProps} ref={root} className={styles.barLivingCard} data-bar-living-card data-context={card.contextOccurrenceId} data-template-key="night-out" data-expanded={expanded}
     data-preset-key="bar-apero" data-state={card.knowledge} aria-label={card.label} onKeyDown={event=>{if(event.key==="Escape"&&expanded&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();living.close();}}}>
     <header className={styles.barLivingHeader}>
-      <PresetIllustration preset={composerPreset("bar-apero")!} className={styles.barLivingImage}/>
+      <button type="button" className={styles.barImageTrigger} disabled={busy} aria-label={`Ouvrir ${card.label}`} onClick={()=>open("summary")}><PresetIllustration preset={composerPreset("bar-apero")!} className={styles.barLivingImage}/></button>
       <div><h3><button type="button" disabled={locked} onClick={()=>open("summary")}>{card.label}</button></h3>
         <strong>{summary?.knownAmount!=null?money(summary.knownAmount):"Coût à préciser"}</strong>
-        <small>{summary?.knownAmount!=null?(fresh?summary.incomplete?"connus · à compléter":"Coût prévu":"Résultat précédent · recalcul en cours"):"Aucun prix inventé"}</small></div>
+        {summary?.knownAmount!=null&&<small>{fresh?summary.incomplete?"connus · coûts à préciser":"Coût prévu":"Résultat précédent · actualisation"}</small>}
+        {(preserved||card.readOnly)&&<small>{card.readOnly?"Lecture seule":"Carte préservée"}</small>}</div>
       <div className={styles.barLivingTools}>
         {!card.readOnly&&<button type="button" disabled={busy} onClick={preserve} aria-label={`${preserved?"Libérer":"Préserver"} ${card.label}`} aria-pressed={preserved}><Pin size={15}/></button>}
         {expanded ? <button type="button" onClick={living.close} aria-label="Replier la carte"><X size={18}/></button>
@@ -47,10 +50,12 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
     </header>
     {expanded ? living.content : <div className={styles.barLivingCompact}>
       <BarMetadata fields={card.fields} model={model} open={open} disabled={locked}/>
-      {(["outbound","return"] as const).map(slot=>{const leg=card.sockets.find(s=>s.slotKey===slot)?.currentItems.find(s=>s.kind==="MOBILITY_INTENT");return <BarRouteLine key={slot} slot={slot} contextId={card.contextOccurrenceId} leg={leg?.kind==="MOBILITY_INTENT"?leg:undefined} model={model} disabled={locked} open={()=>open(slot)}/>;})}
-      <div className={styles.barLivingTiles}>{card.sockets.flatMap(socket=>socket.currentItems.filter(item=>item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT").map(item=><button type="button" key={item.selectionId} disabled={locked} onClick={()=>open(`component:${socket.slotKey}:${item.selectionId}`)}>
-        <BarComponentFace item={item} amount={socket.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount} fresh={fresh}/>
-      </button>))}<button type="button" className={styles.barAddSlot} disabled={locked} onClick={()=>open("drinks")} aria-label="Ajouter une consommation">+<small>Consommation</small></button></div>
+      {(["outbound","return"] as const).map(slot=>{const leg=route(slot);return leg?.kind==="MOBILITY_INTENT"?<BarRouteLine key={slot} slot={slot} contextId={card.contextOccurrenceId} leg={leg} model={model} disabled={locked} open={()=>open(slot)}/>:null;})}
+      {route("outbound")?.kind==="MOBILITY_INTENT"&&!route("return")&&!route("outbound")?.returnRequired&&<button type="button" className={styles.barInlineAdd} disabled={locked} onClick={()=>open("return")}>+ Retour</button>}
+      <div className={styles.barLivingTiles}>{components.slice(0,2).map(({slot,item,amount})=><button type="button" key={item.selectionId} disabled={locked} onClick={()=>open(`component:${slot}:${item.selectionId}`)}>
+        <BarComponentFace item={item} amount={amount} fresh={fresh}/>
+      </button>)}{components.length>2?<button type="button" className={styles.barMoreCount} disabled={busy} onClick={()=>open("drinks")} aria-label={`Voir les ${components.length} postes existants`}>+{components.length-2}</button>:null}</div>
+      {!components.length&&!locked&&<button type="button" className={styles.barInlineAdd} onClick={()=>open("summary")}>Composer cette sortie <span aria-hidden="true">↗</span></button>}
       {remove&&<button type="button" className={styles.nightLink} disabled={locked} onClick={remove}>Retirer ce moment</button>}
     </div>}
   </article>;

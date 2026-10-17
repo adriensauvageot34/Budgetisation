@@ -32,7 +32,7 @@ const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
-const button=(label)=>{const all=controls(n=>n.type==='button'&&text(n).trim()===label.trim());assert.ok(all.length,'Missing button '+label);return all[0];};
+const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
 const click=async label=>{await act(async()=>button(label).props.onClick());steps++;};
 const input=label=>{const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
 const change=async(label,value)=>{await act(async()=>{const node=input(label);for(let p=node.parent;p;p=p.parent)p.props.onChangeCapture?.({target:{value}});node.props.onChange({target:{value}});});steps++;};
@@ -42,7 +42,7 @@ const render=()=>React.createElement(WorkshopConfirmationProvider,{requestRef},R
 const sync=async()=>{await act(async()=>root.update(render()));};
 const init=async(template,preset,component)=>{if(root)await act(async()=>root.unmount());overrides={};registry=new InlineEditRegistry();requestRef={current:()=>{}};registry.requestConfirmation=(message,accept,save)=>requestRef.current({message,accept,save,acceptLabel:'Abandonner cette saisie'});pendingOps=[];steps=0;id=crypto.randomUUID();kind=component;const r=await handleComposerRequest({repository,readWorld:async()=>fixture(),householdPersons:[]},householdId,{sequence:1,targetMonth:'2026-11',draft:state(),kind:'DROP',assetKey:'template:'+template,presetKey:preset,target:{kind:'BOARD_ZONE'},values:{},identity:id,selectionId:crypto.randomUUID()});assert.equal(r.ok,true,JSON.stringify(r));model=r.model;await act(async()=>{root=create(render(),{createNodeMock:element=>element.type==='dialog'?{open:false,showModal(){this.open=true;},close(){this.open=false;},querySelector(){return{focus(){}};},contains(){return false;}}:null});});};
 const current=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
-const save=async()=>{await click('Terminé');await sync();};
+const save=async()=>{const dirty=controls(n=>n.props['data-bar-living-editor']!==undefined)[0]?.props['data-inline-dirty'];if(dirty)await click('Enregistrer');else await click('Date');await sync();};
 const shortInput=label=>input(label);
 const tile=label=>controls(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&(text(c)===label||text(c).startsWith(label+' ×'))).length)[0];
 
@@ -51,10 +51,10 @@ const taxi={kind:'MOBILITY_INTENT',selectionId:uuid(99003),optionKey:'taxi',prov
 const step=()=>controls(n=>n.props['data-bar-living-editor']!==undefined)[0].props['data-bar-step'];
 try {
 await check('P1-NAV-01_ALREADY_OPEN_NO_MUTATION',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await save();const before=pendingOps.length;
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await save();await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{outbound:[{...taxi,selectionId:uuid(99020),pricing:{fare:{kind:'UNKNOWN'},parking:{kind:'UNKNOWN'},fundingAllocations:[],preference:'FASTEST'}}],return:[taxi]}}}));const before=pendingOps.length;
  for(const [label,target] of [['Lieu','place'],['Date','date'],['Personnes','people']]){await click(label);assert.equal(step(),target);}
  await act(async()=>tile('Bière').props.onClick());assert.equal(step(),'row');const identity=current().slotSelections.extras.items[0].selectionId;
- for(const dir of ['outbound','return']){await act(async()=>controls(n=>n.props['data-bar-route']===dir)[0].props.onClick());assert.equal(step(),dir);}
+ for(const dir of ['outbound','return']){await act(async()=>controls(n=>(n.props['data-bar-route']===dir||n.props['data-bar-add-route']===dir))[0].props.onClick());assert.equal(step(),dir);}
  await click('Date');assert.equal(step(),'date');assert.equal(pendingOps.length,before);assert.equal(current().slotSelections.extras.items[0].selectionId,identity);
 });
 await check('P1-PLACE-01_02_03_NO_INFERRED_BINDING',async()=>{
@@ -65,18 +65,18 @@ await check('P1-PLACE-01_02_03_NO_INFERRED_BINDING',async()=>{
 await check('P1-PRICE-01_REJECT_SILENT_FARE_LOSS',()=>assert.throws(()=>barEndpoint(taxi,'origin',other),/prix|tarif|coût/i));
 await check('P1-PRICE-03_EXTERNAL_ROUTE_NOT_REOWNED',()=>{const linked={...taxi,journey:{...taxi.journey,relation:'SHARES_JOURNEY',targetIntentId:uuid(99004),choice:'MERGE'}};assert.throws(()=>barEndpoint(linked,'origin',other),/lié|externe/i);});
 await check('P1-RAW-01_SAVE_AND_RESUME_DATE',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','6,50');const identity=current().slotSelections.extras.items[0].selectionId;
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await change('Prix unitaire (€)','6,50');const identity=current().slotSelections.extras.items[0].selectionId;
  await click('Date');assert.equal(input('Prix unitaire (€)').props.value,'6,50');assert.equal(current().slotSelections.extras.items[0].cost.kind,'UNKNOWN');
  const saveButton=controls(n=>n.type==='button'&&n.props['data-save-workshop']!==undefined)[0];assert.ok(saveButton,'RAW guard must offer an explicit save choice');await act(async()=>saveButton.props.onClick());assert.equal(step(),'date');assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'6.50');assert.equal(current().slotSelections.extras.items[0].selectionId,identity);
 });
 
-const onRoute=async dir=>act(async()=>controls(n=>n.props['data-bar-route']===dir)[0].props.onClick());
+const onRoute=async dir=>act(async()=>controls(n=>(n.props['data-bar-route']===dir||n.props['data-bar-add-route']===dir))[0].props.onClick());
 const saveGuard=async()=>act(async()=>controls(n=>n.props['data-save-workshop']!==undefined)[0].props.onClick());
 const installLegs=async(outbound,back)=>{await act(async()=>assert.equal(admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{placeRef:venue},slots:{...(outbound?{outbound:[outbound]}:{}),...(back?{return:[back]}:{})}}}),true));};
 const unknownPricing={fare:{kind:'UNKNOWN'},parking:{kind:'UNKNOWN'},fundingAllocations:[],preference:'FASTEST'};
 const car={...taxi,selectionId:uuid(99007),optionKey:'car',origin:home,destination:venue,pricing:unknownPricing,route:{version:'composer-mobility-route@v1',vehicleRef:{vehicleId:uuid(99008),labelAtSelection:'Voiture fixture',provenance:'EXPLICIT_USER_DECISION'},manualFuelPrice:'1.8',toll:{kind:'MANUAL',unitAmount:'4'},stops:[{label:'Maison fixture',placeId:home.placeId,distanceToNextKm:'5',distanceSource:'MANUAL',estimatedFuelLiters:'0.4'},{label:'Ami fixture',placeId:uuid(99009),distanceToNextKm:'6',distanceSource:'MANUAL'},{label:'Bar fixture',placeId:venue.placeId,endpointSource:'ROOT_PLACE'}]}};
 await check('P1-PLACE-01_UI_NO_LEGS_NO_CONFIRMATION',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);const before=structuredClone(current());await click('Nom libre');await change('Nom ou adresse libre','Bar déclaré fixture');await click('Retenir ce repère');
+ await init('night-out','bar-apero',BarLivingEditor);const before=structuredClone(current());await click('Lieu');await click('Nom libre');await change('Nom ou adresse libre','Bar déclaré fixture');await click('Retenir ce repère');
  const after=current();assert.equal(after.fields.placeRef.label,'Bar déclaré fixture');assert.deepEqual(after.slotSelections,before.slotSelections);assert.equal(pendingOps.length,1);assert.equal(text(controls(n=>n.props.id==='workshop-confirmation-message')[0]),'');assert.ok(!controls(n=>n.props['data-save-workshop']!==undefined).length);assert.equal(step(),'summary');
 });
 await check('P1-PLACE-04_MULTI_STOP_LEGACY_EXTERNAL_PRESERVED',async()=>{
@@ -108,26 +108,26 @@ await check('P1-PRICE-03_EXTERNAL_MODE_BLOCKED_AND_FUNDED_ENDPOINT_BLOCKED',asyn
  await init('night-out','bar-apero',BarLivingEditor);const linked={...taxi,journey:{...taxi.journey,relation:'SHARES_JOURNEY',targetIntentId:uuid(99010),choice:'MERGE'}};await installLegs(null,linked);const before=structuredClone(current());await onRoute('return');await click('Voiture');assert.deepEqual(current(),before);assert.ok(controls(n=>n.props.role==='alert').length);assert.throws(()=>barEndpoint({...taxi,pricing:{...taxi.pricing,fundingAllocations:[{source:'BANK',amount:'12'}]}},'origin',other,'UNKNOWN'),/financement/);
 });
 await check('P1-RAW-01_CANCEL_DISCARD_REJECT_INVALID_AND_RETRY',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');const before=structuredClone(current());await change('Prix unitaire (€)','6,50');await click('Date');await click('Continuer à modifier');assert.equal(step(),'row');assert.equal(input('Prix unitaire (€)').props.value,'6,50');
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');const before=structuredClone(current());await change('Prix unitaire (€)','6,50');await click('Date');await click('Continuer à modifier');assert.equal(step(),'row');assert.equal(input('Prix unitaire (€)').props.value,'6,50');
  await click('Date');rejectNext=true;await saveGuard();assert.equal(step(),'row');assert.deepEqual(current(),before);assert.equal(input('Prix unitaire (€)').props.value,'6,50');assert.ok(controls(n=>n.props.role==='alert').length);
  await click('Date');await click('Abandonner cette saisie');assert.equal(step(),'date');assert.deepEqual(current(),before);
  await act(async()=>tile('Bière').props.onClick());assert.equal(input('Prix unitaire (€)').props.value,'');await change('Prix unitaire (€)','invalide');await click('Date');assert.equal(controls(n=>n.props['data-save-workshop']!==undefined).length,0);await click('Continuer à modifier');assert.equal(input('Prix unitaire (€)').props.value,'invalide');
 });
 await check('P1-RAW-02_ESCAPE_RERENDER_PRESERVE_EXACT_BUFFER',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);overrides={onCancel:()=>{if(registry.guard(overrides.onCancel))overrides.closed=true;}};await sync();await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','8');const before=structuredClone(current());await sync();await sync();assert.equal(input('Prix unitaire (€)').props.value,'8');
+ await init('night-out','bar-apero',BarLivingEditor);overrides={onCancel:()=>{if(registry.guard(overrides.onCancel))overrides.closed=true;}};await sync();await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await change('Prix unitaire (€)','8');const before=structuredClone(current());await sync();await sync();assert.equal(input('Prix unitaire (€)').props.value,'8');
  globalThis.document.querySelector=()=>null;let stopped=0;await act(async()=>controls(n=>n.props['data-bar-living-editor']!==undefined)[0].props.onKeyDown({key:'Escape',preventDefault(){},stopPropagation(){stopped++;}}));assert.equal(stopped,1);await click('Continuer à modifier');assert.equal(overrides.closed,undefined);assert.deepEqual(current(),before);assert.equal(input('Prix unitaire (€)').props.value,'8');
 });
 await check('P1-RAW-03_MANUAL_ZERO_REOPEN',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','0');await click('Date');await saveGuard();await act(async()=>tile('Bière').props.onClick());assert.equal(input('Prix unitaire (€)').props.value,'0');assert.equal(current().slotSelections.extras.items[0].cost.kind,'MANUAL');
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await change('Prix unitaire (€)','0');await click('Date');await saveGuard();await act(async()=>tile('Bière').props.onClick());assert.equal(input('Prix unitaire (€)').props.value,'0');assert.equal(current().slotSelections.extras.items[0].cost.kind,'MANUAL');
 });
 await check('P1-RAW_ALL_OTHER_BUFFERS_CONTINUE_TO_ORIGINAL_TARGET',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Nom libre');await change('Nom ou adresse libre','Repère fixture');await click('Date');await saveGuard();assert.equal(step(),'date');assert.equal(current().fields.placeRef.label,'Repère fixture');
- await onRoute('return');await click('Taxi / Uber');await onRoute('return');await click('Préciser le prix du trajet');await change('Coût prévu du billet ou de la course (€)','12');await click('Date');await saveGuard();assert.equal(step(),'date');assert.equal(current().slotSelections.return.items[0].pricing.fare.unitAmount,'12');
- await click('Montant rapide');await change('Coût prévu (€)','20');await click('Date');await saveGuard();assert.equal(step(),'date');assert.equal(current().slotSelections.main.items[0].cost.unitAmount,'20');
- await click('Personnes');const person=controls(n=>n.type==='button'&&typeof n.props['aria-pressed']==='boolean'&&text(n).trim()!=='')[0];assert.ok(person);await act(async()=>person.props.onClick());await click('Date');await saveGuard();assert.equal(step(),'date');assert.equal(current().fields.participantRefs.length,1);
+ await init('night-out','bar-apero',BarLivingEditor);await click('Lieu');await click('Nom libre');await change('Nom ou adresse libre','Repère fixture');await click('Date');await saveGuard();assert.equal(step(),'date');assert.equal(current().fields.placeRef.label,'Repère fixture');
+ await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{return:[{...taxi,pricing:{fare:{kind:'UNKNOWN'},parking:{kind:'UNKNOWN'},fundingAllocations:[],preference:'FASTEST'}}]}}}));await onRoute('return');await click('Préciser le prix du trajet');await change('Coût prévu du billet ou de la course (€)','12');await click('Date');await saveGuard();assert.equal(step(),'date');assert.equal(current().slotSelections.return.items[0].pricing.fare.unitAmount,'12');
+ await click('Date');await click('Montant direct');await change('Coût prévu (€)','20');await click('Date');await saveGuard();assert.equal(step(),'date');assert.equal(current().slotSelections.main.items[0].cost.unitAmount,'20');
+ await click('Personnes');const person=controls(n=>n.props['data-question-dock']!==undefined)[0].findAll(n=>n.type==='button'&&typeof n.props['aria-pressed']==='boolean'&&text(n).trim()!=='')[0];assert.ok(person);await act(async()=>person.props.onClick());await click('Date');assert.equal(step(),'date');assert.equal(current().fields.participantRefs.length,1);
 });
 await check('P1-UNDO-01_EXACT_FUNDED_BEER_ID_BINDING',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','6');await save();const beer=current().slotSelections.extras.items[0];await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:[{...beer,quantity:'2',fundingAllocations:[{source:'BANK',amount:'12'}],binding:{mode:'EXTRA_TO_SLOT'}}]}}}));const before=structuredClone(model.semanticState);await act(async()=>tile('Bière').props.onClick());await click('Retirer');assert.equal(current().slotSelections.extras.items.length,0);model=visualDraftModel(model,before);await sync();assert.deepEqual(current().slotSelections.extras.items[0],before.contexts.find(c=>c.contextOccurrenceId===id).slotSelections.extras.items[0]);
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await change('Prix unitaire (€)','6');await save();const beer=current().slotSelections.extras.items[0];await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:[{...beer,quantity:'2',fundingAllocations:[{source:'BANK',amount:'12'}],binding:{mode:'EXTRA_TO_SLOT'}}]}}}));const before=structuredClone(model.semanticState);await act(async()=>tile('Bière').props.onClick());await click('Retirer');assert.equal(current().slotSelections.extras.items.length,0);model=visualDraftModel(model,before);await sync();assert.deepEqual(current().slotSelections.extras.items[0],before.contexts.find(c=>c.contextOccurrenceId===id).slotSelections.extras.items[0]);
 });
 await check('P1-UNDO-02_ATOMIC_VENUE_ENDPOINT_PRICES_REDO',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);await installLegs({...car,route:{...car.route,stops:[],toll:{kind:'UNKNOWN'}}},taxi);const before=structuredClone(model.semanticState);const changed=barEndpoint(taxi,'origin',other,'UNKNOWN');await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{placeRef:other},slots:{return:[changed]}}}));const after=structuredClone(model.semanticState);assert.deepEqual(current().slotSelections.outbound,before.contexts.find(c=>c.contextOccurrenceId===id).slotSelections.outbound);model=visualDraftModel(model,before);await sync();assert.deepEqual(model.semanticState,before);model=visualDraftModel(model,after);await sync();assert.deepEqual(model.semanticState,after);assert.equal(current().slotSelections.return.items.length,1);
@@ -136,15 +136,15 @@ await check('P1-NET_CONFIRMATION_REJECTS_CHANGED_CONTEXT',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);await installLegs(null,{...taxi,optionKey:'car'});await onRoute('return');await click('Taxi / Uber');await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{timingNote:'Modification intervenue fixture'}}}));const before=structuredClone(current());await click('Changer de mode');assert.deepEqual(current(),before);assert.ok(controls(n=>n.props.role==='alert').length);
 });
 await check('P1-NET_RAW_DIALOG_CANNOT_SAVE_CHANGED_BUFFER',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','6');await click('Date');await change('Prix unitaire (€)','8');await saveGuard();assert.equal(step(),'row');assert.equal(input('Prix unitaire (€)').props.value,'8');assert.equal(current().slotSelections.extras.items[0].cost.kind,'UNKNOWN');
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await change('Prix unitaire (€)','6');await click('Date');await change('Prix unitaire (€)','8');await saveGuard();assert.equal(step(),'row');assert.equal(input('Prix unitaire (€)').props.value,'8');assert.equal(current().slotSelections.extras.items[0].cost.kind,'UNKNOWN');
 });
 await check('P1-NAV-03_LOCKED_NO_LOCAL_ADMISSION',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');const before=structuredClone(current());overrides={busy:true};await sync();await change('Prix unitaire (€)','9');await click('Terminé');assert.deepEqual(current(),before);assert.equal(registry.count(),1);assert.ok(controls(n=>n.props.role==='alert').length);
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');const before=structuredClone(current());overrides={busy:true};await sync();await change('Prix unitaire (€)','9');assert.equal(button('Enregistrer').props.disabled,true);assert.deepEqual(current(),before);assert.equal(registry.count(),1);
 });
 
 
 await check('P1-NAV-02_COMPACT_EXACT_COMPONENT_TARGET',async()=>{
- const {BarLivingCard}=require('@/app/mois-a-venir/composer/bar-living-card');await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','9');await save();const selection=current().slotSelections.extras.items[0];let target;
+ const {BarLivingCard}=require('@/app/mois-a-venir/composer/bar-living-card');await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await change('Prix unitaire (€)','9');await save();const selection=current().slotSelections.extras.items[0];let target;
  await act(async()=>root.unmount());await act(async()=>{root=create(React.createElement(BarLivingCard,{card:model.board.contexts.find(c=>c.contextOccurrenceId===id),model,living:{open:(_,next)=>target=next,close(){}},busy:false,preserved:false,preserve(){},drag(){}}));});await act(async()=>tile('Bière').props.onClick());assert.equal(target,'component:extras:'+selection.selectionId);
  await act(async()=>root.unmount());overrides={initialTarget:target};await act(async()=>{root=create(render());});assert.equal(step(),'row');assert.equal(input('Prix unitaire (€)').props.value,'9');assert.equal(current().slotSelections.extras.items[0].selectionId,selection.selectionId);
 });
@@ -156,13 +156,13 @@ await check('P1-PRICE_TARGETED_PARKING_QUOTE_AND_MISMATCH',()=>{
 
 
 await check('P1-RAW_SAVE_THEN_ADD_PRESERVES_JUST_ADMITTED_PRICE',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','6,50');
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await change('Prix unitaire (€)','6,50');
  await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await saveGuard();await click('Cocktail');assert.equal(current().slotSelections.extras.items.length,2);assert.equal(current().slotSelections.extras.items[0].cost.kind,'MANUAL');assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'6.50');assert.equal(current().slotSelections.extras.items[1].label,'Cocktail');
 });
 
 
 await check('P1-RAW_UNDO_DOES_NOT_SAVE_THEN_RESTORE_STALE_HISTORY',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','8');const before=structuredClone(current());let continued=false;
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await change('Prix unitaire (€)','8');const before=structuredClone(current());let continued=false;
  await act(async()=>assert.equal(registry.guard(()=>{continued=true;},undefined,false),false));assert.equal(controls(n=>n.props['data-save-workshop']!==undefined).length,0);await click('Continuer à modifier');assert.equal(continued,false);assert.deepEqual(current(),before);assert.equal(input('Prix unitaire (€)').props.value,'8');
  await act(async()=>registry.guard(()=>{continued=true;},undefined,false));await click('Abandonner cette saisie');assert.equal(continued,true);assert.deepEqual(current(),before);
 });
