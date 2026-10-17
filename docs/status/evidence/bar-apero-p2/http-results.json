@@ -1,0 +1,14 @@
+{
+  "status": "EXECUTED_PASS_LOOPBACK_HTTP_SYNTHETIC_ONLY",
+  "auth": "NOT_RUN_AUTH",
+  "checks": [
+    "Bar+two directed legs+beer+absent date round-trip",
+    "central venue preserves independent legs",
+    "lost response resolved by read; idempotent replay without extra version",
+    "two concurrent CAS writes; one accepted, one conflict",
+    "independent outbound and beer retained after return edit",
+    "zero Apply and zero remote/financial canary writes"
+  ],
+  "successfulSaves": 2,
+  "remoteWrites": 0
+}

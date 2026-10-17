@@ -1,0 +1,25 @@
+{
+  "method": "REACT_IN_PROCESS_NOT_BROWSER",
+  "checks": [
+    {
+      "name": "V2-01_INITIAL_FIVE_CHOICES_NO_DECISION",
+      "status": "FAIL",
+      "message": "Expected values to be strictly equal:\n\n'place' !== 'summary'\n"
+    },
+    {
+      "name": "V2-02_BEER_THEN_STEPPER_ADMITTED_IN_TWO_GESTURES",
+      "status": "FAIL",
+      "message": "Missing button Bière"
+    },
+    {
+      "name": "V2-03_ROW_DOCK_STAYS_DRINKS_SAVE_ONLY_DIRTY",
+      "status": "FAIL",
+      "message": "Missing button Bière"
+    },
+    {
+      "name": "V2-06_COMPACT_NO_PHANTOM_ROUTE_AND_DENSE_PREVIEW_LIMIT",
+      "status": "FAIL",
+      "message": "Expected values to be strictly equal:\n\n2 !== 0\n"
+    }
+  ]
+}

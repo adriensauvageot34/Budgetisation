@@ -1,0 +1,9 @@
+{
+  "status": "NOT_RUN_BROWSER",
+  "tool": "Official Computer Use / @oai/sky",
+  "stopReason": "Could not determine the current browser URL on Windows with enough confidence to enforce policy.",
+  "actionsAfterStop": 0,
+  "screenshotsCaptured": 0,
+  "nativeGeometryZoomFocusKeyboardCertified": false,
+  "reactStructureIsNotScreenshot": true
+}

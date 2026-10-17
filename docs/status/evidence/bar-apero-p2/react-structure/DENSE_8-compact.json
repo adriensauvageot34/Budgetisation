@@ -1,0 +1,324 @@
+{
+  "proof": "REACT_RENDERED_STRUCTURE_NOT_SCREENSHOT_NOT_BROWSER",
+  "tree": {
+    "type": "article",
+    "props": {
+      "ref": {
+        "current": null
+      },
+      "className": "barLivingCard",
+      "data-bar-living-card": true,
+      "data-context": "d90d7dfa-52a7-4832-82f9-1c2410f9a65d",
+      "data-template-key": "night-out",
+      "data-expanded": false,
+      "data-preset-key": "bar-apero",
+      "data-state": "UNKNOWN",
+      "aria-label": "Bar / Apéro"
+    },
+    "children": [
+      {
+        "type": "header",
+        "props": {
+          "className": "barLivingHeader"
+        },
+        "children": [
+          {
+            "type": "button",
+            "props": {
+              "type": "button",
+              "className": "barImageTrigger",
+              "disabled": false,
+              "aria-label": "Ouvrir Bar / Apéro"
+            },
+            "children": [
+              {
+                "type": "img",
+                "props": {
+                  "className": "presetIllustration barLivingImage",
+                  "data-preset-illustration": "bar-apero",
+                  "src": "/planned-visuals/composer/presets/bar-apero.webp",
+                  "width": 1200,
+                  "height": 600,
+                  "alt": "",
+                  "loading": "lazy",
+                  "decoding": "async"
+                },
+                "children": null
+              }
+            ]
+          },
+          {
+            "type": "div",
+            "props": {},
+            "children": [
+              {
+                "type": "h3",
+                "props": {},
+                "children": [
+                  {
+                    "type": "button",
+                    "props": {
+                      "type": "button",
+                      "disabled": false
+                    },
+                    "children": [
+                      "Bar / Apéro"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "strong",
+                "props": {},
+                "children": [
+                  "Coût à préciser"
+                ]
+              }
+            ]
+          },
+          {
+            "type": "div",
+            "props": {
+              "className": "barLivingTools"
+            },
+            "children": [
+              {
+                "type": "button",
+                "props": {
+                  "type": "button",
+                  "disabled": false,
+                  "aria-label": "Préserver Bar / Apéro",
+                  "aria-pressed": false
+                },
+                "children": [
+                  {
+                    "type": "svg",
+                    "props": {
+                      "ref": null,
+                      "xmlns": "http://www.w3.org/2000/svg",
+                      "width": 15,
+                      "height": 15,
+                      "viewBox": "0 0 24 24",
+                      "fill": "none",
+                      "stroke": "currentColor",
+                      "strokeWidth": 2,
+                      "strokeLinecap": "round",
+                      "strokeLinejoin": "round",
+                      "className": "lucide lucide-pin"
+                    },
+                    "children": [
+                      {
+                        "type": "path",
+                        "props": {
+                          "d": "M12 17v5"
+                        },
+                        "children": null
+                      },
+                      {
+                        "type": "path",
+                        "props": {
+                          "d": "M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"
+                        },
+                        "children": null
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "button",
+                "props": {
+                  "type": "button",
+                  "draggable": false,
+                  "data-drag-source": "context-occurrence:d90d7dfa-52a7-4832-82f9-1c2410f9a65d",
+                  "data-grabbed": false,
+                  "disabled": false,
+                  "aria-label": "Déplacer Bar / Apéro"
+                },
+                "children": [
+                  {
+                    "type": "svg",
+                    "props": {
+                      "ref": null,
+                      "xmlns": "http://www.w3.org/2000/svg",
+                      "width": 17,
+                      "height": 17,
+                      "viewBox": "0 0 24 24",
+                      "fill": "none",
+                      "stroke": "currentColor",
+                      "strokeWidth": 2,
+                      "strokeLinecap": "round",
+                      "strokeLinejoin": "round",
+                      "className": "lucide lucide-grip-vertical"
+                    },
+                    "children": [
+                      {
+                        "type": "circle",
+                        "props": {
+                          "cx": "9",
+                          "cy": "12",
+                          "r": "1"
+                        },
+                        "children": null
+                      },
+                      {
+                        "type": "circle",
+                        "props": {
+                          "cx": "9",
+                          "cy": "5",
+                          "r": "1"
+                        },
+                        "children": null
+                      },
+                      {
+                        "type": "circle",
+                        "props": {
+                          "cx": "9",
+                          "cy": "19",
+                          "r": "1"
+                        },
+                        "children": null
+                      },
+                      {
+                        "type": "circle",
+                        "props": {
+                          "cx": "15",
+                          "cy": "12",
+                          "r": "1"
+                        },
+                        "children": null
+                      },
+                      {
+                        "type": "circle",
+                        "props": {
+                          "cx": "15",
+                          "cy": "5",
+                          "r": "1"
+                        },
+                        "children": null
+                      },
+                      {
+                        "type": "circle",
+                        "props": {
+                          "cx": "15",
+                          "cy": "19",
+                          "r": "1"
+                        },
+                        "children": null
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "div",
+        "props": {
+          "className": "barLivingCompact"
+        },
+        "children": [
+          {
+            "type": "nav",
+            "props": {
+              "className": "barLivingMetadata",
+              "aria-label": "Précisions de la sortie"
+            },
+            "children": null
+          },
+          {
+            "type": "div",
+            "props": {
+              "className": "barLivingTiles"
+            },
+            "children": [
+              {
+                "type": "button",
+                "props": {
+                  "type": "button",
+                  "disabled": false
+                },
+                "children": [
+                  {
+                    "type": "span",
+                    "props": {
+                      "className": "barProductSymbol",
+                      "aria-hidden": "true"
+                    },
+                    "children": [
+                      "🍺"
+                    ]
+                  },
+                  {
+                    "type": "strong",
+                    "props": {},
+                    "children": [
+                      "Bière",
+                      " ×1"
+                    ]
+                  },
+                  {
+                    "type": "small",
+                    "props": {},
+                    "children": [
+                      "6,00 € / unité"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "button",
+                "props": {
+                  "type": "button",
+                  "disabled": false
+                },
+                "children": [
+                  {
+                    "type": "span",
+                    "props": {
+                      "className": "barProductSymbol",
+                      "aria-hidden": "true"
+                    },
+                    "children": [
+                      "🍺"
+                    ]
+                  },
+                  {
+                    "type": "strong",
+                    "props": {},
+                    "children": [
+                      "Bière",
+                      " ×1"
+                    ]
+                  },
+                  {
+                    "type": "small",
+                    "props": {},
+                    "children": [
+                      "8,00 € / unité"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "button",
+                "props": {
+                  "type": "button",
+                  "className": "barMoreCount",
+                  "disabled": false,
+                  "aria-label": "Voir les 8 postes existants"
+                },
+                "children": [
+                  "+",
+                  "6"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
