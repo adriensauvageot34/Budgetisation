@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useWorkshopRaw } from "./inline-edit-registry";
 import type { ProspectivePersonRef, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { prospectivePersonIdentity } from "@/domain/phase2/planned-product";
 import type { PlannerJson } from "@/domain/phase2/planner/json";
@@ -35,6 +36,10 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
 }) {
   const [values, setValues] = useState<Values>(() => Object.fromEntries(editor.fields.map(field => [field.key, context.fields[field.key] ?? null])) as Values);
   const [error, setError] = useState("");
+  const acceptedValues = useRef(values), initialValues = acceptedValues.current;
+  useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(values) !== JSON.stringify(initialValues), () => {
+    setValues(initialValues); setError("");
+  });
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [summaryPage, setSummaryPage] = useState(0);
   const posts = Object.entries(context.slotSelections).flatMap(([slotKey, slot]) =>
@@ -66,8 +71,8 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         const original = context.fields[field.key] ?? null;
         if (JSON.stringify(normalized) !== JSON.stringify(original)) patch[field.key] = normalized;
       }
-      if (!Object.keys(patch).length) { setActiveKey(null); return; }
-      if (onSave({ kind: "EDIT_CONTEXT", contextOccurrenceId: context.contextOccurrenceId, values: patch })) setActiveKey(null);
+      if (!Object.keys(patch).length) { acceptedValues.current = values; setActiveKey(null); return; }
+      if (onSave({ kind: "EDIT_CONTEXT", contextOccurrenceId: context.contextOccurrenceId, values: patch })) { acceptedValues.current = values; setActiveKey(null); }
       else setError("Ce choix n’a pas été admis. Le brouillon local reste disponible.");
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez les champs du moment."); }
   };

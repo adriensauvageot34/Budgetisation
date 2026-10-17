@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useWorkshopRaw } from "./inline-edit-registry";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette } from "./context-palette";
 import type { ProspectivePersonRef } from "@/domain/phase2/planned-contract";
@@ -43,6 +44,12 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
   const [row, setRow] = useState(() => existing ? fromSelection(existing) : fresh("Cadeau"));
   const [error, setError] = useState("");
   const [section, setSection] = useState<"summary" | "recipient" | "occasion" | "object" | "budget" | "date">("summary");
+  const buffer = { recipient, occasion, assetKey, objectLabel, date, row };
+  const acceptedBuffer = useRef(buffer), initial = acceptedBuffer.current;
+  useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(buffer) !== JSON.stringify(initial), () => {
+    setRecipient(initial.recipient); setOccasion(initial.occasion); setAssetKey(initial.assetKey);
+    setObjectLabel(initial.objectLabel); setDate(initial.date); setRow(initial.row); setError("");
+  });
   const selectedAsset = giftAssets.find(asset => asset.assetKey === assetKey);
   const save = () => { try {
     if (recipient?.kind === "TEXT" && !recipient.label.trim()) throw Error("Indiquez le nom du destinataire ou retirez cette sélection.");
@@ -55,7 +62,7 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
       edited: row.edited || (objectLabel.trim() || "Cadeau") !== (existing?.label ?? "") }, "gift") : undefined;
     const admitted = item ? onSave({ kind: "EDIT_GIFT", contextOccurrenceId: context.contextOccurrenceId, values: patch, item })
       : !Object.keys(patch).length || onSave({ kind: "EDIT_CONTEXT", contextOccurrenceId: context.contextOccurrenceId, values: patch });
-    if (admitted) { setError(""); setSection("summary"); }
+    if (admitted) { acceptedBuffer.current = buffer; setError(""); setSection("summary"); }
     else setError("Ce choix n’a pas été admis. Le brouillon local reste disponible.");
   } catch (failure) { setError(failure instanceof Error && !/^[A-Z_]+$/.test(failure.message) ? failure.message : "Vérifiez le prix, la quantité et le financement. Votre saisie est conservée."); } };
   return <form data-gift-editor className={styles.nightEditor} onSubmit={event => { event.preventDefault(); save(); }}>

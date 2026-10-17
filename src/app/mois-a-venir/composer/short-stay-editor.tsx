@@ -1,5 +1,6 @@
 "use client";
-import { useState, type ComponentProps } from "react";
+import { useRef, useState, type ComponentProps } from "react";
+import { useWorkshopRaw } from "./inline-edit-registry";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ShortStayEdit } from "@/domain/phase2/planner/short-stay-edit";
@@ -48,6 +49,12 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
   const [postSection, setPostSection] = useState<"lodging" | "groceries" | Group>("lodging");
   const [lodgingPage, setLodgingPage] = useState<"terms" | "price">("terms");
   const [postPage, setPostPage] = useState(0);
+  const buffer = { nights, lodgingKind, basis, lodging, groceries, posts };
+  const acceptedBuffer = useRef(buffer), initial = acceptedBuffer.current;
+  useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(buffer) !== JSON.stringify(initial), () => {
+    setNights(initial.nights); setLodgingKind(initial.lodgingKind); setBasis(initial.basis); setLodging(initial.lodging);
+    setGroceries(initial.groceries); setPosts(initial.posts); setLodgingDirty(false); setGroceriesDirty(false); setDirty({});
+  }, "stay-posts-workshop");
   const update = (slot: Group, values: Post[]) => { setPosts(p => ({ ...p, [slot]: values })); setDirty(d => ({ ...d, [slot]: true })); };
   const prepare = (): Pick<ShortStayEdit, "fields" | "slots" | "children"> => {
     const nightCount = nights.trim() ? Number(nights) : null;
@@ -97,10 +104,10 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
       {[["LATER", "À préciser"], ["RELATIVE", "Chez un proche"], ["HOTEL", "Hôtel"], ["HOSTEL", "Auberge"], ["RENTAL", "Location"], ["OTHER", "Autre"]].map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <label>Nombre de nuits (facultatif)<input type="number" min="1" max="366" value={nights} onChange={e => setNights(e.target.value)} placeholder="Inconnu" /></label>
       <label>Base du prix<select value={basis} onChange={e => { setBasis(e.target.value as typeof basis); setLodgingDirty(true); }}>
-        <option value="TOTAL">Budget total de l’hébergement</option><option value="PER_NIGHT">Tarif par nuit</option>{basis === "LEGACY" && <option value="LEGACY">Conserver la quantité et le prix antérieurs</option>}</select></label></div>
+        <option value="TOTAL">Coût total prévu de l’hébergement</option><option value="PER_NIGHT">Tarif par nuit</option>{basis === "LEGACY" && <option value="LEGACY">Conserver la quantité et le prix antérieurs</option>}</select></label></div>
     <button type="button" onClick={() => setLodgingPage("price")}>Préciser le prix</button></>}
     {lodgingPage === "price" && (lodging ? <WorkshopComponentRow title="Hébergement" row={lodging} participantCount={0} fixedQuantity={basis !== "LEGACY"}
-      priceLabel={basis === "PER_NIGHT" ? "Tarif par nuit (€)" : "Budget total (€)"}
+      priceLabel={basis === "PER_NIGHT" ? "Tarif par nuit (€)" : "Coût total prévu (€)"}
       onChange={row => { setLodging(row); setLodgingDirty(true); }} onRemove={() => { setLodging(null); setLodgingDirty(true); }} />
       : <button type="button" onClick={() => { setLodging(fresh("Hébergement")); setLodgingDirty(true); }}>Renseigner l’hébergement</button>)}
     {basis === "PER_NIGHT" && !nights && <p role="status">Le tarif par nuit sera conservé. Le coût total restera inconnu tant que la durée n’est pas décidée.</p>}</>}
@@ -127,6 +134,8 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
     if (operation.kind !== "EDIT_SHORT_STAY") return false;
     const prepared = prepare();
     validateStayCalendar({ ...context.fields, ...operation.edit.fields, ...prepared.fields });
-    return props.onSave({ ...operation, edit: { ...operation.edit, ...prepared, fields: { ...operation.edit.fields, ...prepared.fields } } });
+    const admitted = props.onSave({ ...operation, edit: { ...operation.edit, ...prepared, fields: { ...operation.edit.fields, ...prepared.fields } } });
+    if (admitted) acceptedBuffer.current = buffer;
+    return admitted;
   }} />;
 }

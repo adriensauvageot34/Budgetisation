@@ -38,7 +38,7 @@ import { useCommittedEvent } from "./use-committed-event";
 import { InlineEditContext, useOwnedInlineEdits } from "./inline-edit-registry";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
-  equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean }; page?: number; saved?: boolean;
+  equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean }; page?: number; saved?: boolean; raw?: boolean;
   restaurantContextId?: string; restaurantCreating?: boolean;
   giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
   cardKey?: string;
@@ -474,6 +474,14 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       setComparison(null); setMessage(keep ? "Variante gardée dans le brouillon. Vous pourrez l’appliquer ensuite." : "Brouillon avant comparaison restauré exactement.");
     }
   }
+  useEffect(() => {
+    const key = "equipment-workshop";
+    inlineEdits.registry.set(key, editor?.equipment && editor.raw ? {
+      targetRef: editor.equipment.target.contextOccurrenceId ?? editor.cardKey ?? key,
+      dimension: key, kind: "RAW", discard: () => setEditor(null), flush: () => {}
+    } : null);
+    return () => inlineEdits.registry.set(key, null);
+  }, [inlineEdits.registry, editor?.raw, editor?.equipment, editor?.cardKey]);
   function prepareDialogFocus() {
     // A nested popover disappears when a modal opens. Restore to its visible root invoker.
     let origin = document.activeElement as HTMLElement | null;
@@ -486,7 +494,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     origin?.focus();
   }
   function choose(asset: ComposerAssetView, target: DropTarget = { kind: "BOARD_ZONE" }, selection?: ComponentSelectionV1, stableId?: string, presetKey?: ComposerPresetKey) {
-    if (editor?.nightContextId && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
     if (asset.kind === "SLOT_OPTION_ASSET" && asset.optionKind === "MOBILITY_INTENT") {
@@ -567,7 +575,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     stage({ kind: "DROP", assetKey: key, target, values: {}, identity: crypto.randomUUID(), selectionId: crypto.randomUUID() });
   }
   function edit(card: ComposerCardView) {
-    if (editor?.nightContextId && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
     setProjectionOpen(false); setUnresolvedOpen(false);
     clearHover();
     if (!card.capability?.actions.length || card.capability.flexibility === "LOCKED") return;
@@ -577,9 +585,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       values: Object.fromEntries(["amount", "count", "unitAmount"].map(key => [key, typeof card.value[key] === "string" ? card.value[key] as string : ""])),
       operation: values => ({ kind: "MUTATE", mutation: { kind: "SET_STATE", targetRef: card.targetRef, value: Object.fromEntries(model.controlEditors.find(e => e.targetRef === card.targetRef)!.fields.map(f => [f.key, values[f.key]])) } }) });
   }
-  const closeDialog = () => { if (!busyRef.current) { if (editor?.nightContextId && !inlineEdits.registry.confirmDiscard(window.confirm)) return; setEditor(null); setProjectionOpen(false); setErrorMessage(null); } };
+  const closeDialog = () => { if (!busyRef.current) { if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return; setEditor(null); setProjectionOpen(false); setErrorMessage(null); } };
   function editContext(card: ComposerContextCardView) {
-    if (editor?.nightContextId && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
     setFocusedContext(card.contextOccurrenceId);
@@ -611,11 +619,11 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const applyDisabled = !!inlineEdits.count || busy || !!pendingApply || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
     || !!draftTransport && (durable.status !== "SAVED" || !durable.online || !!durable.snapshot?.baseStale);
   const openProjectionDetails = () => {
-    if (editor?.nightContextId && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
     clearHover();
     setEditor(null); setUnresolvedOpen(false); setCompletenessFocus(false); setProjectionOpen(true);
   };
-  const showUnresolved = () => { if (editor?.nightContextId && !inlineEdits.registry.confirmDiscard(window.confirm)) return; clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
+  const showUnresolved = () => { if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return; clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
   const navigateDecision = (targetRef: string) => { setFocusedContext(targetRef); setReveal(previous => ({ targetRef, sequence: (previous?.sequence ?? 0) + 1 })); };
   const applyReason = inlineEdits.count ? "Une saisie n’est pas validée ou un réglage attend confirmation. Validez ou annulez la saisie avant de transformer le mois en Plan."
     : busy ? "La prévisualisation serveur est en cours." : pendingApply ? "L’issue de la demande précédente doit être vérifiée avant toute nouvelle application."
@@ -648,7 +656,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stablePreview=useCommittedEvent(()=>void run({kind:"READ"},"none"));
   const stableBalance=useCommittedEvent(()=>{clearHover();setBalanceOpen(v=>!v);if(!balanceOpen)void run({kind:"SUGGESTIONS"},"none");});
   const stableDetails=useCommittedEvent(openProjectionDetails);
-  const stableFocus=useCommittedEvent((id:string|null)=>{setFocusedContext(id);if(editor?.restaurantContextId&&id!==editor.restaurantContextId)setEditor(null);});
+  const stableFocus=useCommittedEvent((id:string|null)=>{if(editor?.restaurantContextId&&id!==editor.restaurantContextId&&!inlineEdits.registry.confirmDiscard(window.confirm))return;setFocusedContext(id);if(editor?.restaurantContextId&&id!==editor.restaurantContextId)setEditor(null);});
   const stableRevealFocus=useCommittedEvent((id:string|null)=>{stableFocus(id);if(id)setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));});
   // Accepted context changes (also Undo/Redo and child edits) replace workshop buffers.
   // Preview responses with the same semantic content leave RAW inputs untouched.
@@ -659,7 +667,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     return admitted;
   };
   const editorKnowledge = editor?.cardKey ? <CardKnowledgePanel knowledge={model.cardKnowledge[editor.cardKey]} onPrefill={(field, value) => {
-          if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value } } : current);
+          if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
   return <InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
@@ -775,7 +783,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
            onSave={stage} />
         : editor ? <form data-equipment-workshop={!!editor.equipment || undefined} onSubmit={e => { e.preventDefault();
           const values = editor.equipment ? editor.values : Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
-          if (stage(editor.operation(values))) setEditor(current => current?.equipment ? { ...current, saved: true } : null);
+          if (stage(editor.operation(values))) setEditor(current => current?.equipment ? { ...current, saved: true, raw: false } : null);
         }}>
         {editor.saved ? <section className={styles.nightSection} role="status"><h3>Choix conservé dans le brouillon</h3>
           <p>La sauvegarde et la simulation suivent leurs propres états dans le bandeau.</p>
@@ -788,9 +796,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           Le montant choisi modifie seulement ce scénario ; aucun mouvement bancaire n’est créé. La projection sera recalculée par Finance V2.
         </p> : <p className={styles.helper}>Une valeur vide reste inconnue. Une date absente reste à préciser.</p>}
         <div className={styles.formFields}>{(editor.equipment ? editor.fields.slice((editor.page ?? 0) * 3, (editor.page ?? 0) * 3 + 3) : editor.fields).map(f => <label key={f.key}>{f.label}{f.kind === "CHOICE" ? <select name={f.key}
-          {...(editor.equipment ? { value: editor.values[f.key] ?? "", onChange: (event: React.ChangeEvent<HTMLSelectElement>) => { const value = event.target.value; setEditor(current => current ? { ...current, values: { ...current.values, [f.key]: value } } : current); } } : { defaultValue: editor.values[f.key] ?? f.choices?.[0]?.value ?? "" })} required={f.required}>
+          {...(editor.equipment ? { value: editor.values[f.key] ?? "", onChange: (event: React.ChangeEvent<HTMLSelectElement>) => { const value = event.target.value; setEditor(current => current ? { ...current, values: { ...current.values, [f.key]: value }, raw: true } : current); } } : { defaultValue: editor.values[f.key] ?? f.choices?.[0]?.value ?? "" })} required={f.required}>
           {[...(f.choices ?? []), ...(f.key === "funding" && editor.values.funding === "EXISTING" ? [{ value: "EXISTING", label: "Conserver le financement antérieur (lecture seule)" }] : [])].map(c => <option value={c.value} key={c.value}>{c.label}</option>)}</select>
-          : <input name={f.key} {...(editor.equipment ? { value: editor.values[f.key] ?? "", onChange: (event: React.ChangeEvent<HTMLInputElement>) => { const value = event.target.value; setEditor(current => current ? { ...current, values: { ...current.values, [f.key]: value } } : current); } } : { defaultValue: editor.values[f.key] ?? f.initial ?? "" })}
+          : <input name={f.key} {...(editor.equipment ? { value: editor.values[f.key] ?? "", onChange: (event: React.ChangeEvent<HTMLInputElement>) => { const value = event.target.value; setEditor(current => current ? { ...current, values: { ...current.values, [f.key]: value }, raw: true } : current); } } : { defaultValue: editor.values[f.key] ?? f.initial ?? "" })}
             type={f.kind === "DATE" ? "date" : "text"} inputMode={f.kind === "AMOUNT" ? "decimal" : undefined} required={f.required} autoComplete="off" />}</label>)}</div>
         {editor.equipment && editor.fields.length > 3 && <nav className={styles.nightPage} aria-label="Précisions du poste"><button type="button" disabled={!editor.page} onClick={() => setEditor(current => current ? { ...current, page: (current.page ?? 0) - 1 } : current)}>Précédent</button>
           <span>{(editor.page ?? 0) + 1} / {Math.ceil(editor.fields.length / 3)}</span><button type="button" disabled={((editor.page ?? 0) + 1) * 3 >= editor.fields.length} onClick={() => setEditor(current => current ? { ...current, page: (current.page ?? 0) + 1 } : current)}>Suivant</button></nav>}

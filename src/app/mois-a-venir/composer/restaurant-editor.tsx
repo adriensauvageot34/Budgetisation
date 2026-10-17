@@ -20,6 +20,7 @@ import { PlannedContactField } from "../planned-people-fields";
 import { PlannedPlaceField } from "../planned-place-field";
 import { fresh, fromSelection, buildComponentRow, type Row } from "./night-out-components";
 import { WorkshopComponentRow } from "./workshop-component-row";
+import { useWorkshopRaw } from "./inline-edit-registry";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { ContextPalette } from "./context-palette";
 import { PlannerIcon } from "./planner-icons/planner-icon";
@@ -70,6 +71,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const [equipment, setEquipment] = useState<{ asset: ComposerAssetView; target: DropTarget } | null>(null);
   const [equipmentValues, setEquipmentValues] = useState<Record<string, string>>({});
   const [allOptions, setAllOptions] = useState(false), [error, setError] = useState("");
+  const [raw, setRaw] = useState(false);
   const panel = useRef<HTMLElement>(null);
   const mealSignature = JSON.stringify(main), priorMeal = useRef(mealSignature);
   // A confirmed semantic change (including Undo/Redo) supersedes the input buffer.
@@ -89,7 +91,15 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     : binding === "EXTRA_TO_SLOT" ? "Une dépense en plus" : binding === "NO_RELATED_SLOT" ? "Sans enveloppe liée" : "Selon l’enveloppe · à confirmer";
   const known = model.cardKnowledge[`template:${context.templateKey}`];
   const suggestion = known?.dimensions.find(d => d.key === "UNIT_PRICE" && d.value !== null && d.suggestionPolicy === "OFFER_PREFILL");
+  const resetBuffer = () => {
+    setRaw(false); setError(""); setExtraRow(null); setEquipment(null); setPerson(undefined);
+    setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
+    setRow(main ? fromSelection(main) : { ...fresh(shape.total), unitBasis: "SHARED" });
+    setDetail(isDetailed(context)); setFormKey(key => key + 1);
+  };
+  const leaveRaw = useWorkshopRaw(context.contextOccurrenceId, raw, resetBuffer);
   const open = (next: Step) => {
+    if (!leaveRaw()) return;
     setStep(next); setError(""); setExtraRow(null); setExtraAdded(false); setEquipment(null); setFormKey(k => k + 1);
     setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
     setRow(main ? fromSelection(main) : { ...fresh(context.templateKey === "purchase" && typeof context.fields.productLabel === "string" ? context.fields.productLabel : shape.total), unitBasis: "SHARED" }); setDetail(isDetailed(context));
@@ -103,7 +113,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   }, [step, formKey]);
   const send = (operation: ComposerOperation) => {
     setError("");
-    try { if (!decide(operation)) { setError("Ce choix ne peut pas être admis. Votre brouillon est conservé."); return false; } return true; }
+    try { if (!decide(operation)) { setError("Ce choix ne peut pas être admis. Votre brouillon est conservé."); return false; } setRaw(false); return true; }
     catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez ce choix."); return false; }
   };
   const advance = (_answeredStep: Step) => { setStep(null); setSummaryPage(0); };
@@ -123,10 +133,12 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     if (!window.confirm(next ? "Remplacer le montant global par un détail ? Le premier élément sera à préciser ; aucun total ne sera ajouté aux lignes."
       : "Remplacer le détail par un total ? Validez ensuite la nouvelle addition. Aucun changement n’est encore enregistré.")) return;
     setDetail(next);
+    setRaw(true);
     setRow(previous => ({ ...previous, label: next ? "Élément hors compléments" : shape.total, quantity: "1", unitBasis: "SHARED",
       personCount: "", amount: "", costMode: "UNKNOWN", edited: true, fundingMode: "UNDECIDED", fundingAmount: "" }));
   };
   const equip = (asset: ComposerAssetView, target: DropTarget) => {
+    if (!leaveRaw()) return;
     setError("");
     if (asset.optionKind === "COMPONENT") {
       if (target.slotKey === mainSlot) { open("budget"); return; }
@@ -166,10 +178,11 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   ];
   const summaryPageSize = 3;
   const panelContent = <aside ref={panel} className={styles.restaurantInspector} role="dialog" aria-modal="false" aria-labelledby="restaurant-heading" data-restaurant-editor data-guided-template={context.templateKey}
+    onChangeCapture={() => setRaw(true)}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); close(); } }}>
     <header>{preset ? <PresetIllustration preset={preset} className={styles.presetInspectorImage} /> : <PlannerIcon iconKey="restaurant" scale="SATELLITE" />}<div><small>Votre mois, à votre façon</small><h2 id="restaurant-heading" tabIndex={-1}>{heading}</h2></div>
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
-    <p className={styles.restaurantIntro}>{step === null ? "Choisissez seulement ce que vous voulez prévoir. Les autres précisions restent facultatives." : "Un choix à la fois ; le reste du brouillon est conservé."}</p>
+    <p className={styles.restaurantIntro}>{step === null ? "Choisissez seulement ce que vous voulez prévoir. Les autres précisions restent facultatives." : "Budget = coût économique prévu, pas un plafond. Les choix validés restent conservés."}</p>
     {step === null ? <><nav aria-label={`Choix de ${heading}`} className={styles.restaurantSummary} data-quick-purchase={quickPurchase || undefined}>
       {summaryEntries.slice(summaryPage * summaryPageSize, (summaryPage + 1) * summaryPageSize).map(entry => <button key={entry.id} type="button" onClick={() => open(entry.id)}>
         {entry.icon}<span><small>{entry.label}</small><strong>{entry.caption}</strong></span><ChevronRight size={14} /></button>)}
@@ -185,7 +198,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     {step !== null && <div className={styles.restaurantQuestion} key={`${step}:${formKey}`}>
       <h3 data-restaurant-focus tabIndex={-1}>{quickPurchase && step === "budget" ? "Quel montant souhaitez-vous prévoir ?" : questions.find(q => q.id === step)?.title ?? (step === "complete" ? "Les petits plus" : "Votre intention est dans le brouillon")}</h3>
       {step === "product" && <><label>Article ou commande<input defaultValue={String(context.fields.productLabel ?? "")} name="productLabel" /></label><label>Vendeur facultatif<input defaultValue={String(context.fields.merchantLabel ?? "")} name="merchantLabel" /></label>
-        <label>Budget de cet achat<select name="budgetDomain" defaultValue={String(context.fields.budgetDomain ?? "")}><option value="">À préciser</option>
+        <label>Enveloppe liée à cet achat<select name="budgetDomain" defaultValue={String(context.fields.budgetDomain ?? "")}><option value="">À préciser</option>
           {model.editors.find(editor => editor.assetKey === "template:purchase")?.fields.find(field => field.key === "budgetDomain")?.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select></label>
         <button type="button" onClick={() => { const product = panel.current?.querySelector<HTMLInputElement>('input[name="productLabel"]')?.value ?? ""; const merchant = panel.current?.querySelector<HTMLInputElement>('input[name="merchantLabel"]')?.value ?? ""; const domain = panel.current?.querySelector<HTMLSelectElement>('select[name="budgetDomain"]')?.value ?? ""; fields({productLabel:product || null,merchantLabel:merchant || null,budgetDomain:domain || null},"product"); }}>Conserver ces précisions</button></>}
       {step === "participants" && <><PlannedContactField label="Ajouter une personne" value={person} householdPersons={model.householdPersons} onChange={setPerson} />
@@ -199,9 +212,9 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       {step === "budget" && <><div className={styles.restaurantModes}><button type="button" aria-pressed={!detail} onClick={() => chooseMode(false)}>Montant total</button>
         <button type="button" aria-pressed={detail} onClick={() => chooseMode(true)}>Détailler les éléments</button></div>
         {suggestion && <p className={styles.restaurantReference}>Repère historique : {money(suggestion.value)} par occurrence.
-          <button type="button" onClick={() => setRow(r => ({ ...r, amount: suggestion.value!, costMode: "MANUAL", edited: true }))}>Reprendre ce montant</button>
+          <button type="button" onClick={() => { setRaw(true); setRow(r => ({ ...r, amount: suggestion.value!, costMode: "MANUAL", edited: true })); }}>Reprendre ce montant</button>
           <small>{suggestion.sourceAuthority} · {suggestion.coverageFrom} – {suggestion.coverageTo} · {suggestion.nCoveredMonths ?? "?"} mois</small></p>}
-        {detail ? <WorkshopComponentRow title="Élément hors compléments" row={row} participantCount={refs.length} onChange={setRow} onSave={() => saveBudget()} busy={busy} bindingChoices={!!shape.envelope} />
+        {detail ? <WorkshopComponentRow title="Élément hors compléments" row={row} participantCount={refs.length} onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy} bindingChoices={!!shape.envelope} />
           : <><label>{shape.total}<select value={row.costMode} onChange={e => setRow(r => ({ ...r, edited: true, costMode: e.target.value as Row["costMode"] }))}>
             <option value="UNKNOWN">Encore inconnu</option><option value="MANUAL">Montant choisi par moi</option>{row.costMode === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
             {row.costMode === "MANUAL" && <label>{shape.total} à notre charge (€)<input inputMode="decimal" value={row.amount} onChange={e => setRow(r => ({ ...r, amount: e.target.value, edited: true }))} /></label>}
@@ -210,7 +223,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
               {row.fundingMode === "BANK" && <label>Montant Banque (€)<input inputMode="decimal" value={row.fundingAmount} onChange={e => setRow(r => ({ ...r, fundingAmount: e.target.value, edited: true }))} /></label>}</details></>}
         <p>{detail ? "Les éléments et les compléments constituent le budget. Aucun total parent ne s’y ajoute." : "Un seul montant à notre charge, quel que soit le nombre de participants."}</p>
         {!detail && <button type="button" className={styles.primary} onClick={() => saveBudget()}>Valider le budget</button>}
-        {detail && extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button key={item.selectionId} type="button" onClick={() => { setStep("complete"); setExtraRow(fromSelection(item)); }}>{item.label} · {priceCaption(item)}</button>)}</>}
+        {detail && extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button key={item.selectionId} type="button" onClick={() => { if (!leaveRaw()) return; setStep("complete"); setExtraRow(fromSelection(item)); }}>{item.label} · {priceCaption(item)}</button>)}</>}
       {step === "binding" && <p>Le Compiler vérifie l’enveloppe réellement disponible. Sans enveloppe admissible, la relation restera à préciser. Les compléments libres sont des postes distincts.</p>}
       {step === "complete" && !extraRow && !equipment && <>{extraAdded ? <p role="status">Poste ajouté au brouillon.</p> : <p>Ajoutez uniquement les compléments qui ne sont pas déjà compris dans le montant.</p>}
         {extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button type="button" key={item.selectionId} onClick={() => setExtraRow(fromSelection(item))}>{item.label} · {priceCaption(item)}</button>)}
@@ -219,7 +232,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
           setDetail(true); setExtraAdded(false); setExtraRow(fresh(shape.complement)); }}>{extraAdded ? "Ajouter encore" : "Ajouter un complément"}</button>
         {extraAdded && <button type="button" onClick={() => open(null)}>Retour au résumé</button>}
         {currentTransport && <button type="button" onClick={() => send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { transport: [] } }))}>Retirer le trajet</button>}</>}
-      {extraRow && <WorkshopComponentRow key={extraRow.id} title={shape.complement} row={extraRow} participantCount={refs.length} onChange={setExtraRow} onRemove={() => {
+      {extraRow && <WorkshopComponentRow key={extraRow.id} title={shape.complement} row={extraRow} participantCount={refs.length} onChange={next => { setRaw(true); setExtraRow(next); }} onRemove={() => {
         if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { extras: extras.filter(item => item.selectionId !== extraRow.id) } }))) setExtraRow(null);
       }} onSave={() => { try { const item = buildComponentRow(extraRow, "extra");
           if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { extras: [...extras.filter(old => old.selectionId !== item.selectionId), item] } }))) { setExtraRow(null); setExtraAdded(!extraRow.existing); }

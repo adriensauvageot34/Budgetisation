@@ -1,5 +1,6 @@
 "use client";
-import { createContext, useContext, useState, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
+import { useCommittedEvent } from "./use-committed-event";
 
 type InlineEdit = Readonly<{ targetRef: string; dimension: string; kind: "RAW" | "PENDING";
   discard(): void; flush(): void }>;
@@ -32,6 +33,18 @@ export class InlineEditRegistry {
 }
 export const InlineEditContext = createContext<InlineEditRegistry | null>(null);
 export const useInlineEditRegistry = () => useContext(InlineEditContext);
+/** Registers presentation-only buffers with the existing navigation/Undo guard.
+ * RAW is never autosaved or financially admitted by this hook. */
+export function useWorkshopRaw(targetRef: string, dirty: boolean, discard: () => void, dimension = "workshop") {
+  const registry = useInlineEditRegistry(), discardCurrent = useCommittedEvent(discard);
+  useEffect(() => {
+    const key = `${dimension}:${targetRef}`;
+    registry?.set(key, dirty ? { targetRef, dimension, kind: "RAW", discard: discardCurrent, flush: () => {} } : null);
+    return () => registry?.set(key, null);
+  }, [registry, targetRef, dirty, dimension, discardCurrent]);
+  return () => registry ? registry.confirmDiscard(window.confirm, new Set([targetRef]))
+    : !dirty || (window.confirm("Cette saisie n’est pas validée. L’abandonner pour continuer ?") && (discard(), true));
+}
 export function useOwnedInlineEdits() {
   const [registry] = useState(() => new InlineEditRegistry());
   const count = useSyncExternalStore(registry.subscribe, registry.count, () => 0);

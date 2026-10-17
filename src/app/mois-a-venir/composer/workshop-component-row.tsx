@@ -39,7 +39,7 @@ export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, p
       <div className={styles.nightBasis}><button type="button" aria-pressed={row.costMode === "MANUAL"} onClick={() => update("costMode", "MANUAL")}>Prix connu</button>
         <button type="button" aria-pressed={row.costMode === "UNKNOWN"} onClick={() => update("costMode", "UNKNOWN")}>Inconnu</button>
         {row.existing?.cost.kind === "QUOTE" && <button type="button" aria-pressed={row.costMode === "QUOTE"} onClick={() => update("costMode", "QUOTE")}>Devis conservé</button>}</div>
-      {row.costMode === "MANUAL" && <label>{priceLabel ?? (row.unitBasis === "SHARED" ? "Montant par lot (€)" : "Prix par unité (€)")}
+      {row.costMode === "MANUAL" && <label>{priceLabel ?? (row.unitBasis === "SHARED" ? "Coût prévu par lot (€)" : "Prix unitaire prévu (€)")}
         <input inputMode="decimal" value={row.amount} onChange={event => update("amount", event.target.value)} /></label>}
       {!fixedQuantity && <button type="button" className={styles.nightLink} onClick={() => setPage("quantity")}>Modifier la base et la quantité</button>}
       {onSave && <button type="button" className={styles.nightAction} disabled={busy} onClick={onSave}>Confirmer ce poste</button>}

@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState, type ReactNode } from "react";
+import { useWorkshopRaw } from "./inline-edit-registry";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette } from "./context-palette";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
@@ -67,6 +68,17 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
   const transportInputs = [origin, destination, mode, returnRequired, outTime, returnTime, vehicleId, preference, fareMode, fare,
     parkingMode, parking, tollMode, toll, fuelPrice, funding, fundingAmount, ownJourney, outStops, backStops];
   const initialInputs = useRef(JSON.stringify(transportInputs));
+  const buffer = { label, date, endDate, note, visited, people, origin, destination, mode, returnRequired, outTime, returnTime,
+    vehicleId, preference, fareMode, fare, parkingMode, parking, tollMode, toll, fuelPrice, funding, fundingAmount, ownJourney, outStops, backStops };
+  const acceptedBuffer = useRef(buffer), initial = acceptedBuffer.current;
+  useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(buffer) !== JSON.stringify(initial), () => {
+    setLabel(initial.label); setDate(initial.date); setEndDate(initial.endDate); setNote(initial.note); setVisited(initial.visited); setPeople(initial.people);
+    setOrigin(initial.origin); setDestination(initial.destination); setMode(initial.mode); setReturnRequired(initial.returnRequired);
+    setOutTime(initial.outTime); setReturnTime(initial.returnTime); setVehicleId(initial.vehicleId); setPreference(initial.preference);
+    setFareMode(initial.fareMode); setFare(initial.fare); setParkingMode(initial.parkingMode); setParking(initial.parking);
+    setTollMode(initial.tollMode); setToll(initial.toll); setFuelPrice(initial.fuelPrice); setFunding(initial.funding); setFundingAmount(initial.fundingAmount);
+    setOwnJourney(initial.ownJourney); setOutStops(initial.outStops); setBackStops(initial.backStops); setError("");
+  }, "prospective-workshop");
   const places = options?.places ?? [], vehicle = options?.vehicle;
   const home = places.find(place => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
   const physicalLabel = (ref: ProspectivePlaceRef) => ref.kind === "TEXT" ? ref.label : places.find(p => p.placeId === ref.placeId)?.name ?? "Lieu lié indisponible";
@@ -112,7 +124,7 @@ export function ProspectiveContextEditor({ stay = false, posts, context, targetM
         || date !== text(context.fields.plannedDate) && !!original?.plannedTime || endDate !== text(context.fields.endDate) && !!original?.returnTime;
       if (!transportChanged && original) transport = original;
       if (onSave({ kind: stay ? "EDIT_SHORT_STAY" : "EDIT_FAMILY_VISIT", edit: { contextOccurrenceId: context.contextOccurrenceId, fields,
-        ...(transportChanged ? { transport } : {}) } })) { setError(""); setSection("summary"); }
+        ...(transportChanged ? { transport } : {}) } })) { acceptedBuffer.current = buffer; setError(""); setSection("summary"); }
     } catch (failure) { setError(failure instanceof Error && failure.message === "MONTH_DECISION_AMOUNT_INVALID"
       ? "Précisez un montant positif ou nul avec deux décimales au maximum." : failure instanceof Error ? failure.message : "Vérifiez les champs."); }
   };
