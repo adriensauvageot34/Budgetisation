@@ -1073,6 +1073,10 @@
 .barActiveTile>button:first-child { display:flex; align-items:center; width:100%; gap:8px; border:0; background:transparent; text-align:left; }
 .barActiveTile>button:first-child>small { margin-left:auto; }
 .barActiveTile [data-bar-short-row] { border-top:1px solid #e8d7b7; padding-top:10px; }
+.barActiveTile [data-bar-short-row] label { display:flex; flex-direction:column; gap:5px; font-size:12px; }
+.barActiveTile [data-bar-short-row] input { box-sizing:border-box; min-width:0; border:1px solid #c9b787; border-radius:8px; background:#fffef9; padding:8px; color:inherit; }
+.barActiveTile [data-bar-short-row]>.barLivingMetadata { gap:12px; align-items:flex-end; margin-bottom:10px; }
+.barActiveTile [data-bar-short-row]>button+button { margin-left:6px; }
 /* Grid rows own cell height. The old flex-start inheritance otherwise lets an
  * intrinsic card exceed its allocated tracks and cover the next row. */
 .inventoryCell { align-self:stretch; }
