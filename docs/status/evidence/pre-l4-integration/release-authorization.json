@@ -1,0 +1,13 @@
+{
+  "userDecision": "GO Production avec ces réserves",
+  "approvedHeads": {
+    "50": "fb71ae2deb69a915bdf633b2ce721c4cf904821e",
+    "51": "0fc3d0882a649bf023b80edc83724aec43644d30",
+    "52": "9270478950f9814df07b9e33d30e4c6ec7bf73fe"
+  },
+  "order": [50,51,52],
+  "method": "merge",
+  "productionDeploymentsAuthorized": true,
+  "acceptedLimits": ["NATIVE_INTERACTIONS_PARTIAL", "AUTH_CYCLE_NOT_RUN_AUTH"],
+  "excluded": ["L4 implementation", "migration", "personal Draft mutation", "Apply", "financial writes", "F0 reactivation"]
+}

@@ -1,0 +1,34 @@
+{
+  "mainBefore": "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+  "mainAfter": "7765bc532511d777ef3e3c80ff0b48826a4e465e",
+  "approvedHead": "9270478950f9814df07b9e33d30e4c6ec7bf73fe",
+  "treeEqualsApprovedHead": true,
+  "sameProductAsTestedC2": true,
+  "allAncestorsPreserved": true,
+  "commits": [
+    {
+      "sha": "dc84adad4dd7fbcf8b478e9e5749dc7b4fa8bf06",
+      "parents": [
+        "5cfb1211d114ddaa574f63372cdb9c4cfc7e660d",
+        "fb71ae2deb69a915bdf633b2ce721c4cf904821e"
+      ],
+      "tree": "76956435c35bad67cf3b6a02e45a37618b712c49"
+    },
+    {
+      "sha": "bab615a0f3b6ae75e69b7fe7e8726d738ee388f6",
+      "parents": [
+        "dc84adad4dd7fbcf8b478e9e5749dc7b4fa8bf06",
+        "0fc3d0882a649bf023b80edc83724aec43644d30"
+      ],
+      "tree": "523fc3e3c0b6dc83f240548f8065817e1b739572"
+    },
+    {
+      "sha": "7765bc532511d777ef3e3c80ff0b48826a4e465e",
+      "parents": [
+        "bab615a0f3b6ae75e69b7fe7e8726d738ee388f6",
+        "9270478950f9814df07b9e33d30e4c6ec7bf73fe"
+      ],
+      "tree": "d1d55d591285fe52b56799f494bce7db8441e4f3"
+    }
+  ]
+}
