@@ -1,0 +1,19 @@
+{
+  "product": "ecbc8f59f0cf60a9d2725a34ceb8da4f9204bdec",
+  "base": "be61864f22daf3b6546a9917758c10e0f35a4e34",
+  "branch": "codex/composer-v3-l4-c-v6-experience",
+  "PR": 56,
+  "dependencies": [
+    54,
+    55
+  ],
+  "browser": "NOT_RUN_DISABLED_IN_WORK_SETTINGS",
+  "auth": "NOT_RUN_AUTH",
+  "mobile": "NOT_RUN_MOBILE",
+  "raw": "PARTIAL_BROWSER_FOCUS_NOT_RUN",
+  "parity": "PASS_198_OF_198",
+  "remoteFinancialWrites": 0,
+  "production": "NO_GO",
+  "financialDomainServerSchemaDiff": "",
+  "timestamp": "2026-10-17T08:22:27.805Z"
+}

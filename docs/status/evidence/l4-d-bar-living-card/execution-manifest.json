@@ -1,0 +1,32 @@
+{
+  "base": "e7d94ce8cd80126ba4e1b8385c6440fb5fa02a8d",
+  "firstProduct": "b4684a5fbca0f7ab70b70375b8ee811aaab10362",
+  "finalProduct": "86305aa602866f9b58a42f4665b9d3cc62f0ac7c",
+  "finalTargetedTests": {
+    "reactGroups": 13,
+    "mobilityGroups": 6,
+    "typeScript": "EXIT_0"
+  },
+  "regressionProductTree": "b4684a5fbca0f7ab70b70375b8ee811aaab10362",
+  "regressions": [
+    "L4-A19",
+    "L4-B47",
+    "V5deep15",
+    "V6React16",
+    "P03-C1",
+    "P10",
+    "P11",
+    "P12",
+    "P13",
+    "Finance198",
+    "C8-017",
+    "DraftHTTP",
+    "scheduler"
+  ],
+  "finalProductDelta": "Only Bar endpoint/vehicle helpers and their tests; no change to shared layout, NightOut domain edit or other presets since broad regressions.",
+  "remoteFinancialWrites": 0,
+  "production": "UNCHANGED",
+  "auth": "NOT_RUN_AUTH",
+  "browser": "NOT_RUN",
+  "newSchema": false
+}

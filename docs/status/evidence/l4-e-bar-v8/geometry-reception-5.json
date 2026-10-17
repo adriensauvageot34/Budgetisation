@@ -1,0 +1,374 @@
+[
+  {
+    "state": "before",
+    "bar": {
+      "bottom": 476,
+      "height": 335,
+      "left": 328,
+      "right": 700.2749938964844,
+      "top": 141,
+      "width": 372.2749938964844,
+      "x": 328,
+      "y": 141
+    },
+    "cells": [
+      {
+        "grid": "grid-area: 1 / 1 / span 34 / span 5;",
+        "id": "00000000-0000-4000-8000-000000096002",
+        "rect": {
+          "bottom": 476,
+          "height": 335,
+          "left": 328,
+          "right": 700.2749938964844,
+          "top": 141,
+          "width": 372.2749938964844,
+          "x": 328,
+          "y": 141
+        }
+      },
+      {
+        "grid": "grid-area: 1 / 6 / span 22 / span 5;",
+        "id": "00000000-0000-4000-8000-000000096003",
+        "rect": {
+          "bottom": 356,
+          "height": 215,
+          "left": 710.2750244140625,
+          "right": 1082.562530517578,
+          "top": 141,
+          "width": 372.2875061035156,
+          "x": 710.2750244140625,
+          "y": 141
+        }
+      },
+      {
+        "grid": "grid-area: 23 / 6 / span 22 / span 5;",
+        "id": "00000000-0000-4000-8000-000000096004",
+        "rect": {
+          "bottom": 576,
+          "height": 215,
+          "left": 710.2750244140625,
+          "right": 1082.562530517578,
+          "top": 361,
+          "width": 372.2875061035156,
+          "x": 710.2750244140625,
+          "y": 361
+        }
+      },
+      {
+        "grid": "grid-area: 1 / 11 / span 17 / span 4;",
+        "id": "savings:00000000-0000-4000-8000-000000000700",
+        "rect": {
+          "bottom": 306,
+          "height": 165,
+          "left": 1092.5625,
+          "right": 1388.3875122070312,
+          "top": 141,
+          "width": 295.82501220703125,
+          "x": 1092.5625,
+          "y": 141
+        }
+      },
+      {
+        "grid": "grid-area: 18 / 11 / span 16 / span 3;",
+        "id": "HOUSEHOLD:household:clothing",
+        "rect": {
+          "bottom": 466,
+          "height": 155,
+          "left": 1092.5625,
+          "right": 1311.9375,
+          "top": 311,
+          "width": 219.375,
+          "x": 1092.5625,
+          "y": 311
+        }
+      },
+      {
+        "grid": "grid-area: 34 / 11 / span 16 / span 3;",
+        "id": "HOUSEHOLD:household:home-small",
+        "rect": {
+          "bottom": 626,
+          "height": 155,
+          "left": 1092.5625,
+          "right": 1311.9375,
+          "top": 471,
+          "width": 219.375,
+          "x": 1092.5625,
+          "y": 471
+        }
+      },
+      {
+        "grid": "grid-area: 35 / 1 / span 16 / span 3;",
+        "id": "HOUSEHOLD:household:games-digital",
+        "rect": {
+          "bottom": 636,
+          "height": 155,
+          "left": 328,
+          "right": 547.3625030517578,
+          "top": 481,
+          "width": 219.3625030517578,
+          "x": 328,
+          "y": 481
+        }
+      },
+      {
+        "grid": "grid-area: 45 / 4 / span 16 / span 3;",
+        "id": "PERSON:33333333-3333-4333-8333-333333333333:mobility:FAMILY_VISIT",
+        "rect": {
+          "bottom": 736,
+          "height": 155,
+          "left": 557.3624877929688,
+          "right": 776.7374877929688,
+          "top": 581,
+          "width": 219.375,
+          "x": 557.3624877929688,
+          "y": 581
+        }
+      },
+      {
+        "grid": "grid-area: 45 / 7 / span 16 / span 3;",
+        "id": "PERSON:33333333-3333-4333-8333-333333333333:mobility:WORK",
+        "rect": {
+          "bottom": 736,
+          "height": 155,
+          "left": 786.7374877929688,
+          "right": 1006.1124877929688,
+          "top": 581,
+          "width": 219.375,
+          "x": 786.7374877929688,
+          "y": 581
+        }
+      },
+      {
+        "grid": "grid-area: 50 / 10 / span 14 / span 3;",
+        "id": "PERSON:33333333-3333-4333-8333-333333333333:need:synthetic-cosmetic-need",
+        "rect": {
+          "bottom": 766,
+          "height": 135,
+          "left": 1016.1124877929688,
+          "right": 1235.4749908447266,
+          "top": 631,
+          "width": 219.3625030517578,
+          "x": 1016.1124877929688,
+          "y": 631
+        }
+      }
+    ],
+    "focus": "Afficher la page 2",
+    "overlaps": [],
+    "page": "Page 2 sur 2",
+    "scroll": [
+      1440,
+      900
+    ],
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "state": "open",
+    "bar": {
+      "bottom": 666,
+      "height": 525,
+      "left": 328,
+      "right": 1082.5625,
+      "top": 141,
+      "width": 754.5625,
+      "x": 328,
+      "y": 141
+    },
+    "cells": [
+      {
+        "grid": "grid-area: 1 / 1 / span 53 / span 10;",
+        "id": "00000000-0000-4000-8000-000000096002",
+        "rect": {
+          "bottom": 666,
+          "height": 525,
+          "left": 328,
+          "right": 1082.5625,
+          "top": 141,
+          "width": 754.5625,
+          "x": 328,
+          "y": 141
+        }
+      }
+    ],
+    "focus": "Replier la carte",
+    "overlaps": [],
+    "page": "Page 3 sur 4",
+    "scroll": [
+      1440,
+      900
+    ],
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "state": "closed",
+    "bar": {
+      "bottom": 476,
+      "height": 335,
+      "left": 328,
+      "right": 700.2749938964844,
+      "top": 141,
+      "width": 372.2749938964844,
+      "x": 328,
+      "y": 141
+    },
+    "cells": [
+      {
+        "grid": "grid-area: 1 / 1 / span 34 / span 5;",
+        "id": "00000000-0000-4000-8000-000000096002",
+        "rect": {
+          "bottom": 476,
+          "height": 335,
+          "left": 328,
+          "right": 700.2749938964844,
+          "top": 141,
+          "width": 372.2749938964844,
+          "x": 328,
+          "y": 141
+        }
+      },
+      {
+        "grid": "grid-area: 1 / 6 / span 22 / span 5;",
+        "id": "00000000-0000-4000-8000-000000096003",
+        "rect": {
+          "bottom": 356,
+          "height": 215,
+          "left": 710.2750244140625,
+          "right": 1082.562530517578,
+          "top": 141,
+          "width": 372.2875061035156,
+          "x": 710.2750244140625,
+          "y": 141
+        }
+      },
+      {
+        "grid": "grid-area: 23 / 6 / span 22 / span 5;",
+        "id": "00000000-0000-4000-8000-000000096004",
+        "rect": {
+          "bottom": 576,
+          "height": 215,
+          "left": 710.2750244140625,
+          "right": 1082.562530517578,
+          "top": 361,
+          "width": 372.2875061035156,
+          "x": 710.2750244140625,
+          "y": 361
+        }
+      },
+      {
+        "grid": "grid-area: 1 / 11 / span 17 / span 4;",
+        "id": "savings:00000000-0000-4000-8000-000000000700",
+        "rect": {
+          "bottom": 306,
+          "height": 165,
+          "left": 1092.5625,
+          "right": 1388.3875122070312,
+          "top": 141,
+          "width": 295.82501220703125,
+          "x": 1092.5625,
+          "y": 141
+        }
+      },
+      {
+        "grid": "grid-area: 18 / 11 / span 16 / span 3;",
+        "id": "HOUSEHOLD:household:clothing",
+        "rect": {
+          "bottom": 466,
+          "height": 155,
+          "left": 1092.5625,
+          "right": 1311.9375,
+          "top": 311,
+          "width": 219.375,
+          "x": 1092.5625,
+          "y": 311
+        }
+      },
+      {
+        "grid": "grid-area: 34 / 11 / span 16 / span 3;",
+        "id": "HOUSEHOLD:household:home-small",
+        "rect": {
+          "bottom": 626,
+          "height": 155,
+          "left": 1092.5625,
+          "right": 1311.9375,
+          "top": 471,
+          "width": 219.375,
+          "x": 1092.5625,
+          "y": 471
+        }
+      },
+      {
+        "grid": "grid-area: 35 / 1 / span 16 / span 3;",
+        "id": "HOUSEHOLD:household:games-digital",
+        "rect": {
+          "bottom": 636,
+          "height": 155,
+          "left": 328,
+          "right": 547.3625030517578,
+          "top": 481,
+          "width": 219.3625030517578,
+          "x": 328,
+          "y": 481
+        }
+      },
+      {
+        "grid": "grid-area: 45 / 4 / span 16 / span 3;",
+        "id": "PERSON:33333333-3333-4333-8333-333333333333:mobility:FAMILY_VISIT",
+        "rect": {
+          "bottom": 736,
+          "height": 155,
+          "left": 557.3624877929688,
+          "right": 776.7374877929688,
+          "top": 581,
+          "width": 219.375,
+          "x": 557.3624877929688,
+          "y": 581
+        }
+      },
+      {
+        "grid": "grid-area: 45 / 7 / span 16 / span 3;",
+        "id": "PERSON:33333333-3333-4333-8333-333333333333:mobility:WORK",
+        "rect": {
+          "bottom": 736,
+          "height": 155,
+          "left": 786.7374877929688,
+          "right": 1006.1124877929688,
+          "top": 581,
+          "width": 219.375,
+          "x": 786.7374877929688,
+          "y": 581
+        }
+      },
+      {
+        "grid": "grid-area: 50 / 10 / span 14 / span 3;",
+        "id": "PERSON:33333333-3333-4333-8333-333333333333:need:synthetic-cosmetic-need",
+        "rect": {
+          "bottom": 766,
+          "height": 135,
+          "left": 1016.1124877929688,
+          "right": 1235.4749908447266,
+          "top": 631,
+          "width": 219.3625030517578,
+          "x": 1016.1124877929688,
+          "y": 631
+        }
+      }
+    ],
+    "focus": null,
+    "overlaps": [],
+    "page": "Page 2 sur 2",
+    "scroll": [
+      1440,
+      900
+    ],
+    "viewport": [
+      1440,
+      900
+    ]
+  }
+]

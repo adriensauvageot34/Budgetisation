@@ -1,0 +1,58 @@
+{
+  "testedProductSha": "58dc567491fcf13ee5a2496a98ba0bce25d5f539",
+  "status": "EXECUTED_PASS_LIMITED_BROWSER_FIXTURE",
+  "auth": "NOT_RUN_AUTH",
+  "checks": [
+    {
+      "name": "ABSENT_DATE_NOT_INVENTED",
+      "status": "EXECUTED_PASS_LOCAL_BROWSER_HTTP_SYNTHETIC"
+    },
+    {
+      "name": "DATE_REEDITED_EXPLICITLY",
+      "status": "EXECUTED_PASS_LOCAL_BROWSER_HTTP_SYNTHETIC"
+    },
+    {
+      "name": "PEOPLE_PLACE_IDS_BEFORE_AND_LEGS_PRESERVED",
+      "status": "EXECUTED_PASS_LOCAL_BROWSER_HTTP_SYNTHETIC"
+    },
+    {
+      "name": "UNDO_EXACT_STATE",
+      "status": "EXECUTED_PASS_LOCAL_BROWSER_HTTP_SYNTHETIC"
+    },
+    {
+      "name": "REDO_EXACT_STATE",
+      "status": "EXECUTED_PASS_LOCAL_BROWSER_HTTP_SYNTHETIC"
+    },
+    {
+      "name": "HTTP_RELOAD_EXACT_STATE_AND_DIGEST",
+      "status": "EXECUTED_PASS_LOCAL_BROWSER_HTTP_SYNTHETIC"
+    },
+    {
+      "name": "REJECTED_TRANSPORT_PREVIOUS_DRAFT_INTACT",
+      "status": "EXECUTED_PASS_LOCAL_BROWSER_HTTP_SYNTHETIC"
+    },
+    {
+      "name": "NO_APPLY_PLAN_REVISION_OR_REMOTE_WRITES",
+      "status": "EXECUTED_PASS_LOCAL_BROWSER_HTTP_SYNTHETIC"
+    }
+  ],
+  "observedCompilerCost": {
+    "before": "95.00",
+    "after": "97.00",
+    "source": "Visible Board and workshop after genuine fixture Compiler/Finance V2 responses"
+  },
+  "draftVersions": {
+    "early": 9,
+    "before": 10,
+    "changed": 11,
+    "undo": 12,
+    "redo": 13,
+    "reload": 13,
+    "final": 13
+  },
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "remoteWrites": 0
+}

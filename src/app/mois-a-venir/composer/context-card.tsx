@@ -1,3 +1,4 @@
+import {BarLivingCard,type LivingBar} from "./bar-living-card";
 import { GripVertical, MoreHorizontal, Pin, Link2, Pencil, LockKeyhole } from "lucide-react";
 import type { ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -20,11 +21,11 @@ const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
   gift: ["item", "extras"],
   "family-visit": ["hospitality", "activities", "transport"],
 };
-export function ContextCard({ card, model, busy, selected, focused, focus, drag, drop, choose, request, edit }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
+export function ContextCard({ card, model, busy, selected, focused, focus, drag, drop, choose, request, edit, livingBar }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
   focused: string | null; focus: (id: string | null) => void;
   selected: string | null; drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
-  request: (operation: ComposerOperation) => void; edit: (card: ComposerContextCardView) => void }) {
+  request: (operation: ComposerOperation) => void; edit: (card: ComposerContextCardView) => void; livingBar?: LivingBar }) {
   const instance = `context-occurrence:${card.contextOccurrenceId}`;
   const index=composerRenderIndex(model), ownDrops=index.drops.get(instance) ?? [];
   const removable = ownDrops.some(d => d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
@@ -47,6 +48,12 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     const left = order.indexOf(a.slotKey), right = order.indexOf(b.slotKey);
     return (left < 0 ? 100 : left) - (right < 0 ? 100 : right) || a.slotKey.localeCompare(b.slotKey);
   });
+  if (preset?.presetKey === "bar-apero" && livingBar) return <BarLivingCard card={card} model={model} living={livingBar} busy={busy} preserved={preserved}
+    surfaceProps={{onDragOver:e=>{e.stopPropagation();if(interaction?.canTarget(card.contextOccurrenceId)&&!busy){e.preventDefault();interaction.overAssistant(card.contextOccurrenceId);}else if(magnetic&&interaction?.grabbed&&!busy){e.preventDefault();interaction.over(magnetic);}else interaction?.over(null);},
+      onDragLeave:e=>{e.stopPropagation();if(leftSurface(e)){interaction?.over(null);interaction?.overAssistant(null);}},
+      onDrop:e=>{e.preventDefault();e.stopPropagation();if(interaction?.canTarget(card.contextOccurrenceId)&&!busy)interaction.placeAssistant(card.contextOccurrenceId);else if(magnetic&&interaction?.grabbed&&!busy)interaction.place(magnetic);}}}
+    preserve={()=>request({kind:"PRESERVE",targetRef:card.contextOccurrenceId,preserve:!preserved})}
+    remove={removable?()=>drop({kind:"TRASH"},instance):undefined} drag={()=>drag(selected===instance?null:instance)}/>;
   return <article className={styles.contextCard} data-context={card.contextOccurrenceId} data-template-key={card.templateKey} data-focused={focused === card.contextOccurrenceId} data-variant={presentation.variant} data-state={card.readOnly ? "derived" : card.knowledge === "UNKNOWN" ? "unresolved" : "chosen"}
     data-compatible={targets.length > 0 || interaction?.canTarget(card.contextOccurrenceId)} data-magnetic={interaction?.overTarget?.contextOccurrenceId === card.contextOccurrenceId}
     data-unresolved={interaction?.unresolvedRefs.includes(card.contextOccurrenceId)} data-snap={interaction?.motionTarget === card.contextOccurrenceId ? interaction.motion : undefined}

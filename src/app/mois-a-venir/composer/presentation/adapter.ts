@@ -3,6 +3,7 @@ import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contra
 import { visualFamily } from "./cluster-rules";
 import type { AtomicNode, ClusterFamily, ComposerPresentationNode, ContentDensity, SpatialFamily, VisualClusterNode } from "./node-types";
 import { stableVisualIdentity } from "../planner-icons/visual-identity";
+import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 
 const clusterLook: Readonly<Record<ClusterFamily, Pick<VisualClusterNode, "title" | "iconKey" | "width" | "height" | "spatialFamily">>> = {
   BEAUTY: { title: "Beauté", iconKey: "beauty", width: 530, height: 165, spatialFamily: "PERSONAL_CARE" },
@@ -61,10 +62,14 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
   const roots: AtomicNode[] = [
     ...model.board.contexts.filter(context => !context.parentContextOccurrenceId).map(context => {
       const density = contextDensity(context, model), template = context.templateKey;
+      const bar = presetForContext(context)?.presetKey === "bar-apero";
+      const tileCount = context.sockets.reduce((n, s) => n + s.currentItems.filter(i => i.kind === "COMPONENT" || i.kind === "CHILD_CONTEXT").length, 0);
+      // Geometry only: keep the small, empty intention compact; grow with its visible content.
+      const barHeight = Math.min(430, 300 + (context.fields.placeRef || context.fields.plannedDate || (Array.isArray(context.fields.participantRefs) && context.fields.participantRefs.length) ? 35 : 0) + Math.floor(tileCount / 2) * 105);
       return { id:context.contextOccurrenceId, kind:"CONTEXT" as const, context, density, spatialFamily:contextFamily(template),
         iconKey:model.presentation.objects[context.contextOccurrenceId].iconKey,
         width:template === "short-stay" ? 400 : template === "night-out" ? 350 : ["gift", "family-visit"].includes(template) ? 240 : 230,
-        height:template === "short-stay" ? 212 : template === "night-out" ? 212 : template === "gift" ? 148
+        height:bar ? barHeight : template === "short-stay" ? 212 : template === "night-out" ? 212 : template === "gift" ? 148
           : template === "family-visit" ? 142 : density === "SPARSE" ? 140 : density === "RICH" ? 190 : 170 };
     }),
     ...[...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings]

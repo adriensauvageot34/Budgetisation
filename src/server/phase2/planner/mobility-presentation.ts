@@ -14,7 +14,7 @@ export function mobilitySummaries(journeys: readonly PhysicalJourneyRequirement[
   return journeys.map(journey => {
     const price = prices.find(p => p.journeyId === journey.physicalJourneyRequirementId), snapshot = price?.snapshot;
     const evidence = price?.evidence && typeof price.evidence === "object" ? price.evidence as { tollDecision?: { kind: string } } : null;
-    return { contextOccurrenceId: journey.ownerContextOccurrenceId, journeyId: journey.physicalJourneyRequirementId,
+    return { contextOccurrenceId: journey.ownerContextOccurrenceId, journeyId: journey.physicalJourneyRequirementId, ...(journey.ownerIntentId?{ownerIntentId:journey.ownerIntentId}:{}),
       requestDigest: price?.requestDigest ?? "", status: price?.status ?? "UNKNOWN", distanceKm: snapshot?.route.distanceKm ?? null,
       economicFuel: price?.economicFuel ?? null, toll: price?.toll ?? null, parking: price?.parking ?? null, fare: price?.fare ?? null,
       cashTransport: price?.cashTransport ?? null, routeSource: snapshot?.route.provider ?? null, fuelSource: snapshot?.fuelPrice?.source ?? null,

@@ -133,10 +133,13 @@ try {
   assert.equal(visited.fields.plannedDate, null);
   assert.equal(visited.fields.timingNote, 'Après-midi');
   const editorHtml = renderToStaticMarkup(React.createElement(CatalogContextEditor, { context: visited,
+    model: edit, choose: () => {},
     editor: edit.editors.find(candidate => candidate.assetKey === 'template:friend-visit'), targetMonth: '2026-11',
     householdPersons: deps.householdPersons, knowledge: edit.cardKnowledge['template:friend-visit'],
     busy: false, onSave: () => {}, onCancel: () => {} }));
-  for (const expected of ['data-catalog-context-editor', 'Amie fixture', 'Village fixture', 'Personne fixture', 'data-card-knowledge'])
+  // V5 starts on a summary. Structured values are retained above; their inputs
+  // are intentionally rendered only when their focused question is opened.
+  for (const expected of ['data-catalog-context-editor', 'data-catalog-summary', 'Visite amie', 'Choisissez uniquement'])
     assert.ok(editorHtml.includes(expected), expected);
   const locallyEdited = stageLocalDecision(enriched, enriched.semanticState, { kind: 'EDIT_CONTEXT',
     contextOccurrenceId: contextId, values: { timingNote: 'Après-midi' } });

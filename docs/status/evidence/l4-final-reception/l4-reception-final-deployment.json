@@ -1,0 +1,12 @@
+{
+  "id": "dpl_9fdLcufQsmGhVpKaj19vz8m4eLdA",
+  "url": "https://budgetisation-7edbax5bi-adriensauvageot34-6137s-projects.vercel.app",
+  "state": "READY",
+  "target": null,
+  "sha": "11ac9d7e83704ae587e24b9479a23518a905f455",
+  "regions": [
+    "iad1"
+  ],
+  "productionPromoted": false,
+  "globalSettingsChanged": false
+}

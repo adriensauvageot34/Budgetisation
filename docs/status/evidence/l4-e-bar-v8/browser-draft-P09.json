@@ -1,0 +1,90 @@
+{
+  "source": "LOCAL_SYNTHETIC_ONLY",
+  "active": {
+    "draftId": "a0ea97e9-4b95-48dd-a67d-079564aa716b",
+    "version": 7,
+    "lifecycle": "ACTIVE",
+    "semanticState": {
+      "version": "month-plan-state@v1",
+      "targetMonth": "2026-11",
+      "controls": [],
+      "contexts": [
+        {
+          "contextOccurrenceId": "6fa2b5c0-37bb-43ee-afbe-bdd83d5b9023",
+          "templateKey": "night-out",
+          "status": "ACTIVE",
+          "parentContextOccurrenceId": null,
+          "fields": {
+            "fieldSchemaVersion": "context-fields@v2",
+            "label": "Bar / Apéro",
+            "composerPresentation": {
+              "version": "composer-context-presentation@v1",
+              "presetKey": "bar-apero"
+            },
+            "plannedDate": "2026-11-15",
+            "participantRefs": [
+              {
+                "kind": "HOUSEHOLD_PERSON",
+                "personId": "00000000-0000-4000-8000-000000000001"
+              },
+              {
+                "kind": "TEXT",
+                "label": "Ami Test"
+              },
+              {
+                "kind": "TEXT",
+                "label": "Camille Test"
+              }
+            ]
+          },
+          "slotSelections": {
+            "extras": {
+              "items": [
+                {
+                  "selectionId": "415595ee-e9f4-455f-ad00-28dd9d9b4f62",
+                  "optionKey": "extra",
+                  "kind": "COMPONENT",
+                  "provenance": "EXPLICIT_USER_DECISION",
+                  "label": "Bière",
+                  "quantity": "2",
+                  "unitBasis": "ITEM",
+                  "cost": {
+                    "kind": "MANUAL",
+                    "unitAmount": "12"
+                  },
+                  "fundingAllocations": [],
+                  "binding": {
+                    "mode": "AUTO"
+                  },
+                  "productAssetRef": {
+                    "catalogVersion": "planned-assets@v1",
+                    "assetKey": "bar:beer",
+                    "labelAtSelection": "Bière",
+                    "provenance": "EXPLICIT_USER_DECISION"
+                  }
+                }
+              ]
+            }
+          },
+          "provenance": "EXPLICIT_USER_DECISION"
+        }
+      ],
+      "preferences": {
+        "anchors": [],
+        "flexibility": {}
+      }
+    },
+    "digest": "eb1669dadf76d837827a149a0b459d9bd17524f9a143a9be9e188ae9e4e16807",
+    "baseRevisionId": null,
+    "baseRevisionNumber": 0,
+    "lastSavedAt": "2026-10-17T13:10:02.652Z",
+    "archivedAt": null,
+    "lastMutationRequestId": "9a82f5cd-f787-4cf2-a831-ccf2390f4f52",
+    "lastMutationExpectedVersion": 6,
+    "lastMutationKind": "SAVE"
+  },
+  "archives": [],
+  "activePlanRevisionId": null,
+  "activePlanRevisionNumber": 0,
+  "baseStale": false
+}

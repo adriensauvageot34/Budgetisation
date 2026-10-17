@@ -1,0 +1,10 @@
+{
+  "method": "ACTUAL_REACT_HANDLERS_NOT_BROWSER_NOT_KEYSTROKES",
+  "samePreset": "bar-apero",
+  "start": "existing empty card editor",
+  "finish": "one explicitly chosen beer, quantity1, UNKNOWN price admitted",
+  "v6ControlActions": 4,
+  "v7ControlActions": 2,
+  "latency": "NOT_MEASURED",
+  "geometry": "NOT_MEASURED"
+}

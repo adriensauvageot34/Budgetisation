@@ -1,0 +1,23 @@
+{
+  "base": "be61864f22daf3b6546a9917758c10e0f35a4e34",
+  "files": [
+    {
+      "file": "src/server/phase2/planner/composer-service.ts",
+      "baseSha256": "8057a0444f550efeb4d351a2ceaa89de820f77a5b1f41ad8e48d006bf079108f",
+      "candidateSha256": "8057a0444f550efeb4d351a2ceaa89de820f77a5b1f41ad8e48d006bf079108f",
+      "identical": true
+    },
+    {
+      "file": "src/app/mois-a-venir/applied-month-view.tsx",
+      "baseSha256": "90ffe4fbbe502b8b7031692c5153294eebbcc6f02ff6770726907247640c08ff",
+      "candidateSha256": "90ffe4fbbe502b8b7031692c5153294eebbcc6f02ff6770726907247640c08ff",
+      "identical": true
+    }
+  ],
+  "assertionsUpdated": [
+    "Date non fixée",
+    "Modifier dans Composer",
+    "COMPOSER_APPLY_UNCONFIRMED with actual owner refusal and no receipt"
+  ],
+  "P12": "SSR fixture model/choose supplied, assertions unchanged"
+}

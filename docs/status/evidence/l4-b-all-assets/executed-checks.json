@@ -1,0 +1,89 @@
+{
+  "productSource": "b7c3127d3db1f808108ab5422631523359939af1",
+  "tsUnchangedSince": "f8964df1ec0b950a3326f347acc73743f60d79fa",
+  "entries": [
+    {
+      "name": "TypeScript",
+      "exitCode": 0,
+      "status": "PASS_LOCAL_FINAL_TS"
+    },
+    {
+      "name": "47 presets",
+      "exitCode": 0,
+      "status": "PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "12 oracles",
+      "exitCode": 0,
+      "status": "PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "P03",
+      "exitCode": 0,
+      "status": "PASS_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "L4-A",
+      "exitCode": 0,
+      "status": "PASS_19_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "Restaurant L1",
+      "exitCode": 0,
+      "status": "PASS_15_GROUPS_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "P05-B",
+      "exitCode": 0,
+      "status": "PASS_9_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "P10",
+      "exitCode": 0,
+      "status": "PASS_19_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "P11",
+      "exitCode": 0,
+      "status": "PASS_21_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "P12",
+      "exitCode": 0,
+      "status": "PASS_13_CONTEXTS_114_OPTIONS_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "P13",
+      "exitCode": 0,
+      "status": "PASS_8_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "Draft HTTP",
+      "exitCode": 0,
+      "status": "PASS_MOCKED_SERVICE_ONLY"
+    },
+    {
+      "name": "C8-017",
+      "exitCode": 0,
+      "status": "PASS_ORIGINAL_GUARD"
+    },
+    {
+      "name": "Next local Turbopack",
+      "exitCode": 1,
+      "status": "BLOCKED_DEPENDENCY_SYMLINK_ROOT"
+    },
+    {
+      "name": "Next local Webpack",
+      "exitCode": 1,
+      "status": "FAILED_NODE_CRYPTO_EXTERNAL_PATH"
+    },
+    {
+      "name": "Next Vercel final",
+      "exitCode": null,
+      "status": "READY_FULL_NEXT_PREVIEW"
+    }
+  ],
+  "jwt": "NOT_RUN_AUTH",
+  "applyAuthenticated": "NOT_RUN",
+  "productionWrites": 0
+}

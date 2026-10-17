@@ -1,0 +1,19 @@
+{
+  "id": "dpl_UjKR8mWa9CzrhMqnkJ8i2LBx85Bz",
+  "state": "READY",
+  "target": null,
+  "sha": "86305aa602866f9b58a42f4665b9d3cc62f0ac7c",
+  "branch": "codex/composer-v3-l4-d-bar-living-card",
+  "url": "https://budgetisation-gdjy7kp6b-adriensauvageot34-6137s-projects.vercel.app",
+  "project": {
+    "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+    "name": "budgetisation",
+    "framework": "nextjs"
+  },
+  "buildComplete": true,
+  "typescriptComplete": true,
+  "staticGenerationComplete": true,
+  "deployed": true,
+  "runtimeBrowser": "NOT_RUN",
+  "authenticated": "NOT_RUN_AUTH"
+}

@@ -1,0 +1,46 @@
+{
+  "checkedAt": "2026-10-16T18:52:00.691Z",
+  "deploymentId": "dpl_5hg1dYL2dJtUmXfGgDxU9Dwjdexm",
+  "sha": "7765bc532511d777ef3e3c80ff0b48826a4e465e",
+  "url": "https://budgetisation-tan.vercel.app/mois-a-venir/composer?month=2026-11",
+  "status": "EXECUTED_PASS_AUTHENTICATED_READ_ONLY_SMOKE",
+  "authentication": "Existing Production browser session reused; no credentials read or entered",
+  "opening": "Initial browser navigation tool timed out; inventory and subsequent official DOM observation showed Composer loaded. No reload used.",
+  "checks": {
+    "composerAndLibrary": true,
+    "boardVisible": true,
+    "projectionUpdated": true,
+    "unknownExplicit": true,
+    "financialPanelOpenedAndClosed": true,
+    "boardNextAndPreviousPage": true,
+    "applyDisabledWithoutConfirmedDraft": true,
+    "noSavedDraftIndicatorUnchanged": true
+  },
+  "mutations": {
+    "semanticDraftEdits": 0,
+    "apply": 0,
+    "accountChanges": 0,
+    "migrations": 0,
+    "financialWritesRequested": 0
+  },
+  "scope": "Observed UI and allowed read-only actions only; no database-wide financial before/after query and no claim of a full authenticated save/reload/CAS cycle.",
+  "runtime": {
+    "query": {
+      "deploymentId": "dpl_5hg1dYL2dJtUmXfGgDxU9Dwjdexm",
+      "environment": "production",
+      "levels": [
+        "error",
+        "fatal"
+      ],
+      "since": "10m",
+      "groupBy": "level",
+      "limit": 10
+    },
+    "result": "No matching groups returned",
+    "limitation": "Bounded log observation; does not prove global absence of errors or substitute for full E2E"
+  },
+  "acceptedReservations": {
+    "nativeInteractions": "PARTIAL",
+    "isolatedJwtCycle": "NOT_RUN_AUTH"
+  }
+}

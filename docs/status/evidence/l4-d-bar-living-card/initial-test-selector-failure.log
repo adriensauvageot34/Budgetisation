@@ -1,0 +1,23 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V7_PLACE_FIRST_AND_QUICK_UNKNOWN_ADMISSION PASS
+V7_RAW_CANCEL_ESCAPE_DISCARD_PRESERVES_ADMITTED_UNKNOWN PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Missing button Augmenter la quantité
+    at button (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:45:89)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:46:46
+    at process.env.NODE_ENV.exports.act (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\outputs\l4c-test-tools\node_modules\react\cjs\react.development.js:890:22)
+    at click (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:46:33)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:87:58
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:41:31)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:79:1 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: true,
+  operator: '=='
+}
+
+Node.js v22.18.0

@@ -1,0 +1,36 @@
+{
+  "id": "dpl_SNV4bewV2dkS49PQEGjrFL77bQyt",
+  "name": "budgetisation",
+  "url": "budgetisation-1nmzusewc-adriensauvageot34-6137s-projects.vercel.app",
+  "type": "LAMBDAS",
+  "state": "READY",
+  "createdAt": 1792244797387,
+  "creator": {
+    "uid": "ItlVoi62mpJ28TeqsxO3j569",
+    "username": "adriensauvageot34-6137"
+  },
+  "project": {
+    "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+    "name": "budgetisation",
+    "framework": "nextjs"
+  },
+  "meta": {
+    "githubCommitRef": "codex/composer-v3-l4-e-bar-v8",
+    "githubCommitSha": "762fbbc3116fd76efb84de0bb9f9e08fac19e0ee",
+    "githubCommitMessage": "style(composer): make Bar tile price inputs visibly editable",
+    "githubRepo": "Budgetisation",
+    "githubOrg": "adriensauvageot34"
+  },
+  "alias": [
+    "budgetisation-git-codex-e0fc5e-adriensauvageot34-6137s-projects.vercel.app"
+  ],
+  "target": null,
+  "regions": [
+    "iad1"
+  ],
+  "buildingAt": 1792244798717,
+  "ready": 1792244918501,
+  "readyState": "READY",
+  "source": "git",
+  "aliasError": null
+}

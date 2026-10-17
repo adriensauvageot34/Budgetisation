@@ -1,0 +1,31 @@
+▲ Next.js 16.2.6 (webpack)
+
+  Creating an optimized production build ...
+Failed to compile.
+
+node:crypto
+Module build failed: UnhandledSchemeError: Reading from "node:crypto" is not handled by plugins (Unhandled scheme).
+Webpack supports "data:" and "file:" URIs by default.
+You may need an additional plugin to handle "node:" URIs.
+    at C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\webpack\bundle5.js:29:408361
+    at Hook.eval [as callAsync] (eval at create (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\webpack\bundle5.js:14:9224), <anonymous>:6:1)
+    at Hook.CALL_ASYNC_DELEGATE [as _callAsync] (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\webpack\bundle5.js:14:6378)
+    at Object.processResource (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\webpack\bundle5.js:29:408286)
+    at processResource (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:5308)
+    at iteratePitchingLoaders (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:4667)
+    at runLoaders (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:8590)
+    at NormalModule._doBuild (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\webpack\bundle5.js:29:408148)
+    at NormalModule.build (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\webpack\bundle5.js:29:410161)
+    at C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\compiled\webpack\bundle5.js:29:82482
+
+Import trace for requested module:
+node:crypto
+./src/analytics/history-v2/facts-hash.ts
+./src/analytics/history-v2/index.ts
+./src/query-api/history-v2/builders.ts
+./src/query-api/history-v2/index.ts
+./src/query-api/index.ts
+./src/components/runtime/exploration-runtime-host.tsx
+
+
+> Build failed because of webpack errors

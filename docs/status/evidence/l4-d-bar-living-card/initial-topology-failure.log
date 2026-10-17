@@ -1,0 +1,20 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: COMPOSER_ROUTE_TOPOLOGY_INVALID: Cette proposition n’a pas pu être validée. Votre brouillon est conservé ; vérifiez les champs et réessayez.
+
+false !== true
+
+    at request (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-mobility.mjs:20:192)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-mobility.mjs:29:9
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-mobility.mjs:22:30)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-mobility.mjs:27:2 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual'
+}
+
+Node.js v22.18.0

@@ -1,5 +1,6 @@
 "use client";
-import { createContext, useContext, useState, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
+import { useCommittedEvent } from "./use-committed-event";
 
 type InlineEdit = Readonly<{ targetRef: string; dimension: string; kind: "RAW" | "PENDING";
   discard(): void; flush(): void }>;
@@ -7,6 +8,7 @@ type InlineEdit = Readonly<{ targetRef: string; dimension: string; kind: "RAW" |
 /** Only field identity and lifecycle callbacks travel to the shell. Text stays
  * inside its editor. This is neither a semantic Draft nor a save/Preview queue. */
 export class InlineEditRegistry {
+  requestConfirmation: (message: string, accept: () => void) => void = () => {};
   private readonly fields = new Map<string, InlineEdit>();
   private readonly listeners = new Set<() => void>();
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
@@ -29,9 +31,31 @@ export class InlineEditRegistry {
     for (const [key, edit] of raw) { this.set(key, null); edit.discard(); }
     return true;
   }
+  guard(continueAfterDiscard: () => void, targets?: ReadonlySet<string>): boolean {
+    const raw = [...this.fields.entries()].filter(([, edit]) => edit.kind === "RAW" && (!targets || targets.has(edit.targetRef)));
+    if (!raw.length) return true;
+    this.requestConfirmation("Votre saisie n’est pas encore validée. L’abandonner ? Les décisions déjà conservées resteront dans le brouillon.", () => {
+      // Only discard the registered buffers for this question. Do not approve a new buffer appearing meanwhile.
+      if (raw.some(([key, edit]) => this.fields.get(key) !== edit)) return;
+      for (const [key, edit] of raw) { this.set(key, null); edit.discard(); }
+      continueAfterDiscard();
+    });
+    return false;
+  }
 }
 export const InlineEditContext = createContext<InlineEditRegistry | null>(null);
 export const useInlineEditRegistry = () => useContext(InlineEditContext);
+/** Registers presentation-only buffers with the existing navigation/Undo guard.
+ * RAW is never autosaved or financially admitted by this hook. */
+export function useWorkshopRaw(targetRef: string, dirty: boolean, discard: () => void, dimension = "workshop") {
+  const registry = useInlineEditRegistry(), discardCurrent = useCommittedEvent(discard);
+  useEffect(() => {
+    const key = `${dimension}:${targetRef}`;
+    registry?.set(key, dirty ? { targetRef, dimension, kind: "RAW", discard: discardCurrent, flush: () => {} } : null);
+    return () => registry?.set(key, null);
+  }, [registry, targetRef, dirty, dimension, discardCurrent]);
+  return (continueAfterDiscard: () => void) => registry ? registry.guard(continueAfterDiscard, new Set([targetRef])) : !dirty;
+}
 export function useOwnedInlineEdits() {
   const [registry] = useState(() => new InlineEditRegistry());
   const count = useSyncExternalStore(registry.subscribe, registry.count, () => 0);

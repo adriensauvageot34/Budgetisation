@@ -1,0 +1,23 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V7_PLACE_FIRST_AND_QUICK_UNKNOWN_ADMISSION PASS
+V7_RAW_CANCEL_ESCAPE_DISCARD_PRESERVES_ADMITTED_UNKNOWN PASS
+V7_DIRECT_REEDIT_8_PLUS_12_AND_QUANTITY_IDENTITY PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+2 !== 1
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:93:9
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:41:31)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:90:1 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 1,
+  operator: 'strictEqual'
+}
+
+Node.js v22.18.0

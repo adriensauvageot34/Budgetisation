@@ -1,0 +1,144 @@
+{
+  "productSHA": "004a6651c5ba8a6bbb4354a8c28deafebcfcf92a",
+  "environment": "LOCAL_PRODUCTION_REACT_HTTP_MEMORY_FIXTURE",
+  "observations": [
+    {
+      "name": "Restaurant RAW lost silently before correction",
+      "sourceSHA": "3eb481a61f524ca7f01208178d9cfeb1acee74a4",
+      "status": "EXECUTED_FAIL",
+      "action": "Enter 60, return to summary, reopen: UNKNOWN without confirmation"
+    },
+    {
+      "name": "RAW registration",
+      "status": "EXECUTED_PASS",
+      "value": "60",
+      "notice": "Saisie non validée",
+      "preview": "FRESH",
+      "scope": "Restaurant",
+      "sourceSHA": "INTERMEDIATE_WORKING_TREE_NOT_FINAL"
+    },
+    {
+      "name": "Native RAW discard",
+      "status": "INCONCLUSIVE_TOOL",
+      "details": "Native confirmation was opened; CDP input and getJsDialog timed out. User answered Annulé. Following state was summary with no RAW 60. Ordering/answer cannot be certified; not counted PASS.",
+      "sourceSHA": "INTERMEDIATE_WORKING_TREE_NOT_FINAL"
+    },
+    {
+      "name": "Gift RAW question switch",
+      "status": "EXECUTED_PASS",
+      "price": "26",
+      "sequence": "Price → Occasion → Price, RAW retained"
+    },
+    {
+      "name": "Gift invalid price recovery",
+      "status": "EXECUTED_PASS",
+      "sourceSHA": "004a6651c5ba8a6bbb4354a8c28deafebcfcf92a",
+      "rejected": "-1",
+      "retained": true,
+      "rawCount": 1,
+      "applyEnabled": false,
+      "corrected": "26",
+      "object": "Livre réception final",
+      "occasion": "Anniversaire",
+      "replayedOnFinal": true
+    },
+    {
+      "name": "Gift HTTP reload",
+      "status": "EXECUTED_PASS",
+      "beforePrice": "25",
+      "object": "Livre réception",
+      "occasion": "Anniversaire"
+    },
+    {
+      "name": "Gift price-only",
+      "status": "EXECUTED_PASS",
+      "price": "26",
+      "object": "Livre réception",
+      "occasion": "Anniversaire"
+    },
+    {
+      "name": "No-op admission re-arms RAW",
+      "status": "EXECUTED_PASS",
+      "rawAfterNormalizedNoop": 0,
+      "rawAfterNextObjectEdit": 1
+    },
+    {
+      "name": "friend-visit RAW question switch",
+      "status": "EXECUTED_PASS",
+      "timingNote": "Un dimanche, encore à préciser",
+      "sequence": "Timing → Label → Timing → Save"
+    },
+    {
+      "name": "family-visit incompatible mode",
+      "status": "EXECUTED_PASS",
+      "sequence": "Car, parking 4 → Train → Save",
+      "persistedParking": "UNKNOWN",
+      "route": "ABSENT",
+      "date": "ABSENT"
+    },
+    {
+      "name": "Close after admission",
+      "status": "EXECUTED_PASS",
+      "implicitApply": false
+    },
+    {
+      "name": "Native total/detail accept and cancel",
+      "status": "NOT_RUN_TOOL",
+      "note": "No bypass of window.confirm; see focused manual protocol in report."
+    },
+    {
+      "name": "Restaurant person selector on final SHA",
+      "sourceSHA": "11ac9d7e83704ae587e24b9479a23518a905f455",
+      "status": "EXECUTED_PASS",
+      "rawAfterSelection": 1,
+      "applyEnabled": false,
+      "explicitAdmission": "Alice Fixture",
+      "totalAdmitted": "60"
+    }
+  ],
+  "giftPriceGeometry": [
+    {
+      "width": 1440,
+      "height": 900,
+      "panelClient": 511,
+      "panelScroll": 511,
+      "formClient": 438,
+      "formScroll": 438,
+      "panelBottom": 636.7999877929688,
+      "dockTop": 740.7999877929688,
+      "pageOverflow": false
+    },
+    {
+      "width": 1728,
+      "height": 900,
+      "panelClient": 511,
+      "panelScroll": 511,
+      "formClient": 438,
+      "formScroll": 438,
+      "panelBottom": 636.7999877929688,
+      "dockTop": 740.7999877929688,
+      "pageOverflow": false
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "panelClient": 511,
+      "panelScroll": 511,
+      "formClient": 438,
+      "formScroll": 438,
+      "panelBottom": 636.7999877929688,
+      "dockTop": 920.7999877929688,
+      "pageOverflow": false
+    }
+  ],
+  "authenticatedSupabase": "NOT_RUN_AUTH",
+  "all112": "NOT_CERTIFIED",
+  "screenshotsArchived": false,
+  "finalState": {
+    "openEditors": 0,
+    "raw": false,
+    "save": "SAVED",
+    "preview": "FRESH"
+  },
+  "finalProductSHA": "11ac9d7e83704ae587e24b9479a23518a905f455"
+}

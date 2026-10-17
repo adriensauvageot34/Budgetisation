@@ -1,0 +1,57 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V7_PLACE_FIRST_AND_QUICK_UNKNOWN_ADMISSION PASS
+V7_RAW_CANCEL_ESCAPE_DISCARD_PRESERVES_ADMITTED_UNKNOWN PASS
+V7_DIRECT_REEDIT_8_PLUS_12_AND_QUANTITY_IDENTITY PASS
+V7_REMOVE_UNDO_RESTORE_IDENTITIES_AND_PRICE PASS
+V7_REJECTED_SAVE_RETRY_AND_ZERO_DISTINCT_FROM_UNKNOWN PASS
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+V7_OWNED_RETURN_AND_PLACE_INVALIDATION_ATOMIC_UNDO PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(taxis.length)
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:127:70
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:41:31)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-d-bar-living-card.mjs:124:1 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: true,
+  operator: '=='
+}
+
+Node.js v22.18.0

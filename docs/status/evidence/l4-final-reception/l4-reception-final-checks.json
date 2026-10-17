@@ -1,0 +1,20 @@
+[
+  {
+    "sourceSHA": "11ac9d7e83704ae587e24b9479a23518a905f455",
+    "name": "restaurant",
+    "command": "node scripts/check-l1-restaurant.mjs",
+    "exitCode": 0
+  },
+  {
+    "sourceSHA": "11ac9d7e83704ae587e24b9479a23518a905f455",
+    "name": "parity",
+    "command": "node scripts/check-planner-performance-parity.mjs",
+    "exitCode": 0
+  },
+  {
+    "sourceSHA": "11ac9d7e83704ae587e24b9479a23518a905f455",
+    "name": "c8",
+    "command": "node scripts/check-pre-l4-c2-c8-source.mjs",
+    "exitCode": 0
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "main": "dc84adad4dd7fbcf8b478e9e5749dc7b4fa8bf06",
+  "c1": "fb71ae2deb69a915bdf633b2ce721c4cf904821e",
+  "c2": "0fc3d0882a649bf023b80edc83724aec43644d30",
+  "diffExactlyEqualsOriginalC1toC2": true,
+  "mergeTree": "523fc3e3c0b6dc83f240548f8065817e1b739572",
+  "mergeSimulationMatchesC2": true,
+  "productFiles": [
+    "src/app/mois-a-venir/composer/composer-card.tsx",
+    "src/app/mois-a-venir/composer/composer-financial-inspector.tsx",
+    "src/app/mois-a-venir/composer/composer-library.tsx",
+    "src/app/mois-a-venir/composer/composer.module.css",
+    "src/app/mois-a-venir/composer/control-value-presentation.ts",
+    "src/app/mois-a-venir/composer/fixed-charges.tsx",
+    "src/app/mois-a-venir/composer/inline-control-value.tsx",
+    "src/domain/phase2/planner/control-input.ts"
+  ]
+}

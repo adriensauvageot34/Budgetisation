@@ -1,0 +1,94 @@
+{
+  "method": "ACTUAL_REACT_HANDLERS_IN_PROCESS_NOT_BROWSER",
+  "baseline": "be61864f22daf3b6546a9917758c10e0f35a4e34",
+  "results": [
+    {
+      "scenario": "A1",
+      "template": "activity",
+      "simpleGestures": 4,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 2,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "A2",
+      "template": "activity",
+      "simpleGestures": 4,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 2,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "R1",
+      "template": "restaurant",
+      "simpleGestures": 4,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 2,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "R2",
+      "template": "fast-food",
+      "simpleGestures": 4,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 2,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "R3",
+      "template": "delivery",
+      "simpleGestures": 4,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 2,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "P1",
+      "template": "purchase",
+      "simpleGestures": 4,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 2,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "P2",
+      "template": "purchase",
+      "simpleGestures": 4,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 2,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    },
+    {
+      "scenario": "M1",
+      "template": "purchase",
+      "simpleGestures": 4,
+      "reeditGestures": 3,
+      "priceScreenDOMInputs": 1,
+      "priceScreenDOMSelects": 2,
+      "richTwoComponents": "NOT_MEASURED",
+      "scroll": "NOT_MEASURED_NO_BROWSER",
+      "initialInputs": 0
+    }
+  ]
+}

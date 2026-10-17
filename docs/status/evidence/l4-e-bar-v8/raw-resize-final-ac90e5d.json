@@ -1,0 +1,24 @@
+{
+  "sha": "ac90e5d17ab03f7b1fa7b6b636e80801a37eedc1",
+  "before": {
+    "price": "8",
+    "step": "row",
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  "after": {
+    "dirty": "true",
+    "focus": {
+      "placeholder": null,
+      "tag": "BUTTON"
+    },
+    "price": "8",
+    "step": "row",
+    "viewport": [
+      1152,
+      720
+    ]
+  }
+}

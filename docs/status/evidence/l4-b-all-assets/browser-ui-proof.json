@@ -1,0 +1,175 @@
+{
+  "environment": "LOCAL_REACT_PRODUCTION_MINIFIED_SPLIT_FIXTURE_ONLY",
+  "sourceFullInventory": "f83c6dc81c31d325a64f09e56887d8bec289edd4",
+  "sourceTargetedFinal": "b7c3127d3db1f808108ab5422631523359939af1",
+  "inventory1440": {
+    "count": 47,
+    "height": 900,
+    "panelScrollCount": 0,
+    "horizontalPageOverflowCount": 0,
+    "errors": 0
+  },
+  "collectiveReload": {
+    "count": 47,
+    "before": "33ac7d92fa9259639f6e19d2a285d880a42e3695615b3ad1182eaf671a402c6e",
+    "after": "33ac7d92fa9259639f6e19d2a285d880a42e3695615b3ad1182eaf671a402c6e"
+  },
+  "representativeSummaries": [
+    {
+      "width": 1728,
+      "height": 900,
+      "count": 15,
+      "panelOverflowCount": 0
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "count": 15,
+      "panelOverflowCount": 0
+    }
+  ],
+  "targetedFinal": [
+    {
+      "name": "stay-price",
+      "width": 1440,
+      "height": 900,
+      "panelHeight": 577,
+      "panelScrollHeight": 577,
+      "innerHeight": 421,
+      "innerScrollHeight": 421,
+      "panelBottom": 702.4000244140625,
+      "dockTop": 740.7999877929688
+    },
+    {
+      "name": "stay-price",
+      "width": 1728,
+      "height": 900,
+      "panelHeight": 577,
+      "panelScrollHeight": 577,
+      "innerHeight": 421,
+      "innerScrollHeight": 421,
+      "panelBottom": 702.4000244140625,
+      "dockTop": 740.7999877929688
+    },
+    {
+      "name": "stay-price",
+      "width": 1920,
+      "height": 1080,
+      "panelHeight": 577,
+      "panelScrollHeight": 577,
+      "innerHeight": 421,
+      "innerScrollHeight": 421,
+      "panelBottom": 702.4000244140625,
+      "dockTop": 920.7999877929688
+    },
+    {
+      "name": "product-server-error",
+      "width": 1440,
+      "height": 900,
+      "panelHeight": 511,
+      "panelScrollHeight": 511,
+      "innerHeight": 226,
+      "innerScrollHeight": 226,
+      "panelBottom": 636.9000244140625,
+      "dockTop": 740.7999877929688
+    },
+    {
+      "name": "product-server-error",
+      "width": 1728,
+      "height": 900,
+      "panelHeight": 511,
+      "panelScrollHeight": 511,
+      "innerHeight": 226,
+      "innerScrollHeight": 226,
+      "panelBottom": 636.9000244140625,
+      "dockTop": 740.7999877929688
+    },
+    {
+      "name": "product-server-error",
+      "width": 1920,
+      "height": 1080,
+      "panelHeight": 511,
+      "panelScrollHeight": 511,
+      "innerHeight": 226,
+      "innerScrollHeight": 226,
+      "panelBottom": 636.9000244140625,
+      "dockTop": 920.7999877929688
+    },
+    {
+      "name": "gift-error",
+      "width": 1440,
+      "height": 900,
+      "panelHeight": 575,
+      "panelScrollHeight": 575,
+      "innerHeight": 322,
+      "innerScrollHeight": 322,
+      "panelBottom": 700.7999877929688,
+      "dockTop": 740.7999877929688
+    },
+    {
+      "name": "gift-error",
+      "width": 1728,
+      "height": 900,
+      "panelHeight": 575,
+      "panelScrollHeight": 575,
+      "innerHeight": 322,
+      "innerScrollHeight": 322,
+      "panelBottom": 700.7999877929688,
+      "dockTop": 740.7999877929688
+    },
+    {
+      "name": "gift-error",
+      "width": 1920,
+      "height": 1080,
+      "panelHeight": 575,
+      "panelScrollHeight": 575,
+      "innerHeight": 322,
+      "innerScrollHeight": 322,
+      "panelBottom": 700.7999877929688,
+      "dockTop": 920.7999877929688
+    }
+  ],
+  "keyboard": {
+    "escapeClosesPanel": true,
+    "escapeKeepsDigest": true,
+    "nativeDateKeysCommitted": true,
+    "fullNativeDrag": "NOT_RUN"
+  },
+  "authenticated": "NOT_RUN_AUTH",
+  "screenshots": "Full viewport captures displayed in the Codex browser session; no fabricated image artifact.",
+  "targetedAdditional": {
+    "visitDates": {
+      "widths": [
+        1440,
+        1728,
+        1920
+      ],
+      "height": 500,
+      "scrollHeight": 500,
+      "innerHeight": 292,
+      "innerScrollHeight": 292,
+      "source": "dd7d8d7 working tree before redundant help text was removed"
+    },
+    "visitCarCosts": {
+      "width": 1440,
+      "panelHeights": [
+        484,
+        484,
+        484,
+        484,
+        535
+      ],
+      "innerHeights": [
+        276,
+        276,
+        276,
+        276,
+        327
+      ],
+      "overflowCount": 0
+    },
+    "calendarConflict": "3 calendar nights vs 2 declared: refused in browser; corrected return keeps TOTAL 240",
+    "invalidPrice": "-1 stays in the input; error shown; Apply disabled",
+    "networkRetry": "503 before commit -> ERROR -> explicit retry -> SAVED; see browser-final-http-check.json"
+  }
+}

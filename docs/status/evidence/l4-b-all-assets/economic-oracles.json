@@ -1,0 +1,55 @@
+{
+  "environment": "PGLITE_SYNTHETIC_ONLY",
+  "checks": [
+    {
+      "name": "S1_COCKTAIL_SHARED_UNKNOWN_PRICE_ONLY",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "A1_SPA_TOTAL_VS_PROVEN_PERSON_QUANTITY",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "A2_PARKING_WITH_UNKNOWN_MAIN",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "R1_TOTAL_REPLACED_BY_DETAIL",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "R3_TOTAL_REPLACED_BY_DETAIL",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "R2_SNACK_15_NO_INVENTED_CHANNEL",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "W1_TOTAL_PER_NIGHT_AND_DATE_CONFLICT",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "P2_MIXED_SELLER_TOTAL_NO_INVENTED_CLASSIFICATION",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "P1_ENVELOPE_100_COVERED_PURCHASE_40_NOT_140",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "P3_GIFT_PARTIAL_RECIPIENT_PRESERVES_20_PLUS_5",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "B1_MANUAL_PRODUCT_PRICE_NO_INVENTED_RENEWAL",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "M1_TWO_PACKS_PRICE_ONLY_STABLE_IDENTITIES",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY"
+    }
+  ],
+  "remoteWrites": 0,
+  "authenticated": "NOT_RUN_AUTH"
+}

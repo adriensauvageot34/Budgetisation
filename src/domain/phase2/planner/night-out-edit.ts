@@ -12,7 +12,7 @@ export type NightOutEdit = Readonly<{
   contextOccurrenceId: string;
   fields: Readonly<Record<string, PlannerJson>>;
   /** Omitted sockets retain their entire prior structure, including child contexts. */
-  slots?: Readonly<Partial<Record<"main" | "food" | "extras", readonly ComponentSelectionV1[]>>>;
+  slots?: Readonly<Partial<Record<"main" | "food" | "extras" | "outbound" | "return", readonly ComponentSelectionV1[]>>>;
   before?: NightOutBeforeEdit | null;
 }>;
 
@@ -35,7 +35,7 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
     fields.fieldSchemaVersion = "context-fields@v2";
   const slots = { ...parent.slotSelections };
   for (const [key, items] of Object.entries(edit.slots ?? {})) {
-    if (!["main", "food", "extras"].includes(key) || !Array.isArray(items)) throw new TypeError("COMPOSER_NIGHT_OUT_SLOT_INVALID");
+    if (!["main", "food", "extras", "outbound", "return"].includes(key) || !Array.isArray(items)) throw new TypeError("COMPOSER_NIGHT_OUT_SLOT_INVALID");
     slots[key] = { items };
   }
   const formerBefore = Array.isArray(parent.slotSelections.before?.items) ? parent.slotSelections.before.items[0] : null;

@@ -1,0 +1,15 @@
+S1 shared_partial_and_independent_return PASS
+S2 shared_partial_and_independent_return PASS
+A1 quantity_partial_and_later_extra PASS
+A2 quantity_partial_and_later_extra PASS
+R1 total_detail_unknown_and_later_extra PASS
+R2 total_detail_unknown_and_later_extra PASS
+R3 total_detail_unknown_and_later_extra PASS
+V1 family-visit_native_contract_preserved PASS
+V1 friend-visit_native_contract_preserved PASS
+W1 composite_lodging_child_and_targeted_edit PASS
+P1 purchase_domain_and_household_quantity PASS
+P2 purchase_domain_and_household_quantity PASS
+M1 purchase_domain_and_household_quantity PASS
+P3 recipient_classification_price_independent PASS
+B1 manual_products_no_renewal_identity_invented PASS

@@ -1,0 +1,73 @@
+RAW_DEFER_CANCEL_ACCEPT_STALE_AND_SCOPE PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+RESTAURANT_RAW_CANCEL_ESCAPE_ACCEPT_AND_NO_ADMISSION PASS
+RESTAURANT_TOTAL_DETAIL_45_PLUS_15_AND_CANCEL PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+DELIVERY_INCLUDED_FEE_CANCEL_THEN_EXPLICIT_EXTRA PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+GIFT_OBJECT_OCCASION_PRICE_ONLY_UNKNOWN_AND_REJECT PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+NIGHT_SHARED_PRICE_DIRECT_NO_FORCED_PEOPLE PASS
+COMPONENT_ADAPTER_PRESERVES_PERSON_QUOTE_FUNDING_AND_UNKNOWN PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+A1_PERSON_TARIFF_AND_QUANTITY_EXPLICIT PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R2_FAST_FOOD_DIRECT_PRICE_NO_PERSON_DATE PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+M1_TWO_PACKS_PRICE_CHANGE_PRESERVES_IDENTITIES PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+W1_TOTAL_AND_PRICE_PER_NIGHT_WITHOUT_INVENTED_DATES PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V1_FAMILY_AND_FRIEND_FIELDS_USE_SEPARATE_PUBLISHED_WRITERS PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   binding: {
++     mode: 'AUTO'
++   },
+    cost: {
+      kind: 'UNKNOWN'
+    },
+    fundingAllocations: [],
+    kind: 'COMPONENT',
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-c-v6-interactions.mjs:118:108
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-c-v6-interactions.mjs:38:31)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-l4-c-v6-interactions.mjs:109:1 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: {
+    selectionId: 'dac99cc0-8235-4427-add6-6702aaf2415f',
+    optionKey: 'product',
+    provenance: 'EXPLICIT_USER_DECISION',
+    kind: 'COMPONENT',
+    label: 'Produit fixture 6',
+    quantity: '1',
+    cost: { kind: 'UNKNOWN' },
+    binding: { mode: 'AUTO' },
+    fundingAllocations: [],
+    unitBasis: 'ITEM'
+  },
+  expected: {
+    selectionId: 'dac99cc0-8235-4427-add6-6702aaf2415f',
+    optionKey: 'product',
+    provenance: 'EXPLICIT_USER_DECISION',
+    kind: 'COMPONENT',
+    label: 'Produit fixture 6',
+    quantity: '1',
+    cost: { kind: 'UNKNOWN' },
+    fundingAllocations: [],
+    unitBasis: 'ITEM'
+  },
+  operator: 'deepStrictEqual'
+}
+
+Node.js v22.18.0

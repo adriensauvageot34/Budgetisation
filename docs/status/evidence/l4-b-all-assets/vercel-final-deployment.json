@@ -1,0 +1,13 @@
+{
+  "sourceSha": "b7c3127d3db1f808108ab5422631523359939af1",
+  "deployment": "dpl_3XT4R6thYmouC79uq5rpnquTBeUd",
+  "url": "https://budgetisation-gzd5vqw1o-adriensauvageot34-6137s-projects.vercel.app",
+  "target": null,
+  "environment": "PREVIEW",
+  "state": "READY",
+  "framework": "nextjs",
+  "command": "npm run build -> next build",
+  "fullNextBuild": true,
+  "productionPromoted": false,
+  "settingsChanged": false
+}

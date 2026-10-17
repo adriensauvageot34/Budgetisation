@@ -1,0 +1,18 @@
+{
+  "method": "cua.getState official API",
+  "errors": [
+    "Browsers: Error: Local browser use is disabled in Work settings"
+  ],
+  "status": "NOT_RUN",
+  "screenshots": "NOT_RUN",
+  "DOM": "NOT_RUN",
+  "nativeKeyboardFocus": "NOT_RUN",
+  "desktopViewports": [
+    "1440x900",
+    "1728x900",
+    "1920x1080"
+  ],
+  "mobile": "OUT_OF_PRODUCT_SCOPE",
+  "authenticated": "NOT_RUN_AUTH",
+  "workaroundsUsed": false
+}
