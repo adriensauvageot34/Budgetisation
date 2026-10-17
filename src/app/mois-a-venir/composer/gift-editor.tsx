@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useWorkshopRaw } from "./inline-edit-registry";
+import { useWorkshopQuestion } from "./workshop-choices";
+import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette } from "./context-palette";
 import type { ProspectivePersonRef } from "@/domain/phase2/planned-contract";
@@ -13,8 +15,7 @@ import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner
 import { WorkshopComponentRow } from "./workshop-component-row";
 import { fresh, fromSelection, buildComponentRow } from "./night-out-components";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
-import { PlannedContactField } from "../planned-people-fields";
-import { ChoiceTiles, builderInput } from "../planned-builder-primitives";
+import { builderInput } from "../planned-builder-primitives";
 import styles from "./composer.module.css";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 
@@ -50,6 +51,7 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
     setRecipient(initial.recipient); setOccasion(initial.occasion); setAssetKey(initial.assetKey);
     setObjectLabel(initial.objectLabel); setDate(initial.date); setRow(initial.row); setError("");
   });
+  const [query,setQuery] = useState("");
   const selectedAsset = giftAssets.find(asset => asset.assetKey === assetKey);
   const save = () => { try {
     if (recipient?.kind === "TEXT" && !recipient.label.trim()) throw Error("Indiquez le nom du destinataire ou retirez cette sélection.");
@@ -65,6 +67,16 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
     if (admitted) { acceptedBuffer.current = buffer; setError(""); setSection("summary"); }
     else setError("Ce choix n’a pas été admis. Le brouillon local reste disponible.");
   } catch (failure) { setError(failure instanceof Error && !/^[A-Z_]+$/.test(failure.message) ? failure.message : "Vérifiez le prix, la quantité et le financement. Votre saisie est conservée."); } };
+  const match = (label:string) => label.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase().includes(query.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase());
+  const tile=(key:string,label:string,choose:()=>void,selected=false,hint?:string)=>({key,label,choose,selected,hint,iconKey:"gift"});
+  useWorkshopQuestion(section==="object"?{title:"Quel cadeau as-tu en tête ?",search:{value:query,change:setQuery,label:"Rechercher un objet cadeau"},choices:[
+    ...giftAssets.filter(asset=>match(asset.label)).map(asset=>tile(asset.assetKey,asset.label,()=>{setAssetKey(asset.assetKey);if(!objectLabel.trim())setObjectLabel(asset.label);},assetKey===asset.assetKey)),
+    tile("free","Objet libre",()=>setAssetKey(""),!assetKey,"Le nom reste indépendant de la catégorie"),tile("price","Passer au prix",()=>setSection("budget"))]}
+    :section==="occasion"?{title:"Quelle occasion ?",choices:[...occasionChoices.map(label=>tile(label,label,()=>setOccasion(label),occasion===label)),tile("other","Autre occasion",()=>setOccasion("")),tile("summary","Résumé",()=>setSection("summary"))]}
+    :section==="recipient"?{title:"Pour qui ?",search:{value:query,change:setQuery,label:"Rechercher un destinataire"},choices:[
+      ...householdPersons.filter(p=>match(p.displayName)).map(p=>tile(p.personId,p.displayName,()=>setRecipient({kind:"HOUSEHOLD_PERSON",personId:p.personId}))),
+      ...SOCIAL_CONTACTS_V1.filter(p=>match(p.label)).map(p=>tile(p.key,p.label,()=>setRecipient({kind:"CONTACT",contactKey:p.key}))),
+      tile("text","Autre personne",()=>setRecipient({kind:"TEXT",label:""})),tile("later","Plus tard",()=>setRecipient(undefined))]}:null);
   return <form data-gift-editor className={styles.nightEditor} onSubmit={event => { event.preventDefault(); save(); }}>
     {section === "summary" && <section className={styles.nightSection} data-gift-summary><h3>{objectLabel || "Cadeau à préciser"}</h3>
       <p>Le cadeau reste dans votre brouillon, même si sa date ou son prix sont inconnus.</p>
@@ -76,19 +88,10 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
     {section === "budget" && <details><summary>Repères historiques · ne décident aucun prix</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
     {section !== "summary" && <p className={styles.helper}>Le coût provient uniquement de l’objet et de ses éventuels compléments.</p>}
     <div className={styles.formFields}>
-      {section === "recipient" && <PlannedContactField label="Pour qui est ce cadeau ?" value={recipient} householdPersons={householdPersons} onChange={setRecipient} />}
-      {section === "occasion" && <div className={styles.giftOccasion}><ChoiceTiles label="Quelle occasion ?" choices={[...occasionChoices.map((label, index) => ({ key: String(index), label })), { key: "OTHER", label: "Autre" }]}
-        value={occasionChoices.includes(occasion) ? String(occasionChoices.indexOf(occasion)) : "OTHER"}
-        onChange={key => setOccasion(key === "OTHER" ? "" : occasionChoices[Number(key)] ?? "")} />
-        {!occasionChoices.includes(occasion) && <label>Précisez l’occasion<input className={builderInput} value={occasion} onChange={event => setOccasion(event.target.value)} maxLength={120} /></label>}</div>}
+      {section === "recipient" && <label>Destinataire{recipient?.kind==="TEXT"?<input value={recipient.label} onChange={event=>setRecipient({kind:"TEXT",label:event.target.value})} placeholder="Nom libre"/>:<p>{recipient?prospectivePersonLabel(recipient)??householdPersons.find(p=>p.personId===(recipient.kind==="HOUSEHOLD_PERSON"?recipient.personId:""))?.displayName:"Choisis une personne dans le dock, ou laisse inconnu."}</p>}</label>}
+      {section === "occasion" && <label>Occasion choisie<input className={builderInput} value={occasion} onChange={event=>setOccasion(event.target.value)} maxLength={120} placeholder="Choisir dans le dock ou saisir" /></label>}
       {section === "object" && <>
-      <label>Type d’objet · catalogue Budgetisation<select value={assetKey} onChange={event => {
-        const asset = giftAssets.find(candidate => candidate.assetKey === event.target.value);
-        setAssetKey(event.target.value);
-        if (asset && !objectLabel.trim()) setObjectLabel(asset.label);
-      }}><option value="">Sans classification choisie</option>
-        {assetKey && !selectedAsset && <option value={assetKey}>Référence indisponible · {existingAssetRef?.labelAtSelection ?? assetKey} ({assetKey})</option>}
-        {giftAssets.map(asset => <option key={asset.assetKey} value={asset.assetKey}>{asset.label}</option>)}</select></label>
+      <p>{selectedAsset?"Type choisi : "+selectedAsset.label:"Aucune classification imposée · choisis une tuile ou un nom libre."}</p>
       {assetKey && !selectedAsset && <p role="status" className={styles.helper}>Cette référence de catalogue n’est plus disponible. Elle reste conservée tant que vous ne choisissez pas un autre type.</p>}
       <label>Quel objet ou produit ?<input value={objectLabel} onChange={event => setObjectLabel(event.target.value)} maxLength={120} /></label></>}
       {section === "date" && <label>Date prévue (facultative)<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>}

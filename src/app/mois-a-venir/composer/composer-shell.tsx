@@ -35,10 +35,13 @@ import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2
 import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
 import type { ComposerApplyReceipt } from "@/domain/phase2/planner/composer-ui-contract";
 import { useCommittedEvent } from "./use-committed-event";
+import { EquipmentComponentEditor } from "./equipment-component-editor";
+import { WorkshopChoicesProvider } from "./workshop-choices";
+import { WorkshopConfirmationProvider } from "./workshop-confirmation";
 import { InlineEditContext, useOwnedInlineEdits } from "./inline-edit-registry";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
-  equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean }; page?: number; saved?: boolean; raw?: boolean;
+  equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean; selection?: ComponentSelectionV1 }; page?: number; saved?: boolean; raw?: boolean;
   restaurantContextId?: string; restaurantCreating?: boolean;
   giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
   cardKey?: string;
@@ -51,6 +54,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   snapshotMetrics?: boolean; previewHttp?: boolean;
 }) {
   const inlineEdits = useOwnedInlineEdits();
+  const confirmationRequest = useRef<Parameters<typeof WorkshopConfirmationProvider>[0]["requestRef"]["current"]>(() => {});
+  useEffect(() => { inlineEdits.registry.requestConfirmation = (message, accept) => confirmationRequest.current({ message, accept, acceptLabel: "Abandonner cette saisie" }); }, [inlineEdits.registry]);
   const draftTransport = durableDraftHttp ? composerDraftHttpTransport : suppliedDraftTransport;
   const transport: ComposerTransport = useCommittedEvent(async (request: ComposerRequest) => {
     const started = performance.now();
@@ -193,7 +198,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       // Flush an already explicit +/- batch first. Its history entry must exist
       // before Undo can target it; do not undo an unrelated older decision.
       if (inlineEdits.registry.flushPending()) return false;
-      if (!inlineEdits.registry.confirmDiscard(window.confirm)) return false;
+      if (!inlineEdits.registry.guard(() => stage(operation, history, restored))) return false;
     }
     if (snapshotMetrics) snapshotIntent.current=performance.now();
     const before = localDraft.current;
@@ -242,7 +247,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     setDraftConfirmation({ kind: "RESTORE", draftId: draft.draftId, version: draft.version });
   }
   async function confirmDraftAction() {
-    if (!inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (!inlineEdits.registry.guard(() => void confirmDraftAction())) return;
     if (inlineEdits.registry.flushPending()) return;
     const action = draftConfirmation;
     if (!action || draftConfirmationBusy) return;
@@ -409,7 +414,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if (busyRef.current) { event.preventDefault(); return; }
     inlineEdits.registry.flushPending();
     const cardRef = event.currentTarget.closest<HTMLElement>("[data-control]")?.dataset.control;
-    if (cardRef && !inlineEdits.registry.confirmDiscard(window.confirm, new Set([cardRef]))) { event.preventDefault(); return; }
+    if (cardRef && !inlineEdits.registry.guard(() => {}, new Set([cardRef]))) { event.preventDefault(); return; }
     clearHover();
     const candidate = key.startsWith("assistant:") ? suggestions?.candidates.find(c => `assistant:${c.candidateId}` === key) : null;
     const source = candidate ? { sourceKey: key, assetKey: key, label: candidate.label, iconKey: shown.presentation.objects[candidate.targetRef]?.iconKey ?? "activity", economicAmount: candidate.impactOnMonthEnd, protected: false }
@@ -494,7 +499,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     origin?.focus();
   }
   function choose(asset: ComposerAssetView, target: DropTarget = { kind: "BOARD_ZONE" }, selection?: ComponentSelectionV1, stableId?: string, presetKey?: ComposerPresetKey) {
-    if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (editor && !inlineEdits.registry.guard(() => choose(asset, target, selection, stableId, presetKey))) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
     if (asset.kind === "SLOT_OPTION_ASSET" && asset.optionKind === "MOBILITY_INTENT") {
@@ -562,7 +567,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     const equipmentFields = (model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? []).filter(field => field.key !== "needOccurrenceId");
     const equipmentSocket = shown.board.contexts.find(card => card.contextOccurrenceId === target.contextOccurrenceId)?.sockets.find(socket => socket.slotKey === target.slotKey);
     setEditor({ title: selection ? `Modifier ${asset.label}` : `Composer ${asset.label}`, side: asset.kind === "SLOT_OPTION_ASSET",
-      ...(asset.kind === "SLOT_OPTION_ASSET" ? { equipment: { asset, target, repeating: equipmentSocket?.cardinality === "REPEATING" }, page: 0 } : {}),
+      ...(asset.kind === "SLOT_OPTION_ASSET" ? { equipment: { asset, target, selection, repeating: equipmentSocket?.cardinality === "REPEATING" }, page: 0 } : {}),
       cardKey: asset.kind === "SLOT_OPTION_ASSET" && knowledgeTemplate ? `template:${knowledgeTemplate}` : asset.assetKey,
       fields: equipmentFields, values: { ...Object.fromEntries(equipmentFields.map(field => [field.key, field.initial ?? field.choices?.[0]?.value ?? ""])), ...values },
       operation: values => ({ kind: "DROP", assetKey: asset.assetKey, target, values, identity, selectionId }) });
@@ -575,7 +580,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     stage({ kind: "DROP", assetKey: key, target, values: {}, identity: crypto.randomUUID(), selectionId: crypto.randomUUID() });
   }
   function edit(card: ComposerCardView) {
-    if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (editor && !inlineEdits.registry.guard(() => edit(card))) return;
     setProjectionOpen(false); setUnresolvedOpen(false);
     clearHover();
     if (!card.capability?.actions.length || card.capability.flexibility === "LOCKED") return;
@@ -585,9 +590,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       values: Object.fromEntries(["amount", "count", "unitAmount"].map(key => [key, typeof card.value[key] === "string" ? card.value[key] as string : ""])),
       operation: values => ({ kind: "MUTATE", mutation: { kind: "SET_STATE", targetRef: card.targetRef, value: Object.fromEntries(model.controlEditors.find(e => e.targetRef === card.targetRef)!.fields.map(f => [f.key, values[f.key]])) } }) });
   }
-  const closeDialog = () => { if (!busyRef.current) { if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return; setEditor(null); setProjectionOpen(false); setErrorMessage(null); } };
+  const closeDialog = () => { if (!busyRef.current) { if (editor && !inlineEdits.registry.guard(closeDialog)) return; setEditor(null); setProjectionOpen(false); setErrorMessage(null); } };
   function editContext(card: ComposerContextCardView) {
-    if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (editor && !inlineEdits.registry.guard(() => editContext(card))) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
     setFocusedContext(card.contextOccurrenceId);
@@ -604,26 +609,27 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
   }
-  function apply() {
+  function apply(confirmedDigest?: string) {
     if (inlineEdits.registry.count() || pendingApply || comparison || grab.current || editor || previewStatus !== "FRESH" || model.board.cockpit.applyReadiness === "BLOCKED"
       || semanticStateDigest(localDraft.current) !== model.board.draft.semanticStateDigest
       || draftTransport && (durable.status !== "SAVED" || !navigator.onLine || durable.snapshot?.baseStale)) return;
-    if (model.board.cockpit.applyReadiness === "READY_WITH_WARNINGS") {
+    if (model.board.cockpit.applyReadiness === "READY_WITH_WARNINGS" && confirmedDigest !== model.proof.expectedPreviewDigest) {
       const warnings = model.board.cockpit.diagnostics.filter(item => item.severity === "WARN").map(item => item.message ?? item.code);
-      if (!window.confirm(`Appliquer ce mois malgré les avertissements ?\n\n${warnings.join("\n")}`)) return;
+      confirmationRequest.current({ message: `Appliquer ce mois malgré les avertissements ?\n\n${warnings.join("\n")}`, acceptLabel: "Appliquer avec ces avertissements", accept: () => stableApply(model.proof.expectedPreviewDigest) }); return;
     }
     const key = `${model.board.draft.semanticStateDigest}:${model.proof.expectedPreviewDigest}:${model.proof.expectedActiveRevisionId}`;
     if (applyAttempt.current?.key !== key) applyAttempt.current = { key, applyRequestId: crypto.randomUUID() };
     void run({ kind: "APPLY", command: { ...model.proof, applyRequestId: applyAttempt.current.applyRequestId } }, "none");
   }
+  const stableApply = useCommittedEvent(apply);
   const applyDisabled = !!inlineEdits.count || busy || !!pendingApply || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
     || !!draftTransport && (durable.status !== "SAVED" || !durable.online || !!durable.snapshot?.baseStale);
   const openProjectionDetails = () => {
-    if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return;
+    if (editor && !inlineEdits.registry.guard(openProjectionDetails)) return;
     clearHover();
     setEditor(null); setUnresolvedOpen(false); setCompletenessFocus(false); setProjectionOpen(true);
   };
-  const showUnresolved = () => { if (editor && !inlineEdits.registry.confirmDiscard(window.confirm)) return; clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
+  const showUnresolved = () => { if (editor && !inlineEdits.registry.guard(showUnresolved)) return; clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
   const navigateDecision = (targetRef: string) => { setFocusedContext(targetRef); setReveal(previous => ({ targetRef, sequence: (previous?.sequence ?? 0) + 1 })); };
   const applyReason = inlineEdits.count ? "Une saisie n’est pas validée ou un réglage attend confirmation. Validez ou annulez la saisie avant de transformer le mois en Plan."
     : busy ? "La prévisualisation serveur est en cours." : pendingApply ? "L’issue de la demande précédente doit être vérifiée avant toute nouvelle application."
@@ -656,7 +662,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stablePreview=useCommittedEvent(()=>void run({kind:"READ"},"none"));
   const stableBalance=useCommittedEvent(()=>{clearHover();setBalanceOpen(v=>!v);if(!balanceOpen)void run({kind:"SUGGESTIONS"},"none");});
   const stableDetails=useCommittedEvent(openProjectionDetails);
-  const stableFocus=useCommittedEvent((id:string|null)=>{if(editor?.restaurantContextId&&id!==editor.restaurantContextId&&!inlineEdits.registry.confirmDiscard(window.confirm))return;setFocusedContext(id);if(editor?.restaurantContextId&&id!==editor.restaurantContextId)setEditor(null);});
+  const stableFocus=useCommittedEvent((id:string|null)=>{if(editor?.restaurantContextId&&id!==editor.restaurantContextId&&!inlineEdits.registry.guard(()=>stableFocus(id)))return;setFocusedContext(id);if(editor?.restaurantContextId&&id!==editor.restaurantContextId)setEditor(null);});
   const stableRevealFocus=useCommittedEvent((id:string|null)=>{stableFocus(id);if(id)setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));});
   // Accepted context changes (also Undo/Redo and child edits) replace workshop buffers.
   // Preview responses with the same semantic content leave RAW inputs untouched.
@@ -670,7 +676,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
-  return <InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
+  return <WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
@@ -686,7 +692,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => stage({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
         {comparison ? <div className={styles.compareActions}><button data-compare-keep className={styles.secondary} disabled={busy} onClick={() => compare(true)}>Garder cette variante</button><button data-compare-exit className={styles.textButton} disabled={busy} onClick={() => compare(false)}>Quitter la comparaison</button></div>
           : <><div className={styles.applyControl} tabIndex={applyDisabled ? 0 : undefined} aria-label={applyDisabled ? applyReason : undefined} data-apply-control data-unavailable={applyDisabled}>
-              <button className={styles.primary} data-apply disabled={applyDisabled} aria-describedby={applyDisabled ? "apply-disabled-reason" : undefined} onClick={apply}>{busy ? "Validation…" : "Transformer en Plan"}</button>
+              <button className={styles.primary} data-apply disabled={applyDisabled} aria-describedby={applyDisabled ? "apply-disabled-reason" : undefined} onClick={() => apply()}>{busy ? "Validation…" : "Transformer en Plan"}</button>
               {!!inlineEdits.count && <span className={styles.inlineEditNotice} data-inline-unvalidated role="status">Saisie non validée</span>}
               {applyDisabled && <div className={styles.applyReason} role="group" aria-label="Application indisponible" data-apply-reason><p id="apply-disabled-reason">{applyReason}</p>
                 {!!model.presentation.unresolvedCount && <button data-show-unresolved onClick={showUnresolved}>Afficher les éléments</button>}</div>}
@@ -718,7 +724,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     <div className={styles.columns} data-workshop-columns data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} />
       <ComposerBoard model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
         add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} reveal={reveal}
-         contextGuide={editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId ? <div ref={setNightDockHost} data-night-dock-host /> : editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
+         contextGuide={editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment?.asset.optionKind === "COMPONENT" ? <div ref={setNightDockHost} data-night-dock-host /> : editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
           && draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)
           && shown.board.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)
           ? <RestaurantEditor key={editor.restaurantContextId} context={draftState.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId)!}
@@ -781,6 +787,15 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           editor={{ assetKey: editor.cardKey ?? "", fields: editor.fields }} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons}
           options={model.mobilityOptions} knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} model={shown} dockHost={nightDockHost} choose={stableChoose} placeDeclines={placeDeclines} declinePlace={declinePlace} onCancel={closeDialog}
            onSave={stage} />
+        : editor?.equipment?.asset.optionKind === "COMPONENT" && !editor.saved ? <EquipmentComponentEditor key={editor.cardKey??editor.equipment.asset.assetKey}
+          asset={editor.equipment.asset} target={editor.equipment.target} model={shown} knowledge={model.cardKnowledge[editor.cardKey??""]} values={editor.values} host={nightDockHost} busy={busy}
+          selection={editor.equipment.selection?.kind==="COMPONENT"?editor.equipment.selection:undefined}
+          onValues={values=>setEditor(current=>current?{...current,values,raw:true}:current)}
+          onSave={(values,component)=>{const target=editor.equipment!.target;const existing=editor.equipment!.selection;
+            const previous=(draftState.contexts.find(c=>c.contextOccurrenceId===target.contextOccurrenceId)?.slotSelections[target.slotKey??""]?.items??[]) as readonly ComponentSelectionV1[];
+            const operation:ComposerOperation=existing?.kind==="COMPONENT"?{kind:"MUTATE",mutation:{kind:"PATCH_CONTEXT",contextOccurrenceId:target.contextOccurrenceId!,slotKey:target.slotKey!,items:previous.map(item=>item.selectionId===existing.selectionId?component:item)}}:editor.operation(values);
+            if(stage(operation))setEditor(current=>current?{...current,values,saved:true,raw:false}:current);}}
+          onSummary={()=>{const owner=shown.board.contexts.find(c=>c.contextOccurrenceId===editor.equipment?.target.contextOccurrenceId);if(owner)editContext(owner);else closeDialog();}}/>
         : editor ? <form data-equipment-workshop={!!editor.equipment || undefined} onSubmit={e => { e.preventDefault();
           const values = editor.equipment ? editor.values : Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
           if (stage(editor.operation(values))) setEditor(current => current?.equipment ? { ...current, saved: true, raw: false } : null);
@@ -820,5 +835,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></ComposerInteractionContext.Provider></InlineEditContext.Provider>;
+  </div></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider>;
 }

@@ -105,11 +105,12 @@ try {
     const html = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: effective.projection,
       semanticState: effective.semanticState, plan: null, revision: 1, today: world.asOfDate,
       persons: deps.householdPersons, composerHref: '/mois-a-venir/composer?month=2026-11' }));
-    for (const expected of ['data-plan-gift', 'Anniversaire', 'Livre', '130,00', 'Prix inconnu', 'Emballage', 'Non fixée', contactKey]) {
+    // B2 changed the persisted reader copy before L4; retain the date-absence and Composer-link assertions.
+    for (const expected of ['data-plan-gift', 'Anniversaire', 'Livre', '130,00', 'Prix inconnu', 'Emballage', 'Date non fixée', contactKey]) {
       if (expected === contactKey) continue;
       assert.match(html, new RegExp(expected));
     }
-    assert.match(html, /Rééditer mon Plan/);
+    assert.match(html, /Modifier dans Composer/);
   });
   await check('GIFT-INVALID-REF-AND-MUTATION-REJECTED', async () => {
     const invalid = await request({ ...amountOnly, values: { recipientRef: { kind: 'CONTACT', contactKey: 'not-a-contact' } } }, amended.semanticState);

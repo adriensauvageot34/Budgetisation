@@ -18,15 +18,15 @@ import { VisualClusterCard, VisualClusterOverlay } from "./visual-cluster";
 import { composerRenderIndex } from "./render-index";
 import { useInlineEditRegistry } from "./inline-edit-registry";
 type BoardProps=Parameters<typeof ComposerBoard>[0];
-const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"> & {item:AtomicNode;inCluster:boolean;closeCluster:()=>boolean}) {
+const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"> & {item:AtomicNode;inCluster:boolean;closeCluster:(after?:()=>void)=>boolean}) {
   const {model,busy,selected,focused,focus,edit,editContext,choose,drag,drop,request,hover,details}=props,index=composerRenderIndex(model);
   // The drag geometry may be held, but card values always use the current model.
-  if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={value=>{if(inCluster&&!closeCluster())return;editContext(value);}}/>:null;}
+  if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={value=>{if(inCluster&&!closeCluster(()=>editContext(value)))return;editContext(value);}}/>:null;}
   const card=index.controls.get(item.id);if(!card)return null;
   return <ComposerCard card={card} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused===item.id} focus={()=>focus(item.id)}
-    preserved={model.semanticState.preferences.flexibility[item.id]==="PRESERVE"} edit={()=>{if(inCluster&&!closeCluster())return;edit(card);}}
+    preserved={model.semanticState.preferences.flexibility[item.id]==="PRESERVE"} edit={()=>{if(inCluster&&!closeCluster(()=>edit(card)))return;edit(card);}}
     preserve={()=>request({kind:"PRESERVE",targetRef:item.id,preserve:model.semanticState.preferences.flexibility[item.id]!=="PRESERVE"})}
-    details={()=>{if(inCluster&&!closeCluster())return;focus(item.id);details();}}
+    details={()=>{if(inCluster&&!closeCluster(()=>{focus(item.id);details();}))return;focus(item.id);details();}}
     mutate={mutation=>request({kind:"MUTATE",mutation})} hover={hover}/>;
 });
 export function ComposerBoard({ model, busy, selected, focused, focus, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details, contextGuide, reveal }: { model: ComposerUiModel; busy: boolean; selected: string | null;
@@ -63,9 +63,9 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
     const remaining = item.children.filter(child => child.id !== restaurantFocus);
     // Keep the intention visible while its guide is open; this is transient layout only.
     return [selected, ...(remaining.length > 1 ? [{ ...item, children: remaining }] : remaining)];
-  })];},[model,restaurantFocus,detached]),closeCluster=useCallback(()=>{
+  })];},[model,restaurantFocus,detached]),closeCluster=useCallback((after?:()=>void)=>{
     const targets = new Set([...document.querySelectorAll<HTMLElement>("dialog [data-control]")].map(node => node.dataset.control!));
-    if (inlineEdits && !inlineEdits.confirmDiscard(window.confirm, targets)) return false;
+    if (inlineEdits && !inlineEdits.guard(() => { inlineEdits.flushPending(); setOpenClusterId(null); after?.(); }, targets)) return false;
     inlineEdits?.flushPending();
     setOpenClusterId(null);
     return true;
@@ -110,7 +110,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
       {interaction?.grabbed?.pack && <article className={styles.packGhost} data-pack-ghost aria-label={`Aperçu de ${interaction.grabbed.label}`}><PlannerIcon iconKey={interaction.grabbed.iconKey} /><h3>{interaction.grabbed.label}</h3>
           <div>{interaction.grabbed.pack.map((s, index) => <span key={`${s.label}:${index}`} title={`${s.label} · ${s.provenance}`}><PlannerIcon iconKey={s.iconKey} scale="SATELLITE" /><small>{s.label}</small></span>)}</div><p>Estimation après ajout</p></article>}
     </BoardCarousel>
-    {openCluster && <VisualClusterOverlay node={openCluster} focused={focused} close={closeCluster} renderChild={item => renderAtomic(item, true)} palette={focusedInCluster ? palette : null} trash={trashZone} />}
+    {openCluster && <VisualClusterOverlay node={openCluster} focused={focused} close={()=>closeCluster()} renderChild={item => renderAtomic(item, true)} palette={focusedInCluster ? palette : null} trash={trashZone} />}
     {model.presentation.elementCount < 4 && <button data-add-element className={styles.emptyInvitation} disabled={busy} onClick={add}><Plus size={14} /> Ajouter à votre mois</button>}
     {!focusedInCluster && palette}
     {!openCluster && trashZone}

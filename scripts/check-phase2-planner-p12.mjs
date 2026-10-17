@@ -133,6 +133,7 @@ try {
   assert.equal(visited.fields.plannedDate, null);
   assert.equal(visited.fields.timingNote, 'Après-midi');
   const editorHtml = renderToStaticMarkup(React.createElement(CatalogContextEditor, { context: visited,
+    model: edit, choose: () => {},
     editor: edit.editors.find(candidate => candidate.assetKey === 'template:friend-visit'), targetMonth: '2026-11',
     householdPersons: deps.householdPersons, knowledge: edit.cardKnowledge['template:friend-visit'],
     busy: false, onSave: () => {}, onCancel: () => {} }));

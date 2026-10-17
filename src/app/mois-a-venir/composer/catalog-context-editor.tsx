@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import type { ProspectivePersonRef, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { prospectivePersonIdentity } from "@/domain/phase2/planned-product";
@@ -9,12 +10,11 @@ import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { ComposerEditor, ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { PlannedContactField } from "../planned-people-fields";
-import { PlannedPlaceField } from "../planned-place-field";
 import { ContactPlaceReference } from "./workshop-place-reference";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { WorkshopDock } from "./workshop-dock";
-import type { ContextPalette } from "./context-palette";
+import type { ContextPalette, PaletteQuestion } from "./context-palette";
 import styles from "./composer.module.css";
 
 type Values = Record<string, PlannerJson>;
@@ -35,6 +35,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   busy: boolean; onSave: (operation: ComposerOperation) => boolean; onCancel: () => void;
 }) {
   const [values, setValues] = useState<Values>(() => Object.fromEntries(editor.fields.map(field => [field.key, context.fields[field.key] ?? null])) as Values);
+  const [query,setQuery]=useState("");
   const [error, setError] = useState("");
   const acceptedValues = useRef(values), initialValues = acceptedValues.current;
   useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(values) !== JSON.stringify(initialValues), () => {
@@ -76,6 +77,22 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       else setError("Ce choix n’a pas été admis. Le brouillon local reste disponible.");
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez les champs du moment."); }
   };
+  const directPost=model.dropCapabilities.find(cap=>cap.target.contextOccurrenceId===context.contextOccurrenceId&&cap.target.kind==="CONTEXT_SOCKET"&&cap.resolution!=="BLOCKED"&&model.library.searchableAssets.some(a=>a.assetKey===cap.sourceAssetKey&&a.optionKind==="COMPONENT"));
+  const directAsset=directPost&&model.library.searchableAssets.find(a=>a.assetKey===directPost.sourceAssetKey);
+  const selectedField=editor.fields.find(field=>field.key===activeKey);
+  const match=(label:string)=>label.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase().includes(query.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase());
+  const tile=(key:string,label:string,choose:()=>void,selected=false)=>({key,label,choose,selected,iconKey:"activity"});
+  const returnChoice=tile("summary","Résumé",()=>setActiveKey(null));
+  const question:PaletteQuestion|undefined = selectedField?.kind==="CHOICE"?{title:selectedField.label,choices:[
+    ...(selectedField.choices??[]).map(c=>tile(c.value,c.label,()=>update(selectedField.key,c.value),values[selectedField.key]===c.value)),
+    tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}
+    :selectedField?.kind==="PERSON_REF"?{title:selectedField.label,search:{value:query,change:setQuery,label:"Rechercher une personne"},choices:[
+      ...householdPersons.filter(p=>match(p.displayName)).map(p=>tile(p.personId,p.displayName,()=>update(selectedField.key,{kind:"HOUSEHOLD_PERSON",personId:p.personId}))),
+      ...SOCIAL_CONTACTS_V1.filter(p=>match(p.label)).map(p=>tile(p.key,p.label,()=>update(selectedField.key,{kind:"CONTACT",contactKey:p.key}))),
+      tile("free","Autre personne",()=>update(selectedField.key,{kind:"TEXT",label:""})),tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}
+    :selectedField?.kind==="PLACE_REF"?{title:selectedField.label,search:{value:query,change:setQuery,label:"Rechercher un lieu connu"},choices:[
+      ...(options?.places??[]).filter(p=>match(p.name)).map(p=>tile(p.placeId,p.name,()=>update(selectedField.key,{kind:"KNOWN",placeId:p.placeId}))),
+      tile("free","Autre destination",()=>update(selectedField.key,{kind:"TEXT",label:"",provenance:"USER_DECLARED_PROSPECTIVE"})),tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}:undefined;
   return <div data-catalog-context-editor={context.templateKey} className={styles.nightEditor}>
     <p className={styles.helper}>Les personnes, lieux et dates restent liés à ce moment. Les produits et autres équipements se choisissent dans la palette du Board ; le parent n’ajoute aucun coût.</p>
     {activeKey === null && <section className={styles.nightSection} data-catalog-summary><h3>{String(context.fields.label ?? "Votre intention")}</h3>
@@ -97,7 +114,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         onChange={ref => update(field.key, ref ?? null)} />;
       if (field.kind === "PLACE_REF") return <div key={field.key}>
         {context.templateKey === "friend-visit" && <ContactPlaceReference declined={placeDeclines} decline={declinePlace} contact={person(values.personVisitedRef)} places={options?.places ?? []} value={place(value)} friend onChoose={ref => update(field.key, ref)} />}
-        <PlannedPlaceField label={field.label} places={options?.places ?? []} value={place(value)} exact onChange={ref => update(field.key, ref ?? null)} /></div>;
+        {place(value)?.kind==="TEXT"?<label>Destination libre<input value={(place(value) as Extract<ProspectivePlaceRef,{kind:"TEXT"}>).label} onChange={event=>update(field.key,{kind:"TEXT",label:event.target.value,provenance:"USER_DECLARED_PROSPECTIVE"})}/></label>:<p>{place(value)?.kind==="KNOWN"?options?.places.find(p=>p.placeId===(place(value) as Extract<ProspectivePlaceRef,{kind:"KNOWN"}>).placeId)?.name??"Lieu lié indisponible":"Choisis une destination dans le dock, ou laisse inconnu."}</p>}</div>;
       if (field.kind === "PERSON_REFS") return <fieldset key={field.key}><legend>{field.label}</legend>
         {participants(value).slice(personPage, personPage + 1).map((ref, offset) => { const index = personPage + offset; return <div key={`${prospectivePersonIdentity(ref)}:${index}`}>
           <PlannedContactField label={`Personne ${index + 1}`} value={ref} householdPersons={householdPersons}
@@ -107,14 +124,13 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         <div className={styles.nightPage}><button type="button" disabled={personPage === 0} onClick={() => setPersonPage(page => page - 1)}>Précédent</button><span>{participants(value).length ? personPage + 1 : 0} / {participants(value).length}</span><button type="button" disabled={personPage + 1 >= participants(value).length} onClick={() => setPersonPage(page => page + 1)}>Suivant</button></div>
         <button type="button" onClick={() => { setPersonPage(participants(value).length); update(field.key, [...participants(value), { kind: "TEXT", label: "" }]); }}>Ajouter une personne</button>
       </fieldset>;
-      return <label key={field.key}>{field.label}{field.kind === "CHOICE" ? <select value={typeof value === "string" ? value : ""}
-        onChange={event => update(field.key, event.target.value || null)}><option value="">À préciser</option>{field.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select>
+      return <label key={field.key}>{field.label}{field.kind === "CHOICE" ? <p>{field.choices?.find(c=>c.value===value)?.label??"À préciser"} · choix dans le dock</p>
         : <input type={field.kind === "DATE" ? "date" : field.kind === "COUNT" ? "number" : "text"} min={field.kind === "COUNT" ? 1 : undefined}
           max={field.kind === "COUNT" ? 366 : undefined} value={typeof value === "string" || typeof value === "number" ? value : ""}
           onChange={event => update(field.key, event.target.value)} autoComplete="off" />}</label>;
     })}</div></div>
-    <WorkshopDock host={dockHost} contextId={context.contextOccurrenceId} model={model} busy={busy} choose={choose} summary={() => setActiveKey(null)}
-      choices={[{ key: "summary", label: "Résumé", iconKey: "activity", selected: activeKey === null, choose: () => setActiveKey(null) },
+    <WorkshopDock question={question} host={dockHost} contextId={context.contextOccurrenceId} model={model} busy={busy} choose={choose} summary={() => setActiveKey(null)}
+      choices={[...(directAsset&&directPost?[{key:"direct-price",label:"Prix direct",iconKey:directAsset.iconKey,choose:()=>choose(directAsset,directPost.target)}]:[]),{ key: "summary", label: "Résumé", iconKey: "activity", selected: activeKey === null, choose: () => setActiveKey(null) },
         ...editor.fields.map(field => ({ key: field.key, label: field.label, iconKey: "activity", selected: activeKey === field.key, choose: () => setActiveKey(field.key) }))]} />
     {error && <p role="alert" className={styles.formError}>{error}</p>}
     <footer><button type="button" className={styles.secondary} disabled={busy} onClick={activeKey === null ? onCancel : () => setActiveKey(null)}>{activeKey === null ? "Retour au mois" : "Retour au résumé"}</button>

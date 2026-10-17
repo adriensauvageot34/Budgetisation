@@ -95,6 +95,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     measureScroll(); const observer = new ResizeObserver(measureScroll); observer.observe(node);
     return () => observer.disconnect();
   }, [hasGroups]);
+  useLayoutEffect(() => { if(options.current) options.current.scrollLeft = 0; measureScroll(); }, [question?.title]);
   useLayoutEffect(measureScroll, [card, mode, query, question]);
   const normalize = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr");
   const visible = groups.map(group => ({ ...group, tiles: group.tiles.filter(tile => !query.trim()
@@ -110,7 +111,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
       </div></header>
     <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options onScroll={measureScroll} tabIndex={0} aria-label={question.title}
       onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();event.currentTarget.scrollBy({left:event.key==="ArrowRight"?180:-180,behavior:"smooth"});}}}>
-      {question.choices.map(choice => <button type="button" key={choice.key} className={styles.questionAnswer} aria-pressed={choice.selected} disabled={busy} onClick={choice.choose}>
+      {question.choices.map(choice => <button type="button" key={choice.key} className={styles.questionAnswer} aria-pressed={choice.selected} disabled={busy} onFocus={event => event.currentTarget.scrollIntoView({block:"nearest",inline:"nearest"})} onClick={choice.choose}>
         <PlannerIcon iconKey={choice.iconKey} scale="PALETTE" /><span><strong>{choice.label}</strong>{choice.hint && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>)}
       {!question.choices.length && <p>{question.emptyLabel??"Aucun résultat. Vous pouvez saisir votre choix."}</p>}
     </div></section>;

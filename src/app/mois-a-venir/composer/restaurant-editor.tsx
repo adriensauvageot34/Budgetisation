@@ -12,6 +12,7 @@ import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { ProspectivePersonRef, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
+import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
 import type { PlannerJson } from "@/domain/phase2/planner/json";
 import { prospectivePersonIdentity } from "@/domain/phase2/planned-product";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
@@ -21,8 +22,10 @@ import { PlannedPlaceField } from "../planned-place-field";
 import { fresh, fromSelection, buildComponentRow, type Row } from "./night-out-components";
 import { WorkshopComponentRow } from "./workshop-component-row";
 import { useWorkshopRaw } from "./inline-edit-registry";
+import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
-import { ContextPalette } from "./context-palette";
+import { useActiveWorkshopQuestion } from "./workshop-choices";
+import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { money } from "./display";
 import styles from "./composer.module.css";
@@ -48,6 +51,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   decide: (operation: ComposerOperation) => boolean; close: () => void;
 }) {
   const baseShape = guidedContextShape(context.templateKey), preset = presetForContext(context);
+  const confirm = useWorkshopConfirmation(), activeQuestion = useActiveWorkshopQuestion();
   const purchaseEnvelope = context.fields.budgetDomain === "clothing" ? "Vêtements" : context.fields.budgetDomain === "home-small" ? "Petits achats maison" : context.fields.budgetDomain === "games-digital" ? "Jeux/Numérique" : null;
   const shape = { ...baseShape, envelope: context.templateKey === "purchase" ? purchaseEnvelope : baseShape.envelope };
   const quickPurchase = context.templateKey === "purchase" && !!preset && !isDetailed(context);
@@ -73,14 +77,14 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const [allOptions, setAllOptions] = useState(false), [error, setError] = useState("");
   const [raw, setRaw] = useState(false);
   const panel = useRef<HTMLElement>(null);
-  const mealSignature = JSON.stringify(main), priorMeal = useRef(mealSignature);
+  const mealSignature = canonicalPlannerJson(main??null), priorMeal = useRef(mealSignature), admittedMode = useRef<{signature:string;detail:boolean}|null>(null);
   // A confirmed semantic change (including Undo/Redo) supersedes the input buffer.
   // An ordinary Preview of the same decision must not erase text being entered.
   useEffect(() => {
     if (priorMeal.current === mealSignature) return;
     priorMeal.current = mealSignature;
     setRow(main ? fromSelection(main) : { ...fresh(context.templateKey === "purchase" && typeof context.fields.productLabel === "string" ? context.fields.productLabel : shape.total), unitBasis: "SHARED" });
-    setDetail(isDetailed(context)); setExtraRow(null);
+    setDetail(admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context)); setExtraRow(null);
   }, [mealSignature, main, context, shape.total]);
   const refs = Array.isArray(context.fields.participantRefs) ? context.fields.participantRefs as ProspectivePersonRef[] : [];
   const personLabel = (ref: ProspectivePersonRef) => ref.kind === "HOUSEHOLD_PERSON"
@@ -95,14 +99,14 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     setRaw(false); setError(""); setExtraRow(null); setEquipment(null); setPerson(undefined);
     setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
     setRow(main ? fromSelection(main) : { ...fresh(shape.total), unitBasis: "SHARED" });
-    setDetail(isDetailed(context)); setFormKey(key => key + 1);
+    setDetail(admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context)); setFormKey(key => key + 1);
   };
   const leaveRaw = useWorkshopRaw(context.contextOccurrenceId, raw, resetBuffer);
   const open = (next: Step) => {
-    if (!leaveRaw()) return;
+    if (!leaveRaw(() => open(next))) return;
     setStep(next); setError(""); setExtraRow(null); setExtraAdded(false); setEquipment(null); setFormKey(k => k + 1);
     setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
-    setRow(main ? fromSelection(main) : { ...fresh(context.templateKey === "purchase" && typeof context.fields.productLabel === "string" ? context.fields.productLabel : shape.total), unitBasis: "SHARED" }); setDetail(isDetailed(context));
+    setRow(main ? fromSelection(main) : { ...fresh(context.templateKey === "purchase" && typeof context.fields.productLabel === "string" ? context.fields.productLabel : shape.total), unitBasis: "SHARED" }); setDetail(admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context));
   };
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -120,30 +124,34 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const fields = (patch: Record<string, PlannerJson>, id: Step) => {
     if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, fields: patch }))) advance(id);
   };
-  const saveBudget = (selectedRow = row) => {
+  const saveBudget = (selectedRow = row, replaceConfirmed = false) => {
     try {
       const item = buildComponentRow({ ...selectedRow, edited: true }, shape.option);
-      if (!detail && extras.length && !window.confirm("Remplacer le détail par ce total ? Les compléments seront retirés. Undo permet de revenir au détail.")) return;
+      if (!detail && extras.length && !replaceConfirmed) {
+        confirm({ message: "Remplacer les postes par ce coût total ? Les compléments seront retirés une seule fois. Undo restaure le détail.",
+          acceptLabel: "Remplacer par ce total", accept: () => saveBudget(selectedRow, true) }); return;
+      }
+      admittedMode.current={signature:canonicalPlannerJson(item),detail};
       if (send(operation({ contextOccurrenceId: context.contextOccurrenceId,
         slots: { [mainSlot]: [item], ...(!detail ? { extras: [] } : {}) } }))) advance("budget");
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez le budget."); }
   };
   const chooseMode = (next: boolean) => {
-    if (next === detail) return;
-    if (!window.confirm(next ? "Remplacer le montant global par un détail ? Le premier élément sera à préciser ; aucun total ne sera ajouté aux lignes."
-      : "Remplacer le détail par un total ? Validez ensuite la nouvelle addition. Aucun changement n’est encore enregistré.")) return;
-    setDetail(next);
-    setRaw(true);
-    setRow(previous => ({ ...previous, label: next ? "Élément hors compléments" : shape.total, quantity: "1", unitBasis: "SHARED",
-      personCount: "", amount: "", costMode: "UNKNOWN", edited: true, fundingMode: "UNDECIDED", fundingAmount: "" }));
+    if(next===detail)return;
+    const prepare=()=>{setDetail(next);setStep("budget");setRaw(true);setRow(previous=>({...previous,label:next?"Élément hors compléments":shape.total,quantity:"1",unitBasis:"SHARED",personCount:"",amount:"",costMode:"UNKNOWN",edited:true,fundingMode:"UNDECIDED",fundingAmount:""}));};
+    if(!main&&!extras.length){prepare();return;}
+    confirm({message:next?"Remplacer le total par les postes ? 45 € + 15 € font 60 €, pas 120 €. Les décisions restent inchangées tant que le nouveau coût n’est pas validé.":"Préparer un coût total à la place du détail ? Les postes seront retirés uniquement après confirmation du nouveau montant.",acceptLabel:next?"Préparer les postes":"Préparer le total",accept:prepare});
   };
-  const equip = (asset: ComposerAssetView, target: DropTarget) => {
-    if (!leaveRaw()) return;
+  const equip = (asset: ComposerAssetView, target: DropTarget, outsideConfirmed = false) => {
+    if (!leaveRaw(() => equip(asset, target, outsideConfirmed))) return;
     setError("");
     if (asset.optionKind === "COMPONENT") {
       if (target.slotKey === mainSlot) { open("budget"); return; }
       const existing = extras.find(item => item.optionKey === asset.optionKey);
-      if (!existing && !detail && main && !window.confirm("Ce complément s’ajoutera au montant. Confirmez qu’il n’est pas déjà inclus.")) return;
+      if (!existing && !detail && main && !outsideConfirmed) {
+        confirm({ message: "Ce poste est-il réellement en plus du montant déjà prévu ? S’il est inclus, gardez le total ou remplacez-le par le détail.",
+          cancelLabel: "Déjà inclus · garder le total", acceptLabel: "Supplément réel", accept: () => equip(asset, target, true) }); return;
+      }
       setExtraRow(existing ? fromSelection(existing) : fresh(shape.complement));
     } else { setExtraRow(null); setEquipment({ asset, target }); setEquipmentPage(0);
       const previous = asset.optionKey === currentTransport?.optionKey ? transportValues : {
@@ -177,6 +185,27 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     ...(shape.transport && currentTransport ? [{ id: "complete" as const, icon: <MapPin size={16} />, label: "Transport", caption: currentTransport.optionKey }] : []),
   ];
   const summaryPageSize = 3;
+  const addExtra = (label: string = shape.complement) => {
+    const add = () => { setExtraAdded(false); setExtraRow(fresh(label)); setStep("complete"); };
+    if (!leaveRaw(() => addExtra(label))) return;
+    if (!detail && main) confirm({message:"Ce poste est-il inclus dans le coût déjà prévu ? Un supplément réel sera additionné. Pour décrire un montant inclus, utilisez le détail.",cancelLabel:"Inclus · garder le total",acceptLabel:"Supplément réel",accept:add}); else add();
+  };
+  const tile = (key:string,label:string,choose:()=>void,iconKey="restaurant",hint?:string,selected?:boolean) => ({key,label,choose,iconKey,hint,selected});
+  const modes = card.sockets.find(socket=>socket.slotKey==="transport")?.choiceAssetKeys ?? [];
+  const summaryChoices = [tile("amount",context.templateKey==="purchase"?"Coût direct":context.templateKey==="delivery"?"Commande complète":context.templateKey==="activity"?"Billets / coût direct":"Montant rapide",()=>open("budget"),card.templateKey,"Sans date ni participants obligatoires"),
+    tile("detail",context.templateKey==="purchase"?"Articles":context.templateKey==="activity"?"Tarif et quantité":"Détailler le repas",()=>{if (!leaveRaw(() => { open("budget"); if(!detail) chooseMode(true); })) return; open("budget"); if(!detail) chooseMode(true); }),
+    tile("extras",context.templateKey==="delivery"?"Frais non inclus":"Compléments",()=>open("complete"),"activity"),
+    ...(context.templateKey==="purchase"?[tile("product","Article / vendeur",()=>open("product"),"purchase")]:[tile("place",context.templateKey==="activity"?"Destination":"Lieu / restaurant",()=>open("place"),"family-visit")]),
+    ...(shape.participants?[tile("people","Personnes",()=>open("participants"),"family-visit")]:[]),
+    ...(shape.envelope?[tile("binding","Enveloppe liée",()=>open("binding"),"purchase")]:[]),tile("date","Date facultative",()=>open("date"),"activity"),
+    tile("all-options","Autres postes admissibles",()=>{if(leaveRaw(()=>setAllOptions(true)))setAllOptions(true);},"activity"),...modes.flatMap(key=>{const asset=model.library.searchableAssets.find(a=>a.assetKey===key);return asset?[tile(key,asset.label,()=>equip(asset,{kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:"transport"}),asset.iconKey)]:[]})];
+  const extraNames = context.templateKey==="delivery"?["Livraison","Service","Autre frais"]:context.templateKey==="activity"?["Parking","Repas","Autre coût"]:context.templateKey==="purchase"?["Autre article","Livraison","Autre frais"]:["Boisson","Dessert","Autre complément"];
+  const question:PaletteQuestion = activeQuestion ?? {title: step===null?"Construire · "+heading:step==="complete"?"Ajouter seulement ce qui est prévu":questions.find(q=>q.id===step)?.title??heading,
+    choices:step===null?summaryChoices:step==="complete"&&!extraRow&&!equipment?[...extras.map(item=>tile(item.selectionId,"Modifier "+item.label,()=>setExtraRow(fromSelection(item)),"purchase",priceCaption(item))),...extraNames.map(label=>tile("add:"+label,label,()=>addExtra(label),"purchase")),tile("summary","Terminer",()=>open(null),"activity")]
+      : step==="budget"?[tile("total","Coût total",()=>chooseMode(false),"restaurant",undefined,!detail),tile("detail","Détailler",()=>chooseMode(true),"restaurant",undefined,detail),tile("unknown","Prix inconnu",()=>saveBudget({...row,costMode:"UNKNOWN",edited:true}),"activity"),
+        ...(suggestion?[tile("reference","Prix observé "+money(suggestion.value),()=>{setRaw(true);setRow(r=>({...r,amount:suggestion.value!,costMode:"MANUAL",edited:true}));},"restaurant","À confirmer · "+suggestion.sourceAuthority)]:[]),tile("summary","Résumé",()=>open(null),"activity")]
+      : step==="binding"?([['CONFIRMED_CONSUMPTION','Compris dans '+shape.envelope],['EXTRA_TO_SLOT','En plus de l’enveloppe']] as const).map(([mode,label])=>tile(mode,label,()=>{if(main&&send(operation({contextOccurrenceId:context.contextOccurrenceId,slots:{[mainSlot]:[{...main,binding:{mode}}]}})))advance("binding");},"purchase"))
+      :[tile("summary","Résumé",()=>open(null),"activity"),...summaryChoices.filter(c=>c.key!==step)]};
   const panelContent = <aside ref={panel} className={styles.restaurantInspector} role="dialog" aria-modal="false" aria-labelledby="restaurant-heading" data-restaurant-editor data-guided-template={context.templateKey}
     onChangeCapture={() => setRaw(true)}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); close(); } }}>
@@ -189,12 +218,6 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     </nav>{summaryEntries.length > summaryPageSize && <div className={styles.nightPage}><button type="button" disabled={summaryPage === 0} onClick={() => setSummaryPage(page => page - 1)}>Précédent</button>
       <span>{summaryPage + 1} / {Math.ceil(summaryEntries.length / summaryPageSize)}</span><button type="button" disabled={(summaryPage + 1) * summaryPageSize >= summaryEntries.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}</>
       : <button type="button" className={styles.nightLink} onClick={() => open(null)}>← Retour au résumé</button>}
-    {step === null && <div className={styles.restaurantSummaryActions}>
-      <button type="button" className={styles.primary} onClick={() => open("budget")}>{main ? "Modifier le budget" : "Prévoir un budget"}</button>
-      <button type="button" onClick={() => open("complete")}>Ajouter un élément</button>
-      {context.templateKey === "purchase" && !context.fields.productLabel && <button type="button" onClick={() => open("product")}>Préciser l’article</button>}
-      {shape.participants && !refs.length && <button type="button" onClick={() => open("participants")}>Ajouter une personne</button>}
-    </div>}
     {step !== null && <div className={styles.restaurantQuestion} key={`${step}:${formKey}`}>
       <h3 data-restaurant-focus tabIndex={-1}>{quickPurchase && step === "budget" ? "Quel montant souhaitez-vous prévoir ?" : questions.find(q => q.id === step)?.title ?? (step === "complete" ? "Les petits plus" : "Votre intention est dans le brouillon")}</h3>
       {step === "product" && <><label>Article ou commande<input defaultValue={String(context.fields.productLabel ?? "")} name="productLabel" /></label><label>Vendeur facultatif<input defaultValue={String(context.fields.merchantLabel ?? "")} name="merchantLabel" /></label>
@@ -209,27 +232,21 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
         <button type="button" disabled={!place || place.kind === "TEXT" && !place.label.trim()} onClick={() => fields({ placeRef: place! }, "place")}>Choisir ce lieu</button></>}
       {step === "date" && <><label>Date facultative<input type="date" value={date} min={`${model.semanticState.targetMonth}-01`} max={`${model.semanticState.targetMonth}-31`} onChange={event => setDate(event.target.value)} /></label>
         <button type="button" onClick={() => { if (date && !date.startsWith(`${model.semanticState.targetMonth}-`)) setError("Choisissez une date dans le mois composé."); else fields({ plannedDate: date || null }, "date"); }}>Confirmer la date</button></>}
-      {step === "budget" && <><div className={styles.restaurantModes}><button type="button" aria-pressed={!detail} onClick={() => chooseMode(false)}>Montant total</button>
-        <button type="button" aria-pressed={detail} onClick={() => chooseMode(true)}>Détailler les éléments</button></div>
-        {suggestion && <p className={styles.restaurantReference}>Repère historique : {money(suggestion.value)} par occurrence.
-          <button type="button" onClick={() => { setRaw(true); setRow(r => ({ ...r, amount: suggestion.value!, costMode: "MANUAL", edited: true })); }}>Reprendre ce montant</button>
-          <small>{suggestion.sourceAuthority} · {suggestion.coverageFrom} – {suggestion.coverageTo} · {suggestion.nCoveredMonths ?? "?"} mois</small></p>}
+      {step === "budget" && <>
         {detail ? <WorkshopComponentRow title="Élément hors compléments" row={row} participantCount={refs.length} onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy} bindingChoices={!!shape.envelope} />
-          : <><label>{shape.total}<select value={row.costMode} onChange={e => setRow(r => ({ ...r, edited: true, costMode: e.target.value as Row["costMode"] }))}>
-            <option value="UNKNOWN">Encore inconnu</option><option value="MANUAL">Montant choisi par moi</option>{row.costMode === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
-            {row.costMode === "MANUAL" && <label>{shape.total} à notre charge (€)<input inputMode="decimal" value={row.amount} onChange={e => setRow(r => ({ ...r, amount: e.target.value, edited: true }))} /></label>}
-            <details><summary>Financement</summary><label>Source<select value={row.fundingMode} onChange={e => setRow(r => ({ ...r, fundingMode: e.target.value as Row["fundingMode"], edited: true }))}>
-              <option value="UNDECIDED">À préciser</option><option value="BANK">Banque déclarée</option>{row.fundingMode === "EXISTING" && <option value="EXISTING">Conserver le financement antérieur</option>}</select></label>
-              {row.fundingMode === "BANK" && <label>Montant Banque (€)<input inputMode="decimal" value={row.fundingAmount} onChange={e => setRow(r => ({ ...r, fundingAmount: e.target.value, edited: true }))} /></label>}</details></>}
+          : <><label>Coût prévu à notre charge (€)<input autoFocus inputMode="decimal" placeholder="Encore inconnu" value={row.costMode==="MANUAL"?row.amount:""} onChange={event=>setRow(r=>({...r,amount:event.target.value,costMode:event.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}))}/></label>
+            <details><summary>Financement · facultatif</summary><label>Source<select value={row.fundingMode} onChange={e=>setRow(r=>({...r,fundingMode:e.target.value as Row['fundingMode'],edited:true}))}><option value="UNDECIDED">À préciser</option><option value="BANK">Banque déclarée</option>{row.fundingMode==="EXISTING"&&<option value="EXISTING">Conserver le financement antérieur</option>}</select></label>{row.fundingMode==="BANK"&&<label>Montant Banque (€)<input inputMode="decimal" value={row.fundingAmount} onChange={e=>setRow(r=>({...r,fundingAmount:e.target.value,edited:true}))}/></label>}</details></>}
         <p>{detail ? "Les éléments et les compléments constituent le budget. Aucun total parent ne s’y ajoute." : "Un seul montant à notre charge, quel que soit le nombre de participants."}</p>
-        {!detail && <button type="button" className={styles.primary} onClick={() => saveBudget()}>Valider le budget</button>}
-        {detail && extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button key={item.selectionId} type="button" onClick={() => { if (!leaveRaw()) return; setStep("complete"); setExtraRow(fromSelection(item)); }}>{item.label} · {priceCaption(item)}</button>)}</>}
+        {!detail && <button type="button" className={styles.primary} onClick={() => saveBudget()}>Conserver ce coût</button>}
+        {detail && extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button key={item.selectionId} type="button" onClick={() => { if (!leaveRaw(() => { setStep("complete"); setExtraRow(fromSelection(item)); })) return; setStep("complete"); setExtraRow(fromSelection(item)); }}>{item.label} · {priceCaption(item)}</button>)}</>}
       {step === "binding" && <p>Le Compiler vérifie l’enveloppe réellement disponible. Sans enveloppe admissible, la relation restera à préciser. Les compléments libres sont des postes distincts.</p>}
       {step === "complete" && !extraRow && !equipment && <>{extraAdded ? <p role="status">Poste ajouté au brouillon.</p> : <p>Ajoutez uniquement les compléments qui ne sont pas déjà compris dans le montant.</p>}
         {extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button type="button" key={item.selectionId} onClick={() => setExtraRow(fromSelection(item))}>{item.label} · {priceCaption(item)}</button>)}
         {extras.length > 3 && <div className={styles.nightPage}><button type="button" disabled={extraPage === 0} onClick={() => setExtraPage(page => page - 1)}>Précédent</button><span>{extraPage + 1} / {Math.ceil(extras.length / 3)}</span><button type="button" disabled={(extraPage + 1) * 3 >= extras.length} onClick={() => setExtraPage(page => page + 1)}>Suivant</button></div>}
-        <button type="button" onClick={() => { if (!detail && main && !window.confirm("Ce complément s’ajoutera au montant. Confirmez qu’il n’est pas déjà inclus.")) return;
-          setDetail(true); setExtraAdded(false); setExtraRow(fresh(shape.complement)); }}>{extraAdded ? "Ajouter encore" : "Ajouter un complément"}</button>
+        <button type="button" onClick={() => {
+          const add = () => { setExtraAdded(false); setExtraRow(fresh(shape.complement)); };
+          if (!detail && main) confirm({ message: "Ces frais sont-ils déjà inclus dans votre montant ? Les ajouter en supplément augmente le coût prévu.", cancelLabel: "Inclus · garder le total", acceptLabel: "Réellement en plus", accept: add }); else add();
+        }}>{extraAdded ? "Ajouter encore" : "Ajouter un complément"}</button>
         {extraAdded && <button type="button" onClick={() => open(null)}>Retour au résumé</button>}
         {currentTransport && <button type="button" onClick={() => send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { transport: [] } }))}>Retirer le trajet</button>}</>}
       {extraRow && <WorkshopComponentRow key={extraRow.id} title={shape.complement} row={extraRow} participantCount={refs.length} onChange={next => { setRaw(true); setExtraRow(next); }} onRemove={() => {
@@ -281,27 +298,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     {known && <details className={styles.restaurantDiagnostics}><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={known} /></details>}
     <footer><button type="button" onClick={close}>Retour au Board</button><span>Les choix validés sont conservés dans le brouillon.</span></footer>
   </aside>;
-  const modes = card.sockets.find(s => s.slotKey === "transport")?.choiceAssetKeys ?? [];
   return <>{typeof document !== "undefined" && createPortal(panelContent, document.body)}
-    {allOptions ? <ContextPalette card={card} model={model} busy={busy} configure choose={equip} close={() => setAllOptions(false)} />
-      : <section className={`${styles.contextPalette} ${styles.restaurantPalette}`} data-restaurant-palette={step ?? "summary"} aria-label={`Guide ${heading}`}><header><div><h3>{questions.find(q => q.id === step)?.title ?? `Compléter ${heading}`}</h3>
-        <p>Choisissez ici, votre intention reste visible sur le Board.</p></div><button type="button" onClick={() => setAllOptions(true)}>Autres options</button></header>
-        <div className={styles.restaurantAnswers}>
-          {step === "product" ? <><button type="button" onClick={() => panel.current?.querySelector<HTMLElement>("input")?.focus()}>Préciser l’article</button><button type="button" onClick={() => open(null)}>Décider plus tard</button></> : step === "participants" ? <>{model.householdPersons.map(p => <button key={p.personId} type="button" aria-pressed={refs.some(ref => ref.kind === "HOUSEHOLD_PERSON" && ref.personId === p.personId)} onClick={() => fields({ participantRefs: [{ kind: "HOUSEHOLD_PERSON", personId: p.personId }] }, "participants")}><Users size={18} />{p.displayName}</button>)}
-            {model.householdPersons.length === 2 && <button type="button" onClick={() => fields({ participantRefs: model.householdPersons.map(p => ({ kind: "HOUSEHOLD_PERSON", personId: p.personId })) }, "participants")}><Users size={18} />Nous deux</button>}
-            <button type="button" onClick={() => panel.current?.querySelector<HTMLElement>("input,select")?.focus()}><Plus size={18} />Ajouter une personne</button><button type="button" onClick={() => fields({ participantRefs: [] }, "participants")}>À préciser</button></>
-            : step === "place" ? <><button type="button" onClick={() => panel.current?.querySelector<HTMLElement>("input,select")?.focus()}>Choisir ou saisir un lieu</button><button type="button" onClick={() => fields({ placeRef: null }, "place")}>Pas encore décidé</button></>
-              : step === "date" ? <><button type="button" onClick={() => panel.current?.querySelector<HTMLElement>('input[type="date"]')?.focus()}>Choisir une date</button><button type="button" onClick={() => fields({ plannedDate: null }, "date")}>Pas encore décidé</button></>
-                : step === "budget" ? <><button type="button" aria-pressed={!detail} onClick={() => chooseMode(false)}>Montant total</button><button type="button" aria-pressed={detail} onClick={() => chooseMode(true)}>Détailler</button><button type="button" onClick={() => {
-                  saveBudget({ ...row, costMode: "UNKNOWN", edited: true });
-                }}>Prix à préciser</button></>
-                  : step === "binding" ? <>{[["CONFIRMED_CONSUMPTION", `Inclus dans mon budget ${shape.envelope ?? ""}`], ["EXTRA_TO_SLOT", "Une dépense en plus"]].map(([mode, label]) => <button key={mode} type="button" disabled={!main} onClick={() => {
-                    if (main && send(operation({ contextOccurrenceId: context.contextOccurrenceId,
-                      slots: { [mainSlot]: [{ ...main, binding: { mode: mode as "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" } }] } }))) advance("binding");
-                  }}>{label}</button>)}<button type="button" onClick={() => setStep("complete")}>Décider plus tard</button></>
-                    : <><button type="button" onClick={() => open("budget")}><Receipt size={18} />Détail et compléments</button>{modes.map(assetKey => {
-                      const asset = model.library.searchableAssets.find(a => a.assetKey === assetKey);
-                      return asset ? <button type="button" key={asset.assetKey} aria-pressed={currentTransport?.optionKey === asset.optionKey} onClick={() => equip(asset, { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: "transport" })}><PlannerIcon iconKey={asset.iconKey} scale="SATELLITE" />{asset.label}</button> : null;
-                    })}</>}
-        </div></section>}</>;
+    {allOptions ? <ContextPalette card={card} model={model} busy={busy} configure choose={(asset,target)=>equip(asset,target)} close={()=>setAllOptions(false)} />
+      : <ContextPalette card={card} model={model} busy={busy} configure choose={(asset,target)=>equip(asset,target)} close={close} question={question} />}</>;
 }
