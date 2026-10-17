@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useState,type ComponentProps} from "react";
+import {useEffect,useRef,useState,type ComponentProps} from "react";
 import {createPortal} from "react-dom";
 import type {ProspectivePersonRef,ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 import {assetsForModule,PLANNED_ASSET_CATALOG_VERSION,type PlannedAsset} from "@/domain/phase2/planned-assets";
@@ -35,7 +35,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const busy=props.busy||!!card?.readOnly||props.semanticState.preferences.anchors.includes(context.contextOccurrenceId)||props.semanticState.preferences.flexibility[context.contextOccurrenceId]==="PRESERVE";
   const initialComponent=props.initialTarget?.startsWith("component:")?props.initialTarget.split(":"):null;
   const initialSelection=initialComponent?barItems(context,initialComponent[1]).find(item=>item.selectionId===initialComponent[2]):undefined;
-  const [page,setPage]=useState<Page>(()=>initialSelection?.kind==="COMPONENT"?"row":props.initialTarget?.startsWith("component:")?"summary":props.initialTarget as Page??"place");
+  const [page,setPage]=useState<Page>(()=>initialSelection?.kind==="COMPONENT"?"row":props.initialTarget?.startsWith("component:")?"summary":props.initialTarget as Page??"summary");
   const [legacy,setLegacy]=useState<"people"|"calendar"|"menu"|"main">("menu"),[legacyKey,setLegacyKey]=useState(0);
   const [row,setRow]=useState<Row>(()=>initialSelection?.kind==="COMPONENT"?fromSelection(initialSelection):fresh()),[slot,setSlot]=useState(initialComponent?.[1]??"extras"),[dirty,setDirty]=useState(false);
   const [advancedRow,setAdvancedRow]=useState(false),[manual,setManual]=useState(""),[query,setQuery]=useState(""),[error,setError]=useState("");
@@ -53,13 +53,29 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       question.accept();
     }});
   };
-  const guard=useWorkshopRaw(context.contextOccurrenceId,dirty,()=>{
+  const rawGuard=useWorkshopRaw(context.contextOccurrenceId,dirty,()=>{
     const original=barItems(context,slot).find(item=>item.selectionId===row.id);
     if(original?.kind==="COMPONENT")setRow(fromSelection(original));
     setManual("");setPersonName("");setPeople(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);
     setFare("");setQuickAmount("");setDirty(false);
   },"bar-living",canSaveBuffer()?{label:page==="row"&&row.costMode==="MANUAL"?`Enregistrer ${row.amount} €`:"Enregistrer cette saisie",run:()=>saveBuffer(),
     bufferKey:JSON.stringify({page,row,slot,manual,people,personName,fare,quickAmount,quickTotal,direction,slots:context.slotSelections,fields:context.fields,busy})}:undefined);
+  const [resume,setResume]=useState<(()=>void)|null>(null);
+  const resumeGo=useCommittedEvent((next:Page)=>go(next));
+  const resumeOpen=useCommittedEvent((target:BarTarget)=>open(target));
+  const resumeAdd=useCommittedEvent((asset:PlannedAsset,included?:boolean)=>add(asset,included));
+  const resumeEdit=useCommittedEvent((target:string,id:string)=>{const item=barItems(context,target).find(i=>i.selectionId===id);if(item?.kind==="COMPONENT")editComponent(target,item);});
+  const resumeLegacy=useCommittedEvent((target:typeof legacy)=>startLegacy(target));
+  const resumeQuick=useCommittedEvent(()=>startQuick());
+  const resumeEndpoint=useCommittedEvent((key:"origin"|"destination")=>targetEndpoint(key));
+  const resumeTogglePerson=useCommittedEvent((person:ProspectivePersonRef)=>togglePerson(person));
+  const resumeFare=useCommittedEvent(()=>targetFare());
+  // Resume after the admitted Draft has committed, using current handlers rather
+  // than a closure that still contains the pre-save slot arrays.
+  const guard=(continuation:()=>void)=>rawGuard(()=>setResume(()=>continuation));
+  useEffect(()=>{if(resume){setResume(null);resume();}},[resume]);
+  const editorRoot=useRef<HTMLDivElement>(null);
+  useEffect(()=>{if(page!=="row")return;const tile=editorRoot.current?.querySelector<HTMLElement>('[data-bar-active-tile="true"]');tile?.scrollIntoView?.({block:"nearest",inline:"nearest"});},[page,row.id]);
   const [pendingEndpoint,setPendingEndpoint]=useState<{leg:BarLeg;key:"origin"|"destination";place:ProspectivePlaceRef|null}|null>(null);
   function canSaveBuffer(){try{
     if(busy)return false;
@@ -77,14 +93,14 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   },[context.slotSelections,page,slot,dirty,row.id]);
   if(!model||!card)return <p role="status">Chargement de la carte…</p>;
   const move=(next:Page)=>{setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setError("");setQuery("");};
-  const go=(next:Page)=>{if(guard(()=>go(next)))move(next);};
+  const go=(next:Page)=>{if(guard(()=>resumeGo(next)))move(next);};
   const decide=(operation:ComposerOperation,next:Page="summary")=>{
     try{if(busy){setError("Cette carte est protégée ou une opération est en cours. Aucun choix n’a été admis.");return false;}if(onSave(operation)){setDirty(false);move(next);return true;}setError("Ce choix n’a pas été admis. Votre saisie est conservée ; vérifiez le message du Board.");}
     catch(failure){setError(failure instanceof Error?failure.message:"Choix non admis. Votre saisie est conservée.");}
     return false;
   };
-  const startLegacy=(target:typeof legacy)=>{if(!guard(()=>startLegacy(target)))return;setLegacy(target);setLegacyKey(k=>k+1);move("legacy");};
-  const open=(target:BarTarget)=>{if(!guard(()=>open(target)))return;
+  const startLegacy=(target:typeof legacy)=>{if(!guard(()=>resumeLegacy(target)))return;setLegacy(target);setLegacyKey(k=>k+1);move("legacy");};
+  const open=(target:BarTarget)=>{if(!guard(()=>resumeOpen(target)))return;
     if(target==="people"){setPeople(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);move("people");return;}
     if(target.startsWith("component:")){const [,slot,id]=target.split(":");const item=barItems(context,slot).find(item=>item.selectionId===id);if(item?.kind==="COMPONENT")editComponent(slot,item);return;}
     move(target as Page);
@@ -93,14 +109,14 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const homeCities=[...new Set((model.mobilityOptions?.places??[]).filter(place=>derivePlannedPlaceRoles(place).includes("OWN_HOME")).map(place=>place.commune?.trim()).filter((value):value is string=>!!value))];
   const searchCity=selectedPlace?.kind==="KNOWN"?model.mobilityOptions?.places.find(place=>place.placeId===selectedPlace.placeId)?.commune??undefined:homeCities.length===1?homeCities[0]:undefined;
   const choosePlace=(place:ProspectivePlaceRef)=>decide(barPlaceOperation(context,place),"summary");
-  const editComponent=(target:string,selection:Component)=>{if(!guard(()=>editComponent(target,selection)))return;setSlot(target);setAdvancedRow(false);setRow(fromSelection(selection));move("row");};
+  const editComponent=(target:string,selection:Component)=>{if(!guard(()=>resumeEdit(target,selection.selectionId)))return;setSlot(target);setAdvancedRow(false);setRow(fromSelection(selection));move("row");};
   const add=(asset:PlannedAsset,included?:boolean)=>{
-    if(!guard(()=>add(asset)))return;
+    if(!guard(()=>resumeAdd(asset,included)))return;
     if(included===undefined&&barItems(context,"main").some(item=>item.kind==="COMPONENT")) {setPendingAsset(asset);move("coverage");return;}
     const value=buildComponentRow({...fresh(asset.label),assetRef:{catalogVersion:PLANNED_ASSET_CATALOG_VERSION,assetKey:asset.assetKey,labelAtSelection:asset.label,provenance:"EXPLICIT_USER_DECISION"}},"extra");
     if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{...(included?{main:[]}:{}),extras:[...barItems(context,"extras"),value]}}},"row")){setPendingAsset(null);setSlot("extras");setAdvancedRow(false);setRow(fromSelection(value));}
   };
-  const startQuick=()=>{if(!guard(startQuick))return;setQuickAmount("");setQuickTotal(false);move("quick");};
+  const startQuick=()=>{if(!guard(resumeQuick))return;setQuickAmount("");setQuickTotal(false);move("quick");};
   const saveQuick=()=>{try{
     const original=barItems(context,"main")[0];if(original&&original.kind!=="COMPONENT"){setError("Un moment lié occupe les entrées. Rééditez-le depuis Autres choix avant de le remplacer.");return;}
     const value=buildComponentRow({...fresh(quickTotal?"Consommations regroupées":"Entrées / contribution"),...(original?.kind==="COMPONENT"?{id:original.selectionId,existing:original}:{}),unitBasis:"SHARED",quantity:"1",costMode:"MANUAL",amount:quickAmount},"main");
@@ -108,11 +124,17 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(quickTotal&&barItems(context,"extras").length){confirm({message:"Remplacer les consommations détaillées par ce total ? Leur coût ne sera pas additionné. Repas, before et trajets restent indépendants et conservés. Undo permet de revenir aux détails.",acceptLabel:"Remplacer par le total",accept:apply});return false;}return apply();
   }catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez le montant.");return false;}};
   const remove=()=>{const apply=()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).filter(item=>item.selectionId!==row.id)}}},"drinks");if(dirty)confirm({message:"Retirer ce poste et abandonner sa saisie non validée ? Undo permet de rétablir la dernière décision conservée.",acceptLabel:"Retirer",accept:apply});else apply();};
-  const saveRow=()=>{try{
+  const saveRow=(candidate:Row=row,next:Page="drinks")=>{try{
     if(!barItems(context,slot).some(item=>item.selectionId===row.id)){setError("Ce poste n’existe plus. Revenez à la carte ; il ne sera pas recréé silencieusement.");return;}
-    const value=buildComponentRow(row,row.existing?.optionKey??"extra");
-    return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).map(item=>item.selectionId===row.id?value:item)}}},"drinks");
+    const value=buildComponentRow(candidate,candidate.existing?.optionKey??"extra");
+    return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).map(item=>item.selectionId===row.id?value:item)}}},next);
   }catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez la saisie.");return false;}};
+  const adjustQuantity=(delta:number)=>{
+    const value=Number(row.quantity);if(!Number.isFinite(value)||value+delta<1||busy)return;
+    const candidate={...row,quantity:String(value+delta),edited:true};
+    if(dirty){setRow(candidate);return;}
+    if(saveRow(candidate,"row"))setRow({...candidate,edited:false});
+  };
   const leg=barLeg(context,direction);
   const patchLeg=(value:BarLeg,next:Page="summary")=>{try{if(leg&&leg.selectionId===value.selectionId&&JSON.stringify(leg)!==JSON.stringify(value))assertBarRouteEditable(leg);return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:barItems(context,direction).some(item=>item.selectionId===value.selectionId)?barItems(context,direction).map(item=>item.selectionId===value.selectionId?value:item):[...barItems(context,direction),value]}}},next);}catch(failure){setError((failure as Error).message);return false;}};
   const chooseEndpoint=(place:ProspectivePlaceRef|null)=>{if(!leg)return;try{
@@ -135,8 +157,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(page==="quick")return !!saveQuick();
     return false;
   }
-  const targetEndpoint=(key:"origin"|"destination")=>{if(!guard(()=>targetEndpoint(key)))return;setEndpoint(key);move("endpoint");};
-  const targetFare=()=>{if(!guard(targetFare))return;setFare(leg?.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:"");move("fare");};
+  const targetEndpoint=(key:"origin"|"destination")=>{if(!guard(()=>resumeEndpoint(key)))return;setEndpoint(key);move("endpoint");};
+  const targetFare=()=>{if(!guard(resumeFare))return;setFare(leg?.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:"");move("fare");};
   const chooseVehicle=()=>{
     const vehicle=model.mobilityOptions?.vehicle;if(!leg||!vehicle?.vehicleId)return;
     try{assertBarRouteEditable(leg);}catch(failure){setError((failure as Error).message);return;}
@@ -157,65 +179,91 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       origin:leg?(leg.origin??null):(direction==="return"?selectedPlace:null)??null,destination:leg?(leg.destination??null):(direction==="outbound"?selectedPlace:null)??null,
       journey:{relation:"OWNS_JOURNEY",certainty:"CERTAIN",targetIntentId:null,externalExpenseId:null,externalCostLineIds:[],choice:null,stopIndex:null,accessLegIndex:null},
       pricing:{fare:{kind:"UNKNOWN"},parking:{kind:"UNKNOWN"},fundingAllocations:[],preference:"FASTEST"},...(optionKey==="car"?{route:{version:"composer-mobility-route@v1" as const,vehicleRef:null,stops:[]}}:{})};
-    const apply=()=>patchLeg(value,direction==="outbound"?"return":leg?"summary":"date");
+    const apply=()=>patchLeg(value,direction);
     if(leg&&leg.optionKey!==optionKey)confirm({message:`Changer de mode pour ${direction==="outbound"?"l’aller":"le retour"} remet ses prix à préciser et retire les données propres à son ancien mode. Les lieux et l’autre trajet sont conservés.${leg.pricing?.fare.kind==="MANUAL"?` Tarif concerné : ${leg.pricing.fare.unitAmount} € déclaré.`:leg.pricing?.fare.kind==="QUOTE"?" Le devis de ce trajet sera retiré.":""}`,acceptLabel:"Changer de mode",accept:apply});else apply();
+  };
+  const togglePerson=(person:ProspectivePersonRef)=>{
+    if(!guard(()=>resumeTogglePerson(person)))return;
+    const refs=Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[];
+    const next=refs.some(p=>prospectivePersonIdentity(p)===prospectivePersonIdentity(person))?refs.filter(p=>prospectivePersonIdentity(p)!==prospectivePersonIdentity(person)):[...refs,person];
+    if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:next}}},"people"))setPeople(next);
   };
   const choice=(key:string,label:string,choose:()=>void,iconKey="night-out",hint?:string,symbol?:string)=>({key,label,choose,iconKey,hint,symbol});
   const later=choice("later","Plus tard",()=>go("drinks"),"activity");
-  let question:PaletteQuestion={title:"Que veux-tu prévoir ?",choices:[choice("place","Lieu",()=>open("place"),"activity"),choice("drinks","Consommations",()=>go("drinks")),choice("quick","Montant rapide",startQuick),choice("more","Autres choix",()=>startLegacy("menu"))]};
+  const beer=catalog.find(asset=>asset.assetKey==="bar:beer")!;
+  const beerChoice=choice(beer.assetKey,"Bière",()=>add(beer),"night-out",undefined,beer.icon);
+  const drinkChoices=catalog.map(asset=>choice(asset.assetKey,asset.label,()=>add(asset),"night-out",undefined,asset.icon));
+  const neutralChoices=[choice("place","Lieu",()=>open("place"),"activity",undefined,"📍"),beerChoice,
+    choice("date","Date",()=>open("date"),"activity",undefined,"📅"),choice("quick","Montant direct",startQuick,"night-out",undefined,"◈"),choice("more","Autre",()=>startLegacy("menu"),"activity",undefined,"＋")];
+  let question:PaletteQuestion={title:"Composer",choices:neutralChoices};
   if(page==="place")question={title:"Où prendre un verre ?",search:{value:query,change:setQuery,label:"Chercher parmi les lieux enregistrés"},choices:[
     ...(model.mobilityOptions?.places??[]).filter(place=>`${place.name} ${place.commune??""}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))).map(place=>choice(place.placeId,place.name,()=>choosePlace({kind:"KNOWN",placeId:place.placeId}),"activity",place.commune??undefined)),
     choice("google","Chercher un bar",()=>go("google"),"activity"),choice("manual","Nom libre",()=>{if(guard(()=>go("manual-place"))){setManual("");move("manual-place");}},"activity"),later,
     choice("drinks","Commencer par les consommations",()=>go("drinks")),choice("quick","Saisir un coût direct",startQuick)]};
-  if(page==="drinks")question={title:"Quelles consommations ?",choices:[...catalog.map(asset=>choice(asset.assetKey,asset.label,()=>add(asset),"night-out",undefined,asset.icon)),choice("quick","Saisir un coût direct",startQuick),choice("more","Repas, before et autres choix",()=>startLegacy("menu"))]};
+  if(page==="drinks")question={title:"Consommations",choices:[...catalog.map(asset=>choice(asset.assetKey,asset.label,()=>add(asset),"night-out",undefined,asset.icon)),choice("quick","Saisir un coût direct",startQuick),choice("more","Repas, before et autres choix",()=>startLegacy("menu"))]};
   if(page==="outbound"||page==="return"){
     const actualDirection=page; // setDirection also keeps endpoint editing attached to this leg.
-    question={title:page==="outbound"?"Comment y aller ?":"Et le retour ?",choices:[
-      ...(page==="return"&&barLeg(context,"outbound")&&!barItems(context,"return").length?[choice("same","Même mode au retour",()=>{try{decide(barSameModeReturn(context,crypto.randomUUID()),"date");}catch(failure){setError((failure as Error).message);}})]:[]),
+    question={title:page==="outbound"?"Aller":"Retour",choices:[
+      ...(page==="return"&&barLeg(context,"outbound")&&!barItems(context,"return").length?[choice("same","Même mode au retour",()=>{try{decide(barSameModeReturn(context,crypto.randomUUID()),"return");}catch(failure){setError((failure as Error).message);}})]:[]),
       ...model.library.searchableAssets.filter(asset=>asset.optionKind==="MOBILITY_INTENT"&&asset.assetKey.startsWith(`option:night-out:${actualDirection}:`)
         &&model.dropCapabilities.some(drop=>drop.sourceAssetKey===asset.assetKey&&drop.target.contextOccurrenceId===context.contextOccurrenceId&&drop.target.slotKey===actualDirection&&drop.resolution!=="BLOCKED"))
-        .map(asset=>choice(asset.assetKey,asset.label,()=>chooseMode(asset.optionKey!),asset.iconKey)),later]};
+        .map(asset=>({...choice(asset.assetKey,asset.label,()=>chooseMode(asset.optionKey!),asset.iconKey,undefined,({car:"🚗",taxi:"🚕",train:"🚆",bus:"🚌",free:"🚶",other:"↗",unknown:"?"} as Record<string,string>)[asset.optionKey??""]),selected:leg?.optionKey===asset.optionKey})),later]};
   }
   if(page==="endpoint")question={title:endpoint==="origin"?"Point de départ":"Destination",choices:[...(model.mobilityOptions?.places??[]).map(place=>choice(place.placeId,place.name,()=>chooseEndpoint({kind:"KNOWN",placeId:place.placeId}),"activity")),
     choice("unknown","Garder à préciser",()=>chooseEndpoint(null),"activity")]};
-  if(page==="date")question={title:"Quand sortir ?",choices:[choice("later","Plus tard",()=>go("drinks"),"activity"),choice("clear","Retirer la date",()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:null}}},"drinks"),"activity")]};
+  if(page==="date")question={title:"Date",choices:neutralChoices};
   if(page==="people"){
     const candidates:ProspectivePersonRef[]=[...props.householdPersons.map(p=>({kind:"HOUSEHOLD_PERSON" as const,personId:p.personId})),...SOCIAL_CONTACTS_V1.map(p=>({kind:"CONTACT" as const,contactKey:p.key}))];
-    question={title:"Avec qui ?",search:{value:query,change:setQuery,label:"Chercher une personne"},choices:candidates.filter(p=>barPersonLabel(p,model).toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))).map(p=>({...choice(prospectivePersonIdentity(p),barPersonLabel(p,model),()=>{setPeople(old=>old.some(x=>prospectivePersonIdentity(x)===prospectivePersonIdentity(p))?old.filter(x=>prospectivePersonIdentity(x)!==prospectivePersonIdentity(p)):[...old,p]);setDirty(true);},"family-visit"),selected:people.some(x=>prospectivePersonIdentity(x)===prospectivePersonIdentity(p))}))};
+    question={title:"Avec qui ?",search:{value:query,change:setQuery,label:"Chercher une personne"},choices:candidates.filter(p=>barPersonLabel(p,model).toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))).map(p=>({...choice(prospectivePersonIdentity(p),barPersonLabel(p,model),()=>togglePerson(p),"family-visit"),selected:people.some(x=>prospectivePersonIdentity(x)===prospectivePersonIdentity(p))}))};
   }
   if(page==="manual-place"||page==="google")question={title:"Le lieu de ta sortie",choices:[choice("known","Lieux enregistrés",()=>go("place"),"activity"),choice("manual","Nom libre",()=>{if(guard(()=>go("manual-place")))move("manual-place");},"activity"),later]};
   if(page==="fare")question={title:"Coût prévu du trajet · sans paiement",choices:[choice("unknown","Prix encore inconnu",()=>{if(leg)patchLeg({...leg,pricing:{fare:{kind:"UNKNOWN"},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);})]};
-  if(page==="row")question=advancedRow?activeQuestion??{title:"Préciser cette consommation",choices:[]}: {title:"Préciser ce poste",choices:[choice("unknown","Prix encore inconnu",()=>{setRow(current=>({...current,costMode:"UNKNOWN",amount:"",edited:true}));setDirty(true);}),choice("advanced","Unité, financement et nom",()=>setAdvancedRow(true))]};
+  if(page==="row")question=advancedRow?activeQuestion??{title:"Détails du poste",choices:[]}: {title:"Consommations",choices:drinkChoices};
   if(page==="quick")question={title:"Que couvre ce coût prévu ?",choices:[{...choice("entry","Entrées / contribution",()=>setQuickTotal(false),"night-out","Hors boissons, repas et trajets"),selected:!quickTotal},{...choice("total","Consommations regroupées",()=>setQuickTotal(true),"night-out","Remplace leurs détails, hors repas et trajets"),selected:quickTotal}]};
   if(page==="coverage")question={title:"Ce poste est-il déjà compris dans le coût retenu ?",choices:[choice("included","Détailler à la place",()=>pendingAsset&&add(pendingAsset,true),"night-out","Retire le coût regroupé pour ne pas le compter deux fois"),choice("extra","Ajouter en plus",()=>pendingAsset&&add(pendingAsset,false),"night-out","Coût indépendant des entrées / contribution"),choice("cancel","Ne rien ajouter",()=>{setPendingAsset(null);go("drinks");},"activity")]};
   const activeRow=<>{!advancedRow && (row.unitBasis==="ITEM"||row.unitBasis==="SHARED") ? <div data-bar-short-row>
           <strong>{row.label}</strong><div className={styles.barLivingMetadata}>
           <label>Quantité {row.unitBasis==="SHARED"?"de lots":"totale"}<span className={styles.workshopStepper}>
-            <button type="button" aria-label="Réduire la quantité" disabled={Number(row.quantity)<=1} onClick={()=>{setRow(r=>({...r,quantity:String(Number(r.quantity)-1),edited:true}));setDirty(true);}}>−</button>
+            <button type="button" aria-label="Réduire la quantité" disabled={Number(row.quantity)<=1} onClick={()=>adjustQuantity(-1)}>−</button>
             <input inputMode="decimal" value={row.quantity} onChange={e=>{setRow(r=>({...r,quantity:e.target.value,edited:true}));setDirty(true);}}/>
-            <button type="button" aria-label="Augmenter la quantité" onClick={()=>{setRow(r=>({...r,quantity:String(Number(r.quantity)+1),edited:true}));setDirty(true);}}>+</button>
+            <button type="button" aria-label="Augmenter la quantité" onClick={()=>adjustQuantity(1)}>+</button>
           </span></label>
-          <label>{row.unitBasis==="SHARED"?"Prix par lot (€)":"Prix unitaire (€)"}<input autoFocus inputMode="decimal" placeholder="Prix à préciser" value={row.costMode==="MANUAL"?row.amount:""} onChange={e=>{setRow(r=>({...r,amount:e.target.value,costMode:e.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}));setDirty(true);}}/></label></div>
+          <label>{row.unitBasis==="SHARED"?"Prix par lot (€)":"Prix unitaire (€)"}<input inputMode="decimal" placeholder="Prix à préciser" value={row.costMode==="MANUAL"?row.amount:""} onChange={e=>{setRow(r=>({...r,amount:e.target.value,costMode:e.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}));setDirty(true);}}/></label></div>
           {row.costMode==="QUOTE"&&<p>Devis conservé ; saisir un prix le remplacera explicitement.</p>}
-          <button type="button" disabled={busy} onClick={()=>dirty?saveRow():go("drinks")}>Terminé</button>
+          {dirty&&<button type="button" disabled={!canSaveBuffer()} onClick={()=>saveRow()}>Enregistrer</button>}
+          <button type="button" onClick={()=>setAdvancedRow(true)}>Unité, financement et nom</button>
           <button type="button" disabled={busy} onClick={remove} aria-label="Retirer ce poste"><Trash2 size={14}/> Retirer</button></div>
-          : <><WorkshopComponentRow title={row.label} row={row} onChange={next=>{setRow(next);setDirty(true);}} onSave={saveRow} onRemove={remove} busy={busy}/><button type="button" onClick={()=>go("drinks")}>Terminé</button></>}</>;
-  const economic=context.slotSelections;
+          : <><WorkshopComponentRow title={row.label} row={row} onChange={next=>{setRow(next);setDirty(true);}} onSave={()=>saveRow()} onRemove={remove} busy={busy}/><button type="button" onClick={()=>go("drinks")}>Voir les consommations</button></>}</>;
+  const sectionLabels={extras:"Au bar",before:"Avant de sortir",food:"Repas",main:"Entrées / coût direct"};
   const freshProjection=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===context.contextOccurrenceId)?.semanticStateDigest===model.board.draft.semanticStateDigest;
-  return <div className={styles.barLivingEditor} data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
-    onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();props.onCancel();}}}>
-    <BarMetadata fields={context.fields} model={model} open={open} editing disabled={busy}/>
-    {(barLeg(context,"outbound")||barLeg(context,"return"))&&page==="summary"&&<p>Lieu de sortie et itinéraires sont indépendants. Pour adapter un trajet au nouveau lieu, modifiez son départ ou son arrivée.</p>}
-    <div className={styles.barLivingShortcuts}><button type="button" onClick={()=>go("drinks")}>Consommations</button><button type="button" onClick={startQuick}>Montant rapide</button><button type="button" onClick={()=>startLegacy("menu")}>Autres choix</button></div>
-    <div className={styles.barLivingRoutes}>{(["outbound","return"] as const).map(key=><BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} open={()=>open(key)}/>)}</div>
-    <div className={styles.barLivingTiles} aria-label="Composants économiques">{Object.entries(economic).flatMap(([key])=>barItems(context,key).filter(item=>item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT").map(item=><div key={item.selectionId} data-bar-tile={item.selectionId} className={page==="row"&&item.selectionId===row.id?styles.barActiveTile:styles.barEconomicTile}><button type="button"
-      draggable={!busy&&!!model.presentation.dragSources[`satellite:${context.contextOccurrenceId}:${key}:${item.selectionId}`]}
-      data-drag-source={`satellite:${context.contextOccurrenceId}:${key}:${item.selectionId}`}
-      onDragStart={event=>{event.stopPropagation();interaction?.start(`satellite:${context.contextOccurrenceId}:${key}:${item.selectionId}`,event);}}
-      onDragEnd={()=>interaction?.end()} onClick={()=>item.kind==="COMPONENT"&&key!=="before"?editComponent(key,item):startLegacy("menu")}>
-      <BarComponentFace item={item} amount={card.sockets.find(socket=>socket.slotKey===key)?.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount} fresh={freshProjection}/>
-</button>{page==="row"&&item.selectionId===row.id&&activeRow}</div>))}
-      <button type="button" className={styles.barAddSlot} onClick={()=>go("drinks")} aria-label="Ajouter une consommation">+<small>Consommation</small></button></div>
+  return <div ref={editorRoot} className={styles.barLivingEditor} data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
+    onClick={event=>{if(page==="row"&&event.target instanceof Element&&!event.target.closest("button,input,label,select,textarea,[data-bar-tile],dialog"))go("summary");}}
+    onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();if(page!=="summary")go("summary");else props.onCancel();}}}>
+    <fieldset className={styles.barEditableBody} disabled={busy} aria-label="Composition de la sortie">
+    <BarMetadata fields={context.fields} model={model} open={open} editing active={page} disabled={busy}/>
+    <div className={styles.barLivingRoutes} aria-label="Déplacements">
+      {(["outbound","return"] as const).map(key=>barLeg(context,key)?<BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} active={direction===key&&["outbound","return","endpoint","fare"].includes(page)} open={()=>open(key)}/>:null)}
+      {!barLeg(context,"outbound")&&!barLeg(context,"return")&&<button type="button" data-bar-add-route="outbound" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("outbound")}>+ Déplacement</button>}
+      {barLeg(context,"outbound")&&!barLeg(context,"return")&&!barLeg(context,"outbound")!.returnRequired&&<button type="button" data-bar-add-route="return" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("return")}>+ Retour</button>}
+      {barLeg(context,"return")&&!barLeg(context,"outbound")&&<button type="button" data-bar-add-route="outbound" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("outbound")}>+ Aller</button>}
+    </div>
+    {(["extras","before","food","main"] as const).map(key=>{
+      const items=barItems(context,key).filter(item=>item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT");
+      if(!items.length&&key!=="extras")return null;
+      return <section key={key} className={styles.barItemSection} data-bar-section={key} aria-label={sectionLabels[key]}>
+        <header><h4>{sectionLabels[key]}</h4>{key==="extras"&&<button type="button" className={styles.barInlineAdd} disabled={busy} aria-label="Ajouter une consommation" onClick={()=>go("drinks")}>+ Ajouter</button>}</header>
+        <div className={styles.barLivingTiles} aria-label="Composants économiques">{items.map(item=><div key={item.selectionId} data-bar-tile={item.selectionId} data-bar-active-tile={page==="row"&&item.selectionId===row.id} className={page==="row"&&item.selectionId===row.id?styles.barActiveTile:styles.barEconomicTile}>
+          <button type="button" disabled={busy} aria-expanded={page==="row"&&item.selectionId===row.id}
+            draggable={!busy&&!!model.presentation.dragSources[`satellite:${context.contextOccurrenceId}:${key}:${item.selectionId}`]}
+            data-drag-source={`satellite:${context.contextOccurrenceId}:${key}:${item.selectionId}`}
+            onDragStart={event=>{event.stopPropagation();interaction?.start(`satellite:${context.contextOccurrenceId}:${key}:${item.selectionId}`,event);}}
+            onDragEnd={()=>interaction?.end()} onClick={()=>item.kind==="COMPONENT"&&key!=="before"?editComponent(key,item):startLegacy("menu")}>
+            <BarComponentFace item={item} amount={card.sockets.find(socket=>socket.slotKey===key)?.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount} fresh={freshProjection}/>
+          </button>{page==="row"&&item.selectionId===row.id&&activeRow}
+          {item.kind==="CHILD_CONTEXT"&&key==="before"&&<ul className={styles.barChildPreview}>{props.semanticState.contexts.find(child=>child.contextOccurrenceId===item.childContextOccurrenceId)?.slotSelections&&Object.values(props.semanticState.contexts.find(child=>child.contextOccurrenceId===item.childContextOccurrenceId)!.slotSelections).flatMap(selection=>(selection.items as readonly ComponentSelectionV1[]).filter(value=>value.kind==="COMPONENT").map(value=><li key={value.selectionId}>{value.kind==="COMPONENT"?value.label:""}</li>))}</ul>}
+        </div>)}</div>
+      </section>;
+    })}
     <section className={styles.barLivingQuestion} aria-label="Décision en cours">
       {page==="row"?null:page==="legacy"?<NightOutEditor {...props} key={legacyKey} embedded initialView={legacy} onSave={operation=>{const admitted=!busy&&onSave(operation);if(admitted){setDirty(false);move(legacy==="calendar"?"drinks":"summary");}return admitted;}} onCancel={()=>go("summary")}/>
         :page==="quick"?<section data-bar-quick><label>Coût prévu (€)<input autoFocus inputMode="decimal" value={quickAmount} onChange={e=>{setQuickAmount(e.target.value);setDirty(true);}}/></label><p>{quickTotal?"Les détails des consommations seront remplacés, sans double compte. Repas, before et trajets sont en plus.":"Entrées ou contribution, hors consommations, repas et trajets. Ce n’est ni un plafond ni un paiement."}</p><button type="button" disabled={busy||!quickAmount.trim()} onClick={saveQuick}>Retenir ce coût</button></section>
@@ -223,15 +271,15 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
           {["L","M","M","J","V","S","D"].map((label,index)=><small key={index}>{label}</small>)}
           {Array.from({length:(new Date(props.semanticState.targetMonth+"-01T12:00:00Z").getUTCDay()+6)%7},(_,i)=><span key={"blank"+i}/>)}
           {Array.from({length:new Date(Number(props.semanticState.targetMonth.slice(0,4)),Number(props.semanticState.targetMonth.slice(5)),0).getDate()},(_,i)=>{const date=props.semanticState.targetMonth+"-"+String(i+1).padStart(2,"0");return <button type="button" key={date} aria-label={date} aria-pressed={context.fields.plannedDate===date} onClick={()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:date}}},"drinks")}>{i+1}</button>;})}
-        </div></div>
-        :page==="people"?<section data-bar-people><p>{people.length} personne(s) sélectionnée(s) · aucun prix multiplié</p><div className={styles.barLivingMetadata}>{people.map(p=><button type="button" key={prospectivePersonIdentity(p)} onClick={()=>{setPeople(old=>old.filter(x=>prospectivePersonIdentity(x)!==prospectivePersonIdentity(p)));setDirty(true);}}>{barPersonLabel(p,model)} ×</button>)}</div><label>Autre prénom<input value={personName} maxLength={120} onChange={e=>{setPersonName(e.target.value);setDirty(true);}}/></label><button type="button" disabled={!personName.trim()} onClick={()=>{const person={kind:"TEXT" as const,label:personName.trim()};if(!people.some(p=>prospectivePersonIdentity(p)===prospectivePersonIdentity(person)))setPeople(old=>[...old,person]);setPersonName("");setDirty(true);}}>Ajouter ce prénom</button><button type="button" disabled={busy||!!personName.trim()} onClick={()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:people}}},"summary")}>Retenir ces personnes</button></section>
+        </div>{context.fields.plannedDate&&<button type="button" className={styles.barInlineAdd} disabled={busy} onClick={()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:null}}},"date")}>Retirer la date</button>}</div>
+        :page==="people"?<section data-bar-people><h4>Personnes</h4><div className={styles.barLivingMetadata}>{people.map(p=><button type="button" key={prospectivePersonIdentity(p)} onClick={()=>togglePerson(p)}>{barPersonLabel(p,model)} ×</button>)}</div><label>Autre prénom<input value={personName} maxLength={120} onChange={e=>{setPersonName(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!personName.trim()} onClick={()=>{const person={kind:"TEXT" as const,label:personName.trim()};if(!people.some(p=>prospectivePersonIdentity(p)===prospectivePersonIdentity(person))){const next=[...people,person];if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:next}}},"people")){setPeople(next);setPersonName("");}}}}>Ajouter ce prénom</button></section>
         :page==="google"?<BarPlaceSearch initialCity={searchCity} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})}/>
         :page==="manual-place"?<><label>Nom ou adresse libre<input autoFocus maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={!manual.trim()||busy} onClick={()=>choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"})}>Retenir ce repère</button><small>Repère textuel uniquement · distance et itinéraire à préciser.</small></>
         :page==="fare"&&leg?<><label>Coût prévu du billet ou de la course (€)<input autoFocus inputMode="decimal" value={fare} placeholder="Encore inconnu" onChange={event=>{setFare(event.target.value);setDirty(true);}}/></label>
           {leg.pricing?.fare.kind==="QUOTE"&&<p>Le devis reste conservé tant qu’un prix de remplacement n’est pas validé.</p>}
           <button type="button" disabled={busy||!fare.trim()} onClick={saveFare}>Retenir le coût du trajet</button>
           <p>Prix du billet ou de la course, hors carburant estimé, péage et stationnement. Le financement existant reste à vérifier.</p></>
-        :page==="outbound"||page==="return"?<><p>{page==="outbound"?"Choisis le mode dans le dock. Le retour restera une décision distincte.":"Même mode, autre mode ou plus tard : le retour n’est jamais supposé."}</p>
+        :page==="outbound"||page==="return"?<>
           {leg&&<div className={styles.barLivingMetadata}>{(["origin","destination"] as const).map(key=><button type="button" key={key} onClick={()=>targetEndpoint(key)}>{key==="origin"?"Départ":"Arrivée"} · {barPlaceLabel(leg[key],model)}</button>)}
             {leg.optionKey==="car"&&model.mobilityOptions?.vehicle?.vehicleId&&<button type="button" onClick={chooseVehicle}>Utiliser {model.mobilityOptions.vehicle.label}</button>}
             <button type="button" onClick={()=>confirm({message:"Retirer uniquement ce trajet ? Les consommations et l’autre sens restent conservés.",acceptLabel:"Retirer le trajet",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:barItems(context,direction).filter(item=>item.selectionId!==leg.selectionId)}}})})}>Retirer ce trajet</button>
@@ -246,6 +294,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       </section>}
       {(error||serverError)&&<p role="alert">{error||serverError}</p>}
     </section>
-    {page!=="legacy"&&dockHost&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure question={question} choose={()=>{}} close={()=>go("summary")}/>,dockHost)}
+    </fieldset>
+    {page!=="legacy"&&dockHost&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure appearance="bar" question={question} choose={()=>{}} close={()=>go("summary")}/>,dockHost)}
   </div>;
 }

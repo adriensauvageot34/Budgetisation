@@ -42,7 +42,7 @@ const check=async(name,run)=>{await run();checks.push({name,status:'EXECUTED_PAS
 const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.props?.['aria-hidden'])==='true'?'':node?.children?.map(text).join('')??'';
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
-const button=(label)=>{const all=controls(n=>n.type==='button'&&text(n).trim()===label.trim());assert.ok(all.length,'Missing button '+label);return all[0];};
+const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
 const click=async label=>{await act(async()=>button(label).props.onClick());steps++;};
 const input=label=>{const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
 const change=async(label,value)=>{await act(async()=>{const node=input(label);for(let p=node.parent;p;p=p.parent)p.props.onChangeCapture?.({target:{value}});node.props.onChange({target:{value}});});steps++;};
@@ -52,14 +52,14 @@ const render=()=>React.createElement(WorkshopConfirmationProvider,{requestRef},R
 const sync=async()=>{await act(async()=>root.update(render()));};
 const init=async(template,preset,component)=>{if(root)await act(async()=>root.unmount());registry=new InlineEditRegistry();requestRef={current:()=>{}};registry.requestConfirmation=(message,accept,save)=>requestRef.current({message,accept,save,acceptLabel:'Abandonner cette saisie'});pendingOps=[];steps=0;id=crypto.randomUUID();kind=component;const r=await handleComposerRequest({repository,readWorld:async()=>fixture(),householdPersons:[]},householdId,{sequence:1,targetMonth:'2026-11',draft:state(),kind:'DROP',assetKey:'template:'+template,presetKey:preset,target:{kind:'BOARD_ZONE'},values:{},identity:id,selectionId:crypto.randomUUID()});assert.equal(r.ok,true,JSON.stringify(r));model=r.model;await act(async()=>{root=create(render(),{createNodeMock:element=>element.type==='dialog'?{open:false,showModal(){this.open=true;},close(){this.open=false;},querySelector(){return{focus(){}};},contains(){return false;}}:null});});};
 const current=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
-const save=async()=>{await click('Terminé');await sync();};
+const save=async()=>{const dirty=controls(n=>n.props['data-bar-living-editor']!==undefined)[0]?.props['data-inline-dirty'];if(dirty)await click('Enregistrer');else await click('Date');await sync();};
 const shortInput=label=>input(label);
 const tile=label=>controls(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&(text(c)===label||text(c).startsWith(label+' ×'))).length)[0];
 try {
 await check('V8_ADD_REMOVE_BEFORE_FIRST_SOCKET_PROJECTION',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);
  model={...model,board:{...model.board,contexts:model.board.contexts.map(c=>c.contextOccurrenceId===id?{...c,sockets:[]}:c)}};await sync();
- await click('Commencer par les consommations');await click('Bière');assert.equal(current().slotSelections.extras.items.length,1);
+ await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');assert.equal(current().slotSelections.extras.items.length,1);
  await click('Retirer');await sync();
  assert.equal(current().slotSelections.extras.items.length,0);assert.equal(pendingOps.length,2);
 });
@@ -69,14 +69,14 @@ await check('V6_V8_COMPARABLE_UNKNOWN_BEER_ADMISSION_EFFORT',async()=>{
  await click('Prix à préciser');await click('Conserver ce poste');await sync();
  const old=steps;assert.equal(current().slotSelections.extras.items[0].cost.kind,'UNKNOWN');
  await init('night-out','bar-apero',BarLivingEditor);steps=0;
- await click('Commencer par les consommations');await click('Bière');const next=steps;
- assert.equal(current().slotSelections.extras.items[0].cost.kind,'UNKNOWN');assert.equal(old,4);assert.equal(next,2);
- fs.mkdirSync('outputs/l4e',{recursive:true});fs.writeFileSync('outputs/l4e/effort.json',JSON.stringify({method:'ACTUAL_REACT_HANDLERS_NOT_BROWSER_NOT_KEYSTROKES',samePreset:'bar-apero',start:'existing empty card editor',finish:'one explicitly chosen beer, quantity1, UNKNOWN price admitted',v6ControlActions:old,v7ControlActions:next,latency:'NOT_MEASURED',geometry:'NOT_MEASURED'},null,2));
+ await click('Bière');const next=steps;
+ assert.equal(current().slotSelections.extras.items[0].cost.kind,'UNKNOWN');assert.equal(old,4);assert.equal(next,1);
+ fs.mkdirSync('outputs/l4e',{recursive:true});fs.writeFileSync('outputs/l4e/effort.json',JSON.stringify({method:'ACTUAL_REACT_HANDLERS_NOT_BROWSER_NOT_KEYSTROKES',samePreset:'bar-apero',start:'existing empty card editor',finish:'one explicitly chosen beer, quantity1, UNKNOWN price admitted',v6ControlActions:old,p2ControlActions:next,latency:'NOT_MEASURED',geometry:'NOT_MEASURED'},null,2));
 });
-await check('V8_PLACE_FIRST_AND_QUICK_UNKNOWN_ADMISSION',async()=>{
+await check('V8_P2_NEUTRAL_ENTRY_AND_QUICK_UNKNOWN_ADMISSION',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);
- assert.equal(controls(n=>n.props['data-bar-step']==='place').length,1);
- await click('Commencer par les consommations');await click('Bière');
+ assert.equal(controls(n=>n.props['data-bar-step']==='summary').length,1);
+ await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');
  assert.equal(current().slotSelections.extras.items.length,1);
  const beer=current().slotSelections.extras.items[0];assert.equal(beer.quantity,'1');assert.equal(beer.cost.kind,'UNKNOWN');
  assert.equal(registry.count(),0);assert.equal(shortInput('Prix unitaire (€)').props.value,'');
@@ -111,7 +111,7 @@ await check('V8_REMOVE_UNDO_RESTORE_IDENTITIES_AND_PRICE',async()=>{
  model=visualDraftModel(model,before);await sync();assert.deepEqual(current().slotSelections.extras.items[0],beer);
 });
 await check('V8_REJECTED_SAVE_RETRY_AND_ZERO_DISTINCT_FROM_UNKNOWN',async()=>{
- await act(async()=>tile('Bière').props.onClick());await change('Prix unitaire (€)','0');rejectNext=true;await click('Terminé');
+ await act(async()=>tile('Bière').props.onClick());await change('Prix unitaire (€)','0');rejectNext=true;await click('Enregistrer');
  assert.equal(registry.count(),1);assert.equal(shortInput('Prix unitaire (€)').props.value,'0');assert.ok(controls(n=>n.props.role==='alert').length);
  await save();assert.equal(current().slotSelections.extras.items[0].cost.kind,'MANUAL');assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'0');
 });
@@ -145,10 +145,10 @@ await check('V8_RETURN_MODE_CHANGE_NO_RESIDUAL_CAR_COST',async()=>{
  await act(async()=>controls(n=>n.type==='button'&&n.props['data-bar-route']==='outbound')[0].props.onClick());await click('Utiliser '+configured.route.vehicleRef.labelAtSelection);await sync();
  assert.deepEqual(current().slotSelections.outbound.items[0].route.stops,configured.route.stops);assert.equal(current().slotSelections.outbound.items[0].route.manualFuelPrice,configured.route.manualFuelPrice);assert.deepEqual(current().slotSelections.outbound.items[0].route.toll,configured.route.toll);
  const before=structuredClone(current().slotSelections.outbound.items[0]);await act(async()=>{root.unmount();root=create(render());});
- const routeButtons=controls(n=>n.type==='button'&&n.props['data-bar-route']==='return');assert.equal(routeButtons.length,1);await act(async()=>routeButtons[0].props.onClick());
+ const routeButtons=controls(n=>n.type==='button'&&(n.props['data-bar-route']==='return'||n.props['data-bar-add-route']==='return'));assert.equal(routeButtons.length,1);await act(async()=>routeButtons[0].props.onClick());
  const taxis=controls(n=>n.type==='button'&&text(n)==='Taxi / Uber');assert.ok(taxis.length);await act(async()=>taxis[0].props.onClick());await click('Changer de mode');await sync();
  const back=current().slotSelections.return.items[0];assert.equal(back.optionKey,'taxi');assert.ok(!back.route);assert.equal(back.pricing.fare.kind,'UNKNOWN');assert.deepEqual(current().slotSelections.outbound.items[0],before);
- const returnButton=controls(n=>n.type==='button'&&n.props['data-bar-route']==='return')[0];await act(async()=>returnButton.props.onClick());
+ const returnButton=controls(n=>n.type==='button'&&(n.props['data-bar-route']==='return'||n.props['data-bar-add-route']==='return'))[0];await act(async()=>returnButton.props.onClick());
  await click('Préciser le prix du trajet');await change('Coût prévu du billet ou de la course (€)','12');await click('Retenir le coût du trajet');await sync();
  const priced=current().slotSelections.return.items[0];assert.equal(priced.pricing.fare.unitAmount,'12');assert.deepEqual(priced.origin,back.origin);assert.deepEqual(priced.destination,back.destination);assert.equal(priced.selectionId,back.selectionId);assert.deepEqual(current().slotSelections.outbound.items[0],before);
 });
@@ -164,7 +164,7 @@ await check('V8_LAYOUT_EXPANSION_DENSE_PAGES_AND_EXACT_COLLAPSE',()=>{
  }}
 });
 await check('V8_SYNTHETIC_APPLY_READ_REEDIT_COMPLETE_COST',async()=>{
- await init('night-out','bar-apero',BarLivingEditor);await click('Commencer par les consommations');await click('Bière');await change('Prix unitaire (€)','8');await save();await click('Cocktail');await change('Prix unitaire (€)','12');await save();
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());await click('Bière');await change('Prix unitaire (€)','8');await save();await click('Cocktail');await change('Prix unitaire (€)','12');await save();
  const deps={repository,readWorld:async()=>fixture(),householdPersons:[]};
  let response=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:90,targetMonth:'2026-11',draft:model.semanticState});assert.equal(response.ok,true,response.code);
  const proof=response.model.proof,expected=structuredClone(model.semanticState);
@@ -215,8 +215,8 @@ await check('V8_INLINE_CALENDAR_PEOPLE_AND_SUMMARY_NO_FINANCE_MULTIPLICATION',as
  await act(async()=>controls(n=>n.type==='button'&&n.props['aria-label']==='2026-11-15')[0].props.onClick());await sync();assert.equal(current().fields.plannedDate,'2026-11-15');
  await act(async()=>controls(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Modifier les personnes'))[0].props.onClick());
  for(const person of ['Ami test','Camille test','Alex test']){await change('Autre prénom',person);await click('Ajouter ce prénom');}
- await click('Retenir ces personnes');await sync();assert.equal(current().fields.participantRefs.length,3);assert.equal(registry.count(),0);assert.equal(current().fields.plannedDate,'2026-11-15');
- await click('Montant rapide');await click('Consommations regroupées');await change('Coût prévu (€)','20');await click('Retenir ce coût');await sync();
+ /* P2: each person toggle is already an admitted decision. */await sync();assert.equal(current().fields.participantRefs.length,3);assert.equal(registry.count(),0);assert.equal(current().fields.plannedDate,'2026-11-15');
+ await click('Date');await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','20');await click('Retenir ce coût');await sync();
  const shared=current().slotSelections.main.items[0];assert.equal(shared.unitBasis,'SHARED');assert.equal(shared.quantity,'1');assert.equal(shared.cost.unitAmount,'20');
  const response=await handleComposerRequest({repository,readWorld:async()=>fixture(),householdPersons:[]},householdId,{kind:'READ',sequence:110,targetMonth:'2026-11',draft:model.semanticState});assert.equal(response.ok,true,response.code);
  const amounts=response.model.board.contexts.find(c=>c.contextOccurrenceId===id).sockets.find(s=>s.slotKey==='main').evaluations.map(e=>e.economicAmount);assert.deepEqual(amounts,['20.00']);
@@ -226,7 +226,7 @@ await check('V8_INLINE_CALENDAR_PEOPLE_AND_SUMMARY_NO_FINANCE_MULTIPLICATION',as
  const read=await handleComposerRequest({repository,readWorld:async()=>fixture(),householdPersons:[]},householdId,{kind:'READ',sequence:111,targetMonth:'2026-11',draft:model.semanticState});assert.equal(read.ok,true,read.code);assert.equal(read.model.nightOutSummaries.find(x=>x.contextOccurrenceId===id).knownAmount,'20.00');
 });
 await check('V8_TOTAL_DETAIL_CONFIRM_CANCEL_ACCEPT_AND_UNDO_PRESERVES_IDS',async()=>{
- const details=structuredClone(model.semanticState),ids=current().slotSelections.extras.items.map(x=>x.selectionId);await click('Montant rapide');await click('Consommations regroupées');await change('Coût prévu (€)','30');await click('Retenir ce coût');
+ const details=structuredClone(model.semanticState),ids=current().slotSelections.extras.items.map(x=>x.selectionId);await click('Date');await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','30');await click('Retenir ce coût');
  await click('Continuer à modifier');assert.deepEqual(current().slotSelections.extras.items.map(x=>x.selectionId),ids);assert.equal(input('Coût prévu (€)').props.value,'30');
  await click('Retenir ce coût');await click('Remplacer par le total');await sync();assert.equal(current().slotSelections.extras.items.length,0);assert.equal(current().slotSelections.main.items[0].cost.unitAmount,'30');
  model=visualDraftModel(model,details);await sync();assert.deepEqual(current().slotSelections.extras.items.map(x=>x.selectionId),ids);

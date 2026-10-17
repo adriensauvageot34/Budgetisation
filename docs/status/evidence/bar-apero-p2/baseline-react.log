@@ -1,0 +1,14 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V2-01_INITIAL_FIVE_CHOICES_NO_DECISION FAIL: Expected values to be strictly equal:
+
+'place' !== 'summary'
+
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V2-02_BEER_THEN_STEPPER_ADMITTED_IN_TWO_GESTURES FAIL: Missing button Bière
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V2-03_ROW_DOCK_STAYS_DRINKS_SAVE_ONLY_DIRTY FAIL: Missing button Bière
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+V2-06_COMPACT_NO_PHANTOM_ROUTE_AND_DENSE_PREVIEW_LIMIT FAIL: Expected values to be strictly equal:
+
+2 !== 0

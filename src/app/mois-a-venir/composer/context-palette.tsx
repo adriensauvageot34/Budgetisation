@@ -76,7 +76,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
 
 export type PaletteQuestion = { title: string; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; symbol?: string; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string };
-export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion;
+export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
 }) {
   const groups = question ? [] : displayEquipmentGroups(card, model);
@@ -102,9 +102,9 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
     .filter(group => group.tiles.length);
   const iconKey = model.presentation.objects[card.contextOccurrenceId]?.iconKey ?? "activity";
-  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette}`} data-context-palette={card.contextOccurrenceId} data-question-dock aria-label={question.title}>
+  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-context-palette={card.contextOccurrenceId} data-question-dock aria-label={question.title}>
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>
-      {question.search && <input aria-label={question.search.label} placeholder={question.search.label} value={question.search.value} onChange={event => question.search!.change(event.target.value)} />}
+      {question.search && <input disabled={appearance==="bar"&&busy} aria-label={question.search.label} placeholder={question.search.label} value={question.search.value} onChange={event => question.search!.change(event.target.value)} />}
       <div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
         <button type="button" aria-label="Réponses précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => options.current?.scrollBy({left:-300,behavior:"smooth"})}><ChevronLeft size={18} /></button>
         <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => options.current?.scrollBy({left:300,behavior:"smooth"})}><ChevronRight size={18} /></button>
