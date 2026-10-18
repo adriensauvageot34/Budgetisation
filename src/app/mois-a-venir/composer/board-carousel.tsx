@@ -46,7 +46,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       .map(node => node.closest<HTMLElement>("[data-inventory-id]")?.dataset.inventoryId).filter((id):id is string => !!id).sort();
     setDirtyItems(old => old.length === ids.length && old.every((id,i) => id === ids[i]) ? old : ids);
   };
-  const previousScene = useRef<{ page:number; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });
+  const previousScene = useRef<{ page:number; expandedId?:string; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });
   const cancelDwell = () => { if (dwell.current) { clearTimeout(dwell.current); dwell.current = null; } };
   const browsing = useRef(false);
   const go = (next: number, manual = true) => { browsing.current = manual; cancelDwell(); captureDirty(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setDeparting(active); setPage(Math.max(0, Math.min(pages.length - 1, next))); };
@@ -135,7 +135,10 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     for (const cell of cells) { cell.getAnimations().forEach(animation => animation.cancel()); rects.set(cell.dataset.inventoryId!, cell.getBoundingClientRect()); }
     const before = previousScene.current, samePage = before.page === active;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (samePage && before.rects.size && !dragging && !reduced) for (const cell of cells) {
+    // A growing living card must reserve its final surface immediately. FLIP
+    // translations of its neighbours crossed the active form in reception.
+    // Also skip the first folded layout; ordinary Board motion is unchanged.
+    if (samePage && before.rects.size && !dragging && !reduced && !expandedId && !before.expandedId) for (const cell of cells) {
       const id = cell.dataset.inventoryId!, currentRect = rects.get(id)!;
       let origin = before.rects.get(id), entering = false;
       if (!origin) {
@@ -155,18 +158,14 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       if (!origin) continue;
       const dx = origin.x - currentRect.x, dy = origin.y - currentRect.y;
       if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && !entering) {
-        // Real Grid tracks already reflowed. Reveal the new surface without
-        // scaling its text or placing an editor over the neighboring cards.
-        if (id === expandedId && (Math.abs(origin.width-currentRect.width)>2 || Math.abs(origin.height-currentRect.height)>2))
-          cell.animate([{clipPath:`inset(0 ${Math.max(0,currentRect.width-origin.width)}px ${Math.max(0,currentRect.height-origin.height)}px 0 round 22px)`},{clipPath:"inset(0 round 22px)"}],{duration:220,easing:"ease-out"});
         continue;
       }
       cell.animate([{ transform:`translate(${dx}px, ${dy}px) scale(${entering ? .95 : 1})`, opacity:entering ? .45 : 1 },
         { transform:"translate(0, 0) scale(1)", opacity:1 }], { duration:entering ? 290 : 220, easing:"cubic-bezier(.2,.75,.25,1)" });
     }
-    previousScene.current = { page:active, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
+    previousScene.current = { page:active, expandedId, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
       .map(placement => [placement.item.id, placement.item.kind === "CLUSTER" ? placement.item.children.map(child => child.id) : []] as const) ?? []) };
-  }, [geometry, active, dragging]);
+  }, [geometry, active, dragging, expandedId]);
   const focusPage = inventoryPageFor(pages, focused, model);
   const lastFocus = useRef(focused), lastReveal = useRef(revealSequence);
   useLayoutEffect(() => {

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import {barP3Month,barP3Knowledge} from './fixtures/bar-apero-p3.mjs';
+import {bar350ReceptionMonth} from './fixtures/bar-apero-350-reception.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -81,6 +82,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
   BAR_P3:barP3Month,
+  ...Object.fromEntries([0,1,2,4,10,15].map(count=>[`BAR350_${count}`,()=>bar350ReceptionMonth(count)])),
   P09: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P09C: p09CompatibilityMonth,
   P09S: p09CompatibilityMonth,
@@ -110,7 +112,7 @@ async function store(key) {
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' },
         ...(key.startsWith('L1') ? [{ personId: '00000000-0000-4000-8000-000000000002', displayName: 'Camille Fixture' }] : [])],
-      readMobilityOptions: async()=>({places:fixture.world.mobilityFacts?.places ?? [],vehicle:fixture.world.mobilityFacts?.vehicle ?? null,...(key==='BAR_P3'?{vehicleIsUnique:true,placeKnowledge:barP3Knowledge}:{})}),
+      readMobilityOptions: async()=>({places:fixture.world.mobilityFacts?.places ?? [],vehicle:fixture.world.mobilityFacts?.vehicle ?? null,...(key==='BAR_P3'||key.startsWith('BAR350_')?{vehicleIsUnique:true,placeKnowledge:barP3Knowledge}:{})}),
       validateContextReferences: async (_household, refs) => {
         if (refs.placeIds.some(id=>!fixture.world.mobilityFacts?.places.some(p=>p.placeId===id))) throw new TypeError('CONTEXT_PLACE_NOT_ADMITTED');
         if (refs.personIds.some(id => id !== '00000000-0000-4000-8000-000000000001' && !(key.startsWith('L1') && id === '00000000-0000-4000-8000-000000000002'))) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
