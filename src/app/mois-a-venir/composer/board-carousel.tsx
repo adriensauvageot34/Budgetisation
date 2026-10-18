@@ -172,6 +172,18 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       .map(placement => [placement.item.id, placement.item.kind === "CLUSTER" ? placement.item.children.map(child => child.id) : []] as const) ?? []) };
   }, [geometry, active, dragging, expandedId]);
   const focusPage = inventoryPageFor(pages, focused, model);
+  useEffect(()=>{
+    if(!expandedId||dragging||focusPage<0)return;
+    // Manual shelf browsing remains possible. A deliberate edit from the
+    // living card or its dock resumes following that card across repacking.
+    const resume=(event:Event)=>{
+      if(!(event.target instanceof Element)||!event.target.closest('[data-bar-living-editor],[data-bar-dock]'))return;
+      browsing.current=false;setPage(focusPage);
+    };
+    document.addEventListener('click',resume,true);
+    document.addEventListener('focusin',resume,true);
+    return()=>{document.removeEventListener('click',resume,true);document.removeEventListener('focusin',resume,true);};
+  },[expandedId,dragging,focusPage]);
   const lastFocus = useRef(focused), lastReveal = useRef(revealSequence);
   useLayoutEffect(() => {
     if (lastFocus.current !== focused || lastReveal.current !== revealSequence) {
