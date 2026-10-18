@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {check} from './check-bar-apero-350.mjs';
+const path='docs/status/evidence/bar-apero-350/';
+const original=JSON.parse(fs.readFileSync(path+'requirements.json'));
+const evidence=JSON.parse(fs.readFileSync(path+'evidence.json'));
+const rejects=(name,change,pattern)=>{const rows=structuredClone(original),proofs=structuredClone(evidence);change(rows,proofs);assert.throws(()=>check({rows,evidence:proofs,verbose:false}),pattern);console.log(name+' PASS_REJECTED');};
+check({verbose:false});
+rejects('INTEGRITY_MISSING_ROW',rows=>rows.pop(),/350/);
+rejects('INTEGRITY_DUPLICATE_ID',rows=>rows[1].id=rows[0].id,/Duplicate/);
+rejects('INTEGRITY_ORIGINAL_WORDING',rows=>rows[0].description_originale+=' changed',/changed description/);
+rejects('INTEGRITY_FALSE_DONE',rows=>{rows[0].statut='DONE_STATIC';rows[0].preuves=[];},/missing evidence/);
+rejects('INTEGRITY_FALSE_AUTH',rows=>rows[0].statut='DONE_AUTH_REAL',/Auth not executed/);
+rejects('INTEGRITY_FALSE_PREVIEW',rows=>rows[0].statut='DONE_PREVIEW',/Preview functional test not executed/);
+rejects('INTEGRITY_EVIDENCE_TAMPER',(_,proofs)=>{proofs[original[0].preuves[0]].file_sha256_lf='bad';},/evidence bytes changed/);
+console.log('REGISTRY_INTEGRITY_EXECUTED_PASS 350 original rows + 7 negative controls');
