@@ -88,6 +88,10 @@ try{
   await click('Date');await click('Lieu');assert.equal(input('Chercher dans les lieux enregistrés').props.value,'ÉCOLE');
   const {barPlaces}=require('@/app/mois-a-venir/composer/bar-place-knowledge');assert.equal(barPlaces([{placeId:uuid(555),name:'Ecole Café',privatePlace:false,commune:'Ville',nature:'Commerce',usage:'Bar',relationships:[]}],'école').length,1);
  });
+ await check('R199_PUBLIC_HOMONYMS_HAVE_VISIBLE_ADDRESS_PROVENANCE',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);model={...model,mobilityOptions:{...model.mobilityOptions,places:['A','B'].map((address,i)=>({placeId:uuid(600+i),name:'Bar jumeau',privatePlace:false,commune:'Ville fixture',address:'Quai '+address,nature:'Commerce',usage:'Bar',relationships:[]}))}};await sync();await click('Lieu');
+  const choices=controls(n=>n.type==='button'&&n.props['data-show-hint']===true);assert.equal(choices.length,2);assert.ok(choices[0].findAll(n=>n.type==='small').length);assert.match(choices[0].props.title,/Quai A/);assert.match(choices[1].props.title,/Quai B/);assert.equal(current().fields.placeRef,undefined);
+ });
  // WAVE_2_TESTS
  // WAVE_3_TESTS
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
