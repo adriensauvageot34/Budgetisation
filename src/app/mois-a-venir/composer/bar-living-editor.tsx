@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useRef,useState,type ComponentProps} from "react";
+import {useCallback,useEffect,useRef,useState,type ComponentProps} from "react";
 import {createPortal} from "react-dom";
 import type {ProspectivePersonRef,ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 import {assetsForModule,PLANNED_ASSET_CATALOG_VERSION,type PlannedAsset} from "@/domain/phase2/planned-assets";
@@ -19,7 +19,8 @@ import {useWorkshopRaw} from "./inline-edit-registry";
 import {useWorkshopConfirmation} from "./workshop-confirmation";
 import {useComposerInteractions} from "./interactions";
 import {barPlaces,barPlaceHint,barEndpointPlaces,barHomePlaces} from "./bar-place-knowledge";
-import {BarPlaceSearch} from "./bar-place-search";
+import {BarPlaceSearch,type BarPlaceSearchState} from "./bar-place-search";
+import {barSearchText} from "./bar-search";
 import {barBefore,barBeforePatch} from "./bar-before";
 import {money} from "./display";
 import {BarMetadata,BarRouteLine,BarComponentFace,barPersonLabel} from "./bar-living-details";
@@ -43,13 +44,22 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const [page,setPage]=useState<Page>(()=>initialSelection?.kind==="COMPONENT"?"row":props.initialTarget?.startsWith("component:")?"summary":props.initialTarget as Page??"summary");
   const [legacy,setLegacy]=useState<"people"|"calendar"|"menu"|"main">("menu"),[legacyKey,setLegacyKey]=useState(0);
   const [row,setRow]=useState<Row>(()=>initialSelection?.kind==="COMPONENT"?fromSelection(initialSelection):fresh()),[slot,setSlot]=useState(initialComponent?.[1]??"extras"),[dirty,setDirty]=useState(false);
-  const [advancedRow,setAdvancedRow]=useState(false),[manual,setManual]=useState(""),[query,setQuery]=useState(""),[allPlaces,setAllPlaces]=useState(false),[error,setError]=useState("");
+  const [advancedRow,setAdvancedRow]=useState(false),[manual,setManual]=useState(""),[allPlaces,setAllPlaces]=useState(false),[error,setError]=useState("");
+  const [queries,setQueries]=useState<Record<string,string>>({});
+  const [googleSearch,setGoogleSearch]=useState<BarPlaceSearchState>();
+  const [calendarFocus,setCalendarFocus]=useState(()=>typeof context.fields.plannedDate==="string"?context.fields.plannedDate:props.semanticState.targetMonth+"-01");
   const [fare,setFare]=useState("");
   const [itemPage,setItemPage]=useState(0);
   const [people,setPeople]=useState<ProspectivePersonRef[]>(()=>Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);
   const [personName,setPersonName]=useState("");
   const [quickAmount,setQuickAmount]=useState(""),[quickTotal,setQuickTotal]=useState(false),[pendingAsset,setPendingAsset]=useState<PlannedAsset|null>(null),[pendingShared,setPendingShared]=useState(false);
   const [direction,setDirection]=useState<"outbound"|"return">(props.initialTarget==="return"?"return":"outbound"),[endpoint,setEndpoint]=useState<"origin"|"destination">("origin");
+  const searchScope=page==="endpoint"?`endpoint:${direction}:${endpoint}`:page;
+  const query=queries[searchScope]??"";
+  const setQuery=(value:string)=>{setQueries(previous=>({...previous,[searchScope]:value}));if(searchScope==="place")setGoogleSearch(undefined);};
+  const saveGoogleSearch=useCallback((state:BarPlaceSearchState)=>{setGoogleSearch(previous=>previous?.query===state.query&&previous.city===state.city&&previous.resultPage===state.resultPage?previous:state);setQueries(previous=>previous.place===state.query?previous:{...previous,place:state.query});},[]);
+  const savedPages=useRef<Record<string,number>>({});
+  const previousPage=useRef(page);
   const requestConfirmation=useWorkshopConfirmation(),activeQuestion=useActiveWorkshopQuestion(),interaction=useComposerInteractions();
   const before=barBefore(props.semanticState,context);
   const rowItems=(target:string)=>target==="before-main"?before?[before.bottle]:[]:target==="before-extras"?before?.extras??[]:barItems(context,target);
@@ -109,7 +119,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(current?.kind==="COMPONENT")setRow(previous=>previous.id===row.id?fromSelection(current):previous);else setPage("drinks");
   },[context.slotSelections,props.semanticState.contexts,page,slot,dirty,row.id]);
   if(!model||!card)return <p role="status">Chargement de la carte…</p>;
-  const move=(next:Page)=>{setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setItemPage(0);setError("");setQuery("");setAllPlaces(false);};
+  const move=(next:Page)=>{savedPages.current[previousPage.current]=itemPage;previousPage.current=next;setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setItemPage(savedPages.current[next]??0);setError("");};
   const go=(next:Page)=>{if(guard(()=>resumeGo(next)))move(next);};
   const decide=(operation:ComposerOperation,next:Page="summary")=>{
     try{if(busy){setError("Cette carte est protégée ou une opération est en cours. Aucun choix n’a été admis.");return false;}if(onSave(operation)){setDirty(false);move(next);return true;}setError("Ce choix n’a pas été admis. Votre saisie est conservée ; vérifiez le message du Board.");}
@@ -223,7 +233,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:next}}},"people"))setPeople(next);
   };
   const choice=(key:string,label:string,choose:()=>void,iconKey="night-out",hint?:string,symbol?:string)=>({key,label,choose,iconKey,hint,symbol});
-  const later=choice("later","Plus tard",()=>go("drinks"),"activity");
+  const later=choice("later","Plus tard",()=>go("summary"),"activity");
   const beer=catalog.find(asset=>asset.assetKey==="bar:beer")!;
   const beerChoice=choice(beer.assetKey,"Bière",()=>add(beer),"night-out",undefined,beer.icon);
   const drinkChoices=catalog.map(asset=>choice(asset.assetKey,asset.label,()=>add(asset),"night-out",undefined,asset.icon));
@@ -234,7 +244,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   let question:PaletteQuestion={title:"Composer",choices:neutralChoices};
   const knownBars=barPlaces(model.mobilityOptions?.places??[],query);
   if(page==="summary"&&selectedPlace)question={title:"La suite de ta sortie",choices:[choice(barLeg(context,"outbound")?"return":"outbound",barLeg(context,"outbound")?barLeg(context,"return")?"Modifier le retour":"Retour":"Aller",()=>open(barLeg(context,"outbound")?"return":"outbound"),"activity"),choice("drinks","Boissons",()=>go("drinks")),...neutralChoices.filter(c=>!["place",beer.assetKey].includes(c.key))]};
-  if(page==="place")question={title:"Où prendre un verre ?",search:{value:query,change:(value:string)=>{setQuery(value);setItemPage(0);},label:"Chercher parmi les lieux enregistrés"},choices:[
+  if(page==="place")question={title:"Où prendre un verre ?",choices:[
     ...knownBars.slice(0,query.trim()||allPlaces?knownBars.length:3).map(place=>choice(place.placeId,place.name,()=>choosePlace({kind:"KNOWN",placeId:place.placeId}),"activity",barPlaceHint(place,model.mobilityOptions?.placeKnowledge))),
     ...(!query.trim()&&!allPlaces&&knownBars.length>3?[choice("all","Tous les bars enregistrés",()=>setAllPlaces(true),"activity")]:[]),
     choice("google","Chercher un bar",()=>go("google"),"activity"),choice("manual","Nom libre",()=>{if(guard(()=>go("manual-place"))){setManual("");move("manual-place");}},"activity"),later,
@@ -256,10 +266,10 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     ...(selectedPlace?.kind==="KNOWN"&&model.mobilityOptions?.places.some(p=>p.placeId===selectedPlace.placeId)?[choice("bar-known",barPlaceLabel(selectedPlace,model),()=>chooseEndpoint(selectedPlace),"activity","Lieu retenu pour cette sortie · choix de ce point uniquement")]:[]),
     ...barEndpointPlaces(model.mobilityOptions?.places??[],model.householdPersons).filter(({place})=>selectedPlace?.kind!=="KNOWN"||place.placeId!==selectedPlace.placeId).filter(({place})=>`${place.name} ${place.commune??""}`.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))).map(({place,hint})=>choice(place.placeId,place.name,()=>chooseEndpoint({kind:"KNOWN",placeId:place.placeId}),"activity",hint)),
     choice("unknown","Garder à préciser",()=>chooseEndpoint(null),"activity")]};
-  if(page==="date")question={title:"Date de la sortie",choices:[choice("back","Ma sortie",()=>go("summary")),...(context.fields.plannedDate?[choice("clear-date","Retirer la date",()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:null}}},"date"))]:[])]};
+  if(page==="date")question={title:"Date de la sortie",choices:[]};
   if(page==="people"){
     const candidates:ProspectivePersonRef[]=[...props.householdPersons.map(p=>({kind:"HOUSEHOLD_PERSON" as const,personId:p.personId})),...SOCIAL_CONTACTS_V1.map(p=>({kind:"CONTACT" as const,contactKey:p.key}))];
-    question={title:"Avec qui ?",search:{value:query,change:setQuery,label:"Chercher une personne"},choices:candidates.filter(p=>barPersonLabel(p,model).toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr"))).map(p=>({...choice(prospectivePersonIdentity(p),barPersonLabel(p,model),()=>togglePerson(p),"family-visit"),selected:people.some(x=>prospectivePersonIdentity(x)===prospectivePersonIdentity(p))}))};
+    question={title:"Avec qui ?",search:{value:query,change:setQuery,label:"Chercher une personne"},choices:candidates.filter(p=>barSearchText(barPersonLabel(p,model)).includes(barSearchText(query))).map(p=>({...choice(prospectivePersonIdentity(p),barPersonLabel(p,model),()=>togglePerson(p),"family-visit"),selected:people.some(x=>prospectivePersonIdentity(x)===prospectivePersonIdentity(p))}))};
   }
   if(page==="manual-place"||page==="google")question={title:"Le lieu de ta sortie",choices:[choice("known","Lieux enregistrés",()=>go("place"),"activity"),choice("manual","Nom libre",()=>{if(guard(()=>go("manual-place")))move("manual-place");},"activity"),later]};
   if(page==="fare")question={title:"Coût prévu du trajet · sans paiement",choices:[choice("unknown","Prix encore inconnu",()=>{if(leg)patchLeg({...leg,pricing:{fare:{kind:"UNKNOWN"},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);})]};
@@ -284,8 +294,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const listPage=(items:readonly ComponentSelectionV1[])=>{const index=Math.min(itemPage,Math.max(0,Math.ceil(items.length/4)-1));return page==="row"?items.filter(item=>item.selectionId===row.id):page==="summary"?items.slice(0,2):items.slice(index*4,(index+1)*4);};
   const pagesFor=(items:readonly ComponentSelectionV1[],label:string)=><BarPageControls index={Math.min(itemPage,Math.max(0,Math.ceil(items.length/4)-1))} count={Math.ceil(items.length/4)} onChange={setItemPage} label={label}/>;
   const beforeScene=page==="summary"||page==="before"||page==="row"&&slot.startsWith("before-");
+  const peoplePage=Math.min(itemPage,Math.max(0,Math.ceil(people.length/4)-1));
   return <div ref={editorRoot} className={styles.barLivingEditor} data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
-    onClick={event=>{if(page==="row"&&event.target instanceof Element&&!event.target.closest("button,input,label,select,textarea,summary,details,[data-bar-tile],dialog"))go("summary");}}
     onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();if(page!=="summary")go("summary");else props.onCancel();}}}>
     <fieldset className={styles.barEditableBody} disabled={busy} aria-label="Composition de la sortie">
     <BarMetadata fields={context.fields} model={model} open={open} editing active={page} disabled={busy}>
@@ -332,18 +342,25 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     </div>
     <section className={styles.barLivingQuestion} aria-label="Décision en cours">
       {page==="place"&&<section data-bar-local-places><label>Chercher dans les lieux enregistrés<input value={query} onChange={e=>{setQuery(e.target.value);setItemPage(0);}} placeholder="Nom, ville…"/></label><p>Lieux enregistrés · <button type="button" onClick={()=>go("google")}>Chercher avec Google Maps</button></p>
-        {knownBars.slice(itemPage*3,(itemPage+1)*3).map(place=><button type="button" key={place.placeId} title={barPlaceHint(place,model.mobilityOptions?.placeKnowledge)} onClick={()=>choosePlace({kind:"KNOWN",placeId:place.placeId})}>{place.name} · {place.commune??place.address??place.placeId.slice(-6)}</button>)}
-        <BarPageControls index={Math.min(itemPage,Math.max(0,Math.ceil(knownBars.length/3)-1))} count={Math.ceil(knownBars.length/3)} onChange={setItemPage} label="Pages des lieux"/>
+        <p>{knownBars.length} lieu(x) correspondant(s) · choisissez une proposition dans le dock.</p>
         <details data-bar-knowledge><summary>Historique et sources</summary>{model.mobilityOptions?.placeKnowledge?<p>{model.mobilityOptions.placeKnowledge.fromDate} – {model.mobilityOptions.placeKnowledge.throughDate} · jours enregistrés, couverture non exhaustive{model.mobilityOptions.placeKnowledge.placesTruncated?" · 500 lieux chargés":""}</p>:<p>Historique non disponible ; lieux enregistrés seulement.</p>}</details></section>}
       {page==="row"?null:page==="legacy"?<NightOutEditor {...props} key={legacyKey} embedded initialView={legacy} onSave={operation=>{const admitted=!busy&&onSave(operation);if(admitted){setDirty(false);move(legacy==="calendar"?"drinks":"summary");}return admitted;}} onCancel={()=>go("summary")}/>
         :page==="quick"?<section data-bar-quick><label>Coût prévu (€)<input autoFocus inputMode="decimal" value={quickAmount} onChange={e=>{setQuickAmount(e.target.value);setDirty(true);}}/></label><p>{quickTotal?"Les détails des consommations seront remplacés, sans double compte. Repas, before et trajets sont en plus.":"Entrées ou contribution, hors consommations, repas et trajets. Ce n’est ni un plafond ni un paiement."}</p><button type="button" disabled={busy||!quickAmount.trim()} onClick={saveQuick}>Retenir ce coût</button></section>
-        :page==="date"?<div className={styles.barInlineCalendar} data-bar-calendar><h4>{new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(props.semanticState.targetMonth+"-01T12:00:00Z"))}</h4><div>
+        :page==="date"?<div className={styles.barInlineCalendar} data-bar-calendar onKeyDown={event=>{
+          const keys=["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End"];if(!keys.includes(event.key))return;
+          const button=(event.target as HTMLElement).closest<HTMLButtonElement>("[data-bar-day]");if(!button)return;
+          event.preventDefault();event.stopPropagation();const day=Number(button.dataset.barDay),count=new Date(Number(props.semanticState.targetMonth.slice(0,4)),Number(props.semanticState.targetMonth.slice(5)),0).getDate();
+          const weekday=(new Date(`${props.semanticState.targetMonth}-${String(day).padStart(2,"0")}T12:00:00Z`).getUTCDay()+6)%7;
+          const delta=({ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7,Home:-weekday,End:6-weekday} as Record<string,number>)[event.key];
+          const next=props.semanticState.targetMonth+"-"+String(Math.max(1,Math.min(count,day+delta))).padStart(2,"0");setCalendarFocus(next);
+          requestAnimationFrame(()=>editorRoot.current?.querySelector<HTMLButtonElement>(`[data-bar-calendar] button[aria-label="${next}"]`)?.focus());
+        }}><h4>{new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(props.semanticState.targetMonth+"-01T12:00:00Z"))}</h4><div role="group" aria-label="Jours du mois · flèches pour naviguer">
           {["L","M","M","J","V","S","D"].map((label,index)=><small key={index}>{label}</small>)}
           {Array.from({length:(new Date(props.semanticState.targetMonth+"-01T12:00:00Z").getUTCDay()+6)%7},(_,i)=><span key={"blank"+i}/>)}
-          {Array.from({length:new Date(Number(props.semanticState.targetMonth.slice(0,4)),Number(props.semanticState.targetMonth.slice(5)),0).getDate()},(_,i)=>{const date=props.semanticState.targetMonth+"-"+String(i+1).padStart(2,"0");return <button type="button" key={date} aria-label={date} aria-pressed={context.fields.plannedDate===date} onClick={()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:date}}},"drinks")}>{i+1}</button>;})}
+          {Array.from({length:new Date(Number(props.semanticState.targetMonth.slice(0,4)),Number(props.semanticState.targetMonth.slice(5)),0).getDate()},(_,i)=>{const date=props.semanticState.targetMonth+"-"+String(i+1).padStart(2,"0");return <button type="button" key={date} data-bar-day={i+1} tabIndex={calendarFocus===date?0:-1} aria-label={date} aria-pressed={context.fields.plannedDate===date} onClick={()=>{setCalendarFocus(date);decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:date}}},"date");}}>{i+1}</button>;})}
         </div>{context.fields.plannedDate&&<button type="button" className={styles.barInlineAdd} disabled={busy} onClick={()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:null}}},"date")}>Retirer la date</button>}</div>
-        :page==="people"?<section data-bar-people><h4>Personnes</h4><div className={styles.barLivingMetadata}>{people.slice(itemPage*4,(itemPage+1)*4).map(p=><button type="button" key={prospectivePersonIdentity(p)} onClick={()=>togglePerson(p)}>{barPersonLabel(p,model)} ×</button>)}</div><BarPageControls index={Math.min(itemPage,Math.max(0,Math.ceil(people.length/4)-1))} count={Math.ceil(people.length/4)} onChange={setItemPage} label="Pages des participants"/><label>Autre prénom<input value={personName} maxLength={120} onChange={e=>{setPersonName(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!personName.trim()} onClick={()=>{const person={kind:"TEXT" as const,label:personName.trim()};if(!people.some(p=>prospectivePersonIdentity(p)===prospectivePersonIdentity(person))){const next=[...people,person];if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:next}}},"people")){setPeople(next);setPersonName("");}}}}>Ajouter ce prénom</button></section>
-        :page==="google"?<BarPlaceSearch initialCity={searchCity} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})} onText={label=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"})}/>
+        :page==="people"?<section data-bar-people><h4>Personnes</h4><div className={styles.barLivingMetadata}>{people.slice(peoplePage*4,(peoplePage+1)*4).map(p=><button type="button" key={prospectivePersonIdentity(p)} onClick={()=>togglePerson(p)}>{barPersonLabel(p,model)} ×</button>)}</div><BarPageControls index={Math.min(itemPage,Math.max(0,Math.ceil(people.length/4)-1))} count={Math.ceil(people.length/4)} onChange={setItemPage} label="Pages des participants"/><label>Autre prénom<input value={personName} maxLength={120} onChange={e=>{setPersonName(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!personName.trim()} onClick={()=>{const person={kind:"TEXT" as const,label:personName.trim()};if(!people.some(p=>prospectivePersonIdentity(p)===prospectivePersonIdentity(person))){const next=[...people,person];if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:next}}},"people")){setPeople(next);setPersonName("");}}}}>Ajouter ce prénom</button></section>
+        :page==="google"?<BarPlaceSearch initialCity={searchCity} initialSearch={googleSearch??{query:queries.place??"",city:searchCity??"",resultPage:0}} onSearchChange={saveGoogleSearch} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})} onText={label=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"})}/>
         :page==="manual-place"?<><label>Nom ou adresse libre<input autoFocus maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={!manual.trim()||busy} onClick={()=>choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"})}>Retenir ce repère</button><small>Repère textuel uniquement · distance et itinéraire à préciser.</small></>
         :page==="endpoint"?<><label>Autre point du trajet<input maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!manual.trim()} onClick={()=>chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true)}>Retenir ce point libre</button><small>Repère textuel uniquement · itinéraire et distance à préciser.</small></>
         :page==="fare"&&leg?<><label>Coût prévu du billet ou de la course (€)<input autoFocus inputMode="decimal" value={fare} placeholder="Encore inconnu" onChange={event=>{setFare(event.target.value);setDirty(true);}}/></label>
@@ -366,6 +383,6 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       {(error||serverError)&&<p role="alert">{error||serverError}</p>}
     </section>
     </fieldset>
-    {page!=="legacy"&&dockHost&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure appearance="bar" question={question} choose={()=>{}} close={()=>go("summary")}/>,dockHost)}
+    {page!=="legacy"&&question.choices.length>0&&dockHost&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure appearance="bar" question={question} choose={()=>{}} close={()=>go("summary")}/>,dockHost)}
   </div>;
 }
