@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRef, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";
@@ -83,29 +84,33 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     const findCard=()=>[...board.querySelectorAll<HTMLElement>("[data-inventory-id]")]
       .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
     let card=findCard();
-    let frame = 0;
-    const resize = new ResizeObserver(()=>{note('resizes');schedule();});
+    let lastHeight=expandedMeasure?.id===expandedId?expandedMeasure.height:null;
+    const resize = new ResizeObserver(()=>{note('resizes');measure(true);});
     const observeContent = () => {
       card=findCard();resize.disconnect();if(!card)return;resize.observe(card);
       for (const child of card.children) if (child instanceof HTMLElement) resize.observe(child);
     };
-    function measure() {
+    function measure(synchronous=false) {
       note('measures');
-      frame = 0;
       card=findCard();
       const editor = card?.querySelector<HTMLElement>("[data-bar-living-editor]");
       const header = card?.querySelector<HTMLElement>("header");
       if (!editor || !header) return; // Keep the previous geometry while the editor loads.
       const height = Math.max(240, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + 2));
-      setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height ? previous : { id: expandedId!, height });
+      if(height===lastHeight)return;
+      lastHeight=height;
+      const reserve=()=>setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height ? previous : { id: expandedId!, height });
+      // Observer delivery follows a DOM commit. Reserve the new intrinsic
+      // height before the browser paints, rather than one rAF/React batch later.
+      // Only an actual height change flushes; ordinary typing does not repack.
+      if(synchronous)flushSync(reserve);else reserve();
     }
-    function schedule() { if (!frame) frame = requestAnimationFrame(measure); }
-    const mutations = new MutationObserver(() => { note('mutations');observeContent(); schedule(); });
+    const mutations = new MutationObserver(() => { note('mutations');observeContent(); measure(true); });
     // Packing can remount the same context on another page. Follow its new
     // host instead of keeping a ResizeObserver attached to the departed card.
     mutations.observe(board, { childList: true, subtree: true, characterData: true });
-    observeContent(); schedule();
-    return () => { resize.disconnect(); mutations.disconnect(); if (frame) cancelAnimationFrame(frame); };
+    observeContent(); measure();
+    return () => { resize.disconnect(); mutations.disconnect(); };
   }, [expandedId, dragging, size.width, spatialKey, active]);
   useLayoutEffect(() => {
     if (!dragging) { setDragOrigin(null); return; }
