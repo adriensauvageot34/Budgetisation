@@ -11,5 +11,35 @@
     "sha": "a2e2aec30c9228cde12ebf26eedec6b5ebcbbc71",
     "niveau": "PASS_HTTP_FIXTURE",
     "scope": "Script HTTP riche réellement rejoué avant changement produit ; CAS, réponse perdue, conservation, zéro Apply et zéro distant."
+  },
+  "G1_REACT": {
+    "path": "docs/status/evidence/bar-apero-350/g1/react.log",
+    "sha": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "niveau": "PASS_REACT",
+    "scope": "Six groupes ciblés ; RAW/clic neutre, Plus tard, calendrier, reprise recherche, homonymes visibles."
+  },
+  "G1_BROWSER": {
+    "path": "docs/status/evidence/bar-apero-350/g1/browser.json",
+    "sha": "08dc6f46cba5d982756c16f62c996886b305059a",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Lieu recherche Canal reprise ; Plus tard summary ; date maintenue et flèche droite focus2/tabstop unique ; aucune mutation distante."
+  },
+  "G1_PLACES": {
+    "path": "docs/status/evidence/bar-apero-350/g1/places.json",
+    "sha": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Homonymes Quai A/B visibles, un champ de recherche, dock sans scroll Y à 1280px."
+  },
+  "G1_P3": {
+    "path": "docs/status/evidence/bar-apero-350/g1/p3.log",
+    "sha": "08dc6f46cba5d982756c16f62c996886b305059a",
+    "niveau": "PASS_REACT_AND_OWNER_FIXTURE",
+    "scope": "12 groupes P3, mocks Google exact/ambigu/429/HTML/tardif et limites owner ; adaptation des clics Reprendre, aucune assertion financière supprimée."
+  },
+  "G1_EXISTING": {
+    "path": "docs/status/evidence/bar-apero-350/g1/existing.log",
+    "sha": "08dc6f46cba5d982756c16f62c996886b305059a",
+    "niveau": "PASS_REACT",
+    "scope": "8 groupes dernière réception dont participants page5→4, RAW, 15 boissons/9 Before et suppression."
   }
 }

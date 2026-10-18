@@ -13,9 +13,14 @@
 - T2 NOT_NEEDED. T3 NOT_RUN. Incident historique réel de sauvegarde riche non confirmée et Canonical 57014 distinctement identifié ; cause du writer non prouvée. La fixture ne reproduit pas cette panne, elle ne la clôture pas.
 - Décision : CONTINUER vague 1, garder R335/R336/R337 ouverts pour une réception autorisée.
 
-## G1 — IN_PROGRESS
+## G1 — PARTIAL_OWNER, CONTINUER
 
-Vague A/B/C, 69 exigences. Aucun PASS anticipé.
+- Code : 08dc6f4 puis 4006356 (hints publics visibles). Vague A/B/C, 69 exigences réconciliées individuellement ; voir registre, pas 69 PASS.
+- Nouvelles corrections : clic vide neutre, Plus tard neutre, date maintenue dans sa scène, suppression du dock vide Date, un seul champ local de lieux, query/ville/pages transitoires conservées, accents, fiche Google dédiée et Reprendre, calendrier à tabstop unique/flèches, cache participants borné après retrait.
+- Six groupes `check-bar-apero-350-waves.mjs` PASS_REACT ; 12 groupes P3 PASS (Google simulé exact/ambigu/429/tardif), 8 dernières réceptions PASS ; TypeScript exit0. Anciennes assertions de parcours adaptées, pas d'oracles financiers supprimés. Échecs initiaux conservés dans `outputs/bar-350/`.
+- T1 navigateur Codex à largeur réelle1280 : recherche Canal conservée après Date→Lieu ; Plus tard→summary ; ArrowRight jour1→focusjour2, un seul tabstop ; jour17 retenu, scène date et zéro dock. Complément place : adresses QuaiA/B et jours observés visibles, un seul champ, zéro scroll Y du dock. `g1/browser.json` et `g1/places.json`.
+- T2 NOT_NEEDED ; T3 NOT_RUN. Mapping/admission Google BLOCKED_OWNER circonscrit ; adaptation des legs, hiérarchie des replis et toutes sous-scènes avancées restent explicitement PARTIAL.
+- Décision : CONTINUER G2, aucune perte de données observée après les corrections. Pas de publication ni Production.
 
 ## G2 — NOT_RUN
 

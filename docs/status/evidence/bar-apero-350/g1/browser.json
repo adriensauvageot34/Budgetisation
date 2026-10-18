@@ -1,0 +1,17 @@
+{
+  "proof": "PASS_BROWSER_FIXTURE_NOT_AUTH",
+  "keyboard": {
+    "focus": "2026-11-02",
+    "scroll": 0,
+    "tabDays": 1
+  },
+  "date": {
+    "date": " mar. 17 nov.",
+    "dockCount": 0,
+    "selected": "true",
+    "step": "date",
+    "width": 1280
+  },
+  "searchResumed": "Canal",
+  "later": "summary"
+}

@@ -6,17 +6,24 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R002",
@@ -25,17 +32,24 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R003",
@@ -44,17 +58,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R004",
@@ -63,17 +84,21 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / accès capsule testé par dernière réception ; pas de parcours Personnes navigateur G1",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R005",
@@ -196,17 +221,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R012",
@@ -215,17 +247,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R013",
@@ -234,17 +272,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Les scènes avancées héritées conservent des étapes à réceptionner.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Les scènes avancées héritées conservent des étapes à réceptionner.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R014",
@@ -253,17 +297,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R015",
@@ -272,17 +322,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Les capsules sont directes ; ciblage fin de mode/coût/endpoints à compléter en F.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Les capsules sont directes ; ciblage fin de mode/coût/endpoints à compléter en F.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R016",
@@ -291,17 +347,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R017",
@@ -310,17 +372,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Date/lieu/row isolés et testés ; toutes les sous-scènes avancées ne sont pas encore certifiées.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Date/lieu/row isolés et testés ; toutes les sous-scènes avancées ne sont pas encore certifiées.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R018",
@@ -329,17 +397,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Date et lieu sont prioritaires ; réception de toutes les scènes et petits viewports encore nécessaire.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Date et lieu sont prioritaires ; réception de toutes les scènes et petits viewports encore nécessaire.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R019",
@@ -348,17 +422,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Identité du header conservée ; géométrie/focus de chaque transition encore à vérifier.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Identité du header conservée ; géométrie/focus de chaque transition encore à vérifier.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R020",
@@ -367,17 +447,24 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R021",
@@ -386,17 +473,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R022",
@@ -405,17 +498,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_STATIC",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R023",
@@ -2786,17 +2885,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Recherche des bars normalisée ; candidats endpoint hors requête encore à corriger en F.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Recherche des bars normalisée ; candidats endpoint hors requête encore à corriger en F.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R144",
@@ -2938,17 +3043,24 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_PLACES"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R152",
@@ -3185,17 +3297,24 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R165",
@@ -3204,17 +3323,24 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R166",
@@ -3223,17 +3349,24 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R167",
@@ -3242,17 +3375,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "Le montant direct ouvre encore Boissons ; traité en vague 2.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Le montant direct ouvre encore Boissons ; traité en vague 2.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R168",
@@ -3261,17 +3400,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Des choix du dock répètent encore la scène active ; vague 3.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Des choix du dock répètent encore la scène active ; vague 3.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R169",
@@ -3280,17 +3425,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "Recherche locale/Google et pages mémorisées ; reprise de fiche Google et focus inter-scènes non entièrement certifiés.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Recherche locale/Google et pages mémorisées ; reprise de fiche Google et focus inter-scènes non entièrement certifiés.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R170",
@@ -3299,17 +3450,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_STATIC",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R171",
@@ -3318,17 +3475,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R172",
@@ -3337,17 +3500,23 @@
     "chantier_original": "Pilotage des scènes, ciblage et navigation dans la carte",
     "vague": 1,
     "localisation": "bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R173",
@@ -3356,17 +3525,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R174",
@@ -3375,17 +3551,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R175",
@@ -3394,17 +3577,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R176",
@@ -3413,17 +3603,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R177",
@@ -3432,17 +3629,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R178",
@@ -3451,17 +3655,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R179",
@@ -3470,17 +3681,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "DONE_STATIC",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R180",
@@ -3489,17 +3706,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R181",
@@ -3508,17 +3731,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R182",
@@ -3527,17 +3757,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R183",
@@ -3546,17 +3783,24 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_BROWSER"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R184",
@@ -3565,17 +3809,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R185",
@@ -3584,17 +3834,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R186",
@@ -3603,17 +3859,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R187",
@@ -3622,17 +3884,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R188",
@@ -3641,17 +3909,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R189",
@@ -3660,17 +3934,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R190",
@@ -3679,17 +3959,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R191",
@@ -3698,17 +3984,23 @@
     "chantier_original": "Métadonnées Date et Personnes",
     "vague": 1,
     "localisation": "bar-living-details.tsx; bar-living-editor.tsx",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R192",
@@ -3717,17 +4009,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Termes partagés local/Google ; admission Canonical Google et comparaison fournisseur réelle non disponibles.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Termes partagés local/Google ; admission Canonical Google et comparaison fournisseur réelle non disponibles.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R193",
@@ -3736,17 +4034,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R194",
@@ -3755,17 +4059,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R195",
@@ -3774,17 +4084,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R196",
@@ -3793,17 +4109,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Commande de recherche ailleurs encore à hiérarchiser visuellement.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Commande de recherche ailleurs encore à hiérarchiser visuellement.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R197",
@@ -3812,17 +4134,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Sources/jours visibles ; pas de certification fournisseur ni de badges différenciés sur tous les lieux.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Sources/jours visibles ; pas de certification fournisseur ni de badges différenciés sur tous les lieux.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R198",
@@ -3831,17 +4159,24 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_PLACES"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R199",
@@ -3850,17 +4185,24 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "PARTIAL",
+    "action_requise": "NONE",
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "G1_PLACES"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_BROWSER_FIXTURE / 1280 px, aucune Auth",
+    "niveau_preuve": "T1",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R200",
@@ -3869,17 +4211,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Filtrage adresse/accents des endpoints encore à compléter en vague F ; recherche des bars déjà normalisée.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Filtrage adresse/accents des endpoints encore à compléter en vague F ; recherche des bars déjà normalisée.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R201",
@@ -3888,17 +4236,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Filtrage adresse/accents des endpoints encore à compléter en vague F ; recherche des bars déjà normalisée.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Filtrage adresse/accents des endpoints encore à compléter en vague F ; recherche des bars déjà normalisée.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R202",
@@ -3907,17 +4261,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R203",
@@ -3926,17 +4286,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R204",
@@ -3945,17 +4311,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R205",
@@ -3964,17 +4336,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "DONE_STATIC",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R206",
@@ -3983,17 +4361,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "DONE_STATIC",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R207",
@@ -4002,17 +4386,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "DONE_STATIC",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R208",
@@ -4021,17 +4411,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Raccord propriétaire autorisé requis ; ne pas fabriquer KNOWN ni coordonnées.",
+    "statut": "BLOCKED_OWNER",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "reste": "Aucun mapping Google→Canonical publié ni writer d’admission officiel attesté ; matching exact seulement testé sur fixture.",
+    "blocage": "BLOCKED_OWNER_GOOGLE_IDENTITY_OR_ADMISSION",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R209",
@@ -4040,17 +4436,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Raccord propriétaire autorisé requis ; ne pas fabriquer KNOWN ni coordonnées.",
+    "statut": "BLOCKED_OWNER",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "reste": "Aucun mapping Google→Canonical publié ni writer d’admission officiel attesté ; matching exact seulement testé sur fixture.",
+    "blocage": "BLOCKED_OWNER_GOOGLE_IDENTITY_OR_ADMISSION",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R210",
@@ -4059,17 +4461,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Raccord propriétaire autorisé requis ; ne pas fabriquer KNOWN ni coordonnées.",
+    "statut": "BLOCKED_OWNER",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "reste": "Aucun mapping Google→Canonical publié ni writer d’admission officiel attesté ; matching exact seulement testé sur fixture.",
+    "blocage": "BLOCKED_OWNER_GOOGLE_IDENTITY_OR_ADMISSION",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R211",
@@ -4078,17 +4486,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R212",
@@ -4097,17 +4511,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Couverture complète non encore établie par les groupes ciblés G1.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Couverture complète non encore établie par les groupes ciblés G1.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R213",
@@ -4116,17 +4536,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "NONE",
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R214",
@@ -4135,17 +4561,23 @@
     "chantier_original": "Lieux, recherche Google et identité Canonical",
     "vague": 1,
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
-    "baseline": "UNVERIFIED",
-    "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
+    "baseline": "EXISTING",
+    "action_requise": "Pas de réécriture implicite ; suggestion d’adaptation exige une liaison sémantique admissible à examiner en F.",
+    "statut": "PARTIAL",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING"
+    ],
+    "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
+    "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
+    "reste": "Pas de réécriture implicite ; suggestion d’adaptation exige une liaison sémantique admissible à examiner en F.",
     "blocage": null,
-    "fichiers_modifiés": []
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+    ]
   },
   {
     "id": "R215",
