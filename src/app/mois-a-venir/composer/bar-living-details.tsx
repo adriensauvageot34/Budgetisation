@@ -1,4 +1,5 @@
 "use client";
+import type {ReactNode} from "react";
 import {mobilityIntentId} from "@/domain/phase2/planner/identity";
 import {CalendarDays,Users,MapPin,ArrowRight,Car,Train,Bus,Footprints,Plus,CarTaxiFront} from "lucide-react";
 import type {ComponentSelectionV1} from "@/domain/phase2/planner/component-contract";
@@ -28,9 +29,10 @@ export function BarComponentFace({item,amount,fresh=true}: {item:ComponentSelect
    {item.kind==="COMPONENT"&&item.unitBasis!=="ITEM"&&<small>{item.unitBasis==="SHARED"?"Lot partagé":"Par personne tarifée"}</small>}
  </>;
 }
-export function BarMetadata({fields,model,open,editing=false,disabled=false,active}: {fields:ComposerContextCardView["fields"];model:ComposerUiModel;open:(target:BarTarget)=>void;editing?:boolean;disabled?:boolean;active?:string}){
+export function BarMetadata({fields,model,open,editing=false,disabled=false,active,children}: {fields:ComposerContextCardView["fields"];model:ComposerUiModel;open:(target:BarTarget)=>void;editing?:boolean;disabled?:boolean;active?:string;children?:ReactNode}){
  const place=fields.placeRef as ProspectivePlaceRef|undefined,date=barDateLabel(fields.plannedDate),people=Array.isArray(fields.participantRefs)?fields.participantRefs as ProspectivePersonRef[]:[];
  return <nav className={styles.barLivingMetadata} aria-label="Précisions de la sortie">
+   {children}
    {(place||editing)&&<button type="button" aria-label="Modifier le lieu" aria-pressed={active==="place"||active==="manual-place"||active==="google"} disabled={disabled} onClick={()=>open("place")} title={place?.kind==="KNOWN"?"Lieu enregistré · identité conservée":"Repère textuel · itinéraire à préciser"}><MapPin size={14}/>{place?barPlaceLabel(place,model):"Lieu"}</button>}
    {(date||editing)&&<button type="button" aria-label="Modifier la date" aria-pressed={active==="date"} disabled={disabled} onClick={()=>open("date")}><CalendarDays size={14}/>{date??"Date"}</button>}
    {(people.length>0||editing)&&<button type="button" className={styles.barPeople} aria-pressed={active==="people"} disabled={disabled} onClick={()=>open("people")} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)}>

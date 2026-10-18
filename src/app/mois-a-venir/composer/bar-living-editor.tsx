@@ -267,17 +267,17 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   if(page==="quick")question={title:"Que couvre ce coût prévu ?",choices:[{...choice("entry","Entrées / contribution",()=>setQuickTotal(false),"night-out","Hors boissons, repas et trajets"),selected:!quickTotal},{...choice("total","Consommations regroupées",()=>setQuickTotal(true),"night-out","Remplace leurs détails, hors repas et trajets"),selected:quickTotal}]};
   if(page==="coverage")question={title:"Ce poste est-il déjà compris dans le coût retenu ?",choices:[choice("included","Détailler à la place",()=>pendingShared?addShared(true):pendingAsset&&add(pendingAsset,true),"night-out","Retire le coût regroupé pour ne pas le compter deux fois"),choice("extra","Ajouter en plus",()=>pendingShared?addShared(false):pendingAsset&&add(pendingAsset,false),"night-out","Coût indépendant des entrées / contribution"),choice("cancel","Ne rien ajouter",()=>{setPendingAsset(null);setPendingShared(false);go("drinks");},"activity")]};
   const activeRow=<fieldset className={styles.barEditableBody} disabled={busy||slot.startsWith("before-")&&beforeLocked}>{!advancedRow && (row.unitBasis==="ITEM"||row.unitBasis==="SHARED") ? <div data-bar-short-row>
-          <strong>{row.label}</strong><div className={styles.barLivingMetadata}>
-          <label>Quantité {row.unitBasis==="SHARED"?"de lots":"totale"}<span className={styles.workshopStepper}>
+          <div className={styles.barRowControls}>
+          <label><span className={styles.barVisuallyHidden}>Quantité {row.unitBasis==="SHARED"?"de lots":"totale"}</span><span className={styles.workshopStepper}>
             <button type="button" aria-label="Réduire la quantité" disabled={Number(row.quantity)<=1} onClick={()=>adjustQuantity(-1)}>−</button>
-            <input inputMode="decimal" value={row.quantity} onChange={e=>{setRow(r=>({...r,quantity:e.target.value,edited:true}));setDirty(true);}}/>
+            <input aria-label={row.unitBasis==="SHARED"?"Quantité de lots":"Quantité totale"} inputMode="decimal" value={row.quantity} onChange={e=>{setRow(r=>({...r,quantity:e.target.value,edited:true}));setDirty(true);}}/>
             <button type="button" aria-label="Augmenter la quantité" onClick={()=>adjustQuantity(1)}>+</button>
           </span></label>
-          <label>{row.unitBasis==="SHARED"?"Prix par lot (€)":"Prix unitaire (€)"}<input inputMode="decimal" placeholder="Prix à préciser" value={row.costMode==="MANUAL"?row.amount:""} onChange={e=>{setRow(r=>({...r,amount:e.target.value,costMode:e.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}));setDirty(true);}}/></label></div>
+          <label className={styles.barInlinePrice}><span className={styles.barVisuallyHidden}>{row.unitBasis==="SHARED"?"Prix par lot (€)":"Prix unitaire (€)"}</span><span aria-hidden="true">{row.unitBasis==="SHARED"?"Prix / lot":"Prix / unité"}</span><input aria-label={row.unitBasis==="SHARED"?"Prix par lot (€)":"Prix unitaire (€)"} inputMode="decimal" placeholder="À préciser" value={row.costMode==="MANUAL"?row.amount:""} onChange={e=>{setRow(r=>({...r,amount:e.target.value,costMode:e.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}));setDirty(true);}}/><span aria-hidden="true">€</span></label>
+          <details className={styles.barItemMenu} data-bar-item-details><summary>Détails du poste</summary><div><button type="button" onClick={()=>setAdvancedRow(true)}>Unité, financement et nom</button><button type="button" disabled={busy} onClick={remove} aria-label="Retirer ce poste"><Trash2 size={14}/> Retirer</button></div></details></div>
           {row.costMode==="QUOTE"&&<p>Devis conservé ; saisir un prix le remplacera explicitement.</p>}
           {dirty&&<button type="button" disabled={!canSaveBuffer()} onClick={()=>saveRow()}>Enregistrer</button>}
-          <details data-bar-item-details><summary>Détails du poste</summary><button type="button" onClick={()=>setAdvancedRow(true)}>Unité, financement et nom</button></details>
-          <button type="button" disabled={busy} onClick={remove} aria-label="Retirer ce poste"><Trash2 size={14}/> Retirer</button></div>
+          </div>
           : <><WorkshopComponentRow title={row.label} row={row} onChange={next=>{setRow(next);setDirty(true);}} onSave={()=>saveRow()} onRemove={remove} busy={busy}/><button type="button" onClick={()=>go("drinks")}>Voir les consommations</button></>}</fieldset>;
   const sectionLabels={extras:"Au bar",before:"Avant de sortir",food:"Repas",main:barItems(context,"main").some(item=>item.kind==="COMPONENT"&&item.label==="Consommations regroupées")?"Consommations regroupées":"Entrées / contribution"};
   const freshProjection=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===context.contextOccurrenceId)?.semanticStateDigest===model.board.draft.semanticStateDigest;
@@ -288,15 +288,17 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     onClick={event=>{if(page==="row"&&event.target instanceof Element&&!event.target.closest("button,input,label,select,textarea,summary,details,[data-bar-tile],dialog"))go("summary");}}
     onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();if(page!=="summary")go("summary");else props.onCancel();}}}>
     <fieldset className={styles.barEditableBody} disabled={busy} aria-label="Composition de la sortie">
-    <BarMetadata fields={context.fields} model={model} open={open} editing active={page} disabled={busy}/>
-    {page!=="summary"&&<button type="button" className={styles.barSceneBack} onClick={()=>go("summary")}>← Ma sortie</button>}
+    <BarMetadata fields={context.fields} model={model} open={open} editing active={page} disabled={busy}>
+      {page!=="summary"&&<button type="button" className={styles.barBackArrow} title="Ma sortie" onClick={()=>go("summary")}>←<span className={styles.barVisuallyHidden}> Ma sortie</span></button>}
+      {!barLeg(context,"outbound")&&!barLeg(context,"return")&&<button type="button" data-bar-add-route="outbound" className={styles.barMetaTrip} disabled={busy} onClick={()=>open("outbound")}>+ Trajet</button>}
+    </BarMetadata>
     {(page==="summary"||["outbound","return","endpoint","fare"].includes(page))&&<div className={styles.barLivingRoutes} aria-label="Déplacements">
       {(["outbound","return"] as const).map(key=>(page==="summary"||key===direction)&&barLeg(context,key)?<BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} active={direction===key&&["outbound","return","endpoint","fare"].includes(page)} open={()=>open(key)}/>:null)}
-      {!barLeg(context,"outbound")&&!barLeg(context,"return")&&<button type="button" data-bar-add-route="outbound" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("outbound")}>+ Déplacement</button>}
       {barLeg(context,"outbound")&&!barLeg(context,"return")&&!barLeg(context,"outbound")!.returnRequired&&<button type="button" data-bar-add-route="return" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("return")}>+ Retour</button>}
       {barLeg(context,"return")&&!barLeg(context,"outbound")&&<button type="button" data-bar-add-route="outbound" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("outbound")}>+ Aller</button>}
     </div>
     }
+    <div className={styles.barLivingSections} data-scene={page}>
     {before&&beforeScene&&<section className={styles.barItemSection} data-bar-before data-bar-section="before" aria-label="Avant de sortir">
       <header><h4>Avant de sortir</h4><button type="button" className={styles.barInlineAdd} disabled={busy||beforeLocked} onClick={()=>go("before")}>Compléter le Before</button><details><summary aria-label="Actions du Before">⋯</summary><button type="button" disabled={busy||beforeLocked} onClick={removeBefore}>Retirer le Before</button></details></header>
       {beforeLocked&&<p>Ce Before est protégé. Ses composants restent consultables.</p>}
@@ -327,6 +329,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
         {page==="drinks"&&pagesFor(items,"Pages des consommations")}
       </section>;
     })}
+    </div>
     <section className={styles.barLivingQuestion} aria-label="Décision en cours">
       {page==="place"&&<section data-bar-local-places><label>Chercher dans les lieux enregistrés<input value={query} onChange={e=>{setQuery(e.target.value);setItemPage(0);}} placeholder="Nom, ville…"/></label><p>Lieux enregistrés · <button type="button" onClick={()=>go("google")}>Chercher avec Google Maps</button></p>
         {knownBars.slice(itemPage*3,(itemPage+1)*3).map(place=><button type="button" key={place.placeId} title={barPlaceHint(place,model.mobilityOptions?.placeKnowledge)} onClick={()=>choosePlace({kind:"KNOWN",placeId:place.placeId})}>{place.name} · {place.commune??place.address??place.placeId.slice(-6)}</button>)}
