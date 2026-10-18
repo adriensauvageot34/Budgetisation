@@ -1,0 +1,28 @@
+{
+  "method": "Official native ctrl+plus; no browser zoom capability; no alternative desktop browser in inventory",
+  "before": {
+    "dpr": 1.0000000149011612,
+    "inner": [
+      1920,
+      1080
+    ],
+    "outer": [
+      1522,
+      946
+    ],
+    "scale": 1
+  },
+  "after": {
+    "dpr": 1.0000000149011612,
+    "inner": [
+      1920,
+      1080
+    ],
+    "outer": [
+      1522,
+      946
+    ],
+    "scale": 1
+  },
+  "verdict": "NOT_VERIFIABLE"
+}

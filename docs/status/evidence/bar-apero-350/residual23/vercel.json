@@ -1,0 +1,11 @@
+{
+  "id": "dpl_4YS7ubjuSZ7cdZbNCjTrXnE19Zi2",
+  "url": "budgetisation-ma10l6rq1-adriensauvageot34-6137s-projects.vercel.app",
+  "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+  "branch": "codex/bar-apero-350-effective-closure",
+  "state": "READY",
+  "target": null,
+  "production": false,
+  "build": "npm run build; compile 31.2s, TypeScript31.8s, static8/8, Build Completed, Deployment completed",
+  "limits": "UI Preview accessible at login only; isolated H1 World prerequisites missing"
+}

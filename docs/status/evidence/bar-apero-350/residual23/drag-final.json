@@ -1,0 +1,286 @@
+{
+  "card": "Bar / Apéro263,00 €connus · coûts à préciser⋯Retirer la sortie Bar du Canal sam. 14 nov.AFAliceAAmandineCCédric+3AllerVoitureDépart · Synthetic place 0Arrivée · Bar du CanalPeugeot 207Usage à estimerCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.RetourTaxiDépart · Bar du CanalArrivée · Synthetic place 012,00 €Tarif prévu · coût monétaire du transport 12,00 €Avant de sortir · 9 objetsVodka ×120,00 € / lotLot partagéDiluant sans alcool ×14,00 € / unité+7Au barBière ×18,00 €Bière ×19,00 €+13",
+  "focus": "Bar / Apéro",
+  "latency": {
+    "drags": [
+      {
+        "compatible": "true",
+        "kind": "VISIBLE_TRASH",
+        "ms": 12088.29999999702,
+        "over": "false",
+        "rect": {
+          "height": 36.60000228881836,
+          "width": 93.4124984741211,
+          "x": 816.2937622070312,
+          "y": 729.4000244140625
+        }
+      }
+    ],
+    "eventTimingSupported": true,
+    "events": [
+      {
+        "category": "OTHER",
+        "handler": 4142.20000000298,
+        "name": "click",
+        "start": 4140.5999999940395
+      },
+      {
+        "category": "BAR",
+        "handler": 12074.59999999404,
+        "name": "dragstart",
+        "start": 12054.79999999702,
+        "x": 675,
+        "y": 166
+      },
+      {
+        "category": "BAR",
+        "handler": 12098.09999999404,
+        "name": "dragenter",
+        "start": 12097.70000000298,
+        "x": 698,
+        "y": 239
+      },
+      {
+        "category": "BAR",
+        "handler": 12098.70000000298,
+        "name": "dragover",
+        "start": 12098.5,
+        "x": 698,
+        "y": 239
+      },
+      {
+        "category": "OTHER",
+        "handler": 12111.09999999404,
+        "name": "dragenter",
+        "start": 12110.90000000596,
+        "x": 721,
+        "y": 312
+      },
+      {
+        "category": "OTHER",
+        "handler": 12120.79999999702,
+        "name": "dragover",
+        "start": 12120.5,
+        "x": 744,
+        "y": 385
+      },
+      {
+        "category": "OTHER",
+        "handler": 12129.90000000596,
+        "name": "dragover",
+        "start": 12129.70000000298,
+        "x": 768,
+        "y": 458
+      },
+      {
+        "category": "OTHER",
+        "handler": 12140.40000000596,
+        "name": "dragenter",
+        "start": 12140.09999999404,
+        "x": 791,
+        "y": 531
+      },
+      {
+        "category": "OTHER",
+        "handler": 12147.40000000596,
+        "name": "dragenter",
+        "start": 12147.20000000298,
+        "x": 814,
+        "y": 604
+      },
+      {
+        "category": "OTHER",
+        "handler": 12156,
+        "name": "dragenter",
+        "start": 12155.79999999702,
+        "x": 837,
+        "y": 677
+      },
+      {
+        "category": "TRASH",
+        "handler": 12163.20000000298,
+        "name": "dragenter",
+        "start": 12163.09999999404,
+        "x": 860,
+        "y": 750
+      },
+      {
+        "category": "TRASH",
+        "handler": 12175.20000000298,
+        "name": "drop",
+        "start": 12175.09999999404,
+        "x": 860,
+        "y": 750
+      },
+      {
+        "category": "BAR",
+        "handler": 12203.09999999404,
+        "name": "dragend",
+        "start": 12201.20000000298,
+        "x": 860,
+        "y": 750
+      }
+    ],
+    "method": "NATIVE_EVENT_TIMING_16MS_THRESHOLD_8MS_QUANTIZATION_NOT_ALL_EVENTS_OR_DISPLAY_PHOTONS",
+    "paints": [
+      {
+        "category": "OTHER",
+        "duration": 48,
+        "interactionId": 2540,
+        "name": "click",
+        "processingEnd": 4152.4000000059605,
+        "processingStart": 4142,
+        "start": 4140.5999999940395
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 12088.40000000596,
+        "processingStart": 12074.09999999404,
+        "start": 12054.79999999702
+      },
+      {
+        "category": "TRASH",
+        "duration": 56,
+        "interactionId": 0,
+        "name": "drop",
+        "processingEnd": 12200.79999999702,
+        "processingStart": 12175.09999999404,
+        "start": 12175.09999999404
+      },
+      {
+        "category": "BAR",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "dragend",
+        "processingEnd": 12203.20000000298,
+        "processingStart": 12202.79999999702,
+        "start": 12201.20000000298
+      }
+    ],
+    "requests": [
+      {
+        "duration": 132.70000000298023,
+        "path": "/interaction",
+        "requestStart": 12182.90000000596,
+        "responseEnd": 12312.5,
+        "responseStart": 12312,
+        "start": 12179.79999999702,
+        "transferSize": 321962
+      },
+      {
+        "duration": 4.299999997019768,
+        "path": "/draft",
+        "requestStart": 13354,
+        "responseEnd": 13356.59999999404,
+        "responseStart": 13356.09999999404,
+        "start": 13352.29999999702,
+        "transferSize": 871
+      },
+      {
+        "duration": 151.30000001192093,
+        "path": "/interaction",
+        "requestStart": 13669.29999999702,
+        "responseEnd": 13814.90000000596,
+        "responseStart": 13813.79999999702,
+        "start": 13663.59999999404,
+        "transferSize": 843229
+      },
+      {
+        "duration": 6.799999997019768,
+        "path": "/draft",
+        "requestStart": 14524.59999999404,
+        "responseEnd": 14529,
+        "responseStart": 14528.09999999404,
+        "start": 14522.20000000298,
+        "transferSize": 13111
+      }
+    ],
+    "states": [
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 446.20000000298023,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "true",
+        "ms": 12088.29999999702,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 12200.70000000298,
+        "preview": "PENDING",
+        "removing": true,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 12345.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 13358.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 13369.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 13520.40000000596,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 13845,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 14534.5,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 14553.90000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      }
+    ]
+  },
+  "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+  "trashPresent": false
+}

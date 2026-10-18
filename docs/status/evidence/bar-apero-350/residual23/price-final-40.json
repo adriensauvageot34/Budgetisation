@@ -1,0 +1,2254 @@
+{
+  "latency": {
+    "drags": [
+      {
+        "compatible": "true",
+        "kind": "VISIBLE_TRASH",
+        "ms": 12088.29999999702,
+        "over": "false",
+        "rect": {
+          "height": 36.60000228881836,
+          "width": 93.4124984741211,
+          "x": 816.2937622070312,
+          "y": 729.4000244140625
+        }
+      },
+      {
+        "compatible": "true",
+        "kind": "VISIBLE_TRASH",
+        "ms": 25876.40000000596,
+        "over": "false",
+        "rect": {
+          "height": 36.60000228881836,
+          "width": 93.4124984741211,
+          "x": 816.2937622070312,
+          "y": 729.4000244140625
+        }
+      }
+    ],
+    "eventTimingSupported": true,
+    "events": [
+      {
+        "category": "OTHER",
+        "handler": 4142.20000000298,
+        "name": "click",
+        "start": 4140.5999999940395
+      },
+      {
+        "category": "BAR",
+        "handler": 12074.59999999404,
+        "name": "dragstart",
+        "start": 12054.79999999702,
+        "x": 675,
+        "y": 166
+      },
+      {
+        "category": "BAR",
+        "handler": 12098.09999999404,
+        "name": "dragenter",
+        "start": 12097.70000000298,
+        "x": 698,
+        "y": 239
+      },
+      {
+        "category": "BAR",
+        "handler": 12098.70000000298,
+        "name": "dragover",
+        "start": 12098.5,
+        "x": 698,
+        "y": 239
+      },
+      {
+        "category": "OTHER",
+        "handler": 12111.09999999404,
+        "name": "dragenter",
+        "start": 12110.90000000596,
+        "x": 721,
+        "y": 312
+      },
+      {
+        "category": "OTHER",
+        "handler": 12120.79999999702,
+        "name": "dragover",
+        "start": 12120.5,
+        "x": 744,
+        "y": 385
+      },
+      {
+        "category": "OTHER",
+        "handler": 12129.90000000596,
+        "name": "dragover",
+        "start": 12129.70000000298,
+        "x": 768,
+        "y": 458
+      },
+      {
+        "category": "OTHER",
+        "handler": 12140.40000000596,
+        "name": "dragenter",
+        "start": 12140.09999999404,
+        "x": 791,
+        "y": 531
+      },
+      {
+        "category": "OTHER",
+        "handler": 12147.40000000596,
+        "name": "dragenter",
+        "start": 12147.20000000298,
+        "x": 814,
+        "y": 604
+      },
+      {
+        "category": "OTHER",
+        "handler": 12156,
+        "name": "dragenter",
+        "start": 12155.79999999702,
+        "x": 837,
+        "y": 677
+      },
+      {
+        "category": "TRASH",
+        "handler": 12163.20000000298,
+        "name": "dragenter",
+        "start": 12163.09999999404,
+        "x": 860,
+        "y": 750
+      },
+      {
+        "category": "TRASH",
+        "handler": 12175.20000000298,
+        "name": "drop",
+        "start": 12175.09999999404,
+        "x": 860,
+        "y": 750
+      },
+      {
+        "category": "BAR",
+        "handler": 12203.09999999404,
+        "name": "dragend",
+        "start": 12201.20000000298,
+        "x": 860,
+        "y": 750
+      },
+      {
+        "category": "BAR",
+        "handler": 25869.09999999404,
+        "name": "dragstart",
+        "start": 25855.09999999404,
+        "x": 675,
+        "y": 166
+      },
+      {
+        "category": "OTHER",
+        "handler": 25882.29999999702,
+        "name": "dragenter",
+        "start": 25882,
+        "x": 753,
+        "y": 233
+      },
+      {
+        "category": "OTHER",
+        "handler": 25882.90000000596,
+        "name": "dragover",
+        "start": 25882.59999999404,
+        "x": 753,
+        "y": 233
+      },
+      {
+        "category": "OTHER",
+        "handler": 25899.90000000596,
+        "name": "dragenter",
+        "start": 25899.5,
+        "x": 831,
+        "y": 300
+      },
+      {
+        "category": "OTHER",
+        "handler": 25916.90000000596,
+        "name": "dragenter",
+        "start": 25916.70000000298,
+        "x": 909,
+        "y": 366
+      },
+      {
+        "category": "OTHER",
+        "handler": 25927.20000000298,
+        "name": "dragenter",
+        "start": 25927,
+        "x": 988,
+        "y": 433
+      },
+      {
+        "category": "OTHER",
+        "handler": 25934.59999999404,
+        "name": "dragenter",
+        "start": 25934.20000000298,
+        "x": 1066,
+        "y": 500
+      },
+      {
+        "category": "OTHER",
+        "handler": 25945.70000000298,
+        "name": "dragenter",
+        "start": 25945.5,
+        "x": 1144,
+        "y": 567
+      },
+      {
+        "category": "OTHER",
+        "handler": 25955.90000000596,
+        "name": "dragenter",
+        "start": 25955.70000000298,
+        "x": 1222,
+        "y": 633
+      },
+      {
+        "category": "OTHER",
+        "handler": 25963.20000000298,
+        "name": "dragover",
+        "start": 25963,
+        "x": 1300,
+        "y": 700
+      },
+      {
+        "category": "BAR",
+        "handler": 25973.79999999702,
+        "name": "dragend",
+        "start": 25973.79999999702,
+        "x": 1300,
+        "y": 700
+      },
+      {
+        "category": "BAR",
+        "handler": 101201.5,
+        "name": "click",
+        "start": 101200.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108025.20000000298,
+        "name": "click",
+        "start": 108024
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108039.70000000298,
+        "name": "keydown",
+        "start": 108039.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108044,
+        "name": "keydown",
+        "start": 108042.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108065.09999999404,
+        "name": "keydown",
+        "start": 108064.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108070.20000000298,
+        "name": "input",
+        "start": 108069.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108098.90000000596,
+        "name": "keydown",
+        "start": 108098.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108101.59999999404,
+        "name": "keydown",
+        "start": 108101.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108127.09999999404,
+        "name": "keydown",
+        "start": 108126.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108128.90000000596,
+        "name": "input",
+        "start": 108128.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108154.29999999702,
+        "name": "keydown",
+        "start": 108153.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108156.40000000596,
+        "name": "keydown",
+        "start": 108156
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108174.5,
+        "name": "keydown",
+        "start": 108174.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108175.40000000596,
+        "name": "input",
+        "start": 108175.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108190.90000000596,
+        "name": "keydown",
+        "start": 108190.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108192.40000000596,
+        "name": "keydown",
+        "start": 108192.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108206.90000000596,
+        "name": "keydown",
+        "start": 108206.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108207.90000000596,
+        "name": "input",
+        "start": 108207.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108235.59999999404,
+        "name": "keydown",
+        "start": 108231.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108237.79999999702,
+        "name": "keydown",
+        "start": 108237.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108250.40000000596,
+        "name": "keydown",
+        "start": 108250
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108252.20000000298,
+        "name": "input",
+        "start": 108252
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108270.79999999702,
+        "name": "keydown",
+        "start": 108270.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108272.90000000596,
+        "name": "keydown",
+        "start": 108272.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108293.59999999404,
+        "name": "keydown",
+        "start": 108293.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108294.5,
+        "name": "input",
+        "start": 108294.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108310.59999999404,
+        "name": "keydown",
+        "start": 108310.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108311.90000000596,
+        "name": "keydown",
+        "start": 108311.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108324.90000000596,
+        "name": "keydown",
+        "start": 108324.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108325.79999999702,
+        "name": "input",
+        "start": 108325.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108338.40000000596,
+        "name": "keydown",
+        "start": 108338.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108339.59999999404,
+        "name": "keydown",
+        "start": 108339.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108352.09999999404,
+        "name": "keydown",
+        "start": 108352
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108354,
+        "name": "input",
+        "start": 108353.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108366.09999999404,
+        "name": "keydown",
+        "start": 108365.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108367.90000000596,
+        "name": "keydown",
+        "start": 108367.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108378.29999999702,
+        "name": "keydown",
+        "start": 108378
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108380,
+        "name": "input",
+        "start": 108379.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108392,
+        "name": "keydown",
+        "start": 108391.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108393.20000000298,
+        "name": "keydown",
+        "start": 108393
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108406.90000000596,
+        "name": "keydown",
+        "start": 108406.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108407.79999999702,
+        "name": "input",
+        "start": 108407.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108420.09999999404,
+        "name": "keydown",
+        "start": 108419.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108421.29999999702,
+        "name": "keydown",
+        "start": 108421.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108433,
+        "name": "keydown",
+        "start": 108432.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108433.90000000596,
+        "name": "input",
+        "start": 108433.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108444.40000000596,
+        "name": "keydown",
+        "start": 108444.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108445.40000000596,
+        "name": "keydown",
+        "start": 108445.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108458.09999999404,
+        "name": "keydown",
+        "start": 108457.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108459.90000000596,
+        "name": "input",
+        "start": 108459.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108473.29999999702,
+        "name": "keydown",
+        "start": 108473.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108474.5,
+        "name": "keydown",
+        "start": 108474.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108486.5,
+        "name": "keydown",
+        "start": 108486.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108487.5,
+        "name": "input",
+        "start": 108487.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108499.20000000298,
+        "name": "keydown",
+        "start": 108499
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108501.09999999404,
+        "name": "keydown",
+        "start": 108500.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108512.70000000298,
+        "name": "keydown",
+        "start": 108512.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108513.90000000596,
+        "name": "input",
+        "start": 108513.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108527.5,
+        "name": "keydown",
+        "start": 108527.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108528.79999999702,
+        "name": "keydown",
+        "start": 108528.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108542.5,
+        "name": "keydown",
+        "start": 108542.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108543.40000000596,
+        "name": "input",
+        "start": 108543.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108559.20000000298,
+        "name": "keydown",
+        "start": 108559
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108560.70000000298,
+        "name": "keydown",
+        "start": 108560.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108574.90000000596,
+        "name": "keydown",
+        "start": 108574.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108575.90000000596,
+        "name": "input",
+        "start": 108575.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108590.5,
+        "name": "keydown",
+        "start": 108590.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108592,
+        "name": "keydown",
+        "start": 108591.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108607.29999999702,
+        "name": "keydown",
+        "start": 108606.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108608.29999999702,
+        "name": "input",
+        "start": 108608
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108624.59999999404,
+        "name": "keydown",
+        "start": 108624.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108626.40000000596,
+        "name": "keydown",
+        "start": 108626.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108646.5,
+        "name": "keydown",
+        "start": 108646.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108647.59999999404,
+        "name": "input",
+        "start": 108647.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108659.40000000596,
+        "name": "keydown",
+        "start": 108659.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108660.59999999404,
+        "name": "keydown",
+        "start": 108660.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108676.09999999404,
+        "name": "keydown",
+        "start": 108675.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108677.09999999404,
+        "name": "input",
+        "start": 108676.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108695.79999999702,
+        "name": "keydown",
+        "start": 108695.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108698.59999999404,
+        "name": "keydown",
+        "start": 108698.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108711.29999999702,
+        "name": "keydown",
+        "start": 108711
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108713.09999999404,
+        "name": "input",
+        "start": 108712.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108725.20000000298,
+        "name": "keydown",
+        "start": 108725.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108726.40000000596,
+        "name": "keydown",
+        "start": 108726.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108740.59999999404,
+        "name": "keydown",
+        "start": 108740.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108741.59999999404,
+        "name": "input",
+        "start": 108741.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108757,
+        "name": "keydown",
+        "start": 108756.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108758.20000000298,
+        "name": "keydown",
+        "start": 108758
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108770.90000000596,
+        "name": "keydown",
+        "start": 108770.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108771.90000000596,
+        "name": "input",
+        "start": 108771.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108785.29999999702,
+        "name": "keydown",
+        "start": 108785
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108786.5,
+        "name": "keydown",
+        "start": 108786.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108796.09999999404,
+        "name": "keydown",
+        "start": 108795.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108797.90000000596,
+        "name": "input",
+        "start": 108797.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108809,
+        "name": "keydown",
+        "start": 108808.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108810.20000000298,
+        "name": "keydown",
+        "start": 108810.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108822.59999999404,
+        "name": "keydown",
+        "start": 108822.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108823.59999999404,
+        "name": "input",
+        "start": 108823.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108836.29999999702,
+        "name": "keydown",
+        "start": 108836
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108837.5,
+        "name": "keydown",
+        "start": 108837.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108849.5,
+        "name": "keydown",
+        "start": 108849.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108850.40000000596,
+        "name": "input",
+        "start": 108850.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108860.29999999702,
+        "name": "keydown",
+        "start": 108860.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108861.5,
+        "name": "keydown",
+        "start": 108861.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108873.59999999404,
+        "name": "keydown",
+        "start": 108873.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108874.59999999404,
+        "name": "input",
+        "start": 108874.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108887.5,
+        "name": "keydown",
+        "start": 108887.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108888.59999999404,
+        "name": "keydown",
+        "start": 108888.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108901.79999999702,
+        "name": "keydown",
+        "start": 108901.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108903.09999999404,
+        "name": "input",
+        "start": 108903
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108917.59999999404,
+        "name": "keydown",
+        "start": 108917.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108920,
+        "name": "keydown",
+        "start": 108919.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108934.5,
+        "name": "keydown",
+        "start": 108934.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108935.5,
+        "name": "input",
+        "start": 108935.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108951.40000000596,
+        "name": "keydown",
+        "start": 108951.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108952.79999999702,
+        "name": "keydown",
+        "start": 108952.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108966.79999999702,
+        "name": "keydown",
+        "start": 108966.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108967.90000000596,
+        "name": "input",
+        "start": 108967.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108978.5,
+        "name": "keydown",
+        "start": 108978.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108980.70000000298,
+        "name": "keydown",
+        "start": 108979.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108992.40000000596,
+        "name": "keydown",
+        "start": 108992.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 108994.29999999702,
+        "name": "input",
+        "start": 108994.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109007.29999999702,
+        "name": "keydown",
+        "start": 109007.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109008.5,
+        "name": "keydown",
+        "start": 109008.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109019.5,
+        "name": "keydown",
+        "start": 109019.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109020.40000000596,
+        "name": "input",
+        "start": 109020.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109032.70000000298,
+        "name": "keydown",
+        "start": 109030.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109034.90000000596,
+        "name": "keydown",
+        "start": 109034.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109045,
+        "name": "keydown",
+        "start": 109044.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109047,
+        "name": "input",
+        "start": 109046.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109071.20000000298,
+        "name": "keydown",
+        "start": 109070.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109073,
+        "name": "keydown",
+        "start": 109072.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109088.70000000298,
+        "name": "keydown",
+        "start": 109088.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109090.5,
+        "name": "input",
+        "start": 109090.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109104.90000000596,
+        "name": "keydown",
+        "start": 109104.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109106.09999999404,
+        "name": "keydown",
+        "start": 109105.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109118.90000000596,
+        "name": "keydown",
+        "start": 109118.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109120.09999999404,
+        "name": "input",
+        "start": 109119.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109133.5,
+        "name": "keydown",
+        "start": 109133.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109134.90000000596,
+        "name": "keydown",
+        "start": 109134.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109146.40000000596,
+        "name": "keydown",
+        "start": 109146
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109147.90000000596,
+        "name": "input",
+        "start": 109147.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109161.70000000298,
+        "name": "keydown",
+        "start": 109161.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109163.90000000596,
+        "name": "keydown",
+        "start": 109163.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109178.40000000596,
+        "name": "keydown",
+        "start": 109178.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109179.40000000596,
+        "name": "input",
+        "start": 109179.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109194.29999999702,
+        "name": "keydown",
+        "start": 109194.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109195.5,
+        "name": "keydown",
+        "start": 109195.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109210.90000000596,
+        "name": "keydown",
+        "start": 109210.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109212,
+        "name": "input",
+        "start": 109211.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109243,
+        "name": "keydown",
+        "start": 109242.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109245.59999999404,
+        "name": "keydown",
+        "start": 109245.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109270.79999999702,
+        "name": "keydown",
+        "start": 109270.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109273.29999999702,
+        "name": "input",
+        "start": 109273
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109292.90000000596,
+        "name": "keydown",
+        "start": 109292.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109295.29999999702,
+        "name": "keydown",
+        "start": 109295.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109309.90000000596,
+        "name": "keydown",
+        "start": 109309.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109311.79999999702,
+        "name": "input",
+        "start": 109311.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109324.59999999404,
+        "name": "keydown",
+        "start": 109324.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109326.09999999404,
+        "name": "keydown",
+        "start": 109326
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109338.20000000298,
+        "name": "keydown",
+        "start": 109338
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 109339.29999999702,
+        "name": "input",
+        "start": 109339.20000000298
+      }
+    ],
+    "method": "NATIVE_EVENT_TIMING_16MS_THRESHOLD_8MS_QUANTIZATION_NOT_ALL_EVENTS_OR_DISPLAY_PHOTONS",
+    "paints": [
+      {
+        "category": "OTHER",
+        "duration": 48,
+        "interactionId": 2540,
+        "name": "click",
+        "processingEnd": 4152.4000000059605,
+        "processingStart": 4142,
+        "start": 4140.5999999940395
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 12088.40000000596,
+        "processingStart": 12074.09999999404,
+        "start": 12054.79999999702
+      },
+      {
+        "category": "TRASH",
+        "duration": 56,
+        "interactionId": 0,
+        "name": "drop",
+        "processingEnd": 12200.79999999702,
+        "processingStart": 12175.09999999404,
+        "start": 12175.09999999404
+      },
+      {
+        "category": "BAR",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "dragend",
+        "processingEnd": 12203.20000000298,
+        "processingStart": 12202.79999999702,
+        "start": 12201.20000000298
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 25876.5,
+        "processingStart": 25869,
+        "start": 25855.09999999404
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "dragend",
+        "processingEnd": 25981.20000000298,
+        "processingStart": 25973.79999999702,
+        "start": 25973.79999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 2561,
+        "name": "click",
+        "processingEnd": 101232.20000000298,
+        "processingStart": 101201.5,
+        "start": 101200.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2575,
+        "name": "keydown",
+        "processingEnd": 108040.59999999404,
+        "processingStart": 108039.59999999404,
+        "start": 108039.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2582,
+        "name": "keydown",
+        "processingEnd": 108045.70000000298,
+        "processingStart": 108043.90000000596,
+        "start": 108042.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2589,
+        "name": "keydown",
+        "processingEnd": 108065.29999999702,
+        "processingStart": 108065,
+        "start": 108064.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2596,
+        "name": "keydown",
+        "processingEnd": 108099.20000000298,
+        "processingStart": 108098.79999999702,
+        "start": 108098.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2603,
+        "name": "keydown",
+        "processingEnd": 108102.20000000298,
+        "processingStart": 108101.59999999404,
+        "start": 108101.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2610,
+        "name": "keydown",
+        "processingEnd": 108127.29999999702,
+        "processingStart": 108127,
+        "start": 108126.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2617,
+        "name": "keydown",
+        "processingEnd": 108154.5,
+        "processingStart": 108154.20000000298,
+        "start": 108153.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2624,
+        "name": "keydown",
+        "processingEnd": 108157,
+        "processingStart": 108156.29999999702,
+        "start": 108156
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2631,
+        "name": "keydown",
+        "processingEnd": 108174.59999999404,
+        "processingStart": 108174.40000000596,
+        "start": 108174.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2638,
+        "name": "keydown",
+        "processingEnd": 108191,
+        "processingStart": 108190.90000000596,
+        "start": 108190.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2645,
+        "name": "keydown",
+        "processingEnd": 108192.70000000298,
+        "processingStart": 108192.40000000596,
+        "start": 108192.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2652,
+        "name": "keydown",
+        "processingEnd": 108207.09999999404,
+        "processingStart": 108206.90000000596,
+        "start": 108206.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2659,
+        "name": "keydown",
+        "processingEnd": 108235.79999999702,
+        "processingStart": 108235.59999999404,
+        "start": 108231.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2666,
+        "name": "keydown",
+        "processingEnd": 108238.09999999404,
+        "processingStart": 108237.79999999702,
+        "start": 108237.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2673,
+        "name": "keydown",
+        "processingEnd": 108250.70000000298,
+        "processingStart": 108250.40000000596,
+        "start": 108250
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2680,
+        "name": "keydown",
+        "processingEnd": 108271,
+        "processingStart": 108270.70000000298,
+        "start": 108270.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2687,
+        "name": "keydown",
+        "processingEnd": 108273.29999999702,
+        "processingStart": 108272.90000000596,
+        "start": 108272.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2694,
+        "name": "keydown",
+        "processingEnd": 108293.70000000298,
+        "processingStart": 108293.59999999404,
+        "start": 108293.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2701,
+        "name": "keydown",
+        "processingEnd": 108310.70000000298,
+        "processingStart": 108310.5,
+        "start": 108310.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2708,
+        "name": "keydown",
+        "processingEnd": 108312.09999999404,
+        "processingStart": 108311.79999999702,
+        "start": 108311.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2715,
+        "name": "keydown",
+        "processingEnd": 108325,
+        "processingStart": 108324.79999999702,
+        "start": 108324.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2722,
+        "name": "keydown",
+        "processingEnd": 108338.59999999404,
+        "processingStart": 108338.40000000596,
+        "start": 108338.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2729,
+        "name": "keydown",
+        "processingEnd": 108339.90000000596,
+        "processingStart": 108339.59999999404,
+        "start": 108339.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2736,
+        "name": "keydown",
+        "processingEnd": 108352.40000000596,
+        "processingStart": 108352.09999999404,
+        "start": 108352
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2743,
+        "name": "keydown",
+        "processingEnd": 108366.40000000596,
+        "processingStart": 108366,
+        "start": 108365.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2750,
+        "name": "keydown",
+        "processingEnd": 108368.20000000298,
+        "processingStart": 108367.90000000596,
+        "start": 108367.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2757,
+        "name": "keydown",
+        "processingEnd": 108378.5,
+        "processingStart": 108378.20000000298,
+        "start": 108378
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2764,
+        "name": "keydown",
+        "processingEnd": 108392.09999999404,
+        "processingStart": 108391.90000000596,
+        "start": 108391.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2771,
+        "name": "keydown",
+        "processingEnd": 108393.59999999404,
+        "processingStart": 108393.09999999404,
+        "start": 108393
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2778,
+        "name": "keydown",
+        "processingEnd": 108407,
+        "processingStart": 108406.79999999702,
+        "start": 108406.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2785,
+        "name": "keydown",
+        "processingEnd": 108420.20000000298,
+        "processingStart": 108420,
+        "start": 108419.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2792,
+        "name": "keydown",
+        "processingEnd": 108421.79999999702,
+        "processingStart": 108421.29999999702,
+        "start": 108421.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2799,
+        "name": "keydown",
+        "processingEnd": 108433.09999999404,
+        "processingStart": 108432.90000000596,
+        "start": 108432.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2806,
+        "name": "keydown",
+        "processingEnd": 108444.5,
+        "processingStart": 108444.29999999702,
+        "start": 108444.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2813,
+        "name": "keydown",
+        "processingEnd": 108445.70000000298,
+        "processingStart": 108445.40000000596,
+        "start": 108445.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2820,
+        "name": "keydown",
+        "processingEnd": 108458.40000000596,
+        "processingStart": 108458,
+        "start": 108457.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2827,
+        "name": "keydown",
+        "processingEnd": 108473.59999999404,
+        "processingStart": 108473.29999999702,
+        "start": 108473.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2834,
+        "name": "keydown",
+        "processingEnd": 108474.79999999702,
+        "processingStart": 108474.5,
+        "start": 108474.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2841,
+        "name": "keydown",
+        "processingEnd": 108486.59999999404,
+        "processingStart": 108486.40000000596,
+        "start": 108486.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2855,
+        "name": "keydown",
+        "processingEnd": 108501.5,
+        "processingStart": 108501,
+        "start": 108500.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2862,
+        "name": "keydown",
+        "processingEnd": 108513,
+        "processingStart": 108512.59999999404,
+        "start": 108512.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2876,
+        "name": "keydown",
+        "processingEnd": 108529.09999999404,
+        "processingStart": 108528.79999999702,
+        "start": 108528.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2883,
+        "name": "keydown",
+        "processingEnd": 108542.59999999404,
+        "processingStart": 108542.5,
+        "start": 108542.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2897,
+        "name": "keydown",
+        "processingEnd": 108560.90000000596,
+        "processingStart": 108560.59999999404,
+        "start": 108560.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2904,
+        "name": "keydown",
+        "processingEnd": 108575.09999999404,
+        "processingStart": 108574.90000000596,
+        "start": 108574.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2918,
+        "name": "keydown",
+        "processingEnd": 108592.40000000596,
+        "processingStart": 108592,
+        "start": 108591.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2925,
+        "name": "keydown",
+        "processingEnd": 108607.40000000596,
+        "processingStart": 108607.20000000298,
+        "start": 108606.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2939,
+        "name": "keydown",
+        "processingEnd": 108626.70000000298,
+        "processingStart": 108626.29999999702,
+        "start": 108626.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2946,
+        "name": "keydown",
+        "processingEnd": 108646.70000000298,
+        "processingStart": 108646.40000000596,
+        "start": 108646.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 2960,
+        "name": "keydown",
+        "processingEnd": 108660.90000000596,
+        "processingStart": 108660.59999999404,
+        "start": 108660.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 2967,
+        "name": "keydown",
+        "processingEnd": 108676.20000000298,
+        "processingStart": 108676,
+        "start": 108675.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2981,
+        "name": "keydown",
+        "processingEnd": 108699.09999999404,
+        "processingStart": 108698.40000000596,
+        "start": 108698.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 2988,
+        "name": "keydown",
+        "processingEnd": 108711.40000000596,
+        "processingStart": 108711.09999999404,
+        "start": 108711
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3002,
+        "name": "keydown",
+        "processingEnd": 108726.79999999702,
+        "processingStart": 108726.20000000298,
+        "start": 108726.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3009,
+        "name": "keydown",
+        "processingEnd": 108740.70000000298,
+        "processingStart": 108740.5,
+        "start": 108740.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3023,
+        "name": "keydown",
+        "processingEnd": 108758.5,
+        "processingStart": 108758.20000000298,
+        "start": 108758
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3030,
+        "name": "keydown",
+        "processingEnd": 108771.09999999404,
+        "processingStart": 108770.79999999702,
+        "start": 108770.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3044,
+        "name": "keydown",
+        "processingEnd": 108786.79999999702,
+        "processingStart": 108786.5,
+        "start": 108786.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3051,
+        "name": "keydown",
+        "processingEnd": 108796.40000000596,
+        "processingStart": 108796,
+        "start": 108795.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3065,
+        "name": "keydown",
+        "processingEnd": 108810.5,
+        "processingStart": 108810.09999999404,
+        "start": 108810.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3072,
+        "name": "keydown",
+        "processingEnd": 108822.70000000298,
+        "processingStart": 108822.5,
+        "start": 108822.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3086,
+        "name": "keydown",
+        "processingEnd": 108837.79999999702,
+        "processingStart": 108837.40000000596,
+        "start": 108837.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 48,
+        "interactionId": 3093,
+        "name": "keydown",
+        "processingEnd": 108849.70000000298,
+        "processingStart": 108849.29999999702,
+        "start": 108849.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3100,
+        "name": "keydown",
+        "processingEnd": 108860.5,
+        "processingStart": 108860.29999999702,
+        "start": 108860.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3107,
+        "name": "keydown",
+        "processingEnd": 108861.79999999702,
+        "processingStart": 108861.5,
+        "start": 108861.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3114,
+        "name": "keydown",
+        "processingEnd": 108873.79999999702,
+        "processingStart": 108873.59999999404,
+        "start": 108873.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3128,
+        "name": "keydown",
+        "processingEnd": 108888.90000000596,
+        "processingStart": 108888.5,
+        "start": 108888.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 48,
+        "interactionId": 3135,
+        "name": "keydown",
+        "processingEnd": 108902.20000000298,
+        "processingStart": 108901.79999999702,
+        "start": 108901.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3149,
+        "name": "keydown",
+        "processingEnd": 108920.29999999702,
+        "processingStart": 108919.90000000596,
+        "start": 108919.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 48,
+        "interactionId": 3156,
+        "name": "keydown",
+        "processingEnd": 108934.70000000298,
+        "processingStart": 108934.40000000596,
+        "start": 108934.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3170,
+        "name": "keydown",
+        "processingEnd": 108953.09999999404,
+        "processingStart": 108952.79999999702,
+        "start": 108952.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 48,
+        "interactionId": 3177,
+        "name": "keydown",
+        "processingEnd": 108967.09999999404,
+        "processingStart": 108966.70000000298,
+        "start": 108966.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3184,
+        "name": "keydown",
+        "processingEnd": 108978.70000000298,
+        "processingStart": 108978.5,
+        "start": 108978.40000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3191,
+        "name": "keydown",
+        "processingEnd": 108981.29999999702,
+        "processingStart": 108980.5,
+        "start": 108979.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3198,
+        "name": "keydown",
+        "processingEnd": 108992.59999999404,
+        "processingStart": 108992.29999999702,
+        "start": 108992.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3212,
+        "name": "keydown",
+        "processingEnd": 109009.09999999404,
+        "processingStart": 109008.40000000596,
+        "start": 109008.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 3219,
+        "name": "keydown",
+        "processingEnd": 109019.59999999404,
+        "processingStart": 109019.5,
+        "start": 109019.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 48,
+        "interactionId": 3233,
+        "name": "keydown",
+        "processingEnd": 109035.20000000298,
+        "processingStart": 109034.79999999702,
+        "start": 109034.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3240,
+        "name": "keydown",
+        "processingEnd": 109045.40000000596,
+        "processingStart": 109045,
+        "start": 109044.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 3254,
+        "name": "keydown",
+        "processingEnd": 109073.70000000298,
+        "processingStart": 109072.79999999702,
+        "start": 109072.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 3261,
+        "name": "keydown",
+        "processingEnd": 109088.90000000596,
+        "processingStart": 109088.5,
+        "start": 109088.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 3275,
+        "name": "keydown",
+        "processingEnd": 109106.40000000596,
+        "processingStart": 109106.09999999404,
+        "start": 109105.90000000596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 3282,
+        "name": "keydown",
+        "processingEnd": 109119.20000000298,
+        "processingStart": 109118.90000000596,
+        "start": 109118.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3296,
+        "name": "keydown",
+        "processingEnd": 109135.40000000596,
+        "processingStart": 109134.79999999702,
+        "start": 109134.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3303,
+        "name": "keydown",
+        "processingEnd": 109146.70000000298,
+        "processingStart": 109146.40000000596,
+        "start": 109146
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3317,
+        "name": "keydown",
+        "processingEnd": 109164.29999999702,
+        "processingStart": 109163.79999999702,
+        "start": 109163.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3324,
+        "name": "keydown",
+        "processingEnd": 109178.59999999404,
+        "processingStart": 109178.29999999702,
+        "start": 109178.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3338,
+        "name": "keydown",
+        "processingEnd": 109195.79999999702,
+        "processingStart": 109195.5,
+        "start": 109195.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 3345,
+        "name": "keydown",
+        "processingEnd": 109211.09999999404,
+        "processingStart": 109210.79999999702,
+        "start": 109210.70000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 3359,
+        "name": "keydown",
+        "processingEnd": 109246.29999999702,
+        "processingStart": 109245.5,
+        "start": 109245.20000000298
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 3366,
+        "name": "keydown",
+        "processingEnd": 109271,
+        "processingStart": 109270.70000000298,
+        "start": 109270.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 3380,
+        "name": "keydown",
+        "processingEnd": 109295.70000000298,
+        "processingStart": 109295.29999999702,
+        "start": 109295.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 3387,
+        "name": "keydown",
+        "processingEnd": 109310.29999999702,
+        "processingStart": 109309.90000000596,
+        "start": 109309.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 3401,
+        "name": "keydown",
+        "processingEnd": 109326.40000000596,
+        "processingStart": 109326.09999999404,
+        "start": 109326
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 3408,
+        "name": "keydown",
+        "processingEnd": 109338.5,
+        "processingStart": 109338.20000000298,
+        "start": 109338
+      }
+    ],
+    "requests": [
+      {
+        "duration": 132.70000000298023,
+        "path": "/interaction",
+        "requestStart": 12182.90000000596,
+        "responseEnd": 12312.5,
+        "responseStart": 12312,
+        "start": 12179.79999999702,
+        "transferSize": 321962
+      },
+      {
+        "duration": 4.299999997019768,
+        "path": "/draft",
+        "requestStart": 13354,
+        "responseEnd": 13356.59999999404,
+        "responseStart": 13356.09999999404,
+        "start": 13352.29999999702,
+        "transferSize": 871
+      },
+      {
+        "duration": 151.30000001192093,
+        "path": "/interaction",
+        "requestStart": 13669.29999999702,
+        "responseEnd": 13814.90000000596,
+        "responseStart": 13813.79999999702,
+        "start": 13663.59999999404,
+        "transferSize": 843229
+      },
+      {
+        "duration": 6.799999997019768,
+        "path": "/draft",
+        "requestStart": 14524.59999999404,
+        "responseEnd": 14529,
+        "responseStart": 14528.09999999404,
+        "start": 14522.20000000298,
+        "transferSize": 13111
+      }
+    ],
+    "states": [
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 446.20000000298023,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "true",
+        "ms": 12088.29999999702,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 12200.70000000298,
+        "preview": "PENDING",
+        "removing": true,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 12345.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 13358.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 13369.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 13520.40000000596,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 13845,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 14534.5,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 14553.90000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "true",
+        "ms": 25876.40000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 25981.20000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      }
+    ]
+  },
+  "price": "8",
+  "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e"
+}

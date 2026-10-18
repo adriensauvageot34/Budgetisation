@@ -1,0 +1,671 @@
+[
+  {
+    "label": "1152-summary",
+    "card": {
+      "overflowY": "visible",
+      "rect": {
+        "h": 535,
+        "w": 762.7999877929688,
+        "x": 328,
+        "y": 191.1000061035156
+      },
+      "scroll": [
+        761,
+        761,
+        533,
+        533
+      ]
+    },
+    "collisions": 0,
+    "dock": {
+      "rect": {
+        "h": 137.60000610351562,
+        "w": 782.7999877929688,
+        "x": 322.8000183105469,
+        "y": 794.9000244140625
+      },
+      "scroll": [
+        783,
+        783,
+        138,
+        138
+      ]
+    },
+    "focus": "Replier la carte",
+    "scene": "summary",
+    "small": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgb(255, 250, 240)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgb(255, 250, 240)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      }
+    ],
+    "viewport": [
+      1152,
+      720,
+      1.0000000149011612
+    ]
+  },
+  {
+    "label": "1152-drinks",
+    "card": {
+      "overflowY": "visible",
+      "rect": {
+        "h": 355,
+        "w": 762.7999877929688,
+        "x": 349.84405517578125,
+        "y": 174.3000030517578
+      },
+      "scroll": [
+        761,
+        761,
+        353,
+        353
+      ]
+    },
+    "collisions": 0,
+    "dock": {
+      "rect": {
+        "h": 137.60000610351562,
+        "w": 782.7999877929688,
+        "x": 322.8000183105469,
+        "y": 582.2999877929688
+      },
+      "scroll": [
+        783,
+        783,
+        138,
+        138
+      ]
+    },
+    "focus": "Consommations",
+    "scene": "drinks",
+    "small": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      }
+    ],
+    "viewport": [
+      1152,
+      720,
+      1.0000000149011612
+    ]
+  },
+  {
+    "label": "1152-date",
+    "card": {
+      "overflowY": "visible",
+      "rect": {
+        "h": 445,
+        "w": 762.7999877929688,
+        "x": 328,
+        "y": 191.1000061035156
+      },
+      "scroll": [
+        761,
+        761,
+        443,
+        443
+      ]
+    },
+    "collisions": 0,
+    "dock": null,
+    "focus": "Modifier la date",
+    "scene": "date",
+    "small": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      }
+    ],
+    "viewport": [
+      1152,
+      720,
+      1.0000000149011612
+    ]
+  },
+  {
+    "label": "1440-summary",
+    "card": {
+      "overflowY": "visible",
+      "rect": {
+        "h": 535,
+        "w": 754.5625,
+        "x": 328,
+        "y": 141
+      },
+      "scroll": [
+        753,
+        753,
+        533,
+        533
+      ]
+    },
+    "collisions": 0,
+    "dock": {
+      "rect": {
+        "h": 124,
+        "w": 1080.4000244140625,
+        "x": 322.8000183105469,
+        "y": 744.7999877929688
+      },
+      "scroll": [
+        1080,
+        1080,
+        124,
+        124
+      ]
+    },
+    "focus": "Replier la carte",
+    "scene": "summary",
+    "small": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgb(255, 250, 240)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgb(255, 250, 240)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      }
+    ],
+    "viewport": [
+      1440,
+      900,
+      1.0000000149011612
+    ]
+  },
+  {
+    "label": "1440-drinks",
+    "card": {
+      "overflowY": "visible",
+      "rect": {
+        "h": 355,
+        "w": 754.5625,
+        "x": 328,
+        "y": 141
+      },
+      "scroll": [
+        753,
+        753,
+        353,
+        353
+      ]
+    },
+    "collisions": 0,
+    "dock": {
+      "rect": {
+        "h": 137.60000610351562,
+        "w": 1080.4000244140625,
+        "x": 322.8000183105469,
+        "y": 740.7999877929688
+      },
+      "scroll": [
+        1080,
+        1080,
+        138,
+        138
+      ]
+    },
+    "focus": "Consommations",
+    "scene": "drinks",
+    "small": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      }
+    ],
+    "viewport": [
+      1440,
+      900,
+      1.0000000149011612
+    ]
+  },
+  {
+    "label": "1440-date",
+    "card": {
+      "overflowY": "visible",
+      "rect": {
+        "h": 445,
+        "w": 754.5625,
+        "x": 328,
+        "y": 141
+      },
+      "scroll": [
+        753,
+        753,
+        443,
+        443
+      ]
+    },
+    "collisions": 0,
+    "dock": null,
+    "focus": "Modifier la date",
+    "scene": "date",
+    "small": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      }
+    ],
+    "viewport": [
+      1440,
+      900,
+      1.0000000149011612
+    ]
+  },
+  {
+    "label": "1920-summary",
+    "card": {
+      "overflowY": "visible",
+      "rect": {
+        "h": 535,
+        "w": 778.2250366210938,
+        "x": 433.2000122070313,
+        "y": 141
+      },
+      "scroll": [
+        777,
+        777,
+        533,
+        533
+      ]
+    },
+    "collisions": 0,
+    "dock": {
+      "rect": {
+        "h": 124,
+        "w": 1560.4000244140625,
+        "x": 322.8000183105469,
+        "y": 920.7999877929688
+      },
+      "scroll": [
+        1560,
+        1560,
+        124,
+        124
+      ]
+    },
+    "focus": "Configuration de Bar / Apéro",
+    "scene": "summary",
+    "small": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgb(255, 250, 240)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgb(255, 250, 240)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      }
+    ],
+    "viewport": [
+      1920,
+      1080,
+      1.0000000149011612
+    ]
+  },
+  {
+    "label": "1920-drinks",
+    "card": {
+      "overflowY": "visible",
+      "rect": {
+        "h": 355,
+        "w": 778.2250366210938,
+        "x": 433.2000122070313,
+        "y": 141
+      },
+      "scroll": [
+        777,
+        777,
+        353,
+        353
+      ]
+    },
+    "collisions": 0,
+    "dock": {
+      "rect": {
+        "h": 137.60000610351562,
+        "w": 1560.4000244140625,
+        "x": 322.8000183105469,
+        "y": 920.7999877929688
+      },
+      "scroll": [
+        1560,
+        1560,
+        138,
+        138
+      ]
+    },
+    "focus": "Consommations",
+    "scene": "drinks",
+    "small": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      }
+    ],
+    "viewport": [
+      1920,
+      1080,
+      1.0000000149011612
+    ]
+  },
+  {
+    "label": "1920-date",
+    "card": {
+      "overflowY": "visible",
+      "rect": {
+        "h": 445,
+        "w": 778.2250366210938,
+        "x": 433.2000122070313,
+        "y": 141
+      },
+      "scroll": [
+        777,
+        777,
+        443,
+        443
+      ]
+    },
+    "collisions": 0,
+    "dock": null,
+    "focus": "Modifier la date",
+    "scene": "date",
+    "small": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(89, 83, 99)",
+        "size": "12px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(48, 52, 70)",
+        "size": "12.8px"
+      }
+    ],
+    "viewport": [
+      1920,
+      1080,
+      1.0000000149011612
+    ]
+  }
+]

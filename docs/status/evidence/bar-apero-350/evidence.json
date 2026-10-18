@@ -307,5 +307,61 @@
     "niveau": "BUILD_READY_NOT_UI",
     "scope": "Final exact SHA READY; no authenticated functional Preview PASS.",
     "file_sha256_lf": "9046dcc2bb461e5d795bc25640fae5a4d9a3cdd13299929172c43fbf442e29c1"
+  },
+  "R23_DESKTOP": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/receipt.md",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Native local desktop, scoped physical paths; not Auth/Preview functional PASS.",
+    "file_sha256_lf": "3a94ba2ea0de9254fdba5be9cdd0b4ca7bd486861d78760b7162f58d34f71cbd"
+  },
+  "R23_METRICS": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/metrics.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_BROWSER_FIXTURE_MEASUREMENT",
+    "scope": "40 native price inputs;6paired sequential removals; no robust P95 of6, no speed improvement claim.",
+    "file_sha256_lf": "0595abca269ad575d0f6a8466dcad2ee262ba7707cf4a0c7b42d578442e7706b"
+  },
+  "R23_NATIVE_DRAG": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/drag-final.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_BROWSER_FIXTURE_NATIVE_DRAG",
+    "scope": "Actual trusted native TRASH drop, removal, Undo, rich content, synthetic FRESH/SAVED.",
+    "file_sha256_lf": "1a2ef2a87680d756b4a46d22f4f6d2f55f2ef2f13244cb27537b218bab2c5d88"
+  },
+  "R23_GEOMETRY": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/geometry.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Nine actual scenes/three measured widths; final UI bytes identical, final probe-only delta qualified in receipt.",
+    "file_sha256_lf": "03cd376d5cece2da4ece050ed25fdf0aeea3fd302449fc4c77074ea5dacbb672"
+  },
+  "R23_TESTS": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/tests.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_REACT",
+    "scope": "Eight commands actually run on final product SHA;198/198 financial hashes unchanged.",
+    "file_sha256_lf": "c28716dca1c50706e8b38c488e256ad920c6e15e7858eda69d887d2bb84f1d16"
+  },
+  "R23_OWNER": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/owners.md",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "BLOCKED_OWNER",
+    "scope": "Missing published contracts and official Global preconditions; no owner bypass.",
+    "file_sha256_lf": "8b491ece6baa12ff64ce73ade3e50f4c2b5c2bfaf756a692b2b0204bee50d67f"
+  },
+  "R23_ENV": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/owner-environment.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "AUTH_UI_BLOCKED",
+    "scope": "Bounded read-only preconditions, no publication and wrong Canonical scope for H1.",
+    "file_sha256_lf": "5e6d0f4d5c82c9add0ac152fc6773e2a404dbc7bdce28a603f62af5be836a6f1"
+  },
+  "R23_PREVIEW": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/vercel.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "BUILD_READY_NOT_UI",
+    "scope": "Exact product commit READY full build; isolated functional Auth UI blocked.",
+    "file_sha256_lf": "79338ea3955b764ea0eb8cb0cb5fa551c9e6b2c638ff5312b59d50f0207655ca"
   }
 }

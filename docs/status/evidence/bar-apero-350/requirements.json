@@ -960,20 +960,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_ENVIRONMENT",
       "END_UI",
-      "END_REACT"
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_GEOMETRY"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "PASS_BROWSER_DESKTOP_LOCAL_SYNTHETIC_ONLY / Vercel READY not UI Auth",
+    "niveau_preuve": "DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "Réception tactile complète non exécutée : aucun appareil ou interface tactile autorisée. Desktop conforme au périmètre utilisateur.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/composer-board.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css",
+      "src/app/mois-a-venir/composer/bar-reception-probe.ts"
+    ],
+    "nature_validation": "TARGETED_DESKTOP_RECEIPT",
     "avant": "BLOCKED_ENV",
     "apres": "NOT_RUN",
     "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
@@ -1013,7 +1023,23 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Réception tactile complète non exécutée : aucun appareil ou interface tactile autorisée. Desktop conforme au périmètre utilisateur."
       }
-    ]
+    ],
+    "portee_validation": "Desktop souris/clavier/dialogue/RAW/Undo reçus ; tactile/mobile exclus explicitement par utilisateur, jamais PASS tactile.",
+    "scope_exclusions": [
+      {
+        "scope": "TOUCH_MOBILE",
+        "status": "OUT_OF_SCOPE_USER_APPROVED",
+        "source": "Mission clôture23résidus18octobre2026 : consigne explicite desktop uniquement",
+        "not_a_pass": true
+      }
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Réception tactile complète non exécutée : aucun appareil ou interface tactile autorisée. Desktop conforme au périmètre utilisateur.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Desktop souris/clavier/dialogue/RAW/Undo reçus ; tactile/mobile exclus explicitement par utilisateur, jamais PASS tactile."
+    }
   },
   {
     "id": "R031",
@@ -3527,19 +3553,29 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_ENVIRONMENT",
-      "END_UI"
+      "END_UI",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_GEOMETRY"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "PASS_BROWSER_DESKTOP_LOCAL_SYNTHETIC_ONLY / Vercel READY not UI Auth",
+    "niveau_preuve": "DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "Une amélioration mesurée du contraste des petits textes reste à réaliser ; la capture lisible ne suffit pas à prouver un renforcement.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/composer-board.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css",
+      "src/app/mois-a-venir/composer/bar-reception-probe.ts"
+    ],
+    "nature_validation": "TARGETED_DESKTOP_RECEIPT",
     "avant": "BLOCKED_ENV",
     "apres": "NOT_RUN",
     "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
@@ -3578,7 +3614,15 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Une amélioration mesurée du contraste des petits textes reste à réaliser ; la capture lisible ne suffit pas à prouver un renforcement."
       }
-    ]
+    ],
+    "portee_validation": "Aides et légendes Bar ciblées :12px et #595363, contrastes rendus6.16–7.27:1 ; neuf scènes desktop sans scroll interne.",
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Une amélioration mesurée du contraste des petits textes reste à réaliser ; la capture lisible ne suffit pas à prouver un renforcement.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Aides et légendes Bar ciblées :12px et #595363, contrastes rendus6.16–7.27:1 ; neuf scènes desktop sans scroll interne."
+    }
   },
   {
     "id": "R085",
@@ -7414,18 +7458,21 @@
       "G1_REACT",
       "G1_P3",
       "G1_EXISTING",
-      "END_OWNER"
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
+    "reste": "Contrat Google exact/admission toujours absent : owners.md.",
     "blocage": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
     ],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -7454,7 +7501,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "BLOCKED_OWNER",
+      "avant_reste": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Contrat Google exact/admission toujours absent : owners.md."
+    }
   },
   {
     "id": "R209",
@@ -7470,18 +7524,21 @@
       "G1_REACT",
       "G1_P3",
       "G1_EXISTING",
-      "END_OWNER"
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
+    "reste": "Contrat Google exact/admission toujours absent : owners.md.",
     "blocage": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
     ],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -7510,7 +7567,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "BLOCKED_OWNER",
+      "avant_reste": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Contrat Google exact/admission toujours absent : owners.md."
+    }
   },
   {
     "id": "R210",
@@ -7526,18 +7590,21 @@
       "G1_REACT",
       "G1_P3",
       "G1_EXISTING",
-      "END_OWNER"
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
+    "reste": "Contrat Google exact/admission toujours absent : owners.md.",
     "blocage": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
     ],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -7566,7 +7633,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "BLOCKED_OWNER",
+      "avant_reste": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Contrat Google exact/admission toujours absent : owners.md."
+    }
   },
   {
     "id": "R211",
@@ -7676,18 +7750,21 @@
       "FINAL_REACT",
       "FINAL_SCOPE",
       "END_REACT",
-      "END_OWNER"
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Owner trajets doit publier un lien explicite avant de proposer une réadaptation automatique. Le parcours manuel indépendant reste utile.",
+    "reste": "Relation route↔lieu central versionnée absente ; contrat précis owners.md. Endpoints/retour/prix manuels restent indépendants.",
     "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
     ],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -7716,7 +7793,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Owner trajets doit publier un lien explicite avant de proposer une réadaptation automatique. Le parcours manuel indépendant reste utile."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Owner trajets doit publier un lien explicite avant de proposer une réadaptation automatique. Le parcours manuel indépendant reste utile.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Relation route↔lieu central versionnée absente ; contrat précis owners.md. Endpoints/retour/prix manuels restent indépendants."
+    }
   },
   {
     "id": "R215",
@@ -8805,19 +8889,22 @@
     "preuves": [
       "FINAL_REACT",
       "FINAL_SCOPE",
-      "END_REACT"
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit.",
+    "reste": "UI explicite et tests de couverture PASS ; discriminant machine owner Finance toujours absent. Libellé historique non considéré comme preuve.",
     "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx",
       "src/app/mois-a-venir/composer/bar-living-card.tsx"
     ],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -8845,7 +8932,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "UI explicite et tests de couverture PASS ; discriminant machine owner Finance toujours absent. Libellé historique non considéré comme preuve."
+    }
   },
   {
     "id": "R256",
@@ -8886,19 +8980,22 @@
     "preuves": [
       "FINAL_REACT",
       "FINAL_SCOPE",
-      "END_REACT"
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit.",
+    "reste": "Substitution simple explicitement admise testée, cas legacy ambigu/multi-main refusés ; contrat de portée économique versionné manquant.",
     "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx",
       "src/app/mois-a-venir/composer/bar-living-card.tsx"
     ],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -8926,7 +9023,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Substitution simple explicitement admise testée, cas legacy ambigu/multi-main refusés ; contrat de portée économique versionné manquant."
+    }
   },
   {
     "id": "R258",
@@ -9505,16 +9609,19 @@
       "FINAL_REACT",
       "FINAL_SCOPE",
       "END_UI",
-      "END_REACT"
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Le DTO véhicule ne publie pas marque/modèle séparés ; demander ces champs à Mobility pour un nom court fiable.",
+    "reste": "Mobility publie label fiable mais pas brand/model séparés ; aucun nom court déduit. Contrat demandé owners.md.",
     "blocage": null,
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -9543,7 +9650,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Le DTO véhicule ne publie pas marque/modèle séparés ; demander ces champs à Mobility pour un nom court fiable."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Le DTO véhicule ne publie pas marque/modèle séparés ; demander ces champs à Mobility pour un nom court fiable.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Mobility publie label fiable mais pas brand/model séparés ; aucun nom court déduit. Contrat demandé owners.md."
+    }
   },
   {
     "id": "R277",
@@ -9673,16 +9787,20 @@
       "FINAL_REACT",
       "FINAL_SCOPE",
       "END_UI",
-      "END_REACT"
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Estimation fournisseur réelle non certifiée dans H1 sans World préparé ; UNKNOWN conservé.",
+    "reste": "Contrats Mobility/UNKNOWN locaux PASS ; fournisseur réel bloqué par World H1 sans Global admissible et scope Canonical H1.",
     "blocage": null,
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -9711,7 +9829,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Estimation fournisseur réelle non certifiée dans H1 sans World préparé ; UNKNOWN conservé."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Estimation fournisseur réelle non certifiée dans H1 sans World préparé ; UNKNOWN conservé.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Contrats Mobility/UNKNOWN locaux PASS ; fournisseur réel bloqué par World H1 sans Global admissible et scope Canonical H1."
+    }
   },
   {
     "id": "R283",
@@ -10335,21 +10460,32 @@
     "localisation": "composer-shell.tsx; durable-draft.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing draggable/trash eligibility code is preserved; actual native drag/drop and trash visibility were not executed in this mission.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_REACT",
       "FINAL_SCOPE",
       "END_UI",
-      "END_REACT"
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_NATIVE_DRAG",
+      "R23_GEOMETRY"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "PASS_BROWSER_DESKTOP_LOCAL_SYNTHETIC_ONLY / Vercel READY not UI Auth",
+    "niveau_preuve": "DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/composer-board.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css",
+      "src/app/mois-a-venir/composer/bar-reception-probe.ts"
+    ],
+    "nature_validation": "TARGETED_DESKTOP_RECEIPT",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -10378,7 +10514,15 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille."
       }
-    ]
+    ],
+    "portee_validation": "Vrai drop souris TRASH reçu après correction dragenter ; retrait/Undo riche, FRESH et SAVED sur fixture synthétique.",
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Vrai drop souris TRASH reçu après correction dragenter ; retrait/Undo riche, FRESH et SAVED sur fixture synthétique."
+    }
   },
   {
     "id": "R308",
@@ -10389,21 +10533,32 @@
     "localisation": "composer-shell.tsx; durable-draft.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing draggable/trash eligibility code is preserved; actual native drag/drop and trash visibility were not executed in this mission.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_REACT",
       "FINAL_SCOPE",
       "END_UI",
-      "END_REACT"
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_NATIVE_DRAG",
+      "R23_GEOMETRY"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "PASS_BROWSER_DESKTOP_LOCAL_SYNTHETIC_ONLY / Vercel READY not UI Auth",
+    "niveau_preuve": "DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/composer-board.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css",
+      "src/app/mois-a-venir/composer/bar-reception-probe.ts"
+    ],
+    "nature_validation": "TARGETED_DESKTOP_RECEIPT",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -10432,7 +10587,15 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille."
       }
-    ]
+    ],
+    "portee_validation": "Corbeille observée pendant drag admissible, absente après drop et annulation ; carte conservée lors annulation.",
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Corbeille observée pendant drag admissible, absente après drop et annulation ; carte conservée lors annulation."
+    }
   },
   {
     "id": "R309",
@@ -10562,16 +10725,20 @@
     "preuves": [
       "FINAL_ENVIRONMENT",
       "END_UI",
-      "END_AUTH"
+      "END_AUTH",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_METRICS"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Pas de chronométrage paint/feedback et serveur corrélé de bout en bout dans le navigateur authentifié. First-rAF ≠ peinture.",
+    "reste": "Chaîne locale EventTiming/DOM/requêtes/Preview/SAVED mesurée ; corrélation serveur/World et persistance UI authentifiée non certifiée.",
     "blocage": null,
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "avant": "BLOCKED_ENV",
     "apres": "NOT_RUN",
     "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
@@ -10611,7 +10778,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Pas de chronométrage paint/feedback et serveur corrélé de bout en bout dans le navigateur authentifié. First-rAF ≠ peinture."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Pas de chronométrage paint/feedback et serveur corrélé de bout en bout dans le navigateur authentifié. First-rAF ≠ peinture.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Chaîne locale EventTiming/DOM/requêtes/Preview/SAVED mesurée ; corrélation serveur/World et persistance UI authentifiée non certifiée."
+    }
   },
   {
     "id": "R315",
@@ -10622,20 +10796,31 @@
     "localisation": "composer-shell.tsx; durable-draft.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_ENVIRONMENT",
       "END_UI",
-      "END_REACT"
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_METRICS",
+      "R23_GEOMETRY"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "PASS_BROWSER_DESKTOP_LOCAL_SYNTHETIC_ONLY / Vercel READY not UI Auth",
+    "niveau_preuve": "DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "Pas de comparaison calibrée avant/après clic→disparition sur mêmes conditions. Aucun gain de latence annoncé.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/composer-board.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css",
+      "src/app/mois-a-venir/composer/bar-reception-probe.ts"
+    ],
+    "nature_validation": "TARGETED_DESKTOP_RECEIPT",
     "avant": "BLOCKED_ENV",
     "apres": "NOT_RUN",
     "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
@@ -10675,7 +10860,15 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Pas de comparaison calibrée avant/après clic→disparition sur mêmes conditions. Aucun gain de latence annoncé."
       }
-    ]
+    ],
+    "portee_validation": "Comparaison même fixture riche1440×900,6retraits avant/6après. Médiane EventTiming48→48ms, aucun gain revendiqué ; P95 robuste non certifié.",
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Pas de comparaison calibrée avant/après clic→disparition sur mêmes conditions. Aucun gain de latence annoncé.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Comparaison même fixture riche1440×900,6retraits avant/6après. Médiane EventTiming48→48ms, aucun gain revendiqué ; P95 robuste non certifié."
+    }
   },
   {
     "id": "R316",
@@ -11389,19 +11582,30 @@
     "localisation": "composer-shell.tsx; durable-draft.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_ENVIRONMENT",
-      "END_UI"
+      "END_UI",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_METRICS",
+      "R23_GEOMETRY"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "PASS_BROWSER_DESKTOP_LOCAL_SYNTHETIC_ONLY / Vercel READY not UI Auth",
+    "niveau_preuve": "DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "Les callbacks ne prouvent pas la peinture ; latence frappe→affichage calibrée et P95 non certifiés.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/composer-board.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css",
+      "src/app/mois-a-venir/composer/bar-reception-probe.ts"
+    ],
+    "nature_validation": "TARGETED_DESKTOP_RECEIPT",
     "avant": "BLOCKED_ENV",
     "apres": "NOT_RUN",
     "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
@@ -11440,7 +11644,15 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Les callbacks ne prouvent pas la peinture ; latence frappe→affichage calibrée et P95 non certifiés."
       }
-    ]
+    ],
+    "portee_validation": "40frappes natives prix : EventTiming P5024ms/P95 descriptif48ms, capture non saturée ; pas de mesure photonique ni Auth.",
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Les callbacks ne prouvent pas la peinture ; latence frappe→affichage calibrée et P95 non certifiés.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "40frappes natives prix : EventTiming P5024ms/P95 descriptif48ms, capture non saturée ; pas de mesure photonique ni Auth."
+    }
   },
   {
     "id": "R329",
@@ -11639,16 +11851,19 @@
     "preuves": [
       "FINAL_ENVIRONMENT",
       "END_AUTH",
-      "END_AUTH_LIMIT"
+      "END_AUTH_LIMIT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Cause de léchec historique personnel inconnue, non reproduite ; aucun diagnostic inventé.",
+    "reste": "Cause de l’ancien échec personnel inconnue et non reproduite. Aucun incident historique attribué sans preuve à H1/Global.",
     "blocage": null,
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -11676,7 +11891,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Cause de léchec historique personnel inconnue, non reproduite ; aucun diagnostic inventé."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Cause de léchec historique personnel inconnue, non reproduite ; aucun diagnostic inventé.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Cause de l’ancien échec personnel inconnue et non reproduite. Aucun incident historique attribué sans preuve à H1/Global."
+    }
   },
   {
     "id": "R336",
@@ -11692,16 +11914,20 @@
       "FINAL_ENVIRONMENT",
       "END_AUTH",
       "END_AUTH_LIMIT",
-      "END_UI"
+      "END_UI",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué.",
+    "reste": "UI Auth/FRESH non exécutée :0publication Global H1,0période certifiée admissible, Canonical scope !=H1. Accord H1 reçu, owner arrêté avant tout contournement.",
     "blocage": null,
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -11730,7 +11956,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "UI Auth/FRESH non exécutée :0publication Global H1,0période certifiée admissible, Canonical scope !=H1. Accord H1 reçu, owner arrêté avant tout contournement."
+    }
   },
   {
     "id": "R337",
@@ -11797,16 +12030,20 @@
       "FINAL_SCOPE",
       "END_AUTH",
       "END_REACT",
-      "END_AUTH_LIMIT"
+      "END_AUTH_LIMIT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "World/FRESH intégré de H1 bloqué par FORECAST_ACTIVE_GLOBAL_PUBLICATION_MISSING. Aucun Apply distant.",
+    "reste": "Même dépendance Global/Canonical H1 ; tests Compiler locaux et HTTP Auth antérieur conservés, aucun Apply réel.",
     "blocage": null,
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -11836,7 +12073,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "World/FRESH intégré de H1 bloqué par FORECAST_ACTIVE_GLOBAL_PUBLICATION_MISSING. Aucun Apply distant."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "World/FRESH intégré de H1 bloqué par FORECAST_ACTIVE_GLOBAL_PUBLICATION_MISSING. Aucun Apply distant.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Même dépendance Global/Canonical H1 ; tests Compiler locaux et HTTP Auth antérieur conservés, aucun Apply réel."
+    }
   },
   {
     "id": "R339",
@@ -11960,16 +12204,19 @@
     "statut": "PARTIAL",
     "preuves": [
       "FINAL_ENVIRONMENT",
-      "END_UI"
+      "END_UI",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "125% natif non obtenu malgré raccourcis ; aucun simple DPR1.25 ou viewport réduit compté comme preuve.",
+    "reste": "Neuf scènes desktop3tailles PASS ; raccourci zoom sans effet mesurable,125% natif NOT_VERIFIABLE. Pas de DPR artificiel.",
     "blocage": null,
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "avant": "BLOCKED_ENV",
     "apres": "NOT_RUN",
     "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
@@ -12008,7 +12255,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "125% natif non obtenu malgré raccourcis ; aucun simple DPR1.25 ou viewport réduit compté comme preuve."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "125% natif non obtenu malgré raccourcis ; aucun simple DPR1.25 ou viewport réduit compté comme preuve.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Neuf scènes desktop3tailles PASS ; raccourci zoom sans effet mesurable,125% natif NOT_VERIFIABLE. Pas de DPR artificiel."
+    }
   },
   {
     "id": "R343",
@@ -12019,20 +12273,30 @@
     "localisation": "scripts/check-bar-apero-*.mjs",
     "baseline": "UNVERIFIED",
     "action_requise": "Current all-scene desktop/zoom/focus/resize browser campaign NOT_RUN after Work access was disabled.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_ENVIRONMENT",
       "END_UI",
-      "END_REACT"
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_GEOMETRY"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "PASS_BROWSER_DESKTOP_LOCAL_SYNTHETIC_ONLY / Vercel READY not UI Auth",
+    "niveau_preuve": "DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "Undo depuis la carte fermée peut laisser BODY après suppression de sa commande. Les transitions de scènes reçues ont un focus utile ; exigence exhaustive non clôturée.",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/composer-board.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css",
+      "src/app/mois-a-venir/composer/bar-reception-probe.ts"
+    ],
+    "nature_validation": "TARGETED_DESKTOP_RECEIPT",
     "avant": "BLOCKED_ENV",
     "apres": "NOT_RUN",
     "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
@@ -12072,7 +12336,15 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Undo depuis la carte fermée peut laisser BODY après suppression de sa commande. Les transitions de scènes reçues ont un focus utile ; exigence exhaustive non clôturée."
       }
-    ]
+    ],
+    "portee_validation": "Défauts Undo fermé et BODY après repack corrigés ; clavier RAW/confirmation/retrait/Undo/resize testés, autres scènes inchangées réutilisent réception physique antérieure.",
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Undo depuis la carte fermée peut laisser BODY après suppression de sa commande. Les transitions de scènes reçues ont un focus utile ; exigence exhaustive non clôturée.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Défauts Undo fermé et BODY après repack corrigés ; clavier RAW/confirmation/retrait/Undo/resize testés, autres scènes inchangées réutilisent réception physique antérieure."
+    }
   },
   {
     "id": "R344",
@@ -12152,16 +12424,20 @@
       "FINAL_ENVIRONMENT",
       "END_REACT",
       "END_AUTH_LIMIT",
-      "END_OWNER"
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense.",
+    "reste": "Appel fournisseur réel non exécuté : environnement isolé H1 non admissible via Global/Canonical. Aucun foyer personnel substitué.",
     "blocage": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense.",
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -12190,7 +12466,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "BLOCKED_ENV",
+      "avant_reste": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Appel fournisseur réel non exécuté : environnement isolé H1 non admissible via Global/Canonical. Aucun foyer personnel substitué."
+    }
   },
   {
     "id": "R346",
@@ -12206,16 +12489,20 @@
       "FINAL_ENVIRONMENT",
       "END_REACT",
       "END_AUTH_LIMIT",
-      "END_OWNER"
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "REACT_OR_OWNER",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense.",
+    "reste": "Comparaison Google Composer/Déclarer non exécutée pour la même dépendance H1. Contrats exact/ambigu/tardif/429 locaux conservés.",
     "blocage": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense.",
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -12244,7 +12531,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "BLOCKED_ENV",
+      "avant_reste": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Comparaison Google Composer/Déclarer non exécutée pour la même dépendance H1. Contrats exact/ambigu/tardif/429 locaux conservés."
+    }
   },
   {
     "id": "R347",
@@ -12283,16 +12577,20 @@
       "FINAL_ENVIRONMENT",
       "END_AUTH",
       "END_AUTH_LIMIT",
-      "END_UI"
+      "END_UI",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
     ],
-    "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058",
-    "environnement": "Local production React fixture / reused exact scene code; Vercel build only",
-    "niveau_preuve": "BROWSER_FIXTURE",
+    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué.",
+    "reste": "Parcours UI riche Auth/FRESH bloqué par préparation officielle H1 ; writer HTTP JWT acquis et inchangé, pas un substitut de preuve UI.",
     "blocage": null,
     "fichiers_modifiés": [],
-    "nature_validation": "FINALISATION_EXECUTED_SCOPED",
+    "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
       {
         "date": "2026-10-18",
@@ -12321,7 +12619,14 @@
         "preview_ui": "NOT_CERTIFIED",
         "limites": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué."
       }
-    ]
+    ],
+    "historique_residu23": {
+      "avant": "PARTIAL",
+      "avant_reste": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué.",
+      "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
+      "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "decision": "Parcours UI riche Auth/FRESH bloqué par préparation officielle H1 ; writer HTTP JWT acquis et inchangé, pas un substitut de preuve UI."
+    }
   },
   {
     "id": "R349",

@@ -1,0 +1,102 @@
+{
+  "drags": [
+    {
+      "compatible": "true",
+      "kind": "VISIBLE_TRASH",
+      "ms": 30837,
+      "over": "false",
+      "rect": {
+        "height": 36.60000228881836,
+        "width": 93.4124984741211,
+        "x": 816.2937622070312,
+        "y": 729.4000244140625
+      }
+    },
+    {
+      "compatible": "true",
+      "kind": "VISIBLE_TRASH",
+      "ms": 34505.5,
+      "over": "false",
+      "rect": {
+        "height": 36.60000228881836,
+        "width": 93.4124984741211,
+        "x": 816.2937622070312,
+        "y": 729.4000244140625
+      }
+    }
+  ],
+  "events": [
+    {
+      "category": "OTHER",
+      "handler": 14538.79999999702,
+      "name": "click",
+      "start": 14537.90000000596
+    },
+    {
+      "category": "BAR",
+      "handler": 30810.79999999702,
+      "name": "dragstart",
+      "start": 30786.5
+    },
+    {
+      "category": "BAR",
+      "handler": 31071.29999999702,
+      "name": "dragend",
+      "start": 31071.10000000894
+    },
+    {
+      "category": "BAR",
+      "handler": 34496.5,
+      "name": "dragstart",
+      "start": 34464.60000000894
+    },
+    {
+      "category": "BAR",
+      "handler": 34623.29999999702,
+      "name": "dragend",
+      "start": 34623.29999999702
+    }
+  ],
+  "states": [
+    {
+      "barPresent": true,
+      "dragging": "false",
+      "ms": 2283.9000000059605,
+      "preview": "FRESH",
+      "removing": false,
+      "save": "CLEAN"
+    },
+    {
+      "barPresent": true,
+      "dragging": "true",
+      "ms": 30836.90000000596,
+      "preview": "FRESH",
+      "removing": false,
+      "save": "CLEAN"
+    },
+    {
+      "barPresent": true,
+      "dragging": "false",
+      "ms": 31080.70000000298,
+      "preview": "FRESH",
+      "removing": false,
+      "save": "CLEAN"
+    },
+    {
+      "barPresent": true,
+      "dragging": "true",
+      "ms": 34505.5,
+      "preview": "FRESH",
+      "removing": false,
+      "save": "CLEAN"
+    },
+    {
+      "barPresent": true,
+      "dragging": "false",
+      "ms": 34630,
+      "preview": "FRESH",
+      "removing": false,
+      "save": "CLEAN"
+    }
+  ]
+}

@@ -1,0 +1,480 @@
+[
+  {
+    "id": "R030",
+    "description_originale": "Préserver la possibilité de tout réaliser au clavier et au tactile malgré la réduction des boutons.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Réception tactile complète non exécutée : aucun appareil ou interface tactile autorisée. Desktop conforme au périmètre utilisateur."
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Desktop souris/clavier/dialogue/RAW/Undo reçus ; tactile/mobile exclus explicitement par utilisateur, jamais PASS tactile.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_GEOMETRY"
+    ],
+    "limites": "Fixture desktop synthétique, pas Auth UI/Provider ni tactile."
+  },
+  {
+    "id": "R084",
+    "description_originale": "Renforcer le contraste des petits textes gris et beiges.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Une amélioration mesurée du contraste des petits textes reste à réaliser ; la capture lisible ne suffit pas à prouver un renforcement."
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Aides et légendes Bar ciblées :12px et #595363, contrastes rendus6.16–7.27:1 ; neuf scènes desktop sans scroll interne.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_GEOMETRY"
+    ],
+    "limites": "Fixture desktop synthétique, pas Auth UI/Provider ni tactile."
+  },
+  {
+    "id": "R208",
+    "description_originale": "Ne pas présenter « Retenir comme nom libre » comme l'issue normale d'un établissement Google reconnu.",
+    "avant": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
+    },
+    "apres": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Contrat Google exact/admission toujours absent : owners.md."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Contrat Google exact/admission toujours absent : owners.md.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R209",
+    "description_originale": "Permettre à un établissement Google nouveau d'acquérir une identité durable exploitable uniquement via le propriétaire officiel autorisé.",
+    "avant": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
+    },
+    "apres": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Contrat Google exact/admission toujours absent : owners.md."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Contrat Google exact/admission toujours absent : owners.md.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R210",
+    "description_originale": "Préserver une correspondance Canonical exacte lorsque le googlePlaceId existe déjà.",
+    "avant": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
+    },
+    "apres": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Contrat Google exact/admission toujours absent : owners.md."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Contrat Google exact/admission toujours absent : owners.md.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R214",
+    "description_originale": "Proposer l'adaptation des trajets après changement de lieu seulement lorsqu'un lien autorisé est prouvé.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Owner trajets doit publier un lien explicite avant de proposer une réadaptation automatique. Le parcours manuel indépendant reste utile."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Relation route↔lieu central versionnée absente ; contrat précis owners.md. Endpoints/retour/prix manuels restent indépendants."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Relation route↔lieu central versionnée absente ; contrat précis owners.md. Endpoints/retour/prix manuels restent indépendants.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R255",
+    "description_originale": "Distinguer l'estimation regroupée des contributions ou entrées additives.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "UI explicite et tests de couverture PASS ; discriminant machine owner Finance toujours absent. Libellé historique non considéré comme preuve."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "UI explicite et tests de couverture PASS ; discriminant machine owner Finance toujours absent. Libellé historique non considéré comme preuve.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R257",
+    "description_originale": "Rendre le choix « Détailler à la place » explicite sur les postes réellement remplacés.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Substitution simple explicitement admise testée, cas legacy ambigu/multi-main refusés ; contrat de portée économique versionné manquant."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Substitution simple explicitement admise testée, cas legacy ambigu/multi-main refusés ; contrat de portée économique versionné manquant.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R276",
+    "description_originale": "Réduire le nom principal du véhicule à « Peugeot 207 » et placer sa version technique dans les détails.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Le DTO véhicule ne publie pas marque/modèle séparés ; demander ces champs à Mobility pour un nom court fiable."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Mobility publie label fiable mais pas brand/model séparés ; aucun nom court déduit. Contrat demandé owners.md."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Mobility publie label fiable mais pas brand/model séparés ; aucun nom court déduit. Contrat demandé owners.md.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R282",
+    "description_originale": "Après sélection des endpoints, proposer le véhicule nécessaire ou l'estimation légitime.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Estimation fournisseur réelle non certifiée dans H1 sans World préparé ; UNKNOWN conservé."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Contrats Mobility/UNKNOWN locaux PASS ; fournisseur réel bloqué par World H1 sans Global admissible et scope Canonical H1."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Contrats Mobility/UNKNOWN locaux PASS ; fournisseur réel bloqué par World H1 sans Global admissible et scope Canonical H1.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R307",
+    "description_originale": "Garder le drag-and-drop vers la corbeille comme geste visuel de retrait des cartes.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille."
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Vrai drop souris TRASH reçu après correction dragenter ; retrait/Undo riche, FRESH et SAVED sur fixture synthétique.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_NATIVE_DRAG",
+      "R23_GEOMETRY"
+    ],
+    "limites": "Fixture desktop synthétique, pas Auth UI/Provider ni tactile."
+  },
+  {
+    "id": "R308",
+    "description_originale": "Afficher la corbeille uniquement durant le déplacement d'un objet admissible.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille."
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Corbeille observée pendant drag admissible, absente après drop et annulation ; carte conservée lors annulation.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_NATIVE_DRAG",
+      "R23_GEOMETRY"
+    ],
+    "limites": "Fixture desktop synthétique, pas Auth UI/Provider ni tactile."
+  },
+  {
+    "id": "R314",
+    "description_originale": "Mesurer séparément le temps clic→feedback, l'opération serveur, la Preview et la sauvegarde durable.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Pas de chronométrage paint/feedback et serveur corrélé de bout en bout dans le navigateur authentifié. First-rAF ≠ peinture."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Chaîne locale EventTiming/DOM/requêtes/Preview/SAVED mesurée ; corrélation serveur/World et persistance UI authentifiée non certifiée."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Chaîne locale EventTiming/DOM/requêtes/Preview/SAVED mesurée ; corrélation serveur/World et persistance UI authentifiée non certifiée.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_METRICS"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R315",
+    "description_originale": "Vérifier la latence de retrait d'une carte riche avec les mêmes données avant et après correction.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Pas de comparaison calibrée avant/après clic→disparition sur mêmes conditions. Aucun gain de latence annoncé."
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Comparaison même fixture riche1440×900,6retraits avant/6après. Médiane EventTiming48→48ms, aucun gain revendiqué ; P95 robuste non certifié.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_METRICS",
+      "R23_GEOMETRY"
+    ],
+    "limites": "Fixture desktop synthétique, pas Auth UI/Provider ni tactile."
+  },
+  {
+    "id": "R328",
+    "description_originale": "Mesurer la latence frappe→affichage lors de l'édition d'un prix.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Les callbacks ne prouvent pas la peinture ; latence frappe→affichage calibrée et P95 non certifiés."
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "40frappes natives prix : EventTiming P5024ms/P95 descriptif48ms, capture non saturée ; pas de mesure photonique ni Auth.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_METRICS",
+      "R23_GEOMETRY"
+    ],
+    "limites": "Fixture desktop synthétique, pas Auth UI/Provider ni tactile."
+  },
+  {
+    "id": "R335",
+    "description_originale": "Identifier la cause de l'échec de sauvegarde riche indépendamment des timeouts Canonical de Preview.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Cause de léchec historique personnel inconnue, non reproduite ; aucun diagnostic inventé."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Cause de l’ancien échec personnel inconnue et non reproduite. Aucun incident historique attribué sans preuve à H1/Global."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Cause de l’ancien échec personnel inconnue et non reproduite. Aucun incident historique attribué sans preuve à H1/Global.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R336",
+    "description_originale": "Valider une soirée riche avec Before, boissons, date, participants et trajets en session authentifiée.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "UI Auth/FRESH non exécutée :0publication Global H1,0période certifiée admissible, Canonical scope !=H1. Accord H1 reçu, owner arrêté avant tout contournement."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "UI Auth/FRESH non exécutée :0publication Global H1,0période certifiée admissible, Canonical scope !=H1. Accord H1 reçu, owner arrêté avant tout contournement.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R338",
+    "description_originale": "Vérifier la cohérence entre Draft, Preview, Finance V2 et application finale sans confondre ces statuts.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "World/FRESH intégré de H1 bloqué par FORECAST_ACTIVE_GLOBAL_PUBLICATION_MISSING. Aucun Apply distant."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Même dépendance Global/Canonical H1 ; tests Compiler locaux et HTTP Auth antérieur conservés, aucun Apply réel."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Même dépendance Global/Canonical H1 ; tests Compiler locaux et HTTP Auth antérieur conservés, aucun Apply réel.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R342",
+    "description_originale": "Tester les états vide, partiel et riche à plusieurs largeurs desktop et au zoom 125 %.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "125% natif non obtenu malgré raccourcis ; aucun simple DPR1.25 ou viewport réduit compté comme preuve."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Neuf scènes desktop3tailles PASS ; raccourci zoom sans effet mesurable,125% natif NOT_VERIFIABLE. Pas de DPR artificiel."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Neuf scènes desktop3tailles PASS ; raccourci zoom sans effet mesurable,125% natif NOT_VERIFIABLE. Pas de DPR artificiel.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R343",
+    "description_originale": "Tester l'accessibilité clavier et la restauration du focus à chaque transition de scène.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Undo depuis la carte fermée peut laisser BODY après suppression de sa commande. Les transitions de scènes reçues ont un focus utile ; exigence exhaustive non clôturée."
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Défauts Undo fermé et BODY après repack corrigés ; clavier RAW/confirmation/retrait/Undo/resize testés, autres scènes inchangées réutilisent réception physique antérieure.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_DESKTOP",
+      "R23_GEOMETRY"
+    ],
+    "limites": "Fixture desktop synthétique, pas Auth UI/Provider ni tactile."
+  },
+  {
+    "id": "R345",
+    "description_originale": "Vérifier la recherche Google et sa reprise dans un environnement fournisseur réellement autorisé.",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense."
+    },
+    "apres": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Appel fournisseur réel non exécuté : environnement isolé H1 non admissible via Global/Canonical. Aucun foyer personnel substitué."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Appel fournisseur réel non exécuté : environnement isolé H1 non admissible via Global/Canonical. Aucun foyer personnel substitué.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R346",
+    "description_originale": "Vérifier la recherche du même établissement depuis Composer et « Déclarer une dépense ».",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense."
+    },
+    "apres": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Comparaison Google Composer/Déclarer non exécutée pour la même dépendance H1. Contrats exact/ambigu/tardif/429 locaux conservés."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Comparaison Google Composer/Déclarer non exécutée pour la même dépendance H1. Contrats exact/ambigu/tardif/429 locaux conservés.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
+    ],
+    "limites": ""
+  },
+  {
+    "id": "R348",
+    "description_originale": "Valider un parcours complet Bar → Lieu → Date → Personnes → Before → Consommations → Aller → Retour → Enregistrer → Relire.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué."
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Parcours UI riche Auth/FRESH bloqué par préparation officielle H1 ; writer HTTP JWT acquis et inchangé, pas un substitut de preuve UI."
+    },
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "raison": "Parcours UI riche Auth/FRESH bloqué par préparation officielle H1 ; writer HTTP JWT acquis et inchangé, pas un substitut de preuve UI.",
+    "preuves": [
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV"
+    ],
+    "limites": ""
+  }
+]

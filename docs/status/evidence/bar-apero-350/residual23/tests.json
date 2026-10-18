@@ -1,0 +1,66 @@
+[
+  {
+    "name": "p2",
+    "command": "node scripts/check-bar-apero-p2.mjs",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "exitCode": 0,
+    "durationMs": 9421,
+    "log": "docs/status/evidence/bar-apero-350/residual23/test-p2.log"
+  },
+  {
+    "name": "p1",
+    "command": "node scripts/check-bar-apero-p1.mjs",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "exitCode": 0,
+    "durationMs": 10069,
+    "log": "docs/status/evidence/bar-apero-350/residual23/test-p1.log"
+  },
+  {
+    "name": "p4",
+    "command": "node scripts/check-bar-apero-p4.mjs",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "exitCode": 0,
+    "durationMs": 9252,
+    "log": "docs/status/evidence/bar-apero-350/residual23/test-p4.log"
+  },
+  {
+    "name": "p3",
+    "command": "node scripts/check-bar-apero-p3.mjs",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "exitCode": 0,
+    "durationMs": 13722,
+    "log": "docs/status/evidence/bar-apero-350/residual23/test-p3.log"
+  },
+  {
+    "name": "c8",
+    "command": "node scripts/check-pre-l4-c2-c8-source.mjs",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "exitCode": 0,
+    "durationMs": 132,
+    "log": "docs/status/evidence/bar-apero-350/residual23/test-c8.log"
+  },
+  {
+    "name": "react",
+    "command": "node scripts/check-bar-apero-350-waves.mjs",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "exitCode": 0,
+    "durationMs": 7272,
+    "log": "docs/status/evidence/bar-apero-350/residual23/test-react.log"
+  },
+  {
+    "name": "parity",
+    "command": "node scripts/check-planner-performance-parity.mjs",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "exitCode": 0,
+    "durationMs": 4525,
+    "log": "docs/status/evidence/bar-apero-350/residual23/test-parity.log"
+  },
+  {
+    "name": "types",
+    "command": "node node_modules/typescript/bin/tsc --noEmit",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "exitCode": 0,
+    "durationMs": 8982,
+    "log": "docs/status/evidence/bar-apero-350/residual23/test-types.log"
+  }
+]

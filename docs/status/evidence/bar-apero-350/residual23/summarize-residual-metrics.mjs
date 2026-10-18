@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+const dir='outputs/bar-350/residual23/';
+const read=n=>JSON.parse(fs.readFileSync(dir+n+'.json'));
+const round=n=>Math.round(n*100)/100;
+const quantile=(a,p)=>{const s=[...a].sort((x,y)=>x-y);return s[Math.ceil(s.length*p)-1];};
+const stats=a=>({n:a.length,values:a.map(round),p50:round(quantile(a,.5)),p95_descriptive_only:round(quantile(a,.95)),min:round(Math.min(...a)),max:round(Math.max(...a))});
+const price=read('price-final-40').latency;
+const inputs=price.events.flatMap((e,i)=>e.name==='input'&&e.category==='PRICE_INPUT'?[price.events.slice(0,i).findLast(k=>k.name==='keydown'&&k.category==='PRICE_INPUT')]:[]);
+const samples=inputs.map(e=>({keyStart:e.start,handlerDelay:round(e.handler-e.start),eventTimingMs:price.paints.find(p=>p.name==='keydown'&&Math.abs(p.start-e.start)<.01)?.duration??null}));
+const observed=samples.filter(r=>r.eventTimingMs!==null).map(r=>r.eventTimingMs);
+const upper=samples.map(r=>r.eventTimingMs??16);
+const withdrawals={};for(const name of ['baseline','candidate']){
+ const t=read('withdrawal-'+name+'-6').latency;
+ const rows=t.states.filter(s=>s.removing).map(s=>{const event=t.events.findLast(e=>e.name==='click'&&e.category==='BAR'&&e.start<=s.ms);const absent=t.states.find(r=>r.ms>s.ms&&!r.barPresent);const fresh=t.states.find(r=>r.ms>s.ms&&!r.barPresent&&r.preview==='FRESH');const saved=t.states.find(r=>r.ms>s.ms&&!r.barPresent&&r.save==='SAVED');const req=t.requests.find(r=>r.path==='/interaction'&&r.start>=event.start);const saveReq=t.requests.find(r=>r.path==='/draft'&&r.start>=event.start);return {start:event.start,eventTimingMs:t.paints.find(p=>p.name==='click'&&Math.abs(p.start-event.start)<.01)?.duration??null,localFeedbackObserver:round(s.ms-event.start),domAbsentObserver:round(absent.ms-event.start),freshObserver:round(fresh.ms-event.start),savedObserver:round(saved.ms-event.start),previewRequestMs:round(req.duration),saveRequestMs:round(saveReq.duration)};});
+ withdrawals[name]={rows,eventTiming:stats(rows.filter(r=>r.eventTimingMs!==null).map(r=>r.eventTimingMs)),localFeedbackObserver:stats(rows.map(r=>r.localFeedbackObserver)),domAbsentObserver:stats(rows.map(r=>r.domAbsentObserver)),freshObserver:stats(rows.map(r=>r.freshObserver)),savedObserver:stats(rows.map(r=>r.savedObserver)),previewRequestMs:stats(rows.map(r=>r.previewRequestMs)),saveRequestMs:stats(rows.map(r=>r.saveRequestMs))};
+}
+const linear=c=>{c/=255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;};const lum=rgb=>rgb.map(linear).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);const contrast=(fg,bg)=>round((Math.max(lum(fg),lum(bg))+.05)/(Math.min(lum(fg),lum(bg))+.05));
+const backgrounds=[[250,232,208],[255,253,249],[255,250,240],[244,241,246],[249,239,220]];
+const result={productSha:'661bd754699d490dfe3fa9fb9723f807cee3725e',method:'Native input; production React synthetic fixture (not full Next or Auth World); 1440x900; opt-in equal probe; duration from Event Timing until next rendering update, 8ms quantized, <16ms censored. Observer DOM times are not paint. Series sequential, no randomized crossover. No backend optimization or real performance claim.',price:{n:inputs.length,captureSaturated:price.events.length>=400||price.paints.length>=300,observed:observed.length,censoredBelow16:inputs.length-observed.length,samples,observedSubset:stats(observed),fullP50:quantile(upper,.5)===16?'<=16ms':quantile(upper,.5),fullP95:quantile(upper,.95)===16?'<=16ms':quantile(upper,.95),handler:stats(samples.map(r=>r.handlerDelay)),financialRequestsDuringRaw:price.requests.filter(r=>r.start>=samples[0].keyStart&&r.start<=samples.at(-1).keyStart).length},withdrawals,contrast:backgrounds.map(bg=>({foreground:[89,83,99],background:bg,ratio:contrast([89,83,99],bg)}))};fs.writeFileSync(dir+'metrics.json',JSON.stringify(result,null,2));console.log(JSON.stringify({price:{...result.price,samples:undefined},withdrawals:Object.fromEntries(Object.entries(withdrawals).map(([k,v])=>[k,{paint:v.eventTiming,dom:v.domAbsentObserver,fresh:v.freshObserver,saved:v.savedObserver}])),contrast:result.contrast},null,2));
+

@@ -1,0 +1,823 @@
+{
+  "focus": "Bar / Apéro",
+  "latency": {
+    "drags": [],
+    "eventTimingSupported": true,
+    "events": [
+      {
+        "category": "OTHER",
+        "handler": 6840.20000000298,
+        "name": "click",
+        "start": 6839.4000000059605
+      },
+      {
+        "category": "BAR",
+        "handler": 7316.800000011921,
+        "name": "click",
+        "start": 7316.20000000298
+      },
+      {
+        "category": "BAR",
+        "handler": 7720.90000000596,
+        "name": "click",
+        "start": 7720.300000011921
+      },
+      {
+        "category": "BAR",
+        "handler": 10192,
+        "name": "click",
+        "start": 10191.5
+      },
+      {
+        "category": "BAR",
+        "handler": 10611.60000000894,
+        "name": "click",
+        "start": 10611.20000000298
+      },
+      {
+        "category": "BAR",
+        "handler": 13259.10000000894,
+        "name": "click",
+        "start": 13258.30000001192
+      },
+      {
+        "category": "BAR",
+        "handler": 13648.90000000596,
+        "name": "click",
+        "start": 13648.40000000596
+      },
+      {
+        "category": "BAR",
+        "handler": 15980.60000000894,
+        "name": "click",
+        "start": 15979.80000001192
+      },
+      {
+        "category": "BAR",
+        "handler": 16420.60000000894,
+        "name": "click",
+        "start": 16420
+      },
+      {
+        "category": "BAR",
+        "handler": 18934.70000000298,
+        "name": "click",
+        "start": 18934.30000001192
+      },
+      {
+        "category": "BAR",
+        "handler": 19344,
+        "name": "click",
+        "start": 19343.60000000894
+      },
+      {
+        "category": "BAR",
+        "handler": 21773.70000000298,
+        "name": "click",
+        "start": 21773
+      },
+      {
+        "category": "BAR",
+        "handler": 22205.60000000894,
+        "name": "click",
+        "start": 22205.30000001192
+      }
+    ],
+    "method": "NATIVE_EVENT_TIMING_16MS_THRESHOLD_8MS_QUANTIZATION_NOT_ALL_EVENTS_OR_DISPLAY_PHOTONS",
+    "paints": [
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 2028,
+        "name": "click",
+        "processingEnd": 6848.800000011921,
+        "processingStart": 6840.100000008941,
+        "start": 6839.4000000059605
+      },
+      {
+        "category": "BAR",
+        "duration": 32,
+        "interactionId": 2035,
+        "name": "click",
+        "processingEnd": 7317,
+        "processingStart": 7316.70000000298,
+        "start": 7316.20000000298
+      },
+      {
+        "category": "BAR",
+        "duration": 56,
+        "interactionId": 2042,
+        "name": "click",
+        "processingEnd": 7742.70000000298,
+        "processingStart": 7720.800000011921,
+        "start": 7720.300000011921
+      },
+      {
+        "category": "BAR",
+        "duration": 16,
+        "interactionId": 2063,
+        "name": "click",
+        "processingEnd": 10192.10000000894,
+        "processingStart": 10192,
+        "start": 10191.5
+      },
+      {
+        "category": "BAR",
+        "duration": 48,
+        "interactionId": 2070,
+        "name": "click",
+        "processingEnd": 10633.60000000894,
+        "processingStart": 10611.60000000894,
+        "start": 10611.20000000298
+      },
+      {
+        "category": "BAR",
+        "duration": 16,
+        "interactionId": 2091,
+        "name": "click",
+        "processingEnd": 13259.40000000596,
+        "processingStart": 13259,
+        "start": 13258.30000001192
+      },
+      {
+        "category": "BAR",
+        "duration": 48,
+        "interactionId": 2098,
+        "name": "click",
+        "processingEnd": 13660.60000000894,
+        "processingStart": 13648.80000001192,
+        "start": 13648.40000000596
+      },
+      {
+        "category": "BAR",
+        "duration": 32,
+        "interactionId": 2119,
+        "name": "click",
+        "processingEnd": 15980.70000000298,
+        "processingStart": 15980.60000000894,
+        "start": 15979.80000001192
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 2126,
+        "name": "click",
+        "processingEnd": 16435.10000000894,
+        "processingStart": 16420.5,
+        "start": 16420
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 2147,
+        "name": "click",
+        "processingEnd": 18934.90000000596,
+        "processingStart": 18934.60000000894,
+        "start": 18934.30000001192
+      },
+      {
+        "category": "BAR",
+        "duration": 48,
+        "interactionId": 2154,
+        "name": "click",
+        "processingEnd": 19356.60000000894,
+        "processingStart": 19343.90000000596,
+        "start": 19343.60000000894
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 2175,
+        "name": "click",
+        "processingEnd": 21773.90000000596,
+        "processingStart": 21773.60000000894,
+        "start": 21773
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 2182,
+        "name": "click",
+        "processingEnd": 22216,
+        "processingStart": 22205.60000000894,
+        "start": 22205.30000001192
+      }
+    ],
+    "requests": [
+      {
+        "duration": 127.40000000596046,
+        "path": "/interaction",
+        "requestStart": 7729.20000000298,
+        "responseEnd": 7853.40000000596,
+        "responseStart": 7852.70000000298,
+        "start": 7726,
+        "transferSize": 321961
+      },
+      {
+        "duration": 3.1000000089406967,
+        "path": "/draft",
+        "requestStart": 8880.70000000298,
+        "responseEnd": 8882.60000000894,
+        "responseStart": 8882.300000011921,
+        "start": 8879.5,
+        "transferSize": 869
+      },
+      {
+        "duration": 158.20000000298023,
+        "path": "/interaction",
+        "requestStart": 9152.20000000298,
+        "responseEnd": 9305.20000000298,
+        "responseStart": 9304.30000001192,
+        "start": 9147,
+        "transferSize": 843229
+      },
+      {
+        "duration": 6.5,
+        "path": "/draft",
+        "requestStart": 9988.20000000298,
+        "responseEnd": 9992.5,
+        "responseStart": 9991.60000000894,
+        "start": 9986,
+        "transferSize": 13109
+      },
+      {
+        "duration": 142.29999999701977,
+        "path": "/interaction",
+        "requestStart": 10614.80000001192,
+        "responseEnd": 10755.70000000298,
+        "responseStart": 10754.70000000298,
+        "start": 10613.40000000596,
+        "transferSize": 321961
+      },
+      {
+        "duration": 6,
+        "path": "/draft",
+        "requestStart": 11818.10000000894,
+        "responseEnd": 11820.80000001192,
+        "responseStart": 11820.10000000894,
+        "start": 11814.80000001192,
+        "transferSize": 869
+      },
+      {
+        "duration": 109.29999999701975,
+        "path": "/interaction",
+        "requestStart": 12184.20000000298,
+        "responseEnd": 12290.10000000894,
+        "responseStart": 12285.70000000298,
+        "start": 12180.80000001192,
+        "transferSize": 843229
+      },
+      {
+        "duration": 6.700000002980232,
+        "path": "/draft",
+        "requestStart": 13066.70000000298,
+        "responseEnd": 13071.40000000596,
+        "responseStart": 13070.60000000894,
+        "start": 13064.70000000298,
+        "transferSize": 13109
+      },
+      {
+        "duration": 110.19999998807909,
+        "path": "/interaction",
+        "requestStart": 13651.90000000596,
+        "responseEnd": 13760.5,
+        "responseStart": 13759.90000000596,
+        "start": 13650.30000001192,
+        "transferSize": 321962
+      },
+      {
+        "duration": 6.899999991059303,
+        "path": "/draft",
+        "requestStart": 14800.40000000596,
+        "responseEnd": 14804,
+        "responseStart": 14802.90000000596,
+        "start": 14797.10000000894,
+        "transferSize": 870
+      },
+      {
+        "duration": 93.19999998807909,
+        "path": "/interaction",
+        "requestStart": 15032.70000000298,
+        "responseEnd": 15123,
+        "responseStart": 15119.5,
+        "start": 15029.80000001192,
+        "transferSize": 843229
+      },
+      {
+        "duration": 7.299999997019768,
+        "path": "/draft",
+        "requestStart": 15883.20000000298,
+        "responseEnd": 15888.10000000894,
+        "responseStart": 15887.30000001192,
+        "start": 15880.80000001192,
+        "transferSize": 13111
+      },
+      {
+        "duration": 149.69999998807907,
+        "path": "/interaction",
+        "requestStart": 16424,
+        "responseEnd": 16572,
+        "responseStart": 16571.5,
+        "start": 16422.30000001192,
+        "transferSize": 321962
+      },
+      {
+        "duration": 5.800000011920929,
+        "path": "/draft",
+        "requestStart": 17615.20000000298,
+        "responseEnd": 17617.80000001192,
+        "responseStart": 17617.40000000596,
+        "start": 17612,
+        "transferSize": 871
+      },
+      {
+        "duration": 135.79999999701977,
+        "path": "/interaction",
+        "requestStart": 17952.80000001192,
+        "responseEnd": 18082,
+        "responseStart": 18081.20000000298,
+        "start": 17946.20000000298,
+        "transferSize": 843230
+      },
+      {
+        "duration": 8.299999997019768,
+        "path": "/draft",
+        "requestStart": 18804.60000000894,
+        "responseEnd": 18809.5,
+        "responseStart": 18808.90000000596,
+        "start": 18801.20000000298,
+        "transferSize": 13111
+      },
+      {
+        "duration": 108.20000000298025,
+        "path": "/interaction",
+        "requestStart": 19347.5,
+        "responseEnd": 19453.70000000298,
+        "responseStart": 19453.20000000298,
+        "start": 19345.5,
+        "transferSize": 321962
+      },
+      {
+        "duration": 6.299999997019768,
+        "path": "/draft",
+        "requestStart": 20498,
+        "responseEnd": 20501.5,
+        "responseStart": 20500.80000001192,
+        "start": 20495.20000000298,
+        "transferSize": 871
+      },
+      {
+        "duration": 119.79999999701975,
+        "path": "/interaction",
+        "requestStart": 20718.90000000596,
+        "responseEnd": 20834.90000000596,
+        "responseStart": 20833.10000000894,
+        "start": 20715.10000000894,
+        "transferSize": 843230
+      },
+      {
+        "duration": 8.100000008940697,
+        "path": "/draft",
+        "requestStart": 21568.40000000596,
+        "responseEnd": 21573.30000001192,
+        "responseStart": 21572.40000000596,
+        "start": 21565.20000000298,
+        "transferSize": 13111
+      },
+      {
+        "duration": 138.3999999910593,
+        "path": "/interaction",
+        "requestStart": 22208.10000000894,
+        "responseEnd": 22345.20000000298,
+        "responseStart": 22330.10000000894,
+        "start": 22206.80000001192,
+        "transferSize": 321962
+      },
+      {
+        "duration": 6.5999999940395355,
+        "path": "/draft",
+        "requestStart": 23383.60000000894,
+        "responseEnd": 23386.5,
+        "responseStart": 23385.60000000894,
+        "start": 23379.90000000596,
+        "transferSize": 871
+      },
+      {
+        "duration": 108.79999999701975,
+        "path": "/interaction",
+        "requestStart": 23701,
+        "responseEnd": 23805.20000000298,
+        "responseStart": 23804.20000000298,
+        "start": 23696.40000000596,
+        "transferSize": 843230
+      },
+      {
+        "duration": 7.200000002980232,
+        "path": "/draft",
+        "requestStart": 24554.90000000596,
+        "responseEnd": 24559.10000000894,
+        "responseStart": 24558.60000000894,
+        "start": 24551.90000000596,
+        "transferSize": 13111
+      }
+    ],
+    "states": [
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 950.2000000029802,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 7734.70000000298,
+        "preview": "PENDING",
+        "removing": true,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 7879.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 8883.40000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 8889.5,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 8989.70000000298,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 9333.5,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 9995.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 10012.40000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 10624.70000000298,
+        "preview": "PENDING",
+        "removing": true,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 10813.90000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 11823.60000000894,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 11860.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 12075.30000001192,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 12330.60000000894,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 13077.5,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 13100,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 13655.90000000596,
+        "preview": "PENDING",
+        "removing": true,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 13783.60000000894,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 14809,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 14830.20000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 14880.20000000298,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 15153,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 15891.20000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 15909.40000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 16429.90000000596,
+        "preview": "PENDING",
+        "removing": true,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 16603,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 17619.20000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 17636.80000001192,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 17793.20000000298,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 18112.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 18815.90000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 18825.5,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 19350.60000000894,
+        "preview": "PENDING",
+        "removing": true,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 19482.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 20503.10000000894,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 20512.10000000894,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 20567.5,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 20861.90000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 21573.90000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 21587.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 22211.20000000298,
+        "preview": "PENDING",
+        "removing": true,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 22372.40000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 23388.80000001192,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 23405.5,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 23553.80000001192,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 23832.70000000298,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 24561.10000000894,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 24571.90000000596,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      }
+    ]
+  },
+  "viewport": [
+    1440,
+    900
+  ]
+}
