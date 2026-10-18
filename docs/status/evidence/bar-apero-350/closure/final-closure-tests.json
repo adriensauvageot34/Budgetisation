@@ -1,0 +1,86 @@
+[
+  {
+    "name": "react",
+    "command": "node scripts/check-bar-apero-350-waves.mjs",
+    "exitCode": 0,
+    "durationMs": 13645,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "p1",
+    "command": "node scripts/check-bar-apero-p1.mjs",
+    "exitCode": 0,
+    "durationMs": 13655,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "p2",
+    "command": "node scripts/check-bar-apero-p2.mjs",
+    "exitCode": 0,
+    "durationMs": 14706,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "p3",
+    "command": "node scripts/check-bar-apero-p3.mjs",
+    "exitCode": 0,
+    "durationMs": 15650,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "p4",
+    "command": "node scripts/check-bar-apero-p4.mjs",
+    "exitCode": 0,
+    "durationMs": 14909,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "last",
+    "command": "node scripts/check-bar-apero-last.mjs",
+    "exitCode": 0,
+    "durationMs": 10500,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "draft",
+    "command": "node scripts/check-bar-apero-closure-draft.mjs",
+    "exitCode": 0,
+    "durationMs": 3512,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "durable",
+    "command": "node scripts/check-composer-p14-p2-durable.mjs",
+    "exitCode": 0,
+    "durationMs": 3487,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "apply",
+    "command": "node scripts/check-phase2-planner-p13.mjs",
+    "exitCode": 0,
+    "durationMs": 18093,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "http-contract",
+    "command": "node scripts/check-composer-post-snap3-draft-http.mjs",
+    "exitCode": 0,
+    "durationMs": 1221,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "c8",
+    "command": "node scripts/check-pre-l4-c2-c8-source.mjs",
+    "exitCode": 0,
+    "durationMs": 156,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  },
+  {
+    "name": "types",
+    "command": "node node_modules/typescript/bin/tsc --noEmit",
+    "exitCode": 0,
+    "durationMs": 9404,
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac"
+  }
+]

@@ -1001,18 +1001,37 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Illustration, titre et montant sur la ligne d’en-tête, captures1440/1728/1920.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Illustration, titre et montant sur la ligne d’en-tête, captures1440/1728/1920.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R042",
@@ -1045,18 +1064,38 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER",
+      "CLOSURE_EMPTY"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Bar vide final1152 : Lieu/Date/Personnes/+Trajet sur même bande horizontale.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Bar vide final1152 : Lieu/Date/Personnes/+Trajet sur même bande horizontale.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R044",
@@ -1067,18 +1106,38 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER",
+      "CLOSURE_EMPTY"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Ajout trajet à droite des métadonnées du Bar vide, dimensions réelles1152.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Ajout trajet à droite des métadonnées du Bar vide, dimensions réelles1152.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R045",
@@ -1089,18 +1148,37 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Titre Before à gauche, Ajouter à droite, capture riche.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Titre Before à gauche, Ajouter à droite, capture riche.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R046",
@@ -1315,18 +1393,37 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Unité avancée de Vodka : sous-scène tarifaire dédiée sans refaire le parcours.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Unité avancée de Vodka : sous-scène tarifaire dédiée sans refaire le parcours.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R055",
@@ -2564,18 +2661,37 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Lieu Bar du Canal visible dans la carte repliée finale.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Lieu Bar du Canal visible dans la carte repliée finale.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R110",
@@ -2654,18 +2770,37 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Montant officiel30 connus et incomplet, dominant dans la carte repliée.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Montant officiel30 connus et incomplet, dominant dans la carte repliée.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R114",
@@ -2838,18 +2973,37 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Carte repliée :2Before et+7,2consommations et+13.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Carte repliée :2Before et+7,2consommations et+13.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R122",
@@ -3676,18 +3830,37 @@
     "localisation": "context-palette.tsx; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Dock paginé par choix entiers, captures denses et pages réellement parcourues.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Dock paginé par choix entiers, captures denses et pages réellement parcourues.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R159",
@@ -3950,7 +4123,7 @@
     "environnement": "LOCAL_SYNTHETIC_ONLY",
     "niveau_preuve": "PASS_REACT / PASS_STATIC",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
+    "reste": "Recherches et pagination conservées lors du ciblage direct sans remount, test React et navigateur. Fermeture complète/remontage : mémoire de recherche non conservée; pas de clôture générale.",
     "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
@@ -3975,7 +4148,7 @@
     "environnement": "LOCAL_SYNTHETIC_ONLY",
     "niveau_preuve": "PASS_REACT / PASS_STATIC",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
+    "reste": "Recherches et pagination conservées lors du ciblage direct sans remount, test React et navigateur. Fermeture complète/remontage : mémoire de recherche non conservée; pas de clôture générale.",
     "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
@@ -4649,21 +4822,38 @@
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
     "baseline": "EXISTING",
     "action_requise": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_REACT",
-      "FINAL_SCOPE"
+      "FINAL_SCOPE",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "PASS_REACT / PASS_STATIC",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
     "blocage": null,
     "fichiers_modifiés": [
-      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
     ],
-    "nature_validation": "PARTIAL"
+    "nature_validation": "PARTIAL",
+    "avant": "PARTIAL",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Repli Nom libre dans Autres possibilités; Google lien secondaire, résultats locaux sourcés dans le dock.",
+    "transition_cloture": {
+      "avant": "PARTIAL",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Repli Nom libre dans Autres possibilités; Google lien secondaire, résultats locaux sourcés dans le dock.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R197",
@@ -4967,7 +5157,7 @@
     "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
     "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Aucun mapping Google→Canonical publié ni writer d’admission officiel attesté ; matching exact seulement testé sur fixture.",
+    "reste": "Recherche Google disponible et matching exact testé sur DTO contrôlé; planned-context ne lit aucun Google Place ID Canonical, composer-service ne projette aucun ID externe, aucun writer d’admission Canonical autorisé trouvé. Aucun faux KNOWN.",
     "blocage": "BLOCKED_OWNER_GOOGLE_IDENTITY_OR_ADMISSION",
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
@@ -4993,7 +5183,7 @@
     "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
     "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Aucun mapping Google→Canonical publié ni writer d’admission officiel attesté ; matching exact seulement testé sur fixture.",
+    "reste": "Recherche Google disponible et matching exact testé sur DTO contrôlé; planned-context ne lit aucun Google Place ID Canonical, composer-service ne projette aucun ID externe, aucun writer d’admission Canonical autorisé trouvé. Aucun faux KNOWN.",
     "blocage": "BLOCKED_OWNER_GOOGLE_IDENTITY_OR_ADMISSION",
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
@@ -5019,7 +5209,7 @@
     "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel",
     "niveau_preuve": "T0",
     "qualification_sha": "CURRENT",
-    "reste": "Aucun mapping Google→Canonical publié ni writer d’admission officiel attesté ; matching exact seulement testé sur fixture.",
+    "reste": "Recherche Google disponible et matching exact testé sur DTO contrôlé; planned-context ne lit aucun Google Place ID Canonical, composer-service ne projette aucun ID externe, aucun writer d’admission Canonical autorisé trouvé. Aucun faux KNOWN.",
     "blocage": "BLOCKED_OWNER_GOOGLE_IDENTITY_OR_ADMISSION",
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
@@ -5061,21 +5251,38 @@
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
     "baseline": "EXISTING",
     "action_requise": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_REACT",
-      "FINAL_SCOPE"
+      "FINAL_SCOPE",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "PASS_REACT / PASS_STATIC",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
     "blocage": null,
     "fichiers_modifiés": [
-      "src/app/mois-a-venir/composer/bar-living-editor.tsx"
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
     ],
-    "nature_validation": "PARTIAL"
+    "nature_validation": "PARTIAL",
+    "avant": "PARTIAL",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Scène Nom libre : repère textuel, distance et itinéraire à préciser; aucune admission.",
+    "transition_cloture": {
+      "avant": "PARTIAL",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Scène Nom libre : repère textuel, distance et itinéraire à préciser; aucune admission.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R213",
@@ -5215,21 +5422,37 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "G2_REACT"
+      "G2_REACT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "PASS_REACT_PARTIAL",
-    "qualification_sha": "EXACT_PRODUCT_COMMIT",
-    "reste": "Familles du catalogue identifiables, hiérarchie initiale du Before encore à améliorer.",
-    "blocage": "",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx",
-      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
     ],
-    "nature_validation": "PARTIAL"
+    "nature_validation": "PARTIAL",
+    "avant": "PARTIAL",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Before vide : Vodka, Bière, Diluant, Snack depuis le catalogue existant, UNKNOWN conservé.",
+    "transition_cloture": {
+      "avant": "PARTIAL",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Before vide : Vodka, Bière, Diluant, Snack depuis le catalogue existant, UNKNOWN conservé.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R219",
@@ -6397,21 +6620,37 @@
     "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "G2_REACT"
+      "G2_REACT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "PASS_REACT_PARTIAL",
-    "qualification_sha": "EXACT_PRODUCT_COMMIT",
-    "reste": "Coût d’usage explicitement distinct du paiement ; affichage à compléter en G3.",
-    "blocage": "",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx",
-      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
     ],
-    "nature_validation": "PARTIAL"
+    "nature_validation": "PARTIAL",
+    "avant": "PARTIAL",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Ligne voiture : coût d’usage estimé distinct de tout achat de carburant.",
+    "transition_cloture": {
+      "avant": "PARTIAL",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Ligne voiture : coût d’usage estimé distinct de tout achat de carburant.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R265",
@@ -6549,18 +6788,37 @@
     "localisation": "bar-living-operations.ts; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Deux endpoints directement visibles dans les lignes Aller/Retour.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Deux endpoints directement visibles dans les lignes Aller/Retour.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R271",
@@ -6615,20 +6873,39 @@
     "localisation": "bar-living-operations.ts; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Receive and complete the dedicated vehicle capsule if required.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_P1",
       "FINAL_P2",
-      "FINAL_P3"
+      "FINAL_P3",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "PASS_REACT / PASS_REACT / PASS_REACT",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Mode capsule is directly editable; vehicle is still selected on the dedicated route scene rather than from its own inline capsule. No completed vehicle-capsule claim.",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": [],
-    "nature_validation": "PARTIAL"
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "PARTIAL",
+    "avant": "PARTIAL",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Capsules mode et véhicule testées; choix véhicule direct et explicite, aucun changement par ouverture.",
+    "transition_cloture": {
+      "avant": "PARTIAL",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Capsules mode et véhicule testées; choix véhicule direct et explicite, aucun changement par ouverture.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R274",
@@ -6639,19 +6916,38 @@
     "localisation": "bar-living-operations.ts; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Fare cells target the retained leg and car cells consult usage; actual pointer/focus reception of those new cells is not certified.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_REACT",
-      "FINAL_SCOPE"
+      "FINAL_SCOPE",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "PASS_REACT / PASS_STATIC",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Fare cells target the retained leg and car cells consult usage; actual pointer/focus reception of those new cells is not certified.",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
     "blocage": null,
-    "fichiers_modifiés": [],
-    "nature_validation": "PARTIAL"
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "PARTIAL",
+    "avant": "PARTIAL",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Tarif Retour cliqué, coût12 retenu dans la scène return; coût voiture ouvre sa consultation.",
+    "transition_cloture": {
+      "avant": "PARTIAL",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Tarif Retour cliqué, coût12 retenu dans la scène return; coût voiture ouvre sa consultation.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R275",
@@ -6662,18 +6958,37 @@
     "localisation": "bar-living-operations.ts; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Coût prévu du Retour à droite de sa ligne; voiture usage à estimer distinct.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Coût prévu du Retour à droite de sa ligne; voiture usage à estimer distinct.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R276",
@@ -6693,7 +7008,7 @@
     "environnement": "LOCAL_SYNTHETIC_ONLY",
     "niveau_preuve": "PASS_REACT / PASS_STATIC",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "The full authoritative vehicle label is preserved; a validated short-label presentation and technical-details disclosure have not been implemented.",
+    "reste": "Libellé officiel conservé dans capsule avec ellipsis et détails. Le DTO ne publie pas marque/modèle distincts; aucun découpage heuristique technique retenu.",
     "blocage": null,
     "fichiers_modifiés": [],
     "nature_validation": "PARTIAL"
@@ -7622,18 +7937,37 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
-      "FINAL_ENVIRONMENT"
+      "FINAL_ENVIRONMENT",
+      "CLOSURE_BROWSER"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
-    "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
-    "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "CURRENT",
+    "reste": "",
+    "blocage": null,
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-details.tsx",
+      "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "src/app/mois-a-venir/composer/board-carousel.tsx",
+      "src/app/mois-a-venir/composer/composer.module.css"
+    ],
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "DONE_BROWSER_FIXTURE",
+    "preuve": "Zéro collision après stabilisation sur le scénario dense aux4tailles; pas une preuve de transition.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "DONE_BROWSER_FIXTURE",
+      "preuve": "Zéro collision après stabilisation sur le scénario dense aux4tailles; pas une preuve de transition.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex, fixture React production / HTTP loopback, données synthétiques uniquement",
+      "niveau_preuve": "PASS_BROWSER_FIXTURE",
+      "reste": ""
+    }
   },
   {
     "id": "R318",
@@ -8036,7 +8370,7 @@
     "environnement": "LOCAL_SYNTHETIC_ONLY",
     "niveau_preuve": "BLOCKED_ENV",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Historical real rich-save failure remains unexplained. Local HTTP rich round-trip passes; no real canary permission/session for this mission. Canonical Preview timeout is NOT established as the cause of Draft failure.",
+    "reste": "Writer/lectures/RPC distingués par instrumentation opt-in et tests de service réels sur transport contrôlé. Ancien échec Auth riche non reproduit ni expliqué; NOT_RUN_AUTH.",
     "blocage": "Browser Work disabled / isolated Auth not established",
     "fichiers_modifiés": [],
     "nature_validation": "ENV_BLOCKED"

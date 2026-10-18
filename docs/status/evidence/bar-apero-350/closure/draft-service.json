@@ -1,0 +1,164 @@
+{
+  "level": "PASS_SERVICE_FIXTURE_NOT_AUTH_NOT_RLS",
+  "checks": [
+    {
+      "name": "RICH_INCOMPLETE_SAVE_READ_PRESERVES_CHILD_IDENTITIES_UNITS_UNKNOWN",
+      "status": "PASS"
+    },
+    {
+      "name": "LOST_RESPONSE_RECONCILED_BEFORE_RETRY_NO_DUPLICATE_WRITE",
+      "status": "PASS"
+    },
+    {
+      "name": "DRAFT_TIMEOUT_DISTINCT_FROM_PREVIEW_ERROR_AND_PRIOR_STATE_RETAINED",
+      "status": "PASS"
+    },
+    {
+      "name": "ACCESS_DENIED_CANNOT_REPORT_SAVED",
+      "status": "PASS"
+    },
+    {
+      "name": "DIAGNOSTICS_CONTAIN_ONLY_PHASE_DURATION_CODE",
+      "status": "PASS"
+    }
+  ],
+  "events": [
+    {
+      "phase": "READ_DRAFTS",
+      "durationMs": 1,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "WRITE_SAVE",
+      "durationMs": 1,
+      "code": null
+    },
+    {
+      "phase": "READ_DRAFTS",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_DRAFTS",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "WRITE_SAVE",
+      "durationMs": 0,
+      "code": "ERROR"
+    },
+    {
+      "phase": "READ_DRAFTS",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_DRAFTS",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_DRAFTS",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "WRITE_SAVE",
+      "durationMs": 0,
+      "code": "57014"
+    },
+    {
+      "phase": "READ_DRAFTS",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_DRAFTS",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "WRITE_SAVE",
+      "durationMs": 0,
+      "code": "42501"
+    },
+    {
+      "phase": "READ_DRAFTS",
+      "durationMs": 0,
+      "code": null
+    },
+    {
+      "phase": "READ_PLAN_BASE",
+      "durationMs": 0,
+      "code": null
+    }
+  ],
+  "financialWrites": 0,
+  "remoteWrites": 0
+}

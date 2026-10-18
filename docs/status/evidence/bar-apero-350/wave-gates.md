@@ -13,3 +13,7 @@ SHA produit final : 4e0dc25987f43fb6a086871d2d3f55bb2b37baec. Les commits docume
 | G6 | PARTIAL_NOT_READY_FOR_REPLICATION | 350 classées, aucune PLANNED ; Google owner et Auth riche ouverts. Aucun PASS global inventé. |
 
 T0 est réellement exécuté, T1 seulement G1/G2, T2 builds complets G3 et G5 READY, T3 NOT_RUN_AUTH / NOT_RUN_REAL_PROVIDER.
+
+## Clôture complémentaire du18octobre
+
+Les anciennes portes G0–G6 ne sont pas réécrites. Voir closure-gates.md pour C0–C3 et closure-matrix.md pour les115écarts initiaux. Verdict globalNOT_READY : Auth riche, réception physique exhaustive et owner Google restent ouverts.

@@ -202,5 +202,54 @@
     "niveau": "PASS_STATIC",
     "scope": "Checker and its seven negative controls executed at ac22d09; product tree remains exactly 4e0dc25.",
     "file_sha256_lf": "600300380c31911b90c2dc6f13f97fb22b9382c7c9962303027e386a4dd45a1a"
+  },
+  "CLOSURE_BROWSER": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-browser-results.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Campagne partielle réelle : dense15+9, tailles effectives1152/1440/1728/1920, lieux, RAW, prix, mode/véhicule, pagination. Pas Auth, Google réel final, zoom125 ni transitions complètes.",
+    "file_sha256_lf": "b7922677712b44227c63a49418e411d7c2109891e523e8a9d6169878d9e23b72"
+  },
+  "CLOSURE_EMPTY": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-empty.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Bar vide final1152x720 hauteur245, métadonnées alignées; calendrier clavier1tabstop.",
+    "file_sha256_lf": "94eebc6582515ea872cc1b595cd224be06f0b0a0985bdc6139e454aab3624de9"
+  },
+  "CLOSURE_DRAFT": {
+    "path": "docs/status/evidence/bar-apero-350/closure/draft-service.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_SERVICE_FIXTURE",
+    "scope": "Service réel avec Supabase contrôlé : Before riche incomplet, réponse perdue sans double write, code57014 séparé, accès refusé et diagnostics expurgés. Pas RLS/Auth.",
+    "file_sha256_lf": "c362680c31fde2f79f59cf40dc03b7627fcf589ecab9def05b9c2dce90ce54c8"
+  },
+  "CLOSURE_HTTP": {
+    "path": "docs/status/evidence/bar-apero-350/closure/http.log",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_HTTP_FIXTURE",
+    "scope": "HTTP loopback réel, données synthétiques,7contrôles CAS/rich/38incomplet sans Apply.",
+    "file_sha256_lf": "c551667c215638d7dffb972dde1943c16a66b10bad5305c8b7cd1ee1d5212ce1"
+  },
+  "CLOSURE_PARITY": {
+    "path": "docs/status/evidence/bar-apero-350/closure/parity.log",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_FIXTURE",
+    "scope": "22x9=198 empreintes inchangées au code final.",
+    "file_sha256_lf": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+  },
+  "CLOSURE_FINAL_TESTS": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-closure-tests.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_REACT_AND_OWNER_FIXTURE",
+    "scope": "12 commandes, tous codes0 sur79e3bf0; suites Bar, Draft/CAS, Apply synthétique, C8, TypeScript",
+    "file_sha256_lf": "7af1c7837d52279ab9bf6931bbe351beb827a105e11cfe359bb479072102cca4"
+  },
+  "CLOSURE_REACT": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-closure-react.log",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_REACT",
+    "scope": "24 groupes réels, dont navigation externe/RAW et capsule véhicule; aucun navigateur simulé revendiqué",
+    "file_sha256_lf": "11adeb9d3a05c55b41cefac192c3384ecf6b0220e9102db2cac35d634d88fbf3"
   }
 }

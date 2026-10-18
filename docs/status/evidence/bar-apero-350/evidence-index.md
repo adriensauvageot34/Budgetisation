@@ -38,3 +38,13 @@ Incident Auth historique : rapport privé outputs/bar-last/live/PRODUCTION_AUTH_
 
 | G5_PREVIEW_BUILD | PASS_BUILD_PREVIEW | 4e0dc25 | final/g5-preview.json ; Next complet READY, fin de journal seulement ; aucune réception fonctionnelle Auth. |
 | FINAL_INTEGRITY | PASS_STATIC | ac22d09, produit 4e0dc25 | final/integrity.log ; 350 textes exacts et sept falsifications refusées. |
+
+## Clôture effective
+
+- CLOSURE_BROWSER — PASS_BROWSER_FIXTURE — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/final-browser-results.json — Campagne partielle réelle : dense15+9, tailles effectives1152/1440/1728/1920, lieux, RAW, prix, mode/véhicule, pagination. Pas Auth, Google réel final, zoom125 ni transitions complètes.
+- CLOSURE_EMPTY — PASS_BROWSER_FIXTURE — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/final-empty.json — Bar vide final1152x720 hauteur245, métadonnées alignées; calendrier clavier1tabstop.
+- CLOSURE_DRAFT — PASS_SERVICE_FIXTURE — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/draft-service.json — Service réel avec Supabase contrôlé : Before riche incomplet, réponse perdue sans double write, code57014 séparé, accès refusé et diagnostics expurgés. Pas RLS/Auth.
+- CLOSURE_HTTP — PASS_HTTP_FIXTURE — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/http.log — HTTP loopback réel, données synthétiques,7contrôles CAS/rich/38incomplet sans Apply.
+- CLOSURE_PARITY — PASS_FIXTURE — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/parity.log — 22x9=198 empreintes inchangées au code final.
+- CLOSURE_FINAL_TESTS — PASS_REACT_AND_OWNER_FIXTURE — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/final-closure-tests.json — 12 commandes, tous codes0 sur79e3bf0; suites Bar, Draft/CAS, Apply synthétique, C8, TypeScript
+- CLOSURE_REACT — PASS_REACT — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/final-closure-react.log — 24 groupes réels, dont navigation externe/RAW et capsule véhicule; aucun navigateur simulé revendiqué
