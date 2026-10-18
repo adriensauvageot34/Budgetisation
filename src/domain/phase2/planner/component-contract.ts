@@ -4,6 +4,7 @@ import type { KernelCost } from "./compiler-contract";
 import type { FundingAllocation, ProspectivePlaceRef } from "../planned-contract";
 import type { JourneyDeclaration, MobilityPricingDecision, ProspectiveRouteDecision } from "./mobility-contract";
 import type { PlannedAssetRef } from "../planned-assets";
+import type {VenueEndpoints} from "./night-out-venue";
 
 export type ComponentDefaultProvenance = "STRUCTURAL_DEFAULT" | "PERSONAL_SUGGESTION" | "EXPLICIT_USER_DECISION";
 export type ContextBindingDecision = Readonly<{ mode: "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" | "NO_RELATED_SLOT" }>;
@@ -19,7 +20,7 @@ export type ComponentSelectionV1 = SelectionIdentity & (
   | Readonly<{ kind: "CHILD_CONTEXT"; childContextOccurrenceId: string }>
   | Readonly<{ kind: "MOBILITY_INTENT"; origin?: ProspectivePlaceRef | null; destination?: ProspectivePlaceRef | null; returnRequired?: boolean;
       journey?: JourneyDeclaration; pricing?: MobilityPricingDecision; plannedTime?: string | null; returnTime?: string | null;
-      route?: ProspectiveRouteDecision }>
+      route?: ProspectiveRouteDecision; venueEndpoints?:VenueEndpoints }>
   | Readonly<{ kind: "UNRESOLVED" }>);
 export type ComponentSlotSelectionV1 = Readonly<{ items: readonly ComponentSelectionV1[] }>;
 export type ComponentOptionDefinition = Readonly<{ optionKey: string; label: string; kind: "COMPONENT" | "MOBILITY_INTENT";

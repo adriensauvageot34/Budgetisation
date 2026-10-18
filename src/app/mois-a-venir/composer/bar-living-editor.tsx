@@ -9,7 +9,8 @@ import type {ComponentSelectionV1} from "@/domain/phase2/planner/component-contr
 import type {ComposerOperation} from "@/domain/phase2/planner/composer-ui-contract";
 import {NightOutEditor} from "./night-out-workshop";
 import {ContextPalette,type PaletteQuestion} from "./context-palette";
-import {barItems,barLeg,barEndpoint,barPlaceOperation,barSameModeReturn,barReverseLeg,assertBarRouteEditable,barEndpointCosts,type BarTarget,type BarLeg} from "./bar-living-operations";
+import {barItems,barLeg,barEndpoint,barPlaceOperation,barVenueAdaptations,barSameModeReturn,barReverseLeg,assertBarRouteEditable,barEndpointCosts,type BarTarget,type BarLeg} from "./bar-living-operations";
+import {parseNightOutVenue,venueBinding,type NightOutVenueDecision,type BarGoogleRef,type VenueEndpointBinding} from "@/domain/phase2/planner/night-out-venue";
 import {barPlaceLabel,barModeLabel,barPeopleLabel} from "./bar-living-card";
 import {fresh,fromSelection,buildComponentRow,type Row} from "./night-out-components";
 import {WorkshopComponentRow} from "./workshop-component-row";
@@ -31,7 +32,7 @@ import type {BarViewMemory} from "./bar-view-memory";
 import {Trash2} from "lucide-react";
 import styles from "./composer.module.css";
 
-type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more";
+type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more"|"venue-change";
 type Component=Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;
 const catalog=assetsForModule("bar").filter(asset=>!/(?:parking|entry)$/u.test(asset.assetKey));
 const beforeCatalog=assetsForModule("house_party");
@@ -51,6 +52,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const [advancedRow,setAdvancedRow]=useState(false),[manual,setManual]=useState(""),[allPlaces,setAllPlaces]=useState(props.initialBarView?.allPlaces??false),[allEndpoints,setAllEndpoints]=useState(false),[allBefore,setAllBefore]=useState(props.initialBarView?.allBefore??false),[error,setError]=useState("");
   const [queries,setQueries]=useState<Record<string,string>>(()=>props.initialBarView?.queries??{});
   const [googleSearch,setGoogleSearch]=useState<BarPlaceSearchState|undefined>(()=>props.initialBarView?.googleSearch);
+  const [pendingVenue,setPendingVenue]=useState<{venue:NightOutVenueDecision;snapshot:string}|null>(null);
   const [calendarFocus,setCalendarFocus]=useState(()=>typeof context.fields.plannedDate==="string"?context.fields.plannedDate:props.semanticState.targetMonth+"-01");
   const [fare,setFare]=useState(()=>{const leg=initialRoute&&barLeg(context,initialRoute[1] as "outbound"|"return");return initialRoute?.[2]==="fare"&&leg&&leg.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:"";});
   const [itemPage,setItemPage]=useState(()=>props.initialBarView?.pages[props.initialTarget??"summary"]??0);
@@ -105,7 +107,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const resumeQuick=useCommittedEvent(()=>startQuick());
   const resumeEndpoint=useCommittedEvent((key:"origin"|"destination")=>targetEndpoint(key));
   const resumeTogglePerson=useCommittedEvent((person:ProspectivePersonRef)=>togglePerson(person));
-  const resumeEndpointChoice=useCommittedEvent((place:ProspectivePlaceRef|null)=>chooseEndpoint(place));
+  const resumeEndpointChoice=useCommittedEvent((place:ProspectivePlaceRef|null,bind:boolean=false)=>chooseEndpoint(place,false,bind));
   const resumeBefore=useCommittedEvent((asset:PlannedAsset)=>addBefore(asset));
   const resumeShared=useCommittedEvent((included?:boolean)=>addShared(included));
   const resumeRemoveBefore=useCommittedEvent(()=>removeBefore());
@@ -123,7 +125,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(trigger&&typeof document!=="undefined"&&!trigger.isConnected&&document.activeElement===document.body)editorRoot.current?.focus({preventScroll:true});
   },[page]);
   useEffect(()=>{if(page!=="row")return;const tile=editorRoot.current?.querySelector<HTMLElement>('[data-bar-active-tile="true"]');tile?.scrollIntoView?.({block:"nearest",inline:"nearest"});},[page,row.id]);
-  const [pendingEndpoint,setPendingEndpoint]=useState<{leg:BarLeg;key:"origin"|"destination";place:ProspectivePlaceRef|null}|null>(null);
+  const [pendingEndpoint,setPendingEndpoint]=useState<{leg:BarLeg;key:"origin"|"destination";place:ProspectivePlaceRef|null;binding?:VenueEndpointBinding}|null>(null);
   function canSaveBuffer(){try{
     if(busy||page==="row"&&slot.startsWith("before-")&&beforeLocked)return false;
     if(page==="row"){buildComponentRow(row,row.existing?.optionKey??"extra");return true;}
@@ -161,7 +163,14 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const homes=barHomePlaces(model.mobilityOptions?.places??[]);
   const homeCities=[...new Set(homes.map(place=>place.commune?.trim()).filter((value):value is string=>!!value))];
   const searchCity=selectedPlace?.kind==="KNOWN"?model.mobilityOptions?.places.find(place=>place.placeId===selectedPlace.placeId)?.commune??undefined:homes.length===1&&homeCities.length===1?homeCities[0]:undefined;
-  const choosePlace=(place:ProspectivePlaceRef)=>decide(barPlaceOperation(context,place),"summary");
+  const selectedVenue=context.fields.venueDecision?parseNightOutVenue(context.fields.venueDecision):null;
+  const choosePlace=(place:ProspectivePlaceRef,google?:BarGoogleRef)=>{
+    const venue=parseNightOutVenue({version:"night-out-venue@v1",decisionId:crypto.randomUUID(),place,...(google?{google}:{}),provenance:"EXPLICIT_USER_DECISION"});
+    if(barVenueAdaptations(context).length){setPendingVenue({venue,snapshot:decisionSnapshot()});move("venue-change");return false;}
+    return decide(barPlaceOperation(context,place,venue),"summary");
+  };
+  const commitVenue=(adapt:boolean)=>{if(!pendingVenue)return;if(pendingVenue.snapshot!==decisionSnapshot()){setError("La sortie a changé. Choisissez à nouveau le bar avant d’adapter ses trajets.");return;}
+    try{if(decide(barPlaceOperation(context,pendingVenue.venue.place,pendingVenue.venue,adapt),"summary"))setPendingVenue(null);}catch(failure){setError((failure as Error).message);}};
   const editComponent=(target:string,selection:Component)=>{if(!guard(()=>resumeEdit(target,selection.selectionId)))return;setSlot(target);setAdvancedRow(false);setRow(fromSelection(selection));move("row");};
   const add=(asset:PlannedAsset,included?:boolean)=>{
     if(!guard(()=>resumeAdd(asset,included)))return;
@@ -208,16 +217,19 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   };
   const leg=barLeg(context,direction);
   const patchLeg=(value:BarLeg,next:Page="summary")=>{try{if(leg&&leg.selectionId===value.selectionId&&JSON.stringify(leg)!==JSON.stringify(value))assertBarRouteEditable(leg);return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:barItems(context,direction).some(item=>item.selectionId===value.selectionId)?barItems(context,direction).map(item=>item.selectionId===value.selectionId?value:item):[...barItems(context,direction),value]}}},next);}catch(failure){setError((failure as Error).message);return false;}};
-  const chooseEndpoint=(place:ProspectivePlaceRef|null,fromBuffer=false)=>{if(!leg)return false;if(!fromBuffer&&!guard(()=>resumeEndpointChoice(place)))return false;try{
+  const chooseEndpoint=(place:ProspectivePlaceRef|null,fromBuffer=false,bindVenue=false)=>{if(!leg)return false;if(!fromBuffer&&!guard(()=>resumeEndpointChoice(place,bindVenue)))return false;try{
     // Validate representability before proposing any destructive price choice.
     const costs=barEndpointCosts(leg,endpoint);
-    const next=barEndpoint(leg,endpoint,place,"UNKNOWN");
-    if(next!==leg&&costs.length){setPendingEndpoint({leg,key:endpoint,place});return false;}
+    const unbound=barEndpoint(leg,endpoint,place,"UNKNOWN");
+    const next=bindVenue&&selectedVenue&&place
+      ?{...unbound,venueEndpoints:{...unbound.venueEndpoints,[endpoint]:venueBinding(selectedVenue)}}:unbound;
+    if(next!==leg&&costs.length){setPendingEndpoint({leg,key:endpoint,place,...(bindVenue&&selectedVenue?{binding:venueBinding(selectedVenue)}:{})});return false;}
     const admitted=patchLeg(next,direction);if(admitted&&place&&endpoint==="origin"&&!next.destination){setEndpoint("destination");setAllEndpoints(false);setManual("");move("endpoint");}return admitted;
   }catch(failure){setError(failure instanceof Error?failure.message:"Ce lieu ne peut pas être retenu. Le trajet est conservé.");}};
   const resolveEndpoint=(choice:"UNKNOWN"|"RETAIN_MANUAL")=>{if(!pendingEndpoint||!leg)return;
     if(JSON.stringify(leg)!==JSON.stringify(pendingEndpoint.leg)){setPendingEndpoint(null);setError("Ce trajet a changé entre-temps. Relisez-le avant de choisir son nouveau prix.");return;}
-    try{patchLeg(barEndpoint(leg,pendingEndpoint.key,pendingEndpoint.place,choice),direction);}catch(failure){setError((failure as Error).message);}
+    if(pendingEndpoint.binding&&pendingEndpoint.binding.venue.decisionId!==selectedVenue?.decisionId){setError("Le bar a changé. Choisissez à nouveau le point du trajet.");return;}
+    try{const next=barEndpoint(leg,pendingEndpoint.key,pendingEndpoint.place,choice);patchLeg({...next,...(pendingEndpoint.binding?{venueEndpoints:{...next.venueEndpoints,[pendingEndpoint.key]:pendingEndpoint.binding}}:{})},direction);}catch(failure){setError((failure as Error).message);}
   };
   const saveFare=()=>{if(!leg)return false;try{return patchLeg({...leg,pricing:{fare:{kind:"MANUAL",unitAmount:decisionAmount(fare.trim().replace(",","."))},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);}catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez le prix.");return false;}};
   function saveBuffer():boolean {
@@ -248,6 +260,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       if((leg.route?.stops.length??0)>2||leg.pricing?.fundingAllocations.length)throw Error("Ce trajet possède des arrêts intermédiaires ou un financement. Utilisez les options détaillées ; ils sont conservés.");
     }catch(failure){setError((failure as Error).message);return;}}
     const value:BarLeg=leg?.optionKey===optionKey?leg:{kind:"MOBILITY_INTENT",selectionId:leg?.selectionId??crypto.randomUUID(),optionKey,provenance:"EXPLICIT_USER_DECISION",returnRequired:false,
+      ...(leg?.venueEndpoints?{venueEndpoints:leg.venueEndpoints}:!leg&&selectedVenue?{venueEndpoints:{[direction==="outbound"?"destination":"origin"]:venueBinding(selectedVenue)}}:{}),
       ...(leg?.plannedTime!==undefined?{plannedTime:leg.plannedTime}:{}),...(leg?.returnTime!==undefined?{returnTime:leg.returnTime}:{}),
       origin:leg?(leg.origin??null):fromHome?{kind:"KNOWN",placeId:homes[0]!.placeId}:(direction==="return"?selectedPlace:null)??null,destination:leg?(leg.destination??null):(direction==="outbound"?selectedPlace:null)??null,
       journey:{relation:"OWNS_JOURNEY",certainty:"CERTAIN",targetIntentId:null,externalExpenseId:null,externalCostLineIds:[],choice:null,stopIndex:null,accessLegIndex:null},
@@ -294,7 +307,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     ...(!leg.origin?[choice("origin","Choisir le départ",()=>targetEndpoint("origin"),"activity")]:!leg.destination?[choice("destination","Choisir l’arrivée",()=>targetEndpoint("destination"),"activity")]:leg.optionKey==="car"&&!leg.route?.vehicleRef&&model.mobilityOptions?.vehicle?.vehicleId?[choice("vehicle",`Utiliser ${model.mobilityOptions.vehicle.label}`,chooseVehicle,"car","Véhicule enregistré · choix explicite")]:[]),
     choice("change-mode","Changer de transport",()=>setRouteModes(true),"activity"),choice("route-details","Options du trajet",()=>startLegacy("menu"),"activity")]};
   if(page==="endpoint")question={title:`${direction==="outbound"?"Aller":"Retour"} · ${endpoint==="origin"?"d’où partir ?":"où arriver ?"}`,identity:`${context.contextOccurrenceId}:${direction}:${endpoint}`,search:{value:query,change:setQuery,label:"Chercher un point du trajet"},choices:[
-    ...(selectedPlace?.kind==="TEXT"&&barSearchText(selectedPlace.label).includes(barSearchText(query))&&((direction==="outbound"&&endpoint==="destination")||(direction==="return"&&endpoint==="origin"))?[{...choice("bar-text",selectedPlace.label,()=>chooseEndpoint(selectedPlace),"activity","Repère libre · distance non attestée"),showHint:true}]:[]),
+    ...(selectedPlace&&((direction==="outbound"&&endpoint==="destination")||(direction==="return"&&endpoint==="origin"))?[{...choice("bar-text",barPlaceLabel(selectedPlace,model),()=>chooseEndpoint(selectedPlace,false,!!selectedVenue),"activity",selectedVenue?.google?"Bar Google retenu · adresse relue pour le trajet":selectedVenue?"Bar retenu · lier ce point à la sortie":"Repère libre · distance non attestée"),showHint:true}]:[]),
     ...barEndpointSuggestions(model.mobilityOptions?.places??[],model.householdPersons,direction,endpoint,leg?.[endpoint==="origin"?"destination":"origin"],selectedPlace,query,allEndpoints).map(({place,hint})=>({...choice(place.placeId,place.name,()=>chooseEndpoint({kind:"KNOWN",placeId:place.placeId}),"activity",hint),showHint:true})),
     ...(!allEndpoints&&!query?[choice("all-endpoints","Tous les lieux",()=>setAllEndpoints(true),"activity","Autres lieux admissibles")]:[]),choice("unknown","Garder à préciser",()=>chooseEndpoint(null),"activity")]};
   if(page==="date")question={title:"Date de la sortie",choices:[]};
@@ -395,7 +408,10 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
           {Array.from({length:new Date(Number(props.semanticState.targetMonth.slice(0,4)),Number(props.semanticState.targetMonth.slice(5)),0).getDate()},(_,i)=>{const date=props.semanticState.targetMonth+"-"+String(i+1).padStart(2,"0");return <button type="button" key={date} data-bar-day={i+1} tabIndex={calendarFocus===date?0:-1} aria-label={date} aria-pressed={context.fields.plannedDate===date} onClick={()=>{setCalendarFocus(date);decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:date}}},"date");}}>{i+1}</button>;})}
         </div>{context.fields.plannedDate&&<button type="button" className={styles.barInlineAdd} disabled={busy} onClick={()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{plannedDate:null}}},"date")}>Retirer la date</button>}</div>
         :page==="people"?<section data-bar-people><h4>Personnes</h4><div className={styles.barLivingMetadata}>{people.slice(peoplePage*4,(peoplePage+1)*4).map(p=><button type="button" key={prospectivePersonIdentity(p)} onClick={()=>togglePerson(p)}>{barPersonLabel(p,model)} ×</button>)}</div><BarPageControls index={Math.min(itemPage,Math.max(0,Math.ceil(people.length/4)-1))} count={Math.ceil(people.length/4)} onChange={setItemPage} label="Pages des participants"/><label>Autre prénom<input value={personName} maxLength={120} onChange={e=>{setPersonName(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!personName.trim()} onClick={()=>{const person={kind:"TEXT" as const,label:personName.trim()};if(!people.some(p=>prospectivePersonIdentity(p)===prospectivePersonIdentity(person))){const next=[...people,person];if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:next}}},"people")){setPeople(next);setPersonName("");}}}}>Ajouter ce prénom</button></section>
-        :page==="google"?<BarPlaceSearch initialCity={searchCity} initialSearch={googleSearch??{query:queries.place??"",city:searchCity??"",resultPage:0}} onSearchChange={saveGoogleSearch} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})} onText={label=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"})}/>
+        :page==="google"?<BarPlaceSearch initialCity={searchCity} initialSearch={googleSearch??{query:queries.place??"",city:searchCity??"",resultPage:0}} onSearchChange={saveGoogleSearch} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})} onText={label=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"})} onGoogle={(label,ref)=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"},ref)}/>
+        :page==="venue-change"&&pendingVenue?<section data-bar-venue-change><h4>Adapter les trajets au nouveau bar ?</h4><p>{barPlaceLabel(pendingVenue.venue.place,model)} · seuls les points explicitement liés sont concernés.</p>
+          <ul>{barVenueAdaptations(context).map(change=><li key={change.slot+change.key}>{change.slot==="outbound"?"Aller":"Retour"} · {change.key==="origin"?"départ":"arrivée"} · {barEndpointCosts(change.leg,change.key).join(", ")||"estimation d’itinéraire à recalculer"}</li>)}</ul>
+          <p>Adapter remet à préciser les prix du trajet concernés. Les autres points, coûts et identités sont conservés. Undo rétablit le bar et les trajets ensemble.</p><button type="button" disabled={busy} onClick={()=>commitVenue(false)}>Conserver les trajets</button><button type="button" disabled={busy} onClick={()=>commitVenue(true)}>Adapter les trajets liés</button></section>
         :page==="manual-place"?<><label>Nom ou adresse libre<input autoFocus maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={!manual.trim()||busy} onClick={()=>choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"})}>Retenir ce repère</button><small>Repère textuel uniquement · distance et itinéraire à préciser.</small></>
         :page==="endpoint"?<><label>Autre point du trajet<input maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!manual.trim()} onClick={()=>chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true)}>Retenir ce point libre</button><small>Repère textuel uniquement · itinéraire et distance à préciser.</small></>
         :page==="vehicle"?<section data-bar-vehicle><h4>Véhicule de {direction==="outbound"?"l’aller":"retour"}</h4><p>{leg?.route?.vehicleRef?.labelAtSelection??"Aucun véhicule retenu."}</p><p>Choisissez le véhicule enregistré dans le dock. Son coût d’usage est une estimation ; aucun achat de carburant n’est créé.</p>{!model.mobilityOptions?.vehicle?.vehicleId&&<p>Pas de véhicule estimable dans les références disponibles. Les lieux et les autres coûts restent conservés.</p>}</section>

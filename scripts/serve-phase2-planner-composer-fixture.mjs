@@ -82,6 +82,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
   BAR_P3:barP3Month,
+  BAR16_GOOGLE:barP3Month,
   ...Object.fromEntries([0,1,2,4,10,15].map(count=>[`BAR350_${count}`,()=>bar350ReceptionMonth(count)])),
   P09: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P09C: p09CompatibilityMonth,
@@ -109,6 +110,10 @@ async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
     const pg = await createKernelPostgres(), fixture = (/^L4E_(5|16|30|50)$/u.test(key) ? () => l4eMonth(Number(key.slice(4))) : key.startsWith('L1_L33') ? () => l33Month(key.includes('DENSE')) : key.startsWith('L1_L31') ? () => l31Month(key.includes('DENSE')) : key.startsWith('L1') ? fixtures.L1 : p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
     if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
+    if(key==='BAR16_GOOGLE'){
+      owner.value.restaurant={details:async id=>({provider:'google_places',placeId:id,displayName:'Bar Google synthétique',formattedAddress:'Adresse synthétique, Bordeaux, France',types:['bar']})};
+      owner.value.route.geocode=async()=>({latitude:44.84,longitude:-0.58,source:'TOMTOM'});
+    }
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' },
         ...(key.startsWith('L1') ? [{ personId: '00000000-0000-4000-8000-000000000002', displayName: 'Camille Fixture' }] : [])],
@@ -135,6 +140,13 @@ const server = http.createServer(async (request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1');
     const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
     const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
+    // Explicit synthetic provider surface, localhost only. Never proxies Google.
+    if(key==='BAR16_GOOGLE'&&request.method==='POST'&&['/api/places/autocomplete','/api/places/details'].includes(url.pathname)){
+      const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>4096)throw Error('FIXTURE_INPUT_TOO_LARGE');chunks.push(chunk);}
+      const input=JSON.parse(Buffer.concat(chunks).toString());response.setHeader('Content-Type','application/json');response.setHeader('Cache-Control','no-store');
+      if(url.pathname.endsWith('autocomplete'))response.end(JSON.stringify({suggestions:[{source:'google_places',placeId:'ChIJ_bar16_synthetic',primaryText:'Bar Google synthétique',secondaryText:'Bordeaux · fixture sans fournisseur réel'}]}));
+      else {if(input.placeId!=='ChIJ_bar16_synthetic'||input.context?.kind!=='BAR_APERO')throw Error('FIXTURE_GOOGLE_REF_INVALID');response.end(JSON.stringify({place:{provider:'google_places',placeId:input.placeId,displayName:'Bar Google synthétique',formattedAddress:'Adresse synthétique, Bordeaux, France',types:['bar']}}));}return;
+    }
     if(p4Measuring&&url.pathname==='/p4-metrics'&&request.method==='POST'){
       if(!/^P4_[a-zA-Z0-9_-]{1,80}$/.test(key))throw Error('P4_SCENARIO_INVALID');
       const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>1000000)throw Error('P4_METRICS_TOO_LARGE');chunks.push(chunk);}

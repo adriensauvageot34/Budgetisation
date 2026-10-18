@@ -12,7 +12,7 @@ import type { GuidedContextEdit } from "./guided-context-edit";
 import type { PlannedMobilityOptions } from "../planned-places";
 
 export type ComposerMobilitySummary = Readonly<{ contextOccurrenceId: string; journeyId: string; ownerIntentId?: string; requestDigest: string;
-  status: "RESOLVED" | "PARTIAL" | "UNKNOWN"; distanceKm: string | null; economicFuel: string | null;
+  status: "RESOLVED" | "PARTIAL" | "UNKNOWN"; distanceKm: string | null; economicFuel: string | null; durationSeconds?:number|null; fuelLiters?:string|null;
   toll: string | null; parking: string | null; fare: string | null; cashTransport: string | null;
   routeSource: string | null; fuelSource: string | null; tollSource: string | null; vehicleLabel: string | null;
   methodRef: string | null; timeBasis: string | null; fallbacks: readonly string[] }>;

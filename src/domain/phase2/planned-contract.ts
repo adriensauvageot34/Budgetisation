@@ -98,6 +98,7 @@ export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly s
 export type PlannedExpenseDraft = Readonly<{ familyKey: PlannedExpenseFamily; subtypeKey: string | null;
   title: string; plannedDate: string | null; costItems: readonly CostItem[]; context: PlannedExpenseContext }>;
 export type PlannedVehicleEstimate = Readonly<{ vehicleId?: string; fuelType?: string; label: string; consumptionL100Km: string;
+  presentation?:Readonly<{version:"canonical-vehicle-presentation@v1";brand:string;model:string;displayName:string;technicalLabel:string;modelRef:string;source:string}>;
   fuelPricePerLiter: string; fuelPriceSource: string; fuelPriceObservedAt?: string; fuelPriceQuality?: string }>;
 export type PlannedPriceSuggestion = Readonly<{ assetKey: string; unitAmount: string; sourceLabel: string }>;
 export type PlannedWalletOption = Readonly<{ source: "SWILE" | "EDENRED"; ownerPersonId: string | null }>;

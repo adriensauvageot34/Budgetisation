@@ -11,6 +11,7 @@ import { ASSET_MODULES } from "@/domain/phase2/planned-assets";
 import { FrenchOfficialFuelPriceProvider, HereTollProvider, TomTomRouteProvider, unknownToll } from "./planned-car-providers";
 import { GoogleRestaurantPlaces } from "@/server/places/google-places";
 import type { ProjectPlaceKind } from "@/domain/phase2/restaurant-places";
+import {validGooglePlaceId,projectPlaceTypeCompatible} from "@/domain/phase2/restaurant-places";
 
 export function parsePlannedCarRequest(raw: unknown): PlannedCarRequest {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new TypeError("PLANNED_ROUTE_REQUEST_INVALID");
@@ -49,7 +50,9 @@ export function parsePlannedCarRequest(raw: unknown): PlannedCarRequest {
   return { stops, ...(tripTiming ? { tripTiming } : {}), plannedDate: value.plannedDate as string | null, plannedTime: value.plannedTime as string | null | undefined,
     timeKind: value.timeKind as PlannedCarRequest["timeKind"], preference: value.preference as PlannedCarRequest["preference"], manualFuelPrice: value.manualFuelPrice as string | undefined };
 }
-type Facts = { places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null; history: readonly HistoricalRouteLeg[]; restaurantGooglePlaceId?: string; googleDestination?: { placeId: string; kind: ProjectPlaceKind } };
+type Facts = { places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null; history: readonly HistoricalRouteLeg[]; restaurantGooglePlaceId?: string; googleDestination?: { placeId: string; kind: ProjectPlaceKind };
+  /** Directed, server-prepared endpoint references. Never apply a venue to every ROOT_PLACE. */
+  googleEndpoints?:readonly {stopIndex:number;placeId:string;kind:"BAR_APERO"}[] };
 type Providers = { route: Pick<TomTomRouteProvider, "estimateCarRoute" | "geocode">; fuel: Pick<FrenchOfficialFuelPriceProvider, "getReference">; toll: Pick<HereTollProvider, "estimateTolls">;
   restaurant?: Pick<GoogleRestaurantPlaces, "details"> };
 /** Same server service for the builder action, Preview and Save. It writes no canonical fact. */
@@ -57,6 +60,9 @@ export async function estimatePlannedCar(raw: PlannedCarRequest, facts: Facts, p
   route: new TomTomRouteProvider(), fuel: new FrenchOfficialFuelPriceProvider(), toll: new HereTollProvider(),
 }): Promise<PlannedCarResult> {
   const input = parsePlannedCarRequest(raw);
+  if(facts.googleEndpoints){const refs=facts.googleEndpoints;
+    if(refs.length>2||new Set(refs.map(r=>r.stopIndex)).size!==refs.length||refs.some(r=>!Number.isInteger(r.stopIndex)||r.stopIndex<0||r.stopIndex>=input.stops.length||input.stops[r.stopIndex].placeId||r.kind!=="BAR_APERO"||!validGooglePlaceId(r.placeId)))throw new TypeError("PLANNED_GOOGLE_ENDPOINT_INVALID");
+    if(input.tripTiming&&refs.length)throw new TypeError("PLANNED_GOOGLE_ENDPOINT_SPLIT_UNSUPPORTED");}
   if (!input.tripTiming) return estimateCarDirection(input, facts, providers);
   const home = facts.places.find((p) => derivePlannedPlaceRoles(p).includes("OWN_HOME"));
   if (!home) throw new TypeError("PLANNED_VISIT_RETURN_HOME_REQUIRED");
@@ -101,13 +107,18 @@ async function estimateCarDirection(raw: PlannedCarRequest, facts: Facts, provid
     const google = facts.googleDestination ?? (facts.restaurantGooglePlaceId ? { placeId: facts.restaurantGooglePlaceId, kind: "RESTAURANT" as const } : undefined);
     const googleAddress = google ? (await (providers.restaurant ?? new GoogleRestaurantPlaces()).details(google.placeId, undefined, google.kind)).formattedAddress : null;
     if (google && !googleAddress) throw new TypeError("RESTAURANT_ADDRESS_UNAVAILABLE");
-    stops = await Promise.all(input.stops.map(async (stop) => {
+    const details=new Map<string,Promise<string>>();
+    const endpointAddress=(id:string)=>{if(!details.has(id))details.set(id,(providers.restaurant??new GoogleRestaurantPlaces()).details(id,undefined,"BAR_APERO").then(place=>{
+      if(place.placeId!==id||place.provider!=="google_places"||!projectPlaceTypeCompatible(place.types,"BAR_APERO")||!place.formattedAddress?.trim())throw new TypeError("PLANNED_GOOGLE_ENDPOINT_DETAILS_INVALID");return place.formattedAddress;}));return details.get(id)!;};
+    stops = await Promise.all(input.stops.map(async (stop,index) => {
+      const external=facts.googleEndpoints?.find(ref=>ref.stopIndex===index);
+      const address=external?await endpointAddress(external.placeId):googleAddress&&stop.endpointSource==="ROOT_PLACE"?googleAddress:null;
       const place = facts.places.find((p) => p.placeId === stop.placeId);
       const coordinates = place?.coordinates ?? (stop.coordinates?.source === "USER_DECLARED" ? stop.coordinates : undefined)
-        ?? await providers.route.geocode(googleAddress && stop.endpointSource === "ROOT_PLACE" ? googleAddress
+        ?? await providers.route.geocode(address ? address
           : place ? [place.address, place.commune, "France"].filter(Boolean).join(", ") || place.name : stop.label,
           // A complete provider address already identifies its city. A home bias can lower the confidence of a valid address elsewhere.
-          googleAddress && stop.endpointSource === "ROOT_PLACE" ? undefined : reference);
+          address ? undefined : reference);
       return { ...stop, label: place?.name ?? stop.label, coordinates };
     }));
   } catch { fallbacks.push("GEOCODING_UNAVAILABLE"); messages.push("Précisez une adresse exacte ou les coordonnées des lieux non résolus."); }

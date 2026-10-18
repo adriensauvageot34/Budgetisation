@@ -4,6 +4,7 @@ import type { KernelCost } from "./compiler-contract";
 import type { FundingAllocation } from "../planned-contract";
 import type { PlannedCarSnapshot } from "../planned-car";
 import type { PlannedRouteStop } from "../planned-contract";
+import type {VenueEndpoints} from "./night-out-venue";
 
 /** Durable prospective choices only. Provider results remain in the existing Compiler manifest. */
 export type ProspectiveRouteDecision = Readonly<{ version: "composer-mobility-route@v1";
@@ -27,7 +28,7 @@ export type MobilityIntent = Readonly<{ mobilityIntentId: string; contextOccurre
   destination: ProspectivePlaceRef | null; returnRequired: boolean;
   mode: "CAR" | "TRAIN" | "BUS" | "TAXI" | "FREE" | "OTHER" | "UNKNOWN";
   timing: PlannerTemporalRef; knowledge: PlannerKnowledge; slotKey?: string; returnTiming?: PlannerTemporalRef | null;
-  journey?: JourneyDeclaration; pricing?: MobilityPricingDecision; route?: ProspectiveRouteDecision }>;
+  journey?: JourneyDeclaration; pricing?: MobilityPricingDecision; route?: ProspectiveRouteDecision; venueEndpoints?:VenueEndpoints }>;
 export type JourneyDependency = Readonly<{ intentId: string;
   relation: "OWNS_JOURNEY" | "SHARES_JOURNEY" | "ADDS_STOP" | "USES_ACCESS_LEG" | "NO_ADDITIONAL_MOBILITY";
   targetJourneyId: string | null; certainty: "CERTAIN" | "POSSIBLE" | "SIMILAR_ONLY";

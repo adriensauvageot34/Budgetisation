@@ -12,6 +12,7 @@ import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import type { PlannedPriceSuggestion, PlannedVehicleEstimate, PlannedWalletOption } from "@/domain/phase2/planned-contract";
 import { calculateRouteFuel, type HistoricalRouteLeg } from "@/domain/phase2/planned-routes";
+import {canonicalVehiclePresentation} from "@/server/canonical/vehicle-profile";
 export type { PlannedVehicleEstimate };
 
 async function readVehicleLegs(client: SupabaseClient, householdId: string, vehicleId: string) {
@@ -125,6 +126,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
     if (consumption && consumption.gt(0)) {
       const price = pricesResult.data?.[0];
       estimatedVehicle = { vehicleId: vehicle.vehicle_id, fuelType: vehicle.fuel_type, label: vehicle.label, consumptionL100Km: consumption.round(3).toFixed(3),
+        ...(canonicalVehiclePresentation(vehicle)?{presentation:canonicalVehiclePresentation(vehicle)}:{}),
         fuelPricePerLiter: price ? new Big(price.price_per_liter).toFixed(3) : "0", ...(price ? { fuelPriceObservedAt: price.observed_at, fuelPriceQuality: price.quality } : {}),
         fuelPriceSource: price ? `Estimation · dernier prix ${new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(price.observed_at))}` : "Prix indisponible" };
     }
