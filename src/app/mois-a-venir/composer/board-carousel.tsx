@@ -211,11 +211,12 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       const root = inventoryRootRef(focused, model), item = pages[active]?.find(item => item.id === root || item.kind === "CLUSTER" && item.children.some(child => child.id === root));
       const cell = viewport.current?.querySelector<HTMLElement>(`[data-board-page="${active}"] [data-inventory-id="${CSS.escape(item?.id ?? root)}"]`);
       const barTitle = cell?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="false"] h3 button');
+      const barFocusTarget = barTitle ?? cell?.querySelector<HTMLElement>('[data-bar-living-editor]');
       // Folding removes the dock, then repacks/remounts the card. Restore only
       // a lost body focus after that second layout, never a user's new focus.
-      const lostBarFocus = barTitle && document.activeElement === document.body;
+      const lostBarFocus = barFocusTarget && document.activeElement === document.body;
       if (focusedRequest.current === revealSequence && !lostBarFocus) return;
-      const target = barTitle ?? cell;
+      const target = barFocusTarget ?? cell;
       if (!target || target.closest('[inert]')) return;
       target.focus({ preventScroll: true });
       if (document.activeElement === target) focusedRequest.current = revealSequence;

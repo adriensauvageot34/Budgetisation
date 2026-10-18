@@ -241,6 +241,16 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       else { setFuture(f => f.slice(0, -1)); setPast(p => [...p, before]); }
     }
     localDraft.current = next; setDraftState(next); setSuggestions(null); setBalanceOpen(false); setHoverModel(null); setInteractionImpact(null); setErrorMessage(null);
+    if (history !== "push") {
+      const restoredBar = next.contexts.find(context => presetForContext(context)?.presetKey === "bar-apero"
+        && !before.contexts.some(previous => previous.contextOccurrenceId === context.contextOccurrenceId));
+      // Explicit history restoration also restores a keyboard destination. The
+      // Board follows its page and waits for the real card, including repacking.
+      if (restoredBar) {
+        setFocusedContext(restoredBar.contextOccurrenceId);
+        setReveal(previous => ({targetRef:restoredBar.contextOccurrenceId,sequence:(previous?.sequence??0)+1}));
+      }
+    }
     setPreviewStatus("STALE"); setMessage("Choix conservé dans le brouillon ; simulation en attente.");
     schedulePreview(next);
     return true;

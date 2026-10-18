@@ -1254,3 +1254,11 @@
 .barRouteEvidence { flex-basis:100%; font-size:10px; }
 .barRouteLine [data-bar-vehicle-capsule] { display:inline-flex; align-items:center; gap:4px; min-width:0; max-width:180px; }
 .barRouteLine [data-bar-vehicle-capsule]>span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Secondary information remains readable without competing with the amount.
+   Scoped to Bar; UNKNOWN/freshness text and its meaning are unchanged. */
+.barLivingCard .barLivingHeader small,
+.barLivingCard .barRouteLine small,
+.barLivingCard .barLivingTiles small,
+.barCompositionDock .questionAnswer[data-show-hint=true] small { font-size:12px; line-height:1.4; color:#595363; }
+.barLivingCard .barRouteLine { font-size:12px; }
