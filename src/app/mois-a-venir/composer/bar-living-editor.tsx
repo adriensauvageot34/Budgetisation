@@ -27,6 +27,7 @@ import {BarMetadata,BarRouteLine,BarComponentFace,barPersonLabel} from "./bar-li
 import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
 import {prospectivePersonIdentity} from "@/domain/phase2/planned-product";
 import {BarPageControls} from "./bar-pages";
+import type {BarViewMemory} from "./bar-view-memory";
 import {Trash2} from "lucide-react";
 import styles from "./composer.module.css";
 
@@ -34,7 +35,7 @@ type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${s
 type Component=Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;
 const catalog=assetsForModule("bar").filter(asset=>!/(?:parking|entry)$/u.test(asset.assetKey));
 const beforeCatalog=assetsForModule("house_party");
-export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number}) {
+export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number;initialBarView?:BarViewMemory;onViewChange?:(view:BarViewMemory)=>void}) {
   const {context,model,card,dockHost,onSave,serverError}=props;
   const busy=props.busy||!!card?.readOnly||props.semanticState.preferences.anchors.includes(context.contextOccurrenceId)||props.semanticState.preferences.flexibility[context.contextOccurrenceId]==="PRESERVE";
   const initialRoute=props.initialTarget?.startsWith("route:")?props.initialTarget.split(":"):null;
@@ -47,23 +48,29 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const [row,setRow]=useState<Row>(()=>initialSelection?.kind==="COMPONENT"?fromSelection(initialSelection):fresh()),[slot,setSlot]=useState(initialComponent?.[1]??"extras"),[dirty,setDirty]=useState(false);
   const [showRowChoices,setShowRowChoices]=useState(false);
   useEffect(()=>setShowRowChoices(false),[row.id]);
-  const [advancedRow,setAdvancedRow]=useState(false),[manual,setManual]=useState(""),[allPlaces,setAllPlaces]=useState(false),[allEndpoints,setAllEndpoints]=useState(false),[allBefore,setAllBefore]=useState(false),[error,setError]=useState("");
-  const [queries,setQueries]=useState<Record<string,string>>({});
-  const [googleSearch,setGoogleSearch]=useState<BarPlaceSearchState>();
+  const [advancedRow,setAdvancedRow]=useState(false),[manual,setManual]=useState(""),[allPlaces,setAllPlaces]=useState(props.initialBarView?.allPlaces??false),[allEndpoints,setAllEndpoints]=useState(false),[allBefore,setAllBefore]=useState(props.initialBarView?.allBefore??false),[error,setError]=useState("");
+  const [queries,setQueries]=useState<Record<string,string>>(()=>props.initialBarView?.queries??{});
+  const [googleSearch,setGoogleSearch]=useState<BarPlaceSearchState|undefined>(()=>props.initialBarView?.googleSearch);
   const [calendarFocus,setCalendarFocus]=useState(()=>typeof context.fields.plannedDate==="string"?context.fields.plannedDate:props.semanticState.targetMonth+"-01");
   const [fare,setFare]=useState(()=>{const leg=initialRoute&&barLeg(context,initialRoute[1] as "outbound"|"return");return initialRoute?.[2]==="fare"&&leg&&leg.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:"";});
-  const [itemPage,setItemPage]=useState(0);
+  const [itemPage,setItemPage]=useState(()=>props.initialBarView?.pages[props.initialTarget??"summary"]??0);
+  const [dockPages,setDockPages]=useState<Record<string,number>>(()=>props.initialBarView?.dockPages??{});
+  const saveDockPage=useCallback((key:string,index:number)=>setDockPages(previous=>({...previous,[key]:index})),[]);
   const [people,setPeople]=useState<ProspectivePersonRef[]>(()=>Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);
   const [personName,setPersonName]=useState("");
-  const [quickAmount,setQuickAmount]=useState(()=>{const item=barItems(context,"main")[0];return props.initialTarget==="quick"&&item?.kind==="COMPONENT"&&item.cost.kind==="MANUAL"?item.cost.unitAmount:"";}),[quickTotal,setQuickTotal]=useState(()=>{const item=barItems(context,"main")[0];return props.initialTarget==="quick"&&!(item?.kind==="COMPONENT"&&item.label!=="Consommations regroupées");}),[pendingAsset,setPendingAsset]=useState<PlannedAsset|null>(null),[pendingShared,setPendingShared]=useState(false);
+  const [quickAmount,setQuickAmount]=useState(()=>{const item=barItems(context,"main")[0];return props.initialTarget==="quick"&&item?.kind==="COMPONENT"&&item.cost.kind==="MANUAL"?item.cost.unitAmount:"";}),[quickTotal,setQuickTotal]=useState<boolean|null>(null),[pendingAsset,setPendingAsset]=useState<PlannedAsset|null>(null),[pendingShared,setPendingShared]=useState(false);
   const [routeModes,setRouteModes]=useState(props.initialTarget==="outbound"||props.initialTarget==="return");
   const [direction,setDirection]=useState<"outbound"|"return">(props.initialTarget==="return"||initialRoute?.[1]==="return"?"return":"outbound"),[endpoint,setEndpoint]=useState<"origin"|"destination">(initialRoute?.[2]==="destination"?"destination":"origin");
   const searchScope=page==="endpoint"?`endpoint:${direction}:${endpoint}`:page;
   const query=queries[searchScope]??"";
   const setQuery=(value:string)=>{setQueries(previous=>({...previous,[searchScope]:value}));if(searchScope==="place")setGoogleSearch(undefined);};
-  const saveGoogleSearch=useCallback((state:BarPlaceSearchState)=>{setGoogleSearch(previous=>previous?.query===state.query&&previous.city===state.city&&previous.resultPage===state.resultPage?previous:state);setQueries(previous=>previous.place===state.query?previous:{...previous,place:state.query});},[]);
-  const savedPages=useRef<Record<string,number>>({});
+  const saveGoogleSearch=useCallback((state:BarPlaceSearchState)=>{setGoogleSearch(previous=>previous?.query===state.query&&previous.city===state.city&&previous.resultPage===state.resultPage&&previous.detail===state.detail&&previous.detailReadAt===state.detailReadAt?previous:state);setQueries(previous=>previous.place===state.query?previous:{...previous,place:state.query});},[]);
+  const savedPages=useRef<Record<string,number>>({...props.initialBarView?.pages});
   const previousPage=useRef(page);
+  useEffect(()=>{
+    savedPages.current[page]=itemPage;
+    props.onViewChange?.({queries,googleSearch,pages:{...savedPages.current},dockPages,allPlaces,allBefore});
+  },[page,itemPage,queries,googleSearch,dockPages,allPlaces,allBefore,props.onViewChange]);
   const requestConfirmation=useWorkshopConfirmation(),activeQuestion=useActiveWorkshopQuestion(),interaction=useComposerInteractions();
   const before=barBefore(props.semanticState,context);
   const rowItems=(target:string)=>target==="before-main"?before?[before.bottle]:[]:target==="before-extras"?before?.extras??[]:barItems(context,target);
@@ -116,7 +123,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(page==="manual-place"||page==="endpoint")return !!manual.trim();
     if(page==="people")return !personName.trim();
     if(page==="fare"){decisionAmount(fare.trim().replace(",","."));return !!fare.trim();}
-    if(page==="quick"){decisionAmount(quickAmount.trim().replace(",","."));return !!quickAmount.trim()&&!(quickTotal&&barItems(context,"extras").length);}
+    if(page==="quick"){decisionAmount(quickAmount.trim().replace(",","."));return quickTotal!==null&&!!quickAmount.trim()&&!(quickTotal&&barItems(context,"extras").length);}
     return false;
   }catch{return false;}}
   useEffect(()=>{
@@ -137,7 +144,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const startLegacy=(target:typeof legacy)=>{if(!guard(()=>resumeLegacy(target)))return;setLegacy(target);setLegacyKey(k=>k+1);move("legacy");};
   const open=(target:BarTarget)=>{if(!guard(()=>resumeOpen(target)))return;
     if(target.startsWith("route:")){const [,dir,key]=target.split(":");setDirection(dir as "outbound"|"return");setAllEndpoints(false);setManual("");if(key==="vehicle"){move("vehicle");}else if(key==="fare"){const actual=barLeg(context,dir as "outbound"|"return");setFare(actual?.pricing?.fare.kind==="MANUAL"?actual.pricing.fare.unitAmount:"");move("fare");}else{setEndpoint(key as "origin"|"destination");move("endpoint");}return;}
-    if(target==="quick"){const item=barItems(context,"main")[0];setQuickAmount(item?.kind==="COMPONENT"&&item.cost.kind==="MANUAL"?item.cost.unitAmount:"");setQuickTotal(!(item?.kind==="COMPONENT"&&item.label!=="Consommations regroupées"));move("quick");return;}
+    if(target==="quick"){const item=barItems(context,"main")[0];setQuickAmount(item?.kind==="COMPONENT"&&item.cost.kind==="MANUAL"?item.cost.unitAmount:"");setQuickTotal(null);move("quick");return;}
     if(target==="outbound"||target==="return")setRouteModes(true);
     if(target==="people"){setPeople(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);move("people");return;}
     if(target.startsWith("component:")){const [,slot,id]=target.split(":");const item=rowItems(slot).find(item=>item.selectionId===id);if(item?.kind==="COMPONENT")editComponent(slot,item);return;}
@@ -156,7 +163,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     const value=buildComponentRow({...fresh(asset.label),assetRef:{catalogVersion:PLANNED_ASSET_CATALOG_VERSION,assetKey:asset.assetKey,labelAtSelection:asset.label,provenance:"EXPLICIT_USER_DECISION"}},"extra");
     if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{...(included?{main:[]}:{}),extras:[...barItems(context,"extras"),value]}}},"row")){setPendingAsset(null);setSlot("extras");setAdvancedRow(false);setRow(fromSelection(value));}
   };
-  const startQuick=()=>{if(!guard(resumeQuick))return;setQuickAmount("");setQuickTotal(false);move("quick");};
+  const startQuick=()=>{if(!guard(resumeQuick))return;setQuickAmount("");setQuickTotal(null);move("quick");};
   const addBefore=(asset:PlannedAsset)=>{
     if(!guard(()=>resumeBefore(asset))||busy||beforeLocked)return;
     try{const value=buildComponentRow({...fresh(asset.label),unitBasis:asset.quantityStrategy==="SHARED"?"SHARED":"ITEM",assetRef:{catalogVersion:PLANNED_ASSET_CATALOG_VERSION,assetKey:asset.assetKey,labelAtSelection:asset.label,provenance:"EXPLICIT_USER_DECISION"}},before?"extra":"activity");
@@ -166,6 +173,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const removeBefore=()=>{if(!guard(resumeRemoveBefore)||!before)return;confirm({message:`Retirer le Before et ses ${1+before.extras.length} éléments, ainsi que ses éventuels trajets liés ? Les choix du bar restent conservés. Undo restitue le groupe et ses identités.`,acceptLabel:"Retirer le Before",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},before:null}})});};
   const addShared=(included?:boolean)=>{if(!guard(()=>resumeShared(included)))return;if(included&&barItems(context,"main").length!==1){setError("Plusieurs postes occupent ce coût. Rééditez leurs tuiles ; aucun poste n’a été retiré.");return;}if(included===undefined&&barItems(context,"main").some(item=>item.kind==="COMPONENT")){setPendingShared(true);setPendingAsset(null);move("coverage");return;}const value=buildComponentRow({...fresh("Bouteille partagée"),unitBasis:"SHARED"},"extra");if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{...(included?{main:[]}:{}),extras:[...barItems(context,"extras"),value]}}},"row")){setPendingShared(false);setSlot("extras");setAdvancedRow(false);setRow(fromSelection(value));}};
   const saveQuick=()=>{try{
+    if(quickTotal===null){setError("Choisissez ce que couvre ce coût avant de le retenir. Aucun poste n’a été modifié.");return false;}
     if(barItems(context,"main").length>1){setError("Plusieurs postes sont conservés ici. Modifiez leurs tuiles pour choisir précisément ce qui doit être remplacé.");return false;}
     const original=barItems(context,"main")[0];if(original&&original.kind!=="COMPONENT"){setError("Un moment lié occupe les entrées. Rééditez-le depuis Autres choix avant de le remplacer.");return;}
     if(original?.kind==="COMPONENT"&&(original.quantity!=="1"||original.unitBasis!=="SHARED")){setError("Ce poste utilise une quantité ou une unité détaillée. Modifiez sa tuile pour conserver ces précisions.");return false;}
@@ -259,7 +267,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   let question:PaletteQuestion={title:"Composer",choices:neutralChoices};
   const knownBars=barPlaces(model.mobilityOptions?.places??[],query);
   if(page==="summary"&&selectedPlace)question={title:"La suite de ta sortie",choices:[choice(barLeg(context,"outbound")?"return":"outbound",barLeg(context,"outbound")?barLeg(context,"return")?"Modifier le retour":"Retour":"Aller",()=>open(barLeg(context,"outbound")?"return":"outbound"),"activity"),choice("drinks","Boissons",()=>go("drinks")),...neutralChoices.filter(c=>c.key!==beer.assetKey)]};
-  if(page==="place")question={title:"Où prendre un verre ?",choices:[
+  if(page==="place")question={title:"Où prendre un verre ?",identity:`${context.contextOccurrenceId}:place:${query}`,choices:[
     ...knownBars.slice(0,query.trim()||allPlaces?knownBars.length:3).map(place=>({...choice(place.placeId,place.name,()=>choosePlace({kind:"KNOWN",placeId:place.placeId}),"activity",barPlaceHint(place,model.mobilityOptions?.placeKnowledge)),showHint:true})),
     ...(!query.trim()&&!allPlaces&&knownBars.length>3?[choice("all","Tous les bars enregistrés",()=>setAllPlaces(true),"activity")]:[]),
 ]};
@@ -292,7 +300,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   if(page==="fare")question={title:"Coût prévu du trajet · sans paiement",choices:[choice("unknown","Prix encore inconnu",()=>{if(leg)patchLeg({...leg,pricing:{fare:{kind:"UNKNOWN"},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);})]};
   if(page==="row")question=advancedRow?activeQuestion??{title:"Détails du poste",choices:[]}: {title:slot.startsWith("before-")?"Avant de sortir":"Consommations",choices:slot.startsWith("before-")?[...beforeChoices(),choice("drinks","Au bar",()=>go("drinks"))]:[...drinkChoices,sharedChoice,beforeChoice]};
   if(page==="row"&&!advancedRow&&dirty&&!showRowChoices)question={title:"Terminer cette saisie",choices:[choice("continue-compose",slot.startsWith("before-")?"Autres objets du Before":"Autres consommations",()=>setShowRowChoices(true),"activity","Ouvrir les choix ; votre saisie reste protégée.")]};
-  if(page==="quick")question={title:"Que couvre ce coût prévu ?",choices:[{...choice("entry","Entrées / contribution",()=>setQuickTotal(false),"night-out","Hors boissons, repas et trajets"),selected:!quickTotal},{...choice("total","Consommations regroupées",()=>setQuickTotal(true),"night-out","Remplace leurs détails, hors repas et trajets"),selected:quickTotal}]};
+  if(page==="quick")question={title:"Que couvre ce coût prévu ?",choices:[{...choice("entry","Entrées / contribution",()=>setQuickTotal(false),"night-out","Hors boissons, repas et trajets"),selected:quickTotal===false},{...choice("total","Consommations regroupées",()=>setQuickTotal(true),"night-out","Remplace leurs détails, hors repas et trajets"),selected:quickTotal===true}]};
   const coveredMain=barItems(context,"main").find((item):item is Component=>item.kind==="COMPONENT");
   if(page==="coverage")question={title:`Remplacer ${coveredMain?.label??"le coût retenu"}${coveredMain?.cost.kind==="MANUAL"?" · "+money(coveredMain.cost.unitAmount)+" / lot":""} ?`,choices:[{...choice("included","Détailler à la place",()=>pendingShared?addShared(true):pendingAsset&&add(pendingAsset,true),"night-out","Retire uniquement le poste ci-dessus ; trajets, Before et repas conservés"),showHint:true},{...choice("extra","Ajouter en plus",()=>pendingShared?addShared(false):pendingAsset&&add(pendingAsset,false),"night-out","Coût supplémentaire indépendant du poste conservé"),showHint:true},choice("cancel","Ne rien ajouter",()=>{setPendingAsset(null);setPendingShared(false);go("drinks");},"activity")]};
   question={...question,identity:question.identity??`${context.contextOccurrenceId}:${page}:${page==="row"?slot+":"+row.id:""}`};
@@ -365,7 +373,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
         <p>{knownBars.length} lieu(x) correspondant(s) · choisissez une proposition dans le dock.</p>
         <details data-bar-knowledge><summary>Historique et sources</summary>{model.mobilityOptions?.placeKnowledge?<p>{model.mobilityOptions.placeKnowledge.fromDate} – {model.mobilityOptions.placeKnowledge.throughDate} · jours enregistrés, couverture non exhaustive{model.mobilityOptions.placeKnowledge.placesTruncated?" · 500 lieux chargés":""}</p>:<p>Historique non disponible ; lieux enregistrés seulement.</p>}</details></section>}
       {page==="row"?null:page==="legacy"?<NightOutEditor {...props} key={legacyKey} embedded initialView={legacy} onSave={operation=>{const admitted=!busy&&onSave(operation);if(admitted){setDirty(false);move(legacy==="calendar"?"drinks":"summary");}return admitted;}} onCancel={()=>go("summary")}/>
-        :page==="quick"?<section data-bar-quick><label>Coût prévu (€)<input autoFocus inputMode="decimal" value={quickAmount} onChange={e=>{setQuickAmount(e.target.value);setDirty(true);}}/></label><p>{quickTotal?"Les détails des consommations seront remplacés, sans double compte. Repas, before et trajets sont en plus.":"Entrées ou contribution, hors consommations, repas et trajets. Ce n’est ni un plafond ni un paiement."}</p><button type="button" disabled={busy||!quickAmount.trim()} onClick={saveQuick}>Retenir ce coût</button></section>
+        :page==="quick"?<section data-bar-quick><label>Coût prévu (€)<input autoFocus inputMode="decimal" value={quickAmount} onChange={e=>{setQuickAmount(e.target.value);setDirty(true);}}/></label><p>{quickTotal===null?"Choisissez dans le dock ce que ce coût couvre. Le libellé d’un ancien poste ne prouve pas sa portée.":quickTotal?"Les détails des consommations seront remplacés, sans double compte. Repas, before et trajets sont en plus.":"Entrées ou contribution, hors consommations, repas et trajets. Ce n’est ni un plafond ni un paiement."}</p><button type="button" disabled={busy||quickTotal===null||!quickAmount.trim()} onClick={saveQuick}>Retenir ce coût</button></section>
         :page==="date"?<div className={styles.barInlineCalendar} data-bar-calendar onKeyDown={event=>{
           const keys=["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End"];if(!keys.includes(event.key))return;
           const button=(event.target as HTMLElement).closest<HTMLButtonElement>("[data-bar-day]");if(!button)return;
@@ -404,6 +412,6 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       {(error||serverError)&&<p role="alert">{error||serverError}</p>}
     </section>
     </fieldset>
-    {page!=="legacy"&&question.choices.length>0&&dockHost&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure appearance="bar" question={question} choose={()=>{}} close={()=>go("summary")}/>,dockHost)}
+    {page!=="legacy"&&question.choices.length>0&&dockHost&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure appearance="bar" question={question} questionPages={dockPages} onQuestionPageChange={saveDockPage} choose={()=>{}} close={()=>go("summary")}/>,dockHost)}
   </div>;
 }

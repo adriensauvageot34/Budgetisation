@@ -109,11 +109,11 @@ try{
  });
  await check('R005_R244_HEADER_TARGET_EDITS_EXISTING_GLOBAL_ONLY',async()=>{
   await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','60');await click('Retenir ce coût');const original=current().slotSelections.main.items[0];
-  overrides={initialTarget:'quick'};await act(async()=>root.unmount());await act(async()=>{root=create(render());});assert.equal(step(),'quick');assert.equal(input('Coût prévu (€)').props.value,'60');await change('Coût prévu (€)','65');await click('Retenir ce coût');assert.equal(current().slotSelections.main.items[0].selectionId,original.selectionId);assert.equal(current().slotSelections.main.items[0].cost.unitAmount,'65');assert.equal(current().slotSelections.main.items.length,1);
+  overrides={initialTarget:'quick'};await act(async()=>root.unmount());await act(async()=>{root=create(render());});assert.equal(step(),'quick');assert.equal(input('Coût prévu (€)').props.value,'60');assert.equal(button('Retenir ce coût').props.disabled,true);await click('Consommations regroupées');await change('Coût prévu (€)','65');await click('Retenir ce coût');assert.equal(current().slotSelections.main.items[0].selectionId,original.selectionId);assert.equal(current().slotSelections.main.items[0].cost.unitAmount,'65');assert.equal(current().slotSelections.main.items.length,1);
  });
  await check('R259_QUICK_PARTIAL_EDIT_KEEPS_FUNDING_AND_UNKNOWN_FIELDS',async()=>{
-  await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await change('Coût prévu (€)','60');await click('Retenir ce coût');const original=current().slotSelections.main.items[0];const rich={...original,fundingAllocations:[{source:'BANK',amount:'15'}],futureFixture:{unknown:'retained'},binding:{mode:'NO_RELATED_SLOT'}};await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{main:[rich]}}}));await click('Montant direct');await change('Coût prévu (€)','65');await click('Retenir ce coût');const changed=current().slotSelections.main.items[0];assert.deepEqual(changed.fundingAllocations,rich.fundingAllocations);assert.deepEqual(changed.futureFixture,rich.futureFixture);assert.deepEqual(changed.binding,rich.binding);assert.equal(changed.selectionId,rich.selectionId);
-  await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{main:[{...changed,quantity:'2'}]}}}));const before=structuredClone(model.semanticState);await click('Montant direct');await change('Coût prévu (€)','70');await click('Retenir ce coût');assert.deepEqual(model.semanticState,before);assert.ok(controls(n=>n.props.role==='alert').some(n=>text(n).includes('unité détaillée')));
+  await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await click('Entrées / contribution');await change('Coût prévu (€)','60');await click('Retenir ce coût');const original=current().slotSelections.main.items[0];const rich={...original,fundingAllocations:[{source:'BANK',amount:'15'}],futureFixture:{unknown:'retained'},binding:{mode:'NO_RELATED_SLOT'}};await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{main:[rich]}}}));await click('Montant direct');await click('Entrées / contribution');await change('Coût prévu (€)','65');await click('Retenir ce coût');const changed=current().slotSelections.main.items[0];assert.deepEqual(changed.fundingAllocations,rich.fundingAllocations);assert.deepEqual(changed.futureFixture,rich.futureFixture);assert.deepEqual(changed.binding,rich.binding);assert.equal(changed.selectionId,rich.selectionId);
+  await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{main:[{...changed,quantity:'2'}]}}}));const before=structuredClone(model.semanticState);await click('Montant direct');await click('Entrées / contribution');await change('Coût prévu (€)','70');await click('Retenir ce coût');assert.deepEqual(model.semanticState,before);assert.ok(controls(n=>n.props.role==='alert').some(n=>text(n).includes('unité détaillée')));
  });
  await check('R143_TEXT_VENUE_SUGGESTION_ALSO_RESPECTS_ENDPOINT_QUERY',async()=>{
   await init('night-out','bar-apero',BarLivingEditor);await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{placeRef:{kind:'TEXT',label:'Bar texte fixture',provenance:'USER_DECLARED_PROSPECTIVE'}}}}));await navigateRoute('outbound');await click('Taxi / Uber');await act(async()=>byLabel('Modifier l’arrivée de l’aller').props.onClick());const search=controls(n=>n.type==='input'&&n.props['aria-label']==='Chercher un point du trajet')[0];await act(async()=>search.props.onChange({target:{value:'autre recherche'}}));assert.ok(!dock().findAll(n=>n.type==='strong').map(text).includes('Bar texte fixture'));assert.equal(current().slotSelections.outbound.items[0].destination.label,'Bar texte fixture');
@@ -164,6 +164,57 @@ try{
  await check('C1_VEHICLE_CAPSULE_TARGET_AND_EMPTY_BEFORE_FAMILIES',async()=>{
   await init('night-out','bar-apero',BarLivingEditor);await click('Before');assert.deepEqual(dock().findAll(n=>n.type==='strong').map(text).slice(0,4),['Vodka','Bière','Diluant sans alcool','Snack']);
   await click('← Ma sortie');await navigateRoute('outbound');await click('Voiture');const before=structuredClone(model.semanticState);const capsule=byLabel('Modifier le véhicule de l’aller');assert.ok(capsule);await act(async()=>capsule.props.onClick());assert.equal(step(),'vehicle');assert.deepEqual(model.semanticState,before);assert.equal(controls(n=>n.props['data-bar-usage-not-payment']!==undefined).length,1);
+ });
+ await check('C1_BAR_REMOUNT_RETAINS_SCOPED_SEARCH_DOCK_AND_ITEM_PAGES',async()=>{
+  const {rememberBarView}=require('@/app/mois-a-venir/composer/bar-view-memory');
+  await init('night-out','bar-apero',BarLivingEditor);
+  const cache=new Map(),key=`2026-11:${id}`,remember=view=>rememberBarView(cache,key,view);
+  overrides={onViewChange:remember};await sync();
+  model={...model,mobilityOptions:{...model.mobilityOptions,places:Array.from({length:12},(_,i)=>({placeId:uuid(700+i),name:'Bar canal '+i,privatePlace:false,commune:'Ville fixture',nature:'Commerce',usage:'Bar',relationships:[]}))}};await sync();
+  const semantic=structuredClone(model.semanticState),ops=pendingOps.length;
+  await click('Lieu');await change('Chercher dans les lieux enregistrés','canal');
+  await act(async()=>byLabel('Pages du dock · suivante').props.onClick());
+  const dockKey=Object.keys(cache.get(key).dockPages).find(k=>k.includes('canal'));
+  assert.ok(dockKey);assert.equal(cache.get(key).dockPages[dockKey],1);
+  await act(async()=>root.unmount());root=null;
+  overrides={initialTarget:'place',initialBarView:cache.get(key),onViewChange:remember};
+  await act(async()=>{root=create(render());});
+  assert.equal(input('Chercher dans les lieux enregistrés').props.value,'canal');
+  assert.ok(dock().findAll(n=>n.type==='strong').map(text).some(t=>t.includes('Bar canal 4')));
+  assert.deepEqual(model.semanticState,semantic);assert.equal(pendingOps.length,ops);
+  await click('← Ma sortie');
+  // A later page is clamped for a shorter list, while the remembered position
+  // remains available after Undo restores the original children.
+  const entries=Array.from({length:9},(_,i)=>({kind:'COMPONENT',selectionId:uuid(810+i),optionKey:'extra',provenance:'EXPLICIT_USER_DECISION',label:'Bière '+i,quantity:'1',unitBasis:'ITEM',cost:{kind:'UNKNOWN'}}));
+  model=visualDraftModel(model,stageLocalDecision(model,model.semanticState,{kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:entries}}}));await sync();await click('Ajouter une consommation');
+  await act(async()=>byLabel('Pages des consommations · suivante').props.onClick());
+  assert.equal(cache.get(key).pages.drinks,1);
+  const admitted=structuredClone(model.semanticState);
+  await act(async()=>root.unmount());root=null;
+  overrides={initialTarget:'drinks',initialBarView:cache.get(key),onViewChange:remember};await act(async()=>{root=create(render());});
+  assert.ok(tile('Bière 4'));assert.equal(tile('Bière 0'),undefined);assert.deepEqual(model.semanticState,admitted);
+  assert.equal(cache.has(`2026-12:${id}`),false);assert.equal(cache.has('2026-11:another-card'),false);
+  for(let i=0;i<40;i++)rememberBarView(cache,`2026-11:other-${i}`,cache.get(key)??{queries:{},pages:{},dockPages:{},allPlaces:false,allBefore:false});
+  assert.equal(cache.size,32);assert.equal(cache.has(key),false);
+ });
+ await check('C1_ROUTE_EXPOSES_OFFICIAL_COSTS_AND_PROVIDER_LIMITS_WITHOUT_SUMMING',async()=>{
+  const {mobilityIntentId}=require('@/domain/phase2/planner/identity');
+  await init('night-out','bar-apero',BarLivingEditor);await navigateRoute('outbound');await click('Voiture');
+  const semantic=structuredClone(model.semanticState);
+  model={...model,mobilitySummaries:[{contextOccurrenceId:id,ownerIntentId:mobilityIntentId(id,'outbound'),journeyId:'fixture',requestDigest:'fixture',status:'PARTIAL',distanceKm:null,economicFuel:'7.00',fare:'3.00',toll:'0.00',parking:'2.00',cashTransport:'5.00',routeSource:null,fuelSource:null,tollSource:null,vehicleLabel:null,methodRef:null,timeBasis:null,fallbacks:['TOMTOM_UNAVAILABLE','FUEL_PRICE_FALLBACK','TOLL_UNAVAILABLE','UNKNOWN_FUTURE_CODE']}]};await sync();
+  const line=controls(n=>n.props['data-bar-route-module']==='outbound')[0];
+  const allText=n=>typeof n==='string'?n:n?.children?.map(allText).join('')??'',caption=allText(line);
+  for(const expected of ['7,00','3,00','péage 0,00','parking 2,00','transport 5,00','Calcul d’itinéraire indisponible','Prix de carburant de repli','Péage à préciser'])assert.ok(caption.includes(expected),caption+' missing '+expected);
+  assert.ok(!caption.includes('UNKNOWN_FUTURE_CODE'));assert.deepEqual(model.semanticState,semantic);
+ });
+ await check('C1_QUICK_COST_NEVER_INFERS_COVERAGE_FROM_A_LEGACY_LABEL',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await change('Coût prévu (€)','60');const prior=structuredClone(model.semanticState);
+  assert.equal(button('Retenir ce coût').props.disabled,true);await click('Retenir ce coût');assert.deepEqual(model.semanticState,prior);
+  await click('Consommations regroupées');await click('Retenir ce coût');await click('Bière');await click('Ajouter en plus');await click('← Ma sortie');
+  overrides={initialTarget:'quick',targetRequest:1};await sync();const before=structuredClone(model.semanticState);
+  assert.equal(input('Coût prévu (€)').props.value,'60');assert.equal(button('Retenir ce coût').props.disabled,true);assert.ok(dock().findAll(n=>n.type==='button').every(n=>n.props['aria-pressed']!==true));
+  await change('Coût prévu (€)','65');await click('Retenir ce coût');assert.deepEqual(model.semanticState,before);
+  await click('Entrées / contribution');await click('Retenir ce coût');assert.equal(current().slotSelections.extras.items.length,1);assert.equal(current().slotSelections.main.items[0].selectionId,before.contexts.find(c=>c.contextOccurrenceId===id).slotSelections.main.items[0].selectionId);
  });
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  fs.mkdirSync('outputs/bar-350',{recursive:true});fs.writeFileSync('outputs/bar-350/waves-react.json',JSON.stringify({proof:'PASS_REACT_AND_OWNER_FIXTURE_NOT_BROWSER_NOT_AUTH',checks,remoteWrites:0},null,2));

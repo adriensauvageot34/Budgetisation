@@ -45,6 +45,8 @@ export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=fa
  const go=(point:"origin"|"destination"|"fare"|"vehicle")=>navigate?navigate(`route:${slot}:${point}`):open();
  const cost=leg?.optionKey==="car"?summary?.economicFuel:leg?.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:summary?.fare;
  const missing=leg?[!leg.origin?"départ":null,!leg.destination?"arrivée":null,leg.optionKey==="car"&&!leg.route?.vehicleRef?"véhicule":null,leg.origin?.kind==="TEXT"||leg.destination?.kind==="TEXT"?"distance du repère libre":null].filter(Boolean):[];
+ const fallbackLabels:Record<string,string>={GEOCODING_UNAVAILABLE:"Adresse non résolue",OFFICIAL_PRICE_UNAVAILABLE:"Référence publique de carburant indisponible",FUEL_PRICE_FALLBACK:"Prix de carburant de repli",FUEL_PRICE_UNAVAILABLE:"Prix de carburant indisponible",TOMTOM_UNAVAILABLE:"Calcul d’itinéraire indisponible",TOLL_UNAVAILABLE:"Péage à préciser"};
+ const availability=[...new Set((summary?.fallbacks??[]).map(code=>fallbackLabels[code]).filter(Boolean))];
  const vehicle=leg?.route?.vehicleRef;
  return <div className={styles.barRouteLine} data-bar-route-module={slot} data-active={active}>
    <button type="button" data-bar-route={slot} aria-pressed={active} disabled={disabled} onClick={open}><b>{leg?.returnRequired?"Aller-retour":slot==="outbound"?"Aller":"Retour"}</b><Icon size={17}/>{leg?barModeLabel(leg.optionKey):"Déplacement"}</button>
@@ -55,7 +57,8 @@ export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=fa
    </button>
    {leg.optionKey==="car"&&<small data-bar-usage-not-payment>Coût d’usage estimé · aucun achat de carburant.{cost==null&&missing.length===0?" Estimation Mobility encore indisponible ; aucun prix n’est supposé.":""}{summary?.status==="PARTIAL"?" Estimation partielle.":""}</small>}
    {leg.optionKey==="car"&&summary?.fare!=null&&<small>Autre tarif prévu : {money(summary.fare)}{!fresh?" · précédent":""}</small>}
-   {(missing.length>0||summary?.toll!=null||summary?.parking!=null||summary?.cashTransport!=null||(leg.route?.stops.length??0)>2)&&<small className={styles.barRouteEvidence}>{missing.length>0&&`À préciser : ${missing.join(", ")}`}{summary?.toll!=null&&` · péage ${money(summary.toll)}`}{summary?.parking!=null&&` · parking ${money(summary.parking)}`}{summary?.cashTransport!=null&&` · transport cash ${money(summary.cashTransport)}`}{(leg.route?.stops.length??0)>2&&` · ${leg.route!.stops.length-2} étape(s) intermédiaire(s)`}</small>}
+   {(missing.length>0||summary?.toll!=null||summary?.parking!=null||summary?.cashTransport!=null||(leg.route?.stops.length??0)>2)&&<small className={styles.barRouteEvidence}>{missing.length>0&&`À préciser : ${missing.join(", ")}`}{summary?.toll!=null&&` · péage ${money(summary.toll)}`}{summary?.parking!=null&&` · parking ${money(summary.parking)}`}{summary?.cashTransport!=null&&` · coût monétaire du transport ${money(summary.cashTransport)}`}{(leg.route?.stops.length??0)>2&&` · ${leg.route!.stops.length-2} étape(s) intermédiaire(s)`}</small>}
+   {availability.length>0&&<small data-bar-route-availability>{availability.join(" · ")}{!fresh?" · précédente estimation":""}</small>}
    </>}
  </div>;
 }

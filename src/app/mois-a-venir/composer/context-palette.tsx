@@ -78,7 +78,8 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
 
 export type PaletteQuestion = { title: string; identity?:string; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string };
-export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
+export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionPages, onQuestionPageChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
+  questionPages?:Readonly<Record<string,number>>; onQuestionPageChange?:(key:string,index:number)=>void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
 }) {
   const groups = question ? [] : displayEquipmentGroups(card, model);
@@ -88,8 +89,8 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const [scroll, setScroll] = useState({ before: false, after: false });
   const [answerPositions,setAnswerPositions]=useState<Record<string,number>>({}),[answerCount,setAnswerCount]=useState(4);
   const answerKey=JSON.stringify([question?.identity??"",question?.title,question?.search?.value??""]);
-  const answerPage=answerPositions[answerKey]??0;
-  const setAnswerPage=(page:number)=>setAnswerPositions(previous=>({...previous,[answerKey]:page}));
+  const answerPage=(questionPages??answerPositions)[answerKey]??0;
+  const setAnswerPage=(page:number)=>{if(onQuestionPageChange)onQuestionPageChange(answerKey,page);else setAnswerPositions(previous=>({...previous,[answerKey]:page}));};
   useLayoutEffect(()=>{
     if(appearance!=="bar"||!options.current)return;
     const node=options.current;

@@ -2,6 +2,7 @@
 import type {BarTarget} from "./bar-living-operations";
 import {createPortal} from "react-dom";
 import {BarLivingMount,useBarLivingHost} from "./bar-living-mount";
+import {rememberBarView,type BarViewMemory} from "./bar-view-memory";
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
 import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
@@ -121,6 +122,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const scheduler = useRef(new ComposerPreviewScheduler());
   const [busy, setBusy] = useState(false), busyRef = useRef(false);
   const [removingBarId,setRemovingBarId]=useState<string|undefined>();
+  const barViews=useRef(new Map<string,BarViewMemory>());
+  const rememberCurrentBarView=useCommittedEvent((view:BarViewMemory)=>{
+    if(livingBarId)rememberBarView(barViews.current,`${draftState.targetMonth}:${livingBarId}`,view);
+  });
   const [selected, setSelected] = useState<string | null>(null), [message, setMessage] = useState("");
   const [focusedContext, setFocusedContext] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -752,6 +757,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       </div></header>
     <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} />
       {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
+          initialBarView={barViews.current.get(`${draftState.targetMonth}:${livingBarId}`)} onViewChange={rememberCurrentBarView}
           context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}
           model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} saveStatus={draftTransport?durable.status:"MEMORY"}
           dockHost={nightDockHost} busy={busy || draftState.preferences.anchors.includes(livingBarId) || draftState.preferences.flexibility[livingBarId]==="PRESERVE"} creating={editor?.nightCreating} admission={editor?.nightAdmission??0} serverError={errorMessage}

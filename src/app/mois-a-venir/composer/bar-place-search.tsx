@@ -5,19 +5,26 @@ import type {PlannedPlaceOption} from "@/domain/phase2/planned-places";
 import {GoogleMapsAttribution} from "../restaurant-place-search";
 import {BarPageControls} from "./bar-pages";
 import styles from "./composer.module.css";
-export type BarPlaceSearchState={query:string;city:string;resultPage:number};
+export type BarPlaceSearchState={query:string;city:string;resultPage:number;detail?:SelectedRestaurantPlace;detailReadAt?:number};
 
 /** Provider data stays transient. Only an already published canonical identity
  * can be admitted; Composer has no Google-place promotion writer. */
 export function BarPlaceSearch({places,onKnown,onText,initialCity,initialSearch,onSearchChange}: {places:readonly PlannedPlaceOption[];onKnown:(placeId:string)=>void;onText?:(label:string)=>void;initialCity?:string;initialSearch?:BarPlaceSearchState;onSearchChange?:(state:BarPlaceSearchState)=>void}) {
   const [query,setQuery]=useState(initialSearch?.query??""),[city,setCity]=useState(initialSearch?.city??initialCity??""),[editCity,setEditCity]=useState(!initialCity||!!initialSearch),[results,setResults]=useState<RestaurantSuggestion[]>([]);
-  const [detail,setDetail]=useState<SelectedRestaurantPlace|null>(null),[status,setStatus]=useState("");
+  const reusableDetail=initialSearch?.detail?.provider==="google_places"&&validGooglePlaceId(initialSearch.detail.placeId)
+    && typeof initialSearch.detailReadAt==="number"&&initialSearch.detailReadAt<=Date.now()&&Date.now()-initialSearch.detailReadAt<300_000;
+  const [detail,setDetail]=useState<SelectedRestaurantPlace|null>(()=>reusableDetail?initialSearch!.detail!:null),[status,setStatus]=useState("");
+  const [detailReadAt,setDetailReadAt]=useState<number|undefined>(()=>reusableDetail?initialSearch?.detailReadAt:undefined);
+  const resumeDetail=useRef(reusableDetail?{query,city}:null);
   const [resultPage,setResultPage]=useState(initialSearch?.resultPage??0);
   const previousSearch=useRef(`${query}\0${city}`);
-  useEffect(()=>{onSearchChange?.({query,city,resultPage});},[query,city,resultPage,onSearchChange]);
+  useEffect(()=>{onSearchChange?.({query,city,resultPage,...(detail?{detail,detailReadAt}:{})});},[query,city,resultPage,detail,detailReadAt,onSearchChange]);
   const [attempt,setAttempt]=useState(0),[failed,setFailed]=useState(false),[detailRetry,setDetailRetry]=useState<RestaurantSuggestion|null>(null);
   const session=useRef(new RestaurantSearchSession()),abort=useRef<AbortController|null>(null),generation=useRef(0);
   useEffect(()=>{
+    // Resume a briefly retained fiche, never a durable identity or route.
+    if(resumeDetail.current?.query===query&&resumeDetail.current.city===city&&attempt===0)return;
+    resumeDetail.current=null;
     const ticket=++generation.current;abort.current?.abort();setDetail(null);setResults([]);if(previousSearch.current!==`${query}\0${city}`)setResultPage(0);previousSearch.current=`${query}\0${city}`;setStatus("");setFailed(false);setDetailRetry(null);
     session.current.schedule(query,city,(request,current)=>{
       const controller=new AbortController();abort.current=controller;setStatus("Recherche…");
@@ -39,7 +46,7 @@ export function BarPlaceSearch({places,onKnown,onText,initialCity,initialSearch,
       const {place}=payload;
       if(!place||place.provider!=="google_places"||place.placeId!==suggestion.placeId||!validGooglePlaceId(place.placeId)||typeof place.displayName!=="string"||!place.displayName.trim())throw Error("Lieu non admissible. Réessayez ou saisissez un repère libre.");
       if(generation.current!==ticket||controller.signal.aborted)return;
-      setDetail(place);setStatus("");setResults([]);session.current.complete();
+      setDetail(place);setDetailReadAt(Date.now());setStatus("");setResults([]);session.current.complete();
     }catch(error){if(generation.current===ticket&&!controller.signal.aborted){setStatus(error instanceof Error?error.message:"Recherche indisponible");setDetailRetry(suggestion);}}
   };
   const known=detail?places.filter(place=>!place.privatePlace&&place.googlePlaceId===detail.placeId):[];

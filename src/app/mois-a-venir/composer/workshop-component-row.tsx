@@ -46,7 +46,7 @@ export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, p
       <label>{priceLabel ?? (row.unitBasis === "SHARED" ? "Coût prévu par lot (€)" : "Prix unitaire prévu (€)")}
         <input autoFocus inputMode="decimal" placeholder="Encore inconnu" value={row.costMode === "MANUAL" ? row.amount : ""}
           onChange={event => onChange({ ...row, amount: event.target.value, costMode: event.target.value.trim() ? "MANUAL" : "UNKNOWN", edited: true })} /></label>
-      <p className={styles.helper}>{row.costMode === "QUOTE" ? "Le devis propriétaire est conservé." : row.costMode === "UNKNOWN" ? "Coût à préciser · vous pouvez continuer." : "Coût prévu, pas un plafond ni un paiement."} {row.quantity} {row.unitBasis === "SHARED" ? "lot(s) pour le groupe" : row.unitBasis === "PERSON" ? "unité(s) par personne tarifée" : "unité(s) au total"}.</p>
+      <p className={styles.helper}>{row.costMode === "QUOTE" ? "Le devis enregistré est conservé." : row.costMode === "UNKNOWN" ? "Coût à préciser · vous pouvez continuer." : "Coût prévu, pas un plafond ni un paiement."} {row.quantity} {row.unitBasis === "SHARED" ? "lot(s) pour le groupe" : row.unitBasis === "PERSON" ? "unité(s) par personne tarifée" : "unité(s) au total"}.</p>
     </>}
     {page === "quantity" && <>
       <label>{row.unitBasis === "PERSON" ? "Unités par personne" : row.unitBasis === "SHARED" ? "Lots partagés" : "Quantité totale"}
@@ -54,11 +54,11 @@ export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, p
           <input type="number" min="0.01" max="9999" step="0.01" value={row.quantity} onChange={event=>update("quantity",event.target.value)} />
           <button type="button" aria-label="Augmenter la quantité" onClick={()=>adjustQuantity(1)}>+</button></span></label>
       {row.unitBasis === "PERSON" && <label>Personnes explicitement tarifées<input type="number" min="1" max="50" step="1" value={row.personCount} onChange={event=>update("personCount",event.target.value)} /></label>}
-      <p className={styles.helper}>{row.unitBasis === "SHARED" ? "Un lot partagé n’est pas multiplié par les invités." : "Seule cette quantité sera confiée au Compiler."}</p>
+      <p className={styles.helper}>{row.unitBasis === "SHARED" ? "Un lot partagé n’est pas multiplié par les invités." : "Seule la quantité indiquée sera prise en compte."}</p>
     </>}
     {page === "name" && <label>Nom du poste<input value={row.label} maxLength={120} onChange={event=>update("label",event.target.value)} /></label>}
     {page === "funding" && <>{row.fundingMode === "BANK" && <label>Montant Banque (€)<input inputMode="decimal" value={row.fundingAmount} onChange={event=>update("fundingAmount",event.target.value)} /></label>}<p>Le financement ne change pas le coût économique. L’impact officiel vient de Finance V2.</p></>}
-    {page === "binding" && <p>La liaison remplace seulement ce que le Compiler reconnaît dans l’enveloppe. Aucun plafond nouveau.</p>}
+    {page === "binding" && <p>Seuls les coûts déjà compris dans cette enveloppe sont remplacés. Ce choix ne crée pas de plafond.</p>}
     <footer>{onSave && <button type="button" className={styles.nightAction} disabled={busy} onClick={onSave}>Conserver ce poste</button>}
       {onRemove && <button type="button" className={styles.nightLink} disabled={busy} onClick={() => confirm({message:"Retirer ce poste ? Les autres décisions sont conservées. Undo permet de revenir en arrière.", acceptLabel:"Retirer ce poste", accept:onRemove})}>Retirer ce poste</button>}</footer>
   </section>;
