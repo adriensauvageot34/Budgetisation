@@ -106,18 +106,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G2_BROWSER"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R006",
@@ -147,15 +152,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R008",
@@ -166,15 +176,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R009",
@@ -753,15 +768,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R036",
@@ -772,15 +792,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R037",
@@ -791,15 +816,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R038",
@@ -810,15 +840,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R039",
@@ -999,15 +1034,18 @@
     "action_requise": "NONE",
     "statut": "ALREADY_DONE_VERIFIED",
     "preuves": [
-      "COMPACT"
+      "G2_P2"
     ],
-    "sha_preuve": "55900176cf7c140ac897f24d3fca180b035ce008",
-    "environnement": "PASS_BROWSER_FIXTURE / statique image selon la recommandation",
-    "niveau_preuve": "T1_HISTORICAL_APPLICABLE",
-    "qualification_sha": "HISTORICAL_APPLICABLE",
-    "reste": "",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R048",
@@ -1020,15 +1058,18 @@
     "action_requise": "NONE",
     "statut": "ALREADY_DONE_VERIFIED",
     "preuves": [
-      "COMPACT"
+      "G2_P2"
     ],
-    "sha_preuve": "55900176cf7c140ac897f24d3fca180b035ce008",
-    "environnement": "PASS_BROWSER_FIXTURE / statique image selon la recommandation",
-    "niveau_preuve": "T1_HISTORICAL_APPLICABLE",
-    "qualification_sha": "HISTORICAL_APPLICABLE",
-    "reste": "",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R049",
@@ -1041,15 +1082,18 @@
     "action_requise": "NONE",
     "statut": "ALREADY_DONE_VERIFIED",
     "preuves": [
-      "COMPACT"
+      "G2_P2"
     ],
-    "sha_preuve": "55900176cf7c140ac897f24d3fca180b035ce008",
-    "environnement": "PASS_BROWSER_FIXTURE / statique image selon la recommandation",
-    "niveau_preuve": "T1_HISTORICAL_APPLICABLE",
-    "qualification_sha": "HISTORICAL_APPLICABLE",
-    "reste": "",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R050",
@@ -1062,15 +1106,18 @@
     "action_requise": "NONE",
     "statut": "ALREADY_DONE_VERIFIED",
     "preuves": [
-      "COMPACT"
+      "G2_P2"
     ],
-    "sha_preuve": "55900176cf7c140ac897f24d3fca180b035ce008",
-    "environnement": "PASS_BROWSER_FIXTURE / statique image selon la recommandation",
-    "niveau_preuve": "T1_HISTORICAL_APPLICABLE",
-    "qualification_sha": "HISTORICAL_APPLICABLE",
-    "reste": "",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R051",
@@ -1083,15 +1130,18 @@
     "action_requise": "NONE",
     "statut": "ALREADY_DONE_VERIFIED",
     "preuves": [
-      "COMPACT"
+      "G2_P2"
     ],
-    "sha_preuve": "55900176cf7c140ac897f24d3fca180b035ce008",
-    "environnement": "PASS_BROWSER_FIXTURE / statique image selon la recommandation",
-    "niveau_preuve": "T1_HISTORICAL_APPLICABLE",
-    "qualification_sha": "HISTORICAL_APPLICABLE",
-    "reste": "",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R052",
@@ -1104,15 +1154,18 @@
     "action_requise": "NONE",
     "statut": "ALREADY_DONE_VERIFIED",
     "preuves": [
-      "COMPACT"
+      "G2_P2"
     ],
-    "sha_preuve": "55900176cf7c140ac897f24d3fca180b035ce008",
-    "environnement": "PASS_BROWSER_FIXTURE / statique image selon la recommandation",
-    "niveau_preuve": "T1_HISTORICAL_APPLICABLE",
-    "qualification_sha": "HISTORICAL_APPLICABLE",
-    "reste": "",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R053",
@@ -1125,15 +1178,18 @@
     "action_requise": "NONE",
     "statut": "ALREADY_DONE_VERIFIED",
     "preuves": [
-      "COMPACT"
+      "G2_P2"
     ],
-    "sha_preuve": "55900176cf7c140ac897f24d3fca180b035ce008",
-    "environnement": "PASS_BROWSER_FIXTURE / statique image selon la recommandation",
-    "niveau_preuve": "T1_HISTORICAL_APPLICABLE",
-    "qualification_sha": "HISTORICAL_APPLICABLE",
-    "reste": "",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R054",
@@ -1481,15 +1537,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R072",
@@ -4588,15 +4649,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R216",
@@ -4607,15 +4673,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R217",
@@ -4626,15 +4697,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R218",
@@ -4645,15 +4721,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Familles du catalogue identifiables, hiérarchie initiale du Before encore à améliorer.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R219",
@@ -4664,15 +4745,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Priorité diluant/soft/snack non encore raccordée.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R220",
@@ -4683,15 +4769,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Suggestions complémentaires pas encore contextuelles.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R221",
@@ -4702,15 +4793,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Catalogue complet disponible mais pas de séparation Suggestions/Tout.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R222",
@@ -4721,15 +4817,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucun prix inventé ; sélection de complément crée une intention UNKNOWN, propositions seules ne créent rien.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R223",
@@ -4740,15 +4841,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R224",
@@ -4759,15 +4865,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R225",
@@ -4778,15 +4889,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R226",
@@ -4797,15 +4913,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R227",
@@ -4816,15 +4937,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Petit + Ajouter livré dans Before ; taille réelle à réceptionner avec carte riche.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R228",
@@ -4835,15 +4961,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R229",
@@ -4854,15 +4985,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R230",
@@ -4873,15 +5009,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R231",
@@ -4892,15 +5033,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R232",
@@ -4911,15 +5057,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R233",
@@ -4930,15 +5081,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R234",
@@ -4949,15 +5105,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R235",
@@ -4968,15 +5129,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Identités et prix distincts conservés, libellé de création encore identique à la tuile.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R236",
@@ -4987,15 +5153,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R237",
@@ -5006,15 +5177,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "RAW conservé et gardé ; dock concurrent encore à alléger sans perdre les accès.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R238",
@@ -5025,15 +5201,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R239",
@@ -5044,15 +5225,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R240",
@@ -5063,15 +5249,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R241",
@@ -5082,15 +5273,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R242",
@@ -5101,15 +5297,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Avancé conservé ; absence de scroll interne sur tous cas avancés non certifiée.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R243",
@@ -5120,15 +5321,20 @@
     "localisation": "bar-before.ts; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R244",
@@ -5136,18 +5342,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G2_BROWSER"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R245",
@@ -5155,18 +5366,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Montant accessible depuis en-tête ; raccourci secondaire Montant direct reste présent à retirer en G3.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R246",
@@ -5174,18 +5390,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R247",
@@ -5193,18 +5414,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R248",
@@ -5212,18 +5438,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R249",
@@ -5231,18 +5462,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "DONE_BROWSER_FIXTURE",
+    "preuves": [
+      "G2_BROWSER"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R250",
@@ -5250,18 +5486,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R251",
@@ -5269,18 +5510,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R252",
@@ -5288,18 +5534,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R253",
@@ -5307,18 +5558,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R254",
@@ -5326,18 +5582,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R255",
@@ -5345,18 +5606,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Contribution et regroupement explicités ; distinction encore fondée sur le libellé historique, sans nouveau contrat.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R256",
@@ -5364,18 +5630,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R257",
@@ -5383,18 +5654,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Seul main retiré lors du passage vers détail ; ancien main contribution requiert vigilance de portée.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R258",
@@ -5402,18 +5678,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Confirmation indique périmètre retiré, mais son montant n’est pas encore visible dans le dock.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R259",
@@ -5421,18 +5702,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R260",
@@ -5440,18 +5726,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R261",
@@ -5459,18 +5750,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R262",
@@ -5478,18 +5774,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R263",
@@ -5497,18 +5798,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R264",
@@ -5516,18 +5822,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Coût d’usage explicitement distinct du paiement ; affichage à compléter en G3.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R265",
@@ -5535,18 +5846,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "PARTIAL",
+    "preuves": [
+      "G2_REACT"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_PARTIAL",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Composants péage/parking non encore tous visibles dans la ligne compacte.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R266",
@@ -5554,18 +5870,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R267",
@@ -5573,18 +5894,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P2"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R268",
@@ -5592,18 +5918,23 @@
     "chantier": "E",
     "chantier_original": "Montant global, couverture économique et affichage des coûts",
     "vague": 2,
-    "localisation": "bar-living-editor.tsx; night-out-summary.ts",
+    "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.",
-    "statut": "PLANNED",
-    "preuves": [],
-    "sha_preuve": null,
-    "environnement": "NOT_RUN",
-    "niveau_preuve": "NONE",
-    "qualification_sha": "CURRENT",
-    "reste": "Preuve courante et éventuelle correction à établir.",
-    "blocage": null,
-    "fichiers_modifiés": []
+    "statut": "ALREADY_DONE_VERIFIED",
+    "preuves": [
+      "G2_P4"
+    ],
+    "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "niveau_preuve": "PASS_REACT_AND_OWNER_FIXTURE",
+    "qualification_sha": "EXACT_PRODUCT_COMMIT",
+    "reste": "Aucune preuve Supabase Auth pour cette assertion.",
+    "blocage": "",
+    "fichiers_modifiés": [
+      "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "src/app/mois-a-venir/composer/bar-living-card.tsx"
+    ]
   },
   {
     "id": "R269",

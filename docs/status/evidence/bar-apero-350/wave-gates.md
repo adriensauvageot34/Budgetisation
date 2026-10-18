@@ -33,3 +33,6 @@ Acquis compact-editorial à réutiliser, pas de nouvelle illustration prévue.
 ## G5 — NOT_RUN
 
 ## G6 — NOT_RUN
+
+## G2 — PARTIAL_CONTINUE
+Code 4ee0a1f. Tests React/P1/P2/P4 PASS après adaptation documentée ITEM/SHARED et clic neutre. Remplacement60→UNKNOWN réel navigateur fixture. Pas de faux0. Suggestions Before, portée du main historique, dock et coûts Mobility restent ouverts pour G3/G4. Aucun Auth.

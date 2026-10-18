@@ -41,5 +41,35 @@
     "sha": "08dc6f46cba5d982756c16f62c996886b305059a",
     "niveau": "PASS_REACT",
     "scope": "8 groupes dernière réception dont participants page5→4, RAW, 15 boissons/9 Before et suppression."
+  },
+  "G2_REACT": {
+    "path": "docs/status/evidence/bar-apero-350/g2/react.log",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_REACT",
+    "scope": "Global60 vers UNKNOWN atomique, identité montant, unités publiées Before et RAW."
+  },
+  "G2_P4": {
+    "path": "docs/status/evidence/bar-apero-350/g2/p4.log",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_REACT_AND_OWNER_FIXTURE",
+    "scope": "15 groupes P4, dont détails/global, ITEM/PERSON/SHARED, prix zéro, Before et Apply/Reload PGlite synthétique."
+  },
+  "G2_P1": {
+    "path": "docs/status/evidence/bar-apero-350/g2/p1.log",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_REACT",
+    "scope": "Régressions interactions indépendantes, RAW, endpoints et continuation."
+  },
+  "G2_P2": {
+    "path": "docs/status/evidence/bar-apero-350/g2/p2.log",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_REACT",
+    "scope": "Régressions d’interactions et de protection des tuiles."
+  },
+  "G2_BROWSER": {
+    "path": "docs/status/evidence/bar-apero-350/g2/browser.json",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "En-tête → coût60 → Bière → Détailler à la place : résumé à préciser, prix vide après Preview. Largeur effective1159. Aucun Auth."
   }
 }
