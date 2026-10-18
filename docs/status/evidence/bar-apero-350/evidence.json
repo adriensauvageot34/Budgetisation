@@ -208,7 +208,7 @@
     "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
     "niveau": "PASS_BROWSER_FIXTURE",
     "scope": "Campagne partielle réelle : dense15+9, tailles effectives1152/1440/1728/1920, lieux, RAW, prix, mode/véhicule, pagination. Pas Auth, Google réel final, zoom125 ni transitions complètes.",
-    "file_sha256_lf": "b7922677712b44227c63a49418e411d7c2109891e523e8a9d6169878d9e23b72"
+    "file_sha256_lf": "051f778a8a3495a391ceb313688171fe49cefb150a9e52509f80dc4f283769a7"
   },
   "CLOSURE_EMPTY": {
     "path": "docs/status/evidence/bar-apero-350/closure/final-empty.json",
@@ -251,5 +251,19 @@
     "niveau": "PASS_REACT",
     "scope": "24 groupes réels, dont navigation externe/RAW et capsule véhicule; aucun navigateur simulé revendiqué",
     "file_sha256_lf": "11adeb9d3a05c55b41cefac192c3384ecf6b0220e9102db2cac35d634d88fbf3"
+  },
+  "CLOSURE_ZOOM": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-native-zoom.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Zoom navigateur natif125 réellement observé DPR1,25, dense1280x720; pas toutes scènes.",
+    "file_sha256_lf": "f3b991790316c9f0ff1df910f5b6a801932bfc4446187f66d1fe32c7dab95639"
+  },
+  "CLOSURE_BUILD": {
+    "path": "docs/status/evidence/bar-apero-350/closure/preview.json",
+    "sha": "aaec279b12d730ec49864088e9aef1533c19c3a9",
+    "niveau": "PASS_BUILD_ONLY",
+    "scope": "Vercel Preview READY, buildNext complet, arbre produit identique79e3bf0; pas preuve Auth ou navigateur.",
+    "file_sha256_lf": "5a5d9f774feed1d27927e986043e7585263c8d915933ea6b225c83ae49be675e"
   }
 }

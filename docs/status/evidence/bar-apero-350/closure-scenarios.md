@@ -44,7 +44,7 @@ IDs réellement clôturés dans cette campagne : R270, R273, R274, R275.
 
 ## C2-06
 
-PARTIAL : dense stabilisé aux1152x720/1440x900/1728x900/1920x1080; aucune collision mesurée, aucun scroll Bar/dock; clipping1152 corrigé par page externe. Zoom125 et toutes transitions NOT_RUN. Les premiers samples de resize sont transitoires, pas du PASS.
+PARTIAL : dense stabilisé aux1152x720/1440x900/1728x900/1920x1080; aucune collision mesurée, aucun scroll Bar/dock; clipping1152 corrigé par page externe. Zoom125 dense exécuté, toutes transitions NOT_RUN. Les premiers samples de resize sont transitoires, pas du PASS.
 
 IDs à couvrir (ne vaut pas preuve automatique) : R039, R040, R041, R042, R043, R044, R045, R046, R054, R055, R056, R057, R058, R060, R061, R062, R063, R064, R065, R068, R069, R070, R073, R076, R077, R078, R079, R080, R081, R082, R083, R084, R085, R087, R316, R317, R318, R319, R320, R321, R322, R323, R324, R325, R326, R328, R329.
 
@@ -81,3 +81,7 @@ Une mesure EMPTY a lu le mauvais onglet : exclue et remplacée par final-empty.j
 ## Auth C3-A
 
 R335,R336,R337,R338,R348 : voir auth-save-diagnosis.md. NOT_RUN_AUTH, aucune session synthétique présentée comme JWT réel.
+
+## Zoom natif effectivement exécuté
+
+Ctrl+plus deux fois, DPR1,25 réellement lu, viewport CSS1280×720, carte dense565px, main overflowauto/scroll895/client720, zéro scroll Bar/dock et overflowXfalse. Capture/JSON final-native-zoom. Retour Ctrl+0 effectué. Ce test ne certifie pas toutes les scènes au zoom. Le réglage viewport réinitialise le zoom : seul le contrôle après touches natives est utilisé.

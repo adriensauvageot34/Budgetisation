@@ -964,7 +964,8 @@
     "return fare12 direct edit admitted; route scene return",
     "two participants added including Enter then removed",
     "ERROR save with FRESH Preview observed; one retry SAVED",
-    "Before pages2/3 and drinks pages2/4 then4/4 physically navigated"
+    "Before pages2/3 and drinks pages2/4 then4/4 physically navigated",
+    "Native Ctrl+plus twice: dense zoom125 verified dpr1.25 CSS1280x720; no Bar/dock scroll or horizontal document overflow; restored Ctrl+0."
   ],
   "intermediateLimits": [
     "Closed details controls false positive in first probe; revised visibility predicate excludes them",
@@ -977,7 +978,6 @@
     "Supabase Auth rich",
     "Google real final SHA",
     "native drag",
-    "native zoom125",
     "frame sampling",
     "all advanced legacy scenes"
   ]

@@ -5,7 +5,7 @@
 - Base vérifiée : `d25ead9f3c8b2033c038491ce9262fa82e787171`, PR66 ouverte Draft, basée sur main `bd97a33d0e4280b7796e941148057b7693af0229`.
 - Branche empilée : `codex/bar-apero-350-effective-closure`, base de PR `codex/bar-apero-350-reconciliation`.
 - **SHA produit testé : `79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac`**. Les commits suivants de réception ne modifient pas le produit.
-- PR Draft et Preview : publication en préparation, références à compléter après retour GitHub/Vercel. Aucun merge, migration ou déploiement Production.
+- PR Draft : https://github.com/adriensauvageot34/Budgetisation/pull/67, base codex/bar-apero-350-reconciliation. Preview READY : https://budgetisation-8e0apcxvw-adriensauvageot34-6137s-projects.vercel.app — dpl_HRxwdJpRfzmUUqJsWgxcE2uiGHS5, SHA aaec279b12d730ec49864088e9aef1533c19c3a9, target Preview/null. Diff src/scripts/public/package/config vide depuis79e3bf0. Aucun merge, migration ou déploiement Production.
 
 Le diff4e0dc25→d25ead9 a été vérifié : documents et contrôleurs du registre seulement. Les235 acquis n'ont pas été réinventés. Le répertoire outputs préexistant reste hors Git.
 
@@ -31,7 +31,7 @@ Commits : `8bb9ddd` fonctionnel, `2db9f63` hauteur, `79e3bf0` priorité sur le v
 | Vide1152×720 | Ancienne preuve pas applicable au SHA final |245px, métadonnées sur bande commune |
 | Sauvegarde / Preview | Incident Auth non expliqué | Fixture réelle navigateur : ERROR Draft/FRESH Preview, puis SAVED après une reprise; pas preuve Supabase |
 
-Le compact riche1920 mesure655px avec deux trajets et miniatures; aucune promesse de compacité universelle. Pas de mesure valide de toutes les animations ni du zoom natif125. Une mesure d'onglet mal ciblée a été exclue, et les premières mesures pendant resize restent des observations transitoires.
+Le compact riche1920 mesure655px avec deux trajets et miniatures; aucune promesse de compacité universelle. Pas de mesure valide de toutes les animations. Zoom natif125 mesuré séparément sur dense1280×720 (DPR1,25), sans scroll Bar/dock ni débordement horizontal. Une mesure d'onglet mal ciblée a été exclue, et les premières mesures pendant resize restent des observations transitoires.
 
 ## Vérifications réellement exécutées
 
@@ -43,7 +43,7 @@ Sur79e3bf0, douze commandes finales ont toutes terminé avec code0 :
 - HTTP loopback :7contrôles, richBefore, CAS/réponse perdue/relecture,4saves/version4, Compiler38connu+incomplet. Aucune Auth Supabase.
 - Registre350 exact +7falsifications rejetées. Les contrôles ne transforment pas une simple Preview READY en preuve fonctionnelle.
 
-Les fichiers `closure/final-closure-tests.json` donnent commandes, exit codes, durées et SHA; les logs sont conservés. Pas de build Next local revendiqué sur le seul bundle de fixture. Le build complet sera celui du SHA immuable Vercel indiqué ci-dessous.
+Les fichiers `closure/final-closure-tests.json` donnent commandes, exit codes, durées et SHA; les logs sont conservés. Pas de build Next local revendiqué sur le seul bundle de fixture. Build Next complet Vercel PASS sur aaec279 : Build Completed in /vercel/output [1m], puis Deployment completed. Voir closure/preview.json; il ne certifie ni navigateur Preview ni Auth.
 
 ## Réception navigateur
 
@@ -51,7 +51,7 @@ Campagne Codex effectivement exécutée, React production/minifié, serveur loca
 
 Exécutés : Bar correct, calendrier/flèches, lieux homonymes et query reprise,60regroupés→remplacement explicite→BièreUNKNOWN puis6, RAW/Continuer, Before enrichi et unités explicites,15consommations+9Before, pagination, participants avec Enter, Aller voiture/Maison/véhicule choisi, Retour inverse puis Taxi confirmé, tarif Retour12, reload HTTP riche, ERROR/repriseSAVED, carte repliée, rectangles desktop réels.
 
-Non certifiés : drag natif, zoom125, toutes transitions animées, tous focus de retour, toutes sous-pages avancées, fournisseur Google final et comparaison avec Déclarer une dépense. Aucun PASS Auth ou performance P95 n'en est déduit.
+Non certifiés : drag natif, toutes transitions animées, tous focus de retour, toutes sous-pages avancées, fournisseur Google final et comparaison avec Déclarer une dépense. Aucun PASS Auth ou performance P95 n'en est déduit.
 
 ## Registre réconcilié
 
@@ -86,4 +86,4 @@ Rollback : retirer les trois commits produits de cette branche empilée avant in
 
 `NOT_READY` pour la clôture des350 et la réplication. Les corrections proposées et18clôtures sont prêtes à examiner dans la PR Draft; aucune fusion autorisée ici.
 
-Prochain prérequis critique : tenant Auth isolé accessible et accord explicite pour son unique Draft riche récupérable. Restent également la campagne physique zoom/drag/transitions et les écarts produit listés; aucune autorisation d'admission Google ou migration n'est supposée. Ne pas lancer la réplication.
+Prochain prérequis critique : tenant Auth isolé accessible et accord explicite pour son unique Draft riche récupérable. Restent également la campagne physique drag/transitions et les écarts produit listés; aucune autorisation d'admission Google ou migration n'est supposée. Ne pas lancer la réplication.

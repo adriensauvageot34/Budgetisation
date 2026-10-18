@@ -48,3 +48,6 @@ Incident Auth historique : rapport privé outputs/bar-last/live/PRODUCTION_AUTH_
 - CLOSURE_PARITY — PASS_FIXTURE — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/parity.log — 22x9=198 empreintes inchangées au code final.
 - CLOSURE_FINAL_TESTS — PASS_REACT_AND_OWNER_FIXTURE — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/final-closure-tests.json — 12 commandes, tous codes0 sur79e3bf0; suites Bar, Draft/CAS, Apply synthétique, C8, TypeScript
 - CLOSURE_REACT — PASS_REACT — 79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac — docs/status/evidence/bar-apero-350/closure/final-closure-react.log — 24 groupes réels, dont navigation externe/RAW et capsule véhicule; aucun navigateur simulé revendiqué
+
+- CLOSURE_ZOOM — PASS_BROWSER_FIXTURE —79e3bf0 — closure/final-native-zoom.json.
+- CLOSURE_BUILD — PASS_BUILD_ONLY —aaec279 — closure/preview.json, arbre produit79e3bf0 inchangé.

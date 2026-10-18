@@ -5,9 +5,9 @@ Base : d25ead9f3c8b2033c038491ce9262fa82e787171. Produit final : 79e3bf0dfb268ca
 | Gate | Résultat | Preuve et frontière |
 |---|---|---|
 | C0 | PASS | PR66 ouverte Draft, base vérifiée, ascendance4e0dc25; différence documentaire seulement jusqu'à d25ead9; intégrité350 et sept faux-DONE rejetés. Ancien outputs préservé. |
-| C1 | PASS_LIMITED_FIXTURE | Navigation persistante, capsule véhicule, familles Before, provenance visible, diagnostics séparés. 24 groupes React et cinq contrôles service; suites acquises conservées. Les autres PARTIAL restent listés, pas de clôture produit globale. |
-| C2 | PARTIAL_REAL_BROWSER | Navigateur réactivé officiellement. Campagne réelle synthétique, dense15+9, quatre tailles effectives, calendrier/focus, RAW/dialogues, modes, véhicule, pagination, ERROR/reprise. Défaut de clipping1152 reproduit puis corrigé; transition complète, drag natif, zoom125 et toutes pages avancées non certifiés. |
-| C3 | PARTIAL_NOT_READY | 198/198, TypeScript et douze commandes finales codes0. HTTP local PASS. Preview candidate à compléter dans le rapport. Auth riche NOT_RUN_AUTH. Google durable BLOCKED_OWNER. |
+| C1 | PARTIAL_PRODUCT_VERIFIED_FIXTURE | Navigation persistante, capsule véhicule, familles Before, provenance visible, diagnostics séparés. 24 groupes React et cinq contrôles service; suites acquises conservées. Les autres PARTIAL restent listés, pas de clôture produit globale. |
+| C2 | PARTIAL_REAL_BROWSER | Navigateur réactivé officiellement. Campagne réelle synthétique, dense15+9, quatre tailles effectives, calendrier/focus, RAW/dialogues, modes, véhicule, pagination, ERROR/reprise. Défaut de clipping1152 reproduit puis corrigé; transition complète, drag natif, toutes pages avancées non certifiées; zoom125 dense exécuté. |
+| C3 | PARTIAL_NOT_READY | 198/198, TypeScript et douze commandes finales codes0. HTTP local PASS. Preview aaec279 READY, Next complet1minute, arbre produit79e3bf0 identique. Auth riche NOT_RUN_AUTH. Google durable BLOCKED_OWNER. |
 
 Les preuves antérieures gardent leur SHA. 8bb9ddd contient la correction fonctionnelle; 2db9f63 et79e3bf0 corrigent seulement Board/CSS après l'observation physique. Les tests fonctionnels8bb sont applicables aux fichiers inchangés; les douze commandes finales ont ensuite été exécutées sur79e3bf0. Aucun golden modifié.
 

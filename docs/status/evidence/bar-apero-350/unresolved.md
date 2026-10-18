@@ -1,6 +1,6 @@
 # Exigences non clôturées après réception effective
 
-Auth riche : NOT_RUN_AUTH. Aucun nouvel accord de Draft personnel utilisé. Google admission : owner manquant. Transitions complètes, drag natif, zoom125 et pages avancées restent non certifiés. Les 115 transitions initiales sont dans closure-matrix.md.
+Auth riche : NOT_RUN_AUTH. Aucun nouvel accord de Draft personnel utilisé. Google admission : owner manquant. Transitions complètes, drag natif et pages avancées restent non certifiés; zoom125 dense exécuté. Les 115 transitions initiales sont dans closure-matrix.md.
 
 | ID | État | Reste exact |
 |---|---|---|
