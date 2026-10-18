@@ -27,7 +27,7 @@ const pg=await createKernelPostgres();
 const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
 const repository=createPlanApplyRepository(pg.client);
 const checks=[];
-const check=async(name,run)=>{try{await run();checks.push({name,status:'PASS'});console.log(name+' PASS');}catch(e){checks.push({name,status:'FAIL',message:e.message});console.log(name+' FAIL: '+e.message);}};
+const check=async(name,run)=>{if(process.env.BAR_CHECK_ONLY&&process.env.BAR_CHECK_ONLY!==name)return;try{await run();checks.push({name,status:'PASS'});console.log(name+' PASS');}catch(e){checks.push({name,status:'FAIL',message:e.message});console.log(name+' FAIL: '+e.message);}};
 const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.props?.['aria-hidden'])==='true'?'':node?.children?.map(text).join('')??'';
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
@@ -214,9 +214,16 @@ try{
   overrides={initialTarget:'quick',targetRequest:1};await sync();const before=structuredClone(model.semanticState);
   assert.equal(input('Coût prévu (€)').props.value,'60');assert.equal(button('Retenir ce coût').props.disabled,true);assert.ok(dock().findAll(n=>n.type==='button').every(n=>n.props['aria-pressed']!==true));
   await change('Coût prévu (€)','65');await click('Retenir ce coût');assert.deepEqual(model.semanticState,before);
-  await click('Entrées / contribution');await click('Retenir ce coût');assert.equal(current().slotSelections.extras.items.length,1);assert.equal(current().slotSelections.main.items[0].selectionId,before.contexts.find(c=>c.contextOccurrenceId===id).slotSelections.main.items[0].selectionId);
+  await click('Entrées / contribution');await click('Retenir ce coût');
+  // R255 now distinguishes the retained aggregate from a new independent contribution.
+  // The old assertion expected the latter to overwrite the former, which loses its scope.
+  assert.equal(current().slotSelections.extras.items.length,2);assert.deepEqual(current().slotSelections.main,before.contexts.find(c=>c.contextOccurrenceId===id).slotSelections.main);
+  assert.ok(current().slotSelections.extras.items.some(item=>item.cost?.unitAmount==='65'&&item.economicScope?.kind==='ADDITIVE_CONTRIBUTION'));
+  const {economicScope:_scope,...legacy}=current().slotSelections.main.items[0];
+  await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{main:[legacy]}}}));
+  overrides={};await sync();await click('Bière');const protectedLegacy=structuredClone(model.semanticState);await click('Détailler à la place');assert.deepEqual(model.semanticState,protectedLegacy,'A legacy label alone never proves a substitutive scope');
  });
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  fs.mkdirSync('outputs/bar-350',{recursive:true});fs.writeFileSync('outputs/bar-350/waves-react.json',JSON.stringify({proof:'PASS_REACT_AND_OWNER_FIXTURE_NOT_BROWSER_NOT_AUTH',checks,remoteWrites:0},null,2));
- if(checks.some(c=>c.status==='FAIL'))process.exitCode=1;
+ if(!checks.length||checks.some(c=>c.status==='FAIL'))process.exitCode=1;
 }finally{if(root)await act(async()=>root.unmount());await pg.close();}

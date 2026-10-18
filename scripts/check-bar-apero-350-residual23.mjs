@@ -7,7 +7,8 @@ const dir='docs/status/evidence/bar-apero-350/',rdir=dir+'residual23/';
 const read=name=>JSON.parse(fs.readFileSync(rdir+name,'utf8'));
 for(const file of read('files-sha256.json').files){const bytes=fs.readFileSync(rdir+file.name);const content=file.method==='utf8_normalized_lf'?bytes.toString('utf8').replaceAll('\r\n','\n'):bytes;assert.equal(crypto.createHash('sha256').update(content).digest('hex'),file.sha256,file.name+' evidence content changed');}
 const base=JSON.parse(execFileSync('git',['show','8998ba8f82a3ab72e7d60619bc8c0c81174ce15a:'+dir+'requirements.json'],{encoding:'utf8'}));
-const rows=JSON.parse(fs.readFileSync(dir+'requirements.json','utf8')),transitions=read('transitions-23.json');
+// This is an immutable historical reception, followed by the residual16 layer.
+const rows=JSON.parse(execFileSync('git',['show','264dfce70e3c94248ccb691d8348da8020cd84c7:'+dir+'requirements.json'],{encoding:'utf8'})),transitions=read('transitions-23.json');
 const pending=base.filter(r=>!r.statut.startsWith('DONE')&&r.statut!=='ALREADY_DONE_VERIFIED');
 assert.equal(pending.length,23);assert.equal(transitions.length,23);
 assert.deepEqual(transitions.map(r=>r.id).sort(),pending.map(r=>r.id).sort());
@@ -46,4 +47,4 @@ assert.match(fs.readFileSync(rdir+'test-parity.log','utf8'),/"cases":22,"hashesP
 const preview=read('vercel.json');assert.equal(preview.sha,m.productSha);assert.equal(preview.state,'READY');assert.equal(preview.production,false);
 assert.equal(read('zoom-native-attempt.json').verdict,'NOT_VERIFIABLE');
 const counts=check({verbose:false});assert.equal(counts.total,350);
-console.log('RESIDUAL23_TRACE_PASS: 327 acquired rows intact; 7 desktop closures, 16 open; native drop/Undo/RAW, 9 scenes, real Event Timing, 198 parity. Not Auth UI or provider certification.');
+console.log('RESIDUAL23_HISTORICAL_TRACE_PASS: 327 acquired rows intact; 7 desktop closures, then 16 open. Current transitions checked by residual16 gate. Not Auth UI or provider certification.');

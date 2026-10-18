@@ -8,12 +8,14 @@ const transitions=JSON.parse(fs.readFileSync(dir+'finalisation/transitions-97.js
 const rows=JSON.parse(fs.readFileSync(dir+'requirements.json','utf8'));
 const laterPath=dir+'residual23/transitions-23.json';
 const later=fs.existsSync(laterPath)?JSON.parse(fs.readFileSync(laterPath,'utf8')):[];
+const residual16Path=dir+'residual16/transitions-16.json';
+const residual16=fs.existsSync(residual16Path)?JSON.parse(fs.readFileSync(residual16Path,'utf8')):[];
 const pending=baseline.filter(r=>!r.statut.startsWith('DONE')&&r.statut!=='ALREADY_DONE_VERIFIED');
 assert.equal(pending.length,97);assert.equal(transitions.length,97);
 assert.deepEqual(transitions.map(r=>r.id).sort(),pending.map(r=>r.id).sort());
 const matrix=fs.readFileSync(dir+'finalisation/matrix-60-ui.md','utf8');
 for(const original of baseline.filter(r=>r.statut==='NOT_RUN'))assert.equal(matrix.split('\n').filter(line=>line.startsWith('|'+original.id+'|')).length,1);
 for(const original of baseline.filter(r=>!pending.some(p=>p.id===r.id)))assert.deepEqual(rows.find(r=>r.id===original.id),original);
-for(const t of transitions){assert.equal(t.description_originale,baseline.find(r=>r.id===t.id).description_originale);assert.ok(t.raison&&t.scenario&&t.preuves.length);const next=later.find(r=>r.id===t.id);if(next)assert.equal(next.avant.statut,t.apres.statut);assert.equal(rows.find(r=>r.id===t.id).statut,next?.apres.statut??t.apres.statut);}
+for(const t of transitions){assert.equal(t.description_originale,baseline.find(r=>r.id===t.id).description_originale);assert.ok(t.raison&&t.scenario&&t.preuves.length);const next=later.find(r=>r.id===t.id);if(next)assert.equal(next.avant.statut,t.apres.statut);const final=residual16.find(r=>r.id===t.id);if(final)assert.equal(final.avant.statut,next?.apres.statut??t.apres.statut);assert.equal(rows.find(r=>r.id===t.id).statut,final?.apres.statut??next?.apres.statut??t.apres.statut);}
 check({verbose:false});
 console.log('FINAL_RECEPTION_TRACE_PASS 97 transitions, 60 UI allocations, 253 acquired rows unchanged; not a product certification');
