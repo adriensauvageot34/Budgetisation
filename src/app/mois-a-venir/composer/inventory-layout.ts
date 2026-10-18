@@ -39,6 +39,10 @@ export function inventoryLayoutPages(items: readonly InventoryItem[], width: num
     const columnSpan = Math.max(1, Math.min(columns, Math.round(((item.id === expandedId ? Math.min(760, availableWidth) : item.width) + columnGap) / (columnWidth + columnGap))
       + (item.kind === "CLUSTER" && item.family === "BEAUTY" && columns >= 15 ? 1 : 0)));
     const livingBar=item.kind==="CONTEXT"&&!!item.context&&presetForContext(item.context)?.presetKey==="bar-apero";
+    // Keep the living editor at the same page origin as its scene changes.
+    // Otherwise a shorter scene fits back into an earlier hole and the whole
+    // editor jumps across the Board. Following items still fill the free area.
+    if(livingBar&&item.id===expandedId)flushPage();
     // Only the living Bar may exceed the shelf. Its real content is packed,
     // and the existing outer Board/page scrollbar keeps it reachable.
     const requested=Math.ceil(((item.id===expandedId?expandedHeight:item.height)+rowGap)/(rowTrack+rowGap));
