@@ -1198,6 +1198,12 @@
 .barLivingEditor>.barEditableBody>.barLivingMetadata { padding-bottom:10px; border-bottom:1px solid #eee3d3; }
 .barLivingMetadata .barBackArrow { order:-1; border:0; background:transparent; padding:5px 8px; font-size:19px; line-height:1; }
 .barLivingMetadata .barMetaTrip { order:1; margin-left:auto; background:#fff9ef; border-style:dashed; }
+/* Reception: the compact people/search actions measured 22/18px high. */
+.barLivingMetadata .barPeople { min-height:32px; padding:5px 7px; }
+.barLivingQuestion [data-bar-local-places] button,
+.barLivingQuestion [data-bar-local-places] summary { min-height:32px; display:inline-flex; align-items:center; }
+[data-budget-unknown=true] .cardValue { font-size:16px; font-weight:650; letter-spacing:0; }
+.barLivingRoutes { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); align-items:start; }
 .barLivingSections { display:grid; gap:12px; min-width:0; }
 .barLivingSections:empty { display:none; }
 .barLivingSections[data-scene=summary] { grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr)); }

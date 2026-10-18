@@ -3,6 +3,7 @@ import type {BarTarget} from "./bar-living-operations";
 import {createPortal} from "react-dom";
 import {BarLivingMount,useBarLivingHost} from "./bar-living-mount";
 import {rememberBarView,type BarViewMemory} from "./bar-view-memory";
+import {startBarReceptionProbe} from "./bar-reception-probe";
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
 import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
@@ -122,6 +123,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const scheduler = useRef(new ComposerPreviewScheduler());
   const [busy, setBusy] = useState(false), busyRef = useRef(false);
   const [removingBarId,setRemovingBarId]=useState<string|undefined>();
+  useEffect(()=>{
+    if(typeof window==='undefined'||new URLSearchParams(window.location?.search??'').get('barProbe')!=='1')return;
+    const root=document.querySelector<HTMLElement>('[data-composer]');if(root)return startBarReceptionProbe(root);
+  },[]);
   const barViews=useRef(new Map<string,BarViewMemory>());
   const rememberCurrentBarView=useCommittedEvent((view:BarViewMemory)=>{
     if(livingBarId)rememberBarView(barViews.current,`${draftState.targetMonth}:${livingBarId}`,view);

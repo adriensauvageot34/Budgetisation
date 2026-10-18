@@ -115,6 +115,13 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const guard=(continuation:()=>void)=>rawGuard(()=>setResume(()=>continuation));
   useEffect(()=>{if(resume){setResume(null);resume();}},[resume]);
   const editorRoot=useRef<HTMLDivElement>(null);
+  const sceneTrigger=useRef<HTMLElement|null>(null);
+  useEffect(()=>{
+    const trigger=sceneTrigger.current;sceneTrigger.current=null;
+    // A scene may remove its own trigger (Back, a dock answer). Keep keyboard
+    // navigation inside this card, without stealing focus from surviving inputs.
+    if(trigger&&typeof document!=="undefined"&&!trigger.isConnected&&document.activeElement===document.body)editorRoot.current?.focus({preventScroll:true});
+  },[page]);
   useEffect(()=>{if(page!=="row")return;const tile=editorRoot.current?.querySelector<HTMLElement>('[data-bar-active-tile="true"]');tile?.scrollIntoView?.({block:"nearest",inline:"nearest"});},[page,row.id]);
   const [pendingEndpoint,setPendingEndpoint]=useState<{leg:BarLeg;key:"origin"|"destination";place:ProspectivePlaceRef|null}|null>(null);
   function canSaveBuffer(){try{
@@ -134,7 +141,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(current?.kind==="COMPONENT")setRow(previous=>previous.id===row.id?fromSelection(current):previous);else setPage("drinks");
   },[context.slotSelections,props.semanticState.contexts,page,slot,dirty,row.id]);
   if(!model||!card)return <p role="status">Chargement de la carte…</p>;
-  const move=(next:Page)=>{savedPages.current[previousPage.current]=itemPage;previousPage.current=next;setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setItemPage(savedPages.current[next]??0);setError("");};
+  const move=(next:Page)=>{if(next!==page&&typeof document!=="undefined"&&typeof HTMLElement!=="undefined"&&document.activeElement instanceof HTMLElement)sceneTrigger.current=document.activeElement;savedPages.current[previousPage.current]=itemPage;previousPage.current=next;setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setItemPage(savedPages.current[next]??0);setError("");};
   const go=(next:Page)=>{if(guard(()=>resumeGo(next)))move(next);};
   const decide=(operation:ComposerOperation,next:Page="summary")=>{
     try{if(busy){setError("Cette carte est protégée ou une opération est en cours. Aucun choix n’a été admis.");return false;}if(onSave(operation)){setDirty(false);move(next);return true;}setError("Ce choix n’a pas été admis. Votre saisie est conservée ; vérifiez le message du Board.");}
@@ -268,7 +275,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const knownBars=barPlaces(model.mobilityOptions?.places??[],query);
   if(page==="summary"&&selectedPlace)question={title:"La suite de ta sortie",choices:[choice(barLeg(context,"outbound")?"return":"outbound",barLeg(context,"outbound")?barLeg(context,"return")?"Modifier le retour":"Retour":"Aller",()=>open(barLeg(context,"outbound")?"return":"outbound"),"activity"),choice("drinks","Boissons",()=>go("drinks")),...neutralChoices.filter(c=>c.key!==beer.assetKey)]};
   if(page==="place")question={title:"Où prendre un verre ?",identity:`${context.contextOccurrenceId}:place:${query}`,choices:[
-    ...knownBars.slice(0,query.trim()||allPlaces?knownBars.length:3).map(place=>({...choice(place.placeId,place.name,()=>choosePlace({kind:"KNOWN",placeId:place.placeId}),"activity",barPlaceHint(place,model.mobilityOptions?.placeKnowledge)),showHint:true})),
+    ...knownBars.slice(0,query.trim()||allPlaces?knownBars.length:3).map(place=>({...choice(place.placeId,place.name,()=>choosePlace({kind:"KNOWN",placeId:place.placeId}),"activity",barPlaceHint(place,model.mobilityOptions?.placeKnowledge),place.name.trim().split(/\s+/u).slice(0,2).map(word=>word[0]).join("").toLocaleUpperCase("fr")),showHint:true})),
     ...(!query.trim()&&!allPlaces&&knownBars.length>3?[choice("all","Tous les bars enregistrés",()=>setAllPlaces(true),"activity")]:[]),
 ]};
   if(page==="more")question={title:"Compléter ta sortie",choices:[beforeChoice,sharedChoice,choice("quick","Montant direct",startQuick,"night-out","Entrée ou estimation regroupée"),choice("drinks","Boissons",()=>go("drinks")),choice("details","Repas et options détaillées",()=>startLegacy("menu"),"activity")]};
@@ -323,7 +330,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const pagesFor=(items:readonly ComponentSelectionV1[],label:string)=><BarPageControls index={Math.min(itemPage,Math.max(0,Math.ceil(items.length/4)-1))} count={Math.ceil(items.length/4)} onChange={setItemPage} label={label}/>;
   const beforeScene=page==="summary"||page==="before"||page==="row"&&slot.startsWith("before-");
   const peoplePage=Math.min(itemPage,Math.max(0,Math.ceil(people.length/4)-1));
-  return <div ref={editorRoot} className={styles.barLivingEditor} data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
+  return <div ref={editorRoot} className={styles.barLivingEditor} tabIndex={-1} aria-label="Configuration de Bar / Apéro" data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
     onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();if(page!=="summary")go("summary");else props.onCancel();}}}>
     <fieldset className={styles.barEditableBody} disabled={busy} aria-label="Composition de la sortie">
     <BarMetadata fields={context.fields} model={model} open={open} editing active={page} disabled={busy}>

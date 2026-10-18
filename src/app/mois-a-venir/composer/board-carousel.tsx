@@ -10,6 +10,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   expandedId?: string; revealSequence?: number; revealFocused?: () => void;
   render: (item: InventoryItem) => ReactNode; emptyClick: () => void; children?: ReactNode; dropProps: React.HTMLAttributes<HTMLDivElement> & { [key: `data-${string}`]: boolean | string | number | undefined } }) {
   const viewport = useRef<HTMLDivElement>(null), [size, setSize] = useState({ width: 1000, height: 470 }), [page, setPage] = useState(0);
+  const reception=useRef({enabled:false,mutations:0,resizes:0,measures:0,repacks:0});
+  useEffect(()=>{reception.current.enabled=typeof window!=='undefined'&&new URLSearchParams(window.location?.search??'').get('barProbe')==='1';},[]);
+  const note=(phase:'mutations'|'resizes'|'measures'|'repacks')=>{
+    if(!reception.current.enabled)return;
+    reception.current[phase]++;
+    if(viewport.current)viewport.current.dataset.barLayoutProbe=JSON.stringify(reception.current);
+  };
   const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number } | null>(null);
   const [compactBarHeights,setCompactBarHeights]=useState<Readonly<Record<string,number>>>({});
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
@@ -22,6 +29,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const spatialKey = inventorySpatialKey(items);
   const expandedHeight = dragging ? stableExpandedHeight.current : expandedMeasure && expandedMeasure.id === expandedId ? expandedMeasure.height : undefined;
   const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight]);
+  useLayoutEffect(()=>note('repacks'),[geometry]);
   const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);
   const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);
   useLayoutEffect(() => { if (!dragging) { stableItems.current = measuredItems; stableSize.current = size; stableExpanded.current = expandedId; stableExpandedHeight.current = expandedHeight; } }, [dragging, measuredItems, size, expandedId, expandedHeight]);
@@ -50,9 +58,9 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     // Measure intrinsic children, not the stretched grid cell: otherwise the
     // reserved height feeds back into itself and can never shrink on folding.
     const cards=()=>[...board.querySelectorAll<HTMLElement>('[data-bar-living-card][data-expanded="false"]')];
-    const resize=new ResizeObserver(schedule);
+    const resize=new ResizeObserver(()=>{note('resizes');schedule();});
     function observe(){resize.disconnect();for(const card of cards())for(const child of card.children)if(child instanceof HTMLElement)resize.observe(child);}
-    function measure(){frame=0;const heights:Record<string,number>={};for(const card of cards()){
+    function measure(){note('measures');frame=0;const heights:Record<string,number>={};for(const card of cards()){
       const id=card.dataset.context;if(!id)continue;
       heights[id]=Math.max(130,Math.ceil([...card.children].reduce((sum,child)=>sum+child.getBoundingClientRect().height,0)+2));
     }
@@ -62,7 +70,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       });
     }
     function schedule(){if(!frame)frame=requestAnimationFrame(measure);}
-    const mutations=new MutationObserver(()=>{observe();schedule();});
+    const mutations=new MutationObserver(()=>{note('mutations');observe();schedule();});
     mutations.observe(board,{childList:true,subtree:true,characterData:true});observe();schedule();
     return()=>{resize.disconnect();mutations.disconnect();if(frame)cancelAnimationFrame(frame);};
   },[dragging,expandedId,size.width,projected]);
@@ -76,12 +84,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
     let card=findCard();
     let frame = 0;
-    const resize = new ResizeObserver(schedule);
+    const resize = new ResizeObserver(()=>{note('resizes');schedule();});
     const observeContent = () => {
       card=findCard();resize.disconnect();if(!card)return;resize.observe(card);
       for (const child of card.children) if (child instanceof HTMLElement) resize.observe(child);
     };
     function measure() {
+      note('measures');
       frame = 0;
       card=findCard();
       const editor = card?.querySelector<HTMLElement>("[data-bar-living-editor]");
@@ -91,7 +100,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height ? previous : { id: expandedId!, height });
     }
     function schedule() { if (!frame) frame = requestAnimationFrame(measure); }
-    const mutations = new MutationObserver(() => { observeContent(); schedule(); });
+    const mutations = new MutationObserver(() => { note('mutations');observeContent(); schedule(); });
     // Packing can remount the same context on another page. Follow its new
     // host instead of keeping a ResizeObserver attached to the departed card.
     mutations.observe(board, { childList: true, subtree: true, characterData: true });
