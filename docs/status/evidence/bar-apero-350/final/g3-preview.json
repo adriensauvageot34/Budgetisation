@@ -1,0 +1,10 @@
+{
+  "deploymentId": "dpl_29Ky4vsCJS3BQMwJeVuVeWmVEY7J",
+  "sha": "83ac6e18cf9052b73c5c6cafed78590bbf997fce",
+  "state": "READY",
+  "target": "Preview",
+  "url": "https://budgetisation-4sx3h8j3c-adriensauvageot34-6137s-projects.vercel.app",
+  "build": "Build Completed in /vercel/output [2m]",
+  "deployed": "Deployment completed",
+  "test": "BUILD_PASS_NOT_AUTH_NOT_BROWSER"
+}

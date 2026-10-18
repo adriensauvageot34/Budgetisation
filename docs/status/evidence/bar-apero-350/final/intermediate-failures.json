@@ -1,0 +1,31 @@
+{
+  "qualification": "OBSERVED_FAILURE_EXTRACTS_NOT_A_RECREATED_RAW_LOG",
+  "failures": [
+    {
+      "case": "R160_R161_DOCK_PAGES_KEY_BY_TARGET_AND_KEEP_COLUMN_COUNT",
+      "before": "4e0dc25",
+      "observed": "actual 'Choix 0', expected 'Choix 5' on return to prior target",
+      "cause": "Residual layout effect reset the memorized page.",
+      "fixedBy": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "rawLog": "outputs/bar-350/final-waves.log was overwritten by the successful rerun. This JSON is the observed-output extract, not an intact original log."
+    },
+    {
+      "case": "P4 first Before creation",
+      "observed": "Old assertion requested Prix par lot for newly created Vodka; catalog FIXED now correctly uses ITEM. Snack SHARED requires Prix par lot.",
+      "rawLog": "outputs/bar-350/g2-p4.log and g2-p4-fixed.log preserved",
+      "financialOracles": "39,79,69 unchanged; no golden edit."
+    },
+    {
+      "case": "V2 clean empty click",
+      "observed": "Old test invoked removed forced-summary click handler.",
+      "rawLog": "outputs/bar-350/g2-p2.log preserved",
+      "fix": "Assert neutral click and preserved semantic state, then explicit Escape separately."
+    },
+    {
+      "case": "HTTP sandbox",
+      "observed": "EACCES 127.0.0.1:3234",
+      "rawLog": "outputs/bar-350/final-http.log preserved",
+      "resolution": "Authorized loopback-only execution passed. No browser or Supabase access used."
+    }
+  ]
+}

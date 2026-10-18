@@ -1,9 +1,40 @@
 # Index de preuves
 
-| ID | SHA / environnement | Preuve et périmètre |
-|---|---|---|
-| COMPACT | 5590017, code inchangé dans a2e2aec | `BAR_APERO_COMPACT_EDITORIAL_RECEPTION.md` ; 445→285 px, menus/tuiles, synthèse et illustration ; preuves navigateur locales `outputs/bar-compact/`. Aucune preuve de nouvelle Auth ou de tous les scénarios. |
-| G0_SAVE | a2e2aec / vrai HTTP loopback, données synthétiques | `g0-save.json`, produit par `scripts/check-bar-apero-p4-http.mjs`, journal privé `outputs/bar-350/g0-http.log`. Pas de Supabase Auth. |
-| PROD_INCIDENT_HISTORICAL | bd97a33 / ancien canari autorisé | Rapport privé `outputs/bar-last/live/PRODUCTION_AUTH_RECEPTION_2026-10-18.md`. Before non durable, erreur non confirmée ; Preview 57014 timing/places/economic. Causes non assimilées. Ni captures personnelles ni payload financier copiés au dépôt. |
+Tous les fichiers référencés sont contrôlés par SHA-256 de leur texte normalisé LF dans evidence.json. Le SHA produit et le niveau de preuve sont indépendants du hash du fichier de preuve.
 
-Les preuves nouvelles seront ajoutées avec leurs IDs précis, leur SHA produit et leurs limites. Les niveaux T0/T1/T2/T3 ne sont pas interchangeables.
+| ID | Niveau | SHA produit | Fichier / portée |
+|---|---|---|---|
+| COMPACT | PASS_BROWSER_FIXTURE | 5590017 | BAR_APERO_COMPACT_EDITORIAL_RECEPTION.md — Compacité mesurée, tuiles, illustration déterministe et reflow ; a2e2aec ne change que ce rapport. Aucune preuve Auth. |
+| G0_SAVE | PASS_HTTP_FIXTURE | a2e2aec | docs/status/evidence/bar-apero-350/g0-save.json — Script HTTP riche réellement rejoué avant changement produit ; CAS, réponse perdue, conservation, zéro Apply et zéro distant. |
+| G1_REACT | PASS_REACT | 4006356 | docs/status/evidence/bar-apero-350/g1/react.log — Six groupes ciblés ; RAW/clic neutre, Plus tard, calendrier, reprise recherche, homonymes visibles. |
+| G1_BROWSER | PASS_BROWSER_FIXTURE | 08dc6f4 | docs/status/evidence/bar-apero-350/g1/browser.json — Lieu recherche Canal reprise ; Plus tard summary ; date maintenue et flèche droite focus2/tabstop unique ; aucune mutation distante. |
+| G1_PLACES | PASS_BROWSER_FIXTURE | 4006356 | docs/status/evidence/bar-apero-350/g1/places.json — Homonymes Quai A/B visibles, un champ de recherche, dock sans scroll Y à 1280px. |
+| G1_P3 | PASS_REACT_AND_OWNER_FIXTURE | 08dc6f4 | docs/status/evidence/bar-apero-350/g1/p3.log — 12 groupes P3, mocks Google exact/ambigu/429/HTML/tardif et limites owner ; adaptation des clics Reprendre, aucune assertion financière supprimée. |
+| G1_EXISTING | PASS_REACT | 08dc6f4 | docs/status/evidence/bar-apero-350/g1/existing.log — 8 groupes dernière réception dont participants page5→4, RAW, 15 boissons/9 Before et suppression. |
+| G2_REACT | PASS_REACT | 4ee0a1f | docs/status/evidence/bar-apero-350/g2/react.log — Global60 vers UNKNOWN atomique, identité montant, unités publiées Before et RAW. |
+| G2_P4 | PASS_REACT_AND_OWNER_FIXTURE | 4ee0a1f | docs/status/evidence/bar-apero-350/g2/p4.log — 15 groupes P4, dont détails/global, ITEM/PERSON/SHARED, prix zéro, Before et Apply/Reload PGlite synthétique. |
+| G2_P1 | PASS_REACT | 4ee0a1f | docs/status/evidence/bar-apero-350/g2/p1.log — Régressions interactions indépendantes, RAW, endpoints et continuation. |
+| G2_P2 | PASS_REACT | 4ee0a1f | docs/status/evidence/bar-apero-350/g2/p2.log — Régressions d’interactions et de protection des tuiles. |
+| G2_BROWSER | PASS_BROWSER_FIXTURE | 4ee0a1f | docs/status/evidence/bar-apero-350/g2/browser.json — En-tête → coût60 → Bière → Détailler à la place : résumé à préciser, prix vide après Preview. Largeur effective1159. Aucun Auth. |
+| FINAL_REACT | PASS_REACT | 4e0dc25 | docs/status/evidence/bar-apero-350/final/react.log — 22 targeted in-process React groups for new behavior; no real browser or Auth. |
+| FINAL_P1 | PASS_REACT | 4e0dc25 | docs/status/evidence/bar-apero-350/final/p1.log — 25 existing targeted interaction/RAW/endpoint controls. |
+| FINAL_P2 | PASS_REACT | 4e0dc25 | docs/status/evidence/bar-apero-350/final/p2.log — 20 local interaction, quantity, protection and pure-layout controls. |
+| FINAL_P3 | PASS_REACT | 4e0dc25 | docs/status/evidence/bar-apero-350/final/p3.log — 12 Google mocks, owner DTO and known-place/route controls; no real provider. |
+| FINAL_P4 | PASS_REACT | 4e0dc25 | docs/status/evidence/bar-apero-350/final/p4.log — 14 rich Before, units, funding, replacement and synthetic Apply/Reload controls. |
+| FINAL_LAST | PASS_REACT | 4e0dc25 | docs/status/evidence/bar-apero-350/final/last.log — 8 rich scene/pagination/target/removal and actual-shell mocked transport controls. |
+| FINAL_PARITY | PASS_OWNER_FIXTURE | 4e0dc25 | docs/status/evidence/bar-apero-350/final/parity.log — 22 owner scenarios, 9 hashes each =198 identical financial hashes; no golden changed. |
+| FINAL_DURABLE | PASS_REACT | 4e0dc25 | docs/status/evidence/bar-apero-350/final/durable.log — 7 actual hook deterministic controls: debounce, CAS, lost response, offline and archive. Not Auth. |
+| FINAL_APPLY | PASS_OWNER_FIXTURE | 4e0dc25 | docs/status/evidence/bar-apero-350/final/apply.log — 8 P13 PGlite owner controls including successful commit then failed reread; no production Apply. |
+| FINAL_HTTP | PASS_HTTP_FIXTURE | 4e0dc25 | docs/status/evidence/bar-apero-350/final/http.log — 7 true loopback HTTP synthetic checks. Backend owner unchanged from running fixture; no browser/Auth. |
+| FINAL_C8 | PASS_STATIC | 4e0dc25 | docs/status/evidence/bar-apero-350/final/c8.log — Original C8-017 isolated assertion executed unchanged. |
+| FINAL_TYPES | PASS_TYPESCRIPT | 4e0dc25 | docs/status/evidence/bar-apero-350/final/types.json — TypeScript exit0 exact final product tree. |
+| FINAL_ENVIRONMENT | BLOCKED_ENV | 4e0dc25 | docs/status/evidence/bar-apero-350/final/environment.json — Actual browser unavailable and no authorized isolated Auth/provider session. |
+| FINAL_SCOPE | PASS_STATIC | 4e0dc25 | docs/status/evidence/bar-apero-350/final/scope.json — Source diff and manual ownership/React review; does not certify UX. |
+| G3_PREVIEW_BUILD | PASS_BUILD_PREVIEW | 83ac6e1 | docs/status/evidence/bar-apero-350/final/g3-preview.json — Full remote Next build READY. No functional browser or Auth test. |
+
+Captures réelles non recadrées G1/G2, conservées hors publication : outputs/bar-350/g1-browser/date.png, places.png et outputs/bar-350/g2/unknown.png. Elles ne prouvent pas la version finale G3/G5. Les anciennes captures Production contenant des voisinages personnels ne sont ni commitées ni téléversées.
+
+Incident Auth historique : rapport privé outputs/bar-last/live/PRODUCTION_AUTH_RECEPTION_2026-10-18.md. Version bd97a33 ; canari antérieur archivé, aucune nouvelle écriture personnelle dans cette reprise. Aucune causalité établie entre 57014 Preview et échec Draft.
+
+| G5_PREVIEW_BUILD | PASS_BUILD_PREVIEW | 4e0dc25 | final/g5-preview.json ; Next complet READY, fin de journal seulement ; aucune réception fonctionnelle Auth. |
+| FINAL_INTEGRITY | PASS_STATIC | ac22d09, produit 4e0dc25 | final/integrity.log ; 350 textes exacts et sept falsifications refusées. |
