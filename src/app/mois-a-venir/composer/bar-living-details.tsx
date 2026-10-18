@@ -42,15 +42,19 @@ export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=fa
  const summary=model.mobilitySummaries?.find(s=>s.contextOccurrenceId===contextId&&s.ownerIntentId===mobilityIntentId(contextId,slot));
  const fresh=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===contextId)?.semanticStateDigest===model.board.draft.semanticStateDigest;
  const Icon=leg?.optionKey==="car"?Car:leg?.optionKey==="taxi"?CarTaxiFront:leg?.optionKey==="train"?Train:leg?.optionKey==="bus"?Bus:leg?.optionKey==="free"?Footprints:ArrowRight;
- const go=(point:"origin"|"destination"|"fare")=>navigate?navigate(`route:${slot}:${point}`):open();
+ const go=(point:"origin"|"destination"|"fare"|"vehicle")=>navigate?navigate(`route:${slot}:${point}`):open();
  const cost=leg?.optionKey==="car"?summary?.economicFuel:leg?.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:summary?.fare;
  const missing=leg?[!leg.origin?"départ":null,!leg.destination?"arrivée":null,leg.optionKey==="car"&&!leg.route?.vehicleRef?"véhicule":null,leg.origin?.kind==="TEXT"||leg.destination?.kind==="TEXT"?"distance du repère libre":null].filter(Boolean):[];
+ const vehicle=leg?.route?.vehicleRef;
  return <div className={styles.barRouteLine} data-bar-route-module={slot} data-active={active}>
    <button type="button" data-bar-route={slot} aria-pressed={active} disabled={disabled} onClick={open}><b>{leg?.returnRequired?"Aller-retour":slot==="outbound"?"Aller":"Retour"}</b><Icon size={17}/>{leg?barModeLabel(leg.optionKey):"Déplacement"}</button>
    {leg&&<><div className={styles.barRouteStops}><button type="button" disabled={disabled} onClick={()=>go("origin")} aria-label={`Modifier le départ ${slot==="outbound"?"de l’aller":"du retour"}`}>Départ · {barPlaceLabel(leg.origin,model)}</button><ArrowRight size={14}/><button type="button" disabled={disabled} onClick={()=>go("destination")} aria-label={`Modifier l’arrivée ${slot==="outbound"?"de l’aller":"du retour"}`}>Arrivée · {barPlaceLabel(leg.destination,model)}</button></div>
+   {leg.optionKey==="car"&&<button type="button" data-bar-vehicle-capsule title={vehicle?.labelAtSelection??"Choisir un véhicule"} disabled={disabled} onClick={()=>go("vehicle")} aria-label={`Modifier le véhicule ${slot==="outbound"?"de l’aller":"du retour"}`}><Car size={14}/><span>{vehicle?.labelAtSelection??"Véhicule à choisir"}</span></button>}
    <button type="button" className={styles.barRouteCost} disabled={disabled} onClick={()=>leg.optionKey==="car"?open():go("fare")} aria-label={`${leg.optionKey==="car"?"Consulter le coût d’usage":"Modifier le tarif"} ${slot==="outbound"?"de l’aller":"du retour"}`}>
      {cost!=null?money(cost):leg.optionKey==="car"?"Usage à estimer":"Tarif à préciser"}{cost!=null&&<small>{leg.optionKey==="car"?"Coût d’usage":"Tarif prévu"}{!fresh?" · précédent":""}</small>}
    </button>
+   {leg.optionKey==="car"&&<small data-bar-usage-not-payment>Coût d’usage estimé · aucun achat de carburant.{cost==null&&missing.length===0?" Estimation Mobility encore indisponible ; aucun prix n’est supposé.":""}{summary?.status==="PARTIAL"?" Estimation partielle.":""}</small>}
+   {leg.optionKey==="car"&&summary?.fare!=null&&<small>Autre tarif prévu : {money(summary.fare)}{!fresh?" · précédent":""}</small>}
    {(missing.length>0||summary?.toll!=null||summary?.parking!=null||summary?.cashTransport!=null||(leg.route?.stops.length??0)>2)&&<small className={styles.barRouteEvidence}>{missing.length>0&&`À préciser : ${missing.join(", ")}`}{summary?.toll!=null&&` · péage ${money(summary.toll)}`}{summary?.parking!=null&&` · parking ${money(summary.parking)}`}{summary?.cashTransport!=null&&` · transport cash ${money(summary.cashTransport)}`}{(leg.route?.stops.length??0)>2&&` · ${leg.route!.stops.length-2} étape(s) intermédiaire(s)`}</small>}
    </>}
  </div>;

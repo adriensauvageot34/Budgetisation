@@ -30,11 +30,11 @@ import {BarPageControls} from "./bar-pages";
 import {Trash2} from "lucide-react";
 import styles from "./composer.module.css";
 
-type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"legacy"|"fare"|"quick"|"coverage"|"before"|"more";
+type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more";
 type Component=Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;
 const catalog=assetsForModule("bar").filter(asset=>!/(?:parking|entry)$/u.test(asset.assetKey));
 const beforeCatalog=assetsForModule("house_party");
-export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget}) {
+export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number}) {
   const {context,model,card,dockHost,onSave,serverError}=props;
   const busy=props.busy||!!card?.readOnly||props.semanticState.preferences.anchors.includes(context.contextOccurrenceId)||props.semanticState.preferences.flexibility[context.contextOccurrenceId]==="PRESERVE";
   const initialRoute=props.initialTarget?.startsWith("route:")?props.initialTarget.split(":"):null;
@@ -42,7 +42,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const initialBefore=barBefore(props.semanticState,context);
   const initialItems=initialComponent?.[1]==="before-main"?initialBefore?[initialBefore.bottle]:[]:initialComponent?.[1]==="before-extras"?initialBefore?.extras??[]:initialComponent?barItems(context,initialComponent[1]):[];
   const initialSelection=initialComponent?initialItems.find(item=>item.selectionId===initialComponent[2]):undefined;
-  const [page,setPage]=useState<Page>(()=>initialSelection?.kind==="COMPONENT"?"row":props.initialTarget?.startsWith("component:")?"summary":initialRoute?(initialRoute[2]==="fare"?"fare":"endpoint"):props.initialTarget as Page??"summary");
+  const [page,setPage]=useState<Page>(()=>initialSelection?.kind==="COMPONENT"?"row":props.initialTarget?.startsWith("component:")?"summary":initialRoute?(initialRoute[2]==="fare"?"fare":initialRoute[2]==="vehicle"?"vehicle":"endpoint"):props.initialTarget as Page??"summary");
   const [legacy,setLegacy]=useState<"people"|"calendar"|"menu"|"main">("menu"),[legacyKey,setLegacyKey]=useState(0);
   const [row,setRow]=useState<Row>(()=>initialSelection?.kind==="COMPONENT"?fromSelection(initialSelection):fresh()),[slot,setSlot]=useState(initialComponent?.[1]??"extras"),[dirty,setDirty]=useState(false);
   const [showRowChoices,setShowRowChoices]=useState(false);
@@ -88,6 +88,10 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const [resume,setResume]=useState<(()=>void)|null>(null);
   const resumeGo=useCommittedEvent((next:Page)=>go(next));
   const resumeOpen=useCommittedEvent((target:BarTarget)=>open(target));
+  // Header navigation changes the target, not the lifetime of this editor.
+  // The shell guards RAW first; keep scoped searches and paging in memory.
+  const lastTargetRequest=useRef(props.targetRequest);
+  useEffect(()=>{if(lastTargetRequest.current===props.targetRequest)return;lastTargetRequest.current=props.targetRequest;resumeOpen(props.initialTarget??"summary");},[props.targetRequest,props.initialTarget,resumeOpen]);
   const resumeAdd=useCommittedEvent((asset:PlannedAsset,included?:boolean)=>add(asset,included));
   const resumeEdit=useCommittedEvent((target:string,id:string)=>{const item=rowItems(target).find(i=>i.selectionId===id);if(item?.kind==="COMPONENT")editComponent(target,item);});
   const resumeLegacy=useCommittedEvent((target:typeof legacy)=>startLegacy(target));
@@ -132,7 +136,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   };
   const startLegacy=(target:typeof legacy)=>{if(!guard(()=>resumeLegacy(target)))return;setLegacy(target);setLegacyKey(k=>k+1);move("legacy");};
   const open=(target:BarTarget)=>{if(!guard(()=>resumeOpen(target)))return;
-    if(target.startsWith("route:")){const [,dir,key]=target.split(":");setDirection(dir as "outbound"|"return");setAllEndpoints(false);setManual("");if(key==="fare"){const actual=barLeg(context,dir as "outbound"|"return");setFare(actual?.pricing?.fare.kind==="MANUAL"?actual.pricing.fare.unitAmount:"");move("fare");}else{setEndpoint(key as "origin"|"destination");move("endpoint");}return;}
+    if(target.startsWith("route:")){const [,dir,key]=target.split(":");setDirection(dir as "outbound"|"return");setAllEndpoints(false);setManual("");if(key==="vehicle"){move("vehicle");}else if(key==="fare"){const actual=barLeg(context,dir as "outbound"|"return");setFare(actual?.pricing?.fare.kind==="MANUAL"?actual.pricing.fare.unitAmount:"");move("fare");}else{setEndpoint(key as "origin"|"destination");move("endpoint");}return;}
     if(target==="quick"){const item=barItems(context,"main")[0];setQuickAmount(item?.kind==="COMPONENT"&&item.cost.kind==="MANUAL"?item.cost.unitAmount:"");setQuickTotal(!(item?.kind==="COMPONENT"&&item.label!=="Consommations regroupées"));move("quick");return;}
     if(target==="outbound"||target==="return")setRouteModes(true);
     if(target==="people"){setPeople(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);move("people");return;}
@@ -248,7 +252,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const consumptionChoice=(asset:PlannedAsset)=>({...choice(asset.assetKey,(barItems(context,"extras").some(i=>i.kind==="COMPONENT"&&i.productAssetRef?.assetKey===asset.assetKey)?"+ ":"")+asset.label,()=>add(asset),"night-out","Nouvelle ligne · rééditez une tuile pour changer sa quantité",asset.icon),showHint:false});
   const beerChoice=consumptionChoice(beer);
   const drinkChoices=catalog.map(consumptionChoice);
-  const beforeChoices=()=>{const items=before?[before.bottle,...before.extras]:[],hasVodka=items.some(i=>i.kind==="COMPONENT"&&i.productAssetRef?.assetKey==="house_party:vodka"),present=new Set(items.flatMap(i=>i.kind==="COMPONENT"&&i.productAssetRef?[i.productAssetRef.assetKey]:[]));const priority=hasVodka?["house_party:mixer","house_party:crazy_tiger","house_party:snack"]:[];const proposed=allBefore?beforeCatalog:hasVodka?beforeCatalog.filter(a=>priority.includes(a.assetKey)&&!present.has(a.assetKey)):beforeCatalog.slice(0,4);return [...proposed.map(asset=>choice(asset.assetKey,asset.label,()=>addBefore(asset),"night-out",undefined,asset.icon)),...(!allBefore?[choice("all-before","Tout le Before",()=>setAllBefore(true),"activity","Catalogue complet · aucun objet ajouté")]:[])];};
+  const beforeChoices=()=>{const items=before?[before.bottle,...before.extras]:[],hasVodka=items.some(i=>i.kind==="COMPONENT"&&i.productAssetRef?.assetKey==="house_party:vodka"),present=new Set(items.flatMap(i=>i.kind==="COMPONENT"&&i.productAssetRef?[i.productAssetRef.assetKey]:[]));const priority=hasVodka?["house_party:mixer","house_party:crazy_tiger","house_party:snack"]:[];const proposed=allBefore?beforeCatalog:hasVodka?beforeCatalog.filter(a=>priority.includes(a.assetKey)&&!present.has(a.assetKey)):["house_party:vodka","house_party:beer","house_party:mixer","house_party:snack"].flatMap(key=>beforeCatalog.filter(a=>a.assetKey===key));return [...proposed.map(asset=>choice(asset.assetKey,asset.label,()=>addBefore(asset),"night-out",undefined,asset.icon)),...(!allBefore?[choice("all-before","Tout le Before",()=>setAllBefore(true),"activity","Catalogue complet · aucun objet ajouté")]:[])];};
   const beforeChoice=choice("before","Before",()=>go("before"),"activity","Bouteille et compléments avant de sortir");
   const sharedChoice=choice("shared","Bouteille partagée",()=>addShared(),"night-out","Un lot, sans multiplier par les présents","🍾");
   const neutralChoices=[beerChoice,beforeChoice,sharedChoice,choice("more","Autre",()=>go("more"),"activity",undefined,"＋")];
@@ -284,6 +288,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     question={title:"Avec qui ?",search:{value:query,change:setQuery,label:"Chercher une personne"},choices:candidates.filter(p=>barSearchText(barPersonLabel(p,model)).includes(barSearchText(query))).map(p=>({...choice(prospectivePersonIdentity(p),barPersonLabel(p,model),()=>togglePerson(p),"family-visit"),selected:people.some(x=>prospectivePersonIdentity(x)===prospectivePersonIdentity(p))}))};
   }
   if(page==="manual-place"||page==="google")question={title:"Le lieu de ta sortie",choices:[choice("known","Lieux enregistrés",()=>go("place"),"activity"),choice("manual","Nom libre",()=>{if(guard(()=>go("manual-place")))move("manual-place");},"activity"),later]};
+  if(page==="vehicle")question={title:"Véhicule de ce trajet",choices:leg?.optionKey==="car"&&model.mobilityOptions?.vehicle?.vehicleId?[choice("vehicle",`Utiliser ${model.mobilityOptions.vehicle.label}`,chooseVehicle,"car","Choix explicite · ne change pas l’autre sens")]:[]};
   if(page==="fare")question={title:"Coût prévu du trajet · sans paiement",choices:[choice("unknown","Prix encore inconnu",()=>{if(leg)patchLeg({...leg,pricing:{fare:{kind:"UNKNOWN"},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);})]};
   if(page==="row")question=advancedRow?activeQuestion??{title:"Détails du poste",choices:[]}: {title:slot.startsWith("before-")?"Avant de sortir":"Consommations",choices:slot.startsWith("before-")?[...beforeChoices(),choice("drinks","Au bar",()=>go("drinks"))]:[...drinkChoices,sharedChoice,beforeChoice]};
   if(page==="row"&&!advancedRow&&dirty&&!showRowChoices)question={title:"Terminer cette saisie",choices:[choice("continue-compose",slot.startsWith("before-")?"Autres objets du Before":"Autres consommations",()=>setShowRowChoices(true),"activity","Ouvrir les choix ; votre saisie reste protégée.")]};
@@ -317,8 +322,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       {page!=="summary"&&<button type="button" className={styles.barBackArrow} title="Ma sortie" onClick={()=>go("summary")}>←<span className={styles.barVisuallyHidden}> Ma sortie</span></button>}
       {!barLeg(context,"outbound")&&!barLeg(context,"return")&&<button type="button" data-bar-add-route="outbound" className={styles.barMetaTrip} disabled={busy} onClick={()=>open("outbound")}>+ Trajet</button>}
     </BarMetadata>
-    {(page==="summary"||["outbound","return","endpoint","fare"].includes(page))&&<div className={styles.barLivingRoutes} aria-label="Déplacements">
-      {(["outbound","return"] as const).map(key=>(page==="summary"||key===direction)&&barLeg(context,key)?<BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} navigate={open} active={direction===key&&["outbound","return","endpoint","fare"].includes(page)} open={()=>open(key)}/>:null)}
+    {(page==="summary"||["outbound","return","endpoint","fare","vehicle"].includes(page))&&<div className={styles.barLivingRoutes} aria-label="Déplacements">
+      {(["outbound","return"] as const).map(key=>(page==="summary"||key===direction)&&barLeg(context,key)?<BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} navigate={open} active={direction===key&&["outbound","return","endpoint","fare","vehicle"].includes(page)} open={()=>open(key)}/>:null)}
       {barLeg(context,"outbound")&&!barLeg(context,"return")&&!barLeg(context,"outbound")!.returnRequired&&<button type="button" data-bar-add-route="return" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("return")}>+ Retour</button>}
       {barLeg(context,"return")&&!barLeg(context,"outbound")&&<button type="button" data-bar-add-route="outbound" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("outbound")}>+ Aller</button>}
     </div>
@@ -378,6 +383,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
         :page==="google"?<BarPlaceSearch initialCity={searchCity} initialSearch={googleSearch??{query:queries.place??"",city:searchCity??"",resultPage:0}} onSearchChange={saveGoogleSearch} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})} onText={label=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"})}/>
         :page==="manual-place"?<><label>Nom ou adresse libre<input autoFocus maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={!manual.trim()||busy} onClick={()=>choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"})}>Retenir ce repère</button><small>Repère textuel uniquement · distance et itinéraire à préciser.</small></>
         :page==="endpoint"?<><label>Autre point du trajet<input maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!manual.trim()} onClick={()=>chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true)}>Retenir ce point libre</button><small>Repère textuel uniquement · itinéraire et distance à préciser.</small></>
+        :page==="vehicle"?<section data-bar-vehicle><h4>Véhicule de {direction==="outbound"?"l’aller":"retour"}</h4><p>{leg?.route?.vehicleRef?.labelAtSelection??"Aucun véhicule retenu."}</p><p>Choisissez le véhicule enregistré dans le dock. Son coût d’usage est une estimation ; aucun achat de carburant n’est créé.</p>{!model.mobilityOptions?.vehicle?.vehicleId&&<p>Pas de véhicule estimable dans les références disponibles. Les lieux et les autres coûts restent conservés.</p>}</section>
         :page==="fare"&&leg?<><label>Coût prévu du billet ou de la course (€)<input autoFocus inputMode="decimal" value={fare} placeholder="Encore inconnu" onChange={event=>{setFare(event.target.value);setDirty(true);}}/></label>
           {leg.pricing?.fare.kind==="QUOTE"&&<p>Le devis reste conservé tant qu’un prix de remplacement n’est pas validé.</p>}
           <button type="button" disabled={busy||!fare.trim()} onClick={saveFare}>Retenir le coût du trajet</button>

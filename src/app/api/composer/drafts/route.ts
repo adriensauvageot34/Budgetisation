@@ -4,7 +4,7 @@ import type { ComposerDraftLifecycleCommand, ComposerDraftSaveCommand } from "@/
 import { COMPOSER_DRAFT_HTTP_CONTRACT } from "@/domain/phase2/planner/composer-draft-contract";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
-import { changeComposerDraftLifecycle, readComposerDrafts, saveComposerDraft } from "@/server/phase2/planner/composer-draft-service";
+import { changeComposerDraftLifecycle, readComposerDrafts, saveComposerDraft, type DraftObservation } from "@/server/phase2/planner/composer-draft-service";
 
 export const dynamic = "force-dynamic";
 const contractHeader = "X-Composer-Draft-Contract";
@@ -18,7 +18,10 @@ function reply(value: unknown, status = 200) {
 async function scope() {
   const { supabase, userId, householdId } = await authorizedPlanner();
   if (!composerDraftAutosaveEnabledFor(userId)) throw new TypeError("COMPOSER_DRAFT_DISABLED");
-  return { supabase, userId, householdId };
+  const correlation = crypto.randomUUID();
+  return { supabase, userId, householdId, ...(process.env.COMPOSER_DRAFT_DIAGNOSTICS === "1" ? {
+    observe: (event: DraftObservation) => console.info("composer_draft_phase", { correlation, ...event }),
+  } : {}) };
 }
 
 async function boundary(run: () => Promise<Response>) {

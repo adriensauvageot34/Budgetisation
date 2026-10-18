@@ -156,6 +156,15 @@ try{
  await check('R235_R237_NEW_LINE_AND_RAW_EXPANSION_RETAIN_TARGET',async()=>{
   await init('night-out','bar-apero',BarLivingEditor);await click('Bière');await change('Prix unitaire (€)','8,');assert.deepEqual(dock().findAll(n=>n.type==='strong').map(text),['Autres consommations']);await click('Autres consommations');assert.ok(dock().findAll(n=>n.type==='strong').map(text).includes('+ Bière'));await click('Bière');await click('Continuer à modifier');assert.equal(input('Prix unitaire (€)').props.value,'8,');assert.equal(current().slotSelections.extras.items.length,1);
  });
+ await check('C1_HEADER_TARGET_REQUEST_RETAINS_SEARCH_AND_RAW',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);overrides={initialTarget:'place',targetRequest:1};await sync();await change('Chercher dans les lieux enregistrés','ÉCOLE');
+  overrides={initialTarget:'date',targetRequest:2};await sync();assert.equal(step(),'date');overrides={initialTarget:'place',targetRequest:3};await sync();assert.equal(step(),'place');assert.equal(input('Chercher dans les lieux enregistrés').props.value,'ÉCOLE');
+  await click('← Ma sortie');await click('Bière');await change('Prix unitaire (€)','19,');const item=structuredClone(current().slotSelections.extras.items[0]);overrides={initialTarget:'date',targetRequest:4};await sync();await click('Continuer à modifier');assert.equal(step(),'row');assert.equal(input('Prix unitaire (€)').props.value,'19,');assert.deepEqual(current().slotSelections.extras.items[0],item);
+ });
+ await check('C1_VEHICLE_CAPSULE_TARGET_AND_EMPTY_BEFORE_FAMILIES',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Before');assert.deepEqual(dock().findAll(n=>n.type==='strong').map(text).slice(0,4),['Vodka','Bière','Diluant sans alcool','Snack']);
+  await click('← Ma sortie');await navigateRoute('outbound');await click('Voiture');const before=structuredClone(model.semanticState);const capsule=byLabel('Modifier le véhicule de l’aller');assert.ok(capsule);await act(async()=>capsule.props.onClick());assert.equal(step(),'vehicle');assert.deepEqual(model.semanticState,before);assert.equal(controls(n=>n.props['data-bar-usage-not-payment']!==undefined).length,1);
+ });
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  fs.mkdirSync('outputs/bar-350',{recursive:true});fs.writeFileSync('outputs/bar-350/waves-react.json',JSON.stringify({proof:'PASS_REACT_AND_OWNER_FIXTURE_NOT_BROWSER_NOT_AUTH',checks,remoteWrites:0},null,2));
  if(checks.some(c=>c.status==='FAIL'))process.exitCode=1;

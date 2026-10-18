@@ -4,7 +4,7 @@ import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state
 import type { ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import {stopForPlace} from "@/domain/phase2/planned-routes";
 
-export type BarTarget = "place" | "date" | "people" | "drinks" | "before" | "outbound" | "return" | "summary" | "quick" | `component:${string}:${string}` | `route:${"outbound"|"return"}:${"origin"|"destination"|"fare"}`;
+export type BarTarget = "place" | "date" | "people" | "drinks" | "before" | "outbound" | "return" | "summary" | "quick" | `component:${string}:${string}` | `route:${"outbound"|"return"}:${"origin"|"destination"|"fare"|"vehicle"}`;
 export type BarLeg = Extract<ComponentSelectionV1, {kind:"MOBILITY_INTENT"}>;
 export const barItems = (context: PlannedContextState, slot: string) =>
   (context.slotSelections[slot]?.items ?? []) as readonly ComponentSelectionV1[];
