@@ -86,6 +86,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const assets = new Map(model.library.searchableAssets.map(asset => [asset.assetKey, asset]));
   const [mode, setMode] = useState<"complete" | "all">("complete"), [query, setQuery] = useState("");
   const options = useRef<HTMLDivElement>(null), optionsId = useId();
+  const questionFocus=useRef<HTMLElement|null>(null);
   const [scroll, setScroll] = useState({ before: false, after: false });
   const [answerPositions,setAnswerPositions]=useState<Record<string,number>>({}),[answerCount,setAnswerCount]=useState(4);
   const answerKey=JSON.stringify([question?.identity??"",question?.title,question?.search?.value??""]);
@@ -99,6 +100,11 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   },[appearance]);
   const answerPages=Math.max(1,Math.ceil((question?.choices.length??0)/answerCount));
   const currentAnswerPage=Math.min(answerPage,answerPages-1);
+  useLayoutEffect(()=>{
+    const prior=questionFocus.current;
+    if(appearance==="bar"&&typeof document!=="undefined"&&prior&&!prior.isConnected&&document.activeElement===document.body)
+      options.current?.focus({preventScroll:true});
+  },[appearance,answerKey,currentAnswerPage,answerCount]);
   const measureScroll = () => {
     if(appearance==="bar")return;
     const node = options.current;
@@ -127,6 +133,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
         <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => options.current?.scrollBy({left:300,behavior:"smooth"})}><ChevronRight size={18} /></button>
       </div>}</header>
     <div ref={options} id={optionsId} className={styles.paletteOptions} style={appearance==="bar"?{gridTemplateColumns:`repeat(${answerCount}, minmax(0, 1fr))`}:undefined} data-palette-options onScroll={measureScroll} tabIndex={0} aria-label={question.title}
+      onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}
       onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();if(appearance==="bar")setAnswerPage(Math.max(0,Math.min(answerPages-1,currentAnswerPage+(event.key==="ArrowRight"?1:-1))));else event.currentTarget.scrollBy({left:event.key==="ArrowRight"?180:-180,behavior:"smooth"});}}}>
       {(appearance==="bar"?question.choices.slice(currentAnswerPage*answerCount,(currentAnswerPage+1)*answerCount):question.choices).map(choice => <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} disabled={busy} title={choice.hint} onFocus={event => {if(appearance!=="bar")event.currentTarget.scrollIntoView({block:"nearest",inline:"nearest"});}} onClick={choice.choose}>
           {appearance==="bar"&&(/^(bar|house_party):/u.test(choice.key)||choice.key==="shared")?<BarProductVisual assetKey={choice.key} label={choice.label}/>:appearance==="bar"&&choice.key.startsWith("option:night-out:")?<PlannerIcon iconKey={choice.iconKey} scale="PALETTE"/>:choice.symbol?<span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>:<PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}<span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>)}
