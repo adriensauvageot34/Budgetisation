@@ -5,6 +5,7 @@ import type { FundingAllocation, ProspectivePlaceRef } from "../planned-contract
 import type { JourneyDeclaration, MobilityPricingDecision, ProspectiveRouteDecision } from "./mobility-contract";
 import type { PlannedAssetRef } from "../planned-assets";
 import type {VenueEndpoints} from "./night-out-venue";
+import type {ComponentEconomicScope} from "./component-economic-scope";
 
 export type ComponentDefaultProvenance = "STRUCTURAL_DEFAULT" | "PERSONAL_SUGGESTION" | "EXPLICIT_USER_DECISION";
 export type ContextBindingDecision = Readonly<{ mode: "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" | "NO_RELATED_SLOT" }>;
@@ -16,6 +17,7 @@ export type ComponentSelectionV1 = SelectionIdentity & (
       /** Optional P09 quantity evidence. `quantity` remains the exact economic total used by the Compiler. */
       quantityEvidenceVersion?: "component-quantity@v1"; quantityPerPerson?: string; pricedParticipantCount?: number;
       productAssetRef?: PlannedAssetRef;
+      economicScope?:ComponentEconomicScope;
       lodgingPricing?: Readonly<{ version: "lodging-pricing@v1"; basis: "TOTAL" | "PER_NIGHT"; nightCount: number | null }> }>
   | Readonly<{ kind: "CHILD_CONTEXT"; childContextOccurrenceId: string }>
   | Readonly<{ kind: "MOBILITY_INTENT"; origin?: ProspectivePlaceRef | null; destination?: ProspectivePlaceRef | null; returnRequired?: boolean;

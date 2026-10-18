@@ -13,6 +13,7 @@ import { isLegacyContextField, resolveContextTemplate } from "./context-registry
 import { parseJourneyDeclaration, parseMobilityPricing, parseProspectiveRoute, mobilityTime } from "./mobility-selections";
 import { validateComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 import {parseNightOutVenue,parseVenueEndpoints,sameVenuePlace} from "@/domain/phase2/planner/night-out-venue";
+import {parseComponentEconomicScope} from "@/domain/phase2/planner/component-economic-scope";
 
 export function contextDate(raw: unknown, targetMonth: string): string | null {
   if (raw == null) return null;
@@ -121,7 +122,7 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
       ...(value.route === undefined ? {} : { route: parseProspectiveRoute(value.route) }),
       plannedTime: mobilityTime(value.plannedTime), returnTime: mobilityTime(value.returnTime) };
   }
-  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", "lodgingPricing", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
+  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", "lodgingPricing", "economicScope", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
   const quantity = decisionAmount(value.quantity);
   if (value.unitBasis !== undefined && !["ITEM", "PERSON", "SHARED"].includes(String(value.unitBasis))) throw new TypeError("CONTEXT_UNIT_BASIS_INVALID");
   validateComponentQuantity(quantity, value.unitBasis, value.quantityEvidenceVersion, value.quantityPerPerson, value.pricedParticipantCount);
@@ -147,6 +148,7 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
     ...(value.unitBasis === undefined ? {} : { unitBasis: value.unitBasis as "ITEM" | "PERSON" | "SHARED" }),
     ...(perPerson === null ? {} : { quantityEvidenceVersion: "component-quantity@v1" as const, quantityPerPerson: perPerson, pricedParticipantCount: participantCount! }),
     ...(lodgingPricing ? { lodgingPricing } : {}),
+    ...(value.economicScope===undefined?{}:{economicScope:parseComponentEconomicScope(value.economicScope,selectionId)}),
     ...(value.productAssetRef === undefined ? {} : { productAssetRef: nightProductAssetRef(value.productAssetRef) }),
     ...(value.needOccurrenceId === undefined ? {} : { needOccurrenceId: plannerString(value.needOccurrenceId) }) };
 }
@@ -191,7 +193,7 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
       throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     for (const item of items) if (item.kind === "MOBILITY_INTENT") {
       if(item.venueEndpoints&&(context.templateKey!=="night-out"||!["outbound","return"].includes(slot.slotKey)||item.returnRequired||item.journey&&item.journey.relation!=="OWNS_JOURNEY"))throw new TypeError("NIGHT_OUT_ENDPOINT_OWNER_INVALID");
-      if(item.venueEndpoints&&item.route)for(const key of ["origin","destination"] as const){
+      if(item.venueEndpoints&&item.route?.stops.length)for(const key of ["origin","destination"] as const){
         const binding=item.venueEndpoints[key],stop=key==="origin"?item.route.stops[0]:item.route.stops.at(-1);
         if(binding&&(!stop||!sameVenuePlace(binding.venue.place,stop.placeId?{kind:"KNOWN",placeId:stop.placeId}:{kind:"TEXT",label:stop.label})))throw new TypeError("NIGHT_OUT_ENDPOINT_ROUTE_MISMATCH");
       }
@@ -207,6 +209,16 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
 export function validateContextGraph(state: PlanSemanticStateV1) {
   const selections = new Map(state.contexts.filter(c => c.templateKey !== "kernel.generic")
     .map(c => [c.contextOccurrenceId, readContextSelections(c, state.targetMonth)]));
+  for(const context of state.contexts){
+    const entries=[...(selections.get(context.contextOccurrenceId)?.entries()??[])];
+    const all=entries.flatMap(([slot,items])=>items.map(item=>({slot,item}))),covered=new Set<string>();
+    for(const {slot,item} of all)if(item.kind==="COMPONENT"&&item.economicScope){
+      if(context.templateKey!=="night-out"||!["main","extras"].includes(slot))throw new TypeError("COMPONENT_ECONOMIC_SCOPE_OWNER_INVALID");
+      for(const id of item.economicScope.coveredSelectionIds){
+        if(covered.has(id)||all.some(other=>other.item.selectionId===id&&other.item!==item))throw new TypeError("COMPONENT_ECONOMIC_SCOPE_OVERLAP");covered.add(id);
+      }
+    }
+  }
   const links = new Map<string, Readonly<{ parentId: string; selection: ComponentSelectionV1 }>>();
   for (const context of state.contexts) for (const items of selections.get(context.contextOccurrenceId)?.values() ?? []) for (const item of items) {
     if (item.kind !== "CHILD_CONTEXT") continue;

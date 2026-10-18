@@ -27,6 +27,8 @@ const checks=[];
 async function test(id,run){try{await run();checks.push({id,status:'PASS'});console.log(id+' PASS');}catch(e){checks.push({id,status:'FAIL',message:e.message});console.error(id+' FAIL '+e.stack);}}
 await test('GOOGLE_REF_STRICT_ROUND_TRIP',()=>{
  const s=semantic();validateContextGraph(s);assert.deepEqual(parsePlanSemanticState(JSON.parse(JSON.stringify(s))),s);
+ const incomplete=semantic({outbound:selections({...leg(),route:{version:'composer-mobility-route@v1',vehicleRef:null,stops:[]}})});validateContextGraph(incomplete);
+ const amountOnly=editNightOut(s,{contextOccurrenceId:s.contexts[0].contextOccurrenceId,fields:{},slots:{main:selections({...s.contexts[0].slotSelections.main.items[0],cost:{kind:'MANUAL',unitAmount:'61'}})}});validateContextGraph(amountOnly);assert.deepEqual(amountOnly.contexts[0].fields,s.contexts[0].fields);
  for(const patch of [{google:{...a.google,placeId:'bad id'}},{google:{...a.google,kind:'RESTAURANT'}},{address:'not allowed'},{place:home}])assert.throws(()=>parseNightOutVenue({...a,...patch}));
  assert.throws(()=>parseVenueEndpoints({origin:venueBinding(a)},{origin:home}));
  assert.throws(()=>editNightOut(s,{contextOccurrenceId:s.contexts[0].contextOccurrenceId,fields:{occasion:'not admitted'}}));
@@ -40,6 +42,8 @@ await test('SHARED_OWNER_BUILDER_VS_DIRECTED_PLANNER',async()=>{
  assert.equal(left.snapshot.fuelEconomicCost,right.snapshot.fuelEconomicCost);assert.equal(left.snapshot.toll.amount,right.snapshot.toll.amount);
  assert.deepEqual(planner.calls.addresses.map(c=>c.address),[detail.formattedAddress]);assert.equal(planner.calls.addresses[0].bias,undefined);
  assert.ok(!JSON.stringify(right.snapshot).includes(detail.formattedAddress));
+ const withCoordinates=owners();await estimatePlannedCar({...input,stops:[input.stops[0],{...input.stops[1],coordinates:{latitude:1,longitude:1,source:'USER_DECLARED'}}]},{...world.mobilityFacts,googleEndpoints:[{stopIndex:1,placeId:a.google.placeId,kind:'BAR_APERO'}]},withCoordinates.value);
+ assert.deepEqual(withCoordinates.calls.routes,planner.calls.routes,'A directed Google binding cannot silently use stale manual coordinates');
 });
 await test('DIRECTED_OUTBOUND_RETURN_AND_CUSTOM_LEG',async()=>{
  const owner=owners();const s=semantic({outbound:selections(leg()),return:selections(leg('return'))});

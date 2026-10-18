@@ -61,7 +61,7 @@ export async function estimatePlannedCar(raw: PlannedCarRequest, facts: Facts, p
 }): Promise<PlannedCarResult> {
   const input = parsePlannedCarRequest(raw);
   if(facts.googleEndpoints){const refs=facts.googleEndpoints;
-    if(refs.length>2||new Set(refs.map(r=>r.stopIndex)).size!==refs.length||refs.some(r=>!Number.isInteger(r.stopIndex)||r.stopIndex<0||r.stopIndex>=input.stops.length||input.stops[r.stopIndex].placeId||r.kind!=="BAR_APERO"||!validGooglePlaceId(r.placeId)))throw new TypeError("PLANNED_GOOGLE_ENDPOINT_INVALID");
+    if(refs.length>2||refs.length&&(facts.googleDestination||facts.restaurantGooglePlaceId)||new Set(refs.map(r=>r.stopIndex)).size!==refs.length||refs.some(r=>!Number.isInteger(r.stopIndex)||![0,input.stops.length-1].includes(r.stopIndex)||input.stops[r.stopIndex].placeId||r.kind!=="BAR_APERO"||!validGooglePlaceId(r.placeId)))throw new TypeError("PLANNED_GOOGLE_ENDPOINT_INVALID");
     if(input.tripTiming&&refs.length)throw new TypeError("PLANNED_GOOGLE_ENDPOINT_SPLIT_UNSUPPORTED");}
   if (!input.tripTiming) return estimateCarDirection(input, facts, providers);
   const home = facts.places.find((p) => derivePlannedPlaceRoles(p).includes("OWN_HOME"));
@@ -114,7 +114,7 @@ async function estimateCarDirection(raw: PlannedCarRequest, facts: Facts, provid
       const external=facts.googleEndpoints?.find(ref=>ref.stopIndex===index);
       const address=external?await endpointAddress(external.placeId):googleAddress&&stop.endpointSource==="ROOT_PLACE"?googleAddress:null;
       const place = facts.places.find((p) => p.placeId === stop.placeId);
-      const coordinates = place?.coordinates ?? (stop.coordinates?.source === "USER_DECLARED" ? stop.coordinates : undefined)
+      const coordinates = external ? await providers.route.geocode(address!,undefined) : place?.coordinates ?? (stop.coordinates?.source === "USER_DECLARED" ? stop.coordinates : undefined)
         ?? await providers.route.geocode(address ? address
           : place ? [place.address, place.commune, "France"].filter(Boolean).join(", ") || place.name : stop.label,
           // A complete provider address already identifies its city. A home bias can lower the confidence of a valid address elsewhere.
