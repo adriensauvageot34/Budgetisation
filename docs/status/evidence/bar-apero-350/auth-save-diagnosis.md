@@ -32,3 +32,6 @@ Prérequis non réunis : tenant/mois isolé effectivement accessible dans l'appl
 Dans ce tenant : relever version/digest avant; créer Bar+Before VodkaSHARED/DiluantITEM/SnackUNKNOWN+Bière/date/participants/Aller/Retour; attendre réponse SAVE confirmée; nouvelle page/session, comparer IDs/slots/unités/prix/liens; modifier un poste, relire; archiver sans DELETE et sans Apply. Corréler uniquement les phases expurgées. Si réponse perdue, relire avant de retenter avec le même request ID. Noter séparément FAILED_DRAFT, FAILED_REREAD et FAILED_PREVIEW.
 
 Aucune migration, hausse de timeout, modification RLS/index ou donnée financière n'est nécessaire pour préparer ce protocole. Une éventuelle modification de droits exige sa propre revue.
+# Complément courant — 18 octobre, réception ba949a6
+
+La preuve récente est dans `finalisation/auth-receipt.md` et `finalisation/auth-http-reception.json` : SAVE/replay/nouvelle session/relecture/modification/CAS/archive réellement passés avec JWT A/H1. Ce PASS_HTTP_AUTH ne certifie pas le bootstrap Composer/FRESH, bloqué séparément par `FORECAST_ACTIVE_GLOBAL_PUBLICATION_MISSING`. L'ancienne erreur personnelle demeure inexpliquée. Les observations ci-dessous sont conservées comme historique.

@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-18",
+  "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+  "total": 350,
+  "initiallyClosed": 253,
+  "newlyClosed": 74,
+  "closed": 327,
+  "counts": {
+    "ALREADY_DONE_VERIFIED": 155,
+    "DONE_BROWSER_FIXTURE": 101,
+    "DONE_STATIC": 70,
+    "PARTIAL": 18,
+    "BLOCKED_OWNER": 3,
+    "DONE_AUTH_REAL": 1,
+    "BLOCKED_ENV": 2
+  }
+}

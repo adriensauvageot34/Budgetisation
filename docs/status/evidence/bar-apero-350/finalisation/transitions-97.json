@@ -1,0 +1,2750 @@
+[
+  {
+    "id": "R013",
+    "description_originale": "Supprimer les écrans intermédiaires qui ne servent qu'à rejoindre une commande déjà présente dans la carte.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Les scènes avancées héritées conservent des étapes à réceptionner.",
+      "blocage": null,
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING"
+      ],
+      "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+      "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Navigation directe et copie simplifiée ; scènes legacy utiles conservées, cible en tête, header ancré. Réception summary/date/place/people/legs/price/legacy.",
+    "scenario": "last-* scenes, raw-confirmation-final",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R015",
+    "description_originale": "Préserver un accès direct à chaque partie de la soirée depuis sa représentation sur la carte.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Navigation directe et copie simplifiée ; scènes legacy utiles conservées, cible en tête, header ancré. Réception summary/date/place/people/legs/price/legacy.",
+    "scenario": "last-* scenes, raw-confirmation-final",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R017",
+    "description_originale": "N'afficher sur une scène que le contenu pertinent pour l'action active.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Date/lieu/row isolés et testés ; toutes les sous-scènes avancées ne sont pas encore certifiées.",
+      "blocage": null,
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING"
+      ],
+      "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+      "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Navigation directe et copie simplifiée ; scènes legacy utiles conservées, cible en tête, header ancré. Réception summary/date/place/people/legs/price/legacy.",
+    "scenario": "last-* scenes, raw-confirmation-final",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R018",
+    "description_originale": "Placer systématiquement la cible éditée dans la première zone visible de la carte.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Date et lieu sont prioritaires ; réception de toutes les scènes et petits viewports encore nécessaire.",
+      "blocage": null,
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING"
+      ],
+      "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+      "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Navigation directe et copie simplifiée ; scènes legacy utiles conservées, cible en tête, header ancré. Réception summary/date/place/people/legs/price/legacy.",
+    "scenario": "last-* scenes, raw-confirmation-final",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R019",
+    "description_originale": "Garder l'en-tête de la carte stable lors des changements de scène.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Identité du header conservée ; géométrie/focus de chaque transition encore à vérifier.",
+      "blocage": null,
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING"
+      ],
+      "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+      "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Navigation directe et copie simplifiée ; scènes legacy utiles conservées, cible en tête, header ancré. Réception summary/date/place/people/legs/price/legacy.",
+    "scenario": "last-* scenes, raw-confirmation-final",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R024",
+    "description_originale": "Ne jamais présenter une limitation technique sous forme de phrase de contrat interne.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Main card text is simplified, including the first Before item error. Inherited advanced fields still contain owner terminology; a full contextual copy reception remains open.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Navigation directe et copie simplifiée ; scènes legacy utiles conservées, cible en tête, header ancré. Réception summary/date/place/people/legs/price/legacy.",
+    "scenario": "last-* scenes, raw-confirmation-final",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R025",
+    "description_originale": "Employer des verbes et noms compréhensibles plutôt que « main », « socket », « composant principal » ou « contrat ».",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Main card text is simplified, including the first Before item error. Inherited advanced fields still contain owner terminology; a full contextual copy reception remains open.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Navigation directe et copie simplifiée ; scènes legacy utiles conservées, cible en tête, header ancré. Réception summary/date/place/people/legs/price/legacy.",
+    "scenario": "last-* scenes, raw-confirmation-final",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R030",
+    "description_originale": "Préserver la possibilité de tout réaliser au clavier et au tactile malgré la réduction des boutons.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Préserver la possibilité de tout réaliser au clavier et au tactile malgré la réduction des boutons.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Clavier réel RAW/Escape/confirmation et navigation vérifiés, cibles>=32px sur Bar ; aucune commande indispensable seulement drag.",
+    "scenario": "raw-confirmation-final + dock-question-focus-fixed",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Réception tactile complète non exécutée : aucun appareil ou interface tactile autorisée. Desktop conforme au périmètre utilisateur."
+  },
+  {
+    "id": "R031",
+    "description_originale": "Maintenir des zones de clic suffisamment grandes pour chaque commande compacte.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Maintenir des zones de clic suffisamment grandes pour chaque commande compacte.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Défauts22/18px reproduits puis cibles Bar>=32px ; aucune cible<24px dans les scènes mesurées.",
+    "scenario": "geometry-receipt small[]",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R034",
+    "description_originale": "Simplifier la hiérarchie visuelle autour de trois niveaux : voir, modifier, options avancées.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Simplifier la hiérarchie visuelle autour de trois niveaux : voir, modifier, options avancées.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Synthèse → capsule/tuile → détails ; aucune porte héritée nécessaire pour rééditer le prix.",
+    "scenario": "last-summary-1920, last-full-unit-editor-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R039",
+    "description_originale": "Réduire la hauteur totale de la carte en édition simple en exploitant davantage la largeur disponible.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire la hauteur totale de la carte en édition simple en exploitant davantage la largeur disponible.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Hauteur liée au contenu : vide245, coût285, tarif395, calendrier445, boissons355 ; métadonnées/actions alignées et pas de grande réserve fixe de formulaire.",
+    "scenario": "empty-created-final, last-quick-cost-1920, last-date-1920, ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R040",
+    "description_originale": "Viser une édition simple proportionnée au contenu plutôt qu'une grande carte quasi vide.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Viser une édition simple proportionnée au contenu plutôt qu'une grande carte quasi vide.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Hauteur liée au contenu : vide245, coût285, tarif395, calendrier445, boissons355 ; métadonnées/actions alignées et pas de grande réserve fixe de formulaire.",
+    "scenario": "empty-created-final, last-quick-cost-1920, last-date-1920, ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R042",
+    "description_originale": "Réduire l'espace vertical entre l'en-tête et les capsules de métadonnées.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire l'espace vertical entre l'en-tête et les capsules de métadonnées.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Hauteur liée au contenu : vide245, coût285, tarif395, calendrier445, boissons355 ; métadonnées/actions alignées et pas de grande réserve fixe de formulaire.",
+    "scenario": "empty-created-final, last-quick-cost-1920, last-date-1920, ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R046",
+    "description_originale": "Supprimer les lignes réservées uniquement à un petit bouton d'action.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Supprimer les lignes réservées uniquement à un petit bouton d'action.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Hauteur liée au contenu : vide245, coût285, tarif395, calendrier445, boissons355 ; métadonnées/actions alignées et pas de grande réserve fixe de formulaire.",
+    "scenario": "empty-created-final, last-quick-cost-1920, last-date-1920, ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R055",
+    "description_originale": "Ne jamais ajouter de défilement vertical interne pour faire tenir davantage de contrôles.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais ajouter de défilement vertical interne pour faire tenir davantage de contrôles.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Dimensions client/scroll égales dans les scènes retenues, pagination explicite, actions atteintes par vrais clics. Carte riche peut nécessiter le scroll externe autorisé.",
+    "scenario": "geometry-receipt + last-* scenes",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R056",
+    "description_originale": "Ne jamais introduire de scroll horizontal interne dans la carte.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais introduire de scroll horizontal interne dans la carte.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Dimensions client/scroll égales dans les scènes retenues, pagination explicite, actions atteintes par vrais clics. Carte riche peut nécessiter le scroll externe autorisé.",
+    "scenario": "geometry-receipt + last-* scenes",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R057",
+    "description_originale": "Ne jamais introduire de scroll vertical interne dans le dock.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais introduire de scroll vertical interne dans le dock.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Dimensions client/scroll égales dans les scènes retenues, pagination explicite, actions atteintes par vrais clics. Carte riche peut nécessiter le scroll externe autorisé.",
+    "scenario": "geometry-receipt + last-* scenes",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R058",
+    "description_originale": "Ne jamais introduire de scroll horizontal continu dans le dock.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais introduire de scroll horizontal continu dans le dock.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Dimensions client/scroll égales dans les scènes retenues, pagination explicite, actions atteintes par vrais clics. Carte riche peut nécessiter le scroll externe autorisé.",
+    "scenario": "geometry-receipt + last-* scenes",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R060",
+    "description_originale": "Ne jamais masquer une action indispensable uniquement par `overflow:hidden`.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais masquer une action indispensable uniquement par `overflow:hidden`.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Dimensions client/scroll égales dans les scènes retenues, pagination explicite, actions atteintes par vrais clics. Carte riche peut nécessiter le scroll externe autorisé.",
+    "scenario": "geometry-receipt + last-* scenes",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R061",
+    "description_originale": "Adapter la hauteur de la carte ouverte à la scène réellement active.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Adapter la hauteur de la carte ouverte à la scène réellement active.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Dimensions client/scroll égales dans les scènes retenues, pagination explicite, actions atteintes par vrais clics. Carte riche peut nécessiter le scroll externe autorisé.",
+    "scenario": "geometry-receipt + last-* scenes",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R062",
+    "description_originale": "Adapter la hauteur de la carte fermée à la quantité réelle d'informations.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Adapter la hauteur de la carte fermée à la quantité réelle d'informations.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Carte fermée mesure le contenu intrinsèque ; riche675/745 selon largeur, pas de masquage des enfants. Réservation avant peinture corrigée après Undo.",
+    "scenario": "last-folded-rich-1920 + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R063",
+    "description_originale": "Ne pas réserver une hauteur fixe excessive pour une seule consommation ou un petit calendrier.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne pas réserver une hauteur fixe excessive pour une seule consommation ou un petit calendrier.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Hauteur liée au contenu : vide245, coût285, tarif395, calendrier445, boissons355 ; métadonnées/actions alignées et pas de grande réserve fixe de formulaire.",
+    "scenario": "empty-created-final, last-quick-cost-1920, last-date-1920, ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R064",
+    "description_originale": "Conserver une hauteur maximale compatible avec le viewport et le Board.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Conserver une hauteur maximale compatible avec le viewport et le Board.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Dimensions client/scroll égales dans les scènes retenues, pagination explicite, actions atteintes par vrais clics. Carte riche peut nécessiter le scroll externe autorisé.",
+    "scenario": "geometry-receipt + last-* scenes",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R065",
+    "description_originale": "Conserver l'édition ciblée dans la carte sans pousser les éléments actifs sous la ligne de flottaison.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Conserver l'édition ciblée dans la carte sans pousser les éléments actifs sous la ligne de flottaison.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Dimensions client/scroll égales dans les scènes retenues, pagination explicite, actions atteintes par vrais clics. Carte riche peut nécessiter le scroll externe autorisé.",
+    "scenario": "geometry-receipt + last-* scenes",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R068",
+    "description_originale": "Éviter d'étirer une tuile unique sur toute la largeur quand une carte plus courte serait préférable.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Éviter d'étirer une tuile unique sur toute la largeur quand une carte plus courte serait préférable.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Profils1/2/4/10/15 réellement affichés ; tuiles limitées en largeur et pagination ajustée au viewport. Aucun objet ajouté par le fixture renderer.",
+    "scenario": "one-item-open-1440, two-items-open-final, four-items-open-1440, ten-items-effective-1440, last-drinks-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R069",
+    "description_originale": "Utiliser des tuiles équilibrées sur la largeur pour deux consommations.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Utiliser des tuiles équilibrées sur la largeur pour deux consommations.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Profils1/2/4/10/15 réellement affichés ; tuiles limitées en largeur et pagination ajustée au viewport. Aucun objet ajouté par le fixture renderer.",
+    "scenario": "one-item-open-1440, two-items-open-final, four-items-open-1440, ten-items-effective-1440, last-drinks-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R070",
+    "description_originale": "Adapter le nombre de colonnes de consommation à la largeur effective et au nombre d'objets.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Adapter le nombre de colonnes de consommation à la largeur effective et au nombre d'objets.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Profils1/2/4/10/15 réellement affichés ; tuiles limitées en largeur et pagination ajustée au viewport. Aucun objet ajouté par le fixture renderer.",
+    "scenario": "one-item-open-1440, two-items-open-final, four-items-open-1440, ten-items-effective-1440, last-drinks-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R073",
+    "description_originale": "Réduire les espaces blancs qui n'assurent aucune respiration utile.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire les espaces blancs qui n'assurent aucune respiration utile.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Hauteur liée au contenu : vide245, coût285, tarif395, calendrier445, boissons355 ; métadonnées/actions alignées et pas de grande réserve fixe de formulaire.",
+    "scenario": "empty-created-final, last-quick-cost-1920, last-date-1920, ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R076",
+    "description_originale": "Mieux aligner les marges, espacements et largeurs des éléments sur une échelle commune.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mieux aligner les marges, espacements et largeurs des éléments sur une échelle commune.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture visuelle des captures et styles rendus : marges/rayons partagés, pointillés réservés àAjouter, état actif discret, tailles et couleurs relevées ; pas de scale des tuiles dans les transitions reçues.",
+    "scenario": "styles-final + last-summary-1920 + ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R077",
+    "description_originale": "Limiter les différences arbitraires de rayon de bordure.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Limiter les différences arbitraires de rayon de bordure.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture visuelle des captures et styles rendus : marges/rayons partagés, pointillés réservés àAjouter, état actif discret, tailles et couleurs relevées ; pas de scale des tuiles dans les transitions reçues.",
+    "scenario": "styles-final + last-summary-1920 + ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R078",
+    "description_originale": "Réduire le nombre de bordures et de boutons pointillés.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire le nombre de bordures et de boutons pointillés.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture visuelle des captures et styles rendus : marges/rayons partagés, pointillés réservés àAjouter, état actif discret, tailles et couleurs relevées ; pas de scale des tuiles dans les transitions reçues.",
+    "scenario": "styles-final + last-summary-1920 + ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R079",
+    "description_originale": "Réserver les contours pointillés aux emplacements vides ou actions dont ce traitement a un sens.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réserver les contours pointillés aux emplacements vides ou actions dont ce traitement a un sens.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture visuelle des captures et styles rendus : marges/rayons partagés, pointillés réservés àAjouter, état actif discret, tailles et couleurs relevées ; pas de scale des tuiles dans les transitions reçues.",
+    "scenario": "styles-final + last-summary-1920 + ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R080",
+    "description_originale": "Utiliser un état actif subtil et homogène sur les tuiles sélectionnées.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Utiliser un état actif subtil et homogène sur les tuiles sélectionnées.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture visuelle des captures et styles rendus : marges/rayons partagés, pointillés réservés àAjouter, état actif discret, tailles et couleurs relevées ; pas de scale des tuiles dans les transitions reçues.",
+    "scenario": "styles-final + last-summary-1920 + ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R081",
+    "description_originale": "Éviter les effets de survol qui agrandissent les tuiles ou déplacent leurs voisines.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Éviter les effets de survol qui agrandissent les tuiles ou déplacent leurs voisines.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture visuelle des captures et styles rendus : marges/rayons partagés, pointillés réservés àAjouter, état actif discret, tailles et couleurs relevées ; pas de scale des tuiles dans les transitions reçues.",
+    "scenario": "styles-final + last-summary-1920 + ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R082",
+    "description_originale": "Prévoir des transitions internes brèves sans déplacement du contenu hors écran.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Prévoir des transitions internes brèves sans déplacement du contenu hors écran.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture visuelle des captures et styles rendus : marges/rayons partagés, pointillés réservés àAjouter, état actif discret, tailles et couleurs relevées ; pas de scale des tuiles dans les transitions reçues.",
+    "scenario": "styles-final + last-summary-1920 + ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R083",
+    "description_originale": "Conserver une hiérarchie typographique stable entre titre, montant, contexte et détails.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Conserver une hiérarchie typographique stable entre titre, montant, contexte et détails.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture visuelle des captures et styles rendus : marges/rayons partagés, pointillés réservés àAjouter, état actif discret, tailles et couleurs relevées ; pas de scale des tuiles dans les transitions reçues.",
+    "scenario": "styles-final + last-summary-1920 + ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R084",
+    "description_originale": "Renforcer le contraste des petits textes gris et beiges.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Renforcer le contraste des petits textes gris et beiges.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture physique et relevé des couleurs exécutés ; les aides Mobility restent à10px et certains détails à11px.",
+    "scenario": "styles-final + last-folded-rich-1920",
+    "preuves": [
+      "END_UI"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Une amélioration mesurée du contraste des petits textes reste à réaliser ; la capture lisible ne suffit pas à prouver un renforcement."
+  },
+  {
+    "id": "R085",
+    "description_originale": "Limiter le nombre de variantes de tailles de texte dans les cartes.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Limiter le nombre de variantes de tailles de texte dans les cartes.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Lecture visuelle des captures et styles rendus : marges/rayons partagés, pointillés réservés àAjouter, état actif discret, tailles et couleurs relevées ; pas de scale des tuiles dans les transitions reçues.",
+    "scenario": "styles-final + last-summary-1920 + ten-items-effective-1440",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R087",
+    "description_originale": "Éviter que toutes les cartes du Board répètent de grands textes « À définir » ou « Occurrences à définir » au détriment de leur identité visuelle.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Other Board cards and their reference placeholders are unchanged. No broad redesign of other presets was introduced for this Bar-only delivery.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Présentation commune des valeurs inconnues ramenée à16px ; identité des cartes voisines lisible, aucune sémantique changée.",
+    "scenario": "ten-items-effective-1440, last-folded-rich-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R099",
+    "description_originale": "Donner la priorité visuelle aux objets et montants réels dans une carte riche.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Donner la priorité visuelle aux objets et montants réels dans une carte riche.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R101",
+    "description_originale": "Harmoniser le style, les dimensions et le cadrage des miniatures entre bibliothèque, dock et carte.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Harmoniser le style, les dimensions et le cadrage des miniatures entre bibliothèque, dock et carte.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R106",
+    "description_originale": "Ne pas employer la même illustration générique pour tous les lieux proposés.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne pas employer la même illustration générique pour tous les lieux proposés.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R108",
+    "description_originale": "Faire de la carte fermée une synthèse illustrative de la soirée plutôt qu'une miniature du formulaire.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Faire de la carte fermée une synthèse illustrative de la soirée plutôt qu'une miniature du formulaire.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R110",
+    "description_originale": "Afficher les participants en pastilles lisibles avec initiales ou portraits autorisés.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Afficher les participants en pastilles lisibles avec initiales ou portraits autorisés.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R111",
+    "description_originale": "Limiter les participants affichés en compact à quelques pastilles puis « +N ».",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Limiter les participants affichés en compact à quelques pastilles puis « +N ».",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R126",
+    "description_originale": "Placer Aller et Retour sur une seule ligne quand la largeur suffit, sans mélanger leurs coûts.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Placer Aller et Retour sur une seule ligne quand la largeur suffit, sans mélanger leurs coûts.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R127",
+    "description_originale": "Rendre les tuiles compactes plus denses et supprimer les espaces morts sous les objets.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Rendre les tuiles compactes plus denses et supprimer les espaces morts sous les objets.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R130",
+    "description_originale": "Réduire les microtextes permanents dans la carte fermée.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire les microtextes permanents dans la carte fermée.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R131",
+    "description_originale": "Construire une composition visuelle propre pour les états vide, partiel et riche.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Construire une composition visuelle propre pour les états vide, partiel et riche.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compact vide/partiel/riche reçu ; Before et Au bar séparés, initiales réelles des lieux/personnes, +N exact, transport indépendant et layout A/R côte à côte si largeur suffisante. Microtextes financiers utiles maintenus.",
+    "scenario": "empty-created-final, last-folded-rich-1920, last-summary-1920, last-place-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R145",
+    "description_originale": "Rendre visible la raison déterminante d'une suggestion quand elle aide réellement au choix.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Source hints, creation labels and secondary fallback hierarchy are implemented; actual new hierarchy/readability has not been visually received on G3/G5.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Origine des lieux visible dans le contenu, création +Bière distincte de navigation Boissons/Before, replis séparés. Pas de preuve fournisseur réel.",
+    "scenario": "last-place-1920, dock-resize-focus, dock-question-focus-fixed",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R146",
+    "description_originale": "Ne pas réserver les informations essentielles de provenance aux seules infobulles de survol.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Source hints, creation labels and secondary fallback hierarchy are implemented; actual new hierarchy/readability has not been visually received on G3/G5.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Origine des lieux visible dans le contenu, création +Bière distincte de navigation Boissons/Before, replis séparés. Pas de preuve fournisseur réel.",
+    "scenario": "last-place-1920, dock-resize-focus, dock-question-focus-fixed",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R148",
+    "description_originale": "Différencier les actions de création d'objet et les actions de navigation entre sections.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Source hints, creation labels and secondary fallback hierarchy are implemented; actual new hierarchy/readability has not been visually received on G3/G5.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Origine des lieux visible dans le contenu, création +Bière distincte de navigation Boissons/Before, replis séparés. Pas de preuve fournisseur réel.",
+    "scenario": "last-place-1920, dock-resize-focus, dock-question-focus-fixed",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R150",
+    "description_originale": "Séparer les choix principaux des options de repli par leur hiérarchie visuelle.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Source hints, creation labels and secondary fallback hierarchy are implemented; actual new hierarchy/readability has not been visually received on G3/G5.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Origine des lieux visible dans le contenu, création +Bière distincte de navigation Boissons/Before, replis séparés. Pas de preuve fournisseur réel.",
+    "scenario": "last-place-1920, dock-resize-focus, dock-question-focus-fixed",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R162",
+    "description_originale": "Préserver le focus clavier lors d'un changement de page du dock.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Préserver le focus clavier lors d'un changement de page du dock.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Page suivante du dock conserve le focus bouton ; changement de question supprimant ce bouton restitue le focus au groupe de choix.",
+    "scenario": "dock-page-resize-focus + dock-question-focus-fixed",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R169",
+    "description_originale": "Conserver la recherche et la pagination transitoires lorsqu'on revient au même travail interrompu.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Recherches et pagination conservées lors du ciblage direct sans remount, test React et navigateur. Fermeture complète/remontage : mémoire de recherche non conservée; pas de clôture générale.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Mémoire LRU par mois/context/cible de recherche et pages pendant repli/remontage ; TTL fiche Google5min, RAW exclu. Tests React remount et réouverture locale.",
+    "scenario": "react memory/remount + place reopen",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R170",
+    "description_originale": "Réinitialiser une recherche seulement si sa cible a changé ou si l'utilisateur l'efface.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Recherches et pagination conservées lors du ciblage direct sans remount, test React et navigateur. Fermeture complète/remontage : mémoire de recherche non conservée; pas de clôture générale.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Mémoire LRU par mois/context/cible de recherche et pages pendant repli/remontage ; TTL fiche Google5min, RAW exclu. Tests React remount et réouverture locale.",
+    "scenario": "react memory/remount + place reopen",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R192",
+    "description_originale": "Proposer une recherche de bar unifiée exploitant les lieux enregistrés et Google lorsque les capacités le permettent.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Recherche unifiée et provenance visibles sur données publiées/fixture ; aucun résultat externe promu sans owner. Appel réel réservé àR345.",
+    "scenario": "last-place-1920, rich-google, p3 exact/ambiguous",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R197",
+    "description_originale": "Distinguer « Déjà fréquenté », « Enregistré » et « Google Maps » avec une provenance vérifiable.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Recherche unifiée et provenance visibles sur données publiées/fixture ; aucun résultat externe promu sans owner. Appel réel réservé àR345.",
+    "scenario": "last-place-1920, rich-google, p3 exact/ambiguous",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R208",
+    "description_originale": "Ne pas présenter « Retenir comme nom libre » comme l'issue normale d'un établissement Google reconnu.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Recherche Google disponible et matching exact testé sur DTO contrôlé; planned-context ne lit aucun Google Place ID Canonical, composer-service ne projette aucun ID externe, aucun writer d’admission Canonical autorisé trouvé. Aucun faux KNOWN.",
+      "blocage": "BLOCKED_OWNER_GOOGLE_IDENTITY_OR_ADMISSION",
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING"
+      ],
+      "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+      "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel"
+    },
+    "apres": {
+      "statut": "BLOCKED_OWNER",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Aucun writer ou mapping durable inventé ; frontière confirmée et demande de contrat documentée.",
+    "scenario": "owner-google",
+    "preuves": [
+      "END_OWNER"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
+  },
+  {
+    "id": "R209",
+    "description_originale": "Permettre à un établissement Google nouveau d'acquérir une identité durable exploitable uniquement via le propriétaire officiel autorisé.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Recherche Google disponible et matching exact testé sur DTO contrôlé; planned-context ne lit aucun Google Place ID Canonical, composer-service ne projette aucun ID externe, aucun writer d’admission Canonical autorisé trouvé. Aucun faux KNOWN.",
+      "blocage": "BLOCKED_OWNER_GOOGLE_IDENTITY_OR_ADMISSION",
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING"
+      ],
+      "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+      "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel"
+    },
+    "apres": {
+      "statut": "BLOCKED_OWNER",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Aucun writer ou mapping durable inventé ; frontière confirmée et demande de contrat documentée.",
+    "scenario": "owner-google",
+    "preuves": [
+      "END_OWNER"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
+  },
+  {
+    "id": "R210",
+    "description_originale": "Préserver une correspondance Canonical exacte lorsque le googlePlaceId existe déjà.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Recherche Google disponible et matching exact testé sur DTO contrôlé; planned-context ne lit aucun Google Place ID Canonical, composer-service ne projette aucun ID externe, aucun writer d’admission Canonical autorisé trouvé. Aucun faux KNOWN.",
+      "blocage": "BLOCKED_OWNER_GOOGLE_IDENTITY_OR_ADMISSION",
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING"
+      ],
+      "sha_preuve": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+      "environnement": "PASS_REACT / propriétaire synthétique ; ni Auth ni fournisseur réel"
+    },
+    "apres": {
+      "statut": "BLOCKED_OWNER",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Aucun writer ou mapping durable inventé ; frontière confirmée et demande de contrat documentée.",
+    "scenario": "owner-google",
+    "preuves": [
+      "END_OWNER"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
+  },
+  {
+    "id": "R214",
+    "description_originale": "Proposer l'adaptation des trajets après changement de lieu seulement lorsqu'un lien autorisé est prouvé.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Aucun lien sémantique endpoint↔bar publié : endpoints personnalisés préservés au changement de lieu.",
+    "scenario": "p1 endpoints",
+    "preuves": [
+      "END_REACT",
+      "END_OWNER"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Owner trajets doit publier un lien explicite avant de proposer une réadaptation automatique. Le parcours manuel indépendant reste utile."
+  },
+  {
+    "id": "R242",
+    "description_originale": "Éviter que l'éditeur historique avancé réintroduise du scroll interne ou une interface contradictoire.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Avancé conservé ; absence de scroll interne sur tous cas avancés non certifiée.",
+      "blocage": "",
+      "preuves": [
+        "G2_REACT"
+      ],
+      "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Avancé legacy et choix unité reçus sans scrollbox, commandes directes ; menu popover peut déborder librement.",
+    "scenario": "last-advanced-1920, last-advanced-meal-1920, last-full-unit-editor-1920, last-unit-choices-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R255",
+    "description_originale": "Distinguer l'estimation regroupée des contributions ou entrées additives.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Explicit replace/add choice exists and multi-main replacement is rejected without mutation. Legacy grouped-vs-contribution meaning still relies on the persisted label, not a new financial contract.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Choix explicite obligatoire : regroupé substitutif ou contribution additive ; remplacement simple testé, cas multi-main refusé sans perte.",
+    "scenario": "react coverage + p4 substitution",
+    "preuves": [
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit."
+  },
+  {
+    "id": "R257",
+    "description_originale": "Rendre le choix « Détailler à la place » explicite sur les postes réellement remplacés.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Explicit replace/add choice exists and multi-main replacement is rejected without mutation. Legacy grouped-vs-contribution meaning still relies on the persisted label, not a new financial contract.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Choix explicite obligatoire : regroupé substitutif ou contribution additive ; remplacement simple testé, cas multi-main refusé sans perte.",
+    "scenario": "react coverage + p4 substitution",
+    "preuves": [
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Le contrat historique persiste encore la distinction via libellé. Un discriminant machine versionné relève dune revue owner séparée ; aucun moteur financier réécrit."
+  },
+  {
+    "id": "R265",
+    "description_originale": "Ne pas dissimuler les composantes péage, parking, fare ou transport cash lorsqu'elles existent dans les résumés officiels.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Composants péage/parking non encore tous visibles dans la ligne compacte.",
+      "blocage": "",
+      "preuves": [
+        "G2_REACT"
+      ],
+      "sha_preuve": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Composantes officielles fare/transport cash/usage/péage/parking projetées lorsquelles existent ; Taxi12visible, inconnu voiture préservé ; couverture owner par tests.",
+    "scenario": "last-fare-1920, last-outbound-1920, p3 owner costs",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R276",
+    "description_originale": "Réduire le nom principal du véhicule à « Peugeot 207 » et placer sa version technique dans les détails.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Libellé officiel conservé dans capsule avec ellipsis et détails. Le DTO ne publie pas marque/modèle distincts; aucun découpage heuristique technique retenu.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Libellé officiel conservé, pas de parsing fragile du nom véhicule.",
+    "scenario": "last-vehicle-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Le DTO véhicule ne publie pas marque/modèle séparés ; demander ces champs à Mobility pour un nom court fiable."
+  },
+  {
+    "id": "R282",
+    "description_originale": "Après sélection des endpoints, proposer le véhicule nécessaire ou l'estimation légitime.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Missing endpoints/vehicle and TEXT limitations are explicit; real provider/fuel/distance completeness and final estimate have not been certified. No fake estimate action.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Endpoints et choix véhicule explicites fonctionnels ; fallback propriétaire clair.",
+    "scenario": "last-endpoint-1920, last-vehicle-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Estimation fournisseur réelle non certifiée dans H1 sans World préparé ; UNKNOWN conservé."
+  },
+  {
+    "id": "R287",
+    "description_originale": "Écarter ou déprioriser un candidat identique à l'autre endpoint sauf trajet volontaire particulier.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Known identical opposite endpoint is excluded; text-only homonyms do not establish identity and require explicit user entry. Full exceptional-loop UX not certified.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Endpoint opposé connu exclu des candidats usuels ; repère libre explicite reste admissible sans rapprochement de texte.",
+    "scenario": "last-endpoint-1920, p1 independent endpoints",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R296",
+    "description_originale": "Afficher les données réellement manquantes à un trajet plutôt qu'un simple « À estimer » générique.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Missing endpoints/vehicle and TEXT limitations are explicit; real provider/fuel/distance completeness and final estimate have not been certified. No fake estimate action.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Motif manquant issu des codes officiels rendu en langage utile, pas de coût supposé quand Mobility indisponible.",
+    "scenario": "last-outbound-1920, last-vehicle-1920, last-fare-1920",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R307",
+    "description_originale": "Garder le drag-and-drop vers la corbeille comme geste visuel de retrait des cartes.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Existing draggable/trash eligibility code is preserved; actual native drag/drop and trash visibility were not executed in this mission.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Drag natif annulé exécuté : deux événements supplémentaires, carte conservée ; retrait via menu et Undo physiquement PASS.",
+    "scenario": "native-drag-attempt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille."
+  },
+  {
+    "id": "R308",
+    "description_originale": "Afficher la corbeille uniquement durant le déplacement d'un objet admissible.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Existing draggable/trash eligibility code is preserved; actual native drag/drop and trash visibility were not executed in this mission.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Drag natif annulé exécuté : deux événements supplémentaires, carte conservée ; retrait via menu et Undo physiquement PASS.",
+    "scenario": "native-drag-attempt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "LAPI native fournit un drag complet sans pause ; visibilité corbeille pendant le geste et drop dans cette cible éphémère non observés. Aucun PASS drag→corbeille."
+  },
+  {
+    "id": "R314",
+    "description_originale": "Mesurer séparément le temps clic→feedback, l'opération serveur, la Preview et la sauvegarde durable.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mesurer séparément le temps clic→feedback, l'opération serveur, la Preview et la sauvegarde durable.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "HTTP durable réel mesuré indépendamment ; RAW et rAF locaux séparés, sans utiliser les durées de loutil.",
+    "scenario": "auth-http-reception + typing-observers",
+    "preuves": [
+      "END_UI",
+      "END_AUTH"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Pas de chronométrage paint/feedback et serveur corrélé de bout en bout dans le navigateur authentifié. First-rAF ≠ peinture."
+  },
+  {
+    "id": "R315",
+    "description_originale": "Vérifier la latence de retrait d'une carte riche avec les mêmes données avant et après correction.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Vérifier la latence de retrait d'une carte riche avec les mêmes données avant et après correction.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Retrait riche et Undo réellement exécutés, états Retrait en cours puis confirmé conservés, données intactes ; collisions10→2→0 sur66frames finales.",
+    "scenario": "undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Pas de comparaison calibrée avant/après clic→disparition sur mêmes conditions. Aucun gain de latence annoncé."
+  },
+  {
+    "id": "R316",
+    "description_originale": "Empêcher les cartes voisines de recouvrir un formulaire actif pendant les animations du Board.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Empêcher les cartes voisines de recouvrir un formulaire actif pendant les animations du Board.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Défauts de traversée/repack reproduits et corrigés. Bar ouvert ancré sur page, réservation intrinsèque avant peinture, pas de FLIP sur page avec Bar. Zéro collision dans campagne scènes retenue et Undo final66frames.",
+    "scenario": "geometry-receipt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R318",
+    "description_originale": "Réserver à la carte ouverte une surface correspondant à sa hauteur réellement utile.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réserver à la carte ouverte une surface correspondant à sa hauteur réellement utile.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Défauts de traversée/repack reproduits et corrigés. Bar ouvert ancré sur page, réservation intrinsèque avant peinture, pas de FLIP sur page avec Bar. Zéro collision dans campagne scènes retenue et Undo final66frames.",
+    "scenario": "geometry-receipt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R319",
+    "description_originale": "Éviter les grandes réservations vides du Board après changement de scène.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Éviter les grandes réservations vides du Board après changement de scène.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Défauts de traversée/repack reproduits et corrigés. Bar ouvert ancré sur page, réservation intrinsèque avant peinture, pas de FLIP sur page avec Bar. Zéro collision dans campagne scènes retenue et Undo final66frames.",
+    "scenario": "geometry-receipt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R320",
+    "description_originale": "Stabiliser l'emplacement des cartes voisines pendant les éditions rapides.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Stabiliser l'emplacement des cartes voisines pendant les éditions rapides.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Défauts de traversée/repack reproduits et corrigés. Bar ouvert ancré sur page, réservation intrinsèque avant peinture, pas de FLIP sur page avec Bar. Zéro collision dans campagne scènes retenue et Undo final66frames.",
+    "scenario": "geometry-receipt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R321",
+    "description_originale": "Contrôler les superpositions et la priorité de clic au cours de chaque transition.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Contrôler les superpositions et la priorité de clic au cours de chaque transition.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Défauts de traversée/repack reproduits et corrigés. Bar ouvert ancré sur page, réservation intrinsèque avant peinture, pas de FLIP sur page avec Bar. Zéro collision dans campagne scènes retenue et Undo final66frames.",
+    "scenario": "geometry-receipt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R322",
+    "description_originale": "Éviter les animations spatiales qui font traverser une carte active par une autre carte.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Éviter les animations spatiales qui font traverser une carte active par une autre carte.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Défauts de traversée/repack reproduits et corrigés. Bar ouvert ancré sur page, réservation intrinsèque avant peinture, pas de FLIP sur page avec Bar. Zéro collision dans campagne scènes retenue et Undo final66frames.",
+    "scenario": "geometry-receipt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R323",
+    "description_originale": "Mieux relier visuellement le dock à la carte qu'il modifie, malgré la pagination du Board.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mieux relier visuellement le dock à la carte qu'il modifie, malgré la pagination du Board.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Défauts de traversée/repack reproduits et corrigés. Bar ouvert ancré sur page, réservation intrinsèque avant peinture, pas de FLIP sur page avec Bar. Zéro collision dans campagne scènes retenue et Undo final66frames.",
+    "scenario": "geometry-receipt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R324",
+    "description_originale": "Préserver un ancrage spatial stable lorsque l'utilisateur change de scène interne.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Préserver un ancrage spatial stable lorsque l'utilisateur change de scène interne.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Défauts de traversée/repack reproduits et corrigés. Bar ouvert ancré sur page, réservation intrinsèque avant peinture, pas de FLIP sur page avec Bar. Zéro collision dans campagne scènes retenue et Undo final66frames.",
+    "scenario": "geometry-receipt + undo-final-reservation",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R325",
+    "description_originale": "Limiter les recalculs de hauteur et les repackings aux variations réellement utiles, après mesure.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Limiter les recalculs de hauteur et les repackings aux variations réellement utiles, après mesure.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compteurs opt-in bornés ; saisie18,25 réellement tapée : mutations11→13, resize10→11, mesures28→31, repacks14→15 (changement dock RAW), pas de repack par caractère.",
+    "scenario": "typing-observers",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R326",
+    "description_originale": "Instrumenter les MutationObserver et ResizeObserver pendant une saisie rapide.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Instrumenter les MutationObserver et ResizeObserver pendant une saisie rapide.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Compteurs opt-in bornés ; saisie18,25 réellement tapée : mutations11→13, resize10→11, mesures28→31, repacks14→15 (changement dock RAW), pas de repack par caractère.",
+    "scenario": "typing-observers",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R328",
+    "description_originale": "Mesurer la latence frappe→affichage lors de l'édition d'un prix.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mesurer la latence frappe→affichage lors de l'édition d'un prix.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "RAW18,25 visible après vraie saisie, callbacks rAF enregistrés et protection confirmée.",
+    "scenario": "typing-observers + raw-confirmation-final",
+    "preuves": [
+      "END_UI"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Les callbacks ne prouvent pas la peinture ; latence frappe→affichage calibrée et P95 non certifiés."
+  },
+  {
+    "id": "R329",
+    "description_originale": "Mesurer les déplacements et collisions des cartes à différentes étapes de leurs animations.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mesurer les déplacements et collisions des cartes à différentes étapes de leurs animations.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Sondes DOM/rAF bornées avant/pendant/après : échecs conservés, correctif final0collision/66frames pour retrait/Undo ; scènes ouvertes antérieures sanscollision.",
+    "scenario": "undo-animation-before-90 + undo-final-reservation + geometry-receipt",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R335",
+    "description_originale": "Identifier la cause de l'échec de sauvegarde riche indépendamment des timeouts Canonical de Preview.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Writer/lectures/RPC distingués par instrumentation opt-in et tests de service réels sur transport contrôlé. Ancien échec Auth riche non reproduit ni expliqué; NOT_RUN_AUTH.",
+      "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Writer courant confirmé et403de configuration identifié ; erreur UI Forecast séparée.",
+    "scenario": "auth-http-reception + auth-http-draft-disabled",
+    "preuves": [
+      "END_AUTH",
+      "END_AUTH_LIMIT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Cause de léchec historique personnel inconnue, non reproduite ; aucun diagnostic inventé."
+  },
+  {
+    "id": "R336",
+    "description_originale": "Valider une soirée riche avec Before, boissons, date, participants et trajets en session authentifiée.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "NOT_RUN_AUTH: no isolated authenticated write environment confirmed; no personal Draft writes repeated. Existing canary was previously archived.",
+      "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Riche sauvegardé/relu avec vraies sessionsJWT ; interactions UI riches sur fixtures séparées.",
+    "scenario": "auth-http-reception + geometry-receipt",
+    "preuves": [
+      "END_AUTH",
+      "END_AUTH_LIMIT",
+      "END_UI"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué."
+  },
+  {
+    "id": "R337",
+    "description_originale": "Relire la même soirée après rechargement avec ses identités, quantités, prix et liens inchangés.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "NOT_RUN_AUTH: no isolated authenticated write environment confirmed; no personal Draft writes repeated. Existing canary was previously archived.",
+      "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis"
+    },
+    "apres": {
+      "statut": "DONE_AUTH_REAL",
+      "sha_preuve": "1624edcb77867f4861209283c69e666e1289e06a"
+    },
+    "raison": "Nouvelle session JWT relit exactement le riche état, IDs, unités, liens ; montant seul modifié sans disparition, archivev3.",
+    "scenario": "auth-http-reception",
+    "preuves": [
+      "END_AUTH"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Niveau HTTP authentifié ; ne certifie ni UI de reprise ni Preview financière réelle."
+  },
+  {
+    "id": "R338",
+    "description_originale": "Vérifier la cohérence entre Draft, Preview, Finance V2 et application finale sans confondre ces statuts.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Owner fixture Preview/Apply/Reload and real HTTP synthetic durability pass with independent statuses. Authenticated complete path remains NOT_RUN_AUTH.",
+      "blocage": null,
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "LOCAL_SYNTHETIC_ONLY"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Draft HTTP authentifié exact ; Preview/Apply/Reload sur fixtures officielles distinctes.",
+    "scenario": "auth-http-reception + terminal-apply",
+    "preuves": [
+      "END_AUTH",
+      "END_REACT",
+      "END_AUTH_LIMIT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "World/FRESH intégré de H1 bloqué par FORECAST_ACTIVE_GLOBAL_PUBLICATION_MISSING. Aucun Apply distant."
+  },
+  {
+    "id": "R341",
+    "description_originale": "Vérifier l'absence de scroll interne sur toutes les sous-scènes, y compris les pages avancées héritées.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Vérifier l'absence de scroll interne sur toutes les sous-scènes, y compris les pages avancées héritées.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Date, lieu, personnes, Before, boissons, montant, endpoints, véhicule, tarif, détails/unité et deux scènes legacy reçus sans scroll interne ; popover visible non confondu avec scrollbox.",
+    "scenario": "last-* scene scroll ratios",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R342",
+    "description_originale": "Tester les états vide, partiel et riche à plusieurs largeurs desktop et au zoom 125 %.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Tester les états vide, partiel et riche à plusieurs largeurs desktop et au zoom 125 %.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "États et largeurs desktop réels reçus, mesure effective attachée à chaque résultat.",
+    "scenario": "geometry-receipt",
+    "preuves": [
+      "END_UI"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "125% natif non obtenu malgré raccourcis ; aucun simple DPR1.25 ou viewport réduit compté comme preuve."
+  },
+  {
+    "id": "R343",
+    "description_originale": "Tester l'accessibilité clavier et la restauration du focus à chaque transition de scène.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Tester l'accessibilité clavier et la restauration du focus à chaque transition de scène.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "RAW dialog restore, question dock et resize/reparent corrigés ; le groupe Consommations garde le focus quand la flèche disparaît ou devient désactivée.",
+    "scenario": "dock-question-focus-fixed + raw-confirmation-final + dock-focus-final",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Undo depuis la carte fermée peut laisser BODY après suppression de sa commande. Les transitions de scènes reçues ont un focus utile ; exigence exhaustive non clôturée."
+  },
+  {
+    "id": "R344",
+    "description_originale": "Tester la pagination des choix au redimensionnement sans page fantôme ni focus perdu.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Tester la pagination des choix au redimensionnement sans page fantôme ni focus perdu.",
+      "blocage": "RECEPTION_NOT_EXECUTED",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée"
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Page2/3 ramenée à2/2, aucune page fantôme ; focus restitué au groupe de choix quand la flèche devient désactivée, non repris par la carte.",
+    "scenario": "dock-focus-final",
+    "preuves": [
+      "END_UI",
+      "END_REACT"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": ""
+  },
+  {
+    "id": "R345",
+    "description_originale": "Vérifier la recherche Google et sa reprise dans un environnement fournisseur réellement autorisé.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Appel fournisseur réel et comparaison authentifiée non exécutés sur le candidat final. Aucun accès Auth isolé utilisé.",
+      "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis"
+    },
+    "apres": {
+      "statut": "BLOCKED_ENV",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Recherche/fiches et reprise testées par contrats contrôlés ; aucune interrogation fournisseur réel effectuée pour clore ces exigences.",
+    "scenario": "p3 contract exact/ambiguous",
+    "preuves": [
+      "END_REACT",
+      "END_AUTH_LIMIT",
+      "END_OWNER"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense."
+  },
+  {
+    "id": "R346",
+    "description_originale": "Vérifier la recherche du même établissement depuis Composer et « Déclarer une dépense ».",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Appel fournisseur réel et comparaison authentifiée non exécutés sur le candidat final. Aucun accès Auth isolé utilisé.",
+      "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis"
+    },
+    "apres": {
+      "statut": "BLOCKED_ENV",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Recherche/fiches et reprise testées par contrats contrôlés ; aucune interrogation fournisseur réel effectuée pour clore ces exigences.",
+    "scenario": "p3 contract exact/ambiguous",
+    "preuves": [
+      "END_REACT",
+      "END_AUTH_LIMIT",
+      "END_OWNER"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense."
+  },
+  {
+    "id": "R348",
+    "description_originale": "Valider un parcours complet Bar → Lieu → Date → Personnes → Before → Consommations → Aller → Retour → Enregistrer → Relire.",
+    "date": "2026-10-18",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Appel fournisseur réel et comparaison authentifiée non exécutés sur le candidat final. Aucun accès Auth isolé utilisé.",
+      "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
+      "preuves": [
+        "FINAL_ENVIRONMENT"
+      ],
+      "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+      "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis"
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "sha_preuve": "ba949a65796850ecfaec83e0aba03566b82b9058"
+    },
+    "raison": "Riche sauvegardé/relu avec vraies sessionsJWT ; interactions UI riches sur fixtures séparées.",
+    "scenario": "auth-http-reception + geometry-receipt",
+    "preuves": [
+      "END_AUTH",
+      "END_AUTH_LIMIT",
+      "END_UI"
+    ],
+    "preview": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+    "preview_ui": "NOT_CERTIFIED",
+    "limites": "Traversée UI authentifiée complète/FRESH bloquée par publication Global absente dans H1. Pas de foyer personnel substitué."
+  }
+]

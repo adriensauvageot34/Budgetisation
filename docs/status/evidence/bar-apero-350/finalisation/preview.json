@@ -1,0 +1,29 @@
+{
+  "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+  "environment": "Preview, not Production",
+  "id": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+  "url": "https://budgetisation-jun26c55r-adriensauvageot34-6137s-projects.vercel.app",
+  "state": "READY",
+  "source": "git",
+  "branch": "codex/bar-apero-350-effective-closure",
+  "build": "npm run build / next build; Next16.2.6 compile55s + TypeScript69s + static8/8 + trace + Build Completed2m + Deployment completed",
+  "browserResult": "Final90 login page reached. Isolated H1 bootstrap blocked by absent Global publication on1624; final ba authenticated UI not executed.",
+  "g1": {
+    "id": "dpl_Bic2ffsswLuVwk24jv9qNrFxy3JE",
+    "sha": "1624edcb77867f4861209283c69e666e1289e06a",
+    "url": "https://budgetisation-g9vsssb0x-adriensauvageot34-6137s-projects.vercel.app",
+    "status": "BUILD_ONLY_AUTH_BOOTSTRAP_BLOCKED"
+  },
+  "g2": {
+    "id": "dpl_EJUsxjh6Usgf6wcKpYYmGH1dQZxD",
+    "sha": "507d4c4f1c4848b62560baa37e73bd38924f0106",
+    "url": "https://budgetisation-e45mnszw0-adriensauvageot34-6137s-projects.vercel.app",
+    "status": "BUILD_ONLY; physical campaign on local production bundle, not Preview UI"
+  },
+  "previousFinal": {
+    "id": "dpl_BkLnbhAMuRgK6fN8AcKnJ2M6poUs",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "url": "https://budgetisation-ed3p18cck-adriensauvageot34-6137s-projects.vercel.app",
+    "state": "READY"
+  }
+}

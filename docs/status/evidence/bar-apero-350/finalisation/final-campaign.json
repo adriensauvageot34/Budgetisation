@@ -1,0 +1,1719 @@
+[
+  {
+    "label": "last-summary-1728",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 505,
+      "w": 778.2250366210938,
+      "x": 337.20001220703125,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1368.4000244140625,
+      "x": 322.8000183105469,
+      "y": 740.7999877929688
+    },
+    "focus": {
+      "label": "Configuration de Bar / Apéro",
+      "tag": "DIV"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 144
+    },
+    "layout": "{\"enabled\":true,\"mutations\":24,\"resizes\":27,\"measures\":65,\"repacks\":27}",
+    "scene": "summary",
+    "scroll": [
+      {
+        "ch": 503,
+        "cw": 777,
+        "sh": 503,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1368,
+        "sh": 124,
+        "sw": 1368,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 426,
+        "cw": 777,
+        "sh": 426,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1728
+    }
+  },
+  {
+    "label": "last-summary-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 505,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": "Configuration de Bar / Apéro",
+      "tag": "DIV"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 144
+    },
+    "layout": "{\"enabled\":true,\"mutations\":24,\"resizes\":28,\"measures\":68,\"repacks\":28}",
+    "scene": "summary",
+    "scroll": [
+      {
+        "ch": 503,
+        "cw": 777,
+        "sh": 503,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1560,
+        "sh": 124,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 426,
+        "cw": 777,
+        "sh": 426,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-drinks-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 355,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": "Configuration de Bar / Apéro",
+      "tag": "DIV"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 162
+    },
+    "layout": "{\"enabled\":true,\"mutations\":26,\"resizes\":29,\"measures\":71,\"repacks\":29}",
+    "scene": "drinks",
+    "scroll": [
+      {
+        "ch": 353,
+        "cw": 777,
+        "sh": 353,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1560,
+        "sh": 138,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 267,
+        "cw": 777,
+        "sh": 267,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-date-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 445,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": null,
+    "focus": {
+      "label": "Modifier la date",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 180
+    },
+    "layout": "{\"enabled\":true,\"mutations\":28,\"resizes\":30,\"measures\":74,\"repacks\":30}",
+    "scene": "date",
+    "scroll": [
+      {
+        "ch": 443,
+        "cw": 777,
+        "sh": 443,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 357,
+        "cw": 777,
+        "sh": 357,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-place-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 365,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 173.60000610351562,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": "Modifier le lieu",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 180
+    },
+    "layout": "{\"enabled\":true,\"mutations\":30,\"resizes\":31,\"measures\":77,\"repacks\":31}",
+    "scene": "place",
+    "scroll": [
+      {
+        "ch": 363,
+        "cw": 777,
+        "sh": 363,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 174,
+        "cw": 1560,
+        "sh": 174,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 281,
+        "cw": 777,
+        "sh": 281,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-people-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 355,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": "Modifier les personnes · Alice Fixture, Amandine, Cédric, Lucas, Florentine, Juliette",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 216
+    },
+    "layout": "{\"enabled\":true,\"mutations\":32,\"resizes\":32,\"measures\":80,\"repacks\":32}",
+    "scene": "people",
+    "scroll": [
+      {
+        "ch": 353,
+        "cw": 777,
+        "sh": 353,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1560,
+        "sh": 138,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 276,
+        "cw": 777,
+        "sh": 276,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-before-nine-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 375,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": "Configuration de Bar / Apéro",
+      "tag": "DIV"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 234
+    },
+    "layout": "{\"enabled\":true,\"mutations\":36,\"resizes\":34,\"measures\":86,\"repacks\":34}",
+    "scene": "before",
+    "scroll": [
+      {
+        "ch": 373,
+        "cw": 777,
+        "sh": 373,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1560,
+        "sh": 124,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 290,
+        "cw": 777,
+        "sh": 290,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-outbound-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 305,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": null,
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 252
+    },
+    "layout": "{\"enabled\":true,\"mutations\":40,\"resizes\":35,\"measures\":90,\"repacks\":36}",
+    "scene": "outbound",
+    "scroll": [
+      {
+        "ch": 303,
+        "cw": 777,
+        "sh": 303,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1560,
+        "sh": 138,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 220,
+        "cw": 777,
+        "sh": 220,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-endpoint-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 365,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 125.5999984741211,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": "Modifier le départ de l’aller",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 289
+    },
+    "layout": "{\"enabled\":true,\"mutations\":42,\"resizes\":37,\"measures\":95,\"repacks\":37}",
+    "scene": "endpoint",
+    "scroll": [
+      {
+        "ch": 363,
+        "cw": 777,
+        "sh": 363,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 126,
+        "cw": 1560,
+        "sh": 126,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 279,
+        "cw": 777,
+        "sh": 279,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-vehicle-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 355,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": "Modifier le véhicule de l’aller",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 325
+    },
+    "layout": "{\"enabled\":true,\"mutations\":46,\"resizes\":39,\"measures\":101,\"repacks\":39}",
+    "scene": "vehicle",
+    "scroll": [
+      {
+        "ch": 353,
+        "cw": 777,
+        "sh": 353,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1560,
+        "sh": 124,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 268,
+        "cw": 777,
+        "sh": 268,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-return-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 305,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": null,
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 361
+    },
+    "layout": "{\"enabled\":true,\"mutations\":50,\"resizes\":41,\"measures\":107,\"repacks\":41}",
+    "scene": "return",
+    "scroll": [
+      {
+        "ch": 303,
+        "cw": 777,
+        "sh": 303,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1560,
+        "sh": 138,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 220,
+        "cw": 777,
+        "sh": 220,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-fare-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 395,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": null,
+      "tag": "INPUT"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 379
+    },
+    "layout": "{\"enabled\":true,\"mutations\":52,\"resizes\":42,\"measures\":110,\"repacks\":42}",
+    "scene": "fare",
+    "scroll": [
+      {
+        "ch": 393,
+        "cw": 777,
+        "sh": 393,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1560,
+        "sh": 124,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 309,
+        "cw": 777,
+        "sh": 309,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-quick-cost-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 285,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": null,
+      "tag": "INPUT"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 379
+    },
+    "layout": "{\"enabled\":true,\"mutations\":56,\"resizes\":43,\"measures\":114,\"repacks\":44}",
+    "scene": "quick",
+    "scroll": [
+      {
+        "ch": 283,
+        "cw": 777,
+        "sh": 283,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1560,
+        "sh": 124,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 197,
+        "cw": 777,
+        "sh": 197,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-advanced-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 245,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": "Que veux-tu prévoir ?",
+      "tag": "FIELDSET"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 416
+    },
+    "layout": "{\"enabled\":true,\"mutations\":62,\"resizes\":46,\"measures\":123,\"repacks\":46}",
+    "scene": "legacy",
+    "scroll": [
+      {
+        "ch": 243,
+        "cw": 777,
+        "sh": 243,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1560,
+        "sh": 138,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 145,
+        "cw": 777,
+        "sh": 145,
+        "sw": 777,
+        "tag": "DIV"
+      },
+      {
+        "ch": 64,
+        "cw": 749,
+        "sh": 64,
+        "sw": 749,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-advanced-meal-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 245,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 912
+    },
+    "focus": {
+      "label": "Un repas pour cette soirée ?",
+      "tag": "FIELDSET"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 455
+    },
+    "layout": "{\"enabled\":true,\"mutations\":64,\"resizes\":48,\"measures\":128,\"repacks\":46}",
+    "scene": "legacy",
+    "scroll": [
+      {
+        "ch": 243,
+        "cw": 777,
+        "sh": 243,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1560,
+        "sh": 138,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 145,
+        "cw": 777,
+        "sh": 145,
+        "sw": 777,
+        "tag": "DIV"
+      },
+      {
+        "ch": 64,
+        "cw": 749,
+        "sh": 64,
+        "sw": 749,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-price-details-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 285,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": null,
+      "tag": "SUMMARY"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 483
+    },
+    "layout": "{\"enabled\":true,\"mutations\":68,\"resizes\":50,\"measures\":134,\"repacks\":48}",
+    "scene": "row",
+    "scroll": [
+      {
+        "ch": 283,
+        "cw": 777,
+        "sh": 332,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1560,
+        "sh": 138,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 204,
+        "cw": 777,
+        "sh": 255,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-full-unit-editor-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 385,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": null,
+      "tag": "INPUT"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 501
+    },
+    "layout": "{\"enabled\":true,\"mutations\":70,\"resizes\":51,\"measures\":137,\"repacks\":49}",
+    "scene": "row",
+    "scroll": [
+      {
+        "ch": 383,
+        "cw": 777,
+        "sh": 383,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1560,
+        "sh": 124,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 304,
+        "cw": 777,
+        "sh": 304,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-unit-choices-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 425,
+      "w": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1560.4000244140625,
+      "x": 322.8000183105469,
+      "y": 920.7999877929688
+    },
+    "focus": {
+      "label": null,
+      "tag": "BODY"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 519
+    },
+    "layout": "{\"enabled\":true,\"mutations\":72,\"resizes\":51,\"measures\":138,\"repacks\":50}",
+    "scene": "row",
+    "scroll": [
+      {
+        "ch": 423,
+        "cw": 777,
+        "sh": 423,
+        "sw": 777,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1560,
+        "sh": 124,
+        "sw": 1560,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 344,
+        "cw": 777,
+        "sh": 344,
+        "sw": 777,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-folded-rich-1920",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 675,
+      "w": 384.125,
+      "x": -443.3999938964844,
+      "y": 311
+    },
+    "dock": null,
+    "focus": {
+      "label": null,
+      "tag": "BODY"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 555
+    },
+    "layout": "{\"enabled\":true,\"mutations\":75,\"resizes\":55,\"measures\":145,\"repacks\":54}",
+    "scene": "closed",
+    "scroll": [
+      {
+        "ch": 673,
+        "cw": 383,
+        "sh": 673,
+        "sw": 383,
+        "tag": "ARTICLE"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "last-native-125-folded",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 675,
+      "w": 384.125,
+      "x": 1142.5999755859375,
+      "y": 311
+    },
+    "dock": null,
+    "focus": {
+      "label": null,
+      "tag": "BODY"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 555
+    },
+    "layout": "{\"enabled\":true,\"mutations\":75,\"resizes\":55,\"measures\":146,\"repacks\":54}",
+    "scene": "closed",
+    "scroll": [
+      {
+        "ch": 673,
+        "cw": 383,
+        "sh": 673,
+        "sw": 383,
+        "tag": "ARTICLE"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "native-zoom-attempt",
+    "tab": "5",
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "bar": {
+      "h": 675,
+      "w": 384.125,
+      "x": 1142.5999755859375,
+      "y": 311
+    },
+    "dock": null,
+    "focus": {
+      "label": null,
+      "tag": "BODY"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 573
+    },
+    "layout": "{\"enabled\":true,\"mutations\":75,\"resizes\":55,\"measures\":146,\"repacks\":54}",
+    "scene": "closed",
+    "scroll": [
+      {
+        "ch": 673,
+        "cw": 383,
+        "sh": 673,
+        "sw": 383,
+        "tag": "ARTICLE"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 1080,
+      "w": 1920
+    }
+  },
+  {
+    "label": "one-item-closed-1440",
+    "tab": "6",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 605,
+      "w": 372.2749938964844,
+      "x": 328,
+      "y": 141
+    },
+    "dock": null,
+    "focus": {
+      "label": "Afficher la page 2",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 18
+    },
+    "layout": "{\"enabled\":true,\"mutations\":0,\"resizes\":3,\"measures\":4,\"repacks\":4}",
+    "scene": "closed",
+    "scroll": [
+      {
+        "ch": 603,
+        "cw": 371,
+        "sh": 603,
+        "sw": 371,
+        "tag": "ARTICLE"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1440
+    }
+  },
+  {
+    "label": "one-item-open-1440",
+    "tab": "6",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 465,
+      "w": 754.5625,
+      "x": 328,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1080.4000244140625,
+      "x": 322.8000183105469,
+      "y": 740.7999877929688
+    },
+    "focus": {
+      "label": "Replier la carte",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 36
+    },
+    "layout": "{\"enabled\":true,\"mutations\":6,\"resizes\":6,\"measures\":14,\"repacks\":7}",
+    "scene": "summary",
+    "scroll": [
+      {
+        "ch": 463,
+        "cw": 753,
+        "sh": 463,
+        "sw": 753,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1080,
+        "sh": 124,
+        "sw": 1080,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 377,
+        "cw": 753,
+        "sh": 377,
+        "sw": 753,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1440
+    }
+  },
+  {
+    "label": "dock-question-focus-fixed",
+    "tab": "6",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 425,
+      "w": 754.5625,
+      "x": 328,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1080.4000244140625,
+      "x": 322.8000183105469,
+      "y": 740.7999877929688
+    },
+    "focus": {
+      "label": "Comment compter « Bière » ?",
+      "tag": "DIV"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 108
+    },
+    "layout": "{\"enabled\":true,\"mutations\":16,\"resizes\":9,\"measures\":25,\"repacks\":10}",
+    "scene": "row",
+    "scroll": [
+      {
+        "ch": 423,
+        "cw": 753,
+        "sh": 423,
+        "sw": 753,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1080,
+        "sh": 124,
+        "sw": 1080,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 344,
+        "cw": 753,
+        "sh": 344,
+        "sw": 753,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1440
+    }
+  },
+  {
+    "label": "four-items-closed-1440",
+    "tab": "7",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 605,
+      "w": 372.2749938964844,
+      "x": 328,
+      "y": 141
+    },
+    "dock": null,
+    "focus": {
+      "label": "Afficher la page 2",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 18
+    },
+    "layout": "{\"enabled\":true,\"mutations\":0,\"resizes\":3,\"measures\":4,\"repacks\":4}",
+    "scene": "closed",
+    "scroll": [
+      {
+        "ch": 603,
+        "cw": 371,
+        "sh": 603,
+        "sw": 371,
+        "tag": "ARTICLE"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1440
+    }
+  },
+  {
+    "label": "four-items-open-1440",
+    "tab": "7",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 305,
+      "w": 754.5625,
+      "x": 328,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1080.4000244140625,
+      "x": 322.8000183105469,
+      "y": 740.7999877929688
+    },
+    "focus": {
+      "label": "Configuration de Bar / Apéro",
+      "tag": "DIV"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 54
+    },
+    "layout": "{\"enabled\":true,\"mutations\":10,\"resizes\":7,\"measures\":18,\"repacks\":8}",
+    "scene": "drinks",
+    "scroll": [
+      {
+        "ch": 303,
+        "cw": 753,
+        "sh": 303,
+        "sw": 753,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1080,
+        "sh": 138,
+        "sw": 1080,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 226,
+        "cw": 753,
+        "sh": 226,
+        "sw": 753,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1440
+    }
+  },
+  {
+    "label": "empty-created-final",
+    "tab": "10",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 245,
+      "w": 754.5625,
+      "x": 328,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 1080.4000244140625,
+      "x": 322.8000183105469,
+      "y": 740.7999877929688
+    },
+    "focus": {
+      "label": "Replier la carte",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 18
+    },
+    "layout": "{\"enabled\":true,\"mutations\":7,\"resizes\":4,\"measures\":16,\"repacks\":8}",
+    "scene": "summary",
+    "scroll": [
+      {
+        "ch": 243,
+        "cw": 753,
+        "sh": 243,
+        "sw": 753,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 1080,
+        "sh": 124,
+        "sw": 1080,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 117,
+        "cw": 753,
+        "sh": 117,
+        "sw": 753,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1440
+    }
+  },
+  {
+    "label": "two-items-open-final",
+    "tab": "11",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 465,
+      "w": 727.0125122070312,
+      "x": 328,
+      "y": 141
+    },
+    "dock": {
+      "h": 124,
+      "w": 910.7999877929688,
+      "x": 322.8000183105469,
+      "y": 671.7999877929688
+    },
+    "focus": {
+      "label": "Replier la carte",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 36
+    },
+    "layout": "{\"enabled\":true,\"mutations\":5,\"resizes\":5,\"measures\":15,\"repacks\":6}",
+    "scene": "summary",
+    "scroll": [
+      {
+        "ch": 463,
+        "cw": 725,
+        "sh": 463,
+        "sw": 725,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 124,
+        "cw": 911,
+        "sh": 124,
+        "sw": 911,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 383,
+        "cw": 725,
+        "sh": 383,
+        "sw": 725,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.25,
+      "h": 720,
+      "w": 1280
+    }
+  },
+  {
+    "label": "ten-items-open-final",
+    "tab": "12",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 355,
+      "w": 779.6000366210938,
+      "x": 328,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 799.6000366210938,
+      "x": 322.8000183105469,
+      "y": 652
+    },
+    "focus": {
+      "label": "Configuration de Bar / Apéro",
+      "tag": "DIV"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 54
+    },
+    "layout": "{\"enabled\":true,\"mutations\":11,\"resizes\":9,\"measures\":23,\"repacks\":10}",
+    "scene": "drinks",
+    "scroll": [
+      {
+        "ch": 353,
+        "cw": 778,
+        "sh": 353,
+        "sw": 778,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 800,
+        "sh": 138,
+        "sw": 800,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 267,
+        "cw": 778,
+        "sh": 267,
+        "sw": 778,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.25,
+      "h": 811,
+      "w": 1159
+    }
+  },
+  {
+    "label": "ten-items-effective-1440",
+    "tab": "12",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 355,
+      "w": 754.5625,
+      "x": 328,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1080.4000244140625,
+      "x": 322.8000183105469,
+      "y": 740.7999877929688
+    },
+    "focus": {
+      "label": "Replier la carte",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 74
+    },
+    "layout": "{\"enabled\":true,\"mutations\":11,\"resizes\":11,\"measures\":28,\"repacks\":11}",
+    "scene": "drinks",
+    "scroll": [
+      {
+        "ch": 353,
+        "cw": 753,
+        "sh": 353,
+        "sw": 753,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1080,
+        "sh": 138,
+        "sw": 1080,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 267,
+        "cw": 753,
+        "sh": 267,
+        "sw": 753,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1440
+    }
+  },
+  {
+    "label": "native-zoom-two-plus-attempt",
+    "tab": "12",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 355,
+      "w": 754.5625,
+      "x": 328,
+      "y": 141
+    },
+    "dock": {
+      "h": 137.60000610351562,
+      "w": 1080.4000244140625,
+      "x": 322.8000183105469,
+      "y": 740.7999877929688
+    },
+    "focus": {
+      "label": "Replier la carte",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 94
+    },
+    "layout": "{\"enabled\":true,\"mutations\":11,\"resizes\":11,\"measures\":28,\"repacks\":11}",
+    "scene": "drinks",
+    "scroll": [
+      {
+        "ch": 353,
+        "cw": 753,
+        "sh": 353,
+        "sw": 753,
+        "tag": "ARTICLE"
+      },
+      {
+        "ch": 138,
+        "cw": 1080,
+        "sh": 138,
+        "sw": 1080,
+        "tag": "SECTION"
+      },
+      {
+        "ch": 267,
+        "cw": 753,
+        "sh": 267,
+        "sw": 753,
+        "tag": "DIV"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1440
+    }
+  },
+  {
+    "label": "final90-rich-closed",
+    "tab": "13",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 675,
+      "w": 384.8000183105469,
+      "x": 328,
+      "y": 141
+    },
+    "dock": null,
+    "focus": {
+      "label": "Afficher la page 2",
+      "tag": "BUTTON"
+    },
+    "frames": {
+      "collisions": 0,
+      "samples": 18
+    },
+    "layout": "{\"enabled\":true,\"mutations\":0,\"resizes\":1,\"measures\":2,\"repacks\":2}",
+    "scene": "closed",
+    "scroll": [
+      {
+        "ch": 673,
+        "cw": 383,
+        "sh": 673,
+        "sw": 383,
+        "tag": "ARTICLE"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.25,
+      "h": 811,
+      "w": 1159
+    }
+  },
+  {
+    "label": "final90-undo-restored",
+    "tab": "13",
+    "sha": "90edbbc1a4c62bb3756b36b9e5b3c73aac2ecd7d",
+    "bar": {
+      "h": 675,
+      "w": 384.8000183105469,
+      "x": 328,
+      "y": 141
+    },
+    "dock": null,
+    "focus": {
+      "label": null,
+      "tag": "BODY"
+    },
+    "frames": {
+      "collisions": 10,
+      "samples": 71
+    },
+    "layout": "{\"enabled\":true,\"mutations\":4,\"resizes\":6,\"measures\":12,\"repacks\":9}",
+    "scene": "closed",
+    "scroll": [
+      {
+        "ch": 673,
+        "cw": 383,
+        "sh": 673,
+        "sw": 383,
+        "tag": "ARTICLE"
+      }
+    ],
+    "small": [],
+    "viewport": {
+      "dpr": 1.25,
+      "h": 811,
+      "w": 1159
+    }
+  }
+]

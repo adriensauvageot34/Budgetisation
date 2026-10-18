@@ -1,0 +1,44 @@
+[
+  {
+    "items": 0,
+    "http": 200,
+    "ok": true,
+    "code": null,
+    "barCount": 1
+  },
+  {
+    "items": 1,
+    "http": 200,
+    "ok": true,
+    "code": null,
+    "barCount": 1
+  },
+  {
+    "items": 2,
+    "http": 200,
+    "ok": true,
+    "code": null,
+    "barCount": 1
+  },
+  {
+    "items": 4,
+    "http": 200,
+    "ok": true,
+    "code": null,
+    "barCount": 1
+  },
+  {
+    "items": 10,
+    "http": 200,
+    "ok": true,
+    "code": null,
+    "barCount": 1
+  },
+  {
+    "items": 15,
+    "http": 200,
+    "ok": true,
+    "code": null,
+    "barCount": 1
+  }
+]

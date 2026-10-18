@@ -265,5 +265,47 @@
     "niveau": "PASS_BUILD_ONLY",
     "scope": "Vercel Preview READY, buildNext complet, arbre produit identique79e3bf0; pas preuve Auth ou navigateur.",
     "file_sha256_lf": "5a5d9f774feed1d27927e986043e7585263c8d915933ea6b225c83ae49be675e"
+  },
+  "END_UI": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/geometry-receipt.json",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Measured scenes/rectangles and rAF frames in actual Codex browser. Local synthetic production bundle; actual viewports and excluded attempts recorded. Not Preview/Auth.",
+    "file_sha256_lf": "fb5718bee24531fc9c67660c1bc101d450598d1f9af4c62462fff9f8b1ba717e"
+  },
+  "END_REACT": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/tests.json",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "PASS_REACT",
+    "scope": "Full terminal gate at b1 + affected tests at90/a1, exact provenance retained; no relabelling old executions.",
+    "file_sha256_lf": "c77b31bfcb8c74497f0bee14434f93de2007ce225c8c031265097d872ae1b62b"
+  },
+  "END_AUTH": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/auth-http-reception.json",
+    "sha": "1624edcb77867f4861209283c69e666e1289e06a",
+    "niveau": "PASS_AUTH_REAL",
+    "scope": "Actual JWT HTTP save/reload/new session/CAS/archive on isolated Preview1624. Not integrated UI nor financial FRESH.",
+    "file_sha256_lf": "2eb844939e87cb69b3a40da2893fc3d651f189ed439c73c13f2b06e4f9e90504"
+  },
+  "END_AUTH_LIMIT": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/auth-receipt.md",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "AUTH_UI_BLOCKED",
+    "scope": "Writer authenticated pass; Global publication missing prevents isolated Composer UI.",
+    "file_sha256_lf": "4f7a65f905f6f5dc3c3363375dc899ff6453ff3ce0187066b4d1f3fde1613e26"
+  },
+  "END_OWNER": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/owner-google.md",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "BLOCKED_OWNER",
+    "scope": "Exact missing Canonical mapping/admission boundary, safe TEXT fallback.",
+    "file_sha256_lf": "8f8c9a01b763f439280213ef76abf1254a9ece185cb0691a55b350aae4c3fa45"
+  },
+  "END_PREVIEW": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/preview.json",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "BUILD_READY_NOT_UI",
+    "scope": "Final exact SHA READY; no authenticated functional Preview PASS.",
+    "file_sha256_lf": "9046dcc2bb461e5d795bc25640fae5a4d9a3cdd13299929172c43fbf442e29c1"
   }
 }

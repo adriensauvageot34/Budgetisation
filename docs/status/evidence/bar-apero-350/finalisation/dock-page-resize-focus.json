@@ -1,0 +1,27 @@
+{
+  "before": {
+    "dock": "Consommations←2 / 3→ShotPlanche / tapas+ SoftEauSaisir un coût direct",
+    "focus": {
+      "label": "Pages du dock · suivante",
+      "tag": "BUTTON"
+    },
+    "viewport": {
+      "dpr": 1.25,
+      "h": 720,
+      "w": 1280
+    }
+  },
+  "after": {
+    "dock": "Consommations←2 / 2→Planche / tapas+ SoftEauSaisir un coût directRepas, before et autres choix",
+    "focus": {
+      "label": "Replier la carte",
+      "tag": "BUTTON"
+    },
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "h": 900,
+      "w": 1728
+    }
+  },
+  "interpretation": "Page clamped from 2/3 to 2/2; focus moves to living card fold control on Board reparent, not BODY. No new semantic choice."
+}

@@ -1,0 +1,40 @@
+{
+  "result": {
+    "deployment": {
+      "id": "dpl_DcPEDV2RqLPsxe9KUsz7mfFjCqSZ",
+      "name": "budgetisation",
+      "url": "budgetisation-jun26c55r-adriensauvageot34-6137s-projects.vercel.app",
+      "type": "LAMBDAS",
+      "state": "READY",
+      "createdAt": 1792346791269,
+      "creator": {
+        "uid": "ItlVoi62mpJ28TeqsxO3j569",
+        "username": "adriensauvageot34-6137"
+      },
+      "project": {
+        "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+        "name": "budgetisation",
+        "framework": "nextjs"
+      },
+      "meta": {
+        "githubCommitRef": "codex/bar-apero-350-effective-closure",
+        "githubCommitSha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+        "githubCommitMessage": "fix(composer): retain dock focus through Board repacking",
+        "githubRepo": "Budgetisation",
+        "githubOrg": "adriensauvageot34"
+      },
+      "alias": [
+        "budgetisation-git-codex-f57c8a-adriensauvageot34-6137s-projects.vercel.app"
+      ],
+      "target": null,
+      "regions": [
+        "iad1"
+      ],
+      "buildingAt": 1792346793390,
+      "ready": 1792346941422,
+      "readyState": "READY",
+      "source": "git",
+      "aliasError": null
+    }
+  }
+}

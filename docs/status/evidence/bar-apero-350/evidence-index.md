@@ -51,3 +51,7 @@ Incident Auth historique : rapport privé outputs/bar-last/live/PRODUCTION_AUTH_
 
 - CLOSURE_ZOOM — PASS_BROWSER_FIXTURE —79e3bf0 — closure/final-native-zoom.json.
 - CLOSURE_BUILD — PASS_BUILD_ONLY —aaec279 — closure/preview.json, arbre produit79e3bf0 inchangé.
+# Réception complémentaire du 18 octobre — produit ba949a6
+
+Rapport courant : `docs/status/BAR_APERO_350_FINALISATION_GATES_VERCEL_AUTH_RECEPTION.md`.
+Les pièces précédentes restent historiques. Le dossier `finalisation/` contient les97transitions initialement ouvertes, les60affectations UI, les frames avant/après (y compris les échecs), les captures complètes, les tests avec SHA et la preuve HTTP authentifiée isolée. Le registre indique327clos au niveau annoncé et23résiduels ; aucune clôture350/350 ni certification UI authentifiée globale.

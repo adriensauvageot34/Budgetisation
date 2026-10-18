@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {check} from './check-bar-apero-350.mjs';
+const dir='docs/status/evidence/bar-apero-350/';
+const baseline=JSON.parse(execFileSync('git',['show','78300455af286a94ba438d9eb098f37379869131:'+dir+'requirements.json'],{encoding:'utf8'}));
+const transitions=JSON.parse(fs.readFileSync(dir+'finalisation/transitions-97.json','utf8'));
+const rows=JSON.parse(fs.readFileSync(dir+'requirements.json','utf8'));
+const pending=baseline.filter(r=>!r.statut.startsWith('DONE')&&r.statut!=='ALREADY_DONE_VERIFIED');
+assert.equal(pending.length,97);assert.equal(transitions.length,97);
+assert.deepEqual(transitions.map(r=>r.id).sort(),pending.map(r=>r.id).sort());
+const matrix=fs.readFileSync(dir+'finalisation/matrix-60-ui.md','utf8');
+for(const original of baseline.filter(r=>r.statut==='NOT_RUN'))assert.equal(matrix.split('\n').filter(line=>line.startsWith('|'+original.id+'|')).length,1);
+for(const original of baseline.filter(r=>!pending.some(p=>p.id===r.id)))assert.deepEqual(rows.find(r=>r.id===original.id),original);
+for(const t of transitions){assert.equal(t.description_originale,baseline.find(r=>r.id===t.id).description_originale);assert.ok(t.raison&&t.scenario&&t.preuves.length);assert.equal(rows.find(r=>r.id===t.id).statut,t.apres.statut);}
+check({verbose:false});
+console.log('FINAL_RECEPTION_TRACE_PASS 97 transitions, 60 UI allocations, 253 acquired rows unchanged; not a product certification');
