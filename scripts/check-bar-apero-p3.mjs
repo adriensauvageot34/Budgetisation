@@ -40,7 +40,7 @@ const click=async label=>{
     const next=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled)[0];
     if(next){await act(async()=>next.props.onClick());steps++;continue;}
     const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];
-    if(back&&['Montant direct','Autre'].includes(label)){await act(async()=>back.props.onClick());steps++;continue;}break;
+    if(back&&['Montant direct','Autre'].includes(label)){await act(async()=>back.props.onClick());steps++;continue;}const all=controls(n=>n.type==='button'&&text(n)==='Tous les lieux')[0];if(all){await act(async()=>all.props.onClick());continue;}const reveal=controls(n=>n.type==='button'&&['Autres consommations','Autres objets du Before'].includes(text(n)))[0];if(reveal){await act(async()=>reveal.props.onClick());continue;}break;
   }
   await act(async()=>button(label).props.onClick());steps++;
 };
@@ -98,7 +98,7 @@ await check('P3_13_14_CURRENT_WORK_IDENTITY_NOT_MEAL_OR_NAME',async()=>{
  await seed([a,home,work,meal,other]);await onRoute('outbound');await click('Taxi / Uber');await click('Départ · À préciser');assert.ok(labels().some(l=>l.includes('Travail fixture')));assert.ok(!labels().some(l=>l.includes('Repas fixture')));await click('Travail fixture');assert.equal(current().slotSelections.outbound.items[0].origin.placeId,work.placeId);assert.deepEqual(current().fields.participantRefs??[],[]);
 });
 await check('P3_15_17_DIRECTED_RETURN_AND_PLACE_ONLY_MUTATION',async()=>{
- await seed();await act(async()=>admit(barPlaceOperation(current(),{kind:'KNOWN',placeId:a.placeId})));await onRoute('outbound');await click('Taxi / Uber');await click('Départ · À préciser');await click('Maison fixture');await onRoute('return');await click('Même mode au retour');const before=structuredClone(current());const back=before.slotSelections.return.items[0];assert.notEqual(back.selectionId,before.slotSelections.outbound.items[0].selectionId);assert.equal(back.origin.placeId,a.placeId);assert.equal(back.destination.placeId,home.placeId);assert.equal(back.pricing.fare.kind,'UNKNOWN');
+ await seed();await act(async()=>admit(barPlaceOperation(current(),{kind:'KNOWN',placeId:a.placeId})));await onRoute('outbound');await click('Taxi / Uber');await click('Départ · À préciser');await click('Maison fixture');await onRoute('return');await click('Reprendre le trajet inverse');const before=structuredClone(current());const back=before.slotSelections.return.items[0];assert.notEqual(back.selectionId,before.slotSelections.outbound.items[0].selectionId);assert.equal(back.origin.placeId,a.placeId);assert.equal(back.destination.placeId,home.placeId);assert.equal(back.pricing.fare.kind,'UNKNOWN');
  await act(async()=>admit(barPlaceOperation(current(),{kind:'KNOWN',placeId:b.placeId})));assert.deepEqual(current().slotSelections,before.slotSelections);assert.equal(current().fields.placeRef.placeId,b.placeId);
 });
 await check('P3_19_RAW_BEFORE_PLACE_CANCEL_AND_SAVE',async()=>{

@@ -32,14 +32,14 @@ const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
-const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||n.props['aria-label']===label||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
+const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||n.props['aria-label']===label||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
 const click=async label=>{
-  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||n.props['aria-label']===label||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));
+  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||n.props['aria-label']===label||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));
   for(let i=0;i<12&&!matches().length;i++){
     const next=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled)[0];
     if(next){await act(async()=>next.props.onClick());steps++;continue;}
     const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];
-    if(back&&['Montant direct','Autre'].includes(label)){await act(async()=>back.props.onClick());steps++;continue;}break;
+    if(back&&['Montant direct','Autre'].includes(label)){await act(async()=>back.props.onClick());steps++;continue;}if(label==='Montant direct'){const more=controls(n=>n.type==='button'&&text(n)==='Autre')[0];if(more){await act(async()=>more.props.onClick());continue;}}if(['Vodka','Crazy Tiger sans alcool','Diluant sans alcool','Bière','Snack','Chips','Vin','Rhum'].includes(label)){const full=controls(n=>n.type==='button'&&text(n)==='Tout le Before')[0];if(full){await act(async()=>full.props.onClick());continue;}}const all=controls(n=>n.type==='button'&&text(n)==='Tous les lieux')[0];if(all){await act(async()=>all.props.onClick());continue;}const reveal=controls(n=>n.type==='button'&&['Autres consommations','Autres objets du Before'].includes(text(n)))[0];if(reveal){await act(async()=>reveal.props.onClick());continue;}break;
   }
   await act(async()=>button(label).props.onClick());steps++;
 };
@@ -112,6 +112,26 @@ try{
   overrides={initialTarget:'quick'};await act(async()=>root.unmount());await act(async()=>{root=create(render());});assert.equal(step(),'quick');assert.equal(input('Coût prévu (€)').props.value,'60');await change('Coût prévu (€)','65');await click('Retenir ce coût');assert.equal(current().slotSelections.main.items[0].selectionId,original.selectionId);assert.equal(current().slotSelections.main.items[0].cost.unitAmount,'65');assert.equal(current().slotSelections.main.items.length,1);
  });
  // WAVE_3_TESTS
+ await check('R278_REVERSE_ONE_LEG_INVALIDATES_PRICES_AND_PRESERVES_ID',async()=>{
+  const {barReverseLeg}=require('@/app/mois-a-venir/composer/bar-living-operations');const leg={kind:'MOBILITY_INTENT',selectionId:uuid(799),optionKey:'taxi',origin:{kind:'KNOWN',placeId:uuid(790)},destination:{kind:'KNOWN',placeId:uuid(791)},returnRequired:false,pricing:{fare:{kind:'MANUAL',unitAmount:'12'},parking:{kind:'MANUAL',unitAmount:'3'},fundingAllocations:[],preference:'FASTEST'}};const reversed=barReverseLeg(leg);assert.deepEqual(reversed.origin,leg.destination);assert.deepEqual(reversed.destination,leg.origin);assert.equal(reversed.selectionId,leg.selectionId);assert.equal(reversed.pricing.fare.kind,'UNKNOWN');assert.equal(reversed.pricing.parking.kind,'UNKNOWN');assert.equal(leg.pricing.fare.unitAmount,'12');assert.throws(()=>barReverseLeg({...leg,pricing:{...leg.pricing,fundingAllocations:[{source:'BANK',amount:'12'}]}}),/financement/);
+ });
+ await check('R009_R132_HOME_DOCK_NO_REDUNDANT_NAVIGATION',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);const labels=dock().findAll(n=>n.type==='strong').map(text);assert.deepEqual(labels,['Bière','Before','Bouteille partagée','Autre']);assert.equal(pendingOps.length,0);
+ });
+ await check('R219_R222_BEFORE_CONTEXTUAL_COMPLEMENTS_NO_AUTO_MUTATION',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Before');await click('Vodka');const prior=structuredClone(model.semanticState),labels=dock().findAll(n=>n.type==='strong').map(text);assert.ok(labels.includes('Diluant sans alcool'));assert.ok(!labels.includes('Rhum'));await click('Tout le Before');assert.deepEqual(model.semanticState,prior);await click('Rhum');assert.equal(model.semanticState.contexts.find(c=>c.parentContextOccurrenceId===id).slotSelections.extras.items[0].cost.kind,'UNKNOWN');
+ });
+ await check('R141_R142_R200_R283_R289_ENDPOINT_ROLE_SEARCH_NOT_28_PAGES',async()=>{
+  const {barEndpointSuggestions}=require('@/app/mois-a-venir/composer/bar-place-knowledge');const p=(i,name,extra={})=>({placeId:uuid(i),name,commune:'Ville',nature:'Commerce',usage:'Bar',subtype:null,privatePlace:false,relationships:[],...extra}),home=p(701,'Maison',{nature:'Domicile privé',usage:'Domicile',subtype:'Domicile principal',privatePlace:true}),bar=p(702,'Bar fixture'),airport=p(703,'Aéroport',{address:'Quai École'}),venue={kind:'KNOWN',placeId:bar.placeId};
+  assert.deepEqual(barEndpointSuggestions([airport,bar,home],[],'outbound','origin',venue,venue).map(x=>x.place.placeId),[home.placeId]);assert.equal(barEndpointSuggestions([airport,bar,home],[],'return','origin',{kind:'KNOWN',placeId:home.placeId},venue)[0].place.placeId,bar.placeId);assert.equal(barEndpointSuggestions([airport,bar,home],[],'outbound','origin',venue,venue,'ecole')[0].place.placeId,airport.placeId);assert.equal(barEndpointSuggestions([airport,bar,home],[],'outbound','origin',venue,venue,'',true).length,2);
+ });
+ await check('R271_R281_MODE_ENDPOINT_FOLLOWUP_AND_INDEPENDENT_RETURN',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await navigateRoute('outbound');await click('Taxi / Uber');assert.equal(step(),'endpoint');assert.equal(current().slotSelections.outbound.items[0].origin,null);assert.equal(current().slotSelections.return?.items.length??0,0);
+  await change('Autre point du trajet','Départ libre fixture');await click('Retenir ce point libre');assert.equal(step(),'endpoint');await change('Autre point du trajet','Arrivée libre fixture');await click('Retenir ce point libre');assert.equal(step(),'outbound');const leg=structuredClone(current().slotSelections.outbound.items[0]);await navigateRoute('return');await click('Reprendre le trajet inverse');assert.deepEqual(current().slotSelections.outbound.items[0],leg);assert.notEqual(current().slotSelections.return.items[0].selectionId,leg.selectionId);assert.equal(current().slotSelections.return.items[0].pricing.fare.kind,'UNKNOWN');
+ });
+ await check('R235_R237_NEW_LINE_AND_RAW_EXPANSION_RETAIN_TARGET',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Bière');await change('Prix unitaire (€)','8,');assert.deepEqual(dock().findAll(n=>n.type==='strong').map(text),['Autres consommations']);await click('Autres consommations');assert.ok(dock().findAll(n=>n.type==='strong').map(text).includes('+ Bière'));await click('Bière');await click('Continuer à modifier');assert.equal(input('Prix unitaire (€)').props.value,'8,');assert.equal(current().slotSelections.extras.items.length,1);
+ });
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  fs.mkdirSync('outputs/bar-350',{recursive:true});fs.writeFileSync('outputs/bar-350/waves-react.json',JSON.stringify({proof:'PASS_REACT_AND_OWNER_FIXTURE_NOT_BROWSER_NOT_AUTH',checks,remoteWrites:0},null,2));
  if(checks.some(c=>c.status==='FAIL'))process.exitCode=1;

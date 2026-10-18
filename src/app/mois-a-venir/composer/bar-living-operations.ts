@@ -4,7 +4,7 @@ import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state
 import type { ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import {stopForPlace} from "@/domain/phase2/planned-routes";
 
-export type BarTarget = "place" | "date" | "people" | "drinks" | "before" | "outbound" | "return" | "summary" | "quick" | `component:${string}:${string}`;
+export type BarTarget = "place" | "date" | "people" | "drinks" | "before" | "outbound" | "return" | "summary" | "quick" | `component:${string}:${string}` | `route:${"outbound"|"return"}:${"origin"|"destination"|"fare"}`;
 export type BarLeg = Extract<ComponentSelectionV1, {kind:"MOBILITY_INTENT"}>;
 export const barItems = (context: PlannedContextState, slot: string) =>
   (context.slotSelections[slot]?.items ?? []) as readonly ComponentSelectionV1[];
@@ -63,6 +63,13 @@ export function barEndpointCosts(leg: BarLeg, key: "origin" | "destination"): st
   return [leg.pricing?.fare && leg.pricing.fare.kind!=="UNKNOWN" ? "le tarif du billet ou de la course" : null,
     key==="destination" && leg.pricing?.parking && leg.pricing.parking.kind!=="UNKNOWN" ? "le stationnement à l’arrivée" : null,
     leg.route?.toll && leg.route.toll.kind!=="UNKNOWN" ? "le péage de cet itinéraire" : null].filter((value):value is string=>value!==null);
+}
+/** Explicit reversal of one simple leg; independent return and identity are untouched. */
+export function barReverseLeg(leg:BarLeg):BarLeg {
+  assertBarRouteEditable(leg);
+  if(!leg.origin||!leg.destination||(leg.route?.stops.length??0)>2)
+    throw Error("Précisez les deux points ; les trajets à étapes se rééditent dans leurs options détaillées.");
+  return barEndpoint(barEndpoint(leg,"origin",leg.destination,"UNKNOWN"),"destination",leg.origin,"UNKNOWN");
 }
 /** Explicit user action only. A new independent leg never inherits a fare,
  * parking, funding or quote. Existing returns require a separate replacement choice. */

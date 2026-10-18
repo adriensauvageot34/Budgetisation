@@ -75,7 +75,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
   </>;
 }
 
-export type PaletteQuestion = { title: string; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; choose: () => void }[];
+export type PaletteQuestion = { title: string; identity?:string; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string };
 export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
@@ -85,14 +85,17 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const [mode, setMode] = useState<"complete" | "all">("complete"), [query, setQuery] = useState("");
   const options = useRef<HTMLDivElement>(null), optionsId = useId();
   const [scroll, setScroll] = useState({ before: false, after: false });
-  const [answerPage,setAnswerPage]=useState(0),[answerCount,setAnswerCount]=useState(4);
+  const [answerPositions,setAnswerPositions]=useState<Record<string,number>>({}),[answerCount,setAnswerCount]=useState(4);
+  const answerKey=JSON.stringify([question?.identity??question?.title,question?.search?.value??""]);
+  const answerPage=answerPositions[answerKey]??0;
+  const setAnswerPage=(page:number)=>setAnswerPositions(previous=>({...previous,[answerKey]:page}));
   useLayoutEffect(()=>{
     if(appearance!=="bar"||!options.current)return;
     const node=options.current;
     const measure=()=>setAnswerCount(Math.max(1,Math.min(6,Math.floor(node.clientWidth/170)||4)));
     measure();const observer=new ResizeObserver(measure);observer.observe(node);return()=>observer.disconnect();
   },[appearance]);
-  useLayoutEffect(()=>setAnswerPage(0),[question?.title,question?.search?.value]);
+  useLayoutEffect(()=>setAnswerPage(0),[question?.identity,question?.title,question?.search?.value]);
   const answerPages=Math.max(1,Math.ceil((question?.choices.length??0)/answerCount));
   const currentAnswerPage=Math.min(answerPage,answerPages-1);
   const measureScroll = () => {
