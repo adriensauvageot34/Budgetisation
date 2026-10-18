@@ -739,18 +739,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Préserver la possibilité de tout réaliser au clavier et au tactile malgré la réduction des boutons.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Préserver la possibilité de tout réaliser au clavier et au tactile malgré la réduction des boutons."
+    }
   },
   {
     "id": "R031",
@@ -761,18 +773,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Maintenir des zones de clic suffisamment grandes pour chaque commande compacte.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Maintenir des zones de clic suffisamment grandes pour chaque commande compacte."
+    }
   },
   {
     "id": "R032",
@@ -831,18 +855,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Simplifier la hiérarchie visuelle autour de trois niveaux : voir, modifier, options avancées.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Simplifier la hiérarchie visuelle autour de trois niveaux : voir, modifier, options avancées."
+    }
   },
   {
     "id": "R035",
@@ -957,18 +993,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Réduire la hauteur totale de la carte en édition simple en exploitant davantage la largeur disponible.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire la hauteur totale de la carte en édition simple en exploitant davantage la largeur disponible."
+    }
   },
   {
     "id": "R040",
@@ -979,18 +1027,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Viser une édition simple proportionnée au contenu plutôt qu'une grande carte quasi vide.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Viser une édition simple proportionnée au contenu plutôt qu'une grande carte quasi vide."
+    }
   },
   {
     "id": "R041",
@@ -1042,18 +1102,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Réduire l'espace vertical entre l'en-tête et les capsules de métadonnées.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire l'espace vertical entre l'en-tête et les capsules de métadonnées."
+    }
   },
   {
     "id": "R043",
@@ -1189,18 +1261,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Supprimer les lignes réservées uniquement à un petit bouton d'action.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Supprimer les lignes réservées uniquement à un petit bouton d'action."
+    }
   },
   {
     "id": "R047",
@@ -1434,18 +1518,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Ne jamais ajouter de défilement vertical interne pour faire tenir davantage de contrôles.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais ajouter de défilement vertical interne pour faire tenir davantage de contrôles."
+    }
   },
   {
     "id": "R056",
@@ -1456,18 +1552,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Ne jamais introduire de scroll horizontal interne dans la carte.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais introduire de scroll horizontal interne dans la carte."
+    }
   },
   {
     "id": "R057",
@@ -1478,18 +1586,30 @@
     "localisation": "context-palette.tsx; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Ne jamais introduire de scroll vertical interne dans le dock.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais introduire de scroll vertical interne dans le dock."
+    }
   },
   {
     "id": "R058",
@@ -1500,18 +1620,30 @@
     "localisation": "context-palette.tsx; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Ne jamais introduire de scroll horizontal continu dans le dock.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais introduire de scroll horizontal continu dans le dock."
+    }
   },
   {
     "id": "R059",
@@ -1546,18 +1678,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Ne jamais masquer une action indispensable uniquement par `overflow:hidden`.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne jamais masquer une action indispensable uniquement par `overflow:hidden`."
+    }
   },
   {
     "id": "R061",
@@ -1568,18 +1712,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Adapter la hauteur de la carte ouverte à la scène réellement active.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Adapter la hauteur de la carte ouverte à la scène réellement active."
+    }
   },
   {
     "id": "R062",
@@ -1590,18 +1746,30 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Adapter la hauteur de la carte fermée à la quantité réelle d'informations.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Adapter la hauteur de la carte fermée à la quantité réelle d'informations."
+    }
   },
   {
     "id": "R063",
@@ -1612,18 +1780,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Ne pas réserver une hauteur fixe excessive pour une seule consommation ou un petit calendrier.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne pas réserver une hauteur fixe excessive pour une seule consommation ou un petit calendrier."
+    }
   },
   {
     "id": "R064",
@@ -1634,18 +1814,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Conserver une hauteur maximale compatible avec le viewport et le Board.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Conserver une hauteur maximale compatible avec le viewport et le Board."
+    }
   },
   {
     "id": "R065",
@@ -1656,18 +1848,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Conserver l'édition ciblée dans la carte sans pousser les éléments actifs sous la ligne de flottaison.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Conserver l'édition ciblée dans la carte sans pousser les éléments actifs sous la ligne de flottaison."
+    }
   },
   {
     "id": "R066",
@@ -1726,18 +1930,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Éviter d'étirer une tuile unique sur toute la largeur quand une carte plus courte serait préférable.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Éviter d'étirer une tuile unique sur toute la largeur quand une carte plus courte serait préférable."
+    }
   },
   {
     "id": "R069",
@@ -1748,18 +1964,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Utiliser des tuiles équilibrées sur la largeur pour deux consommations.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Utiliser des tuiles équilibrées sur la largeur pour deux consommations."
+    }
   },
   {
     "id": "R070",
@@ -1770,18 +1998,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Adapter le nombre de colonnes de consommation à la largeur effective et au nombre d'objets.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Adapter le nombre de colonnes de consommation à la largeur effective et au nombre d'objets."
+    }
   },
   {
     "id": "R071",
@@ -1842,18 +2082,30 @@
     "localisation": "bar-living-editor.tsx; composer.module.css",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Réduire les espaces blancs qui n'assurent aucune respiration utile.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire les espaces blancs qui n'assurent aucune respiration utile."
+    }
   },
   {
     "id": "R074",
@@ -1912,18 +2164,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Mieux aligner les marges, espacements et largeurs des éléments sur une échelle commune.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mieux aligner les marges, espacements et largeurs des éléments sur une échelle commune."
+    }
   },
   {
     "id": "R077",
@@ -1934,18 +2198,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Limiter les différences arbitraires de rayon de bordure.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Limiter les différences arbitraires de rayon de bordure."
+    }
   },
   {
     "id": "R078",
@@ -1956,18 +2232,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Réduire le nombre de bordures et de boutons pointillés.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire le nombre de bordures et de boutons pointillés."
+    }
   },
   {
     "id": "R079",
@@ -1978,18 +2266,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Réserver les contours pointillés aux emplacements vides ou actions dont ce traitement a un sens.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réserver les contours pointillés aux emplacements vides ou actions dont ce traitement a un sens."
+    }
   },
   {
     "id": "R080",
@@ -2000,18 +2300,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Utiliser un état actif subtil et homogène sur les tuiles sélectionnées.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Utiliser un état actif subtil et homogène sur les tuiles sélectionnées."
+    }
   },
   {
     "id": "R081",
@@ -2022,18 +2334,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Éviter les effets de survol qui agrandissent les tuiles ou déplacent leurs voisines.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Éviter les effets de survol qui agrandissent les tuiles ou déplacent leurs voisines."
+    }
   },
   {
     "id": "R082",
@@ -2044,18 +2368,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Prévoir des transitions internes brèves sans déplacement du contenu hors écran.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Prévoir des transitions internes brèves sans déplacement du contenu hors écran."
+    }
   },
   {
     "id": "R083",
@@ -2066,18 +2402,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Conserver une hiérarchie typographique stable entre titre, montant, contexte et détails.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Conserver une hiérarchie typographique stable entre titre, montant, contexte et détails."
+    }
   },
   {
     "id": "R084",
@@ -2088,18 +2436,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Renforcer le contraste des petits textes gris et beiges.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Renforcer le contraste des petits textes gris et beiges."
+    }
   },
   {
     "id": "R085",
@@ -2110,18 +2470,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Limiter le nombre de variantes de tailles de texte dans les cartes.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Limiter le nombre de variantes de tailles de texte dans les cartes."
+    }
   },
   {
     "id": "R086",
@@ -2441,18 +2813,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Donner la priorité visuelle aux objets et montants réels dans une carte riche.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Donner la priorité visuelle aux objets et montants réels dans une carte riche."
+    }
   },
   {
     "id": "R100",
@@ -2485,18 +2869,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Harmoniser le style, les dimensions et le cadrage des miniatures entre bibliothèque, dock et carte.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Harmoniser le style, les dimensions et le cadrage des miniatures entre bibliothèque, dock et carte."
+    }
   },
   {
     "id": "R102",
@@ -2595,18 +2991,30 @@
     "localisation": "composer.module.css; public/planned-visuals",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Ne pas employer la même illustration générique pour tous les lieux proposés.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Ne pas employer la même illustration générique pour tous les lieux proposés."
+    }
   },
   {
     "id": "R107",
@@ -2639,18 +3047,30 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Faire de la carte fermée une synthèse illustrative de la soirée plutôt qu'une miniature du formulaire.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Faire de la carte fermée une synthèse illustrative de la soirée plutôt qu'une miniature du formulaire."
+    }
   },
   {
     "id": "R109",
@@ -2702,18 +3122,30 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Afficher les participants en pastilles lisibles avec initiales ou portraits autorisés.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Afficher les participants en pastilles lisibles avec initiales ou portraits autorisés."
+    }
   },
   {
     "id": "R111",
@@ -2724,18 +3156,30 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Limiter les participants affichés en compact à quelques pastilles puis « +N ».",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Limiter les participants affichés en compact à quelques pastilles puis « +N »."
+    }
   },
   {
     "id": "R112",
@@ -3108,18 +3552,30 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Placer Aller et Retour sur une seule ligne quand la largeur suffit, sans mélanger leurs coûts.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Placer Aller et Retour sur une seule ligne quand la largeur suffit, sans mélanger leurs coûts."
+    }
   },
   {
     "id": "R127",
@@ -3130,18 +3586,30 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Rendre les tuiles compactes plus denses et supprimer les espaces morts sous les objets.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Rendre les tuiles compactes plus denses et supprimer les espaces morts sous les objets."
+    }
   },
   {
     "id": "R128",
@@ -3196,18 +3664,30 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Réduire les microtextes permanents dans la carte fermée.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réduire les microtextes permanents dans la carte fermée."
+    }
   },
   {
     "id": "R131",
@@ -3218,18 +3698,30 @@
     "localisation": "bar-living-card.tsx; bar-living-details.tsx",
     "baseline": "EXISTING",
     "action_requise": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Existing compact CSS/art and new structural improvements are present. Current dimensions, focus/contrast/visual balance or all-scene geometry are not certified; browser disabled. Historical captures remain historical, not a new PASS.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Construire une composition visuelle propre pour les états vide, partiel et riche.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Construire une composition visuelle propre pour les états vide, partiel et riche."
+    }
   },
   {
     "id": "R132",
@@ -3939,18 +4431,30 @@
     "localisation": "context-palette.tsx; bar-living-editor.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "The paged/compact implementation exists, but current pixel geometry, clipping or actual keyboard focus cannot be certified after Work browser access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Préserver le focus clavier lors d'un changement de page du dock.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Préserver le focus clavier lors d'un changement de page du dock."
+    }
   },
   {
     "id": "R163",
@@ -7871,18 +8375,30 @@
     "localisation": "composer-shell.tsx; durable-draft.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Mesurer séparément le temps clic→feedback, l'opération serveur, la Preview et la sauvegarde durable.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mesurer séparément le temps clic→feedback, l'opération serveur, la Preview et la sauvegarde durable."
+    }
   },
   {
     "id": "R315",
@@ -7893,18 +8409,30 @@
     "localisation": "composer-shell.tsx; durable-draft.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Vérifier la latence de retrait d'une carte riche avec les mêmes données avant et après correction.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Vérifier la latence de retrait d'une carte riche avec les mêmes données avant et après correction."
+    }
   },
   {
     "id": "R316",
@@ -7915,18 +8443,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Empêcher les cartes voisines de recouvrir un formulaire actif pendant les animations du Board.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Empêcher les cartes voisines de recouvrir un formulaire actif pendant les animations du Board."
+    }
   },
   {
     "id": "R317",
@@ -7978,18 +8518,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "EXISTING",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Réserver à la carte ouverte une surface correspondant à sa hauteur réellement utile.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Réserver à la carte ouverte une surface correspondant à sa hauteur réellement utile."
+    }
   },
   {
     "id": "R319",
@@ -8000,18 +8552,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "EXISTING",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Éviter les grandes réservations vides du Board après changement de scène.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Éviter les grandes réservations vides du Board après changement de scène."
+    }
   },
   {
     "id": "R320",
@@ -8022,18 +8586,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Stabiliser l'emplacement des cartes voisines pendant les éditions rapides.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Stabiliser l'emplacement des cartes voisines pendant les éditions rapides."
+    }
   },
   {
     "id": "R321",
@@ -8044,18 +8620,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Contrôler les superpositions et la priorité de clic au cours de chaque transition.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Contrôler les superpositions et la priorité de clic au cours de chaque transition."
+    }
   },
   {
     "id": "R322",
@@ -8066,18 +8654,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Éviter les animations spatiales qui font traverser une carte active par une autre carte.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Éviter les animations spatiales qui font traverser une carte active par une autre carte."
+    }
   },
   {
     "id": "R323",
@@ -8088,18 +8688,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Mieux relier visuellement le dock à la carte qu'il modifie, malgré la pagination du Board.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mieux relier visuellement le dock à la carte qu'il modifie, malgré la pagination du Board."
+    }
   },
   {
     "id": "R324",
@@ -8110,18 +8722,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Préserver un ancrage spatial stable lorsque l'utilisateur change de scène interne.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Préserver un ancrage spatial stable lorsque l'utilisateur change de scène interne."
+    }
   },
   {
     "id": "R325",
@@ -8132,18 +8756,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Limiter les recalculs de hauteur et les repackings aux variations réellement utiles, après mesure.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Limiter les recalculs de hauteur et les repackings aux variations réellement utiles, après mesure."
+    }
   },
   {
     "id": "R326",
@@ -8154,18 +8790,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Instrumenter les MutationObserver et ResizeObserver pendant une saisie rapide.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Instrumenter les MutationObserver et ResizeObserver pendant une saisie rapide."
+    }
   },
   {
     "id": "R327",
@@ -8198,18 +8846,30 @@
     "localisation": "composer-shell.tsx; durable-draft.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Mesurer la latence frappe→affichage lors de l'édition d'un prix.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mesurer la latence frappe→affichage lors de l'édition d'un prix."
+    }
   },
   {
     "id": "R329",
@@ -8220,18 +8880,30 @@
     "localisation": "board-carousel.tsx; inventory-layout.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Actual browser timing, scrolling, Board observers or animated collisions require current browser access. Pure layout and shell transition tests pass but do not certify these measurements.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Mesurer les déplacements et collisions des cartes à différentes étapes de leurs animations.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Mesurer les déplacements et collisions des cartes à différentes étapes de leurs animations."
+    }
   },
   {
     "id": "R330",
@@ -8367,11 +9039,11 @@
       "FINAL_ENVIRONMENT"
     ],
     "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis",
     "niveau_preuve": "BLOCKED_ENV",
     "qualification_sha": "EXACT_PRODUCT_TREE",
     "reste": "Writer/lectures/RPC distingués par instrumentation opt-in et tests de service réels sur transport contrôlé. Ancien échec Auth riche non reproduit ni expliqué; NOT_RUN_AUTH.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
     "fichiers_modifiés": [],
     "nature_validation": "ENV_BLOCKED"
   },
@@ -8389,11 +9061,11 @@
       "FINAL_ENVIRONMENT"
     ],
     "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis",
     "niveau_preuve": "BLOCKED_ENV",
     "qualification_sha": "EXACT_PRODUCT_TREE",
     "reste": "NOT_RUN_AUTH: no isolated authenticated write environment confirmed; no personal Draft writes repeated. Existing canary was previously archived.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
     "fichiers_modifiés": [],
     "nature_validation": "ENV_BLOCKED"
   },
@@ -8411,11 +9083,11 @@
       "FINAL_ENVIRONMENT"
     ],
     "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis",
     "niveau_preuve": "BLOCKED_ENV",
     "qualification_sha": "EXACT_PRODUCT_TREE",
     "reste": "NOT_RUN_AUTH: no isolated authenticated write environment confirmed; no personal Draft writes repeated. Existing canary was previously archived.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
     "fichiers_modifiés": [],
     "nature_validation": "ENV_BLOCKED"
   },
@@ -8497,18 +9169,30 @@
     "localisation": "scripts/check-bar-apero-*.mjs",
     "baseline": "UNVERIFIED",
     "action_requise": "Current all-scene desktop/zoom/focus/resize browser campaign NOT_RUN after Work access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Current all-scene desktop/zoom/focus/resize browser campaign NOT_RUN after Work access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Vérifier l'absence de scroll interne sur toutes les sous-scènes, y compris les pages avancées héritées.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Vérifier l'absence de scroll interne sur toutes les sous-scènes, y compris les pages avancées héritées."
+    }
   },
   {
     "id": "R342",
@@ -8519,18 +9203,30 @@
     "localisation": "scripts/check-bar-apero-*.mjs",
     "baseline": "UNVERIFIED",
     "action_requise": "Current all-scene desktop/zoom/focus/resize browser campaign NOT_RUN after Work access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Current all-scene desktop/zoom/focus/resize browser campaign NOT_RUN after Work access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Tester les états vide, partiel et riche à plusieurs largeurs desktop et au zoom 125 %.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Tester les états vide, partiel et riche à plusieurs largeurs desktop et au zoom 125 %."
+    }
   },
   {
     "id": "R343",
@@ -8541,18 +9237,30 @@
     "localisation": "scripts/check-bar-apero-*.mjs",
     "baseline": "UNVERIFIED",
     "action_requise": "Current all-scene desktop/zoom/focus/resize browser campaign NOT_RUN after Work access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Current all-scene desktop/zoom/focus/resize browser campaign NOT_RUN after Work access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Tester l'accessibilité clavier et la restauration du focus à chaque transition de scène.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Tester l'accessibilité clavier et la restauration du focus à chaque transition de scène."
+    }
   },
   {
     "id": "R344",
@@ -8563,18 +9271,30 @@
     "localisation": "scripts/check-bar-apero-*.mjs",
     "baseline": "UNVERIFIED",
     "action_requise": "Current all-scene desktop/zoom/focus/resize browser campaign NOT_RUN after Work access was disabled.",
-    "statut": "BLOCKED_ENV",
+    "statut": "NOT_RUN",
     "preuves": [
       "FINAL_ENVIRONMENT"
     ],
-    "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
-    "niveau_preuve": "BLOCKED_ENV",
+    "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+    "niveau_preuve": "NOT_RUN",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Current all-scene desktop/zoom/focus/resize browser campaign NOT_RUN after Work access was disabled.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Exécuter et prouver le comportement complet : Tester la pagination des choix au redimensionnement sans page fantôme ni focus perdu.",
+    "blocage": "RECEPTION_NOT_EXECUTED",
     "fichiers_modifiés": [],
-    "nature_validation": "ENV_BLOCKED"
+    "nature_validation": "ENV_BLOCKED",
+    "avant": "BLOCKED_ENV",
+    "apres": "NOT_RUN",
+    "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+    "transition_cloture": {
+      "avant": "BLOCKED_ENV",
+      "apres": "NOT_RUN",
+      "preuve": "Le navigateur a été rétabli; le contrôle complet de cette exigence n’a pas été exécuté. Aucun succès n’est inféré de la campagne partielle.",
+      "sha_preuve": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+      "environnement": "Navigateur Codex disponible, réception spécifique complète non exécutée",
+      "niveau_preuve": "NOT_RUN",
+      "reste": "Exécuter et prouver le comportement complet : Tester la pagination des choix au redimensionnement sans page fantôme ni focus perdu."
+    }
   },
   {
     "id": "R345",
@@ -8590,11 +9310,11 @@
       "FINAL_ENVIRONMENT"
     ],
     "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis",
     "niveau_preuve": "BLOCKED_ENV",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Real Google/provider and comparative expense flow NOT_RUN; fixtures do not replace an authenticated provider campaign.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Appel fournisseur réel et comparaison authentifiée non exécutés sur le candidat final. Aucun accès Auth isolé utilisé.",
+    "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
     "fichiers_modifiés": [],
     "nature_validation": "ENV_BLOCKED"
   },
@@ -8612,11 +9332,11 @@
       "FINAL_ENVIRONMENT"
     ],
     "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis",
     "niveau_preuve": "BLOCKED_ENV",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Real Google/provider and comparative expense flow NOT_RUN; fixtures do not replace an authenticated provider campaign.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Appel fournisseur réel et comparaison authentifiée non exécutés sur le candidat final. Aucun accès Auth isolé utilisé.",
+    "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
     "fichiers_modifiés": [],
     "nature_validation": "ENV_BLOCKED"
   },
@@ -8657,11 +9377,11 @@
       "FINAL_ENVIRONMENT"
     ],
     "sha_preuve": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
-    "environnement": "LOCAL_SYNTHETIC_ONLY",
+    "environnement": "Navigateur disponible; session/tenant isolé et nouvel accord Draft Auth non réunis",
     "niveau_preuve": "BLOCKED_ENV",
     "qualification_sha": "EXACT_PRODUCT_TREE",
-    "reste": "Complete rich authenticated save/reload chain NOT_RUN_AUTH. Local constituent paths pass but do not close the historical rich-save gate.",
-    "blocage": "Browser Work disabled / isolated Auth not established",
+    "reste": "Appel fournisseur réel et comparaison authentifiée non exécutés sur le candidat final. Aucun accès Auth isolé utilisé.",
+    "blocage": "AUTH_ISOLATED_ENV_NOT_AVAILABLE",
     "fichiers_modifiés": [],
     "nature_validation": "ENV_BLOCKED"
   },

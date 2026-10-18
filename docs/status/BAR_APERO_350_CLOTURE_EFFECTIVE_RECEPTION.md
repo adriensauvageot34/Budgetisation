@@ -63,10 +63,11 @@ Non certifiés : drag natif, toutes transitions animées, tous focus de retour, 
 | DONE_STATIC |70|
 | DONE_BROWSER_FIXTURE |28|
 | PARTIAL |28|
-| BLOCKED_ENV |66|
+| BLOCKED_ENV |6|
+| NOT_RUN |60|
 | BLOCKED_OWNER |3|
 
-235acquis antérieurs +18clôtures =253clos à leur niveau de preuve.97restent ouverts. Aucun `350/350 DONE`. La matrice des115écarts initiaux conserve avant/après/preuve/reste; les formulations et catégories originales sont intactes.
+235acquis antérieurs +18clôtures =253clos à leur niveau de preuve.97restent ouverts. Le navigateur étant rétabli,60contrôles encore inexécutés sont requalifiés NOT_RUN plutôt que conservés à tort BLOCKED_ENV. Six dépendances Auth/fournisseur restent effectivement bloquées. Aucun `350/350 DONE`. La matrice des115écarts initiaux conserve avant/après/preuve/reste; les formulations et catégories originales sont intactes.
 
 ## Bloqueurs et limites propriétaires
 
