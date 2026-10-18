@@ -70,18 +70,19 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     if (!expandedId || dragging) return;
     // Measure only the living Bar's rendered content. The grid owns the outer
     // rectangle and still caps it to the available shelf; no overlay or data edit.
-    const cell = [...viewport.current?.querySelectorAll<HTMLElement>("[data-inventory-id]") ?? []]
-      .find(node => node.dataset.inventoryId === expandedId);
-    const card = cell?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
-    if (!card) return;
+    const board=viewport.current;if(!board)return;
+    const findCard=()=>[...board.querySelectorAll<HTMLElement>("[data-inventory-id]")]
+      .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
+    let card=findCard();
     let frame = 0;
     const resize = new ResizeObserver(schedule);
     const observeContent = () => {
-      resize.disconnect(); resize.observe(card);
+      card=findCard();resize.disconnect();if(!card)return;resize.observe(card);
       for (const child of card.children) if (child instanceof HTMLElement) resize.observe(child);
     };
     function measure() {
       frame = 0;
+      card=findCard();
       const editor = card?.querySelector<HTMLElement>("[data-bar-living-editor]");
       const header = card?.querySelector<HTMLElement>("header");
       if (!editor || !header) return; // Keep the previous geometry while the editor loads.
@@ -90,10 +91,12 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     }
     function schedule() { if (!frame) frame = requestAnimationFrame(measure); }
     const mutations = new MutationObserver(() => { observeContent(); schedule(); });
-    mutations.observe(card, { childList: true, subtree: true, characterData: true });
+    // Packing can remount the same context on another page. Follow its new
+    // host instead of keeping a ResizeObserver attached to the departed card.
+    mutations.observe(board, { childList: true, subtree: true, characterData: true });
     observeContent(); schedule();
     return () => { resize.disconnect(); mutations.disconnect(); if (frame) cancelAnimationFrame(frame); };
-  }, [expandedId, dragging, size.width, spatialKey]);
+  }, [expandedId, dragging, size.width, spatialKey, active]);
   useLayoutEffect(() => {
     if (!dragging) { setDragOrigin(null); return; }
     const sourceKey = interaction?.grabbed?.sourceKey;
