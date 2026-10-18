@@ -28,7 +28,7 @@ async function test(id,run){try{await run();checks.push({id,status:'PASS'});cons
 await test('GOOGLE_REF_STRICT_ROUND_TRIP',()=>{
  const s=semantic();validateContextGraph(s);assert.deepEqual(parsePlanSemanticState(JSON.parse(JSON.stringify(s))),s);
  const incomplete=semantic({outbound:selections({...leg(),route:{version:'composer-mobility-route@v1',vehicleRef:null,stops:[]}})});validateContextGraph(incomplete);
- const amountOnly=editNightOut(s,{contextOccurrenceId:s.contexts[0].contextOccurrenceId,fields:{},slots:{main:selections({...s.contexts[0].slotSelections.main.items[0],cost:{kind:'MANUAL',unitAmount:'61'}})}});validateContextGraph(amountOnly);assert.deepEqual(amountOnly.contexts[0].fields,s.contexts[0].fields);
+ const amountOnly=editNightOut(s,{contextOccurrenceId:s.contexts[0].contextOccurrenceId,fields:{},slots:{main:[{...s.contexts[0].slotSelections.main.items[0],cost:{kind:'MANUAL',unitAmount:'61'}}]}});validateContextGraph(amountOnly);assert.deepEqual(amountOnly.contexts[0].fields,s.contexts[0].fields);
  for(const patch of [{google:{...a.google,placeId:'bad id'}},{google:{...a.google,kind:'RESTAURANT'}},{address:'not allowed'},{place:home}])assert.throws(()=>parseNightOutVenue({...a,...patch}));
  assert.throws(()=>parseVenueEndpoints({origin:venueBinding(a)},{origin:home}));
  assert.throws(()=>editNightOut(s,{contextOccurrenceId:s.contexts[0].contextOccurrenceId,fields:{occasion:'not admitted'}}));
