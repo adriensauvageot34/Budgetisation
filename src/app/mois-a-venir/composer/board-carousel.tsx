@@ -47,7 +47,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       .map(node => node.closest<HTMLElement>("[data-inventory-id]")?.dataset.inventoryId).filter((id):id is string => !!id).sort();
     setDirtyItems(old => old.length === ids.length && old.every((id,i) => id === ids[i]) ? old : ids);
   };
-  const previousScene = useRef<{ page:number; expandedId?:string; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });
+  const previousScene = useRef<{ page:number; expandedId?:string; hasLivingBar?:boolean; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });
   const cancelDwell = () => { if (dwell.current) { clearTimeout(dwell.current); dwell.current = null; } };
   const browsing = useRef(false);
   const go = (next: number, manual = true) => { browsing.current = manual; cancelDwell(); captureDirty(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setDeparting(active); setPage(Math.max(0, Math.min(pages.length - 1, next))); };
@@ -55,25 +55,28 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   useLayoutEffect(captureDirty,[model]);
   useLayoutEffect(()=>{
     if(dragging||!viewport.current)return;
-    const board=viewport.current;let frame=0;
+    const board=viewport.current;let lastSignature='';
     // Measure intrinsic children, not the stretched grid cell: otherwise the
     // reserved height feeds back into itself and can never shrink on folding.
     const cards=()=>[...board.querySelectorAll<HTMLElement>('[data-bar-living-card][data-expanded="false"]')];
-    const resize=new ResizeObserver(()=>{note('resizes');schedule();});
+    const resize=new ResizeObserver(()=>{note('resizes');measure(true);});
     function observe(){resize.disconnect();for(const card of cards())for(const child of card.children)if(child instanceof HTMLElement)resize.observe(child);}
-    function measure(){note('measures');frame=0;const heights:Record<string,number>={};for(const card of cards()){
+    function measure(synchronous=false){note('measures');const heights:Record<string,number>={};for(const card of cards()){
       const id=card.dataset.context;if(!id)continue;
       heights[id]=Math.max(130,Math.ceil([...card.children].reduce((sum,child)=>sum+child.getBoundingClientRect().height,0)+2));
     }
-      setCompactBarHeights(previous=>{
+      const signature=JSON.stringify(heights);if(signature===lastSignature)return;lastSignature=signature;
+      const reserve=()=>setCompactBarHeights(previous=>{
         const next={...previous,...heights};for(const id of Object.keys(next))if(!projected.some(item=>item.id===id))delete next[id];
         return Object.keys(next).length===Object.keys(previous).length&&Object.entries(next).every(([id,height])=>previous[id]===height)?previous:next;
       });
+      // Undo and Preview can remount a folded Bar before its prior height is
+      // known. Reserve the intrinsic surface before paint, as for the editor.
+      if(synchronous)flushSync(reserve);else reserve();
     }
-    function schedule(){if(!frame)frame=requestAnimationFrame(measure);}
-    const mutations=new MutationObserver(()=>{note('mutations');observe();schedule();});
-    mutations.observe(board,{childList:true,subtree:true,characterData:true});observe();schedule();
-    return()=>{resize.disconnect();mutations.disconnect();if(frame)cancelAnimationFrame(frame);};
+    const mutations=new MutationObserver(()=>{note('mutations');observe();measure(true);});
+    mutations.observe(board,{childList:true,subtree:true,characterData:true});observe();measure();
+    return()=>{resize.disconnect();mutations.disconnect();};
   },[dragging,expandedId,size.width,projected]);
   useLayoutEffect(() => {
     if (!expandedId || dragging) return;
@@ -142,8 +145,10 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     // A growing living card must reserve its final surface immediately. FLIP
     // translations of its neighbours crossed the active form in reception.
-    // Also skip the first folded layout; ordinary Board motion is unchanged.
-    if (samePage && before.rects.size && !dragging && !reduced && !expandedId && !before.expandedId) for (const cell of cells) {
+    // A folded rich Bar also changes height during removal/Undo and Preview.
+    // Keep those pages still; pages without a Bar retain ordinary Board motion.
+    const hasLivingBar = cells.some(cell => !!cell.querySelector('[data-bar-living-card]'));
+    if (samePage && before.rects.size && !dragging && !reduced && !expandedId && !before.expandedId && !hasLivingBar && !before.hasLivingBar) for (const cell of cells) {
       const id = cell.dataset.inventoryId!, currentRect = rects.get(id)!;
       let origin = before.rects.get(id), entering = false;
       if (!origin) {
@@ -168,7 +173,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       cell.animate([{ transform:`translate(${dx}px, ${dy}px) scale(${entering ? .95 : 1})`, opacity:entering ? .45 : 1 },
         { transform:"translate(0, 0) scale(1)", opacity:1 }], { duration:entering ? 290 : 220, easing:"cubic-bezier(.2,.75,.25,1)" });
     }
-    previousScene.current = { page:active, expandedId, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
+    previousScene.current = { page:active, expandedId, hasLivingBar, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
       .map(placement => [placement.item.id, placement.item.kind === "CLUSTER" ? placement.item.children.map(child => child.id) : []] as const) ?? []) };
   }, [geometry, active, dragging, expandedId]);
   const focusPage = inventoryPageFor(pages, focused, model);
