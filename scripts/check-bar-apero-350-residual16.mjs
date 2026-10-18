@@ -1,6 +1,7 @@
-import fs from 'node:fs';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';
+import fs from 'node:fs';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';
 import {check} from './check-bar-apero-350.mjs';
 const dir='docs/status/evidence/bar-apero-350/',rdir=dir+'residual16/',read=name=>JSON.parse(fs.readFileSync(rdir+name,'utf8'));
+for(const file of read('files-sha256.json').files){const bytes=fs.readFileSync(rdir+file.name),content=file.method==='utf8_normalized_lf'?bytes.toString('utf8').replaceAll('\r\n','\n'):bytes;assert.equal(crypto.createHash('sha256').update(content).digest('hex'),file.sha256,file.name+' evidence changed');}
 const baseline=JSON.parse(execFileSync('git',['show','264dfce70e3c94248ccb691d8348da8020cd84c7:'+dir+'requirements.json'],{encoding:'utf8'}));
 const rows=JSON.parse(fs.readFileSync(dir+'requirements.json','utf8')),transitions=read('transitions-16.json');
 assert.equal(transitions.length,16);assert.equal(new Set(transitions.map(t=>t.id)).size,16);

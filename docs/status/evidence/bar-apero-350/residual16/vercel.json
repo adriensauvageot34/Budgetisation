@@ -1,0 +1,48 @@
+{
+  "productSha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+  "deployments": [
+    {
+      "gate": "V1",
+      "sha": "8b8adfa2524030a679a7876078e30c385e841008",
+      "id": "dpl_i8mDSYjeKUfEgvERhnKh1DUvpgHt",
+      "url": "https://budgetisation-5kds8kzdl-adriensauvageot34-6137s-projects.vercel.app",
+      "branch": "codex/bar-apero-350-effective-closure",
+      "environment": "Preview",
+      "target": null,
+      "state": "READY",
+      "browser": "LOGIN_PAGE_OBSERVED",
+      "authProviderSmoke": "NOT_RUN_H1_BLOCKED",
+      "productBugFoundLocally": "empty route stops rejected while incomplete; corrected in integrated candidate"
+    },
+    {
+      "gate": "V2",
+      "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+      "id": "dpl_CpGS22ZxR29YMKwM8zL9xtS3xCiv",
+      "url": "https://budgetisation-hkhz9y8yw-adriensauvageot34-6137s-projects.vercel.app",
+      "branch": "codex/bar-apero-350-effective-closure",
+      "environment": "Preview",
+      "target": null,
+      "state": "READY",
+      "browser": "LOGIN_PAGE_OBSERVED",
+      "authProviderSmoke": "NOT_RUN_H1_BLOCKED",
+      "build": "Full Next16.2.6 compile29.4s TypeScript31.5s static8/8 Deployment completed"
+    },
+    {
+      "gate": "V3 / FINAL",
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "id": "dpl_ENdnsTfEAxLnuqUpDhSWK9HzmuLx",
+      "url": "https://budgetisation-2qyas1vcu-adriensauvageot34-6137s-projects.vercel.app",
+      "branch": "codex/bar-apero-350-effective-closure",
+      "environment": "Preview",
+      "target": null,
+      "state": "READY",
+      "browser": "LOGIN_PAGE_OBSERVED_AFTER_BUILD",
+      "authProviderSmoke": "NOT_RUN_H1_BLOCKED",
+      "build": "Full Next16.2.6 compile48s TypeScript49s static8/8 Deployment completed",
+      "localBrowser": "R143 mismatch/match, explicit endpoint; UNKNOWN amount; no internal overflow; FRESH/SAVED fixture"
+    }
+  ],
+  "V3": "R143_PRODUCT_FIX_TARGETED_RECEPTION",
+  "productionChanged": false,
+  "finalProductSha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f"
+}

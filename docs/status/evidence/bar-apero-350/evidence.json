@@ -363,5 +363,61 @@
     "niveau": "BUILD_READY_NOT_UI",
     "scope": "Exact product commit READY full build; isolated functional Auth UI blocked.",
     "file_sha256_lf": "79338ea3955b764ea0eb8cb0cb5fa551c9e6b2c638ff5312b59d50f0207655ca"
+  },
+  "R16_TESTS": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/tests.json",
+    "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+    "niveau": "PASS_REACT",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "ea089c7fd2924ac860e935e3855da8254ccaa1e077078e368916599fdad4f55c"
+  },
+  "R16_GOOGLE": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/google-route.json",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "PASS_DOMAIN_MOCK",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "afbe6cc52d35edf68f2e505e28b61be1bbd3a44fcd669d04808c0055dfaa2bd0"
+  },
+  "R16_FINANCE": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/economic-scope.json",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "PASS_PGLITE_SYNTHETIC",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "43fec3d24b9c1b96beb67dc1290f3f9855c7e800b5ef6b445be398a8685d42a1"
+  },
+  "R16_BROWSER": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/google-browser.json",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "0a9d59f92dfc3c98a83f3956cce5ef77493969492f81123827d440ccbdb25efe"
+  },
+  "R16_OWNER": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/owners.md",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "BLOCKED_OWNER",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "24dee0b63177f3c0886354bf331b37cfd84466088acce1b61c0b5f47b7966b76"
+  },
+  "R16_GEOMETRY": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/geometry.json",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "3de047bcd5c48663805b4342890b78b60b75d71872feb2c03b7b60eebb635737"
+  },
+  "R16_PREVIEW": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/vercel.json",
+    "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+    "niveau": "BUILD_READY_NOT_AUTH",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "3d270d7f0ed8fb9d98f153920bfa55293282340319a1fb1499084b0008d0219d"
+  },
+  "R16_V3": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/v3-browser.json",
+    "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Only final R143 endpoint filter is native-browser retested; financial and shared-owner suites rerun at final SHA. Rich geometry and other browser paths remain explicitly V2 evidence.",
+    "file_sha256_lf": "ff34af5802eec7d4c1da8479401688e7e01f1ec400d9cb75b44ca130f22acddf"
   }
 }

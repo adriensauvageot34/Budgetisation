@@ -1,0 +1,19 @@
+{
+  "project": "ipuuhxrblxormwgoaqnz",
+  "scope": "H1 exclusively fictitious",
+  "readOnly": true,
+  "timeoutSeconds": 5,
+  "h1GlobalPublished": false,
+  "canonicalStatus": "READY",
+  "canonicalIsH1": false,
+  "h1Gate": "BLOCKED_OWNER",
+  "accountsChanged": false,
+  "remoteFinancialWrites": 0,
+  "canonicalWrites": 0,
+  "draftWritesRemote": 0,
+  "authUI": "NOT_RUN",
+  "realGoogle": "NOT_RUN",
+  "realTomTom": "NOT_RUN",
+  "realHere": "NOT_RUN",
+  "historicalDraftIncident": "HISTORICAL_INCIDENT_UNEXPLAINED"
+}

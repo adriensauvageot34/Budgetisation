@@ -1,0 +1,13 @@
+GOOGLE_REF_STRICT_ROUND_TRIP FAIL TypeError: (items ?? []) is not iterable
+    at editNightOut (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\domain\phase2\planner\night-out-edit.ts:70:37)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-apero-google-route.mjs:31:19
+    at test (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-apero-google-route.mjs:27:39)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-apero-google-route.mjs:28:7
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+SHARED_OWNER_BUILDER_VS_DIRECTED_PLANNER PASS
+DIRECTED_OUTBOUND_RETURN_AND_CUSTOM_LEG PASS
+INVALID_DETAILS_PRESERVE_UNKNOWN_AND_INPUT PASS
+VENUE_CHANGE_EXPLICIT_SCOPE_ATOMIC_AND_REVERSE PASS
+STRUCTURED_VEHICLE_PRESENTATION_ONLY_OFFICIAL_DECLARATION PASS

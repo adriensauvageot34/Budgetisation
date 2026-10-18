@@ -1,0 +1,681 @@
+[
+  {
+    "id": "R208",
+    "description_originale": "Ne pas présenter « Retenir comme nom libre » comme l'issue normale d'un établissement Google reconnu.",
+    "avant": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Contrat Google exact/admission toujours absent : owners.md.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING",
+        "END_OWNER",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "responsabilite": "Lieux, recherche Google et identité Canonical",
+    "correctif": "Référence Google prospective versionnée, choix explicite et routage via owner partagé sans faux KNOWN.",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_BROWSER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "resultat": "CLOSED_AT_RECORDED_LEVEL",
+    "action_suivante": "Revue de la tranche ; pas de réplication tant que R348/providers non certifiés."
+  },
+  {
+    "id": "R209",
+    "description_originale": "Permettre à un établissement Google nouveau d'acquérir une identité durable exploitable uniquement via le propriétaire officiel autorisé.",
+    "avant": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Contrat Google exact/admission toujours absent : owners.md.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING",
+        "END_OWNER",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
+    },
+    "apres": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Admission Canonical durable absente : revue du contrat, mapping/source/RLS et migration dédiée décrits dans residual16/owners.md."
+    },
+    "responsabilite": "Lieux, recherche Google et identité Canonical",
+    "correctif": "Admission Canonical durable absente : revue du contrat, mapping/source/RLS et migration dédiée décrits dans residual16/owners.md.",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_OWNER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "Admission Canonical durable absente : revue du contrat, mapping/source/RLS et migration dédiée décrits dans residual16/owners.md."
+  },
+  {
+    "id": "R210",
+    "description_originale": "Préserver une correspondance Canonical exacte lorsque le googlePlaceId existe déjà.",
+    "avant": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Contrat Google exact/admission toujours absent : owners.md.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "G1_REACT",
+        "G1_P3",
+        "G1_EXISTING",
+        "END_OWNER",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés."
+    },
+    "apres": {
+      "statut": "BLOCKED_OWNER",
+      "reste": "Matching exact local prouvé ; aucun mapping Google officiel publié dans le DTO réel. Owner Canonical doit publier cette identité, pas un rapprochement textuel."
+    },
+    "responsabilite": "Lieux, recherche Google et identité Canonical",
+    "correctif": "Matching exact local prouvé ; aucun mapping Google officiel publié dans le DTO réel. Owner Canonical doit publier cette identité, pas un rapprochement textuel.",
+    "preuves": [
+      "G1_REACT",
+      "G1_P3",
+      "G1_EXISTING",
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_OWNER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "Matching exact local prouvé ; aucun mapping Google officiel publié dans le DTO réel. Owner Canonical doit publier cette identité, pas un rapprochement textuel."
+  },
+  {
+    "id": "R214",
+    "description_originale": "Proposer l'adaptation des trajets après changement de lieu seulement lorsqu'un lien autorisé est prouvé.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Relation route↔lieu central versionnée absente ; contrat précis owners.md. Endpoints/retour/prix manuels restent indépendants.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE",
+        "END_REACT",
+        "END_OWNER",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "responsabilite": "Lieux, recherche Google et identité Canonical",
+    "correctif": "Liaison dirigée versionnée ; conserver/adapter avant mutation, Undo natif et trajets autonomes préservés.",
+    "preuves": [
+      "FINAL_REACT",
+      "FINAL_SCOPE",
+      "END_REACT",
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_BROWSER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "resultat": "CLOSED_AT_RECORDED_LEVEL",
+    "action_suivante": "Revue de la tranche ; pas de réplication tant que R348/providers non certifiés."
+  },
+  {
+    "id": "R255",
+    "description_originale": "Distinguer l'estimation regroupée des contributions ou entrées additives.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "UI explicite et tests de couverture PASS ; discriminant machine owner Finance toujours absent. Libellé historique non considéré comme preuve.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE",
+        "END_REACT",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "responsabilite": "Montant global, couverture économique et affichage des coûts",
+    "correctif": "Discriminant COMPONENT économique versionné, IDs exacts, contributions indépendantes conservées.",
+    "preuves": [
+      "FINAL_REACT",
+      "FINAL_SCOPE",
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_BROWSER",
+      "R16_FINANCE"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "resultat": "CLOSED_AT_RECORDED_LEVEL",
+    "action_suivante": "Revue de la tranche ; pas de réplication tant que R348/providers non certifiés."
+  },
+  {
+    "id": "R257",
+    "description_originale": "Rendre le choix « Détailler à la place » explicite sur les postes réellement remplacés.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Substitution simple explicitement admise testée, cas legacy ambigu/multi-main refusés ; contrat de portée économique versionné manquant.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE",
+        "END_REACT",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "responsabilite": "Montant global, couverture économique et affichage des coûts",
+    "correctif": "Substitution atomique à digest attendu, refus des scopes legacy/funding ambigus, 60+12 et Undo natif.",
+    "preuves": [
+      "FINAL_REACT",
+      "FINAL_SCOPE",
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_BROWSER",
+      "R16_FINANCE"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "resultat": "CLOSED_AT_RECORDED_LEVEL",
+    "action_suivante": "Revue de la tranche ; pas de réplication tant que R348/providers non certifiés."
+  },
+  {
+    "id": "R276",
+    "description_originale": "Réduire le nom principal du véhicule à « Peugeot 207 » et placer sa version technique dans les détails.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Mobility publie label fiable mais pas brand/model séparés ; aucun nom court déduit. Contrat demandé owners.md.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE",
+        "END_UI",
+        "END_REACT",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "DONE_STATIC",
+      "reste": ""
+    },
+    "responsabilite": "Mobilité Aller / Retour : endpoints, modes, véhicules, coûts",
+    "correctif": "Déclaration officielle Canonical exacte : nom court structuré, descriptif technique conservé ; aucune regex de label.",
+    "preuves": [
+      "FINAL_REACT",
+      "FINAL_SCOPE",
+      "END_UI",
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_GOOGLE"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "OFFICIAL_READER + RENDERED_MARKUP_FIXTURE",
+    "niveau_preuve": "STATIC_AND_RENDERED_FIXTURE",
+    "resultat": "CLOSED_AT_RECORDED_LEVEL",
+    "action_suivante": "Revue de la tranche ; pas de réplication tant que R348/providers non certifiés."
+  },
+  {
+    "id": "R282",
+    "description_originale": "Après sélection des endpoints, proposer le véhicule nécessaire ou l'estimation légitime.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Contrats Mobility/UNKNOWN locaux PASS ; fournisseur réel bloqué par World H1 sans Global admissible et scope Canonical H1.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE",
+        "END_UI",
+        "END_REACT",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER",
+        "R23_ENV"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "DONE_BROWSER_FIXTURE",
+      "reste": ""
+    },
+    "responsabilite": "Mobilité Aller / Retour : endpoints, modes, véhicules, coûts",
+    "correctif": "Dock véhicule après endpoints décidés ; estimation owner partagé et UNKNOWN honnête, aucun domicile/véhicule implicite.",
+    "preuves": [
+      "FINAL_REACT",
+      "FINAL_SCOPE",
+      "END_UI",
+      "END_REACT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_BROWSER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "resultat": "CLOSED_AT_RECORDED_LEVEL",
+    "action_suivante": "Revue de la tranche ; pas de réplication tant que R348/providers non certifiés."
+  },
+  {
+    "id": "R314",
+    "description_originale": "Mesurer séparément le temps clic→feedback, l'opération serveur, la Preview et la sauvegarde durable.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Chaîne locale EventTiming/DOM/requêtes/Preview/SAVED mesurée ; corrélation serveur/World et persistance UI authentifiée non certifiée.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_ENVIRONMENT",
+        "END_UI",
+        "END_AUTH",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER",
+        "R23_METRICS"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Mesures locales séparées collectées ; corrélation serveur/Auth et persistance UI H1 non exécutées."
+    },
+    "responsabilite": "Suppression, sauvegarde, états asynchrones et latence",
+    "correctif": "Mesures locales séparées collectées ; corrélation serveur/Auth et persistance UI H1 non exécutées.",
+    "preuves": [
+      "FINAL_ENVIRONMENT",
+      "END_UI",
+      "END_AUTH",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_METRICS",
+      "R16_TESTS",
+      "R16_OWNER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "Mesures locales séparées collectées ; corrélation serveur/Auth et persistance UI H1 non exécutées."
+  },
+  {
+    "id": "R335",
+    "description_originale": "Identifier la cause de l'échec de sauvegarde riche indépendamment des timeouts Canonical de Preview.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Cause de l’ancien échec personnel inconnue et non reproduite. Aucun incident historique attribué sans preuve à H1/Global.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_ENVIRONMENT",
+        "END_AUTH",
+        "END_AUTH_LIMIT",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "HISTORICAL_INCIDENT_UNEXPLAINED : ancien échec personnel non reproduit ; erreurs Draft et Preview séparées, aucune cause historique inventée."
+    },
+    "responsabilite": "Suppression, sauvegarde, états asynchrones et latence",
+    "correctif": "HISTORICAL_INCIDENT_UNEXPLAINED : ancien échec personnel non reproduit ; erreurs Draft et Preview séparées, aucune cause historique inventée.",
+    "preuves": [
+      "FINAL_ENVIRONMENT",
+      "END_AUTH",
+      "END_AUTH_LIMIT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_OWNER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "HISTORICAL_INCIDENT_UNEXPLAINED : ancien échec personnel non reproduit ; erreurs Draft et Preview séparées, aucune cause historique inventée."
+  },
+  {
+    "id": "R336",
+    "description_originale": "Valider une soirée riche avec Before, boissons, date, participants et trajets en session authentifiée.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "UI Auth/FRESH non exécutée :0publication Global H1,0période certifiée admissible, Canonical scope !=H1. Accord H1 reçu, owner arrêté avant tout contournement.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_ENVIRONMENT",
+        "END_AUTH",
+        "END_AUTH_LIMIT",
+        "END_UI",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER",
+        "R23_ENV"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "NOT_RUN_AUTH : H1 sans Global publié et scope Canonical différent ; préparer un World fictif officiellement admissible."
+    },
+    "responsabilite": "Suppression, sauvegarde, états asynchrones et latence",
+    "correctif": "NOT_RUN_AUTH : H1 sans Global publié et scope Canonical différent ; préparer un World fictif officiellement admissible.",
+    "preuves": [
+      "FINAL_ENVIRONMENT",
+      "END_AUTH",
+      "END_AUTH_LIMIT",
+      "END_UI",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "NOT_RUN_AUTH : H1 sans Global publié et scope Canonical différent ; préparer un World fictif officiellement admissible."
+  },
+  {
+    "id": "R338",
+    "description_originale": "Vérifier la cohérence entre Draft, Preview, Finance V2 et application finale sans confondre ces statuts.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Même dépendance Global/Canonical H1 ; tests Compiler locaux et HTTP Auth antérieur conservés, aucun Apply réel.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_REACT",
+        "FINAL_SCOPE",
+        "END_AUTH",
+        "END_REACT",
+        "END_AUTH_LIMIT",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER",
+        "R23_ENV"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "Nouveau scope Preview/Apply/Reload PGlite PASS ; chaîne UI Auth/FRESH non exécutée. Aucun Apply réel."
+    },
+    "responsabilite": "Suppression, sauvegarde, états asynchrones et latence",
+    "correctif": "Nouveau scope Preview/Apply/Reload PGlite PASS ; chaîne UI Auth/FRESH non exécutée. Aucun Apply réel.",
+    "preuves": [
+      "FINAL_REACT",
+      "FINAL_SCOPE",
+      "END_AUTH",
+      "END_REACT",
+      "END_AUTH_LIMIT",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_FINANCE"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "Nouveau scope Preview/Apply/Reload PGlite PASS ; chaîne UI Auth/FRESH non exécutée. Aucun Apply réel."
+  },
+  {
+    "id": "R342",
+    "description_originale": "Tester les états vide, partiel et riche à plusieurs largeurs desktop et au zoom 125 %.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Neuf scènes desktop3tailles PASS ; raccourci zoom sans effet mesurable,125% natif NOT_VERIFIABLE. Pas de DPR artificiel.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_ENVIRONMENT",
+        "END_UI",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "9 scènes finales aux 4 largeurs desktop sans collision/scroll interne ; zoom natif125 NOT_VERIFIABLE, pas de simulation DPR."
+    },
+    "responsabilite": "Recettes, accessibilité vérifiée et décision de réplication",
+    "correctif": "9 scènes finales aux 4 largeurs desktop sans collision/scroll interne ; zoom natif125 NOT_VERIFIABLE, pas de simulation DPR.",
+    "preuves": [
+      "FINAL_ENVIRONMENT",
+      "END_UI",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_OWNER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "9 scènes finales aux 4 largeurs desktop sans collision/scroll interne ; zoom natif125 NOT_VERIFIABLE, pas de simulation DPR."
+  },
+  {
+    "id": "R345",
+    "description_originale": "Vérifier la recherche Google et sa reprise dans un environnement fournisseur réellement autorisé.",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Appel fournisseur réel non exécuté : environnement isolé H1 non admissible via Global/Canonical. Aucun foyer personnel substitué.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_ENVIRONMENT",
+        "END_REACT",
+        "END_AUTH_LIMIT",
+        "END_OWNER",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER",
+        "R23_ENV"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense."
+    },
+    "apres": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Google réel/retry NOT_RUN : World H1 non admissible ; aucun compte personnel substitué."
+    },
+    "responsabilite": "Recettes, accessibilité vérifiée et décision de réplication",
+    "correctif": "Google réel/retry NOT_RUN : World H1 non admissible ; aucun compte personnel substitué.",
+    "preuves": [
+      "FINAL_ENVIRONMENT",
+      "END_REACT",
+      "END_AUTH_LIMIT",
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "Google réel/retry NOT_RUN : World H1 non admissible ; aucun compte personnel substitué."
+  },
+  {
+    "id": "R346",
+    "description_originale": "Vérifier la recherche du même établissement depuis Composer et « Déclarer une dépense ».",
+    "avant": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Comparaison Google Composer/Déclarer non exécutée pour la même dépendance H1. Contrats exact/ambigu/tardif/429 locaux conservés.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_ENVIRONMENT",
+        "END_REACT",
+        "END_AUTH_LIMIT",
+        "END_OWNER",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER",
+        "R23_ENV"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense."
+    },
+    "apres": {
+      "statut": "BLOCKED_ENV",
+      "reste": "Parité du handoff partagé mock PASS ; comparaison du même établissement réel NOT_RUN, prérequis H1."
+    },
+    "responsabilite": "Recettes, accessibilité vérifiée et décision de réplication",
+    "correctif": "Parité du handoff partagé mock PASS ; comparaison du même établissement réel NOT_RUN, prérequis H1.",
+    "preuves": [
+      "FINAL_ENVIRONMENT",
+      "END_REACT",
+      "END_AUTH_LIMIT",
+      "END_OWNER",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "Parité du handoff partagé mock PASS ; comparaison du même établissement réel NOT_RUN, prérequis H1."
+  },
+  {
+    "id": "R348",
+    "description_originale": "Valider un parcours complet Bar → Lieu → Date → Personnes → Before → Consommations → Aller → Retour → Enregistrer → Relire.",
+    "avant": {
+      "statut": "PARTIAL",
+      "reste": "Parcours UI riche Auth/FRESH bloqué par préparation officielle H1 ; writer HTTP JWT acquis et inchangé, pas un substitut de preuve UI.",
+      "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+      "preuves": [
+        "FINAL_ENVIRONMENT",
+        "END_AUTH",
+        "END_AUTH_LIMIT",
+        "END_UI",
+        "R23_TESTS",
+        "R23_PREVIEW",
+        "R23_OWNER",
+        "R23_ENV"
+      ],
+      "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+      "blocage": null
+    },
+    "apres": {
+      "statut": "PARTIAL",
+      "reste": "UI Auth riche Google/Before/route/Save/Reload NOT_RUN : World H1 non admissible. R337 HTTP JWT historique conservé, pas rejoué."
+    },
+    "responsabilite": "Recettes, accessibilité vérifiée et décision de réplication",
+    "correctif": "UI Auth riche Google/Before/route/Save/Reload NOT_RUN : World H1 non admissible. R337 HTTP JWT historique conservé, pas rejoué.",
+    "preuves": [
+      "FINAL_ENVIRONMENT",
+      "END_AUTH",
+      "END_AUTH_LIMIT",
+      "END_UI",
+      "R23_TESTS",
+      "R23_PREVIEW",
+      "R23_OWNER",
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER"
+    ],
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
+    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "resultat": "OPEN",
+    "action_suivante": "UI Auth riche Google/Before/route/Save/Reload NOT_RUN : World H1 non admissible. R337 HTTP JWT historique conservé, pas rejoué."
+  }
+]

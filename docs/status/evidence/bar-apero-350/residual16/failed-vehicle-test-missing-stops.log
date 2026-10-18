@@ -1,0 +1,16 @@
+GOOGLE_REF_STRICT_ROUND_TRIP PASS
+SHARED_OWNER_BUILDER_VS_DIRECTED_PLANNER PASS
+DIRECTED_OUTBOUND_RETURN_AND_CUSTOM_LEG PASS
+INVALID_DETAILS_PRESERVE_UNKNOWN_AND_INPUT PASS
+VENUE_CHANGE_EXPLICIT_SCOPE_ATOMIC_AND_REVERSE PASS
+STRUCTURED_VEHICLE_PRESENTATION_ONLY_OFFICIAL_DECLARATION FAIL TypeError: Cannot read properties of undefined (reading 'length')
+    at BarRouteLine (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\app\mois-a-venir\composer\bar-living-details.tsx:49:3422)
+    at Object.react_stack_bottom_frame (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:9808:18)
+    at renderWithHooks (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5062:19)
+    at renderElement (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5497:23)
+    at retryNode (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:6417:31)
+    at performWork (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:7435:17)
+    at startWork (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:8270:7)
+    at renderToStringImpl (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:8380:7)
+    at process.env.NODE_ENV.exports.renderToStaticMarkup (C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:9861:14)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-apero-google-route.mjs:81:15

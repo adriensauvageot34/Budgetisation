@@ -7453,7 +7453,7 @@
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
     "baseline": "EXISTING",
     "action_requise": "Raccord propriétaire autorisé requis ; ne pas fabriquer KNOWN ni coordonnées.",
-    "statut": "BLOCKED_OWNER",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "G1_REACT",
       "G1_P3",
@@ -7461,14 +7461,17 @@
       "END_OWNER",
       "R23_TESTS",
       "R23_PREVIEW",
-      "R23_OWNER"
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_BROWSER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
-    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "Contrat Google exact/admission toujours absent : owners.md.",
-    "blocage": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
+    "reste": "",
+    "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
     ],
@@ -7508,6 +7511,31 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Contrat Google exact/admission toujours absent : owners.md."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "BLOCKED_OWNER",
+        "reste": "Contrat Google exact/admission toujours absent : owners.md.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "G1_REACT",
+          "G1_P3",
+          "G1_EXISTING",
+          "END_OWNER",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": "Clôture au niveau local indiqué ; R209/R210 et R345/R346/R348 restent ouverts, pas de provider réel ni certification Auth.",
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -7527,14 +7555,17 @@
       "END_OWNER",
       "R23_TESTS",
       "R23_PREVIEW",
-      "R23_OWNER"
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Contrat Google exact/admission toujours absent : owners.md.",
-    "blocage": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
+    "reste": "Admission Canonical durable absente : revue du contrat, mapping/source/RLS et migration dédiée décrits dans residual16/owners.md.",
+    "blocage": "Admission Canonical durable absente : revue du contrat, mapping/source/RLS et migration dédiée décrits dans residual16/owners.md.",
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
     ],
@@ -7574,6 +7605,31 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Contrat Google exact/admission toujours absent : owners.md."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "BLOCKED_OWNER",
+        "reste": "Contrat Google exact/admission toujours absent : owners.md.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "G1_REACT",
+          "G1_P3",
+          "G1_EXISTING",
+          "END_OWNER",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -7593,14 +7649,17 @@
       "END_OWNER",
       "R23_TESTS",
       "R23_PREVIEW",
-      "R23_OWNER"
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Contrat Google exact/admission toujours absent : owners.md.",
-    "blocage": "Contrat Canonical exact googlePlaceId et admission durable serveur manquants ; repli TEXT et lieux publiés préservés.",
+    "reste": "Matching exact local prouvé ; aucun mapping Google officiel publié dans le DTO réel. Owner Canonical doit publier cette identité, pas un rapprochement textuel.",
+    "blocage": "Matching exact local prouvé ; aucun mapping Google officiel publié dans le DTO réel. Owner Canonical doit publier cette identité, pas un rapprochement textuel.",
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
     ],
@@ -7640,6 +7699,31 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Contrat Google exact/admission toujours absent : owners.md."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "BLOCKED_OWNER",
+        "reste": "Contrat Google exact/admission toujours absent : owners.md.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "G1_REACT",
+          "G1_P3",
+          "G1_EXISTING",
+          "END_OWNER",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -7745,7 +7829,7 @@
     "localisation": "bar-place-search.tsx; bar-place-knowledge.ts",
     "baseline": "EXISTING",
     "action_requise": "Direct route targets, local query scopes and Google resume are improved. Provider admission, remount focus/search state or semantic route binding remain unverified/owner-limited; no global completion claim.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_REACT",
       "FINAL_SCOPE",
@@ -7753,13 +7837,16 @@
       "END_OWNER",
       "R23_TESTS",
       "R23_PREVIEW",
-      "R23_OWNER"
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_BROWSER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
-    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "Relation route↔lieu central versionnée absente ; contrat précis owners.md. Endpoints/retour/prix manuels restent indépendants.",
+    "reste": "",
     "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx"
@@ -7800,6 +7887,31 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Relation route↔lieu central versionnée absente ; contrat précis owners.md. Endpoints/retour/prix manuels restent indépendants."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "Relation route↔lieu central versionnée absente ; contrat précis owners.md. Endpoints/retour/prix manuels restent indépendants.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_REACT",
+          "FINAL_SCOPE",
+          "END_REACT",
+          "END_OWNER",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": "Clôture au niveau local indiqué ; R209/R210 et R345/R346/R348 restent ouverts, pas de provider réel ni certification Auth.",
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -8885,20 +8997,24 @@
     "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Explicit replace/add choice exists and multi-main replacement is rejected without mutation. Legacy grouped-vs-contribution meaning still relies on the persisted label, not a new financial contract.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_REACT",
       "FINAL_SCOPE",
       "END_REACT",
       "R23_TESTS",
       "R23_PREVIEW",
-      "R23_OWNER"
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_BROWSER",
+      "R16_FINANCE",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
-    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "UI explicite et tests de couverture PASS ; discriminant machine owner Finance toujours absent. Libellé historique non considéré comme preuve.",
+    "reste": "",
     "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx",
@@ -8939,6 +9055,30 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "UI explicite et tests de couverture PASS ; discriminant machine owner Finance toujours absent. Libellé historique non considéré comme preuve."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "UI explicite et tests de couverture PASS ; discriminant machine owner Finance toujours absent. Libellé historique non considéré comme preuve.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_REACT",
+          "FINAL_SCOPE",
+          "END_REACT",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": "Clôture au niveau local indiqué ; R209/R210 et R345/R346/R348 restent ouverts, pas de provider réel ni certification Auth.",
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -8976,20 +9116,24 @@
     "localisation": "bar-living-editor.tsx; night-out-presentation.ts",
     "baseline": "UNVERIFIED",
     "action_requise": "Explicit replace/add choice exists and multi-main replacement is rejected without mutation. Legacy grouped-vs-contribution meaning still relies on the persisted label, not a new financial contract.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_REACT",
       "FINAL_SCOPE",
       "END_REACT",
       "R23_TESTS",
       "R23_PREVIEW",
-      "R23_OWNER"
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_BROWSER",
+      "R16_FINANCE",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
-    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "Substitution simple explicitement admise testée, cas legacy ambigu/multi-main refusés ; contrat de portée économique versionné manquant.",
+    "reste": "",
     "blocage": null,
     "fichiers_modifiés": [
       "src/app/mois-a-venir/composer/bar-living-editor.tsx",
@@ -9030,6 +9174,30 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Substitution simple explicitement admise testée, cas legacy ambigu/multi-main refusés ; contrat de portée économique versionné manquant."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "Substitution simple explicitement admise testée, cas legacy ambigu/multi-main refusés ; contrat de portée économique versionné manquant.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_REACT",
+          "FINAL_SCOPE",
+          "END_REACT",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": "Clôture au niveau local indiqué ; R209/R210 et R345/R346/R348 restent ouverts, pas de provider réel ni certification Auth.",
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -9604,7 +9772,7 @@
     "localisation": "bar-living-operations.ts; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "The full authoritative vehicle label is preserved; a validated short-label presentation and technical-details disclosure have not been implemented.",
-    "statut": "PARTIAL",
+    "statut": "DONE_STATIC",
     "preuves": [
       "FINAL_REACT",
       "FINAL_SCOPE",
@@ -9612,13 +9780,16 @@
       "END_REACT",
       "R23_TESTS",
       "R23_PREVIEW",
-      "R23_OWNER"
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_GOOGLE",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
-    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "OFFICIAL_READER + RENDERED_MARKUP_FIXTURE",
+    "niveau_preuve": "STATIC_AND_RENDERED_FIXTURE",
     "qualification_sha": "CURRENT",
-    "reste": "Mobility publie label fiable mais pas brand/model séparés ; aucun nom court déduit. Contrat demandé owners.md.",
+    "reste": "",
     "blocage": null,
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
@@ -9657,6 +9828,31 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Mobility publie label fiable mais pas brand/model séparés ; aucun nom court déduit. Contrat demandé owners.md."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "Mobility publie label fiable mais pas brand/model séparés ; aucun nom court déduit. Contrat demandé owners.md.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_REACT",
+          "FINAL_SCOPE",
+          "END_UI",
+          "END_REACT",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": "Clôture au niveau local indiqué ; R209/R210 et R345/R346/R348 restent ouverts, pas de provider réel ni certification Auth.",
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -9782,7 +9978,7 @@
     "localisation": "bar-living-operations.ts; bar-living-details.tsx",
     "baseline": "UNVERIFIED",
     "action_requise": "Missing endpoints/vehicle and TEXT limitations are explicit; real provider/fuel/distance completeness and final estimate have not been certified. No fake estimate action.",
-    "statut": "PARTIAL",
+    "statut": "DONE_BROWSER_FIXTURE",
     "preuves": [
       "FINAL_REACT",
       "FINAL_SCOPE",
@@ -9791,13 +9987,16 @@
       "R23_TESTS",
       "R23_PREVIEW",
       "R23_OWNER",
-      "R23_ENV"
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_BROWSER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
-    "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_BROWSER_FIXTURE + DOMAIN_MOCK / desktop / no Auth or live provider",
+    "niveau_preuve": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
     "qualification_sha": "CURRENT",
-    "reste": "Contrats Mobility/UNKNOWN locaux PASS ; fournisseur réel bloqué par World H1 sans Global admissible et scope Canonical H1.",
+    "reste": "",
     "blocage": null,
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
@@ -9836,6 +10035,32 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Contrats Mobility/UNKNOWN locaux PASS ; fournisseur réel bloqué par World H1 sans Global admissible et scope Canonical H1."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "Contrats Mobility/UNKNOWN locaux PASS ; fournisseur réel bloqué par World H1 sans Global admissible et scope Canonical H1.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_REACT",
+          "FINAL_SCOPE",
+          "END_UI",
+          "END_REACT",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER",
+          "R23_ENV"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": "Clôture au niveau local indiqué ; R209/R210 et R345/R346/R348 restent ouverts, pas de provider réel ni certification Auth.",
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -10729,14 +10954,17 @@
       "R23_TESTS",
       "R23_PREVIEW",
       "R23_OWNER",
-      "R23_METRICS"
+      "R23_METRICS",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Chaîne locale EventTiming/DOM/requêtes/Preview/SAVED mesurée ; corrélation serveur/World et persistance UI authentifiée non certifiée.",
-    "blocage": null,
+    "reste": "Mesures locales séparées collectées ; corrélation serveur/Auth et persistance UI H1 non exécutées.",
+    "blocage": "Mesures locales séparées collectées ; corrélation serveur/Auth et persistance UI H1 non exécutées.",
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "avant": "BLOCKED_ENV",
@@ -10785,6 +11013,31 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Chaîne locale EventTiming/DOM/requêtes/Preview/SAVED mesurée ; corrélation serveur/World et persistance UI authentifiée non certifiée."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "Chaîne locale EventTiming/DOM/requêtes/Preview/SAVED mesurée ; corrélation serveur/World et persistance UI authentifiée non certifiée.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_ENVIRONMENT",
+          "END_UI",
+          "END_AUTH",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER",
+          "R23_METRICS"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -11854,14 +12107,17 @@
       "END_AUTH_LIMIT",
       "R23_TESTS",
       "R23_PREVIEW",
-      "R23_OWNER"
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Cause de l’ancien échec personnel inconnue et non reproduite. Aucun incident historique attribué sans preuve à H1/Global.",
-    "blocage": null,
+    "reste": "HISTORICAL_INCIDENT_UNEXPLAINED : ancien échec personnel non reproduit ; erreurs Draft et Preview séparées, aucune cause historique inventée.",
+    "blocage": "HISTORICAL_INCIDENT_UNEXPLAINED : ancien échec personnel non reproduit ; erreurs Draft et Preview séparées, aucune cause historique inventée.",
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
@@ -11898,6 +12154,30 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Cause de l’ancien échec personnel inconnue et non reproduite. Aucun incident historique attribué sans preuve à H1/Global."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "Cause de l’ancien échec personnel inconnue et non reproduite. Aucun incident historique attribué sans preuve à H1/Global.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_ENVIRONMENT",
+          "END_AUTH",
+          "END_AUTH_LIMIT",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -11918,14 +12198,17 @@
       "R23_TESTS",
       "R23_PREVIEW",
       "R23_OWNER",
-      "R23_ENV"
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "UI Auth/FRESH non exécutée :0publication Global H1,0période certifiée admissible, Canonical scope !=H1. Accord H1 reçu, owner arrêté avant tout contournement.",
-    "blocage": null,
+    "reste": "NOT_RUN_AUTH : H1 sans Global publié et scope Canonical différent ; préparer un World fictif officiellement admissible.",
+    "blocage": "NOT_RUN_AUTH : H1 sans Global publié et scope Canonical différent ; préparer un World fictif officiellement admissible.",
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
@@ -11963,6 +12246,32 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "UI Auth/FRESH non exécutée :0publication Global H1,0période certifiée admissible, Canonical scope !=H1. Accord H1 reçu, owner arrêté avant tout contournement."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "UI Auth/FRESH non exécutée :0publication Global H1,0période certifiée admissible, Canonical scope !=H1. Accord H1 reçu, owner arrêté avant tout contournement.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_ENVIRONMENT",
+          "END_AUTH",
+          "END_AUTH_LIMIT",
+          "END_UI",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER",
+          "R23_ENV"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -12034,14 +12343,18 @@
       "R23_TESTS",
       "R23_PREVIEW",
       "R23_OWNER",
-      "R23_ENV"
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_FINANCE",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Même dépendance Global/Canonical H1 ; tests Compiler locaux et HTTP Auth antérieur conservés, aucun Apply réel.",
-    "blocage": null,
+    "reste": "Nouveau scope Preview/Apply/Reload PGlite PASS ; chaîne UI Auth/FRESH non exécutée. Aucun Apply réel.",
+    "blocage": "Nouveau scope Preview/Apply/Reload PGlite PASS ; chaîne UI Auth/FRESH non exécutée. Aucun Apply réel.",
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
@@ -12080,6 +12393,33 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Même dépendance Global/Canonical H1 ; tests Compiler locaux et HTTP Auth antérieur conservés, aucun Apply réel."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "Même dépendance Global/Canonical H1 ; tests Compiler locaux et HTTP Auth antérieur conservés, aucun Apply réel.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_REACT",
+          "FINAL_SCOPE",
+          "END_AUTH",
+          "END_REACT",
+          "END_AUTH_LIMIT",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER",
+          "R23_ENV"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -12207,14 +12547,17 @@
       "END_UI",
       "R23_TESTS",
       "R23_PREVIEW",
-      "R23_OWNER"
+      "R23_OWNER",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Neuf scènes desktop3tailles PASS ; raccourci zoom sans effet mesurable,125% natif NOT_VERIFIABLE. Pas de DPR artificiel.",
-    "blocage": null,
+    "reste": "9 scènes finales aux 4 largeurs desktop sans collision/scroll interne ; zoom natif125 NOT_VERIFIABLE, pas de simulation DPR.",
+    "blocage": "9 scènes finales aux 4 largeurs desktop sans collision/scroll interne ; zoom natif125 NOT_VERIFIABLE, pas de simulation DPR.",
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "avant": "BLOCKED_ENV",
@@ -12262,6 +12605,29 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Neuf scènes desktop3tailles PASS ; raccourci zoom sans effet mesurable,125% natif NOT_VERIFIABLE. Pas de DPR artificiel."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "Neuf scènes desktop3tailles PASS ; raccourci zoom sans effet mesurable,125% natif NOT_VERIFIABLE. Pas de DPR artificiel.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_ENVIRONMENT",
+          "END_UI",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -12428,14 +12794,17 @@
       "R23_TESTS",
       "R23_PREVIEW",
       "R23_OWNER",
-      "R23_ENV"
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Appel fournisseur réel non exécuté : environnement isolé H1 non admissible via Global/Canonical. Aucun foyer personnel substitué.",
-    "blocage": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense.",
+    "reste": "Google réel/retry NOT_RUN : World H1 non admissible ; aucun compte personnel substitué.",
+    "blocage": "Google réel/retry NOT_RUN : World H1 non admissible ; aucun compte personnel substitué.",
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
@@ -12473,6 +12842,32 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Appel fournisseur réel non exécuté : environnement isolé H1 non admissible via Global/Canonical. Aucun foyer personnel substitué."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "BLOCKED_ENV",
+        "reste": "Appel fournisseur réel non exécuté : environnement isolé H1 non admissible via Global/Canonical. Aucun foyer personnel substitué.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_ENVIRONMENT",
+          "END_REACT",
+          "END_AUTH_LIMIT",
+          "END_OWNER",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER",
+          "R23_ENV"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -12493,14 +12888,17 @@
       "R23_TESTS",
       "R23_PREVIEW",
       "R23_OWNER",
-      "R23_ENV"
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Comparaison Google Composer/Déclarer non exécutée pour la même dépendance H1. Contrats exact/ambigu/tardif/429 locaux conservés.",
-    "blocage": "Environnement de test préparé avec Global et Google configuré requis pour appel réel et comparaison Déclarer une dépense.",
+    "reste": "Parité du handoff partagé mock PASS ; comparaison du même établissement réel NOT_RUN, prérequis H1.",
+    "blocage": "Parité du handoff partagé mock PASS ; comparaison du même établissement réel NOT_RUN, prérequis H1.",
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
@@ -12538,6 +12936,32 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Comparaison Google Composer/Déclarer non exécutée pour la même dépendance H1. Contrats exact/ambigu/tardif/429 locaux conservés."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "BLOCKED_ENV",
+        "reste": "Comparaison Google Composer/Déclarer non exécutée pour la même dépendance H1. Contrats exact/ambigu/tardif/429 locaux conservés.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_ENVIRONMENT",
+          "END_REACT",
+          "END_AUTH_LIMIT",
+          "END_OWNER",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER",
+          "R23_ENV"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {
@@ -12581,14 +13005,17 @@
       "R23_TESTS",
       "R23_PREVIEW",
       "R23_OWNER",
-      "R23_ENV"
+      "R23_ENV",
+      "R16_TESTS",
+      "R16_OWNER",
+      "R16_V3"
     ],
-    "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
-    "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI",
+    "sha_preuve": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "environnement": "LOCAL_FIXTURE / OWNER_READ_ONLY / NOT_RUN_AUTH",
     "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
     "qualification_sha": "CURRENT",
-    "reste": "Parcours UI riche Auth/FRESH bloqué par préparation officielle H1 ; writer HTTP JWT acquis et inchangé, pas un substitut de preuve UI.",
-    "blocage": null,
+    "reste": "UI Auth riche Google/Before/route/Save/Reload NOT_RUN : World H1 non admissible. R337 HTTP JWT historique conservé, pas rejoué.",
+    "blocage": "UI Auth riche Google/Before/route/Save/Reload NOT_RUN : World H1 non admissible. R337 HTTP JWT historique conservé, pas rejoué.",
     "fichiers_modifiés": [],
     "nature_validation": "LIMIT_EXPLICITLY_PRESERVED",
     "historique_receptions": [
@@ -12626,6 +13053,32 @@
       "base": "8998ba8f82a3ab72e7d60619bc8c0c81174ce15a",
       "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
       "decision": "Parcours UI riche Auth/FRESH bloqué par préparation officielle H1 ; writer HTTP JWT acquis et inchangé, pas un substitut de preuve UI."
+    },
+    "historique_preuves": [
+      {
+        "mission": "RESIDUAL23",
+        "statut": "PARTIAL",
+        "reste": "Parcours UI riche Auth/FRESH bloqué par préparation officielle H1 ; writer HTTP JWT acquis et inchangé, pas un substitut de preuve UI.",
+        "sha_preuve": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+        "preuves": [
+          "FINAL_ENVIRONMENT",
+          "END_AUTH",
+          "END_AUTH_LIMIT",
+          "END_UI",
+          "R23_TESTS",
+          "R23_PREVIEW",
+          "R23_OWNER",
+          "R23_ENV"
+        ],
+        "niveau_preuve": "PARTIAL_OR_OWNER_OR_ENV",
+        "environnement": "LOCAL_CONTRACT_REUSED / PREVIEW_READY_NOT_AUTH_UI"
+      }
+    ],
+    "scope_limites": null,
+    "verification_candidat_final": {
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+      "preuve": "R16_V3",
+      "scope": "A single endpoint-search condition differs from V2; affected surface retested. V2 screenshots retain their actual SHA, not relabelled as V3."
     }
   },
   {

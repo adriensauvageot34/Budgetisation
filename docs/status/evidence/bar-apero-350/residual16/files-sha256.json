@@ -1,0 +1,270 @@
+{
+  "finalProductSha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+  "files": [
+    {
+      "name": "economic-scope.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "43fec3d24b9c1b96beb67dc1290f3f9855c7e800b5ef6b445be398a8685d42a1"
+    },
+    {
+      "name": "environment.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "dcb5666afdb139d3a8f5245deb67aef90f6876e8c7938b941af2b9d9aaa72b88"
+    },
+    {
+      "name": "failed-google-test-argument.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "7e3dad1ce52a01b356f1c99b69465900b447762fdd65cfe78d019c213ad118f7"
+    },
+    {
+      "name": "failed-p4-before-selection.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "699a371e78d17e3dcdf52910e4132b483a20b6d556077187f9e8b816b17196c2"
+    },
+    {
+      "name": "failed-vehicle-test-missing-stops.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "066a8ab22bc14f8b2a0ee3f4d5b6cc396172c3c1c09a0d0717f2db5964f3c7c4"
+    },
+    {
+      "name": "failed-waves-full.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "447c77e3ff96b086f6b24b1978828284e0437bc769f296f198619e64b772d074"
+    },
+    {
+      "name": "failed-waves-navigation.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "b4cfafd104942107d3ac2b31b4fb4608ca7f0854621afcacd66c3e42e4e5ec20"
+    },
+    {
+      "name": "geometry.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "3de047bcd5c48663805b4342890b78b60b75d71872feb2c03b7b60eebb635737"
+    },
+    {
+      "name": "google-browser.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "0a9d59f92dfc3c98a83f3956cce5ef77493969492f81123827d440ccbdb25efe"
+    },
+    {
+      "name": "google-route.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "afbe6cc52d35edf68f2e505e28b61be1bbd3a44fcd669d04808c0055dfaa2bd0"
+    },
+    {
+      "name": "matrix-16.md",
+      "method": "utf8_normalized_lf",
+      "sha256": "564f2a2cbb82240e95faebc32728ca31c54c65f2e2045be3ea9280ed45a55c74"
+    },
+    {
+      "name": "metrics.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "fc9b6378b80300e1d724cad08ee96a25c8898c35752dd2ec7980a3f83d4005e0"
+    },
+    {
+      "name": "owners.md",
+      "method": "utf8_normalized_lf",
+      "sha256": "24dee0b63177f3c0886354bf331b37cfd84466088acce1b61c0b5f47b7966b76"
+    },
+    {
+      "name": "proof-levels.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "3d062c4e7efff3495a41a5c2748d8a316ca31c8d85e71d7521a33fe3b2e13d51"
+    },
+    {
+      "name": "screens/final-1152-dense-closed.png",
+      "method": "bytes",
+      "sha256": "5176300a88f2efa6952beedd3ff0f3c5b858fca4b74acb8cd8c20a62de75a526"
+    },
+    {
+      "name": "screens/final-1152-dense-open.png",
+      "method": "bytes",
+      "sha256": "44782966fffa3d76bf406ea535af673fdbf2da6ec34ddeb2bce3f81f7f312693"
+    },
+    {
+      "name": "screens/final-1152-dense-raw.png",
+      "method": "bytes",
+      "sha256": "4212ab1347b981c9f5a310027530e4f766364dd273a31cd55edf8d3032274fc6"
+    },
+    {
+      "name": "screens/final-1152-google-substitution-saved.png",
+      "method": "bytes",
+      "sha256": "ae5e5c247e77023544589b3a06bfb1320a7ce1d987b74e7c8b693d887033caea"
+    },
+    {
+      "name": "screens/final-1152-substitution-undo.png",
+      "method": "bytes",
+      "sha256": "de1c215b82dbd28885a8e09b1013c860ade16e0bec21abf60319c12b47cffeaf"
+    },
+    {
+      "name": "screens/final-1440-dense-closed.png",
+      "method": "bytes",
+      "sha256": "39ec70dff65db299e272c835e933c819efb52cc626f80e7267f3005fb71f6dc6"
+    },
+    {
+      "name": "screens/final-1440-dense-open.png",
+      "method": "bytes",
+      "sha256": "83e798c2e7a2c19418d3e73c9be8cdbcde3de5dae7a44e5309cbb825db693989"
+    },
+    {
+      "name": "screens/final-1728-dense-closed.png",
+      "method": "bytes",
+      "sha256": "841dbcc1152f09231d31ad1e2e876d444f5a658d77e54fc8eb64fe74a3cf7c56"
+    },
+    {
+      "name": "screens/final-1728-dense-open.png",
+      "method": "bytes",
+      "sha256": "a3927ff96d5c8308f5a6481ec7eb13270dc186205434154bc272a13233b8c870"
+    },
+    {
+      "name": "screens/final-1920-dense-closed.png",
+      "method": "bytes",
+      "sha256": "c130b0892a161c29c8abc3db1eda8ff57ed8a14fef269c96c48daea3c4cbf2ec"
+    },
+    {
+      "name": "screens/final-1920-dense-open.png",
+      "method": "bytes",
+      "sha256": "c2a9df429123c20d06894920be8b2f025ebc9008f084b5d326334fe5cd883c94"
+    },
+    {
+      "name": "screens/final-v3-1440-endpoint-match.png",
+      "method": "bytes",
+      "sha256": "fb200d7112168d43dd12d4105251669874b24bd2904328569491d933a351909a"
+    },
+    {
+      "name": "screens/final-v3-1440-endpoint-no-match.png",
+      "method": "bytes",
+      "sha256": "29fb2cdf8c0509091d306d93100e9337648382df9ef68ca0dd211fbf34899fb9"
+    },
+    {
+      "name": "test-check-bar-apero-closure-draft.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "03f753e2f6f4a7c482d48d3c371f16d16e98913a2bcafce9a60e0309b5da2cf7"
+    },
+    {
+      "name": "test-check-bar-apero-economic-scope.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "4a9427786b9ad074c6d6675c834aaac49ee9e00bbf819cf8f96f69ced7564608"
+    },
+    {
+      "name": "test-check-bar-apero-google-route.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "7e3dad1ce52a01b356f1c99b69465900b447762fdd65cfe78d019c213ad118f7"
+    },
+    {
+      "name": "test-check-bar-apero-p1.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "ef40a48582c4a83372f7f80e853f22c5777b68fe05f63e876bc5266252223c08"
+    },
+    {
+      "name": "test-check-bar-apero-p2.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "2f855e95c63fcefce752fd2d97de0d932bc8f57f6f0a721a6b72a01378db45d7"
+    },
+    {
+      "name": "test-check-bar-apero-p3.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "e20faf5ff886ce8d3fceca0127b4e9e82cd58485380d038af9d53b12117a16a3"
+    },
+    {
+      "name": "test-check-bar-apero-p4.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "f3613757ddf4385682098bcc7875ff77673786659f2efbb8d8d93d95c4cebb3d"
+    },
+    {
+      "name": "test-check-phase2-planner-mobility.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "965e450171566478c2a389a6126944f743c7a8883793163b7d69c7841f9eeae8"
+    },
+    {
+      "name": "test-check-planner-performance-parity.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+    },
+    {
+      "name": "test-google-corrected.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "cc058727b33349e70c5d7ff16b1c43cbc056f73bb179c7e2ff37a089b2b57677"
+    },
+    {
+      "name": "test-parity-final.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+    },
+    {
+      "name": "test-planned-car.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "dac665ddea93787272b345dbbfc33c803251916354d1367b9aaf230e1d64e949"
+    },
+    {
+      "name": "test-vehicle-ui.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "cc058727b33349e70c5d7ff16b1c43cbc056f73bb179c7e2ff37a089b2b57677"
+    },
+    {
+      "name": "test-waves-c1-targeted.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "a33018adc4b6f21773724466bf8acebc4067c7a10a71ba847ba9b3bf0fb0e744"
+    },
+    {
+      "name": "test-waves-r143-fixed.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "16c5e45dbc9fadaaf6b65c8042ab54283c9e6ae085fdaabef48ce14f57336aa8"
+    },
+    {
+      "name": "tests.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "ea089c7fd2924ac860e935e3855da8254ccaa1e077078e368916599fdad4f55c"
+    },
+    {
+      "name": "transitions-16.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "6559a94deabdba1dccd021f3bb3a7aebb34fa2fa1e4efdfb21aa6fbfd05023bd"
+    },
+    {
+      "name": "undo-browser.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "6194c19f6323eb5c118804db8d0187805d425eea51c91be1a375aa171cd6c6fd"
+    },
+    {
+      "name": "v3-browser.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "ff34af5802eec7d4c1da8479401688e7e01f1ec400d9cb75b44ca130f22acddf"
+    },
+    {
+      "name": "v3-check-bar-apero-economic-scope.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "4a9427786b9ad074c6d6675c834aaac49ee9e00bbf819cf8f96f69ced7564608"
+    },
+    {
+      "name": "v3-check-bar-apero-google-route.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "cc058727b33349e70c5d7ff16b1c43cbc056f73bb179c7e2ff37a089b2b57677"
+    },
+    {
+      "name": "v3-check-planner-performance-parity.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+    },
+    {
+      "name": "v3-product-diff.patch",
+      "method": "utf8_normalized_lf",
+      "sha256": "aee7ba7638091be6e8d763fa213fa266440836bec49bcf7383e611bfdf22950f"
+    },
+    {
+      "name": "vercel-build-excerpt.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "594467ebf6978c1d05b6ab7247700e9c1efe70c3e70452e196fae220831d7089"
+    },
+    {
+      "name": "vercel-v3-build-excerpt.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "1ae98037bf4ed476f9dd2603f1f40ee0cc67aa55e2242c88118b54af2f6e8420"
+    },
+    {
+      "name": "vercel.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "3d270d7f0ed8fb9d98f153920bfa55293282340319a1fb1499084b0008d0219d"
+    }
+  ]
+}

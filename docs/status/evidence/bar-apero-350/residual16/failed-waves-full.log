@@ -1,0 +1,62 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R022_R238_CLICK_EMPTY_IS_NEUTRAL_AND_RAW_SURVIVES PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R164_R165_PLUS_TARD_IS_NEUTRAL_WITHOUT_MUTATION PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R003_R166_R173_R177_R179_DATE_REMAINS_TARGETED PASS
+R181_R182_R183_CALENDAR_ROVING_FOCUS_MONTH_BOUNDS PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R143_R151_R169_R170_R201_ONE_LOCAL_SEARCH_RESUMES PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R199_PUBLIC_HOMONYMS_HAVE_VISIBLE_ADDRESS_PROVENANCE PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R223_R224_BEFORE_FIRST_ITEM_RESPECTS_PUBLISHED_UNITS PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R246_R252_GROUPED_60_TO_UNKNOWN_ATOMIC_AND_REVERSIBLE PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R238_DIRTY_ROW_RAW_EXACT PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R005_R244_HEADER_TARGET_EDITS_EXISTING_GLOBAL_ONLY PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R259_QUICK_PARTIAL_EDIT_KEEPS_FUNDING_AND_UNKNOWN_FIELDS PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R143_TEXT_VENUE_SUGGESTION_ALSO_RESPECTS_ENDPOINT_QUERY FAIL: The expression evaluated to a falsy value:
+
+  assert.ok(!dock().findAll(n=>n.type==='strong').map(text).includes('Bar texte fixture'))
+
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R160_R161_DOCK_PAGES_KEY_BY_TARGET_AND_KEEP_COLUMN_COUNT PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R327_PAGED_DOCK_NO_SCROLL_READS_OR_REOBSERVE_ON_40_EDITS PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R093_R100_R102_R103_REAL_ASSET_ART_AND_VECTOR_FALLBACK PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R116_R117_R120_COMPACT_FAITHFUL_RUBRICS_NO_FAKE_EMPTY_INVITATION PASS
+R278_REVERSE_ONE_LEG_INVALIDATES_PRICES_AND_PRESERVES_ID PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R009_R132_HOME_DOCK_NO_REDUNDANT_NAVIGATION PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R219_R222_BEFORE_CONTEXTUAL_COMPLEMENTS_NO_AUTO_MUTATION PASS
+R141_R142_R200_R283_R289_ENDPOINT_ROLE_SEARCH_NOT_28_PAGES PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R271_R281_MODE_ENDPOINT_FOLLOWUP_AND_INDEPENDENT_RETURN PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+R235_R237_NEW_LINE_AND_RAW_EXPANSION_RETAIN_TARGET PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+C1_HEADER_TARGET_REQUEST_RETAINS_SEARCH_AND_RAW PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+C1_VEHICLE_CAPSULE_TARGET_AND_EMPTY_BEFORE_FAMILIES PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+C1_BAR_REMOUNT_RETAINS_SCOPED_SEARCH_DOCK_AND_ITEM_PAGES PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+C1_ROUTE_EXPOSES_OFFICIAL_COSTS_AND_PROVIDER_LIMITS_WITHOUT_SUMMING PASS
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+C1_QUICK_COST_NEVER_INFERS_COVERAGE_FROM_A_LEGACY_LABEL FAIL: Expected values to be strictly equal:
+
+2 !== 1
+

@@ -1,0 +1,491 @@
+{
+  "productSha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+  "environment": "LOCAL_BROWSER_FIXTURE_NOT_AUTH",
+  "method": "Native trusted events + PerformanceEventTiming (16ms threshold) and ResourceTiming; not Codex wall-clock, not SQL time or display-photon feedback",
+  "events": 35,
+  "eventTiming": {
+    "n": 35,
+    "p50": 864,
+    "min": 24,
+    "max": 4480,
+    "p95": null,
+    "p95Reason": "Mixed gestures / small heterogeneous sample, no robust P95 claim"
+  },
+  "requests": {
+    "MUTATE_OR_PREVIEW_FIXTURE": {
+      "n": 13,
+      "p50": 242.90000000596046,
+      "min": 154.09999999403954,
+      "max": 724,
+      "p95": null,
+      "p95Reason": "Mixed gestures / small heterogeneous sample, no robust P95 claim"
+    },
+    "DRAFT_HTTP": {
+      "n": 12,
+      "p50": 12.5,
+      "min": 5.0999999940395355,
+      "max": 25.80000001192093,
+      "p95": null,
+      "p95Reason": "Mixed gestures / small heterogeneous sample, no robust P95 claim"
+    }
+  },
+  "stateTransitions": [
+    {
+      "ms": 8852.09999999404,
+      "preview": "FRESH",
+      "save": "CLEAN",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": false
+    },
+    {
+      "ms": 13098.09999999404,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 13551.200000017881,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 14117.800000011921,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 14148.800000011921,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 38318.5,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 38642.20000001788,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 39337.70000001788,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 39356.09999999404,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 41495.90000000596,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 42470.90000000596,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 42522.59999999404,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 42564.20000001788,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 59725.5,
+      "preview": "PENDING",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 59754.5,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 60053.40000000596,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 60748.20000001788,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 61187,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 61765,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 61776.5,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 98783.5,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 99469.5,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 99971.5,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 100020.80000001192,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 130618.40000000596,
+      "preview": "PENDING",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 130655.70000001788,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 131132.30000001192,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 131652.80000001192,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 131675.70000001788,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 131820.09999999404,
+      "preview": "PENDING",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 131923.80000001192,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 132288.59999999404,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 132857.5,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 132882.70000001788,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 140369.40000000596,
+      "preview": "PENDING",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 140417.40000000596,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 140832.09999999404,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 141391.30000001192,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 141416.30000001192,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 176844.20000001788,
+      "preview": "PENDING",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 176936.30000001192,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 177241.80000001192,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 178069.80000001192,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 178091.40000000596,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 188558.80000001192,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 189111.40000000596,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 189537.80000001192,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 189560.20000001788,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 217066.5,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 217503.5,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 218065.70000001788,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 218083.90000000596,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 234141.40000000596,
+      "preview": "PENDING",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 234162.20000001788,
+      "preview": "PENDING",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 234497.20000001788,
+      "preview": "FRESH",
+      "save": "DIRTY",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 235178.09999999404,
+      "preview": "FRESH",
+      "save": "SAVING",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    },
+    {
+      "ms": 235207.20000001788,
+      "preview": "FRESH",
+      "save": "SAVED",
+      "dragging": "false",
+      "removing": false,
+      "barPresent": true
+    }
+  ],
+  "nativeZoom125": "NOT_VERIFIABLE"
+}
