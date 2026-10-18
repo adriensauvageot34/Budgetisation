@@ -66,7 +66,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
         const label=slot==="extras"?"Au bar":slot==="food"?"Repas":slot==="before"?"Avant de sortir":items.some(c=>c.item.kind==="COMPONENT"&&c.item.label==="Consommations regroupées")?"Consommations regroupées":"Entrées / contribution";
         return <section key={slot} aria-label={label}><h4>{label}</h4><div className={styles.barLivingTiles}>{items.slice(0,2).map(({item,amount})=><button type="button" key={item.selectionId} disabled={locked} onClick={()=>open(`component:${slot}:${item.selectionId}`)}><BarComponentFace item={item} amount={amount} fresh={fresh}/></button>)}{items.length>2&&<button type="button" className={styles.barMoreCount} disabled={locked} onClick={()=>open(slot==="extras"?"drinks":"summary")} aria-label={`Voir les ${items.length} postes existants`}>+{items.length-2}</button>}</div></section>;
       })}
-      {!components.length&&!locked&&<button type="button" className={styles.barInlineAdd} onClick={()=>open("summary")}>Composer cette sortie <span aria-hidden="true">↗</span></button>}
+      {richness==="empty"&&!locked&&<button type="button" className={styles.barInlineAdd} onClick={()=>open("summary")}>Composer cette sortie <span aria-hidden="true">↗</span></button>}
     </div>}
   </article>;
 }

@@ -7,7 +7,7 @@ import type {ComposerContextCardView} from "@/domain/phase2/planner/composer-con
 import type {ComposerUiModel} from "@/domain/phase2/planner/composer-ui-contract";
 import type {ProspectivePersonRef,ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
-import {plannedAsset} from "@/domain/phase2/planned-assets";
+import {BarProductVisual} from "./bar-product-visual";
 import {money} from "./display";
 import type {BarTarget,BarLeg} from "./bar-living-operations";
 import styles from "./composer.module.css";
@@ -20,9 +20,7 @@ export function barPeopleLabel(value:unknown,model:ComposerUiModel){return Array
 
 /** Identity and authoritative amounts only; no client multiplication or summation. */
 export function BarComponentFace({item,amount,fresh=true}: {item:ComponentSelectionV1;amount?:string|null;fresh?:boolean}){
- const asset=item.kind==="COMPONENT"&&item.productAssetRef?plannedAsset(item.productAssetRef.assetKey):undefined;
- const art=asset?.assetKey.split(":").at(-1);const image=art&&({beer:"beer",vodka:"vodka",rum:"rum",wine:"wine-glass",soft:"soft",water:"water",shot:"shot",mixer:"soft",crazy_tiger:"energy"} as Record<string,string>)[art];
- return <><span className={styles.barProductSymbol} aria-hidden="true">{image?<img src={`/planned-visuals/builder/clay/drinks/${image}.webp`} alt=""/>:asset?.icon??(item.kind==="CHILD_CONTEXT"?"🎟️":"✦")}</span>
+ return <><BarProductVisual assetKey={item.kind==="COMPONENT"?item.productAssetRef?.assetKey:undefined} label={item.kind==="COMPONENT"?item.label:""} child={item.kind==="CHILD_CONTEXT"}/>
    <strong>{item.kind==="COMPONENT"?item.label:"Moment lié"}{item.kind==="COMPONENT"?` ×${item.quantity}`:""}</strong>
    <small>{amount!=null?`${money(amount)}${fresh?"":" · précédent"}`:item.kind==="COMPONENT"&&item.cost.kind==="MANUAL"?`${money(item.cost.unitAmount)} / ${item.unitBasis==="SHARED"?"lot":"unité"}`:item.kind==="COMPONENT"&&item.cost.kind==="QUOTE"?"Devis conservé":item.kind==="CHILD_CONTEXT"?"Ouvrir ce moment":"Prix à préciser"}</small>
    {item.provenance==="PERSONAL_SUGGESTION"&&<small>Suggestion non retenue</small>}

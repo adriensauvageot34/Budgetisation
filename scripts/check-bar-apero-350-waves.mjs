@@ -83,7 +83,7 @@ try{
   await act(async()=>calendar.props.onKeyDown({key:'ArrowLeft',target:{closest:()=>({dataset:{barDay:'1'}})},preventDefault(){},stopPropagation(){}}));assert.equal(byLabel('2026-11-01').props.tabIndex,0);
  });
  await check('R143_R151_R169_R170_R201_ONE_LOCAL_SEARCH_RESUMES',async()=>{
-  await init('night-out','bar-apero',BarLivingEditor);await click('Lieu');await change('Chercher dans les lieux enregistrés','ÉCOLE');assert.equal(dock().props.question,undefined);
+  await init('night-out','bar-apero',BarLivingEditor);await click('Lieu');await change('Chercher dans les lieux enregistrés','ÉCOLE');assert.equal(controls(n=>n.props['data-question-dock']!==undefined).length,0);
   assert.equal(controls(n=>n.type==='input'&&n.props['aria-label']==='Chercher parmi les lieux enregistrés').length,0);
   await click('Date');await click('Lieu');assert.equal(input('Chercher dans les lieux enregistrés').props.value,'ÉCOLE');
   const {barPlaces}=require('@/app/mois-a-venir/composer/bar-place-knowledge');assert.equal(barPlaces([{placeId:uuid(555),name:'Ecole Café',privatePlace:false,commune:'Ville',nature:'Commerce',usage:'Bar',relationships:[]}],'école').length,1);
@@ -110,6 +110,24 @@ try{
  await check('R005_R244_HEADER_TARGET_EDITS_EXISTING_GLOBAL_ONLY',async()=>{
   await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','60');await click('Retenir ce coût');const original=current().slotSelections.main.items[0];
   overrides={initialTarget:'quick'};await act(async()=>root.unmount());await act(async()=>{root=create(render());});assert.equal(step(),'quick');assert.equal(input('Coût prévu (€)').props.value,'60');await change('Coût prévu (€)','65');await click('Retenir ce coût');assert.equal(current().slotSelections.main.items[0].selectionId,original.selectionId);assert.equal(current().slotSelections.main.items[0].cost.unitAmount,'65');assert.equal(current().slotSelections.main.items.length,1);
+ });
+ await check('R259_QUICK_PARTIAL_EDIT_KEEPS_FUNDING_AND_UNKNOWN_FIELDS',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await change('Coût prévu (€)','60');await click('Retenir ce coût');const original=current().slotSelections.main.items[0];const rich={...original,fundingAllocations:[{source:'BANK',amount:'15'}],futureFixture:{unknown:'retained'},binding:{mode:'NO_RELATED_SLOT'}};await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{main:[rich]}}}));await click('Montant direct');await change('Coût prévu (€)','65');await click('Retenir ce coût');const changed=current().slotSelections.main.items[0];assert.deepEqual(changed.fundingAllocations,rich.fundingAllocations);assert.deepEqual(changed.futureFixture,rich.futureFixture);assert.deepEqual(changed.binding,rich.binding);assert.equal(changed.selectionId,rich.selectionId);
+  await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{main:[{...changed,quantity:'2'}]}}}));const before=structuredClone(model.semanticState);await click('Montant direct');await change('Coût prévu (€)','70');await click('Retenir ce coût');assert.deepEqual(model.semanticState,before);assert.ok(controls(n=>n.props.role==='alert').some(n=>text(n).includes('unité détaillée')));
+ });
+ // WAVE_5_TESTS
+ await check('R327_PAGED_DOCK_NO_SCROLL_READS_OR_REOBSERVE_ON_40_EDITS',async()=>{
+  const {ContextPalette}=require('@/app/mois-a-venir/composer/context-palette');await act(async()=>root.unmount());let observers=0,reads=0;const PreviousObserver=globalThis.ResizeObserver;globalThis.ResizeObserver=class{constructor(){observers++;}observe(){}disconnect(){}};
+  const node={clientWidth:850,get scrollLeft(){reads++;return 0;},get scrollWidth(){reads++;return 850;},set scrollLeft(value){},querySelector(){return null;}};
+  const renderPalette=(edit)=>React.createElement(ContextPalette,{card:props().card,model,busy:false,appearance:'bar',choose(){},close(){},question:{title:'Fixture pagination',identity:'stable',choices:Array.from({length:12},(_,i)=>({key:String(i),label:'Choix '+i,iconKey:'activity',choose(){}})),search:{value:String(edit),change(){},label:'Recherche fixture'}}});
+  try{await act(async()=>{root=create(renderPalette(0),{createNodeMock:element=>element.props['data-palette-options']!==undefined?node:null});});for(let i=1;i<=40;i++)await act(async()=>root.update(renderPalette(i)));assert.equal(reads,0);assert.equal(observers,1);}finally{await act(async()=>root.unmount());root=null;globalThis.ResizeObserver=PreviousObserver;}
+ });
+ // WAVE_4_TESTS
+ await check('R093_R100_R102_R103_REAL_ASSET_ART_AND_VECTOR_FALLBACK',async()=>{
+  const {BarProductVisual}=require('@/app/mois-a-venir/composer/bar-product-visual');if(root)await act(async()=>root.unmount());await act(async()=>{root=create(React.createElement('div',null,['bar:beer','bar:cocktail','house_party:snack'].map(assetKey=>React.createElement(BarProductVisual,{assetKey,key:assetKey}))));});assert.equal(controls(n=>n.type==='img').length,1);assert.equal(controls(n=>n.type==='svg').length,2);assert.ok(controls(n=>n.type==='span').every(n=>n.props['aria-hidden']==='true'));assert.equal(controls(n=>n.type==='img')[0].props.src,'/planned-visuals/builder/clay/drinks/beer.webp');
+ });
+ await check('R116_R117_R120_COMPACT_FAITHFUL_RUBRICS_NO_FAKE_EMPTY_INVITATION',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Bière');const item=current().slotSelections.extras.items[0];await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{plannedDate:'2026-11-17'},slots:{food:[{...item,selectionId:crypto.randomUUID(),label:'Repas fixture'}],main:[{...item,selectionId:crypto.randomUUID(),label:'Entrée fixture'}]}}}));const {BarLivingCard}=require('@/app/mois-a-venir/composer/bar-living-card');await act(async()=>root.unmount());await act(async()=>{root=create(React.createElement(BarLivingCard,{card:props().card,model,living:{open(){},close(){}},busy:false,preserved:false,preserve(){},drag(){}}));});assert.deepEqual(controls(n=>n.type==='h4').map(text),['Au bar','Repas','Entrées / contribution']);assert.equal(controls(n=>n.type==='button'&&text(n).includes('Composer cette sortie')).length,0);
  });
  // WAVE_3_TESTS
  await check('R278_REVERSE_ONE_LEG_INVALIDATES_PRICES_AND_PRESERVES_ID',async()=>{

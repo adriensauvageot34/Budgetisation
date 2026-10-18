@@ -8,6 +8,7 @@ import { displayEquipmentGroups, type EquipmentTile } from "./presentation/palet
 import styles from "./composer.module.css";
 import { useComposerInteractions } from "./interactions";
 import { BarPageControls } from "./bar-pages";
+import { BarProductVisual } from "./bar-product-visual";
 
 function routeCaption(groupKey: string, slotKey: string, assetKey: string, socketLabel: string | null | undefined): string {
   if (groupKey === "meal") return assetKey.startsWith("template:") ? "Objet autonome" : "Composant du repas";
@@ -99,12 +100,14 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const answerPages=Math.max(1,Math.ceil((question?.choices.length??0)/answerCount));
   const currentAnswerPage=Math.min(answerPage,answerPages-1);
   const measureScroll = () => {
+    if(appearance==="bar")return;
     const node = options.current;
     const next = { before: !!node && node.scrollLeft > 2, after: !!node && node.scrollLeft + node.clientWidth < node.scrollWidth - 2 };
     setScroll(old => old.before === next.before && old.after === next.after ? old : next);
   };
   const hasGroups = !!question || groups.length > 0;
   useLayoutEffect(() => {
+    if(appearance==="bar")return;
     const node = options.current; if (!node) return;
     measureScroll(); const observer = new ResizeObserver(measureScroll); observer.observe(node);
     return () => observer.disconnect();
@@ -126,7 +129,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options onScroll={measureScroll} tabIndex={0} aria-label={question.title}
       onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();if(appearance==="bar")setAnswerPage(Math.max(0,Math.min(answerPages-1,currentAnswerPage+(event.key==="ArrowRight"?1:-1))));else event.currentTarget.scrollBy({left:event.key==="ArrowRight"?180:-180,behavior:"smooth"});}}}>
       {(appearance==="bar"?question.choices.slice(currentAnswerPage*answerCount,(currentAnswerPage+1)*answerCount):question.choices).map(choice => <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} disabled={busy} title={choice.hint} onFocus={event => {if(appearance!=="bar")event.currentTarget.scrollIntoView({block:"nearest",inline:"nearest"});}} onClick={choice.choose}>
-        {choice.symbol?<span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>:<PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}<span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>)}
+          {appearance==="bar"&&/^(bar|house_party):/u.test(choice.key)?<BarProductVisual assetKey={choice.key} label={choice.label}/>:choice.symbol?<span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>:<PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}<span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>)}
       {!question.choices.length && <p>{question.emptyLabel??"Aucun résultat. Vous pouvez saisir votre choix."}</p>}
     </div></section>;
   return <section className={styles.contextPalette} data-context-palette={card.contextOccurrenceId} aria-label={`Équiper ${card.label}`}>
