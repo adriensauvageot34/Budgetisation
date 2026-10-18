@@ -102,7 +102,8 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const currentAnswerPage=Math.min(answerPage,answerPages-1);
   useLayoutEffect(()=>{
     const prior=questionFocus.current;
-    if(appearance==="bar"&&typeof document!=="undefined"&&prior&&!prior.isConnected&&document.activeElement===document.body)
+    if(appearance==="bar"&&typeof document!=="undefined"&&prior&&(!prior.isConnected||prior.matches(':disabled'))
+      &&(document.activeElement===document.body||document.activeElement===prior))
       options.current?.focus({preventScroll:true});
   },[appearance,answerKey,currentAnswerPage,answerCount]);
   const measureScroll = () => {
@@ -125,7 +126,8 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
     .filter(group => group.tiles.length);
   const iconKey = model.presentation.objects[card.contextOccurrenceId]?.iconKey ?? "activity";
-  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-context-palette={card.contextOccurrenceId} data-question-dock aria-label={question.title}>
+  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-context-palette={card.contextOccurrenceId} data-question-dock aria-label={question.title}
+    onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}>
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>
       {question.search && <input disabled={appearance==="bar"&&busy} aria-label={question.search.label} placeholder={question.search.label} value={question.search.value} onChange={event => question.search!.change(event.target.value)} />}
       {appearance==="bar"?<BarPageControls index={currentAnswerPage} count={answerPages} onChange={setAnswerPage} label="Pages du dock"/>:<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
