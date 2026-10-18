@@ -35,13 +35,22 @@ let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
 const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
 const click=async label=>{
+  let searchedFromStart=false;
   const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));
   for(let i=0;i<12&&!matches().length;i++){
     const next=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled)[0];
     if(next){await act(async()=>next.props.onClick());steps++;continue;}
+    // Dock pagination is now deliberately retained when a scene reopens.
+    // Search the other pages using their real controls; never assume page 1.
+    if(!searchedFromStart){searchedFromStart=true;let previous;
+      while((previous=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · précédente'&&!n.props.disabled)[0])){await act(async()=>previous.props.onClick());steps++;}
+      if(matches().length)break;
+      if(controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled).length)continue;
+    }
     const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];
     if(back&&['Montant direct','Autre','Bouteille partagée'].includes(label)){await act(async()=>back.props.onClick());steps++;continue;}if(label==='Bouteille partagée'){const more=controls(n=>n.type==='button'&&text(n)==='Autre')[0];if(more){await act(async()=>more.props.onClick());steps++;continue;}}if(label==='Montant direct'){const more=controls(n=>n.type==='button'&&text(n)==='Autre')[0];if(more){await act(async()=>more.props.onClick());continue;}}if(['Vodka','Crazy Tiger sans alcool','Diluant sans alcool','Bière','Snack','Chips','Vin','Rhum'].includes(label)){const full=controls(n=>n.type==='button'&&text(n)==='Tout le Before')[0];if(full){await act(async()=>full.props.onClick());continue;}}const all=controls(n=>n.type==='button'&&text(n)==='Tous les lieux')[0];if(all){await act(async()=>all.props.onClick());continue;}const reveal=controls(n=>n.type==='button'&&['Autres consommations','Autres objets du Before'].includes(text(n)))[0];if(reveal){await act(async()=>reveal.props.onClick());continue;}break;
   }
+  assert.ok(matches().length,`Missing button ${label}; scene=${controls(n=>n.props['data-bar-step']!==undefined)[0]?.props['data-bar-step']}; dock=${controls(n=>n.props['data-question-dock']!==undefined)[0]?.findAll(n=>n.type==='strong').map(text).join('|')}`);
   await act(async()=>button(label).props.onClick());steps++;
 };
 const input=label=>{const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
