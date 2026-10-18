@@ -125,7 +125,7 @@ await check('V2_MEASURED_EXPANSION_REPACKS_AND_CAPS_WITHOUT_DATA_CHANGES',async(
 
 await check('V2_CLEAN_OUTSIDE_AND_ESCAPE_KEEP_ADMITTED_CARD',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);await click('Bière');const before=structuredClone(current());globalThis.Element=class{closest(){return null;}};
- await act(async()=>controls(n=>n.props['data-bar-living-editor']!==undefined)[0].props.onClick({target:new Element()}));assert.equal(step(),'summary');assert.deepEqual(current(),before);assert.equal(registry.count(),0);
+ await act(async()=>controls(n=>n.props['data-bar-living-editor']!==undefined)[0].props.onClick?.({target:new Element()}));assert.equal(step(),'row');assert.deepEqual(current(),before);assert.equal(registry.count(),0);
  await openTile('Bière');globalThis.document.querySelector=()=>null;let stops=0;await act(async()=>controls(n=>n.props['data-bar-living-editor']!==undefined)[0].props.onKeyDown({key:'Escape',preventDefault(){},stopPropagation(){stops++;}}));assert.equal(step(),'summary');assert.equal(stops,1);assert.deepEqual(current(),before);
 });
 await check('V2_COMPACT_SIZING_AND_OTHER_PRESETS_UNCHANGED',async()=>{

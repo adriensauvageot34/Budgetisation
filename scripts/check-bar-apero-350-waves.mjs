@@ -32,9 +32,9 @@ const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
-const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
+const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||n.props['aria-label']===label||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
 const click=async label=>{
-  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));
+  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||n.props['aria-label']===label||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));
   for(let i=0;i<12&&!matches().length;i++){
     const next=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled)[0];
     if(next){await act(async()=>next.props.onClick());steps++;continue;}
@@ -93,6 +93,24 @@ try{
   const choices=controls(n=>n.type==='button'&&n.props['data-show-hint']===true);assert.equal(choices.length,2);assert.ok(choices[0].findAll(n=>n.type==='small').length);assert.match(choices[0].props.title,/Quai A/);assert.match(choices[1].props.title,/Quai B/);assert.equal(current().fields.placeRef,undefined);
  });
  // WAVE_2_TESTS
+ await check('R223_R224_BEFORE_FIRST_ITEM_RESPECTS_PUBLISHED_UNITS',async()=>{
+  const {barBefore}=require('@/app/mois-a-venir/composer/bar-before');
+  await init('night-out','bar-apero',BarLivingEditor);await click('Autre');await click('Before');await click('Bière');let b=barBefore(model.semanticState,current());assert.equal(b.bottle.unitBasis,'ITEM');assert.equal(b.bottle.cost.kind,'UNKNOWN');
+  await init('night-out','bar-apero',BarLivingEditor);await click('Autre');await click('Before');await click('Chips');b=barBefore(model.semanticState,current());assert.equal(b.bottle.unitBasis,'SHARED');assert.equal(b.bottle.quantity,'1');assert.equal(b.bottle.cost.kind,'UNKNOWN');
+ });
+ await check('R246_R252_GROUPED_60_TO_UNKNOWN_ATOMIC_AND_REVERSIBLE',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','60');await click('Retenir ce coût');assert.equal(step(),'summary');
+  const prior=structuredClone(model.semanticState),n=pendingOps.length;await click('Bière');assert.equal(step(),'coverage');assert.deepEqual(model.semanticState,prior);await click('Détailler à la place');assert.equal(pendingOps.length,n+1);assert.equal(current().slotSelections.main.items.length,0);assert.equal(current().slotSelections.extras.items[0].cost.kind,'UNKNOWN');
+  const result=await handleComposerRequest({repository,readWorld:async()=>fixture()},householdId,{kind:'READ',sequence:100,targetMonth:'2026-11',draft:model.semanticState});assert.equal(result.ok,true,result.code);assert.equal(result.model.nightOutSummaries[0].knownAmount,null);assert.equal(result.model.nightOutSummaries[0].incomplete,true);
+  model=visualDraftModel(model,prior);await sync();assert.deepEqual(model.semanticState,prior);
+ });
+ await check('R238_DIRTY_ROW_RAW_EXACT',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Bière');await change('Prix unitaire (€)','17,');await click('Date');await click('Continuer à modifier');assert.equal(input('Prix unitaire (€)').props.value,'17,');assert.equal(current().slotSelections.extras.items[0].cost.kind,'UNKNOWN');
+ });
+ await check('R005_R244_HEADER_TARGET_EDITS_EXISTING_GLOBAL_ONLY',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','60');await click('Retenir ce coût');const original=current().slotSelections.main.items[0];
+  overrides={initialTarget:'quick'};await act(async()=>root.unmount());await act(async()=>{root=create(render());});assert.equal(step(),'quick');assert.equal(input('Coût prévu (€)').props.value,'60');await change('Coût prévu (€)','65');await click('Retenir ce coût');assert.equal(current().slotSelections.main.items[0].selectionId,original.selectionId);assert.equal(current().slotSelections.main.items[0].cost.unitAmount,'65');assert.equal(current().slotSelections.main.items.length,1);
+ });
  // WAVE_3_TESTS
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  fs.mkdirSync('outputs/bar-350',{recursive:true});fs.writeFileSync('outputs/bar-350/waves-react.json',JSON.stringify({proof:'PASS_REACT_AND_OWNER_FIXTURE_NOT_BROWSER_NOT_AUTH',checks,remoteWrites:0},null,2));

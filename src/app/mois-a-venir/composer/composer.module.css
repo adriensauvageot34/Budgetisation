@@ -1231,3 +1231,6 @@
 .barItemMenu>div>button { display:flex; align-items:center; gap:6px; width:100%; padding:9px; border:0; background:transparent; text-align:left; }
 .barVisuallyHidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 .barCompositionDock .questionAnswer[data-show-hint=true] small { display:block; margin-top:4px; font-size:11px; line-height:1.4; color:#6d5c47; white-space:normal; overflow-wrap:anywhere; }
+
+.barLivingAmount .barAmountTrigger { border:0; padding:0; background:transparent; color:inherit; text-align:left; cursor:pointer; font:inherit; }
+.barLivingAmount .barAmountTrigger:focus-visible { outline:2px solid #795719; outline-offset:3px; border-radius:3px; }
