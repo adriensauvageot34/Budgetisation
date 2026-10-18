@@ -31,7 +31,8 @@ export function startBarReceptionProbe(root: HTMLElement) {
       const entry=raw as PerformanceResourceTiming;let pathname='';
       try{pathname=new URL(entry.name).pathname;}catch{continue;}
       if(!['/interaction','/draft','/api/composer/preview','/api/composer/drafts'].includes(pathname)||requests.length>=100)continue;
-      requests.push({path:pathname,start:entry.startTime,duration:entry.duration,requestStart:entry.requestStart,
+      const phase=pathname==='/draft'||pathname==='/api/composer/drafts'?'DRAFT_HTTP':pathname==='/api/composer/preview'?'PREVIEW_HTTP':'MUTATE_OR_PREVIEW_FIXTURE';
+      requests.push({phase,correlation:`${phase}-${requests.length+1}`,path:pathname,status:(entry as PerformanceResourceTiming&{responseStatus?:number}).responseStatus??null,start:entry.startTime,duration:entry.duration,requestStart:entry.requestStart,
         responseStart:entry.responseStart,responseEnd:entry.responseEnd,transferSize:entry.transferSize});
     }publishLatency();
   }):null;
