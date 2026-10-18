@@ -1030,6 +1030,10 @@
 .columns[data-bar-living-open=true] { padding-right:0; }
 .columns[data-bar-living-open=true] .paletteDock { width:auto; overflow:hidden; }
 .columns[data-bar-living-open=true] .plateau { min-width:0; }
+/* A living Bar may exceed a short desktop viewport. Let the surrounding page
+   scroll naturally; neither the card nor its dock becomes a scroll container. */
+:global(main):has(.columns[data-bar-living-open=true]) { overflow-y:auto; }
+.columns[data-bar-living-open=true] .plateau { overflow-y:visible; }
 .barLivingCard { box-sizing:border-box; }
 .barLivingHeader { position:sticky; top:0; z-index:1; background:#fffdfa; }
 .barLivingCard[data-expanded=true] .barLivingHeader { border-bottom:1px solid #f0e8df; }

@@ -69,7 +69,8 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   useLayoutEffect(() => {
     if (!expandedId || dragging) return;
     // Measure only the living Bar's rendered content. The grid owns the outer
-    // rectangle and still caps it to the available shelf; no overlay or data edit.
+    // rectangle. A tall living card also grows the page instead of being cut
+    // by the finite shelf; no overlay or semantic edit.
     const board=viewport.current;if(!board)return;
     const findCard=()=>[...board.querySelectorAll<HTMLElement>("[data-inventory-id]")]
       .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
@@ -197,7 +198,8 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     dwellEdge.current = direction;
     dwell.current = setTimeout(() => { dwell.current = null; interaction.over(null); go(active + direction); }, 600); };
   return <>
-    <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-drop data-board-page-active={active} {...dropProps}
+    <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-drop data-board-page-active={active}
+      style={expandedId && expandedHeight ? { minHeight: expandedHeight + 24 } : undefined} {...dropProps}
       onClick={e => { if (e.target === e.currentTarget || e.target instanceof Element && e.target.matches("[data-mosaic],[data-board-page]")) emptyClick(); }}>
       <div className={styles.plateauTrack} style={{ transform: `translateX(-${active * 100}%)` }} data-plateau-track onTransitionEnd={event=>{if(event.target===event.currentTarget)setDeparting(active);}}>
         {layouts.map((inventory, index) => <section key={index} className={styles.plateau} data-board-page={index} data-single-page={layouts.length === 1} aria-label={`Page ${index + 1} sur ${pages.length}`}
