@@ -51,7 +51,7 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
   const templates = publishContextRegistry().templates;
   const editors = view.library.searchableAssets.flatMap<ComposerEditor>(asset => {
     if (asset.kind === "CONTEXT_ASSET") return [{ assetKey: asset.assetKey, fields: resolveContextTemplate(asset.templateKey!).fields
-      .filter(f => f.fieldKey !== "fieldSchemaVersion" && f.kind !== "PLANNED_ASSET_REF").map(f => ({
+      .filter(f => f.fieldKey !== "fieldSchemaVersion" && f.kind !== "PLANNED_ASSET_REF" && !f.semanticContract).map(f => ({
       key: f.fieldKey, label: fieldLabels[f.fieldKey] ?? f.fieldKey, kind: f.kind as ComposerField["kind"], required: f.required,
       ...(f.choices ? { choices: f.choices.map(value => ({ value, label: choiceLabels[value] ?? value })) } : {}) })) as ComposerField[] }];
     if (asset.kind !== "SLOT_OPTION_ASSET") return [];

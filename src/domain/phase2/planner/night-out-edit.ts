@@ -3,6 +3,7 @@ import type { ComponentSelectionV1 } from "./component-contract";
 import type { PlannerJson } from "./json";
 import { plannerDigest } from "./json";
 import { plannedAsset, PLANNED_ASSET_CATALOG_VERSION } from "../planned-assets";
+import {parseNightOutVenue,sameVenuePlace,parseVenueEndpoints} from "./night-out-venue";
 
 export type NightOutBeforeEdit = Readonly<{
   childContextOccurrenceId: string; selectionId: string;
@@ -27,11 +28,14 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
   for (const [key, value] of Object.entries(edit.fields)) {
     if (value === "") delete fields[key]; else fields[key] = value;
   }
-  if (Object.keys(edit.fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "timingNote"].includes(key)))
+  if(Object.hasOwn(edit.fields,"placeRef")&&!Object.hasOwn(edit.fields,"venueDecision"))delete fields.venueDecision;
+  if(fields.venueDecision!=null){const venue=parseNightOutVenue(fields.venueDecision);if(!sameVenuePlace(venue.place,fields.placeRef as never))throw new TypeError("NIGHT_OUT_VENUE_CONTEXT_INVALID");fields.fieldSchemaVersion="context-fields@v6";}
+  for(const items of Object.values(edit.slots??{}))for(const item of items??[])if(item.kind==="MOBILITY_INTENT"&&item.venueEndpoints)parseVenueEndpoints(item.venueEndpoints,item);
+  if (Object.keys(edit.fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "venueDecision", "timingNote"].includes(key)))
     throw new TypeError("COMPOSER_NIGHT_OUT_FIELD_INVALID");
-  if (Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "timingNote", "fieldSchemaVersion", "composerPresentation"].includes(key)))
+  if (Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "venueDecision", "timingNote", "fieldSchemaVersion", "composerPresentation"].includes(key)))
     throw new TypeError("COMPOSER_NIGHT_OUT_FIELD_INVALID");
-  if (fields.fieldSchemaVersion !== "context-fields@v3" && Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "fieldSchemaVersion"].includes(key)))
+  if (!["context-fields@v3","context-fields@v6"].includes(String(fields.fieldSchemaVersion)) && Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "fieldSchemaVersion"].includes(key)))
     fields.fieldSchemaVersion = "context-fields@v2";
   const slots = { ...parent.slotSelections };
   for (const [key, items] of Object.entries(edit.slots ?? {})) {

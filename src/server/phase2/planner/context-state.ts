@@ -34,6 +34,7 @@ export function patchContextEditorFields(raw: PlanSemanticStateV1, contextId: st
   const template = resolveContextTemplate(context.templateKey), patch = plannerRecord(rawPatch);
   plannerKeys(patch, template.fields.filter(field => field.fieldKey !== "fieldSchemaVersion").map(field => field.fieldKey), []);
   const fields = { ...context.fields };
+  if(context.templateKey==="night-out"&&Object.hasOwn(patch,"placeRef")&&!Object.hasOwn(patch,"venueDecision"))delete fields.venueDecision;
   for (const [key, value] of Object.entries(patch)) {
     const definition = template.fields.find(field => field.fieldKey === key)!;
     if (value === undefined) throw new TypeError("CONTEXT_FIELD_UNDEFINED");
@@ -51,7 +52,8 @@ export function patchContextEditorFields(raw: PlanSemanticStateV1, contextId: st
     }
   }
   const rich = Object.keys(fields).some(key => !isLegacyContextField(context.templateKey, key));
-  if (context.fields.fieldSchemaVersion === "context-fields@v5") fields.fieldSchemaVersion = "context-fields@v5";
+  if(context.templateKey==="night-out"&&(fields.venueDecision!=null||context.fields.fieldSchemaVersion==="context-fields@v6"))fields.fieldSchemaVersion="context-fields@v6";
+  else if (context.fields.fieldSchemaVersion === "context-fields@v5") fields.fieldSchemaVersion = "context-fields@v5";
   else if (context.fields.fieldSchemaVersion === "context-fields@v4") fields.fieldSchemaVersion = "context-fields@v4";
   else if (context.fields.fieldSchemaVersion === "context-fields@v3" || Object.hasOwn(fields, "objectAssetRef"))
     fields.fieldSchemaVersion = "context-fields@v3";
