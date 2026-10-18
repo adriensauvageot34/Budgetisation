@@ -1,0 +1,18 @@
+/** One-time import, refusing to overwrite the evolving evidence register. */
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {sourceRequirements} from './check-bar-apero-350.mjs';
+const dir='docs/status/evidence/bar-apero-350/';
+assert.ok(!fs.existsSync(dir+'requirements.json'),'Register already exists; refusing reset');
+const source=fs.readFileSync(dir+'source-master.md','utf8'),rows=sourceRequirements(source);
+assert.equal(rows.length,350);
+const files={A:'bar-living-editor.tsx',B:'bar-place-search.tsx; bar-place-knowledge.ts',C:'bar-living-details.tsx; bar-living-editor.tsx',D:'bar-before.ts; bar-living-editor.tsx',E:'bar-living-editor.tsx; night-out-summary.ts',F:'bar-living-operations.ts; bar-living-details.tsx',G:'context-palette.tsx; bar-living-editor.tsx',H:'bar-living-editor.tsx; composer.module.css',I:'bar-living-card.tsx; bar-living-details.tsx',J:'composer.module.css; public/planned-visuals',K:'board-carousel.tsx; inventory-layout.ts',L:'composer-shell.tsx; durable-draft.ts',M:'scripts/check-bar-apero-*.mjs'};
+const verified=new Set([39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,61,63,66,67,68,69,70,73,74,75,88,89,90,91,92,93,94,95,96,97,98,99,100,122,127,131,306,309,310,318,319]);
+const write=(file,value)=>fs.writeFileSync(dir+file,JSON.stringify(value,null,2)+'\n');
+write('source-manifest.json',{source:'PROMPT_CODEX_BAR_APERO_350_RECOMMANDATIONS_EXECUTION_PAR_VAGUES_GATES_TESTS_2026-10-18.md',sha256_normalized_lf:crypto.createHash('sha256').update(source.replaceAll('\r\n','\n')).digest('hex'),chantiers:Object.fromEntries('ABCDEFGHIJKLM'.split('').map(k=>[k,rows.filter(r=>r.chantier===k).length])),vagues:Object.fromEntries([1,2,3,4,5,6].map(k=>[k,rows.filter(r=>r.vague===k).length]))});
+write('requirements.json',rows.map(r=>({...r,localisation:files[r.chantier],baseline:verified.has(Number(r.id.slice(1)))?'EXISTING':'UNVERIFIED',action_requise:verified.has(Number(r.id.slice(1)))?'NONE':'Vérifier les sous-conditions du référentiel puis traiter les écarts dans la vague propriétaire.',statut:verified.has(Number(r.id.slice(1)))?'ALREADY_DONE_VERIFIED':'PLANNED',preuves:verified.has(Number(r.id.slice(1)))?['COMPACT']:[],sha_preuve:verified.has(Number(r.id.slice(1)))?'55900176cf7c140ac897f24d3fca180b035ce008':null,environnement:verified.has(Number(r.id.slice(1)))?'PASS_BROWSER_FIXTURE / statique image selon la recommandation':'NOT_RUN',niveau_preuve:verified.has(Number(r.id.slice(1)))?'T1_HISTORICAL_APPLICABLE':'NONE',qualification_sha:verified.has(Number(r.id.slice(1)))?'HISTORICAL_APPLICABLE':'CURRENT',reste:verified.has(Number(r.id.slice(1)))?'':'Preuve courante et éventuelle correction à établir.',blocage:null,fichiers_modifiés:[]})));
+write('evidence.json',{COMPACT:{path:'BAR_APERO_COMPACT_EDITORIAL_RECEPTION.md',sha:'55900176cf7c140ac897f24d3fca180b035ce008',niveau:'PASS_BROWSER_FIXTURE',qualification:'HISTORICAL_APPLICABLE',scope:'Compacité mesurée, tuiles, illustration déterministe et reflow ; a2e2aec ne change que ce rapport. Aucune preuve Auth.'},G0_SAVE:{path:dir+'g0-save.json',sha:'a2e2aec30c9228cde12ebf26eedec6b5ebcbbc71',niveau:'PASS_HTTP_FIXTURE',scope:'Script HTTP riche réellement rejoué avant changement produit ; CAS, réponse perdue, conservation, zéro Apply et zéro distant.'}});
+const result=JSON.parse(fs.readFileSync('outputs/bar-p4/http-results.json','utf8'));
+write('g0-save.json',{status:result.status,checks:result.checks,successfulSaves:result.successfulSaves,finalVersion:result.finalVersion,digest:result.digest,auth:result.auth,remoteWrites:result.evidence.remoteWrites});
+console.log(JSON.stringify({imported:rows.length,verified_prior:verified.size}));

@@ -1,0 +1,15 @@
+{
+  "COMPACT": {
+    "path": "BAR_APERO_COMPACT_EDITORIAL_RECEPTION.md",
+    "sha": "55900176cf7c140ac897f24d3fca180b035ce008",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "qualification": "HISTORICAL_APPLICABLE",
+    "scope": "Compacité mesurée, tuiles, illustration déterministe et reflow ; a2e2aec ne change que ce rapport. Aucune preuve Auth."
+  },
+  "G0_SAVE": {
+    "path": "docs/status/evidence/bar-apero-350/g0-save.json",
+    "sha": "a2e2aec30c9228cde12ebf26eedec6b5ebcbbc71",
+    "niveau": "PASS_HTTP_FIXTURE",
+    "scope": "Script HTTP riche réellement rejoué avant changement produit ; CAS, réponse perdue, conservation, zéro Apply et zéro distant."
+  }
+}

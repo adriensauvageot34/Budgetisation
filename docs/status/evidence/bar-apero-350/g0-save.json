@@ -1,0 +1,17 @@
+{
+  "status": "EXECUTED_PASS_LOOPBACK_HTTP_SYNTHETIC_ONLY",
+  "checks": [
+    "rich Before with UNKNOWN and absent date round-trip",
+    "lost response read before idempotent replay; no extra version",
+    "two sessions same version: one write and one conflict",
+    "Undo and Redo serialized under CAS",
+    "only child bottle amount changed; other fields and IDs exact",
+    "official Compiler known 38.00 plus incomplete; no parent double count",
+    "zero Apply/remote/financial writes"
+  ],
+  "successfulSaves": 4,
+  "finalVersion": 4,
+  "digest": "02880333c3c11e023f11f63840ae81ce617891fcedb0d99f30fa8479f92e4a18",
+  "auth": "NOT_RUN_AUTH_P4",
+  "remoteWrites": 0
+}
