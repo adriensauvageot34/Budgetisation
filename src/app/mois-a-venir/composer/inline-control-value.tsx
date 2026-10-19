@@ -94,7 +94,7 @@ export function InlineControlValue({ card, dimension, busy, focus, mutate }: {
       </button>
       {admitted && <button type="button" className={styles.valueStep} aria-label={`Augmenter ${title} de ${card.label}`} disabled={busy || displayed !== null && new Big(displayed).gte(rule.maximum)} onClick={() => adjust(1)}><Plus size={13} /></button>}
     </div>}
-    {dimension === "unitAmount" && presentation.kind !== "UNKNOWN" && <small className={styles.unitValueOrigin}>{presentation.label}</small>}
+    {dimension === "unitAmount" && presentation.kind !== "UNKNOWN" && <small className={styles.unitValueOrigin} title={presentation.label} aria-label={presentation.label}>{presentation.shortLabel}</small>}
     {pending !== null && <small role="status">Réglage en attente…</small>}
     {error && <small role="alert" className={styles.formError}>{error}</small>}
   </div>;

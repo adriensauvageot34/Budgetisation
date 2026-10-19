@@ -1325,6 +1325,35 @@
 .barFinanceMode button,.barMoments button { padding:6px 9px; min-height:30px; border:1px solid #dfcfb5; border-radius:9px; background:#fffaf0; color:#655033; font-size:12px; cursor:pointer; }
 .barFinanceMode button[aria-pressed=true],.barMoments button[aria-pressed=true] { background:#f6e6c7; border-color:#ad8646; color:#46351c; }
 .barGroup button:focus-visible,.barFinanceMode button:focus-visible,.barMoments button:focus-visible { outline:3px solid #927039; outline-offset:2px; }
+
+/* R6: shared, quiet universe accents; financial states retain their own labels. */
+.contextCard[data-template-key=night-out] { --scene-accent:#80628c; --scene-tint:#faf7fc; }
+.contextCard[data-template-key=short-stay],.contextCard[data-template-key=family-visit] { --scene-accent:#547e90; --scene-tint:#f6fafb; }
+.contextCard[data-template-key=purchase] { --scene-accent:#648270; --scene-tint:#f7faf7; }
+.barLivingCard { --scene-accent:#927039; --scene-tint:#fffaf0; --focus:var(--scene-accent); }
+.contextCard { --focus:var(--scene-accent,#9b82c1); border-color:color-mix(in srgb,var(--scene-accent,#9b82c1) 18%,#eee); background:var(--scene-tint,#fff); }
+.contextCard :is(button,input,summary):focus-visible,.barLivingCard :is(button,input,summary):focus-visible { outline-color:var(--scene-accent,#9b82c1); }
+.barRouteLine { container-type:inline-size; }
+.barLivingCard .barRouteLine { gap:3px 6px; padding:5px 7px; }
+.barRouteLine>[data-bar-route] { display:flex; align-items:center; gap:5px; flex:0 0 auto; white-space:nowrap; }
+.barRouteStops>button { overflow:hidden; }
+.barRouteStops>button>span { display:block; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+.barRouteStops>svg { flex:none; }
+.barRouteLine .barRouteEvidence { flex:0 1 auto; margin-left:auto; max-width:100%; color:#766346; }
+.barRouteEvidence>summary { cursor:pointer; padding:3px; }
+.barRouteEvidence[open] { flex-basis:100%; margin-left:0; }
+.barRouteEvidence>small { display:block; margin:4px 0; }
+.barRouteCost { white-space:nowrap; }
+.barLivingCard .barRouteCost small { font-size:10px; }
+.barPlaceResults { display:flex; flex-direction:column; gap:5px; }
+.barPlaceResults>section { display:grid; gap:4px; min-width:0; }
+.barPlaceResults h4 { margin:0; font-size:11px; color:#75603d; }
+.barPlaceResults .barPlaceChoice { width:100%; height:48px; }
+.barPlaceResults [data-bar-place-source=text] { justify-items:start; }
+.barBeforeEmpty,[data-bar-before]>header { position:relative; padding-right:86px; }
+.barBeforeArt { position:absolute; right:0; top:50%; transform:translateY(-50%); width:80px; height:48px; object-fit:contain; pointer-events:none; }
+.barLivingEditor[data-bar-scene-density=dense] .barBeforeArt { display:none; }
+.barLivingCard:has([data-bar-scene-density=dense]) .barImageTrigger { opacity:.3; }
 .barManage small { display:block; padding:4px; max-width:180px; }
 .columns[data-bar-living-open=true] .paletteDock:has([data-compact-dock=true]) { min-height:82px; }
 .barCompositionDock[data-compact-dock=true] .paletteOptions { min-height:0; padding-block:3px; }

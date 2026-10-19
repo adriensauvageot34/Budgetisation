@@ -7,12 +7,12 @@ Module._load = function(name, ...args) { return name === 'react' ? React : origi
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const { BarPlaceSearch } = require('@/app/mois-a-venir/composer/bar-place-search');
 const pending = [], adopted = [];
-globalThis.fetch = async (path, init) => new Promise(resolve => pending.push({ path, resolve, signal: init.signal }));
+globalThis.fetch = async (path, init) => new Promise(resolve => pending.push({ path, resolve, signal: init.signal, body:JSON.parse(init.body) }));
 const text = n => typeof n === 'string' ? n : n?.children?.map(text).join('') ?? '';
 let key = 'initial', root, places=[]; const knownAdopted=[]; globalThis.requestAnimationFrame=()=>0;
 const mount = () => React.createElement(BarPlaceSearch, { places, initialCity: 'Ville fictive', commitOnVerified: true, decisionKey: key,
   onKnown: id => {assert(places.some(place=>place.placeId===id),'No invented Canonical identity');knownAdopted.push(id);}, onGoogle: (label, ref) => adopted.push({ label, ref }) });
-const field = () => root.root.findAll(n => n.type === 'label' && text(n).startsWith('Chercher un bar'))[0].findByType('input');
+const field = () => root.root.findAll(n => n.type === 'label' && text(n).startsWith('Rechercher un bar'))[0].findByType('input');
 const change = async value => act(async () => field().props.onChange({ target: { value } }));
 const wait = async () => act(async () => new Promise(resolve => setTimeout(resolve, 330)));
 const answer = async (index, payload) => act(async () => { assert(pending[index]); pending[index].resolve({ ok: true, json: async () => payload }); });
@@ -60,4 +60,17 @@ try {
   await act(async()=>root.root.findAll(n=>n.type==='button'&&n.props['aria-label']==='Résultats de la recherche · précédente')[0].props.onClick({currentTarget:null}));
   await act(async()=>visible().find(n=>n.props['aria-label']==='Bar partagé · Ville B').props.onClick());assert.deepEqual(knownAdopted,['known-b']);
   console.log('PASS GEO bounded search: all 4 distinct candidates reachable, 3 per page; exact linked Google duplicate only, no name-based identity merge.');
+  const sources=root.root.findAll(n=>n.props['data-bar-place-source']).map(n=>n.props['data-bar-place-source']);
+  assert.deepEqual(sources,['known','google'],'published and provider results have distinct ordered sources');
+  await click('Préciser une ville').catch(()=>click('Changer la ville'));
+  const city=root.root.findAll(n=>n.type==='label'&&text(n).startsWith('Ville facultative'))[0].findByType('input');
+  await act(async()=>city.props.onChange({target:{value:''}}));await change('sans ville');await wait();
+  assert.equal(pending.at(-1).body.context.city,'','empty city remains empty, never replaced with a home city');
+  for(const [status,message] of [[401,'Connectez-vous'],[403,'Accès à la recherche refusé'],[429,'Recherche temporairement limitée']]){
+    await act(async()=>pending.at(-1).resolve({ok:false,status}));
+    assert(root.root.findAll(n=>n.props.role==='status').some(n=>text(n).includes(message)));
+    assert.equal(adopted.length,1);await change('nouvel essai '+status);await wait();
+  }
+  await answer(pending.length-1,{suggestions:[]});
+  console.log('PASS R6 MOCK: explicit optional city, ordered source sections, 401/403/429 errors preserve the existing decision.');
 } finally { if (root) await act(async () => root.unmount()); }

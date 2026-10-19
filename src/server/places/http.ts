@@ -41,7 +41,9 @@ export async function restaurantPlacesRequest(request: Request, kind: "autocompl
     if (token !== undefined && (typeof token !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu.test(token))) throw new TypeError();
     if (kind === "autocomplete") {
       const context = body.context as { city?: unknown } | undefined;
-      const city = context?.city ?? "Montpellier";
+      // Bar search may be country-wide. Never silently attach the user's
+      // query to Montpellier when no city was explicitly selected.
+      const city = context?.city ?? (placeKind === "BAR_APERO" ? "" : "Montpellier");
       if (typeof body.input !== "string" || body.input.trim().length < 2 || body.input.length > 120 || !token || typeof city !== "string" || (!city.trim() && placeKind !== "BAR_APERO") || city.length > 100) throw new TypeError();
       return reply({ suggestions: await provider.autocomplete(body.input.trim(), String(token), city.trim(), placeKind as ProjectPlaceKind),...capabilities });
     }

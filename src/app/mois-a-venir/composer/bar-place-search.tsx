@@ -21,7 +21,7 @@ export function BarPlaceChoice({label,choose}:{label:string;choose:()=>void}){
  * already published Canonical identity is admitted. No Canonical promotion. */
 export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initialSearch,onSearchChange,personalPlacesCapability=false,rawTargetRef,onPersonalSuggestions,commitOnVerified=false,onManual,decisionKey}: {decisionKey?:string;onManual?:()=>void;onPersonalSuggestions?:(places:readonly PersonalGooglePlace[])=>void;commitOnVerified?:boolean;rawTargetRef?:string;personalPlacesCapability?:boolean;places:readonly PlannedPlaceOption[];onKnown:(placeId:string)=>void;onText?:(label:string)=>void;onGoogle?:(label:string,ref:BarGoogleRef)=>void;initialCity?:string;initialSearch?:BarPlaceSearchState;onSearchChange?:(state:BarPlaceSearchState)=>void}) {
   const placesFetch=useBarPlaceTransport();
-  const [query,setQuery]=useState(initialSearch?.query??""),[city,setCity]=useState(initialSearch?.city??initialCity??""),[editCity,setEditCity]=useState(!initialCity||!!initialSearch&&initialSearch.city!==initialCity),[results,setResults]=useState<RestaurantSuggestion[]>([]);
+  const [query,setQuery]=useState(initialSearch?.query??""),[city,setCity]=useState(initialSearch?.city??initialCity??""),[editCity,setEditCity]=useState(false),[results,setResults]=useState<RestaurantSuggestion[]>([]);
   const [personalPlacesEnabled,setPersonalPlacesEnabled]=useState(initialSearch?.personalPlacesEnabled===true);
   const registry=useInlineEditRegistry();
   const changeQuestion=(run:()=>void)=>{if(!registry||registry.guard(run,rawTargetRef?new Set([rawTargetRef]):undefined,false))run();};
@@ -37,6 +37,7 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
   // only an already published exact Google identity can remove a duplicate.
   const choices=[...matchingKnown.map(known=>({known,google:null})),...results.filter(result=>!matchingKnown.some(known=>known.googlePlaceId===result.placeId)).map(google=>({known:null,google}))];
   const resultPageIndex=Math.min(resultPage,Math.max(0,Math.ceil(choices.length/3)-1));
+  const visibleChoices=choices.slice(resultPageIndex*3,(resultPageIndex+1)*3);
   const previousSearch=useRef(`${query}\0${city}`);
   useEffect(()=>{onSearchChange?.({query,city,resultPage,...(detail?{detail,detailReadAt}:{}),...(personalPlacesEnabled?{personalPlacesEnabled:true}:{})});},[query,city,resultPage,detail,detailReadAt,onSearchChange,personalPlacesEnabled]);
   const [attempt,setAttempt]=useState(0),[failed,setFailed]=useState(false),[detailRetry,setDetailRetry]=useState<RestaurantSuggestion|null>(null);
@@ -83,14 +84,14 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
   };
   const known=detail?places.filter(place=>!place.privatePlace&&place.googlePlaceId===detail.placeId):[];
   return <section data-bar-google-search aria-label="Chercher un bar avec Google Maps">
-    {!detail&&<><div className={styles.barPlaceFields}><label>Chercher un bar<input autoFocus maxLength={120} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom du lieu…"/></label>
-    {editCity?<label>Ville<input maxLength={100} value={city} onChange={e=>setCity(e.target.value)}/></label>
-      :<div className={styles.barPlaceContext}>Autour de {city} <button type="button" onClick={()=>setEditCity(true)}>Modifier la ville</button></div>}</div>
-    <button type="button" onClick={()=>{setCity("");setEditCity(true);}}>Chercher ailleurs, sans ville imposée</button>
-    {!city.trim()&&<small>Recherche en France · ajoutez une ville au nom pour préciser.</small>}</>}
-    {onManual&&<button type="button" onClick={()=>changeQuestion(onManual)}>Nom libre</button>}
+    {!detail&&<><div className={styles.barPlaceFields}><label>Rechercher un bar<input autoFocus maxLength={120} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom du lieu…"/></label>
+    {editCity?<label>Ville facultative<input maxLength={100} value={city} onChange={e=>setCity(e.target.value)}/><button type="button" onClick={()=>setEditCity(false)}>Terminer</button></label>
+      :<div className={styles.barPlaceContext}>{city.trim()?`Autour de ${city}`:"Recherche en France"} <button type="button" onClick={()=>setEditCity(true)}>{city.trim()?"Changer la ville":"Préciser une ville"}</button></div>}</div>
+    {city.trim()&&<button type="button" onClick={()=>{setCity("");setEditCity(false);}}>Sans ville imposée</button>}</>}
     <div className={styles.barPlaceResults} data-bar-place-results>
-    {!detail&&choices.slice(resultPageIndex*3,(resultPageIndex+1)*3).map(({known,google})=>known?<BarPlaceChoice key={`known:${known.placeId}`} label={`${known.name} · ${known.commune??"Lieu enregistré"}${known.address?" · "+known.address:""}`} choose={()=>changeQuestion(()=>onKnown(known.placeId))}/>:google?<BarPlaceChoice key={`google:${google.placeId}`} label={`${google.primaryText}${google.secondaryText?" · "+google.secondaryText:""}`} choose={()=>void select(google)}/>:null)}
+    {!detail&&visibleChoices.some(choice=>choice.known)&&<section aria-label="Lieux enregistrés" data-bar-place-source="known"><h4>Lieux enregistrés</h4>{visibleChoices.map(({known})=>known?<BarPlaceChoice key={`known:${known.placeId}`} label={`${known.name} · ${known.commune??"Lieu enregistré"}${known.address?" · "+known.address:""}`} choose={()=>changeQuestion(()=>onKnown(known.placeId))}/>:null)}</section>}
+    {!detail&&visibleChoices.some(choice=>choice.google)&&<section aria-label="Google Maps" data-bar-place-source="google"><h4>Google Maps</h4>{visibleChoices.map(({google})=>google?<BarPlaceChoice key={`google:${google.placeId}`} label={`${google.primaryText}${google.secondaryText?" · "+google.secondaryText:""}`} choose={()=>void select(google)}/>:null)}</section>}
+    {!detail&&onManual&&<section aria-label="Nom libre" data-bar-place-source="text"><button type="button" onClick={()=>changeQuestion(onManual)}>Nom libre</button></section>}
     </div>
     {(personalPlacesCapability||personalPlacesEnabled)&&<BarPersonalPlaces detail={detail} query={query} onChoose={onGoogle} rawTargetRef={rawTargetRef} onSuggestions={onPersonalSuggestions}/>}
     <div className={styles.barPlaceFeedback} data-bar-search-feedback><GoogleMapsAttribution/>{status&&<p role="status">{status}</p>}

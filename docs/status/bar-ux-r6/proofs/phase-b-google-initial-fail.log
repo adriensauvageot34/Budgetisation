@@ -1,0 +1,13 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-subassets-r5-google.mjs:15
+const field = () => root.root.findAll(n => n.type === 'label' && text(n).startsWith('Chercher un bar'))[0].findByType('input');
+                                                                                                          ^
+
+TypeError: Cannot read properties of undefined (reading 'findByType')
+    at field (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-subassets-r5-google.mjs:15:107)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-subassets-r5-google.mjs:16:47
+    at process.env.NODE_ENV.exports.act (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\outputs\l4c-test-tools\node_modules\react\cjs\react.development.js:890:22)
+    at change (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-subassets-r5-google.mjs:16:31)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-subassets-r5-google.mjs:24:9
+
+Node.js v22.18.0

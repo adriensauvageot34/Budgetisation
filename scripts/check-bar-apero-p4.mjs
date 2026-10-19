@@ -42,6 +42,11 @@ const click=async label=>{
   const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'||label==='Montant direct'&&n.props['aria-label']==='Modifier le coût prévu'||label==='Bouteille partagée'&&text(n)==='Bouteille'));
   for(let i=0;i<12&&!matches().length;i++){
     if(controls(n=>n.props['data-bar-living-editor']!==undefined).length){
+      // R6 exposes composition mode explicitly. Navigate through that visible
+      // control after a direct amount; the coverage assertions below remain.
+      const mode=controls(n=>n.type==='button'&&n.props['data-bar-finance-mode']==='detailed')[0];
+      const scene=controls(n=>n.props['data-bar-step']!==undefined)[0]?.props['data-bar-step'];
+      if(mode&&scene==='summary'&&['Bière','Bouteille partagée','Cocktail','Vin','Chips','Snack','Planche / tapas'].includes(label)){await act(async()=>mode.props.onClick());continue;}
       const switchFamily=controls(n=>n.type==='button'&&text(n)==='Changer de famille')[0];
       if(switchFamily&&['Chips','Snack','Planche / tapas','Vodka','Crazy Tiger sans alcool','Diluant sans alcool','Bière','Vin','Rhum','Bouteille partagée'].includes(label)){await act(async()=>switchFamily.props.onClick());continue;}
       const familyLabel=['Chips','Snack','Planche / tapas'].includes(label)?'Restauration':'Boissons';
@@ -95,6 +100,7 @@ const child=()=>model.semanticState.contexts.find(c=>c.parentContextOccurrenceId
 try{
  await check('P4_BEFORE_DIRECT_CHILD_TILE_REEDIT',async()=>{
   await init('night-out','bar-apero',BarLivingEditor);const asset=beforeAsset().find(a=>a.assetKey==='house_party:vodka');assert.ok(asset);const bottle=product(asset,{costMode:'MANUAL',amount:'25'});await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},before:{childContextOccurrenceId:crypto.randomUUID(),selectionId:crypto.randomUUID(),bottle,extras:[]}}}));
+  await act(async()=>controls(n=>n.type==='button'&&text(n).startsWith('Before ·'))[0].props.onClick()); // R6 edits one sibling moment at a time.
   assert.equal(controls(n=>n.props['data-bar-before-item']===bottle.selectionId).length,1,'Before bottle has no directly editable tile');
  });
 
