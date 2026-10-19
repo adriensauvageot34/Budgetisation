@@ -1163,7 +1163,7 @@
 .barLivingCard [data-bar-item-details] summary { cursor:pointer; }
 .barLivingCard [data-bar-removal-pending] { padding:10px; margin:4px 12px; background:#f4eff9; border-radius:10px; }
 .barLivingCard[data-removing=true] { opacity:.75; }
-.barLivingCard [data-bar-calendar] { max-width:350px; margin:auto; }
+.barLivingCard [data-bar-calendar] { width:100%; min-width:0; margin:0; }
 .barLivingCard [data-bar-calendar] h4 { margin:4px 0; }
 .barLivingCard .barProductSymbol img { display:block; width:40px; height:40px; object-fit:contain; }
 
@@ -1172,19 +1172,20 @@
 .barLivingCard { background:radial-gradient(ellipse at 0 0,#fae8d0,transparent 65%),#fffdf9; border-color:#ded1be; }
 .barLivingHeader { background:transparent; padding:10px 12px; gap:10px; }
 .barLivingHeader .barLivingImage { width:76px; height:60px; object-fit:contain; border-radius:0; }
-.barLivingIdentity { flex:1; display:flex; flex-wrap:wrap; align-items:center; gap:6px 22px; }
+.barLivingIdentity { flex:1; display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; }
 .barLivingIdentity h3 { flex:1 1 150px; margin:0; }
 .barLivingAmount { flex:0 1 auto; }
 .barLivingHeader strong { font-size:23px; line-height:1.2; }
+.barLivingAmount[data-cost-unknown=true] strong { font-size:14px; font-weight:650; }
 .barLivingTools { align-self:flex-start; }
 .barLivingCard:not([data-expanded=true]) .barLivingTools { position:absolute; right:10px; top:10px; }
 .barLivingCard:not([data-expanded=true]) .barLivingIdentity h3 { flex-basis:100%; margin-right:80px; }
 .barLivingCard[data-richness=empty]:not([data-expanded=true]) .barLivingImage { width:90px; height:70px; }
 .barLivingCard[data-richness=rich]:not([data-expanded=true]) .barLivingImage { width:64px; height:56px; }
 .barLivingCard[data-expanded=true] .barLivingImage { width:64px; height:56px; }
-.barLivingCard[data-expanded=true] .barLivingIdentity { flex-wrap:nowrap; }
+.barLivingCard[data-expanded=true] .barLivingIdentity { flex-wrap:wrap; justify-content:flex-start; }
 .barLivingCard[data-expanded=true] .barLivingIdentity h3 { flex-basis:auto; }
-.barLivingCard[data-expanded=true] .barLivingAmount { margin-left:auto; }
+.barLivingCard[data-expanded=true] .barLivingAmount { margin-left:0; }
 .barLivingCard[data-expanded=true] .barLivingTools { align-self:center; }
 .barLivingCompact h4 { margin:0 0 6px; font-size:12px; color:#76603f; }
 .barLivingCompact>.barLivingMetadata:empty { display:none; }
@@ -1194,8 +1195,8 @@
 .barLivingCompact .barLivingTiles small { margin:0; }
 .barLivingCompact .barLivingTiles>.barMoreCount { display:block; align-self:center; min-height:32px; }
 .barLivingCompact [data-bar-before-miniature]>.barSceneBack { margin-bottom:5px; }
-.barLivingEditor { padding:10px 14px 14px; gap:12px; }
-.barLivingEditor>.barEditableBody>.barLivingMetadata { padding-bottom:10px; border-bottom:1px solid #eee3d3; }
+.barLivingEditor { padding:8px 12px 12px; gap:8px; }
+.barLivingEditor>.barEditableBody>.barLivingMetadata { padding-bottom:6px; border-bottom:1px solid #eee3d3; }
 .barLivingMetadata .barBackArrow { order:-1; border:0; background:transparent; padding:5px 8px; font-size:19px; line-height:1; }
 .barLivingMetadata .barMetaTrip { order:1; margin-left:auto; background:#fff9ef; border-style:dashed; }
 /* Reception: the compact people/search actions measured 22/18px high. */
@@ -1283,7 +1284,7 @@
 .barCostScopes button { padding:9px; border:1px solid #d9c8a9; border-radius:10px; background:#fffdf8; color:#514329; text-align:left; }
 .barCostScopes button[aria-pressed=true] { background:#faedcf; border-color:#a78142; }
 .barPlaceResults { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; gap:6px; min-height:122px; }
-.barPlaceFeedback { display:grid; grid-template-columns:minmax(0,1fr) auto; align-content:start; align-items:start; gap:6px; min-height:84px; padding-top:4px; }
+.barPlaceFeedback { display:grid; grid-template-columns:minmax(0,1fr) auto; align-content:start; align-items:start; gap:4px; min-height:76px; padding-top:4px; }
 .barPlaceFeedback>p { grid-column:1 / -1; grid-row:2; margin:0; }
 .barPlaceFeedback>button { grid-column:2; grid-row:1; max-width:170px; min-height:32px; }
 .barSearchPages { min-height:34px; }
@@ -1293,6 +1294,12 @@
 .barPlaceChoice:is(:focus-visible,:hover) .barPlaceFullLabel { display:block; }
 .barPlaceFullLabel::after { content:attr(data-full-label); }
 .barPlaceChoice:focus-visible { outline:3px solid #a78142; outline-offset:1px; }
+/* One compact search header; the bounded result/error slots keep async geometry stable. */
+.barPlaceFields { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:8px; align-items:end; }
+.barLivingCard [data-bar-google-search]>button { display:inline-flex; width:auto; align-items:center; min-height:32px; margin:2px 6px 6px 0; }
+.barLivingCard [data-bar-google-search]>small { display:block; margin:0 0 4px; }
+.pageStep { min-width:32px; min-height:32px; justify-content:center; }
+.purchaseSummary button[data-budget-unknown=true] { font-size:14px; font-weight:650; }
 .barCompositionDock { position:relative; }
 .barCompositionDock .paletteOptions { min-height:76px; }
 .barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { height:72px; min-height:72px; }

@@ -54,7 +54,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
     <header className={styles.barLivingHeader}>
       <button type="button" className={styles.barImageTrigger} disabled={locked} aria-label={`Ouvrir ${card.label}`} onClick={()=>open("summary")}><img src="/planned-visuals/builder/clay/drinks/bar-editorial.webp" alt="" className={styles.barLivingImage} width={128} height={128}/></button>
       <div className={styles.barLivingIdentity}><h3><button type="button" disabled={locked} onClick={()=>open("summary")}>{card.label}</button></h3>
-        <div className={styles.barLivingAmount}><button type="button" data-bar-amount-trigger className={styles.barAmountTrigger} disabled={locked} aria-label="Modifier l’estimation des consommations" title="Choisir la portée à modifier · aucun total calculé n’est écrasé" onClick={()=>open("quick")}><strong>{summary?.knownAmount!=null?money(summary.knownAmount):"Coût à préciser"}</strong></button>
+        <div className={styles.barLivingAmount} data-cost-unknown={summary?.knownAmount==null}><button type="button" data-bar-amount-trigger className={styles.barAmountTrigger} disabled={locked} aria-label="Modifier l’estimation des consommations" title="Choisir la portée à modifier · aucun total calculé n’est écrasé" onClick={()=>open("quick")}><strong>{summary?.knownAmount!=null?money(summary.knownAmount):"Coût à préciser"}</strong></button>
         {summary?.knownAmount!=null&&<small>{fresh?summary.incomplete?"connus · coûts à préciser":"Coût prévu":"Résultat précédent · actualisation"}</small>}
         {(preserved||card.readOnly)&&<small>{card.readOnly?"Lecture seule":"Carte préservée"}</small>}</div></div>
       <div className={styles.barLivingTools}>

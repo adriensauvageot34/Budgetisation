@@ -83,9 +83,9 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
   };
   const known=detail?places.filter(place=>!place.privatePlace&&place.googlePlaceId===detail.placeId):[];
   return <section data-bar-google-search aria-label="Chercher un bar avec Google Maps">
-    {!detail&&<><label>Chercher un bar<input autoFocus maxLength={120} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom du lieu…"/></label>
+    {!detail&&<><div className={styles.barPlaceFields}><label>Chercher un bar<input autoFocus maxLength={120} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom du lieu…"/></label>
     {editCity?<label>Ville<input maxLength={100} value={city} onChange={e=>setCity(e.target.value)}/></label>
-      :<div className={styles.barPlaceContext}>Autour de {city} <button type="button" onClick={()=>setEditCity(true)}>Modifier la ville</button></div>}
+      :<div className={styles.barPlaceContext}>Autour de {city} <button type="button" onClick={()=>setEditCity(true)}>Modifier la ville</button></div>}</div>
     <button type="button" onClick={()=>{setCity("");setEditCity(true);}}>Chercher ailleurs, sans ville imposée</button>
     {!city.trim()&&<small>Recherche en France · ajoutez une ville au nom pour préciser.</small>}</>}
     {onManual&&<button type="button" onClick={()=>changeQuestion(onManual)}>Nom libre</button>}

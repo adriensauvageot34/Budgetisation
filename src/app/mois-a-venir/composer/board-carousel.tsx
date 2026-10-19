@@ -267,6 +267,9 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
             style={{ "--board-columns":inventoryColumns(layoutSize.width) } as React.CSSProperties}>
             {inventoryMountedPage(index,active,departing,mode,pinned) && inventory.map(({ item, column, row, columnSpan, rowSpan }) => <div key={item.id} className={styles.inventoryCell} data-inventory-id={item.id} tabIndex={-1}
               data-column-span={columnSpan} data-row-span={rowSpan} data-requested-surface={item.id===expandedId?surface?.size??"compact":undefined} data-geometry-scene={item.id===expandedId?surface?.scene:undefined}
+              data-preferred-width={item.id===expandedId?surface?.preferredWidth:undefined} data-min-usable-width={item.id===expandedId?surface?.minUsableWidth:undefined}
+              data-geometry-fallback={item.id===expandedId&&surface&&layoutSize.width<surface.minUsableWidth?"DOCUMENT_WIDTH_CONSTRAINED":undefined}
+              data-geometry-checkpoint={item.id===expandedId?expandedMeasure?.checkpoint:undefined}
               data-density={item.density} data-spatial-family={item.spatialFamily}
               style={{ gridColumn:`${column} / span ${columnSpan}`, gridRow:`${row} / span ${rowSpan}` }}>{render(item)}</div>)}
           </div>
@@ -283,10 +286,10 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     {pages.length > 1 && <nav className={styles.plateauNavigation} aria-label="Pages du mois" data-carousel-nav data-single-page={pages.length === 1}
       onKeyDown={e => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return; e.preventDefault(); const next = e.key === "Home" ? 0 : e.key === "End" ? pages.length - 1 : active + (e.key === "ArrowRight" ? 1 : -1); go(next);
         e.currentTarget.querySelector<HTMLButtonElement>(`[data-page-index="${Math.max(0,Math.min(pages.length-1,next))}"]`)?.focus(); }}>
-      <button className={styles.pageStep} aria-label="Page précédente du mois" disabled={!active} onClick={() => go(active - 1)}><ChevronLeft size={16} /> Précédente</button>
+      <button className={styles.pageStep} aria-label="Page précédente du mois" title="Page précédente du mois" disabled={!active} onClick={() => go(active - 1)}><ChevronLeft size={16} /></button>
       <span className={styles.pageStatus} aria-live="polite">Page {active + 1} sur {pages.length}</span>
       <div>{pages.map((_, index) => <button key={index} data-page-index={index} aria-label={`Afficher la page ${index + 1}`} aria-current={index === active ? "page" : undefined} tabIndex={index === active ? 0 : -1} onClick={() => go(index)}>{index + 1}</button>)}</div>
-      <button className={styles.pageStep} aria-label="Page suivante du mois" disabled={active === pages.length - 1} onClick={() => go(active + 1)}>Suivante <ChevronRight size={16} /></button>
+      <button className={styles.pageStep} aria-label="Page suivante du mois" title="Page suivante du mois" disabled={active === pages.length - 1} onClick={() => go(active + 1)}><ChevronRight size={16} /></button>
       {focusedLabel && focusPage >= 0 && focusPage !== active && <button className={styles.returnToCard} data-return-to-card={focused} disabled={dragging} onClick={returnToSelection}>Voir {focusedLabel} · page {focusPage + 1}</button>}
     </nav>}
   </>;

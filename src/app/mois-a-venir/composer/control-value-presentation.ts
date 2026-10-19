@@ -13,7 +13,7 @@ export function controlValuePresentation(card: ComposerCardView, dimension: Cont
   const absentEnvelope = dimension === "amount" && !explicit && card.value.inclusion === "SUGGESTION_ONLY";
   const kind = explicit ? "DECISION" : value !== null && !absentEnvelope ? "REFERENCE" : "UNKNOWN";
   const label = dimension === "unitAmount" ? kind === "DECISION" ? "Prix choisi" : kind === "REFERENCE" ? "Prix de référence" : "Prix à préciser"
-    : kind === "DECISION" ? "Choix de ce mois" : kind === "REFERENCE" ? "Référence du mois · pas une décision" : "À définir · aucun choix retenu";
+    : kind === "DECISION" ? "Choix de ce mois" : kind === "REFERENCE" ? "Référence du mois · pas une décision" : "À prévoir";
   return { kind, label, value: absentEnvelope ? null : value } as const;
 }
 export function controlMainDimension(card: ComposerCardView): "count" | "amount" {
