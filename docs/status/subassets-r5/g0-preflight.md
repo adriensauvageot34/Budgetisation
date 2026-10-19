@@ -44,3 +44,7 @@ Ces constats sont statiques, pas de nouveaux PASS navigateur. Les canaris de la 
 - Les55C restent réservées : pas de refonte du packing, des dimensions ou des autres presets.
 
 Plan : L1 rail dans ContextPalette ; L2 moments/catalogues et mini-édition via EDIT_NIGHT_OUT ; L3 recherche et contexte avec les owners Google/favoris/Mobility existants ; L4 finitions desktop. Fixtures React/PGlite et serveur navigateur disponibles. Le projet Supabase isolé ne dispose pas du contrat Draft : sa mémoire locale ne prouve pas une sauvegarde durable authentifiée.
+
+## Clôture de la réception
+
+Les statuts NOT_RUN ci-dessus décrivent le préflight historique, pas le résultat final. Voir gate-results.md et bar-subassets-release.md :PR Draft68 publiée, UI Preview exécutée, aucune fusion ni Production.78A vérifiées au niveau indiqué/27A partielles ou bloquées ;62B examinées ;55C réservées. GO_MAIN=NO.

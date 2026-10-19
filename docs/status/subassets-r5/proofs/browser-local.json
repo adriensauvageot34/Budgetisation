@@ -1,0 +1,41 @@
+{
+  "productBase": "c594c4886f41241d8d71d7f8ab5daabfd8b1baa7",
+  "candidate": "working tree before final grouped commit",
+  "environment": "LOCAL_BROWSER_SYNTHETIC_NO_SUPABASE",
+  "measurements": [
+    {
+      "card": [
+        {
+          "clientHeight": 303,
+          "scrollHeight": 303
+        }
+      ],
+      "dockBottom": 876.7999877929688,
+      "height": 900,
+      "price": "Bière ×112,50 €",
+      "stage": "1440-admitted-price",
+      "width": 1440
+    },
+    {
+      "card": [
+        {
+          "clientHeight": 303,
+          "scrollHeight": 303
+        }
+      ],
+      "dockBottom": 1046.3999862670898,
+      "height": 1080,
+      "horizontalOverflow": false,
+      "stage": "1920-admitted-price",
+      "width": 1920
+    },
+    {
+      "stage": "reload",
+      "result": "PASS_FIXTURE_ONLY",
+      "price": "12,50 €",
+      "note": "relecture réelle du serveur local ; pas Supabase"
+    }
+  ],
+  "raw": "12, retained on cancel, 12,50 admitted once with Enter",
+  "zoom": "NOT_VERIFIED_ZOOM"
+}

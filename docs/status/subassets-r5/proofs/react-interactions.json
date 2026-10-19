@@ -32,6 +32,18 @@
     {
       "name": "R5_REJECTED_MUTATION_RETAINS_CONTEXT_AND_NOT_SUCCESS",
       "status": "PASS"
+    },
+    {
+      "name": "R5_MOMENT_FAMILY_MEMORY_AND_NO_DUPLICATE_BEFORE_LAUNCHER",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_VENUE_REMOVE_RETAINS_AUTONOMOUS_LEGS_AND_OTHER_FIELDS",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_NO_MATCH_SEARCH_STAYS_MOUNTED_AND_FREE_PERSON_IS_EXPLICIT",
+      "status": "PASS"
     }
   ]
 }

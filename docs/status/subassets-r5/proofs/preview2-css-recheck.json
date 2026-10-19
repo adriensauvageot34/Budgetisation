@@ -1,0 +1,100 @@
+{
+  "sha": "cc9d2595dd95a69051d88d54beeb408ab308263d",
+  "deployment": "dpl_5RixWNdUcY8KKxNGQJ8YKr6EAKdU",
+  "measurements": [
+    {
+      "container": {
+        "height": 136,
+        "overflow": "visible",
+        "scroll": 136
+      },
+      "dock": {
+        "bottom": 709.9000244140625,
+        "client": 136,
+        "scroll": 136
+      },
+      "height": 720,
+      "pageCanScroll": true,
+      "scene": "two beers active row",
+      "width": 1152
+    },
+    {
+      "controls": [
+        {
+          "bottom": 767.5,
+          "name": "Boissons"
+        },
+        {
+          "bottom": 767.5,
+          "name": "Restauration"
+        }
+      ],
+      "dock": [
+        {
+          "bottom": 777.5,
+          "client": 124,
+          "scroll": 124
+        }
+      ],
+      "height": 720,
+      "scene": "summary two beers",
+      "width": 1152
+    },
+    {
+      "controls": [
+        {
+          "bottom": 689.1000366210938,
+          "name": "Boissons"
+        },
+        {
+          "bottom": 689.1000366210938,
+          "name": "Restauration"
+        }
+      ],
+      "dock": [
+        {
+          "bottom": 699.1000366210938,
+          "client": 124,
+          "scroll": 124
+        }
+      ],
+      "height": 720,
+      "scene": "summary after document safety scroll",
+      "width": 1152
+    },
+    {
+      "card": [
+        {
+          "client": 325,
+          "scroll": 325
+        }
+      ],
+      "docks": 0,
+      "height": 900,
+      "reserve": [
+        0
+      ],
+      "scene": "calendar",
+      "width": 1440
+    },
+    {
+      "card": [
+        {
+          "client": 225,
+          "scroll": 225
+        }
+      ],
+      "dock": [
+        {
+          "bottom": 1017.2000122070312,
+          "client": 124,
+          "scroll": 124
+        }
+      ],
+      "height": 1080,
+      "horizontalOverflow": false,
+      "scene": "summary final",
+      "width": 1920
+    }
+  ]
+}
