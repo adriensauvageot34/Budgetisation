@@ -12,7 +12,8 @@ assert.equal(before.error, null);
 assert(before.data.user.email.endsWith('.invalid'), 'EXISTING_FICTIONAL_IDENTITY_ONLY');
 const metadata = { ...before.data.user.app_metadata };
 if (action === 'enable') metadata.bar_google_test = 'closure-20261019';
-else delete metadata.bar_google_test;
+// Auth Admin merges app_metadata; omission does not revoke an existing key.
+else metadata.bar_google_test = null;
 const result = await client.auth.admin.updateUserById(id, { app_metadata: metadata, ban_duration: action === 'enable' ? 'none' : '876000h' });
 assert.equal(result.error, null);
 const check = await client.auth.admin.getUserById(id);

@@ -1028,7 +1028,7 @@
 .barLivingQuestion [data-night-workshop] h3 { font-size:15px; }
 /* V8: an inline atelier must never reserve the legacy side panel. */
 .columns[data-bar-living-open=true] { padding-right:0; }
-.columns[data-bar-living-open=true] .paletteDock { width:auto; overflow:hidden; }
+.columns[data-bar-living-open=true] .paletteDock { width:auto; height:auto; flex-basis:auto; min-height:136px; overflow:visible; }
 .columns[data-bar-living-open=true] .plateau { min-width:0; }
 /* A living Bar may exceed a short desktop viewport. Let the surrounding page
    scroll naturally; neither the card nor its dock becomes a scroll container. */
