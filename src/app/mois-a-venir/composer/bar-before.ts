@@ -21,3 +21,18 @@ export function barBeforePatch(state: PlanSemanticStateV1, parent: PlannedContex
     childContextOccurrenceId: before?.child.contextOccurrenceId ?? crypto.randomUUID(),
     selectionId: before?.link.selectionId ?? crypto.randomUUID(), bottle, extras } } };
 }
+
+/** The activity's main slot is technical ownership, not a privileged bottle.
+ * Promote the next real component atomically through the existing edit owner.
+ * The caller confirms removal of the entire child when no component remains. */
+export function barBeforeRemove(state: PlanSemanticStateV1, parent: PlannedContextState, selectionId: string): ComposerOperation {
+  const before = barBefore(state, parent);
+  if (!before) throw Error("Ce Before n’est plus disponible. Relisez la carte.");
+  if (before.bottle.selectionId !== selectionId) {
+    if (!before.extras.some(item => item.selectionId === selectionId)) throw Error("Ce poste n’existe plus.");
+    return barBeforePatch(state, parent, before.bottle, before.extras.filter(item => item.selectionId !== selectionId));
+  }
+  const next = before.extras.find(item => item.kind === "COMPONENT");
+  if (!next) throw Error("Confirmez le retrait du Before entier pour conserver la protection de ses liens.");
+  return barBeforePatch(state, parent, { ...next, optionKey: "activity" }, before.extras.filter(item => item.selectionId !== next.selectionId));
+}

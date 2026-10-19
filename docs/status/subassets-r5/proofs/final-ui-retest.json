@@ -1,0 +1,35 @@
+{
+  "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+  "environment": "VERCEL_PREVIEW_AUTH_ISOLATED_COMPOSER_IN_MEMORY",
+  "checks": [
+    {
+      "focus": "Modifier l’estimation des consommations",
+      "height": 900,
+      "id": "UI220_COST_ESCAPE_ANCHOR",
+      "width": 1440
+    },
+    {
+      "id": "RAW_GUARD_CANCEL",
+      "value": "12,"
+    },
+    {
+      "amount": "0,00 €",
+      "disabled": false,
+      "focus": "Annuler la dernière modification du brouillon",
+      "id": "UI220_LAST_REDO"
+    },
+    {
+      "height": 720,
+      "id": "UI093_FINAL_SHA_CLEAR",
+      "rail": [
+        {
+          "after": "true",
+          "client": 1023,
+          "scroll": 4468
+        }
+      ],
+      "right": 1,
+      "width": 1152
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "A_verified": 78,
+  "A_other": 27,
+  "B_checked": 62,
+  "statuses": {
+    "IMPLEMENTED_VERIFIED": 90,
+    "PARTIAL": 45,
+    "ALREADY_VERIFIED": 16,
+    "OUT_OF_SCOPE_NEXT_STAGE": 55,
+    "IMPLEMENTED_NOT_BROWSER_PROVEN": 5,
+    "NO_CHANGE_REQUIRED_VERIFIED": 4,
+    "BLOCKED_OWNER": 6,
+    "BLOCKED_ENV": 1
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "sha": "c594c4886f41241d8d71d7f8ab5daabfd8b1baa7",
+  "deployment": "dpl_E55owBobiASXM5wSnoJtMknJm5Gq",
+  "project": "wlndjknwbceaqrqcwbqw",
+  "checks": [
+    {
+      "test": "two beers",
+      "result": "PASS"
+    },
+    {
+      "height": 900,
+      "result": "PASS",
+      "test": "date no dock",
+      "width": 1440
+    },
+    {
+      "test": "three contacts then remove one",
+      "result": "PASS_BROWSER_PREVIEW_MEMORY_ONLY"
+    },
+    {
+      "test": "Google live",
+      "result": "UNAVAILABLE_PROVIDER",
+      "fallback": "query retained; explicit free text available; no invented result"
+    },
+    {
+      "test": "Before chips then snack distinct IDs",
+      "result": "PASS_ACTIVE_TILE_ONLY"
+    },
+    {
+      "test": "mode vs known routes",
+      "result": "PASS_BROWSER_PREVIEW",
+      "note": "mode choisi explicitement, départ et tarif inconnus, bar libre ne prouve aucune distance"
+    }
+  ],
+  "dimensions": {
+    "card": [
+      {
+        "bottom": 682.5,
+        "clientHeight": 363,
+        "scrollHeight": 363
+      }
+    ],
+    "dockBottom": 875.9000396728516,
+    "height": 900,
+    "width": 1440
+  }
+}

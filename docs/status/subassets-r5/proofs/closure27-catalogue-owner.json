@@ -1,0 +1,85 @@
+{
+  "owner": "EDIT_NIGHT_OUT",
+  "approvedModules": [
+    "bar",
+    "house_party",
+    "club"
+  ],
+  "auBar": [
+    {
+      "key": "bar:beer",
+      "label": "Bière"
+    },
+    {
+      "key": "bar:wine",
+      "label": "Verre de vin"
+    },
+    {
+      "key": "bar:cocktail",
+      "label": "Cocktail"
+    },
+    {
+      "key": "bar:shot",
+      "label": "Shot"
+    },
+    {
+      "key": "bar:tapas",
+      "label": "Planche / tapas"
+    },
+    {
+      "key": "bar:soft",
+      "label": "Soft"
+    },
+    {
+      "key": "bar:water",
+      "label": "Eau"
+    },
+    {
+      "key": "house_party:snack",
+      "label": "Snack"
+    },
+    {
+      "key": "house_party:chips",
+      "label": "Chips"
+    },
+    {
+      "key": "club:food",
+      "label": "Nourriture sur place"
+    }
+  ],
+  "before": [
+    {
+      "key": "house_party:vodka",
+      "label": "Vodka"
+    },
+    {
+      "key": "house_party:crazy_tiger",
+      "label": "Crazy Tiger sans alcool"
+    },
+    {
+      "key": "house_party:mixer",
+      "label": "Diluant sans alcool"
+    },
+    {
+      "key": "house_party:beer",
+      "label": "Bière"
+    },
+    {
+      "key": "house_party:wine",
+      "label": "Vin"
+    },
+    {
+      "key": "house_party:rum",
+      "label": "Rhum"
+    },
+    {
+      "key": "house_party:snack",
+      "label": "Snack"
+    },
+    {
+      "key": "house_party:chips",
+      "label": "Chips"
+    }
+  ],
+  "excluded": "Restaurant/Sandwich/custom food not published for this owner. No universal import."
+}

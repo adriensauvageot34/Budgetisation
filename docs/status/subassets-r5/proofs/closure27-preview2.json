@@ -1,0 +1,269 @@
+{
+  "sha": "99681b47cdabe187776932f52056ec10d1f0a620",
+  "environment": "AUTH_TEST_PROJECT_COMPOSER_MEMORY",
+  "checks": [
+    {
+      "id": "UI078",
+      "count": 1,
+      "label": "Modifier les personnes · Amandine"
+    },
+    {
+      "id": "UI078",
+      "count": 3,
+      "label": "Modifier les personnes · Amandine, Cédric, Lucas"
+    },
+    {
+      "id": "UI078",
+      "count": 4,
+      "summary": "←\nMa sortie\n+ Trajet\nLieu\nDate\nA\nAmandine\nC\nCédric\nL\nLucas\n+1\nPersonnes\nAmandine ×\nCédric ×\nLucas ×\nFlorentine ×"
+    },
+    {
+      "id": "UI078",
+      "countBefore": 8,
+      "countAfterRemove": 7,
+      "summary": "←\nMa sortie\n+ Trajet\nLieu\nDate\nA\nAmandine\nC\nCédric\nL\nLucas\n+4\nPersonnes\nJuliette ×\nElsa ×\nGreg ×\n←\n2 / 2\n→"
+    },
+    {
+      "id": "UI119/124",
+      "compatible": [
+        "Snack",
+        "Chips",
+        "Nourriture sur place",
+        "Planche / tapas"
+      ],
+      "scene": "row"
+    },
+    {
+      "id": "UI222_RICH_20",
+      "text": "Changer de famille\n←\nMa sortie\n+ Trajet\nLieu\nDate\nA\nAmandine\nC\nCédric\nL\nLucas\n+4\nAu bar\n+ Ajouter\nBière ×1\nPrix à préciser\nBière ×1\nPrix à préciser\nBière ×1\nPrix à préciser\nBière ×1\nPrix à préciser\n←\n5 / 5\n→"
+    },
+    {
+      "bar": [
+        {
+          "height": 353,
+          "overflowY": "visible",
+          "rect": {
+            "bottom": 672.5,
+            "height": 355,
+            "left": 475.2000122070313,
+            "right": 1243.6000366210938,
+            "top": 317.5,
+            "width": 768.4000244140625,
+            "x": 475.2000122070313,
+            "y": 317.5
+          },
+          "scrollHeight": 353
+        }
+      ],
+      "dock": [
+        {
+          "height": 143,
+          "overflowY": "visible",
+          "rect": {
+            "bottom": 877.2999877929688,
+            "height": 143,
+            "left": 470,
+            "right": 1258.4000244140625,
+            "top": 734.2999877929688,
+            "width": 788.4000244140625,
+            "x": 470,
+            "y": 734.2999877929688
+          },
+          "scrollHeight": 143
+        }
+      ],
+      "editor": [
+        {
+          "height": 269,
+          "overflowY": "visible",
+          "rect": {
+            "bottom": 664,
+            "height": 268.8999938964844,
+            "left": 476,
+            "right": 1242.7999877929688,
+            "top": 395.1000061035156,
+            "width": 766.7999877929688,
+            "x": 476,
+            "y": 395.1000061035156
+          },
+          "scrollHeight": 269
+        }
+      ],
+      "height": 900,
+      "id": "GEOMETRY_RICH",
+      "visuals": [
+        {
+          "kind": "clay",
+          "loaded": true,
+          "rect": {
+            "bottom": 550.8000183105469,
+            "height": 40,
+            "left": 554.6000366210938,
+            "right": 602.6000366210938,
+            "top": 510.8000183105469,
+            "width": 48,
+            "x": 554.6000366210938,
+            "y": 510.8000183105469
+          }
+        },
+        {
+          "kind": "clay",
+          "loaded": true,
+          "rect": {
+            "bottom": 550.8000183105469,
+            "height": 40,
+            "left": 741.7999877929688,
+            "right": 789.7999877929688,
+            "top": 510.8000183105469,
+            "width": 48,
+            "x": 741.7999877929688,
+            "y": 510.8000183105469
+          }
+        },
+        {
+          "kind": "clay",
+          "loaded": true,
+          "rect": {
+            "bottom": 550.8000183105469,
+            "height": 40,
+            "left": 929,
+            "right": 977,
+            "top": 510.8000183105469,
+            "width": 48,
+            "x": 929,
+            "y": 510.8000183105469
+          }
+        },
+        {
+          "kind": "clay",
+          "loaded": true,
+          "rect": {
+            "bottom": 550.8000183105469,
+            "height": 40,
+            "left": 1116.2000732421875,
+            "right": 1164.2000732421875,
+            "top": 510.8000183105469,
+            "width": 48,
+            "x": 1116.2000732421875,
+            "y": 510.8000183105469
+          }
+        }
+      ],
+      "width": 1440
+    },
+    {
+      "areas": [
+        {
+          "height": 353,
+          "name": "Bar / Apéro",
+          "overflowY": "visible",
+          "rect": {
+            "bottom": 672.5,
+            "height": 355,
+            "left": 331.63751220703125,
+            "right": 1100.0375366210938,
+            "top": 317.5,
+            "width": 768.4000244140625,
+            "x": 331.63751220703125,
+            "y": 317.5
+          },
+          "scrollHeight": 353
+        },
+        {
+          "height": 269,
+          "name": "Configuration de Bar / Apéro",
+          "overflowY": "visible",
+          "rect": {
+            "bottom": 664,
+            "height": 268.8999938964844,
+            "left": 332.4375,
+            "right": 1099.2374877929688,
+            "top": 395.1000061035156,
+            "width": 766.7999877929688,
+            "x": 332.4375,
+            "y": 395.1000061035156
+          },
+          "scrollHeight": 269
+        },
+        {
+          "height": 143,
+          "name": "Boissons",
+          "overflowY": "visible",
+          "rect": {
+            "bottom": 877.2999877929688,
+            "height": 143,
+            "left": 326.4375,
+            "right": 1114.8375244140625,
+            "top": 734.2999877929688,
+            "width": 788.4000244140625,
+            "x": 326.4375,
+            "y": 734.2999877929688
+          },
+          "scrollHeight": 143
+        }
+      ],
+      "document": {
+        "height": 737,
+        "width": 1142
+      },
+      "height": 720,
+      "id": "GEOMETRY_RICH_1152",
+      "width": 1152
+    },
+    {
+      "areas": [
+        {
+          "height": 353,
+          "name": "Bar / Apéro",
+          "overflowY": "visible",
+          "rect": {
+            "bottom": 672.5,
+            "height": 355,
+            "left": 715.2000122070312,
+            "right": 1483.6000366210938,
+            "top": 317.5,
+            "width": 768.4000244140625,
+            "x": 715.2000122070312,
+            "y": 317.5
+          },
+          "scrollHeight": 353
+        },
+        {
+          "height": 269,
+          "name": "Configuration de Bar / Apéro",
+          "overflowY": "visible",
+          "rect": {
+            "bottom": 664,
+            "height": 268.8999938964844,
+            "left": 716,
+            "right": 1482.7999877929688,
+            "top": 395.1000061035156,
+            "width": 766.7999877929688,
+            "x": 716,
+            "y": 395.1000061035156
+          },
+          "scrollHeight": 269
+        },
+        {
+          "height": 143,
+          "name": "Boissons",
+          "overflowY": "visible",
+          "rect": {
+            "bottom": 1027.6000366210938,
+            "height": 143,
+            "left": 710,
+            "right": 1498.4000244140625,
+            "top": 884.6000366210938,
+            "width": 788.4000244140625,
+            "x": 710,
+            "y": 884.6000366210938
+          },
+          "scrollHeight": 143
+        }
+      ],
+      "height": 1080,
+      "id": "GEOMETRY_RICH_1920",
+      "width": 1920
+    }
+  ]
+}

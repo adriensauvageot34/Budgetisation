@@ -1,0 +1,34 @@
+{
+  "method": "REACT_OWNER_PGLITE_NOT_BROWSER",
+  "checks": [
+    {
+      "name": "C27_L1_SINGLE_COST_ACCESS_AND_ANCHORED_SCOPE",
+      "status": "PASS"
+    },
+    {
+      "name": "C27_L1_INCOMPLETE_QUICK_RAW_ESCAPE_IS_GUARDED",
+      "status": "PASS"
+    },
+    {
+      "name": "C27_L1_REJECTED_COST_PRESERVES_BUFFER",
+      "status": "PASS"
+    },
+    {
+      "name": "C27_L1_EXPLICIT_ADDITIVE_COST_DOES_NOT_PROMPT_SUBSTITUTION",
+      "status": "FAIL",
+      "message": "Expected values to be strictly equal:\n\n'coverage' !== 'row'\n"
+    },
+    {
+      "name": "C27_L2_COMPATIBLE_PRODUCTS_OWNED_BY_MOMENT",
+      "status": "PASS"
+    },
+    {
+      "name": "C27_L2_OTHER_NOT_A_FALSE_CHOICE_EXISTING_VALUE_SURVIVES",
+      "status": "PASS"
+    },
+    {
+      "name": "C27_L2_OWNER_PUBLISHED_PLACE_ORDER_NOT_A_DECISION",
+      "status": "PASS"
+    }
+  ]
+}

@@ -30,7 +30,10 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
       // Keep that live focus, including buttons and the options group.
       if(expanded&&active instanceof HTMLElement&&active!==document.body
         &&(root.current?.contains(active)||active.closest('[data-bar-dock]')))return;
-      root.current?.querySelector<HTMLButtonElement>(expanded?'button[aria-label="Replier la carte"]':"h3 button")?.focus({preventScroll:true});
+      const scene=root.current?.querySelector<HTMLElement>('[data-bar-living-editor]')?.dataset.barStep;
+      const sceneFocus=expanded&&(scene==="place"||scene==="google")?root.current?.querySelector<HTMLElement>('[data-bar-google-search] input')
+        :expanded&&scene==="date"?root.current?.querySelector<HTMLElement>('[data-bar-calendar] button[tabindex="0"]'):null;
+      (sceneFocus??root.current?.querySelector<HTMLButtonElement>(expanded?'button[aria-label="Replier la carte"]':"h3 button"))?.focus({preventScroll:true});
     });wasExpanded.current=expanded;return()=>cancelAnimationFrame(frame);}
   },[expanded]);
   const summary=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===card.contextOccurrenceId);
@@ -49,7 +52,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
     <header className={styles.barLivingHeader}>
       <button type="button" className={styles.barImageTrigger} disabled={locked} aria-label={`Ouvrir ${card.label}`} onClick={()=>open("summary")}><img src="/planned-visuals/builder/clay/drinks/bar-editorial.webp" alt="" className={styles.barLivingImage} width={128} height={128}/></button>
       <div className={styles.barLivingIdentity}><h3><button type="button" disabled={locked} onClick={()=>open("summary")}>{card.label}</button></h3>
-        <div className={styles.barLivingAmount}><button type="button" className={styles.barAmountTrigger} disabled={locked} aria-label="Modifier l’estimation des consommations" title="Estimation des consommations uniquement · repas, Before et transports restent distincts" onClick={()=>open("quick")}><strong>{summary?.knownAmount!=null?money(summary.knownAmount):"Coût à préciser"}</strong></button>
+        <div className={styles.barLivingAmount}><button type="button" data-bar-amount-trigger className={styles.barAmountTrigger} disabled={locked} aria-label="Modifier l’estimation des consommations" title="Choisir la portée à modifier · aucun total calculé n’est écrasé" onClick={()=>open("quick")}><strong>{summary?.knownAmount!=null?money(summary.knownAmount):"Coût à préciser"}</strong></button>
         {summary?.knownAmount!=null&&<small>{fresh?summary.incomplete?"connus · coûts à préciser":"Coût prévu":"Résultat précédent · actualisation"}</small>}
         {(preserved||card.readOnly)&&<small>{card.readOnly?"Lecture seule":"Carte préservée"}</small>}</div></div>
       <div className={styles.barLivingTools}>

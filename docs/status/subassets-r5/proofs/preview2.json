@@ -1,0 +1,88 @@
+{
+  "sha": "fa8d0aff21c392d8966a9b75d8e0963ffebcad27",
+  "deployment": "dpl_7f4KSzvzkHrtQTWdCZNcyuqbXipe",
+  "environment": "Supabase isolated Auth A; Composer memory synthetic; no Apply",
+  "checks": [
+    {
+      "name": "two beer lines",
+      "status": "PASS_BROWSER_PREVIEW"
+    },
+    {
+      "name": "multi people three then remove Lucas",
+      "status": "PASS_BROWSER_PREVIEW"
+    },
+    {
+      "name": "no match search remains mounted",
+      "status": "PASS_BROWSER_PREVIEW"
+    },
+    {
+      "name": "Before Chips then Snack no duplicate launcher",
+      "status": "PASS_BROWSER_PREVIEW"
+    },
+    {
+      "name": "rail arrow moves",
+      "left": 293.6,
+      "status": "PASS_BROWSER_PREVIEW"
+    },
+    {
+      "name": "1152 summary dock partly below screen",
+      "status": "PARTIAL",
+      "bottom": 777.5,
+      "height": 720
+    },
+    {
+      "name": "RAW12 comma guarded, continue retains; 12.50 Enter admitted",
+      "status": "PASS_BROWSER_PREVIEW"
+    },
+    {
+      "name": "Before family food restored separately from bar drinks",
+      "status": "PASS_BROWSER_PREVIEW"
+    },
+    {
+      "name": "date atomic returns summary",
+      "status": "PASS_BROWSER_PREVIEW"
+    }
+  ],
+  "measurements": [
+    {
+      "docks": 0,
+      "height": 900,
+      "overflows": [
+        {
+          "client": 327,
+          "scroll": 327
+        },
+        {
+          "client": 242,
+          "scroll": 242
+        }
+      ],
+      "reserve": [
+        0
+      ],
+      "scene": "calendar",
+      "width": 1440
+    },
+    {
+      "card": [
+        {
+          "client": 227,
+          "scroll": 227
+        }
+      ],
+      "dock": [
+        {
+          "bottom": 1035.2000122070312,
+          "client": 136,
+          "scroll": 136,
+          "top": 899.2000122070312
+        }
+      ],
+      "height": 1080,
+      "noHorizontalOverflow": true,
+      "priceVisible": true,
+      "scene": "priced-row",
+      "width": 1920
+    }
+  ]
+}

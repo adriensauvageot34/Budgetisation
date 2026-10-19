@@ -1,7 +1,7 @@
 "use client";
 import type {ReactNode} from "react";
 import {mobilityIntentId} from "@/domain/phase2/planner/identity";
-import {CalendarDays,Users,MapPin,ArrowRight,Car,Train,Bus,Footprints,Plus,CarTaxiFront} from "lucide-react";
+import {CalendarDays,Users,MapPin,ArrowRight,Car,Train,Bus,Footprints,Plus,CarTaxiFront,X} from "lucide-react";
 import type {ComponentSelectionV1} from "@/domain/phase2/planner/component-contract";
 import type {ComposerContextCardView} from "@/domain/phase2/planner/composer-contract";
 import type {ComposerUiModel} from "@/domain/phase2/planner/composer-ui-contract";
@@ -28,12 +28,13 @@ export function BarComponentFace({item,amount,fresh=true}: {item:ComponentSelect
    {item.kind==="COMPONENT"&&item.unitBasis!=="ITEM"&&<small>{item.unitBasis==="SHARED"?"Lot partagé":"Par personne tarifée"}</small>}
  </>;
 }
-export function BarMetadata({fields,model,open,editing=false,disabled=false,active,children}: {fields:ComposerContextCardView["fields"];model:ComposerUiModel;open:(target:BarTarget)=>void;editing?:boolean;disabled?:boolean;active?:string;children?:ReactNode}){
+export function BarMetadata({fields,model,open,editing=false,disabled=false,active,children,removePlace}: {fields:ComposerContextCardView["fields"];model:ComposerUiModel;open:(target:BarTarget)=>void;editing?:boolean;disabled?:boolean;active?:string;children?:ReactNode;removePlace?:()=>void}){
  const place=fields.placeRef as ProspectivePlaceRef|undefined,date=barDateLabel(fields.plannedDate),people=Array.isArray(fields.participantRefs)?fields.participantRefs as ProspectivePersonRef[]:[];
  const googleVenue=fields.venueDecision?!!parseNightOutVenue(fields.venueDecision).google:false;
  return <nav className={styles.barLivingMetadata} aria-label="Précisions de la sortie">
    {children}
    <button type="button" aria-label="Modifier le lieu" aria-pressed={active==="place"||active==="manual-place"||active==="google"} disabled={disabled} onClick={()=>open("place")} title={place?.kind==="KNOWN"?"Lieu enregistré · identité conservée":googleVenue?"Bar Google retenu · itinéraire calculable sous réserve des fournisseurs":"Repère textuel · itinéraire à préciser"}>{place?<MapPin size={14}/>:<Plus size={14}/>} {place?barPlaceLabel(place,model):"Lieu"}</button>
+   {place&&removePlace&&<button type="button" aria-label="Retirer le lieu de la sortie" disabled={disabled} onClick={removePlace}><X size={14}/></button>}
    <button type="button" aria-label="Modifier la date" aria-pressed={active==="date"} disabled={disabled} onClick={()=>open("date")}>{date?<CalendarDays size={14}/>:<Plus size={14}/>} {date??"Date"}</button>
    <button type="button" className={styles.barPeople} aria-pressed={active==="people"} disabled={disabled} onClick={()=>open("people")} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)}>
      {people.length?people.slice(0,3).map((p,i)=>{const label=barPersonLabel(p,model);return <span key={i}><i aria-hidden="true">{label.split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join("")}</i>{label.split(/\s+/)[0]}</span>;}):<><Plus size={14}/>Personnes</>}{people.length>3&&<span>+{people.length-3}</span>}
@@ -62,7 +63,7 @@ export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=fa
    {leg.optionKey==="car"&&<small data-bar-usage-not-payment>Coût d’usage estimé · aucun achat de carburant.{cost==null&&missing.length===0?" Estimation Mobility encore indisponible ; aucun prix n’est supposé.":""}{summary?.status==="PARTIAL"?" Estimation partielle.":""}</small>}
    {leg.optionKey==="car"&&summary?.fare!=null&&<small>Autre tarif prévu : {money(summary.fare)}{!fresh?" · précédent":""}</small>}
    {(missing.length>0||summary?.toll!=null||summary?.parking!=null||summary?.cashTransport!=null||(leg.route?.stops.length??0)>2)&&<small className={styles.barRouteEvidence}>{missing.length>0&&`À préciser : ${missing.join(", ")}`}{summary?.toll!=null&&` · péage ${money(summary.toll)}`}{summary?.parking!=null&&` · parking ${money(summary.parking)}`}{summary?.cashTransport!=null&&` · coût monétaire du transport ${money(summary.cashTransport)}`}{(leg.route?.stops.length??0)>2&&` · ${leg.route!.stops.length-2} étape(s) intermédiaire(s)`}</small>}
-   {availability.length>0&&<small data-bar-route-availability>{availability.join(" · ")}{!fresh?" · précédente estimation":""}</small>}
+   {availability.length>0&&<details data-bar-route-availability><summary>{cost==null?"Estimation indisponible":"Limites de l’estimation"}</summary><small>{availability.join(" · ")}{!fresh?" · précédente estimation":""}</small></details>}
    </>}
  </div>;
 }

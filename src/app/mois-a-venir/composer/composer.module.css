@@ -1028,7 +1028,7 @@
 .barLivingQuestion [data-night-workshop] h3 { font-size:15px; }
 /* V8: an inline atelier must never reserve the legacy side panel. */
 .columns[data-bar-living-open=true] { padding-right:0; }
-.columns[data-bar-living-open=true] .paletteDock { width:auto; overflow:hidden; }
+.columns[data-bar-living-open=true] .paletteDock { width:auto; height:auto; flex-basis:auto; min-height:136px; overflow:visible; }
 .columns[data-bar-living-open=true] .plateau { min-width:0; }
 /* A living Bar may exceed a short desktop viewport. Let the surrounding page
    scroll naturally; neither the card nor its dock becomes a scroll container. */
@@ -1155,8 +1155,8 @@
 .barSceneBack { border:0; background:transparent; color:#655078; padding:4px 0; text-align:left; font-size:12px; }
 .barPagination { display:flex; align-items:center; justify-content:flex-end; gap:9px; margin:6px 0; font-size:12px; }
 .barPagination button { border:1px solid #ddd1e7; border-radius:8px; padding:5px 10px; background:#fff; }
-.barCompositionDock .paletteOptions { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); overflow:visible; gap:9px; }
-.barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { min-width:0; max-width:none; width:100%; box-sizing:border-box; height:auto; min-height:65px; }
+.barCompositionDock .paletteOptions { display:flex; overflow-x:auto; overflow-y:hidden; gap:9px; scroll-padding-inline:4px; }
+.barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { flex:0 0 170px; min-width:150px; max-width:230px; box-sizing:border-box; height:auto; min-height:65px; }
 .barLivingQuestion [data-bar-local-places]>button,.barLivingCard [data-bar-google-search]>button { display:block; width:100%; padding:7px; margin:3px 0; border:1px solid #e6dcec; border-radius:10px; background:#fff; text-align:left; }
 .barLivingQuestion [data-bar-local-places] input { width:100%; box-sizing:border-box; }
 .barLivingCard [data-bar-item-details] { display:inline-block; margin:5px; font-size:12px; }
@@ -1262,3 +1262,38 @@
 .barLivingCard .barLivingTiles small,
 .barCompositionDock .questionAnswer[data-show-hint=true] small { font-size:12px; line-height:1.4; color:#595363; }
 .barLivingCard .barRouteLine { font-size:12px; }
+
+/* R5: an empty scene does not reserve a passive dock. The portal host stays mounted. */
+.columns[data-bar-living-open=true] .paletteDock:not(:has([data-bar-dock])) { display:none; }
+
+/* R5: stable choice artwork box; no card or Board sizing changes. */
+.barCompositionDock .barProductSymbol { flex:0 0 64px; width:64px; height:36px; display:grid; place-items:center; }
+.barCompositionDock .barProductSymbol img { width:64px; height:36px; object-fit:contain; }
+.barCompositionDock .questionAnswer:focus-visible { outline-offset:-3px; }
+@media (prefers-reduced-motion:reduce) { .barCompositionDock .paletteOptions { scroll-behavior:auto; } }
+
+.barCompositionDock .paletteOptions[data-overflow-after=true] { box-shadow:inset -14px 0 12px -13px #8c6e40; }
+.barCompositionDock .barProductSymbol { flex-basis:48px; width:48px; height:40px; }
+.barCompositionDock .barProductSymbol img { width:48px; height:40px; object-fit:cover; object-position:right center; border-radius:7px; }
+.barCostPopover { width:min(360px,calc(100vw - 24px)); max-height:none; overflow:visible; }
+.barCostPopover [data-bar-quick] { display:grid; gap:10px; }
+.barCostPopover [data-bar-quick] p { margin:0; font-size:12px; line-height:1.45; }
+.barCostScopes { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.barCostScopes button { padding:9px; border:1px solid #d9c8a9; border-radius:10px; background:#fffdf8; color:#514329; text-align:left; }
+.barCostScopes button[aria-pressed=true] { background:#faedcf; border-color:#a78142; }
+.barPlaceResults { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; min-height:58px; }
+.barPlaceChoice { position:relative; min-width:0; height:58px; padding:8px 10px; border:1px solid #d9cdb5; border-radius:11px; background:#fffdf8; color:#51432b; text-align:left; font-size:12px; line-height:18px; }
+.barPlaceChoice>span:first-child { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+.barPlaceFullLabel { display:none; position:absolute; left:0; top:calc(100% + 3px); z-index:5; min-width:100%; width:max-content; max-width:300px; padding:8px; border:1px solid #ad915f; border-radius:8px; background:#fffdf7; color:#30291d; box-shadow:0 3px 10px #0002; overflow-wrap:anywhere; }
+.barPlaceChoice:is(:focus-visible,:hover) .barPlaceFullLabel { display:block; }
+.barPlaceFullLabel::after { content:attr(data-full-label); }
+.barPlaceChoice:focus-visible { outline:3px solid #a78142; outline-offset:1px; }
+.barCompositionDock { position:relative; }
+.barCompositionDock .paletteOptions { min-height:76px; }
+.barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { height:72px; min-height:72px; }
+.barCompositionDock .questionAnswer strong { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:16px; overflow-wrap:anywhere; }
+.barCompositionDock .questionAnswer[data-show-hint=true] small { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; line-height:15px; }
+.barDockFullLabel { position:absolute; bottom:calc(100% + 6px); left:0; z-index:8; width:max-content; max-width:min(100%,520px); padding:9px 12px; border:1px solid #ad915f; border-radius:9px; background:#fffdf7; color:#352c1f; box-shadow:0 4px 14px #0002; font-size:12px; line-height:17px; overflow-wrap:anywhere; pointer-events:none; }
+.barLivingCard[data-expanded=true] .barProductSymbol { display:grid; place-items:center; width:48px; height:40px; flex:none; }
+.barLivingCard[data-expanded=true] .barProductSymbol img { display:block; width:48px; height:40px; object-fit:cover; object-position:right center; border-radius:8px; }
+.barProductSymbol[data-bar-visual=functional-icon] { display:grid; place-items:center; width:48px; height:40px; color:#6a4e20; background:#f4e8cd; border-radius:9px; }

@@ -33,10 +33,25 @@ const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
-const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
+const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'||label==='Montant direct'&&n.props['aria-label']==='Modifier le coût prévu'||label==='Bouteille partagée'&&text(n)==='Bouteille'));assert.ok(all.length,'Missing button '+label);return all[0];};
 const click=async label=>{
-  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));
+  // Cost is now the card header value, outside this editor-only fixture. Exercise
+  // its existing targetRequest boundary instead of reintroducing a fake CTA.
+  if(label==='Montant direct'&&kind===BarLivingEditor){overrides={...overrides,initialTarget:'quick',targetRequest:(overrides.targetRequest??0)+1};await sync();return;}
+  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'||label==='Montant direct'&&n.props['aria-label']==='Modifier le coût prévu'||label==='Bouteille partagée'&&text(n)==='Bouteille'));
   for(let i=0;i<12&&!matches().length;i++){
+    if(controls(n=>n.props['data-bar-living-editor']!==undefined).length){
+      const switchFamily=controls(n=>n.type==='button'&&text(n)==='Changer de famille')[0];
+      if(switchFamily&&['Chips','Snack','Planche / tapas','Vodka','Crazy Tiger sans alcool','Diluant sans alcool','Bière','Vin','Rhum','Bouteille partagée'].includes(label)){await act(async()=>switchFamily.props.onClick());continue;}
+      const familyLabel=['Chips','Snack','Planche / tapas'].includes(label)?'Restauration':'Boissons';
+      const family=controls(n=>n.type==='button'&&text(n)===familyLabel)[0];
+      if(family&&!['Date','Lieu','Montant direct','Before','Nom libre'].includes(label)){await act(async()=>family.props.onClick());continue;}
+      const routes=controls(n=>n.type==='button'&&text(n)==='Trajets proposés')[0];
+      if(routes&&['Reprendre le trajet inverse','Même mode qu’à l’aller'].includes(label)){await act(async()=>routes.props.onClick());continue;}
+      const endpointSearch=controls(n=>n.type==='input'&&n.props['aria-label']==='Chercher un point du trajet')[0];
+      if(endpointSearch&&endpointSearch.props.value!==label){await act(async()=>endpointSearch.props.onChange({target:{value:label}}));continue;}
+    }
+
     const next=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled)[0];
     if(next){await act(async()=>next.props.onClick());steps++;continue;}
     const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];
@@ -83,7 +98,7 @@ await check('P3_01_05_PUBLIC_RANKING_HOMONYMS_AND_HONEST_COVERAGE',async()=>{
  const matches=dock().findAll(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&text(c)==='Bar jumeau').length);assert.equal(matches.length,2);await act(async()=>matches[1].props.onClick());assert.equal(current().fields.placeRef.placeId,b.placeId);
 });
 await check('P3_11_EXPLICIT_HOME_CAR_ATOMIC_NO_PRICE_OR_RETURN',async()=>{
- await seed();await click('Lieu');await act(async()=>dock().findAll(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&text(c)==='Bar jumeau').length)[0].props.onClick());const n=pendingOps.length;await onRoute('outbound');assert.equal(pendingOps.length,n);
+ await seed();await click('Lieu');await act(async()=>dock().findAll(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&text(c)==='Bar jumeau').length)[0].props.onClick());const n=pendingOps.length;await onRoute('outbound');await click('Trajets proposés');assert.equal(pendingOps.length,n);
  const shortcuts=controls(n=>n.type==='button'&&text(n).startsWith('Maison →'));assert.equal(shortcuts.length,1);await act(async()=>shortcuts[0].props.onClick());
  const outbound=current().slotSelections.outbound.items[0];assert.equal(outbound.origin.placeId,home.placeId);assert.equal(outbound.destination.placeId,a.placeId);assert.equal(outbound.route.vehicleRef.vehicleId,vehicle.vehicleId);assert.equal(outbound.route.stops.length,2);assert.equal(outbound.pricing.fare.kind,'UNKNOWN');assert.equal(current().slotSelections.return?.items.length??0,0);assert.equal(pendingOps.length,n+1);
 });

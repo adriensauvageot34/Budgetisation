@@ -5,9 +5,11 @@ export type BarViewMemory = {
   queries: Record<string, string>;
   googleSearch?: BarPlaceSearchState;
   pages: Record<string, number>;
-  dockPages: Record<string, number>;
+  dockScroll: Record<string, number>;
   allPlaces: boolean;
   allBefore: boolean;
+  family?: "drinks" | "food" | null;
+  families?: Record<"bar" | "before", "drinks" | "food" | null>;
 };
 
 /** Owned by one mounted Composer, scoped to month and occurrence identity. */
