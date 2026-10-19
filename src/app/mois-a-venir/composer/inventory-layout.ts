@@ -34,46 +34,46 @@ export function inventoryLayoutPages(items: readonly InventoryItem[], width: num
   const columns = inventoryColumns(availableWidth), columnWidth = (availableWidth - (columns - 1) * columnGap) / columns;
   // The measured viewport already excludes pagination and the palette.
   const maxTracks = Math.max(23, Math.floor((Math.max(218, height) - 8 + rowGap) / (rowTrack + rowGap)));
-  const pages: InventoryPlacement[][] = [];
-  let page: InventoryPlacement[] = [], occupied = new Set<number>();
-  const flushPage = () => { if (page.length) pages.push(page); page = []; occupied = new Set(); };
-  for (const item of items) {
-    const livingBar=item.kind==="CONTEXT"&&!!item.context&&presetForContext(item.context)?.presetKey==="bar-apero";
-    const expanded=item.id===expandedId;
+  const pages: InventoryPlacement[][] = [], occupancy: Set<number>[] = [];
+  const ensurePage=(index:number)=>{while(pages.length<=index){pages.push([]);occupancy.push(new Set());}};
+  const dimensions=(item:InventoryItem)=>{
+    const livingBar=item.kind==="CONTEXT"&&!!item.context&&presetForContext(item.context)?.presetKey==="bar-apero", expanded=item.id===expandedId;
     const surface=options.surface??barSurface("summary",item.density==="RICH");
     const requestedWidth=expanded ? livingBar ? Math.min(surface.preferredWidth,availableWidth) : Math.min(760,availableWidth) : item.width;
-    const columnSpan = Math.max(1, Math.min(columns, (livingBar&&expanded?Math.ceil:Math.round)((requestedWidth + columnGap) / (columnWidth + columnGap))
-      + (item.kind === "CLUSTER" && item.family === "BEAUTY" && columns >= 15 ? 1 : 0)));
-    // Pin the active card to its established page/origin, not a dedicated page.
-    // A short scene never falls backwards into a hole in an earlier page.
-    const anchor=livingBar&&expanded&&options.anchor?.id===item.id?options.anchor:undefined;
-    if(anchor&&pages.length<anchor.page){flushPage();while(pages.length<anchor.page)pages.push([]);}
-    // Only the living Bar may exceed the shelf. Its real content is packed,
-    // and the existing outer Board/page scrollbar keeps it reachable.
-    const requested=Math.ceil(((item.id===expandedId?expandedHeight:item.height)+rowGap)/(rowTrack+rowGap));
-    const rowSpan = Math.max(1,livingBar?requested:Math.min(maxTracks,requested));
-    // A tall editor extends the outer document rather than being clipped or
-    // moving to a new page on an asynchronous height change.
-    const trackLimit=livingBar&&expanded&&anchor ? Math.max(maxTracks,anchor.row-1)+rowSpan : Math.max(maxTracks,rowSpan);
-    const findSlot = () => {
-      const startRow=anchor&&pages.length===anchor.page?anchor.row-1:0;
-      for (let row = startRow; row <= trackLimit - rowSpan; row++) for (let column = 0; column <= columns - columnSpan; column++) {
-        if(anchor&&pages.length===anchor.page&&row===startRow&&column<Math.min(anchor.column-1,columns-columnSpan))continue;
-        let free = true;
-        for (let y = row; free && y < row + rowSpan; y++) for (let x = column; x < column + columnSpan; x++)
-          if (occupied.has(y * columns + x)) { free = false; break; }
-        if (free) return { row, column };
-      }
-      return null;
-    };
-    let slot = findSlot();
-    if (!slot) { flushPage(); slot = findSlot(); }
-    if (!slot) throw new Error(`Inventory item exceeds page geometry: ${item.id}`);
-    for (let y = slot.row; y < slot.row + rowSpan; y++) for (let x = slot.column; x < slot.column + columnSpan; x++) occupied.add(y * columns + x);
-    page.push({ item, column:slot.column + 1, row:slot.row + 1, columnSpan, rowSpan });
+    const columnSpan=Math.max(1,Math.min(columns,(livingBar&&expanded?Math.ceil:Math.round)((requestedWidth+columnGap)/(columnWidth+columnGap))
+      +(item.kind==="CLUSTER"&&item.family==="BEAUTY"&&columns>=15?1:0)));
+    const requested=Math.ceil(((expanded?expandedHeight:item.height)+rowGap)/(rowTrack+rowGap));
+    return {columnSpan,rowSpan:Math.max(1,livingBar?requested:Math.min(maxTracks,requested)),livingBar};
+  };
+  const occupy=(index:number,item:InventoryItem,column:number,row:number,columnSpan:number,rowSpan:number)=>{
+    ensurePage(index);
+    for(let y=row;y<row+rowSpan;y++)for(let x=column;x<column+columnSpan;x++)occupancy[index].add(y*columns+x);
+    pages[index].push({item,column:column+1,row:row+1,columnSpan,rowSpan});
+  };
+  const pinned=items.find(item=>item.id===expandedId&&item.id===options.anchor?.id&&dimensions(item).livingBar);
+  // Reserve the active rectangle first. Neighbours flow around it in their
+  // existing relative order. Only the active card may precede an earlier item;
+  // no semantic order or identity is changed, and folding drops this reservation.
+  if(pinned&&options.anchor){const {columnSpan,rowSpan}=dimensions(pinned),anchor=options.anchor;
+    occupy(Math.max(0,anchor.page),pinned,Math.max(0,Math.min(anchor.column-1,columns-columnSpan)),Math.max(0,anchor.row-1),columnSpan,rowSpan);
   }
-  flushPage();
-  return pages.length ? pages : [[]];
+  let index=0;
+  for(const item of items){
+    if(item===pinned)continue;
+    const {columnSpan,rowSpan}=dimensions(item),trackLimit=Math.max(maxTracks,rowSpan);
+    let slot:{row:number;column:number}|null=null;
+    while(!slot){
+      ensurePage(index);const occupied=occupancy[index];
+      for(let row=0;!slot&&row<=trackLimit-rowSpan;row++)for(let column=0;!slot&&column<=columns-columnSpan;column++){
+        let free=true;for(let y=row;free&&y<row+rowSpan;y++)for(let x=column;x<column+columnSpan;x++)if(occupied.has(y*columns+x)){free=false;break;}
+        if(free)slot={row,column};
+      }
+      if(!slot)index++;
+    }
+    occupy(index,item,slot.column,slot.row,columnSpan,rowSpan);
+  }
+  const order=new Map(items.map((item,index)=>[item.id,index]));
+  return pages.length?pages.map(page=>page.sort((a,b)=>order.get(a.item.id)!-order.get(b.item.id)!)):[[]];
 }
 
 export function inventoryPages(items: readonly InventoryItem[], width: number, height: number): InventoryItem[][] {

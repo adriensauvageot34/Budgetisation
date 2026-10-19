@@ -34,7 +34,10 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const previousGeometry=useRef<readonly (readonly InventoryPlacement[])[]>([]), activeAnchor=useRef<InventoryAnchor|undefined>(undefined);
   const originPage=previousGeometry.current.findIndex(p=>p.some(box=>box.item.id===expandedId));
   const origin=previousGeometry.current[originPage]?.find(box=>box.item.id===expandedId);
-  const anchor=expandedId ? activeAnchor.current?.id===expandedId ? activeAnchor.current : origin ? {id:expandedId,page:originPage,column:origin.column,row:origin.row} : undefined : undefined;
+  // At explicit opening choose a usable local origin if the closed card was
+  // near the bottom. Once established, this anchor survives fine edits.
+  const anchor=expandedId ? activeAnchor.current?.id===expandedId ? activeAnchor.current
+    : {id:expandedId,page:origin?originPage:Math.max(0,Math.min(page,previousGeometry.current.length-1)),column:1,row:1} : undefined;
   const surface=expandedMeasure&&expandedMeasure.id===expandedId?expandedMeasure.surface:undefined;
   const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);
   useLayoutEffect(()=>{

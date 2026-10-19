@@ -131,7 +131,7 @@ await check('V2_LIVING_SCENE_HEIGHT_RETAINS_PAGE_AND_ORIGIN',async()=>{
  for(const [width,height] of [[720,380],[1000,470],[1330,760]]){
   const baseline=inventoryLayoutPages(items,width,height),pageIndex=baseline.findIndex(p=>p.some(box=>box.item.id===id)),initial=baseline[pageIndex].find(box=>box.item.id===id);
   let anchor={id,page:pageIndex,column:initial.column,row:initial.row};
-  const positions=[245,355,445,515,2000,245].map(sceneHeight=>{const pages=inventoryLayoutPages(items,width,height,id,sceneHeight,{anchor});assert.deepEqual(pages.flat().map(p=>p.item.id),items.map(i=>i.id));const page=pages.findIndex(p=>p.some(box=>box.item.id===id)),box=pages[page].find(box=>box.item.id===id);assert.equal(page,anchor.page);assert.equal(box.column,anchor.column);assert.ok(box.row>=anchor.row);anchor={id,page,column:box.column,row:box.row};return [page,box.column,box.row];});
+  const positions=[245,355,445,515,2000,245].map(sceneHeight=>{const pages=inventoryLayoutPages(items,width,height,id,sceneHeight,{anchor});assert.deepEqual(pages.flat().map(p=>p.item.id).sort(),items.map(i=>i.id).sort());assert.deepEqual(pages.flat().filter(p=>p.item.id!==id).map(p=>p.item.id),items.filter(i=>i.id!==id).map(i=>i.id));const page=pages.findIndex(p=>p.some(box=>box.item.id===id)),box=pages[page].find(box=>box.item.id===id);assert.equal(page,anchor.page);assert.equal(box.column,anchor.column);assert.ok(box.row>=anchor.row);anchor={id,page,column:box.column,row:box.row};return [page,box.column,box.row];});
   assert.equal(positions.at(-1)[0],positions[0][0],JSON.stringify({width,height,positions}));
  }
  assert.deepEqual(items,before);

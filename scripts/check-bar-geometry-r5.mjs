@@ -7,7 +7,7 @@ const bar={id:'bar',kind:'CONTEXT',width:350,height:140,density:'SPARSE',spatial
 // Use the real preset projection shape rather than matching a user-facing name.
 const {presetCreationFields}=require('@/domain/phase2/planner/composer-presets');bar.context.fields=presetCreationFields('night-out','bar-apero');
 const checks=[];
-function valid(pages,items,width){assert.deepEqual(pages.flat().map(p=>p.item.id),items.map(i=>i.id));for(const page of pages){const used=new Set();for(const b of page){assert.ok(b.column>0&&b.row>0&&b.column+b.columnSpan-1<=inventoryColumns(width));for(let y=b.row;y<b.row+b.rowSpan;y++)for(let x=b.column;x<b.column+b.columnSpan;x++){const k=x+':'+y;assert.ok(!used.has(k),k);used.add(k);}}}}
+function valid(pages,items,width){assert.deepEqual(pages.flat().map(p=>p.item.id).sort(),items.map(i=>i.id).sort());assert.deepEqual(pages.flat().filter(p=>p.item.id!=='bar').map(p=>p.item.id),items.filter(i=>i.id!=='bar').map(i=>i.id));for(const page of pages){const used=new Set();for(const b of page){assert.ok(b.column>0&&b.row>0&&b.column+b.columnSpan-1<=inventoryColumns(width));for(let y=b.row;y<b.row+b.rowSpan;y++)for(let x=b.column;x<b.column+b.columnSpan;x++){const k=x+':'+y;assert.ok(!used.has(k),k);used.add(k);}}}}
 for(const count of [5,16,30,50])for(const width of [560,720,1000,1330]){
  const items=[...Array.from({length:Math.min(3,count-1)},(_,i)=>({...bar,id:'before:'+i,width:210,height:128})),bar,...Array.from({length:count-4},(_,i)=>({...bar,id:'after:'+i}))],snapshot=JSON.stringify(items);
  const closed=inventoryLayoutPages(items,width,470);let page=closed.findIndex(p=>p.some(x=>x.item.id==='bar')),box=closed[page].find(x=>x.item.id==='bar');let anchor={id:'bar',page,column:box.column,row:box.row};
