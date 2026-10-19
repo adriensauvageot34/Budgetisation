@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-18",
+  "browserAfterG2": "Local browser use is disabled in Work settings",
+  "browserG3G4G5G6": "NOT_RUN_BLOCKED_ENV",
+  "nativeZoom125": "NOT_RUN",
+  "supabaseAuth": "NOT_RUN_AUTH",
+  "googleRealProvider": "NOT_RUN",
+  "personalDraftWrites": 0,
+  "remoteFinancialWrites": 0,
+  "localNodeModules": "Junction to ../p14-c4-candidate/node_modules",
+  "nextLocal": "NOT_CERTIFIED_LOCAL_JUNCTION_ENVIRONMENT",
+  "g3Preview": {
+    "id": "dpl_29Ky4vsCJS3BQMwJeVuVeWmVEY7J",
+    "sha": "83ac6e18cf9052b73c5c6cafed78590bbf997fce",
+    "state": "READY",
+    "target": "Preview",
+    "url": "https://budgetisation-4sx3h8j3c-adriensauvageot34-6137s-projects.vercel.app"
+  },
+  "limits": "No authenticated isolated test environment established for this mission; no consent assumed for another personal Draft canary."
+}

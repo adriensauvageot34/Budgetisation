@@ -1,4 +1,5 @@
 "use client";
+import type {ReactNode} from "react";
 import {mobilityIntentId} from "@/domain/phase2/planner/identity";
 import {CalendarDays,Users,MapPin,ArrowRight,Car,Train,Bus,Footprints,Plus,CarTaxiFront} from "lucide-react";
 import type {ComponentSelectionV1} from "@/domain/phase2/planner/component-contract";
@@ -6,7 +7,7 @@ import type {ComposerContextCardView} from "@/domain/phase2/planner/composer-con
 import type {ComposerUiModel} from "@/domain/phase2/planner/composer-ui-contract";
 import type {ProspectivePersonRef,ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
-import {plannedAsset} from "@/domain/phase2/planned-assets";
+import {BarProductVisual} from "./bar-product-visual";
 import {money} from "./display";
 import type {BarTarget,BarLeg} from "./bar-living-operations";
 import styles from "./composer.module.css";
@@ -19,34 +20,38 @@ export function barPeopleLabel(value:unknown,model:ComposerUiModel){return Array
 
 /** Identity and authoritative amounts only; no client multiplication or summation. */
 export function BarComponentFace({item,amount,fresh=true}: {item:ComponentSelectionV1;amount?:string|null;fresh?:boolean}){
- const asset=item.kind==="COMPONENT"&&item.productAssetRef?plannedAsset(item.productAssetRef.assetKey):undefined;
- const art=asset?.assetKey.split(":").at(-1);const image=art&&({beer:"beer",vodka:"vodka",rum:"rum",wine:"wine-glass",soft:"soft",water:"water",shot:"shot",mixer:"soft",crazy_tiger:"energy"} as Record<string,string>)[art];
- return <><span className={styles.barProductSymbol} aria-hidden="true">{image?<img src={`/planned-visuals/builder/clay/drinks/${image}.webp`} alt=""/>:asset?.icon??(item.kind==="CHILD_CONTEXT"?"🎟️":"✦")}</span>
+ return <><BarProductVisual assetKey={item.kind==="COMPONENT"?item.productAssetRef?.assetKey:undefined} label={item.kind==="COMPONENT"?item.label:""} child={item.kind==="CHILD_CONTEXT"}/>
    <strong>{item.kind==="COMPONENT"?item.label:"Moment lié"}{item.kind==="COMPONENT"?` ×${item.quantity}`:""}</strong>
    <small>{amount!=null?`${money(amount)}${fresh?"":" · précédent"}`:item.kind==="COMPONENT"&&item.cost.kind==="MANUAL"?`${money(item.cost.unitAmount)} / ${item.unitBasis==="SHARED"?"lot":"unité"}`:item.kind==="COMPONENT"&&item.cost.kind==="QUOTE"?"Devis conservé":item.kind==="CHILD_CONTEXT"?"Ouvrir ce moment":"Prix à préciser"}</small>
    {item.provenance==="PERSONAL_SUGGESTION"&&<small>Suggestion non retenue</small>}
    {item.kind==="COMPONENT"&&item.unitBasis!=="ITEM"&&<small>{item.unitBasis==="SHARED"?"Lot partagé":"Par personne tarifée"}</small>}
  </>;
 }
-export function BarMetadata({fields,model,open,editing=false,disabled=false,active}: {fields:ComposerContextCardView["fields"];model:ComposerUiModel;open:(target:BarTarget)=>void;editing?:boolean;disabled?:boolean;active?:string}){
+export function BarMetadata({fields,model,open,editing=false,disabled=false,active,children}: {fields:ComposerContextCardView["fields"];model:ComposerUiModel;open:(target:BarTarget)=>void;editing?:boolean;disabled?:boolean;active?:string;children?:ReactNode}){
  const place=fields.placeRef as ProspectivePlaceRef|undefined,date=barDateLabel(fields.plannedDate),people=Array.isArray(fields.participantRefs)?fields.participantRefs as ProspectivePersonRef[]:[];
  return <nav className={styles.barLivingMetadata} aria-label="Précisions de la sortie">
-   {(place||editing)&&<button type="button" aria-label="Modifier le lieu" aria-pressed={active==="place"||active==="manual-place"||active==="google"} disabled={disabled} onClick={()=>open("place")} title={place?.kind==="KNOWN"?"Lieu enregistré · identité conservée":"Repère textuel · itinéraire à préciser"}><MapPin size={14}/>{place?barPlaceLabel(place,model):"Lieu"}</button>}
-   {(date||editing)&&<button type="button" aria-label="Modifier la date" aria-pressed={active==="date"} disabled={disabled} onClick={()=>open("date")}><CalendarDays size={14}/>{date??"Date"}</button>}
-   {(people.length>0||editing)&&<button type="button" className={styles.barPeople} aria-pressed={active==="people"} disabled={disabled} onClick={()=>open("people")} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)}>
-     {people.length?people.slice(0,3).map((p,i)=>{const label=barPersonLabel(p,model);return <span key={i}><i aria-hidden="true">{label.split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join("")}</i>{label.split(/\s+/)[0]}</span>;}):<><Users size={14}/>Personnes</>}{people.length>3&&<span>+{people.length-3}</span>}
-   </button>}
+   {children}
+   <button type="button" aria-label="Modifier le lieu" aria-pressed={active==="place"||active==="manual-place"||active==="google"} disabled={disabled} onClick={()=>open("place")} title={place?.kind==="KNOWN"?"Lieu enregistré · identité conservée":"Repère textuel · itinéraire à préciser"}>{place?<MapPin size={14}/>:<Plus size={14}/>} {place?barPlaceLabel(place,model):"Lieu"}</button>
+   <button type="button" aria-label="Modifier la date" aria-pressed={active==="date"} disabled={disabled} onClick={()=>open("date")}>{date?<CalendarDays size={14}/>:<Plus size={14}/>} {date??"Date"}</button>
+   <button type="button" className={styles.barPeople} aria-pressed={active==="people"} disabled={disabled} onClick={()=>open("people")} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)}>
+     {people.length?people.slice(0,3).map((p,i)=>{const label=barPersonLabel(p,model);return <span key={i}><i aria-hidden="true">{label.split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join("")}</i>{label.split(/\s+/)[0]}</span>;}):<><Plus size={14}/>Personnes</>}{people.length>3&&<span>+{people.length-3}</span>}
+   </button>
  </nav>;
 }
-export function BarRouteLine({slot,leg,model,open,contextId,disabled=false,active=false}: {slot:"outbound"|"return";contextId:string;leg?:BarLeg;model:ComposerUiModel;open:()=>void;disabled?:boolean;active?:boolean}){
+export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=false,active=false}: {slot:"outbound"|"return";contextId:string;leg?:BarLeg;model:ComposerUiModel;open:()=>void;navigate?:(target:BarTarget)=>void;disabled?:boolean;active?:boolean}){
  const summary=model.mobilitySummaries?.find(s=>s.contextOccurrenceId===contextId&&s.ownerIntentId===mobilityIntentId(contextId,slot));
  const fresh=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===contextId)?.semanticStateDigest===model.board.draft.semanticStateDigest;
  const Icon=leg?.optionKey==="car"?Car:leg?.optionKey==="taxi"?CarTaxiFront:leg?.optionKey==="train"?Train:leg?.optionKey==="bus"?Bus:leg?.optionKey==="free"?Footprints:ArrowRight;
- return <button type="button" className={styles.barRouteLine} data-bar-route={slot} aria-pressed={active} disabled={disabled} onClick={open}>
-   <b>{leg?.returnRequired?"Aller-retour":slot==="outbound"?"Aller":"Retour"}</b>{leg?<><span className={styles.barRouteStops}>{barPlaceLabel(leg.origin,model)}<span><Icon size={17}/>{barModeLabel(leg.optionKey)}<ArrowRight size={14}/></span>{barPlaceLabel(leg.destination,model)}</span>
-     <small>{leg.optionKey==="car"?"Coût d’usage estimé": "Tarif prévu"} · {leg.optionKey==="car"?summary?.economicFuel!=null?money(summary.economicFuel):"à estimer":leg.pricing?.fare.kind==="MANUAL"?`${money(leg.pricing.fare.unitAmount)} déclaré`:summary?.fare!=null?money(summary.fare):leg.pricing?.fare.kind==="QUOTE"?"devis à estimer":"à préciser"}{summary&&!fresh?" · estimation précédente":""}
-       {(leg.route?.stops.length??0)>2&&` · ${leg.route!.stops.length} arrêts`}
-     </small></>
-     :<span><Plus size={14}/>{slot==="return"?"Retour":"Déplacement"}</span>}
- </button>;
+ const go=(point:"origin"|"destination"|"fare")=>navigate?navigate(`route:${slot}:${point}`):open();
+ const cost=leg?.optionKey==="car"?summary?.economicFuel:leg?.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:summary?.fare;
+ const missing=leg?[!leg.origin?"départ":null,!leg.destination?"arrivée":null,leg.optionKey==="car"&&!leg.route?.vehicleRef?"véhicule":null,leg.origin?.kind==="TEXT"||leg.destination?.kind==="TEXT"?"distance du repère libre":null].filter(Boolean):[];
+ return <div className={styles.barRouteLine} data-bar-route-module={slot} data-active={active}>
+   <button type="button" data-bar-route={slot} aria-pressed={active} disabled={disabled} onClick={open}><b>{leg?.returnRequired?"Aller-retour":slot==="outbound"?"Aller":"Retour"}</b><Icon size={17}/>{leg?barModeLabel(leg.optionKey):"Déplacement"}</button>
+   {leg&&<><div className={styles.barRouteStops}><button type="button" disabled={disabled} onClick={()=>go("origin")} aria-label={`Modifier le départ ${slot==="outbound"?"de l’aller":"du retour"}`}>Départ · {barPlaceLabel(leg.origin,model)}</button><ArrowRight size={14}/><button type="button" disabled={disabled} onClick={()=>go("destination")} aria-label={`Modifier l’arrivée ${slot==="outbound"?"de l’aller":"du retour"}`}>Arrivée · {barPlaceLabel(leg.destination,model)}</button></div>
+   <button type="button" className={styles.barRouteCost} disabled={disabled} onClick={()=>leg.optionKey==="car"?open():go("fare")} aria-label={`${leg.optionKey==="car"?"Consulter le coût d’usage":"Modifier le tarif"} ${slot==="outbound"?"de l’aller":"du retour"}`}>
+     {cost!=null?money(cost):leg.optionKey==="car"?"Usage à estimer":"Tarif à préciser"}{cost!=null&&<small>{leg.optionKey==="car"?"Coût d’usage":"Tarif prévu"}{!fresh?" · précédent":""}</small>}
+   </button>
+   {(missing.length>0||summary?.toll!=null||summary?.parking!=null||summary?.cashTransport!=null||(leg.route?.stops.length??0)>2)&&<small className={styles.barRouteEvidence}>{missing.length>0&&`À préciser : ${missing.join(", ")}`}{summary?.toll!=null&&` · péage ${money(summary.toll)}`}{summary?.parking!=null&&` · parking ${money(summary.parking)}`}{summary?.cashTransport!=null&&` · transport cash ${money(summary.cashTransport)}`}{(leg.route?.stops.length??0)>2&&` · ${leg.route!.stops.length-2} étape(s) intermédiaire(s)`}</small>}
+   </>}
+ </div>;
 }

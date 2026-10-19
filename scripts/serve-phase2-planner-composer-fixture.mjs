@@ -266,7 +266,7 @@ const server = http.createServer(async (request, response) => {
       response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture ${key}</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
       return;
     }
-    if (/^\/planned-visuals\/composer\/presets\/[a-z-]+\.webp$/.test(url.pathname)) {
+    if (/^\/planned-visuals\/(?:composer\/presets|builder\/clay\/drinks)\/[a-z-]+\.webp$/.test(url.pathname)) {
       response.setHeader('Content-Type','image/webp'); response.setHeader('Cache-Control','public,max-age=3600');
       response.end(fs.readFileSync(path.join('public',url.pathname))); return;
     }

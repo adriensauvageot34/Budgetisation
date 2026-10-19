@@ -1,0 +1,27 @@
+{
+  "source": "PROMPT_CODEX_BAR_APERO_350_RECOMMANDATIONS_EXECUTION_PAR_VAGUES_GATES_TESTS_2026-10-18.md",
+  "sha256_normalized_lf": "ba19643dc4e91f0ad74fb719426cc64a531b8f203a93b3cba83da4c58fc0a4a7",
+  "chantiers": {
+    "A": 20,
+    "B": 27,
+    "C": 22,
+    "D": 43,
+    "E": 26,
+    "F": 39,
+    "G": 34,
+    "H": 31,
+    "I": 25,
+    "J": 33,
+    "K": 18,
+    "L": 22,
+    "M": 10
+  },
+  "vagues": {
+    "1": 69,
+    "2": 69,
+    "3": 73,
+    "4": 89,
+    "5": 40,
+    "6": 10
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "deploymentId": "dpl_8eyZkEiapaEkpwe8ZfVoyJixAd5a",
+  "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+  "state": "READY",
+  "readyState": "READY",
+  "target": "Preview",
+  "url": "https://budgetisation-ailn1aojl-adriensauvageot34-6137s-projects.vercel.app",
+  "regions": [
+    "iad1"
+  ],
+  "qualification": "FULL_NEXT_BUILD_PASS_NOT_BROWSER_NOT_AUTH",
+  "buildEventsTail": [
+    {
+      "type": "stdout",
+      "text": "Build cache uploaded: 2.147s",
+      "date": 1792325741865
+    },
+    {
+      "type": "stdout",
+      "text": "Uploading build cache [172.40 MB]",
+      "date": 1792325739718
+    },
+    {
+      "type": "stdout",
+      "text": "Created build cache: 9s",
+      "date": 1792325739718
+    },
+    {
+      "type": "stdout",
+      "text": "Creating build cache...",
+      "date": 1792325730332
+    },
+    {
+      "type": "stdout",
+      "text": "Deployment completed",
+      "date": 1792325730321
+    },
+    {
+      "type": "stdout",
+      "text": "Deploying outputs...",
+      "date": 1792325723365
+    },
+    {
+      "type": "stderr",
+      "text": "Build Completed in /vercel/output [1m]",
+      "date": 1792325723344
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792325722799
+    },
+    {
+      "type": "stdout",
+      "text": "ƒ  (Dynamic)  server-rendered on demand",
+      "date": 1792325722799
+    },
+    {
+      "type": "stdout",
+      "text": "○  (Static)   prerendered as static content",
+      "date": 1792325722799
+    }
+  ],
+  "tailOnly": true
+}

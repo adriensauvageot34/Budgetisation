@@ -1,0 +1,206 @@
+{
+  "COMPACT": {
+    "path": "BAR_APERO_COMPACT_EDITORIAL_RECEPTION.md",
+    "sha": "55900176cf7c140ac897f24d3fca180b035ce008",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "qualification": "HISTORICAL_APPLICABLE",
+    "scope": "Compacité mesurée, tuiles, illustration déterministe et reflow ; a2e2aec ne change que ce rapport. Aucune preuve Auth.",
+    "file_sha256_lf": "6c88210d98b75c5d36c987f689a306252d8519702071a001ab782142fc56dbed"
+  },
+  "G0_SAVE": {
+    "path": "docs/status/evidence/bar-apero-350/g0-save.json",
+    "sha": "a2e2aec30c9228cde12ebf26eedec6b5ebcbbc71",
+    "niveau": "PASS_HTTP_FIXTURE",
+    "scope": "Script HTTP riche réellement rejoué avant changement produit ; CAS, réponse perdue, conservation, zéro Apply et zéro distant.",
+    "file_sha256_lf": "c01f89c58d94fb1f6a009317f1aadb56daa99fa2db450d01afc6a835e5ff3664"
+  },
+  "G1_REACT": {
+    "path": "docs/status/evidence/bar-apero-350/g1/react.log",
+    "sha": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "niveau": "PASS_REACT",
+    "scope": "Six groupes ciblés ; RAW/clic neutre, Plus tard, calendrier, reprise recherche, homonymes visibles.",
+    "file_sha256_lf": "947a8f42d19427b9a4bd377a6f5b9cd312256c82b8684c66fa893f840e0b63cf"
+  },
+  "G1_BROWSER": {
+    "path": "docs/status/evidence/bar-apero-350/g1/browser.json",
+    "sha": "08dc6f46cba5d982756c16f62c996886b305059a",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Lieu recherche Canal reprise ; Plus tard summary ; date maintenue et flèche droite focus2/tabstop unique ; aucune mutation distante.",
+    "file_sha256_lf": "651f4848e2ce458188fbc1e31b6003b4917b56088330aba0e79aac4728f71831"
+  },
+  "G1_PLACES": {
+    "path": "docs/status/evidence/bar-apero-350/g1/places.json",
+    "sha": "4006356b9b28a2015e6e0a150bc509d3f8c73cb8",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Homonymes Quai A/B visibles, un champ de recherche, dock sans scroll Y à 1280px.",
+    "file_sha256_lf": "ce1b1d6676af6bbce10b959843fc6fe7ecbb75f817b63e33c471e76ac5a40eab"
+  },
+  "G1_P3": {
+    "path": "docs/status/evidence/bar-apero-350/g1/p3.log",
+    "sha": "08dc6f46cba5d982756c16f62c996886b305059a",
+    "niveau": "PASS_REACT_AND_OWNER_FIXTURE",
+    "scope": "12 groupes P3, mocks Google exact/ambigu/429/HTML/tardif et limites owner ; adaptation des clics Reprendre, aucune assertion financière supprimée.",
+    "file_sha256_lf": "0105b3baa570e400af5317edaa7aafec918647e098c1893edecdb64fb130592a"
+  },
+  "G1_EXISTING": {
+    "path": "docs/status/evidence/bar-apero-350/g1/existing.log",
+    "sha": "08dc6f46cba5d982756c16f62c996886b305059a",
+    "niveau": "PASS_REACT",
+    "scope": "8 groupes dernière réception dont participants page5→4, RAW, 15 boissons/9 Before et suppression.",
+    "file_sha256_lf": "e1347421dd29de6b15077ad7fee41428523fa51b6eb7f937bb11cfe83d99a7d4"
+  },
+  "G2_REACT": {
+    "path": "docs/status/evidence/bar-apero-350/g2/react.log",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_REACT",
+    "scope": "Global60 vers UNKNOWN atomique, identité montant, unités publiées Before et RAW.",
+    "file_sha256_lf": "02b022cfe2259a472710067f4e590aba7463c85be8f48651e705c65f7e0d617f"
+  },
+  "G2_P4": {
+    "path": "docs/status/evidence/bar-apero-350/g2/p4.log",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_REACT_AND_OWNER_FIXTURE",
+    "scope": "15 groupes P4, dont détails/global, ITEM/PERSON/SHARED, prix zéro, Before et Apply/Reload PGlite synthétique.",
+    "file_sha256_lf": "c63d4d0620c05c3b92a6ee9b0ad4864d7e0370be96273f6b045f7bc5f437920f"
+  },
+  "G2_P1": {
+    "path": "docs/status/evidence/bar-apero-350/g2/p1.log",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_REACT",
+    "scope": "Régressions interactions indépendantes, RAW, endpoints et continuation.",
+    "file_sha256_lf": "ef40a48582c4a83372f7f80e853f22c5777b68fe05f63e876bc5266252223c08"
+  },
+  "G2_P2": {
+    "path": "docs/status/evidence/bar-apero-350/g2/p2.log",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_REACT",
+    "scope": "Régressions d’interactions et de protection des tuiles.",
+    "file_sha256_lf": "3c7745bb23b3162d887b28bd0c4fe15a9925f518e846781116fb4ef7560e6e73"
+  },
+  "G2_BROWSER": {
+    "path": "docs/status/evidence/bar-apero-350/g2/browser.json",
+    "sha": "4ee0a1f11f382d3b5566e8701091eb8b32b48943",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "En-tête → coût60 → Bière → Détailler à la place : résumé à préciser, prix vide après Preview. Largeur effective1159. Aucun Auth.",
+    "file_sha256_lf": "16d43ac6a868b50d5635c0259ac2068ae0745545cb91d229a47f9bf7a842caf6"
+  },
+  "FINAL_REACT": {
+    "path": "docs/status/evidence/bar-apero-350/final/react.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_REACT",
+    "scope": "22 targeted in-process React groups for new behavior; no real browser or Auth.",
+    "file_sha256_lf": "0f7dcb0df3476d8e34df84f213dc12a6c35d848543fd003f56526c2ac5920d5d"
+  },
+  "FINAL_P1": {
+    "path": "docs/status/evidence/bar-apero-350/final/p1.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_REACT",
+    "scope": "25 existing targeted interaction/RAW/endpoint controls.",
+    "file_sha256_lf": "ef40a48582c4a83372f7f80e853f22c5777b68fe05f63e876bc5266252223c08"
+  },
+  "FINAL_P2": {
+    "path": "docs/status/evidence/bar-apero-350/final/p2.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_REACT",
+    "scope": "20 local interaction, quantity, protection and pure-layout controls.",
+    "file_sha256_lf": "c9be858fbb1f531ef3718850f0fbe1dcc62c7e517338b706e06d880147de8ebf"
+  },
+  "FINAL_P3": {
+    "path": "docs/status/evidence/bar-apero-350/final/p3.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_REACT",
+    "scope": "12 Google mocks, owner DTO and known-place/route controls; no real provider.",
+    "file_sha256_lf": "0105b3baa570e400af5317edaa7aafec918647e098c1893edecdb64fb130592a"
+  },
+  "FINAL_P4": {
+    "path": "docs/status/evidence/bar-apero-350/final/p4.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_REACT",
+    "scope": "14 rich Before, units, funding, replacement and synthetic Apply/Reload controls.",
+    "file_sha256_lf": "c63d4d0620c05c3b92a6ee9b0ad4864d7e0370be96273f6b045f7bc5f437920f"
+  },
+  "FINAL_LAST": {
+    "path": "docs/status/evidence/bar-apero-350/final/last.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_REACT",
+    "scope": "8 rich scene/pagination/target/removal and actual-shell mocked transport controls.",
+    "file_sha256_lf": "e1347421dd29de6b15077ad7fee41428523fa51b6eb7f937bb11cfe83d99a7d4"
+  },
+  "FINAL_PARITY": {
+    "path": "docs/status/evidence/bar-apero-350/final/parity.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_OWNER_FIXTURE",
+    "scope": "22 owner scenarios, 9 hashes each =198 identical financial hashes; no golden changed.",
+    "file_sha256_lf": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+  },
+  "FINAL_DURABLE": {
+    "path": "docs/status/evidence/bar-apero-350/final/durable.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_REACT",
+    "scope": "7 actual hook deterministic controls: debounce, CAS, lost response, offline and archive. Not Auth.",
+    "file_sha256_lf": "79cb7806703cf1f0efe9f178c4e01b0079a50d3812e511ff89099b61cdec4909"
+  },
+  "FINAL_APPLY": {
+    "path": "docs/status/evidence/bar-apero-350/final/apply.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_OWNER_FIXTURE",
+    "scope": "8 P13 PGlite owner controls including successful commit then failed reread; no production Apply.",
+    "file_sha256_lf": "46fdf5a405526fc5417270fe4485e6ab1cd297acd04e2d14069504599eb1aa7e"
+  },
+  "FINAL_HTTP": {
+    "path": "docs/status/evidence/bar-apero-350/final/http.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_HTTP_FIXTURE",
+    "scope": "7 true loopback HTTP synthetic checks. Backend owner unchanged from running fixture; no browser/Auth.",
+    "file_sha256_lf": "b396de9e35a0ea2a61eab8ace6887a7c724c1d7a27579f7fbf23ecd11aeb62bf"
+  },
+  "FINAL_C8": {
+    "path": "docs/status/evidence/bar-apero-350/final/c8.log",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_STATIC",
+    "scope": "Original C8-017 isolated assertion executed unchanged.",
+    "file_sha256_lf": "09e0d1e3ae8be456a928a465e244b4bada639eabe32f24ee09a8323300c84921"
+  },
+  "FINAL_TYPES": {
+    "path": "docs/status/evidence/bar-apero-350/final/types.json",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_TYPESCRIPT",
+    "scope": "TypeScript exit0 exact final product tree.",
+    "file_sha256_lf": "b3b77bdb82732559e55087768e113c7ac9eba3b7d5332cd443623502970879fd"
+  },
+  "FINAL_ENVIRONMENT": {
+    "path": "docs/status/evidence/bar-apero-350/final/environment.json",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "BLOCKED_ENV",
+    "scope": "Actual browser unavailable and no authorized isolated Auth/provider session.",
+    "file_sha256_lf": "210a0380f40e2ef3465740ed924e0c0b76b913d9468468f0f8a327dcde928119"
+  },
+  "FINAL_SCOPE": {
+    "path": "docs/status/evidence/bar-apero-350/final/scope.json",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_STATIC",
+    "scope": "Source diff and manual ownership/React review; does not certify UX.",
+    "file_sha256_lf": "ae1158808bc3b4b3ff78d59033c6e8d4757f2b380fec6d23f318a3608d76ec3c"
+  },
+  "G3_PREVIEW_BUILD": {
+    "path": "docs/status/evidence/bar-apero-350/final/g3-preview.json",
+    "sha": "83ac6e18cf9052b73c5c6cafed78590bbf997fce",
+    "niveau": "PASS_BUILD_PREVIEW",
+    "scope": "Full remote Next build READY. No functional browser or Auth test.",
+    "file_sha256_lf": "320e1a053805c0f01b55473e3810f84880fb1500a2645e67c40055fca8c150f5"
+  },
+  "G5_PREVIEW_BUILD": {
+    "path": "docs/status/evidence/bar-apero-350/final/g5-preview.json",
+    "sha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+    "niveau": "PASS_BUILD_PREVIEW",
+    "scope": "Exact final product commit full Next build READY; build log tail preserved. No functional browser or Supabase Auth test.",
+    "file_sha256_lf": "c856e9b32c9f6f40a8b14e8d058666f5d635f605bad4ea92a3e6c388667fcfbb"
+  },
+  "FINAL_INTEGRITY": {
+    "path": "docs/status/evidence/bar-apero-350/final/integrity.log",
+    "sha": "ac22d097e01470b866a441725ac2e40386359285",
+    "niveau": "PASS_STATIC",
+    "scope": "Checker and its seven negative controls executed at ac22d09; product tree remains exactly 4e0dc25.",
+    "file_sha256_lf": "600300380c31911b90c2dc6f13f97fb22b9382c7c9962303027e386a4dd45a1a"
+  }
+}

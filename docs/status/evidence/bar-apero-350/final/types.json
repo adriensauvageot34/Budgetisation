@@ -1,0 +1,6 @@
+{
+  "codeSha": "4e0dc25987f43fb6a086871d2d3f55bb2b37baec",
+  "command": "node node_modules/typescript/bin/tsc --noEmit",
+  "exitCode": 0,
+  "note": "Full TypeScript execution; not a Next build."
+}
