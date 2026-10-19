@@ -18,6 +18,6 @@ for(const [name,value] of Object.entries(vars)){
  if(!value)throw Error('MISSING_PREVIEW_CONFIGURATION_'+name);
  const args=[cli,'env','add',name,'preview','--git-branch',branch,'--project','prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ','--scope','adriensauvageot34-6137s-projects','--type',name.startsWith('NEXT_PUBLIC_')||!name.endsWith('_KEY')?'config':'secret','--force','--yes'];
  const r=spawnSync(process.execPath,args,{input:value,encoding:'utf8',timeout:60000,windowsHide:true});
- if(r.status!==0)throw Error('PREVIEW_ENV_FAILED_'+name);
+ if(r.status!==0){const detail=String(r.stderr??r.error?.code??'').replaceAll(String(value),'[REDACTED]').replace(/(?:sb_secret_|sbp_|eyJ)[A-Za-z0-9_.-]+/gu,'[REDACTED]');throw Error('PREVIEW_ENV_FAILED_'+name+' status='+r.status+' '+detail.slice(-1200));}
  console.log(name+' CONFIGURED_TEST_BRANCH_ONLY');
 }

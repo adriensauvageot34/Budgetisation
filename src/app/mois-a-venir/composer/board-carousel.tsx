@@ -150,8 +150,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     const px = (value: string) => Number(value.replace("px", "")) || 0;
     const observe = () => { const plateau = node.querySelector<HTMLElement>("[data-board-page]");
       const padding = plateau && getComputedStyle(plateau);
+      const dock=node.parentElement?.querySelector<HTMLElement>('[data-palette-dock]');
+      const navigation=node.parentElement?.querySelector<HTMLElement>('[data-carousel-nav]');
+      // The shelf budget is the screen space, not its content-driven minHeight.
+      // Otherwise reserving rows enlarges the budget and repeatedly repacks it.
+      const top=node.getBoundingClientRect().top+(node.closest('main')?.scrollTop??0)+window.scrollY;
       const value = { width: Math.max(1, (plateau?.clientWidth ?? node.clientWidth) - (padding ? px(padding.paddingLeft) + px(padding.paddingRight) : 0)),
-        height: Math.max(1, node.clientHeight - (padding ? px(padding.paddingTop) + px(padding.paddingBottom) : 0)) };
+        height: Math.max(218,window.innerHeight-top-(dock?.getBoundingClientRect().height??0)-(navigation?.getBoundingClientRect().height??0)-24-(padding ? px(padding.paddingTop)+px(padding.paddingBottom):0)) };
       setSize(old => old.width === value.width && old.height === value.height ? old : value); };
     observe(); const observer = new ResizeObserver(observe); observer.observe(node); return () => observer.disconnect();
   }, []);
@@ -250,7 +255,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     dwell.current = setTimeout(() => { dwell.current = null; interaction.over(null); go(active + direction); }, 600); };
   return <>
     <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-drop data-board-page-active={active}
-      style={expandedId && expandedHeight ? { minHeight: expandedHeight + 24 } : undefined} {...dropProps}
+      style={expandedId ? { minHeight: Math.max(expandedHeight??0,...(layouts[active]??[]).map(box=>(box.row-1+box.rowSpan)*10-5))+36 } : undefined} {...dropProps}
       onClick={e => { if (e.target === e.currentTarget || e.target instanceof Element && e.target.matches("[data-mosaic],[data-board-page]")) emptyClick(); }}>
       <div className={styles.plateauTrack} style={{ transform: `translateX(-${active * 100}%)` }} data-plateau-track onTransitionEnd={event=>{if(event.target===event.currentTarget)setDeparting(active);}}>
         {layouts.map((inventory, index) => <section key={index} className={styles.plateau} data-board-page={index} data-single-page={layouts.length === 1} aria-label={`Page ${index + 1} sur ${pages.length}`}
