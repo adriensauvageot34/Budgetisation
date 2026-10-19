@@ -116,6 +116,30 @@ await check('R5_REJECTED_MUTATION_RETAINS_CONTEXT_AND_NOT_SUCCESS',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);await chooseFamily();const old=semanticStateDigest(model.semanticState);rejectNext=true;
  await click('Bière');assert.equal(semanticStateDigest(model.semanticState),old);assert.equal(step(),'drinks');assert.ok(controls(n=>n.props.role==='alert').length);
 });
+
+await check('R5_MOMENT_FAMILY_MEMORY_AND_NO_DUPLICATE_BEFORE_LAUNCHER',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);await chooseFamily();await click('Bière');await click('← Ma sortie');await click('+ Before');await chooseFamily('Restauration');await click('Chips');
+ await click('← Ma sortie');assert.equal(controls(n=>n.type==='button'&&text(n)==='+ Before').length,0);
+ await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());assert.equal(dock().props['aria-label'],'Boissons');
+ await click('← Ma sortie');await act(async()=>controls(n=>n.props['aria-label']==='Compléter le Before')[0].props.onClick());assert.equal(dock().props['aria-label'],'Restauration');
+});
+await check('R5_VENUE_REMOVE_RETAINS_AUTONOMOUS_LEGS_AND_OTHER_FIELDS',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>admit(barPlaceOperation(current(),other)));
+ await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{plannedDate:'2026-11-12',participantRefs:[{kind:'TEXT',label:'Personne fictive'}]},slots:{return:[taxi]}}}));
+ const old=structuredClone(current());await act(async()=>controls(n=>n.props['aria-label']==='Retirer le lieu de la sortie')[0].props.onClick());
+ assert.equal(current().fields.placeRef,null);assert.equal(current().fields.venueDecision,null);assert.deepEqual(current().slotSelections,old.slotSelections);assert.equal(current().fields.plannedDate,old.fields.plannedDate);assert.deepEqual(current().fields.participantRefs,old.fields.participantRefs);
+});
+
+
+await check('R5_NO_MATCH_SEARCH_STAYS_MOUNTED_AND_FREE_PERSON_IS_EXPLICIT',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']?.startsWith('Modifier les personnes'))[0].props.onClick());
+ const old=semanticStateDigest(model.semanticState);let search=controls(n=>n.type==='input'&&n.props['aria-label']==='Chercher une personne')[0];
+ await act(async()=>search.props.onChange({target:{value:'Invité fictif ZYX'}}));assert.ok(dock());assert.equal(semanticStateDigest(model.semanticState),old);
+ await click('Ajouter « Invité fictif ZYX »');assert.deepEqual(current().fields.participantRefs,[{kind:'TEXT',label:'Invité fictif ZYX'}]);
+ search=controls(n=>n.type==='input'&&n.props['aria-label']==='Chercher une personne')[0];await act(async()=>search.props.onChange({target:{value:'Amandine'}}));
+ assert.equal(controls(n=>n.type==='button'&&text(n)==='Ajouter « Amandine »').length,0);assert.ok(dock());
+});
+
 } finally {if(root)await act(async()=>root.unmount());await pg.close();}
 fs.mkdirSync('docs/status/subassets-r5/proofs',{recursive:true});
 fs.writeFileSync('docs/status/subassets-r5/proofs/react-interactions.json',JSON.stringify({environment:'REACT_PGLITE_SYNTHETIC_ONLY',checks},null,2)+'\n');

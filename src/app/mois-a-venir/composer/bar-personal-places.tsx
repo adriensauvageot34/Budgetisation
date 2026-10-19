@@ -53,13 +53,13 @@ export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-perso
   };
   return <section aria-label="Mes lieux personnels" data-bar-personal-places data-place-request-id={lastReceipt?.requestId} data-place-result={lastReceipt?.status} data-place-version={lastReceipt?.version}>
     {!detail&&<button type="button" disabled={busy} onClick={()=>guarded(()=>{setShowArchives(v=>!v);setPage(0);})}>{showArchives?'Mes lieux actifs':'Lieux archivés'}</button>}
-    {!detail&&(!onSuggestions||showArchives)&&matches.slice(effectivePage*3,(effectivePage+1)*3).map(p=><div key={p.id}>
+    {!detail&&(!onSuggestions||showArchives||!!query.trim())&&matches.slice(effectivePage*3,(effectivePage+1)*3).map(p=><div key={p.id}>
       <button type="button" onClick={()=>guarded(()=>onChoose?.(p.userLabel,{provider:'google_places',kind:'BAR_APERO',placeId:p.googlePlaceId}))}>{p.userLabel} · {p.status==='SAVED'?'Lieu personnel':'Archivé'}</button>
       {p.status==='SAVED'?<><button type="button" disabled={busy} onClick={()=>rename(p)}>Renommer {p.userLabel}</button>
         <button type="button" disabled={busy} onClick={()=>guarded(()=>void mutate('ARCHIVE',p.googlePlaceId,p.userLabel,p.version))}>Retirer de mes lieux</button></>
         :<button type="button" disabled={busy} onClick={()=>void mutate('SAVE',p.googlePlaceId,p.userLabel,p.version)}>Récupérer {p.userLabel}</button>}
     </div>)}
-    {!detail&&(!onSuggestions||showArchives)&&<BarPageControls index={effectivePage} count={Math.ceil(matches.length/3)} onChange={setPage} label="Mes lieux personnels"/>}
+    {!detail&&(!onSuggestions||showArchives||!!query.trim())&&<BarPageControls index={effectivePage} count={Math.ceil(matches.length/3)} onChange={setPage} label="Mes lieux personnels"/>}
     {editing&&<><label>Nom personnel<input disabled={busy} maxLength={120} value={label} onChange={e=>{setLabel(e.target.value);setRawVersion(v=>v+1);}}/></label>
       <button type="button" disabled={busy||!label.trim()||label.trim()===editing.userLabel} onClick={()=>void mutate('SAVE',editing.googlePlaceId,label.trim(),editing.version)}>Enregistrer le nom</button></>}
     {detail&&(!existing||existing.status==='ARCHIVED')&&<>

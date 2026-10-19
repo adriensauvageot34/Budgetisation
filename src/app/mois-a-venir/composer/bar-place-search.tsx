@@ -25,7 +25,10 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
   const [detail,setDetail]=useState<SelectedRestaurantPlace|null>(()=>reusableDetail?initialSearch!.detail!:null),[status,setStatus]=useState("");
   const [detailReadAt,setDetailReadAt]=useState<number|undefined>(()=>reusableDetail?initialSearch?.detailReadAt:undefined);
   const resumeDetail=useRef(reusableDetail?{query,city}:null);
-  const [resultPage,setResultPage]=useState(initialSearch?.resultPage??0);
+  const [resultPage,setResultPage]=useState(initialSearch?.resultPage??0),[knownPage,setKnownPage]=useState(0);
+  const matchingKnown=query.trim()?places.filter(place=>!place.privatePlace&&`${place.name} ${place.commune??""} ${place.address??""}`.toLocaleLowerCase("fr").includes(query.trim().toLocaleLowerCase("fr"))):[];
+  const knownPageIndex=Math.min(knownPage,Math.max(0,Math.ceil(matchingKnown.length/3)-1));
+  useEffect(()=>setKnownPage(0),[query]);
   const previousSearch=useRef(`${query}\0${city}`);
   useEffect(()=>{onSearchChange?.({query,city,resultPage,...(detail?{detail,detailReadAt}:{}),...(personalPlacesEnabled?{personalPlacesEnabled:true}:{})});},[query,city,resultPage,detail,detailReadAt,onSearchChange,personalPlacesEnabled]);
   const [attempt,setAttempt]=useState(0),[failed,setFailed]=useState(false),[detailRetry,setDetailRetry]=useState<RestaurantSuggestion|null>(null);
@@ -78,7 +81,8 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
     <button type="button" onClick={()=>{setCity("");setEditCity(true);}}>Chercher ailleurs, sans ville imposée</button>
     {!city.trim()&&<small>Recherche en France · ajoutez une ville au nom pour préciser.</small>}</>}
     {onManual&&<button type="button" onClick={()=>changeQuestion(onManual)}>Nom libre</button>}
-    {query.trim()&&!detail&&places.filter(place=>!place.privatePlace&&`${place.name} ${place.commune??""} ${place.address??""}`.toLocaleLowerCase("fr").includes(query.trim().toLocaleLowerCase("fr"))).slice(0,3).map(place=><button type="button" key={place.placeId} onClick={()=>changeQuestion(()=>onKnown(place.placeId))}>{place.name} · {place.commune??"Lieu enregistré"}</button>)}
+    {query.trim()&&!detail&&matchingKnown.slice(knownPageIndex*3,(knownPageIndex+1)*3).map(place=><button type="button" key={place.placeId} onClick={()=>changeQuestion(()=>onKnown(place.placeId))}>{place.name} · {place.commune??"Lieu enregistré"}</button>)}
+    {!detail&&<BarPageControls index={knownPageIndex} count={Math.ceil(matchingKnown.length/3)} onChange={setKnownPage} label="Résultats enregistrés"/>}
     {(personalPlacesCapability||personalPlacesEnabled)&&<BarPersonalPlaces detail={detail} query={query} onChoose={onGoogle} rawTargetRef={rawTargetRef} onSuggestions={onPersonalSuggestions}/>}
     <GoogleMapsAttribution/>{status&&<p role="status">{status}</p>}
     {failed&&<button type="button" onClick={()=>{session.current.complete();setAttempt(value=>value+1);}}>Réessayer la recherche</button>}

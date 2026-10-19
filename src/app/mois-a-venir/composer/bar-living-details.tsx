@@ -63,7 +63,7 @@ export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=fa
    {leg.optionKey==="car"&&<small data-bar-usage-not-payment>Coût d’usage estimé · aucun achat de carburant.{cost==null&&missing.length===0?" Estimation Mobility encore indisponible ; aucun prix n’est supposé.":""}{summary?.status==="PARTIAL"?" Estimation partielle.":""}</small>}
    {leg.optionKey==="car"&&summary?.fare!=null&&<small>Autre tarif prévu : {money(summary.fare)}{!fresh?" · précédent":""}</small>}
    {(missing.length>0||summary?.toll!=null||summary?.parking!=null||summary?.cashTransport!=null||(leg.route?.stops.length??0)>2)&&<small className={styles.barRouteEvidence}>{missing.length>0&&`À préciser : ${missing.join(", ")}`}{summary?.toll!=null&&` · péage ${money(summary.toll)}`}{summary?.parking!=null&&` · parking ${money(summary.parking)}`}{summary?.cashTransport!=null&&` · coût monétaire du transport ${money(summary.cashTransport)}`}{(leg.route?.stops.length??0)>2&&` · ${leg.route!.stops.length-2} étape(s) intermédiaire(s)`}</small>}
-   {availability.length>0&&<small data-bar-route-availability>{availability.join(" · ")}{!fresh?" · précédente estimation":""}</small>}
+   {availability.length>0&&<details data-bar-route-availability><summary>{cost==null?"Estimation indisponible":"Limites de l’estimation"}</summary><small>{availability.join(" · ")}{!fresh?" · précédente estimation":""}</small></details>}
    </>}
  </div>;
 }

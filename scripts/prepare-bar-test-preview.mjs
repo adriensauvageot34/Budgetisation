@@ -12,6 +12,7 @@ const vars={NEXT_PUBLIC_SUPABASE_URL:BAR_TEST_URL,NEXT_PUBLIC_SUPABASE_PUBLISHAB
  COMPOSER_P14_P3_HISTORICAL_REUSE:'0',COMPOSER_DRAFT_AUTOSAVE_ENABLED:'false',COMPOSER_P14_SNAP3_HISTORICAL_BASIS:'0',COMPOSER_P14_SNAP1_ACTIVITY_HISTORY:'0',
  GOOGLE_MAPS_API_KEY:process.env.GOOGLE_MAPS_API_KEY,TOMTOM_API_KEY:process.env.TOMTOM_API_KEY,HERE_API_KEY:process.env.HERE_API_KEY};
 for(const [name,value] of Object.entries(vars)){
+ if(!value&&['GOOGLE_MAPS_API_KEY','TOMTOM_API_KEY','HERE_API_KEY'].includes(name)){console.log(name+' NOT_OVERRIDDEN_EXISTING_PREVIEW_CONFIG_ONLY');continue;}
  if(!value)throw Error('MISSING_PREVIEW_CONFIGURATION_'+name);
  const args=[cli,'env','add',name,'preview','--git-branch',branch,'--project','prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ','--scope','adriensauvageot34-6137s-projects','--type',name.startsWith('NEXT_PUBLIC_')||!name.endsWith('_KEY')?'config':'secret','--force','--yes'];
  const r=spawnSync(process.execPath,args,{input:value,encoding:'utf8',timeout:60000,windowsHide:true});
