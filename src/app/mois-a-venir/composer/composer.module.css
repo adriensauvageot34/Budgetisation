@@ -1065,7 +1065,7 @@
 .barLivingShortcuts { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:7px; }
 .barLivingShortcuts button { border:0; border-radius:8px; padding:5px 8px; background:#f6f0e4; font-size:11px; }
 .barLivingQuestion:empty { display:none; }
-.barInlineCalendar { max-width:340px; }
+.barInlineCalendar { min-width:0; width:100%; }
 .barInlineCalendar h4 { margin:5px 0 10px; text-transform:capitalize; font-size:14px; }
 .barInlineCalendar>div { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
 .barInlineCalendar button { border:0; background:#f6f1e8; border-radius:8px; min-height:28px; }
@@ -1123,6 +1123,7 @@
 .barLivingQuestion [data-bar-price-arbitration] button { margin:3px; padding:7px 9px; border:1px solid #d3bf9b; border-radius:8px; background:white; font-size:12px; }
 .barLivingQuestion [data-bar-people]>h4 { margin:0 0 8px; font-size:13px; }
 .barLivingQuestion [data-bar-people]>.barLivingMetadata { margin-bottom:10px; }
+.barLivingQuestion [data-bar-people] { min-height:92px; }
 .barCompositionDock { min-width:0; width:100%; max-width:100%; box-sizing:border-box; background:linear-gradient(110deg,#fffcf6,#f9f4ea); }
 .barCompositionDock header { gap:8px; }
 .barCompositionDock .paletteHeading h3 { color:#76603f; font-size:12px; }
