@@ -1155,8 +1155,8 @@
 .barSceneBack { border:0; background:transparent; color:#655078; padding:4px 0; text-align:left; font-size:12px; }
 .barPagination { display:flex; align-items:center; justify-content:flex-end; gap:9px; margin:6px 0; font-size:12px; }
 .barPagination button { border:1px solid #ddd1e7; border-radius:8px; padding:5px 10px; background:#fff; }
-.barCompositionDock .paletteOptions { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); overflow:visible; gap:9px; }
-.barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { min-width:0; max-width:none; width:100%; box-sizing:border-box; height:auto; min-height:65px; }
+.barCompositionDock .paletteOptions { display:flex; overflow-x:auto; overflow-y:hidden; gap:9px; scroll-padding-inline:4px; }
+.barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { flex:0 0 170px; min-width:150px; max-width:230px; box-sizing:border-box; height:auto; min-height:65px; }
 .barLivingQuestion [data-bar-local-places]>button,.barLivingCard [data-bar-google-search]>button { display:block; width:100%; padding:7px; margin:3px 0; border:1px solid #e6dcec; border-radius:10px; background:#fff; text-align:left; }
 .barLivingQuestion [data-bar-local-places] input { width:100%; box-sizing:border-box; }
 .barLivingCard [data-bar-item-details] { display:inline-block; margin:5px; font-size:12px; }
@@ -1262,3 +1262,6 @@
 .barLivingCard .barLivingTiles small,
 .barCompositionDock .questionAnswer[data-show-hint=true] small { font-size:12px; line-height:1.4; color:#595363; }
 .barLivingCard .barRouteLine { font-size:12px; }
+
+/* R5: an empty scene does not reserve a passive dock. The portal host stays mounted. */
+.columns[data-bar-living-open=true] .paletteDock:not(:has([data-bar-dock])) { display:none; }

@@ -7,7 +7,7 @@ import { PlannerIcon } from "./planner-icons/planner-icon";
 import { displayEquipmentGroups, type EquipmentTile } from "./presentation/palette-groups";
 import styles from "./composer.module.css";
 import { useComposerInteractions } from "./interactions";
-import { BarPageControls } from "./bar-pages";
+import { barDockCatalog } from "./bar-dock-catalog";
 import { BarProductVisual } from "./bar-product-visual";
 
 function routeCaption(groupKey: string, slotKey: string, assetKey: string, socketLabel: string | null | undefined): string {
@@ -76,10 +76,10 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
   </>;
 }
 
-export type PaletteQuestion = { title: string; identity?:string; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; choose: () => void }[];
+export type PaletteQuestion = { title: string; identity?:string; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string };
-export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionPages, onQuestionPageChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
-  questionPages?:Readonly<Record<string,number>>; onQuestionPageChange?:(key:string,index:number)=>void;
+export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionScroll, onQuestionScrollChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
+  questionScroll?:Readonly<Record<string,number>>; onQuestionScrollChange?:(key:string,index:number)=>void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
 }) {
   const groups = question ? [] : displayEquipmentGroups(card, model);
@@ -88,58 +88,60 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const options = useRef<HTMLDivElement>(null), optionsId = useId();
   const questionFocus=useRef<HTMLElement|null>(null);
   const [scroll, setScroll] = useState({ before: false, after: false });
-  const [answerPositions,setAnswerPositions]=useState<Record<string,number>>({}),[answerCount,setAnswerCount]=useState(4);
-  const answerKey=JSON.stringify([question?.identity??"",question?.title,question?.search?.value??""]);
-  const answerPage=(questionPages??answerPositions)[answerKey]??0;
-  const setAnswerPage=(page:number)=>{if(onQuestionPageChange)onQuestionPageChange(answerKey,page);else setAnswerPositions(previous=>({...previous,[answerKey]:page}));};
-  useLayoutEffect(()=>{
-    if(appearance!=="bar"||!options.current)return;
-    const node=options.current;
-    const measure=()=>setAnswerCount(Math.max(1,Math.min(6,Math.floor(node.clientWidth/170)||4)));
-    measure();const observer=new ResizeObserver(measure);observer.observe(node);return()=>observer.disconnect();
-  },[appearance]);
-  const answerPages=Math.max(1,Math.ceil((question?.choices.length??0)/answerCount));
-  const currentAnswerPage=Math.min(answerPage,answerPages-1);
+  const scrollPositions=useRef<Record<string,number>>({});
+  const [searches,setSearches]=useState<Record<string,string>>({});
+  const [limits,setLimits]=useState<Record<string,number>>({});
+  const answerKey=JSON.stringify([card.contextOccurrenceId,question?.identity??question?.title??""]);
+  const searchValue=question?.search?.value??searches[answerKey]??"";
+  const catalogue=barDockCatalog(question?.choices??[],searchValue,limits[answerKey]??24);
+  const search=question?.search??(appearance==="bar"&&(question?.choices.length??0)>24?{
+    value:searchValue,label:"Rechercher dans ces choix",change:(value:string)=>setSearches(previous=>({...previous,[answerKey]:value}))
+  }:undefined);
+  const measureScroll = () => {
+    const node = options.current;
+    const next = { before: !!node && node.scrollLeft > 2, after: !!node && node.scrollLeft + node.clientWidth < node.scrollWidth - 2 };
+    setScroll(old => old.before === next.before && old.after === next.after ? old : next);
+  };
   useLayoutEffect(()=>{
     const prior=questionFocus.current;
     if(appearance==="bar"&&typeof document!=="undefined"&&prior&&(!prior.isConnected||prior.matches(':disabled'))
       &&(document.activeElement===document.body||document.activeElement===prior))
       options.current?.focus({preventScroll:true});
-  },[appearance,answerKey,currentAnswerPage,answerCount]);
-  const measureScroll = () => {
-    if(appearance==="bar")return;
-    const node = options.current;
-    const next = { before: !!node && node.scrollLeft > 2, after: !!node && node.scrollLeft + node.clientWidth < node.scrollWidth - 2 };
-    setScroll(old => old.before === next.before && old.after === next.after ? old : next);
-  };
+  },[appearance,answerKey,searchValue]);
   const hasGroups = !!question || groups.length > 0;
   useLayoutEffect(() => {
-    if(appearance==="bar")return;
     const node = options.current; if (!node) return;
     measureScroll(); const observer = new ResizeObserver(measureScroll); observer.observe(node);
     return () => observer.disconnect();
-  }, [hasGroups]);
-  useLayoutEffect(() => { if(options.current) options.current.scrollLeft = 0; measureScroll(); }, [question?.title]);
+  }, [hasGroups,appearance]);
+  useLayoutEffect(() => {
+    if(options.current) options.current.scrollLeft = appearance==="bar" ? (questionScroll??scrollPositions.current)[answerKey]??0 : 0;
+    measureScroll();
+    // Restore only when the semantic scene changes, never on an admitted object or keystroke.
+  }, [answerKey,appearance]);
   useLayoutEffect(measureScroll, [card, mode, query, question]);
   const normalize = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr");
   const visible = groups.map(group => ({ ...group, tiles: group.tiles.filter(tile => !query.trim()
     || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
     .filter(group => group.tiles.length);
   const iconKey = model.presentation.objects[card.contextOccurrenceId]?.iconKey ?? "activity";
-  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-context-palette={card.contextOccurrenceId} data-question-dock aria-label={question.title}
+  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-context-palette={card.contextOccurrenceId} data-question-dock data-dock-nature={question.nature} aria-label={question.title}
     onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}>
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>
-      {question.search && <input disabled={appearance==="bar"&&busy} aria-label={question.search.label} placeholder={question.search.label} value={question.search.value} onChange={event => question.search!.change(event.target.value)} />}
-      {appearance==="bar"?<BarPageControls index={currentAnswerPage} count={answerPages} onChange={setAnswerPage} label="Pages du dock"/>:<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
+      {search && <input disabled={appearance==="bar"&&busy} aria-label={search.label} placeholder={search.label} value={search.value} onChange={event => search.change(event.target.value)} />}
+      {(appearance!=="bar"||scroll.before||scroll.after)&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
         <button type="button" aria-label="Réponses précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => options.current?.scrollBy({left:-300,behavior:"smooth"})}><ChevronLeft size={18} /></button>
         <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => options.current?.scrollBy({left:300,behavior:"smooth"})}><ChevronRight size={18} /></button>
       </div>}</header>
-    <div ref={options} id={optionsId} className={styles.paletteOptions} style={appearance==="bar"?{gridTemplateColumns:`repeat(${answerCount}, minmax(0, 1fr))`}:undefined} data-palette-options onScroll={measureScroll} tabIndex={0} aria-label={question.title}
+    <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options data-overflow-before={scroll.before} data-overflow-after={scroll.after} onScroll={()=>{
+        measureScroll();if(appearance==="bar"&&options.current){const value=options.current.scrollLeft;scrollPositions.current[answerKey]=value;onQuestionScrollChange?.(answerKey,value);}
+      }} tabIndex={0} aria-label={question.title}
       onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}
-      onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();if(appearance==="bar")setAnswerPage(Math.max(0,Math.min(answerPages-1,currentAnswerPage+(event.key==="ArrowRight"?1:-1))));else event.currentTarget.scrollBy({left:event.key==="ArrowRight"?180:-180,behavior:"smooth"});}}}>
-      {(appearance==="bar"?question.choices.slice(currentAnswerPage*answerCount,(currentAnswerPage+1)*answerCount):question.choices).map(choice => <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} disabled={busy} title={choice.hint} onFocus={event => {if(appearance!=="bar")event.currentTarget.scrollIntoView({block:"nearest",inline:"nearest"});}} onClick={choice.choose}>
-          {appearance==="bar"&&(/^(bar|house_party):/u.test(choice.key)||choice.key==="shared")?<BarProductVisual assetKey={choice.key} label={choice.label}/>:appearance==="bar"&&choice.key.startsWith("option:night-out:")?<PlannerIcon iconKey={choice.iconKey} scale="PALETTE"/>:choice.symbol?<span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>:<PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}<span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>)}
-      {!question.choices.length && <p>{question.emptyLabel??"Aucun résultat. Vous pouvez saisir votre choix."}</p>}
+      onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();event.currentTarget.scrollBy({left:event.key==="ArrowRight"?180:-180,behavior:"smooth"});}}}>
+      {(appearance==="bar"?catalogue.visible:question.choices).map(choice => <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} disabled={busy} title={choice.hint} onFocus={event => {event.currentTarget.scrollIntoView?.({block:"nearest",inline:"nearest"});}} onClick={choice.choose}>
+          {appearance==="bar"&&(/^(bar|house_party|option:night-out):/u.test(choice.key)||["shared","drinks","food"].includes(choice.key))?<BarProductVisual assetKey={choice.key} label={choice.label}/>:appearance==="bar"&&choice.key.startsWith("option:night-out:")?<PlannerIcon iconKey={choice.iconKey} scale="PALETTE"/>:choice.symbol?<span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>:<PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}<span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>)}
+      {appearance==="bar"&&catalogue.remaining>0&&<button type="button" className={styles.questionAnswer} onClick={()=>setLimits(previous=>({...previous,[answerKey]:(previous[answerKey]??24)+24}))}>Afficher la suite ({catalogue.remaining})</button>}
+      {!(appearance==="bar"?catalogue.total:question.choices.length) && <p>{question.emptyLabel??"Aucun résultat. Vous pouvez saisir votre choix."}</p>}
     </div></section>;
   return <section className={styles.contextPalette} data-context-palette={card.contextOccurrenceId} aria-label={`Équiper ${card.label}`}>
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><div><h3>Équiper · {card.label}</h3><p>Choisissez un objet pour ce moment</p></div></div>

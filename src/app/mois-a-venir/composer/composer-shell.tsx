@@ -208,7 +208,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       if (status === "STALE") setMessage("Projection obsolète. Votre brouillon est conservé ; relancez la prévisualisation avant d’appliquer le mois.");
     }, response => {
       if (!response.ok) { setMessage(response.message); setErrorMessage(response.message); return; }
-      install(response.model); setErrorMessage(null); setMessage("Brouillon simulé par le Compiler/V2.");
+      install(response.model); setErrorMessage(null); setMessage("Projection du brouillon actualisée.");
     });
   }
   function stage(operation: ComposerOperation, history: "push" | "undo" | "redo" = "push", restored?: PlanSemanticStateV1) {

@@ -6,6 +6,7 @@ import {GoogleMapsAttribution} from "../restaurant-place-search";
 import {BarPageControls} from "./bar-pages";
 import styles from "./composer.module.css";
 import {projectPlaceTypeCompatible} from "@/domain/phase2/restaurant-places";
+import type {PersonalGooglePlace} from "@/domain/phase2/personal-google-place";
 import type {BarGoogleRef} from "@/domain/phase2/planner/night-out-venue";
 import {BarPersonalPlaces} from "./bar-personal-places";
 import {useInlineEditRegistry} from "./inline-edit-registry";
@@ -13,7 +14,7 @@ export type BarPlaceSearchState={query:string;city:string;resultPage:number;deta
 
 /** Details stay transient; only the user's minimal prospective reference or an
  * already published Canonical identity is admitted. No Canonical promotion. */
-export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initialSearch,onSearchChange,personalPlacesCapability=false,rawTargetRef}: {rawTargetRef?:string;personalPlacesCapability?:boolean;places:readonly PlannedPlaceOption[];onKnown:(placeId:string)=>void;onText?:(label:string)=>void;onGoogle?:(label:string,ref:BarGoogleRef)=>void;initialCity?:string;initialSearch?:BarPlaceSearchState;onSearchChange?:(state:BarPlaceSearchState)=>void}) {
+export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initialSearch,onSearchChange,personalPlacesCapability=false,rawTargetRef,onPersonalSuggestions,commitOnVerified=false,onManual,decisionKey}: {decisionKey?:string;onManual?:()=>void;onPersonalSuggestions?:(places:readonly PersonalGooglePlace[])=>void;commitOnVerified?:boolean;rawTargetRef?:string;personalPlacesCapability?:boolean;places:readonly PlannedPlaceOption[];onKnown:(placeId:string)=>void;onText?:(label:string)=>void;onGoogle?:(label:string,ref:BarGoogleRef)=>void;initialCity?:string;initialSearch?:BarPlaceSearchState;onSearchChange?:(state:BarPlaceSearchState)=>void}) {
   const [query,setQuery]=useState(initialSearch?.query??""),[city,setCity]=useState(initialSearch?.city??initialCity??""),[editCity,setEditCity]=useState(!initialCity||!!initialSearch),[results,setResults]=useState<RestaurantSuggestion[]>([]);
   const [personalPlacesEnabled,setPersonalPlacesEnabled]=useState(initialSearch?.personalPlacesEnabled===true);
   const registry=useInlineEditRegistry();
@@ -29,6 +30,12 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
   useEffect(()=>{onSearchChange?.({query,city,resultPage,...(detail?{detail,detailReadAt}:{}),...(personalPlacesEnabled?{personalPlacesEnabled:true}:{})});},[query,city,resultPage,detail,detailReadAt,onSearchChange,personalPlacesEnabled]);
   const [attempt,setAttempt]=useState(0),[failed,setFailed]=useState(false),[detailRetry,setDetailRetry]=useState<RestaurantSuggestion|null>(null);
   const session=useRef(new RestaurantSearchSession()),abort=useRef<AbortController|null>(null),generation=useRef(0);
+  const priorDecision=useRef(decisionKey);
+  useEffect(()=>{
+    if(priorDecision.current===decisionKey)return;
+    priorDecision.current=decisionKey;generation.current++;abort.current?.abort();session.current.cancel();
+    setStatus("La sortie a changé. Relancez votre recherche pour retenir un lieu.");setFailed(true);
+  },[decisionKey]);
   useEffect(()=>{
     // Resume a briefly retained fiche, never a durable identity or route.
     if(resumeDetail.current?.query===query&&resumeDetail.current.city===city&&attempt===0)return;
@@ -55,6 +62,12 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
       if(!place||place.provider!=="google_places"||place.placeId!==suggestion.placeId||!validGooglePlaceId(place.placeId)||!Array.isArray(place.types)||!projectPlaceTypeCompatible(place.types,"BAR_APERO")||typeof place.displayName!=="string"||!place.displayName.trim())throw Error("Lieu non admissible. Réessayez ou saisissez un repère libre.");
       if(generation.current!==ticket||controller.signal.aborted)return;
       setPersonalPlacesEnabled(payload.capabilities?.personalSavedPlaces===true);setDetail(place);setDetailReadAt(Date.now());setStatus("");setResults([]);session.current.complete();
+      if(commitOnVerified){
+        const exact=places.filter(candidate=>!candidate.privatePlace&&candidate.googlePlaceId===place.placeId);
+        if(exact.length===1)changeQuestion(()=>{if(generation.current===ticket&&!controller.signal.aborted)onKnown(exact[0].placeId);});
+        else if(exact.length===0&&onGoogle&&place.displayName.trim().length<=120)
+          changeQuestion(()=>{if(generation.current===ticket&&!controller.signal.aborted)onGoogle(place.displayName.trim(),{provider:"google_places",kind:"BAR_APERO",placeId:place.placeId});});
+      }
     }catch(error){if(generation.current===ticket&&!controller.signal.aborted){setStatus(error instanceof Error?error.message:"Recherche indisponible");setDetailRetry(suggestion);}}
   };
   const known=detail?places.filter(place=>!place.privatePlace&&place.googlePlaceId===detail.placeId):[];
@@ -64,7 +77,9 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
       :<div className={styles.barPlaceContext}>Autour de {city} <button type="button" onClick={()=>setEditCity(true)}>Modifier la ville</button></div>}
     <button type="button" onClick={()=>{setCity("");setEditCity(true);}}>Chercher ailleurs, sans ville imposée</button>
     {!city.trim()&&<small>Recherche en France · ajoutez une ville au nom pour préciser.</small>}</>}
-    {(personalPlacesCapability||personalPlacesEnabled)&&<BarPersonalPlaces detail={detail} query={query} onChoose={onGoogle} rawTargetRef={rawTargetRef}/>}
+    {onManual&&<button type="button" onClick={()=>changeQuestion(onManual)}>Nom libre</button>}
+    {query.trim()&&!detail&&places.filter(place=>!place.privatePlace&&`${place.name} ${place.commune??""} ${place.address??""}`.toLocaleLowerCase("fr").includes(query.trim().toLocaleLowerCase("fr"))).slice(0,3).map(place=><button type="button" key={place.placeId} onClick={()=>changeQuestion(()=>onKnown(place.placeId))}>{place.name} · {place.commune??"Lieu enregistré"}</button>)}
+    {(personalPlacesCapability||personalPlacesEnabled)&&<BarPersonalPlaces detail={detail} query={query} onChoose={onGoogle} rawTargetRef={rawTargetRef} onSuggestions={onPersonalSuggestions}/>}
     <GoogleMapsAttribution/>{status&&<p role="status">{status}</p>}
     {failed&&<button type="button" onClick={()=>{session.current.complete();setAttempt(value=>value+1);}}>Réessayer la recherche</button>}
     {detailRetry&&<button type="button" onClick={()=>void select(detailRetry)}>Réessayer ce lieu</button>}

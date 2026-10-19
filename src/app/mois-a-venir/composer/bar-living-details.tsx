@@ -1,7 +1,7 @@
 "use client";
 import type {ReactNode} from "react";
 import {mobilityIntentId} from "@/domain/phase2/planner/identity";
-import {CalendarDays,Users,MapPin,ArrowRight,Car,Train,Bus,Footprints,Plus,CarTaxiFront} from "lucide-react";
+import {CalendarDays,Users,MapPin,ArrowRight,Car,Train,Bus,Footprints,Plus,CarTaxiFront,X} from "lucide-react";
 import type {ComponentSelectionV1} from "@/domain/phase2/planner/component-contract";
 import type {ComposerContextCardView} from "@/domain/phase2/planner/composer-contract";
 import type {ComposerUiModel} from "@/domain/phase2/planner/composer-ui-contract";
@@ -28,12 +28,13 @@ export function BarComponentFace({item,amount,fresh=true}: {item:ComponentSelect
    {item.kind==="COMPONENT"&&item.unitBasis!=="ITEM"&&<small>{item.unitBasis==="SHARED"?"Lot partagé":"Par personne tarifée"}</small>}
  </>;
 }
-export function BarMetadata({fields,model,open,editing=false,disabled=false,active,children}: {fields:ComposerContextCardView["fields"];model:ComposerUiModel;open:(target:BarTarget)=>void;editing?:boolean;disabled?:boolean;active?:string;children?:ReactNode}){
+export function BarMetadata({fields,model,open,editing=false,disabled=false,active,children,removePlace}: {fields:ComposerContextCardView["fields"];model:ComposerUiModel;open:(target:BarTarget)=>void;editing?:boolean;disabled?:boolean;active?:string;children?:ReactNode;removePlace?:()=>void}){
  const place=fields.placeRef as ProspectivePlaceRef|undefined,date=barDateLabel(fields.plannedDate),people=Array.isArray(fields.participantRefs)?fields.participantRefs as ProspectivePersonRef[]:[];
  const googleVenue=fields.venueDecision?!!parseNightOutVenue(fields.venueDecision).google:false;
  return <nav className={styles.barLivingMetadata} aria-label="Précisions de la sortie">
    {children}
    <button type="button" aria-label="Modifier le lieu" aria-pressed={active==="place"||active==="manual-place"||active==="google"} disabled={disabled} onClick={()=>open("place")} title={place?.kind==="KNOWN"?"Lieu enregistré · identité conservée":googleVenue?"Bar Google retenu · itinéraire calculable sous réserve des fournisseurs":"Repère textuel · itinéraire à préciser"}>{place?<MapPin size={14}/>:<Plus size={14}/>} {place?barPlaceLabel(place,model):"Lieu"}</button>
+   {place&&removePlace&&<button type="button" aria-label="Retirer le lieu de la sortie" disabled={disabled} onClick={removePlace}><X size={14}/></button>}
    <button type="button" aria-label="Modifier la date" aria-pressed={active==="date"} disabled={disabled} onClick={()=>open("date")}>{date?<CalendarDays size={14}/>:<Plus size={14}/>} {date??"Date"}</button>
    <button type="button" className={styles.barPeople} aria-pressed={active==="people"} disabled={disabled} onClick={()=>open("people")} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)}>
      {people.length?people.slice(0,3).map((p,i)=>{const label=barPersonLabel(p,model);return <span key={i}><i aria-hidden="true">{label.split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join("")}</i>{label.split(/\s+/)[0]}</span>;}):<><Plus size={14}/>Personnes</>}{people.length>3&&<span>+{people.length-3}</span>}

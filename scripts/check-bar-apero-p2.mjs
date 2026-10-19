@@ -32,10 +32,22 @@ const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
-const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
+const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'||label==='Montant direct'&&n.props['aria-label']==='Modifier le coût prévu'||label==='Bouteille partagée'&&text(n)==='Bouteille'));assert.ok(all.length,'Missing button '+label);return all[0];};
 const click=async label=>{
-  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));
+  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'||label==='Montant direct'&&n.props['aria-label']==='Modifier le coût prévu'||label==='Bouteille partagée'&&text(n)==='Bouteille'));
   for(let i=0;i<12&&!matches().length;i++){
+    if(controls(n=>n.props['data-bar-living-editor']!==undefined).length){
+      const switchFamily=controls(n=>n.type==='button'&&text(n)==='Changer de famille')[0];
+      if(switchFamily&&['Chips','Snack','Planche / tapas','Vodka','Crazy Tiger sans alcool','Diluant sans alcool','Bière','Vin','Rhum','Bouteille partagée'].includes(label)){await act(async()=>switchFamily.props.onClick());continue;}
+      const familyLabel=['Chips','Snack','Planche / tapas'].includes(label)?'Restauration':'Boissons';
+      const family=controls(n=>n.type==='button'&&text(n)===familyLabel)[0];
+      if(family&&!['Date','Lieu','Montant direct','Before','Nom libre'].includes(label)){await act(async()=>family.props.onClick());continue;}
+      const routes=controls(n=>n.type==='button'&&text(n)==='Trajets proposés')[0];
+      if(routes&&['Reprendre le trajet inverse','Même mode qu’à l’aller'].includes(label)){await act(async()=>routes.props.onClick());continue;}
+      const endpointSearch=controls(n=>n.type==='input'&&n.props['aria-label']==='Chercher un point du trajet')[0];
+      if(endpointSearch&&endpointSearch.props.value!==label){await act(async()=>endpointSearch.props.onChange({target:{value:label}}));continue;}
+    }
+
     const next=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled)[0];
     if(next){await act(async()=>next.props.onClick());steps++;continue;}
     const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];
@@ -65,7 +77,7 @@ const snapshot=name=>{fs.mkdirSync('outputs/bar-p2/react-structure',{recursive:t
 const dock=()=>controls(n=>n.props['data-question-dock']!==undefined)[0];
 const labels=()=>dock().findAll(n=>n.type==='button'&&n.findAll(c=>c.type==='strong').length).map(n=>text(n).trim());
 try {
-await check('V2-01_CONTEXTUAL_FOUR_CHOICES_NO_DECISION',async()=>{await init('night-out','bar-apero',BarLivingEditor);assert.equal(step(),'summary');snapshot('EMPTY-expanded');assert.deepEqual(labels(),['Bière','Before','Bouteille partagée','Autre']);assert.equal(controls(n=>n.props['aria-label']==='Pages du dock · suivante').length,0);assert.equal(pendingOps.length,0);assert.equal(controls(n=>n.props['data-bar-route']!==undefined).length,0);assert.equal(controls(n=>n.type==='button'&&text(n)==='Terminé').length,0);});
+await check('V2-01_R5_FAMILIES_NO_DECISION',async()=>{await init('night-out','bar-apero',BarLivingEditor);assert.equal(step(),'summary');snapshot('EMPTY-expanded');assert.deepEqual(labels(),['Boissons','Restauration']);assert.equal(controls(n=>n.props['aria-label']==='Pages du dock · suivante').length,0);assert.equal(pendingOps.length,0);assert.equal(controls(n=>n.props['data-bar-route']!==undefined).length,0);assert.equal(controls(n=>n.type==='button'&&text(n)==='Terminé').length,0);});
 await check('V2-02_BEER_THEN_STEPPER_ADMITTED_IN_TWO_GESTURES',async()=>{await init('night-out','bar-apero',BarLivingEditor);await click('Bière');const beer=current().slotSelections.extras.items[0];assert.equal(beer.cost.kind,'UNKNOWN');assert.equal(beer.quantity,'1');snapshot('BEER_UNKNOWN-expanded');assert.equal(registry.count(),0);await act(async()=>controls(n=>n.props['aria-label']==='Augmenter la quantité')[0].props.onClick());assert.equal(current().slotSelections.extras.items[0].quantity,'2');assert.equal(current().slotSelections.extras.items[0].selectionId,beer.selectionId);assert.equal(registry.count(),0);assert.equal(controls(n=>n.type==='button'&&text(n)==='Terminé').length,0);});
 await check('V2-03_ROW_DOCK_STAYS_DRINKS_SAVE_ONLY_DIRTY',async()=>{await init('night-out','bar-apero',BarLivingEditor);await click('Bière');assert.ok(labels().some(s=>s.includes('Cocktail')));assert.ok(!labels().includes('Prix encore inconnu'));assert.equal(controls(n=>n.type==='button'&&text(n)==='Enregistrer').length,0);await change('Prix unitaire (€)','6,50');await click('Enregistrer');assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'6.50');await click('Date');assert.equal(step(),'date');});
 await check('V2-06_COMPACT_NO_PHANTOM_ROUTE_AND_DENSE_PREVIEW_LIMIT',async()=>{await init('night-out','bar-apero',BarLivingEditor);const card=model.board.contexts.find(c=>c.contextOccurrenceId===id);await act(async()=>root.unmount());let target;await act(async()=>{root=create(React.createElement(BarLivingCard,{card,model,living:{open:(_,t)=>target=t,close(){}},busy:false,preserved:false,preserve(){},drag(){}}));});assert.equal(controls(n=>n.props['data-bar-route']!==undefined).length,0);});

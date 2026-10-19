@@ -10,7 +10,7 @@ import {useWorkshopRaw} from './inline-edit-registry';
 /** Capability remains OFF until the personal-place owner SQL is reviewed.
  * Saving a favourite never selects a venue, creates KNOWN, or changes a route.
  */
-export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-personal-place'}:{detail:SelectedRestaurantPlace|null;query:string;onChoose?:(label:string,ref:BarGoogleRef)=>void;rawTargetRef?:string}) {
+export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-personal-place',onSuggestions}:{detail:SelectedRestaurantPlace|null;query:string;onChoose?:(label:string,ref:BarGoogleRef)=>void;rawTargetRef?:string;onSuggestions?:(places:readonly PersonalGooglePlace[])=>void}) {
   const [enabled,setEnabled]=useState(false),[places,setPlaces]=useState<PersonalGooglePlace[]>([]),[label,setLabel]=useState('');
   const [status,setStatus]=useState(''),[busy,setBusy]=useState(false),[page,setPage]=useState(0);
   const [lastReceipt,setLastReceipt]=useState<{requestId:string;status:string;version?:number}|null>(null);
@@ -27,6 +27,7 @@ export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-perso
   const editing=places.find(p=>p.id===editingId);
   const guardPersonal=useWorkshopRaw(rawTargetRef,enabled&&!!label.trim()&&(editing?label.trim()!==editing.userLabel:!!detail&&existing?.status!=='SAVED'),()=>{setLabel('');setEditingId(null);},`bar-personal-label:${rawVersion}`);
   const guarded=(run:()=>void)=>{if(guardPersonal(run))run();};
+  useEffect(()=>{onSuggestions?.(enabled?places.filter(place=>place.status==='SAVED'):[]);},[enabled,places,onSuggestions]);
   if(!enabled)return null;
   const matches=places.filter(p=>p.status===(showArchives?'ARCHIVED':'SAVED')&&p.userLabel.toLocaleLowerCase('fr').includes(query.trim().toLocaleLowerCase('fr')));
   const effectivePage=Math.min(page,Math.max(0,Math.ceil(matches.length/3)-1));
@@ -52,13 +53,13 @@ export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-perso
   };
   return <section aria-label="Mes lieux personnels" data-bar-personal-places data-place-request-id={lastReceipt?.requestId} data-place-result={lastReceipt?.status} data-place-version={lastReceipt?.version}>
     {!detail&&<button type="button" disabled={busy} onClick={()=>guarded(()=>{setShowArchives(v=>!v);setPage(0);})}>{showArchives?'Mes lieux actifs':'Lieux archivés'}</button>}
-    {!detail&&matches.slice(effectivePage*3,(effectivePage+1)*3).map(p=><div key={p.id}>
+    {!detail&&(!onSuggestions||showArchives)&&matches.slice(effectivePage*3,(effectivePage+1)*3).map(p=><div key={p.id}>
       <button type="button" onClick={()=>guarded(()=>onChoose?.(p.userLabel,{provider:'google_places',kind:'BAR_APERO',placeId:p.googlePlaceId}))}>{p.userLabel} · {p.status==='SAVED'?'Lieu personnel':'Archivé'}</button>
       {p.status==='SAVED'?<><button type="button" disabled={busy} onClick={()=>rename(p)}>Renommer {p.userLabel}</button>
         <button type="button" disabled={busy} onClick={()=>guarded(()=>void mutate('ARCHIVE',p.googlePlaceId,p.userLabel,p.version))}>Retirer de mes lieux</button></>
         :<button type="button" disabled={busy} onClick={()=>void mutate('SAVE',p.googlePlaceId,p.userLabel,p.version)}>Récupérer {p.userLabel}</button>}
     </div>)}
-    {!detail&&<BarPageControls index={effectivePage} count={Math.ceil(matches.length/3)} onChange={setPage} label="Mes lieux personnels"/>}
+    {!detail&&(!onSuggestions||showArchives)&&<BarPageControls index={effectivePage} count={Math.ceil(matches.length/3)} onChange={setPage} label="Mes lieux personnels"/>}
     {editing&&<><label>Nom personnel<input disabled={busy} maxLength={120} value={label} onChange={e=>{setLabel(e.target.value);setRawVersion(v=>v+1);}}/></label>
       <button type="button" disabled={busy||!label.trim()||label.trim()===editing.userLabel} onClick={()=>void mutate('SAVE',editing.googlePlaceId,label.trim(),editing.version)}>Enregistrer le nom</button></>}
     {detail&&(!existing||existing.status==='ARCHIVED')&&<>
