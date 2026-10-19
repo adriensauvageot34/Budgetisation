@@ -1,0 +1,250 @@
+R6-P45-001 PASS
+R6-P45-002 PASS
+R6-P45-003 PASS
+R6-P45-004 PASS
+R6-P45-005 PASS
+R6-P45-006 PASS
+R6-P45-007 PASS
+R6-P45-008 PASS
+R6-P45-009 PASS
+R6-P45-010 PASS
+R6-P45-011 PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /dragging \? stableItems\.current : projected/. Input:
+
+'"use client";\r\n' +
+  'import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";\r\n' +
+  'import { flushSync } from "react-dom";\r\n' +
+  'import { ChevronLeft, ChevronRight } from "lucide-react";\r\n' +
+  'import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";\r\n' +
+  'import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRef, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";\r\n' +
+  'import { useComposerInteractions } from "./interactions";\r\n' +
+  'import styles from "./composer.module.css";\r\n' +
+  'import {barSurface, type BarSurface, type InventoryAnchor} from "./bar-surface";\r\n' +
+  'import type {InventoryPlacement} from "./inventory-layout";\r\n' +
+  '\r\n' +
+  'export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps, revealSequence, revealFocused, expandedId }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;\r\n' +
+  '  expandedId?: string; revealSequence?: number; revealFocused?: () => void;\r\n' +
+  '  render: (item: InventoryItem) => ReactNode; emptyClick: () => void; children?: ReactNode; dropProps: React.HTMLAttributes<HTMLDivElement> & { [key: `data-${string}`]: boolean | string | number | undefined } }) {\r\n' +
+  '  const viewport = useRef<HTMLDivElement>(null), [size, setSize] = useState({ width: 1000, height: 470 }), [page, setPage] = useState(0);\r\n' +
+  '  const reception=useRef({enabled:false,mutations:0,resizes:0,measures:0,repacks:0});\r\n' +
+  "  useEffect(()=>{reception.current.enabled=typeof window!=='undefined'&&new URLSearchParams(window.location?.search??'').get('barProbe')==='1';},[]);\r\n" +
+  "  const note=(phase:'mutations'|'resizes'|'measures'|'repacks')=>{\r\n" +
+  '    if(!reception.current.enabled)return;\r\n' +
+  '    reception.current[phase]++;\r\n' +
+  '    if(viewport.current)viewport.current.dataset.barLayoutProbe=JSON.stringify(reception.current);\r\n' +
+  '  };\r\n' +
+  '  const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number; surface: BarSurface; checkpoint: string } | null>(null);\r\n' +
+  '  const [compactBarHeights,setCompactBarHeights]=useState<Readonly<Record<string,number>>>({});\r\n' +
+  '  const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);\r\n' +
+  '  const projected = useMemo(() => inventory ?? inventoryItems(model), [model,inventory]);\r\n' +
+  '  const stableItems = useRef(projected), stableSize = useRef(size), stableExpanded = useRef(expandedId);\r\n' +
+  '  const stableExpandedHeight = useRef<number | undefined>(undefined);\r\n' +
+  '  const dragging = !!interaction?.grabbed;\r\n' +
+  '  const measuredItems=useMemo(()=>projected.map(item=>compactBarHeights[item.id]&&item.id!==expandedId?{...item,height:compactBarHeights[item.id]}:item),[projected,compactBarHeights,expandedId]);\r\n' +
+  '  const items = dragging ? stableItems.current : measuredItems, layoutSize = dragging ? stableSize.current : size;\r\n' +
+  '  const spatialKey = inventorySpatialKey(items);\r\n' +
+  '  const expandedHeight = dragging ? stableExpandedHeight.current : expandedMeasure && expandedMeasure.id === expandedId ? expandedMeasure.height : undefined;\r\n' +
+  '  const previousGeometry=useRef<readonly (readonly InventoryPlacement[])[]>([]), activeAnchor=useRef<InventoryAnchor|undefined>(undefined);\r\n' +
+  '  const originPage=previousGeometry.current.findIndex(p=>p.some(box=>box.item.id===expandedId));\r\n' +
+  '  const origin=previousGeometry.current[originPage]?.find(box=>box.item.id===expandedId);\r\n' +
+  '  // At explicit opening choose a usable local origin if the closed card was\r\n' +
+  '  // near the bottom. Once established, this anchor survives fine edits.\r\n' +
+  '  const anchor=expandedId ? activeAnchor.current?.id===expandedId ? activeAnchor.current\r\n' +
+  '    : {id:expandedId,page:origin?originPage:Math.max(0,Math.min(page,previousGeometry.current.length-1)),column:1,row:1} : undefined;\r\n' +
+  '  const surface=expandedMeasure&&expandedMeasure.id===expandedId?expandedMeasure.surface:undefined;\r\n' +
+  '  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);\r\n' +
+  '  useLayoutEffect(()=>{\r\n' +
+  '    previousGeometry.current=geometry;\r\n' +
+  '    if(!expandedId){activeAnchor.current=undefined;return;}\r\n' +
+  '    const index=geometry.findIndex(p=>p.some(box=>box.item.id===expandedId)),box=geometry[index]?.find(box=>box.item.id===expandedId);\r\n' +
+  '    if(box)activeAnchor.current={id:expandedId,page:index,column:box.column,row:box.row};\r\n' +
+  '  },[geometry,expandedId]);\r\n' +
+  "  useLayoutEffect(()=>note('repacks'),[geometry]);\r\n" +
+  '  const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);\r\n' +
+  '  const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);\r\n' +
+  '  useLayoutEffect(() => { if (!dragging) { stableItems.current = measuredItems; stableSize.current = size; stableExpanded.current = expandedId; stableExpandedHeight.current = expandedHeight; } }, [dragging, measuredItems, size, expandedId, expandedHeight]);\r\n' +
+  '  const active = Math.min(page, pages.length - 1), previousIds = useRef(new Set(items.map(item => item.id)));\r\n' +
+  '  const [departing,setDeparting] = useState(0), [dirtyItems,setDirtyItems] = useState<readonly string[]>([]);\r\n' +
+  '  const [dragOrigin,setDragOrigin] = useState<number|null>(null);\r\n' +
+  '  // On a small Board the mount/unmount bookkeeping costs more than the\r\n' +
+  '  // invisible cards. Keep the full page tree until it becomes dense.\r\n' +
+  '  const mode = process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES === "0" || items.length < 24 ? "all" : "neighbors";\r\n' +
+  '  const pinned = new Set(layouts.flatMap((layout,index) => layout.some(p => dirtyItems.includes(p.item.id)) ? [index] : []));\r\n' +
+  '  if (dragOrigin !== null && dragging) pinned.add(dragOrigin);\r\n' +
+  '  const captureDirty = () => {\r\n' +
+  '    const ids=[...viewport.current?.querySelectorAll<HTMLElement>("[data-inline-dirty=true]") ?? []]\r\n' +
+  '      .map(node => node.closest<HTMLElement>("[data-inventory-id]")?.dataset.inventoryId).filter((id):id is string => !!id).sort();\r\n' +
+  '    setDirtyItems(old => old.length === ids.length && old.every((id,i) => id === ids[i]) ? old : ids);\r\n' +
+  '  };\r\n' +
+  '  const previousScene = useRef<{ page:number; expandedId?:string; hasLivingBar?:boolean; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });\r\n' +
+  '  const cancelDwell = () => { if (dwell.current) { clearTimeout(dwell.current); dwell.current = null; } };\r\n' +
+  '  const browsing = useRef(false);\r\n' +
+  '  const go = (next: number, manual = true) => { browsing.current = manual; cancelDwell(); captureDirty(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setDeparting(active); setPage(Math.max(0, Math.min(pages.length - 1, next))); };\r\n' +
+  '  useEffect(() => { const timer=setTimeout(()=>setDeparting(active),300);return()=>clearTimeout(timer); },[active]);\r\n' +
+  '  useLayoutEffect(captureDirty,[model]);\r\n' +
+  '  useLayoutEffect(()=>{\r\n' +
+  '    if(dragging||!viewport.current)return;\r\n' +
+  "    const board=viewport.current;let lastSignature='';\r\n" +
+  '    // Measure intrinsic children, not the stretched grid cell: otherwise the\r\n' +
+  '    // reserved height feeds back into itself and can never shrink on folding.\r\n' +
+  `    const cards=()=>[...board.querySelectorAll<HTMLElement>('[data-bar-living-card][data-expanded="false"]')];\r\n` +
+  "    const resize=new ResizeObserver(()=>{note('resizes');measure(true);});\r\n" +
+  '    function observe(){resize.disconnect();for(const card of cards())for(const child of card.children)if(child instanceof HTMLElement)resize.observe(child);}\r\n' +
+  "    function measure(synchronous=false){note('measures');const heights:Record<string,number>={};for(const card of cards()){\r\n" +
+  '      const id=card.dataset.context;if(!id)continue;\r\n' +
+  '      heights[id]=Math.max(130,Math.ceil([...card.children].reduce((sum,child)=>sum+child.getBoundingClientRect().height,0)+2));\r\n' +
+  '    }\r\n' +
+  '      const signature=JSON.stringify(heights);if(signature===lastSignature)return;lastSignature=signature;\r\n' +
+  '      const reserve=()=>setCompactBarHeights(previous=>{\r\n' +
+  '        const next={...previous,...heights};for(const id of Object.keys(next))if(!projected.some(item=>item.id===id))delete next[id];\r\n' +
+  '        return Object.keys(next).length===Object.keys(previous).length&&Object.entries(next).every(([id,height])=>previous[id]===height)?previous:next;\r\n' +
+  '      });\r\n' +
+  '      // Undo and Preview can remount a folded Bar before its prior height is\r\n' +
+  '      // known. Reserve the intrinsic surface before paint, as for the editor.\r\n' +
+  '      if(synchronous)flushSync(reserve);else reserve();\r\n' +
+  '    }\r\n' +
+  "    const mutations=new MutationObserver(()=>{note('mutations');observe();measure(true);});\r\n" +
+  '    mutations.observe(board,{childList:true,subtree:true,characterData:true});observe();measure();\r\n' +
+  '    return()=>{resize.disconnect();mutations.disconnect();};\r\n' +
+  '  },[dragging,expandedId,size.width,projected]);\r\n' +
+  '  useLayoutEffect(() => {\r\n' +
+  '    if (!expandedId || dragging) return;\r\n' +
+  "    // Measure only the living Bar's rendered content. The grid owns the outer\r\n" +
+  '    // rectangle. A tall living card also grows the page instead of being cut\r\n' +
+  '    // by the finite shelf; no overlay or semantic edit.\r\n' +
+  '    const board=viewport.current;if(!board)return;\r\n' +
+  '    const findCard=()=>[...board.querySelectorAll<HTMLElement>("[data-inventory-id]")]\r\n' +
+  `      .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');\r\n` +
+  '    let card=findCard();\r\n' +
+  '    let lastHeight=expandedMeasure?.id===expandedId?expandedMeasure.height:null;\r\n' +
+  '    let lastCheckpoint=expandedMeasure?.id===expandedId?expandedMeasure.checkpoint:null;\r\n' +
+  "    const resize = new ResizeObserver(()=>{note('resizes');measure(true);});\r\n" +
+  '    const observeContent = () => {\r\n' +
+  '      card=findCard();resize.disconnect();if(!card)return;resize.observe(card);\r\n' +
+  '      for (const child of card'... 16110 more characters
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-composer-r6-p45.mjs:43:33
+    at check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-composer-r6-p45.mjs:19:29)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-composer-r6-p45.mjs:43:3 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '"use client";\r\n' +
+    'import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";\r\n' +
+    'import { flushSync } from "react-dom";\r\n' +
+    'import { ChevronLeft, ChevronRight } from "lucide-react";\r\n' +
+    'import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";\r\n' +
+    'import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRef, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";\r\n' +
+    'import { useComposerInteractions } from "./interactions";\r\n' +
+    'import styles from "./composer.module.css";\r\n' +
+    'import {barSurface, type BarSurface, type InventoryAnchor} from "./bar-surface";\r\n' +
+    'import type {InventoryPlacement} from "./inventory-layout";\r\n' +
+    '\r\n' +
+    'export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps, revealSequence, revealFocused, expandedId }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;\r\n' +
+    '  expandedId?: string; revealSequence?: number; revealFocused?: () => void;\r\n' +
+    '  render: (item: InventoryItem) => ReactNode; emptyClick: () => void; children?: ReactNode; dropProps: React.HTMLAttributes<HTMLDivElement> & { [key: `data-${string}`]: boolean | string | number | undefined } }) {\r\n' +
+    '  const viewport = useRef<HTMLDivElement>(null), [size, setSize] = useState({ width: 1000, height: 470 }), [page, setPage] = useState(0);\r\n' +
+    '  const reception=useRef({enabled:false,mutations:0,resizes:0,measures:0,repacks:0});\r\n' +
+    "  useEffect(()=>{reception.current.enabled=typeof window!=='undefined'&&new URLSearchParams(window.location?.search??'').get('barProbe')==='1';},[]);\r\n" +
+    "  const note=(phase:'mutations'|'resizes'|'measures'|'repacks')=>{\r\n" +
+    '    if(!reception.current.enabled)return;\r\n' +
+    '    reception.current[phase]++;\r\n' +
+    '    if(viewport.current)viewport.current.dataset.barLayoutProbe=JSON.stringify(reception.current);\r\n' +
+    '  };\r\n' +
+    '  const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number; surface: BarSurface; checkpoint: string } | null>(null);\r\n' +
+    '  const [compactBarHeights,setCompactBarHeights]=useState<Readonly<Record<string,number>>>({});\r\n' +
+    '  const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);\r\n' +
+    '  const projected = useMemo(() => inventory ?? inventoryItems(model), [model,inventory]);\r\n' +
+    '  const stableItems = useRef(projected), stableSize = useRef(size), stableExpanded = useRef(expandedId);\r\n' +
+    '  const stableExpandedHeight = useRef<number | undefined>(undefined);\r\n' +
+    '  const dragging = !!interaction?.grabbed;\r\n' +
+    '  const measuredItems=useMemo(()=>projected.map(item=>compactBarHeights[item.id]&&item.id!==expandedId?{...item,height:compactBarHeights[item.id]}:item),[projected,compactBarHeights,expandedId]);\r\n' +
+    '  const items = dragging ? stableItems.current : measuredItems, layoutSize = dragging ? stableSize.current : size;\r\n' +
+    '  const spatialKey = inventorySpatialKey(items);\r\n' +
+    '  const expandedHeight = dragging ? stableExpandedHeight.current : expandedMeasure && expandedMeasure.id === expandedId ? expandedMeasure.height : undefined;\r\n' +
+    '  const previousGeometry=useRef<readonly (readonly InventoryPlacement[])[]>([]), activeAnchor=useRef<InventoryAnchor|undefined>(undefined);\r\n' +
+    '  const originPage=previousGeometry.current.findIndex(p=>p.some(box=>box.item.id===expandedId));\r\n' +
+    '  const origin=previousGeometry.current[originPage]?.find(box=>box.item.id===expandedId);\r\n' +
+    '  // At explicit opening choose a usable local origin if the closed card was\r\n' +
+    '  // near the bottom. Once established, this anchor survives fine edits.\r\n' +
+    '  const anchor=expandedId ? activeAnchor.current?.id===expandedId ? activeAnchor.current\r\n' +
+    '    : {id:expandedId,page:origin?originPage:Math.max(0,Math.min(page,previousGeometry.current.length-1)),column:1,row:1} : undefined;\r\n' +
+    '  const surface=expandedMeasure&&expandedMeasure.id===expandedId?expandedMeasure.surface:undefined;\r\n' +
+    '  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);\r\n' +
+    '  useLayoutEffect(()=>{\r\n' +
+    '    previousGeometry.current=geometry;\r\n' +
+    '    if(!expandedId){activeAnchor.current=undefined;return;}\r\n' +
+    '    const index=geometry.findIndex(p=>p.some(box=>box.item.id===expandedId)),box=geometry[index]?.find(box=>box.item.id===expandedId);\r\n' +
+    '    if(box)activeAnchor.current={id:expandedId,page:index,column:box.column,row:box.row};\r\n' +
+    '  },[geometry,expandedId]);\r\n' +
+    "  useLayoutEffect(()=>note('repacks'),[geometry]);\r\n" +
+    '  const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);\r\n' +
+    '  const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);\r\n' +
+    '  useLayoutEffect(() => { if (!dragging) { stableItems.current = measuredItems; stableSize.current = size; stableExpanded.current = expandedId; stableExpandedHeight.current = expandedHeight; } }, [dragging, measuredItems, size, expandedId, expandedHeight]);\r\n' +
+    '  const active = Math.min(page, pages.length - 1), previousIds = useRef(new Set(items.map(item => item.id)));\r\n' +
+    '  const [departing,setDeparting] = useState(0), [dirtyItems,setDirtyItems] = useState<readonly string[]>([]);\r\n' +
+    '  const [dragOrigin,setDragOrigin] = useState<number|null>(null);\r\n' +
+    '  // On a small Board the mount/unmount bookkeeping costs more than the\r\n' +
+    '  // invisible cards. Keep the full page tree until it becomes dense.\r\n' +
+    '  const mode = process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES === "0" || items.length < 24 ? "all" : "neighbors";\r\n' +
+    '  const pinned = new Set(layouts.flatMap((layout,index) => layout.some(p => dirtyItems.includes(p.item.id)) ? [index] : []));\r\n' +
+    '  if (dragOrigin !== null && dragging) pinned.add(dragOrigin);\r\n' +
+    '  const captureDirty = () => {\r\n' +
+    '    const ids=[...viewport.current?.querySelectorAll<HTMLElement>("[data-inline-dirty=true]") ?? []]\r\n' +
+    '      .map(node => node.closest<HTMLElement>("[data-inventory-id]")?.dataset.inventoryId).filter((id):id is string => !!id).sort();\r\n' +
+    '    setDirtyItems(old => old.length === ids.length && old.every((id,i) => id === ids[i]) ? old : ids);\r\n' +
+    '  };\r\n' +
+    '  const previousScene = useRef<{ page:number; expandedId?:string; hasLivingBar?:boolean; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });\r\n' +
+    '  const cancelDwell = () => { if (dwell.current) { clearTimeout(dwell.current); dwell.current = null; } };\r\n' +
+    '  const browsing = useRef(false);\r\n' +
+    '  const go = (next: number, manual = true) => { browsing.current = manual; cancelDwell(); captureDirty(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setDeparting(active); setPage(Math.max(0, Math.min(pages.length - 1, next))); };\r\n' +
+    '  useEffect(() => { const timer=setTimeout(()=>setDeparting(active),300);return()=>clearTimeout(timer); },[active]);\r\n' +
+    '  useLayoutEffect(captureDirty,[model]);\r\n' +
+    '  useLayoutEffect(()=>{\r\n' +
+    '    if(dragging||!viewport.current)return;\r\n' +
+    "    const board=viewport.current;let lastSignature='';\r\n" +
+    '    // Measure intrinsic children, not the stretched grid cell: otherwise the\r\n' +
+    '    // reserved height feeds back into itself and can never shrink on folding.\r\n' +
+    `    const cards=()=>[...board.querySelectorAll<HTMLElement>('[data-bar-living-card][data-expanded="false"]')];\r\n` +
+    "    const resize=new ResizeObserver(()=>{note('resizes');measure(true);});\r\n" +
+    '    function observe(){resize.disconnect();for(const card of cards())for(const child of card.children)if(child instanceof HTMLElement)resize.observe(child);}\r\n' +
+    "    function measure(synchronous=false){note('measures');const heights:Record<string,number>={};for(const card of cards()){\r\n" +
+    '      const id=card.dataset.context;if(!id)continue;\r\n' +
+    '      heights[id]=Math.max(130,Math.ceil([...card.children].reduce((sum,child)=>sum+child.getBoundingClientRect().height,0)+2));\r\n' +
+    '    }\r\n' +
+    '      const signature=JSON.stringify(heights);if(signature===lastSignature)return;lastSignature=signature;\r\n' +
+    '      const reserve=()=>setCompactBarHeights(previous=>{\r\n' +
+    '        const next={...previous,...heights};for(const id of Object.keys(next))if(!projected.some(item=>item.id===id))delete next[id];\r\n' +
+    '        return Object.keys(next).length===Object.keys(previous).length&&Object.entries(next).every(([id,height])=>previous[id]===height)?previous:next;\r\n' +
+    '      });\r\n' +
+    '      // Undo and Preview can remount a folded Bar before its prior height is\r\n' +
+    '      // known. Reserve the intrinsic surface before paint, as for the editor.\r\n' +
+    '      if(synchronous)flushSync(reserve);else reserve();\r\n' +
+    '    }\r\n' +
+    "    const mutations=new MutationObserver(()=>{note('mutations');observe();measure(true);});\r\n" +
+    '    mutations.observe(board,{childList:true,subtree:true,characterData:true});observe();measure();\r\n' +
+    '    return()=>{resize.disconnect();mutations.disconnect();};\r\n' +
+    '  },[dragging,expandedId,size.width,projected]);\r\n' +
+    '  useLayoutEffect(() => {\r\n' +
+    '    if (!expandedId || dragging) return;\r\n' +
+    "    // Measure only the living Bar's rendered content. The grid owns the outer\r\n" +
+    '    // rectangle. A tall living card also grows the page instead of being cut\r\n' +
+    '    // by the finite shelf; no overlay or semantic edit.\r\n' +
+    '    const board=viewport.current;if(!board)return;\r\n' +
+    '    const findCard=()=>[...board.querySelectorAll<HTMLElement>("[data-inventory-id]")]\r\n' +
+    `      .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');\r\n` +
+    '    let card=findCard();\r\n' +
+    '    let lastHeight=expandedMeasure?.id===expandedId?expandedMeasure.height:null;\r\n' +
+    '    let lastCheckpoint=expandedMeasure?.id===expandedId?expandedMeasure.checkpoint:null;\r\n' +
+    "    const resize = new ResizeObserver(()=>{note('resizes');measure(true);});\r\n" +
+    '    const observeContent = () => {\r\n' +
+    '      card=findCard();resize.disconnect();if(!card)return;resize.observe(card);\r\n' +
+    '      for (const child of card'... 16110 more characters,
+  expected: /dragging \? stableItems\.current : projected/,
+  operator: 'match'
+}
+
+Node.js v22.18.0

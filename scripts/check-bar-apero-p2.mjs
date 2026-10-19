@@ -129,8 +129,10 @@ await check('V2_LIVING_SCENE_HEIGHT_RETAINS_PAGE_AND_ORIGIN',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);const bar=inventoryItems(model).find(n=>n.id===id);
  const items=[...Array.from({length:6},(_,i)=>({...bar,id:'neighbour:'+i})),bar,...Array.from({length:8},(_,i)=>({...bar,id:'after:'+i}))],before=structuredClone(items);
  for(const [width,height] of [[720,380],[1000,470],[1330,760]]){
-  const positions=[245,355,445,515,2000].map(sceneHeight=>{const pages=inventoryLayoutPages(items,width,height,id,sceneHeight);assert.deepEqual(pages.flat().map(p=>p.item.id),items.map(i=>i.id));const page=pages.findIndex(p=>p.some(box=>box.item.id===id)),box=pages[page].find(box=>box.item.id===id);return [page,box.column,box.row];});
-  assert.ok(positions.every(position=>JSON.stringify(position)===JSON.stringify(positions[0])),JSON.stringify({width,height,positions}));
+  const baseline=inventoryLayoutPages(items,width,height),pageIndex=baseline.findIndex(p=>p.some(box=>box.item.id===id)),initial=baseline[pageIndex].find(box=>box.item.id===id);
+  let anchor={id,page:pageIndex,column:initial.column,row:initial.row};
+  const positions=[245,355,445,515,2000,245].map(sceneHeight=>{const pages=inventoryLayoutPages(items,width,height,id,sceneHeight,{anchor});assert.deepEqual(pages.flat().map(p=>p.item.id).sort(),items.map(i=>i.id).sort());assert.deepEqual(pages.flat().filter(p=>p.item.id!==id).map(p=>p.item.id),items.filter(i=>i.id!==id).map(i=>i.id));const page=pages.findIndex(p=>p.some(box=>box.item.id===id)),box=pages[page].find(box=>box.item.id===id);assert.equal(page,anchor.page);assert.equal(box.column,anchor.column);assert.ok(box.row>=anchor.row);anchor={id,page,column:box.column,row:box.row};return [page,box.column,box.row];});
+  assert.equal(positions.at(-1)[0],positions[0][0],JSON.stringify({width,height,positions}));
  }
  assert.deepEqual(items,before);
 });
@@ -157,6 +159,15 @@ await check('V2_COMPACT_SIZING_AND_OTHER_PRESETS_UNCHANGED',async()=>{
  await click('Bière');const beer=current().slotSelections.extras.items[0],one=inventoryItems(model).find(n=>n.id===id);assert.ok(one.height>empty.height);
  await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:Array.from({length:15},()=>({...beer,selectionId:crypto.randomUUID()}))}}}));const rich=inventoryItems(model);assert.equal(rich.find(n=>n.id===id).height,one.height);assert.deepEqual(rich.filter(n=>n.id!==id),others);
  const {ContextPalette}=require('@/app/mois-a-venir/composer/context-palette');await act(async()=>root.unmount());await act(async()=>{root=create(React.createElement(ContextPalette,{card:model.board.contexts.find(c=>c.contextOccurrenceId===id),model,busy:false,choose(){},close(){},question:{title:'Other preset canary',choices:[]}}));});assert.equal(controls(n=>n.props['data-bar-dock']!==undefined).length,0);
+});
+await check('R5_STRUCTURAL_CHECKPOINT_RECLAIMS_LAST_ITEM_NOT_PRICE_OR_QUANTITY',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);await click('Bière');await click('← Ma sortie');await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());
+ const key=()=>controls(n=>n.props['data-bar-living-editor']!==undefined)[0].props['data-bar-geometry-key'];
+ const original=structuredClone(current().slotSelections.extras.items),withItem=key();assert.equal(step(),'drinks');
+ await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:original.map(item=>({...item,quantity:'3',cost:{kind:'MANUAL',unitAmount:'5.00'}}))}}}));assert.equal(key(),withItem);
+ await act(async()=>admit({kind:'CLEAR_SOCKET',contextOccurrenceId:id,slotKey:'extras',selectionId:original[0].selectionId}));const removed=key();assert.equal(step(),'drinks');assert.notEqual(removed,withItem);
+ await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:original}}}));assert.equal(key(),withItem);
+ await act(async()=>admit({kind:'CLEAR_SOCKET',contextOccurrenceId:id,slotKey:'extras',selectionId:original[0].selectionId}));assert.equal(key(),removed);
 });
 await check('V2_REDUCED_SCOPE_READONLY_FORM_DISABLED',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);overrides={busy:true};await sync();assert.equal(controls(n=>n.type==='fieldset'&&n.props['aria-label']==='Composition de la sortie')[0].props.disabled,true);assert.equal(dock().findAll(n=>n.type==='button'&&!n.props.disabled&&n.findAll(c=>c.type==='strong').length).length,0);

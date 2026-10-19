@@ -6,6 +6,8 @@ import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contra
 import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRef, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";
 import { useComposerInteractions } from "./interactions";
 import styles from "./composer.module.css";
+import {barSurface, type BarSurface, type InventoryAnchor} from "./bar-surface";
+import type {InventoryPlacement} from "./inventory-layout";
 
 export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps, revealSequence, revealFocused, expandedId }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;
   expandedId?: string; revealSequence?: number; revealFocused?: () => void;
@@ -18,7 +20,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     reception.current[phase]++;
     if(viewport.current)viewport.current.dataset.barLayoutProbe=JSON.stringify(reception.current);
   };
-  const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number } | null>(null);
+  const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number; surface: BarSurface; checkpoint: string } | null>(null);
   const [compactBarHeights,setCompactBarHeights]=useState<Readonly<Record<string,number>>>({});
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
   const projected = useMemo(() => inventory ?? inventoryItems(model), [model,inventory]);
@@ -29,7 +31,21 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const items = dragging ? stableItems.current : measuredItems, layoutSize = dragging ? stableSize.current : size;
   const spatialKey = inventorySpatialKey(items);
   const expandedHeight = dragging ? stableExpandedHeight.current : expandedMeasure && expandedMeasure.id === expandedId ? expandedMeasure.height : undefined;
-  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight]);
+  const previousGeometry=useRef<readonly (readonly InventoryPlacement[])[]>([]), activeAnchor=useRef<InventoryAnchor|undefined>(undefined);
+  const originPage=previousGeometry.current.findIndex(p=>p.some(box=>box.item.id===expandedId));
+  const origin=previousGeometry.current[originPage]?.find(box=>box.item.id===expandedId);
+  // At explicit opening choose a usable local origin if the closed card was
+  // near the bottom. Once established, this anchor survives fine edits.
+  const anchor=expandedId ? activeAnchor.current?.id===expandedId ? activeAnchor.current
+    : {id:expandedId,page:origin?originPage:Math.max(0,Math.min(page,previousGeometry.current.length-1)),column:1,row:1} : undefined;
+  const surface=expandedMeasure&&expandedMeasure.id===expandedId?expandedMeasure.surface:undefined;
+  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);
+  useLayoutEffect(()=>{
+    previousGeometry.current=geometry;
+    if(!expandedId){activeAnchor.current=undefined;return;}
+    const index=geometry.findIndex(p=>p.some(box=>box.item.id===expandedId)),box=geometry[index]?.find(box=>box.item.id===expandedId);
+    if(box)activeAnchor.current={id:expandedId,page:index,column:box.column,row:box.row};
+  },[geometry,expandedId]);
   useLayoutEffect(()=>note('repacks'),[geometry]);
   const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);
   const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);
@@ -88,6 +104,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
     let card=findCard();
     let lastHeight=expandedMeasure?.id===expandedId?expandedMeasure.height:null;
+    let lastCheckpoint=expandedMeasure?.id===expandedId?expandedMeasure.checkpoint:null;
     const resize = new ResizeObserver(()=>{note('resizes');measure(true);});
     const observeContent = () => {
       card=findCard();resize.disconnect();if(!card)return;resize.observe(card);
@@ -99,10 +116,16 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       const editor = card?.querySelector<HTMLElement>("[data-bar-living-editor]");
       const header = card?.querySelector<HTMLElement>("header");
       if (!editor || !header) return; // Keep the previous geometry while the editor loads.
+      const checkpoint=`${editor.dataset.barGeometryKey??editor.dataset.barStep??"summary"}:${Math.round(card!.getBoundingClientRect().width)}`;
       const height = Math.max(240, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + 2));
-      if(height===lastHeight)return;
+      // Provider results, typing, focus and images do not renegotiate a scene.
+      // Retain its envelope until an explicit scene/page transition. Growing
+      // contents may reserve more rows for access, but the anchor stays pinned.
+      if(checkpoint===lastCheckpoint&&(height===lastHeight||height<(lastHeight??0)))return;
+      const surface=barSurface(editor.dataset.barStep??"summary",card?.dataset.barSurfaceRich==="true",editor.dataset.barAdvanced==="true",card?.dataset.barSurfaceItems==="true");
       lastHeight=height;
-      const reserve=()=>setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height ? previous : { id: expandedId!, height });
+      lastCheckpoint=checkpoint;
+      const reserve=()=>setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height && previous.checkpoint===checkpoint ? previous : { id: expandedId!, height, surface, checkpoint });
       // Observer delivery follows a DOM commit. Reserve the new intrinsic
       // height before the browser paints, rather than one rAF/React batch later.
       // Only an actual height change flushes; ordinary typing does not repack.
@@ -111,7 +134,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     const mutations = new MutationObserver(() => { note('mutations');observeContent(); measure(true); });
     // Packing can remount the same context on another page. Follow its new
     // host instead of keeping a ResizeObserver attached to the departed card.
-    mutations.observe(board, { childList: true, subtree: true, characterData: true });
+    mutations.observe(board, { childList: true, subtree: true, characterData: true, attributes:true, attributeFilter:["data-bar-geometry-key"] });
     observeContent(); measure();
     return () => { resize.disconnect(); mutations.disconnect(); };
   }, [expandedId, dragging, size.width, spatialKey, active]);
@@ -130,8 +153,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     const px = (value: string) => Number(value.replace("px", "")) || 0;
     const observe = () => { const plateau = node.querySelector<HTMLElement>("[data-board-page]");
       const padding = plateau && getComputedStyle(plateau);
+      const dock=node.parentElement?.querySelector<HTMLElement>('[data-palette-dock]');
+      const navigation=node.parentElement?.querySelector<HTMLElement>('[data-carousel-nav]');
+      // The shelf budget is the screen space, not its content-driven minHeight.
+      // Otherwise reserving rows enlarges the budget and repeatedly repacks it.
+      const top=node.getBoundingClientRect().top+(node.closest('main')?.scrollTop??0)+window.scrollY;
       const value = { width: Math.max(1, (plateau?.clientWidth ?? node.clientWidth) - (padding ? px(padding.paddingLeft) + px(padding.paddingRight) : 0)),
-        height: Math.max(1, node.clientHeight - (padding ? px(padding.paddingTop) + px(padding.paddingBottom) : 0)) };
+        height: Math.max(218,window.innerHeight-top-(dock?.getBoundingClientRect().height??0)-(navigation?.getBoundingClientRect().height??0)-24-(padding ? px(padding.paddingTop)+px(padding.paddingBottom):0)) };
       setSize(old => old.width === value.width && old.height === value.height ? old : value); };
     observe(); const observer = new ResizeObserver(observe); observer.observe(node); return () => observer.disconnect();
   }, []);
@@ -230,7 +258,8 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     dwell.current = setTimeout(() => { dwell.current = null; interaction.over(null); go(active + direction); }, 600); };
   return <>
     <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-drop data-board-page-active={active}
-      style={expandedId && expandedHeight ? { minHeight: expandedHeight + 24 } : undefined} {...dropProps}
+      data-bar-page={!!expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id])||undefined}
+      style={expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id]) ? { minHeight: Math.max(expandedHeight??0,...(layouts[active]??[]).map(box=>(box.row-1+box.rowSpan)*10-5))+36 } : undefined} {...dropProps}
       onClick={e => { if (e.target === e.currentTarget || e.target instanceof Element && e.target.matches("[data-mosaic],[data-board-page]")) emptyClick(); }}>
       <div className={styles.plateauTrack} style={{ transform: `translateX(-${active * 100}%)` }} data-plateau-track onTransitionEnd={event=>{if(event.target===event.currentTarget)setDeparting(active);}}>
         {layouts.map((inventory, index) => <section key={index} className={styles.plateau} data-board-page={index} data-single-page={layouts.length === 1} aria-label={`Page ${index + 1} sur ${pages.length}`}
@@ -238,6 +267,10 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
           <div className={styles.mosaic} data-mosaic data-has-focus={!!focused} data-completeness-focus={interaction?.completenessFocus}
             style={{ "--board-columns":inventoryColumns(layoutSize.width) } as React.CSSProperties}>
             {inventoryMountedPage(index,active,departing,mode,pinned) && inventory.map(({ item, column, row, columnSpan, rowSpan }) => <div key={item.id} className={styles.inventoryCell} data-inventory-id={item.id} tabIndex={-1}
+              data-column-span={columnSpan} data-row-span={rowSpan} data-requested-surface={item.id===expandedId?surface?.size??"compact":undefined} data-geometry-scene={item.id===expandedId?surface?.scene:undefined}
+              data-preferred-width={item.id===expandedId?surface?.preferredWidth:undefined} data-min-usable-width={item.id===expandedId?surface?.minUsableWidth:undefined}
+              data-geometry-fallback={item.id===expandedId&&surface&&layoutSize.width<surface.minUsableWidth?"DOCUMENT_WIDTH_CONSTRAINED":undefined}
+              data-geometry-checkpoint={item.id===expandedId?expandedMeasure?.checkpoint:undefined}
               data-density={item.density} data-spatial-family={item.spatialFamily}
               style={{ gridColumn:`${column} / span ${columnSpan}`, gridRow:`${row} / span ${rowSpan}` }}>{render(item)}</div>)}
           </div>
@@ -254,10 +287,10 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     {pages.length > 1 && <nav className={styles.plateauNavigation} aria-label="Pages du mois" data-carousel-nav data-single-page={pages.length === 1}
       onKeyDown={e => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return; e.preventDefault(); const next = e.key === "Home" ? 0 : e.key === "End" ? pages.length - 1 : active + (e.key === "ArrowRight" ? 1 : -1); go(next);
         e.currentTarget.querySelector<HTMLButtonElement>(`[data-page-index="${Math.max(0,Math.min(pages.length-1,next))}"]`)?.focus(); }}>
-      <button className={styles.pageStep} aria-label="Page précédente du mois" disabled={!active} onClick={() => go(active - 1)}><ChevronLeft size={16} /> Précédente</button>
+      <button className={styles.pageStep} aria-label="Page précédente du mois" title="Page précédente du mois" disabled={!active} onClick={() => go(active - 1)}><ChevronLeft size={16} /></button>
       <span className={styles.pageStatus} aria-live="polite">Page {active + 1} sur {pages.length}</span>
       <div>{pages.map((_, index) => <button key={index} data-page-index={index} aria-label={`Afficher la page ${index + 1}`} aria-current={index === active ? "page" : undefined} tabIndex={index === active ? 0 : -1} onClick={() => go(index)}>{index + 1}</button>)}</div>
-      <button className={styles.pageStep} aria-label="Page suivante du mois" disabled={active === pages.length - 1} onClick={() => go(active + 1)}>Suivante <ChevronRight size={16} /></button>
+      <button className={styles.pageStep} aria-label="Page suivante du mois" title="Page suivante du mois" disabled={active === pages.length - 1} onClick={() => go(active + 1)}><ChevronRight size={16} /></button>
       {focusedLabel && focusPage >= 0 && focusPage !== active && <button className={styles.returnToCard} data-return-to-card={focused} disabled={dragging} onClick={returnToSelection}>Voir {focusedLabel} · page {focusPage + 1}</button>}
     </nav>}
   </>;

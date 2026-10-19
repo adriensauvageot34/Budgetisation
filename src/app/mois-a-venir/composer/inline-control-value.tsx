@@ -75,7 +75,7 @@ export function InlineControlValue({ card, dimension, busy, focus, mutate }: {
     } catch { setError("Précisez une valeur avant de l’ajuster."); }
   };
   const displayed = pending ?? value;
-  const caption = displayed === null || optional && pending === null ? dimension === "count" ? "Occurrences à définir" : dimension === "unitAmount" ? "Prix à préciser" : "À définir"
+  const caption = displayed === null || optional && pending === null ? dimension === "count" ? "Occurrences à définir" : dimension === "unitAmount" ? "Prix à préciser" : "À prévoir"
     : dimension === "count" ? `${quantityLabel(displayed)} occurrence${new Big(displayed).eq(1) ? "" : "s"}` : money(displayed);
   return <div className={styles.directValue} data-control-dimension={dimension} data-value-status={presentation.kind} data-inline-dirty={editing || pending !== null || undefined} data-inline-editing={editing || undefined} data-value-pending={pending !== null || undefined}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) flush(); }}>

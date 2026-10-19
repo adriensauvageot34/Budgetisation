@@ -6,7 +6,7 @@ import type {PlanningWorldFacts} from '@/domain/phase2/planner/compiler-contract
 import worldJson from './bar-world.json';
 import {buildPlanningBaseline} from '@/server/phase2/planner/baseline';
 import type {PlanningBaselineSources} from '@/server/phase2/planner/baseline-sources';
-import {barReceptionEnabled} from './bar-reception-gate';
+import {barReceptionEnabled,barGeometryReceptionEnabled} from './bar-reception-gate';
 export {barReceptionEnabled} from './bar-reception-gate';
 
 /** Real Supabase Auth, RLS and favourite persistence; financial facts are synthetic.
@@ -15,10 +15,17 @@ export {barReceptionEnabled} from './bar-reception-gate';
 export async function barReceptionScope() {
   if(!barReceptionEnabled())throw new TypeError('BAR_RECEPTION_DISABLED');
   const {user,supabase}=await getAuthenticatedBootstrapClient();
-  if(user.app_metadata.bar_google_test!=='closure-20261019')throw new TypeError('BAR_RECEPTION_DENIED');
-  const household=await getCurrentHousehold(supabase);
-  if(!household||!['ba190000-0000-4000-8000-000000000001','ba190000-0000-4000-8000-000000000002'].includes(household.householdId))throw new TypeError('BAR_RECEPTION_DENIED');
-  const householdId=String(household.householdId);
+  const geometry=barGeometryReceptionEnabled();
+  let householdId='ba190000-0000-4000-8000-000000000001';
+  if(geometry){
+    if(user.email?.toLowerCase()!==process.env.BAR_GEOMETRY_AUTHOR?.toLowerCase())throw new TypeError('BAR_RECEPTION_DENIED');
+    // Authentication only: never resolve or read this author's personal household.
+  }else{
+    if(user.app_metadata.bar_google_test!=='closure-20261019')throw new TypeError('BAR_RECEPTION_DENIED');
+    const household=await getCurrentHousehold(supabase);
+    if(!household||!['ba190000-0000-4000-8000-000000000001','ba190000-0000-4000-8000-000000000002'].includes(household.householdId))throw new TypeError('BAR_RECEPTION_DENIED');
+    householdId=String(household.householdId);
+  }
   const rebase=(value:unknown):unknown=>Array.isArray(value)?value.map(rebase):value&&typeof value==='object'
     ?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,k==='householdId'?householdId:rebase(v)])):value;
   const world=rebase(worldJson) as PlanningWorldFacts & {sources:PlanningBaselineSources};

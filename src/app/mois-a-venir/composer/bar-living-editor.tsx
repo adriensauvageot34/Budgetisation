@@ -359,9 +359,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
             <button type="button" aria-label="Augmenter la quantité" onClick={()=>adjustQuantity(1)}>+</button>
           </span></label>
           <label className={styles.barInlinePrice}><span className={styles.barVisuallyHidden}>{row.unitBasis==="SHARED"?"Prix par lot (€)":"Prix unitaire (€)"}</span><span aria-hidden="true">{row.unitBasis==="SHARED"?"Prix / lot":"Prix / unité"}</span><input aria-label={row.unitBasis==="SHARED"?"Prix par lot (€)":"Prix unitaire (€)"} inputMode="decimal" placeholder="À préciser" value={row.costMode==="MANUAL"?row.amount:""} onChange={e=>{setRow(r=>({...r,amount:e.target.value,costMode:e.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}));setDirty(true);}}/><span aria-hidden="true">€</span></label>
-          <details className={styles.barItemMenu} data-bar-item-details><summary>Détails du poste</summary><div><button type="button" onClick={()=>setAdvancedRow(true)}>Unité, financement et nom</button><button type="button" disabled={busy} onClick={remove} aria-label="Retirer ce poste"><Trash2 size={14}/> Retirer</button></div></details></div>
+          <details className={styles.barItemMenu} data-bar-item-details><summary>Détails du poste</summary><div><button type="button" onClick={()=>setAdvancedRow(true)}>Unité, financement et nom</button><button type="button" disabled={busy} onClick={remove} aria-label="Retirer ce poste"><Trash2 size={14}/> Retirer</button></div></details>
+          <button type="button" data-bar-row-save style={{visibility:dirty?"visible":"hidden"}} aria-hidden={!dirty} tabIndex={dirty?0:-1} disabled={!dirty||!canSaveBuffer()} onClick={()=>saveRow()}>Enregistrer</button></div>
           {row.costMode==="QUOTE"&&<p>Devis conservé ; saisir un prix le remplacera explicitement.</p>}
-          {dirty&&<button type="button" disabled={!canSaveBuffer()} onClick={()=>saveRow()}>Enregistrer</button>}
           </div>
           : <><WorkshopComponentRow title={row.label} row={row} onChange={next=>{setRow(next);setDirty(true);}} onSave={()=>saveRow()} onRemove={remove} busy={busy}/><button type="button" onClick={()=>go("drinks")}>Voir les consommations</button></>}</fieldset>;
   const sectionLabels={extras:"Au bar",before:"Avant de sortir",food:"Repas",main:barItems(context,"main").some(item=>item.kind==="COMPONENT"&&item.label==="Consommations regroupées")?"Consommations regroupées":"Entrées / contribution"};
@@ -371,7 +371,12 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const beforeScene=page==="summary"||page==="before"||page==="row"&&slot.startsWith("before-");
   const admittedPeople=Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[];
   const peoplePage=Math.min(itemPage,Math.max(0,Math.ceil(admittedPeople.length/4)-1));
+  // Structural admission is a valid packing checkpoint (also on Undo/Redo).
+  // Prices, quantities, RAW and provider replies never change this identity key.
+  const geometryItems=[...Object.keys(context.slotSelections).flatMap(key=>barItems(context,key).map(item=>`${key}:${item.selectionId}`)),
+    ...(before?[before.bottle,...before.extras].map(item=>`before:${item.selectionId}`):[])].sort().join("|");
   return <div ref={editorRoot} className={styles.barLivingEditor} tabIndex={-1} aria-label="Configuration de Bar / Apéro" data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
+    data-bar-geometry-key={`${page}:${advancedRow}:${itemPage}:${geometryItems}`} data-bar-advanced={advancedRow}
     onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();if(page!=="summary")go("summary");else props.onCancel();}}}>
     <fieldset className={styles.barEditableBody} disabled={busy} aria-label="Composition de la sortie">
     <BarMetadata fields={context.fields} model={model} open={open} editing active={page} disabled={busy} removePlace={()=>{const clear=()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{placeRef:null,venueDecision:null}}});if(!guard(clear))return;if(barVenueAdaptations(context).length)confirm({message:"Retirer le lieu de la sortie ? Les points et coûts des trajets restent conservés ; aucun trajet n’est réorienté. Undo rétablit le lieu.",acceptLabel:"Retirer uniquement le lieu",accept:clear});else clear();}}>
