@@ -1,0 +1,71 @@
+{
+  "id": "dpl_HRxwdJpRfzmUUqJsWgxcE2uiGHS5",
+  "url": "https://budgetisation-8e0apcxvw-adriensauvageot34-6137s-projects.vercel.app",
+  "sha": "aaec279b12d730ec49864088e9aef1533c19c3a9",
+  "state": "READY",
+  "target": null,
+  "productSha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+  "productDiff": "git diff 79e3bf0 aaec279 -- src scripts public package.json package-lock.json next.config.ts vercel.json => empty",
+  "buildTail": [
+    {
+      "type": "stdout",
+      "text": "Build cache uploaded: 3.517s"
+    },
+    {
+      "type": "stdout",
+      "text": "Uploading build cache [172.40 MB]"
+    },
+    {
+      "type": "stdout",
+      "text": "Created build cache: 9s"
+    },
+    {
+      "type": "stdout",
+      "text": "Creating build cache..."
+    },
+    {
+      "type": "stdout",
+      "text": "Deployment completed"
+    },
+    {
+      "type": "stdout",
+      "text": "Deploying outputs..."
+    },
+    {
+      "type": "stderr",
+      "text": "Build Completed in /vercel/output [1m]"
+    },
+    {
+      "type": "stdout",
+      "text": ""
+    },
+    {
+      "type": "stdout",
+      "text": "ƒ  (Dynamic)  server-rendered on demand"
+    },
+    {
+      "type": "stdout",
+      "text": "○  (Static)   prerendered as static content"
+    },
+    {
+      "type": "stdout",
+      "text": ""
+    },
+    {
+      "type": "stdout",
+      "text": "ƒ Proxy (Middleware)"
+    },
+    {
+      "type": "stdout",
+      "text": ""
+    },
+    {
+      "type": "stdout",
+      "text": ""
+    },
+    {
+      "type": "stdout",
+      "text": "└ ○ /parametres"
+    }
+  ]
+}

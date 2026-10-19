@@ -1,0 +1,5 @@
+{
+  "at": "2026-10-19T10:05:36.826Z",
+  "level": "PREVIEW_LOGIN_PAGE_ONLY_NOT_AUTH_E2E",
+  "state": "Browser tab: 12, Title: \"Connexion · Budgetisation\", URL: \"https://budgetisation-i4boc50vr-adriensauvageot34-6137s-projects.vercel.app/connexion?retour=%2Fmois-a-venir%2Fcomposer%3Fmonth%3D2026-11\".\n0 AXWebArea Connexion · Budgetisation, URL: budgetisation-i4boc50vr-adriensauvageot34-6137s-projects.vercel.app/connexion?retour=%2Fmois-a-venir%2Fcomposer%3Fmonth%3D2026-11\n\t1 container\n\t\t2 image\n\t\t3 heading Budgetisation V2, Value: 1\n\t\t\t4 text Budgetisation V2\n\t\t5 text Connexion au bootstrap technique V2.\n\t\t6 container\n\t\t\t7 text E-mail\n\t\t\t8 text field (settable) E-mail\n\t\t9 container\n\t\t\t10 text Mot de passe\n\t\t\t11 text field (settable) Mot de passe\n\t\t12 button Se connecter\n\t\t\t13 image\n\t\t\t14 text Se connecter\n\nThe focused UI element is 0 AXWebArea Connexion · Budgetisation, URL: budgetisation-i4boc50vr-adriensauvageot34-6137s-projects.vercel.app/connexion?retour=%2Fmois-a-venir%2Fcomposer%3Fmonth%3D2026-11"
+}

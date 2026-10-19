@@ -1,0 +1,29 @@
+{
+  "proof": "LOCAL_SHARED_OWNER_MOCK_NOT_REAL_PROVIDER_NOT_AUTH",
+  "checks": [
+    {
+      "id": "GOOGLE_REF_STRICT_ROUND_TRIP",
+      "status": "PASS"
+    },
+    {
+      "id": "SHARED_OWNER_BUILDER_VS_DIRECTED_PLANNER",
+      "status": "PASS"
+    },
+    {
+      "id": "DIRECTED_OUTBOUND_RETURN_AND_CUSTOM_LEG",
+      "status": "PASS"
+    },
+    {
+      "id": "INVALID_DETAILS_PRESERVE_UNKNOWN_AND_INPUT",
+      "status": "PASS"
+    },
+    {
+      "id": "VENUE_CHANGE_EXPLICIT_SCOPE_ATOMIC_AND_REVERSE",
+      "status": "PASS"
+    },
+    {
+      "id": "STRUCTURED_VEHICLE_PRESENTATION_ONLY_OFFICIAL_DECLARATION",
+      "status": "PASS"
+    }
+  ]
+}

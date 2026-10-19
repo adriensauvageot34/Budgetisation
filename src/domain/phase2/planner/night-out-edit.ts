@@ -3,6 +3,8 @@ import type { ComponentSelectionV1 } from "./component-contract";
 import type { PlannerJson } from "./json";
 import { plannerDigest } from "./json";
 import { plannedAsset, PLANNED_ASSET_CATALOG_VERSION } from "../planned-assets";
+import {parseNightOutVenue,sameVenuePlace,parseVenueEndpoints} from "./night-out-venue";
+import {parseComponentEconomicScope} from "./component-economic-scope";
 
 export type NightOutBeforeEdit = Readonly<{
   childContextOccurrenceId: string; selectionId: string;
@@ -14,7 +16,25 @@ export type NightOutEdit = Readonly<{
   /** Omitted sockets retain their entire prior structure, including child contexts. */
   slots?: Readonly<Partial<Record<"main" | "food" | "extras" | "outbound" | "return", readonly ComponentSelectionV1[]>>>;
   before?: NightOutBeforeEdit | null;
+  coverageReplacement?:Readonly<{version:"night-out-coverage-replacement@v1";selectionId:string;expectedComponentDigest:string}>;
 }>;
+
+/** Exact owner-scoped replacement, independent of labels and costs. No amounts are computed here. */
+const coverageItems=(context:PlannedContextState,key:string):readonly ComponentSelectionV1[]=>{
+  const values=context.slotSelections[key]?.items;return Array.isArray(values)?values as readonly ComponentSelectionV1[]:[];
+};
+export function substituteNightOutCoverage(context:PlannedContextState,selectionId:string,replacement:ComponentSelectionV1):NightOutEdit{
+  const slot=["main","extras"].find(key=>coverageItems(context,key).some(item=>item.selectionId===selectionId));
+  const aggregate=slot?coverageItems(context,slot).find(item=>item.selectionId===selectionId):null;
+  if(!slot||!aggregate||typeof aggregate!=="object"||Array.isArray(aggregate)||aggregate.kind!=="COMPONENT"||!aggregate.economicScope)throw new TypeError("NIGHT_OUT_COVERAGE_LEGACY_NEEDS_CHOICE");
+  const scope=parseComponentEconomicScope(aggregate.economicScope,selectionId);
+  if(scope.kind!=="AGGREGATED_SUBSTITUTIVE_ESTIMATE")throw new TypeError("NIGHT_OUT_COVERAGE_NOT_SUBSTITUTIVE");
+  if(Array.isArray(aggregate.fundingAllocations)&&aggregate.fundingAllocations.length)throw new TypeError("NIGHT_OUT_COVERAGE_FUNDING_NEEDS_CHOICE");
+  if(replacement.kind!=="COMPONENT"||replacement.selectionId===selectionId)throw new TypeError("NIGHT_OUT_COVERAGE_REPLACEMENT_INVALID");
+  const items=(key:string)=>coverageItems(context,key);
+  return {contextOccurrenceId:context.contextOccurrenceId,fields:{},coverageReplacement:{version:"night-out-coverage-replacement@v1",selectionId,expectedComponentDigest:plannerDigest(aggregate)},
+    slots:{...(slot==="main"?{main:items("main").filter(i=>i.selectionId!==selectionId)}:{}),extras:[...items("extras").filter(i=>i.selectionId!==selectionId),replacement]}};
+}
 
 /** One semantic decision, shared by local staging and server validation. No financial calculation. */
 export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): PlanSemanticStateV1 {
@@ -23,15 +43,28 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
   if (parent?.templateKey !== "night-out") throw new TypeError("COMPOSER_NIGHT_OUT_TARGET_INVALID");
   const protectedContext = (id: string) => state.preferences.anchors.includes(id) || state.preferences.flexibility[id] === "PRESERVE";
   if (protectedContext(parent.contextOccurrenceId)) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+  if(edit.coverageReplacement){
+    const proof=edit.coverageReplacement;
+    if(proof.version!=="night-out-coverage-replacement@v1"||edit.before!==undefined||Object.keys(edit.fields).length)throw new TypeError("NIGHT_OUT_COVERAGE_REPLACEMENT_INVALID");
+    const current=["main","extras"].flatMap(key=>coverageItems(parent,key)).find(item=>item.selectionId===proof.selectionId);
+    if(!current||plannerDigest(current)!==proof.expectedComponentDigest)throw new TypeError("NIGHT_OUT_COVERAGE_STALE");
+    const additions=(edit.slots?.extras??[]).filter(item=>!coverageItems(parent,"extras").some(old=>old.selectionId===item.selectionId));
+    if(additions.length!==1)throw new TypeError("NIGHT_OUT_COVERAGE_REPLACEMENT_INVALID");
+    const expected=substituteNightOutCoverage(parent,proof.selectionId,additions[0]);
+    if(plannerDigest(expected)!==plannerDigest(edit))throw new TypeError("NIGHT_OUT_COVERAGE_SCOPE_MISMATCH");
+  }
   const fields = { ...parent.fields };
   for (const [key, value] of Object.entries(edit.fields)) {
     if (value === "") delete fields[key]; else fields[key] = value;
   }
-  if (Object.keys(edit.fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "timingNote"].includes(key)))
+  if(Object.hasOwn(edit.fields,"placeRef")&&!Object.hasOwn(edit.fields,"venueDecision"))delete fields.venueDecision;
+  if(fields.venueDecision!=null){const venue=parseNightOutVenue(fields.venueDecision);if(!sameVenuePlace(venue.place,fields.placeRef as never))throw new TypeError("NIGHT_OUT_VENUE_CONTEXT_INVALID");fields.fieldSchemaVersion="context-fields@v6";}
+  for(const items of Object.values(edit.slots??{}))for(const item of items??[])if(item.kind==="MOBILITY_INTENT"&&item.venueEndpoints)parseVenueEndpoints(item.venueEndpoints,item);
+  if (Object.keys(edit.fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "venueDecision", "timingNote"].includes(key)))
     throw new TypeError("COMPOSER_NIGHT_OUT_FIELD_INVALID");
-  if (Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "timingNote", "fieldSchemaVersion", "composerPresentation"].includes(key)))
+  if (Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "venueDecision", "timingNote", "fieldSchemaVersion", "composerPresentation"].includes(key)))
     throw new TypeError("COMPOSER_NIGHT_OUT_FIELD_INVALID");
-  if (fields.fieldSchemaVersion !== "context-fields@v3" && Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "fieldSchemaVersion"].includes(key)))
+  if (!["context-fields@v3","context-fields@v6"].includes(String(fields.fieldSchemaVersion)) && Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "fieldSchemaVersion"].includes(key)))
     fields.fieldSchemaVersion = "context-fields@v2";
   const slots = { ...parent.slotSelections };
   for (const [key, items] of Object.entries(edit.slots ?? {})) {

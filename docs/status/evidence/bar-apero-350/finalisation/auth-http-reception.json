@@ -1,0 +1,107 @@
+{
+  "status": "PASS_AUTH_HTTP_NOT_BROWSER",
+  "sha": "1624edcb77867f4861209283c69e666e1289e06a",
+  "deployment": "dpl_9UcA8pqAGLLPb1oLRjVD8Jru7KDD",
+  "scope": "A/H1, 2027-01; existing November drafts untouched",
+  "checks": [
+    {
+      "name": "REAL_JWT_A_ISOLATED_H1",
+      "status": "PASS"
+    },
+    {
+      "name": "EMPTY_TARGET_NO_OFFICIAL_PLAN",
+      "status": "PASS"
+    },
+    {
+      "name": "RICH_SAVE_CONFIRMED",
+      "status": "PASS",
+      "version": 1,
+      "digest": "e0a206b1c467c49dac9e15b776f5e5b221ac403038c2c64587dd38f63b8edefd"
+    },
+    {
+      "name": "SAME_REQUEST_NO_DUPLICATE_COMMIT",
+      "status": "PASS"
+    },
+    {
+      "name": "NEW_AUTH_SESSION_RICH_RELOAD_IDENTITIES_UNITS_CHILDREN_EXACT",
+      "status": "PASS"
+    },
+    {
+      "name": "AMOUNT_ONLY_UPDATE_PRESERVES_OTHER_FIELDS",
+      "status": "PASS",
+      "version": 2,
+      "digest": "cbe9e9c584a36a7d4fdd32173785e382febff28041b02a04ca6a93ac31fd4903"
+    },
+    {
+      "name": "STALE_CAS_REJECTED_WITHOUT_OVERWRITE",
+      "status": "PASS"
+    },
+    {
+      "name": "RECOVERABLE_ARCHIVE_NO_APPLY_OR_PLAN",
+      "status": "PASS",
+      "version": 3
+    }
+  ],
+  "events": [
+    {
+      "kind": "READ",
+      "http": 200,
+      "ms": 2579,
+      "code": null
+    },
+    {
+      "kind": "SAVE",
+      "http": 200,
+      "ms": 2000,
+      "code": null
+    },
+    {
+      "kind": "SAVE",
+      "http": 200,
+      "ms": 1392,
+      "code": null
+    },
+    {
+      "kind": "READ",
+      "http": 200,
+      "ms": 1408,
+      "code": null
+    },
+    {
+      "kind": "SAVE",
+      "http": 200,
+      "ms": 2086,
+      "code": null
+    },
+    {
+      "kind": "SAVE",
+      "http": 200,
+      "ms": 1638,
+      "code": "CONFLICT"
+    },
+    {
+      "kind": "READ",
+      "http": 200,
+      "ms": 1097,
+      "code": null
+    },
+    {
+      "kind": "ARCHIVE",
+      "http": 200,
+      "ms": 1117,
+      "code": null
+    },
+    {
+      "kind": "READ",
+      "http": 200,
+      "ms": 1281,
+      "code": null
+    }
+  ],
+  "limits": [
+    "Composer UI blocked by FORECAST_ACTIVE_GLOBAL_PUBLICATION_MISSING",
+    "TEXT places/participants only; no vehicle invented",
+    "No real World/Finance Preview or Apply executed"
+  ],
+  "financialWrites": 0
+}

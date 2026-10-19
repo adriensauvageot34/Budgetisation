@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRef, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";
@@ -10,6 +11,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   expandedId?: string; revealSequence?: number; revealFocused?: () => void;
   render: (item: InventoryItem) => ReactNode; emptyClick: () => void; children?: ReactNode; dropProps: React.HTMLAttributes<HTMLDivElement> & { [key: `data-${string}`]: boolean | string | number | undefined } }) {
   const viewport = useRef<HTMLDivElement>(null), [size, setSize] = useState({ width: 1000, height: 470 }), [page, setPage] = useState(0);
+  const reception=useRef({enabled:false,mutations:0,resizes:0,measures:0,repacks:0});
+  useEffect(()=>{reception.current.enabled=typeof window!=='undefined'&&new URLSearchParams(window.location?.search??'').get('barProbe')==='1';},[]);
+  const note=(phase:'mutations'|'resizes'|'measures'|'repacks')=>{
+    if(!reception.current.enabled)return;
+    reception.current[phase]++;
+    if(viewport.current)viewport.current.dataset.barLayoutProbe=JSON.stringify(reception.current);
+  };
   const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number } | null>(null);
   const [compactBarHeights,setCompactBarHeights]=useState<Readonly<Record<string,number>>>({});
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
@@ -22,6 +30,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const spatialKey = inventorySpatialKey(items);
   const expandedHeight = dragging ? stableExpandedHeight.current : expandedMeasure && expandedMeasure.id === expandedId ? expandedMeasure.height : undefined;
   const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight]);
+  useLayoutEffect(()=>note('repacks'),[geometry]);
   const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);
   const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);
   useLayoutEffect(() => { if (!dragging) { stableItems.current = measuredItems; stableSize.current = size; stableExpanded.current = expandedId; stableExpandedHeight.current = expandedHeight; } }, [dragging, measuredItems, size, expandedId, expandedHeight]);
@@ -38,7 +47,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       .map(node => node.closest<HTMLElement>("[data-inventory-id]")?.dataset.inventoryId).filter((id):id is string => !!id).sort();
     setDirtyItems(old => old.length === ids.length && old.every((id,i) => id === ids[i]) ? old : ids);
   };
-  const previousScene = useRef<{ page:number; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });
+  const previousScene = useRef<{ page:number; expandedId?:string; hasLivingBar?:boolean; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });
   const cancelDwell = () => { if (dwell.current) { clearTimeout(dwell.current); dwell.current = null; } };
   const browsing = useRef(false);
   const go = (next: number, manual = true) => { browsing.current = manual; cancelDwell(); captureDirty(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setDeparting(active); setPage(Math.max(0, Math.min(pages.length - 1, next))); };
@@ -46,56 +55,65 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   useLayoutEffect(captureDirty,[model]);
   useLayoutEffect(()=>{
     if(dragging||!viewport.current)return;
-    const board=viewport.current;let frame=0;
+    const board=viewport.current;let lastSignature='';
     // Measure intrinsic children, not the stretched grid cell: otherwise the
     // reserved height feeds back into itself and can never shrink on folding.
     const cards=()=>[...board.querySelectorAll<HTMLElement>('[data-bar-living-card][data-expanded="false"]')];
-    const resize=new ResizeObserver(schedule);
+    const resize=new ResizeObserver(()=>{note('resizes');measure(true);});
     function observe(){resize.disconnect();for(const card of cards())for(const child of card.children)if(child instanceof HTMLElement)resize.observe(child);}
-    function measure(){frame=0;const heights:Record<string,number>={};for(const card of cards()){
+    function measure(synchronous=false){note('measures');const heights:Record<string,number>={};for(const card of cards()){
       const id=card.dataset.context;if(!id)continue;
       heights[id]=Math.max(130,Math.ceil([...card.children].reduce((sum,child)=>sum+child.getBoundingClientRect().height,0)+2));
     }
-      setCompactBarHeights(previous=>{
+      const signature=JSON.stringify(heights);if(signature===lastSignature)return;lastSignature=signature;
+      const reserve=()=>setCompactBarHeights(previous=>{
         const next={...previous,...heights};for(const id of Object.keys(next))if(!projected.some(item=>item.id===id))delete next[id];
         return Object.keys(next).length===Object.keys(previous).length&&Object.entries(next).every(([id,height])=>previous[id]===height)?previous:next;
       });
+      // Undo and Preview can remount a folded Bar before its prior height is
+      // known. Reserve the intrinsic surface before paint, as for the editor.
+      if(synchronous)flushSync(reserve);else reserve();
     }
-    function schedule(){if(!frame)frame=requestAnimationFrame(measure);}
-    const mutations=new MutationObserver(()=>{observe();schedule();});
-    mutations.observe(board,{childList:true,subtree:true,characterData:true});observe();schedule();
-    return()=>{resize.disconnect();mutations.disconnect();if(frame)cancelAnimationFrame(frame);};
+    const mutations=new MutationObserver(()=>{note('mutations');observe();measure(true);});
+    mutations.observe(board,{childList:true,subtree:true,characterData:true});observe();measure();
+    return()=>{resize.disconnect();mutations.disconnect();};
   },[dragging,expandedId,size.width,projected]);
   useLayoutEffect(() => {
     if (!expandedId || dragging) return;
     // Measure only the living Bar's rendered content. The grid owns the outer
-    // rectangle and still caps it to the available shelf; no overlay or data edit.
+    // rectangle. A tall living card also grows the page instead of being cut
+    // by the finite shelf; no overlay or semantic edit.
     const board=viewport.current;if(!board)return;
     const findCard=()=>[...board.querySelectorAll<HTMLElement>("[data-inventory-id]")]
       .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
     let card=findCard();
-    let frame = 0;
-    const resize = new ResizeObserver(schedule);
+    let lastHeight=expandedMeasure?.id===expandedId?expandedMeasure.height:null;
+    const resize = new ResizeObserver(()=>{note('resizes');measure(true);});
     const observeContent = () => {
       card=findCard();resize.disconnect();if(!card)return;resize.observe(card);
       for (const child of card.children) if (child instanceof HTMLElement) resize.observe(child);
     };
-    function measure() {
-      frame = 0;
+    function measure(synchronous=false) {
+      note('measures');
       card=findCard();
       const editor = card?.querySelector<HTMLElement>("[data-bar-living-editor]");
       const header = card?.querySelector<HTMLElement>("header");
       if (!editor || !header) return; // Keep the previous geometry while the editor loads.
       const height = Math.max(240, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + 2));
-      setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height ? previous : { id: expandedId!, height });
+      if(height===lastHeight)return;
+      lastHeight=height;
+      const reserve=()=>setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height ? previous : { id: expandedId!, height });
+      // Observer delivery follows a DOM commit. Reserve the new intrinsic
+      // height before the browser paints, rather than one rAF/React batch later.
+      // Only an actual height change flushes; ordinary typing does not repack.
+      if(synchronous)flushSync(reserve);else reserve();
     }
-    function schedule() { if (!frame) frame = requestAnimationFrame(measure); }
-    const mutations = new MutationObserver(() => { observeContent(); schedule(); });
+    const mutations = new MutationObserver(() => { note('mutations');observeContent(); measure(true); });
     // Packing can remount the same context on another page. Follow its new
     // host instead of keeping a ResizeObserver attached to the departed card.
     mutations.observe(board, { childList: true, subtree: true, characterData: true });
-    observeContent(); schedule();
-    return () => { resize.disconnect(); mutations.disconnect(); if (frame) cancelAnimationFrame(frame); };
+    observeContent(); measure();
+    return () => { resize.disconnect(); mutations.disconnect(); };
   }, [expandedId, dragging, size.width, spatialKey, active]);
   useLayoutEffect(() => {
     if (!dragging) { setDragOrigin(null); return; }
@@ -125,7 +143,12 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     for (const cell of cells) { cell.getAnimations().forEach(animation => animation.cancel()); rects.set(cell.dataset.inventoryId!, cell.getBoundingClientRect()); }
     const before = previousScene.current, samePage = before.page === active;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (samePage && before.rects.size && !dragging && !reduced) for (const cell of cells) {
+    // A growing living card must reserve its final surface immediately. FLIP
+    // translations of its neighbours crossed the active form in reception.
+    // A folded rich Bar also changes height during removal/Undo and Preview.
+    // Keep those pages still; pages without a Bar retain ordinary Board motion.
+    const hasLivingBar = cells.some(cell => !!cell.querySelector('[data-bar-living-card]'));
+    if (samePage && before.rects.size && !dragging && !reduced && !expandedId && !before.expandedId && !hasLivingBar && !before.hasLivingBar) for (const cell of cells) {
       const id = cell.dataset.inventoryId!, currentRect = rects.get(id)!;
       let origin = before.rects.get(id), entering = false;
       if (!origin) {
@@ -145,19 +168,27 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       if (!origin) continue;
       const dx = origin.x - currentRect.x, dy = origin.y - currentRect.y;
       if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && !entering) {
-        // Real Grid tracks already reflowed. Reveal the new surface without
-        // scaling its text or placing an editor over the neighboring cards.
-        if (id === expandedId && (Math.abs(origin.width-currentRect.width)>2 || Math.abs(origin.height-currentRect.height)>2))
-          cell.animate([{clipPath:`inset(0 ${Math.max(0,currentRect.width-origin.width)}px ${Math.max(0,currentRect.height-origin.height)}px 0 round 22px)`},{clipPath:"inset(0 round 22px)"}],{duration:220,easing:"ease-out"});
         continue;
       }
       cell.animate([{ transform:`translate(${dx}px, ${dy}px) scale(${entering ? .95 : 1})`, opacity:entering ? .45 : 1 },
         { transform:"translate(0, 0) scale(1)", opacity:1 }], { duration:entering ? 290 : 220, easing:"cubic-bezier(.2,.75,.25,1)" });
     }
-    previousScene.current = { page:active, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
+    previousScene.current = { page:active, expandedId, hasLivingBar, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
       .map(placement => [placement.item.id, placement.item.kind === "CLUSTER" ? placement.item.children.map(child => child.id) : []] as const) ?? []) };
-  }, [geometry, active, dragging]);
+  }, [geometry, active, dragging, expandedId]);
   const focusPage = inventoryPageFor(pages, focused, model);
+  useEffect(()=>{
+    if(!expandedId||dragging||focusPage<0)return;
+    // Manual shelf browsing remains possible. A deliberate edit from the
+    // living card or its dock resumes following that card across repacking.
+    const resume=(event:Event)=>{
+      if(!(event.target instanceof Element)||!event.target.closest('[data-bar-living-editor],[data-bar-dock]'))return;
+      browsing.current=false;setPage(focusPage);
+    };
+    document.addEventListener('click',resume,true);
+    document.addEventListener('focusin',resume,true);
+    return()=>{document.removeEventListener('click',resume,true);document.removeEventListener('focusin',resume,true);};
+  },[expandedId,dragging,focusPage]);
   const lastFocus = useRef(focused), lastReveal = useRef(revealSequence);
   useLayoutEffect(() => {
     if (lastFocus.current !== focused || lastReveal.current !== revealSequence) {
@@ -180,11 +211,12 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       const root = inventoryRootRef(focused, model), item = pages[active]?.find(item => item.id === root || item.kind === "CLUSTER" && item.children.some(child => child.id === root));
       const cell = viewport.current?.querySelector<HTMLElement>(`[data-board-page="${active}"] [data-inventory-id="${CSS.escape(item?.id ?? root)}"]`);
       const barTitle = cell?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="false"] h3 button');
+      const barFocusTarget = barTitle ?? cell?.querySelector<HTMLElement>('[data-bar-living-editor]');
       // Folding removes the dock, then repacks/remounts the card. Restore only
       // a lost body focus after that second layout, never a user's new focus.
-      const lostBarFocus = barTitle && document.activeElement === document.body;
+      const lostBarFocus = barFocusTarget && document.activeElement === document.body;
       if (focusedRequest.current === revealSequence && !lostBarFocus) return;
-      const target = barTitle ?? cell;
+      const target = barFocusTarget ?? cell;
       if (!target || target.closest('[inert]')) return;
       target.focus({ preventScroll: true });
       if (document.activeElement === target) focusedRequest.current = revealSequence;
@@ -197,7 +229,8 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     dwellEdge.current = direction;
     dwell.current = setTimeout(() => { dwell.current = null; interaction.over(null); go(active + direction); }, 600); };
   return <>
-    <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-drop data-board-page-active={active} {...dropProps}
+    <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-drop data-board-page-active={active}
+      style={expandedId && expandedHeight ? { minHeight: expandedHeight + 24 } : undefined} {...dropProps}
       onClick={e => { if (e.target === e.currentTarget || e.target instanceof Element && e.target.matches("[data-mosaic],[data-board-page]")) emptyClick(); }}>
       <div className={styles.plateauTrack} style={{ transform: `translateX(-${active * 100}%)` }} data-plateau-track onTransitionEnd={event=>{if(event.target===event.currentTarget)setDeparting(active);}}>
         {layouts.map((inventory, index) => <section key={index} className={styles.plateau} data-board-page={index} data-single-page={layouts.length === 1} aria-label={`Page ${index + 1} sur ${pages.length}`}

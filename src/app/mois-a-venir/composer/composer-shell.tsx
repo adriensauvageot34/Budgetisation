@@ -2,6 +2,8 @@
 import type {BarTarget} from "./bar-living-operations";
 import {createPortal} from "react-dom";
 import {BarLivingMount,useBarLivingHost} from "./bar-living-mount";
+import {rememberBarView,type BarViewMemory} from "./bar-view-memory";
+import {startBarReceptionProbe} from "./bar-reception-probe";
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
 import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
@@ -47,7 +49,7 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean; selection?: ComponentSelectionV1 }; page?: number; saved?: boolean; raw?: boolean;
   restaurantContextId?: string; restaurantCreating?: boolean;
   giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
-  barTarget?:BarTarget; cardKey?: string;
+  barTarget?:BarTarget; barTargetRequest?:number; cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
@@ -121,6 +123,14 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const scheduler = useRef(new ComposerPreviewScheduler());
   const [busy, setBusy] = useState(false), busyRef = useRef(false);
   const [removingBarId,setRemovingBarId]=useState<string|undefined>();
+  useEffect(()=>{
+    if(typeof window==='undefined'||new URLSearchParams(window.location?.search??'').get('barProbe')!=='1')return;
+    const root=document.querySelector<HTMLElement>('[data-composer]');if(root)return startBarReceptionProbe(root);
+  },[]);
+  const barViews=useRef(new Map<string,BarViewMemory>());
+  const rememberCurrentBarView=useCommittedEvent((view:BarViewMemory)=>{
+    if(livingBarId)rememberBarView(barViews.current,`${draftState.targetMonth}:${livingBarId}`,view);
+  });
   const [selected, setSelected] = useState<string | null>(null), [message, setMessage] = useState("");
   const [focusedContext, setFocusedContext] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -231,6 +241,16 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       else { setFuture(f => f.slice(0, -1)); setPast(p => [...p, before]); }
     }
     localDraft.current = next; setDraftState(next); setSuggestions(null); setBalanceOpen(false); setHoverModel(null); setInteractionImpact(null); setErrorMessage(null);
+    if (history !== "push") {
+      const restoredBar = next.contexts.find(context => presetForContext(context)?.presetKey === "bar-apero"
+        && !before.contexts.some(previous => previous.contextOccurrenceId === context.contextOccurrenceId));
+      // Explicit history restoration also restores a keyboard destination. The
+      // Board follows its page and waits for the real card, including repacking.
+      if (restoredBar) {
+        setFocusedContext(restoredBar.contextOccurrenceId);
+        setReveal(previous => ({targetRef:restoredBar.contextOccurrenceId,sequence:(previous?.sequence??0)+1}));
+      }
+    }
     setPreviewStatus("STALE"); setMessage("Choix conservé dans le brouillon ; simulation en attente.");
     schedulePreview(next);
     return true;
@@ -626,7 +646,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     setProjectionOpen(false); setUnresolvedOpen(false);
     setFocusedContext(card.contextOccurrenceId);
     prepareDialogFocus();
-     setEditor({ title: `Modifier ${card.label}`, side: true, barTarget,
+     setEditor({ title: `Modifier ${card.label}`, side: true, barTarget, barTargetRequest:(editor?.barTargetRequest??0)+1,
       cardKey: `template:${card.templateKey}`,
       ...(card.templateKey === "gift" ? { giftContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "night-out" ? { nightContextId: card.contextOccurrenceId } : {}),
@@ -751,12 +771,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
     <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} />
-      {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId+":"+(editor?.barTarget??"default")} initialTarget={editor?.barTarget}
+      {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
+          initialBarView={barViews.current.get(`${draftState.targetMonth}:${livingBarId}`)} onViewChange={rememberCurrentBarView}
           context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}
           model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} saveStatus={draftTransport?durable.status:"MEMORY"}
           dockHost={nightDockHost} busy={busy || draftState.preferences.anchors.includes(livingBarId) || draftState.preferences.flexibility[livingBarId]==="PRESERVE"} creating={editor?.nightCreating} admission={editor?.nightAdmission??0} serverError={errorMessage}
           onSave={stage} onCancel={closeDialog} onOpenChild={id=>{const child=shown.board.contexts.find(c=>c.contextOccurrenceId===id);if(child)editContext(child);}} />
-          : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>,barHost.node,livingBarId+":"+(editor?.barTarget??"default"))}
+          : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>,barHost.node,livingBarId)}
       <ComposerBoard livingBar={livingBarId ? {id:livingBarId,removingId:removingBarId,open:stableEditContext,close:closeDialog,content:<BarLivingMount host={barHost}/>} : {removingId:removingBarId,open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
         add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} reveal={reveal}
          contextGuide={editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment?.asset.optionKind === "COMPONENT" ? <div ref={setNightDockHost} data-night-dock-host /> : editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor

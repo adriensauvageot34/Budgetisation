@@ -36,16 +36,17 @@ export async function restaurantPlacesRequest(request: Request, kind: "autocompl
     const provider = new GoogleRestaurantPlaces();
     const placeKind = (body.context as { kind?: unknown } | undefined)?.kind ?? "RESTAURANT";
     if (!["RESTAURANT", "ACTIVITY", "VENUE", "BAR_APERO", "DESTINATION", "RETAIL"].includes(String(placeKind))) throw new TypeError();
+    const capabilities=placeKind==='BAR_APERO'&&process.env.BAR_PERSONAL_PLACES_ENABLED==='1'?{capabilities:{personalSavedPlaces:true}}:{};
     const token = body.sessionToken;
     if (token !== undefined && (typeof token !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu.test(token))) throw new TypeError();
     if (kind === "autocomplete") {
       const context = body.context as { city?: unknown } | undefined;
       const city = context?.city ?? "Montpellier";
       if (typeof body.input !== "string" || body.input.trim().length < 2 || body.input.length > 120 || !token || typeof city !== "string" || (!city.trim() && placeKind !== "BAR_APERO") || city.length > 100) throw new TypeError();
-      return reply({ suggestions: await provider.autocomplete(body.input.trim(), String(token), city.trim(), placeKind as ProjectPlaceKind) });
+      return reply({ suggestions: await provider.autocomplete(body.input.trim(), String(token), city.trim(), placeKind as ProjectPlaceKind),...capabilities });
     }
     if (!validGooglePlaceId(body.placeId)) throw new TypeError();
-    if (kind === "details") return reply({ place: await provider.details(body.placeId, token as string | undefined, placeKind as ProjectPlaceKind) });
+    if (kind === "details") return reply({ place: await provider.details(body.placeId, token as string | undefined, placeKind as ProjectPlaceKind),...capabilities });
     if (Object.keys(body).some(key => !["placeId", "selectedIndex", "gallery", "maxWidthPx", "maxHeightPx"].includes(key))) throw new TypeError();
     const dimension = (value: unknown, fallback: number) => {
       if (value === undefined) return fallback;

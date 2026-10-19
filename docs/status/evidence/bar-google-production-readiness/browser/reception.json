@@ -1,0 +1,51 @@
+{
+  "sha": "3f04ac96ca4788b0aa9ecd8319336b80494969b0",
+  "url": "https://budgetisation-ns217ehxq-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris",
+  "level": "REAL_SUPABASE_AUTH_VERCEL_FAVORITES_SYNTHETIC_FINANCIAL_WORLD_NO_APPLY",
+  "checks": [
+    {
+      "id": "CREATE_BAR_SEARCH_GOOGLE_DETAILS_EXPLICIT_SAVE",
+      "status": "PASS",
+      "requestId": "4a29fca7-963d-4f63-8103-f3ec21b7fe4e",
+      "version": 1
+    },
+    {
+      "id": "RENAME_AND_DISTINCT_VENUE_CHOICE",
+      "status": "PASS"
+    },
+    {
+      "id": "NEW_DOCUMENT_RELOAD_AND_SECOND_BAR_FAVORITE_READ",
+      "status": "PASS"
+    },
+    {
+      "id": "ARCHIVE_REMOVES_SUGGESTION_PRESERVES_OPEN_OUTING",
+      "status": "PASS",
+      "requestId": "d453fd4e-e2cb-470a-b5df-7d5713732d99",
+      "version": 3
+    },
+    {
+      "id": "RECOVERY_SAME_FAVORITE_VERSION4",
+      "status": "PASS",
+      "requestId": "3fc6926a-8863-4171-bac0-a3f5c398471e",
+      "version": 4
+    },
+    {
+      "id": "REAL_SECOND_SESSION_CAS_CONFLICT_UI_RAW_RETAINED",
+      "status": "PASS",
+      "beforeVersion": 4,
+      "serverVersion": 5
+    },
+    {
+      "id": "SIGN_OUT_REAL_NEW_SESSION_READ_CURRENT_VERSION5",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOOSE_PERSISTED_FAVORITE_FOR_NEW_OUTING",
+      "status": "PASS"
+    },
+    {
+      "id": "APPLY_REMAINS_DISABLED",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "productSha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+  "sourceEquivalence": "git diff cf5ba1c ec85e59 -- src is empty; only the malformed socket argument in a test changed",
+  "tests": [
+    {
+      "name": "check-bar-apero-google-route",
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "exitCode": 1
+    },
+    {
+      "name": "check-bar-apero-economic-scope",
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "exitCode": 0
+    },
+    {
+      "name": "check-planner-performance-parity",
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "exitCode": 0
+    },
+    {
+      "name": "check-bar-apero-closure-draft",
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "exitCode": 0
+    },
+    {
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "name": "check-bar-apero-p1",
+      "exitCode": 0
+    },
+    {
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "name": "check-bar-apero-p2",
+      "exitCode": 0
+    },
+    {
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "name": "check-bar-apero-p3",
+      "exitCode": 0
+    },
+    {
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "name": "check-bar-apero-p4",
+      "exitCode": 0
+    },
+    {
+      "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+      "name": "check-phase2-planner-mobility",
+      "exitCode": 0
+    },
+    {
+      "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+      "name": "check-bar-apero-google-route",
+      "exitCode": 0
+    },
+    {
+      "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+      "name": "check-planner-performance-parity",
+      "exitCode": 0
+    },
+    {
+      "name": "supplemental structured vehicle rendered with official full label",
+      "command": "node scripts/check-bar-apero-google-route.mjs",
+      "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+      "sourceQualification": "supplemental test assertion added after ec85; src unchanged; test included in documentation commit",
+      "exitCode": 0
+    },
+    {
+      "name": "PlannedCar providers and persistence",
+      "command": "node scripts/check-phase2-planned-car.mjs",
+      "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+      "exitCode": 0
+    },
+    {
+      "name": "local TypeScript",
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "exitCode": 0
+    },
+    {
+      "name": "local minified production React fixture bundle",
+      "command": "PLANNER_C8_BUILD_ONLY=1 node scripts/serve-phase2-planner-composer-fixture.mjs",
+      "sha": "cf5ba1c5bfb9fc25dba683a4736546f47ae060da",
+      "exitCode": 0
+    }
+  ],
+  "failuresPreserved": [
+    "failed-p4-before-selection.log",
+    "failed-google-test-argument.log",
+    "failed-vehicle-test-missing-stops.log",
+    "failed-waves-full.log",
+    "failed-waves-navigation.log"
+  ],
+  "noGoldenEdited": true,
+  "realAuthenticatedUi": "NOT_RUN",
+  "realProviders": "NOT_RUN",
+  "finalProductSha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+  "finalSourceTests": [
+    {
+      "exitCode": 0,
+      "name": "check-bar-apero-google-route",
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f"
+    },
+    {
+      "exitCode": 0,
+      "name": "check-bar-apero-economic-scope",
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f"
+    },
+    {
+      "exitCode": 0,
+      "name": "check-planner-performance-parity",
+      "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f"
+    }
+  ],
+  "targetedWaves": {
+    "totalGroups": 27,
+    "fullCampaign": {
+      "pass": 25,
+      "fail": 2,
+      "exitCode": 1,
+      "log": "failed-waves-full.log"
+    },
+    "retests": [
+      {
+        "name": "C1_QUICK_COST_NEVER_INFERS_COVERAGE_FROM_A_LEGACY_LABEL",
+        "exitCode": 0,
+        "log": "test-waves-c1-targeted.log"
+      },
+      {
+        "name": "R143_TEXT_VENUE_SUGGESTION_ALSO_RESPECTS_ENDPOINT_QUERY",
+        "exitCode": 0,
+        "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+        "log": "test-waves-r143-fixed.log"
+      }
+    ],
+    "qualification": "25 unchanged groups + 2 targeted successful retests; not a new full 27-group execution"
+  },
+  "localTypeScriptFinal": {
+    "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+    "exitCode": 0
+  },
+  "fixtureBundleFinal": {
+    "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+    "exitCode": 0
+  }
+}

@@ -150,5 +150,27 @@ await check('P3_06_10_GOOGLE_EXACT_AMBIGUOUS_RETRY_TEXT_STALE_NO_AUTO_CHOICE',as
   await click('Reprendre cette recherche'); await change('Chercher un bar','Unmount');await wait();await act(async()=>root.unmount());root=null;await answer(14,{suggestions:[suggestion()]});assert.equal(adopted.length,3);
  }finally{globalThis.fetch=previous;}
 });
+await check('P3_GOOGLE_FICHE_RESUMES_TRANSIENTLY_WITHOUT_ADOPTION_OR_STALE_RESPONSE',async()=>{
+ if(root)await act(async()=>root.unmount());root=null;
+ const {BarPlaceSearch}=require('@/app/mois-a-venir/composer/bar-place-search');const previous=globalThis.fetch,calls=[];let remembered,selected=0;
+ globalThis.fetch=async()=>{calls.push('provider');return {ok:true,json:async()=>({suggestions:[]})};};
+ const recent={query:'Bar mémoire',city:'Ville fixture',resultPage:1,detail:{provider:'google_places',placeId:'google_exact_123',displayName:'Bar mémoire',formattedAddress:'Adresse publique fixture',lat:43,lng:3,types:['bar']},detailReadAt:Date.now()};
+ const mount=initialSearch=>React.createElement(BarPlaceSearch,{places:[],onKnown:()=>selected++,onText:()=>selected++,initialSearch,onSearchChange:value=>{remembered=value;}});
+ try{
+  await act(async()=>{root=create(mount(recent));});await act(async()=>new Promise(r=>setTimeout(r,330)));
+  assert.equal(calls.length,0);assert.equal(selected,0);assert.equal(controls(n=>n.props['data-bar-place-detail']!==undefined).length,1);assert.equal(remembered.detail.placeId,recent.detail.placeId);
+  await act(async()=>root.unmount());root=null;await act(async()=>{root=create(mount(remembered));});assert.equal(controls(n=>n.props['data-bar-place-detail']!==undefined).length,1);assert.equal(selected,0);
+  await click('Reprendre cette recherche');await act(async()=>new Promise(r=>setTimeout(r,330)));assert.equal(calls.length,1);assert.equal(remembered.detail,undefined);
+  await act(async()=>root.unmount());root=null;await act(async()=>{root=create(mount({...recent,detailReadAt:Date.now()-300_001}));});assert.equal(controls(n=>n.props['data-bar-place-detail']!==undefined).length,0);await act(async()=>new Promise(r=>setTimeout(r,330)));assert.equal(calls.length,2);assert.equal(selected,0);
+ }finally{if(root)await act(async()=>root.unmount());root=null;globalThis.fetch=previous;}
+});
+await check('BAR16_GOOGLE_PROSPECTIVE_CHOICE_MINIMAL_AND_EXPLICIT',async()=>{
+ if(root)await act(async()=>root.unmount());root=null;
+ const {BarPlaceSearch}=require('@/app/mois-a-venir/composer/bar-place-search');const adopted=[];
+ const initialSearch={query:'Synthetic Google bar',city:'Bordeaux',resultPage:0,detail:{provider:'google_places',placeId:'ChIJ_synthetic_bar16',displayName:'Synthetic Google bar',formattedAddress:'Transient fixture address, Bordeaux',types:['bar']},detailReadAt:Date.now()};
+ await act(async()=>{root=create(React.createElement(BarPlaceSearch,{places:[],initialSearch,onKnown:()=>assert.fail('No fabricated Canonical identity'),onGoogle:(label,ref)=>adopted.push({label,ref})}));});
+ assert.equal(adopted.length,0);await click('Retenir ce bar pour ma sortie');
+ assert.deepEqual(adopted,[{label:'Synthetic Google bar',ref:{provider:'google_places',kind:'BAR_APERO',placeId:'ChIJ_synthetic_bar16'}}]);assert.ok(!JSON.stringify(adopted).includes('Transient fixture address'));
+});
 fs.mkdirSync('outputs/bar-p3',{recursive:true});fs.writeFileSync('outputs/bar-p3/p3-results.json',JSON.stringify({method:'SYNTHETIC_REACT_OWNER_CLIENT_NOT_AUTHENTICATED_NOT_BROWSER',checks},null,2));if(checks.some(c=>c.status==='FAIL'))process.exitCode=1;
 }finally{if(root)await act(async()=>root.unmount());await pg.close();}

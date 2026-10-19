@@ -1,0 +1,3919 @@
+{
+  "latency": {
+    "drags": [
+      {
+        "compatible": "true",
+        "kind": "VISIBLE_TRASH",
+        "ms": 9989,
+        "over": "false",
+        "rect": {
+          "height": 36.60000228881836,
+          "width": 93.4124984741211,
+          "x": 816.2937622070312,
+          "y": 729.4000244140625
+        }
+      }
+    ],
+    "eventTimingSupported": true,
+    "events": [
+      {
+        "category": "OTHER",
+        "handler": 5924.5999999940395,
+        "name": "click",
+        "start": 5924.0999999940395
+      },
+      {
+        "category": "BAR",
+        "handler": 9977.09999999404,
+        "name": "dragstart",
+        "start": 9952.5,
+        "x": 675,
+        "y": 166
+      },
+      {
+        "category": "BAR",
+        "handler": 9994.39999999106,
+        "name": "dragenter",
+        "start": 9994.09999999404,
+        "x": 698,
+        "y": 239
+      },
+      {
+        "category": "BAR",
+        "handler": 9994.89999999106,
+        "name": "dragover",
+        "start": 9994.69999998808,
+        "x": 698,
+        "y": 239
+      },
+      {
+        "category": "OTHER",
+        "handler": 10007.39999999106,
+        "name": "dragenter",
+        "start": 10007.19999998808,
+        "x": 721,
+        "y": 312
+      },
+      {
+        "category": "OTHER",
+        "handler": 10018,
+        "name": "dragover",
+        "start": 10017.79999999702,
+        "x": 744,
+        "y": 385
+      },
+      {
+        "category": "OTHER",
+        "handler": 10031.79999999702,
+        "name": "dragover",
+        "start": 10031.5,
+        "x": 768,
+        "y": 458
+      },
+      {
+        "category": "OTHER",
+        "handler": 10047.19999998808,
+        "name": "dragenter",
+        "start": 10047,
+        "x": 791,
+        "y": 531
+      },
+      {
+        "category": "OTHER",
+        "handler": 10059.89999999106,
+        "name": "dragenter",
+        "start": 10059.69999998808,
+        "x": 814,
+        "y": 604
+      },
+      {
+        "category": "OTHER",
+        "handler": 10070,
+        "name": "dragenter",
+        "start": 10069.59999999404,
+        "x": 837,
+        "y": 677
+      },
+      {
+        "category": "TRASH",
+        "handler": 10083.59999999404,
+        "name": "dragenter",
+        "start": 10083.5,
+        "x": 860,
+        "y": 750
+      },
+      {
+        "category": "TRASH",
+        "handler": 10099.69999998808,
+        "name": "drop",
+        "start": 10099.59999999404,
+        "x": 860,
+        "y": 750
+      },
+      {
+        "category": "BAR",
+        "handler": 10126.79999999702,
+        "name": "dragend",
+        "start": 10125.19999998808,
+        "x": 860,
+        "y": 750
+      },
+      {
+        "category": "BAR",
+        "handler": 33463.89999999106,
+        "name": "click",
+        "start": 33463.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38818.09999999404,
+        "name": "click",
+        "start": 38817.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38830.89999999106,
+        "name": "keydown",
+        "start": 38830.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38838,
+        "name": "keydown",
+        "start": 38833.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38857.29999999702,
+        "name": "keydown",
+        "start": 38856.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38860.59999999404,
+        "name": "input",
+        "start": 38859.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38894.59999999404,
+        "name": "keydown",
+        "start": 38893.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38898.59999999404,
+        "name": "keydown",
+        "start": 38897.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38921.5,
+        "name": "keydown",
+        "start": 38920.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38923.69999998808,
+        "name": "input",
+        "start": 38923.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38950.69999998808,
+        "name": "keydown",
+        "start": 38950.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38955.5,
+        "name": "keydown",
+        "start": 38954.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38983.69999998808,
+        "name": "keydown",
+        "start": 38983.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 38985.29999999702,
+        "name": "input",
+        "start": 38984.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39012.59999999404,
+        "name": "keydown",
+        "start": 39012.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39015.29999999702,
+        "name": "keydown",
+        "start": 39015
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39033.89999999106,
+        "name": "keydown",
+        "start": 39033.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39034.89999999106,
+        "name": "input",
+        "start": 39034.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39050.69999998808,
+        "name": "keydown",
+        "start": 39050.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39052,
+        "name": "keydown",
+        "start": 39051.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39067.69999998808,
+        "name": "keydown",
+        "start": 39067.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39068.89999999106,
+        "name": "input",
+        "start": 39068.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39084.5,
+        "name": "keydown",
+        "start": 39084.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39086.5,
+        "name": "keydown",
+        "start": 39086.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39100.59999999404,
+        "name": "keydown",
+        "start": 39100.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39102.39999999106,
+        "name": "input",
+        "start": 39102.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39130.29999999702,
+        "name": "keydown",
+        "start": 39130
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39132,
+        "name": "keydown",
+        "start": 39131.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39146.89999999106,
+        "name": "keydown",
+        "start": 39146.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39147.89999999106,
+        "name": "input",
+        "start": 39147.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39163.79999999702,
+        "name": "keydown",
+        "start": 39163.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39165.29999999702,
+        "name": "keydown",
+        "start": 39165.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39180,
+        "name": "keydown",
+        "start": 39179.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39180.89999999106,
+        "name": "input",
+        "start": 39180.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39195.19999998808,
+        "name": "keydown",
+        "start": 39195
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39196.59999999404,
+        "name": "keydown",
+        "start": 39196.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39209.89999999106,
+        "name": "keydown",
+        "start": 39209.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39210.89999999106,
+        "name": "input",
+        "start": 39210.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39225.69999998808,
+        "name": "keydown",
+        "start": 39225.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39227.29999999702,
+        "name": "keydown",
+        "start": 39227.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39240,
+        "name": "keydown",
+        "start": 39239.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39241.39999999106,
+        "name": "input",
+        "start": 39241.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39251.39999999106,
+        "name": "keydown",
+        "start": 39251.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39255.29999999702,
+        "name": "keydown",
+        "start": 39254.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39266.19999998808,
+        "name": "keydown",
+        "start": 39265.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39268,
+        "name": "input",
+        "start": 39267.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39286.19999998808,
+        "name": "keydown",
+        "start": 39285.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39289.79999999702,
+        "name": "keydown",
+        "start": 39289.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39310.69999998808,
+        "name": "keydown",
+        "start": 39310.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39311.69999998808,
+        "name": "input",
+        "start": 39311.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39331.59999999404,
+        "name": "keydown",
+        "start": 39331.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39333.79999999702,
+        "name": "keydown",
+        "start": 39333.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39350.39999999106,
+        "name": "keydown",
+        "start": 39350.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39351.39999999106,
+        "name": "input",
+        "start": 39351.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39364.89999999106,
+        "name": "keydown",
+        "start": 39364.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39366.29999999702,
+        "name": "keydown",
+        "start": 39366
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39381.79999999702,
+        "name": "keydown",
+        "start": 39381.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39383,
+        "name": "input",
+        "start": 39382.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39399.5,
+        "name": "keydown",
+        "start": 39399.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39400.79999999702,
+        "name": "keydown",
+        "start": 39400.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39416.09999999404,
+        "name": "keydown",
+        "start": 39415.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39417.09999999404,
+        "name": "input",
+        "start": 39417
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39433,
+        "name": "keydown",
+        "start": 39432.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39434.29999999702,
+        "name": "keydown",
+        "start": 39434.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39450.39999999106,
+        "name": "keydown",
+        "start": 39450.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39451.29999999702,
+        "name": "input",
+        "start": 39451.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39466.89999999106,
+        "name": "keydown",
+        "start": 39466.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39468.29999999702,
+        "name": "keydown",
+        "start": 39468.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39483.09999999404,
+        "name": "keydown",
+        "start": 39482.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39484.09999999404,
+        "name": "input",
+        "start": 39484
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39498.79999999702,
+        "name": "keydown",
+        "start": 39498.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39500.09999999404,
+        "name": "keydown",
+        "start": 39499.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39516,
+        "name": "keydown",
+        "start": 39515.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39517.09999999404,
+        "name": "input",
+        "start": 39516.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39532.69999998808,
+        "name": "keydown",
+        "start": 39532.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39534.09999999404,
+        "name": "keydown",
+        "start": 39533.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39547.89999999106,
+        "name": "keydown",
+        "start": 39547.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39549.79999999702,
+        "name": "input",
+        "start": 39549.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39567.79999999702,
+        "name": "keydown",
+        "start": 39567.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39571.59999999404,
+        "name": "keydown",
+        "start": 39570.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39596.39999999106,
+        "name": "keydown",
+        "start": 39596
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 39597.39999999106,
+        "name": "input",
+        "start": 39597.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44475.89999999106,
+        "name": "keydown",
+        "start": 44475.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44477.79999999702,
+        "name": "keydown",
+        "start": 44477.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44498.69999998808,
+        "name": "keydown",
+        "start": 44498.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44500.09999999404,
+        "name": "input",
+        "start": 44499.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44519.09999999404,
+        "name": "keydown",
+        "start": 44518.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44522,
+        "name": "keydown",
+        "start": 44521.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44535.19999998808,
+        "name": "keydown",
+        "start": 44534.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44537,
+        "name": "input",
+        "start": 44536.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44549.5,
+        "name": "keydown",
+        "start": 44549.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44550.69999998808,
+        "name": "keydown",
+        "start": 44550.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44568,
+        "name": "keydown",
+        "start": 44567.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44569.29999999702,
+        "name": "input",
+        "start": 44569.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44588.69999998808,
+        "name": "keydown",
+        "start": 44588.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44590.79999999702,
+        "name": "keydown",
+        "start": 44590.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44604.09999999404,
+        "name": "keydown",
+        "start": 44603.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44605.5,
+        "name": "input",
+        "start": 44605.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44621.89999999106,
+        "name": "keydown",
+        "start": 44621.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44624.29999999702,
+        "name": "keydown",
+        "start": 44624.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44635.5,
+        "name": "keydown",
+        "start": 44635.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44637.19999998808,
+        "name": "input",
+        "start": 44636.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44649.29999999702,
+        "name": "keydown",
+        "start": 44649.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44650.5,
+        "name": "keydown",
+        "start": 44650.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44664.79999999702,
+        "name": "keydown",
+        "start": 44664.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44665.79999999702,
+        "name": "input",
+        "start": 44665.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44680.39999999106,
+        "name": "keydown",
+        "start": 44680.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44681.69999998808,
+        "name": "keydown",
+        "start": 44681.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44696.39999999106,
+        "name": "keydown",
+        "start": 44696.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44697.5,
+        "name": "input",
+        "start": 44697.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44711.39999999106,
+        "name": "keydown",
+        "start": 44711.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44712.69999998808,
+        "name": "keydown",
+        "start": 44712.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44730.79999999702,
+        "name": "keydown",
+        "start": 44730.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44731.89999999106,
+        "name": "input",
+        "start": 44731.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44748,
+        "name": "keydown",
+        "start": 44747.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44749.39999999106,
+        "name": "keydown",
+        "start": 44749.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44765.19999998808,
+        "name": "keydown",
+        "start": 44764.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44766.19999998808,
+        "name": "input",
+        "start": 44766
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44780.5,
+        "name": "keydown",
+        "start": 44780.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44782.09999999404,
+        "name": "keydown",
+        "start": 44781.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44797.59999999404,
+        "name": "keydown",
+        "start": 44797.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44798.69999998808,
+        "name": "input",
+        "start": 44798.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44814.09999999404,
+        "name": "keydown",
+        "start": 44813.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44815.39999999106,
+        "name": "keydown",
+        "start": 44815.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44832.59999999404,
+        "name": "keydown",
+        "start": 44832.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44833.79999999702,
+        "name": "input",
+        "start": 44833.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44853.79999999702,
+        "name": "keydown",
+        "start": 44853.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44856.29999999702,
+        "name": "keydown",
+        "start": 44855.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44897.79999999702,
+        "name": "keydown",
+        "start": 44897.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44899.19999998808,
+        "name": "input",
+        "start": 44899
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44917.29999999702,
+        "name": "keydown",
+        "start": 44917.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44919.29999999702,
+        "name": "keydown",
+        "start": 44919
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44942.39999999106,
+        "name": "keydown",
+        "start": 44942.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44943.59999999404,
+        "name": "input",
+        "start": 44943.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44962.89999999106,
+        "name": "keydown",
+        "start": 44962.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44964.19999998808,
+        "name": "keydown",
+        "start": 44964.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44979.89999999106,
+        "name": "keydown",
+        "start": 44979.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44981,
+        "name": "input",
+        "start": 44980.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44996.09999999404,
+        "name": "keydown",
+        "start": 44995.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 44997.39999999106,
+        "name": "keydown",
+        "start": 44997.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45011.79999999702,
+        "name": "keydown",
+        "start": 45011.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45012.79999999702,
+        "name": "input",
+        "start": 45012.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45028,
+        "name": "keydown",
+        "start": 45027.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45029.5,
+        "name": "keydown",
+        "start": 45029.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45046,
+        "name": "keydown",
+        "start": 45045.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45047.19999998808,
+        "name": "input",
+        "start": 45047
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45065.19999998808,
+        "name": "keydown",
+        "start": 45064.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45066.69999998808,
+        "name": "keydown",
+        "start": 45066.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45082.5,
+        "name": "keydown",
+        "start": 45082.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45083.59999999404,
+        "name": "input",
+        "start": 45083.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45100.79999999702,
+        "name": "keydown",
+        "start": 45100.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45102.69999998808,
+        "name": "keydown",
+        "start": 45102.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45117.59999999404,
+        "name": "keydown",
+        "start": 45117.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45118.89999999106,
+        "name": "input",
+        "start": 45118.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45140.19999998808,
+        "name": "keydown",
+        "start": 45140
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45141.79999999702,
+        "name": "keydown",
+        "start": 45141.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45159.69999998808,
+        "name": "keydown",
+        "start": 45159.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45160.79999999702,
+        "name": "input",
+        "start": 45160.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45184.69999998808,
+        "name": "keydown",
+        "start": 45184.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45188.59999999404,
+        "name": "keydown",
+        "start": 45188.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45201.29999999702,
+        "name": "keydown",
+        "start": 45201
+      },
+      {
+        "category": "PRICE_INPUT",
+        "handler": 45202.89999999106,
+        "name": "input",
+        "start": 45202.69999998808
+      }
+    ],
+    "method": "NATIVE_EVENT_TIMING_16MS_THRESHOLD_8MS_QUANTIZATION_NOT_ALL_EVENTS_OR_DISPLAY_PHOTONS",
+    "paints": [
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 5906,
+        "processingStart": 5904.29999999702,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 5906.0999999940395,
+        "processingStart": 5906,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 5906.0999999940395,
+        "processingStart": 5906.0999999940395,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 5906.0999999940395,
+        "processingStart": 5906.0999999940395,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 5906.0999999940395,
+        "processingStart": 5906.0999999940395,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 5906.0999999940395,
+        "processingStart": 5906.0999999940395,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 5906.0999999940395,
+        "processingStart": 5906.0999999940395,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 5906.29999999702,
+        "processingStart": 5906.0999999940395,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 5906.399999991059,
+        "processingStart": 5906.399999991059,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 5906.399999991059,
+        "processingStart": 5906.399999991059,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 5906.399999991059,
+        "processingStart": 5906.399999991059,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 5906.399999991059,
+        "processingStart": 5906.399999991059,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 5906.399999991059,
+        "processingStart": 5906.399999991059,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 5906.399999991059,
+        "processingStart": 5906.399999991059,
+        "start": 5891.899999991059
+      },
+      {
+        "category": "OTHER",
+        "duration": 48,
+        "interactionId": 8639,
+        "name": "pointerup",
+        "processingEnd": 5924.399999991059,
+        "processingStart": 5924.29999999702,
+        "start": 5924.0999999940395
+      },
+      {
+        "category": "OTHER",
+        "duration": 48,
+        "interactionId": 0,
+        "name": "mouseup",
+        "processingEnd": 5924.5,
+        "processingStart": 5924.399999991059,
+        "start": 5924.0999999940395
+      },
+      {
+        "category": "OTHER",
+        "duration": 48,
+        "interactionId": 8639,
+        "name": "click",
+        "processingEnd": 5931.5999999940395,
+        "processingStart": 5924.5,
+        "start": 5924.0999999940395
+      },
+      {
+        "category": "BAR",
+        "duration": 88,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 9989.19999998808,
+        "processingStart": 9977,
+        "start": 9952.5
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerout",
+        "processingEnd": 9976.59999999404,
+        "processingStart": 9976.29999999702,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.59999999404,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "mouseout",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 9976.69999998808,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 9976.79999999702,
+        "processingStart": 9976.69999998808,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 9976.79999999702,
+        "processingStart": 9976.79999999702,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointercancel",
+        "processingEnd": 9990.29999999702,
+        "processingStart": 9990.29999999702,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerout",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.29999999702,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 64,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 9990.39999999106,
+        "processingStart": 9990.39999999106,
+        "start": 9975.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "dragenter",
+        "processingEnd": 10007.39999999106,
+        "processingStart": 10007.39999999106,
+        "start": 10007.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "dragleave",
+        "processingEnd": 10007.69999998808,
+        "processingStart": 10007.5,
+        "start": 10007.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "dragover",
+        "processingEnd": 10018.19999998808,
+        "processingStart": 10017.89999999106,
+        "start": 10017.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "dragenter",
+        "processingEnd": 10059.89999999106,
+        "processingStart": 10059.79999999702,
+        "start": 10059.69999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "dragleave",
+        "processingEnd": 10060,
+        "processingStart": 10059.89999999106,
+        "start": 10059.69999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 48,
+        "interactionId": 0,
+        "name": "dragend",
+        "processingEnd": 10126.89999999106,
+        "processingStart": 10126.69999998808,
+        "start": 10125.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 10127.29999999702,
+        "processingStart": 10127.19999998808,
+        "start": 10127
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 10127.29999999702,
+        "processingStart": 10127.29999999702,
+        "start": 10127
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseout",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 10127.39999999106,
+        "processingStart": 10127.39999999106,
+        "start": 10127
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 10297.59999999404,
+        "processingStart": 10297.59999999404,
+        "start": 10296.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 10297.79999999702,
+        "processingStart": 10297.59999999404,
+        "start": 10296.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 10297.79999999702,
+        "processingStart": 10297.79999999702,
+        "start": 10296.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 10297.79999999702,
+        "processingStart": 10297.79999999702,
+        "start": 10296.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerout",
+        "processingEnd": 11334.79999999702,
+        "processingStart": 11334.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.79999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.89999999106,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.89999999106,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.89999999106,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.89999999106,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.89999999106,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.89999999106,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.89999999106,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.89999999106,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 11334.89999999106,
+        "processingStart": 11334.89999999106,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseout",
+        "processingEnd": 11335.19999998808,
+        "processingStart": 11335,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.19999998808,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 11335.29999999702,
+        "processingStart": 11335.29999999702,
+        "start": 11329.79999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 8653,
+        "name": "keyup",
+        "processingEnd": 15633.79999999702,
+        "processingStart": 15633.59999999404,
+        "start": 15631.5
+      },
+      {
+        "category": "BAR",
+        "duration": 16,
+        "interactionId": 8646,
+        "name": "keyup",
+        "processingEnd": 15639,
+        "processingStart": 15638.89999999106,
+        "start": 15636.89999999106
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerout",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.39999999106,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseout",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 15958.59999999404,
+        "processingStart": 15958.59999999404,
+        "start": 15957.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerout",
+        "processingEnd": 16645.19999998808,
+        "processingStart": 16645.19999998808,
+        "start": 16644.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 16645.29999999702,
+        "processingStart": 16645.19999998808,
+        "start": 16644.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 16645.29999999702,
+        "processingStart": 16645.29999999702,
+        "start": 16644.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseout",
+        "processingEnd": 16645.29999999702,
+        "processingStart": 16645.29999999702,
+        "start": 16644.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 16645.29999999702,
+        "processingStart": 16645.29999999702,
+        "start": 16644.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 16645.29999999702,
+        "processingStart": 16645.29999999702,
+        "start": 16644.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 224,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 33488.29999999702,
+        "processingStart": 33488.29999999702,
+        "start": 33463.09999999404
+      },
+      {
+        "category": "BAR",
+        "duration": 224,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 33488.39999999106,
+        "processingStart": 33488.29999999702,
+        "start": 33463.09999999404
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerout",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.19999998808,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "DOCK",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "DOCK",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "DOCK",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "DOCK",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 33650.5,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseout",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.5,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "DOCK",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "DOCK",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "DOCK",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "DOCK",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 33650.59999999404,
+        "processingStart": 33650.59999999404,
+        "start": 33646.29999999702
+      },
+      {
+        "category": "DOCK",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerout",
+        "processingEnd": 38776.19999998808,
+        "processingStart": 38775.89999999106,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "DOCK",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 38776.19999998808,
+        "processingStart": 38776.19999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "DOCK",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 38776.19999998808,
+        "processingStart": 38776.19999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "DOCK",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 38776.19999998808,
+        "processingStart": 38776.19999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 38776.19999998808,
+        "processingStart": 38776.19999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerleave",
+        "processingEnd": 38776.19999998808,
+        "processingStart": 38776.19999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerover",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.19999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "pointerenter",
+        "processingEnd": 38776.59999999404,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "DOCK",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseout",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.59999999404,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "DOCK",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "DOCK",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "DOCK",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseleave",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseover",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "OTHER",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.69999998808,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.79999999702,
+        "processingStart": 38776.69999998808,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.79999999702,
+        "processingStart": 38776.79999999702,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.79999999702,
+        "processingStart": 38776.79999999702,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.79999999702,
+        "processingStart": 38776.79999999702,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.79999999702,
+        "processingStart": 38776.79999999702,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.79999999702,
+        "processingStart": 38776.79999999702,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.79999999702,
+        "processingStart": 38776.79999999702,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "BAR",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.79999999702,
+        "processingStart": 38776.79999999702,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mouseenter",
+        "processingEnd": 38776.79999999702,
+        "processingStart": 38776.79999999702,
+        "start": 38775.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8667,
+        "name": "pointerdown",
+        "processingEnd": 38794.69999998808,
+        "processingStart": 38794.69999998808,
+        "start": 38794.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "mousedown",
+        "processingEnd": 38794.89999999106,
+        "processingStart": 38794.79999999702,
+        "start": 38794.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8674,
+        "name": "keydown",
+        "processingEnd": 38831.89999999106,
+        "processingStart": 38830.79999999702,
+        "start": 38830.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8681,
+        "name": "keydown",
+        "processingEnd": 38839.69999998808,
+        "processingStart": 38837.89999999106,
+        "start": 38833.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 48,
+        "interactionId": 8688,
+        "name": "keydown",
+        "processingEnd": 38857.39999999106,
+        "processingStart": 38857.09999999404,
+        "start": 38856.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 48,
+        "interactionId": 8688,
+        "name": "keypress",
+        "processingEnd": 38873.09999999404,
+        "processingStart": 38857.39999999106,
+        "start": 38856.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 38857.89999999106,
+        "processingStart": 38857.89999999106,
+        "start": 38857.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 40,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 38873.09999999404,
+        "processingStart": 38860.29999999702,
+        "start": 38859.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8695,
+        "name": "keydown",
+        "processingEnd": 38895.19999998808,
+        "processingStart": 38894.39999999106,
+        "start": 38893.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8702,
+        "name": "keydown",
+        "processingEnd": 38899.19999998808,
+        "processingStart": 38898.29999999702,
+        "start": 38897.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8702,
+        "name": "keyup",
+        "processingEnd": 38905.19999998808,
+        "processingStart": 38905.09999999404,
+        "start": 38904.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8709,
+        "name": "keydown",
+        "processingEnd": 38921.89999999106,
+        "processingStart": 38921.09999999404,
+        "start": 38920.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8709,
+        "name": "keypress",
+        "processingEnd": 38927.29999999702,
+        "processingStart": 38921.89999999106,
+        "start": 38920.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 38922,
+        "processingStart": 38922,
+        "start": 38922
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 38927.19999998808,
+        "processingStart": 38923.69999998808,
+        "start": 38923.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8709,
+        "name": "keyup",
+        "processingEnd": 38930.39999999106,
+        "processingStart": 38930.29999999702,
+        "start": 38929.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8723,
+        "name": "keydown",
+        "processingEnd": 38956.39999999106,
+        "processingStart": 38955.39999999106,
+        "start": 38954.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8723,
+        "name": "keyup",
+        "processingEnd": 38961.5,
+        "processingStart": 38961.29999999702,
+        "start": 38960.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8716,
+        "name": "keyup",
+        "processingEnd": 38967.09999999404,
+        "processingStart": 38967,
+        "start": 38966.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8730,
+        "name": "keydown",
+        "processingEnd": 38983.89999999106,
+        "processingStart": 38983.59999999404,
+        "start": 38983.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8730,
+        "name": "keypress",
+        "processingEnd": 38989,
+        "processingStart": 38984,
+        "start": 38983.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 38984,
+        "processingStart": 38984,
+        "start": 38984
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 38988.89999999106,
+        "processingStart": 38985.19999998808,
+        "start": 38984.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8737,
+        "name": "keydown",
+        "processingEnd": 39012.79999999702,
+        "processingStart": 39012.59999999404,
+        "start": 39012.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8744,
+        "name": "keydown",
+        "processingEnd": 39016,
+        "processingStart": 39015.29999999702,
+        "start": 39015
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8744,
+        "name": "keyup",
+        "processingEnd": 39020,
+        "processingStart": 39019.79999999702,
+        "start": 39018.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8737,
+        "name": "keyup",
+        "processingEnd": 39023.69999998808,
+        "processingStart": 39023.59999999404,
+        "start": 39023.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8751,
+        "name": "keydown",
+        "processingEnd": 39034.09999999404,
+        "processingStart": 39033.89999999106,
+        "start": 39033.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8751,
+        "name": "keypress",
+        "processingEnd": 39037.69999998808,
+        "processingStart": 39034.09999999404,
+        "start": 39033.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 39034.09999999404,
+        "processingStart": 39034.09999999404,
+        "start": 39034.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 39037.59999999404,
+        "processingStart": 39034.89999999106,
+        "start": 39034.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8751,
+        "name": "keyup",
+        "processingEnd": 39040.89999999106,
+        "processingStart": 39040.79999999702,
+        "start": 39040.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8758,
+        "name": "keydown",
+        "processingEnd": 39050.79999999702,
+        "processingStart": 39050.59999999404,
+        "start": 39050.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8765,
+        "name": "keydown",
+        "processingEnd": 39052.79999999702,
+        "processingStart": 39052,
+        "start": 39051.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8765,
+        "name": "keyup",
+        "processingEnd": 39056.39999999106,
+        "processingStart": 39056.29999999702,
+        "start": 39056
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8758,
+        "name": "keyup",
+        "processingEnd": 39060,
+        "processingStart": 39059.89999999106,
+        "start": 39059.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8772,
+        "name": "keydown",
+        "processingEnd": 39068,
+        "processingStart": 39067.69999998808,
+        "start": 39067.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8772,
+        "name": "keypress",
+        "processingEnd": 39071.39999999106,
+        "processingStart": 39068,
+        "start": 39067.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 39068.09999999404,
+        "processingStart": 39068.09999999404,
+        "start": 39068.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 39071.29999999702,
+        "processingStart": 39068.89999999106,
+        "start": 39068.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8786,
+        "name": "keydown",
+        "processingEnd": 39086.89999999106,
+        "processingStart": 39086.39999999106,
+        "start": 39086.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8786,
+        "name": "keyup",
+        "processingEnd": 39090.29999999702,
+        "processingStart": 39090.29999999702,
+        "start": 39090
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8779,
+        "name": "keyup",
+        "processingEnd": 39093,
+        "processingStart": 39092.89999999106,
+        "start": 39092.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8793,
+        "name": "keydown",
+        "processingEnd": 39101,
+        "processingStart": 39100.5,
+        "start": 39100.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8793,
+        "name": "keypress",
+        "processingEnd": 39104.79999999702,
+        "processingStart": 39101,
+        "start": 39100.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 39101,
+        "processingStart": 39101,
+        "start": 39101
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 39104.69999998808,
+        "processingStart": 39102.39999999106,
+        "start": 39102.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8793,
+        "name": "keyup",
+        "processingEnd": 39107.19999998808,
+        "processingStart": 39107,
+        "start": 39106.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8800,
+        "name": "keydown",
+        "processingEnd": 39130.59999999404,
+        "processingStart": 39130.29999999702,
+        "start": 39130
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8807,
+        "name": "keydown",
+        "processingEnd": 39132.29999999702,
+        "processingStart": 39131.89999999106,
+        "start": 39131.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8807,
+        "name": "keyup",
+        "processingEnd": 39134.39999999106,
+        "processingStart": 39134.29999999702,
+        "start": 39134
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8800,
+        "name": "keyup",
+        "processingEnd": 39137.89999999106,
+        "processingStart": 39137.89999999106,
+        "start": 39135.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8814,
+        "name": "keydown",
+        "processingEnd": 39147.09999999404,
+        "processingStart": 39146.79999999702,
+        "start": 39146.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8814,
+        "name": "keypress",
+        "processingEnd": 39150.59999999404,
+        "processingStart": 39147.09999999404,
+        "start": 39146.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 39147.09999999404,
+        "processingStart": 39147.09999999404,
+        "start": 39147.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 39150.5,
+        "processingStart": 39147.89999999106,
+        "start": 39147.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8814,
+        "name": "keyup",
+        "processingEnd": 39155.39999999106,
+        "processingStart": 39155.19999998808,
+        "start": 39155.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8821,
+        "name": "keydown",
+        "processingEnd": 39164,
+        "processingStart": 39163.59999999404,
+        "start": 39163.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8828,
+        "name": "keydown",
+        "processingEnd": 39165.89999999106,
+        "processingStart": 39165.29999999702,
+        "start": 39165.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8828,
+        "name": "keyup",
+        "processingEnd": 39167.59999999404,
+        "processingStart": 39167.5,
+        "start": 39167.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8821,
+        "name": "keyup",
+        "processingEnd": 39170.89999999106,
+        "processingStart": 39170.69999998808,
+        "start": 39169.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8835,
+        "name": "keydown",
+        "processingEnd": 39180.19999998808,
+        "processingStart": 39179.89999999106,
+        "start": 39179.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8835,
+        "name": "keypress",
+        "processingEnd": 39183.19999998808,
+        "processingStart": 39180.19999998808,
+        "start": 39179.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 39180.19999998808,
+        "processingStart": 39180.19999998808,
+        "start": 39180.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 39183.19999998808,
+        "processingStart": 39180.89999999106,
+        "start": 39180.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8835,
+        "name": "keyup",
+        "processingEnd": 39185.09999999404,
+        "processingStart": 39185,
+        "start": 39184.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8842,
+        "name": "keydown",
+        "processingEnd": 39195.5,
+        "processingStart": 39195.19999998808,
+        "start": 39195
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8849,
+        "name": "keydown",
+        "processingEnd": 39196.89999999106,
+        "processingStart": 39196.5,
+        "start": 39196.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8849,
+        "name": "keyup",
+        "processingEnd": 39198.59999999404,
+        "processingStart": 39198.59999999404,
+        "start": 39198.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8842,
+        "name": "keyup",
+        "processingEnd": 39200.5,
+        "processingStart": 39200.39999999106,
+        "start": 39200.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8856,
+        "name": "keydown",
+        "processingEnd": 39210,
+        "processingStart": 39209.79999999702,
+        "start": 39209.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8856,
+        "name": "keypress",
+        "processingEnd": 39213.09999999404,
+        "processingStart": 39210,
+        "start": 39209.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 39210.19999998808,
+        "processingStart": 39210.19999998808,
+        "start": 39210.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 39213.09999999404,
+        "processingStart": 39210.89999999106,
+        "start": 39210.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8856,
+        "name": "keyup",
+        "processingEnd": 39214.79999999702,
+        "processingStart": 39214.69999998808,
+        "start": 39214.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8863,
+        "name": "keydown",
+        "processingEnd": 39225.89999999106,
+        "processingStart": 39225.69999998808,
+        "start": 39225.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8870,
+        "name": "keydown",
+        "processingEnd": 39227.69999998808,
+        "processingStart": 39227.29999999702,
+        "start": 39227.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8870,
+        "name": "keyup",
+        "processingEnd": 39229.59999999404,
+        "processingStart": 39229.59999999404,
+        "start": 39229.5
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8863,
+        "name": "keyup",
+        "processingEnd": 39231.19999998808,
+        "processingStart": 39231.09999999404,
+        "start": 39231
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8877,
+        "name": "keydown",
+        "processingEnd": 39240.19999998808,
+        "processingStart": 39239.79999999702,
+        "start": 39239.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8877,
+        "name": "keypress",
+        "processingEnd": 39243.39999999106,
+        "processingStart": 39240.29999999702,
+        "start": 39239.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 39240.29999999702,
+        "processingStart": 39240.29999999702,
+        "start": 39240.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 39243.29999999702,
+        "processingStart": 39241.29999999702,
+        "start": 39241.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8877,
+        "name": "keyup",
+        "processingEnd": 39245,
+        "processingStart": 39245,
+        "start": 39244.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8884,
+        "name": "keydown",
+        "processingEnd": 39251.69999998808,
+        "processingStart": 39251.29999999702,
+        "start": 39251.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8891,
+        "name": "keydown",
+        "processingEnd": 39255.69999998808,
+        "processingStart": 39255.19999998808,
+        "start": 39254.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8891,
+        "name": "keyup",
+        "processingEnd": 39258.19999998808,
+        "processingStart": 39258,
+        "start": 39257.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8884,
+        "name": "keyup",
+        "processingEnd": 39260,
+        "processingStart": 39259.89999999106,
+        "start": 39259.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8898,
+        "name": "keydown",
+        "processingEnd": 39266.5,
+        "processingStart": 39266.09999999404,
+        "start": 39265.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8898,
+        "name": "keypress",
+        "processingEnd": 39271.19999998808,
+        "processingStart": 39266.5,
+        "start": 39265.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 39266.69999998808,
+        "processingStart": 39266.69999998808,
+        "start": 39266.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 39271.09999999404,
+        "processingStart": 39268,
+        "start": 39267.89999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8905,
+        "name": "keydown",
+        "processingEnd": 39286.59999999404,
+        "processingStart": 39286.19999998808,
+        "start": 39285.79999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 32,
+        "interactionId": 8912,
+        "name": "keydown",
+        "processingEnd": 39290.59999999404,
+        "processingStart": 39289.79999999702,
+        "start": 39289.09999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8912,
+        "name": "keyup",
+        "processingEnd": 39296.19999998808,
+        "processingStart": 39296,
+        "start": 39295.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8905,
+        "name": "keyup",
+        "processingEnd": 39298.89999999106,
+        "processingStart": 39298.89999999106,
+        "start": 39298.69999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8919,
+        "name": "keydown",
+        "processingEnd": 39310.89999999106,
+        "processingStart": 39310.69999998808,
+        "start": 39310.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8919,
+        "name": "keypress",
+        "processingEnd": 39313.69999998808,
+        "processingStart": 39310.89999999106,
+        "start": 39310.39999999106
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "beforeinput",
+        "processingEnd": 39311,
+        "processingStart": 39311,
+        "start": 39311
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 0,
+        "name": "input",
+        "processingEnd": 39313.59999999404,
+        "processingStart": 39311.69999998808,
+        "start": 39311.59999999404
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8919,
+        "name": "keyup",
+        "processingEnd": 39316.5,
+        "processingStart": 39316.39999999106,
+        "start": 39316.29999999702
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 24,
+        "interactionId": 8926,
+        "name": "keydown",
+        "processingEnd": 39331.79999999702,
+        "processingStart": 39331.5,
+        "start": 39331.19999998808
+      },
+      {
+        "category": "PRICE_INPUT",
+        "duration": 16,
+        "interactionId": 8933,
+        "name": "keydown",
+        "processingEnd": 39334.29999999702,
+        "processingStart": 39333.79999999702,
+        "start": 39333.59999999404
+      }
+    ],
+    "requests": [
+      {
+        "duration": 155.40000000596046,
+        "path": "/interaction",
+        "requestStart": 10108.69999998808,
+        "responseEnd": 10258,
+        "responseStart": 10257,
+        "start": 10102.59999999404,
+        "transferSize": 321962
+      },
+      {
+        "duration": 21.900000005960464,
+        "path": "/draft",
+        "requestStart": 11296.39999999106,
+        "responseEnd": 11315.59999999404,
+        "responseStart": 11314.69999998808,
+        "start": 11293.69999998808,
+        "transferSize": 869
+      },
+      {
+        "duration": 151,
+        "path": "/interaction",
+        "requestStart": 15775.19999998808,
+        "responseEnd": 15922.59999999404,
+        "responseStart": 15921.09999999404,
+        "start": 15771.59999999404,
+        "transferSize": 843203
+      },
+      {
+        "duration": 6.800000011920929,
+        "path": "/draft",
+        "requestStart": 16626.89999999106,
+        "responseEnd": 16630,
+        "responseStart": 16629.69999998808,
+        "start": 16623.19999998808,
+        "transferSize": 13083
+      }
+    ],
+    "states": [
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 469,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "true",
+        "ms": 9989,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 10122.79999999702,
+        "preview": "PENDING",
+        "removing": true,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 10296,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 11301.19999998808,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": false,
+        "dragging": "false",
+        "ms": 11329.39999999106,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 15617.09999999404,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 15957.09999999404,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "DIRTY"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 16633.09999999404,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVING"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 16644.09999999404,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "SAVED"
+      }
+    ]
+  },
+  "price": "8"
+}

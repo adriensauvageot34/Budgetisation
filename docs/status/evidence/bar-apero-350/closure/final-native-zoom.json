@@ -1,0 +1,25 @@
+{
+  "bar": {
+    "bottom": 706,
+    "h": 565,
+    "w": 727.0125122070312,
+    "x": 328,
+    "y": 141
+  },
+  "dock": {
+    "h": 124,
+    "y": 765.7999877929688
+  },
+  "dpr": 1.25,
+  "height": 720,
+  "internalScroll": [],
+  "label": "DENSE_NATIVE_ZOOM",
+  "main": {
+    "client": 720,
+    "overflow": "auto",
+    "scroll": 895
+  },
+  "overflowX": false,
+  "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+  "width": 1280
+}

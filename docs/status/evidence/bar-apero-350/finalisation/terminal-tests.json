@@ -1,0 +1,119 @@
+[
+  {
+    "name": "p2",
+    "command": "node scripts/check-bar-apero-p2.mjs",
+    "exitCode": 0,
+    "durationMs": 19806,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:04.025Z",
+    "log": "outputs/bar-350/terminal-p2.log"
+  },
+  {
+    "name": "react",
+    "command": "node scripts/check-bar-apero-350-waves.mjs",
+    "exitCode": 0,
+    "durationMs": 20781,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:04.918Z",
+    "log": "outputs/bar-350/terminal-react.log"
+  },
+  {
+    "name": "p1",
+    "command": "node scripts/check-bar-apero-p1.mjs",
+    "exitCode": 0,
+    "durationMs": 21392,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:05.578Z",
+    "log": "outputs/bar-350/terminal-p1.log"
+  },
+  {
+    "name": "last",
+    "command": "node scripts/check-bar-apero-last.mjs",
+    "exitCode": 0,
+    "durationMs": 15178,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:20.759Z",
+    "log": "outputs/bar-350/terminal-last.log"
+  },
+  {
+    "name": "p4",
+    "command": "node scripts/check-bar-apero-p4.mjs",
+    "exitCode": 0,
+    "durationMs": 20062,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:24.982Z",
+    "log": "outputs/bar-350/terminal-p4.log"
+  },
+  {
+    "name": "draft",
+    "command": "node scripts/check-bar-apero-closure-draft.mjs",
+    "exitCode": 0,
+    "durationMs": 4603,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:25.366Z",
+    "log": "outputs/bar-350/terminal-draft.log"
+  },
+  {
+    "name": "p3",
+    "command": "node scripts/check-bar-apero-p3.mjs",
+    "exitCode": 0,
+    "durationMs": 22073,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:26.112Z",
+    "log": "outputs/bar-350/terminal-p3.log"
+  },
+  {
+    "name": "http",
+    "command": "node scripts/check-composer-post-snap3-draft-http.mjs",
+    "exitCode": 0,
+    "durationMs": 2220,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:28.336Z",
+    "log": "outputs/bar-350/terminal-http.log"
+  },
+  {
+    "name": "c8",
+    "command": "node scripts/check-pre-l4-c2-c8-source.mjs",
+    "exitCode": 0,
+    "durationMs": 273,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:28.612Z",
+    "log": "outputs/bar-350/terminal-c8.log"
+  },
+  {
+    "name": "durable",
+    "command": "node scripts/check-composer-p14-p2-durable.mjs",
+    "exitCode": 0,
+    "durationMs": 6409,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:31.395Z",
+    "log": "outputs/bar-350/terminal-durable.log"
+  },
+  {
+    "name": "parity",
+    "command": "node scripts/check-planner-performance-parity.mjs",
+    "exitCode": 0,
+    "durationMs": 18719,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:34:47.337Z",
+    "log": "outputs/bar-350/terminal-parity.log"
+  },
+  {
+    "name": "types",
+    "command": "node node_modules/typescript/bin/tsc --noEmit",
+    "exitCode": 0,
+    "durationMs": 60226,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:35:31.626Z",
+    "log": "outputs/bar-350/terminal-types.log"
+  },
+  {
+    "name": "apply",
+    "command": "node scripts/check-phase2-planner-p13.mjs",
+    "exitCode": 0,
+    "durationMs": 85914,
+    "sha": "b1bc0c57b9042aa122a0536f2b897d041f2a1e4c",
+    "date": "2026-10-18T17:35:51.287Z",
+    "log": "outputs/bar-350/terminal-apply.log"
+  }
+]

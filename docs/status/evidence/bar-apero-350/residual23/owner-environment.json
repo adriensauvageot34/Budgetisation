@@ -1,0 +1,22 @@
+{
+  "observation": "READ_ONLY_OBSERVED_DURING_THIS_MISSION",
+  "scope": "H1 exclusively fictitious; approved by user; no activation or publication attempted",
+  "queryLimits": "Read-only transaction, statement_timeout 5s, exists or LIMIT2, no personal rows returned",
+  "observations": {
+    "h1GlobalPublished": false,
+    "h1EligibleCertifiedPeriodsBoundedCount": 0,
+    "canonicalScopeStatus": "READY",
+    "canonicalScopeMatchesH1": false
+  },
+  "queries": [
+    "select exists(select 1 from public.analytics_publications where household_id='f07b0000-0000-4000-8000-000000000001'::uuid and scope_kind='global' and status='published');",
+    "Eligible closed analysis_periods for H1 with finance/life/calendar known: bounded LIMIT2 result =0.",
+    "select status, household_id='f07b0000-0000-4000-8000-000000000001'::uuid as scope_is_h1 from public.canonical_household_scope_control limit 2;"
+  ],
+  "errorsPreserved": [
+    "First read-only households.id probe: 42703, no write; corrected to existing contracts."
+  ],
+  "writes": 0,
+  "fixtureAccountChanged": false,
+  "limit": "Do not fabricate certified periods, widen Canonical scope or reuse personal household. Official Global producer cannot certify H1 with these preconditions."
+}

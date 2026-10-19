@@ -1,0 +1,38 @@
+[
+  {
+    "name": "check-bar-apero-p1",
+    "exit": 0
+  },
+  {
+    "name": "check-bar-apero-p1-http",
+    "exit": 1
+  },
+  {
+    "name": "check-bar-apero-p2",
+    "exit": 0
+  },
+  {
+    "name": "check-bar-apero-p3",
+    "exit": 0
+  },
+  {
+    "name": "check-bar-apero-p4",
+    "exit": 0
+  },
+  {
+    "name": "check-bar-apero-p4-http",
+    "exit": 1
+  },
+  {
+    "name": "check-bar-apero-google-route",
+    "exit": 0
+  },
+  {
+    "name": "check-bar-apero-economic-scope",
+    "exit": 0
+  },
+  {
+    "name": "check-planner-performance-parity",
+    "exit": 0
+  }
+]

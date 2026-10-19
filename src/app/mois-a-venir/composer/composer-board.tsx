@@ -100,7 +100,8 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   const trashZone = trashVisible && <div className={styles.trash} data-trash data-protected={interaction?.grabbed?.protected} data-compatible={trashAccepts || !!interaction?.grabbed?.removeOperation} data-drag-over={sameTarget(interaction?.overTarget ?? null, trashTarget)}
     role="status" aria-label={interaction?.grabbed?.protected ? "Protégée · retrait interdit" : "Retirer l’élément saisi"}
     onDragOver={e => { e.stopPropagation(); if (!busy && !interaction?.grabbed?.protected) { e.preventDefault(); interaction?.over(trashTarget); } }}
-    onDragEnter={() => { if (interaction?.grabbed?.protected) interaction.reject(); }}
+    onDragEnter={e => { e.stopPropagation(); if (interaction?.grabbed?.protected) interaction.reject();
+      else if (!busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(trashTarget); } }}
     onDragLeave={() => interaction?.over(null)} onDrop={e => { e.preventDefault(); e.stopPropagation(); if (!busy) interaction?.place(trashTarget); }}>
     {interaction?.grabbed?.protected ? <LockKeyhole size={17} /> : <Trash2 size={17} />}{interaction?.grabbed?.protected ? "Protégée" : "Retirer"}</div>;
   return <section className={styles.board} aria-label="Board du mois">

@@ -15,8 +15,8 @@ export function barPlaces(places: readonly PlannedPlaceOption[], query = "") {
 export function barPlaceHint(place: PlannedPlaceOption, knowledge?: PlannedPlaceKnowledge) {
   const location = [place.commune, place.address].filter(Boolean).join(" · ") || `Réf. ${place.placeId.slice(-6)}`;
   return knowledge && (place.visits12Months ?? 0) > 0
-    ? `${location} · ${place.visits12Months} jour(s) enregistré(s) · dernier ${place.lastVisitDate ?? "à préciser"}`
-    : `${location} · historique non établi`;
+    ? `${location} · Lieu enregistré · ${place.visits12Months} jour(s) enregistré(s) · dernier ${place.lastVisitDate ?? "à préciser"} · ${knowledge.fromDate} – ${knowledge.throughDate} · couverture disponible, non exhaustive`
+    : `${location} · Lieu enregistré · historique non établi`;
 }
 export function barHomePlaces(places: readonly PlannedPlaceOption[]) {
   return places.filter(place => derivePlannedPlaceRoles({...place, relationships: []}).includes("OWN_HOME")

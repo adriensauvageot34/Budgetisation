@@ -1,0 +1,33 @@
+{
+  "level": "REACT_HANDLERS_HTTP_MOCK_AUTH_NOT_BROWSER_NOT_SUPABASE",
+  "checks": [
+    {
+      "id": "UI_SAVE_RETRY_SAME_REQUEST_LABEL_NOT_PROVIDER_NO_AUTO_CHOICE",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "UI_REOPEN_SELECT_EXPLICIT_ARCHIVE",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "UI_ARCHIVE_RECOVERY_RENAME_AND_REOPEN_NO_AUTO_CHOICE",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "UI_DISABLED_NO_FAKE_ENTRY",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "RAW_OLD_CONFIRMATION_CANNOT_DISCARD_A_NEW_LABEL",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "UI_REPLAY_RECEIPT_NEVER_REPLACES_NEWER_ARCHIVE",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "HTTP_DISABLED_AUTH_ORIGIN_TYPE_SIZE_SCOPE",
+      "status": "PASS_LOCAL_DOMAIN"
+    }
+  ]
+}

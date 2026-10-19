@@ -1,0 +1,24 @@
+{
+  "status": "FAIL",
+  "sha": "1624edcb77867f4861209283c69e666e1289e06a",
+  "deployment": "dpl_Bic2ffsswLuVwk24jv9qNrFxy3JE",
+  "scope": "A/H1, 2027-01; existing November drafts untouched",
+  "checks": [
+    {
+      "name": "REAL_JWT_A_ISOLATED_H1",
+      "status": "PASS"
+    },
+    {
+      "name": "AUTH_HTTP_RECEPTION",
+      "status": "FAIL",
+      "code": ""
+    }
+  ],
+  "events": [],
+  "limits": [
+    "Composer UI blocked by FORECAST_ACTIVE_GLOBAL_PUBLICATION_MISSING",
+    "TEXT places/participants only; no vehicle invented",
+    "No real World/Finance Preview or Apply executed"
+  ],
+  "financialWrites": 0
+}

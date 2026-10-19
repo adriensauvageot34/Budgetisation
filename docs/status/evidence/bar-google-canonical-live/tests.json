@@ -1,0 +1,74 @@
+{
+  "productSha": "bdbff62f492b60791bed9e8ac510f0552d3f393f",
+  "personalSqlAndService": {
+    "exit": 0,
+    "groups": 9,
+    "proof": "personal-tests.json",
+    "level": "PGLITE_SYNTHETIC_NOT_SUPABASE_AUTH"
+  },
+  "uiHttp": {
+    "exit": 0,
+    "groups": 6,
+    "proof": "ui-tests.json",
+    "level": "REACT_HANDLERS_MOCK_AUTH"
+  },
+  "p1": {
+    "exit": 0,
+    "log": "p1.log",
+    "sha": "bdbff62"
+  },
+  "p2": {
+    "exit": 0,
+    "log": "p2.log",
+    "sha": "bdbff62"
+  },
+  "p3": {
+    "exit": 0,
+    "log": "p3-final.log",
+    "sha": "bdbff62"
+  },
+  "p4": {
+    "exit": 0,
+    "log": "p4.log",
+    "sha": "bdbff62"
+  },
+  "finance": {
+    "goldenChanged": false,
+    "sha": "bdbff62",
+    "cases": 22,
+    "exit": 0,
+    "hashesPerCase": 9,
+    "log": "parity-final.log",
+    "hashes": 198
+  },
+  "types": {
+    "exit": 0,
+    "log": "typecheck-final.log",
+    "sha": "bdbff62"
+  },
+  "buildLocal": {
+    "status": "FAIL_OUTILLAGE_SYMLINK",
+    "exit": 1,
+    "log": "next-build.log"
+  },
+  "buildVercel": {
+    "status": "PASS_FULL_NEXT",
+    "sha": "bdbff62",
+    "log": "vercel-build.log"
+  },
+  "browser": {
+    "authenticated": "NOT_RUN_AUTH",
+    "proof": "browser.json",
+    "level": "LOCAL_SYNTHETIC"
+  },
+  "providers": {
+    "here": "BLOCKED_CREDENTIALS_OR_SCOPE",
+    "scriptUncommittedAtRun": true,
+    "proof": "providers.json",
+    "fuel": "PASS_REAL_PROVIDER",
+    "gitHeadAtRun": "1ef6334",
+    "userRequestedDeferral": true,
+    "google": "BLOCKED_CREDENTIALS_OR_SCOPE",
+    "tomtom": "BLOCKED_CREDENTIALS_OR_SCOPE"
+  }
+}

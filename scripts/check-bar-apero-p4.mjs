@@ -35,13 +35,22 @@ let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
 const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
 const click=async label=>{
+  let searchedFromStart=false;
   const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));
   for(let i=0;i<12&&!matches().length;i++){
     const next=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled)[0];
     if(next){await act(async()=>next.props.onClick());steps++;continue;}
+    // Dock pagination is now deliberately retained when a scene reopens.
+    // Search the other pages using their real controls; never assume page 1.
+    if(!searchedFromStart){searchedFromStart=true;let previous;
+      while((previous=controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · précédente'&&!n.props.disabled)[0])){await act(async()=>previous.props.onClick());steps++;}
+      if(matches().length)break;
+      if(controls(n=>n.type==='button'&&n.props['aria-label']==='Pages du dock · suivante'&&!n.props.disabled).length)continue;
+    }
     const back=controls(n=>n.type==='button'&&text(n)==='← Ma sortie')[0];
     if(back&&['Montant direct','Autre','Bouteille partagée'].includes(label)){await act(async()=>back.props.onClick());steps++;continue;}if(label==='Bouteille partagée'){const more=controls(n=>n.type==='button'&&text(n)==='Autre')[0];if(more){await act(async()=>more.props.onClick());steps++;continue;}}if(label==='Montant direct'){const more=controls(n=>n.type==='button'&&text(n)==='Autre')[0];if(more){await act(async()=>more.props.onClick());continue;}}if(['Vodka','Crazy Tiger sans alcool','Diluant sans alcool','Bière','Snack','Chips','Vin','Rhum'].includes(label)){const full=controls(n=>n.type==='button'&&text(n)==='Tout le Before')[0];if(full){await act(async()=>full.props.onClick());continue;}}const all=controls(n=>n.type==='button'&&text(n)==='Tous les lieux')[0];if(all){await act(async()=>all.props.onClick());continue;}const reveal=controls(n=>n.type==='button'&&['Autres consommations','Autres objets du Before'].includes(text(n)))[0];if(reveal){await act(async()=>reveal.props.onClick());continue;}break;
   }
+  assert.ok(matches().length,`Missing button ${label}; scene=${controls(n=>n.props['data-bar-step']!==undefined)[0]?.props['data-bar-step']}; dock=${controls(n=>n.props['data-question-dock']!==undefined)[0]?.findAll(n=>n.type==='strong').map(text).join('|')}`);
   await act(async()=>button(label).props.onClick());steps++;
 };
 const input=label=>{const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
@@ -111,7 +120,7 @@ try{
   await click('Bière');await change('Prix unitaire (€)','0');await click('Enregistrer');const zero=current().slotSelections.extras.items[3];assert.equal(zero.cost.kind,'MANUAL');assert.equal(zero.cost.unitAmount,'0');const z=await read('manual-zero');assert.equal(z.summary.knownAmount,'69.00');assert.equal(z.state.contexts[0].slotSelections.extras.items[3].cost.kind,'MANUAL');
  });
  await check('P4_GLOBAL_DETAILS_EXACT_CONSENT_CANCEL_REPLACE_UNDO',async()=>{
-  await init('night-out','bar-apero',BarLivingEditor);for(let i=0;i<2;i++){await click('Bière');await change('Prix unitaire (€)','8');await click('Enregistrer');}const detailed=structuredClone(model.semanticState);await click('Date');await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','30');await click('Retenir ce coût');await click('Continuer à modifier');assert.deepEqual(model.semanticState,detailed);await click('Retenir ce coût');await click('Remplacer par le total');let r=await read('covered-total');assert.equal(r.summary.knownAmount,'30.00');assert.equal(current().slotSelections.extras.items.length,0);model=visualDraftModel(model,detailed);await sync();r=await read('details-undo');assert.equal(r.summary.knownAmount,'16.00');assert.deepEqual(model.semanticState,detailed);
+  await init('night-out','bar-apero',BarLivingEditor);for(let i=0;i<2;i++){await click('Bière');await change('Prix unitaire (€)','8');await click('Enregistrer');}const detailed=structuredClone(model.semanticState);await click('Date');await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','30');for(const n of controls(n=>n.type==='button'&&text(n).startsWith('Remplacer Bière ·'))){await act(async()=>n.props.onClick());}await click('Retenir ce coût');await click('Continuer à modifier');assert.deepEqual(model.semanticState,detailed);await click('Retenir ce coût');await click('Remplacer les postes sélectionnés');let r=await read('covered-total');assert.equal(r.summary.knownAmount,'30.00');assert.equal(current().slotSelections.extras.items.length,0);model=visualDraftModel(model,detailed);await sync();r=await read('details-undo');assert.equal(r.summary.knownAmount,'16.00');assert.deepEqual(model.semanticState,detailed);
  });
  await check('P4_SHARED_TOTAL_COLLISION_CANNOT_BYPASS_COVERAGE',async()=>{
   await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','30');await click('Retenir ce coût');const before=structuredClone(model.semanticState);await click('Bouteille partagée');assert.equal(controls(n=>n.props['data-bar-step']==='coverage').length,1);assert.deepEqual(model.semanticState,before);await click('Ne rien ajouter');assert.deepEqual(model.semanticState,before);
@@ -138,6 +147,16 @@ try{
   r=await handleComposerRequest(deps,householdId,{kind:'APPLY',sequence:++serverSequence,targetMonth:'2026-11',draft:expected,command:{...r.model.proof,applyRequestId:crypto.randomUUID()}});assert.equal(r.ok,true,r.code+': '+r.message);assert.equal(pg.rpcCalls,calls+1);
   r=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:++serverSequence,targetMonth:'2026-11'});assert.equal(r.ok,true,r.code);assert.deepEqual(r.model.semanticState,expected);const saved=await repository.readActivePlan(householdId,'2026-11');assert.deepEqual(saved.activeRevision.semanticState,expected);assert.equal(JSON.stringify(world),unchanged);await pg.verifyCanaries();
   states['rich-before-applied-reloaded']={state:expected,summary:r.model.nightOutSummaries[0],digest:semanticStateDigest(expected),counts:await pg.counts(),applyRpcCalls:pg.rpcCalls};
+ });
+ await check('BAR16_REACT_60_PLUS_12_TARGETED_SUBSTITUTION_AND_RAW',async()=>{
+  await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');await click('Consommations regroupées');await change('Coût prévu (€)','60');await click('Retenir ce coût');
+  const aggregate=current().slotSelections.main.items[0];assert.equal(aggregate.economicScope.kind,'AGGREGATED_SUBSTITUTIVE_ESTIMATE');
+  await click('Montant direct');await click('Entrées / contribution');await change('Coût prévu (€)','12');await click('Retenir ce coût');
+  const independent=current().slotSelections.extras.items[0];assert.equal(independent.cost.unitAmount,'12');assert.equal(independent.economicScope.kind,'ADDITIVE_CONTRIBUTION');assert.deepEqual(current().slotSelections.main.items[0],aggregate);
+  await click('Bière');assert.equal(controls(n=>n.props['data-bar-step']==='coverage').length,1);await click('Détailler à la place');
+  assert.equal(current().slotSelections.main.items.length,0);assert.deepEqual(current().slotSelections.extras.items.find(i=>i.selectionId===independent.selectionId),independent);
+  const beer=current().slotSelections.extras.items.find(i=>i.selectionId!==independent.selectionId);assert.equal(beer.cost.kind,'UNKNOWN');
+  await change('Prix unitaire (€)','8');await click('Date');await click('Continuer à modifier');assert.equal(input('Prix unitaire (€)').props.value,'8');
  });
  fs.mkdirSync('outputs/bar-p4',{recursive:true});fs.writeFileSync('outputs/bar-p4/states.json',JSON.stringify(states,null,2));
  fs.mkdirSync('outputs/bar-p4',{recursive:true});fs.writeFileSync('outputs/bar-p4/results.json',JSON.stringify({checks,method:'REACT_SYNTHETIC'},null,2));if(checks.some(c=>c.status==='FAIL'))process.exitCode=1;

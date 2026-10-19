@@ -5,7 +5,22 @@ import { parsePlanSemanticState, semanticStateDigest } from "@/domain/phase2/pla
 import type { ComposerDraftLifecycleCommand, ComposerDraftResult, ComposerDraftSaveCommand,
   ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 
-type Scope = Readonly<{ supabase: SupabaseClient; userId: string; householdId: string }>;
+export type DraftPhase = "READ_PLAN_BASE" | "READ_DRAFTS" | "WRITE_SAVE" | "WRITE_ARCHIVE" | "WRITE_RESTORE";
+export type DraftObservation = Readonly<{ phase: DraftPhase; durationMs: number; code: string | null }>;
+type Scope = Readonly<{ supabase: SupabaseClient; userId: string; householdId: string;
+  observe?: (event: DraftObservation) => void }>;
+/** Opt-in diagnostics contain no state, place, person, token or database message. */
+async function measured<T extends { error?: unknown }>(scope: Scope, phase: DraftPhase, read: () => PromiseLike<T>): Promise<T> {
+  const started = performance.now(); let code: string | null = null;
+  try { const result = await read(); code = safeCode(result.error); return result; }
+  catch (error) { code = safeCode(error) ?? "TRANSPORT_ERROR"; throw error; }
+  finally { try { scope.observe?.({ phase, durationMs: Math.round(performance.now() - started), code }); } catch { /* Observation cannot change a save. */ } }
+}
+function safeCode(error: unknown): string | null {
+  if (!error) return null;
+  const code = typeof error === "object" && "code" in error ? String(error.code) : "ERROR";
+  return /^[A-Z0-9_]{1,24}$/u.test(code) ? code : "ERROR";
+}
 type PlanBase = Readonly<{ planId: string | null; revisionId: string | null; revisionNumber: number }>;
 const table = "phase2_composer_drafts";
 const monthDate = (value: string) => `${plannerMonth(value)}-01`;
@@ -32,9 +47,9 @@ function parseRow(value: unknown, targetMonth: string): StoredComposerDraft {
 }
 
 async function readBase(scope: Scope, targetMonth: string): Promise<PlanBase> {
-  const { data, error } = await scope.supabase.from("phase2_month_plans")
+  const { data, error } = await measured(scope, "READ_PLAN_BASE", () => scope.supabase.from("phase2_month_plans")
     .select("plan_id,active_revision_id,active_revision_number")
-    .eq("household_id", scope.householdId).eq("target_month", monthDate(targetMonth)).abortSignal(AbortSignal.timeout(15000)).maybeSingle();
+    .eq("household_id", scope.householdId).eq("target_month", monthDate(targetMonth)).abortSignal(AbortSignal.timeout(15000)).maybeSingle());
   if (error) throw error;
   return { planId: data?.active_revision_id ? plannerUuid(data.plan_id) : null,
     revisionId: data?.active_revision_id ? plannerUuid(data.active_revision_id) : null,
@@ -42,10 +57,10 @@ async function readBase(scope: Scope, targetMonth: string): Promise<PlanBase> {
 }
 
 async function readRows(scope: Scope, targetMonth: string): Promise<StoredComposerDraft[]> {
-  const { data, error } = await scope.supabase.from(table).select("*")
+  const { data, error } = await measured(scope, "READ_DRAFTS", () => scope.supabase.from(table).select("*")
     .eq("owner_user_id", scope.userId).eq("household_id", scope.householdId)
     .eq("target_month", monthDate(targetMonth)).order("created_at", { ascending: false })
-    .abortSignal(AbortSignal.timeout(15000));
+    .abortSignal(AbortSignal.timeout(15000)));
   if (error) throw error;
   return (data ?? []).map(row => parseRow(row, targetMonth));
 }
@@ -110,13 +125,13 @@ export async function saveComposerDraft(scope: Scope, command: ComposerDraftSave
     if ((active?.draftId ?? null) !== expectedId || (active?.version ?? 0) !== expectedVersion)
       return failed("CONFLICT", before);
 
-    const { data, error } = await scope.supabase.rpc("save_phase2_composer_draft_v2", {
+    const { data, error } = await measured(scope, "WRITE_SAVE", () => scope.supabase.rpc("save_phase2_composer_draft_v2", {
       p_household_id: scope.householdId, p_target_month: monthDate(targetMonth),
       p_expected_draft_id: expectedId, p_expected_draft_version: expectedVersion,
       p_save_request_id: requestId, p_base_plan_id: base.planId,
       p_base_plan_revision_id: base.revisionId, p_base_plan_revision_number: base.revisionNumber,
       p_semantic_state: state, p_semantic_state_digest: digest,
-    }).abortSignal(AbortSignal.timeout(15000)).then(response => response, () => ({ data: null, error: null }));
+    }).abortSignal(AbortSignal.timeout(15000))).then(response => response, () => ({ data: null, error: null }));
     if (!error) {
       try {
         const saved = responseDraft(data, targetMonth);
@@ -154,12 +169,12 @@ export async function changeComposerDraftLifecycle(scope: Scope, kind: "ARCHIVE"
       return { ok: true, draft: row, replayed: true };
     if (!row || row.version !== expectedVersion || row.lifecycle !== (kind === "ARCHIVE" ? "ACTIVE" : "ABANDONED")
       || kind === "RESTORE" && before.active) return failed("CONFLICT", before);
-    const { data, error } = await scope.supabase.rpc(kind === "ARCHIVE"
+    const { data, error } = await measured(scope, kind === "ARCHIVE" ? "WRITE_ARCHIVE" : "WRITE_RESTORE", () => scope.supabase.rpc(kind === "ARCHIVE"
       ? "archive_phase2_composer_draft_v2" : "restore_phase2_composer_draft_v2", {
       p_household_id: scope.householdId, p_target_month: monthDate(month), p_draft_id: id,
       p_expected_draft_version: expectedVersion,
       ...(kind === "ARCHIVE" ? { p_archive_request_id: requestId } : { p_restore_request_id: requestId }),
-    }).abortSignal(AbortSignal.timeout(15000)).then(response => response, () => ({ data: null, error: null }));
+    }).abortSignal(AbortSignal.timeout(15000))).then(response => response, () => ({ data: null, error: null }));
     if (!error) {
       try { return { ok: true, ...responseDraft(data, month) }; }
       catch { /* Reconcile a malformed or lost response from committed SQL. */ }

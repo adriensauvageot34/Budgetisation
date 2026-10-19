@@ -1,0 +1,32 @@
+{
+  "bar": {
+    "h": 245,
+    "w": 772.4000244140625,
+    "x": 328,
+    "y": 191.1000061035156
+  },
+  "height": 720,
+  "metadata": [
+    {
+      "text": "+ Trajet",
+      "top": 278.70001220703125
+    },
+    {
+      "text": " Lieu",
+      "top": 278.70001220703125
+    },
+    {
+      "text": " Date",
+      "top": 278.70001220703125
+    },
+    {
+      "text": "Personnes",
+      "top": 283.5
+    }
+  ],
+  "preview": "FRESH",
+  "scenario": "EMPTY",
+  "scene": "summary",
+  "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+  "width": 1152
+}

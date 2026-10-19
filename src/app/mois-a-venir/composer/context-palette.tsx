@@ -78,18 +78,20 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
 
 export type PaletteQuestion = { title: string; identity?:string; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string };
-export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
+export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionPages, onQuestionPageChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
+  questionPages?:Readonly<Record<string,number>>; onQuestionPageChange?:(key:string,index:number)=>void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
 }) {
   const groups = question ? [] : displayEquipmentGroups(card, model);
   const assets = new Map(model.library.searchableAssets.map(asset => [asset.assetKey, asset]));
   const [mode, setMode] = useState<"complete" | "all">("complete"), [query, setQuery] = useState("");
   const options = useRef<HTMLDivElement>(null), optionsId = useId();
+  const questionFocus=useRef<HTMLElement|null>(null);
   const [scroll, setScroll] = useState({ before: false, after: false });
   const [answerPositions,setAnswerPositions]=useState<Record<string,number>>({}),[answerCount,setAnswerCount]=useState(4);
   const answerKey=JSON.stringify([question?.identity??"",question?.title,question?.search?.value??""]);
-  const answerPage=answerPositions[answerKey]??0;
-  const setAnswerPage=(page:number)=>setAnswerPositions(previous=>({...previous,[answerKey]:page}));
+  const answerPage=(questionPages??answerPositions)[answerKey]??0;
+  const setAnswerPage=(page:number)=>{if(onQuestionPageChange)onQuestionPageChange(answerKey,page);else setAnswerPositions(previous=>({...previous,[answerKey]:page}));};
   useLayoutEffect(()=>{
     if(appearance!=="bar"||!options.current)return;
     const node=options.current;
@@ -98,6 +100,12 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   },[appearance]);
   const answerPages=Math.max(1,Math.ceil((question?.choices.length??0)/answerCount));
   const currentAnswerPage=Math.min(answerPage,answerPages-1);
+  useLayoutEffect(()=>{
+    const prior=questionFocus.current;
+    if(appearance==="bar"&&typeof document!=="undefined"&&prior&&(!prior.isConnected||prior.matches(':disabled'))
+      &&(document.activeElement===document.body||document.activeElement===prior))
+      options.current?.focus({preventScroll:true});
+  },[appearance,answerKey,currentAnswerPage,answerCount]);
   const measureScroll = () => {
     if(appearance==="bar")return;
     const node = options.current;
@@ -118,7 +126,8 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
     .filter(group => group.tiles.length);
   const iconKey = model.presentation.objects[card.contextOccurrenceId]?.iconKey ?? "activity";
-  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-context-palette={card.contextOccurrenceId} data-question-dock aria-label={question.title}>
+  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-context-palette={card.contextOccurrenceId} data-question-dock aria-label={question.title}
+    onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}>
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>
       {question.search && <input disabled={appearance==="bar"&&busy} aria-label={question.search.label} placeholder={question.search.label} value={question.search.value} onChange={event => question.search!.change(event.target.value)} />}
       {appearance==="bar"?<BarPageControls index={currentAnswerPage} count={answerPages} onChange={setAnswerPage} label="Pages du dock"/>:<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
@@ -126,6 +135,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
         <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => options.current?.scrollBy({left:300,behavior:"smooth"})}><ChevronRight size={18} /></button>
       </div>}</header>
     <div ref={options} id={optionsId} className={styles.paletteOptions} style={appearance==="bar"?{gridTemplateColumns:`repeat(${answerCount}, minmax(0, 1fr))`}:undefined} data-palette-options onScroll={measureScroll} tabIndex={0} aria-label={question.title}
+      onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}
       onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();if(appearance==="bar")setAnswerPage(Math.max(0,Math.min(answerPages-1,currentAnswerPage+(event.key==="ArrowRight"?1:-1))));else event.currentTarget.scrollBy({left:event.key==="ArrowRight"?180:-180,behavior:"smooth"});}}}>
       {(appearance==="bar"?question.choices.slice(currentAnswerPage*answerCount,(currentAnswerPage+1)*answerCount):question.choices).map(choice => <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} disabled={busy} title={choice.hint} onFocus={event => {if(appearance!=="bar")event.currentTarget.scrollIntoView({block:"nearest",inline:"nearest"});}} onClick={choice.choose}>
           {appearance==="bar"&&(/^(bar|house_party):/u.test(choice.key)||choice.key==="shared")?<BarProductVisual assetKey={choice.key} label={choice.label}/>:appearance==="bar"&&choice.key.startsWith("option:night-out:")?<PlannerIcon iconKey={choice.iconKey} scale="PALETTE"/>:choice.symbol?<span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>:<PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}<span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>)}

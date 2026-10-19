@@ -1,0 +1,337 @@
+{
+  "at": "2026-10-19T10:34:21.929Z",
+  "project": "wlndjknwbceaqrqcwbqw",
+  "level": "REAL_SUPABASE_AUTH_JWT_POSTGREST_TEST_PROJECT",
+  "accounts": {
+    "A": {
+      "id": "03926eba-b2f9-4183-a30d-a35d63d7ea07"
+    },
+    "B": {
+      "id": "880d4968-ba1a-4713-9255-270cee9faee7"
+    },
+    "C": {
+      "id": "776f0cf9-b303-4510-95a9-34b6bf7d798e"
+    }
+  },
+  "checks": [
+    {
+      "id": "AUTH_REAL_4_SESSIONS_AND_ANONYMOUS",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "SAVE_READ_RENAME_ARCHIVE_RECOVER_RELOAD",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "HOMONYMS_DUPLICATE_ID_AND_STALE_VERSION",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "AUTH_SCOPE_B_SAME_HOUSEHOLD_C_OTHER_HOUSEHOLD",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "REAL_JWT_ROLES_RPC_AND_DIRECT_DML_DENIED",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "CONCURRENT_TWO_AUTH_SESSIONS_CAS_REPLAY",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "LOST_RESPONSE_REAL_COMMIT_RECONCILES_WITHOUT_SECOND_WRITE",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "MEMBERSHIP_REVOKED_OLD_REAL_JWT_DENIED",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "REAL_AUTH_TRANSACTION_FAILURE_NO_PARTIAL_PLACE",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "BANNED_ACCOUNT_OLD_JWT_RPC_DENIED",
+      "status": "PASS_REAL_AUTH"
+    }
+  ],
+  "trace": [
+    {
+      "requestId": "ebb21102-79cc-489b-8161-5a9670c4cd47",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "ebb21102-79cc-489b-8161-5a9670c4cd47",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "ebb21102-79cc-489b-8161-5a9670c4cd47",
+      "stage": "GOOGLE",
+      "status": "VERIFIED"
+    },
+    {
+      "requestId": "ebb21102-79cc-489b-8161-5a9670c4cd47",
+      "stage": "SQL",
+      "status": "SAVED"
+    },
+    {
+      "requestId": "0bcabc47-f58a-450b-9eb2-66366313084c",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "0bcabc47-f58a-450b-9eb2-66366313084c",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "0bcabc47-f58a-450b-9eb2-66366313084c",
+      "stage": "SQL",
+      "status": "SAVED"
+    },
+    {
+      "requestId": "fe81be65-ff0b-4340-8237-00870ba5bebb",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "fe81be65-ff0b-4340-8237-00870ba5bebb",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "fe81be65-ff0b-4340-8237-00870ba5bebb",
+      "stage": "SQL",
+      "status": "ARCHIVED"
+    },
+    {
+      "requestId": "fb383ea6-a4c7-47f5-bba8-a9e35a52d46e",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "fb383ea6-a4c7-47f5-bba8-a9e35a52d46e",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "fb383ea6-a4c7-47f5-bba8-a9e35a52d46e",
+      "stage": "GOOGLE",
+      "status": "VERIFIED"
+    },
+    {
+      "requestId": "fb383ea6-a4c7-47f5-bba8-a9e35a52d46e",
+      "stage": "SQL",
+      "status": "SAVED"
+    },
+    {
+      "requestId": "4152a275-c698-4ded-b244-21d2ad836294",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "4152a275-c698-4ded-b244-21d2ad836294",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "4152a275-c698-4ded-b244-21d2ad836294",
+      "stage": "GOOGLE",
+      "status": "VERIFIED"
+    },
+    {
+      "requestId": "4152a275-c698-4ded-b244-21d2ad836294",
+      "stage": "SQL",
+      "status": "SAVED"
+    },
+    {
+      "requestId": "a525a091-0e78-4ada-aac9-1d150c6bad94",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "a525a091-0e78-4ada-aac9-1d150c6bad94",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "a525a091-0e78-4ada-aac9-1d150c6bad94",
+      "stage": "GOOGLE",
+      "status": "VERIFIED"
+    },
+    {
+      "requestId": "a525a091-0e78-4ada-aac9-1d150c6bad94",
+      "stage": "SQL",
+      "status": "CONFLICT"
+    },
+    {
+      "requestId": "9f6a2919-4e52-4322-9fdf-b68622496b71",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "9f6a2919-4e52-4322-9fdf-b68622496b71",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "9f6a2919-4e52-4322-9fdf-b68622496b71",
+      "stage": "GOOGLE",
+      "status": "VERIFIED"
+    },
+    {
+      "requestId": "9f6a2919-4e52-4322-9fdf-b68622496b71",
+      "stage": "SQL",
+      "status": "CONFLICT"
+    },
+    {
+      "requestId": "294e010c-c0a2-4a2d-b390-4d1ee98c8924",
+      "stage": "SCOPE",
+      "status": "DENIED"
+    },
+    {
+      "requestId": "010fce87-d356-471b-a04d-b3be99071b89",
+      "stage": "SCOPE",
+      "status": "DENIED"
+    },
+    {
+      "requestId": "39884a4c-c6a3-4494-bdf9-f0115a740197",
+      "stage": "SCOPE",
+      "status": "DENIED"
+    },
+    {
+      "requestId": "904a3d33-7467-4703-97de-718de2e3201a",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "cac44fdd-779d-446a-97ae-58c4df47b847",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "904a3d33-7467-4703-97de-718de2e3201a",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "cac44fdd-779d-446a-97ae-58c4df47b847",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "cac44fdd-779d-446a-97ae-58c4df47b847",
+      "stage": "SQL",
+      "status": "CONFLICT"
+    },
+    {
+      "requestId": "904a3d33-7467-4703-97de-718de2e3201a",
+      "stage": "SQL",
+      "status": "SAVED"
+    },
+    {
+      "requestId": "04c2acaa-41d2-40e0-b2ad-422b35df8719",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "04c2acaa-41d2-40e0-b2ad-422b35df8719",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "04c2acaa-41d2-40e0-b2ad-422b35df8719",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "04c2acaa-41d2-40e0-b2ad-422b35df8719",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "04c2acaa-41d2-40e0-b2ad-422b35df8719",
+      "stage": "SQL",
+      "status": "SAVED"
+    },
+    {
+      "requestId": "04c2acaa-41d2-40e0-b2ad-422b35df8719",
+      "stage": "SQL",
+      "status": "SAVED"
+    },
+    {
+      "requestId": "04c2acaa-41d2-40e0-b2ad-422b35df8719",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "04c2acaa-41d2-40e0-b2ad-422b35df8719",
+      "stage": "REPLAY",
+      "status": "CONFLICT"
+    },
+    {
+      "requestId": "8ae2222b-5e96-4d18-b4c0-ea9bcf8294d2",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "8ae2222b-5e96-4d18-b4c0-ea9bcf8294d2",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "8ae2222b-5e96-4d18-b4c0-ea9bcf8294d2",
+      "stage": "SQL",
+      "status": "COMMIT_UNKNOWN"
+    },
+    {
+      "requestId": "8ae2222b-5e96-4d18-b4c0-ea9bcf8294d2",
+      "stage": "RECONCILE",
+      "status": "SAVED"
+    },
+    {
+      "requestId": "8ae2222b-5e96-4d18-b4c0-ea9bcf8294d2",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "8ae2222b-5e96-4d18-b4c0-ea9bcf8294d2",
+      "stage": "REPLAY",
+      "status": "SAVED"
+    },
+    {
+      "requestId": "3296920f-8c77-45f6-9773-00a8c5d16f05",
+      "stage": "SCOPE",
+      "status": "DENIED"
+    },
+    {
+      "requestId": "c81c0988-e751-42e0-8e6a-262d2bcdaa50",
+      "stage": "SCOPE",
+      "status": "ADMITTED"
+    },
+    {
+      "requestId": "c81c0988-e751-42e0-8e6a-262d2bcdaa50",
+      "stage": "REPLAY",
+      "status": "ABSENT"
+    },
+    {
+      "requestId": "c81c0988-e751-42e0-8e6a-262d2bcdaa50",
+      "stage": "GOOGLE",
+      "status": "VERIFIED"
+    },
+    {
+      "requestId": "c81c0988-e751-42e0-8e6a-262d2bcdaa50",
+      "stage": "SQL",
+      "status": "COMMIT_UNKNOWN"
+    },
+    {
+      "requestId": "c81c0988-e751-42e0-8e6a-262d2bcdaa50",
+      "stage": "RECONCILE",
+      "status": "ABSENT"
+    }
+  ],
+  "financialWrites": 0,
+  "accountsDisabled": true
+}

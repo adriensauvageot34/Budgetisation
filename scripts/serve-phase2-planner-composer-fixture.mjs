@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import {barP3Month,barP3Knowledge} from './fixtures/bar-apero-p3.mjs';
+import {bar350ReceptionMonth} from './fixtures/bar-apero-350-reception.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -8,6 +9,7 @@ import { execFileSync } from 'node:child_process';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { require } from './lib/phase2-ts-loader.mjs';
+import {readLiveProviderKeys} from './lib/bar-live-provider-keys.mjs';
 import { createKernelPostgres } from './lib/planner-kernel-postgres.mjs';
 import { fixture as plannerFixture, state as plannerState, simpleMonth, nightMonth, weekendMonth, renewalMonth, externalMonth, householdId } from './fixtures/planner-headless.mjs';
 import { providers } from './fixtures/planner-mobility.mjs';
@@ -30,8 +32,16 @@ const { appliedMobilitySummaries } = require('@/server/phase2/planner/mobility-p
 const { appliedPlanControls } = require('@/server/phase2/planner/applied-plan-read');
 const { AppliedMonthView } = require('@/app/mois-a-venir/applied-month-view');
 const { semanticStateDigest, parsePlanSemanticState } = require('@/domain/phase2/planner/semantic-state');
-// Every prospective provider is synthetic. Reject any accidental server network call.
-globalThis.fetch = async () => { throw new Error('FIXTURE_NETWORK_FORBIDDEN'); };
+// Explicit localhost opt-in only. No Supabase, redirects, or unbounded calls.
+const liveProviders=process.env.BAR_LOCAL_LIVE_PROVIDERS==='1';
+if(liveProviders)await readLiveProviderKeys();
+const nativeFetch=globalThis.fetch;let liveCalls=0;
+globalThis.fetch = async (input,init) => {
+ const url=new URL(input instanceof Request?input.url:input);
+ if(!liveProviders||!['places.googleapis.com','api.tomtom.com','router.hereapi.com','www.data.economie.gouv.fr'].includes(url.hostname)||url.protocol!=='https:'||++liveCalls>100)throw Error('FIXTURE_NETWORK_FORBIDDEN');
+ return nativeFetch(input,{...init,redirect:'error'});
+};
+const realGoogle=liveProviders?new (require('@/server/places/google-places').GoogleRestaurantPlaces)():null;
 const out = path.resolve(process.env.PLANNER_C8_BROWSER_OUTPUT ?? 'outputs/planner-c8-browser');
 fs.mkdirSync(out, { recursive: true });
 if (process.env.PLANNER_C8_PREBUILT !== '1') {
@@ -81,6 +91,9 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
   BAR_P3:barP3Month,
+  BAR16_GOOGLE:barP3Month,
+  BARLIVE_PERSONAL:barP3Month,
+  ...Object.fromEntries([0,1,2,4,10,15].map(count=>[`BAR350_${count}`,()=>bar350ReceptionMonth(count)])),
   P09: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P09C: p09CompatibilityMonth,
   P09S: p09CompatibilityMonth,
@@ -107,10 +120,18 @@ async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
     const pg = await createKernelPostgres(), fixture = (/^L4E_(5|16|30|50)$/u.test(key) ? () => l4eMonth(Number(key.slice(4))) : key.startsWith('L1_L33') ? () => l33Month(key.includes('DENSE')) : key.startsWith('L1_L31') ? () => l31Month(key.includes('DENSE')) : key.startsWith('L1') ? fixtures.L1 : p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
     if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
+    if(['BAR16_GOOGLE','BARLIVE_PERSONAL'].includes(key)){
+      owner.value.restaurant={details:async id=>({provider:'google_places',placeId:id,displayName:'Bar Google synthétique',formattedAddress:'Adresse synthétique, Bordeaux, France',types:['bar']})};
+      owner.value.route.geocode=async()=>({latitude:44.84,longitude:-0.58,source:'TOMTOM'});
+      if(liveProviders&&key==='BARLIVE_PERSONAL'){
+        const {TomTomRouteProvider,FrenchOfficialFuelPriceProvider,HereTollProvider}=require('@/server/phase2/planned-car-providers');
+        owner.value={restaurant:realGoogle,route:new TomTomRouteProvider(),fuel:new FrenchOfficialFuelPriceProvider(),toll:new HereTollProvider()};
+      }
+    }
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' },
         ...(key.startsWith('L1') ? [{ personId: '00000000-0000-4000-8000-000000000002', displayName: 'Camille Fixture' }] : [])],
-      readMobilityOptions: async()=>({places:fixture.world.mobilityFacts?.places ?? [],vehicle:fixture.world.mobilityFacts?.vehicle ?? null,...(key==='BAR_P3'?{vehicleIsUnique:true,placeKnowledge:barP3Knowledge}:{})}),
+      readMobilityOptions: async()=>({places:fixture.world.mobilityFacts?.places ?? [],vehicle:fixture.world.mobilityFacts?.vehicle ?? null,...(key==='BAR_P3'||key.startsWith('BAR350_')?{vehicleIsUnique:true,placeKnowledge:barP3Knowledge}:{})}),
       validateContextReferences: async (_household, refs) => {
         if (refs.placeIds.some(id=>!fixture.world.mobilityFacts?.places.some(p=>p.placeId===id))) throw new TypeError('CONTEXT_PLACE_NOT_ADMITTED');
         if (refs.personIds.some(id => id !== '00000000-0000-4000-8000-000000000001' && !(key.startsWith('L1') && id === '00000000-0000-4000-8000-000000000002'))) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
@@ -128,11 +149,34 @@ const item={type,x:e.clientX,y:e.clientY,source:e.target.closest?.('[data-drag-s
 if(type==='dragover'&&events.at(-1)?.type===type&&events.at(-1)?.board===item.board)return;events.push(item);if(events.length>60)events.shift();
 setTimeout(()=>{item.prevented=e.defaultPrevented;document.documentElement.setAttribute('data-l31-drag-trace',JSON.stringify(events));},0);
 },true);})();</script>`;
+let personalFixture;
 const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://127.0.0.1');
     const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
     const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
+    // Explicit synthetic provider surface, localhost only. Never proxies Google.
+    if(['BAR16_GOOGLE','BARLIVE_PERSONAL'].includes(key)&&request.method==='POST'&&['/api/places/autocomplete','/api/places/details'].includes(url.pathname)){
+      const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>4096)throw Error('FIXTURE_INPUT_TOO_LARGE');chunks.push(chunk);}
+      const input=JSON.parse(Buffer.concat(chunks).toString());response.setHeader('Content-Type','application/json');response.setHeader('Cache-Control','no-store');
+      const capabilities=key==='BARLIVE_PERSONAL'?{capabilities:{personalSavedPlaces:true}}:{};
+      if(liveProviders&&key==='BARLIVE_PERSONAL'){
+        if(input.context?.kind!=='BAR_APERO')throw Error('FIXTURE_GOOGLE_SCOPE_INVALID');
+        if(url.pathname.endsWith('autocomplete'))response.end(JSON.stringify({suggestions:await realGoogle.autocomplete(input.input,input.sessionToken??crypto.randomUUID(),input.context?.city??'Montpellier','BAR_APERO'),...capabilities}));
+        else response.end(JSON.stringify({place:await realGoogle.details(input.placeId,input.sessionToken,'BAR_APERO'),...capabilities}));return;
+      }
+      if(url.pathname.endsWith('autocomplete'))response.end(JSON.stringify({suggestions:[{source:'google_places',placeId:'ChIJ_bar16_synthetic',primaryText:'Bar Google synthétique',secondaryText:'Bordeaux · fixture sans fournisseur réel'}],...capabilities}));
+      else {if(input.placeId!=='ChIJ_bar16_synthetic'||input.context?.kind!=='BAR_APERO')throw Error('FIXTURE_GOOGLE_REF_INVALID');response.end(JSON.stringify({place:{provider:'google_places',placeId:input.placeId,displayName:'Bar Google synthétique',formattedAddress:'Adresse synthétique, Bordeaux, France',types:['bar']},...capabilities}));}return;
+    }
+    if(key==='BARLIVE_PERSONAL'&&url.pathname==='/api/places/personal'){
+      // Opt-in localhost fixture only; real SQL/service, synthetic Auth and Google.
+      personalFixture??=(await import('./lib/bar-personal-place-fixture.mjs')).personalPlaceFixture(realGoogle);
+      const owner=await personalFixture;response.setHeader('Content-Type','application/json');response.setHeader('Cache-Control','no-store');
+      if(request.method==='GET'){response.end(JSON.stringify(await owner.read()));return;}
+      if(request.method!=='POST'||request.headers.origin!==`http://${request.headers.host}`){response.statusCode=403;response.end('{}');return;}
+      const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>4096)throw Error('FIXTURE_INPUT_TOO_LARGE');chunks.push(chunk);}
+      const result=await owner.save(JSON.parse(Buffer.concat(chunks).toString()));response.statusCode=['SAVED','ARCHIVED'].includes(result.status)?200:409;response.end(JSON.stringify(result));return;
+    }
     if(p4Measuring&&url.pathname==='/p4-metrics'&&request.method==='POST'){
       if(!/^P4_[a-zA-Z0-9_-]{1,80}$/.test(key))throw Error('P4_SCENARIO_INVALID');
       const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>1000000)throw Error('P4_METRICS_TOO_LARGE');chunks.push(chunk);}
@@ -282,4 +326,4 @@ const server = http.createServer(async (request, response) => {
 });
 await store('A');
 server.listen(Number(process.env.PORT ?? 3108), '127.0.0.1', () => console.log(`C8 synthetic Composer ready http://127.0.0.1:${server.address().port} (no remote writes)`));
-process.on('SIGINT', async () => { server.close(); for (const promise of stores.values()) await (await promise).pg.close(); process.exit(); });
+process.on('SIGINT', async () => { server.close(); if(personalFixture)await(await personalFixture).close(); for (const promise of stores.values()) await (await promise).pg.close(); process.exit(); });

@@ -1,0 +1,172 @@
+{
+  "productSha": "3f04ac96ca4788b0aa9ecd8319336b80494969b0",
+  "previousProductSha": "8806f37c259361c9ed9782242520dc8a0e3ffcae",
+  "normalization": "STAGED_GIT_BYTES_NOT_WORKTREE_EOL",
+  "files": [
+    {
+      "file": "auth-clean-final-3f04.log",
+      "bytes": 158,
+      "sha256": "1e62119602a7fed094d663b408cee18c3b446c1020cab91a390d4c267ac66337"
+    },
+    {
+      "file": "auth-clean-replay.json",
+      "bytes": 566,
+      "sha256": "2b952597d3255cca51b526cc8a155664bdde2f4b10f80a465f1218964ce780eb"
+    },
+    {
+      "file": "auth-tests.json",
+      "bytes": 8196,
+      "sha256": "8a56518705716512aa3a10baab2b66d1d96d7bb4e5aca0decb454e9a3cee44f6"
+    },
+    {
+      "file": "browser/chosen-after-new-session.png",
+      "bytes": 76768,
+      "sha256": "4dd3617f773577158905e953cdaa78385a27460ff77df804dc06585e3dbf0870"
+    },
+    {
+      "file": "browser/conflict.png",
+      "bytes": 66550,
+      "sha256": "e0312a2b3958a889ed2ba285915a34d608c7f898b93f5bfed1585f5a7aa74dc5"
+    },
+    {
+      "file": "browser/reception.json",
+      "bytes": 1385,
+      "sha256": "4e10052741663cd7d7f5d09a71a07f748ac2c2eae1ce86387b7243626bb8be12"
+    },
+    {
+      "file": "browser/recovery.png",
+      "bytes": 72733,
+      "sha256": "7e3f05e9f13de64de9a21a7be24a478bea7c778c39759c461dae48264737f16e"
+    },
+    {
+      "file": "canonical-final.log",
+      "bytes": 25,
+      "sha256": "0f4eca2c428f5a9aa6d5697aa549105f18599bdb5f88cd922051b00870e24d1f"
+    },
+    {
+      "file": "canonical-tests.json",
+      "bytes": 1437,
+      "sha256": "c4f608a88186787745780d7093b1e88c04a8176aad463f3c30623a24d6684fc4"
+    },
+    {
+      "file": "check-bar-apero-economic-scope-final.log",
+      "bytes": 223,
+      "sha256": "4a9427786b9ad074c6d6675c834aaac49ee9e00bbf819cf8f96f69ced7564608"
+    },
+    {
+      "file": "check-bar-apero-google-route-final.log",
+      "bytes": 337,
+      "sha256": "2875c5e8d31b8bbd6423c9e728e61e6351cf4e68ea74cb5f9191af4438df93cc"
+    },
+    {
+      "file": "check-bar-apero-p1-final.log",
+      "bytes": 3464,
+      "sha256": "ef40a48582c4a83372f7f80e853f22c5777b68fe05f63e876bc5266252223c08"
+    },
+    {
+      "file": "check-bar-apero-p2-final.log",
+      "bytes": 3791,
+      "sha256": "2f855e95c63fcefce752fd2d97de0d932bc8f57f6f0a721a6b72a01378db45d7"
+    },
+    {
+      "file": "check-bar-apero-p3-final.log",
+      "bytes": 2217,
+      "sha256": "e20faf5ff886ce8d3fceca0127b4e9e82cd58485380d038af9d53b12117a16a3"
+    },
+    {
+      "file": "check-bar-apero-p4-final.log",
+      "bytes": 1535,
+      "sha256": "f3613757ddf4385682098bcc7875ff77673786659f2efbb8d8d93d95c4cebb3d"
+    },
+    {
+      "file": "check-bar-personal-places-ui-final.log",
+      "bytes": 862,
+      "sha256": "f28de496139ab78839755ab8f52496dc0fdb95ed91d7a581cc83a2a8de353ec1"
+    },
+    {
+      "file": "check-phase2-planned-car-final.log",
+      "bytes": 307,
+      "sha256": "dac665ddea93787272b345dbbfc33c803251916354d1367b9aaf230e1d64e949"
+    },
+    {
+      "file": "check-planner-performance-parity-final.log",
+      "bytes": 64,
+      "sha256": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+    },
+    {
+      "file": "fuel-cutoff-probe.json",
+      "bytes": 207,
+      "sha256": "16ccbfebe4978edac432558c1c3f8994b74816db25d349dd034141897820c24c"
+    },
+    {
+      "file": "handoff-clean-sha-replay.json",
+      "bytes": 17215,
+      "sha256": "fa05e686dd261697f27c56f1aaca308ec136406475060e11026c3dc00bfe15a9"
+    },
+    {
+      "file": "migration-reconciliation.json",
+      "bytes": 861,
+      "sha256": "5c25a81fc645b533d585dcc452797fa63fcc1d80a27a47a54facb0cc7095f931"
+    },
+    {
+      "file": "next-build-final.log",
+      "bytes": 2940,
+      "sha256": "76b87e21c990ef192238ac988a42d405b6e9ad2c72e47164d24034b4cd8ad3a3"
+    },
+    {
+      "file": "parity-final-3f04.log",
+      "bytes": 64,
+      "sha256": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+    },
+    {
+      "file": "providers-clean-sha.json",
+      "bytes": 26957,
+      "sha256": "cbcea587b126cdc2646d56c9d97591479776f9d731ba85d086cd8b703ff2e228"
+    },
+    {
+      "file": "reception-gate.log",
+      "bytes": 31,
+      "sha256": "deb64ad93b2f8a9ba96fc7f2220e681a998204ced5acdbf19a1a3141f28042c1"
+    },
+    {
+      "file": "security-final.json",
+      "bytes": 695,
+      "sha256": "d6b63c0395e549765ff1881c8275f8a3612793b60b7c03f72bbc6ba67b282a9a"
+    },
+    {
+      "file": "typecheck-final-3f04.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "typecheck-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "ui-cas-competitor.json",
+      "bytes": 85,
+      "sha256": "7ad244933d65a4573d933a6c401cd403c9cae5e800d379a54c32b46ce91faee8"
+    },
+    {
+      "file": "vercel-final-build.json",
+      "bytes": 28197,
+      "sha256": "0c32c4db25236a1ec981bd5c99b6143a198bd5fa6d66bdb42c7f8e9854a31b37"
+    },
+    {
+      "file": "vercel-http-lost-response-trusted.log",
+      "bytes": 60,
+      "sha256": "9d696fd5884b672e0b400a613a60bfc814fc1b87b86777f407279102e13559df"
+    },
+    {
+      "file": "vercel-http-lost-response.json",
+      "bytes": 319,
+      "sha256": "b656a0b45e37fe041896ca715eb9b68e8d1a2a59bad9f9ec3b7a46f8abe107cd"
+    },
+    {
+      "file": "vercel-http-lost-response.log",
+      "bytes": 24,
+      "sha256": "3db5cf61cd61514f774b4b1976d65b81a548d7996413ef11027dd626aa4c8661"
+    }
+  ]
+}

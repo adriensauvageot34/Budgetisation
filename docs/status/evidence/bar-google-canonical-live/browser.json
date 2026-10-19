@@ -1,0 +1,39 @@
+{
+  "sha": "bdbff62f492b60791bed9e8ac510f0552d3f393f",
+  "level": "PASS_LOCAL_BROWSER_SYNTHETIC_ONLY",
+  "viewport": {
+    "documentScrollWidth": 1280,
+    "height": 720,
+    "personalSection": {
+      "clientHeight": 44,
+      "height": 44,
+      "overflowY": "visible",
+      "scrollHeight": 44,
+      "width": 705.2625122070312
+    },
+    "width": 1280
+  },
+  "provider": "SYNTHETIC_GOOGLE",
+  "storage": "Exact candidate SQL in isolated PGlite process; survives page reload, not a remote Supabase persistence claim",
+  "auth": "SYNTHETIC_NOT_SUPABASE",
+  "checks": [
+    "Save favourite does not select a venue",
+    "RAW: question change prompts; cancel preserves exact text",
+    "Explicit save then archive then re-save succeeds",
+    "Explicit favourite selection then SAVED then Reload retains venue label",
+    "Favourite remains available on search reopen without a Google call",
+    "No Apply executed"
+  ],
+  "earlierCaptures": {
+    "personal-saved-final-local.png": "intermediate working tree before final RAW/receipt correction",
+    "personal-reloaded-local.png": "intermediate working tree",
+    "raw-protection-final-local.png": "bdbff62",
+    "archive-restored-final-local.png": "bdbff62",
+    "saved-reloaded-final-local.png": "bdbff62"
+  },
+  "limits": [
+    "No live Google/TomTom/HERE keys",
+    "No H1 authenticated World",
+    "No durable remote SQL activation"
+  ]
+}

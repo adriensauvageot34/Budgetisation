@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import Big from "big.js";
+import {CANONICAL_PEUGEOT_207} from "./vehicle-profile";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import { parseMobilityLegFact, type MobilityLegFact } from "../../analytics/facts/index";
@@ -11,7 +12,7 @@ import { parseMobilityLegFact, type MobilityLegFact } from "../../analytics/fact
 export const CANONICAL_MOBILITY_IMPORT_METHOD_VERSION = "canonical_mobility_xlsx@v1" as const;
 export const MOBILITY_LEG_FACT_METHOD_VERSION = "mobility_leg_projection@v1" as const;
 export const MOBILITY_ROUTE_METHOD_REF = "tomtom-car-fastest-live-traffic-disabled@v1" as const;
-export const MOBILITY_VEHICLE_MODEL_REF = "peugeot-207-1.4-vti95-bvm5-sp95@tomtom-v1" as const;
+export const MOBILITY_VEHICLE_MODEL_REF = CANONICAL_PEUGEOT_207.modelRef;
 
 const DATASET_NAMESPACE = "610f0cce-dde4-5b6b-9a2d-92c5d23226f5";
 const LEG_NAMESPACE = "2a2ab9bf-74c9-5bb7-8fe6-87b2eef13893";
@@ -611,7 +612,7 @@ export async function buildCanonicalMobilityImportPlan(input: {
     },
     vehicleCandidate: {
       vehicle_id: vehicleId, household_id: householdId, owner_person_id: null,
-      label: "Peugeot 207 2010 — 1.4 VTi 95 — SP95 — BVM5", fuel_type: "SP95", consumption_l_100km: null, status: "active",
+      label: CANONICAL_PEUGEOT_207.fullLabel, fuel_type: "SP95", consumption_l_100km: null, status: "active",
     },
     fuelPriceObservations: [...fuelPriceObservations.values()].sort((left, right) =>
       left.fuel_price_observation_id.localeCompare(right.fuel_price_observation_id)),

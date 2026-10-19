@@ -198,6 +198,6 @@ export function NightOutEditor({context,semanticState,householdPersons,creating=
     </fieldset>
     {embedded&&feedback&&<p role="alert">{feedback}</p>}
     {!embedded&&<footer className={styles.nightWorkshopFooter}><span data-night-persistence role={feedback?"alert":"status"} className={feedback?styles.nightWorkshopError:undefined}>{feedback??(dirty?"Saisie non confirmée":({SAVED:"Brouillon sauvegardé",SAVING:"Sauvegarde en cours",ERROR:"Erreur de sauvegarde · choix conservés",CONFLICT:"Conflit à vérifier",MEMORY:"Brouillon en mémoire"} as Record<string,string>)[saveStatus]??"À sauvegarder")}<small>{isFresh?`Coût connu : ${money(cost?.knownAmount??null)}${cost?.incomplete?" · à compléter":""}`:"Projection à actualiser"} · impact officiel dans le bandeau</small></span><div><button type="button" onClick={()=>{if(dirty){go("summary");return;}move("summary");}} disabled={busy}>Résumé</button><button type="button" onClick={onCancel} disabled={busy}>Quitter</button></div></footer>}
-    {dockHost&&card&&model&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure question={question} choose={chooseAsset} close={()=>go("menu")}/>,dockHost)}
+    {dockHost&&card&&model&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure appearance={embedded&&presetKey==="bar-apero"?"bar":undefined} question={question} choose={chooseAsset} close={()=>go("menu")}/>,dockHost)}
   </div>;
 }

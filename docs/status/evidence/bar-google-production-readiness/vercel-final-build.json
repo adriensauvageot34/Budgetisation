@@ -1,0 +1,1123 @@
+{
+  "result": {
+    "events": [
+      {
+        "created": 1792408367233,
+        "date": 1792408367233,
+        "type": "stdout",
+        "text": "Running build in Washington, D.C., USA (East) – iad1",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408367234,
+        "date": 1792408367234,
+        "type": "stdout",
+        "text": "Build machine configuration: 2 cores, 8 GB",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408367376,
+        "date": 1792408367376,
+        "type": "stdout",
+        "text": "Cloning github.com/adriensauvageot34/Budgetisation (Branch: codex/bar-apero-350-effective-closure, Commit: 3f04ac9)",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371483,
+        "date": 1792408371483,
+        "type": "stdout",
+        "text": "Cloning completed: 4.106s",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371576,
+        "date": 1792408371576,
+        "type": "stdout",
+        "text": "Found .vercelignore",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371594,
+        "date": 1792408371594,
+        "type": "stdout",
+        "text": "Removed 28 ignored files defined in .vercelignore",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371594,
+        "date": 1792408371594,
+        "type": "stdout",
+        "text": "  /.env.example",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371594,
+        "date": 1792408371594,
+        "type": "stdout",
+        "text": "  /.git/config",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371594,
+        "date": 1792408371594,
+        "type": "stdout",
+        "text": "  /.git/description",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371595,
+        "date": 1792408371595,
+        "type": "stdout",
+        "text": "  /.git/FETCH_HEAD",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371595,
+        "date": 1792408371595,
+        "type": "stdout",
+        "text": "  /.git/HEAD",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371595,
+        "date": 1792408371595,
+        "type": "stdout",
+        "text": "  /.git/hooks/applypatch-msg.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371595,
+        "date": 1792408371595,
+        "type": "stdout",
+        "text": "  /.git/hooks/commit-msg.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371595,
+        "date": 1792408371595,
+        "type": "stdout",
+        "text": "  /.git/hooks/fsmonitor-watchman.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371595,
+        "date": 1792408371595,
+        "type": "stdout",
+        "text": "  /.git/hooks/post-update.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371595,
+        "date": 1792408371595,
+        "type": "stdout",
+        "text": "  /.git/hooks/pre-applypatch.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371651,
+        "date": 1792408371651,
+        "type": "stdout",
+        "text": "Restored build cache from previous deployment (HU8xXLwEaBYg985DuxemYBErDJUm)",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371954,
+        "date": 1792408371954,
+        "type": "stdout",
+        "text": "Running \"vercel build\"",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408371962,
+        "date": 1792408371962,
+        "type": "stderr",
+        "text": "Vercel CLI 64.3.1",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408372354,
+        "date": 1792408372354,
+        "type": "stdout",
+        "text": "Installing dependencies...",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408372820,
+        "date": 1792408372820,
+        "type": "stderr",
+        "text": "npm warn Unknown env config \"cache-dir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373041,
+        "date": 1792408373041,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373042,
+        "date": 1792408373042,
+        "type": "stdout",
+        "text": "up to date in 584ms",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373042,
+        "date": 1792408373042,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373042,
+        "date": 1792408373042,
+        "type": "stdout",
+        "text": "23 packages are looking for funding",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373042,
+        "date": 1792408373042,
+        "type": "stdout",
+        "text": "  run `npm fund` for details",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373043,
+        "date": 1792408373043,
+        "type": "stderr",
+        "text": "npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373043,
+        "date": 1792408373043,
+        "type": "stderr",
+        "text": "npm warn install-scripts   sharp@0.34.5 (install: node install/check.js || npm run build)",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373043,
+        "date": 1792408373043,
+        "type": "stderr",
+        "text": "npm warn install-scripts",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373043,
+        "date": 1792408373043,
+        "type": "stderr",
+        "text": "npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373064,
+        "date": 1792408373064,
+        "type": "stdout",
+        "text": "Detected Next.js version: 16.2.6",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373067,
+        "date": 1792408373067,
+        "type": "stdout",
+        "text": "Running \"npm run build\"",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373140,
+        "date": 1792408373140,
+        "type": "stderr",
+        "text": "npm warn Unknown env config \"cache-dir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373153,
+        "date": 1792408373153,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373154,
+        "date": 1792408373154,
+        "type": "stdout",
+        "text": "> budgetisation@0.1.0 build",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373154,
+        "date": 1792408373154,
+        "type": "stdout",
+        "text": "> next build",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373154,
+        "date": 1792408373154,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373594,
+        "date": 1792408373594,
+        "type": "stdout",
+        "text": "  Applying modifyConfig from Vercel",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373690,
+        "date": 1792408373690,
+        "type": "stdout",
+        "text": "▲ Next.js 16.2.6 (Turbopack)",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373691,
+        "date": 1792408373691,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408373724,
+        "date": 1792408373724,
+        "type": "stdout",
+        "text": "  Creating an optimized production build ...",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408403309,
+        "date": 1792408403309,
+        "type": "stdout",
+        "text": "✓ Compiled successfully in 29.3s",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408403310,
+        "date": 1792408403310,
+        "type": "stdout",
+        "text": "  Running TypeScript ...",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408433466,
+        "date": 1792408433466,
+        "type": "stdout",
+        "text": "  Finished TypeScript in 30.2s ...",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408433469,
+        "date": 1792408433469,
+        "type": "stdout",
+        "text": "  Collecting page data using 1 worker ...",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434419,
+        "date": 1792408434419,
+        "type": "stdout",
+        "text": "  Generating static pages using 1 worker (0/8) ...",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434681,
+        "date": 1792408434681,
+        "type": "stdout",
+        "text": "  Generating static pages using 1 worker (2/8) \r",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434681,
+        "date": 1792408434681,
+        "type": "stdout",
+        "text": "  Generating static pages using 1 worker (4/8) \r",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434682,
+        "date": 1792408434682,
+        "type": "stdout",
+        "text": "  Generating static pages using 1 worker (6/8) \r",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434682,
+        "date": 1792408434682,
+        "type": "stdout",
+        "text": "✓ Generating static pages using 1 worker (8/8) in 262ms",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434754,
+        "date": 1792408434754,
+        "type": "stdout",
+        "text": "  Running onBuildComplete from Vercel",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434864,
+        "date": 1792408434864,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434866,
+        "date": 1792408434866,
+        "type": "stdout",
+        "text": "Route (app)",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434866,
+        "date": 1792408434866,
+        "type": "stdout",
+        "text": "┌ ƒ /",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434866,
+        "date": 1792408434866,
+        "type": "stdout",
+        "text": "├ ○ /_not-found",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ○ /acces-refuse",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ○ /analyse",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /analyse-globale",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/composer/activity-history",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/composer/drafts",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/composer/historical-basis",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/composer/preview",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/cron/composer-history",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/global-v2/query",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/persona-portrait/[name]",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/places/autocomplete",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/places/details",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/places/personal",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/places/photo",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/query",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /api/recette/bar-favoris",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /categorie/[slug]",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434867,
+        "date": 1792408434867,
+        "type": "stdout",
+        "text": "├ ƒ /connexion",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ƒ /diagnostic",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ƒ /historique",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ƒ /historique/[month]",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ƒ /historique/analyse/global",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ○ /imports",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ○ /mentions-places",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ƒ /mois-a-venir",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ƒ /mois-a-venir/composer",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ƒ /mois-a-venir/composer/preparer-historique",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ƒ /mois-a-venir/composer/preparer-socle",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ƒ /operations",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "├ ○ /parametres",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "└ ƒ /recette/bar-favoris",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "ƒ Proxy (Middleware)",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "○  (Static)   prerendered as static content",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "ƒ  (Dynamic)  server-rendered on demand",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408434868,
+        "date": 1792408434868,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408435430,
+        "date": 1792408435430,
+        "type": "stderr",
+        "text": "Build Completed in /vercel/output [1m]",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408435447,
+        "date": 1792408435447,
+        "type": "stdout",
+        "text": "Deploying outputs...",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408442361,
+        "date": 1792408442361,
+        "type": "stdout",
+        "text": "Deployment completed",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408442372,
+        "date": 1792408442372,
+        "type": "stdout",
+        "text": "Creating build cache...",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408450522,
+        "date": 1792408450522,
+        "type": "stdout",
+        "text": "Created build cache: 8s",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408450523,
+        "date": 1792408450523,
+        "type": "stdout",
+        "text": "Uploading build cache [172.40 MB]",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792408453023,
+        "date": 1792408453023,
+        "type": "stdout",
+        "text": "Build cache uploaded: 2.500s",
+        "info": {
+          "type": "build",
+          "name": "bld_jova1bmr0",
+          "entrypoint": "."
+        }
+      }
+    ]
+  },
+  "truncated": true,
+  "truncation": {
+    "arrays": 1,
+    "omittedArrayItems": 1,
+    "objects": 0,
+    "omittedObjectKeys": 0,
+    "strings": 0,
+    "omittedStringChars": 0,
+    "depth": 0,
+    "budget": 0
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "total": 350,
+  "baselineClosed": 235,
+  "newlyClosed": 18,
+  "statuts": {
+    "ALREADY_DONE_VERIFIED": 155,
+    "DONE_BROWSER_FIXTURE": 28,
+    "DONE_STATIC": 70,
+    "PARTIAL": 28,
+    "NOT_RUN": 60,
+    "BLOCKED_OWNER": 3,
+    "BLOCKED_ENV": 6
+  }
+}

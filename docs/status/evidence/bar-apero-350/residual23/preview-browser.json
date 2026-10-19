@@ -1,0 +1,6 @@
+{
+  "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+  "url": "https://budgetisation-ma10l6rq1-adriensauvageot34-6137s-projects.vercel.app/connexion?retour=%2Fmois-a-venir%2Fcomposer%3Fmonth%3D2026-11",
+  "verdict": "PREVIEW_ACCESSIBLE_LOGIN_REQUIRED; ISOLATED_AUTH_UI_WORLD_BLOCKED_BY_OWNER_PRECONDITIONS; no login or writer retry",
+  "authUi": "NOT_RUN"
+}

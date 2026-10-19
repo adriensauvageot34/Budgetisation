@@ -1,0 +1,54 @@
+{
+  "observedAt": "2026-10-19",
+  "method": "TWO_BOUNDED_REMOTE_READ_ONLY_METADATA_QUERIES_TIMEOUT_5S",
+  "project": "ipuuhxrblxormwgoaqnz",
+  "canonicalPlaces": {
+    "table": "public.referentiel_lieu",
+    "rls": true,
+    "policies": [],
+    "triggers": [],
+    "rolesWithExplicitTableGrants": [
+      "postgres",
+      "service_role"
+    ],
+    "googleIdColumn": false,
+    "externalMappingColumn": false,
+    "columns": [
+      "place_id",
+      "place_key",
+      "nom_canonique",
+      "nature_lieu",
+      "usage_principal",
+      "sous_type",
+      "parent_place_id",
+      "adresse",
+      "commune",
+      "region",
+      "pays",
+      "latitude_canonique",
+      "longitude_canonique",
+      "granularite",
+      "private_place",
+      "note"
+    ]
+  },
+  "candidateRelatedTables": [
+    "merchant_place_aliases",
+    "operation_place_links",
+    "person_place_roles"
+  ],
+  "matchingOwnerRoutines": [],
+  "existingAccessHelper": {
+    "function": "private.user_has_household_access(uuid)",
+    "owner": "postgres",
+    "securityDefiner": true,
+    "searchPath": "",
+    "basis": "auth.uid + private.household_memberships"
+  },
+  "h1": {
+    "globalPublished": false,
+    "canonicalIsH1": false,
+    "reactivated": false
+  },
+  "remoteWrites": 0
+}

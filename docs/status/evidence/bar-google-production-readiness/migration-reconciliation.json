@@ -1,0 +1,21 @@
+{
+  "project": "wlndjknwbceaqrqcwbqw",
+  "productionUsed": false,
+  "initialHistory": ["20261019103133_bar_personal_auth_test_project_bootstrap", "20261019103139_personal_google_places"],
+  "interruptedPlanMigrationApplied": false,
+  "planTablesPresent": false,
+  "draftTablePresent": false,
+  "retryPlanFoundation": "AUTO_REVIEW_REJECTED_NOT_EXECUTED_NO_INDIRECT_RETRY",
+  "saferAlternative": "IN_MEMORY_COMPOSER_FINANCIAL_FIXTURE_REAL_AUTH_AND_PERSONAL_RPC_ONLY",
+  "cleanupMigration": "20261019105701_bar_test_remove_transaction_fault",
+  "transactionFaultRemoved": true,
+  "retainedFavoriteUiVersion": 6,
+  "rpcOwner": "postgres",
+  "privateRpcSecurityDefiner": true,
+  "publicRpcSecurityInvoker": true,
+  "rpcSearchPath": "",
+  "ordinaryRpcExecute": false,
+  "serviceRpcExecute": true,
+  "directTableDml": false,
+  "productionMigration": "NOT_PERFORMED"
+}

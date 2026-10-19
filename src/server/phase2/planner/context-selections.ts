@@ -12,6 +12,8 @@ import { parseKernelCost, parseKernelFunding } from "./cost-resolver";
 import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
 import { parseJourneyDeclaration, parseMobilityPricing, parseProspectiveRoute, mobilityTime } from "./mobility-selections";
 import { validateComponentQuantity } from "@/domain/phase2/planner/component-quantity";
+import {parseNightOutVenue,parseVenueEndpoints,sameVenuePlace} from "@/domain/phase2/planner/night-out-venue";
+import {parseComponentEconomicScope} from "@/domain/phase2/planner/component-economic-scope";
 
 export function contextDate(raw: unknown, targetMonth: string): string | null {
   if (raw == null) return null;
@@ -67,6 +69,7 @@ function nightProductAssetRef(raw: unknown): PlannedAssetRef {
 }
 export function parseContextField(raw: unknown, field: ContextFieldDefinition, targetMonth: string): unknown {
   if (raw == null) return null;
+  if(field.semanticContract==="NIGHT_OUT_VENUE")return parseNightOutVenue(raw);
   if (field.kind === "PLANNED_ASSET_REF") return giftAssetRef(raw);
   if (field.kind === "DATE") return contextDate(raw, targetMonth);
   if (field.kind === "PERSON_REF") return person(raw);
@@ -106,19 +109,20 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
   const option = slot.options.find(o => o.optionKey === optionKey && o.kind === value.kind);
   if (!option) throw new TypeError("CONTEXT_COMPONENT_CAPABILITY_FORBIDDEN");
   if (value.kind === "MOBILITY_INTENT") {
-    plannerKeys(value, [...common, "origin", "destination", "returnRequired", "journey", "pricing", "plannedTime", "returnTime", "route"], common);
+    plannerKeys(value, [...common, "origin", "destination", "returnRequired", "journey", "pricing", "plannedTime", "returnTime", "route", "venueEndpoints"], common);
     if (value.returnRequired !== undefined && typeof value.returnRequired !== "boolean") throw new TypeError("CONTEXT_MOBILITY_RETURN_INVALID");
     if (value.returnTime != null && value.returnRequired !== true) throw new TypeError("JOURNEY_RETURN_TIME_REQUIRES_RETURN");
     if (value.route !== undefined && (option.mobilityMode !== "CAR"
       || value.journey !== undefined && parseJourneyDeclaration(value.journey)?.relation !== "OWNS_JOURNEY"))
       throw new TypeError("COMPOSER_ROUTE_OWNER_REQUIRED");
     return { ...identity, kind: "MOBILITY_INTENT", origin: place(value.origin), destination: place(value.destination), returnRequired: value.returnRequired === true,
+      ...(value.venueEndpoints===undefined?{}:{venueEndpoints:parseVenueEndpoints(value.venueEndpoints,{origin:place(value.origin),destination:place(value.destination)})}),
       ...(value.journey === undefined ? {} : { journey: parseJourneyDeclaration(value.journey) }),
       ...(value.pricing === undefined ? {} : { pricing: parseMobilityPricing(value.pricing) }),
       ...(value.route === undefined ? {} : { route: parseProspectiveRoute(value.route) }),
       plannedTime: mobilityTime(value.plannedTime), returnTime: mobilityTime(value.returnTime) };
   }
-  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", "lodgingPricing", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
+  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", "lodgingPricing", "economicScope", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
   const quantity = decisionAmount(value.quantity);
   if (value.unitBasis !== undefined && !["ITEM", "PERSON", "SHARED"].includes(String(value.unitBasis))) throw new TypeError("CONTEXT_UNIT_BASIS_INVALID");
   validateComponentQuantity(quantity, value.unitBasis, value.quantityEvidenceVersion, value.quantityPerPerson, value.pricedParticipantCount);
@@ -144,6 +148,7 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
     ...(value.unitBasis === undefined ? {} : { unitBasis: value.unitBasis as "ITEM" | "PERSON" | "SHARED" }),
     ...(perPerson === null ? {} : { quantityEvidenceVersion: "component-quantity@v1" as const, quantityPerPerson: perPerson, pricedParticipantCount: participantCount! }),
     ...(lodgingPricing ? { lodgingPricing } : {}),
+    ...(value.economicScope===undefined?{}:{economicScope:parseComponentEconomicScope(value.economicScope,selectionId)}),
     ...(value.productAssetRef === undefined ? {} : { productAssetRef: nightProductAssetRef(value.productAssetRef) }),
     ...(value.needOccurrenceId === undefined ? {} : { needOccurrenceId: plannerString(value.needOccurrenceId) }) };
 }
@@ -153,11 +158,12 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
     if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
       || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
-      && !["context-fields@v2", "context-fields@v3", ...(context.templateKey === "family-visit" ? ["context-fields@v4"] : context.templateKey === "short-stay" ? ["context-fields@v5"] : [])].includes(String(context.fields.fieldSchemaVersion)))
+      && !["context-fields@v2", "context-fields@v3", ...(context.templateKey === "night-out" ? ["context-fields@v6"] : context.templateKey === "family-visit" ? ["context-fields@v4"] : context.templateKey === "short-stay" ? ["context-fields@v5"] : [])].includes(String(context.fields.fieldSchemaVersion)))
       throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     parseContextField(context.fields[field.fieldKey], field, targetMonth);
   }
   const start = contextDate(context.fields.plannedDate, targetMonth), end = contextDate(context.fields.endDate, targetMonth);
+  if(context.fields.venueDecision!=null&&(context.fields.fieldSchemaVersion!=="context-fields@v6"||!sameVenuePlace(parseNightOutVenue(context.fields.venueDecision).place,place(context.fields.placeRef))))throw new TypeError("NIGHT_OUT_VENUE_CONTEXT_INVALID");
   if (start && end && end < start) throw new TypeError("CONTEXT_DATE_RANGE_INVALID");
   plannerKeys(plannerRecord(context.slotSelections), template.componentSlots.map(s => s.slotKey), []);
   return new Map(template.componentSlots.map(slot => {
@@ -186,6 +192,11 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
     if (context.templateKey === "short-stay" && slot.slotKey === "extras" && items.length && context.fields.fieldSchemaVersion !== "context-fields@v5")
       throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     for (const item of items) if (item.kind === "MOBILITY_INTENT") {
+      if(item.venueEndpoints&&(context.templateKey!=="night-out"||!["outbound","return"].includes(slot.slotKey)||item.returnRequired||item.journey&&item.journey.relation!=="OWNS_JOURNEY"))throw new TypeError("NIGHT_OUT_ENDPOINT_OWNER_INVALID");
+      if(item.venueEndpoints&&item.route?.stops.length)for(const key of ["origin","destination"] as const){
+        const binding=item.venueEndpoints[key],stop=key==="origin"?item.route.stops[0]:item.route.stops.at(-1);
+        if(binding&&(!stop||!sameVenuePlace(binding.venue.place,stop.placeId?{kind:"KNOWN",placeId:stop.placeId}:{kind:"TEXT",label:stop.label})))throw new TypeError("NIGHT_OUT_ENDPOINT_ROUTE_MISMATCH");
+      }
       if (item.plannedTime && !(slot.mobilityRole === "RETURN" ? end ?? start : start) || item.returnTime && !start)
         throw new TypeError("JOURNEY_TIME_REQUIRES_DATE");
       if (item.returnRequired && (!end || end === start) && item.plannedTime && item.returnTime && item.returnTime < item.plannedTime)
@@ -198,6 +209,16 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
 export function validateContextGraph(state: PlanSemanticStateV1) {
   const selections = new Map(state.contexts.filter(c => c.templateKey !== "kernel.generic")
     .map(c => [c.contextOccurrenceId, readContextSelections(c, state.targetMonth)]));
+  for(const context of state.contexts){
+    const entries=[...(selections.get(context.contextOccurrenceId)?.entries()??[])];
+    const all=entries.flatMap(([slot,items])=>items.map(item=>({slot,item}))),covered=new Set<string>();
+    for(const {slot,item} of all)if(item.kind==="COMPONENT"&&item.economicScope){
+      if(context.templateKey!=="night-out"||!["main","extras"].includes(slot))throw new TypeError("COMPONENT_ECONOMIC_SCOPE_OWNER_INVALID");
+      for(const id of item.economicScope.coveredSelectionIds){
+        if(covered.has(id)||all.some(other=>other.item.selectionId===id&&other.item!==item))throw new TypeError("COMPONENT_ECONOMIC_SCOPE_OVERLAP");covered.add(id);
+      }
+    }
+  }
   const links = new Map<string, Readonly<{ parentId: string; selection: ComponentSelectionV1 }>>();
   for (const context of state.contexts) for (const items of selections.get(context.contextOccurrenceId)?.values() ?? []) for (const item of items) {
     if (item.kind !== "CHILD_CONTEXT") continue;

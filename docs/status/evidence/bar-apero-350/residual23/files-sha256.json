@@ -1,0 +1,260 @@
+{
+  "productSha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+  "files": [
+    {
+      "name": "1152-date.png",
+      "method": "binary",
+      "sha256": "32a1d16013c87611fa97679c067d25c771b5b132508eeef8c421565e3f12e380"
+    },
+    {
+      "name": "1152-drinks.png",
+      "method": "binary",
+      "sha256": "7187135008923c4f74ebaea3700b59fa0db81f1048d5a4969cce970e45b60769"
+    },
+    {
+      "name": "1152-summary.png",
+      "method": "binary",
+      "sha256": "0b9c24ed9579c100c1d4fc193d9a1f828a1e161d00e7690093244082965291d2"
+    },
+    {
+      "name": "1440-date.png",
+      "method": "binary",
+      "sha256": "6fbdc78bef5b0a23a5f045b4dfb200119873b779cae7cb1d309dc4fa3492c22e"
+    },
+    {
+      "name": "1440-drinks.png",
+      "method": "binary",
+      "sha256": "2b00d68ec31195736d637e9b0d0e1e32710d9801c77ee6fd9df166b7d65fb41e"
+    },
+    {
+      "name": "1440-summary.png",
+      "method": "binary",
+      "sha256": "8f5d2a13012cfab76e490a4784bc41513d533efc0a12d9b8b8d0344831dfa1f3"
+    },
+    {
+      "name": "1920-date.png",
+      "method": "binary",
+      "sha256": "996849de618cd2c3b0341c5b4a1143cf99759c913868e3bddcfd3bb59e7a446f"
+    },
+    {
+      "name": "1920-drinks.png",
+      "method": "binary",
+      "sha256": "76d8dc52b6769df83f312bfda4c329d456ceff2dbf8c0af18587ecaae8da062d"
+    },
+    {
+      "name": "1920-summary.png",
+      "method": "binary",
+      "sha256": "87686b163a4f32a91e05b08b15211db78fc13f7c7bdaa1e17823120297a2c6af"
+    },
+    {
+      "name": "build-residual-baseline.cjs",
+      "method": "utf8_normalized_lf",
+      "sha256": "08d5effc4474ab800db28a8b043e59361e4322c3f81264a21193e4be45395943"
+    },
+    {
+      "name": "contrast-baseline-rendered.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "bcc7b66750c22dd62137a08f6bd91aa4d18f9817f57380a94afebefc005cd7e4"
+    },
+    {
+      "name": "contrast-rendered.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "972d81c3484ed074f40966e6e46fb3f08222645376f77f19603af3089d62b66c"
+    },
+    {
+      "name": "drag-after.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "d75fa24e687a059a4aec5cc8badd23b9434d2d143fbb5b858106a6fc1e0b3dfb"
+    },
+    {
+      "name": "drag-cancel-final.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "c87281fb556fe7136a232b3e77ff8ad55925ab4cf7343bdccdb9baa22a41f712"
+    },
+    {
+      "name": "drag-enter-without-over.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "6a4e3dfba6d4a3e4cc992ec21c77c8ff23e66ca5af591406f8bf7badd0c8b89d"
+    },
+    {
+      "name": "drag-final.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "1a2ef2a87680d756b4a46d22f4f6d2f55f2ef2f13244cb27537b218bab2c5d88"
+    },
+    {
+      "name": "drag-first-attempts.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "ba6c16205e5891a5372a6b72ed1d7f5d24a33abb6236d9c9af6c9d8c515d5336"
+    },
+    {
+      "name": "drag-undo.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "eb9f00037aacd4e490a7d27ff86c15289d30d1b49d176ced77d77553d1a394e7"
+    },
+    {
+      "name": "drag-undo.png",
+      "method": "binary",
+      "sha256": "1fb8fc652a2b12637f74b2173056a8ddf2aef589a529c4f5fdf1dbd79230fd2b"
+    },
+    {
+      "name": "final-drag-undo.png",
+      "method": "binary",
+      "sha256": "c1c26fadee98151cb0cb0af90e3f824986482ad8cdc58e0683343ec50720f55c"
+    },
+    {
+      "name": "geometry.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "03cd376d5cece2da4ece050ed25fdf0aeea3fd302449fc4c77074ea5dacbb672"
+    },
+    {
+      "name": "matrix-23.md",
+      "method": "utf8_normalized_lf",
+      "sha256": "c4d71d3e915606e7c7522c101e200e37130435f5813cdf74fcc8056f49ee6257"
+    },
+    {
+      "name": "metrics.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "0595abca269ad575d0f6a8466dcad2ee262ba7707cf4a0c7b42d578442e7706b"
+    },
+    {
+      "name": "owner-environment.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "5e6d0f4d5c82c9add0ac152fc6773e2a404dbc7bdce28a603f62af5be836a6f1"
+    },
+    {
+      "name": "owners.md",
+      "method": "utf8_normalized_lf",
+      "sha256": "8b491ece6baa12ff64ce73ade3e50f4c2b5c2bfaf756a692b2b0204bee50d67f"
+    },
+    {
+      "name": "preview-browser.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "f575d814eea541729cda0650b2b9227129d05969ed03c63a3327ddb572bcb911"
+    },
+    {
+      "name": "preview-login.png",
+      "method": "binary",
+      "sha256": "c8e85ea1a4c3415cc36a0dd0698a7783dae948da5d0a783a21cdbd34d070b845"
+    },
+    {
+      "name": "price-final-40.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "a64b6ba936953fa6fb307eb06994476e67ab6a8eafe7d36188048e62b9bb8568"
+    },
+    {
+      "name": "price-native-40.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "618feab411fa95da1303beb4328a4004f8073bda2b376e5fbcb17c54f365aefb"
+    },
+    {
+      "name": "raw-keyboard-final.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "d775c8f0516a7dcdd4f7e310351090b15ca38e8539300c18b4962fcdd0ec52df"
+    },
+    {
+      "name": "raw-keyboard.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "73dc6fdd6d592310716b98cda55b8619093f9f95d80320b6fe253a8354a15504"
+    },
+    {
+      "name": "receipt.md",
+      "method": "utf8_normalized_lf",
+      "sha256": "3a94ba2ea0de9254fdba5be9cdd0b4ca7bd486861d78760b7162f58d34f71cbd"
+    },
+    {
+      "name": "run-residual-tests.mjs",
+      "method": "utf8_normalized_lf",
+      "sha256": "95665e861b2ad060c204a8decee9a203febf70bbfac92f54779391f0edbedefb"
+    },
+    {
+      "name": "summarize-residual-metrics.mjs",
+      "method": "utf8_normalized_lf",
+      "sha256": "bc2e5b503a9b4b0066fd503109fa08342d324e31bfaab7d67dc04b96159b79f0"
+    },
+    {
+      "name": "test-c8.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "09e0d1e3ae8be456a928a465e244b4bada639eabe32f24ee09a8323300c84921"
+    },
+    {
+      "name": "test-p1.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "ef40a48582c4a83372f7f80e853f22c5777b68fe05f63e876bc5266252223c08"
+    },
+    {
+      "name": "test-p2.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "2f855e95c63fcefce752fd2d97de0d932bc8f57f6f0a721a6b72a01378db45d7"
+    },
+    {
+      "name": "test-p3.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "9d660f27fa45fd6d19ee91fcd4e176b63787f8ac2c4e64387a140811e1d86801"
+    },
+    {
+      "name": "test-p4.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "c63d4d0620c05c3b92a6ee9b0ad4864d7e0370be96273f6b045f7bc5f437920f"
+    },
+    {
+      "name": "test-parity.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+    },
+    {
+      "name": "test-react.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "8d088b79941bbcc95473020fcef3f6d7fd4ccf54258d710a05baec6d76c051c7"
+    },
+    {
+      "name": "test-types.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tests.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "c28716dca1c50706e8b38c488e256ad920c6e15e7858eda69d887d2bb84f1d16"
+    },
+    {
+      "name": "transitions-23.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "e52b2aa9cdb7c00e41fe2bac7e5da6d9e285914efd0bad9b73951b981393183e"
+    },
+    {
+      "name": "undo-keyboard.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "88127fee41d152a74fd3f9c893b17f6442c76f92cd30782811176f050c0dcffa"
+    },
+    {
+      "name": "undo-keyboard.png",
+      "method": "binary",
+      "sha256": "6050f5b7bfd5533dbb53969d99ae954a7a9694ea504e257fcf91569ef8ad8b41"
+    },
+    {
+      "name": "vercel-build.log",
+      "method": "utf8_normalized_lf",
+      "sha256": "a6655e0e3e1ec45794301bf645cbc33cdb45225eeb0727eedadf7ae146fb22ae"
+    },
+    {
+      "name": "vercel.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "79338ea3955b764ea0eb8cb0cb5fa551c9e6b2c638ff5312b59d50f0207655ca"
+    },
+    {
+      "name": "withdrawal-baseline-6.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "6ad78d5456e1a9f2defa414072fee4b6db3b363d4f3249bc2a27abbb3613c541"
+    },
+    {
+      "name": "withdrawal-candidate-6.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "a7d628350f722addc413494dfae45a0e0dabb0e215e2fbde622ec8ee752228f3"
+    },
+    {
+      "name": "zoom-native-attempt.json",
+      "method": "utf8_normalized_lf",
+      "sha256": "467b1145a94e20818661d6312d3677106210ed7cdce772a738754638c85886e1"
+    }
+  ]
+}

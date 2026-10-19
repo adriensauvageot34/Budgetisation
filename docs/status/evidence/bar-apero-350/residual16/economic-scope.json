@@ -1,0 +1,21 @@
+{
+  "proof": "LOCAL_DOMAIN_FINANCE_FIXTURE_ONLY",
+  "checks": [
+    {
+      "id": "EXACT_60_REPLACEMENT_PRESERVES_12_ROUTE_UNKNOWN",
+      "status": "PASS"
+    },
+    {
+      "id": "LEGACY_ADDITIVE_FUNDING_OVERLAP_AND_TAMPERING_REFUSED",
+      "status": "PASS"
+    },
+    {
+      "id": "BEFORE_AND_OTHER_SOCKETS_PRESERVED_BYTE_FOR_BYTE",
+      "status": "PASS"
+    },
+    {
+      "id": "NEW_SCOPE_PREVIEW_APPLY_RELOAD_ISOLATED_PGLITE_ONLY",
+      "status": "PASS"
+    }
+  ]
+}

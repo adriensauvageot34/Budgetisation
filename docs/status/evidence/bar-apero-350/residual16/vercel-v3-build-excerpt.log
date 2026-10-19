@@ -1,0 +1,16 @@
+Cloning github.com/adriensauvageot34/Budgetisation (Branch: codex/bar-apero-350-effective-closure, Commit: 7b9e111)
+npm warn install-scripts   sharp@0.34.5 (install: node install/check.js || npm run build)
+Detected Next.js version: 16.2.6
+Running "npm run build"
+> next build
+▲ Next.js 16.2.6 (Turbopack)
+✓ Compiled successfully in 48s
+  Running TypeScript ...
+  Finished TypeScript in 49s ...
+  Generating static pages using 1 worker (0/8) ...
+  Generating static pages using 1 worker (2/8) 
+  Generating static pages using 1 worker (4/8) 
+  Generating static pages using 1 worker (6/8) 
+✓ Generating static pages using 1 worker (8/8) in 442ms
+Build Completed in /vercel/output [2m]
+Deployment completed

@@ -202,5 +202,222 @@
     "niveau": "PASS_STATIC",
     "scope": "Checker and its seven negative controls executed at ac22d09; product tree remains exactly 4e0dc25.",
     "file_sha256_lf": "600300380c31911b90c2dc6f13f97fb22b9382c7c9962303027e386a4dd45a1a"
+  },
+  "CLOSURE_BROWSER": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-browser-results.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Campagne partielle réelle : dense15+9, tailles effectives1152/1440/1728/1920, lieux, RAW, prix, mode/véhicule, pagination. Pas Auth, Google réel final, zoom125 ni transitions complètes.",
+    "file_sha256_lf": "051f778a8a3495a391ceb313688171fe49cefb150a9e52509f80dc4f283769a7"
+  },
+  "CLOSURE_EMPTY": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-empty.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Bar vide final1152x720 hauteur245, métadonnées alignées; calendrier clavier1tabstop.",
+    "file_sha256_lf": "94eebc6582515ea872cc1b595cd224be06f0b0a0985bdc6139e454aab3624de9"
+  },
+  "CLOSURE_DRAFT": {
+    "path": "docs/status/evidence/bar-apero-350/closure/draft-service.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_SERVICE_FIXTURE",
+    "scope": "Service réel avec Supabase contrôlé : Before riche incomplet, réponse perdue sans double write, code57014 séparé, accès refusé et diagnostics expurgés. Pas RLS/Auth.",
+    "file_sha256_lf": "c362680c31fde2f79f59cf40dc03b7627fcf589ecab9def05b9c2dce90ce54c8"
+  },
+  "CLOSURE_HTTP": {
+    "path": "docs/status/evidence/bar-apero-350/closure/http.log",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_HTTP_FIXTURE",
+    "scope": "HTTP loopback réel, données synthétiques,7contrôles CAS/rich/38incomplet sans Apply.",
+    "file_sha256_lf": "c551667c215638d7dffb972dde1943c16a66b10bad5305c8b7cd1ee1d5212ce1"
+  },
+  "CLOSURE_PARITY": {
+    "path": "docs/status/evidence/bar-apero-350/closure/parity.log",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_FIXTURE",
+    "scope": "22x9=198 empreintes inchangées au code final.",
+    "file_sha256_lf": "06c4066fce9d353cdb15849d91453423790a72262b0606aedbfda63109b14c1f"
+  },
+  "CLOSURE_FINAL_TESTS": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-closure-tests.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_REACT_AND_OWNER_FIXTURE",
+    "scope": "12 commandes, tous codes0 sur79e3bf0; suites Bar, Draft/CAS, Apply synthétique, C8, TypeScript",
+    "file_sha256_lf": "7af1c7837d52279ab9bf6931bbe351beb827a105e11cfe359bb479072102cca4"
+  },
+  "CLOSURE_REACT": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-closure-react.log",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_REACT",
+    "scope": "24 groupes réels, dont navigation externe/RAW et capsule véhicule; aucun navigateur simulé revendiqué",
+    "file_sha256_lf": "11adeb9d3a05c55b41cefac192c3384ecf6b0220e9102db2cac35d634d88fbf3"
+  },
+  "CLOSURE_ZOOM": {
+    "path": "docs/status/evidence/bar-apero-350/closure/final-native-zoom.json",
+    "sha": "79e3bf0dfb268ca6c5a1599cb7de82684f09e6ac",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Zoom navigateur natif125 réellement observé DPR1,25, dense1280x720; pas toutes scènes.",
+    "file_sha256_lf": "f3b991790316c9f0ff1df910f5b6a801932bfc4446187f66d1fe32c7dab95639"
+  },
+  "CLOSURE_BUILD": {
+    "path": "docs/status/evidence/bar-apero-350/closure/preview.json",
+    "sha": "aaec279b12d730ec49864088e9aef1533c19c3a9",
+    "niveau": "PASS_BUILD_ONLY",
+    "scope": "Vercel Preview READY, buildNext complet, arbre produit identique79e3bf0; pas preuve Auth ou navigateur.",
+    "file_sha256_lf": "5a5d9f774feed1d27927e986043e7585263c8d915933ea6b225c83ae49be675e"
+  },
+  "END_UI": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/geometry-receipt.json",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "PASS_BROWSER_FIXTURE",
+    "scope": "Measured scenes/rectangles and rAF frames in actual Codex browser. Local synthetic production bundle; actual viewports and excluded attempts recorded. Not Preview/Auth.",
+    "file_sha256_lf": "fb5718bee24531fc9c67660c1bc101d450598d1f9af4c62462fff9f8b1ba717e"
+  },
+  "END_REACT": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/tests.json",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "PASS_REACT",
+    "scope": "Full terminal gate at b1 + affected tests at90/a1, exact provenance retained; no relabelling old executions.",
+    "file_sha256_lf": "c77b31bfcb8c74497f0bee14434f93de2007ce225c8c031265097d872ae1b62b"
+  },
+  "END_AUTH": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/auth-http-reception.json",
+    "sha": "1624edcb77867f4861209283c69e666e1289e06a",
+    "niveau": "PASS_AUTH_REAL",
+    "scope": "Actual JWT HTTP save/reload/new session/CAS/archive on isolated Preview1624. Not integrated UI nor financial FRESH.",
+    "file_sha256_lf": "2eb844939e87cb69b3a40da2893fc3d651f189ed439c73c13f2b06e4f9e90504"
+  },
+  "END_AUTH_LIMIT": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/auth-receipt.md",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "AUTH_UI_BLOCKED",
+    "scope": "Writer authenticated pass; Global publication missing prevents isolated Composer UI.",
+    "file_sha256_lf": "4f7a65f905f6f5dc3c3363375dc899ff6453ff3ce0187066b4d1f3fde1613e26"
+  },
+  "END_OWNER": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/owner-google.md",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "BLOCKED_OWNER",
+    "scope": "Exact missing Canonical mapping/admission boundary, safe TEXT fallback.",
+    "file_sha256_lf": "8f8c9a01b763f439280213ef76abf1254a9ece185cb0691a55b350aae4c3fa45"
+  },
+  "END_PREVIEW": {
+    "path": "docs/status/evidence/bar-apero-350/finalisation/preview.json",
+    "sha": "ba949a65796850ecfaec83e0aba03566b82b9058",
+    "niveau": "BUILD_READY_NOT_UI",
+    "scope": "Final exact SHA READY; no authenticated functional Preview PASS.",
+    "file_sha256_lf": "9046dcc2bb461e5d795bc25640fae5a4d9a3cdd13299929172c43fbf442e29c1"
+  },
+  "R23_DESKTOP": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/receipt.md",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Native local desktop, scoped physical paths; not Auth/Preview functional PASS.",
+    "file_sha256_lf": "3a94ba2ea0de9254fdba5be9cdd0b4ca7bd486861d78760b7162f58d34f71cbd"
+  },
+  "R23_METRICS": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/metrics.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_BROWSER_FIXTURE_MEASUREMENT",
+    "scope": "40 native price inputs;6paired sequential removals; no robust P95 of6, no speed improvement claim.",
+    "file_sha256_lf": "0595abca269ad575d0f6a8466dcad2ee262ba7707cf4a0c7b42d578442e7706b"
+  },
+  "R23_NATIVE_DRAG": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/drag-final.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_BROWSER_FIXTURE_NATIVE_DRAG",
+    "scope": "Actual trusted native TRASH drop, removal, Undo, rich content, synthetic FRESH/SAVED.",
+    "file_sha256_lf": "1a2ef2a87680d756b4a46d22f4f6d2f55f2ef2f13244cb27537b218bab2c5d88"
+  },
+  "R23_GEOMETRY": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/geometry.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Nine actual scenes/three measured widths; final UI bytes identical, final probe-only delta qualified in receipt.",
+    "file_sha256_lf": "03cd376d5cece2da4ece050ed25fdf0aeea3fd302449fc4c77074ea5dacbb672"
+  },
+  "R23_TESTS": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/tests.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "PASS_REACT",
+    "scope": "Eight commands actually run on final product SHA;198/198 financial hashes unchanged.",
+    "file_sha256_lf": "c28716dca1c50706e8b38c488e256ad920c6e15e7858eda69d887d2bb84f1d16"
+  },
+  "R23_OWNER": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/owners.md",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "BLOCKED_OWNER",
+    "scope": "Missing published contracts and official Global preconditions; no owner bypass.",
+    "file_sha256_lf": "8b491ece6baa12ff64ce73ade3e50f4c2b5c2bfaf756a692b2b0204bee50d67f"
+  },
+  "R23_ENV": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/owner-environment.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "AUTH_UI_BLOCKED",
+    "scope": "Bounded read-only preconditions, no publication and wrong Canonical scope for H1.",
+    "file_sha256_lf": "5e6d0f4d5c82c9add0ac152fc6773e2a404dbc7bdce28a603f62af5be836a6f1"
+  },
+  "R23_PREVIEW": {
+    "path": "docs/status/evidence/bar-apero-350/residual23/vercel.json",
+    "sha": "661bd754699d490dfe3fa9fb9723f807cee3725e",
+    "niveau": "BUILD_READY_NOT_UI",
+    "scope": "Exact product commit READY full build; isolated functional Auth UI blocked.",
+    "file_sha256_lf": "79338ea3955b764ea0eb8cb0cb5fa551c9e6b2c638ff5312b59d50f0207655ca"
+  },
+  "R16_TESTS": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/tests.json",
+    "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+    "niveau": "PASS_REACT",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "ea089c7fd2924ac860e935e3855da8254ccaa1e077078e368916599fdad4f55c"
+  },
+  "R16_GOOGLE": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/google-route.json",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "PASS_DOMAIN_MOCK",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "afbe6cc52d35edf68f2e505e28b61be1bbd3a44fcd669d04808c0055dfaa2bd0"
+  },
+  "R16_FINANCE": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/economic-scope.json",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "PASS_PGLITE_SYNTHETIC",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "43fec3d24b9c1b96beb67dc1290f3f9855c7e800b5ef6b445be398a8685d42a1"
+  },
+  "R16_BROWSER": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/google-browser.json",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "0a9d59f92dfc3c98a83f3956cce5ef77493969492f81123827d440ccbdb25efe"
+  },
+  "R16_OWNER": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/owners.md",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "BLOCKED_OWNER",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "24dee0b63177f3c0886354bf331b37cfd84466088acce1b61c0b5f47b7966b76"
+  },
+  "R16_GEOMETRY": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/geometry.json",
+    "sha": "ec85e59d046063a7a1c286c08eb35e875b411e7a",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "3de047bcd5c48663805b4342890b78b60b75d71872feb2c03b7b60eebb635737"
+  },
+  "R16_PREVIEW": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/vercel.json",
+    "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+    "niveau": "BUILD_READY_NOT_AUTH",
+    "scope": "Residual16 only; scopes are distinct; no live-provider/Auth proof inferred",
+    "file_sha256_lf": "3d270d7f0ed8fb9d98f153920bfa55293282340319a1fb1499084b0008d0219d"
+  },
+  "R16_V3": {
+    "path": "docs/status/evidence/bar-apero-350/residual16/v3-browser.json",
+    "sha": "7b9e11199d098a3e56fe4fe39f8c439f1b7d879f",
+    "niveau": "PASS_BROWSER_FIXTURE_DESKTOP_LOCAL",
+    "scope": "Only final R143 endpoint filter is native-browser retested; financial and shared-owner suites rerun at final SHA. Rich geometry and other browser paths remain explicitly V2 evidence.",
+    "file_sha256_lf": "ff34af5802eec7d4c1da8479401688e7e01f1ec400d9cb75b44ca130f22acddf"
   }
 }

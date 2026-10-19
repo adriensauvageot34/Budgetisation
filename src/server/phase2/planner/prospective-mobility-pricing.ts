@@ -14,6 +14,7 @@ import { expandComposableContexts } from "./context-compiler";
 import { materializePlanSlots } from "./plan-slot-resolver";
 import { resolveJourneyRequirements } from "./journey-resolver";
 import type { HistoricalControlAdmission } from "./historical-control-admission";
+import {sameVenuePlace} from "@/domain/phase2/planner/night-out-venue";
 
 export const PROSPECTIVE_MOBILITY_PRICING_VERSION = "planner-existing-mobility-pricing@v1";
 export type MobilityProviders = Parameters<typeof estimatePlannedCar>[2];
@@ -29,7 +30,7 @@ export function stableMobilityEvidence<T>(value: T): ClocklessMobilityEvidence<T
   return value as ClocklessMobilityEvidence<T>;
 }
 export function journeyPricingDigest(journey: PhysicalJourneyRequirement, intent: MobilityIntent, world: PlanningWorldFacts) {
-  return plannerDigest(JSON.parse(JSON.stringify({ journey, pricing: intent.pricing ?? null, ...(intent.route ? { route: intent.route } : {}),
+  return plannerDigest(JSON.parse(JSON.stringify({ journey, pricing: intent.pricing ?? null, ...(intent.route ? { route: intent.route } : {}),...(intent.venueEndpoints?{venueEndpoints:intent.venueEndpoints}:{}),
     costQuotes: world.costQuotes, authority: world.mobilityFacts ? { vehicle: world.mobilityFacts.vehicle, places: world.mobilityFacts.places, history: world.mobilityFacts.history,
       personalAuthority: world.mobilityFacts.personalAuthority.outputHash, evidenceRefs: world.mobilityFacts.evidenceRefs } : null })));
 }
@@ -79,6 +80,13 @@ export async function preparePlanningMobility(world: PlanningWorldFacts, state: 
         const anchor = journey.stops.findIndex((ref, index) => index > 0 && plannerDigest(ref) === plannerDigest(intent.destination));
         const stops = intent.route?.stops ?? journey.stops.map((ref, index) => stopForPlace(ref, ref.kind === "KNOWN" ? facts.places.find(p => p.placeId === ref.placeId)?.name ?? ref.placeId : ref.label,
           index === anchor ? "ROOT_PLACE" : "DIRECT_PLACE"));
+        const googleEndpoints=(["origin","destination"] as const).flatMap(key=>{
+          const binding=intent.venueEndpoints?.[key],stopIndex=key==="origin"?0:stops.length-1,stop=stops[stopIndex];
+          if(!binding?.venue.google)return [];
+          if(intent.returnRequired||!stop||!sameVenuePlace(binding.venue.place,intent[key])||!sameVenuePlace(binding.venue.place,journey.stops[key==="origin"?0:journey.stops.length-1])||stop.placeId||binding.venue.place.kind!=="TEXT"||stop.label!==binding.venue.place.label)throw new TypeError("NIGHT_OUT_ENDPOINT_BINDING_INVALID");
+          return [{stopIndex,placeId:binding.venue.google.placeId,kind:"BAR_APERO" as const}];
+        });
+        const directedFacts={...facts,...(googleEndpoints.length?{googleEndpoints}:{})};
         const date = journey.outbound.kind === "DATED" ? journey.outbound.date : null;
         try {
           const input = { stops, plannedDate: date,
@@ -95,7 +103,7 @@ export async function preparePlanningMobility(world: PlanningWorldFacts, state: 
               estimatePlannedCar({ ...input, stops: stops.slice(split), plannedDate: timing.return.date, plannedTime: timing.return.time }, facts, admittedProviders) ]);
             return { ...outbound, status: outbound.status === "LIVE" && returning.status === "LIVE" ? "LIVE" as const : "PARTIAL" as const,
               snapshot: outbound.snapshot && returning.snapshot ? combineProspectiveCarJourney(outbound.snapshot, returning.snapshot, timing) : null };
-          })() : await estimatePlannedCar({ ...input, ...(timing ? { tripTiming: timing } : {}) }, facts, admittedProviders);
+          })() : await estimatePlannedCar({ ...input, ...(timing ? { tripTiming: timing } : {}) }, directedFacts, admittedProviders);
           snapshot = result.snapshot ? stableMobilityEvidence(result.snapshot) : null;
           economicFuel = result.snapshot?.fuelEconomicCost ?? null;
           toll = intent.route?.toll ? declaredCost(intent.route.toll, world) : result.snapshot?.toll.amount ?? null;

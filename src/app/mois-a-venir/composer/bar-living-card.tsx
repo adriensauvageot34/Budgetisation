@@ -25,7 +25,11 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
   const root=useRef<HTMLElement>(null),wasExpanded=useRef(false);
   useEffect(()=>{
     if(expanded||wasExpanded.current){const frame=requestAnimationFrame(()=>{
-      if(expanded&&root.current?.contains(document.activeElement)&&document.activeElement?.matches("input,textarea,select"))return;
+      const active=document.activeElement;
+      // Repacking can remount the card while the user is still in its dock.
+      // Keep that live focus, including buttons and the options group.
+      if(expanded&&active instanceof HTMLElement&&active!==document.body
+        &&(root.current?.contains(active)||active.closest('[data-bar-dock]')))return;
       root.current?.querySelector<HTMLButtonElement>(expanded?'button[aria-label="Replier la carte"]':"h3 button")?.focus({preventScroll:true});
     });wasExpanded.current=expanded;return()=>cancelAnimationFrame(frame);}
   },[expanded]);

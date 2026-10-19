@@ -1,0 +1,53 @@
+{
+  "at": "2026-10-19T05:10:07.900Z",
+  "sha": "1ef6334734814d1f6078b1ffc59a7d81fd62280e",
+  "boundary": "SERVER_SCRIPT_PUBLIC_POINTS_SYNTHETIC_WORLD_NO_SUPABASE",
+  "maxRequests": 70,
+  "requests": [
+    {
+      "host": "www.data.economie.gouv.fr",
+      "ordinal": 1,
+      "status": 200,
+      "ms": 503
+    }
+  ],
+  "checks": {
+    "REAL_GOOGLE": {
+      "status": "BLOCKED_CREDENTIALS_OR_SCOPE"
+    },
+    "REAL_FUEL_OFFICIAL": {
+      "status": "PASS_REAL_PROVIDER",
+      "result": {
+        "pricePerLiter": "2.245",
+        "source": "FR_GOV_FUEL_INSTANT_V2",
+        "methodRef": "fr-gov-sp95-local-median@v1",
+        "observedAt": "2026-10-19T00:50:00+00:00",
+        "calculatedAt": "2026-10-19T05:10:08.712Z",
+        "quality": "STALE",
+        "sampleCount": 5,
+        "radiusKm": 15,
+        "minimum": "2.141",
+        "maximum": "2.297"
+      }
+    },
+    "REAL_TOMTOM": {
+      "status": "BLOCKED_CREDENTIALS_OR_SCOPE"
+    },
+    "REAL_HERE": {
+      "status": "BLOCKED_CREDENTIALS_OR_SCOPE"
+    },
+    "REAL_BAR_HANDOFF": {
+      "status": "BLOCKED_CREDENTIALS_OR_SCOPE"
+    },
+    "NO_SUPABASE_WRITES": {
+      "status": "PASS",
+      "basis": "No Supabase client; fetch allowlist rejects every non-provider host. Synthetic world is in memory only."
+    }
+  },
+  "configuration": {
+    "GOOGLE_MAPS_API_KEY": false,
+    "TOMTOM_API_KEY": false,
+    "HERE_API_KEY": false
+  },
+  "hereErrors": []
+}

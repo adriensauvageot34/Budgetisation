@@ -51,7 +51,7 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
   const templates = publishContextRegistry().templates;
   const editors = view.library.searchableAssets.flatMap<ComposerEditor>(asset => {
     if (asset.kind === "CONTEXT_ASSET") return [{ assetKey: asset.assetKey, fields: resolveContextTemplate(asset.templateKey!).fields
-      .filter(f => f.fieldKey !== "fieldSchemaVersion" && f.kind !== "PLANNED_ASSET_REF").map(f => ({
+      .filter(f => f.fieldKey !== "fieldSchemaVersion" && f.kind !== "PLANNED_ASSET_REF" && !f.semanticContract).map(f => ({
       key: f.fieldKey, label: fieldLabels[f.fieldKey] ?? f.fieldKey, kind: f.kind as ComposerField["kind"], required: f.required,
       ...(f.choices ? { choices: f.choices.map(value => ({ value, label: choiceLabels[value] ?? value })) } : {}) })) as ComposerField[] }];
     if (asset.kind !== "SLOT_OPTION_ASSET") return [];
@@ -87,6 +87,7 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
   const mobilityOptions = view.semanticState.contexts.some(c => resolveContextTemplate(c.templateKey).fields.some(f => f.kind === "PLACE_REF")) && deps.readMobilityOptions
     ? await deps.readMobilityOptions(household) : undefined;
   return { ...view, householdPersons: deps.householdPersons ?? [],
+    ...(process.env.BAR_PERSONAL_PLACES_ENABLED==='1'?{personalGooglePlacesEnabled:true as const}:{}),
     ...(mobilityOptions ? { mobilityOptions: { vehicle: mobilityOptions.vehicle, vehicleIsUnique: mobilityOptions.vehicleIsUnique, placeKnowledge: mobilityOptions.placeKnowledge, places: mobilityOptions.places.map(p => ({
       placeId: p.placeId, name: p.name, commune: p.commune, nature: p.nature, usage: p.usage, subtype: p.subtype, privatePlace: p.privatePlace,
       relationships: p.relationships,
