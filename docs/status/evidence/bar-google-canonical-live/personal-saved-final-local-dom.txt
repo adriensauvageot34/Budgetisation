@@ -1,0 +1,271 @@
+- main:
+  - link "Centre de contrôle":
+    - /url: /mois-a-venir?month=2026-11&control=center
+    - text: Centre de contrôle
+  - heading "Composer · novembre 2026" [level=1]:
+    - text: Composer
+    - generic: · novembre 2026
+  - generic: Sauvegardé
+  - text: 17 éléments ·
+  - button "3 à préciser"
+  - generic "Projection financière du mois":
+    - button "Reste prévisionnel du mois Montant à préciser":
+      - generic: Reste prévisionnel du mois
+      - strong: Montant à préciser
+    - generic "Somme réservée dans le scénario, pas un mouvement bancaire":
+      - generic: Cagnottes réservées
+      - generic: 100,00 €
+    - generic: Projection actualisée · montants incomplets
+    - button "Les finances du mois":
+      - text: Les finances du mois
+  - button "Annuler la dernière modification du brouillon":
+  - button "Rétablir la modification du brouillon" [disabled]:
+  - generic "Terminez ou fermez le panneau de configuration avant d’appliquer le mois.":
+    - button "Transformer en Plan" [disabled]
+  - button "Options du mois":
+    - generic: Options
+  - complementary "Bibliothèque d’intentions":
+    - heading "Que veux-tu prévoir ?" [level=2]:
+      - button "Que veux-tu prévoir ?"
+    - navigation "Espaces de la bibliothèque":
+      - button "À ajouter" [pressed]
+      - button "À piloter"
+    - textbox "Rechercher une intention":
+      - /placeholder: Soirée, repas, achat…
+    - paragraph: Favoris locaux à ce navigateur · aucun budget engagé.
+    - heading "Sortir & faire la fête 7" [level=3]:
+      - button "Sortir & faire la fête 7" [expanded]:
+        - generic: ▾
+        - text: Sortir & faire la fête
+        - generic: "7"
+    - button "Soirée techno":
+      - generic: Soirée techno
+    - button "Épingler Soirée techno":
+    - button "Bar / Apéro":
+      - generic: Bar / Apéro
+    - button "Épingler Bar / Apéro":
+    - button "Boîte de nuit":
+      - generic: Boîte de nuit
+    - button "Épingler Boîte de nuit":
+    - button "Soirée chez des amis":
+      - generic: Soirée chez des amis
+    - button "Épingler Soirée chez des amis":
+    - button "Soirée chez nous":
+      - generic: Soirée chez nous
+    - button "Épingler Soirée chez nous":
+    - button "Concert":
+      - generic: Concert
+    - button "Épingler Concert":
+    - button "Autre intention · 1":
+      - generic: ▸
+      - text: Autre intention · 1
+    - heading "Manger & commander 6" [level=3]:
+      - button "Manger & commander 6":
+        - generic: ▸
+        - text: Manger & commander
+        - generic: "6"
+    - heading "Activités & loisirs 8" [level=3]:
+      - button "Activités & loisirs 8":
+        - generic: ▸
+        - text: Activités & loisirs
+        - generic: "8"
+    - heading "Acheter 9" [level=3]:
+      - button "Acheter 9":
+        - generic: ▸
+        - text: Acheter
+        - generic: "9"
+    - heading "Beauté & soins 11" [level=3]:
+      - button "Beauté & soins 11":
+        - generic: ▸
+        - text: Beauté & soins
+        - generic: "11"
+    - heading "Voir un proche 5" [level=3]:
+      - button "Voir un proche 5":
+        - generic: ▸
+        - text: Voir un proche
+        - generic: "5"
+    - heading "Week-ends & séjours 4" [level=3]:
+      - button "Week-ends & séjours 4":
+        - generic: ▸
+        - text: Week-ends & séjours
+        - generic: "4"
+    - heading "Maison & quotidien 9" [level=3]:
+      - button "Maison & quotidien 9":
+        - generic: ▸
+        - text: Maison & quotidien
+        - generic: "9"
+    - heading "Imprévus & autres 1" [level=3]:
+      - button "Imprévus & autres 1":
+        - generic: ▸
+        - text: Imprévus & autres
+        - generic: "1"
+  - region "Board du mois":
+    - heading "Votre mois prend forme" [level=2]
+    - generic: Socle · habitudes et enveloppes · intentions
+    - region:
+      - article:
+        - heading [level=3]: Charges fixes
+        - paragraph: 1 montant(s) connu(s) · 0 à préciser
+        - generic: Socle du mois · lecture seule dans Composer
+        - button: Voir les charges (1)
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Courses
+        - button:
+          - strong: 325,00 €
+        - generic: Référence du mois · pas une décision
+        - generic: Habituel 325,00 €
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Café au travail
+        - generic: Adrien
+        - button:
+          - strong: 1 occurrence
+        - button:
+          - strong: 1,00 €
+          - text: / occurrence
+        - generic: Prix de référence
+        - generic: "Coût du mois : 1,00 €"
+        - generic: Référence du mois · pas une décision
+        - generic: Habituel 1 occurrence(s)
+      - button:
+        - heading [level=3]: Restauration
+        - strong: 5 éléments
+        - generic: Ouvrir les objets
+        - generic: "+1"
+    - region:
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Coiffeur
+        - button:
+          - strong: 2 occurrences
+        - button:
+          - strong: 14,00 €
+          - text: / occurrence
+        - generic: Prix de référence
+        - generic: "Coût du mois : 28,00 €"
+        - generic: Référence du mois · pas une décision
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Tabac / vape
+        - button:
+          - strong: 60,00 €
+        - generic: Référence du mois · pas une décision
+        - generic: Habituel 60,00 €
+    - region "Page 3 sur 5":
+      - article "Bar / Apéro":
+        - button "Ouvrir Bar / Apéro"
+        - heading "Bar / Apéro" [level=3]:
+          - button "Bar / Apéro"
+        - button "Modifier l’estimation des consommations":
+          - strong: Coût à préciser
+        - generic "Actions de Bar / Apéro": ⋯
+        - button "Préserver Bar / Apéro":
+        - button "Replier la carte":
+        - generic "Configuration de Bar / Apéro":
+          - group "Composition de la sortie":
+            - navigation "Précisions de la sortie":
+              - button "← Ma sortie":
+                - text: ←
+                - generic: Ma sortie
+              - button "+ Trajet"
+              - button "Modifier le lieu" [pressed]:
+                - text: Lieu
+              - button "Modifier la date":
+                - text: Date
+              - button "Modifier les personnes · Personnes à préciser":
+                - text: Personnes
+            - region "Décision en cours":
+              - region "Chercher un bar avec Google Maps":
+                - region "Mes lieux personnels":
+                  - paragraph: "Dans mes lieux personnels : Mon bar de recette"
+                  - status: Enregistré dans mes lieux personnels. La sortie reste inchangée.
+                - generic: Google Maps
+                - link "Conditions et confidentialité de la recherche de lieux":
+                  - /url: /mentions-places
+                  - text: ⓘ
+                - strong: Bar Google synthétique
+                - paragraph: Adresse synthétique, Bordeaux, France
+                - button "Reprendre cette recherche"
+                - status: Ce bar peut être retenu sans créer de lieu enregistré. Son adresse sera relue pour le trajet.
+                - button "Retenir ce bar pour ma sortie"
+                - button "Garder seulement le nom libre"
+    - region:
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Synthetic adjustable saving
+        - button:
+          - strong: 100,00 €
+        - progressbar
+        - generic: Ajustable · déclaré 100,00 € · réservation / repère initial
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Vêtements
+        - button:
+          - strong: À définir
+        - generic: À définir · aucun choix retenu
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Maison petit
+        - button:
+          - strong: À définir
+        - generic: À définir · aucun choix retenu
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Jeux / numérique ponctuel
+        - button:
+          - strong: À définir
+        - generic: À définir · aucun choix retenu
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Visites famille · mobilité
+        - button [disabled]:
+          - strong: 1 occurrence
+        - generic: Référence du mois · pas une décision
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Trajets travail fixes
+        - button [disabled]:
+          - strong: 1 occurrence
+        - generic: Référence du mois · pas une décision
+        - generic: Habituel 1 occurrence(s)
+    - region:
+      - article:
+        - button:
+        - button:
+        - heading [level=3]: Besoin à préciser
+        - button [disabled]:
+          - strong: Occurrences à définir
+        - generic: À définir · aucun choix retenu
+    - navigation "Pages du mois":
+      - button "Page précédente du mois":
+        - text: Précédente
+      - generic: Page 3 sur 5
+      - button "Afficher la page 1": "1"
+      - button "Afficher la page 2": "2"
+      - button "Afficher la page 3": "3"
+      - button "Afficher la page 4": "4"
+      - button "Afficher la page 5": "5"
+      - button "Page suivante du mois":
+        - text: Suivante
+    - region "Le lieu de ta sortie":
+      - heading "Le lieu de ta sortie" [level=3]
+      - generic "Le lieu de ta sortie":
+        - button "Lieux enregistrés":
+          - strong: Lieux enregistrés
+        - button "Nom libre":
+          - strong: Nom libre
+        - button "Plus tard":
+          - strong: Plus tard
+  - generic: À préciser
+  - status: Brouillon simulé par le Compiler/V2.

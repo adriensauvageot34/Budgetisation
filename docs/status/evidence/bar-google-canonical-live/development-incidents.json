@@ -1,0 +1,34 @@
+[
+  {
+    "id": "P3_EXTRA_READ",
+    "observed": "P3_GOOGLE_FICHE_RESUMES_TRANSIENTLY_WITHOUT_ADOPTION_OR_STALE_RESPONSE: 1 !== 0",
+    "source": "Observed tool output; original full run log not retained",
+    "fixed": "Capability-gated mount. Existing original assertion unchanged; final rerun PASS."
+  },
+  {
+    "id": "ARCHIVE_VERSION_READ",
+    "observed": "Review found READ excluded archived row, preventing UI re-save at expected version after reopen.",
+    "fixed": "READ returns private SAVED and ARCHIVED rows; suggestions filter SAVED. SQL tests assert archive version survives reread."
+  },
+  {
+    "id": "SUPERSEDED_RECEIPT",
+    "observed": "Review found an old idempotent receipt could replace the current archived version in UI.",
+    "fixed": "Reconcile replay via current read; preserve receipt separately; UI never demotes a newer version.",
+    "tests": [
+      "EXACT_ID_DUPLICATE_CAS_REPLAY_DIFFERENT_PAYLOAD",
+      "UI_REPLAY_RECEIPT_NEVER_REPLACES_NEWER_ARCHIVE"
+    ]
+  },
+  {
+    "id": "LOCAL_NEXT_OUTILLAGE",
+    "observed": "Turbopack: Symlink [project]/node_modules points out of filesystem root",
+    "log": "next-build.log",
+    "resolution": "No repeated local build; full authorized Vercel build READY on exact product SHA."
+  },
+  {
+    "id": "FIRST_PUBLIC_FUEL_NETWORK",
+    "observed": "First restricted-network attempt failed; one authorized network attempt then HTTP200",
+    "source": "Observed tool output; full first JSON overwritten by second smoke",
+    "notAProductFailure": true
+  }
+]

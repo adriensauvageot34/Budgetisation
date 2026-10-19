@@ -1,0 +1,8 @@
+{
+  "remoteEnabled": false,
+  "path": "supabase/candidates/BAR_PERSONAL_GOOGLE_PLACES_REVIEW_DO_NOT_EXECUTE.sql",
+  "featureFlag": "BAR_PERSONAL_PLACES_ENABLED",
+  "sha256": "6E3EB69C1FCDC5BEABE4120ADE496D00E7031311C1003C5094F8EDEB3ADCA257",
+  "remoteExecuted": false,
+  "syntheticSqlExecuted": true
+}

@@ -1,0 +1,16 @@
+scripts/check-bar-personal-places-ui.mjs
+scripts/check-bar-personal-places.mjs
+scripts/lib/bar-personal-place-fixture.mjs
+scripts/serve-phase2-planner-composer-fixture.mjs
+scripts/smoke-bar-google-mobility-live.mjs
+src/app/api/places/personal/route.ts
+src/app/mois-a-venir/composer/bar-living-editor.tsx
+src/app/mois-a-venir/composer/bar-personal-places.tsx
+src/app/mois-a-venir/composer/bar-place-search.tsx
+src/domain/phase2/personal-google-place.ts
+src/domain/phase2/planner/composer-ui-contract.ts
+src/server/phase2/planner/composer-service.ts
+src/server/places/http.ts
+src/server/places/personal-google-place-store.ts
+src/server/places/personal-google-places.ts
+supabase/candidates/BAR_PERSONAL_GOOGLE_PLACES_REVIEW_DO_NOT_EXECUTE.sql

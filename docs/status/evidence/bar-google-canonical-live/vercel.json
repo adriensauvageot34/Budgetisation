@@ -1,0 +1,15 @@
+{
+  "productSha": "bdbff62f492b60791bed9e8ac510f0552d3f393f",
+  "deployment": "dpl_H5zcGzBDcGefPxUW78qrKNV22SnG",
+  "url": "https://budgetisation-dhhvfmy4c-adriensauvageot34-6137s-projects.vercel.app",
+  "state": "READY",
+  "target": "PREVIEW",
+  "branch": "codex/bar-apero-350-effective-closure",
+  "next": "16.2.6",
+  "compileSeconds": 50,
+  "typecheckSeconds": 52,
+  "staticPages": "8/8",
+  "authE2E": "NOT_RUN_AUTH",
+  "personalPlacesEnabled": false,
+  "productionPromotion": false
+}
