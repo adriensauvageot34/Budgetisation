@@ -6,7 +6,9 @@ const React=rr('react'),{create,act}=rr('react-test-renderer'),load=Module._load
 let authCalls=0,reads=0,writes=0,authDenied=false;
 Module._load=function(name,...args){
  if(name==='react')return React;
- if(name==='@/server/phase2/planner/runtime')return {authorizedPlanner:async()=>{authCalls++;if(authDenied)throw new (require('@/server/bootstrap/errors').BootstrapAuthenticationRequiredError)();return {userId:'f07b0000-0000-4000-8000-0000000000a1',householdId:'f07b0000-0000-4000-8000-000000000001'};}};
+ if(name==='@/server/phase2/planner/runtime')throw Error('PERSONAL_PLACES_MUST_NOT_REQUIRE_WORLD');
+ if(name==='@/server/bootstrap/auth')return {getAuthenticatedBootstrapClient:async()=>{authCalls++;if(authDenied)throw new (require('@/server/bootstrap/errors').BootstrapAuthenticationRequiredError)();return {user:{id:'f07b0000-0000-4000-8000-0000000000a1'},supabase:{}};}};
+ if(name==='@/server/bootstrap/queries')return {getCurrentHousehold:async()=>({householdId:'f07b0000-0000-4000-8000-000000000001'})};
  if(name==='@/server/places/personal-google-place-store')return {createPersonalPlaceStore:()=>({read:async()=>{reads++;return [];},replay:async()=>null,mutate:async()=>{writes++;return {status:'CONFLICT'};}})};
  return load.call(this,name,...args);
 };

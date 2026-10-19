@@ -11,7 +11,7 @@ import {readLiveProviderKeys} from './lib/bar-live-provider-keys.mjs';
 await readLiveProviderKeys();
 if (process.env.BAR_LIVE_ENV_FILE) process.loadEnvFile(process.env.BAR_LIVE_ENV_FILE);
 const {GoogleRestaurantPlaces}=require('@/server/places/google-places');
-const {TomTomRouteProvider,FrenchOfficialFuelPriceProvider,HereTollProvider}=require('@/server/phase2/planned-car-providers');
+const {TomTomRouteProvider,FrenchOfficialFuelPriceProvider,HereTollProvider,decodeTomTomPolyline,hereImportTrace}=require('@/server/phase2/planned-car-providers');
 const {estimatePlannedCar}=require('@/server/phase2/planned-car-estimation');
 const {preparePlanningMobility,stableMobilityEvidence}=require('@/server/phase2/planner/prospective-mobility-pricing');
 const {fuelEconomicCost}=require('@/domain/phase2/planned-car');
@@ -85,6 +85,21 @@ if(config.TOMTOM_API_KEY&&chosen)await check('REAL_TOMTOM',async()=>{
 });else blocked('REAL_TOMTOM');
 if(config.HERE_API_KEY&&config.TOMTOM_API_KEY&&outbound)await check('REAL_HERE',async()=>{
   const urban=await toll.estimateTolls(outbound);
+  if(process.env.BAR_HERE_TRACE_DIAGNOSTIC==='1'){
+    evidence.urbanGeometry=[];
+    for(const [direction,r] of [['OUTBOUND',outbound],['RETURN',returning]]){
+      const vertices=[];for(const g of r.geometry){const p=decodeTomTomPolyline(g.encodedPolyline,g.precision);if(vertices.length&&p.length&&JSON.stringify(vertices.at(-1))===JSON.stringify(p[0]))p.shift();vertices.push(...p);}
+      const rawErrors=[];
+      const rawProvider=new HereTollProvider(undefined,{cache:false,onError:e=>rawErrors.push(e),fetcher:async(url,init)=>{
+        const u=new URL(url);return bounded(url,u.pathname==='/v8/import'?{...init,body:JSON.stringify({trace:vertices})}:init);
+      }});
+      const normal=direction==='OUTBOUND'?urban:await toll.estimateTolls(r),raw=await rawProvider.estimateTolls(r);
+      evidence.urbanGeometry.push({direction,legs:r.geometry.length,vertices:vertices.length,densified:hereImportTrace(r).length,
+        maximumOriginalGapMeters:Math.round(Math.max(0,...vertices.slice(1).map((p,i)=>Math.hypot((p.lat-vertices[i].lat)*111320,(p.lng-vertices[i].lng)*111320*Math.cos(p.lat*Math.PI/180))))),
+        normal,raw,rawErrors});
+      assert.equal(raw.geometryHash,r.geometryHash);if(raw.status==='UNAVAILABLE')assert.equal(raw.amount,null);
+    }
+  }
   const motorwayInput={coordinates:[{latitude:43.67048,longitude:4.0129699,source:'USER_DECLARED'},{latitude:45.4761,longitude:4.8337799,source:'USER_DECLARED'}],plannedDate:null,plannedTime:null,timeKind:'DEPARTURE'};
   const motorway=await route.estimateCarRoute({...motorwayInput,preference:'FASTEST'}),paid=await toll.estimateTolls(motorway);
   const reverse=await route.estimateCarRoute({...motorwayInput,coordinates:[...motorwayInput.coordinates].reverse(),preference:'FASTEST'}),reverseToll=await toll.estimateTolls(reverse);

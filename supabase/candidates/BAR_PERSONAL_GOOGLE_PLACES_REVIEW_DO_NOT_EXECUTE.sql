@@ -66,6 +66,8 @@ begin
   v_request:=(p_command->>'requestId')::uuid;v_action:=p_command->>'action';
   -- One scope lock serializes different IDs and request replays. Hash collisions only serialize extra work.
   perform pg_advisory_xact_lock(hashtextextended(p_actor::text||':'||p_household::text,0));
+  -- Recheck revocation after acquiring a contended lock, not only before waiting.
+  if not exists(select 1 from private.household_memberships m join auth.users u on u.id=m.user_id where m.user_id=p_actor and m.household_id=p_household and (u.banned_until is null or u.banned_until<=now())) then return jsonb_build_object('status','DENIED');end if;
   select * into v_prior from private.personal_google_place_requests where owner_user_id=p_actor and household_id=p_household and request_id=v_request;
   if found then
     if v_prior.command<>p_command then return jsonb_build_object('status','CONFLICT');end if;

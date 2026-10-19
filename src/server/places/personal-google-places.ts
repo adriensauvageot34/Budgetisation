@@ -6,6 +6,7 @@ import {projectPlaceTypeCompatible} from '@/domain/phase2/restaurant-places';
 import {plannerUuid} from '@/domain/phase2/planner/json';
 
 export type PersonalPlaceScope=Readonly<{userId:string;householdId:string}>;
+export type PersonalPlaceTrace=(event:Readonly<{requestId:string;stage:'AUTH'|'SCOPE'|'REPLAY'|'GOOGLE'|'SQL'|'RECONCILE';status:string}>)=>void;
 export type PersonalPlaceResult={status:'SAVED'|'ARCHIVED';place:PersonalGooglePlace;replayed:boolean;currentPlace?:PersonalGooglePlace;superseded?:boolean}
   |{status:'CONFLICT'|'DENIED'|'PROVIDER_UNAVAILABLE'|'UNAVAILABLE'|'INVALID'};
 /** Storage is an explicit owner boundary. The only live adapter uses the
@@ -18,7 +19,7 @@ export interface PersonalPlaceStore {
 }
 export class PersonalGooglePlaces {
   constructor(private readonly store:PersonalPlaceStore,private readonly authorized:(scope:PersonalPlaceScope)=>Promise<boolean>,
-    private readonly google:Pick<GoogleRestaurantPlaces,'details'>=new GoogleRestaurantPlaces()){}
+    private readonly google:Pick<GoogleRestaurantPlaces,'details'>=new GoogleRestaurantPlaces(),private readonly trace?:PersonalPlaceTrace){}
   private async access(scope:PersonalPlaceScope){plannerUuid(scope.userId);plannerUuid(scope.householdId);return this.authorized(scope);}
   private async reconcile(scope:PersonalPlaceScope,result:PersonalPlaceResult):Promise<PersonalPlaceResult>{
     if(!('place' in result))return result;
@@ -29,9 +30,10 @@ export class PersonalGooglePlaces {
   async read(scope:PersonalPlaceScope){if(!await this.access(scope))throw new TypeError('PERSONAL_PLACE_DENIED');return this.store.read(scope);}
   async save(scope:PersonalPlaceScope,raw:unknown):Promise<PersonalPlaceResult> {
     const command=parsePersonalGooglePlaceCommand(raw);
-    if(!await this.access(scope))return {status:'DENIED'};
+    const event=(stage:Parameters<PersonalPlaceTrace>[0]['stage'],status:string)=>{try{this.trace?.({requestId:command.requestId,stage,status});}catch{/* Diagnostics must never alter a commit. */}};
+    if(!await this.access(scope)){event('SCOPE','DENIED');return {status:'DENIED'};}event('SCOPE','ADMITTED');
     // Reconcile a lost response before any fresh provider call or mutation.
-    try {const replay=await this.store.replay(scope,command);if(replay)return await this.reconcile(scope,replay);}catch{return {status:'UNAVAILABLE'};}
+    try {const replay=await this.store.replay(scope,command);event('REPLAY',replay?.status??'ABSENT');if(replay)return await this.reconcile(scope,replay);}catch{event('REPLAY','UNAVAILABLE');return {status:'UNAVAILABLE'};}
     let alreadyVerified=false;
     if(command.action==='SAVE'){
       try {const existing=(await this.store.read(scope)).find(p=>p.googlePlaceId===command.googlePlaceId);
@@ -42,11 +44,13 @@ export class PersonalGooglePlaces {
     if(command.action==='SAVE'&&!alreadyVerified){
       try {const detail=await this.google.details(command.googlePlaceId,undefined,'BAR_APERO');
         if(detail.provider!=='google_places'||detail.placeId!==command.googlePlaceId||!projectPlaceTypeCompatible(detail.types,'BAR_APERO'))return {status:'INVALID'};
-      }catch{return {status:'PROVIDER_UNAVAILABLE'};}
+        event('GOOGLE','VERIFIED');
+      }catch{event('GOOGLE','UNAVAILABLE');return {status:'PROVIDER_UNAVAILABLE'};}
     }
-    try {return await this.store.mutate(scope,command);}catch{
+    try {const result=await this.store.mutate(scope,command);event('SQL',result.status);return result;}catch{
+      event('SQL','COMMIT_UNKNOWN');
       // Do not send the mutation again after an indeterminate commit.
-      try {const replay=await this.store.replay(scope,command);return replay?await this.reconcile(scope,replay):{status:'UNAVAILABLE'};}catch{return {status:'UNAVAILABLE'};}
+      try {const replay=await this.store.replay(scope,command);event('RECONCILE',replay?.status??'ABSENT');return replay?await this.reconcile(scope,replay):{status:'UNAVAILABLE'};}catch{event('RECONCILE','UNAVAILABLE');return {status:'UNAVAILABLE'};}
     }
   }
 }

@@ -13,6 +13,7 @@ import {useWorkshopRaw} from './inline-edit-registry';
 export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-personal-place'}:{detail:SelectedRestaurantPlace|null;query:string;onChoose?:(label:string,ref:BarGoogleRef)=>void;rawTargetRef?:string}) {
   const [enabled,setEnabled]=useState(false),[places,setPlaces]=useState<PersonalGooglePlace[]>([]),[label,setLabel]=useState('');
   const [status,setStatus]=useState(''),[busy,setBusy]=useState(false),[page,setPage]=useState(0);
+  const [lastReceipt,setLastReceipt]=useState<{requestId:string;status:string;version?:number}|null>(null);
   const [rawVersion,setRawVersion]=useState(0);
   const [editingId,setEditingId]=useState<string|null>(null),[showArchives,setShowArchives]=useState(false);
   const generation=useRef(0),pending=useRef<{identity:string;requestId:string}|null>(null);
@@ -42,13 +43,14 @@ export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-perso
         const admitted=v.currentPlace?parsePersonalGooglePlace(v.currentPlace):receipt;
         if(admitted.id!==receipt.id||admitted.googlePlaceId!==id||admitted.version<receipt.version)throw Error('PERSONAL_PLACE_RESPONSE_INVALID');
         setPlaces(previous=>previous.some(p=>p.googlePlaceId===id&&p.version>admitted.version)?previous:[...previous.filter(p=>p.googlePlaceId!==id),admitted]);pending.current=null;
+        setLastReceipt({requestId,status:admitted.status,version:admitted.version});
         setEditingId(null);setLabel('');
         setStatus(v.superseded===true?'Cette demande avait été enregistrée. Une version plus récente a été relue.':action==='SAVE'?'Enregistré dans mes lieux personnels. La sortie reste inchangée.':'Retiré de mes suggestions. Archive conservée.');
-      }else setStatus(v.status==='CONFLICT'?'Ce lieu a changé ailleurs. Rouvrez la recherche pour relire sa version.':v.status==='DENIED'?'Enregistrement refusé. Votre sortie est conservée.':'Enregistrement non confirmé. Votre sortie est conservée ; vous pouvez réessayer.');
-    }catch{if(generation.current===ticket)setStatus('Enregistrement non confirmé. Réessayez pour vérifier la même demande, sans double écriture.');}
+      }else {setLastReceipt({requestId,status:v.status==='CONFLICT'?'CONFLICT':v.status==='DENIED'?'DENIED':'UNCONFIRMED'});setStatus(v.status==='CONFLICT'?'Ce lieu a changé ailleurs. Rouvrez la recherche pour relire sa version.':v.status==='DENIED'?'Enregistrement refusé. Votre sortie est conservée.':'Enregistrement non confirmé. Votre sortie est conservée ; vous pouvez réessayer.');}
+    }catch{if(generation.current===ticket){setLastReceipt({requestId,status:'HTTP_UNCONFIRMED'});setStatus('Enregistrement non confirmé. Réessayez pour vérifier la même demande, sans double écriture.');}}
     finally{if(generation.current===ticket)setBusy(false);}
   };
-  return <section aria-label="Mes lieux personnels" data-bar-personal-places>
+  return <section aria-label="Mes lieux personnels" data-bar-personal-places data-place-request-id={lastReceipt?.requestId} data-place-result={lastReceipt?.status} data-place-version={lastReceipt?.version}>
     {!detail&&<button type="button" disabled={busy} onClick={()=>guarded(()=>{setShowArchives(v=>!v);setPage(0);})}>{showArchives?'Mes lieux actifs':'Lieux archivés'}</button>}
     {!detail&&matches.slice(effectivePage*3,(effectivePage+1)*3).map(p=><div key={p.id}>
       <button type="button" onClick={()=>guarded(()=>onChoose?.(p.userLabel,{provider:'google_places',kind:'BAR_APERO',placeId:p.googlePlaceId}))}>{p.userLabel} · {p.status==='SAVED'?'Lieu personnel':'Archivé'}</button>

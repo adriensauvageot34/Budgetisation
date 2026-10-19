@@ -12,6 +12,7 @@ const {preparePlanningMobility}=require('@/server/phase2/planner/prospective-mob
 const {estimatePlannedCar}=require('@/server/phase2/planned-car-estimation');
 const {stopForPlace}=require('@/domain/phase2/planned-routes');
 const {CANONICAL_PEUGEOT_207,canonicalVehiclePresentation}=require('@/server/canonical/vehicle-profile');
+const {hereImportTrace}=require('@/server/phase2/planned-car-providers');
 const venue=(n=1)=>parseNightOutVenue({version:'night-out-venue@v1',decisionId:uuid(98000+n),place:{kind:'TEXT',label:'Synthetic bar '+n},google:{provider:'google_places',kind:'BAR_APERO',placeId:'ChIJ_fixture_'+n},provenance:'EXPLICIT_USER_DECISION'});
 const a=venue(),b=venue(2),world=fixture();
 const detail={provider:'google_places',placeId:a.google.placeId,displayName:'Synthetic bar',formattedAddress:'12 synthetic road, Bordeaux, France',types:['bar']};
@@ -25,6 +26,13 @@ const leg=(key='outbound')=>car({selectionId:'synthetic-'+key,origin:key==='outb
 const semantic=(slots={outbound:selections(leg())})=>state([],[{...night(98010,'60',slots),fields:{label:'Synthetic bar',fieldSchemaVersion:'context-fields@v6',venueDecision:a,placeRef:a.place}}]);
 const checks=[];
 async function test(id,run){try{await run();checks.push({id,status:'PASS'});console.log(id+' PASS');}catch(e){checks.push({id,status:'FAIL',message:e.message});console.error(id+' FAIL '+e.stack);}}
+await test('HERE_MULTILEG_DISTINCT_VERTEX_NEVER_DROPPED',()=>{
+ const encode=points=>{let lat=0,lng=0,s='';const n=v=>{v=v<0?~(v<<1):v<<1;let t='';while(v>=32){t+=String.fromCharCode((32|(v&31))+63);v>>=5;}return t+String.fromCharCode(v+63);};for(const p of points){const a=Math.round(p.lat*1e5),b=Math.round(p.lng*1e5);s+=n(a-lat)+n(b-lng);lat=a;lng=b;}return s;};
+ const a={lat:43.6,lng:3.89},b={lat:43.6001,lng:3.89},c={lat:43.6001,lng:3.8901},d={lat:43.6002,lng:3.8901};
+ const trace=hereImportTrace({geometry:[{encodedPolyline:encode([a,b]),precision:5},{encodedPolyline:encode([c,d]),precision:5}]});
+ assert.deepEqual(trace,[a,b,c,d]);
+ assert.deepEqual(hereImportTrace({geometry:[{encodedPolyline:encode([a,b]),precision:5},{encodedPolyline:encode([b,c]),precision:5}]}),[a,b,c]);
+});
 await test('GOOGLE_REF_STRICT_ROUND_TRIP',()=>{
  const s=semantic();validateContextGraph(s);assert.deepEqual(parsePlanSemanticState(JSON.parse(JSON.stringify(s))),s);
  const incomplete=semantic({outbound:selections({...leg(),route:{version:'composer-mobility-route@v1',vehicleRef:null,stops:[]}})});validateContextGraph(incomplete);

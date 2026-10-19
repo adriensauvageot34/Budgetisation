@@ -89,7 +89,13 @@ export function decodeTomTomPolyline(encoded: string, precision: number): { lat:
 }
 /** Densify only for HERE map matching, along the exact decoded line. No waypoint or bend is removed. */
 export function hereImportTrace(route: CarRouteFacts): { lat: number; lng: number }[] {
-  const vertices = route.geometry.flatMap((g, index) => { const points = decodeTomTomPolyline(g.encodedPolyline, g.precision); return index ? points.slice(1) : points; });
+  const vertices: { lat: number; lng: number }[] = [];
+  for (const leg of route.geometry) {
+    const points = decodeTomTomPolyline(leg.encodedPolyline, leg.precision), last = vertices.at(-1), first = points[0];
+    // Deduplicate only an identical shared endpoint. A distinct first vertex
+    // belongs to the original geometry and must not silently disappear.
+    vertices.push(...(last && first && last.lat === first.lat && last.lng === first.lng ? points.slice(1) : points));
+  }
   const trace: { lat: number; lng: number }[] = [];
   for (let i = 0; i < vertices.length; i++) {
     const point = vertices[i]!, previous = vertices[i - 1];

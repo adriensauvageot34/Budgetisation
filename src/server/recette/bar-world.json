@@ -1,0 +1,5655 @@
+{
+  "baseline": {
+    "version": "planning-baseline@v1",
+    "householdId": "11111111-1111-4111-8111-111111111111",
+    "targetMonth": "2026-11",
+    "knowledgeCutoff": "2026-10-05T10:00:00Z",
+    "structuralFacts": {
+      "resources": [
+        {
+          "factKey": "benefit:edenred",
+          "label": "benefit:edenred",
+          "value": {
+            "low": "0.00",
+            "central": "0.00",
+            "high": "0.00"
+          },
+          "dueDate": null,
+          "knowledge": "DECLARED",
+          "provenance": [
+            "CANONICAL_FACT"
+          ],
+          "sourceRefs": [
+            "month-inputs:facts"
+          ],
+          "metadata": {}
+        },
+        {
+          "factKey": "benefit:swile",
+          "label": "benefit:swile",
+          "value": {
+            "low": "0.00",
+            "central": "0.00",
+            "high": "0.00"
+          },
+          "dueDate": null,
+          "knowledge": "DECLARED",
+          "provenance": [
+            "CANONICAL_FACT"
+          ],
+          "sourceRefs": [
+            "month-inputs:facts"
+          ],
+          "metadata": {}
+        },
+        {
+          "factKey": "income:Digital Learning Contest",
+          "label": "Synthetic salary A",
+          "value": {
+            "low": "1000.00",
+            "central": "1000.00",
+            "high": "1000.00"
+          },
+          "knowledge": "ESTIMATED",
+          "provenance": [
+            "CANONICAL_FACT"
+          ],
+          "sourceRefs": [
+            "forecast:structural"
+          ],
+          "dueDate": null,
+          "metadata": {
+            "ownerAuthority": "synthetic-existing-owner@v1",
+            "nature": "CONTRACTUAL_EXPECTED",
+            "fundingPlan": "BANK_OR_OTHER"
+          }
+        },
+        {
+          "factKey": "income:Promotrans",
+          "label": "Synthetic salary B",
+          "value": {
+            "low": "1000.00",
+            "central": "1000.00",
+            "high": "1000.00"
+          },
+          "knowledge": "ESTIMATED",
+          "provenance": [
+            "CANONICAL_FACT"
+          ],
+          "sourceRefs": [
+            "forecast:structural"
+          ],
+          "dueDate": null,
+          "metadata": {
+            "ownerAuthority": "synthetic-existing-owner@v1",
+            "nature": "CONTRACTUAL_EXPECTED",
+            "fundingPlan": "BANK_OR_OTHER"
+          }
+        }
+      ],
+      "obligations": [
+        {
+          "factKey": "obligation:rent",
+          "label": "obligation:rent",
+          "value": {
+            "low": "500.00",
+            "central": "500.00",
+            "high": "500.00"
+          },
+          "knowledge": "ESTIMATED",
+          "provenance": [
+            "CANONICAL_FACT"
+          ],
+          "sourceRefs": [
+            "forecast:structural"
+          ],
+          "dueDate": null,
+          "metadata": {
+            "ownerAuthority": "synthetic-existing-owner@v1",
+            "nature": "CONTRACTUAL_EXPECTED",
+            "fundingPlan": "BANK_OR_OTHER"
+          }
+        }
+      ],
+      "savingsReservations": [
+        {
+          "reservationId": "00000000-0000-4000-8000-000000000700",
+          "label": "Synthetic adjustable saving",
+          "amount": "100.00",
+          "dueDate": null,
+          "adjustability": "ADJUSTABLE",
+          "source": "MONTH_INPUT",
+          "annualGoalRef": null,
+          "provenance": "CANONICAL_FACT",
+          "sourceRefs": [
+            "month-inputs:facts"
+          ]
+        },
+        {
+          "reservationId": "policy:safety-reserve",
+          "label": "Safety reserve",
+          "amount": "0.00",
+          "dueDate": null,
+          "adjustability": "PROTECTED",
+          "source": "MONTH_INPUT",
+          "annualGoalRef": null,
+          "provenance": "CANONICAL_FACT",
+          "sourceRefs": [
+            "month-inputs:facts"
+          ]
+        }
+      ],
+      "externalKnownContexts": []
+    },
+    "slots": [
+      {
+        "semanticKey": "clothing",
+        "controlKey": "clothing",
+        "kind": "AMOUNT",
+        "scope": {
+          "kind": "HOUSEHOLD"
+        },
+        "inclusion": "SUGGESTION_ONLY",
+        "baselineValue": {
+          "amount": "0.00",
+          "count": null,
+          "unitAmount": null,
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "sourceRefs": [
+          "simple:optional-policy"
+        ],
+        "knowledge": "NOT_APPLICABLE",
+        "provenance": [
+          "STRUCTURAL_DEFAULT"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_AMOUNT",
+            "availability": "AVAILABLE",
+            "reason": "OPTIONAL_USER_BUDGET"
+          }
+        ],
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "clothing",
+          "referenceKeys": [
+            "clothing"
+          ],
+          "ownershipGroup": "clothing",
+          "gate": "AVAILABLE",
+          "reason": null,
+          "optionalBudget": true,
+          "occurrenceModel": null,
+          "hardFloor": null
+        },
+        "planSlotId": "plan-slot:6a11d7cfc6b92787220e14bed39259fef89a683cc1af7ed8ffd877571695e4b0",
+        "slotIdentityKey": "HOUSEHOLD:household:clothing"
+      },
+      {
+        "semanticKey": "delivery",
+        "controlKey": "delivery",
+        "kind": "OCCURRENCE",
+        "scope": {
+          "kind": "HOUSEHOLD"
+        },
+        "inclusion": "CENTRAL",
+        "baselineValue": {
+          "amount": null,
+          "count": "1.00",
+          "unitAmount": "15.00",
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "sourceRefs": [
+          "simple:delivery"
+        ],
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "OCCURRENCE_COUNT",
+          "requiredSources": [
+            "BANK",
+            "EDENRED",
+            "SWILE"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:delivery-2026-01",
+                "synthetic-dining-13"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:delivery-2026-02",
+                "synthetic-dining-15"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:delivery-2026-03",
+                "synthetic-dining-17"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:delivery-2026-04",
+                "synthetic-dining-19"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:delivery-2026-05",
+                "synthetic-dining-21"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:delivery-2026-06",
+                "synthetic-dining-23"
+              ]
+            }
+          ],
+          "range": {
+            "low": "1.00",
+            "central": "1.00",
+            "high": "1.00"
+          },
+          "evidenceRefs": [
+            "operation:delivery-2026-01",
+            "operation:delivery-2026-02",
+            "operation:delivery-2026-03",
+            "operation:delivery-2026-04",
+            "operation:delivery-2026-05",
+            "operation:delivery-2026-06",
+            "synthetic-dining-13",
+            "synthetic-dining-15",
+            "synthetic-dining-17",
+            "synthetic-dining-19",
+            "synthetic-dining-21",
+            "synthetic-dining-23"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_COUNT",
+            "availability": "AVAILABLE",
+            "reason": null
+          }
+        ],
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "delivery",
+          "referenceKeys": [
+            "household-restaurants"
+          ],
+          "ownershipGroup": "household-dining",
+          "gate": "AVAILABLE",
+          "reason": null,
+          "optionalBudget": false,
+          "occurrenceModel": {
+            "version": "planner-simple-occurrences@v1",
+            "basis": "CANONICAL_OCCURRENCE",
+            "count": "1.00",
+            "unitAmount": "15.00"
+          },
+          "hardFloor": null
+        },
+        "planSlotId": "plan-slot:1b752e204ec8c43244426512f56795b3a620931f85794396c65088b2897cb6a0",
+        "slotIdentityKey": "HOUSEHOLD:household:delivery"
+      },
+      {
+        "semanticKey": "fast-food",
+        "controlKey": "fast-food",
+        "kind": "OCCURRENCE",
+        "scope": {
+          "kind": "HOUSEHOLD"
+        },
+        "inclusion": "CENTRAL",
+        "baselineValue": {
+          "amount": null,
+          "count": "1.00",
+          "unitAmount": "10.00",
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "sourceRefs": [
+          "simple:fast-food"
+        ],
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "OCCURRENCE_COUNT",
+          "requiredSources": [
+            "BANK",
+            "EDENRED",
+            "SWILE"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:fast-2026-01",
+                "synthetic-dining-12"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:fast-2026-02",
+                "synthetic-dining-14"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:fast-2026-03",
+                "synthetic-dining-16"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:fast-2026-04",
+                "synthetic-dining-18"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:fast-2026-05",
+                "synthetic-dining-20"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "operation:fast-2026-06",
+                "synthetic-dining-22"
+              ]
+            }
+          ],
+          "range": {
+            "low": "1.00",
+            "central": "1.00",
+            "high": "1.00"
+          },
+          "evidenceRefs": [
+            "operation:fast-2026-01",
+            "operation:fast-2026-02",
+            "operation:fast-2026-03",
+            "operation:fast-2026-04",
+            "operation:fast-2026-05",
+            "operation:fast-2026-06",
+            "synthetic-dining-12",
+            "synthetic-dining-14",
+            "synthetic-dining-16",
+            "synthetic-dining-18",
+            "synthetic-dining-20",
+            "synthetic-dining-22"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_COUNT",
+            "availability": "AVAILABLE",
+            "reason": null
+          }
+        ],
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "fast-food",
+          "referenceKeys": [
+            "household-restaurants"
+          ],
+          "ownershipGroup": "household-dining",
+          "gate": "AVAILABLE",
+          "reason": null,
+          "optionalBudget": false,
+          "occurrenceModel": {
+            "version": "planner-simple-occurrences@v1",
+            "basis": "CANONICAL_OCCURRENCE",
+            "count": "1.00",
+            "unitAmount": "10.00"
+          },
+          "hardFloor": null
+        },
+        "planSlotId": "plan-slot:116a1c88df9889d84e870f42f7be1a9461e4ab8fef646da4bc13182830ea7d74",
+        "slotIdentityKey": "HOUSEHOLD:household:fast-food"
+      },
+      {
+        "semanticKey": "games-digital",
+        "controlKey": "games-digital",
+        "kind": "AMOUNT",
+        "scope": {
+          "kind": "HOUSEHOLD"
+        },
+        "inclusion": "SUGGESTION_ONLY",
+        "baselineValue": {
+          "amount": "0.00",
+          "count": null,
+          "unitAmount": null,
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "sourceRefs": [
+          "simple:optional-policy"
+        ],
+        "knowledge": "NOT_APPLICABLE",
+        "provenance": [
+          "STRUCTURAL_DEFAULT"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_AMOUNT",
+            "availability": "AVAILABLE",
+            "reason": "OPTIONAL_USER_BUDGET"
+          }
+        ],
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "games-digital",
+          "referenceKeys": [
+            "games-digital"
+          ],
+          "ownershipGroup": "games-digital",
+          "gate": "AVAILABLE",
+          "reason": null,
+          "optionalBudget": true,
+          "occurrenceModel": null,
+          "hardFloor": null
+        },
+        "planSlotId": "plan-slot:cc21778bb4849148779e41faee04a51e083eb654ceb3040a6357167e5e546d7c",
+        "slotIdentityKey": "HOUSEHOLD:household:games-digital"
+      },
+      {
+        "semanticKey": "groceries",
+        "controlKey": "groceries",
+        "kind": "AMOUNT",
+        "scope": {
+          "kind": "HOUSEHOLD"
+        },
+        "inclusion": "CENTRAL",
+        "baselineValue": {
+          "amount": "325.00",
+          "count": null,
+          "unitAmount": null,
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "ECONOMIC_AMOUNT",
+          "requiredSources": [
+            "BANK",
+            "EDENRED",
+            "SWILE"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "300.00",
+              "minimum": "300.00",
+              "evidenceRefs": [
+                "food-month:2026-01",
+                "purchase:grocery-2026-01"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "310.00",
+              "minimum": "310.00",
+              "evidenceRefs": [
+                "food-month:2026-02",
+                "purchase:grocery-2026-02"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "320.00",
+              "minimum": "320.00",
+              "evidenceRefs": [
+                "food-month:2026-03",
+                "purchase:grocery-2026-03"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "330.00",
+              "minimum": "330.00",
+              "evidenceRefs": [
+                "food-month:2026-04",
+                "purchase:grocery-2026-04"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "340.00",
+              "minimum": "340.00",
+              "evidenceRefs": [
+                "food-month:2026-05",
+                "purchase:grocery-2026-05"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "350.00",
+              "minimum": "350.00",
+              "evidenceRefs": [
+                "food-month:2026-06",
+                "purchase:grocery-2026-06"
+              ]
+            }
+          ],
+          "range": {
+            "low": "312.50",
+            "central": "325.00",
+            "high": "337.50"
+          },
+          "evidenceRefs": [
+            "food-month:2026-01",
+            "food-month:2026-02",
+            "food-month:2026-03",
+            "food-month:2026-04",
+            "food-month:2026-05",
+            "food-month:2026-06",
+            "purchase:grocery-2026-01",
+            "purchase:grocery-2026-02",
+            "purchase:grocery-2026-03",
+            "purchase:grocery-2026-04",
+            "purchase:grocery-2026-05",
+            "purchase:grocery-2026-06"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "sourceRefs": [
+          "food:groceries"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_AMOUNT",
+            "availability": "AVAILABLE",
+            "reason": null
+          }
+        ],
+        "planSlotId": "plan-slot:3e19418ebe4140d5c0b4d6f4690dd6a9f0fbb2f16a68aae53437a66128fe337b",
+        "slotIdentityKey": "HOUSEHOLD:household:groceries",
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "groceries",
+          "referenceKeys": [
+            "groceries"
+          ],
+          "ownershipGroup": "groceries",
+          "gate": "AVAILABLE",
+          "reason": null,
+          "optionalBudget": false,
+          "occurrenceModel": null,
+          "hardFloor": null
+        }
+      },
+      {
+        "semanticKey": "home-small",
+        "controlKey": "home-small",
+        "kind": "AMOUNT",
+        "scope": {
+          "kind": "HOUSEHOLD"
+        },
+        "inclusion": "SUGGESTION_ONLY",
+        "baselineValue": {
+          "amount": "0.00",
+          "count": null,
+          "unitAmount": null,
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "sourceRefs": [
+          "simple:optional-policy"
+        ],
+        "knowledge": "NOT_APPLICABLE",
+        "provenance": [
+          "STRUCTURAL_DEFAULT"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_AMOUNT",
+            "availability": "AVAILABLE",
+            "reason": "OPTIONAL_USER_BUDGET"
+          }
+        ],
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "home-small",
+          "referenceKeys": [
+            "home-small"
+          ],
+          "ownershipGroup": "home-small",
+          "gate": "AVAILABLE",
+          "reason": null,
+          "optionalBudget": true,
+          "occurrenceModel": null,
+          "hardFloor": null
+        },
+        "planSlotId": "plan-slot:98e5aa43274d744b0119e62e711117a1dc7bde8a7fa95fe2905a3e31260f010f",
+        "slotIdentityKey": "HOUSEHOLD:household:home-small"
+      },
+      {
+        "semanticKey": "restaurants",
+        "controlKey": "restaurants",
+        "kind": "OCCURRENCE",
+        "scope": {
+          "kind": "HOUSEHOLD"
+        },
+        "inclusion": "CENTRAL",
+        "baselineValue": {
+          "amount": null,
+          "count": "2.00",
+          "unitAmount": "20.00",
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "sourceRefs": [
+          "simple:restaurants"
+        ],
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "OCCURRENCE_COUNT",
+          "requiredSources": [
+            "BANK",
+            "EDENRED",
+            "SWILE"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "purchase:restaurant-2026-01-0",
+                "purchase:restaurant-2026-01-1",
+                "synthetic-dining-0",
+                "synthetic-dining-1"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "purchase:restaurant-2026-02-0",
+                "purchase:restaurant-2026-02-1",
+                "synthetic-dining-2",
+                "synthetic-dining-3"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "purchase:restaurant-2026-03-0",
+                "purchase:restaurant-2026-03-1",
+                "synthetic-dining-4",
+                "synthetic-dining-5"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "purchase:restaurant-2026-04-0",
+                "purchase:restaurant-2026-04-1",
+                "synthetic-dining-6",
+                "synthetic-dining-7"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "purchase:restaurant-2026-05-0",
+                "purchase:restaurant-2026-05-1",
+                "synthetic-dining-8",
+                "synthetic-dining-9"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "purchase:restaurant-2026-06-0",
+                "purchase:restaurant-2026-06-1",
+                "synthetic-dining-10",
+                "synthetic-dining-11"
+              ]
+            }
+          ],
+          "range": {
+            "low": "2.00",
+            "central": "2.00",
+            "high": "2.00"
+          },
+          "evidenceRefs": [
+            "purchase:restaurant-2026-01-0",
+            "purchase:restaurant-2026-01-1",
+            "purchase:restaurant-2026-02-0",
+            "purchase:restaurant-2026-02-1",
+            "purchase:restaurant-2026-03-0",
+            "purchase:restaurant-2026-03-1",
+            "purchase:restaurant-2026-04-0",
+            "purchase:restaurant-2026-04-1",
+            "purchase:restaurant-2026-05-0",
+            "purchase:restaurant-2026-05-1",
+            "purchase:restaurant-2026-06-0",
+            "purchase:restaurant-2026-06-1",
+            "synthetic-dining-0",
+            "synthetic-dining-1",
+            "synthetic-dining-10",
+            "synthetic-dining-11",
+            "synthetic-dining-2",
+            "synthetic-dining-3",
+            "synthetic-dining-4",
+            "synthetic-dining-5",
+            "synthetic-dining-6",
+            "synthetic-dining-7",
+            "synthetic-dining-8",
+            "synthetic-dining-9"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_COUNT",
+            "availability": "AVAILABLE",
+            "reason": null
+          }
+        ],
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "restaurants",
+          "referenceKeys": [
+            "household-restaurants"
+          ],
+          "ownershipGroup": "household-dining",
+          "gate": "AVAILABLE",
+          "reason": null,
+          "optionalBudget": false,
+          "occurrenceModel": {
+            "version": "planner-simple-occurrences@v1",
+            "basis": "CANONICAL_OCCURRENCE",
+            "count": "2.00",
+            "unitAmount": "20.00"
+          },
+          "hardFloor": null
+        },
+        "planSlotId": "plan-slot:3c66ffa6fc2bcb7f90cf87e5e5be3d16403122113fd7d114b193b6fb474ab92b",
+        "slotIdentityKey": "HOUSEHOLD:household:restaurants"
+      },
+      {
+        "semanticKey": "tobacco-vape",
+        "controlKey": "tobacco-vape",
+        "kind": "AMOUNT",
+        "scope": {
+          "kind": "HOUSEHOLD"
+        },
+        "inclusion": "CENTRAL",
+        "baselineValue": {
+          "amount": "60.00",
+          "count": null,
+          "unitAmount": null,
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "sourceRefs": [
+          "simple:tobacco-vape"
+        ],
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "ECONOMIC_AMOUNT",
+          "requiredSources": [
+            "BANK"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "60.00",
+              "minimum": "60.00",
+              "evidenceRefs": [
+                "operation:tobacco-2026-01"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "60.00",
+              "minimum": "60.00",
+              "evidenceRefs": [
+                "operation:tobacco-2026-02"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "60.00",
+              "minimum": "60.00",
+              "evidenceRefs": [
+                "operation:tobacco-2026-03"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "60.00",
+              "minimum": "60.00",
+              "evidenceRefs": [
+                "operation:tobacco-2026-04"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "60.00",
+              "minimum": "60.00",
+              "evidenceRefs": [
+                "operation:tobacco-2026-05"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "60.00",
+              "minimum": "60.00",
+              "evidenceRefs": [
+                "operation:tobacco-2026-06"
+              ]
+            }
+          ],
+          "range": {
+            "low": "60.00",
+            "central": "60.00",
+            "high": "60.00"
+          },
+          "evidenceRefs": [
+            "operation:tobacco-2026-01",
+            "operation:tobacco-2026-02",
+            "operation:tobacco-2026-03",
+            "operation:tobacco-2026-04",
+            "operation:tobacco-2026-05",
+            "operation:tobacco-2026-06"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_AMOUNT",
+            "availability": "AVAILABLE",
+            "reason": null
+          }
+        ],
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "tobacco-vape",
+          "referenceKeys": [
+            "tobacco-vape"
+          ],
+          "ownershipGroup": "tobacco-vape",
+          "gate": "AVAILABLE",
+          "reason": null,
+          "optionalBudget": false,
+          "occurrenceModel": null,
+          "hardFloor": null
+        },
+        "planSlotId": "plan-slot:a18128686214435a96c12b335fc2dce2a9d3833e334dbb8857adb748bed036b8",
+        "slotIdentityKey": "HOUSEHOLD:household:tobacco-vape"
+      },
+      {
+        "semanticKey": "adrien-work-coffee",
+        "controlKey": "adrien-work-coffee",
+        "kind": "OCCURRENCE",
+        "scope": {
+          "kind": "PERSON",
+          "personId": "22222222-2222-4222-8222-222222222222"
+        },
+        "inclusion": "CENTRAL",
+        "baselineValue": {
+          "amount": null,
+          "count": "1.00",
+          "unitAmount": "1.00",
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "OCCURRENCE_COUNT",
+          "requiredSources": [
+            "BANK",
+            "SWILE"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-01",
+                "operation:coffee-2026-01"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-02",
+                "operation:coffee-2026-02"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-03",
+                "operation:coffee-2026-03"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-04",
+                "operation:coffee-2026-04"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-05",
+                "operation:coffee-2026-05"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-06",
+                "operation:coffee-2026-06"
+              ]
+            }
+          ],
+          "range": {
+            "low": "1.00",
+            "central": "1.00",
+            "high": "1.00"
+          },
+          "evidenceRefs": [
+            "food-month:2026-01",
+            "food-month:2026-02",
+            "food-month:2026-03",
+            "food-month:2026-04",
+            "food-month:2026-05",
+            "food-month:2026-06",
+            "operation:coffee-2026-01",
+            "operation:coffee-2026-02",
+            "operation:coffee-2026-03",
+            "operation:coffee-2026-04",
+            "operation:coffee-2026-05",
+            "operation:coffee-2026-06"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "sourceRefs": [
+          "food:adrien-work-coffee"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_COUNT",
+            "availability": "AVAILABLE",
+            "reason": null
+          }
+        ],
+        "planSlotId": "plan-slot:b2cc41db2c238e02d69fdeec74a88efc47100d92974135c5585343b6095e1c40",
+        "slotIdentityKey": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-coffee"
+      },
+      {
+        "semanticKey": "adrien-work-meals",
+        "controlKey": "adrien-work-meals",
+        "kind": "OCCURRENCE",
+        "scope": {
+          "kind": "PERSON",
+          "personId": "22222222-2222-4222-8222-222222222222"
+        },
+        "inclusion": "CENTRAL",
+        "baselineValue": {
+          "amount": null,
+          "count": "2.00",
+          "unitAmount": "8.00",
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "OCCURRENCE_COUNT",
+          "requiredSources": [
+            "BANK",
+            "SWILE"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-01",
+                "purchase:meal-Adrien-2026-01-0",
+                "purchase:meal-Adrien-2026-01-1"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-02",
+                "purchase:meal-Adrien-2026-02-0",
+                "purchase:meal-Adrien-2026-02-1"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-03",
+                "purchase:meal-Adrien-2026-03-0",
+                "purchase:meal-Adrien-2026-03-1"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-04",
+                "purchase:meal-Adrien-2026-04-0",
+                "purchase:meal-Adrien-2026-04-1"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-05",
+                "purchase:meal-Adrien-2026-05-0",
+                "purchase:meal-Adrien-2026-05-1"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-06",
+                "purchase:meal-Adrien-2026-06-0",
+                "purchase:meal-Adrien-2026-06-1"
+              ]
+            }
+          ],
+          "range": {
+            "low": "2.00",
+            "central": "2.00",
+            "high": "2.00"
+          },
+          "evidenceRefs": [
+            "food-month:2026-01",
+            "food-month:2026-02",
+            "food-month:2026-03",
+            "food-month:2026-04",
+            "food-month:2026-05",
+            "food-month:2026-06",
+            "purchase:meal-Adrien-2026-01-0",
+            "purchase:meal-Adrien-2026-01-1",
+            "purchase:meal-Adrien-2026-02-0",
+            "purchase:meal-Adrien-2026-02-1",
+            "purchase:meal-Adrien-2026-03-0",
+            "purchase:meal-Adrien-2026-03-1",
+            "purchase:meal-Adrien-2026-04-0",
+            "purchase:meal-Adrien-2026-04-1",
+            "purchase:meal-Adrien-2026-05-0",
+            "purchase:meal-Adrien-2026-05-1",
+            "purchase:meal-Adrien-2026-06-0",
+            "purchase:meal-Adrien-2026-06-1"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "sourceRefs": [
+          "food:adrien-work-meals"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_COUNT",
+            "availability": "AVAILABLE",
+            "reason": null
+          }
+        ],
+        "planSlotId": "plan-slot:0f6ace960189b8e29d73ff0172f35562a1bcd5129a60d6a3ac1bed9dafe215f6",
+        "slotIdentityKey": "PERSON:22222222-2222-4222-8222-222222222222:adrien-work-meals",
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "adrien-work-meals",
+          "referenceKeys": [
+            "adrien-work-meals"
+          ],
+          "ownershipGroup": "adrien-work-meals",
+          "gate": "AVAILABLE",
+          "reason": null,
+          "optionalBudget": false,
+          "occurrenceModel": {
+            "version": "planner-simple-occurrences@v1",
+            "basis": "WORK_LUNCH_DATE",
+            "count": "2.00",
+            "unitAmount": "8.00"
+          },
+          "hardFloor": null
+        }
+      },
+      {
+        "semanticKey": "hairdresser",
+        "controlKey": "habit:22222222-2222-4222-8222-222222222222:hairdresser",
+        "kind": "OCCURRENCE",
+        "scope": {
+          "kind": "PERSON",
+          "personId": "22222222-2222-4222-8222-222222222222"
+        },
+        "inclusion": "CENTRAL",
+        "baselineValue": {
+          "amount": null,
+          "count": "2",
+          "unitAmount": "14.00",
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "knowledge": "DECLARED",
+        "provenance": [
+          "USER_VALIDATED_HABIT"
+        ],
+        "sourceRefs": [
+          "habit:22222222-2222-4222-8222-222222222222:hairdresser"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_COUNT",
+            "availability": "AVAILABLE",
+            "reason": null
+          }
+        ],
+        "planSlotId": "plan-slot:3257c3b1cdd1bd88bbda9d47a8856a7b625b914121123db72cd0206d53a6dca1",
+        "slotIdentityKey": "PERSON:22222222-2222-4222-8222-222222222222:hairdresser"
+      },
+      {
+        "semanticKey": "manon-work-meals",
+        "controlKey": "manon-work-meals",
+        "kind": "OCCURRENCE",
+        "scope": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        },
+        "inclusion": "UNRESOLVED_RESERVE",
+        "baselineValue": {
+          "amount": null,
+          "count": null,
+          "unitAmount": "8.00",
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "OCCURRENCE_COUNT",
+          "requiredSources": [
+            "BANK",
+            "EDENRED"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-01",
+                "purchase:meal-Manon-2026-01-0",
+                "purchase:meal-Manon-2026-01-1"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-02",
+                "purchase:meal-Manon-2026-02-0",
+                "purchase:meal-Manon-2026-02-1"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-03",
+                "purchase:meal-Manon-2026-03-0",
+                "purchase:meal-Manon-2026-03-1"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-04",
+                "purchase:meal-Manon-2026-04-0",
+                "purchase:meal-Manon-2026-04-1"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-05",
+                "purchase:meal-Manon-2026-05-0",
+                "purchase:meal-Manon-2026-05-1"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-06",
+                "purchase:meal-Manon-2026-06-0",
+                "purchase:meal-Manon-2026-06-1"
+              ]
+            }
+          ],
+          "range": {
+            "low": "2.00",
+            "central": "2.00",
+            "high": "2.00"
+          },
+          "evidenceRefs": [
+            "food-month:2026-01",
+            "food-month:2026-02",
+            "food-month:2026-03",
+            "food-month:2026-04",
+            "food-month:2026-05",
+            "food-month:2026-06",
+            "purchase:meal-Manon-2026-01-0",
+            "purchase:meal-Manon-2026-01-1",
+            "purchase:meal-Manon-2026-02-0",
+            "purchase:meal-Manon-2026-02-1",
+            "purchase:meal-Manon-2026-03-0",
+            "purchase:meal-Manon-2026-03-1",
+            "purchase:meal-Manon-2026-04-0",
+            "purchase:meal-Manon-2026-04-1",
+            "purchase:meal-Manon-2026-05-0",
+            "purchase:meal-Manon-2026-05-1",
+            "purchase:meal-Manon-2026-06-0",
+            "purchase:meal-Manon-2026-06-1"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "UNKNOWN",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "sourceRefs": [
+          "food:manon-work-meals"
+        ],
+        "capabilities": [
+          {
+            "action": "SET_COUNT",
+            "availability": "AVAILABLE",
+            "reason": null
+          }
+        ],
+        "planSlotId": "plan-slot:d21d708264e145b80055fd2fb777c6d0d9197bbc43ed98e370c46a01f7ce8db4",
+        "slotIdentityKey": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+        "simpleAuthority": {
+          "version": "planner-simple-baseline@v1",
+          "domain": "manon-work-meals",
+          "referenceKeys": [
+            "manon-work-meals"
+          ],
+          "ownershipGroup": "manon-work-meals",
+          "gate": "NEEDS_NEW_INPUT",
+          "reason": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+          "optionalBudget": false,
+          "occurrenceModel": {
+            "version": "planner-simple-occurrences@v1",
+            "basis": "WORK_LUNCH_DATE",
+            "count": null,
+            "unitAmount": "8.00"
+          },
+          "hardFloor": null
+        }
+      },
+      {
+        "semanticKey": "mobility:FAMILY_VISIT",
+        "controlKey": null,
+        "kind": "OCCURRENCE",
+        "scope": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        },
+        "inclusion": "SUGGESTION_ONLY",
+        "baselineValue": {
+          "amount": null,
+          "count": "1.00",
+          "unitAmount": null,
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "OCCURRENCE_COUNT",
+          "requiredSources": [
+            "MOBILITY"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-01-family-in",
+                "mobility-leg:leg-2026-01-family-out"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-02-family-in",
+                "mobility-leg:leg-2026-02-family-out"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-03-family-in",
+                "mobility-leg:leg-2026-03-family-out"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-04-family-in",
+                "mobility-leg:leg-2026-04-family-out"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-05-family-in",
+                "mobility-leg:leg-2026-05-family-out"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-06-family-in",
+                "mobility-leg:leg-2026-06-family-out"
+              ]
+            }
+          ],
+          "range": {
+            "low": "1.00",
+            "central": "1.00",
+            "high": "1.00"
+          },
+          "evidenceRefs": [
+            "mobility-leg:leg-2026-01-family-in",
+            "mobility-leg:leg-2026-01-family-out",
+            "mobility-leg:leg-2026-02-family-in",
+            "mobility-leg:leg-2026-02-family-out",
+            "mobility-leg:leg-2026-03-family-in",
+            "mobility-leg:leg-2026-03-family-out",
+            "mobility-leg:leg-2026-04-family-in",
+            "mobility-leg:leg-2026-04-family-out",
+            "mobility-leg:leg-2026-05-family-in",
+            "mobility-leg:leg-2026-05-family-out",
+            "mobility-leg:leg-2026-06-family-in",
+            "mobility-leg:leg-2026-06-family-out"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "sourceRefs": [
+          "mobility:33333333-3333-4333-8333-333333333333:FAMILY_VISIT"
+        ],
+        "capabilities": [
+          {
+            "action": "REVIEW_REFERENCE",
+            "availability": "AVAILABLE",
+            "reason": "CONTEXTUAL_GROSS_USAGE_NOT_INCREMENTAL_COST"
+          }
+        ],
+        "planSlotId": "plan-slot:bea6ffede164b804b27e954f39a82cb30acd4ef77900738b665d2204a923e4f7",
+        "slotIdentityKey": "PERSON:33333333-3333-4333-8333-333333333333:mobility:FAMILY_VISIT"
+      },
+      {
+        "semanticKey": "mobility:WORK",
+        "controlKey": null,
+        "kind": "OCCURRENCE",
+        "scope": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        },
+        "inclusion": "CENTRAL",
+        "baselineValue": {
+          "amount": null,
+          "count": "1.00",
+          "unitAmount": null,
+          "minimumAmount": null,
+          "dueState": null
+        },
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "OCCURRENCE_COUNT",
+          "requiredSources": [
+            "MOBILITY"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-01-work-in",
+                "mobility-leg:leg-2026-01-work-out"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-02-work-in",
+                "mobility-leg:leg-2026-02-work-out"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-03-work-in",
+                "mobility-leg:leg-2026-03-work-out"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-04-work-in",
+                "mobility-leg:leg-2026-04-work-out"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-05-work-in",
+                "mobility-leg:leg-2026-05-work-out"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "1",
+              "minimum": null,
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-06-work-in",
+                "mobility-leg:leg-2026-06-work-out"
+              ]
+            }
+          ],
+          "range": {
+            "low": "1.00",
+            "central": "1.00",
+            "high": "1.00"
+          },
+          "evidenceRefs": [
+            "mobility-leg:leg-2026-01-work-in",
+            "mobility-leg:leg-2026-01-work-out",
+            "mobility-leg:leg-2026-02-work-in",
+            "mobility-leg:leg-2026-02-work-out",
+            "mobility-leg:leg-2026-03-work-in",
+            "mobility-leg:leg-2026-03-work-out",
+            "mobility-leg:leg-2026-04-work-in",
+            "mobility-leg:leg-2026-04-work-out",
+            "mobility-leg:leg-2026-05-work-in",
+            "mobility-leg:leg-2026-05-work-out",
+            "mobility-leg:leg-2026-06-work-in",
+            "mobility-leg:leg-2026-06-work-out"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "sourceRefs": [
+          "mobility:33333333-3333-4333-8333-333333333333:WORK"
+        ],
+        "capabilities": [
+          {
+            "action": "REVIEW_REFERENCE",
+            "availability": "AVAILABLE",
+            "reason": "CURRENT_WORK_PATTERN_STRUCTURAL"
+          }
+        ],
+        "planSlotId": "plan-slot:7715d9523ce4c263751cb643b2a67c5ff26f99ca754e9bb464a5da776dbd05b6",
+        "slotIdentityKey": "PERSON:33333333-3333-4333-8333-333333333333:mobility:WORK"
+      },
+      {
+        "semanticKey": "need:synthetic-cosmetic-need",
+        "controlKey": null,
+        "kind": "CONDITIONAL_OCCURRENCE",
+        "scope": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        },
+        "inclusion": "CONDITIONAL",
+        "baselineValue": {
+          "amount": null,
+          "count": null,
+          "unitAmount": null,
+          "minimumAmount": null,
+          "dueState": "UNKNOWN"
+        },
+        "knowledge": "UNKNOWN",
+        "provenance": [
+          "CANONICAL_HISTORY"
+        ],
+        "sourceRefs": [
+          "need-observations:33333333-3333-4333-8333-333333333333:synthetic-cosmetic-need"
+        ],
+        "capabilities": [
+          {
+            "action": "REVIEW_REFERENCE",
+            "availability": "AVAILABLE",
+            "reason": "RENEWAL_PROFILE_NOT_BUILT"
+          }
+        ],
+        "planSlotId": "plan-slot:72bf8a307c734904dfa0c1b437cf35c3f857a0c109f29a34eeeb2a5ad24f0e5f",
+        "slotIdentityKey": "PERSON:33333333-3333-4333-8333-333333333333:need:synthetic-cosmetic-need"
+      }
+    ],
+    "unresolvedReserves": [
+      {
+        "reserveKey": "economic:UNRESOLVED",
+        "reason": "BEHAVIOR_NOT_YET_MODELED",
+        "value": {
+          "low": "80.00",
+          "central": "80.00",
+          "high": "80.00"
+        },
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "ECONOMIC_AMOUNT",
+          "requiredSources": [
+            "BANK"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "80.00",
+              "minimum": "80.00",
+              "evidenceRefs": [
+                "operation:tech-2026-01"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "80.00",
+              "minimum": "80.00",
+              "evidenceRefs": [
+                "operation:tech-2026-02"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "80.00",
+              "minimum": "80.00",
+              "evidenceRefs": [
+                "operation:tech-2026-03"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "80.00",
+              "minimum": "80.00",
+              "evidenceRefs": [
+                "operation:tech-2026-04"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "80.00",
+              "minimum": "80.00",
+              "evidenceRefs": [
+                "operation:tech-2026-05"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "80.00",
+              "minimum": "80.00",
+              "evidenceRefs": [
+                "operation:tech-2026-06"
+              ]
+            }
+          ],
+          "range": {
+            "low": "80.00",
+            "central": "80.00",
+            "high": "80.00"
+          },
+          "evidenceRefs": [
+            "operation:tech-2026-01",
+            "operation:tech-2026-02",
+            "operation:tech-2026-03",
+            "operation:tech-2026-04",
+            "operation:tech-2026-05",
+            "operation:tech-2026-06"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "sourceRefs": [
+          "economic:UNRESOLVED"
+        ],
+        "replacesSlotKey": null
+      },
+      {
+        "reserveKey": "mobility:UNRESOLVED",
+        "replacesSlotKey": null,
+        "reason": "MOBILITY_CONTEXT_UNRESOLVED",
+        "value": {
+          "low": "5.00",
+          "central": "5.00",
+          "high": "5.00"
+        },
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "GROSS_MOBILITY_USAGE",
+          "requiredSources": [
+            "MOBILITY"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "5.00",
+              "minimum": "5.00",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-01-unresolved"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "5.00",
+              "minimum": "5.00",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-02-unresolved"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "5.00",
+              "minimum": "5.00",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-03-unresolved"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "5.00",
+              "minimum": "5.00",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-04-unresolved"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "5.00",
+              "minimum": "5.00",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-05-unresolved"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "5.00",
+              "minimum": "5.00",
+              "evidenceRefs": [
+                "mobility-leg:leg-2026-06-unresolved"
+              ]
+            }
+          ],
+          "range": {
+            "low": "5.00",
+            "central": "5.00",
+            "high": "5.00"
+          },
+          "evidenceRefs": [
+            "mobility-leg:leg-2026-01-unresolved",
+            "mobility-leg:leg-2026-02-unresolved",
+            "mobility-leg:leg-2026-03-unresolved",
+            "mobility-leg:leg-2026-04-unresolved",
+            "mobility-leg:leg-2026-05-unresolved",
+            "mobility-leg:leg-2026-06-unresolved"
+          ],
+          "hardFloor": false
+        },
+        "knowledge": "ESTIMATED",
+        "sourceRefs": [
+          "mobility:UNRESOLVED"
+        ]
+      },
+      {
+        "reserveKey": "unresolved:manon-work-meals",
+        "replacesSlotKey": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+        "reason": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+        "knowledge": "UNKNOWN",
+        "value": {
+          "low": null,
+          "central": null,
+          "high": null
+        },
+        "historicalReferences": {
+          "policyVersion": "planner-closed-local-reference@v1",
+          "basis": "OCCURRENCE_COUNT",
+          "requiredSources": [
+            "BANK",
+            "EDENRED"
+          ],
+          "comparableMonths": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06"
+          ],
+          "samples": [
+            {
+              "month": "2026-01",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-01",
+                "purchase:meal-Manon-2026-01-0",
+                "purchase:meal-Manon-2026-01-1"
+              ]
+            },
+            {
+              "month": "2026-02",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-02",
+                "purchase:meal-Manon-2026-02-0",
+                "purchase:meal-Manon-2026-02-1"
+              ]
+            },
+            {
+              "month": "2026-03",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-03",
+                "purchase:meal-Manon-2026-03-0",
+                "purchase:meal-Manon-2026-03-1"
+              ]
+            },
+            {
+              "month": "2026-04",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-04",
+                "purchase:meal-Manon-2026-04-0",
+                "purchase:meal-Manon-2026-04-1"
+              ]
+            },
+            {
+              "month": "2026-05",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-05",
+                "purchase:meal-Manon-2026-05-0",
+                "purchase:meal-Manon-2026-05-1"
+              ]
+            },
+            {
+              "month": "2026-06",
+              "value": "2",
+              "minimum": null,
+              "evidenceRefs": [
+                "food-month:2026-06",
+                "purchase:meal-Manon-2026-06-0",
+                "purchase:meal-Manon-2026-06-1"
+              ]
+            }
+          ],
+          "range": {
+            "low": "2.00",
+            "central": "2.00",
+            "high": "2.00"
+          },
+          "evidenceRefs": [
+            "food-month:2026-01",
+            "food-month:2026-02",
+            "food-month:2026-03",
+            "food-month:2026-04",
+            "food-month:2026-05",
+            "food-month:2026-06",
+            "purchase:meal-Manon-2026-01-0",
+            "purchase:meal-Manon-2026-01-1",
+            "purchase:meal-Manon-2026-02-0",
+            "purchase:meal-Manon-2026-02-1",
+            "purchase:meal-Manon-2026-03-0",
+            "purchase:meal-Manon-2026-03-1",
+            "purchase:meal-Manon-2026-04-0",
+            "purchase:meal-Manon-2026-04-1",
+            "purchase:meal-Manon-2026-05-0",
+            "purchase:meal-Manon-2026-05-1",
+            "purchase:meal-Manon-2026-06-0",
+            "purchase:meal-Manon-2026-06-1"
+          ],
+          "hardFloor": false
+        },
+        "sourceRefs": [
+          "food:manon-work-meals"
+        ]
+      }
+    ],
+    "sourceRefs": [
+      {
+        "sourceKey": "economic:UNRESOLVED",
+        "owner": "CanonicalEconomicHistory",
+        "digest": "e7cc978d57e93dd9e99c20643e5cb4120e172b1c513f57a591e312da94567e79",
+        "evidenceRefs": [
+          "operation:tech-2026-01",
+          "operation:tech-2026-02",
+          "operation:tech-2026-03",
+          "operation:tech-2026-04",
+          "operation:tech-2026-05",
+          "operation:tech-2026-06"
+        ]
+      },
+      {
+        "sourceKey": "food:adrien-work-coffee",
+        "owner": "global_food_rhythm@v2-purchase-aware",
+        "digest": "e2f8f608407aba25f4f4aa568e961bee4b235347bf1070bd880297eb7da934c9",
+        "evidenceRefs": [
+          "food-month:2026-01",
+          "food-month:2026-02",
+          "food-month:2026-03",
+          "food-month:2026-04",
+          "food-month:2026-05",
+          "food-month:2026-06",
+          "operation:coffee-2026-01",
+          "operation:coffee-2026-02",
+          "operation:coffee-2026-03",
+          "operation:coffee-2026-04",
+          "operation:coffee-2026-05",
+          "operation:coffee-2026-06"
+        ]
+      },
+      {
+        "sourceKey": "food:adrien-work-meals",
+        "owner": "global_food_rhythm@v2-purchase-aware",
+        "digest": "49ef02b7cf2e4f10a7e4a41222696b7a6cb84309d5b392f9a43fa38381718622",
+        "evidenceRefs": [
+          "food-month:2026-01",
+          "food-month:2026-02",
+          "food-month:2026-03",
+          "food-month:2026-04",
+          "food-month:2026-05",
+          "food-month:2026-06",
+          "purchase:meal-Adrien-2026-01-0",
+          "purchase:meal-Adrien-2026-01-1",
+          "purchase:meal-Adrien-2026-02-0",
+          "purchase:meal-Adrien-2026-02-1",
+          "purchase:meal-Adrien-2026-03-0",
+          "purchase:meal-Adrien-2026-03-1",
+          "purchase:meal-Adrien-2026-04-0",
+          "purchase:meal-Adrien-2026-04-1",
+          "purchase:meal-Adrien-2026-05-0",
+          "purchase:meal-Adrien-2026-05-1",
+          "purchase:meal-Adrien-2026-06-0",
+          "purchase:meal-Adrien-2026-06-1"
+        ]
+      },
+      {
+        "sourceKey": "food:groceries",
+        "owner": "global_food_rhythm@v2-purchase-aware",
+        "digest": "c30b05f74a81cbe4e9628724d8eceb8b0c3c79adf51739840e1c1668f81dd4fd",
+        "evidenceRefs": [
+          "food-month:2026-01",
+          "food-month:2026-02",
+          "food-month:2026-03",
+          "food-month:2026-04",
+          "food-month:2026-05",
+          "food-month:2026-06",
+          "purchase:grocery-2026-01",
+          "purchase:grocery-2026-02",
+          "purchase:grocery-2026-03",
+          "purchase:grocery-2026-04",
+          "purchase:grocery-2026-05",
+          "purchase:grocery-2026-06"
+        ]
+      },
+      {
+        "sourceKey": "food:household-restaurants",
+        "owner": "global_food_rhythm@v2-purchase-aware",
+        "digest": "36ef068e9589c0a76dd36b45e1ff593718625b993c5481fe78e0b4cf4c899a18",
+        "evidenceRefs": [
+          "food-month:2026-01",
+          "food-month:2026-02",
+          "food-month:2026-03",
+          "food-month:2026-04",
+          "food-month:2026-05",
+          "food-month:2026-06",
+          "operation:delivery-2026-01",
+          "operation:delivery-2026-02",
+          "operation:delivery-2026-03",
+          "operation:delivery-2026-04",
+          "operation:delivery-2026-05",
+          "operation:delivery-2026-06",
+          "operation:fast-2026-01",
+          "operation:fast-2026-02",
+          "operation:fast-2026-03",
+          "operation:fast-2026-04",
+          "operation:fast-2026-05",
+          "operation:fast-2026-06",
+          "purchase:restaurant-2026-01-0",
+          "purchase:restaurant-2026-01-1",
+          "purchase:restaurant-2026-02-0",
+          "purchase:restaurant-2026-02-1",
+          "purchase:restaurant-2026-03-0",
+          "purchase:restaurant-2026-03-1",
+          "purchase:restaurant-2026-04-0",
+          "purchase:restaurant-2026-04-1",
+          "purchase:restaurant-2026-05-0",
+          "purchase:restaurant-2026-05-1",
+          "purchase:restaurant-2026-06-0",
+          "purchase:restaurant-2026-06-1"
+        ]
+      },
+      {
+        "sourceKey": "food:manon-work-meals",
+        "owner": "global_food_rhythm@v2-purchase-aware",
+        "digest": "aa6d26a58ffc94361a04a6cc22580a302605ff7011910779f982110691779a7e",
+        "evidenceRefs": [
+          "food-month:2026-01",
+          "food-month:2026-02",
+          "food-month:2026-03",
+          "food-month:2026-04",
+          "food-month:2026-05",
+          "food-month:2026-06",
+          "purchase:meal-Manon-2026-01-0",
+          "purchase:meal-Manon-2026-01-1",
+          "purchase:meal-Manon-2026-02-0",
+          "purchase:meal-Manon-2026-02-1",
+          "purchase:meal-Manon-2026-03-0",
+          "purchase:meal-Manon-2026-03-1",
+          "purchase:meal-Manon-2026-04-0",
+          "purchase:meal-Manon-2026-04-1",
+          "purchase:meal-Manon-2026-05-0",
+          "purchase:meal-Manon-2026-05-1",
+          "purchase:meal-Manon-2026-06-0",
+          "purchase:meal-Manon-2026-06-1"
+        ]
+      },
+      {
+        "sourceKey": "forecast:structural",
+        "owner": "MonthForecast",
+        "digest": "79cdcaf4607f7c7cc3d828af32b259a2c162f25e63323c37a2a8bd8be6e0b1e7",
+        "evidenceRefs": [
+          "source:income:Digital Learning Contest",
+          "source:income:Promotrans",
+          "source:obligation:rent"
+        ]
+      },
+      {
+        "sourceKey": "habit:22222222-2222-4222-8222-222222222222:hairdresser",
+        "owner": "person_habit_assertions",
+        "digest": "86164f6e551019e96d18241894ac85929a6789f5a2109a9ecbc071536e97f671",
+        "evidenceRefs": [
+          "habit-assertion:55555555-5555-4555-8555-555555555555"
+        ]
+      },
+      {
+        "sourceKey": "mobility:33333333-3333-4333-8333-333333333333:FAMILY_VISIT",
+        "owner": "global_m7_personal_mobility@v1",
+        "digest": "3d4f6b5e497994ef4c969c966c6142024b9b4f3c9e71c1936d8be4fcf1ce06b4",
+        "evidenceRefs": [
+          "mobility-leg:leg-2026-01-family-in",
+          "mobility-leg:leg-2026-01-family-out",
+          "mobility-leg:leg-2026-02-family-in",
+          "mobility-leg:leg-2026-02-family-out",
+          "mobility-leg:leg-2026-03-family-in",
+          "mobility-leg:leg-2026-03-family-out",
+          "mobility-leg:leg-2026-04-family-in",
+          "mobility-leg:leg-2026-04-family-out",
+          "mobility-leg:leg-2026-05-family-in",
+          "mobility-leg:leg-2026-05-family-out",
+          "mobility-leg:leg-2026-06-family-in",
+          "mobility-leg:leg-2026-06-family-out"
+        ]
+      },
+      {
+        "sourceKey": "mobility:33333333-3333-4333-8333-333333333333:WORK",
+        "owner": "global_m7_personal_mobility@v1",
+        "digest": "10d9386a97b9cc8a4aef53055610df0b42792592b5dacd8573814c8624dc190d",
+        "evidenceRefs": [
+          "mobility-leg:leg-2026-01-work-in",
+          "mobility-leg:leg-2026-01-work-out",
+          "mobility-leg:leg-2026-02-work-in",
+          "mobility-leg:leg-2026-02-work-out",
+          "mobility-leg:leg-2026-03-work-in",
+          "mobility-leg:leg-2026-03-work-out",
+          "mobility-leg:leg-2026-04-work-in",
+          "mobility-leg:leg-2026-04-work-out",
+          "mobility-leg:leg-2026-05-work-in",
+          "mobility-leg:leg-2026-05-work-out",
+          "mobility-leg:leg-2026-06-work-in",
+          "mobility-leg:leg-2026-06-work-out"
+        ]
+      },
+      {
+        "sourceKey": "mobility:UNRESOLVED",
+        "owner": "CanonicalMobility",
+        "digest": "3fc29fa75e0ae618665ed2d0612d8cef9f7d67a18ddaeefd1f0acdd602cf8eb9",
+        "evidenceRefs": [
+          "mobility-leg:leg-2026-01-unresolved",
+          "mobility-leg:leg-2026-02-unresolved",
+          "mobility-leg:leg-2026-03-unresolved",
+          "mobility-leg:leg-2026-04-unresolved",
+          "mobility-leg:leg-2026-05-unresolved",
+          "mobility-leg:leg-2026-06-unresolved"
+        ]
+      },
+      {
+        "sourceKey": "month-inputs:facts",
+        "owner": "phase2_month_inputs",
+        "digest": "03193e93f84a2414910e616d54e937f6c013769d53916fad6fca9562b1857796",
+        "evidenceRefs": []
+      },
+      {
+        "sourceKey": "need-observations:33333333-3333-4333-8333-333333333333:synthetic-cosmetic-need",
+        "owner": "Needs+ProductObservations",
+        "digest": "415b2f143c31a34cf70292f5fd90ac0a41d5f8c0e6001430e26e613f50725f45",
+        "evidenceRefs": [
+          "product:0",
+          "product:1"
+        ]
+      },
+      {
+        "sourceKey": "planned-expenses:intents",
+        "owner": "phase2_planned_expenses",
+        "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "evidenceRefs": []
+      },
+      {
+        "sourceKey": "simple:delivery",
+        "owner": "planner-simple-occurrences@v1",
+        "digest": "55edf504a416effe653665b63d8d0f0df9a41c2d513bd7170f5eef86136182ee",
+        "evidenceRefs": [
+          "operation:delivery-2026-01",
+          "operation:delivery-2026-02",
+          "operation:delivery-2026-03",
+          "operation:delivery-2026-04",
+          "operation:delivery-2026-05",
+          "operation:delivery-2026-06",
+          "synthetic-dining-13",
+          "synthetic-dining-15",
+          "synthetic-dining-17",
+          "synthetic-dining-19",
+          "synthetic-dining-21",
+          "synthetic-dining-23"
+        ]
+      },
+      {
+        "sourceKey": "simple:fast-food",
+        "owner": "planner-simple-occurrences@v1",
+        "digest": "a9e704a5613635f635997c13d05c2db06db665fad548c42ffe012fa6619bd755",
+        "evidenceRefs": [
+          "operation:fast-2026-01",
+          "operation:fast-2026-02",
+          "operation:fast-2026-03",
+          "operation:fast-2026-04",
+          "operation:fast-2026-05",
+          "operation:fast-2026-06",
+          "synthetic-dining-12",
+          "synthetic-dining-14",
+          "synthetic-dining-16",
+          "synthetic-dining-18",
+          "synthetic-dining-20",
+          "synthetic-dining-22"
+        ]
+      },
+      {
+        "sourceKey": "simple:optional-policy",
+        "owner": "planner-simple-mappings@v1",
+        "digest": "46940b6cd166891c086c383d68729434b802b4210b4a21c9a9b10254587f1043",
+        "evidenceRefs": []
+      },
+      {
+        "sourceKey": "simple:restaurants",
+        "owner": "planner-simple-occurrences@v1",
+        "digest": "b070d4033f5518d8754905884f28db927d198e7a2ce03bb25e67f40f2995d0f2",
+        "evidenceRefs": [
+          "purchase:restaurant-2026-01-0",
+          "purchase:restaurant-2026-01-1",
+          "purchase:restaurant-2026-02-0",
+          "purchase:restaurant-2026-02-1",
+          "purchase:restaurant-2026-03-0",
+          "purchase:restaurant-2026-03-1",
+          "purchase:restaurant-2026-04-0",
+          "purchase:restaurant-2026-04-1",
+          "purchase:restaurant-2026-05-0",
+          "purchase:restaurant-2026-05-1",
+          "purchase:restaurant-2026-06-0",
+          "purchase:restaurant-2026-06-1",
+          "synthetic-dining-0",
+          "synthetic-dining-1",
+          "synthetic-dining-10",
+          "synthetic-dining-11",
+          "synthetic-dining-2",
+          "synthetic-dining-3",
+          "synthetic-dining-4",
+          "synthetic-dining-5",
+          "synthetic-dining-6",
+          "synthetic-dining-7",
+          "synthetic-dining-8",
+          "synthetic-dining-9"
+        ]
+      },
+      {
+        "sourceKey": "simple:tobacco-vape",
+        "owner": "CanonicalEconomicHistory",
+        "digest": "32eecfc0c9a7753d4fda0b9fb160c9145b502e59989c272bfdb41cdb5291cc0b",
+        "evidenceRefs": [
+          "operation:tobacco-2026-01",
+          "operation:tobacco-2026-02",
+          "operation:tobacco-2026-03",
+          "operation:tobacco-2026-04",
+          "operation:tobacco-2026-05",
+          "operation:tobacco-2026-06"
+        ]
+      }
+    ],
+    "modelVersions": {
+      "builder": "planning-baseline-builder@v1",
+      "reference": "planner-closed-local-reference@v1",
+      "food": "planner-purchase-aware-food@v1",
+      "habits": "planner-canonical-habit-assertions@v2",
+      "mobility": "planner-canonical-personal-mobility@v1",
+      "foodOwner": "global_food_rhythm@v2-purchase-aware",
+      "mobilityOwner": "global_m7_personal_mobility@v1",
+      "simpleBaseline": "planner-simple-baseline@v1",
+      "simpleMappings": "planner-simple-mappings@v1",
+      "simpleOccurrences": "planner-simple-occurrences@v1"
+    },
+    "diagnostics": [
+      {
+        "code": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+        "severity": "WARN",
+        "targetRef": "mobility:UNRESOLVED",
+        "message": "BASELINE_MOBILITY_CONTEXT_UNRESOLVED",
+        "evidenceRefs": [
+          "mobility-leg:leg-2026-01-unresolved",
+          "mobility-leg:leg-2026-02-unresolved",
+          "mobility-leg:leg-2026-03-unresolved",
+          "mobility-leg:leg-2026-04-unresolved",
+          "mobility-leg:leg-2026-05-unresolved",
+          "mobility-leg:leg-2026-06-unresolved"
+        ]
+      },
+      {
+        "code": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+        "severity": "WARN",
+        "targetRef": "need-observations:33333333-3333-4333-8333-333333333333:synthetic-cosmetic-need",
+        "message": "BASELINE_RENEWAL_DUE_STATE_UNKNOWN",
+        "evidenceRefs": [
+          "product:0",
+          "product:1"
+        ]
+      },
+      {
+        "code": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+        "severity": "WARN",
+        "targetRef": "economic:UNRESOLVED",
+        "message": "BASELINE_UNEXPLAINED_ECONOMIC_HISTORY_PRESERVED",
+        "evidenceRefs": [
+          "operation:tech-2026-01",
+          "operation:tech-2026-02",
+          "operation:tech-2026-03",
+          "operation:tech-2026-04",
+          "operation:tech-2026-05",
+          "operation:tech-2026-06",
+          "operation:tobacco-2026-01",
+          "operation:tobacco-2026-02",
+          "operation:tobacco-2026-03",
+          "operation:tobacco-2026-04",
+          "operation:tobacco-2026-05",
+          "operation:tobacco-2026-06"
+        ]
+      },
+      {
+        "code": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+        "severity": "WARN",
+        "targetRef": "PERSON:33333333-3333-4333-8333-333333333333:manon-work-meals",
+        "message": "MANON_MEAL_FREQUENCY_UNIDENTIFIED",
+        "evidenceRefs": [
+          "food:manon-work-meals"
+        ]
+      }
+    ],
+    "digest": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656"
+  },
+  "forecast": {
+    "meta": {
+      "targetMonth": "2026-11",
+      "sourcePublicationId": "synthetic-publication",
+      "sourceRevision": 1,
+      "analyticsRevision": 1,
+      "computedAt": "2026-10-05T10:00:00Z"
+    },
+    "publicationMeta": {
+      "publicationId": "synthetic-publication",
+      "revision": 1,
+      "factsHash": "synthetic",
+      "manifestHash": "synthetic"
+    },
+    "resourceMeta": {
+      "contractVersion": "synthetic-forecast@v1",
+      "methodSignature": "synthetic",
+      "policyVersions": {},
+      "resourceInputHash": "synthetic"
+    },
+    "income": {
+      "low": "2000.00",
+      "central": "2000.00",
+      "high": "2000.00",
+      "components": [
+        {
+          "key": "income:Digital Learning Contest",
+          "label": "Synthetic salary A",
+          "central": "1000.00",
+          "low": "1000.00",
+          "high": "1000.00",
+          "knowledgeState": "PROBABLE",
+          "ownerAuthority": "synthetic-existing-owner@v1",
+          "nature": "CONTRACTUAL_EXPECTED",
+          "fundingPlan": "BANK_OR_OTHER",
+          "provenance": [
+            "source:income:Digital Learning Contest"
+          ]
+        },
+        {
+          "key": "income:Promotrans",
+          "label": "Synthetic salary B",
+          "central": "1000.00",
+          "low": "1000.00",
+          "high": "1000.00",
+          "knowledgeState": "PROBABLE",
+          "ownerAuthority": "synthetic-existing-owner@v1",
+          "nature": "CONTRACTUAL_EXPECTED",
+          "fundingPlan": "BANK_OR_OTHER",
+          "provenance": [
+            "source:income:Promotrans"
+          ]
+        }
+      ]
+    },
+    "components": [
+      {
+        "key": "obligation:rent",
+        "label": "obligation:rent",
+        "nature": "CONTRACTUAL_EXPECTED",
+        "additiveGroup": "obligations",
+        "knowledgeState": "PROBABLE",
+        "low": "500.00",
+        "central": "500.00",
+        "high": "500.00",
+        "ownerAuthority": "synthetic-existing-owner@v1",
+        "fundingPlan": "BANK_OR_OTHER",
+        "provenance": [
+          "source:obligation:rent"
+        ]
+      }
+    ],
+    "obligations": {
+      "low": "500.00",
+      "central": "500.00",
+      "high": "500.00"
+    },
+    "economicCost": {
+      "low": "983.00",
+      "central": "983.00",
+      "high": "983.00"
+    },
+    "freeToSpend": {
+      "low": "1017.00",
+      "central": "1017.00",
+      "high": "1017.00"
+    },
+    "cash": {
+      "grossBeforeUnconfirmedFunding": {
+        "low": "983.00",
+        "central": "983.00",
+        "high": "983.00"
+      }
+    },
+    "reserve": {
+      "amount": "0.00"
+    },
+    "referencePlan": {
+      "targetMonth": "2026-11",
+      "necessary": [
+        {
+          "key": "groceries",
+          "low": "325.00",
+          "central": "325.00",
+          "high": "325.00",
+          "method": "synthetic-existing-reference@v1",
+          "observationCount": 6,
+          "provenance": [
+            "synthetic:groceries"
+          ],
+          "note": null,
+          "decisionCapabilities": {
+            "label": "groceries",
+            "role": "BEHAVIORAL",
+            "targetAllowed": true,
+            "adjustability": "ADJUSTABLE",
+            "strategies": [
+              "TEST_AMOUNT"
+            ]
+          }
+        },
+        {
+          "key": "tobacco-vape",
+          "low": "60.00",
+          "central": "60.00",
+          "high": "60.00",
+          "method": "synthetic-existing-reference@v1",
+          "observationCount": 6,
+          "provenance": [
+            "synthetic:tobacco-vape"
+          ],
+          "note": null,
+          "decisionCapabilities": {
+            "label": "tobacco-vape",
+            "role": "BEHAVIORAL",
+            "targetAllowed": true,
+            "adjustability": "ADJUSTABLE",
+            "strategies": [
+              "TEST_AMOUNT"
+            ]
+          }
+        }
+      ],
+      "flexible": [
+        {
+          "key": "household-restaurants",
+          "low": "65.00",
+          "central": "65.00",
+          "high": "65.00",
+          "method": "synthetic-existing-reference@v1",
+          "observationCount": 6,
+          "provenance": [
+            "synthetic:household-restaurants"
+          ],
+          "note": null,
+          "decisionCapabilities": {
+            "label": "household-restaurants",
+            "role": "BEHAVIORAL",
+            "targetAllowed": true,
+            "adjustability": "ADJUSTABLE",
+            "strategies": [
+              "TEST_AMOUNT"
+            ]
+          }
+        },
+        {
+          "key": "adrien-work-meals",
+          "low": "16.00",
+          "central": "16.00",
+          "high": "16.00",
+          "method": "synthetic-existing-reference@v1",
+          "observationCount": 6,
+          "provenance": [
+            "synthetic:adrien-work-meals"
+          ],
+          "note": null,
+          "decisionCapabilities": {
+            "label": "adrien-work-meals",
+            "role": "BEHAVIORAL",
+            "targetAllowed": true,
+            "adjustability": "ADJUSTABLE",
+            "strategies": [
+              "TEST_AMOUNT"
+            ]
+          }
+        },
+        {
+          "key": "manon-work-meals",
+          "low": "16.00",
+          "central": "16.00",
+          "high": "16.00",
+          "method": "synthetic-existing-reference@v1",
+          "observationCount": 6,
+          "provenance": [
+            "synthetic:manon-work-meals"
+          ],
+          "note": null,
+          "decisionCapabilities": {
+            "label": "manon-work-meals",
+            "role": "BEHAVIORAL",
+            "targetAllowed": true,
+            "adjustability": "ADJUSTABLE",
+            "strategies": [
+              "TEST_AMOUNT"
+            ]
+          }
+        },
+        {
+          "key": "adrien-work-coffee",
+          "low": "1.00",
+          "central": "1.00",
+          "high": "1.00",
+          "method": "synthetic-existing-reference@v1",
+          "observationCount": 6,
+          "provenance": [
+            "synthetic:adrien-work-coffee"
+          ],
+          "note": null,
+          "decisionCapabilities": {
+            "label": "adrien-work-coffee",
+            "role": "BEHAVIORAL",
+            "targetAllowed": true,
+            "adjustability": "ADJUSTABLE",
+            "strategies": [
+              "TEST_AMOUNT"
+            ]
+          }
+        }
+      ],
+      "necessaryTotal": {
+        "low": "385.00",
+        "central": "385.00",
+        "high": "385.00"
+      },
+      "flexibleTotal": {
+        "low": "98.00",
+        "central": "98.00",
+        "high": "98.00"
+      },
+      "restaurantCorpus": [],
+      "excludedRestaurantSubcategories": [],
+      "estimatedDays": {}
+    }
+  },
+  "monthInputs": {
+    "benefitWallets": {
+      "SWILE": {
+        "provider": "SWILE",
+        "balanceObservations": [],
+        "expectedLoading": {
+          "amount": "0.00",
+          "expectedDate": null
+        }
+      },
+      "EDENRED": {
+        "provider": "EDENRED",
+        "balanceObservations": [],
+        "expectedLoading": {
+          "amount": "0.00",
+          "expectedDate": null
+        }
+      }
+    },
+    "decision": {
+      "version": "month-decision@v2",
+      "assumptions": {},
+      "categoryTargets": {},
+      "goal": null
+    },
+    "safetyReserve": "0.00",
+    "openingBalance": null,
+    "benefit": {
+      "currentBalance": null,
+      "expectedLoading": {
+        "amount": "0.00",
+        "expectedDate": null
+      }
+    },
+    "plannedEvents": [],
+    "confirmedObligations": [],
+    "excludedFixedObligations": [],
+    "declinedConditionalObligations": [],
+    "declaredResources": {
+      "benefit:swile": "0.00",
+      "benefit:edenred": "0.00"
+    },
+    "resourceOverrides": {},
+    "fixedAmountOverrides": {},
+    "declaredOutflows": [
+      {
+        "id": "00000000-0000-4000-8000-000000000700",
+        "label": "Synthetic adjustable saving",
+        "amount": "100.00",
+        "dueDate": null,
+        "kind": "SAVINGS",
+        "adjustability": "ADJUSTABLE",
+        "source": "MONTH_INPUT",
+        "annualGoalRef": null
+      }
+    ]
+  },
+  "externalIntents": [],
+  "asOfDate": "2026-10-05",
+  "costQuotes": {},
+  "modelVersions": {
+    "financialOwner": "deriveMonthScenario@v2"
+  },
+  "sources": {
+    "householdId": "11111111-1111-4111-8111-111111111111",
+    "targetMonth": "2026-11",
+    "knowledgeCutoff": "2026-10-05T10:00:00Z",
+    "timezone": "Europe/Paris",
+    "forecast": {
+      "meta": {
+        "targetMonth": "2026-11",
+        "sourcePublicationId": "synthetic-publication",
+        "sourceRevision": 1,
+        "analyticsRevision": 1,
+        "computedAt": "2026-10-05T10:00:00Z"
+      },
+      "publicationMeta": {
+        "publicationId": "synthetic-publication",
+        "revision": 1,
+        "factsHash": "synthetic",
+        "manifestHash": "synthetic"
+      },
+      "resourceMeta": {
+        "contractVersion": "synthetic-forecast@v1",
+        "methodSignature": "synthetic",
+        "policyVersions": {},
+        "resourceInputHash": "synthetic"
+      },
+      "income": {
+        "low": "2000.00",
+        "central": "2000.00",
+        "high": "2000.00",
+        "components": [
+          {
+            "key": "income:Digital Learning Contest",
+            "label": "Synthetic salary A",
+            "central": "1000.00",
+            "low": "1000.00",
+            "high": "1000.00",
+            "knowledgeState": "PROBABLE",
+            "ownerAuthority": "synthetic-existing-owner@v1",
+            "nature": "CONTRACTUAL_EXPECTED",
+            "fundingPlan": "BANK_OR_OTHER",
+            "provenance": [
+              "source:income:Digital Learning Contest"
+            ]
+          },
+          {
+            "key": "income:Promotrans",
+            "label": "Synthetic salary B",
+            "central": "1000.00",
+            "low": "1000.00",
+            "high": "1000.00",
+            "knowledgeState": "PROBABLE",
+            "ownerAuthority": "synthetic-existing-owner@v1",
+            "nature": "CONTRACTUAL_EXPECTED",
+            "fundingPlan": "BANK_OR_OTHER",
+            "provenance": [
+              "source:income:Promotrans"
+            ]
+          }
+        ]
+      },
+      "components": [
+        {
+          "key": "obligation:rent",
+          "label": "obligation:rent",
+          "nature": "CONTRACTUAL_EXPECTED",
+          "additiveGroup": "obligations",
+          "knowledgeState": "PROBABLE",
+          "low": "500.00",
+          "central": "500.00",
+          "high": "500.00",
+          "ownerAuthority": "synthetic-existing-owner@v1",
+          "fundingPlan": "BANK_OR_OTHER",
+          "provenance": [
+            "source:obligation:rent"
+          ]
+        }
+      ],
+      "obligations": {
+        "low": "500.00",
+        "central": "500.00",
+        "high": "500.00"
+      },
+      "economicCost": {
+        "low": "983.00",
+        "central": "983.00",
+        "high": "983.00"
+      },
+      "freeToSpend": {
+        "low": "1017.00",
+        "central": "1017.00",
+        "high": "1017.00"
+      },
+      "cash": {
+        "grossBeforeUnconfirmedFunding": {
+          "low": "983.00",
+          "central": "983.00",
+          "high": "983.00"
+        }
+      },
+      "reserve": {
+        "amount": "0.00"
+      },
+      "referencePlan": {
+        "targetMonth": "2026-11",
+        "necessary": [
+          {
+            "key": "groceries",
+            "low": "325.00",
+            "central": "325.00",
+            "high": "325.00",
+            "method": "synthetic-existing-reference@v1",
+            "observationCount": 6,
+            "provenance": [
+              "synthetic:groceries"
+            ],
+            "note": null,
+            "decisionCapabilities": {
+              "label": "groceries",
+              "role": "BEHAVIORAL",
+              "targetAllowed": true,
+              "adjustability": "ADJUSTABLE",
+              "strategies": [
+                "TEST_AMOUNT"
+              ]
+            }
+          },
+          {
+            "key": "tobacco-vape",
+            "low": "60.00",
+            "central": "60.00",
+            "high": "60.00",
+            "method": "synthetic-existing-reference@v1",
+            "observationCount": 6,
+            "provenance": [
+              "synthetic:tobacco-vape"
+            ],
+            "note": null,
+            "decisionCapabilities": {
+              "label": "tobacco-vape",
+              "role": "BEHAVIORAL",
+              "targetAllowed": true,
+              "adjustability": "ADJUSTABLE",
+              "strategies": [
+                "TEST_AMOUNT"
+              ]
+            }
+          }
+        ],
+        "flexible": [
+          {
+            "key": "household-restaurants",
+            "low": "65.00",
+            "central": "65.00",
+            "high": "65.00",
+            "method": "synthetic-existing-reference@v1",
+            "observationCount": 6,
+            "provenance": [
+              "synthetic:household-restaurants"
+            ],
+            "note": null,
+            "decisionCapabilities": {
+              "label": "household-restaurants",
+              "role": "BEHAVIORAL",
+              "targetAllowed": true,
+              "adjustability": "ADJUSTABLE",
+              "strategies": [
+                "TEST_AMOUNT"
+              ]
+            }
+          },
+          {
+            "key": "adrien-work-meals",
+            "low": "16.00",
+            "central": "16.00",
+            "high": "16.00",
+            "method": "synthetic-existing-reference@v1",
+            "observationCount": 6,
+            "provenance": [
+              "synthetic:adrien-work-meals"
+            ],
+            "note": null,
+            "decisionCapabilities": {
+              "label": "adrien-work-meals",
+              "role": "BEHAVIORAL",
+              "targetAllowed": true,
+              "adjustability": "ADJUSTABLE",
+              "strategies": [
+                "TEST_AMOUNT"
+              ]
+            }
+          },
+          {
+            "key": "manon-work-meals",
+            "low": "16.00",
+            "central": "16.00",
+            "high": "16.00",
+            "method": "synthetic-existing-reference@v1",
+            "observationCount": 6,
+            "provenance": [
+              "synthetic:manon-work-meals"
+            ],
+            "note": null,
+            "decisionCapabilities": {
+              "label": "manon-work-meals",
+              "role": "BEHAVIORAL",
+              "targetAllowed": true,
+              "adjustability": "ADJUSTABLE",
+              "strategies": [
+                "TEST_AMOUNT"
+              ]
+            }
+          },
+          {
+            "key": "adrien-work-coffee",
+            "low": "1.00",
+            "central": "1.00",
+            "high": "1.00",
+            "method": "synthetic-existing-reference@v1",
+            "observationCount": 6,
+            "provenance": [
+              "synthetic:adrien-work-coffee"
+            ],
+            "note": null,
+            "decisionCapabilities": {
+              "label": "adrien-work-coffee",
+              "role": "BEHAVIORAL",
+              "targetAllowed": true,
+              "adjustability": "ADJUSTABLE",
+              "strategies": [
+                "TEST_AMOUNT"
+              ]
+            }
+          }
+        ],
+        "necessaryTotal": {
+          "low": "385.00",
+          "central": "385.00",
+          "high": "385.00"
+        },
+        "flexibleTotal": {
+          "low": "98.00",
+          "central": "98.00",
+          "high": "98.00"
+        },
+        "restaurantCorpus": [],
+        "excludedRestaurantSubcategories": [],
+        "estimatedDays": {}
+      }
+    },
+    "monthInputs": {
+      "benefitWallets": {
+        "SWILE": {
+          "provider": "SWILE",
+          "balanceObservations": [],
+          "expectedLoading": {
+            "amount": "0.00",
+            "expectedDate": null
+          }
+        },
+        "EDENRED": {
+          "provider": "EDENRED",
+          "balanceObservations": [],
+          "expectedLoading": {
+            "amount": "0.00",
+            "expectedDate": null
+          }
+        }
+      },
+      "decision": {
+        "version": "month-decision@v2",
+        "assumptions": {},
+        "categoryTargets": {},
+        "goal": null
+      },
+      "safetyReserve": "0.00",
+      "openingBalance": null,
+      "benefit": {
+        "currentBalance": null,
+        "expectedLoading": {
+          "amount": "0.00",
+          "expectedDate": null
+        }
+      },
+      "plannedEvents": [],
+      "confirmedObligations": [],
+      "excludedFixedObligations": [],
+      "declinedConditionalObligations": [],
+      "declaredResources": {
+        "benefit:swile": "0.00",
+        "benefit:edenred": "0.00"
+      },
+      "resourceOverrides": {},
+      "fixedAmountOverrides": {},
+      "declaredOutflows": [
+        {
+          "id": "00000000-0000-4000-8000-000000000700",
+          "label": "Synthetic adjustable saving",
+          "amount": "100.00",
+          "dueDate": null,
+          "kind": "SAVINGS",
+          "adjustability": "ADJUSTABLE",
+          "source": "MONTH_INPUT",
+          "annualGoalRef": null
+        }
+      ]
+    },
+    "periods": [
+      {
+        "analysisPeriodId": "period:2026-01",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "month": "2026-01-01",
+        "financeStatus": "complete",
+        "lifeStatus": "complete",
+        "locationStatus": "complete",
+        "calendarStatus": "complete",
+        "isClosed": true,
+        "sourceRevision": 1
+      },
+      {
+        "analysisPeriodId": "period:2026-02",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "month": "2026-02-01",
+        "financeStatus": "complete",
+        "lifeStatus": "complete",
+        "locationStatus": "complete",
+        "calendarStatus": "complete",
+        "isClosed": true,
+        "sourceRevision": 1
+      },
+      {
+        "analysisPeriodId": "period:2026-03",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "month": "2026-03-01",
+        "financeStatus": "complete",
+        "lifeStatus": "complete",
+        "locationStatus": "complete",
+        "calendarStatus": "complete",
+        "isClosed": true,
+        "sourceRevision": 1
+      },
+      {
+        "analysisPeriodId": "period:2026-04",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "month": "2026-04-01",
+        "financeStatus": "complete",
+        "lifeStatus": "complete",
+        "locationStatus": "complete",
+        "calendarStatus": "complete",
+        "isClosed": true,
+        "sourceRevision": 1
+      },
+      {
+        "analysisPeriodId": "period:2026-05",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "month": "2026-05-01",
+        "financeStatus": "complete",
+        "lifeStatus": "complete",
+        "locationStatus": "complete",
+        "calendarStatus": "complete",
+        "isClosed": true,
+        "sourceRevision": 1
+      },
+      {
+        "analysisPeriodId": "period:2026-06",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "month": "2026-06-01",
+        "financeStatus": "complete",
+        "lifeStatus": "complete",
+        "locationStatus": "complete",
+        "calendarStatus": "complete",
+        "isClosed": true,
+        "sourceRevision": 1
+      }
+    ],
+    "evidence": {
+      "history": {
+        "startMonth": "2026-01",
+        "endMonth": "2026-06",
+        "economicEntries": [
+          {
+            "operationId": "bank-grocery-2026-01",
+            "canonicalComponentKey": "operation:bank-grocery-2026-01",
+            "purchaseEventId": "grocery-2026-01",
+            "date": "2026-01-05",
+            "amount": "300",
+            "amountStatus": "KNOWN",
+            "subcategory": "Courses alimentaires",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic shop",
+            "funding": {
+              "BANK": "20",
+              "SWILE": "80",
+              "EDENRED": "200"
+            }
+          },
+          {
+            "operationId": "restaurant-2026-01-0",
+            "purchaseEventId": "restaurant-2026-01-0",
+            "date": "2026-01-10",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "restaurant-2026-01-1",
+            "purchaseEventId": "restaurant-2026-01-1",
+            "date": "2026-01-11",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "meal-Adrien-2026-01-0",
+            "purchaseEventId": "meal-Adrien-2026-01-0",
+            "date": "2026-01-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Adrien-2026-01-1",
+            "purchaseEventId": "meal-Adrien-2026-01-1",
+            "date": "2026-01-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-01-0",
+            "purchaseEventId": "meal-Manon-2026-01-0",
+            "date": "2026-01-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-01-1",
+            "purchaseEventId": "meal-Manon-2026-01-1",
+            "date": "2026-01-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "coffee-2026-01",
+            "date": "2026-01-18",
+            "amount": "1.00",
+            "subcategory": "Café au travail",
+            "person": "Adrien",
+            "preciseType": null,
+            "merchant": "Synthetic coffee"
+          },
+          {
+            "operationId": "tech-2026-01",
+            "date": "2026-01-20",
+            "amount": "80.00",
+            "subcategory": "Unknown semantic behavior",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic unknown"
+          },
+          {
+            "operationId": "rent-2026-01",
+            "date": "2026-01-01",
+            "amount": "600.00",
+            "subcategory": "Housing",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic rent"
+          },
+          {
+            "operationId": "bank-grocery-2026-02",
+            "canonicalComponentKey": "operation:bank-grocery-2026-02",
+            "purchaseEventId": "grocery-2026-02",
+            "date": "2026-02-05",
+            "amount": "310",
+            "amountStatus": "KNOWN",
+            "subcategory": "Courses alimentaires",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic shop",
+            "funding": {
+              "BANK": "20",
+              "SWILE": "80",
+              "EDENRED": "200"
+            }
+          },
+          {
+            "operationId": "restaurant-2026-02-0",
+            "purchaseEventId": "restaurant-2026-02-0",
+            "date": "2026-02-10",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "restaurant-2026-02-1",
+            "purchaseEventId": "restaurant-2026-02-1",
+            "date": "2026-02-11",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "meal-Adrien-2026-02-0",
+            "purchaseEventId": "meal-Adrien-2026-02-0",
+            "date": "2026-02-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Adrien-2026-02-1",
+            "purchaseEventId": "meal-Adrien-2026-02-1",
+            "date": "2026-02-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-02-0",
+            "purchaseEventId": "meal-Manon-2026-02-0",
+            "date": "2026-02-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-02-1",
+            "purchaseEventId": "meal-Manon-2026-02-1",
+            "date": "2026-02-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "coffee-2026-02",
+            "date": "2026-02-18",
+            "amount": "1.00",
+            "subcategory": "Café au travail",
+            "person": "Adrien",
+            "preciseType": null,
+            "merchant": "Synthetic coffee"
+          },
+          {
+            "operationId": "tech-2026-02",
+            "date": "2026-02-20",
+            "amount": "80.00",
+            "subcategory": "Unknown semantic behavior",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic unknown"
+          },
+          {
+            "operationId": "rent-2026-02",
+            "date": "2026-02-01",
+            "amount": "600.00",
+            "subcategory": "Housing",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic rent"
+          },
+          {
+            "operationId": "bank-grocery-2026-03",
+            "canonicalComponentKey": "operation:bank-grocery-2026-03",
+            "purchaseEventId": "grocery-2026-03",
+            "date": "2026-03-05",
+            "amount": "320",
+            "amountStatus": "KNOWN",
+            "subcategory": "Courses alimentaires",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic shop",
+            "funding": {
+              "BANK": "20",
+              "SWILE": "80",
+              "EDENRED": "200"
+            }
+          },
+          {
+            "operationId": "restaurant-2026-03-0",
+            "purchaseEventId": "restaurant-2026-03-0",
+            "date": "2026-03-10",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "restaurant-2026-03-1",
+            "purchaseEventId": "restaurant-2026-03-1",
+            "date": "2026-03-11",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "meal-Adrien-2026-03-0",
+            "purchaseEventId": "meal-Adrien-2026-03-0",
+            "date": "2026-03-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Adrien-2026-03-1",
+            "purchaseEventId": "meal-Adrien-2026-03-1",
+            "date": "2026-03-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-03-0",
+            "purchaseEventId": "meal-Manon-2026-03-0",
+            "date": "2026-03-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-03-1",
+            "purchaseEventId": "meal-Manon-2026-03-1",
+            "date": "2026-03-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "coffee-2026-03",
+            "date": "2026-03-18",
+            "amount": "1.00",
+            "subcategory": "Café au travail",
+            "person": "Adrien",
+            "preciseType": null,
+            "merchant": "Synthetic coffee"
+          },
+          {
+            "operationId": "tech-2026-03",
+            "date": "2026-03-20",
+            "amount": "80.00",
+            "subcategory": "Unknown semantic behavior",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic unknown"
+          },
+          {
+            "operationId": "rent-2026-03",
+            "date": "2026-03-01",
+            "amount": "600.00",
+            "subcategory": "Housing",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic rent"
+          },
+          {
+            "operationId": "bank-grocery-2026-04",
+            "canonicalComponentKey": "operation:bank-grocery-2026-04",
+            "purchaseEventId": "grocery-2026-04",
+            "date": "2026-04-05",
+            "amount": "330",
+            "amountStatus": "KNOWN",
+            "subcategory": "Courses alimentaires",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic shop",
+            "funding": {
+              "BANK": "20",
+              "SWILE": "80",
+              "EDENRED": "200"
+            }
+          },
+          {
+            "operationId": "restaurant-2026-04-0",
+            "purchaseEventId": "restaurant-2026-04-0",
+            "date": "2026-04-10",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "restaurant-2026-04-1",
+            "purchaseEventId": "restaurant-2026-04-1",
+            "date": "2026-04-11",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "meal-Adrien-2026-04-0",
+            "purchaseEventId": "meal-Adrien-2026-04-0",
+            "date": "2026-04-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Adrien-2026-04-1",
+            "purchaseEventId": "meal-Adrien-2026-04-1",
+            "date": "2026-04-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-04-0",
+            "purchaseEventId": "meal-Manon-2026-04-0",
+            "date": "2026-04-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-04-1",
+            "purchaseEventId": "meal-Manon-2026-04-1",
+            "date": "2026-04-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "coffee-2026-04",
+            "date": "2026-04-18",
+            "amount": "1.00",
+            "subcategory": "Café au travail",
+            "person": "Adrien",
+            "preciseType": null,
+            "merchant": "Synthetic coffee"
+          },
+          {
+            "operationId": "tech-2026-04",
+            "date": "2026-04-20",
+            "amount": "80.00",
+            "subcategory": "Unknown semantic behavior",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic unknown"
+          },
+          {
+            "operationId": "rent-2026-04",
+            "date": "2026-04-01",
+            "amount": "600.00",
+            "subcategory": "Housing",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic rent"
+          },
+          {
+            "operationId": "bank-grocery-2026-05",
+            "canonicalComponentKey": "operation:bank-grocery-2026-05",
+            "purchaseEventId": "grocery-2026-05",
+            "date": "2026-05-05",
+            "amount": "340",
+            "amountStatus": "KNOWN",
+            "subcategory": "Courses alimentaires",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic shop",
+            "funding": {
+              "BANK": "20",
+              "SWILE": "80",
+              "EDENRED": "200"
+            }
+          },
+          {
+            "operationId": "restaurant-2026-05-0",
+            "purchaseEventId": "restaurant-2026-05-0",
+            "date": "2026-05-10",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "restaurant-2026-05-1",
+            "purchaseEventId": "restaurant-2026-05-1",
+            "date": "2026-05-11",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "meal-Adrien-2026-05-0",
+            "purchaseEventId": "meal-Adrien-2026-05-0",
+            "date": "2026-05-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Adrien-2026-05-1",
+            "purchaseEventId": "meal-Adrien-2026-05-1",
+            "date": "2026-05-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-05-0",
+            "purchaseEventId": "meal-Manon-2026-05-0",
+            "date": "2026-05-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-05-1",
+            "purchaseEventId": "meal-Manon-2026-05-1",
+            "date": "2026-05-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "coffee-2026-05",
+            "date": "2026-05-18",
+            "amount": "1.00",
+            "subcategory": "Café au travail",
+            "person": "Adrien",
+            "preciseType": null,
+            "merchant": "Synthetic coffee"
+          },
+          {
+            "operationId": "tech-2026-05",
+            "date": "2026-05-20",
+            "amount": "80.00",
+            "subcategory": "Unknown semantic behavior",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic unknown"
+          },
+          {
+            "operationId": "rent-2026-05",
+            "date": "2026-05-01",
+            "amount": "600.00",
+            "subcategory": "Housing",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic rent"
+          },
+          {
+            "operationId": "bank-grocery-2026-06",
+            "canonicalComponentKey": "operation:bank-grocery-2026-06",
+            "purchaseEventId": "grocery-2026-06",
+            "date": "2026-06-05",
+            "amount": "350",
+            "amountStatus": "KNOWN",
+            "subcategory": "Courses alimentaires",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic shop",
+            "funding": {
+              "BANK": "20",
+              "SWILE": "80",
+              "EDENRED": "200"
+            }
+          },
+          {
+            "operationId": "restaurant-2026-06-0",
+            "purchaseEventId": "restaurant-2026-06-0",
+            "date": "2026-06-10",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "restaurant-2026-06-1",
+            "purchaseEventId": "restaurant-2026-06-1",
+            "date": "2026-06-11",
+            "amount": "20.00",
+            "subcategory": "Restaurant",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic restaurant"
+          },
+          {
+            "operationId": "meal-Adrien-2026-06-0",
+            "purchaseEventId": "meal-Adrien-2026-06-0",
+            "date": "2026-06-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Adrien-2026-06-1",
+            "purchaseEventId": "meal-Adrien-2026-06-1",
+            "date": "2026-06-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Adrien",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-06-0",
+            "purchaseEventId": "meal-Manon-2026-06-0",
+            "date": "2026-06-15",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "meal-Manon-2026-06-1",
+            "purchaseEventId": "meal-Manon-2026-06-1",
+            "date": "2026-06-16",
+            "amount": "8.00",
+            "subcategory": "Boulangerie",
+            "person": "Manon",
+            "preciseType": "Repas du midi au travail",
+            "merchant": "Synthetic lunch"
+          },
+          {
+            "operationId": "coffee-2026-06",
+            "date": "2026-06-18",
+            "amount": "1.00",
+            "subcategory": "Café au travail",
+            "person": "Adrien",
+            "preciseType": null,
+            "merchant": "Synthetic coffee"
+          },
+          {
+            "operationId": "tech-2026-06",
+            "date": "2026-06-20",
+            "amount": "80.00",
+            "subcategory": "Unknown semantic behavior",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic unknown"
+          },
+          {
+            "operationId": "rent-2026-06",
+            "date": "2026-06-01",
+            "amount": "600.00",
+            "subcategory": "Housing",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic rent"
+          },
+          {
+            "operationId": "fast-2026-01",
+            "date": "2026-01-21",
+            "amount": "10.00",
+            "subcategory": "Fast-food / snack",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic fast food"
+          },
+          {
+            "operationId": "delivery-2026-01",
+            "date": "2026-01-22",
+            "amount": "15.00",
+            "subcategory": "Livraison de repas",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic delivery"
+          },
+          {
+            "operationId": "tobacco-2026-01",
+            "date": "2026-01-23",
+            "amount": "60.00",
+            "subcategory": "Vape / cigarette électronique",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic tobacco"
+          },
+          {
+            "operationId": "fast-2026-02",
+            "date": "2026-02-21",
+            "amount": "10.00",
+            "subcategory": "Fast-food / snack",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic fast food"
+          },
+          {
+            "operationId": "delivery-2026-02",
+            "date": "2026-02-22",
+            "amount": "15.00",
+            "subcategory": "Livraison de repas",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic delivery"
+          },
+          {
+            "operationId": "tobacco-2026-02",
+            "date": "2026-02-23",
+            "amount": "60.00",
+            "subcategory": "Vape / cigarette électronique",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic tobacco"
+          },
+          {
+            "operationId": "fast-2026-03",
+            "date": "2026-03-21",
+            "amount": "10.00",
+            "subcategory": "Fast-food / snack",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic fast food"
+          },
+          {
+            "operationId": "delivery-2026-03",
+            "date": "2026-03-22",
+            "amount": "15.00",
+            "subcategory": "Livraison de repas",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic delivery"
+          },
+          {
+            "operationId": "tobacco-2026-03",
+            "date": "2026-03-23",
+            "amount": "60.00",
+            "subcategory": "Vape / cigarette électronique",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic tobacco"
+          },
+          {
+            "operationId": "fast-2026-04",
+            "date": "2026-04-21",
+            "amount": "10.00",
+            "subcategory": "Fast-food / snack",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic fast food"
+          },
+          {
+            "operationId": "delivery-2026-04",
+            "date": "2026-04-22",
+            "amount": "15.00",
+            "subcategory": "Livraison de repas",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic delivery"
+          },
+          {
+            "operationId": "tobacco-2026-04",
+            "date": "2026-04-23",
+            "amount": "60.00",
+            "subcategory": "Vape / cigarette électronique",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic tobacco"
+          },
+          {
+            "operationId": "fast-2026-05",
+            "date": "2026-05-21",
+            "amount": "10.00",
+            "subcategory": "Fast-food / snack",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic fast food"
+          },
+          {
+            "operationId": "delivery-2026-05",
+            "date": "2026-05-22",
+            "amount": "15.00",
+            "subcategory": "Livraison de repas",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic delivery"
+          },
+          {
+            "operationId": "tobacco-2026-05",
+            "date": "2026-05-23",
+            "amount": "60.00",
+            "subcategory": "Vape / cigarette électronique",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic tobacco"
+          },
+          {
+            "operationId": "fast-2026-06",
+            "date": "2026-06-21",
+            "amount": "10.00",
+            "subcategory": "Fast-food / snack",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic fast food"
+          },
+          {
+            "operationId": "delivery-2026-06",
+            "date": "2026-06-22",
+            "amount": "15.00",
+            "subcategory": "Livraison de repas",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic delivery"
+          },
+          {
+            "operationId": "tobacco-2026-06",
+            "date": "2026-06-23",
+            "amount": "60.00",
+            "subcategory": "Vape / cigarette électronique",
+            "person": null,
+            "preciseType": null,
+            "merchant": "Synthetic tobacco"
+          }
+        ],
+        "mobilityLegs": []
+      },
+      "personNamesById": {
+        "22222222-2222-4222-8222-222222222222": "Adrien",
+        "33333333-3333-4333-8333-333333333333": "Manon"
+      },
+      "currentEconomicEntries": [],
+      "currentMobilityLegs": [],
+      "observedThrough": null,
+      "bankObservations": [
+        {
+          "id": "rent-2026-01",
+          "recurrenceSeriesId": "rent"
+        },
+        {
+          "id": "rent-2026-02",
+          "recurrenceSeriesId": "rent"
+        },
+        {
+          "id": "rent-2026-03",
+          "recurrenceSeriesId": "rent"
+        },
+        {
+          "id": "rent-2026-04",
+          "recurrenceSeriesId": "rent"
+        },
+        {
+          "id": "rent-2026-05",
+          "recurrenceSeriesId": "rent"
+        },
+        {
+          "id": "rent-2026-06",
+          "recurrenceSeriesId": "rent"
+        }
+      ],
+      "completeMonthsBySource": {
+        "BANK": [
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06"
+        ],
+        "SWILE": [
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06"
+        ],
+        "EDENRED": [
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06"
+        ],
+        "MOBILITY": [
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06"
+        ]
+      },
+      "limitationCodes": []
+    },
+    "food": {
+      "methodVersion": "global_food_rhythm@v2-purchase-aware",
+      "months": [
+        [
+          "2026-01",
+          "300",
+          "92.00",
+          "0",
+          "392.00",
+          "92.00",
+          null,
+          [
+            1,
+            1,
+            "1",
+            []
+          ],
+          [
+            3,
+            3,
+            3,
+            "1",
+            "1",
+            {
+              "status": "KNOWN",
+              "value": "20.00"
+            }
+          ],
+          0,
+          [
+            [],
+            [],
+            []
+          ],
+          [
+            "KNOWN",
+            "KNOWN",
+            []
+          ],
+          [
+            0,
+            "392",
+            "392"
+          ]
+        ],
+        [
+          "2026-02",
+          "310",
+          "92.00",
+          "0",
+          "392.00",
+          "92.00",
+          null,
+          [
+            1,
+            1,
+            "1",
+            []
+          ],
+          [
+            3,
+            3,
+            3,
+            "1",
+            "1",
+            {
+              "status": "KNOWN",
+              "value": "20.00"
+            }
+          ],
+          0,
+          [
+            [],
+            [],
+            []
+          ],
+          [
+            "KNOWN",
+            "KNOWN",
+            []
+          ],
+          [
+            0,
+            "392",
+            "392"
+          ]
+        ],
+        [
+          "2026-03",
+          "320",
+          "92.00",
+          "0",
+          "392.00",
+          "92.00",
+          null,
+          [
+            1,
+            1,
+            "1",
+            []
+          ],
+          [
+            3,
+            3,
+            3,
+            "1",
+            "1",
+            {
+              "status": "KNOWN",
+              "value": "20.00"
+            }
+          ],
+          0,
+          [
+            [],
+            [],
+            []
+          ],
+          [
+            "KNOWN",
+            "KNOWN",
+            []
+          ],
+          [
+            0,
+            "392",
+            "392"
+          ]
+        ],
+        [
+          "2026-04",
+          "330",
+          "92.00",
+          "0",
+          "392.00",
+          "92.00",
+          null,
+          [
+            1,
+            1,
+            "1",
+            []
+          ],
+          [
+            3,
+            3,
+            3,
+            "1",
+            "1",
+            {
+              "status": "KNOWN",
+              "value": "20.00"
+            }
+          ],
+          0,
+          [
+            [],
+            [],
+            []
+          ],
+          [
+            "KNOWN",
+            "KNOWN",
+            []
+          ],
+          [
+            0,
+            "392",
+            "392"
+          ]
+        ],
+        [
+          "2026-05",
+          "340",
+          "92.00",
+          "0",
+          "392.00",
+          "92.00",
+          null,
+          [
+            1,
+            1,
+            "1",
+            []
+          ],
+          [
+            3,
+            3,
+            3,
+            "1",
+            "1",
+            {
+              "status": "KNOWN",
+              "value": "20.00"
+            }
+          ],
+          0,
+          [
+            [],
+            [],
+            []
+          ],
+          [
+            "KNOWN",
+            "KNOWN",
+            []
+          ],
+          [
+            0,
+            "392",
+            "392"
+          ]
+        ],
+        [
+          "2026-06",
+          "350",
+          "92.00",
+          "0",
+          "392.00",
+          "92.00",
+          null,
+          [
+            1,
+            1,
+            "1",
+            []
+          ],
+          [
+            3,
+            3,
+            3,
+            "1",
+            "1",
+            {
+              "status": "KNOWN",
+              "value": "20.00"
+            }
+          ],
+          0,
+          [
+            [],
+            [],
+            []
+          ],
+          [
+            "KNOWN",
+            "KNOWN",
+            []
+          ],
+          [
+            0,
+            "392",
+            "392"
+          ]
+        ]
+      ]
+    },
+    "purchaseFacts": [],
+    "habitAssertions": [
+      {
+        "assertionId": "55555555-5555-4555-8555-555555555555",
+        "personId": "22222222-2222-4222-8222-222222222222",
+        "habitKey": "hairdresser",
+        "monthlyVisitEstimate": "2.00",
+        "typicalVisitPrice": "14.00",
+        "priceBasis": "INDICATIVE_PRICE_NOT_PAYMENT",
+        "authority": "USER_VALIDATED",
+        "validatedAt": "2026-01-01T00:00:00Z"
+      }
+    ],
+    "productObservations": [
+      {
+        "observationId": "synthetic-product-0",
+        "subject": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        },
+        "needKey": "synthetic-cosmetic-need",
+        "productKey": "synthetic-product",
+        "observedAt": "2026-01-10",
+        "price": "12.00",
+        "evidenceRefs": [
+          "product:0"
+        ]
+      },
+      {
+        "observationId": "synthetic-product-1",
+        "subject": {
+          "kind": "PERSON",
+          "personId": "33333333-3333-4333-8333-333333333333"
+        },
+        "needKey": "synthetic-cosmetic-need",
+        "productKey": "synthetic-product",
+        "observedAt": "2026-04-10",
+        "price": "12.00",
+        "evidenceRefs": [
+          "product:1"
+        ]
+      }
+    ],
+    "needSubjects": {
+      "synthetic-need": {
+        "needKey": "synthetic-cosmetic-need",
+        "personId": "33333333-3333-4333-8333-333333333333"
+      }
+    },
+    "mobilityLegs": [
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-01-work-out",
+        "date": "2026-01-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-01:work-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-01-work-in",
+        "date": "2026-01-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-01:work-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-01-family-out",
+        "date": "2026-01-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-01:family-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-01-family-in",
+        "date": "2026-01-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-01:family-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-01-unresolved",
+        "date": "2026-01-09",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-01:unresolved"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-02-work-out",
+        "date": "2026-02-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-02:work-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-02-work-in",
+        "date": "2026-02-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-02:work-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-02-family-out",
+        "date": "2026-02-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-02:family-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-02-family-in",
+        "date": "2026-02-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-02:family-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-02-unresolved",
+        "date": "2026-02-09",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-02:unresolved"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-03-work-out",
+        "date": "2026-03-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-03:work-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-03-work-in",
+        "date": "2026-03-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-03:work-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-03-family-out",
+        "date": "2026-03-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-03:family-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-03-family-in",
+        "date": "2026-03-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-03:family-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-03-unresolved",
+        "date": "2026-03-09",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-03:unresolved"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-04-work-out",
+        "date": "2026-04-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-04:work-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-04-work-in",
+        "date": "2026-04-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-04:work-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-04-family-out",
+        "date": "2026-04-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-04:family-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-04-family-in",
+        "date": "2026-04-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-04:family-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-04-unresolved",
+        "date": "2026-04-09",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-04:unresolved"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-05-work-out",
+        "date": "2026-05-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-05:work-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-05-work-in",
+        "date": "2026-05-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-05:work-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-05-family-out",
+        "date": "2026-05-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-05:family-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-05-family-in",
+        "date": "2026-05-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-05:family-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-05-unresolved",
+        "date": "2026-05-09",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-05:unresolved"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-06-work-out",
+        "date": "2026-06-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-06:work-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-06-work-in",
+        "date": "2026-06-07",
+        "estimatedFuelCost": "2.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-06:work-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-06-family-out",
+        "date": "2026-06-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-06:family-out"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-06-family-in",
+        "date": "2026-06-08",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-06:family-in"
+        ]
+      },
+      {
+        "fact": "fct_mobility_leg",
+        "householdId": "11111111-1111-4111-8111-111111111111",
+        "legId": "leg-2026-06-unresolved",
+        "date": "2026-06-09",
+        "estimatedFuelCost": "5.00",
+        "source": {
+          "status": "CERTIFIED_SOURCE"
+        },
+        "evidenceRefs": [
+          "source-leg:2026-06:unresolved"
+        ]
+      }
+    ],
+    "mobilityContexts": [
+      {
+        "contextResolutionId": "context:leg-2026-01-work-out",
+        "mobilityLegId": "leg-2026-01-work-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-01-work-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-01-work-in",
+        "mobilityLegId": "leg-2026-01-work-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-01-work-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-01-family-out",
+        "mobilityLegId": "leg-2026-01-family-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-01-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-01-family-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-01-family-in",
+        "mobilityLegId": "leg-2026-01-family-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-01-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-01-family-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-02-work-out",
+        "mobilityLegId": "leg-2026-02-work-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-02-work-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-02-work-in",
+        "mobilityLegId": "leg-2026-02-work-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-02-work-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-02-family-out",
+        "mobilityLegId": "leg-2026-02-family-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-02-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-02-family-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-02-family-in",
+        "mobilityLegId": "leg-2026-02-family-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-02-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-02-family-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-03-work-out",
+        "mobilityLegId": "leg-2026-03-work-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-03-work-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-03-work-in",
+        "mobilityLegId": "leg-2026-03-work-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-03-work-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-03-family-out",
+        "mobilityLegId": "leg-2026-03-family-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-03-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-03-family-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-03-family-in",
+        "mobilityLegId": "leg-2026-03-family-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-03-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-03-family-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-04-work-out",
+        "mobilityLegId": "leg-2026-04-work-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-04-work-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-04-work-in",
+        "mobilityLegId": "leg-2026-04-work-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-04-work-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-04-family-out",
+        "mobilityLegId": "leg-2026-04-family-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-04-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-04-family-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-04-family-in",
+        "mobilityLegId": "leg-2026-04-family-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-04-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-04-family-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-05-work-out",
+        "mobilityLegId": "leg-2026-05-work-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-05-work-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-05-work-in",
+        "mobilityLegId": "leg-2026-05-work-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-05-work-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-05-family-out",
+        "mobilityLegId": "leg-2026-05-family-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-05-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-05-family-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-05-family-in",
+        "mobilityLegId": "leg-2026-05-family-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-05-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-05-family-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-06-work-out",
+        "mobilityLegId": "leg-2026-06-work-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-06-work-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-06-work-in",
+        "mobilityLegId": "leg-2026-06-work-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "WORK_COMMUTE",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": null,
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-06-work-in"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-06-family-out",
+        "mobilityLegId": "leg-2026-06-family-out",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-06-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-06-family-out"
+        ]
+      },
+      {
+        "contextResolutionId": "context:leg-2026-06-family-in",
+        "mobilityLegId": "leg-2026-06-family-in",
+        "subjectPersonId": "33333333-3333-4333-8333-333333333333",
+        "purpose": "FAMILY_VISIT",
+        "contextKind": "LIFE_EVENT",
+        "contextRef": "visit:2026-06-08",
+        "scope": "PERSONAL",
+        "linkState": "LINKED",
+        "knowledgeState": "CONFIRMED",
+        "temporalRelation": "ARRIVAL_TO_CONTEXT",
+        "temporalQuality": "EXACT",
+        "evidenceRefs": [
+          "leg-2026-06-family-in"
+        ]
+      }
+    ],
+    "personalMobility": {
+      "methodVersion": "global_m7_personal_mobility@v1",
+      "costMetricId": "mobility_usage_estimated_fuel_cost",
+      "summaries": [],
+      "liveWrites": "NONE"
+    },
+    "plannedExpenses": [],
+    "simpleOccurrences": {
+      "occurrences": [
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-0",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-01-10",
+          "endDate": "2026-01-10",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-1",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-01-11",
+          "endDate": "2026-01-11",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-2",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-02-10",
+          "endDate": "2026-02-10",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-3",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-02-11",
+          "endDate": "2026-02-11",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-4",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-03-10",
+          "endDate": "2026-03-10",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-5",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-03-11",
+          "endDate": "2026-03-11",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-6",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-04-10",
+          "endDate": "2026-04-10",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-7",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-04-11",
+          "endDate": "2026-04-11",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-8",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-05-10",
+          "endDate": "2026-05-10",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-9",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-05-11",
+          "endDate": "2026-05-11",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-10",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-06-10",
+          "endDate": "2026-06-10",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-11",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-06-11",
+          "endDate": "2026-06-11",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-12",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-01-21",
+          "endDate": "2026-01-21",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-13",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-01-22",
+          "endDate": "2026-01-22",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-14",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-02-21",
+          "endDate": "2026-02-21",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-15",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-02-22",
+          "endDate": "2026-02-22",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-16",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-03-21",
+          "endDate": "2026-03-21",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-17",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-03-22",
+          "endDate": "2026-03-22",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-18",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-04-21",
+          "endDate": "2026-04-21",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-19",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-04-22",
+          "endDate": "2026-04-22",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-20",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-05-21",
+          "endDate": "2026-05-21",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-21",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-05-22",
+          "endDate": "2026-05-22",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-22",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-06-21",
+          "endDate": "2026-06-21",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        },
+        {
+          "fact": "fct_activity_occurrence",
+          "householdId": "11111111-1111-4111-8111-111111111111",
+          "householdTimeZone": "Europe/Paris",
+          "lifeEventId": "synthetic-dining-23",
+          "activityId": "repas_restaurant",
+          "lifeEventSeriesId": null,
+          "parentLifeEventId": null,
+          "startDate": "2026-06-22",
+          "endDate": "2026-06-22",
+          "validationStatus": "Confirmé",
+          "participantIds": []
+        }
+      ],
+      "links": [
+        {
+          "financialLinkId": "synthetic-link-0",
+          "lifeEventId": "synthetic-dining-0",
+          "canonicalComponentKey": "operation:restaurant-2026-01-0",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-1",
+          "lifeEventId": "synthetic-dining-1",
+          "canonicalComponentKey": "operation:restaurant-2026-01-1",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-2",
+          "lifeEventId": "synthetic-dining-2",
+          "canonicalComponentKey": "operation:restaurant-2026-02-0",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-3",
+          "lifeEventId": "synthetic-dining-3",
+          "canonicalComponentKey": "operation:restaurant-2026-02-1",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-4",
+          "lifeEventId": "synthetic-dining-4",
+          "canonicalComponentKey": "operation:restaurant-2026-03-0",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-5",
+          "lifeEventId": "synthetic-dining-5",
+          "canonicalComponentKey": "operation:restaurant-2026-03-1",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-6",
+          "lifeEventId": "synthetic-dining-6",
+          "canonicalComponentKey": "operation:restaurant-2026-04-0",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-7",
+          "lifeEventId": "synthetic-dining-7",
+          "canonicalComponentKey": "operation:restaurant-2026-04-1",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-8",
+          "lifeEventId": "synthetic-dining-8",
+          "canonicalComponentKey": "operation:restaurant-2026-05-0",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-9",
+          "lifeEventId": "synthetic-dining-9",
+          "canonicalComponentKey": "operation:restaurant-2026-05-1",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-10",
+          "lifeEventId": "synthetic-dining-10",
+          "canonicalComponentKey": "operation:restaurant-2026-06-0",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-11",
+          "lifeEventId": "synthetic-dining-11",
+          "canonicalComponentKey": "operation:restaurant-2026-06-1",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "20.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-12",
+          "lifeEventId": "synthetic-dining-12",
+          "canonicalComponentKey": "operation:fast-2026-01",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "10.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-13",
+          "lifeEventId": "synthetic-dining-13",
+          "canonicalComponentKey": "operation:delivery-2026-01",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "15.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-14",
+          "lifeEventId": "synthetic-dining-14",
+          "canonicalComponentKey": "operation:fast-2026-02",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "10.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-15",
+          "lifeEventId": "synthetic-dining-15",
+          "canonicalComponentKey": "operation:delivery-2026-02",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "15.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-16",
+          "lifeEventId": "synthetic-dining-16",
+          "canonicalComponentKey": "operation:fast-2026-03",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "10.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-17",
+          "lifeEventId": "synthetic-dining-17",
+          "canonicalComponentKey": "operation:delivery-2026-03",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "15.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-18",
+          "lifeEventId": "synthetic-dining-18",
+          "canonicalComponentKey": "operation:fast-2026-04",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "10.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-19",
+          "lifeEventId": "synthetic-dining-19",
+          "canonicalComponentKey": "operation:delivery-2026-04",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "15.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-20",
+          "lifeEventId": "synthetic-dining-20",
+          "canonicalComponentKey": "operation:fast-2026-05",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "10.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-21",
+          "lifeEventId": "synthetic-dining-21",
+          "canonicalComponentKey": "operation:delivery-2026-05",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "15.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-22",
+          "lifeEventId": "synthetic-dining-22",
+          "canonicalComponentKey": "operation:fast-2026-06",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "10.00"
+        },
+        {
+          "financialLinkId": "synthetic-link-23",
+          "lifeEventId": "synthetic-dining-23",
+          "canonicalComponentKey": "operation:delivery-2026-06",
+          "relationType": "Paiement_activite",
+          "economicAmountLinked": "15.00"
+        }
+      ]
+    }
+  },
+  "mobilityFacts": {
+    "places": [
+      {
+        "placeId": "00000000-0000-4000-8000-000000009100",
+        "name": "Synthetic place 0",
+        "commune": null,
+        "nature": "Domicile privé",
+        "usage": "Domicile",
+        "subtype": "Domicile principal",
+        "privatePlace": true,
+        "relationships": [],
+        "coordinates": {
+          "latitude": 43.6,
+          "longitude": 3.89,
+          "source": "CANONICAL"
+        }
+      },
+      {
+        "commune": "Ville fixture",
+        "nature": "Commerce",
+        "usage": "Bar",
+        "subtype": null,
+        "privatePlace": false,
+        "relationships": [],
+        "placeId": "00000000-0000-4000-8000-000000099201",
+        "name": "Bar des Trois Jours",
+        "visits12Months": 3,
+        "lastVisitDate": "2026-10-10",
+        "address": "Place des Fictions"
+      },
+      {
+        "commune": "Ville fixture",
+        "nature": "Commerce",
+        "usage": "Bar",
+        "subtype": null,
+        "privatePlace": false,
+        "relationships": [],
+        "placeId": "00000000-0000-4000-8000-000000099202",
+        "name": "Bar du Canal",
+        "visits12Months": 1,
+        "lastVisitDate": "2026-10-12",
+        "address": "Quai A fictif"
+      },
+      {
+        "commune": "Ville fixture",
+        "nature": "Commerce",
+        "usage": "Bar",
+        "subtype": null,
+        "privatePlace": false,
+        "relationships": [],
+        "placeId": "00000000-0000-4000-8000-000000099203",
+        "name": "Bar du Canal",
+        "visits12Months": 0,
+        "lastVisitDate": null,
+        "address": "Quai B fictif"
+      },
+      {
+        "commune": "Ville fixture",
+        "nature": "Commerce",
+        "usage": "Travail",
+        "subtype": null,
+        "privatePlace": true,
+        "relationships": [],
+        "placeId": "00000000-0000-4000-8000-000000099204",
+        "name": "Atelier fixture",
+        "currentRelationships": [
+          {
+            "personId": "00000000-0000-4000-8000-000000000001",
+            "role": "PRIMARY_WORK"
+          }
+        ]
+      }
+    ],
+    "vehicle": {
+      "vehicleId": "00000000-0000-4000-8000-000000009150",
+      "fuelType": "SP95",
+      "label": "Peugeot 207",
+      "consumptionL100Km": "8",
+      "fuelPricePerLiter": "1.99",
+      "fuelPriceSource": "Synthetic canonical fuel",
+      "fuelPriceObservedAt": "2026-10-01T10:00:00Z"
+    },
+    "history": [],
+    "evidenceRefs": [
+      "synthetic:canonical-mobility"
+    ],
+    "personalAuthority": {
+      "methodVersion": "global_m7_personal_mobility@v1",
+      "costMetricId": "mobility_usage_estimated_fuel_cost",
+      "summaries": [],
+      "outputHash": "synthetic-personal-authority",
+      "inputHash": "synthetic-personal-input",
+      "liveWrites": "NONE"
+    }
+  }
+}
