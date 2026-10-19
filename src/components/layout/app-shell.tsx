@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const runtime = useProductRuntime();
   const historyV2 = /^\/historique\/\d{4}-\d{2}$/.test(pathname);
   const plannedMonth = pathname === "/mois-a-venir";
-  const composer = pathname === "/mois-a-venir/composer";
+  const composer = pathname === "/mois-a-venir/composer" || pathname === "/recette/bar-favoris";
 
   if (pathname === "/connexion" || pathname === "/acces-refuse") {
     return children;
