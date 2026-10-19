@@ -1,0 +1,60 @@
+{
+  "at": "2026-10-19T09:56:26.009Z",
+  "serverVersion": "17.11",
+  "candidateSha256": "0476d053fc1943bd1bb55961265c2dca694b06bae3a01524094a9fd7bed44845",
+  "level": "POSTGRESQL_17_REAL_MULTI_CONNECTION_SYNTHETIC_NOT_SUPABASE_AUTH",
+  "checks": [
+    {
+      "id": "SQL_EXACT_CANDIDATE_CREATE_SAVE_READ",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "EXACT_ID_DUPLICATE_CAS_REPLAY_DIFFERENT_PAYLOAD",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "LOST_RESPONSE_RECONCILES_WITHOUT_SECOND_MUTATION",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "ARCHIVE_RECOVERY_NO_VISITS_NO_CANONICAL",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "HOMONYMS_NOT_MERGED_AND_PROVIDER_ERRORS_NO_MUTATION",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "ISOLATION_ACCESS_REVOKED_AND_BANNED",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "RPC_PRIVILEGES_NO_ORDINARY_DML",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "TRANSACTION_FAILURE_ROLLS_BACK_PLACE_AND_REQUEST",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "PUBLISHED_MAPPING_EXACT_SCOPE_GENERATION_PRIVACY_CONFLICT",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "RENAME_OFFLINE_PRESERVES_VERIFICATION_AND_JOURNAL_REVIEW",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "ACCOUNT_DELETION_ONLY_REMOVES_OWN_PRIVATE_PLACES",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "SQL_CATALOG_OWNERS_SEARCH_PATH_PRIVILEGES_AND_RLS",
+      "status": "PASS_LOCAL_DOMAIN"
+    },
+    {
+      "id": "PG17_TWO_CONNECTIONS_CAS_AND_IDEMPOTENCE_REOPEN",
+      "status": "PASS_LOCAL_DOMAIN"
+    }
+  ]
+}

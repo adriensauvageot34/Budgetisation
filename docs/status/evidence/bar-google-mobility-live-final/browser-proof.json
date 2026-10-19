@@ -1,0 +1,68 @@
+{
+  "level": "LOCAL_DESKTOP_REAL_GOOGLE_TOMTOM_PG17_SYNTHETIC_AUTH_DRAFT_FIXTURE",
+  "steps": [
+    {
+      "step": "REAL_GOOGLE_SELECTED_PG17_RENAMED_REAL_ROUTE",
+      "at": "2026-10-19T09:53:35.164Z",
+      "state": "Browser tab: 11, Title: \"Composer mon mois — fixtures C8\", URL: \"http://127.0.0.1:3245/?scenario=BARLIVE_PERSONAL&durable=1\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 182 container Compléter ce trajet"
+    },
+    {
+      "step": "DRAFT_RELOAD_RETAINS_GOOGLE_AND_REAL_ROUTE",
+      "at": "2026-10-19T09:54:46.164Z",
+      "state": "Browser tab: 11, Title: \"Composer mon mois — fixtures C8\", URL: \"http://127.0.0.1:3245/?scenario=BARLIVE_PERSONAL&durable=1\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 1 AXWebArea Composer mon mois — fixtures C8, URL: 127.0.0.1:3245/?scenario=BARLIVE_PERSONAL&durable=1"
+    },
+    {
+      "step": "PG17_FAVOURITE_RELOAD_PERSONAL_NAME",
+      "at": "2026-10-19T09:55:38.626Z",
+      "state": "Browser tab: 11, Title: \"Composer mon mois — fixtures C8\", URL: \"http://127.0.0.1:3245/?scenario=BARLIVE_PERSONAL&durable=1\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 239 button Replier la carte"
+    },
+    {
+      "step": "ARCHIVE_RECOVERY_CONFIRMED_VENUE_UNCHANGED",
+      "at": "2026-10-19T09:56:53.904Z",
+      "geometry": {
+        "configuration": [
+          {
+            "clientHeight": 493,
+            "overflow": "visible",
+            "scrollHeight": 493
+          }
+        ],
+        "documentWidth": 810,
+        "height": 811,
+        "personal": [
+          {
+            "clientHeight": 94,
+            "overflow": "visible",
+            "scrollHeight": 94
+          }
+        ],
+        "width": 810
+      },
+      "state": "Browser tab: 11, Title: \"Composer mon mois — fixtures C8\", URL: \"http://127.0.0.1:3245/?scenario=BARLIVE_PERSONAL&durable=1\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 239 button Replier la carte"
+    },
+    {
+      "step": "DESKTOP_1440_PERSONAL_RECOVERY_GEOMETRY",
+      "at": "2026-10-19T09:57:39.218Z",
+      "geometry": {
+        "configuration": [
+          {
+            "clientHeight": 413,
+            "overflow": "visible",
+            "scrollHeight": 413
+          }
+        ],
+        "documentWidth": 1440,
+        "height": 900,
+        "personal": [
+          {
+            "clientHeight": 70,
+            "overflow": "visible",
+            "scrollHeight": 70
+          }
+        ],
+        "width": 1440
+      },
+      "state": "Browser tab: 11, Title: \"Composer mon mois — fixtures C8\", URL: \"http://127.0.0.1:3245/?scenario=BARLIVE_PERSONAL&durable=1\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 239 button Replier la carte"
+    }
+  ]
+}

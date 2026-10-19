@@ -1,0 +1,77 @@
+{
+  "productSha": "75efc73e67eb20827d743416738cd60914d117f6",
+  "startSha": "2bd6e64ac752278293163cbbf059819b2c66ff50",
+  "branch": "codex/bar-apero-350-effective-closure",
+  "basePr": 66,
+  "pr": 67,
+  "realRuns": [
+    17,
+    30,
+    52
+  ],
+  "timeZone": "Europe/Paris",
+  "boundaries": {
+    "remoteSql": 0,
+    "remoteAuthMutations": 0,
+    "remoteFinancialWrites": 0,
+    "remoteApply": 0,
+    "productionSecretChanges": 0,
+    "canonicalAdmissions": 0,
+    "localPG17": "17.11/loopback55437/SYNTHETIC/STOPPED_WITH_DATA_RETAINED",
+    "providerKeys": "EPHEMERAL_NON_ECHO_SERVER_STDIN_NOT_STORED"
+  },
+  "execution": [
+    {
+      "command": "BAR_SQL_ENGINE=pg17 node scripts/check-bar-personal-places.mjs",
+      "exit": 0,
+      "groups": 13,
+      "level": "REAL_PG17_SQL_ROLES_SYNTHETIC_NO_JWT"
+    },
+    {
+      "command": "node scripts/check-bar-personal-places-ui.mjs",
+      "exit": 0,
+      "groups": 7,
+      "level": "REACT_HANDLERS_AND_HTTP_MOCK_AUTH"
+    },
+    {
+      "command": "node scripts/check-phase2-planned-car.mjs",
+      "exit": 0,
+      "level": "OWNER_MOCK_PROVIDERS"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/check-planner-performance-parity.mjs",
+      "exit": 0,
+      "assertions": 198,
+      "goldenChanged": false
+    }
+  ],
+  "provenance": "Live calls ran with HEAD2bd6e64 plus worktree changes subsequently committed in75efc73. Providers final uses the extracted secure helper before its final cleanup-only change. App TSX/service/SQL bytes tested are the committed product bytes. No claim of live replay on a clean75efc73 checkout.",
+  "limitations": [
+    "HERE urban importSplitRoute rejected; no proven zero urban toll",
+    "Real homonym query results have different display-name hashes: exact same-name establishments NOT_CERTIFIED_REAL (distinct IDs/homonyms tested in SQL synthetic)",
+    "UI real route uses synthetic canonical fuel fallback because fixture cutoff predates official observation; official real fuel proved independently in smoke",
+    "Canonical write authority/publication generation remains unestablished; no speculative writer enabled",
+    "Supabase JWT isolated/UI E2E NOT_RUN; personal-place SQL not remotely applied",
+    "Initial UI RAW guarded callback omission fixed and retested; initial failure log retained",
+    "Initial P1/P4 HTTP tests hit old ports/restricted loopback, then both passed on actual3245 fixture"
+  ],
+  "smokeProviderRequestsAcrossRuns": 99,
+  "uiProviderRequests": "Additional, bounded at100; exact count not recorded",
+  "vercel": {
+    "deploymentId": "dpl_9qkRiwL34SaATBFzjonxA59J8ftm",
+    "sha": "75efc73e67eb20827d743416738cd60914d117f6",
+    "url": "https://budgetisation-i4boc50vr-adriensauvageot34-6137s-projects.vercel.app",
+    "target": "PREVIEW",
+    "state": "READY",
+    "next": "16.2.6",
+    "compileSeconds": 31.5,
+    "typescriptSeconds": 34.5,
+    "staticPages": "8/8",
+    "auth": "NOT_RUN_AUTH",
+    "browser": "LOGIN_PAGE_ONLY"
+  }
+}

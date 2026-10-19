@@ -1,0 +1,1382 @@
+{
+  "at": "2026-10-19T09:43:55.398Z",
+  "sha": "2bd6e64ac752278293163cbbf059819b2c66ff50",
+  "boundary": "SERVER_SCRIPT_PUBLIC_POINTS_SYNTHETIC_WORLD_NO_SUPABASE",
+  "maxRequests": 70,
+  "requests": [
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 1,
+      "status": 200,
+      "ms": 365
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 2,
+      "status": 200,
+      "ms": 95
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 3,
+      "status": 200,
+      "ms": 103
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 4,
+      "status": 200,
+      "ms": 63
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 5,
+      "status": 200,
+      "ms": 79
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 6,
+      "status": 200,
+      "ms": 70
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 7,
+      "status": 200,
+      "ms": 53
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 8,
+      "status": 200,
+      "ms": 46
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 9,
+      "status": 200,
+      "ms": 107
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 10,
+      "status": 200,
+      "ms": 52
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 11,
+      "status": 200,
+      "ms": 99
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 12,
+      "status": 200,
+      "ms": 48
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 13,
+      "status": 200,
+      "ms": 98
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 14,
+      "status": 200,
+      "ms": 69
+    },
+    {
+      "host": "www.data.economie.gouv.fr",
+      "ordinal": 15,
+      "status": 200,
+      "ms": 1102
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 16,
+      "status": 200,
+      "ms": 226
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 17,
+      "status": 200,
+      "ms": 90
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 18,
+      "status": 200,
+      "ms": 66
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 19,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "notices",
+          "routes"
+        ],
+        "notices": [
+          {
+            "code": "importSplitRoute",
+            "severity": "info"
+          }
+        ],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 306
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 20,
+      "status": 200,
+      "ms": 73
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 21,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "routes"
+        ],
+        "notices": [],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 685
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 22,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "routes"
+        ],
+        "notices": [],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections"
+            ],
+            "hasHandle": false,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport",
+                  "tolls",
+                  "tollSystems"
+                ],
+                "tolls": 1
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 116
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 23,
+      "status": 200,
+      "ms": 89
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 24,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "routes"
+        ],
+        "notices": [],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 562
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 25,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "routes"
+        ],
+        "notices": [],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections"
+            ],
+            "hasHandle": false,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport",
+                  "tolls",
+                  "tollSystems"
+                ],
+                "tolls": 1
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 142
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 26,
+      "status": 200,
+      "ms": 516
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 27,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "routes"
+        ],
+        "notices": [],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 882
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 28,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "routes"
+        ],
+        "notices": [],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections"
+            ],
+            "hasHandle": false,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport",
+                  "tolls",
+                  "tollSystems"
+                ],
+                "tolls": 2
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 73
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 29,
+      "status": 200,
+      "ms": 150
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 30,
+      "status": 200,
+      "ms": 55
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 31,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "notices",
+          "routes"
+        ],
+        "notices": [
+          {
+            "code": "importSplitRoute",
+            "severity": "info"
+          }
+        ],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 154
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 32,
+      "status": 200,
+      "ms": 35
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 33,
+      "status": 200,
+      "ms": 62
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 34,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "notices",
+          "routes"
+        ],
+        "notices": [
+          {
+            "code": "importSplitRoute",
+            "severity": "info"
+          }
+        ],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 183
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 35,
+      "networkError": true,
+      "ms": 4514
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 36,
+      "status": 200,
+      "ms": 82
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 37,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "notices",
+          "routes"
+        ],
+        "notices": [
+          {
+            "code": "importSplitRoute",
+            "severity": "info"
+          }
+        ],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 285
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 38,
+      "status": 200,
+      "ms": 31
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 39,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "notices",
+          "routes"
+        ],
+        "notices": [
+          {
+            "code": "importSplitRoute",
+            "severity": "info"
+          }
+        ],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 165
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 40,
+      "status": 200,
+      "ms": 29
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 41,
+      "status": 200,
+      "ms": 178
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 42,
+      "status": 200,
+      "ms": 335
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 43,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "notices",
+          "routes"
+        ],
+        "notices": [
+          {
+            "code": "importSplitRoute",
+            "severity": "info"
+          }
+        ],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 1074
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 44,
+      "status": 200,
+      "ms": 618
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 45,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "notices",
+          "routes"
+        ],
+        "notices": [
+          {
+            "code": "importSplitRoute",
+            "severity": "info"
+          }
+        ],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "notices",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 2020
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 46,
+      "status": 200,
+      "ms": 35
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 47,
+      "status": 200,
+      "ms": 344
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 48,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "notices",
+          "routes"
+        ],
+        "notices": [
+          {
+            "code": "importSplitRoute",
+            "severity": "info"
+          }
+        ],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 1366
+    },
+    {
+      "host": "api.tomtom.com",
+      "ordinal": 49,
+      "status": 200,
+      "ms": 709
+    },
+    {
+      "host": "router.hereapi.com",
+      "ordinal": 50,
+      "status": 200,
+      "hereShape": {
+        "keys": [
+          "notices",
+          "routes"
+        ],
+        "notices": [
+          {
+            "code": "importSplitRoute",
+            "severity": "info"
+          }
+        ],
+        "routeCount": 1,
+        "topHandle": false,
+        "routes": [
+          {
+            "keys": [
+              "id",
+              "sections",
+              "routeHandle"
+            ],
+            "hasHandle": true,
+            "notices": [],
+            "sections": [
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              },
+              {
+                "keys": [
+                  "id",
+                  "type",
+                  "departure",
+                  "arrival",
+                  "transport"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "ms": 1797
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 51,
+      "status": 200,
+      "ms": 34
+    },
+    {
+      "host": "places.googleapis.com",
+      "ordinal": 52,
+      "status": 200,
+      "ms": 34
+    }
+  ],
+  "checks": {
+    "REAL_GOOGLE": {
+      "status": "PASS_REAL_PROVIDER",
+      "result": {
+        "identityHash": "bebb066b7e3eb4c0ca8fd8452d52f32e7014e52170cb850653cf0a9270bdd295",
+        "typesAdmitted": true,
+        "addressPresent": true,
+        "outsideMontpellier": true,
+        "searches": [
+          {
+            "name": "PARTIAL_NAME",
+            "count": 1,
+            "identityHashes": [
+              "bebb066b7e3eb4c0ca8fd8452d52f32e7014e52170cb850653cf0a9270bdd295"
+            ]
+          },
+          {
+            "name": "MINOR_TYPO",
+            "count": 3,
+            "identityHashes": [
+              "bebb066b7e3eb4c0ca8fd8452d52f32e7014e52170cb850653cf0a9270bdd295",
+              "6cf35bd8f696a39ac55d9c068e83932c644eb8a28fd69a2edeaf84aa9fd925d2",
+              "aaf9101f3824f7540d95d9a940f5fbfc48b802c7406004ec87f80b1ef59c8741"
+            ]
+          },
+          {
+            "name": "NAME_WITHOUT_CITY",
+            "count": 1,
+            "identityHashes": [
+              "bebb066b7e3eb4c0ca8fd8452d52f32e7014e52170cb850653cf0a9270bdd295"
+            ]
+          },
+          {
+            "name": "EXPLICIT_OTHER_CITY_WITH_MONTPELLIER_BIAS",
+            "count": 4,
+            "identityHashes": [
+              "591be9d41d09a4ad0a2b6e5a91cbe6410390a3774c524b22c17029e9d7a70183",
+              "f23599faac7c8778a6918bf539cc993c8ca942e55477ce8d61edfd40b7e3bedf",
+              "9ee4eb9f3462d3ac141b3c56130ef00176c7ba443c4e1f67f406387b65295015",
+              "17db23fbf378b89fdad12afcaccad8829d672a8f963c68adbe53080d75294d6b"
+            ]
+          },
+          {
+            "name": "HOMONYM_A",
+            "count": 3,
+            "identityHashes": [
+              "0349d03bffa3f217ebcd7c15d1614f13458287857171b651e5edcd93a9fb9f83",
+              "4dfbea9d79af984dc8dbba81b383d6d1dc6b1ee805fccafb1e8fec63b300eeb7",
+              "cfdf0b8ecf5204a3b4eba83604bd5fc41f8b4d5b12f532b1f50d4a0e25ae8ab0"
+            ],
+            "nameHash": "52653e4e0ac34c4d93386fa5788bba75381842bf75fa01cd119311afc4b57487",
+            "exactIdVerified": true
+          },
+          {
+            "name": "HOMONYM_B",
+            "count": 3,
+            "identityHashes": [
+              "80d9c3b5dcc8e113e73c09fd9833cd373780be270e2d8686587b6d89c1700b58",
+              "fd727fe15b22cc398674c3b19e6d8f08aa093b63b09e763f3921a609ba955af6",
+              "5fe99c59f5a3cc999d0898ce2859bda8bfa99967f4bad104012366338547d3f3"
+            ],
+            "nameHash": "87a1c4aa968d489da3006801c8b89bc8921897371a61f73281682f3644582796",
+            "exactIdVerified": true
+          },
+          {
+            "name": "NO_RESULT",
+            "count": 0,
+            "identityHashes": []
+          }
+        ]
+      }
+    },
+    "REAL_FUEL_OFFICIAL": {
+      "status": "PASS_REAL_PROVIDER",
+      "result": {
+        "pricePerLiter": "2.245",
+        "source": "FR_GOV_FUEL_INSTANT_V2",
+        "methodRef": "fr-gov-sp95-local-median@v1",
+        "observedAt": "2026-10-19T00:50:00+00:00",
+        "calculatedAt": "2026-10-19T09:43:58.120Z",
+        "quality": "STALE",
+        "sampleCount": 5,
+        "radiusKm": 15,
+        "minimum": "2.141",
+        "maximum": "2.297"
+      }
+    },
+    "REAL_TOMTOM": {
+      "status": "PASS_REAL_PROVIDER",
+      "result": {
+        "outbound": {
+          "distanceKm": "3.046",
+          "durationSeconds": 779,
+          "liters": "0.345454",
+          "geometryHash": "89f76d618c576651ba2610d53e20c757543e2a8e0ec332737b0ff5c38a689064",
+          "method": "tomtom-planned-car-fastest@v2",
+          "timeBasis": "TYPICAL_NO_DATE",
+          "economicFuel": "0.78"
+        },
+        "return": {
+          "distanceKm": "1.329",
+          "durationSeconds": 513,
+          "liters": "0.130221",
+          "geometryHash": "5111f8519f764a48761001cae3ec7538598b4df2cf364740ee8af81b95ec4f23",
+          "method": "tomtom-planned-car-fastest@v2",
+          "timeBasis": "TYPICAL_NO_DATE",
+          "economicFuel": "0.29"
+        },
+        "independentDirections": true
+      }
+    },
+    "REAL_HERE": {
+      "status": "PASS_REAL_PROVIDER",
+      "result": {
+        "urban": {
+          "status": "UNAVAILABLE",
+          "amount": null,
+          "currency": "EUR",
+          "provider": "NONE",
+          "methodRef": "here-route-import-tolls@v1",
+          "routeImportedFrom": null,
+          "geometryHash": "89f76d618c576651ba2610d53e20c757543e2a8e0ec332737b0ff5c38a689064",
+          "components": []
+        },
+        "motorway": {
+          "status": "KNOWN",
+          "amount": "32.80",
+          "currency": "EUR",
+          "provider": "HERE",
+          "methodRef": "here-route-import-tolls@v1",
+          "routeImportedFrom": "TOMTOM",
+          "geometryHash": "fb899d870a4c357db7c18839552b64514e0ad2abd1280a83bd9b895ca299405a",
+          "components": [
+            {
+              "name": "ASF",
+              "amount": "32.80"
+            }
+          ]
+        },
+        "reverse": {
+          "status": "KNOWN",
+          "amount": "32.80",
+          "currency": "EUR",
+          "provider": "HERE",
+          "methodRef": "here-route-import-tolls@v1",
+          "routeImportedFrom": "TOMTOM",
+          "geometryHash": "3b542900cfd4cf8b60c27666412e85ba806a50930df93adbfbbe38f1aed9bf52",
+          "components": [
+            {
+              "name": "ASF",
+              "amount": "32.80"
+            }
+          ]
+        },
+        "avoidTolls": {
+          "status": "KNOWN",
+          "amount": "5.50",
+          "currency": "EUR",
+          "provider": "HERE",
+          "methodRef": "here-route-import-tolls@v1",
+          "routeImportedFrom": "TOMTOM",
+          "geometryHash": "b239779f37382292a5b8624a9cf9c213207ece4b8f5e4828b09f06ed970eabfe",
+          "components": [
+            {
+              "name": "ASF",
+              "amount": "1.30"
+            },
+            {
+              "name": "ASF",
+              "amount": "4.20"
+            }
+          ]
+        },
+        "routes": {
+          "motorway": {
+            "distanceKm": "248.408",
+            "durationSeconds": 7278,
+            "liters": "18.692252",
+            "geometryHash": "fb899d870a4c357db7c18839552b64514e0ad2abd1280a83bd9b895ca299405a",
+            "method": "tomtom-planned-car-fastest@v2",
+            "timeBasis": "TYPICAL_NO_DATE",
+            "economicFuel": "41.96"
+          },
+          "reverse": {
+            "distanceKm": "260.154",
+            "durationSeconds": 7861,
+            "liters": "19.265129",
+            "geometryHash": "3b542900cfd4cf8b60c27666412e85ba806a50930df93adbfbbe38f1aed9bf52",
+            "method": "tomtom-planned-car-fastest@v2",
+            "timeBasis": "TYPICAL_NO_DATE",
+            "economicFuel": "43.25"
+          },
+          "avoid": {
+            "distanceKm": "262.594",
+            "durationSeconds": 15977,
+            "liters": "20.078997",
+            "geometryHash": "b239779f37382292a5b8624a9cf9c213207ece4b8f5e4828b09f06ed970eabfe",
+            "method": "tomtom-planned-car-avoid-tolls@v2",
+            "timeBasis": "TYPICAL_NO_DATE",
+            "economicFuel": "45.08"
+          }
+        },
+        "urbanExactToll": "UNAVAILABLE_GEOMETRY_MISMATCH"
+      }
+    },
+    "REAL_BAR_HANDOFF": {
+      "status": "PASS_REAL_PROVIDER",
+      "result": {
+        "sharedOwner": "estimatePlannedCar@planned-car-live-v2",
+        "directions": [
+          {
+            "fuel": "0.29",
+            "cash": null,
+            "toll": null,
+            "digest": "3335e6a82f0ee849a92c1f09ccb1a8c123ae08638fcc91fb484fb944dbfed559"
+          },
+          {
+            "fuel": "0.78",
+            "cash": null,
+            "toll": null,
+            "digest": "49cc5e5e6c66a0bd7878d150f0a60c9f3eb4128b1f8548ffc6c3c588871e46de"
+          }
+        ],
+        "builderParity": true,
+        "semanticPreserved": true,
+        "changeInvalidatesBindings": true
+      }
+    },
+    "NO_SUPABASE_WRITES": {
+      "status": "PASS",
+      "basis": "No Supabase client; fetch allowlist rejects every non-provider host. Synthetic world is in memory only."
+    }
+  },
+  "configuration": {
+    "GOOGLE_MAPS_API_KEY": true,
+    "TOMTOM_API_KEY": true,
+    "HERE_API_KEY": true
+  },
+  "hereCanaries": {
+    "urban": {
+      "status": "UNAVAILABLE",
+      "amount": null,
+      "currency": "EUR",
+      "provider": "NONE",
+      "methodRef": "here-route-import-tolls@v1",
+      "routeImportedFrom": null,
+      "geometryHash": "89f76d618c576651ba2610d53e20c757543e2a8e0ec332737b0ff5c38a689064",
+      "components": []
+    },
+    "motorway": {
+      "status": "KNOWN",
+      "amount": "32.80",
+      "currency": "EUR",
+      "provider": "HERE",
+      "methodRef": "here-route-import-tolls@v1",
+      "routeImportedFrom": "TOMTOM",
+      "geometryHash": "fb899d870a4c357db7c18839552b64514e0ad2abd1280a83bd9b895ca299405a",
+      "components": [
+        {
+          "name": "ASF",
+          "amount": "32.80"
+        }
+      ]
+    },
+    "reverse": {
+      "status": "KNOWN",
+      "amount": "32.80",
+      "currency": "EUR",
+      "provider": "HERE",
+      "methodRef": "here-route-import-tolls@v1",
+      "routeImportedFrom": "TOMTOM",
+      "geometryHash": "3b542900cfd4cf8b60c27666412e85ba806a50930df93adbfbbe38f1aed9bf52",
+      "components": [
+        {
+          "name": "ASF",
+          "amount": "32.80"
+        }
+      ]
+    },
+    "avoidTolls": {
+      "status": "KNOWN",
+      "amount": "5.50",
+      "currency": "EUR",
+      "provider": "HERE",
+      "methodRef": "here-route-import-tolls@v1",
+      "routeImportedFrom": "TOMTOM",
+      "geometryHash": "b239779f37382292a5b8624a9cf9c213207ece4b8f5e4828b09f06ed970eabfe",
+      "components": [
+        {
+          "name": "ASF",
+          "amount": "1.30"
+        },
+        {
+          "name": "ASF",
+          "amount": "4.20"
+        }
+      ]
+    },
+    "routes": {
+      "motorway": {
+        "distanceKm": "248.408",
+        "durationSeconds": 7278,
+        "liters": "18.692252",
+        "geometryHash": "fb899d870a4c357db7c18839552b64514e0ad2abd1280a83bd9b895ca299405a",
+        "method": "tomtom-planned-car-fastest@v2",
+        "timeBasis": "TYPICAL_NO_DATE",
+        "economicFuel": "41.96"
+      },
+      "reverse": {
+        "distanceKm": "260.154",
+        "durationSeconds": 7861,
+        "liters": "19.265129",
+        "geometryHash": "3b542900cfd4cf8b60c27666412e85ba806a50930df93adbfbbe38f1aed9bf52",
+        "method": "tomtom-planned-car-fastest@v2",
+        "timeBasis": "TYPICAL_NO_DATE",
+        "economicFuel": "43.25"
+      },
+      "avoid": {
+        "distanceKm": "262.594",
+        "durationSeconds": 15977,
+        "liters": "20.078997",
+        "geometryHash": "b239779f37382292a5b8624a9cf9c213207ece4b8f5e4828b09f06ed970eabfe",
+        "method": "tomtom-planned-car-avoid-tolls@v2",
+        "timeBasis": "TYPICAL_NO_DATE",
+        "economicFuel": "45.08"
+      }
+    }
+  },
+  "combined": {
+    "simpleReal": [
+      {
+        "fuel": "0.29",
+        "toll": null,
+        "status": "PARTIAL"
+      },
+      {
+        "fuel": "0.78",
+        "toll": null,
+        "status": "PARTIAL"
+      }
+    ],
+    "mixedRealOutboundSyntheticTaxi": {
+      "fare": "17.00",
+      "fuel": "0.00"
+    },
+    "changedRealVenue": [
+      {
+        "digest": "5781ecd57548add42ecddbd60c095fb860cbb11c6168a396e4649fb972413645",
+        "fuel": "81.76",
+        "status": "PARTIAL"
+      },
+      {
+        "digest": "2f939404eacd7a7927ae6398fcd12f85d492aee6e4bf1a0e009f53ebfff6a85f",
+        "fuel": "83.09",
+        "status": "PARTIAL"
+      }
+    ],
+    "injectedOutagePreservesSemantic": true,
+    "unresolvedDeicticNoRequest": true
+  },
+  "hereErrors": [
+    {
+      "provider": "HERE",
+      "code": "GEOMETRY_MISMATCH",
+      "stage": "import"
+    },
+    {
+      "provider": "HERE",
+      "code": "GEOMETRY_MISMATCH",
+      "stage": "import"
+    },
+    {
+      "provider": "HERE",
+      "code": "GEOMETRY_MISMATCH",
+      "stage": "import"
+    },
+    {
+      "provider": "HERE",
+      "code": "GEOMETRY_MISMATCH",
+      "stage": "import"
+    },
+    {
+      "provider": "HERE",
+      "code": "GEOMETRY_MISMATCH",
+      "stage": "import"
+    },
+    {
+      "provider": "HERE",
+      "code": "GEOMETRY_MISMATCH",
+      "stage": "import"
+    },
+    {
+      "provider": "HERE",
+      "code": "GEOMETRY_MISMATCH",
+      "stage": "import"
+    },
+    {
+      "provider": "HERE",
+      "code": "GEOMETRY_MISMATCH",
+      "stage": "import"
+    },
+    {
+      "provider": "HERE",
+      "code": "GEOMETRY_MISMATCH",
+      "stage": "import"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "result": {
+    "deployment": {
+      "id": "dpl_9qkRiwL34SaATBFzjonxA59J8ftm",
+      "name": "budgetisation",
+      "url": "budgetisation-i4boc50vr-adriensauvageot34-6137s-projects.vercel.app",
+      "type": "LAMBDAS",
+      "state": "READY",
+      "createdAt": 1792403985975,
+      "creator": {
+        "uid": "ItlVoi62mpJ28TeqsxO3j569",
+        "username": "adriensauvageot34-6137"
+      },
+      "project": {
+        "id": "prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ",
+        "name": "budgetisation",
+        "framework": "nextjs"
+      },
+      "meta": {
+        "githubCommitRef": "codex/bar-apero-350-effective-closure",
+        "githubCommitSha": "75efc73e67eb20827d743416738cd60914d117f6",
+        "githubCommitMessage": "feat(bar): complete private place recovery and verify live mobility owners",
+        "githubRepo": "Budgetisation",
+        "githubOrg": "adriensauvageot34"
+      },
+      "alias": [
+        "budgetisation-git-codex-f57c8a-adriensauvageot34-6137s-projects.vercel.app"
+      ],
+      "target": null,
+      "regions": [
+        "iad1"
+      ],
+      "buildingAt": 1792403986911,
+      "ready": 1792404068766,
+      "readyState": "READY",
+      "source": "git",
+      "aliasError": null
+    }
+  }
+}
