@@ -1,0 +1,76 @@
+{
+  "sha": "1e0de69f83bca63f00a5bae23a325718b8fc41e5",
+  "method": "DOM_SYNTHETIC_ONLY",
+  "cards": [
+    {
+      "absenceCount": 0,
+      "height": 565,
+      "id": "eb51236e-012b-4923-af84-e0511e32c8bc",
+      "innerHeight": 565,
+      "title": "Bar / Apéro"
+    },
+    {
+      "absenceCount": 0,
+      "height": 145,
+      "id": "b4e1e1b7-88e3-4d78-9f1b-32559904b9eb",
+      "innerHeight": 145,
+      "title": "Crayon à sourcils"
+    },
+    {
+      "absenceCount": 0,
+      "height": 145,
+      "id": "f37f3b4b-2bca-4c14-b223-d54c5f80d3c8",
+      "innerHeight": 145,
+      "title": "Mascara"
+    },
+    {
+      "absenceCount": 0,
+      "height": 165,
+      "id": "savings:00000000-0000-4000-8000-000000000700",
+      "innerHeight": 165,
+      "title": "Synthetic adjustable saving"
+    },
+    {
+      "absenceCount": 1,
+      "height": 175,
+      "id": "41f08444-aa6c-4b9b-a6d3-f9b95b7fbc50",
+      "innerHeight": 175,
+      "title": "Acheter des vêtements"
+    },
+    {
+      "absenceCount": 0,
+      "height": 145,
+      "id": "77f4ee83-9b07-44b1-9d51-ad714014b749",
+      "innerHeight": 145,
+      "title": "Projet maison"
+    },
+    {
+      "absenceCount": 0,
+      "height": 205,
+      "id": "HOUSEHOLD:household:household-restaurants",
+      "innerHeight": 205,
+      "title": "household-restaurants"
+    },
+    {
+      "absenceCount": 0,
+      "height": 155,
+      "id": "PERSON:33333333-3333-4333-8333-333333333333:mobility:FAMILY_VISIT",
+      "innerHeight": 155,
+      "title": "Visites famille · mobilité"
+    },
+    {
+      "absenceCount": 0,
+      "height": 155,
+      "id": "PERSON:33333333-3333-4333-8333-333333333333:mobility:WORK",
+      "innerHeight": 155,
+      "title": "Trajets travail fixes"
+    },
+    {
+      "absenceCount": 0,
+      "height": 135,
+      "id": "PERSON:33333333-3333-4333-8333-333333333333:need:synthetic-cosmetic-need",
+      "innerHeight": 135,
+      "title": "Besoin à préciser"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+src/app/mois-a-venir/composer/bar-living-editor.tsx(376,89): error TS18047: 'group.items' is possibly 'null'.
+src/app/mois-a-venir/composer/bar-living-editor.tsx(376,101): error TS2339: Property 'map' does not exist on type 'string | number | boolean | PlannerJsonObject | readonly PlannerJson[]'.
+  Property 'map' does not exist on type 'string'.
+src/app/mois-a-venir/composer/bar-living-editor.tsx(376,105): error TS7006: Parameter 'item' implicitly has an 'any' type.

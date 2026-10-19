@@ -1,0 +1,4 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS UI046 MOCK: loading, error, long owner label, late/out-of-order results rejected; unsupported photo data ignored (no photo rendering claimed)
+PASS R5 Google: typing is not a decision; verified single-click admission; minimal identity; changed-card late response rejected. MOCK_PROVIDER_ONLY
+PASS GEO bounded search: all 4 distinct candidates reachable, 3 per page; exact linked Google duplicate only, no name-based identity merge.

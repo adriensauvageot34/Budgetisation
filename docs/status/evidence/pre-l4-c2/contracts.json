@@ -5,7 +5,7 @@
       "name": "Vêtements absent",
       "id": "HOUSEHOLD:household:clothing",
       "status": "UNKNOWN",
-      "label": "À définir · aucun choix retenu",
+      "label": "À prévoir",
       "summary": "À définir"
     },
     {
@@ -19,7 +19,7 @@
       "name": "Maison petit absent",
       "id": "HOUSEHOLD:household:home-small",
       "status": "UNKNOWN",
-      "label": "À définir · aucun choix retenu",
+      "label": "À prévoir",
       "summary": "À définir"
     },
     {
@@ -33,7 +33,7 @@
       "name": "Jeux / numérique ponctuel absent",
       "id": "HOUSEHOLD:household:games-digital",
       "status": "UNKNOWN",
-      "label": "À définir · aucun choix retenu",
+      "label": "À prévoir",
       "summary": "À définir"
     },
     {

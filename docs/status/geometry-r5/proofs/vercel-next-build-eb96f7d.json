@@ -1,0 +1,1125 @@
+{
+  "deploymentId": "dpl_HjFmd7qnAozvUJZQzxbcnBzLB8rk",
+  "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+  "result": {
+    "events": [
+      {
+        "created": 1792444376257,
+        "date": 1792444376257,
+        "type": "stdout",
+        "text": "Running build in Washington, D.C., USA (East) – iad1",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444376257,
+        "date": 1792444376257,
+        "type": "stdout",
+        "text": "Build machine configuration: 2 cores, 8 GB",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444376376,
+        "date": 1792444376376,
+        "type": "stdout",
+        "text": "Cloning github.com/adriensauvageot34/Budgetisation (Branch: codex/bar-r5-board-geometry-34, Commit: eb96f7d)",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380269,
+        "date": 1792444380269,
+        "type": "stdout",
+        "text": "Cloning completed: 3.893s",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380392,
+        "date": 1792444380392,
+        "type": "stdout",
+        "text": "Found .vercelignore",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380416,
+        "date": 1792444380416,
+        "type": "stdout",
+        "text": "Removed 28 ignored files defined in .vercelignore",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380416,
+        "date": 1792444380416,
+        "type": "stdout",
+        "text": "  /.env.example",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380416,
+        "date": 1792444380416,
+        "type": "stdout",
+        "text": "  /.git/config",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380416,
+        "date": 1792444380416,
+        "type": "stdout",
+        "text": "  /.git/description",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380416,
+        "date": 1792444380416,
+        "type": "stdout",
+        "text": "  /.git/FETCH_HEAD",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380416,
+        "date": 1792444380416,
+        "type": "stdout",
+        "text": "  /.git/HEAD",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380416,
+        "date": 1792444380416,
+        "type": "stdout",
+        "text": "  /.git/hooks/applypatch-msg.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380417,
+        "date": 1792444380417,
+        "type": "stdout",
+        "text": "  /.git/hooks/commit-msg.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380417,
+        "date": 1792444380417,
+        "type": "stdout",
+        "text": "  /.git/hooks/fsmonitor-watchman.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380417,
+        "date": 1792444380417,
+        "type": "stdout",
+        "text": "  /.git/hooks/post-update.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380417,
+        "date": 1792444380417,
+        "type": "stdout",
+        "text": "  /.git/hooks/pre-applypatch.sample",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380482,
+        "date": 1792444380482,
+        "type": "stdout",
+        "text": "Restored build cache from previous deployment (DZTZT37VM3hPM1NAhWKPxpsK6oLm)",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380830,
+        "date": 1792444380830,
+        "type": "stdout",
+        "text": "Running \"vercel build\"",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444380839,
+        "date": 1792444380839,
+        "type": "stderr",
+        "text": "Vercel CLI 64.3.1",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381295,
+        "date": 1792444381295,
+        "type": "stdout",
+        "text": "Installing dependencies...",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381771,
+        "date": 1792444381771,
+        "type": "stderr",
+        "text": "npm warn Unknown env config \"cache-dir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381994,
+        "date": 1792444381994,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381994,
+        "date": 1792444381994,
+        "type": "stdout",
+        "text": "up to date in 567ms",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381994,
+        "date": 1792444381994,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381994,
+        "date": 1792444381994,
+        "type": "stdout",
+        "text": "23 packages are looking for funding",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381994,
+        "date": 1792444381994,
+        "type": "stdout",
+        "text": "  run `npm fund` for details",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381995,
+        "date": 1792444381995,
+        "type": "stderr",
+        "text": "npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381995,
+        "date": 1792444381995,
+        "type": "stderr",
+        "text": "npm warn install-scripts   sharp@0.34.5 (install: node install/check.js || npm run build)",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381995,
+        "date": 1792444381995,
+        "type": "stderr",
+        "text": "npm warn install-scripts",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444381995,
+        "date": 1792444381995,
+        "type": "stderr",
+        "text": "npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382019,
+        "date": 1792444382019,
+        "type": "stdout",
+        "text": "Detected Next.js version: 16.2.6",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382023,
+        "date": 1792444382023,
+        "type": "stdout",
+        "text": "Running \"npm run build\"",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382105,
+        "date": 1792444382105,
+        "type": "stderr",
+        "text": "npm warn Unknown env config \"cache-dir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.",
+        "level": "warning",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382119,
+        "date": 1792444382119,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382119,
+        "date": 1792444382119,
+        "type": "stdout",
+        "text": "> budgetisation@0.1.0 build",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382119,
+        "date": 1792444382119,
+        "type": "stdout",
+        "text": "> next build",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382119,
+        "date": 1792444382119,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382664,
+        "date": 1792444382664,
+        "type": "stdout",
+        "text": "  Applying modifyConfig from Vercel",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382786,
+        "date": 1792444382786,
+        "type": "stdout",
+        "text": "▲ Next.js 16.2.6 (Turbopack)",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382787,
+        "date": 1792444382787,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444382835,
+        "date": 1792444382835,
+        "type": "stdout",
+        "text": "  Creating an optimized production build ...",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444417773,
+        "date": 1792444417773,
+        "type": "stdout",
+        "text": "✓ Compiled successfully in 34.6s",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444417775,
+        "date": 1792444417775,
+        "type": "stdout",
+        "text": "  Running TypeScript ...",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444455529,
+        "date": 1792444455529,
+        "type": "stdout",
+        "text": "  Finished TypeScript in 37.8s ...",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444455533,
+        "date": 1792444455533,
+        "type": "stdout",
+        "text": "  Collecting page data using 1 worker ...",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444456831,
+        "date": 1792444456831,
+        "type": "stdout",
+        "text": "  Generating static pages using 1 worker (0/8) ...",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457161,
+        "date": 1792444457161,
+        "type": "stdout",
+        "text": "  Generating static pages using 1 worker (2/8) \r",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457161,
+        "date": 1792444457161,
+        "type": "stdout",
+        "text": "  Generating static pages using 1 worker (4/8) \r",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457162,
+        "date": 1792444457162,
+        "type": "stdout",
+        "text": "  Generating static pages using 1 worker (6/8) \r",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457162,
+        "date": 1792444457162,
+        "type": "stdout",
+        "text": "✓ Generating static pages using 1 worker (8/8) in 330ms",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457230,
+        "date": 1792444457230,
+        "type": "stdout",
+        "text": "  Running onBuildComplete from Vercel",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457393,
+        "date": 1792444457393,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457396,
+        "date": 1792444457396,
+        "type": "stdout",
+        "text": "Route (app)",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457396,
+        "date": 1792444457396,
+        "type": "stdout",
+        "text": "┌ ƒ /",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457396,
+        "date": 1792444457396,
+        "type": "stdout",
+        "text": "├ ○ /_not-found",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ○ /acces-refuse",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ○ /analyse",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /analyse-globale",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/composer/activity-history",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/composer/drafts",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/composer/historical-basis",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/composer/preview",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/cron/composer-history",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/global-v2/query",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/persona-portrait/[name]",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/places/autocomplete",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/places/details",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/places/personal",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/places/photo",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/query",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457397,
+        "date": 1792444457397,
+        "type": "stdout",
+        "text": "├ ƒ /api/recette/bar-favoris",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /categorie/[slug]",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /connexion",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /diagnostic",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /historique",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /historique/[month]",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /historique/analyse/global",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ○ /imports",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ○ /mentions-places",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /mois-a-venir",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /mois-a-venir/composer",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /mois-a-venir/composer/preparer-historique",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /mois-a-venir/composer/preparer-socle",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ƒ /operations",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "├ ○ /parametres",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "└ ƒ /recette/bar-favoris",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457398,
+        "date": 1792444457398,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457399,
+        "date": 1792444457399,
+        "type": "stdout",
+        "text": "ƒ Proxy (Middleware)",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457399,
+        "date": 1792444457399,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457399,
+        "date": 1792444457399,
+        "type": "stdout",
+        "text": "○  (Static)   prerendered as static content",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457399,
+        "date": 1792444457399,
+        "type": "stdout",
+        "text": "ƒ  (Dynamic)  server-rendered on demand",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457399,
+        "date": 1792444457399,
+        "type": "stdout",
+        "text": "",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457950,
+        "date": 1792444457950,
+        "type": "stderr",
+        "text": "Build Completed in /vercel/output [1m]",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444457971,
+        "date": 1792444457971,
+        "type": "stdout",
+        "text": "Deploying outputs...",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444465906,
+        "date": 1792444465906,
+        "type": "stdout",
+        "text": "Deployment completed",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444465923,
+        "date": 1792444465923,
+        "type": "stdout",
+        "text": "Creating build cache...",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444475596,
+        "date": 1792444475596,
+        "type": "stdout",
+        "text": "Created build cache: 10s",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444475596,
+        "date": 1792444475596,
+        "type": "stdout",
+        "text": "Uploading build cache [172.40 MB]",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      },
+      {
+        "created": 1792444478070,
+        "date": 1792444478070,
+        "type": "stdout",
+        "text": "Build cache uploaded: 2.474s",
+        "info": {
+          "type": "build",
+          "name": "bld_qb7a7b0tt",
+          "entrypoint": "."
+        }
+      }
+    ]
+  },
+  "truncated": true,
+  "truncation": {
+    "arrays": 1,
+    "omittedArrayItems": 1,
+    "objects": 0,
+    "omittedObjectKeys": 0,
+    "strings": 0,
+    "omittedStringChars": 0,
+    "depth": 0,
+    "budget": 0
+  }
+}

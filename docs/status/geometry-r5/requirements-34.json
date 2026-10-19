@@ -7,510 +7,980 @@
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Adapter la largeur de la carte à la scène active et non à un format ouvert universel.",
       "r5": "Faire varier **le span réservé par le Board et la largeur visuelle ensemble**, pas seulement une propriété CSS.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
         "inventory-layout.ts",
-        "board-carousel.tsx",
-        "composer.module.css"
+        "board-carousel.tsx"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S04, GEO-S08, GEO-S11",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G1",
+      "initialStatus": "GAP_CONFIRMED_STATIC",
+      "scenarios": [
+        "GEO-S04",
+        "GEO-S08",
+        "GEO-S11"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-018",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Permettre au Board de récupérer l'espace libéré par une carte devenue plus étroite, sans créer un trou invisible dans sa grille.",
       "r5": "Réutiliser l'espace au repack **stabilisé**, sans sauts pendant frappe ou drag ; pas de place fantôme permanente.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
         "inventory-layout.ts",
-        "board-carousel.tsx",
-        "composer.module.css"
+        "board-carousel.tsx"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S04, GEO-S08, GEO-S11",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G1",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S04",
+        "GEO-S08",
+        "GEO-S11"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-025",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Ne jamais conserver une hauteur artificielle après la fermeture d'une scène ou le retrait d'un objet.",
       "r5": "La réduction de hauteur intrinsèque doit aussi être reflétée dans l'empreinte réservée.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
         "inventory-layout.ts",
-        "board-carousel.tsx",
-        "composer.module.css"
+        "board-carousel.tsx"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S04, GEO-S08, GEO-S11",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G1",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S04",
+        "GEO-S08",
+        "GEO-S11"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-205",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Décorréler la largeur visuelle de la carte et l’empreinte réservée dans le moteur de placement, pour que la place libérée serve réellement à d’autres cartes.",
       "r5": "Clarification R5 : la largeur rendue ET le `columnSpan` réservé doivent diminuer ensemble ; pas de dissociation durable des deux.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
         "inventory-layout.ts",
-        "board-carousel.tsx",
-        "composer.module.css"
+        "board-carousel.tsx"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S04, GEO-S08, GEO-S11",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G1",
+      "initialStatus": "GAP_CONFIRMED_STATIC",
+      "scenarios": [
+        "GEO-S04",
+        "GEO-S08",
+        "GEO-S11"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-206",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Ne pas laisser un grand trou vide dans le Board simplement parce qu’une carte compactée conserve un grand emplacement virtuel.",
       "r5": "Le packer récupère physiquement l'espace, sans densification agressive pendant saisie.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
         "inventory-layout.ts",
-        "board-carousel.tsx",
-        "composer.module.css"
+        "board-carousel.tsx"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S04, GEO-S08, GEO-S11",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G1",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S04",
+        "GEO-S08",
+        "GEO-S11"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-207",
       "sourceStatus": "SOUS CONTRAT MÉTIER/PROVIDER",
       "text": "Rendre la transition compact ↔ détaillé stable, sans chevauchement, collision ou déplacement disproportionné des cartes voisines.",
       "r5": "Conserver ancre/carte active, gel pendant focus/drag et repack lors de transition explicite.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
         "inventory-layout.ts",
-        "board-carousel.tsx",
-        "composer.module.css"
+        "board-carousel.tsx"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S04, GEO-S08, GEO-S11",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G1",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S04",
+        "GEO-S08",
+        "GEO-S11"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-016",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Donner à la carte vide une largeur proche de celle de deux petites cartes, ou moins si le Board le permet.",
       "r5": "Ordre de grandeur, non largeur imposée ; maximiser la lisibilité sans fabriquer des grands blancs.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-surface.ts",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S04, GEO-S05, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G2",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S04",
+        "GEO-S05",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-017",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Réserver les grandes largeurs aux situations où plusieurs blocs peuvent véritablement être disposés côte à côte.",
       "r5": null,
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-surface.ts",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S04, GEO-S05, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G2",
+      "initialStatus": "GAP_CONFIRMED_STATIC",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S04",
+        "GEO-S05",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-029",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Prévoir une taille optimale spécifique aux scènes Lieu, Date, Personnes, Consommation et Trajet.",
       "r5": "Gabarits de scène et contenu utile, non matrice CSS rigide par preset.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-surface.ts",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S04, GEO-S05, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G2",
+      "initialStatus": "GAP_CONFIRMED_STATIC",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S04",
+        "GEO-S05",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-030",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Ajuster la largeur au niveau de contenu : compacte pour une soirée vide, intermédiaire pour Lieu/Date/Personnes et édition simple, étendue pour plusieurs moments ou trajets.",
       "r5": "Préférence de surface, mesure intrinsèque et empreinte accordée sont trois variables distinctes.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-surface.ts",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S04, GEO-S05, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G2",
+      "initialStatus": "GAP_CONFIRMED_STATIC",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S04",
+        "GEO-S05",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-031",
       "sourceStatus": "HYPOTHÈSE À MESURER",
       "text": "Employer des fourchettes de travail indicatives desktop (à valider sur navigateur) : fermé 350–480 px ; ouvert vide 480–600 px ; recherche/date 560–680 px ; consommation 560–700 px ; soirée riche 720–900 px.",
       "r5": "**Non contractuel** : les fourchettes historiques sont des hypothèses à corriger selon scénario/viewport. Date peut être plus étroite ; riche ne devient L que si utile.",
-      "status": "HYPOTHESIS",
+      "status": "HYPOTHESIS_MEASURED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-surface.ts",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S04, GEO-S05, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G2",
+      "initialStatus": "HYPOTHESIS",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S04",
+        "GEO-S05",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md.",
+      "limit": "Working hypotheses measured, not fixed acceptance ranges. Date can be ~449px; rich ~755–778px."
     },
     {
       "id": "UI-059",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Réduire la largeur de la carte à celle d'une véritable scène calendrier, plutôt que de garder une énorme carte presque vide.",
       "r5": "Scène M calendrier, pas '760 px + minuscule widget'.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-surface.ts",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S04, GEO-S05, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G2",
+      "initialStatus": "GAP_CONFIRMED_STATIC",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S04",
+        "GEO-S05",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-060",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Faire occuper au calendrier la majorité de la largeur disponible dans sa scène.",
       "r5": "Utiliser l'enveloppe utile pour les 7 colonnes, sans élargir artificiellement la carte.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-surface.ts",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S04, GEO-S05, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G2",
+      "initialStatus": "GAP_CONFIRMED_STATIC",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S04",
+        "GEO-S05",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-019",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Rapprocher « Bar / Apéro » et le montant, actuellement séparés par une distance excessive.",
       "r5": null,
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-living-card.tsx",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S03, GEO-S08, GEO-S09, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G3",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S03",
+        "GEO-S08",
+        "GEO-S09",
+        "GEO-S10"
+      ],
+      "browserProofSha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-020",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Éviter de réserver une ligne entière pour un seul bouton situé à l'extrémité droite.",
       "r5": null,
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-living-card.tsx",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S03, GEO-S08, GEO-S09, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G3",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S03",
+        "GEO-S08",
+        "GEO-S09",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-021",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Regrouper Lieu, Date, Personnes et Trajet sur une même ligne quand la place le permet, mais ne pas forcer leur compression.",
       "r5": "Une ligne seulement si elle reste utilisable ; sinon deux lignes denses ou capsules compactes. Ne pas diminuer excessivement les hitboxes.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-living-card.tsx",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S03, GEO-S08, GEO-S09, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G3",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S03",
+        "GEO-S08",
+        "GEO-S09",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-022",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Réduire les marges verticales des états vides, surtout sous « Au bar ».",
       "r5": null,
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-living-card.tsx",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S03, GEO-S08, GEO-S09, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G3",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S03",
+        "GEO-S08",
+        "GEO-S09",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-023",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Faire disparaître une section vide non essentielle lorsque son seul contenu est son titre.",
       "r5": null,
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-living-card.tsx",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S03, GEO-S08, GEO-S09, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G3",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S03",
+        "GEO-S08",
+        "GEO-S09",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-024",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Utiliser l'espace horizontal pour présenter des informations complémentaires, mais pas pour étirer inutilement les champs de saisie.",
       "r5": null,
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-living-card.tsx",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S03, GEO-S08, GEO-S09, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G3",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S03",
+        "GEO-S08",
+        "GEO-S09",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-032",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Ne pas imposer la même grille aux formulaires courts, consommations, trajectoires et résumés ; choisir la disposition verticale ou horizontale selon le contenu.",
       "r5": null,
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-living-card.tsx",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S03, GEO-S08, GEO-S09, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G3",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S03",
+        "GEO-S08",
+        "GEO-S09",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-033",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Répartir les consommations sur plusieurs colonnes si utile, sans écraser leur lisibilité pour gagner quelques pixels.",
       "r5": "Deux colonnes uniquement si chaque objet conserve nom, quantité, prix, unité et cible éditable lisibles.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "bar-living-card.tsx",
+        "bar-living-editor.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S03, GEO-S08, GEO-S09, GEO-S10",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G3",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S03",
+        "GEO-S08",
+        "GEO-S09",
+        "GEO-S10"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-170",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Réduire la hauteur des cartes simples qui n'ont encore aucun choix utilisateur.",
       "r5": "Compacter également l'empreinte de grille et non seulement l'intérieur de la petite carte.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-171",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Afficher un seul état « À prévoir » ou « À définir », plutôt que plusieurs formulations équivalentes.",
       "r5": "N'afficher qu'un seul état utile sans prix fictif à 0 €.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "GAP_CONFIRMED_STATIC",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-172",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Ne pas utiliser une énorme taille de police pour une absence de décision, au détriment du nom de l'objet.",
       "r5": "Typographie de l'objet et de la décision prioritaire à celle de l'absence.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-173",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Faire de l'illustration et du titre les deux éléments les plus importants des cartes non configurées.",
       "r5": "Illustration d'univers **décorative** clairement distincte d'un poste économique ajouté.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-174",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Afficher les détails économiques uniquement lorsque des informations suffisantes existent.",
       "r5": null,
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-175",
       "sourceStatus": "SOUS CONTRAT MÉTIER/PROVIDER",
       "text": "Rendre chaque carte voisine directement manipulable depuis son information principale : fréquence, prix, quantité ou destination, selon sa nature.",
       "r5": "Clic sur le prix/fréquence visible du preset correspondant ; ne pas copier de force l'éditeur Bar.",
-      "status": "OWNER_CONTRACT",
+      "status": "OWNER_CONTRACT_EXPLICIT",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "OWNER_CONTRACT",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md.",
+      "limit": "Existing frequency/price controls verified. Unsupported edits remain owner-bound; no new capability or financial contract."
     },
     {
       "id": "UI-177",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Préserver un alignement cohérent des cartes entre elles, même lorsque certaines contiennent beaucoup plus de données.",
       "r5": "Alignement calme sans imposer une hauteur commune artificielle.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-178",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Éviter de forcer toutes les cartes fermées dans un format dont la hauteur dépend de la carte voisine la plus dense.",
       "r5": "Hauteur intrinsèque propre à chaque carte, malgré CSS Grid voisin.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-180",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Ne pas grossir artificiellement une carte fermée avec du texte explicatif ; remplir la surface par une composition graphique sobre et des contenus réels.",
       "r5": "Décor à empreinte constante ; si le Board réserve 760px inutilement, corriger le packer d'abord.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-181",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Rationaliser les cartes Mascara, Sourcils, Vêtements et Maison petit qui répètent « À définir » et « Aucun choix retenu » sur plusieurs lignes.",
       "r5": "Un seul 'À prévoir' au lieu de lignes redondantes ; garder prix de référence seulement si qualifié et pertinent.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "GAP_CONFIRMED_STATIC",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md.",
+      "limit": "Browser: Mascara, Crayon à sourcils, Acheter des vêtements, Autre projet maison; shared empty purchase presentation also covered by C2. No independent Maison petit product capability invented."
     },
     {
       "id": "UI-182",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Éviter qu’une carte détaillée oblige ses voisines à s’étirer verticalement et à afficher des zones blanches inutiles.",
       "r5": "Ne jamais étirer les petites voisines par la grande carte sur leur rangée.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
-        "board-carousel.tsx",
+        "composer-card.tsx",
+        "control-value-presentation.ts",
+        "presentation/adapter.ts",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S01, GEO-S02, GEO-S03, GEO-S12",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json",
+        "proofs/neighbors-release.json",
+        "proofs/screenshots/release-neighbors-1920.png"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G4",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S01",
+        "GEO-S02",
+        "GEO-S03",
+        "GEO-S12"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-200",
       "sourceStatus": "RETENU — INTERPRÉTATION R5",
       "text": "Réduire les espaces verticaux inutiles entre les cartes, la pagination du Board et le dock.",
       "r5": "Réduire la réserve passive Board/dock sans déplacer la carte à chaque réponse asynchrone.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
         "board-carousel.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S13, GEO-S14",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G5",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S13",
+        "GEO-S14"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     },
     {
       "id": "UI-208",
       "sourceStatus": "RETENU — CIBLE UX",
       "text": "Conserver des éléments de navigation de Board reconnaissables sans multiplier les libellés redondants autour de « Précédente / Page 2 sur 3 / 1 2 3 / Suivante ».",
       "r5": "Une seule pagination Board reconnaissable ; titre/label court, pas 5 variantes de précédent/suivant.",
-      "status": "NOT_BROWSER_TESTED",
+      "status": "IMPLEMENTED_VERIFIED",
       "owner": [
-        "inventory-layout.ts",
         "board-carousel.tsx",
         "composer.module.css"
       ],
-      "scenario": null,
-      "evidence": null,
-      "sha": null
+      "scenario": "GEO-S13, GEO-S14",
+      "evidence": [
+        "preview-reception.md#matrice-des-scénarios",
+        "geometry-measures.json"
+      ],
+      "sha": "eb96f7d85d60d2ac9731b998db802ac858111e7d",
+      "group": "G5",
+      "initialStatus": "NOT_BROWSER_TESTED",
+      "scenarios": [
+        "GEO-S13",
+        "GEO-S14"
+      ],
+      "browserProofSha": "4204aea6f78cc55afee4d35cb49f8a47722b4aa3",
+      "finalRetest": "4204aea → eb96f7d: only opened-title flex rule changed; short/rich/RAW/Date retested at actual desktop widths on eb96f7d. See preview-reception.md."
     }
-  ]
+  ],
+  "preview": "https://budgetisation-c4zqngwf5-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris?barProbe=1",
+  "counts": {
+    "unique": 34,
+    "implementedVerified": 32,
+    "hypothesisMeasured": 1,
+    "ownerContractExplicit": 1,
+    "partial": 0,
+    "fail": 0
+  },
+  "limit": "Synthetic memory Board with real author Auth. No durable Auth, Google live or native125 certification. Reduced-motion=true browser preference not available; static path only."
 }

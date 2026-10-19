@@ -1,0 +1,517 @@
+{
+  "deploymentId": "dpl_3KuHWVmLxEmFM6Y893qLAzgNt2gQ",
+  "sha": "66b31bc40851f41e435c3c148b08886caadf8d40",
+  "source": "VERCEL_OFFICIAL_BUILD_EVENTS",
+  "events": [
+    {
+      "type": "stdout",
+      "text": "Running build in Washington, D.C., USA (East) – iad1",
+      "date": 1792441984772
+    },
+    {
+      "type": "stdout",
+      "text": "Build machine configuration: 2 cores, 8 GB",
+      "date": 1792441984772
+    },
+    {
+      "type": "stdout",
+      "text": "Cloning github.com/adriensauvageot34/Budgetisation (Branch: codex/bar-r5-board-geometry-34, Commit: 66b31bc)",
+      "date": 1792441984888
+    },
+    {
+      "type": "stdout",
+      "text": "Cloning completed: 3.993s",
+      "date": 1792441988882
+    },
+    {
+      "type": "stdout",
+      "text": "Found .vercelignore",
+      "date": 1792441988992
+    },
+    {
+      "type": "stdout",
+      "text": "Removed 28 ignored files defined in .vercelignore",
+      "date": 1792441989011
+    },
+    {
+      "type": "stdout",
+      "text": "  /.env.example",
+      "date": 1792441989011
+    },
+    {
+      "type": "stdout",
+      "text": "  /.git/config",
+      "date": 1792441989012
+    },
+    {
+      "type": "stdout",
+      "text": "  /.git/description",
+      "date": 1792441989012
+    },
+    {
+      "type": "stdout",
+      "text": "  /.git/FETCH_HEAD",
+      "date": 1792441989012
+    },
+    {
+      "type": "stdout",
+      "text": "  /.git/HEAD",
+      "date": 1792441989012
+    },
+    {
+      "type": "stdout",
+      "text": "  /.git/hooks/applypatch-msg.sample",
+      "date": 1792441989012
+    },
+    {
+      "type": "stdout",
+      "text": "  /.git/hooks/commit-msg.sample",
+      "date": 1792441989012
+    },
+    {
+      "type": "stdout",
+      "text": "  /.git/hooks/fsmonitor-watchman.sample",
+      "date": 1792441989012
+    },
+    {
+      "type": "stdout",
+      "text": "  /.git/hooks/post-update.sample",
+      "date": 1792441989012
+    },
+    {
+      "type": "stdout",
+      "text": "  /.git/hooks/pre-applypatch.sample",
+      "date": 1792441989012
+    },
+    {
+      "type": "stdout",
+      "text": "Restored build cache from previous deployment (868KpS3hAXYdcDb7RkACPGzZuEB5)",
+      "date": 1792441989097
+    },
+    {
+      "type": "stdout",
+      "text": "Running \"vercel build\"",
+      "date": 1792441989423
+    },
+    {
+      "type": "stderr",
+      "text": "Vercel CLI 64.3.1",
+      "date": 1792441989430
+    },
+    {
+      "type": "stdout",
+      "text": "Installing dependencies...",
+      "date": 1792441989921
+    },
+    {
+      "type": "stderr",
+      "text": "npm warn Unknown env config \"cache-dir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.",
+      "date": 1792441990406
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792441990714
+    },
+    {
+      "type": "stdout",
+      "text": "up to date in 677ms",
+      "date": 1792441990714
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792441990715
+    },
+    {
+      "type": "stdout",
+      "text": "23 packages are looking for funding",
+      "date": 1792441990715
+    },
+    {
+      "type": "stdout",
+      "text": "  run `npm fund` for details",
+      "date": 1792441990715
+    },
+    {
+      "type": "stderr",
+      "text": "npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:",
+      "date": 1792441990716
+    },
+    {
+      "type": "stderr",
+      "text": "npm warn install-scripts   sharp@0.34.5 (install: node install/check.js || npm run build)",
+      "date": 1792441990716
+    },
+    {
+      "type": "stderr",
+      "text": "npm warn install-scripts",
+      "date": 1792441990716
+    },
+    {
+      "type": "stderr",
+      "text": "npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.",
+      "date": 1792441990716
+    },
+    {
+      "type": "stdout",
+      "text": "Detected Next.js version: 16.2.6",
+      "date": 1792441990745
+    },
+    {
+      "type": "stdout",
+      "text": "Running \"npm run build\"",
+      "date": 1792441990749
+    },
+    {
+      "type": "stderr",
+      "text": "npm warn Unknown env config \"cache-dir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.",
+      "date": 1792441990844
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792441990858
+    },
+    {
+      "type": "stdout",
+      "text": "> budgetisation@0.1.0 build",
+      "date": 1792441990858
+    },
+    {
+      "type": "stdout",
+      "text": "> next build",
+      "date": 1792441990858
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792441990858
+    },
+    {
+      "type": "stdout",
+      "text": "  Applying modifyConfig from Vercel",
+      "date": 1792441991433
+    },
+    {
+      "type": "stdout",
+      "text": "▲ Next.js 16.2.6 (Turbopack)",
+      "date": 1792441991555
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792441991557
+    },
+    {
+      "type": "stdout",
+      "text": "  Creating an optimized production build ...",
+      "date": 1792441991600
+    },
+    {
+      "type": "stdout",
+      "text": "✓ Compiled successfully in 30.7s",
+      "date": 1792442022667
+    },
+    {
+      "type": "stdout",
+      "text": "  Running TypeScript ...",
+      "date": 1792442022678
+    },
+    {
+      "type": "stdout",
+      "text": "  Finished TypeScript in 33.0s ...",
+      "date": 1792442055665
+    },
+    {
+      "type": "stdout",
+      "text": "  Collecting page data using 1 worker ...",
+      "date": 1792442055668
+    },
+    {
+      "type": "stdout",
+      "text": "  Generating static pages using 1 worker (0/8) ...",
+      "date": 1792442056957
+    },
+    {
+      "type": "stdout",
+      "text": "  Generating static pages using 1 worker (2/8) \r",
+      "date": 1792442057384
+    },
+    {
+      "type": "stdout",
+      "text": "  Generating static pages using 1 worker (4/8) \r",
+      "date": 1792442057384
+    },
+    {
+      "type": "stdout",
+      "text": "  Generating static pages using 1 worker (6/8) \r",
+      "date": 1792442057384
+    },
+    {
+      "type": "stdout",
+      "text": "✓ Generating static pages using 1 worker (8/8) in 427ms",
+      "date": 1792442057385
+    },
+    {
+      "type": "stdout",
+      "text": "  Running onBuildComplete from Vercel",
+      "date": 1792442057453
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792442057626
+    },
+    {
+      "type": "stdout",
+      "text": "Route (app)",
+      "date": 1792442057629
+    },
+    {
+      "type": "stdout",
+      "text": "┌ ƒ /",
+      "date": 1792442057629
+    },
+    {
+      "type": "stdout",
+      "text": "├ ○ /_not-found",
+      "date": 1792442057629
+    },
+    {
+      "type": "stdout",
+      "text": "├ ○ /acces-refuse",
+      "date": 1792442057629
+    },
+    {
+      "type": "stdout",
+      "text": "├ ○ /analyse",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /analyse-globale",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/composer/activity-history",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/composer/drafts",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/composer/historical-basis",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/composer/preview",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/cron/composer-history",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/global-v2/query",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/persona-portrait/[name]",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/places/autocomplete",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/places/details",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/places/personal",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/places/photo",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/query",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /api/recette/bar-favoris",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /categorie/[slug]",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /connexion",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /diagnostic",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /historique",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /historique/[month]",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /historique/analyse/global",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ○ /imports",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ○ /mentions-places",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /mois-a-venir",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /mois-a-venir/composer",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /mois-a-venir/composer/preparer-historique",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /mois-a-venir/composer/preparer-socle",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ƒ /operations",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "├ ○ /parametres",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "└ ƒ /recette/bar-favoris",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "ƒ Proxy (Middleware)",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792442057630
+    },
+    {
+      "type": "stdout",
+      "text": "○  (Static)   prerendered as static content",
+      "date": 1792442057631
+    },
+    {
+      "type": "stdout",
+      "text": "ƒ  (Dynamic)  server-rendered on demand",
+      "date": 1792442057631
+    },
+    {
+      "type": "stdout",
+      "text": "",
+      "date": 1792442057631
+    },
+    {
+      "type": "stderr",
+      "text": "Build Completed in /vercel/output [1m]",
+      "date": 1792442058178
+    },
+    {
+      "type": "stdout",
+      "text": "Deploying outputs...",
+      "date": 1792442058201
+    },
+    {
+      "type": "stdout",
+      "text": "Deployment completed",
+      "date": 1792442066039
+    },
+    {
+      "type": "stdout",
+      "text": "Creating build cache...",
+      "date": 1792442066052
+    },
+    {
+      "type": "stdout",
+      "text": "Created build cache: 9s",
+      "date": 1792442074830
+    },
+    {
+      "type": "stdout",
+      "text": "Uploading build cache [172.40 MB]",
+      "date": 1792442074830
+    },
+    {
+      "type": "stdout",
+      "text": "Build cache uploaded: 2.348s",
+      "date": 1792442077178
+    }
+  ],
+  "connectorTruncation": {
+    "arrays": 1,
+    "omittedArrayItems": 1,
+    "objects": 0,
+    "omittedObjectKeys": 0,
+    "strings": 0,
+    "omittedStringChars": 0,
+    "depth": 0,
+    "budget": 0
+  }
+}
