@@ -6,6 +6,8 @@ import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contra
 import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRef, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";
 import { useComposerInteractions } from "./interactions";
 import styles from "./composer.module.css";
+import {barSurface, type BarSurface, type InventoryAnchor} from "./bar-surface";
+import type {InventoryPlacement} from "./inventory-layout";
 
 export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps, revealSequence, revealFocused, expandedId }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;
   expandedId?: string; revealSequence?: number; revealFocused?: () => void;
@@ -18,7 +20,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     reception.current[phase]++;
     if(viewport.current)viewport.current.dataset.barLayoutProbe=JSON.stringify(reception.current);
   };
-  const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number } | null>(null);
+  const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number; surface: BarSurface; checkpoint: string } | null>(null);
   const [compactBarHeights,setCompactBarHeights]=useState<Readonly<Record<string,number>>>({});
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
   const projected = useMemo(() => inventory ?? inventoryItems(model), [model,inventory]);
@@ -29,7 +31,18 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const items = dragging ? stableItems.current : measuredItems, layoutSize = dragging ? stableSize.current : size;
   const spatialKey = inventorySpatialKey(items);
   const expandedHeight = dragging ? stableExpandedHeight.current : expandedMeasure && expandedMeasure.id === expandedId ? expandedMeasure.height : undefined;
-  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight]);
+  const previousGeometry=useRef<readonly (readonly InventoryPlacement[])[]>([]), activeAnchor=useRef<InventoryAnchor|undefined>(undefined);
+  const originPage=previousGeometry.current.findIndex(p=>p.some(box=>box.item.id===expandedId));
+  const origin=previousGeometry.current[originPage]?.find(box=>box.item.id===expandedId);
+  const anchor=expandedId ? activeAnchor.current?.id===expandedId ? activeAnchor.current : origin ? {id:expandedId,page:originPage,column:origin.column,row:origin.row} : undefined : undefined;
+  const surface=expandedMeasure&&expandedMeasure.id===expandedId?expandedMeasure.surface:undefined;
+  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);
+  useLayoutEffect(()=>{
+    previousGeometry.current=geometry;
+    if(!expandedId){activeAnchor.current=undefined;return;}
+    const index=geometry.findIndex(p=>p.some(box=>box.item.id===expandedId)),box=geometry[index]?.find(box=>box.item.id===expandedId);
+    if(box)activeAnchor.current={id:expandedId,page:index,column:box.column,row:box.row};
+  },[geometry,expandedId]);
   useLayoutEffect(()=>note('repacks'),[geometry]);
   const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);
   const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);
@@ -88,6 +101,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
     let card=findCard();
     let lastHeight=expandedMeasure?.id===expandedId?expandedMeasure.height:null;
+    let lastCheckpoint=expandedMeasure?.id===expandedId?expandedMeasure.checkpoint:null;
     const resize = new ResizeObserver(()=>{note('resizes');measure(true);});
     const observeContent = () => {
       card=findCard();resize.disconnect();if(!card)return;resize.observe(card);
@@ -99,10 +113,16 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       const editor = card?.querySelector<HTMLElement>("[data-bar-living-editor]");
       const header = card?.querySelector<HTMLElement>("header");
       if (!editor || !header) return; // Keep the previous geometry while the editor loads.
+      const checkpoint=`${editor.dataset.barGeometryKey??editor.dataset.barStep??"summary"}:${Math.round(card!.getBoundingClientRect().width)}`;
       const height = Math.max(240, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + 2));
-      if(height===lastHeight)return;
+      // Provider results, typing, focus and images do not renegotiate a scene.
+      // Retain its envelope until an explicit scene/page transition. Growing
+      // contents may reserve more rows for access, but the anchor stays pinned.
+      if(checkpoint===lastCheckpoint&&(height===lastHeight||height<(lastHeight??0)))return;
+      const surface=barSurface(editor.dataset.barStep??"summary",card?.dataset.richness==="rich",editor.dataset.barAdvanced==="true");
       lastHeight=height;
-      const reserve=()=>setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height ? previous : { id: expandedId!, height });
+      lastCheckpoint=checkpoint;
+      const reserve=()=>setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height && previous.checkpoint===checkpoint ? previous : { id: expandedId!, height, surface, checkpoint });
       // Observer delivery follows a DOM commit. Reserve the new intrinsic
       // height before the browser paints, rather than one rAF/React batch later.
       // Only an actual height change flushes; ordinary typing does not repack.
@@ -111,7 +131,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     const mutations = new MutationObserver(() => { note('mutations');observeContent(); measure(true); });
     // Packing can remount the same context on another page. Follow its new
     // host instead of keeping a ResizeObserver attached to the departed card.
-    mutations.observe(board, { childList: true, subtree: true, characterData: true });
+    mutations.observe(board, { childList: true, subtree: true, characterData: true, attributes:true, attributeFilter:["data-bar-geometry-key"] });
     observeContent(); measure();
     return () => { resize.disconnect(); mutations.disconnect(); };
   }, [expandedId, dragging, size.width, spatialKey, active]);
@@ -238,6 +258,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
           <div className={styles.mosaic} data-mosaic data-has-focus={!!focused} data-completeness-focus={interaction?.completenessFocus}
             style={{ "--board-columns":inventoryColumns(layoutSize.width) } as React.CSSProperties}>
             {inventoryMountedPage(index,active,departing,mode,pinned) && inventory.map(({ item, column, row, columnSpan, rowSpan }) => <div key={item.id} className={styles.inventoryCell} data-inventory-id={item.id} tabIndex={-1}
+              data-column-span={columnSpan} data-row-span={rowSpan} data-requested-surface={item.id===expandedId?surface?.size??"compact":undefined} data-geometry-scene={item.id===expandedId?surface?.scene:undefined}
               data-density={item.density} data-spatial-family={item.spatialFamily}
               style={{ gridColumn:`${column} / span ${columnSpan}`, gridRow:`${row} / span ${rowSpan}` }}>{render(item)}</div>)}
           </div>

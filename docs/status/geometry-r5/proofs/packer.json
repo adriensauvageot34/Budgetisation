@@ -1,0 +1,92 @@
+{
+  "method": "PURE_LOCAL_NOT_BROWSER",
+  "checks": [
+    {
+      "count": 5,
+      "width": 560,
+      "status": "PASS"
+    },
+    {
+      "count": 5,
+      "width": 720,
+      "status": "PASS"
+    },
+    {
+      "count": 5,
+      "width": 1000,
+      "status": "PASS"
+    },
+    {
+      "count": 5,
+      "width": 1330,
+      "status": "PASS"
+    },
+    {
+      "count": 16,
+      "width": 560,
+      "status": "PASS"
+    },
+    {
+      "count": 16,
+      "width": 720,
+      "status": "PASS"
+    },
+    {
+      "count": 16,
+      "width": 1000,
+      "status": "PASS"
+    },
+    {
+      "count": 16,
+      "width": 1330,
+      "status": "PASS"
+    },
+    {
+      "count": 30,
+      "width": 560,
+      "status": "PASS"
+    },
+    {
+      "count": 30,
+      "width": 720,
+      "status": "PASS"
+    },
+    {
+      "count": 30,
+      "width": 1000,
+      "status": "PASS"
+    },
+    {
+      "count": 30,
+      "width": 1330,
+      "status": "PASS"
+    },
+    {
+      "count": 50,
+      "width": 560,
+      "status": "PASS"
+    },
+    {
+      "count": 50,
+      "width": 720,
+      "status": "PASS"
+    },
+    {
+      "count": 50,
+      "width": 1000,
+      "status": "PASS"
+    },
+    {
+      "count": 50,
+      "width": 1330,
+      "status": "PASS"
+    },
+    {
+      "surfaceSpans": [
+        6,
+        10
+      ],
+      "status": "PASS"
+    }
+  ]
+}

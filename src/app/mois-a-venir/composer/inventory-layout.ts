@@ -2,6 +2,7 @@ import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contra
 import { composePresentationNodes } from "./presentation/adapter";
 import type { ComposerPresentationNode } from "./presentation/node-types";
 import {presetForContext} from "@/domain/phase2/planner/composer-presets";
+import {barSurface, type BarSurface, type InventoryAnchor} from "./bar-surface";
 
 /** All geometry is a deterministic, transient CSS Grid projection. */
 export type InventoryItem = ComposerPresentationNode;
@@ -27,7 +28,8 @@ const columnGap = 10, rowGap = 5, rowTrack = 5;
 // rounding each 230px card up to ~260px. CSS and packing use the same cap.
 export const inventoryColumns = (width: number) => Math.max(2, Math.min(18, Math.floor((Math.max(212, Math.min(1330, width)) + columnGap) / 76)));
 
-export function inventoryLayoutPages(items: readonly InventoryItem[], width: number, height: number, expandedId?: string, expandedHeight = 520): InventoryPlacement[][] {
+export function inventoryLayoutPages(items: readonly InventoryItem[], width: number, height: number, expandedId?: string, expandedHeight = 520,
+  options: { surface?: BarSurface; anchor?: InventoryAnchor } = {}): InventoryPlacement[][] {
   const availableWidth = Math.max(212, Math.min(1330, width));
   const columns = inventoryColumns(availableWidth), columnWidth = (availableWidth - (columns - 1) * columnGap) / columns;
   // The measured viewport already excludes pagination and the palette.
@@ -36,20 +38,27 @@ export function inventoryLayoutPages(items: readonly InventoryItem[], width: num
   let page: InventoryPlacement[] = [], occupied = new Set<number>();
   const flushPage = () => { if (page.length) pages.push(page); page = []; occupied = new Set(); };
   for (const item of items) {
-    const columnSpan = Math.max(1, Math.min(columns, Math.round(((item.id === expandedId ? Math.min(760, availableWidth) : item.width) + columnGap) / (columnWidth + columnGap))
-      + (item.kind === "CLUSTER" && item.family === "BEAUTY" && columns >= 15 ? 1 : 0)));
     const livingBar=item.kind==="CONTEXT"&&!!item.context&&presetForContext(item.context)?.presetKey==="bar-apero";
-    // Keep the living editor at the same page origin as its scene changes.
-    // Otherwise a shorter scene fits back into an earlier hole and the whole
-    // editor jumps across the Board. Following items still fill the free area.
-    if(livingBar&&item.id===expandedId)flushPage();
+    const expanded=item.id===expandedId;
+    const surface=options.surface??barSurface("summary",item.density==="RICH");
+    const requestedWidth=expanded ? livingBar ? Math.min(surface.preferredWidth,availableWidth) : Math.min(760,availableWidth) : item.width;
+    const columnSpan = Math.max(1, Math.min(columns, (livingBar&&expanded?Math.ceil:Math.round)((requestedWidth + columnGap) / (columnWidth + columnGap))
+      + (item.kind === "CLUSTER" && item.family === "BEAUTY" && columns >= 15 ? 1 : 0)));
+    // Pin the active card to its established page/origin, not a dedicated page.
+    // A short scene never falls backwards into a hole in an earlier page.
+    const anchor=livingBar&&expanded&&options.anchor?.id===item.id?options.anchor:undefined;
+    if(anchor&&pages.length<anchor.page){flushPage();while(pages.length<anchor.page)pages.push([]);}
     // Only the living Bar may exceed the shelf. Its real content is packed,
     // and the existing outer Board/page scrollbar keeps it reachable.
     const requested=Math.ceil(((item.id===expandedId?expandedHeight:item.height)+rowGap)/(rowTrack+rowGap));
     const rowSpan = Math.max(1,livingBar?requested:Math.min(maxTracks,requested));
-    const trackLimit=Math.max(maxTracks,rowSpan);
+    // A tall editor extends the outer document rather than being clipped or
+    // moving to a new page on an asynchronous height change.
+    const trackLimit=livingBar&&expanded&&anchor ? Math.max(maxTracks,anchor.row-1)+rowSpan : Math.max(maxTracks,rowSpan);
     const findSlot = () => {
-      for (let row = 0; row <= trackLimit - rowSpan; row++) for (let column = 0; column <= columns - columnSpan; column++) {
+      const startRow=anchor&&pages.length===anchor.page?anchor.row-1:0;
+      for (let row = startRow; row <= trackLimit - rowSpan; row++) for (let column = 0; column <= columns - columnSpan; column++) {
+        if(anchor&&pages.length===anchor.page&&row===startRow&&column<Math.min(anchor.column-1,columns-columnSpan))continue;
         let free = true;
         for (let y = row; free && y < row + rowSpan; y++) for (let x = column; x < column + columnSpan; x++)
           if (occupied.has(y * columns + x)) { free = false; break; }
