@@ -33,9 +33,11 @@ export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-perso
       body:JSON.stringify({version:'personal-google-place@v1',requestId,googlePlaceId:id,userLabel,expectedVersion,action})});
       const v=await r.json();if(generation.current!==ticket)return;
       if(r.ok&&(v.status==='SAVED'||v.status==='ARCHIVED')&&v.place?.googlePlaceId===id&&v.place.kind==='PERSONAL_SAVED_PLACE'){
-        const admitted=parsePersonalGooglePlace(v.place);if(admitted.status!==v.status)throw Error('PERSONAL_PLACE_RESPONSE_INVALID');
-        setPlaces(previous=>[...previous.filter(p=>p.googlePlaceId!==id),admitted]);pending.current=null;
-        setStatus(action==='SAVE'?'Enregistré dans mes lieux personnels. La sortie reste inchangée.':'Retiré de mes suggestions. Archive conservée.');
+        const receipt=parsePersonalGooglePlace(v.place);if(receipt.status!==v.status)throw Error('PERSONAL_PLACE_RESPONSE_INVALID');
+        const admitted=v.currentPlace?parsePersonalGooglePlace(v.currentPlace):receipt;
+        if(admitted.id!==receipt.id||admitted.googlePlaceId!==id||admitted.version<receipt.version)throw Error('PERSONAL_PLACE_RESPONSE_INVALID');
+        setPlaces(previous=>previous.some(p=>p.googlePlaceId===id&&p.version>admitted.version)?previous:[...previous.filter(p=>p.googlePlaceId!==id),admitted]);pending.current=null;
+        setStatus(v.superseded===true?'Cette demande avait été enregistrée. Une version plus récente a été relue.':action==='SAVE'?'Enregistré dans mes lieux personnels. La sortie reste inchangée.':'Retiré de mes suggestions. Archive conservée.');
       }else setStatus(v.status==='CONFLICT'?'Ce lieu a changé ailleurs. Rouvrez la recherche pour relire sa version.':v.status==='DENIED'?'Enregistrement refusé. Votre sortie est conservée.':'Enregistrement non confirmé. Votre sortie est conservée ; vous pouvez réessayer.');
     }catch{if(generation.current===ticket)setStatus('Enregistrement non confirmé. Réessayez pour vérifier la même demande, sans double écriture.');}
     finally{if(generation.current===ticket)setBusy(false);}

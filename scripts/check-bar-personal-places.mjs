@@ -37,6 +37,7 @@ await test('EXACT_ID_DUPLICATE_CAS_REPLAY_DIFFERENT_PAYLOAD',async()=>{
  assert.equal((await service.save(scope,command())).status,'CONFLICT');
  assert.equal((await rpc(scope,command({expectedVersion:1}), 'MUTATE')).place.version,2);
  assert.equal((await rpc(scope,command({expectedVersion:1}), 'MUTATE')).status,'CONFLICT');
+ const old=await service.save(scope,original);assert.equal(old.replayed,true);assert.equal(old.superseded,true);assert.equal(old.place.version,1);assert.equal(old.currentPlace.version,2);
 });
 await test('LOST_RESPONSE_RECONCILES_WITHOUT_SECOND_MUTATION',async()=>{
  loseResponse=true;const before=mutations;const c=command({expectedVersion:2});const r=await service.save(scope,c);

@@ -51,6 +51,13 @@ await test('RAW_OLD_CONFIRMATION_CANNOT_DISCARD_A_NEW_LABEL',async()=>{
  rawRegistry.guard(()=>continued++);await act(async()=>discard());assert.equal(continued,1);assert.equal(root.root.findByType('input').props.value,'');await act(async()=>root.unmount());
 });
 const {GET,POST}=require('@/app/api/places/personal/route');
+await test('UI_REPLAY_RECEIPT_NEVER_REPLACES_NEWER_ARCHIVE',async()=>{
+ const previous=globalThis.fetch;const saved={id:'f07b0000-0000-4000-8000-000000000004',googlePlaceId:'ChIJ_replayed',userLabel:'Recorded before',version:1,status:'SAVED',kind:'PERSONAL_SAVED_PLACE',verifiedAt:new Date().toISOString()};
+ globalThis.fetch=async(_url,init)=>({ok:true,json:async()=>init?.method?{status:'SAVED',place:saved,replayed:true,superseded:true,currentPlace:{...saved,version:3,status:'ARCHIVED'}}:{enabled:true,places:[]}});
+ detail={...detail,placeId:saved.googlePlaceId};await act(async()=>{root=create(render());});await act(async()=>root.root.findByType('input').props.onChange({target:{value:'Retry label'}}));
+ await click('Enregistrer dans mes lieux');assert(text(root.toJSON()).includes('version plus récente'));assert(!text(root.toJSON()).includes('Dans mes lieux personnels'));
+ await act(async()=>root.unmount());globalThis.fetch=previous;
+});
 await test('HTTP_DISABLED_AUTH_ORIGIN_TYPE_SIZE_SCOPE',async()=>{
  delete process.env.BAR_PERSONAL_PLACES_ENABLED;assert.equal((await (await GET()).json()).enabled,false);assert.equal(authCalls,0);
  const url='https://fixture.invalid/api/places/personal';assert.equal((await POST(new Request(url,{method:'POST'}))).status,403);
