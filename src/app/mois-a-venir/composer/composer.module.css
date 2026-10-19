@@ -1350,7 +1350,7 @@
 .barPlaceResults h4 { margin:0; font-size:11px; color:#75603d; }
 .barPlaceResults .barPlaceChoice { width:100%; height:48px; }
 .barPlaceResults [data-bar-place-source=text] { justify-items:start; }
-.barBeforeEmpty,[data-bar-before]>header { position:relative; padding-right:86px; }
+.barBeforeEmpty,.barLivingEditor [data-bar-before]>header { position:relative; padding-right:86px; }
 .barBeforeArt { position:absolute; right:0; top:50%; transform:translateY(-50%); width:80px; height:48px; object-fit:contain; pointer-events:none; }
 .barLivingEditor[data-bar-scene-density=dense] .barBeforeArt { display:none; }
 .barLivingCard:has([data-bar-scene-density=dense]) .barImageTrigger { opacity:.3; }

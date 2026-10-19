@@ -1,0 +1,24 @@
+
+> budgetisation@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.6 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Skipped not serializable cache item 'Compilation/modules|javascript/auto|C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\build\webpack\loaders\next-flight-css-loader.js??ruleSet[1].rules[15].oneOf[5].use[0]!C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[15].oneOf[5].use[1]!C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[15].oneOf[5].use[2]!C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\app\mois-a-venir\composer\composer.module.css|ssr': No serializer registered for CssSyntaxError
+<w> while serializing webpack/lib/cache/PackFileCacheStrategy.PackContentItems -> webpack/lib/NormalModule -> webpack/lib/ModuleBuildError -> CssSyntaxError
+Failed to compile.
+
+./src/app/mois-a-venir/composer/composer.module.css:1353:1
+Syntax error: Selector ".barBeforeEmpty,[data-bar-before]>header" is not pure (pure selectors must contain at least one local class or id)
+
+  1351 | .barPlaceResults .barPlaceChoice { width:100%; height:48px; }
+  1352 | .barPlaceResults [data-bar-place-source=text] { justify-items:start; }
+> 1353 | .barBeforeEmpty,[data-bar-before]>header { position:relative; padding-right:86px; }
+       | ^
+  1354 | .barBeforeArt { position:absolute; right:0; top:50%; transform:translateY(-50%); width:80px; height:48px; object-fit:contain; pointer-events:none; }
+  1355 | .barLivingEditor[data-bar-scene-density=dense] .barBeforeArt { display:none; }
+
+
+> Build failed because of webpack errors
