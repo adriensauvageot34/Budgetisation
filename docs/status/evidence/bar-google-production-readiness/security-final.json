@@ -1,0 +1,30 @@
+[
+  {
+    "proof": {
+      "rls": [
+        {
+          "table": "personal_google_places",
+          "enabled": true,
+          "anon_select": false,
+          "service_insert": false,
+          "authenticated_select": false
+        },
+        {
+          "table": "personal_google_place_requests",
+          "enabled": true,
+          "anon_select": false,
+          "service_insert": false,
+          "authenticated_select": false
+        }
+      ],
+      "project": "wlndjknwbceaqrqcwbqw",
+      "households": 2,
+      "test_users": 3,
+      "memberships": 3,
+      "favorite_count": 5,
+      "canonical_writer": null,
+      "banned_test_users": 3,
+      "active_test_markers": 0
+    }
+  }
+]

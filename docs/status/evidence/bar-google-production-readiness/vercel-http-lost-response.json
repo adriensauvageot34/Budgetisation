@@ -1,0 +1,12 @@
+{
+  "sha": "3f04ac96ca4788b0aa9ecd8319336b80494969b0",
+  "level": "REAL_VERCEL_HTTP_REAL_AUTH_COOKIE_JWT",
+  "requestId": "798fd05d-3312-406b-a5cb-f0ffd84f843d",
+  "lostPayload": true,
+  "replayed": true,
+  "versionBefore": 5,
+  "versionAfter": 6,
+  "samePlaceId": true,
+  "doubleWrite": false,
+  "financialWrites": 0
+}

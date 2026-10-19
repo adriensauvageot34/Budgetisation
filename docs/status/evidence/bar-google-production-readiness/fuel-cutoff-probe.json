@@ -1,0 +1,6 @@
+{
+  "level": "DETERMINISTIC_OWNER_REPLAY_REAL_RECORDED_FUEL_SYNTHETIC_ROUTE_NOT_ORIGINAL_LIVE_TRACE",
+  "futureObservationRefused": true,
+  "routeRetained": true,
+  "sameReferenceAfterCutoffAdmitted": true
+}

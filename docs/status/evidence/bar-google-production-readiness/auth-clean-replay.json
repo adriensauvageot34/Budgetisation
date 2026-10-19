@@ -1,0 +1,24 @@
+{
+  "sha": "3f04ac96ca4788b0aa9ecd8319336b80494969b0",
+  "project": "wlndjknwbceaqrqcwbqw",
+  "level": "REAL_SUPABASE_AUTH_WITH_GOOGLE_STUB",
+  "checks": [
+    {
+      "id": "CLEAN_SHA_AUTH_RENAME_ARCHIVE_RESTORE_RELOAD",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "CONCURRENT_REAL_SESSIONS_CAS",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "LOST_RESPONSE_RECEIPT_NO_SECOND_WRITE",
+      "status": "PASS_REAL_AUTH"
+    },
+    {
+      "id": "OTHER_REAL_USER_NO_ACCESS",
+      "status": "PASS_REAL_AUTH"
+    }
+  ],
+  "financialWrites": 0
+}
