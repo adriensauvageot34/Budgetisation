@@ -19,6 +19,7 @@ export default async function Page({searchParams}:{searchParams:Promise<{r5catal
       if(!seeded.ok)throw new TypeError('BAR_RECEPTION_FIXTURE_UNAVAILABLE');
       return <BarDockReception model={seeded.model} count={Number(search.r5catalog) as 25|120|150}/>;
     }
-    return <div style={{height:'100%',display:'flex',flexDirection:'column',minWidth:0}}><p role="note" style={{fontSize:11,margin:'0 0 6px',flexShrink:0}}>{barGeometryReceptionEnabled()?"Recette géométrie : connexion habituelle, Board synthétique en mémoire. Aucun enregistrement distant, favori ou Apply.":"Recette isolée : Auth et favoris Supabase réels. Composer en mémoire, faits financiers synthétiques. Apply interdit. Les sorties de cette recette ne sont pas sauvegardées."}</p><div style={{flex:1,minHeight:0,minWidth:0}}><BarFavoritesReception model={initial.model}/></div></div>;
+    return <div style={{height:'100%',display:'flex',flexDirection:'column',minWidth:0}}><p role="note" style={{fontSize:11,margin:'0 0 6px',flexShrink:0}}>{barGeometryReceptionEnabled()?"Recette géométrie : connexion habituelle, Board synthétique en mémoire. Lieux simulés. Aucun enregistrement distant, favori ou Apply.":"Recette isolée : Auth et favoris Supabase réels. Composer en mémoire, faits financiers synthétiques. Apply interdit. Les sorties de cette recette ne sont pas sauvegardées."}</p><div style={{flex:1,minHeight:0,minWidth:0}}><BarFavoritesReception model={initial.model} geometry={barGeometryReceptionEnabled()}/></div></div>;
   }catch(e){if(e instanceof BootstrapAuthenticationRequiredError)redirect('/connexion?retour=%2Frecette%2Fbar-favoris');throw e;}
 }
+

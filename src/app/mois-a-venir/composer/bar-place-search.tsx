@@ -10,6 +10,7 @@ import type {PersonalGooglePlace} from "@/domain/phase2/personal-google-place";
 import type {BarGoogleRef} from "@/domain/phase2/planner/night-out-venue";
 import {BarPersonalPlaces} from "./bar-personal-places";
 import {useInlineEditRegistry} from "./inline-edit-registry";
+import {useBarPlaceTransport} from "./bar-place-transport";
 export type BarPlaceSearchState={query:string;city:string;resultPage:number;detail?:SelectedRestaurantPlace;detailReadAt?:number;personalPlacesEnabled?:boolean};
 /** Fixed result footprint; full owner text is available to keyboard and pointer. */
 export function BarPlaceChoice({label,choose}:{label:string;choose:()=>void}){
@@ -19,6 +20,7 @@ export function BarPlaceChoice({label,choose}:{label:string;choose:()=>void}){
 /** Details stay transient; only the user's minimal prospective reference or an
  * already published Canonical identity is admitted. No Canonical promotion. */
 export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initialSearch,onSearchChange,personalPlacesCapability=false,rawTargetRef,onPersonalSuggestions,commitOnVerified=false,onManual,decisionKey}: {decisionKey?:string;onManual?:()=>void;onPersonalSuggestions?:(places:readonly PersonalGooglePlace[])=>void;commitOnVerified?:boolean;rawTargetRef?:string;personalPlacesCapability?:boolean;places:readonly PlannedPlaceOption[];onKnown:(placeId:string)=>void;onText?:(label:string)=>void;onGoogle?:(label:string,ref:BarGoogleRef)=>void;initialCity?:string;initialSearch?:BarPlaceSearchState;onSearchChange?:(state:BarPlaceSearchState)=>void}) {
+  const placesFetch=useBarPlaceTransport();
   const [query,setQuery]=useState(initialSearch?.query??""),[city,setCity]=useState(initialSearch?.city??initialCity??""),[editCity,setEditCity]=useState(!initialCity||!!initialSearch),[results,setResults]=useState<RestaurantSuggestion[]>([]);
   const [personalPlacesEnabled,setPersonalPlacesEnabled]=useState(initialSearch?.personalPlacesEnabled===true);
   const registry=useInlineEditRegistry();
@@ -50,18 +52,18 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
     const ticket=++generation.current;abort.current?.abort();setDetail(null);setResults([]);if(previousSearch.current!==`${query}\0${city}`)setResultPage(0);previousSearch.current=`${query}\0${city}`;setStatus("");setFailed(false);setDetailRetry(null);
     session.current.schedule(query,city,(request,current)=>{
       const controller=new AbortController();abort.current=controller;setStatus("Recherche…");
-      void fetch("/api/places/autocomplete",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({input:request.input,sessionToken:request.sessionToken,context:{city:request.city,country:"FR",kind:"BAR_APERO"}})})
+      void placesFetch("/api/places/autocomplete",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({input:request.input,sessionToken:request.sessionToken,context:{city:request.city,country:"FR",kind:"BAR_APERO"}})})
         .then(async response=>{if(!response.ok)throw Error(response.status===401?"Connectez-vous pour rechercher avec Google Maps.":response.status===403?"Accès à la recherche refusé. Vérifiez votre session ; votre sortie est conservée.":response.status===429?"Recherche temporairement limitée. Réessayez plus tard ou saisissez un lieu.":"Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles.");try{return await response.json();}catch{throw Error("Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles.");}})
         .then(raw=>{if(current()&&generation.current===ticket){if(!raw||!Array.isArray(raw.suggestions))throw Error("Réponse de recherche invalide. Réessayez ou utilisez un nom libre.");setPersonalPlacesEnabled(raw.capabilities?.personalSavedPlaces===true);const admitted=raw.suggestions.filter((item:RestaurantSuggestion)=>item&&item.source==="google_places"&&validGooglePlaceId(item.placeId)&&typeof item.primaryText==="string");setResults(admitted);setResultPage(page=>Math.min(page,Math.max(0,Math.ceil(admitted.length/3)-1)));setStatus(admitted.length?"Résultats Google Maps":"Aucun résultat Google pour cette recherche. Essayez une autre ville ou un nom libre.");}})
         .catch(error=>{if(current()&&generation.current===ticket&&!controller.signal.aborted){setStatus(error.message);setFailed(true);}});
     });
     return()=>{session.current.cancel();abort.current?.abort();};
-  },[query,city,attempt]);
+  },[query,city,attempt,placesFetch]);
   useEffect(()=>()=>{generation.current++;session.current.complete();abort.current?.abort();},[]);
   const select=async(suggestion:RestaurantSuggestion)=>{
     const ticket=++generation.current;session.current.cancel();abort.current?.abort();const controller=new AbortController();abort.current=controller;setDetail(null);setDetailRetry(null);setFailed(false);setStatus("Lecture du lieu…");
     try{
-      const response=await fetch("/api/places/details",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({placeId:suggestion.placeId,sessionToken:session.current.sessionToken(),context:{kind:"BAR_APERO"}})});
+      const response=await placesFetch("/api/places/details",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({placeId:suggestion.placeId,sessionToken:session.current.sessionToken(),context:{kind:"BAR_APERO"}})});
       if(!response.ok)throw Error("Ce lieu n’a pas pu être vérifié. Réessayez ou saisissez son nom librement.");
       let payload:{place:SelectedRestaurantPlace;capabilities?:{personalSavedPlaces?:boolean}};
       try{payload=await response.json();}catch{throw Error("Ce lieu n’a pas pu être vérifié. Réessayez ou saisissez son nom librement.");}
