@@ -41,11 +41,12 @@ export function AnchoredAtomicPopover({label,anchor,onClose,children}:{label:str
     return()=>{alive=false;attachment.disconnect();cancelAnimationFrame(frame);node.removeEventListener('toggle',toggle);window.removeEventListener('resize',place);window.removeEventListener('scroll',place,true);document.removeEventListener('transitionend',place,true);document.removeEventListener('animationend',place,true);document.removeEventListener('pointerdown',outside,true);node.hidePopover();
       // The summary can move this same portal to a fresh cell. Resolve its own
       // value after that commit, without overriding a live input or RAW dialog.
-      requestAnimationFrame(()=>{
-        const trigger=anchorRef.current()??(contextId?document.querySelector<HTMLElement>(`[data-bar-living-card][data-context="${CSS.escape(contextId)}"] [data-bar-amount-trigger]`):null);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        const current=anchorRef.current();
+        const trigger=current?.isConnected?current:(contextId?document.querySelector<HTMLElement>(`[data-bar-living-card][data-context="${CSS.escape(contextId)}"] [data-bar-amount-trigger]`):null);
         const active=document.activeElement;
         if(trigger?.isConnected&&!document.querySelector('dialog[open]')&&(!active||active===document.body||node.contains(active)||active.getAttribute('aria-label')==='Replier la carte'))trigger.focus({preventScroll:true});
-      });
+      }));
     };
     // The anchor is the value button for this mounted scene; never refocus on a keystroke.
   },[]);
