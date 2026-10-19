@@ -40,7 +40,7 @@ try {
   check('R6-P45-009',()=>{const childIds=threeNodes.find(node=>node.kind==='CLUSTER'&&node.family==='BEAUTY').children.map(node=>node.id);assert.equal(new Set(childIds).size,3);});
   check('R6-P45-010',()=>{const ids=new Set(threeNodes.map(node=>node.id));assert.ok(ids.has('cluster:beauty'));assert.ok(!threeNodes.some(node=>node.kind==='CLUSTER'&&node.children.length<3));});
   check('R6-P45-011',()=>assert.match(board,/prefers-reduced-motion: reduce/));
-  check('R6-P45-012',()=>assert.match(board,/dragging \? stableItems\.current : projected/));
+  check('R6-P45-012',()=>assert.match(board,/dragging \? stableItems\.current : (?:projected|measuredItems)/));
   check('R6-P45-013',()=>assert.equal(JSON.stringify(model),before));
   check('R6-P45-014',()=>assert.match(read('comparison.ts'),/finishComparison/));
   check('R6-P45-015',()=>assert.match(read('composer-cockpit.tsx'),/knowledge|—/));

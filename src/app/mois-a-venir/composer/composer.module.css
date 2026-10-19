@@ -1224,6 +1224,7 @@
 .barActiveTile:has([data-workshop-row])>.barEditableBody { flex-basis:100%; }
 .barActiveTile [data-bar-short-row] { border:0; padding:0; }
 .barRowControls { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:9px; }
+.barRowControls>[data-bar-row-save] { flex:0 0 82px; min-height:32px; padding:5px; border:1px solid #d8c59e; border-radius:8px; background:white; font-size:12px; }
 .barActiveTile [data-bar-short-row] label { display:flex; flex-direction:row; align-items:center; gap:6px; margin:0; }
 .barActiveTile [data-bar-short-row] .workshopStepper { display:inline-flex; align-items:center; gap:3px; }
 .barActiveTile [data-bar-short-row] .workshopStepper input { width:40px; padding:7px 3px; }
