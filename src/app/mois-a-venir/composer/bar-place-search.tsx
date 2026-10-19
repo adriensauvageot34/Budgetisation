@@ -11,6 +11,10 @@ import type {BarGoogleRef} from "@/domain/phase2/planner/night-out-venue";
 import {BarPersonalPlaces} from "./bar-personal-places";
 import {useInlineEditRegistry} from "./inline-edit-registry";
 export type BarPlaceSearchState={query:string;city:string;resultPage:number;detail?:SelectedRestaurantPlace;detailReadAt?:number;personalPlacesEnabled?:boolean};
+/** Fixed result footprint; full owner text is available to keyboard and pointer. */
+export function BarPlaceChoice({label,choose}:{label:string;choose:()=>void}){
+  return <button type="button" className={styles.barPlaceChoice} title={label} aria-label={label} onClick={choose}><span>{label}</span><span className={styles.barPlaceFullLabel} data-full-label={label} aria-hidden="true"/></button>;
+}
 
 /** Details stay transient; only the user's minimal prospective reference or an
  * already published Canonical identity is admitted. No Canonical promotion. */
@@ -81,13 +85,15 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
     <button type="button" onClick={()=>{setCity("");setEditCity(true);}}>Chercher ailleurs, sans ville imposée</button>
     {!city.trim()&&<small>Recherche en France · ajoutez une ville au nom pour préciser.</small>}</>}
     {onManual&&<button type="button" onClick={()=>changeQuestion(onManual)}>Nom libre</button>}
-    {query.trim()&&!detail&&matchingKnown.slice(knownPageIndex*3,(knownPageIndex+1)*3).map(place=><button type="button" key={place.placeId} onClick={()=>changeQuestion(()=>onKnown(place.placeId))}>{place.name} · {place.commune??"Lieu enregistré"}</button>)}
+    <div className={styles.barPlaceResults} data-bar-place-results>
+    {query.trim()&&!detail&&matchingKnown.slice(knownPageIndex*3,(knownPageIndex+1)*3).map(place=><BarPlaceChoice key={place.placeId} label={`${place.name} · ${place.commune??"Lieu enregistré"}`} choose={()=>changeQuestion(()=>onKnown(place.placeId))}/>)}
+    {results.slice(resultPage*3,(resultPage+1)*3).map(result=><BarPlaceChoice key={result.placeId} label={`${result.primaryText}${result.secondaryText?" · "+result.secondaryText:""}`} choose={()=>void select(result)}/>)}
+    </div>
     {!detail&&<BarPageControls index={knownPageIndex} count={Math.ceil(matchingKnown.length/3)} onChange={setKnownPage} label="Résultats enregistrés"/>}
     {(personalPlacesCapability||personalPlacesEnabled)&&<BarPersonalPlaces detail={detail} query={query} onChoose={onGoogle} rawTargetRef={rawTargetRef} onSuggestions={onPersonalSuggestions}/>}
     <GoogleMapsAttribution/>{status&&<p role="status">{status}</p>}
     {failed&&<button type="button" onClick={()=>{session.current.complete();setAttempt(value=>value+1);}}>Réessayer la recherche</button>}
     {detailRetry&&<button type="button" onClick={()=>void select(detailRetry)}>Réessayer ce lieu</button>}
-    {results.slice(resultPage*3,(resultPage+1)*3).map(result=><button type="button" key={result.placeId} onClick={()=>void select(result)}>{result.primaryText} · {result.secondaryText}</button>)}
     <BarPageControls index={resultPage} count={Math.ceil(results.length/3)} onChange={setResultPage} label="Résultats Google"/>
     {detail&&<div data-bar-place-detail><strong>{detail.displayName}</strong><p>{detail.formattedAddress}</p><button type="button" onClick={()=>changeQuestion(()=>{setDetail(null);session.current.complete();setAttempt(value=>value+1);})}>Reprendre cette recherche</button>{known.length?known.map(place=><button type="button" key={place.placeId} onClick={()=>onKnown(place.placeId)}>{known.length===1?"Retenir ce lieu enregistré":`Retenir ${place.name} · ${place.commune??"commune à préciser"} · ${place.address??place.placeId.slice(-6)}`}</button>)
       :<><p role="status">Ce bar peut être retenu sans créer de lieu enregistré. Son adresse sera relue pour le trajet.</p>{onGoogle&&detail.displayName.trim().length<=120&&<button type="button" onClick={()=>onGoogle(detail.displayName.trim(),{provider:"google_places",kind:"BAR_APERO",placeId:detail.placeId})}>Retenir ce bar pour ma sortie</button>}{onText&&detail.displayName.trim().length<=120&&<button type="button" onClick={()=>onText(detail.displayName.trim())}>{onGoogle?"Garder seulement le nom libre":"Retenir comme nom libre"}</button>}</>}</div>}

@@ -97,6 +97,37 @@ await check('C27_L1_REJECTED_COST_PRESERVES_BUFFER',async()=>{
  assert.equal(pendingOps.length,0);
  assert(controls(n=>n.props.role==='alert').some(n=>text(n).includes('pas été admis')));
 });
+await check('C27_L2_COMPATIBLE_PRODUCTS_OWNED_BY_MOMENT',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);
+ await click('Boissons');for(const name of ['Bière','Bière','Cocktail'])await click(name);
+ await click('← Ma sortie');await click('Restauration');await click('Planche / tapas');await click('Snack');await click('Nourriture sur place');
+ await click('← Ma sortie');await click('Boissons');await click('Bouteille');
+ const selected=current().slotSelections.extras.items;
+ assert.equal(selected.length,7);assert.equal(new Set(selected.map(i=>i.selectionId)).size,7);
+ assert(selected.every(i=>i.kind==='COMPONENT'&&i.cost.kind==='UNKNOWN'));
+ await click('← Ma sortie');await click('+ Before');await click('Restauration');await click('Chips');
+ const before=barBefore(model.semanticState,current());
+ assert.equal(before.bottle.label,'Chips');assert.equal(before.child.parentContextOccurrenceId,id);
+ assert.equal(model.semanticState.contexts.filter(c=>c.templateKey==='night-out').length,1);
+ assert.equal(current().slotSelections.extras.items.length,7);
+});
+await check('C27_L2_OTHER_NOT_A_FALSE_CHOICE_EXISTING_VALUE_SURVIVES',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);
+ await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{return:[{...taxi,optionKey:'other'}]}}}));
+ await navigateRoute('outbound');
+ const labels=dock().findAll(n=>n.type==='strong').map(text);
+ assert(!labels.some(label=>/Autre|préciser|Plus tard/i.test(label)));
+ assert.equal(current().slotSelections.return.items[0].optionKey,'other');
+ assert.equal(current().slotSelections.return.items[0].pricing.fare.unitAmount,'12');
+});
+await check('C27_L2_OWNER_PUBLISHED_PLACE_ORDER_NOT_A_DECISION',async()=>{
+ const {barPlaces}=require('@/app/mois-a-venir/composer/bar-place-knowledge');
+ const base={nature:'Commerce',usage:'Bar',subtype:null,privatePlace:false,relationships:[],commune:null};
+ const rows=[{...base,placeId:uuid(10),name:'Z',visits12Months:0},{...base,placeId:uuid(11),name:'A',visits12Months:4,lastVisitDate:'2026-10-10'},{...base,placeId:uuid(12),name:'B',visits12Months:1,lastVisitDate:'2026-10-12'}];
+ assert.deepEqual(barPlaces(rows).map(p=>p.name),['A','B','Z']);
+ assert.deepEqual(barPlaces(rows.map(p=>({...p,visits12Months:undefined,lastVisitDate:null}))).map(p=>p.name),['A','B','Z']);
+});
+
 } finally {
  if(root)await act(async()=>root.unmount());await pg.db.close();
  fs.mkdirSync('docs/status/subassets-r5/proofs',{recursive:true});

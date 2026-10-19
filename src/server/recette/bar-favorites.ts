@@ -23,6 +23,12 @@ export async function barReceptionScope() {
     ?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,k==='householdId'?householdId:rebase(v)])):value;
   const world=rebase(worldJson) as PlanningWorldFacts & {sources:PlanningBaselineSources};
   const facts={...world,baseline:buildPlanningBaseline(world.sources)};
+  if(facts.mobilityFacts)facts.mobilityFacts={...facts.mobilityFacts,places:[...facts.mobilityFacts.places,{
+    placeId:'ba190000-0000-4000-8000-000000009999',
+    name:'Bar fictif des Voyageurs et de la Très Longue Promenade des Démonstrations',
+    commune:'Ville fictive',nature:'Commerce',usage:'Bar',subtype:null,privatePlace:false,relationships:[],
+    visits12Months:0,lastVisitDate:null,address:null
+  }]};
   const deps:PlannerDependencies={repository:{readActivePlan:async()=>null,readRevision:async()=>null,readAppliedRequest:async()=>null,applyRevision:async()=>{throw new TypeError('BAR_RECEPTION_APPLY_FORBIDDEN');}},
     readWorld:async(h,m)=>{if(h!==householdId||m!=='2026-11')throw new TypeError('BAR_RECEPTION_SCOPE_INVALID');return structuredClone(facts);},
     readMobilityOptions:async()=>({places:facts.mobilityFacts?.places??[],vehicle:facts.mobilityFacts?.vehicle??null}),

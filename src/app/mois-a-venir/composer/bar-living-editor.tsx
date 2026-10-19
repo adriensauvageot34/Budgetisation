@@ -37,7 +37,11 @@ import {AnchoredAtomicPopover} from "./atomic-popover";
 
 type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more"|"venue-change"|"known-routes";
 type Component=Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;
-const catalog=assetsForModule("bar").filter(asset=>!/(?:parking|entry)$/u.test(asset.assetKey));
+// Reuse published compatible food definitions, under this Bar's component owner.
+// EDIT_NIGHT_OUT admits bar/club/house_party refs; Restaurant remains a separate event.
+const catalog=[...assetsForModule("bar").filter(asset=>!/(?:parking|entry)$/u.test(asset.assetKey)),
+  ...assetsForModule("house_party").filter(asset=>["snack","chips"].includes(asset.assetKey.split(":").at(-1)??"")),
+  ...assetsForModule("club").filter(asset=>asset.assetKey==="club:food")];
 const beforeCatalog=assetsForModule("house_party");
 export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number;initialBarView?:BarViewMemory;onViewChange?:(view:BarViewMemory)=>void}) {
   const {context,model,card,dockHost,onSave,serverError}=props;
@@ -320,7 +324,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   if(page==="outbound"||page==="return"){
     const actualDirection=page; // setDirection also keeps endpoint editing attached to this leg.
     question={title:"Choisir un transport",nature:"MODES",choices:[
-      ...model.library.searchableAssets.filter(asset=>asset.optionKind==="MOBILITY_INTENT"&&asset.optionKey!=="unknown"&&asset.assetKey.startsWith(`option:night-out:${actualDirection}:`)
+      ...model.library.searchableAssets.filter(asset=>asset.optionKind==="MOBILITY_INTENT"&&!["unknown","other"].includes(asset.optionKey??"")&&asset.assetKey.startsWith(`option:night-out:${actualDirection}:`)
         &&model.dropCapabilities.some(drop=>drop.sourceAssetKey===asset.assetKey&&drop.target.contextOccurrenceId===context.contextOccurrenceId&&drop.target.slotKey===actualDirection&&drop.resolution!=="BLOCKED"))
         .map(asset=>({...choice(asset.assetKey,asset.label,()=>chooseMode(asset.optionKey!),asset.iconKey,undefined,({car:"🚗",taxi:"🚕",train:"🚆",bus:"🚌",free:"🚶",other:"↗",unknown:"?"} as Record<string,string>)[asset.optionKey??""]),selected:leg?.optionKey===asset.optionKey}))]};
   }

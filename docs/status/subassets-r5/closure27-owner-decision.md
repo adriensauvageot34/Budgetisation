@@ -25,3 +25,7 @@ Validation :création/réédition, texte absent/invalide, changement de mode san
 ## Accord demandé (un seul arbitrage)
 
 Conserver ces quatre capacités différées pour la réception du lot UI, ou autoriser un lot propriétaire distinct couvrant les contrats/admission/lecture ci-dessus, puis revue séparée de tout SQL nécessaire. Cette mission n'autorise aucune de ces évolutions métier. Les travaux UI indépendants continuent dans les deux cas.
+
+## Décision utilisateur reçue le19 octobre2026
+
+« Conserver le report dans ce lot UI ». UI129/130/142/160 restent BLOCKED_OWNER, explicitement différées. Aucune extension de contrat ni migration autorisée par cette décision. Les parties quantité/prix/unité de141 et contrôles adaptés de148 peuvent être reçues indépendamment, sans avatars financiers fictifs.
