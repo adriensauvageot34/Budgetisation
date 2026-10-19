@@ -52,6 +52,7 @@ const hereErrors=[];
 const toll=new HereTollProvider(undefined,{fetcher:bounded,onError:issue=>hereErrors.push(issue)});
 const origin={latitude:43.6083,longitude:3.8794,source:'USER_DECLARED'}; // Place de la Comédie, public.
 let chosen,other,outbound,returning,reference;
+const handoffReplay=process.env.BAR_LIVE_HANDOFF_REPLAY_PATH;
 const routeSummary=r=>({distanceKm:r.distanceKm,durationSeconds:r.durationSeconds,liters:r.liters,geometryHash:r.geometryHash,method:r.routeMethodRef,timeBasis:r.timeBasis,economicFuel:reference?fuelEconomicCost(r.liters,reference.pricePerLiter):null});
 if(config.GOOGLE_MAPS_API_KEY)await check('REAL_GOOGLE',async()=>{
   const token=randomUUID();const candidates=await google.autocomplete('bar Montpellier',token,'Montpellier','BAR_APERO');
@@ -61,7 +62,7 @@ if(config.GOOGLE_MAPS_API_KEY)await check('REAL_GOOGLE',async()=>{
   other=await google.details(elsewhere[0].placeId,undefined,'BAR_APERO');assert.equal(other.placeId,elsewhere[0].placeId);
   assert.equal(other.city?.toLocaleLowerCase('fr'),'bordeaux');
   const searches=[];
-  for(const [name,input,city] of [['PARTIAL_NAME',chosen.displayName.slice(0,Math.max(3,Math.ceil(chosen.displayName.length/2)))+' Montpellier','Montpellier'],
+  for(const [name,input,city] of handoffReplay?[]:[['PARTIAL_NAME',chosen.displayName.slice(0,Math.max(3,Math.ceil(chosen.displayName.length/2)))+' Montpellier','Montpellier'],
     ['MINOR_TYPO','bar Montpelier','Montpellier'],['NAME_WITHOUT_CITY',chosen.displayName,''],['EXPLICIT_OTHER_CITY_WITH_MONTPELLIER_BIAS','bar Toulouse','Montpellier'],
     ['HOMONYM_A','Le Central Montpellier',''],['HOMONYM_B','Le Central Bordeaux',''],['NO_RESULT','zzzxqvplm_9467821630','']]){
     const suggestions=await google.autocomplete(input,randomUUID(),city,'BAR_APERO');searches.push({name,count:suggestions.length,identityHashes:suggestions.map(s=>hash(s.placeId))});
@@ -71,7 +72,8 @@ if(config.GOOGLE_MAPS_API_KEY)await check('REAL_GOOGLE',async()=>{
   }
   return {identityHash:hash(chosen.placeId),typesAdmitted:true,addressPresent:true,outsideMontpellier:true,searches};
 });else blocked('REAL_GOOGLE');
-await check('REAL_FUEL_OFFICIAL',async()=>{reference=await fuel.getReference(origin);assert(reference);assert.equal(reference.source,'FR_GOV_FUEL_INSTANT_V2');
+await check('REAL_FUEL_OFFICIAL',async()=>{reference=handoffReplay?JSON.parse(fs.readFileSync(handoffReplay,'utf8')).checks.REAL_FUEL_OFFICIAL.result:await fuel.getReference(origin);assert(reference);assert.equal(reference.source,'FR_GOV_FUEL_INSTANT_V2');
+  if(handoffReplay){assert(Date.parse(reference.observedAt)<=Date.now());evidence.fuelEvidenceMode='REPLAY_PREVIOUS_REAL_REFERENCE_AFTER_ITS_OBSERVATION_TIME_NO_NEW_FUEL_CALL';}
   return reference;});
 if(config.TOMTOM_API_KEY&&chosen)await check('REAL_TOMTOM',async()=>{
   const destination=await route.geocode(chosen.formattedAddress);assert.equal(destination.source,'TOMTOM_GEOCODE');
@@ -83,7 +85,7 @@ if(config.TOMTOM_API_KEY&&chosen)await check('REAL_TOMTOM',async()=>{
     method:r.routeMethodRef,timeBasis:r.timeBasis,economicFuel:reference?fuelEconomicCost(r.liters,reference.pricePerLiter):null});
   return {outbound:summary(outbound),return:summary(returning),independentDirections:true};
 });else blocked('REAL_TOMTOM');
-if(config.HERE_API_KEY&&config.TOMTOM_API_KEY&&outbound)await check('REAL_HERE',async()=>{
+if(!handoffReplay&&config.HERE_API_KEY&&config.TOMTOM_API_KEY&&outbound)await check('REAL_HERE',async()=>{
   const urban=await toll.estimateTolls(outbound);
   if(process.env.BAR_HERE_TRACE_DIAGNOSTIC==='1'){
     evidence.urbanGeometry=[];
@@ -111,7 +113,7 @@ if(config.HERE_API_KEY&&config.TOMTOM_API_KEY&&outbound)await check('REAL_HERE',
   assert.equal(paid.status,'KNOWN');assert(Number(paid.amount)>0);assert.equal(paid.geometryHash,motorway.geometryHash);
   assert.equal(alternativeToll.provider,'HERE');assert.equal(alternativeToll.geometryHash,alternate.geometryHash);
   return {...evidence.hereCanaries,urbanExactToll:urban.status==='NONE'?'CERTIFIED_NONE':'UNAVAILABLE_GEOMETRY_MISMATCH'};
-});else blocked('REAL_HERE');
+});else if(!handoffReplay)blocked('REAL_HERE');
 if(chosen&&outbound&&returning)await check('REAL_BAR_HANDOFF',async()=>{
   const world=fixture(),home={kind:'KNOWN',placeId:world.mobilityFacts.places[0].placeId};
   world.baseline.knowledgeCutoff=new Date().toISOString();world.mobilityFacts.places=[{...world.mobilityFacts.places[0],privatePlace:false,name:'Public departure',coordinates:origin}];
@@ -120,8 +122,9 @@ if(chosen&&outbound&&returning)await check('REAL_BAR_HANDOFF',async()=>{
   const venue={version:'night-out-venue@v1',decisionId:uuid(99101),place:{kind:'TEXT',label:'Public bar selected for synthetic smoke'},google:{provider:'google_places',kind:'BAR_APERO',placeId:chosen.placeId},provenance:'EXPLICIT_USER_DECISION'};
   const makeLeg=reverse=>car({selectionId:reverse?'live-return':'live-outbound',origin:reverse?venue.place:home,destination:reverse?home:venue.place,returnRequired:false,venueEndpoints:{[reverse?'origin':'destination']:venueBinding(venue)}});
   const context={...night(99102,'0',{outbound:selections(makeLeg(false)),return:selections(makeLeg(true))}),fields:{label:'Public smoke',fieldSchemaVersion:'context-fields@v6',venueDecision:venue,placeRef:venue.place}};
-  const semantic=state([],[context]),before=structuredClone(semantic),owners={route,fuel,toll,restaurant:google};
+  const semantic=state([],[context]),before=structuredClone(semantic),owners={route,fuel:handoffReplay?{getReference:async()=>reference}:fuel,toll,restaurant:google};
   const priced=await preparePlanningMobility(world,semantic,owners),prices=Object.values(priced.journeyPrices);assert.equal(prices.length,2);
+  evidence.handoffAdmission=prices.map(p=>({status:p.status,fuelKnown:p.economicFuel!==null,routeProvider:p.snapshot?.route.provider??null,fuelSource:p.snapshot?.fuelPrice?.source??null}));
   for(const price of prices){assert.equal(price.snapshot?.route.provider,'TOMTOM');assert(price.economicFuel!==null);assert.equal(price.snapshot?.fuelPrice.source,'FR_GOV_FUEL_INSTANT_V2');}
   const stops=[{label:'Public departure',placeId:home.placeId,endpointSource:'DIRECT_PLACE'},{label:venue.place.label,endpointSource:'ROOT_PLACE'}];
   const builder=await estimatePlannedCar({stops,plannedDate:null,plannedTime:null,preference:'FASTEST'},{...world.mobilityFacts,googleDestination:venue.google},owners);

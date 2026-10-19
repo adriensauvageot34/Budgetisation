@@ -6,16 +6,12 @@ import type {PlanningWorldFacts} from '@/domain/phase2/planner/compiler-contract
 import worldJson from './bar-world.json';
 import {buildPlanningBaseline} from '@/server/phase2/planner/baseline';
 import type {PlanningBaselineSources} from '@/server/phase2/planner/baseline-sources';
+import {barReceptionEnabled} from './bar-reception-gate';
+export {barReceptionEnabled} from './bar-reception-gate';
 
 /** Real Supabase Auth, RLS and favourite persistence; financial facts are synthetic.
  * This reception host is unreachable in Production and cannot Apply a Plan.
  */
-export function barReceptionEnabled() {
-  const url='https://wlndjknwbceaqrqcwbqw.supabase.co';
-  return process.env.VERCEL_ENV==='preview'
-    && process.env.BAR_AUTH_RECEPTION_PROJECT==='wlndjknwbceaqrqcwbqw'
-    && process.env.NEXT_PUBLIC_SUPABASE_URL===url && process.env.SUPABASE_URL===url;
-}
 export async function barReceptionScope() {
   if(!barReceptionEnabled())throw new TypeError('BAR_RECEPTION_DISABLED');
   const {user,supabase}=await getAuthenticatedBootstrapClient();
