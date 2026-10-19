@@ -70,8 +70,14 @@ const failedHere=await new providers.HereTollProvider("mock",{cache:false,timeou
 assert.equal(failedHere.status,"UNAVAILABLE"); assert.equal(failedHere.amount,null);
 const invalidHere=await new providers.HereTollProvider("mock",{cache:false,fetcher:async()=>Response.json({routes:[{}]})}).estimateTolls(facts);
 assert.equal(invalidHere.amount,null);
-const splitHere=await new providers.HereTollProvider("mock",{cache:false,fetcher:async()=>Response.json({notices:[{code:"importSplitRoute"}],routes:[{routeHandle:"unusable"}]})}).estimateTolls(facts);
+const splitErrors=[];
+const splitHere=await new providers.HereTollProvider("mock",{cache:false,onError:e=>splitErrors.push(e),fetcher:async()=>Response.json({notices:[{code:"importSplitRoute"}],routes:[{routeHandle:"unusable"}]})}).estimateTolls(facts);
 assert.equal(splitHere.status,"UNAVAILABLE");
+assert.equal(splitErrors[0].code,"GEOMETRY_MISMATCH");assert.equal(splitHere.amount,null);
+let unresolvedCalls=0;
+const unresolvedProvider=new providers.TomTomRouteProvider("mock",{cache:false,fetcher:async()=>{unresolvedCalls++;throw Error('Must not geocode a deictic origin');}});
+for(const label of ['maison',' DOMICILE ','chez moi','home','bureau'])await assert.rejects(()=>unresolvedProvider.geocode(label),e=>e.code==='GEOCODE_AMBIGUOUS');
+assert.equal(unresolvedCalls,0);
 const fuel = new providers.FrenchOfficialFuelPriceProvider({cache:false,now:()=>now,fetcher:async()=>Response.json({total_count:3,results:stations})});
 assert.equal((await fuel.getReference(coordinates[0])).pricePerLiter,"1.9");
 assert.equal(await new providers.FrenchOfficialFuelPriceProvider({cache:false,fetcher:async()=>Response.json({results:[],total_count:0})}).getReference(coordinates[0]),null);

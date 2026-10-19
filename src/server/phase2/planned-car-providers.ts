@@ -6,7 +6,7 @@ import { PEUGEOT_207_ROUTING_PROFILE, type CarRouteFacts, type FuelPriceProvider
   type PlannedRouteProvider, type RouteCoordinates, type TollEstimate, type TollProvider } from "@/domain/phase2/planned-car";
 
 export class PlannedProviderError extends Error {
-  constructor(public readonly provider: string, public readonly code: "CONFIGURATION" | "TIMEOUT" | "HTTP" | "NO_ROUTE" | "INVALID_RESPONSE" | "GEOCODE_AMBIGUOUS", public readonly status?: number) {
+  constructor(public readonly provider: string, public readonly code: "CONFIGURATION" | "TIMEOUT" | "HTTP" | "NO_ROUTE" | "INVALID_RESPONSE" | "GEOCODE_AMBIGUOUS" | "GEOMETRY_MISMATCH", public readonly status?: number) {
     super(`PLANNED_TRANSPORT_${provider}_${code}`);
   }
 }
@@ -109,6 +109,7 @@ export class TomTomRouteProvider implements PlannedRouteProvider {
   constructor(private readonly key = process.env.TOMTOM_API_KEY, private readonly options: ProviderOptions = {}) { this.http = new ProviderHttp("TOMTOM", options); }
   async geocode(label: string, bias?: RouteCoordinates): Promise<RouteCoordinates> {
     if (!this.key) throw new PlannedProviderError("TOMTOM", "CONFIGURATION");
+    if (/^(?:maison|domicile|chez moi|travail|bureau|home)$/iu.test(label.trim())) throw new PlannedProviderError("TOMTOM", "GEOCODE_AMBIGUOUS");
     return cached(`geocode:${hash([label, bias])}`, 86400000, this.options.cache !== false, async () => {
       const url = new URL(`https://api.tomtom.com/search/2/geocode/${encodeURIComponent(label)}.json`);
       url.search = new URLSearchParams({ key: this.key!, countrySet: "FR", limit: "3", language: "fr-FR", ...(bias ? { lat: String(bias.latitude), lon: String(bias.longitude) } : {}) }).toString();
@@ -264,7 +265,8 @@ export class HereTollProvider implements TollProvider {
         const routeTime = hereTollDepartureTime(route);
         url.searchParams.set("departureTime", routeTime);
         const imported = await this.http.json(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trace }) });
-        if ((imported.notices ?? []).some((n: any) => n.severity === "critical" || n.code === "importSplitRoute") || typeof imported.routes?.[0]?.routeHandle !== "string") throw new PlannedProviderError("HERE", "INVALID_RESPONSE");
+        if ((imported.notices ?? []).some((n: any) => n.code === "importSplitRoute")) throw new PlannedProviderError("HERE", "GEOMETRY_MISMATCH");
+        if ((imported.notices ?? []).some((n: any) => n.severity === "critical") || typeof imported.routes?.[0]?.routeHandle !== "string") throw new PlannedProviderError("HERE", "INVALID_RESPONSE");
         const handle = imported.routes[0].routeHandle; // Ephemeral; never returned or persisted.
         stage = "tolls";
         const tollUrl = new URL(`https://router.hereapi.com/v8/routes/${encodeURIComponent(handle)}`);

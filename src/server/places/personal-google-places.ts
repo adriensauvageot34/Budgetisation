@@ -32,7 +32,14 @@ export class PersonalGooglePlaces {
     if(!await this.access(scope))return {status:'DENIED'};
     // Reconcile a lost response before any fresh provider call or mutation.
     try {const replay=await this.store.replay(scope,command);if(replay)return await this.reconcile(scope,replay);}catch{return {status:'UNAVAILABLE'};}
+    let alreadyVerified=false;
     if(command.action==='SAVE'){
+      try {const existing=(await this.store.read(scope)).find(p=>p.googlePlaceId===command.googlePlaceId);
+        alreadyVerified=existing?.status==='SAVED'&&existing.version===command.expectedVersion;
+      }catch{return {status:'UNAVAILABLE'};}
+    }
+    // Renaming a verified private favourite is a user label edit, not a Google refresh.
+    if(command.action==='SAVE'&&!alreadyVerified){
       try {const detail=await this.google.details(command.googlePlaceId,undefined,'BAR_APERO');
         if(detail.provider!=='google_places'||detail.placeId!==command.googlePlaceId||!projectPlaceTypeCompatible(detail.types,'BAR_APERO'))return {status:'INVALID'};
       }catch{return {status:'PROVIDER_UNAVAILABLE'};}

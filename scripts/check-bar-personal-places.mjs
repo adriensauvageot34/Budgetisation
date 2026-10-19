@@ -1,17 +1,26 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 import {PGlite} from '@electric-sql/pglite';
 import {require} from './lib/phase2-ts-loader.mjs';
 const {PersonalGooglePlaces}=require('@/server/places/personal-google-places');
 const {personalPlaceRpcStore}=require('@/server/places/personal-google-place-store');
 const {parsePersonalGooglePlaceCommand,matchPublishedGooglePlace}=require('@/domain/phase2/personal-google-place');
-const db=new PGlite(),checks=[];
+let db,pgConfig;const checks=[];
+if(process.env.BAR_SQL_ENGINE==='pg17'){
+ const {Client}=require('pg'),admin=new Client({host:'127.0.0.1',port:55437,user:'postgres',database:'postgres'});await admin.connect();
+ const name='bar_places_'+Date.now();await admin.query('create database '+name);await admin.end();
+ pgConfig={host:'127.0.0.1',port:55437,user:'postgres',database:name};const client=new Client(pgConfig);await client.connect();
+ db={query:(...args)=>client.query(...args),exec:sql=>client.query(sql),close:()=>client.end()};
+}else db=new PGlite();
 const A='f07b0000-0000-4000-8000-0000000000a1',B='f07b0000-0000-4000-8000-0000000000b1',H1='f07b0000-0000-4000-8000-000000000001',H2='f07b0000-0000-4000-8000-000000000002';
 const scope={userId:A,householdId:H1};
 const command=(patch={})=>({version:'personal-google-place@v1',requestId:randomUUID(),googlePlaceId:'ChIJ_synthetic_public_bar',userLabel:'My declared label',action:'SAVE',expectedVersion:0,...patch});
 async function test(id,run){try{await run();checks.push({id,status:'PASS_LOCAL_DOMAIN'});console.log(id+' PASS');}catch(e){checks.push({id,status:'FAIL',error:e.message});console.error(id+' FAIL '+e.stack);}}
-await db.exec(`create schema auth;create schema private;create role anon;create role authenticated;create role service_role;
+await db.exec(`create schema auth;create schema private;
+ do $$begin if not exists(select 1 from pg_roles where rolname='anon') then create role anon;end if;
+ if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated;end if;
+ if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role;end if;end$$;
  create table auth.users(id uuid primary key,banned_until timestamptz);create table public.households(household_id uuid primary key);
  create table private.household_memberships(user_id uuid,household_id uuid);
  insert into auth.users values('${A}',null),('${B}',null);insert into public.households values('${H1}'),('${H2}');
@@ -89,5 +98,36 @@ await test('PUBLISHED_MAPPING_EXACT_SCOPE_GENERATION_PRIVACY_CONFLICT',()=>{
  for(const patch of [{googlePlaceId:'ChIJ_other'},{householdId:H2},{sourceGeneration:'g2'},{privatePlace:true},{publicationStatus:'PENDING'}])assert.equal(matchPublishedGooglePlace(m.googlePlaceId,s,[{...m,...patch}]).status,'PENDING');
  assert.equal(matchPublishedGooglePlace(m.googlePlaceId,s,[m,{...m,canonicalPlaceId:randomUUID()}]).status,'CONFLICT');
 });
-await db.close();fs.mkdirSync('outputs/bar-live',{recursive:true});fs.writeFileSync('outputs/bar-live/personal-tests.json',JSON.stringify({level:'PGLITE_SYNTHETIC_NOT_SUPABASE_AUTH_NOT_MULTI_CONNECTION',checks},null,2));
+await test('RENAME_OFFLINE_PRESERVES_VERIFICATION_AND_JOURNAL_REVIEW',async()=>{
+ const originalPlace=(await service.read(scope)).find(p=>p.googlePlaceId===original.googlePlaceId);providerFail=true;const before=providerCalls;
+ const renamed=await service.save(scope,command({expectedVersion:originalPlace.version,userLabel:'A personal rename'}));
+ assert.equal(renamed.status,'SAVED');assert.equal(providerCalls,before);assert.equal(Date.parse(renamed.place.verifiedAt),Date.parse(originalPlace.verifiedAt));providerFail=false;
+ const review=(await db.query("select count(*)::int n from private.personal_google_place_requests where review_after>=created_at+interval '365 days'")).rows[0].n;assert(review>0);
+});
+await test('ACCOUNT_DELETION_ONLY_REMOVES_OWN_PRIVATE_PLACES',async()=>{
+ const who='f07b0000-0000-4000-8000-0000000000d1';await db.query('insert into auth.users values($1,null)',[who]);await db.query('insert into private.household_memberships values($1,$2)',[who,H1]);
+ const n=(await rpc(scope,null,'READ')).length;assert.equal((await rpc({userId:who,householdId:H1},command(),'MUTATE')).status,'SAVED');
+ await db.query('delete from auth.users where id=$1',[who]);assert.equal((await db.query('select count(*)::int n from private.personal_google_places where owner_user_id=$1',[who])).rows[0].n,0);
+ assert.equal((await db.query('select count(*)::int n from private.personal_google_place_requests where owner_user_id=$1',[who])).rows[0].n,0);assert.equal((await rpc(scope,null,'READ')).length,n);
+});
+await test('SQL_CATALOG_OWNERS_SEARCH_PATH_PRIVILEGES_AND_RLS',async()=>{
+ const f=(await db.query("select n.nspname,p.prosecdef,pg_get_userbyid(p.proowner) owner,p.proconfig from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.proname='personal_google_place_v1' order by n.nspname")).rows;
+ assert.equal(f.length,2);assert(f.every(x=>x.owner==='postgres'));assert.equal(f.find(x=>x.nspname==='private').prosecdef,true);assert.equal(f.find(x=>x.nspname==='public').prosecdef,false);
+ assert(f.every(x=>x.proconfig.some(v=>v==='search_path=""')));
+ const tables=(await db.query("select relrowsecurity from pg_class where oid in ('private.personal_google_places'::regclass,'private.personal_google_place_requests'::regclass)")).rows;assert.equal(tables.length,2);assert(tables.every(x=>x.relrowsecurity));
+ const fk=(await db.query("select confdeltype from pg_constraint where contype='f' and conrelid in ('private.personal_google_places'::regclass,'private.personal_google_place_requests'::regclass)")).rows;assert.equal(fk.length,4);assert(fk.every(x=>x.confdeltype==='c'));
+});
+if(pgConfig)await test('PG17_TWO_CONNECTIONS_CAS_AND_IDEMPOTENCE_REOPEN',async()=>{
+ const {Client}=require('pg'),a=new Client(pgConfig),b=new Client(pgConfig);await a.connect();await b.connect();
+ try {const p=(await rpc(scope,null,'READ')).find(p=>p.googlePlaceId===original.googlePlaceId);
+ const call=(client,c)=>client.query('select public.personal_google_place_v1($1,$2,$3::jsonb,$4) r',[A,H1,JSON.stringify(c),'MUTATE']).then(r=>r.rows[0].r);
+ await a.query('set role service_role');await b.query('set role service_role');
+ const results=await Promise.all([call(a,command({expectedVersion:p.version,userLabel:'Concurrent one'})),call(b,command({expectedVersion:p.version,userLabel:'Concurrent two'}))]);
+ assert.deepEqual(results.map(r=>r.status).sort(),['CONFLICT','SAVED']);
+ const request=command({expectedVersion:p.version+1});const replay=await Promise.all([call(a,request),call(b,request)]);assert(replay.every(r=>r.status==='SAVED'));assert.deepEqual(replay.map(r=>r.replayed).sort(),[false,true]);
+ const read=(await b.query('select public.personal_google_place_v1($1,$2,null,$3) r',[A,H1,'READ'])).rows[0].r;assert.equal(read.find(x=>x.id===p.id).version,p.version+2);
+ }finally{await a.end();await b.end();}
+});
+const serverVersion=(await db.query('show server_version')).rows[0].server_version;
+await db.close();const proofDir=process.env.BAR_SQL_ENGINE==='pg17'?'outputs/bar-live-final':'outputs/bar-live';fs.mkdirSync(proofDir,{recursive:true});fs.writeFileSync(proofDir+'/personal-tests.json',JSON.stringify({at:new Date().toISOString(),serverVersion,candidateSha256:createHash('sha256').update(sql).digest('hex'),level:pgConfig?'POSTGRESQL_17_REAL_MULTI_CONNECTION_SYNTHETIC_NOT_SUPABASE_AUTH':'PGLITE_SYNTHETIC_NOT_SUPABASE_AUTH_NOT_MULTI_CONNECTION',checks},null,2));
 process.exitCode=checks.some(c=>c.status==='FAIL')?1:0;

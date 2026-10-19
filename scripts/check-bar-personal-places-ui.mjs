@@ -40,6 +40,13 @@ await test('UI_REOPEN_SELECT_EXPLICIT_ARCHIVE',async()=>{
  await click('My own label · Lieu personnel');assert.equal(chosen.length,1);assert.equal(chosen[0][1].placeId,stored[0].googlePlaceId);
  await click('Retirer de mes lieux');assert.equal(calls.at(-1).action,'ARCHIVE');assert.equal(calls.at(-1).expectedVersion,1);assert(!buttons().some(n=>text(n)==='My own label · Lieu personnel'));
 });
+await test('UI_ARCHIVE_RECOVERY_RENAME_AND_REOPEN_NO_AUTO_CHOICE',async()=>{
+ const count=chosen.length;await click('Lieux archivés');await click('Récupérer My own label');assert.equal(calls.at(-1).expectedVersion,2);assert.equal(calls.at(-1).action,'SAVE');
+ await click('Mes lieux actifs');await click('Renommer My own label');
+ await act(async()=>root.root.findByType('input').props.onChange({target:{value:'My renamed place'}}));assert.equal(rawRegistry.count(),1);
+ await click('Enregistrer le nom');assert.equal(calls.at(-1).expectedVersion,3);assert.equal(chosen.length,count);assert.equal(rawRegistry.count(),0);
+ await act(async()=>root.unmount());await act(async()=>{root=create(render());});assert(buttons().some(n=>text(n)==='My renamed place · Lieu personnel'));
+});
 await test('UI_DISABLED_NO_FAKE_ENTRY',async()=>{await act(async()=>root.unmount());capability=false;await act(async()=>{root=create(render());});assert.equal(root.toJSON(),null);await act(async()=>root.unmount());});
 await test('RAW_OLD_CONFIRMATION_CANNOT_DISCARD_A_NEW_LABEL',async()=>{
  capability=true;stored=[];detail={...detail,placeId:'ChIJ_other_raw'};await act(async()=>{root=create(render());});

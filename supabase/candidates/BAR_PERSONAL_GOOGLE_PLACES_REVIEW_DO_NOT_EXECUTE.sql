@@ -4,8 +4,8 @@ begin;
 set local lock_timeout='5s';
 create table private.personal_google_places (
   saved_place_id uuid primary key default gen_random_uuid(),
-  owner_user_id uuid not null references auth.users(id),
-  household_id uuid not null references public.households(household_id),
+  owner_user_id uuid not null references auth.users(id) on delete cascade,
+  household_id uuid not null references public.households(household_id) on delete cascade,
   provider text not null default 'google_places' check(provider='google_places'),
   external_id text not null check(external_id ~ '^[A-Za-z0-9_-]{5,255}$'),
   user_label text not null check(length(btrim(user_label)) between 1 and 120),
@@ -16,11 +16,14 @@ create table private.personal_google_places (
   unique(owner_user_id,household_id,provider,external_id)
 );
 create table private.personal_google_place_requests (
-  owner_user_id uuid not null references auth.users(id),
-  household_id uuid not null references public.households(household_id),
+  owner_user_id uuid not null references auth.users(id) on delete cascade,
+  household_id uuid not null references public.households(household_id) on delete cascade,
   request_id uuid not null,
   command jsonb not null,
   result jsonb not null,
+  created_at timestamptz not null default now(),
+  review_after timestamptz not null default (now()+interval '365 days'),
+  check(review_after>=created_at),
   primary key(owner_user_id,household_id,request_id)
 );
 alter table private.personal_google_places enable row level security;
@@ -74,11 +77,11 @@ begin
   insert into private.personal_google_places(owner_user_id,household_id,external_id,user_label,state,version,verified_at)
     values(p_actor,p_household,v_id,v_label,case when v_action='SAVE' then 'SAVED' else 'ARCHIVED' end,v_expected+1,now())
     on conflict(owner_user_id,household_id,provider,external_id) do update set user_label=excluded.user_label,state=excluded.state,version=excluded.version,
-      verified_at=case when v_action='SAVE' then excluded.verified_at else private.personal_google_places.verified_at end returning * into v_old;
+      verified_at=case when v_action='SAVE' and private.personal_google_places.state='ARCHIVED' then excluded.verified_at else private.personal_google_places.verified_at end returning * into v_old;
   v_result:=jsonb_build_object('status',case when v_action='SAVE' then 'SAVED' else 'ARCHIVED' end,'replayed',false,
     'place',jsonb_build_object('id',v_old.saved_place_id,'googlePlaceId',v_old.external_id,'userLabel',v_old.user_label,'version',v_old.version,
       'status',v_old.state,'kind','PERSONAL_SAVED_PLACE','verifiedAt',v_old.verified_at));
-  insert into private.personal_google_place_requests values(p_actor,p_household,v_request,p_command,v_result);
+  insert into private.personal_google_place_requests(owner_user_id,household_id,request_id,command,result) values(p_actor,p_household,v_request,p_command,v_result);
   return v_result;
 end $$;
 alter function private.personal_google_place_v1(uuid,uuid,jsonb,text) owner to postgres;
