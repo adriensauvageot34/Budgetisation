@@ -97,6 +97,13 @@ await check('C27_L1_REJECTED_COST_PRESERVES_BUFFER',async()=>{
  assert.equal(pendingOps.length,0);
  assert(controls(n=>n.props.role==='alert').some(n=>text(n).includes('pas été admis')));
 });
+await check('C27_L1_EXPLICIT_ADDITIVE_COST_DOES_NOT_PROMPT_SUBSTITUTION',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);await click('Montant direct');
+ await click('Entrées / contribution');await change('Coût prévu (€)','12');await click('Retenir ce coût');
+ await click('Boissons');await click('Bière');
+ assert.equal(step(),'row');assert.equal(current().slotSelections.main.items[0].cost.unitAmount,'12');
+ assert.equal(current().slotSelections.extras.items.length,1);
+});
 await check('C27_L2_COMPATIBLE_PRODUCTS_OWNED_BY_MOMENT',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);
  await click('Boissons');for(const name of ['Bière','Bière','Cocktail'])await click(name);
@@ -126,6 +133,16 @@ await check('C27_L2_OWNER_PUBLISHED_PLACE_ORDER_NOT_A_DECISION',async()=>{
  const rows=[{...base,placeId:uuid(10),name:'Z',visits12Months:0},{...base,placeId:uuid(11),name:'A',visits12Months:4,lastVisitDate:'2026-10-10'},{...base,placeId:uuid(12),name:'B',visits12Months:1,lastVisitDate:'2026-10-12'}];
  assert.deepEqual(barPlaces(rows).map(p=>p.name),['A','B','Z']);
  assert.deepEqual(barPlaces(rows.map(p=>({...p,visits12Months:undefined,lastVisitDate:null}))).map(p=>p.name),['A','B','Z']);
+});
+await check('C27_L3_BROKEN_ART_FALLS_BACK_WITHOUT_SEMANTIC_MUTATION',async()=>{
+ const {BarProductVisual}=require('@/app/mois-a-venir/composer/bar-product-visual');let visual;
+ const digest=semanticStateDigest(model.semanticState);
+ await act(async()=>{visual=create(React.createElement(BarProductVisual,{assetKey:'bar:beer',label:'Bière'}));});
+ assert.equal(visual.root.findAll(n=>n.type==='img').length,1);
+ await act(async()=>visual.root.findByType('img').props.onError());
+ assert.equal(visual.root.findAll(n=>n.type==='img').length,0);
+ assert.equal(visual.root.findAll(n=>n.props['data-bar-visual']==='functional-icon').length,1);
+ assert.equal(semanticStateDigest(model.semanticState),digest);await act(async()=>visual.unmount());
 });
 
 } finally {

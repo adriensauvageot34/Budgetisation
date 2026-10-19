@@ -1288,3 +1288,12 @@
 .barPlaceChoice:is(:focus-visible,:hover) .barPlaceFullLabel { display:block; }
 .barPlaceFullLabel::after { content:attr(data-full-label); }
 .barPlaceChoice:focus-visible { outline:3px solid #a78142; outline-offset:1px; }
+.barCompositionDock { position:relative; }
+.barCompositionDock .paletteOptions { min-height:76px; }
+.barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { height:72px; min-height:72px; }
+.barCompositionDock .questionAnswer strong { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:16px; overflow-wrap:anywhere; }
+.barCompositionDock .questionAnswer[data-show-hint=true] small { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; line-height:15px; }
+.barDockFullLabel { position:absolute; bottom:calc(100% + 6px); left:0; z-index:8; width:max-content; max-width:min(100%,520px); padding:9px 12px; border:1px solid #ad915f; border-radius:9px; background:#fffdf7; color:#352c1f; box-shadow:0 4px 14px #0002; font-size:12px; line-height:17px; overflow-wrap:anywhere; pointer-events:none; }
+.barLivingCard[data-expanded=true] .barProductSymbol { display:grid; place-items:center; width:48px; height:40px; flex:none; }
+.barLivingCard[data-expanded=true] .barProductSymbol img { display:block; width:48px; height:40px; object-fit:cover; object-position:right center; border-radius:8px; }
+.barProductSymbol[data-bar-visual=functional-icon] { display:grid; place-items:center; width:48px; height:40px; color:#6a4e20; background:#f4e8cd; border-radius:9px; }

@@ -30,7 +30,10 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
       // Keep that live focus, including buttons and the options group.
       if(expanded&&active instanceof HTMLElement&&active!==document.body
         &&(root.current?.contains(active)||active.closest('[data-bar-dock]')))return;
-      root.current?.querySelector<HTMLButtonElement>(expanded?'button[aria-label="Replier la carte"]':"h3 button")?.focus({preventScroll:true});
+      const scene=root.current?.querySelector<HTMLElement>('[data-bar-living-editor]')?.dataset.barStep;
+      const sceneFocus=expanded&&(scene==="place"||scene==="google")?root.current?.querySelector<HTMLElement>('[data-bar-google-search] input')
+        :expanded&&scene==="date"?root.current?.querySelector<HTMLElement>('[data-bar-calendar] button[tabindex="0"]'):null;
+      (sceneFocus??root.current?.querySelector<HTMLButtonElement>(expanded?'button[aria-label="Replier la carte"]':"h3 button"))?.focus({preventScroll:true});
     });wasExpanded.current=expanded;return()=>cancelAnimationFrame(frame);}
   },[expanded]);
   const summary=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===card.contextOccurrenceId);

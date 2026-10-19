@@ -17,14 +17,21 @@ export function AnchoredAtomicPopover({label,anchor,onClose,children}:{label:str
   const id=useId(),panel=useRef<HTMLDivElement>(null),closeRef=useRef(onClose);closeRef.current=onClose;
   useEffect(()=>{
     const node=panel.current,trigger=anchor();if(!node||!trigger)return;
-    node.showPopover();const place=()=>placeAtomicPopover(node,trigger);place();
-    node.querySelector<HTMLElement>('input,button')?.focus({preventScroll:true});
+    let alive=true,frame=0;
+    const place=()=>{if(node.isConnected&&node.matches(':popover-open'))placeAtomicPopover(node,trigger);};
+    // Board page stabilization closes native popovers. The controlled cost scene
+    // still owns this one; reopen after that move, never over a RAW modal.
+    const toggle=(event:Event)=>{if((event as ToggleEvent).newState!=="closed")return;
+      cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{if(alive&&node.isConnected&&!document.querySelector('dialog[open]')){node.showPopover();place();(node.querySelector<HTMLElement>('input')??node.querySelector<HTMLElement>('button'))?.focus({preventScroll:true});}});
+    };
+    node.addEventListener('toggle',toggle);node.showPopover();place();
+    (node.querySelector<HTMLElement>('input')??node.querySelector<HTMLElement>('button'))?.focus({preventScroll:true});
     const outside=(event:PointerEvent)=>{
       if(!(event.target instanceof Node)||node.contains(event.target)||trigger.contains(event.target)||document.querySelector('dialog[open]'))return;
       event.preventDefault();event.stopPropagation();closeRef.current();
     };
-    window.addEventListener('resize',place);window.addEventListener('scroll',place,true);document.addEventListener('pointerdown',outside,true);
-    return()=>{window.removeEventListener('resize',place);window.removeEventListener('scroll',place,true);document.removeEventListener('pointerdown',outside,true);node.hidePopover();if(!document.querySelector('dialog[open]'))trigger.isConnected&&trigger.focus({preventScroll:true});};
+    window.addEventListener('resize',place);window.addEventListener('scroll',place,true);document.addEventListener('transitionend',place,true);document.addEventListener('animationend',place,true);document.addEventListener('pointerdown',outside,true);
+    return()=>{alive=false;cancelAnimationFrame(frame);node.removeEventListener('toggle',toggle);window.removeEventListener('resize',place);window.removeEventListener('scroll',place,true);document.removeEventListener('transitionend',place,true);document.removeEventListener('animationend',place,true);document.removeEventListener('pointerdown',outside,true);node.hidePopover();if(!document.querySelector('dialog[open]'))trigger.isConnected&&trigger.focus({preventScroll:true});};
     // The anchor is the value button for this mounted scene; never refocus on a keystroke.
   },[]);
   return <div ref={panel} popover="manual" role="dialog" aria-labelledby={id} className={`${styles.atomicPopover} ${styles.barCostPopover}`} data-bar-cost-popover

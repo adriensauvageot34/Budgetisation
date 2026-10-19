@@ -14,6 +14,10 @@
       "status": "PASS"
     },
     {
+      "name": "C27_L1_EXPLICIT_ADDITIVE_COST_DOES_NOT_PROMPT_SUBSTITUTION",
+      "status": "PASS"
+    },
+    {
       "name": "C27_L2_COMPATIBLE_PRODUCTS_OWNED_BY_MOMENT",
       "status": "PASS"
     },
@@ -23,6 +27,10 @@
     },
     {
       "name": "C27_L2_OWNER_PUBLISHED_PLACE_ORDER_NOT_A_DECISION",
+      "status": "PASS"
+    },
+    {
+      "name": "C27_L3_BROKEN_ART_FALLS_BACK_WITHOUT_SEMANTIC_MUTATION",
       "status": "PASS"
     }
   ]

@@ -1,0 +1,81 @@
+{
+  "sha": "a71af6d5a2f1b627e0a6e229f09877e5226db16f",
+  "environment": "VERCEL_PREVIEW_TEST_AUTH_COMPOSER_MEMORY",
+  "defects": [
+    {
+      "name": "cost popover closed after Board stabilization",
+      "status": "FAIL_BROWSER",
+      "open": false,
+      "rectHeight": 0
+    }
+  ],
+  "checks": [
+    {
+      "id": "UI078",
+      "status": "PASS_4_9_8_CASES",
+      "note": "3 visible names +6 at9, third page exposes Isabelle, individual removal gives8; 0/1/3 exact snapshots deferred final"
+    },
+    {
+      "fullName": "Bar fictif des Voyageurs et de la Très Longue Promenade des Démonstrations · Ville fictive",
+      "fullVisible": "block",
+      "height": 900,
+      "id": "UI045/046",
+      "resultHeight": 58,
+      "status": "BROWSER_MEASURED",
+      "statusText": [
+        "Recherche indisponible. Les lieux enregistrés et la saisie libre restent disponibles."
+      ],
+      "width": 1440
+    },
+    {
+      "choices": [
+        {
+          "frame": {
+            "height": 40,
+            "width": 48
+          },
+          "imageLoaded": true,
+          "name": "Voiture",
+          "visual": "clay"
+        },
+        {
+          "frame": {
+            "height": 40,
+            "width": 48
+          },
+          "imageLoaded": true,
+          "name": "Train / tram",
+          "visual": "clay"
+        },
+        {
+          "frame": {
+            "height": 40,
+            "width": 48
+          },
+          "imageLoaded": true,
+          "name": "Bus",
+          "visual": "clay"
+        },
+        {
+          "frame": {
+            "height": 40,
+            "width": 48
+          },
+          "name": "Taxi / Uber",
+          "visual": "functional-icon"
+        },
+        {
+          "frame": {
+            "height": 40,
+            "width": 48
+          },
+          "imageLoaded": true,
+          "name": "À pied / gratuit",
+          "visual": "clay"
+        }
+      ],
+      "id": "UI156/166",
+      "status": "BROWSER_RENDERED"
+    }
+  ]
+}
