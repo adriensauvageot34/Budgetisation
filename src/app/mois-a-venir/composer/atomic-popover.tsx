@@ -3,6 +3,37 @@ import { X } from "lucide-react";
 import styles from "./composer.module.css";
 import { useDragHandle } from "./interactions";
 
+/** Shared transient placement, independent of semantic or financial state. */
+export function placeAtomicPopover(node:HTMLElement,trigger:HTMLElement){
+  const anchor=trigger.getBoundingClientRect(),box=node.getBoundingClientRect(),margin=12;
+  node.style.left=`${Math.max(margin,Math.min(innerWidth-box.width-margin,anchor.left+anchor.width/2-box.width/2))}px`;
+  const below=anchor.bottom+9;
+  node.style.top=`${Math.max(margin,Math.min(innerHeight-box.height-margin,below+box.height<=innerHeight-margin?below:anchor.top-box.height-9))}px`;
+}
+
+/** Controlled surface for an existing value trigger. Manual dismissal always
+ * goes through its owner's RAW guard; native light-dismiss cannot discard it. */
+export function AnchoredAtomicPopover({label,anchor,onClose,children}:{label:string;anchor:()=>HTMLElement|null;onClose:()=>void;children:ReactNode}){
+  const id=useId(),panel=useRef<HTMLDivElement>(null),closeRef=useRef(onClose);closeRef.current=onClose;
+  useEffect(()=>{
+    const node=panel.current,trigger=anchor();if(!node||!trigger)return;
+    node.showPopover();const place=()=>placeAtomicPopover(node,trigger);place();
+    node.querySelector<HTMLElement>('input,button')?.focus({preventScroll:true});
+    const outside=(event:PointerEvent)=>{
+      if(!(event.target instanceof Node)||node.contains(event.target)||trigger.contains(event.target)||document.querySelector('dialog[open]'))return;
+      event.preventDefault();event.stopPropagation();closeRef.current();
+    };
+    window.addEventListener('resize',place);window.addEventListener('scroll',place,true);document.addEventListener('pointerdown',outside,true);
+    return()=>{window.removeEventListener('resize',place);window.removeEventListener('scroll',place,true);document.removeEventListener('pointerdown',outside,true);node.hidePopover();if(!document.querySelector('dialog[open]'))trigger.isConnected&&trigger.focus({preventScroll:true});};
+    // The anchor is the value button for this mounted scene; never refocus on a keystroke.
+  },[]);
+  return <div ref={panel} popover="manual" role="dialog" aria-labelledby={id} className={`${styles.atomicPopover} ${styles.barCostPopover}`} data-bar-cost-popover
+    onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeRef.current();}}}>
+    <header><h4 id={id}>{label}</h4><button type="button" className={styles.iconButton} aria-label="Fermer le coût prévu" onClick={onClose}><X size={15}/></button></header>
+    {children}
+  </div>;
+}
+
 /** Viewport coordinates are transient DOM placement, never part of a draft. */
 export function AtomicPopover({ label, state, selectionId, empty, children, icon, focus, dragSourceKey, utility }: {
   label: string; state: string; selectionId?: string; empty?: boolean; icon: ReactNode;
@@ -16,10 +47,7 @@ export function AtomicPopover({ label, state, selectionId, empty, children, icon
     const node = panel.current;
     const place = () => {
       if (!node?.matches(":popover-open") || !trigger.current) return;
-      const anchor = trigger.current.getBoundingClientRect(), box = node.getBoundingClientRect(), margin = 12;
-      node.style.left = `${Math.max(margin, Math.min(innerWidth - box.width - margin, anchor.left + anchor.width / 2 - box.width / 2))}px`;
-      const below = anchor.bottom + 9;
-      node.style.top = `${Math.max(margin, Math.min(innerHeight - box.height - margin, below + box.height <= innerHeight - margin ? below : anchor.top - box.height - 9))}px`;
+      placeAtomicPopover(node,trigger.current);
     };
     const toggle = (event: Event) => {
       if ((event as ToggleEvent).newState === "open") { setOpen(true); place(); window.addEventListener("resize", place); window.addEventListener("scroll", place, true);

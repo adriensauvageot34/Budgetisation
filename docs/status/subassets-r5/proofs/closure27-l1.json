@@ -1,0 +1,17 @@
+{
+  "method": "REACT_OWNER_PGLITE_NOT_BROWSER",
+  "checks": [
+    {
+      "name": "C27_L1_SINGLE_COST_ACCESS_AND_ANCHORED_SCOPE",
+      "status": "PASS"
+    },
+    {
+      "name": "C27_L1_INCOMPLETE_QUICK_RAW_ESCAPE_IS_GUARDED",
+      "status": "PASS"
+    },
+    {
+      "name": "C27_L1_REJECTED_COST_PRESERVES_BUFFER",
+      "status": "PASS"
+    }
+  ]
+}

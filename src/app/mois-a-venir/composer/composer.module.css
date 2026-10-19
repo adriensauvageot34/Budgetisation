@@ -1275,3 +1275,9 @@
 .barCompositionDock .paletteOptions[data-overflow-after=true] { box-shadow:inset -14px 0 12px -13px #8c6e40; }
 .barCompositionDock .barProductSymbol { flex-basis:48px; width:48px; height:40px; }
 .barCompositionDock .barProductSymbol img { width:48px; height:40px; object-fit:cover; object-position:right center; border-radius:7px; }
+.barCostPopover { width:min(360px,calc(100vw - 24px)); max-height:none; overflow:visible; }
+.barCostPopover [data-bar-quick] { display:grid; gap:10px; }
+.barCostPopover [data-bar-quick] p { margin:0; font-size:12px; line-height:1.45; }
+.barCostScopes { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.barCostScopes button { padding:9px; border:1px solid #d9c8a9; border-radius:10px; background:#fffdf8; color:#514329; text-align:left; }
+.barCostScopes button[aria-pressed=true] { background:#faedcf; border-color:#a78142; }
