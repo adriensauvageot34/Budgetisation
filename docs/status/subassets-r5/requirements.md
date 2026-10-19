@@ -1,3 +1,5 @@
+> Actualisation finale UI : voir pr68-final-ui.md. Les descriptions normatives et les observations historiques restent conservées.
+
 # Registre normatif et réception R5
 
 Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849. Registre222 exact, A105/B62/C55,76 décisions inchangées. Les niveaux de preuve restent distincts. Voir closure27-reception.md.
@@ -854,7 +856,7 @@ Pas de changement du packing. Hauteurs internes mesurées sur scènes présentes
 
 **Reste :** Pagination sémantique existante préservée ; catalogue150 testé en React, pas en navigateur.
 
-### UI-035 — A — PARTIAL
+### UI-035 — A — DEFERRED_EXTERNAL
 
 - **UI-035** · **SOUS CONTRAT MÉTIER/PROVIDER** — Faire de Google Places le moteur principal de recherche des établissements lorsqu'il est disponible.
 
@@ -862,13 +864,13 @@ Pas de changement du packing. Hauteurs internes mesurées sur scènes présentes
 
 **Décisions R5 dominantes :** R5-D15…D19, D53, D61.
 
-Owner : Lieux / Google / favoris. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Lieux / Google / favoris. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Recherche Google officielle conservée ; fallback lieux enregistrés et nom libre fonctionnel.
+Chemin Google/favoris conservé ; loading/error/late/out-of-order validés en mocks.
 
-**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Un appel réel Preview1 retourne indisponible ; Details, annulation et réponses obsolètes restent prouvés par mocks. Pas de PASS fournisseur réel.
+**Reste :** DEFERRED_EXTERNAL_GOOGLE_REAL : aucun appel live dans ce lot. Plan séparé dans deferred-reception.md.
 
 ### UI-036 — A — IMPLEMENTED_VERIFIED
 
@@ -1030,7 +1032,7 @@ Nom complet + ville attestée disponibles dans aria-label/title et révélation 
 
 **Reste :** Lieu fictif long choisi par Entrée en Preview3 ; résultat de recherche 58px en Preview1, tuile de dock 72px en Preview3.
 
-### UI-046 — A — PARTIAL
+### UI-046 — A — PARTIAL_SCOPED
 
 - **UI-046** · **RETENU — CIBLE UX** — Donner aux propositions de lieux une hauteur stable et empêcher tout texte de déborder ou d'être coupé.
 
@@ -1038,13 +1040,13 @@ Nom complet + ville attestée disponibles dans aria-label/title et révélation 
 
 **Décisions R5 dominantes :** R5-D15…D19, D53, D61.
 
-Owner : Lieux / Google / favoris. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Lieux / Google / favoris. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Choix de lieu à hauteur bornée, nom complet accessible sans agrandir la tuile.
+Nom+ville et hauteur bornée préservés ; mocks loading/error/hors ordre rejetés sans admission automatique.
 
-**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Hauteur58px et focus réel prouvés. Images et résultats fournisseurs tardifs/hors ordre : mocks seulement ; photo de lieu non raccordée.
+**Reste :** Photos non publiées dans cette tuile : données photo inconnues ignorées, aucun rendu tardif prétendu. Partie live DEFERRED_EXTERNAL_GOOGLE_REAL.
 
 ### UI-047 — B — PARTIAL
 
@@ -1782,7 +1784,7 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-093 — A — PARTIAL
+### UI-093 — A — IMPLEMENTED_BROWSER_VERIFIED
 
 - **UI-093** · **RETENU — CIBLE UX** — Prévoir une légère ombre ou un fondu sur le bord droit pour indiquer que d'autres éléments existent.
 
@@ -1790,13 +1792,13 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Décisions R5 dominantes :** R5-D28…D35.
 
-Owner : Rail / catalogue. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Rail / catalogue. Niveau : BROWSER_PREVIEW_SCOPED. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Indice latéral et flèches conditionnés au débordement mesuré.
+Le rail est remesuré selon les options réellement rendues, même avec question stable ; effacement par bouton et clavier, flèches et fin de rail.
 
-**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Défaut encore reproduit en Preview3 : effacer un filtre du catalogue150 ne remesure pas le rail (1027px/4468px, after=false, flèches absentes). Après rechargement, flèche Entrée déplace le rail.
+**Reste :** PASS au SHA final :1152×720, scroll4468>client1023, after=true et flèche présente immédiatement après effacement. Catalogue150 atteint en entier en Preview initiale.
 
 ### UI-094 — C — OUT_OF_SCOPE_NEXT_STAGE
 
@@ -1846,7 +1848,7 @@ Deux lignes visuelles, libellé intégral aria-label/title et tooltip au focus/h
 
 **Reste :** Preview3 : focus du deuxième libellé long, tooltip complet36,6px hors rail sans changement de hauteur de tuile.
 
-### UI-097 — A — FIXED_LOCAL_ONLY
+### UI-097 — A — IMPLEMENTED_LOCAL_VERIFIED
 
 - **UI-097** · **RETENU — CIBLE UX** — Positionner les suggestions les plus pertinentes au début, selon le contexte et l'historique exploitable.
 
@@ -1854,13 +1856,13 @@ Deux lignes visuelles, libellé intégral aria-label/title et tooltip au focus/h
 
 **Décisions R5 dominantes :** R5-D28…D35.
 
-Owner : Rail / catalogue. Niveau : REACT_OWNER_PGLITE_NOT_BROWSER. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Rail / catalogue. Niveau : REACT_OWNER_FIXTURE. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Réutilisation de l’ordre publié : lieux qualifiés par visites/date, absence d’historique en ordre neutre ; familles compatibles par moment.
+Fixtures synthétiques avec visites qualifiées/sans historique ; familles Before/Au bar, réemploi des sources et recherche exhaustive25/120/150.
 
-**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Tests propriétaires positifs/sans historique PASS. Pas de nouvelle inférence ni score ; pertinence sur corpus utilisateur réel non certifiée.
+**Reste :** PASS_FIXTURE uniquement. Aucun score nouveau, aucune pertinence personnelle réelle certifiée et aucune suggestion automatiquement admise.
 
 ### UI-098 — A — IMPLEMENTED_VERIFIED
 
@@ -1894,7 +1896,7 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-100 — A — FIXED_LOCAL_ONLY
+### UI-100 — A — IMPLEMENTED_BROWSER_VERIFIED
 
 - **UI-100** · **RETENU — CIBLE UX** — Éviter que le dock saute d'une hauteur à l'autre à chaque modification mineure.
 
@@ -1902,13 +1904,13 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Décisions R5 dominantes :** R5-D28…D35.
 
-Owner : Rail / catalogue. Niveau : REACT_OWNER_PGLITE_NOT_BROWSER. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Rail / catalogue. Niveau : BROWSER_PREVIEW_SCOPED. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Gabarit72px des choix, rail borné et contenu riche paginé ; ajouts restent dans leur scène.
+Cinq Bière ajoutées rapidement : famille Boissons et focus Bière conservés, dock143px et top704,6px identiques avant/après ; famille Restauration puis Snack.
 
-**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** React/PGlite PASS, dock143px observé après20 postes. Absence de flash/saut pendant toute une séquence non instrumentée en navigateur.
+**Reste :** PASS sur Preview0b541bb ; le seul diff final porte sur le retour de focus du popover de coût.
 
 ### UI-101 — A — FIXED_BROWSER
 
@@ -2358,7 +2360,7 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-129 — A — BLOCKED_OWNER
+### UI-129 — A — DEFERRED_OWNER_APPROVED
 
 - **UI-129** · **SOUS CONTRAT MÉTIER/PROVIDER** — Permettre de configurer qui partage le coût directement depuis la tuile de la bouteille ou des tapas.
 
@@ -2366,15 +2368,15 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Décisions R5 dominantes :** R5-D44…D50.
 
-Owner : Scopes / financement. Niveau : CONTRACT_REVIEW_USER_DEFERRED. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Scopes / financement. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Aucune UI trompeuse de parts financières ; proposition de contrat distinct conservée.
+Report utilisateur des parts financières par poste.
 
-**Preuves :** closure27-owner-decision.md
+**Preuves :** closure27-owner-decision.md, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Report explicitement accepté par l’utilisateur pour ce lot UI. Aucun contrat de parts implémenté.
+**Reste :** Contrat absent ; dossier closure27-owner-decision.md, aucun faux partage ni writer.
 
-### UI-130 — A — BLOCKED_OWNER
+### UI-130 — A — DEFERRED_OWNER_APPROVED
 
 - **UI-130** · **SOUS CONTRAT MÉTIER/PROVIDER** — Faire apparaître les personnes de la soirée dans le dock lorsqu'on choisit une répartition de frais.
 
@@ -2382,13 +2384,13 @@ Aucune UI trompeuse de parts financières ; proposition de contrat distinct cons
 
 **Décisions R5 dominantes :** R5-D44…D50.
 
-Owner : Scopes / financement. Niveau : CONTRACT_REVIEW_USER_DEFERRED. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Scopes / financement. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Pas de dock de payeurs sans parts persistantes du poste.
+Report utilisateur du dock de payeurs lié au poste.
 
-**Preuves :** closure27-owner-decision.md
+**Preuves :** closure27-owner-decision.md, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Report explicitement accepté ; participants de présence restent distincts des financeurs.
+**Reste :** Participants de présence distincts des financeurs ; aucune extension de contrat.
 
 ### UI-131 — B — BLOCKED_OWNER
 
@@ -2550,7 +2552,7 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-141 — A — PARTIAL
+### UI-141 — A — PARTIAL_SCOPED
 
 - **UI-141** · **SOUS CONTRAT MÉTIER/PROVIDER** — Après ajout d’une bouteille, permettre de choisir librement quantité, prix, unité et répartition financière depuis l’objet lui-même.
 
@@ -2558,15 +2560,15 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Décisions R5 dominantes :** R5-D44…D50.
 
-Owner : Scopes / financement. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Scopes / financement. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Quantité/prix/unité/funding existants préservés ; montant partiel ne détruit pas les autres champs.
+Mini-édition supportée PASS : RAW12, conservé après annulation, prix12.50, quantité2/coût25, financement Banque25 explicitement admis. Identités et unité préservées par les tests propriétaires.
 
-**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** P1–P4 PASS. Répartition financière absente du contrat et reportée : pas de clôture complète de cette ligne.
+**Reste :** Parts par payeur DEFERRED_OWNER_APPROVED. Refus d’un montant Banque vide observé puis résolu par saisie explicite ; pas de financement inventé.
 
-### UI-142 — A — BLOCKED_OWNER
+### UI-142 — A — DEFERRED_OWNER_APPROVED
 
 - **UI-142** · **SOUS CONTRAT MÉTIER/PROVIDER** — Lorsque « Partager les frais » est activé, proposer d’abord les participants déjà associés à la soirée.
 
@@ -2574,13 +2576,13 @@ Quantité/prix/unité/funding existants préservés ; montant partiel ne détrui
 
 **Décisions R5 dominantes :** R5-D44…D50.
 
-Owner : Scopes / financement. Niveau : CONTRACT_REVIEW_USER_DEFERRED. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Scopes / financement. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Aucune assimilation des participants aux payeurs.
+Report utilisateur de la répartition financière.
 
-**Preuves :** closure27-owner-decision.md
+**Preuves :** closure27-owner-decision.md, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Parts financières du poste non admises ; report explicitement accepté pour ce lot.
+**Reste :** Pas d’assimilation des participants aux payeurs ; aucun partage égal supposé.
 
 ### UI-143 — B — BLOCKED_OWNER
 
@@ -2662,7 +2664,7 @@ Prix/quantité dans tuile, détails secondaires ; virgule terminale non admise ;
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-148 — A — PARTIAL
+### UI-148 — A — PARTIAL_SCOPED
 
 - **UI-148** · **RETENU — CIBLE UX** — Faire varier ces mini-éditeurs selon le type de donnée : compteur pour une quantité, choix illustrés pour une boisson, sélection d'avatars pour le partage.
 
@@ -2670,13 +2672,13 @@ Prix/quantité dans tuile, détails secondaires ; virgule terminale non admise ;
 
 **Décisions R5 dominantes :** R5-D25…D27, D41…D42.
 
-Owner : Mini-éditeurs. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Mini-éditeurs. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Compteur, montant court, choix illustrés et options avancées réutilisent les tuiles existantes.
+Compteurs et prix courts PASS navigateur, édition d’unité/financement existant couverte par P1/P4 ; choix illustrés préservés.
 
-**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Partage par avatars non activé faute de contrat de parts ; report accepté, pas de faux PASS.
+**Reste :** Avatars de partage DEFERRED_OWNER_APPROVED ; pas de clôture totale du contrat de parts.
 
 ### UI-149 — A — IMPLEMENTED_VERIFIED
 
@@ -2854,7 +2856,7 @@ Modes séparés des trajets connus ; sens indépendants, endpoints liés explici
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-160 — A — BLOCKED_OWNER
+### UI-160 — A — DEFERRED_OWNER_APPROVED
 
 - **UI-160** · **SOUS CONTRAT MÉTIER/PROVIDER** — Prévoir un mode personnalisé dans les options avancées pour les transports non couverts.
 
@@ -2862,13 +2864,13 @@ Modes séparés des trajets connus ; sens indépendants, endpoints liés explici
 
 **Décisions R5 dominantes :** R5-D51…D54.
 
-Owner : Mobility. Niveau : CONTRACT_REVIEW_USER_DEFERRED. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Mobility. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-OTHER générique ancien conservé, pas de saisie de nom non durable proposée.
+OTHER ancien conservé ; report accepté du libellé durable personnalisé.
 
-**Preuves :** closure27-owner-decision.md
+**Preuves :** closure27-owner-decision.md, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Libellé OTHER absent du DTO persistant ; mini-proposition et report accepté, aucun nouveau contrat.
+**Reste :** Pas de champ éphémère ni nouvelle migration.
 
 ### UI-161 — B — ALREADY_VERIFIED
 
@@ -3542,7 +3544,7 @@ Pagination Board distincte du rail ; défaut de découpe parent130px/contenu136p
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-203 — A — PARTIAL
+### UI-203 — A — IMPLEMENTED_BROWSER_VERIFIED
 
 - **UI-203** · **RETENU — CIBLE UX** — Garantir que les propositions de dock sont entièrement visibles, sans être coupées par le bas de la fenêtre.
 
@@ -3550,15 +3552,15 @@ Pagination Board distincte du rail ; défaut de découpe parent130px/contenu136p
 
 **Décisions R5 dominantes :** R5-D01…D12, D31…D35.
 
-Owner : Dock et Board. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Dock et Board. Niveau : BROWSER_PREVIEW_SCOPED. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Conteneur du dock non tronqué (143=143px) et rail horizontal accessible dans les scènes mesurées.
+1152×720 : dock riche accessible par défilement du conteneur principal MAIN extérieur au Composer, bottom889,7→709,7 ; dernier choix Bouteille atteint au clavier.
 
-**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** À1152×720 riche, dock bottom877,3 dépasse le viewport ; accessibilité par défilement de secours non recertifiée ici. Zoom125% non exposé. Pas de PASS tous états.
+**Reste :** PAS une promesse de tout afficher sans scroll de page. MAIN.scrollTop205,6 ; aucun scroll interne de carte/éditeur/dock. Zoom DEFERRED_NATIVE_ZOOM_125.
 
-### UI-204 — A — PARTIAL
+### UI-204 — A — IMPLEMENTED_BROWSER_VERIFIED
 
 - **UI-204** · **RETENU — CIBLE UX** — Positionner le dock de manière stable pendant l'édition, avec une hauteur maîtrisée.
 
@@ -3566,13 +3568,13 @@ Conteneur du dock non tronqué (143=143px) et rail horizontal accessible dans le
 
 **Décisions R5 dominantes :** R5-D01…D12, D31…D35.
 
-Owner : Dock et Board. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Dock et Board. Niveau : BROWSER_PREVIEW_SCOPED. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Dock masqué sans réserve au calendrier (0px), gabarits de scène maîtrisés, pas de scroll vertical interne mesuré.
+Scènes calendrier/lieux/Before riche/20 postes/coût mesurées à1152/1440/1920 réels ; calendrier sans dock ; hauteur143px du dock, surfaces internes non scrollables.
 
-**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** 1440/1920 mesurés ; état riche1152 nécessite le filet de sécurité hors viewport. Stabilité complète/zoom restent partiels.
+**Reste :** Défilement de secours extérieur accepté ; compaction globale réservée aux55C. Zoom DEFERRED_NATIVE_ZOOM_125.
 
 ### UI-205 — C — OUT_OF_SCOPE_NEXT_STAGE
 
@@ -3734,7 +3736,7 @@ Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-m
 
 **Reste :** Contrats/provenance préservés par P1/P3/P4 et parité ; détails secondaires conservés.
 
-### UI-215 — B — PARTIAL
+### UI-215 — B — PARTIAL_SCOPED
 
 - **UI-215** · **CRITÈRE DE RECETTE** — Vérifier systématiquement les transitions avec la souris et le clavier sur desktop, aux résolutions prévues et au zoom navigateur 125 %, sans scroll vertical dans les cartes.
 
@@ -3742,13 +3744,13 @@ Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-m
 
 **Décisions R5 dominantes :** R5-D55, D64…D76.
 
-Owner : Microtextes / accessibilité. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Microtextes / accessibilité. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-motion prévu ; pas de preuve de zoom natif.
+Desktop souris/clavier et trois viewports réellement mesurés ; aucun DPR simulé.
 
-**Preuves :** proofs/preview2.json, proofs/react-interactions.json, proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/preview2.json, proofs/react-interactions.json, proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Souris/clavier ciblés exécutés ; zoom natif125% et reduced motion non exécutés.
+**Reste :** DEFERRED_NATIVE_ZOOM_125. Reduced motion non recertifié, pas de campagne mobile.
 
 ### UI-216 — A — IMPLEMENTED_VERIFIED
 
@@ -3814,7 +3816,7 @@ Réservé hors périmètre.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
-### UI-220 — B — PARTIAL
+### UI-220 — B — PARTIAL_SCOPED
 
 - **UI-220** · **SOUS CONTRAT MÉTIER/PROVIDER** — Protéger l’accessibilité clavier, le focus et la lisibilité malgré la suppression de textes explicatifs.
 
@@ -3822,13 +3824,13 @@ Réservé hors périmètre.
 
 **Décisions R5 dominantes :** R5-D55, D64…D76.
 
-Owner : Microtextes / accessibilité. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Microtextes / accessibilité. Niveau : SCOPED_WITH_EXPLICIT_USER_DEFERRAL. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-motion prévu ; pas de preuve de zoom natif.
+PASS_BROWSER focus dernier Redo→Undo actif, fermeture coût→sa propre ancre ; Tab/Shift+Tab/Espace/Entrée/Échap et calendrier exécutés.
 
-**Preuves :** proofs/preview2.json, proofs/react-interactions.json, proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/preview2.json, proofs/react-interactions.json, proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Tab/Shift+Tab/Espace/Entrée/Échap et calendrier prouvés. Focus Undo conservé ; après Redo un instant document.body a été observé : restauration exhaustive non certifiée.
+**Reste :** Transition vers certaines questions avancées peut laisser momentanément body focalisé ; aucune perte RAW, aucune commande inaccessible ni piège clavier observé. Pas de certification exhaustive de tout focus Composer.
 
 ### UI-221 — B — PARTIAL
 
@@ -3846,7 +3848,7 @@ Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-m
 
 **Reste :** Campagne strictement desktop ; zoom natif non vérifié.
 
-### UI-222 — B — PARTIAL
+### UI-222 — B — IMPLEMENTED_BROWSER_VERIFIED
 
 - **UI-222** · **CRITÈRE DE RECETTE** — Vérifier dans des états vides et riches qu’aucun dock, résultat Google, calendrier ou tuile de sélection n’est coupé par le bas de la fenêtre.
 
@@ -3854,10 +3856,10 @@ Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-m
 
 **Décisions R5 dominantes :** R5-D55, D64…D76.
 
-Owner : Microtextes / accessibilité. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
+Owner : Microtextes / accessibilité. Niveau : BROWSER_PREVIEW_SCOPED. Produit : ecca4bff353284c2fccea22fca4e7139e0bf422d.
 
-Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-motion prévu ; pas de preuve de zoom natif.
+Scènes représentatives riches/vides,20 postes paginés, Before4 objets, calendrier, lieux et coût sans scroll vertical interne ; commandes atteignables au desktop minimal par la page externe.
 
-**Preuves :** proofs/preview2.json, proofs/react-interactions.json, proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
+**Preuves :** proofs/preview2.json, proofs/react-interactions.json, proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json, proofs/final-ui-browser.json, proofs/final-ui-retest.json, pr68-final-ui.md, deferred-reception.md
 
-**Reste :** Rich20 paginé et calendrier sans dock prouvés ; viewport1152 dépassement et fournisseur réel indisponible, Before riche navigateur non rejoué.
+**Reste :** Borné aux scènes mesurées, sans Google réel/photos non publiées et sans zoom125%. Aucune certification générale de tous états de Composer.

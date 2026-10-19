@@ -1,5 +1,7 @@
 # Gates R5 — actualisation des27 résidus
 
+> Actualisation finale : **gates UI PASS**, reports Google réel/Auth durable/zoom125% assumés et non certifiés. UI093 et focus corrigés/testés ; voir [pr68-final-ui.md](pr68-final-ui.md). Les anciennes lignes GO_MAIN=NO ci-dessous décrivent les missions précédentes.
+
 Produit actuel :157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849. Détail et limites :closure27-reception.md.
 
 | Gate courant | Résultat réel | Preuve / arbre |

@@ -1,5 +1,7 @@
 # Clôture ciblée des27 lignes A — PR68
 
+> **Réception historique conservée.** La mission suivante reporte explicitement Google réel, Auth durable et zoom125%, corrige UI093 et le focus, puis autorise la livraison si les gates UI passent. État courant : [pr68-final-ui.md](pr68-final-ui.md). Les échecs et mesures ci-dessous ne sont pas effacés.
+
 **PARTIAL_READY_FOR_REVIEW ; GO_MAIN=NO.** Les quatre reports de contrats sont acceptés par l’utilisateur ; aucune fusion ni Production effectuée.
 
 ## Résultat exploitable

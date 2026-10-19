@@ -1091,9 +1091,9 @@
       "precision": "Si API réellement disponible. Les lieux canoniques/favoris demeurent accessibles et nom libre en repli ; aucun blocage total si provider absent.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D15…D19, D53, D61.",
       "owner": "Lieux / Google / favoris",
-      "status": "PARTIAL",
-      "niveau_preuve": "MIXED_PARTIAL",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "DEFERRED_EXTERNAL",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-place-search.tsx",
         "src/app/mois-a-venir/composer/bar-personal-places.tsx",
@@ -1104,20 +1104,29 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Un appel réel Preview1 retourne indisponible ; Details, annulation et réponses obsolètes restent prouvés par mocks. Pas de PASS fournisseur réel.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Recherche Google officielle conservée ; fallback lieux enregistrés et nom libre fonctionnel.",
+      "remaining": "DEFERRED_EXTERNAL_GOOGLE_REAL : aucun appel live dans ce lot. Plan séparé dans deferred-reception.md.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Chemin Google/favoris conservé ; loading/error/late/out-of-order validés en mocks.",
       "reviewed": true,
       "closure27": {
-        "status": "PARTIAL",
+        "status": "DEFERRED_EXTERNAL",
         "previous_status": "PARTIAL",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "DEFERRED_EXTERNAL",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
       }
     },
     {
@@ -1430,9 +1439,9 @@
       "precision": "Gabarit fixé avant arrivée de la photo/résultat. Si nom long, révélation du nom complet sans croissance verticale.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D15…D19, D53, D61.",
       "owner": "Lieux / Google / favoris",
-      "status": "PARTIAL",
-      "niveau_preuve": "MIXED_PARTIAL",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "PARTIAL_SCOPED",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-place-search.tsx",
         "src/app/mois-a-venir/composer/bar-personal-places.tsx",
@@ -1443,20 +1452,29 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Hauteur58px et focus réel prouvés. Images et résultats fournisseurs tardifs/hors ordre : mocks seulement ; photo de lieu non raccordée.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Choix de lieu à hauteur bornée, nom complet accessible sans agrandir la tuile.",
+      "remaining": "Photos non publiées dans cette tuile : données photo inconnues ignorées, aucun rendu tardif prétendu. Partie live DEFERRED_EXTERNAL_GOOGLE_REAL.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Nom+ville et hauteur bornée préservés ; mocks loading/error/hors ordre rejetés sans admission automatique.",
       "reviewed": true,
       "closure27": {
-        "status": "PARTIAL",
+        "status": "PARTIAL_SCOPED",
         "previous_status": "PARTIAL",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "PARTIAL_SCOPED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
       }
     },
     {
@@ -2676,9 +2694,9 @@
       "precision": "",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D28…D35.",
       "owner": "Rail / catalogue",
-      "status": "PARTIAL",
-      "niveau_preuve": "MIXED_PARTIAL",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "IMPLEMENTED_BROWSER_VERIFIED",
+      "niveau_preuve": "BROWSER_PREVIEW_SCOPED",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/context-palette.tsx",
         "src/app/mois-a-venir/composer/bar-dock-catalog.ts",
@@ -2689,20 +2707,29 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Défaut encore reproduit en Preview3 : effacer un filtre du catalogue150 ne remesure pas le rail (1027px/4468px, after=false, flèches absentes). Après rechargement, flèche Entrée déplace le rail.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Indice latéral et flèches conditionnés au débordement mesuré.",
+      "remaining": "PASS au SHA final :1152×720, scroll4468>client1023, after=true et flèche présente immédiatement après effacement. Catalogue150 atteint en entier en Preview initiale.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Le rail est remesuré selon les options réellement rendues, même avec question stable ; effacement par bouton et clavier, flèches et fin de rail.",
       "reviewed": true,
       "closure27": {
-        "status": "PARTIAL",
+        "status": "IMPLEMENTED_BROWSER_VERIFIED",
         "previous_status": "IMPLEMENTED_NOT_BROWSER_PROVEN",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "IMPLEMENTED_BROWSER_VERIFIED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
       }
     },
     {
@@ -2810,9 +2837,9 @@
       "precision": "Historique peut prioriser une suggestion seulement avec preuve suffisante ; n'admet aucune décision automatiquement.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D28…D35.",
       "owner": "Rail / catalogue",
-      "status": "FIXED_LOCAL_ONLY",
-      "niveau_preuve": "REACT_OWNER_PGLITE_NOT_BROWSER",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "IMPLEMENTED_LOCAL_VERIFIED",
+      "niveau_preuve": "REACT_OWNER_FIXTURE",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/context-palette.tsx",
         "src/app/mois-a-venir/composer/bar-dock-catalog.ts",
@@ -2823,20 +2850,29 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Tests propriétaires positifs/sans historique PASS. Pas de nouvelle inférence ni score ; pertinence sur corpus utilisateur réel non certifiée.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Réutilisation de l’ordre publié : lieux qualifiés par visites/date, absence d’historique en ordre neutre ; familles compatibles par moment.",
+      "remaining": "PASS_FIXTURE uniquement. Aucun score nouveau, aucune pertinence personnelle réelle certifiée et aucune suggestion automatiquement admise.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Fixtures synthétiques avec visites qualifiées/sans historique ; familles Before/Au bar, réemploi des sources et recherche exhaustive25/120/150.",
       "reviewed": true,
       "closure27": {
-        "status": "FIXED_LOCAL_ONLY",
+        "status": "IMPLEMENTED_LOCAL_VERIFIED",
         "previous_status": "PARTIAL",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "IMPLEMENTED_LOCAL_VERIFIED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
       }
     },
     {
@@ -2907,9 +2943,9 @@
       "precision": "",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D28…D35.",
       "owner": "Rail / catalogue",
-      "status": "FIXED_LOCAL_ONLY",
-      "niveau_preuve": "REACT_OWNER_PGLITE_NOT_BROWSER",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "IMPLEMENTED_BROWSER_VERIFIED",
+      "niveau_preuve": "BROWSER_PREVIEW_SCOPED",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/context-palette.tsx",
         "src/app/mois-a-venir/composer/bar-dock-catalog.ts",
@@ -2920,20 +2956,29 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "React/PGlite PASS, dock143px observé après20 postes. Absence de flash/saut pendant toute une séquence non instrumentée en navigateur.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Gabarit72px des choix, rail borné et contenu riche paginé ; ajouts restent dans leur scène.",
+      "remaining": "PASS sur Preview0b541bb ; le seul diff final porte sur le retour de focus du popover de coût.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Cinq Bière ajoutées rapidement : famille Boissons et focus Bière conservés, dock143px et top704,6px identiques avant/après ; famille Restauration puis Snack.",
       "reviewed": true,
       "closure27": {
-        "status": "FIXED_LOCAL_ONLY",
+        "status": "IMPLEMENTED_BROWSER_VERIFIED",
         "previous_status": "PARTIAL",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "IMPLEMENTED_BROWSER_VERIFIED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
       }
     },
     {
@@ -3730,28 +3775,38 @@
       "precision": "Afficher/activer partage effectif **seulement** si l'owner Finance sait persister les parts du poste.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D44…D50.",
       "owner": "Scopes / financement",
-      "status": "BLOCKED_OWNER",
-      "niveau_preuve": "CONTRACT_REVIEW_USER_DEFERRED",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "DEFERRED_OWNER_APPROVED",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-living-editor.tsx",
         "src/app/mois-a-venir/composer/bar-living-details.tsx"
       ],
       "evidence": [
-        "closure27-owner-decision.md"
+        "closure27-owner-decision.md",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Report explicitement accepté par l’utilisateur pour ce lot UI. Aucun contrat de parts implémenté.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Aucune UI trompeuse de parts financières ; proposition de contrat distinct conservée.",
+      "remaining": "Contrat absent ; dossier closure27-owner-decision.md, aucun faux partage ni writer.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Report utilisateur des parts financières par poste.",
       "reviewed": true,
       "closure27": {
-        "status": "BLOCKED_OWNER",
+        "status": "DEFERRED_OWNER_APPROVED",
         "previous_status": "BLOCKED_OWNER",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "DEFERRED_OWNER_APPROVED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES",
+        "owner_parts": "DEFERRED_OWNER_APPROVED"
       }
     },
     {
@@ -3764,28 +3819,38 @@
       "precision": "Dock d'avatars lié au **poste ciblé**, pas à tous les coûts de la soirée.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D44…D50.",
       "owner": "Scopes / financement",
-      "status": "BLOCKED_OWNER",
-      "niveau_preuve": "CONTRACT_REVIEW_USER_DEFERRED",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "DEFERRED_OWNER_APPROVED",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-living-editor.tsx",
         "src/app/mois-a-venir/composer/bar-living-details.tsx"
       ],
       "evidence": [
-        "closure27-owner-decision.md"
+        "closure27-owner-decision.md",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Report explicitement accepté ; participants de présence restent distincts des financeurs.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Pas de dock de payeurs sans parts persistantes du poste.",
+      "remaining": "Participants de présence distincts des financeurs ; aucune extension de contrat.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Report utilisateur du dock de payeurs lié au poste.",
       "reviewed": true,
       "closure27": {
-        "status": "BLOCKED_OWNER",
+        "status": "DEFERRED_OWNER_APPROVED",
         "previous_status": "BLOCKED_OWNER",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "DEFERRED_OWNER_APPROVED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES",
+        "owner_parts": "DEFERRED_OWNER_APPROVED"
       }
     },
     {
@@ -4080,9 +4145,9 @@
       "precision": "Options avancées ouvertes à la demande ; part personnelle et remboursements seulement sous contrat Finance prouvé.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D44…D50.",
       "owner": "Scopes / financement",
-      "status": "PARTIAL",
-      "niveau_preuve": "MIXED_PARTIAL",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "PARTIAL_SCOPED",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-living-editor.tsx",
         "src/app/mois-a-venir/composer/bar-living-details.tsx"
@@ -4091,20 +4156,31 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "P1–P4 PASS. Répartition financière absente du contrat et reportée : pas de clôture complète de cette ligne.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Quantité/prix/unité/funding existants préservés ; montant partiel ne détruit pas les autres champs.",
+      "remaining": "Parts par payeur DEFERRED_OWNER_APPROVED. Refus d’un montant Banque vide observé puis résolu par saisie explicite ; pas de financement inventé.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Mini-édition supportée PASS : RAW12, conservé après annulation, prix12.50, quantité2/coût25, financement Banque25 explicitement admis. Identités et unité préservées par les tests propriétaires.",
       "reviewed": true,
       "closure27": {
-        "status": "PARTIAL",
+        "status": "PARTIAL_SCOPED",
         "previous_status": "PARTIAL",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "PARTIAL_SCOPED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES",
+        "supported_editor": "PASS",
+        "owner_parts": "DEFERRED_OWNER_APPROVED"
       }
     },
     {
@@ -4117,28 +4193,38 @@
       "precision": "Prioriser contacts déjà présents, sans supposer qu'ils partagent les coûts.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D44…D50.",
       "owner": "Scopes / financement",
-      "status": "BLOCKED_OWNER",
-      "niveau_preuve": "CONTRACT_REVIEW_USER_DEFERRED",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "DEFERRED_OWNER_APPROVED",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-living-editor.tsx",
         "src/app/mois-a-venir/composer/bar-living-details.tsx"
       ],
       "evidence": [
-        "closure27-owner-decision.md"
+        "closure27-owner-decision.md",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Parts financières du poste non admises ; report explicitement accepté pour ce lot.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Aucune assimilation des participants aux payeurs.",
+      "remaining": "Pas d’assimilation des participants aux payeurs ; aucun partage égal supposé.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Report utilisateur de la répartition financière.",
       "reviewed": true,
       "closure27": {
-        "status": "BLOCKED_OWNER",
+        "status": "DEFERRED_OWNER_APPROVED",
         "previous_status": "BLOCKED_OWNER",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "DEFERRED_OWNER_APPROVED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES",
+        "owner_parts": "DEFERRED_OWNER_APPROVED"
       }
     },
     {
@@ -4290,9 +4376,9 @@
       "precision": "Le même style de tuile peut contenir des contrôles différents selon l'objet et le moment.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D25…D27, D41…D42.",
       "owner": "Mini-éditeurs",
-      "status": "PARTIAL",
-      "niveau_preuve": "MIXED_PARTIAL",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "PARTIAL_SCOPED",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-living-editor.tsx"
       ],
@@ -4300,20 +4386,31 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Partage par avatars non activé faute de contrat de parts ; report accepté, pas de faux PASS.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Compteur, montant court, choix illustrés et options avancées réutilisent les tuiles existantes.",
+      "remaining": "Avatars de partage DEFERRED_OWNER_APPROVED ; pas de clôture totale du contrat de parts.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Compteurs et prix courts PASS navigateur, édition d’unité/financement existant couverte par P1/P4 ; choix illustrés préservés.",
       "reviewed": true,
       "closure27": {
-        "status": "PARTIAL",
+        "status": "PARTIAL_SCOPED",
         "previous_status": "PARTIAL",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "PARTIAL_SCOPED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES",
+        "supported_editor": "PASS",
+        "owner_parts": "DEFERRED_OWNER_APPROVED"
       }
     },
     {
@@ -4626,29 +4723,39 @@
       "precision": "Transport libre dans détails uniquement si le contrat permet réellement sa description.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D51…D54.",
       "owner": "Mobility",
-      "status": "BLOCKED_OWNER",
-      "niveau_preuve": "CONTRACT_REVIEW_USER_DEFERRED",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "DEFERRED_OWNER_APPROVED",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-living-editor.tsx",
         "src/app/mois-a-venir/composer/bar-living-details.tsx",
         "src/app/mois-a-venir/composer/bar-product-visual.tsx"
       ],
       "evidence": [
-        "closure27-owner-decision.md"
+        "closure27-owner-decision.md",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Libellé OTHER absent du DTO persistant ; mini-proposition et report accepté, aucun nouveau contrat.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "OTHER générique ancien conservé, pas de saisie de nom non durable proposée.",
+      "remaining": "Pas de champ éphémère ni nouvelle migration.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "OTHER ancien conservé ; report accepté du libellé durable personnalisé.",
       "reviewed": true,
       "closure27": {
-        "status": "BLOCKED_OWNER",
+        "status": "DEFERRED_OWNER_APPROVED",
         "previous_status": "BLOCKED_OWNER",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "DEFERRED_OWNER_APPROVED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES",
+        "owner_parts": "DEFERRED_OWNER_APPROVED"
       }
     },
     {
@@ -5596,9 +5703,9 @@
       "precision": "Vérifier bas d'écran à 1152×720 et zoom 125% ; pas de tuile inaccessible.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D01…D12, D31…D35.",
       "owner": "Dock et Board",
-      "status": "PARTIAL",
-      "niveau_preuve": "MIXED_PARTIAL",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "IMPLEMENTED_BROWSER_VERIFIED",
+      "niveau_preuve": "BROWSER_PREVIEW_SCOPED",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/context-palette.tsx",
         "src/app/mois-a-venir/composer/composer.module.css"
@@ -5607,20 +5714,29 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "À1152×720 riche, dock bottom877,3 dépasse le viewport ; accessibilité par défilement de secours non recertifiée ici. Zoom125% non exposé. Pas de PASS tous états.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Conteneur du dock non tronqué (143=143px) et rail horizontal accessible dans les scènes mesurées.",
+      "remaining": "PAS une promesse de tout afficher sans scroll de page. MAIN.scrollTop205,6 ; aucun scroll interne de carte/éditeur/dock. Zoom DEFERRED_NATIVE_ZOOM_125.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "1152×720 : dock riche accessible par défilement du conteneur principal MAIN extérieur au Composer, bottom889,7→709,7 ; dernier choix Bouteille atteint au clavier.",
       "reviewed": true,
       "closure27": {
-        "status": "PARTIAL",
+        "status": "IMPLEMENTED_BROWSER_VERIFIED",
         "previous_status": "PARTIAL",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "IMPLEMENTED_BROWSER_VERIFIED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
       }
     },
     {
@@ -5633,9 +5749,9 @@
       "precision": "Dock fait partie du viewport utile et se masque lorsqu'inutile à transition stable.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D01…D12, D31…D35.",
       "owner": "Dock et Board",
-      "status": "PARTIAL",
-      "niveau_preuve": "MIXED_PARTIAL",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "IMPLEMENTED_BROWSER_VERIFIED",
+      "niveau_preuve": "BROWSER_PREVIEW_SCOPED",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/context-palette.tsx",
         "src/app/mois-a-venir/composer/composer.module.css"
@@ -5644,20 +5760,29 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "1440/1920 mesurés ; état riche1152 nécessite le filet de sécurité hors viewport. Stabilité complète/zoom restent partiels.",
-      "test_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-      "action": "Dock masqué sans réserve au calendrier (0px), gabarits de scène maîtrisés, pas de scroll vertical interne mesuré.",
+      "remaining": "Défilement de secours extérieur accepté ; compaction globale réservée aux55C. Zoom DEFERRED_NATIVE_ZOOM_125.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Scènes calendrier/lieux/Before riche/20 postes/coût mesurées à1152/1440/1920 réels ; calendrier sans dock ; hauteur143px du dock, surfaces internes non scrollables.",
       "reviewed": true,
       "closure27": {
-        "status": "PARTIAL",
+        "status": "IMPLEMENTED_BROWSER_VERIFIED",
         "previous_status": "PARTIAL",
         "proof_shas": [
           "99681b47cdabe187776932f52056ec10d1f0a620",
           "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849"
         ],
         "note": "Chaque fichier de preuve porte son SHA réel ; aucun retest fournisseur ou Auth durable implicite."
+      },
+      "final_ui": {
+        "status": "IMPLEMENTED_BROWSER_VERIFIED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
       }
     },
     {
@@ -5906,9 +6031,9 @@
       "precision": "Validation **desktop souris + clavier**, 1152×720, 1440×900, 1920×1080, **zoom natif 125%**, reduced motion ; pas de campagne tactile.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D55, D64…D76.",
       "owner": "Microtextes / accessibilité",
-      "status": "PARTIAL",
-      "niveau_preuve": "SOURCE_REVIEW_AND_REACT_FIXTURE",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "PARTIAL_SCOPED",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-living-editor.tsx",
         "src/app/mois-a-venir/composer/composer-shell.tsx",
@@ -5921,12 +6046,21 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Souris/clavier ciblés exécutés ; zoom natif125% et reduced motion non exécutés.",
-      "test_sha": "fa8d0aff21c392d8966a9b75d8e0963ffebcad27",
-      "action": "Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-motion prévu ; pas de preuve de zoom natif.",
-      "reviewed": true
+      "remaining": "DEFERRED_NATIVE_ZOOM_125. Reduced motion non recertifié, pas de campagne mobile.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Desktop souris/clavier et trois viewports réellement mesurés ; aucun DPR simulé.",
+      "reviewed": true,
+      "final_ui": {
+        "status": "PARTIAL_SCOPED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
+      }
     },
     {
       "id": "UI-216",
@@ -6039,9 +6173,9 @@
       "precision": "Tab/Espace/Entrée/Échap et focus restauré ; noms accessibles même si icône sans texte.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D55, D64…D76.",
       "owner": "Microtextes / accessibilité",
-      "status": "PARTIAL",
-      "niveau_preuve": "SOURCE_REVIEW_AND_REACT_FIXTURE",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "PARTIAL_SCOPED",
+      "niveau_preuve": "SCOPED_WITH_EXPLICIT_USER_DEFERRAL",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-living-editor.tsx",
         "src/app/mois-a-venir/composer/composer-shell.tsx",
@@ -6054,12 +6188,21 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Tab/Shift+Tab/Espace/Entrée/Échap et calendrier prouvés. Focus Undo conservé ; après Redo un instant document.body a été observé : restauration exhaustive non certifiée.",
-      "test_sha": "fa8d0aff21c392d8966a9b75d8e0963ffebcad27",
-      "action": "Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-motion prévu ; pas de preuve de zoom natif.",
-      "reviewed": true
+      "remaining": "Transition vers certaines questions avancées peut laisser momentanément body focalisé ; aucune perte RAW, aucune commande inaccessible ni piège clavier observé. Pas de certification exhaustive de tout focus Composer.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "PASS_BROWSER focus dernier Redo→Undo actif, fermeture coût→sa propre ancre ; Tab/Shift+Tab/Espace/Entrée/Échap et calendrier exécutés.",
+      "reviewed": true,
+      "final_ui": {
+        "status": "PARTIAL_SCOPED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
+      }
     },
     {
       "id": "UI-221",
@@ -6099,9 +6242,9 @@
       "precision": "Scènes représentatives vides/partielles/riches, avec dock et Google chargés/échoués, aucune commande coupée.",
       "r5_decision_references": "**Décisions R5 dominantes :** R5-D55, D64…D76.",
       "owner": "Microtextes / accessibilité",
-      "status": "PARTIAL",
-      "niveau_preuve": "SOURCE_REVIEW_AND_REACT_FIXTURE",
-      "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+      "status": "IMPLEMENTED_BROWSER_VERIFIED",
+      "niveau_preuve": "BROWSER_PREVIEW_SCOPED",
+      "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
       "changed_files": [
         "src/app/mois-a-venir/composer/bar-living-editor.tsx",
         "src/app/mois-a-venir/composer/composer-shell.tsx",
@@ -6114,42 +6257,74 @@
         "proofs/closure27-l1.json",
         "proofs/closure27-preview1.json",
         "proofs/closure27-preview2.json",
-        "proofs/closure27-preview3.json"
+        "proofs/closure27-preview3.json",
+        "proofs/final-ui-browser.json",
+        "proofs/final-ui-retest.json",
+        "pr68-final-ui.md",
+        "deferred-reception.md"
       ],
-      "remaining": "Rich20 paginé et calendrier sans dock prouvés ; viewport1152 dépassement et fournisseur réel indisponible, Before riche navigateur non rejoué.",
-      "test_sha": "fa8d0aff21c392d8966a9b75d8e0963ffebcad27",
-      "action": "Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-motion prévu ; pas de preuve de zoom natif.",
-      "reviewed": true
+      "remaining": "Borné aux scènes mesurées, sans Google réel/photos non publiées et sans zoom125%. Aucune certification générale de tous états de Composer.",
+      "test_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+      "action": "Scènes représentatives riches/vides,20 postes paginés, Before4 objets, calendrier, lieux et coût sans scroll vertical interne ; commandes atteignables au desktop minimal par la page externe.",
+      "reviewed": true,
+      "final_ui": {
+        "status": "IMPLEMENTED_BROWSER_VERIFIED",
+        "sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+        "scope": "DESKTOP_WITH_USER_DEFERRED_EXTERNAL_GATES"
+      }
     }
   ],
   "reception": {
-    "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-    "behavior_tests_sha": "99681b47cdabe187776932f52056ec10d1f0a620",
-    "inheritance": "Campagne intégrée exécutée99681b4 ;157b7f6 ne modifie que le rattachement du popover (26 lignes). Contrôle ciblé8/8, TypeScript et build complet rejoués157 ; aucun code financier modifié entre ces SHA.",
-    "go_main": false,
-    "auth_save_reload": "BLOCKED_ENV",
-    "native_zoom": "NOT_VERIFIED_ZOOM"
+    "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+    "behavior_tests_sha": "0b541bb06315b57d968cf30595d5b8a38eda0289",
+    "inheritance": "Campagne ciblée et navigateur0b541bb ; ecca4bf ne change que7 lignes de restauration focus coût, retest réel coût/RAW/Redo/overflow au SHA final.",
+    "go_main": true,
+    "auth_save_reload": "DEFERRED_AUTH_SAVE_RELOAD",
+    "native_zoom": "DEFERRED_NATIVE_ZOOM_125"
   },
   "closure27": {
     "date": "2026-10-19",
     "base_sha": "5f98040cffbcd3437287367775e9b368b81123cd",
-    "product_sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
-    "preview": "https://budgetisation-q0jchhg63-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris",
+    "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+    "preview": "https://budgetisation-haqto6h0q-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris",
     "preview_state": "READY",
     "previous_A": 78,
     "previous_A_non_regression": "P1/P2/P3/P4=25/21/14/15 ; R5=11 ; parité198. Pas78 parcours navigateur indépendants.",
     "counts": {
       "FIXED_BROWSER": 14,
-      "PARTIAL": 7,
-      "FIXED_LOCAL_ONLY": 2,
-      "BLOCKED_OWNER": 4
+      "DEFERRED_EXTERNAL": 1,
+      "PARTIAL_SCOPED": 3,
+      "IMPLEMENTED_BROWSER_VERIFIED": 4,
+      "IMPLEMENTED_LOCAL_VERIFIED": 1,
+      "DEFERRED_OWNER_APPROVED": 4
     },
     "B_reviewed": 62,
     "C_reserved": 55,
-    "google_real": "NOT_RUN",
+    "google_real": "DEFERRED_EXTERNAL_GOOGLE_REAL",
     "google_attempt": "PREVIEW1_PROVIDER_UNAVAILABLE",
-    "auth_durable": "BLOCKED_ENV",
+    "auth_durable": "DEFERRED_AUTH_SAVE_RELOAD",
     "production": "UNCHANGED",
-    "go_main": false
+    "go_main": true
+  },
+  "final_ui": {
+    "base": "34994a675b32f226fe2d00449727d498816b5a5c",
+    "product_sha": "ecca4bff353284c2fccea22fca4e7139e0bf422d",
+    "preview": "https://budgetisation-haqto6h0q-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris",
+    "deployment": "dpl_41voJNBYDL9BGjxmvizEEox9CQLx",
+    "preview_state": "READY",
+    "go_main": true,
+    "decision": "SCOPED_UI_GATES_PASS_EXTERNAL_DEFERRED_BY_USER",
+    "google": "DEFERRED_EXTERNAL_GOOGLE_REAL",
+    "auth": "DEFERRED_AUTH_SAVE_RELOAD",
+    "zoom": "DEFERRED_NATIVE_ZOOM_125",
+    "owners": "DEFERRED_OWNER_APPROVED",
+    "counts": {
+      "FIXED_BROWSER": 14,
+      "DEFERRED_EXTERNAL": 1,
+      "PARTIAL_SCOPED": 3,
+      "IMPLEMENTED_BROWSER_VERIFIED": 4,
+      "IMPLEMENTED_LOCAL_VERIFIED": 1,
+      "DEFERRED_OWNER_APPROVED": 4
+    }
   }
 }

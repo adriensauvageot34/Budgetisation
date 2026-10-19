@@ -1,5 +1,7 @@
 # Bar / Apéro R5 — clôture ciblée des27 résidus
 
+> **Nouvelle décision de périmètre : livraison UI autorisée sous gates réussis ; certifications externes reportées par l’utilisateur.** Voir [pr68-final-ui.md](pr68-final-ui.md) pour le statut courant et [deferred-reception.md](deferred-reception.md) pour les reports. Les réceptions partielles qui suivent restent historiques.
+
 **État actuel : PARTIAL_READY_FOR_REVIEW ; GO_MAIN=NO ; Production inchangée.**
 
 Produit testé : `157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849`. [PR Draft68](https://github.com/adriensauvageot34/Budgetisation/pull/68) · [Preview finale READY](https://budgetisation-q0jchhg63-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris).

@@ -14,7 +14,7 @@ for (let number = 1; number <= 222; number++) {
   assert.ok(item?.source && item.normative_status && item.owner, `Incomplete ${number}`);
   assert.ok(item.precision !== undefined && item.r5_decision_references !== undefined);
   if (item.class === 'C') assert.equal(item.status, 'OUT_OF_SCOPE_NEXT_STAGE');
-  if (['DONE', 'ALREADY_VERIFIED', 'NO_CHANGE_REQUIRED_VERIFIED', 'IMPLEMENTED_VERIFIED', 'FIXED_BROWSER', 'FIXED_LOCAL_ONLY'].includes(item.status)) {
+  if (['DONE', 'ALREADY_VERIFIED', 'NO_CHANGE_REQUIRED_VERIFIED', 'IMPLEMENTED_VERIFIED', 'FIXED_BROWSER', 'FIXED_LOCAL_ONLY', 'IMPLEMENTED_BROWSER_VERIFIED', 'IMPLEMENTED_LOCAL_VERIFIED'].includes(item.status)) {
     assert.ok(item.evidence.length && item.product_sha && item.niveau_preuve !== 'NONE', `Unproven ${item.id}`);
   }
 }
