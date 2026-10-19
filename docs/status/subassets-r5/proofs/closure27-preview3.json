@@ -1,0 +1,166 @@
+{
+  "sha": "157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849",
+  "environment": "VERCEL_PREVIEW_AUTH_ISOLATED_COMPOSER_MEMORY",
+  "checks": [
+    {
+      "anchor": {
+        "bottom": 387.5000133514404,
+        "height": 28.80000114440918,
+        "left": 967.6749877929688,
+        "right": 1129.0874938964844,
+        "top": 358.70001220703125,
+        "width": 161.41250610351562,
+        "x": 967.6749877929688,
+        "y": 358.70001220703125
+      },
+      "focus": "decimal",
+      "height": 900,
+      "id": "UI007_UI133_POPOVER_STABILIZED",
+      "open": true,
+      "panel": {
+        "bottom": 681.1000061035156,
+        "height": 284.6000061035156,
+        "left": 868.375,
+        "right": 1228.375,
+        "top": 396.5,
+        "width": 360,
+        "x": 868.375,
+        "y": 396.5
+      },
+      "width": 1440
+    },
+    {
+      "id": "RAW_ESCAPE_CANCEL",
+      "retained": "12,",
+      "saveDisabled": true
+    },
+    {
+      "id": "ZERO_ENTER_UNDO",
+      "zeroPreviouslyVisible": true,
+      "afterUndoContributionCount": 0,
+      "focus": {
+        "label": "Annuler la dernière modification du brouillon",
+        "tag": "BUTTON"
+      }
+    },
+    {
+      "height": 720,
+      "id": "DOCK_150_INITIAL",
+      "rails": [],
+      "tiles": [
+        {
+          "height": 72,
+          "name": "Cocktail de démonstration 001 — libellé long sans données réelles"
+        },
+        {
+          "height": 72,
+          "name": "Cocktail de démonstration 002 — libellé long sans données réelles"
+        },
+        {
+          "height": 72,
+          "name": "Cocktail de démonstration 003 — libellé long sans données réelles"
+        },
+        {
+          "height": 72,
+          "name": "Cocktail de démonstration 004 — libellé long sans données réelles"
+        },
+        {
+          "height": 72,
+          "name": "Cocktail de démonstration 005 — libellé long sans données réelles"
+        }
+      ],
+      "width": 1280
+    },
+    {
+      "dock": "<section class=\"composer-module__XdBSUG__contextPalette composer-module__XdBSUG__questionPalette composer-module__XdBSUG__barCompositionDock\" data-bar-dock=\"true\" data-context-palette=\"68b18f40-e440-439c-b63d-e2237b23da9b\" data-question-dock=\"true\" data-dock-nature=\"OBJECTS\" aria-label=\"Catalogue fictif 150\"><div role=\"tooltip\" id=\"_R_1lfiv5vbb_-full-label\" class=\"composer-module__XdBSUG__barDockFullLabel\">Cocktail de démonstration 002 — libellé long sans données réelles</div><header><div class=\"composer-module__XdBSUG__paletteHeading\"><span data-planner-icon=\"night-out\" data-icon-scale=\"SATELLITE\" aria-hidden=\"true\"><svg width=\"40\" height=\"40\" viewBox=\"0 0 64 64\" style=\"--sculpture-plum:url(#_R_2rlfiv5vbb_-plum);--sculpture-violet:url(#_R_2rlfiv5vbb_-violet);--sculpture-pearl:url(#_R_2rlfiv5vbb_-pearl);--sculpture-ivory:url(#_R_2rlfiv5vbb_-ivory)\" aria-hidden=\"true\" focusable=\"false\" fi",
+      "focus": "Cocktail de démonstration 002 — libellé long sans données réelles",
+      "id": "DOCK_LONG_LABEL_FOCUS",
+      "tooltip": [
+        {
+          "rect": {
+            "bottom": 169.20000839233398,
+            "height": 36.60000228881836,
+            "left": 109.9124984741211,
+            "right": 486.86251068115234,
+            "top": 132.60000610351562,
+            "width": 376.9500122070313,
+            "x": 109.9124984741211,
+            "y": 132.60000610351562
+          },
+          "text": "Cocktail de démonstration 002 — libellé long sans données réelles"
+        }
+      ]
+    },
+    {
+      "id": "DOCK_150_SEARCH_AND_ENTER",
+      "lastVisible": true,
+      "status": "1 choix de test"
+    },
+    {
+      "arrows": 0,
+      "id": "DOCK_CLEAR_FILTER_RESIDUAL",
+      "rail": [
+        {
+          "after": "false",
+          "client": 1027,
+          "scroll": 4468
+        }
+      ]
+    },
+    {
+      "id": "DOCK_ARROW_ENTER",
+      "rail": [
+        {
+          "after": "true",
+          "before": "true",
+          "client": 1027,
+          "left": 68,
+          "scroll": 4468
+        }
+      ]
+    },
+    {
+      "id": "DOCK_ARROW_KEY",
+      "left": 68
+    },
+    {
+      "id": "DOCK_25_SEARCH_SPACE",
+      "status": "1 choix de test"
+    },
+    {
+      "id": "DOCK_120_SEARCH_SPACE",
+      "status": "1 choix de test"
+    },
+    {
+      "calendar": [
+        {
+          "client": 242,
+          "scroll": 242
+        }
+      ],
+      "dockCount": 0,
+      "height": 900,
+      "id": "CALENDAR_NO_DOCK",
+      "palettes": [
+        {
+          "display": "none",
+          "h": 0
+        }
+      ],
+      "width": 1440
+    },
+    {
+      "id": "CALENDAR_ARROW_FOCUS",
+      "focus": "2026-11-02"
+    },
+    {
+      "height": 72,
+      "id": "LONG_PLACE_FULL_NAME",
+      "name": "Bar fictif des Voyageurs et de la Très Longue Promenade des Démonstrations · Ville fictive",
+      "title": "Bar fictif des Voyageurs et de la Très Longue Promenade des Démonstrations · Ville fictive",
+      "tooltip": [
+        "Bar fictif des Voyageurs et de la Très Longue Promenade des Démonstrations · Ville fictive"
+      ]
+    }
+  ]
+}

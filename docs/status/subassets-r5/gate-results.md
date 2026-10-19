@@ -1,4 +1,28 @@
-# Gates R5 — réception finale
+# Gates R5 — actualisation des27 résidus
+
+Produit actuel :157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849. Détail et limites :closure27-reception.md.
+
+| Gate courant | Résultat réel | Preuve / arbre |
+|---|---|---|
+| Registre | PASS222 ;78A acquises inchangées ;27=14 navigateur+2 locales+7 partielles+4 owner | requirements.json ; contrôle des textes normatifs inchangés |
+| P1/P2/P3/P4 | PASS25/21/14/15 | closure27-p*-results.json, exécutés99681b4 |
+| R5 et ciblé27 | PASS11 et8 | closure27-r5.log ; closure27-l1.json (8 rejoués157b7f6) |
+| Finance | PASS198/198 ; aucun golden modifié | closure27-finance.log,99681b4 ; seul popover UI change ensuite |
+| TypeScript | PASS exit0 | tsc --noEmit,157b7f6 |
+| Build Vercel | PASS complet Next puis READY | closure27-final-vercel-build.log ; dpl_3n8jYgVAUYBk6xgyj6AqkjuR5sTt ;157b7f6 |
+| Preview1/2 | Exécutées ; coût FAIL conservé | closure27-preview1/2.json ; a71af6d/99681b4 |
+| Preview3 corrective | Coût ancré/RAW/zéro/Undo, catalogue25/120/150, calendrier et lieu long exécutés | closure27-preview3.json ;157b7f6 |
+| Résidu rail | FAIL après effacement filtre150 | after=false malgré4468>1027 ; pas de quatrième Preview |
+| Desktop | PARTIAL global ; pas de scroll vertical interne dans les surfaces mesurées | rich20,1440/1920 visibles ;1152 dock dépasse viewport |
+| B215/220/222 | PARTIAL ; zoom NOT_VERIFIED_ZOOM | focus Redo/visibilité exhaustive non certifiés |
+| Google réel | NOT_RUN de certification, tentative indisponible | mock PASS ; repli disponible en Preview1 |
+| Auth durable | BLOCKED_ENV | tables Draft/PlanRevision absentes ; aucun test personnel |
+| Nettoyage | PASS compte A rebanni, marqueur retiré/relu | closure27-account-cleanup.log ; aucun favori/Draft distant créé |
+| GO_MAIN / Production | NO / UNCHANGED | PR Draft68 uniquement ; aucune migration ni Apply |
+
+---
+
+## Historique des gates de la réception cc9d259
 Base main : 5f98040cffbcd3437287367775e9b368b81123cd (fetch final, ancêtre).
 Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
 Suites comportement : fa8d0aff21c392d8966a9b75d8e0963ffebcad27 ; seul changement applicatif suivant : conteneur CSS du dock, rejoué sur la Preview finale. Autre changement : outil de révocation Auth fictif.

@@ -1,8 +1,6 @@
 # Registre normatif et réception R5
 
-Source de vérité machine : requirements.json.222 IDs uniques, A105/B62/C55. La précision R5 prime sur la formulation initiale.
-
-Produit : cc9d2595dd95a69051d88d54beeb408ab308263d. Niveau de preuve et limites propres à chaque ligne ; aucun167/167 PASS.
+Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849. Registre222 exact, A105/B62/C55,76 décisions inchangées. Les niveaux de preuve restent distincts. Voir closure27-reception.md.
 
 ## Décisions R5 conservées intégralement
 
@@ -408,7 +406,7 @@ Admission propriétaire après choix ; frappe non admise ; RAW gardé ; ajouts m
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-007 — A — PARTIAL
+### UI-007 — A — FIXED_BROWSER
 
 - **UI-007** · **RETENU — CIBLE UX** — Limiter les opérations principales à un seul emplacement intuitif. Modifier le lieu sur la capsule Lieu, la date sur Date, les participants sur leurs avatars, le montant sur le prix.
 
@@ -416,13 +414,13 @@ Admission propriétaire après choix ; frappe non admise ; RAW gardé ; ajouts m
 
 **Décisions R5 dominantes :** R5-D13…D27.
 
-Owner : Navigation / admission / RAW. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Navigation / admission / RAW. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Admission propriétaire après choix ; frappe non admise ; RAW gardé ; ajouts multiples restent dans leur scène.
+Valeur du coût unique ; popover ancré près du montant, scopes explicites sans dock supplémentaire.
 
-**Preuves :** proofs/react-interactions.json, proofs/bar-p1-results.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Valeurs éditables directement ; le bouton secondaire de coût reste un doublon visible dans la carte.
+**Reste :** Preview3 : ouverture après déplacement du portail, clavier et RAW ; les autres accès acquis sont conservés.
 
 ### UI-008 — B — PARTIAL
 
@@ -548,7 +546,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -564,7 +562,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -580,7 +578,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -596,7 +594,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -612,7 +610,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -628,7 +626,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -644,7 +642,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -660,7 +658,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -676,7 +674,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -692,7 +690,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -708,7 +706,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -772,7 +770,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -788,7 +786,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -804,7 +802,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -820,7 +818,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -836,7 +834,7 @@ Owner : 2. Dimensions adaptatives, densité et absence de scroll interne — 20 
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -864,13 +862,13 @@ Pas de changement du packing. Hauteurs internes mesurées sur scènes présentes
 
 **Décisions R5 dominantes :** R5-D15…D19, D53, D61.
 
-Owner : Lieux / Google / favoris. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Lieux / Google / favoris. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Recherche unique et résultats proches du champ. Details avant admission minimale ; identités exactes, aucun rapprochement par libellé ; repli explicite.
+Recherche Google officielle conservée ; fallback lieux enregistrés et nom libre fonctionnel.
 
-**Preuves :** proofs/bar-p3-results.json, scripts/check-bar-subassets-r5-google.mjs, proofs/preview1.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Google mock PASS et repli utile ; un appel réel Preview1 indisponible. Pas de répétition aveugle.
+**Reste :** Un appel réel Preview1 retourne indisponible ; Details, annulation et réponses obsolètes restent prouvés par mocks. Pas de PASS fournisseur réel.
 
 ### UI-036 — A — IMPLEMENTED_VERIFIED
 
@@ -1016,7 +1014,7 @@ Recherche unique et résultats proches du champ. Details avant admission minimal
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-045 — A — IMPLEMENTED_NOT_BROWSER_PROVEN
+### UI-045 — A — FIXED_BROWSER
 
 - **UI-045** · **RETENU — CIBLE UX** — Présenter les suggestions sous la forme nom + ville, avec éventuellement une courte catégorie.
 
@@ -1024,13 +1022,13 @@ Recherche unique et résultats proches du champ. Details avant admission minimal
 
 **Décisions R5 dominantes :** R5-D15…D19, D53, D61.
 
-Owner : Lieux / Google / favoris. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Lieux / Google / favoris. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Recherche unique et résultats proches du champ. Details avant admission minimale ; identités exactes, aucun rapprochement par libellé ; repli explicite.
+Nom complet + ville attestée disponibles dans aria-label/title et révélation au focus.
 
-**Preuves :** proofs/bar-p3-results.json, scripts/check-bar-subassets-r5-google.mjs, proofs/preview1.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Nom/commune attestée sur lieux connus ; échantillon des noms longs réels non certifié.
+**Reste :** Lieu fictif long choisi par Entrée en Preview3 ; résultat de recherche 58px en Preview1, tuile de dock 72px en Preview3.
 
 ### UI-046 — A — PARTIAL
 
@@ -1040,13 +1038,13 @@ Recherche unique et résultats proches du champ. Details avant admission minimal
 
 **Décisions R5 dominantes :** R5-D15…D19, D53, D61.
 
-Owner : Lieux / Google / favoris. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Lieux / Google / favoris. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Recherche unique et résultats proches du champ. Details avant admission minimale ; identités exactes, aucun rapprochement par libellé ; repli explicite.
+Choix de lieu à hauteur bornée, nom complet accessible sans agrandir la tuile.
 
-**Preuves :** proofs/bar-p3-results.json, scripts/check-bar-subassets-r5-google.mjs, proofs/preview1.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Gabarit borné et libellés accessibles ; noms longs et photos tardives non certifiés.
+**Reste :** Hauteur58px et focus réel prouvés. Images et résultats fournisseurs tardifs/hors ordre : mocks seulement ; photo de lieu non raccordée.
 
 ### UI-047 — B — PARTIAL
 
@@ -1172,7 +1170,7 @@ Owner : 3. Lieu : recherche Google, suggestions, sélection et retrait — 24 re
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -1252,7 +1250,7 @@ Owner : 4. Date : calendrier proportionné et manipulable — 14 recommandations
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -1268,7 +1266,7 @@ Owner : 4. Date : calendrier proportionné et manipulable — 14 recommandations
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -1396,7 +1394,7 @@ Owner : 4. Date : calendrier proportionné et manipulable — 14 recommandations
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -1540,11 +1538,11 @@ Owner : 5. Personnes : choix multiples, avatars et contexte — 13 recommandatio
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
-### UI-078 — A — IMPLEMENTED_NOT_BROWSER_PROVEN
+### UI-078 — A — FIXED_BROWSER
 
 - **UI-078** · **RETENU — CIBLE UX** — Limiter le nombre de noms visibles dans la carte et afficher `+3` lorsque les participants deviennent nombreux.
 
@@ -1552,13 +1550,13 @@ Réservé hors périmètre.
 
 **Décisions R5 dominantes :** R5-D23…D26, D48…D49.
 
-Owner : Participants. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Participants. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Multi-toggle de présence, recherche au dock, prénom libre uniquement après absence de résultat ; aucune inférence de paiement.
+Trois noms puis +N exact, accès paginé aux personnes et retrait individuel.
 
-**Preuves :** proofs/react-interactions.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Code existant slice(0,3), puis +N ; trois participants testés, plus de trois non testés en navigateur.
+**Reste :** Preview2 : 0/1/3/4/8 participants ; +1 à4, +5 à8, retrait de Marc depuis page2 donne7/+4. Preview1 :9 puis8.
 
 ### UI-079 — A — IMPLEMENTED_VERIFIED
 
@@ -1636,7 +1634,7 @@ Owner : 5. Personnes : choix multiples, avatars et contexte — 13 recommandatio
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -1784,7 +1782,7 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-093 — A — IMPLEMENTED_NOT_BROWSER_PROVEN
+### UI-093 — A — PARTIAL
 
 - **UI-093** · **RETENU — CIBLE UX** — Prévoir une légère ombre ou un fondu sur le bord droit pour indiquer que d'autres éléments existent.
 
@@ -1792,13 +1790,13 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Décisions R5 dominantes :** R5-D28…D35.
 
-Owner : Rail / catalogue. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Rail / catalogue. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Projection sur catalogue complet avant limite24, suite explicite ; rail réel sans pager ; mémoire par occurrence/scène/moment/famille.
+Indice latéral et flèches conditionnés au débordement mesuré.
 
-**Preuves :** scripts/check-bar-subassets-r5-dock.mjs, proofs/react-interactions.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Indice d’overflow CSS ajouté et associé à la mesure réelle ; perception visuelle finale à revoir.
+**Reste :** Défaut encore reproduit en Preview3 : effacer un filtre du catalogue150 ne remesure pas le rail (1027px/4468px, after=false, flèches absentes). Après rechargement, flèche Entrée déplace le rail.
 
 ### UI-094 — C — OUT_OF_SCOPE_NEXT_STAGE
 
@@ -1812,11 +1810,11 @@ Owner : 6. Dock : catalogue horizontal et proposition réellement contextuelle �
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
-### UI-095 — A — PARTIAL
+### UI-095 — A — FIXED_BROWSER
 
 - **UI-095** · **RETENU — CIBLE UX** — Conserver une largeur de tuile homogène selon la famille d'objets, tout en permettant davantage de place pour les noms longs.
 
@@ -1824,15 +1822,15 @@ Réservé hors périmètre.
 
 **Décisions R5 dominantes :** R5-D28…D35.
 
-Owner : Rail / catalogue. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Rail / catalogue. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Projection sur catalogue complet avant limite24, suite explicite ; rail réel sans pager ; mémoire par occurrence/scène/moment/famille.
+Tuiles de même famille à hauteur72px ; nom complet accessible au focus sans tuile géante.
 
-**Preuves :** scripts/check-bar-subassets-r5-dock.mjs, proofs/react-interactions.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Tuiles bornées par famille ; noms extrêmes et grands catalogues visuels non certifiés.
+**Reste :** Catalogue150 mesuré dans navigateur1280×720 ; recherches25/120/150 et choix du dernier résultat exécutés.
 
-### UI-096 — A — PARTIAL
+### UI-096 — A — FIXED_BROWSER
 
 - **UI-096** · **RETENU — CIBLE UX** — Éviter les textes coupés dans les tuiles ; réduire le contenu avant de réduire sa taille de police.
 
@@ -1840,15 +1838,15 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Décisions R5 dominantes :** R5-D28…D35.
 
-Owner : Rail / catalogue. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Rail / catalogue. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Projection sur catalogue complet avant limite24, suite explicite ; rail réel sans pager ; mémoire par occurrence/scène/moment/famille.
+Deux lignes visuelles, libellé intégral aria-label/title et tooltip au focus/hover.
 
-**Preuves :** scripts/check-bar-subassets-r5-dock.mjs, proofs/react-interactions.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Retour à la ligne autorisé ; pas de preuve navigateur150 avec libellés longs.
+**Reste :** Preview3 : focus du deuxième libellé long, tooltip complet36,6px hors rail sans changement de hauteur de tuile.
 
-### UI-097 — A — PARTIAL
+### UI-097 — A — FIXED_LOCAL_ONLY
 
 - **UI-097** · **RETENU — CIBLE UX** — Positionner les suggestions les plus pertinentes au début, selon le contexte et l'historique exploitable.
 
@@ -1856,13 +1854,13 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Décisions R5 dominantes :** R5-D28…D35.
 
-Owner : Rail / catalogue. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Rail / catalogue. Niveau : REACT_OWNER_PGLITE_NOT_BROWSER. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Projection sur catalogue complet avant limite24, suite explicite ; rail réel sans pager ; mémoire par occurrence/scène/moment/famille.
+Réutilisation de l’ordre publié : lieux qualifiés par visites/date, absence d’historique en ordre neutre ; familles compatibles par moment.
 
-**Preuves :** scripts/check-bar-subassets-r5-dock.mjs, proofs/react-interactions.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Suggestions propriétaires réutilisées ; aucun nouvel ordonnancement historique inventé, couverture de pertinence non certifiée.
+**Reste :** Tests propriétaires positifs/sans historique PASS. Pas de nouvelle inférence ni score ; pertinence sur corpus utilisateur réel non certifiée.
 
 ### UI-098 — A — IMPLEMENTED_VERIFIED
 
@@ -1896,7 +1894,7 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-100 — A — PARTIAL
+### UI-100 — A — FIXED_LOCAL_ONLY
 
 - **UI-100** · **RETENU — CIBLE UX** — Éviter que le dock saute d'une hauteur à l'autre à chaque modification mineure.
 
@@ -1904,15 +1902,15 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Décisions R5 dominantes :** R5-D28…D35.
 
-Owner : Rail / catalogue. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Rail / catalogue. Niveau : REACT_OWNER_PGLITE_NOT_BROWSER. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Projection sur catalogue complet avant limite24, suite explicite ; rail réel sans pager ; mémoire par occurrence/scène/moment/famille.
+Gabarit72px des choix, rail borné et contenu riche paginé ; ajouts restent dans leur scène.
 
-**Preuves :** scripts/check-bar-subassets-r5-dock.mjs, proofs/react-interactions.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Rafale d’ajouts garde le rail ; hauteurs par nature diffèrent légèrement et petit viewport requiert document de secours.
+**Reste :** React/PGlite PASS, dock143px observé après20 postes. Absence de flash/saut pendant toute une séquence non instrumentée en navigateur.
 
-### UI-101 — A — PARTIAL
+### UI-101 — A — FIXED_BROWSER
 
 - **UI-101** · **RETENU — CIBLE UX** — Supprimer les tuiles « Autre », « Plus tard » et « À préciser » lorsqu'elles n'apportent pas une possibilité réellement distincte.
 
@@ -1920,13 +1918,13 @@ Projection sur catalogue complet avant limite24, suite explicite ; rail réel sa
 
 **Décisions R5 dominantes :** R5-D28…D35.
 
-Owner : Rail / catalogue. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Rail / catalogue. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Projection sur catalogue complet avant limite24, suite explicite ; rail réel sans pager ; mémoire par occurrence/scène/moment/famille.
+Retrait de other/unknown des modes proposés ; valeurs OTHER déjà enregistrées restent lisibles et chiffrées.
 
-**Preuves :** scripts/check-bar-subassets-r5-dock.mjs, proofs/react-interactions.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Faux reports supprimés ; le mode other admissible reste visible sans description libre complète.
+**Reste :** Cinq choix utiles observés Preview1 ; conservation d’une ancienne valeur OTHER et absence de faux choix validées par owner/PGlite.
 
 ### UI-102 — A — IMPLEMENTED_VERIFIED
 
@@ -1956,7 +1954,7 @@ Owner : 6. Dock : catalogue horizontal et proposition réellement contextuelle �
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -2036,7 +2034,7 @@ Owner : 7. Moments de la soirée : Before, Au bar et autres moments — 10 recom
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -2100,7 +2098,7 @@ Owner : 7. Moments de la soirée : Before, Au bar et autres moments — 10 recom
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -2200,7 +2198,7 @@ Premier Before par objet réel ; promotion atomique du principal ; propriétaire
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-119 — A — PARTIAL
+### UI-119 — A — FIXED_BROWSER
 
 - **UI-119** · **SOUS CONTRAT MÉTIER/PROVIDER** — Réutiliser les catalogues existants d'autres modules sans ouvrir leurs formulaires complets ni perdre le contexte Bar.
 
@@ -2208,13 +2206,13 @@ Premier Before par objet réel ; promotion atomique du principal ; propriétaire
 
 **Décisions R5 dominantes :** R5-D39…D43.
 
-Owner : Moments / objets. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Moments / objets. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Premier Before par objet réel ; promotion atomique du principal ; propriétaires et selectionId distincts ; familles compatibles sous EDIT_NIGHT_OUT.
+Réemploi des objets compatibles bar/club/house_party dans le parent Bar, aucun wizard Restaurant.
 
-**Preuves :** proofs/react-interactions.json, proofs/bar-p4-results.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Réutilisation limitée aux assets admissibles Bar/club/house_party ; pas d’import arbitraire de tout le catalogue Restaurant.
+**Reste :** Snack, Chips, Nourriture sur place, tapas ajoutés en Preview2 ; Bière/Cocktail/bouteille/Before et selectionIds distincts validés en PGlite.
 
 ### UI-120 — A — IMPLEMENTED_VERIFIED
 
@@ -2280,7 +2278,7 @@ Premier Before par objet réel ; promotion atomique du principal ; propriétaire
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-124 — A — PARTIAL
+### UI-124 — A — FIXED_BROWSER
 
 - **UI-124** · **SOUS CONTRAT MÉTIER/PROVIDER** — Dans la soirée, importer le catalogue et ses règles d’un sous-module existant sans ouvrir le scénario complet « Restaurant » ou « Repas » comme un autre événement.
 
@@ -2288,13 +2286,13 @@ Premier Before par objet réel ; promotion atomique du principal ; propriétaire
 
 **Décisions R5 dominantes :** R5-D39…D43.
 
-Owner : Moments / objets. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Moments / objets. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Premier Before par objet réel ; promotion atomique du principal ; propriétaires et selectionId distincts ; familles compatibles sous EDIT_NIGHT_OUT.
+Les règles des sous-modules admissibles alimentent le même événement, sans redemander date/lieu/personnes.
 
-**Preuves :** proofs/react-interactions.json, proofs/bar-p4-results.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Même limite owner que UI119 ; aucun second scénario ni demande date/lieu/personnes lors d’ajout compatible.
+**Reste :** Même parcours Preview2 et tests propriétaire/PGlite ; catalogue admissible détaillé dans closure27-catalogue-owner.json.
 
 ### UI-125 — B — NO_CHANGE_REQUIRED_VERIFIED
 
@@ -2368,13 +2366,13 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Décisions R5 dominantes :** R5-D44…D50.
 
-Owner : Scopes / financement. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Scopes / financement. Niveau : CONTRACT_REVIEW_USER_DEFERRED. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couverture ; aucun partage de dette ou droit Wallet inventé.
+Aucune UI trompeuse de parts financières ; proposition de contrat distinct conservée.
 
-**Preuves :** proofs/bar-p1-results.json, proofs/bar-p4-results.json, proofs/finance-final.log, src/domain/phase2/planner/component-contract.ts, src/domain/phase2/planner/night-out-edit.ts
+**Preuves :** closure27-owner-decision.md
 
-**Reste :** ComponentSelectionV1 ne conserve pas les parts par payeur/remboursements ; aucune UI de partage financier fictive.
+**Reste :** Report explicitement accepté par l’utilisateur pour ce lot UI. Aucun contrat de parts implémenté.
 
 ### UI-130 — A — BLOCKED_OWNER
 
@@ -2384,13 +2382,13 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Décisions R5 dominantes :** R5-D44…D50.
 
-Owner : Scopes / financement. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Scopes / financement. Niveau : CONTRACT_REVIEW_USER_DEFERRED. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couverture ; aucun partage de dette ou droit Wallet inventé.
+Pas de dock de payeurs sans parts persistantes du poste.
 
-**Preuves :** proofs/bar-p1-results.json, proofs/bar-p4-results.json, proofs/finance-final.log, src/domain/phase2/planner/component-contract.ts, src/domain/phase2/planner/night-out-edit.ts
+**Preuves :** closure27-owner-decision.md
 
-**Reste :** Pas de dock de répartition financière sans contrat de parts du poste ; présence reste indépendante.
+**Reste :** Report explicitement accepté ; participants de présence restent distincts des financeurs.
 
 ### UI-131 — B — BLOCKED_OWNER
 
@@ -2424,7 +2422,7 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-133 — A — PARTIAL
+### UI-133 — A — FIXED_BROWSER
 
 - **UI-133** · **RETENU — MODIFIÉ PAR R5** — Ouvrir un petit éditeur de montant à proximité du chiffre, plutôt qu'un nouveau catalogue ou un long formulaire.
 
@@ -2432,13 +2430,13 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Décisions R5 dominantes :** R5-D44…D50.
 
-Owner : Scopes / financement. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Scopes / financement. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couverture ; aucun partage de dette ou droit Wallet inventé.
+Éditeur de coût contrôlé près du chiffre, choix de portée dans la même surface.
 
-**Preuves :** proofs/bar-p1-results.json, proofs/bar-p4-results.json, proofs/finance-final.log
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Le coût ouvre sa portée sûre existante, mais pas un popover ancré à la valeur. Aucun agrégat Compiler écrasable.
+**Reste :** Défaut de portail reproduit sur Previews1/2, corrigé157b7f6 puis retest Preview3 : ouvert, input focalisé, RAW conservé, zéro admis par Entrée, Undo/Redo.
 
 ### UI-134 — B — PARTIAL
 
@@ -2560,13 +2558,13 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Décisions R5 dominantes :** R5-D44…D50.
 
-Owner : Scopes / financement. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Scopes / financement. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couverture ; aucun partage de dette ou droit Wallet inventé.
+Quantité/prix/unité/funding existants préservés ; montant partiel ne détruit pas les autres champs.
 
-**Preuves :** proofs/bar-p1-results.json, proofs/bar-p4-results.json, proofs/finance-final.log, src/domain/phase2/planner/component-contract.ts, src/domain/phase2/planner/night-out-edit.ts
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Quantité/prix/unité/funding accessibles ; répartition financière bloquée par absence de parts propriétaire.
+**Reste :** P1–P4 PASS. Répartition financière absente du contrat et reportée : pas de clôture complète de cette ligne.
 
 ### UI-142 — A — BLOCKED_OWNER
 
@@ -2576,13 +2574,13 @@ Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couve
 
 **Décisions R5 dominantes :** R5-D44…D50.
 
-Owner : Scopes / financement. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Scopes / financement. Niveau : CONTRACT_REVIEW_USER_DEFERRED. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Bouteille neutre, bases économiques existantes ; remplacement ciblé sous couverture ; aucun partage de dette ou droit Wallet inventé.
+Aucune assimilation des participants aux payeurs.
 
-**Preuves :** proofs/bar-p1-results.json, proofs/bar-p4-results.json, proofs/finance-final.log, src/domain/phase2/planner/component-contract.ts, src/domain/phase2/planner/night-out-edit.ts
+**Preuves :** closure27-owner-decision.md
 
-**Reste :** Partage financier non activé : ne pas confondre contacts de présence et payeurs.
+**Reste :** Parts financières du poste non admises ; report explicitement accepté pour ce lot.
 
 ### UI-143 — B — BLOCKED_OWNER
 
@@ -2672,13 +2670,13 @@ Prix/quantité dans tuile, détails secondaires ; virgule terminale non admise ;
 
 **Décisions R5 dominantes :** R5-D25…D27, D41…D42.
 
-Owner : Mini-éditeurs. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Mini-éditeurs. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Prix/quantité dans tuile, détails secondaires ; virgule terminale non admise ; Entrée explicite sans commit au blur.
+Compteur, montant court, choix illustrés et options avancées réutilisent les tuiles existantes.
 
-**Preuves :** proofs/react-interactions.json, proofs/preview2.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Compteur et prix courts livrés ; avatars de partage non activés faute de contrat financier.
+**Reste :** Partage par avatars non activé faute de contrat de parts ; report accepté, pas de faux PASS.
 
 ### UI-149 — A — IMPLEMENTED_VERIFIED
 
@@ -2792,7 +2790,7 @@ Modes séparés des trajets connus ; sens indépendants, endpoints liés explici
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-156 — A — PARTIAL
+### UI-156 — A — FIXED_BROWSER
 
 - **UI-156** · **RETENU — CIBLE UX** — Présenter les modes Voiture, Tram/Train, Bus, Taxi/Uber et À pied avec des illustrations de même style et de même taille.
 
@@ -2800,13 +2798,13 @@ Modes séparés des trajets connus ; sens indépendants, endpoints liés explici
 
 **Décisions R5 dominantes :** R5-D51…D54.
 
-Owner : Mobility. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Mobility. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Modes séparés des trajets connus ; sens indépendants, endpoints liés explicitement ; owner existant seul pour les devis ; inconnu reste inconnu.
+Frames48×40 cohérents ; Clay voiture/train/bus/marche ; Taxi icône fonctionnelle sobre faute de Clay admissible.
 
-**Preuves :** proofs/bar-p3-results.json, proofs/bar-p4-results.json, proofs/preview1.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Clay voiture/train/bus/marche réutilisé ; Taxi reste un fallback iconographique, harmonisation complète non certifiée.
+**Reste :** Preview1 : quatre images chargées et Taxi iconographique, mêmes dimensions mesurées. Fichiers correspondants identiques au produit final.
 
 ### UI-157 — A — IMPLEMENTED_VERIFIED
 
@@ -2864,13 +2862,13 @@ Modes séparés des trajets connus ; sens indépendants, endpoints liés explici
 
 **Décisions R5 dominantes :** R5-D51…D54.
 
-Owner : Mobility. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Mobility. Niveau : CONTRACT_REVIEW_USER_DEFERRED. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Modes séparés des trajets connus ; sens indépendants, endpoints liés explicitement ; owner existant seul pour les devis ; inconnu reste inconnu.
+OTHER générique ancien conservé, pas de saisie de nom non durable proposée.
 
-**Preuves :** proofs/bar-p3-results.json, proofs/bar-p4-results.json, proofs/preview1.json, src/domain/phase2/planner/component-contract.ts, src/domain/phase2/planner/night-out-edit.ts
+**Preuves :** closure27-owner-decision.md
 
-**Reste :** Mode other existant mais description libre nommée absente du contrat ; pas de champ éphémère trompeur.
+**Reste :** Libellé OTHER absent du DTO persistant ; mini-proposition et report accepté, aucun nouveau contrat.
 
 ### UI-161 — B — ALREADY_VERIFIED
 
@@ -2952,7 +2950,7 @@ Modes séparés des trajets connus ; sens indépendants, endpoints liés explici
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-166 — A — IMPLEMENTED_NOT_BROWSER_PROVEN
+### UI-166 — A — FIXED_BROWSER
 
 - **UI-166** · **RETENU — INTERPRÉTATION R5** — Prévoir pour « À pied » et les autres modes une illustration visible et harmonisée, y compris à petite taille.
 
@@ -2960,13 +2958,13 @@ Modes séparés des trajets connus ; sens indépendants, endpoints liés explici
 
 **Décisions R5 dominantes :** R5-D51…D54.
 
-Owner : Mobility. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Mobility. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Modes séparés des trajets connus ; sens indépendants, endpoints liés explicitement ; owner existant seul pour les devis ; inconnu reste inconnu.
+Clay À pied conservé à48×40, même gabarit que les modes voisins.
 
-**Preuves :** proofs/bar-p3-results.json, proofs/bar-p4-results.json, proofs/preview1.json
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Asset walking Clay référencé ; lisibilité petite taille pas certifiée séparément.
+**Reste :** Image chargée et visuel inspecté sur capture Preview1 ; aucun nouveau prix ou trajet déduit.
 
 ### UI-167 — B — ALREADY_VERIFIED
 
@@ -3028,7 +3026,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3044,7 +3042,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3060,7 +3058,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3076,7 +3074,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3092,7 +3090,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3108,7 +3106,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3140,7 +3138,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3156,7 +3154,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3188,7 +3186,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3204,7 +3202,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3220,7 +3218,7 @@ Owner : 12. Carte fermée, tuiles voisines et synthèse du Board — 13 recomman
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3236,7 +3234,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3252,7 +3250,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3268,11 +3266,11 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
-### UI-186 — A — PARTIAL
+### UI-186 — A — FIXED_BROWSER
 
 - **UI-186** · **RETENU — CIBLE UX** — Utiliser une seule famille d'illustrations 3D pour les objets, transports, moments et catégories, avec des miniatures réellement lisibles.
 
@@ -3280,15 +3278,15 @@ Réservé hors périmètre.
 
 **Décisions R5 dominantes :** R5-D56…D68.
 
-Owner : Illustrations. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Illustrations. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Clay existant, recadrage local des vignettes dock ; icônes fonctionnelles conservées ; photo fournisseur jamais identité.
+Bibliothèque Clay existante prioritaire ; recadrage2:1 local, fallback fonctionnel sans image inventée.
 
-**Preuves :** proofs/screenshots/final-preview-1920.png, proofs/screenshots/final-preview-1152.png
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Clay existant prioritaire ; certains produits/modes restent des icônes, pas de nouvelle image inventée.
+**Reste :** Preview1 modes et Preview2 rich20 inspectés ; les quatre miniatures Bière sont chargées dans des frames48×40. Portée : échantillons exécutés, pas création de toute une nouvelle famille.
 
-### UI-187 — A — PARTIAL
+### UI-187 — A — FIXED_BROWSER
 
 - **UI-187** · **RETENU — INTERPRÉTATION R5** — Supprimer les pictogrammes génériques violets lorsqu'une illustration contextuelle claire existe.
 
@@ -3296,13 +3294,13 @@ Clay existant, recadrage local des vignettes dock ; icônes fonctionnelles conse
 
 **Décisions R5 dominantes :** R5-D56…D68.
 
-Owner : Illustrations. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Illustrations. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Clay existant, recadrage local des vignettes dock ; icônes fonctionnelles conservées ; photo fournisseur jamais identité.
+Icône contextuelle sobre lorsque Clay manque ; icônes génériques remplacées si une vraie image existe.
 
-**Preuves :** proofs/screenshots/final-preview-1920.png, proofs/screenshots/final-preview-1152.png
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Images existantes utilisées ; fallback générique encore visible pour certains produits, notamment Cocktail.
+**Reste :** Taxi et Cocktail restent des fallbacks fonctionnels annoncés ; onError testé en React sans mutation de digest.
 
 ### UI-188 — C — OUT_OF_SCOPE_NEXT_STAGE
 
@@ -3316,7 +3314,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3332,7 +3330,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3348,7 +3346,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3364,7 +3362,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3380,7 +3378,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3396,7 +3394,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3412,7 +3410,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3428,7 +3426,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3444,7 +3442,7 @@ Owner : 13. Direction artistique réutilisable, décors et images — 17 recomma
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3464,7 +3462,7 @@ Clay existant, recadrage local des vignettes dock ; icônes fonctionnelles conse
 
 **Reste :** Preuve bornée au niveau indiqué ; aucune certification Auth Draft ou fournisseur réel implicite.
 
-### UI-198 — A — PARTIAL
+### UI-198 — A — FIXED_BROWSER
 
 - **UI-198** · **RETENU — CIBLE UX** — Rendre les images de lieux, boissons et transports reconnaissables sur de petites tuiles ; remplacer les miniatures blanches ou quasiment invisibles.
 
@@ -3472,13 +3470,13 @@ Clay existant, recadrage local des vignettes dock ; icônes fonctionnelles conse
 
 **Décisions R5 dominantes :** R5-D56…D68.
 
-Owner : Illustrations. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Illustrations. Niveau : BROWSER_PREVIEW_WITH_SCOPED_INHERITANCE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Clay existant, recadrage local des vignettes dock ; icônes fonctionnelles conservées ; photo fournisseur jamais identité.
+Miniatures48×40, recadrage cover au sujet pour les fichiers2:1, fond contrasté des fallbacks.
 
-**Preuves :** proofs/screenshots/final-preview-1920.png, proofs/screenshots/final-preview-1152.png
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Recadrage dock corrigé ; miniatures sur objets admis restent petites, visibles sur capture finale. Pas de PASS de lisibilité globale.
+**Reste :** Bière miniature réellement lisible sur capture1440, modes vus Preview1 ; pas de prétendue photo Google.
 
 ### UI-199 — A — IMPLEMENTED_VERIFIED
 
@@ -3508,7 +3506,7 @@ Owner : 14. Placement dans le Board, pagination et espace périphérique — 9 r
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3552,13 +3550,13 @@ Pagination Board distincte du rail ; défaut de découpe parent130px/contenu136p
 
 **Décisions R5 dominantes :** R5-D01…D12, D31…D35.
 
-Owner : Dock et Board. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Dock et Board. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Pagination Board distincte du rail ; défaut de découpe parent130px/contenu136px reproduit puis corrigé au SHA produit ; réception finale distincte.
+Conteneur du dock non tronqué (143=143px) et rail horizontal accessible dans les scènes mesurées.
 
-**Preuves :** proofs/preview2.json, proofs/screenshots/final-preview-1152.png
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Découpe parent130px corrigée ; à1152 le dock résumé nécessite le document de secours, zoom125 non vérifiable.
+**Reste :** À1152×720 riche, dock bottom877,3 dépasse le viewport ; accessibilité par défilement de secours non recertifiée ici. Zoom125% non exposé. Pas de PASS tous états.
 
 ### UI-204 — A — PARTIAL
 
@@ -3568,13 +3566,13 @@ Pagination Board distincte du rail ; défaut de découpe parent130px/contenu136p
 
 **Décisions R5 dominantes :** R5-D01…D12, D31…D35.
 
-Owner : Dock et Board. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Dock et Board. Niveau : MIXED_PARTIAL. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
-Pagination Board distincte du rail ; défaut de découpe parent130px/contenu136px reproduit puis corrigé au SHA produit ; réception finale distincte.
+Dock masqué sans réserve au calendrier (0px), gabarits de scène maîtrisés, pas de scroll vertical interne mesuré.
 
-**Preuves :** proofs/preview2.json, proofs/screenshots/final-preview-1152.png
+**Preuves :** proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Ancrage et réserve vide corrigés localement ; visibilité garantie sur tous états denses et125% non certifiée.
+**Reste :** 1440/1920 mesurés ; état riche1152 nécessite le filet de sécurité hors viewport. Stabilité complète/zoom restent partiels.
 
 ### UI-205 — C — OUT_OF_SCOPE_NEXT_STAGE
 
@@ -3588,7 +3586,7 @@ Owner : 14. Placement dans le Board, pagination et espace périphérique — 9 r
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3604,7 +3602,7 @@ Owner : 14. Placement dans le Board, pagination et espace périphérique — 9 r
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3620,7 +3618,7 @@ Owner : 14. Placement dans le Board, pagination et espace périphérique — 9 r
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3636,7 +3634,7 @@ Owner : 14. Placement dans le Board, pagination et espace périphérique — 9 r
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3736,7 +3734,7 @@ Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-m
 
 **Reste :** Contrats/provenance préservés par P1/P3/P4 et parité ; détails secondaires conservés.
 
-### UI-215 — B — BLOCKED_ENV
+### UI-215 — B — PARTIAL
 
 - **UI-215** · **CRITÈRE DE RECETTE** — Vérifier systématiquement les transitions avec la souris et le clavier sur desktop, aux résolutions prévues et au zoom navigateur 125 %, sans scroll vertical dans les cartes.
 
@@ -3744,13 +3742,13 @@ Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-m
 
 **Décisions R5 dominantes :** R5-D55, D64…D76.
 
-Owner : Microtextes / accessibilité. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Microtextes / accessibilité. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
 Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-motion prévu ; pas de preuve de zoom natif.
 
-**Preuves :** proofs/preview2.json, proofs/react-interactions.json
+**Preuves :** proofs/preview2.json, proofs/react-interactions.json, proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Viewport desktop réellement mesuré ; zoom natif125% absent de l’API. NOT_VERIFIED_ZOOM, pas de DPR substitué.
+**Reste :** Souris/clavier ciblés exécutés ; zoom natif125% et reduced motion non exécutés.
 
 ### UI-216 — A — IMPLEMENTED_VERIFIED
 
@@ -3812,7 +3810,7 @@ Owner : 15. Microtextes, états de retour et vérification desktop — 14 recomm
 
 Réservé hors périmètre.
 
-**Preuves :** Non exécuté :C réservé.
+**Preuves :** Non exécuté : C réservé.
 
 **Reste :** Réservé : aucun développement de dimensions, packing, décor ou auto-scroll dans ce lot.
 
@@ -3824,13 +3822,13 @@ Réservé hors périmètre.
 
 **Décisions R5 dominantes :** R5-D55, D64…D76.
 
-Owner : Microtextes / accessibilité. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Microtextes / accessibilité. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
 Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-motion prévu ; pas de preuve de zoom natif.
 
-**Preuves :** proofs/preview2.json, proofs/react-interactions.json
+**Preuves :** proofs/preview2.json, proofs/react-interactions.json, proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Noms accessibles, Enter et focus RAW testés ; toutes séquences Tab/Shift+Tab/Espace/Échap non exécutées.
+**Reste :** Tab/Shift+Tab/Espace/Entrée/Échap et calendrier prouvés. Focus Undo conservé ; après Redo un instant document.body a été observé : restauration exhaustive non certifiée.
 
 ### UI-221 — B — PARTIAL
 
@@ -3856,10 +3854,10 @@ Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-m
 
 **Décisions R5 dominantes :** R5-D55, D64…D76.
 
-Owner : Microtextes / accessibilité. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
+Owner : Microtextes / accessibilité. Niveau : SOURCE_REVIEW_AND_REACT_FIXTURE. Produit : 157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849.
 
 Titres contextuels et détails accessibles ; jargon normal supprimé ; reduced-motion prévu ; pas de preuve de zoom natif.
 
-**Preuves :** proofs/preview2.json, proofs/react-interactions.json
+**Preuves :** proofs/preview2.json, proofs/react-interactions.json, proofs/closure27-l1.json, proofs/closure27-preview1.json, proofs/closure27-preview2.json, proofs/closure27-preview3.json
 
-**Reste :** Petits états et calendrier mesurés ; document de secours nécessaire1152, photo réelle et états extrêmes non certifiés.
+**Reste :** Rich20 paginé et calendrier sans dock prouvés ; viewport1152 dépassement et fournisseur réel indisponible, Before riche navigateur non rejoué.

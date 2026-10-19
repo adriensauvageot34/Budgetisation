@@ -1,0 +1,8 @@
+{
+  "environment": "VERCEL_PREVIEW_AUTH_ISOLATED_COMPOSER_MEMORY",
+  "reproductions": [
+    {"sha":"a71af6d5a2f1b627e0a6e229f09877e5226db16f","status":"FAIL_BROWSER","evidence":"closure27-preview1.json"},
+    {"sha":"99681b47cdabe187776932f52056ec10d1f0a620","status":"FAIL_BROWSER","observed":{"costPopoverOpen":false,"costPopoverRectHeight":0,"costContentMounted":true,"focus":"Replier la carte"},"cause":"Portal host attachment can occur after initial anchor lookup; early effect return installs no toggle listener."}
+  ],
+  "retest":{"sha":"157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849","status":"PASS_BROWSER_TARGETED","evidence":"closure27-preview3.json","preserved":"RAW12, after Escape/cancel; explicit zero admitted; Undo/Redo functional; no remote financial writes"}
+}

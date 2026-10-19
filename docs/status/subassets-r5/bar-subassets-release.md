@@ -1,4 +1,22 @@
-# Bar / Apéro R5 — réception PR68
+# Bar / Apéro R5 — clôture ciblée des27 résidus
+
+**État actuel : PARTIAL_READY_FOR_REVIEW ; GO_MAIN=NO ; Production inchangée.**
+
+Produit testé : `157b7f6b63d19a9e60d8ba5ff95d4a117e9cf849`. [PR Draft68](https://github.com/adriensauvageot34/Budgetisation/pull/68) · [Preview finale READY](https://budgetisation-q0jchhg63-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris).
+
+Réception actuelle : [closure27-reception.md](closure27-reception.md). Matrice originale et registre222 mis à jour ligne par ligne ;78A acquises conservées à leur niveau ; sur27 : **14 FIXED_BROWSER,2 FIXED_LOCAL_ONLY,7 PARTIAL,4 BLOCKED_OWNER**. Les quatre reports owner sont explicitement acceptés pour ce lot UI.62B examinées ;55C réservées. Aucun27/27 ni167/167 PASS.
+
+P1/P2/P3/P4 :25/21/14/15 PASS ; R5 :11 ; parité198/198. Tests ciblés8/8, TypeScript exit0 et build final Vercel complet PASS. Le popover coût a été corrigé après reproduction puis retesté sur Preview3 avec RAW, zéro et Undo/Redo.
+
+Résidus exacts : remesure du rail après effacement d’un filtre150, visibilité1152/zoom/focus exhaustif, photo/Google réel, partage financier et OTHER nommé différés. Auth durable **BLOCKED_ENV** : tables Draft/PlanRevision absentes du projet fictif, Composer de recette en mémoire. Aucun test sur Draft personnel.
+
+A rebanni et marqueur retiré/relu, pont local fermé. Aucun Apply, Plan, migration ou écriture financière/Production. Revert normal des commits UI si besoin, aucune suppression. Captures synthétiques dans `proofs/screenshots/closure27-*`.
+
+---
+
+## Réception historique précédente (produit cc9d259)
+
+Les informations ci-dessous décrivent l’état antérieur ; le verdict courant figure ci-dessus et dans closure27-reception.md.
 **READY_FOR_REVIEW_NOT_MERGED ; GO_MAIN=NO.**
 Produit : cc9d2595dd95a69051d88d54beeb408ab308263d.
 Branche : codex/bar-subassets-r5. Base :5f98040cffbcd3437287367775e9b368b81123cd.
