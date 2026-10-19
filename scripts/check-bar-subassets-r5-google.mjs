@@ -34,5 +34,20 @@ try {
   assert.equal(pending[last].signal.aborted, true);
   await answer(last, detail); assert.equal(adopted.length, 1, 'late Details cannot overwrite a changed card');
   assert(root.root.findAll(n => n.props.role === 'status').some(n => text(n).includes('sortie a changé')));
+  await change('ancienne');await wait();const oldRequest=pending.length-1;
+  assert(root.root.findAll(n=>n.props.role==='status').some(n=>text(n)==='Recherche…'));
+  await change('actuelle');await wait();const newRequest=pending.length-1;
+  const longName='Bar fictif des Voyageurs et de la Très Longue Promenade';
+  await answer(newRequest,{suggestions:[{...suggestions.suggestions[0],placeId:'google_current_r5',primaryText:longName,secondaryText:'Ville fictive',photos:[{ignored:'not a published photo capability'}]}]});
+  await answer(oldRequest,{suggestions:[{...suggestions.suggestions[0],primaryText:'Résultat ancien interdit'}]});
+  assert.equal(root.root.findAll(n=>n.type==='button'&&n.props['aria-label']===longName+' · Ville fictive').length,1);
+  assert.equal(root.root.findAll(n=>n.type==='button'&&text(n).includes('Résultat ancien interdit')).length,0);
+  assert.equal(adopted.length,1,'neither a late result nor an unsupported photo auto-selects a place');
+  await change('indisponible');await wait();
+  await act(async()=>pending.at(-1).resolve({ok:false,status:503}));
+  assert(root.root.findAll(n=>n.props.role==='status').some(n=>text(n).includes('Recherche indisponible')));
+  assert(root.root.findAll(n=>n.type==='button'&&text(n)==='Réessayer la recherche').length);
+  assert.equal(adopted.length,1);
+  console.log('PASS UI046 MOCK: loading, error, long owner label, late/out-of-order results rejected; unsupported photo data ignored (no photo rendering claimed)');
   console.log('PASS R5 Google: typing is not a decision; verified single-click admission; minimal identity; changed-card late response rejected. MOCK_PROVIDER_ONLY');
 } finally { if (root) await act(async () => root.unmount()); }

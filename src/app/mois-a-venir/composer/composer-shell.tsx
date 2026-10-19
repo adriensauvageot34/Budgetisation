@@ -195,6 +195,18 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const assistantOver = useRef<string | null>(null);
   const [hoverPending, setHoverPending] = useState(false), [interactionImpact, setInteractionImpact] = useState<string | null>(null);
   const [motion, setMotion] = useState<"snap" | "undo" | "redo" | "recoil" | null>(null), [motionTarget, setMotionTarget] = useState<string | null>(null);
+  const historyTools=useRef<HTMLDivElement>(null),historyFocus=useRef<"undo"|"redo"|null>(null);
+  useLayoutEffect(()=>{
+    const direction=historyFocus.current,tools=historyTools.current;
+    if(!direction||!tools||busy)return;
+    historyFocus.current=null;
+    const active=document.activeElement;
+    // A final Redo disables its own button. Keep the keyboard on the remaining
+    // history action, without stealing focus from another live editor or modal.
+    if(document.querySelector('dialog[open]')||active&&active!==document.body&&!tools.contains(active))return;
+    (tools.querySelector<HTMLButtonElement>(`[data-history-action="${direction}"]:not(:disabled)`)
+      ??tools.querySelector<HTMLButtonElement>('button:not(:disabled)'))?.focus({preventScroll:true});
+  },[past.length,future.length,busy]);
   const motionTimer = useRef<ReturnType<typeof setTimeout> | null>(null), nextMotionTarget = useRef<string | null>(null);
   const install = (next: ComposerUiModel) => { current.current = next; localDraft.current = next.semanticState; setDraftState(next.semanticState); setModel(next); };
   const shown = useMemo(() => visualDraftModel(model, draftState), [model, draftState]);
@@ -227,6 +239,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       // Saving RAW would add a history entry and invalidate this Undo/Redo target.
       // Keep editing or discard the RAW first; never save then restore a stale entry.
       if (!inlineEdits.registry.guard(() => stage(operation, history, restored), undefined, false)) return false;
+      if(typeof document!=="undefined"&&historyTools.current?.contains(document.activeElement))historyFocus.current=history;
     }
     if (snapshotMetrics) snapshotIntent.current=performance.now();
     const before = localDraft.current;
@@ -736,9 +749,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       <div className={styles.hudContainer} data-compare-header>{comparison && <div className={styles.compareCurrent}><span>Actuel</span><strong>{money(comparison.model.board.cockpit.plan.economicMonthEndRemainder)}</strong></div>}
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails} /></div>
-      <div className={styles.toolbar}><div className={styles.historyTools}>
-        <button className={styles.historyButton} title="Annuler (Ctrl/Cmd+Z)" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => stage({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
-        <button className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => stage({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
+      <div className={styles.toolbar}><div ref={historyTools} className={styles.historyTools}>
+        <button data-history-action="undo" className={styles.historyButton} title="Annuler (Ctrl/Cmd+Z)" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => stage({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
+        <button data-history-action="redo" className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => stage({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
         {comparison ? <div className={styles.compareActions}><button data-compare-keep className={styles.secondary} disabled={busy} onClick={() => compare(true)}>Garder cette variante</button><button data-compare-exit className={styles.textButton} disabled={busy} onClick={() => compare(false)}>Quitter la comparaison</button></div>
           : <><div className={styles.applyControl} tabIndex={applyDisabled ? 0 : undefined} aria-label={applyDisabled ? applyReason : undefined} data-apply-control data-unavailable={applyDisabled}>
               <button className={styles.primary} data-apply disabled={applyDisabled} aria-describedby={applyDisabled ? "apply-disabled-reason" : undefined} onClick={() => apply()}>{busy ? "Validation…" : "Transformer en Plan"}</button>

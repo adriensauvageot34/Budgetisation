@@ -85,7 +85,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const groups = question ? [] : displayEquipmentGroups(card, model);
   const assets = new Map(model.library.searchableAssets.map(asset => [asset.assetKey, asset]));
   const [mode, setMode] = useState<"complete" | "all">("complete"), [query, setQuery] = useState("");
-  const options = useRef<HTMLDivElement>(null), optionsId = useId();
+  const options = useRef<HTMLDivElement>(null), searchInput=useRef<HTMLInputElement>(null), optionsId = useId();
   const questionFocus=useRef<HTMLElement|null>(null);
   const [scroll, setScroll] = useState({ before: false, after: false });
   const scrollPositions=useRef<Record<string,number>>({});
@@ -95,6 +95,9 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const answerKey=JSON.stringify([card.contextOccurrenceId,question?.identity??question?.title??""]);
   const searchValue=question?.search?.value??searches[answerKey]??"";
   const catalogue=barDockCatalog(question?.choices??[],searchValue,limits[answerKey]??24);
+  // Internal search/"show more" can change the rendered rail while the caller's
+  // question object stays identical. Measure the actual projection, not its owner.
+  const renderedChoicesKey=JSON.stringify([catalogue.visible.map(choice=>[choice.key,choice.label,choice.hint,choice.showHint]),catalogue.remaining]);
   const search=question?.search??(appearance==="bar"&&(question?.choices.length??0)>24?{
     value:searchValue,label:"Rechercher dans ces choix",change:(value:string)=>setSearches(previous=>({...previous,[answerKey]:value}))
   }:undefined);
@@ -121,7 +124,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     measureScroll();
     // Restore only when the semantic scene changes, never on an admitted object or keystroke.
   }, [answerKey,appearance]);
-  useLayoutEffect(measureScroll, [card, mode, query, question]);
+  useLayoutEffect(measureScroll, [card, mode, query, question, renderedChoicesKey]);
   const normalize = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr");
   const visible = groups.map(group => ({ ...group, tiles: group.tiles.filter(tile => !query.trim()
     || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
@@ -131,12 +134,13 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}>
     {appearance==="bar"&&caption&&caption.key.startsWith(answerKey+":")&&<div role="tooltip" id={optionsId+"-full-label"} className={styles.barDockFullLabel}>{caption.label}</div>}
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>
-      {search && <input disabled={appearance==="bar"&&busy} aria-label={search.label} placeholder={search.label} value={search.value} onChange={event => search.change(event.target.value)} />}
+      {search && <><input ref={searchInput} disabled={appearance==="bar"&&busy} aria-label={search.label} placeholder={search.label} value={search.value} onChange={event => search.change(event.target.value)} />
+        {appearance==="bar"&&search.value&&<button type="button" className={styles.iconButton} disabled={busy} aria-label="Effacer la recherche des choix" onClick={()=>{search.change("");searchInput.current?.focus({preventScroll:true});}}><X size={16}/></button>}</>}
       {(appearance!=="bar"||scroll.before||scroll.after)&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
         <button type="button" aria-label="Réponses précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => scrollRail(-300)}><ChevronLeft size={18} /></button>
         <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => scrollRail(300)}><ChevronRight size={18} /></button>
       </div>}</header>
-    <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options data-overflow-before={scroll.before} data-overflow-after={scroll.after} onScroll={()=>{
+    <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options data-overflow-before={scroll.before} data-overflow-after={scroll.after} onLoadCapture={measureScroll} onScroll={()=>{
         measureScroll();if(appearance==="bar"&&options.current){const value=options.current.scrollLeft;scrollPositions.current[answerKey]=value;onQuestionScrollChange?.(answerKey,value);}
       }} tabIndex={0} aria-label={question.title}
       onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}

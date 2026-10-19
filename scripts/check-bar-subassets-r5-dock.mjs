@@ -44,6 +44,31 @@ await act(async () => nodes(x => x.type === 'input')[0].props.onChange({ target:
 assert.equal(nodes(x => x.type === 'strong').length, 1);
 assert.equal(nodes(x => x.type === 'strong')[0].children.join(''), 'Boisson 24');
 await act(async () => root.unmount());
+// The original bug requires stable props: internal filtering must remeasure
+// even when the owner's question/card never changes and ResizeObserver is idle.
+for(const count of [25,120,150]){
+  const stableChoices=Array.from({length:count},(_,i)=>({key:`stable:${i}`,label:`Option ${String(i+1).padStart(3,'0')}`,iconKey:'night-out',choose(){}}));
+  const stableProps={...props('stable:'+count),question:{identity:'stable:'+count,title:'Catalogue',nature:'OBJECTS',choices:stableChoices}};
+  const railNode={scrollLeft:0,clientWidth:1027,scrollWidth:4468,scrollBy({left}){this.scrollLeft=Math.max(0,Math.min(this.scrollWidth-this.clientWidth,this.scrollLeft+left));}};
+  await act(async()=>{root=create(React.createElement(ContextPalette,stableProps),{createNodeMock:el=>el.props['data-palette-options']?railNode:null});});
+  const search=()=>nodes(x=>x.type==='input')[0],right=()=>nodes(x=>x.props['aria-label']==='Réponses suivantes');
+  assert.equal(rail().props['data-overflow-after'],true);
+  railNode.scrollWidth=180;railNode.scrollLeft=0;
+  await act(async()=>search().props.onChange({target:{value:String(count).padStart(3,'0')}}));
+  assert.equal(nodes(x=>x.type==='strong').length,1);assert.equal(rail().props['data-overflow-after'],false);assert.equal(right().length,0);
+  railNode.scrollWidth=4468;
+  await act(async()=>nodes(x=>x.props['aria-label']==='Effacer la recherche des choix')[0].props.onClick());
+  assert.equal(rail().props['data-overflow-after'],true,'clear button must restore arrows without resize');assert.equal(right().length,1);
+  await act(async()=>{right()[0].props.onClick();rail().props.onScroll();});assert.equal(railNode.scrollLeft,300);
+  await act(async()=>{rail().props.onKeyDown({target:railNode,currentTarget:railNode,key:'ArrowLeft',preventDefault(){}});rail().props.onScroll();});assert.equal(railNode.scrollLeft,120);
+  railNode.scrollWidth=180;railNode.scrollLeft=0;
+  await act(async()=>search().props.onChange({target:{value:String(count).padStart(3,'0')}}));
+  railNode.scrollWidth=4468;
+  await act(async()=>search().props.onChange({target:{value:''}}));assert.equal(rail().props['data-overflow-after'],true,'input deletion must restore arrows');
+  railNode.scrollLeft=3441;await act(async()=>rail().props.onScroll());assert.equal(rail().props['data-overflow-after'],false);assert.equal(rail().props['data-overflow-before'],true);
+  await act(async()=>root.unmount());
+  console.log(`PASS UI093 stable question ${count}: filter, clear button, input deletion, arrows, keyboard and end tolerance; no resize`);
+}
 const cache = new Map();
 for (let i = 0; i < 34; i++) rememberBarView(cache, `month:${i}`, { queries: {}, pages: {}, dockScroll: {}, allPlaces: false, allBefore: false });
 assert.equal(cache.size, 32); assert.equal(cache.has('month:0'), false);
