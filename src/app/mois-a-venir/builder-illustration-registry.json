@@ -167,6 +167,7 @@
     "automotive/part": "automotive/part.webp"
   },
   "choices": {
+    "scene:bar-before": "moments/before-editorial",
     "intent:restaurant": "intent/restaurant",
     "module:restaurant": "intent/restaurant",
     "scene:restaurant": "intent/restaurant",

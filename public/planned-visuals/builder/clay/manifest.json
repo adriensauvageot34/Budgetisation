@@ -12,6 +12,12 @@
   },
   "illustrations": [
     {
+      "key": "moments/before-editorial",
+      "file": "moments/before-editorial.webp",
+      "subject": "R6 editorial Before: a clay coffee table, two glasses, face-down playing cards and a small neutral bowl. Transparent background, no person, brand, text or purchasable bottle. Decoration only.",
+      "choices": ["scene:bar-before"]
+    },
+    {
       "key": "intent/restaurant",
       "file": "intent/restaurant.webp",
       "subject": "One empty round ivory plate with a fine lavender rim, two simple matte ivory cutlery pieces with pale lavender handles. A soft folded napkin underneath, restrained and tactile.",
