@@ -371,8 +371,12 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const beforeScene=page==="summary"||page==="before"||page==="row"&&slot.startsWith("before-");
   const admittedPeople=Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[];
   const peoplePage=Math.min(itemPage,Math.max(0,Math.ceil(admittedPeople.length/4)-1));
+  // Structural admission is a valid packing checkpoint (also on Undo/Redo).
+  // Prices, quantities, RAW and provider replies never change this identity key.
+  const geometryItems=[...Object.keys(context.slotSelections).flatMap(key=>barItems(context,key).map(item=>`${key}:${item.selectionId}`)),
+    ...(before?[before.bottle,...before.extras].map(item=>`before:${item.selectionId}`):[])].sort().join("|");
   return <div ref={editorRoot} className={styles.barLivingEditor} tabIndex={-1} aria-label="Configuration de Bar / Apéro" data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
-    data-bar-geometry-key={`${page}:${advancedRow}:${itemPage}`} data-bar-advanced={advancedRow}
+    data-bar-geometry-key={`${page}:${advancedRow}:${itemPage}:${geometryItems}`} data-bar-advanced={advancedRow}
     onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();if(page!=="summary")go("summary");else props.onCancel();}}}>
     <fieldset className={styles.barEditableBody} disabled={busy} aria-label="Composition de la sortie">
     <BarMetadata fields={context.fields} model={model} open={open} editing active={page} disabled={busy} removePlace={()=>{const clear=()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{placeRef:null,venueDecision:null}}});if(!guard(clear))return;if(barVenueAdaptations(context).length)confirm({message:"Retirer le lieu de la sortie ? Les points et coûts des trajets restent conservés ; aucun trajet n’est réorienté. Undo rétablit le lieu.",acceptLabel:"Retirer uniquement le lieu",accept:clear});else clear();}}>

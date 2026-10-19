@@ -160,6 +160,15 @@ await check('V2_COMPACT_SIZING_AND_OTHER_PRESETS_UNCHANGED',async()=>{
  await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:Array.from({length:15},()=>({...beer,selectionId:crypto.randomUUID()}))}}}));const rich=inventoryItems(model);assert.equal(rich.find(n=>n.id===id).height,one.height);assert.deepEqual(rich.filter(n=>n.id!==id),others);
  const {ContextPalette}=require('@/app/mois-a-venir/composer/context-palette');await act(async()=>root.unmount());await act(async()=>{root=create(React.createElement(ContextPalette,{card:model.board.contexts.find(c=>c.contextOccurrenceId===id),model,busy:false,choose(){},close(){},question:{title:'Other preset canary',choices:[]}}));});assert.equal(controls(n=>n.props['data-bar-dock']!==undefined).length,0);
 });
+await check('R5_STRUCTURAL_CHECKPOINT_RECLAIMS_LAST_ITEM_NOT_PRICE_OR_QUANTITY',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);await click('Bière');await click('← Ma sortie');await act(async()=>controls(n=>n.props['aria-label']==='Ajouter une consommation')[0].props.onClick());
+ const key=()=>controls(n=>n.props['data-bar-living-editor']!==undefined)[0].props['data-bar-geometry-key'];
+ const original=structuredClone(current().slotSelections.extras.items),withItem=key();assert.equal(step(),'drinks');
+ await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:original.map(item=>({...item,quantity:'3',cost:{kind:'MANUAL',unitAmount:'5.00'}}))}}}));assert.equal(key(),withItem);
+ await act(async()=>admit({kind:'CLEAR_SOCKET',contextOccurrenceId:id,slotKey:'extras',selectionId:original[0].selectionId}));const removed=key();assert.equal(step(),'drinks');assert.notEqual(removed,withItem);
+ await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:original}}}));assert.equal(key(),withItem);
+ await act(async()=>admit({kind:'CLEAR_SOCKET',contextOccurrenceId:id,slotKey:'extras',selectionId:original[0].selectionId}));assert.equal(key(),removed);
+});
 await check('V2_REDUCED_SCOPE_READONLY_FORM_DISABLED',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);overrides={busy:true};await sync();assert.equal(controls(n=>n.type==='fieldset'&&n.props['aria-label']==='Composition de la sortie')[0].props.disabled,true);assert.equal(dock().findAll(n=>n.type==='button'&&!n.props.disabled&&n.findAll(c=>c.type==='strong').length).length,0);
 });
