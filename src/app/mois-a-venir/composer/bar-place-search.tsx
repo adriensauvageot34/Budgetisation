@@ -90,7 +90,7 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
     {!city.trim()&&<small>Recherche en France · ajoutez une ville au nom pour préciser.</small>}</>}
     {onManual&&<button type="button" onClick={()=>changeQuestion(onManual)}>Nom libre</button>}
     <div className={styles.barPlaceResults} data-bar-place-results>
-    {!detail&&choices.slice(resultPageIndex*3,(resultPageIndex+1)*3).map(({known,google})=>known?<BarPlaceChoice key={`known:${known.placeId}`} label={`${known.name} · ${known.commune??"Lieu enregistré"}`} choose={()=>changeQuestion(()=>onKnown(known.placeId))}/>:google?<BarPlaceChoice key={`google:${google.placeId}`} label={`${google.primaryText}${google.secondaryText?" · "+google.secondaryText:""}`} choose={()=>void select(google)}/>:null)}
+    {!detail&&choices.slice(resultPageIndex*3,(resultPageIndex+1)*3).map(({known,google})=>known?<BarPlaceChoice key={`known:${known.placeId}`} label={`${known.name} · ${known.commune??"Lieu enregistré"}${known.address?" · "+known.address:""}`} choose={()=>changeQuestion(()=>onKnown(known.placeId))}/>:google?<BarPlaceChoice key={`google:${google.placeId}`} label={`${google.primaryText}${google.secondaryText?" · "+google.secondaryText:""}`} choose={()=>void select(google)}/>:null)}
     </div>
     {(personalPlacesCapability||personalPlacesEnabled)&&<BarPersonalPlaces detail={detail} query={query} onChoose={onGoogle} rawTargetRef={rawTargetRef} onSuggestions={onPersonalSuggestions}/>}
     <div className={styles.barPlaceFeedback} data-bar-search-feedback><GoogleMapsAttribution/>{status&&<p role="status">{status}</p>}
