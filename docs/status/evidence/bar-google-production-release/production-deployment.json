@@ -1,0 +1,10 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"result\": {\n    \"deployment\": {\n      \"id\": \"dpl_5EbosW3rDSitGXToi7fK3PEWHFBc\",\n      \"name\": \"budgetisation\",\n      \"url\": \"budgetisation-lvi76osxa-adriensauvageot34-6137s-projects.vercel.app\",\n      \"type\": \"LAMBDAS\",\n      \"state\": \"READY\",\n      \"createdAt\": 1792412957211,\n      \"creator\": {\n        \"uid\": \"ItlVoi62mpJ28TeqsxO3j569\",\n        \"username\": \"adriensauvageot34-6137\"\n      },\n      \"project\": {\n        \"id\": \"prj_ahtV6haS1FmhhqvoRsN0R9Vf7ueQ\",\n        \"name\": \"budgetisation\",\n        \"framework\": \"nextjs\"\n      },\n      \"meta\": {\n        \"githubCommitRef\": \"main\",\n        \"githubCommitSha\": \"5f98040cffbcd3437287367775e9b368b81123cd\",\n        \"githubCommitMessage\": \"Merge Bar Google favorites and Mobility release (#67)\\n\\nBar / Apéro — favoris Google Auth certifiés, Mobility et contrat Canonical\",\n        \"githubRepo\": \"Budgetisation\",\n        \"githubOrg\": \"adriensauvageot34\"\n      },\n      \"alias\": [\n        \"budgetisation-tan.vercel.app\",\n        \"budgetisation-adriensauvageot34-6137s-projects.vercel.app\",\n        \"budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app\"\n      ],\n      \"target\": \"production\",\n      \"regions\": [\n        \"iad1\"\n      ],\n      \"buildingAt\": 1792412958190,\n      \"ready\": 1792413036727,\n      \"readyState\": \"READY\",\n      \"source\": \"redeploy\",\n      \"aliasError\": null\n    }\n  }\n}"
+    }
+  ],
+  "structuredContent": null,
+  "isError": false
+}

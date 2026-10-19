@@ -1,0 +1,13 @@
+{
+  "testedHead": "f45f018fb84c33a44ec9b93585c8f527c62c6f80",
+  "mergedMain": "5f98040cffbcd3437287367775e9b368b81123cd",
+  "productTreeDiff": "EMPTY: src public package.json package-lock.json next.config.ts vercel.json supabase/migrations",
+  "commands": [
+    {"command": "node scripts/check-planner-performance-parity.mjs", "exitCode": 0, "cases": 22, "hashesPerCase": 9, "result": "198/198 PASS", "remoteWrites": 0},
+    {"command": "npx.cmd tsc --noEmit", "exitCode": 0},
+    {"command": "node scripts/check-bar-personal-places-ui.mjs", "exitCode": 0, "groups": 7, "level": "REACT_AND_HTTP_MOCKS"},
+    {"command": "node scripts/check-bar-apero-google-route.mjs", "exitCode": 0, "groups": 7, "level": "LOCAL_CONTRACTS"}
+  ],
+  "goldensChanged": false,
+  "productionAuthClaim": false
+}

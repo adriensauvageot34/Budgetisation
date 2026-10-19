@@ -1,0 +1,10 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"result\": {\n    \"events\": [\n      {\n        \"created\": 1792413002455,\n        \"date\": 1792413002455,\n        \"type\": \"stdout\",\n        \"text\": \"✓ Compiled successfully in 29.9s\",\n        \"info\": {\n          \"type\": \"build\",\n          \"name\": \"bld_knq8c65q2\",\n          \"entrypoint\": \".\"\n        }\n      },\n      {\n        \"created\": 1792413002456,\n        \"date\": 1792413002456,\n        \"type\": \"stdout\",\n        \"text\": \"  Running TypeScript ...\",\n        \"info\": {\n          \"type\": \"build\",\n          \"name\": \"bld_knq8c65q2\",\n          \"entrypoint\": \".\"\n        }\n      }\n    ]\n  }\n}"
+    }
+  ],
+  "structuredContent": null,
+  "isError": false
+}

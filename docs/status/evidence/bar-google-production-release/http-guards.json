@@ -1,0 +1,19 @@
+[
+  {
+    "path": "/recette/bar-favoris",
+    "status": 307
+  },
+  {
+    "path": "/api/recette/bar-favoris",
+    "status": 405
+  },
+  {
+    "path": "/api/places/personal",
+    "status": 401
+  },
+  {
+    "path": "/connexion?bar-reception-otp=1",
+    "status": 200,
+    "recipeOtpExposed": false
+  }
+]

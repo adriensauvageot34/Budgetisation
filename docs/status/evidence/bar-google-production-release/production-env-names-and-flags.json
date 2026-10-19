@@ -1,0 +1,76 @@
+[
+  {
+    "key": "BAR_PERSONAL_PLACES_ENABLED",
+    "type": "plain",
+    "value": "1"
+  },
+  {
+    "key": "COMPOSER_PREVIEW_HTTP_ENABLED",
+    "type": "plain",
+    "value": "1"
+  },
+  {
+    "key": "COMPOSER_P14_SNAP3_HISTORICAL_BASIS",
+    "type": "plain",
+    "value": "1"
+  },
+  {
+    "key": "CRON_SECRET",
+    "type": "sensitive"
+  },
+  {
+    "key": "COMPOSER_P14_P3_HISTORICAL_REUSE",
+    "type": "plain",
+    "value": "0"
+  },
+  {
+    "key": "COMPOSER_P14_SNAP1_ACTIVITY_HISTORY",
+    "type": "plain",
+    "value": "0"
+  },
+  {
+    "key": "COMPOSER_P14_SNAP_PREPARE_ENABLED",
+    "type": "plain",
+    "value": "0"
+  },
+  {
+    "key": "COMPOSER_DRAFT_AUTOSAVE_ENABLED",
+    "type": "encrypted"
+  },
+  {
+    "key": "COMPOSER_DRAFT_AUTOSAVE_CANARY_USER_ID",
+    "type": "sensitive"
+  },
+  {
+    "key": "GOOGLE_MAPS_API_KEY",
+    "type": "sensitive"
+  },
+  {
+    "key": "TOMTOM_API_KEY",
+    "type": "sensitive"
+  },
+  {
+    "key": "HERE_API_KEY",
+    "type": "sensitive"
+  },
+  {
+    "key": "GLOBAL_V2_ROUTE_ACTIVE",
+    "type": "encrypted"
+  },
+  {
+    "key": "SUPABASE_URL",
+    "type": "sensitive"
+  },
+  {
+    "key": "SUPABASE_SECRET_KEY",
+    "type": "sensitive"
+  },
+  {
+    "key": "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "type": "sensitive"
+  },
+  {
+    "key": "NEXT_PUBLIC_SUPABASE_URL",
+    "type": "sensitive"
+  }
+]
