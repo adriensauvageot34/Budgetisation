@@ -87,6 +87,7 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
   const mobilityOptions = view.semanticState.contexts.some(c => resolveContextTemplate(c.templateKey).fields.some(f => f.kind === "PLACE_REF")) && deps.readMobilityOptions
     ? await deps.readMobilityOptions(household) : undefined;
   return { ...view, householdPersons: deps.householdPersons ?? [],
+    ...(process.env.BAR_PERSONAL_PLACES_ENABLED==='1'?{personalGooglePlacesEnabled:true as const}:{}),
     ...(mobilityOptions ? { mobilityOptions: { vehicle: mobilityOptions.vehicle, vehicleIsUnique: mobilityOptions.vehicleIsUnique, placeKnowledge: mobilityOptions.placeKnowledge, places: mobilityOptions.places.map(p => ({
       placeId: p.placeId, name: p.name, commune: p.commune, nature: p.nature, usage: p.usage, subtype: p.subtype, privatePlace: p.privatePlace,
       relationships: p.relationships,

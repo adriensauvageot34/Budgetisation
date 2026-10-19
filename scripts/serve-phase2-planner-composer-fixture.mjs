@@ -83,6 +83,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
   BAR_P3:barP3Month,
   BAR16_GOOGLE:barP3Month,
+  BARLIVE_PERSONAL:barP3Month,
   ...Object.fromEntries([0,1,2,4,10,15].map(count=>[`BAR350_${count}`,()=>bar350ReceptionMonth(count)])),
   P09: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P09C: p09CompatibilityMonth,
@@ -110,7 +111,7 @@ async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
     const pg = await createKernelPostgres(), fixture = (/^L4E_(5|16|30|50)$/u.test(key) ? () => l4eMonth(Number(key.slice(4))) : key.startsWith('L1_L33') ? () => l33Month(key.includes('DENSE')) : key.startsWith('L1_L31') ? () => l31Month(key.includes('DENSE')) : key.startsWith('L1') ? fixtures.L1 : p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
     if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
-    if(key==='BAR16_GOOGLE'){
+    if(['BAR16_GOOGLE','BARLIVE_PERSONAL'].includes(key)){
       owner.value.restaurant={details:async id=>({provider:'google_places',placeId:id,displayName:'Bar Google synthétique',formattedAddress:'Adresse synthétique, Bordeaux, France',types:['bar']})};
       owner.value.route.geocode=async()=>({latitude:44.84,longitude:-0.58,source:'TOMTOM'});
     }
@@ -135,17 +136,28 @@ const item={type,x:e.clientX,y:e.clientY,source:e.target.closest?.('[data-drag-s
 if(type==='dragover'&&events.at(-1)?.type===type&&events.at(-1)?.board===item.board)return;events.push(item);if(events.length>60)events.shift();
 setTimeout(()=>{item.prevented=e.defaultPrevented;document.documentElement.setAttribute('data-l31-drag-trace',JSON.stringify(events));},0);
 },true);})();</script>`;
+let personalFixture;
 const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://127.0.0.1');
     const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
     const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
     // Explicit synthetic provider surface, localhost only. Never proxies Google.
-    if(key==='BAR16_GOOGLE'&&request.method==='POST'&&['/api/places/autocomplete','/api/places/details'].includes(url.pathname)){
+    if(['BAR16_GOOGLE','BARLIVE_PERSONAL'].includes(key)&&request.method==='POST'&&['/api/places/autocomplete','/api/places/details'].includes(url.pathname)){
       const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>4096)throw Error('FIXTURE_INPUT_TOO_LARGE');chunks.push(chunk);}
       const input=JSON.parse(Buffer.concat(chunks).toString());response.setHeader('Content-Type','application/json');response.setHeader('Cache-Control','no-store');
-      if(url.pathname.endsWith('autocomplete'))response.end(JSON.stringify({suggestions:[{source:'google_places',placeId:'ChIJ_bar16_synthetic',primaryText:'Bar Google synthétique',secondaryText:'Bordeaux · fixture sans fournisseur réel'}]}));
-      else {if(input.placeId!=='ChIJ_bar16_synthetic'||input.context?.kind!=='BAR_APERO')throw Error('FIXTURE_GOOGLE_REF_INVALID');response.end(JSON.stringify({place:{provider:'google_places',placeId:input.placeId,displayName:'Bar Google synthétique',formattedAddress:'Adresse synthétique, Bordeaux, France',types:['bar']}}));}return;
+      const capabilities=key==='BARLIVE_PERSONAL'?{capabilities:{personalSavedPlaces:true}}:{};
+      if(url.pathname.endsWith('autocomplete'))response.end(JSON.stringify({suggestions:[{source:'google_places',placeId:'ChIJ_bar16_synthetic',primaryText:'Bar Google synthétique',secondaryText:'Bordeaux · fixture sans fournisseur réel'}],...capabilities}));
+      else {if(input.placeId!=='ChIJ_bar16_synthetic'||input.context?.kind!=='BAR_APERO')throw Error('FIXTURE_GOOGLE_REF_INVALID');response.end(JSON.stringify({place:{provider:'google_places',placeId:input.placeId,displayName:'Bar Google synthétique',formattedAddress:'Adresse synthétique, Bordeaux, France',types:['bar']},...capabilities}));}return;
+    }
+    if(key==='BARLIVE_PERSONAL'&&url.pathname==='/api/places/personal'){
+      // Opt-in localhost fixture only; real SQL/service, synthetic Auth and Google.
+      personalFixture??=(await import('./lib/bar-personal-place-fixture.mjs')).personalPlaceFixture();
+      const owner=await personalFixture;response.setHeader('Content-Type','application/json');response.setHeader('Cache-Control','no-store');
+      if(request.method==='GET'){response.end(JSON.stringify(await owner.read()));return;}
+      if(request.method!=='POST'||request.headers.origin!==`http://${request.headers.host}`){response.statusCode=403;response.end('{}');return;}
+      const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>4096)throw Error('FIXTURE_INPUT_TOO_LARGE');chunks.push(chunk);}
+      const result=await owner.save(JSON.parse(Buffer.concat(chunks).toString()));response.statusCode=['SAVED','ARCHIVED'].includes(result.status)?200:409;response.end(JSON.stringify(result));return;
     }
     if(p4Measuring&&url.pathname==='/p4-metrics'&&request.method==='POST'){
       if(!/^P4_[a-zA-Z0-9_-]{1,80}$/.test(key))throw Error('P4_SCENARIO_INVALID');
