@@ -17,7 +17,7 @@ import { editNightOut } from "@/domain/phase2/planner/night-out-edit";
 import { editShortStay } from "@/domain/phase2/planner/short-stay-edit";
 import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { mobilitySummaries } from "./mobility-presentation";
-import { nightOutSummaries } from "./night-out-presentation";
+import { nightOutSummaries,nightOutComponentGroups } from "./night-out-presentation";
 import { knownContextReferences } from "./context-selections";
 import { plannerDigest, plannerKeys, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
@@ -95,6 +95,7 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
       ...(!p.privatePlace && p.address ? { address: p.address } : {}) })) } } : {}),
     mobilitySummaries: mobilitySummaries(preview.compiled.journeys, preview.compiled.journeyPrices),
     nightOutSummaries: nightOutSummaries(model),
+    nightOutComponentGroups: nightOutComponentGroups(model),
     presentation: composerPresentation(model), library: { ...view.library,
     searchableAssets: view.library.searchableAssets.map(asset => ({ ...asset, iconKey: composerAssetIcon(asset, model) })), sections: [
     ...groups.map(family => ({ sectionKey: family, assetKeys: templates.filter(t => t.family === family).map(t => `template:${t.templateKey}`) })),

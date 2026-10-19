@@ -1305,6 +1305,32 @@
 .purchaseSummary button[data-budget-unknown=true] { font-size:14px; font-weight:650; }
 .barCompositionDock { position:relative; }
 .barCompositionDock .paletteOptions { min-height:76px; }
+
+/* R6: one economic tile vocabulary. Membership and totals come from owners. */
+.barGroup { min-width:126px; width:100%; }
+.barGroup>button { width:100%; box-sizing:border-box; padding:9px; border:1px solid #e1d5bf; border-radius:13px; background:linear-gradient(145deg,#fffcf5,#faf0dc); color:#403526; cursor:pointer; }
+.barCompactFace { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0; }
+.barGroup .barCompactFace>strong { display:block; width:100%; font-size:13px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; overflow-wrap:normal; word-break:normal; }
+.barCompactFace .barProductSymbol { width:64px; height:42px; }
+.barCompactFace .barProductSymbol img { width:64px; height:42px; object-fit:contain; }
+.barCompactBadges { display:flex; justify-content:center; flex-wrap:wrap; gap:5px; }
+.barCompactBadges>span { display:inline-flex; align-items:center; padding:3px 7px; border-radius:8px; background:#fffdf6; border:1px solid #e8dcc6; color:#4c3c24; font-size:12px; line-height:1.25; white-space:nowrap; }
+.barCompactFace>small { font-size:11px; }
+.barItemSection .barEconomicTile { flex:0 1 156px; min-width:126px; max-width:190px; }
+.barLivingCompact .barGroup { flex:0 1 156px; min-width:126px; max-width:190px; }
+.barGroupLines { margin-top:6px; padding:7px; border:1px solid #dac5a2; border-radius:10px; background:#fffdf8; }
+.barGroupLines p { margin:0 0 5px; font-size:11px; }
+.barGroupLines>button { display:flex; flex-direction:column; width:100%; padding:6px; margin:3px 0; border:1px solid #e7dccb; border-radius:8px; background:white; text-align:left; font-size:12px; }
+.barFinanceMode,.barMoments { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin:5px 0; }
+.barFinanceMode button,.barMoments button { padding:6px 9px; min-height:30px; border:1px solid #dfcfb5; border-radius:9px; background:#fffaf0; color:#655033; font-size:12px; cursor:pointer; }
+.barFinanceMode button[aria-pressed=true],.barMoments button[aria-pressed=true] { background:#f6e6c7; border-color:#ad8646; color:#46351c; }
+.barGroup button:focus-visible,.barFinanceMode button:focus-visible,.barMoments button:focus-visible { outline:3px solid #927039; outline-offset:2px; }
+.barManage small { display:block; padding:4px; max-width:180px; }
+.columns[data-bar-living-open=true] .paletteDock:has([data-compact-dock=true]) { min-height:82px; }
+.barCompositionDock[data-compact-dock=true] .paletteOptions { min-height:0; padding-block:3px; }
+.barCompositionDock[data-compact-dock=true] .questionAnswer { min-height:42px; padding:5px 10px; }
+.barCompositionDock[data-compact-dock=true] .barProductSymbol { width:32px; height:30px; }
+.barCompositionDock[data-compact-dock=true] .barProductSymbol img { width:32px; height:30px; }
 .barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { height:72px; min-height:72px; }
 .barCompositionDock .questionAnswer strong { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:16px; overflow-wrap:anywhere; }
 .barCompositionDock .questionAnswer[data-show-hint=true] small { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; line-height:15px; }

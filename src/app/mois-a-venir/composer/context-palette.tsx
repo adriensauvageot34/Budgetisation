@@ -130,7 +130,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
     .filter(group => group.tiles.length);
   const iconKey = model.presentation.objects[card.contextOccurrenceId]?.iconKey ?? "activity";
-  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-context-palette={card.contextOccurrenceId} data-question-dock data-dock-nature={question.nature} aria-label={question.title}
+  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-compact-dock={appearance==='bar'&&question.choices.length<=3&&!search} data-context-palette={card.contextOccurrenceId} data-question-dock data-dock-nature={question.nature} aria-label={question.title}
     onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}>
     {appearance==="bar"&&caption&&caption.key.startsWith(answerKey+":")&&<div role="tooltip" id={optionsId+"-full-label"} className={styles.barDockFullLabel}>{caption.label}</div>}
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>

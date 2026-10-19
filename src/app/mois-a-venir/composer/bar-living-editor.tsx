@@ -34,6 +34,8 @@ import type {BarViewMemory} from "./bar-view-memory";
 import {Trash2} from "lucide-react";
 import styles from "./composer.module.css";
 import {AnchoredAtomicPopover} from "./atomic-popover";
+import {componentPresentationGroups} from '@/domain/phase2/planner/component-group-presentation';
+import {BarComponentGroup} from './bar-component-group';
 
 type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more"|"venue-change"|"known-routes";
 type Component=Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;
@@ -55,7 +57,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const [legacy,setLegacy]=useState<"people"|"calendar"|"menu"|"main">("menu"),[legacyKey,setLegacyKey]=useState(0);
   const [row,setRow]=useState<Row>(()=>initialSelection?.kind==="COMPONENT"?fromSelection(initialSelection):fresh()),[slot,setSlot]=useState(initialComponent?.[1]??"extras"),[dirty,setDirty]=useState(false);
   const [families,setFamilies]=useState<Record<"bar"|"before","drinks"|"food"|null>>(()=>props.initialBarView?.families??{bar:props.initialBarView?.family??null,before:null});
-  const activeMoment=page==="before"||page==="row"&&slot.startsWith("before-")?"before":"bar";
+  const [moment,setMoment]=useState<'before'|'bar'>(()=>props.initialTarget==='before'||initialComponent?.[1]?.startsWith('before-')?'before':props.initialBarView?.moment??'bar');
+  const activeMoment=page==="before"||page==="row"&&slot.startsWith("before-")?"before":page==="drinks"?'bar':moment;
   const family=families[activeMoment];
   const setFamily=(value:"drinks"|"food"|null)=>setFamilies(previous=>({...previous,[activeMoment]:value}));
   const [advancedRow,setAdvancedRow]=useState(false),[manual,setManual]=useState(""),[allPlaces,setAllPlaces]=useState(props.initialBarView?.allPlaces??false),[allEndpoints,setAllEndpoints]=useState(false),[allBefore,setAllBefore]=useState(props.initialBarView?.allBefore??false),[error,setError]=useState("");
@@ -83,8 +86,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const previousPage=useRef(page);
   useEffect(()=>{
     savedPages.current[page]=itemPage;
-    props.onViewChange?.({queries,googleSearch,pages:{...savedPages.current},dockScroll,allPlaces,allBefore,family,families});
-  },[page,itemPage,queries,googleSearch,dockScroll,allPlaces,allBefore,family,families,props.onViewChange]);
+    props.onViewChange?.({queries,googleSearch,pages:{...savedPages.current},dockScroll,allPlaces,allBefore,family,families,moment:activeMoment});
+  },[page,itemPage,queries,googleSearch,dockScroll,allPlaces,allBefore,family,families,activeMoment,props.onViewChange]);
   const requestConfirmation=useWorkshopConfirmation(),activeQuestion=useActiveWorkshopQuestion(),interaction=useComposerInteractions();
   const before=barBefore(props.semanticState,context);
   const rowItems=(target:string)=>target==="before-main"?before?[before.bottle]:[]:target==="before-extras"?before?.extras??[]:barItems(context,target);
@@ -116,7 +119,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const resumeAdd=useCommittedEvent((asset:PlannedAsset,included?:boolean)=>add(asset,included));
   const resumeEdit=useCommittedEvent((target:string,id:string)=>{const item=rowItems(target).find(i=>i.selectionId===id);if(item?.kind==="COMPONENT")editComponent(target,item);});
   const resumeLegacy=useCommittedEvent((target:typeof legacy)=>startLegacy(target));
-  const resumeQuick=useCommittedEvent(()=>startQuick());
+  const resumeQuick=useCommittedEvent((scope?:boolean)=>startQuick(scope));
   const resumeEndpoint=useCommittedEvent((key:"origin"|"destination")=>targetEndpoint(key));
   const resumeTogglePerson=useCommittedEvent((person:ProspectivePersonRef)=>togglePerson(person));
   const resumeEndpointChoice=useCommittedEvent((place:ProspectivePlaceRef|null,bind:boolean=false)=>chooseEndpoint(place,false,bind));
@@ -155,7 +158,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(current?.kind==="COMPONENT")setRow(previous=>previous.id===row.id?fromSelection(current):previous);else setPage("drinks");
   },[context.slotSelections,props.semanticState.contexts,page,slot,dirty,row.id]);
   if(!model||!card)return <p role="status">Chargement de la carte…</p>;
-  const move=(next:Page)=>{if(next!==page&&typeof document!=="undefined"&&typeof HTMLElement!=="undefined"&&document.activeElement instanceof HTMLElement)sceneTrigger.current=document.activeElement;savedPages.current[previousPage.current]=itemPage;previousPage.current=next;setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setItemPage(savedPages.current[next]??0);setError("");};
+  const move=(next:Page)=>{if(next==='before')setMoment('before');if(next==='drinks')setMoment('bar');if(next!==page&&typeof document!=="undefined"&&typeof HTMLElement!=="undefined"&&document.activeElement instanceof HTMLElement)sceneTrigger.current=document.activeElement;savedPages.current[previousPage.current]=itemPage;previousPage.current=next;setPendingEndpoint(null);if(next==="outbound"||next==="return")setDirection(next);setPage(next);setItemPage(savedPages.current[next]??0);setError("");};
   const go=(next:Page)=>{if(guard(()=>resumeGo(next)))move(next);};
   const decide=(operation:ComposerOperation,next:Page="summary")=>{
     try{if(busy){setError("Cette carte est protégée ou une opération est en cours. Aucun choix n’a été admis.");return false;}if(onSave(operation)){setDirty(false);move(next);return true;}setError("Ce choix n’a pas été admis. Votre saisie est conservée ; vérifiez le message du Board.");}
@@ -174,7 +177,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const selectedPlace=context.fields.placeRef as ProspectivePlaceRef|undefined;
   const homes=barHomePlaces(model.mobilityOptions?.places??[]);
   const homeCities=[...new Set(homes.map(place=>place.commune?.trim()).filter((value):value is string=>!!value))];
-  const searchCity=selectedPlace?.kind==="KNOWN"?model.mobilityOptions?.places.find(place=>place.placeId===selectedPlace.placeId)?.commune??undefined:homes.length===1&&homeCities.length===1?homeCities[0]:undefined;
+  // A household address is not consent to constrain a public-place search.
+  const searchCity=selectedPlace?.kind==="KNOWN"?model.mobilityOptions?.places.find(place=>place.placeId===selectedPlace.placeId)?.commune??undefined:undefined;
   const selectedVenue=context.fields.venueDecision?parseNightOutVenue(context.fields.venueDecision):null;
   const choosePlace=(place:ProspectivePlaceRef,google?:BarGoogleRef)=>{
     const venue=parseNightOutVenue({version:"night-out-venue@v1",decisionId:crypto.randomUUID(),place,...(google?{google}:{}),provenance:"EXPLICIT_USER_DECISION"});
@@ -192,7 +196,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       if(decide({kind:"EDIT_NIGHT_OUT",edit},"row")){setPendingAsset(null);setSlot("extras");setAdvancedRow(false);setRow(fromSelection(value));}
     }catch(failure){setError("Ce poste ancien n’a pas de portée de remplacement certaine, ou possède un financement. Conservez-le, choisissez « Ajouter en plus » ou rééditez explicitement son coût. Aucun poste n’est supprimé.");}
   };
-  const startQuick=()=>{if(!guard(resumeQuick))return;setQuickAmount("");setQuickTotal(null);setCoverageIds([]);move("quick");};
+  const startQuick=(scope?:boolean)=>{if(!guard(()=>resumeQuick(scope)))return;const existing=barItems(context,'main')[0];setQuickAmount(existing?.kind==='COMPONENT'&&existing.cost.kind==='MANUAL'?existing.cost.unitAmount:'');setQuickTotal(scope??null);setCoverageIds([]);move("quick");};
   const addBefore=(asset:PlannedAsset)=>{
     if(!guard(()=>resumeBefore(asset))||busy||beforeLocked)return;
     try{const value=buildComponentRow({...fresh(asset.label),unitBasis:asset.quantityStrategy==="SHARED"?"SHARED":"ITEM",assetRef:{catalogVersion:PLANNED_ASSET_CATALOG_VERSION,assetKey:asset.assetKey,labelAtSelection:asset.label,provenance:"EXPLICIT_USER_DECISION"}},before?"extra":"activity");
@@ -349,6 +353,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   if(page==="row")question=advancedRow?activeQuestion??{title:"Détails du poste",choices:[]}:family?{title:family==="food"?"Restauration":"Boissons",nature:"OBJECTS",choices:slot.startsWith("before-")?beforeChoices():family==="drinks"?[...drinkChoices,sharedChoice]:drinkChoices,search:{value:queries[(slot.startsWith("before-")?"before":"drinks")+":"+(family??"families")]??"",change:value=>setQueries(previous=>({...previous,[(slot.startsWith("before-")?"before":"drinks")+":"+(family??"families")]:value})),label:"Chercher un objet"}}:{title:"Choisir une famille",nature:"FAMILIES",choices:familyChoices(slot.startsWith("before-")?"before":"bar")};
   if(page==="quick")question={title:"Coût prévu",choices:[]};
   const coveredMain=[...barItems(context,"main"),...barItems(context,"extras")].find((item):item is Component=>item.kind==="COMPONENT"&&item.economicScope?.kind==="AGGREGATED_SUBSTITUTIVE_ESTIMATE")??barItems(context,"main").find((item):item is Component=>item.kind==="COMPONENT"&&!item.economicScope);
+  if(page==='summary'&&coveredMain)question={title:'Consommations regroupées',choices:[]};
   if(page==="coverage")question={title:`Remplacer ${coveredMain?.label??"le coût retenu"}${coveredMain?.cost.kind==="MANUAL"?" · "+money(coveredMain.cost.unitAmount)+" / lot":""} ?`,choices:[{...choice("included","Détailler à la place",()=>pendingShared?addShared(true):pendingAsset&&add(pendingAsset,true),"night-out","Retire uniquement ce regroupement ; contribution, trajets, Before et repas conservés"),showHint:true},{...choice("extra","Ajouter en plus",()=>pendingShared?addShared(false):pendingAsset&&add(pendingAsset,false),"night-out","Coût supplémentaire indépendant du poste conservé"),showHint:true},choice("cancel","Ne rien ajouter",()=>{setPendingAsset(null);setPendingShared(false);go("drinks");},"activity")]};
   question={...question,identity:question.identity??`${context.contextOccurrenceId}:${page==="row"?(slot.startsWith("before-")?"before":"drinks"):page}:${family??"families"}:${question.nature??"decision"}`};
   const activeRow=<fieldset className={styles.barEditableBody} disabled={busy||slot.startsWith("before-")&&beforeLocked} onKeyDown={event=>{if(event.key==="Enter"&&event.target instanceof HTMLInputElement&&dirty){event.preventDefault();event.stopPropagation();if(canSaveBuffer())saveRow();}}}>{!advancedRow && (row.unitBasis==="ITEM"||row.unitBasis==="SHARED") ? <div data-bar-short-row>
@@ -366,9 +371,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
           : <><WorkshopComponentRow title={row.label} row={row} onChange={next=>{setRow(next);setDirty(true);}} onSave={()=>saveRow()} onRemove={remove} busy={busy}/><button type="button" onClick={()=>go("drinks")}>Voir les consommations</button></>}</fieldset>;
   const sectionLabels={extras:"Au bar",before:"Avant de sortir",food:"Repas",main:barItems(context,"main").some(item=>item.kind==="COMPONENT"&&item.label==="Consommations regroupées")?"Consommations regroupées":"Entrées / contribution"};
   const freshProjection=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===context.contextOccurrenceId)?.semanticStateDigest===model.board.draft.semanticStateDigest;
-  const listPage=(items:readonly ComponentSelectionV1[])=>{const index=Math.min(itemPage,Math.max(0,Math.ceil(items.length/4)-1));return page==="row"?items.filter(item=>item.selectionId===row.id):page==="summary"?items.slice(0,2):items.slice(index*4,(index+1)*4);};
-  const pagesFor=(items:readonly ComponentSelectionV1[],label:string)=><BarPageControls index={Math.min(itemPage,Math.max(0,Math.ceil(items.length/4)-1))} count={Math.ceil(items.length/4)} onChange={setItemPage} label={label}/>;
-  const beforeScene=page==="summary"||page==="before"||page==="row"&&slot.startsWith("before-");
+  const listGroups=(items:readonly ComponentSelectionV1[])=>{const groups=componentPresentationGroups(page==='row'?items.filter(item=>item.selectionId===row.id):items),index=Math.min(itemPage,Math.max(0,Math.ceil(groups.length/4)-1));return page==='row'?groups:page==='summary'?groups.slice(0,2):groups.slice(index*4,(index+1)*4);};
+  const pagesFor=(items:readonly ComponentSelectionV1[],label:string)=>{const count=componentPresentationGroups(items).length;return <BarPageControls index={Math.min(itemPage,Math.max(0,Math.ceil(count/4)-1))} count={Math.ceil(count/4)} onChange={setItemPage} label={label}/>;};
+  const beforeScene=page==="summary"&&activeMoment==='before'||page==="before"||page==="row"&&slot.startsWith("before-");
   const admittedPeople=Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[];
   const peoplePage=Math.min(itemPage,Math.max(0,Math.ceil(admittedPeople.length/4)-1));
   // Structural admission is a valid packing checkpoint (also on Undo/Redo).
@@ -381,10 +386,17 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     <fieldset className={styles.barEditableBody} disabled={busy} aria-label="Composition de la sortie">
     <BarMetadata fields={context.fields} model={model} open={open} editing active={page} disabled={busy} removePlace={()=>{const clear=()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{placeRef:null,venueDecision:null}}});if(!guard(clear))return;if(barVenueAdaptations(context).length)confirm({message:"Retirer le lieu de la sortie ? Les points et coûts des trajets restent conservés ; aucun trajet n’est réorienté. Undo rétablit le lieu.",acceptLabel:"Retirer uniquement le lieu",accept:clear});else clear();}}>
       {(page==="drinks"||page==="before"||page==="row")&&family&&<button type="button" onClick={()=>{if(guard(()=>setFamily(null)))setFamily(null);}}>Changer de famille</button>}
-      {page==="summary"&&!before&&<button type="button" onClick={()=>go("before")}>+ Before</button>}
       {page!=="summary"&&<button type="button" className={styles.barBackArrow} title="Ma sortie" onClick={()=>go("summary")}>←<span className={styles.barVisuallyHidden}> Ma sortie</span></button>}
       {!barLeg(context,"outbound")&&!barLeg(context,"return")&&<button type="button" data-bar-add-route="outbound" className={styles.barMetaTrip} disabled={busy} onClick={()=>open("outbound")}>+ Trajet</button>}
     </BarMetadata>
+    {['summary','drinks','before','row','quick','coverage'].includes(page)&&<div className={styles.barFinanceMode} role="group" aria-label="Mode de composition des consommations">
+      <button type="button" data-bar-finance-mode="direct" aria-pressed={page==='quick'||page==='summary'&&!!coveredMain} title="Montant déclaré pour les consommations, hors contribution, Before et trajets" onClick={()=>startQuick(true)}>Montant direct</button>
+      <button type="button" data-bar-finance-mode="detailed" aria-pressed={page!=='quick'&&!(page==='summary'&&coveredMain)} onClick={()=>go('drinks')}>Détailler les consommations</button>
+    </div>}
+    {['summary','drinks','before','row'].includes(page)&&<nav className={styles.barMoments} aria-label="Moments de consommation">
+      <button type="button" aria-pressed={activeMoment==='before'} onClick={()=>go('before')}>{before?`Before · ${1+before.extras.length} lignes`:'+ Before'}</button>
+      <button type="button" aria-pressed={activeMoment==='bar'} onClick={()=>go('drinks')}>Au bar{barItems(context,'extras').length?` · ${barItems(context,'extras').length} lignes`:''}</button>
+    </nav>}
     {(page==="summary"||["outbound","return","endpoint","fare","vehicle"].includes(page))&&<div className={styles.barLivingRoutes} aria-label="Déplacements">
       {(["outbound","return"] as const).map(key=>(page==="summary"||key===direction)&&barLeg(context,key)?<BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} navigate={open} active={direction===key&&["outbound","return","endpoint","fare","vehicle"].includes(page)} open={()=>open(key)}/>:null)}
       {barLeg(context,"outbound")&&!barLeg(context,"return")&&!barLeg(context,"outbound")!.returnRequired&&<button type="button" data-bar-add-route="return" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("return")}>+ Retour</button>}
@@ -393,11 +405,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     }
     <div className={styles.barLivingSections} data-scene={page}>
     {before&&beforeScene&&<section className={styles.barItemSection} data-bar-before data-bar-section="before" aria-label="Avant de sortir">
-      <header><h4>Avant de sortir</h4><button type="button" className={styles.barInlineAdd} aria-label="Compléter le Before" disabled={busy||beforeLocked} onClick={()=>go("before")}>+ Ajouter</button><details><summary aria-label="Actions du Before">⋯</summary><button type="button" disabled={busy||beforeLocked} onClick={removeBefore}>Retirer le Before</button></details></header>
+      <header><h4>Before</h4><button type="button" className={styles.barInlineAdd} aria-label="Compléter le Before" disabled={busy||beforeLocked} onClick={()=>go("before")}>+ Ajouter</button><details><summary aria-label="Actions du Before">⋯</summary><button type="button" disabled={busy||beforeLocked} onClick={removeBefore}>Retirer le Before</button></details></header>
       {beforeLocked&&<p>Ce Before est protégé. Ses composants restent consultables.</p>}
-      <div className={styles.barLivingTiles}>{listPage([before.bottle,...before.extras]).map(item=>item.kind==="COMPONENT"?<div key={item.selectionId} data-bar-before-item={item.selectionId} data-bar-active-tile={page==="row"&&item.selectionId===row.id} className={page==="row"&&item.selectionId===row.id?styles.barActiveTile:styles.barEconomicTile}>
-        <button type="button" disabled={busy||beforeLocked} aria-expanded={page==="row"&&item.selectionId===row.id} onClick={()=>editComponent(item.selectionId===before.bottle.selectionId?"before-main":"before-extras",item)}><BarComponentFace item={item} fresh={freshProjection}/></button>{page==="row"&&item.selectionId===row.id&&activeRow}
-      </div>:<p key={item.selectionId}>Composant lié conservé · options détaillées</p>)}</div>
+      <div className={styles.barLivingTiles}>{listGroups([before.bottle,...before.extras]).map(group=>{const item=group.items[0];return <div key={group.key} data-bar-before-item={item.selectionId} data-bar-active-tile={page==='row'&&item.selectionId===row.id} className={page==='row'?styles.barActiveTile:styles.barEconomicTile}><BarComponentGroup group={group} model={model} owner={before.child.contextOccurrenceId} slot="$before" disabled={busy||beforeLocked} choose={chosen=>chosen.kind==='COMPONENT'&&editComponent(chosen.selectionId===before.bottle.selectionId?'before-main':'before-extras',chosen)}>{page==='row'&&item.selectionId===row.id&&activeRow}</BarComponentGroup></div>;})}</div>
     {page==="before"&&pagesFor([before.bottle,...before.extras],"Pages du Before")}
     {page==="summary"&&before.extras.length>1&&<button type="button" onClick={()=>go("before")}>Voir les {1+before.extras.length} objets du Before</button>}
     </section>}
@@ -405,20 +415,14 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     {(["extras","before","food","main"] as const).map(key=>{
       const items=barItems(context,key).filter(item=>item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT");
       if(key==="before"&&before)return null;
+      if(page==='summary'&&key==='extras'&&activeMoment!=='bar')return null;
       if(page!=="summary"&&!(page==="drinks"&&key==="extras")&&!(page==="row"&&key===slot))return null;
       if(!items.length&&key!=="extras")return null;
       return <section key={key} className={styles.barItemSection} data-bar-section={key} aria-label={sectionLabels[key]}>
         <header><h4>{sectionLabels[key]}</h4>{key==="extras"&&<button type="button" className={styles.barInlineAdd} disabled={busy} aria-label="Ajouter une consommation" onClick={()=>go("drinks")}>+ Ajouter</button>}{page==="summary"&&items.length>2&&<button type="button" onClick={()=>{if(key==="extras")go("drinks");else startLegacy("menu");}}>Voir les {items.length} postes</button>}</header>
-        <div className={styles.barLivingTiles} aria-label="Composants économiques">{listPage(items).map(item=><div key={item.selectionId} data-bar-tile={item.selectionId} data-bar-active-tile={page==="row"&&item.selectionId===row.id} className={page==="row"&&item.selectionId===row.id?styles.barActiveTile:styles.barEconomicTile}>
-          <button type="button" disabled={busy} aria-expanded={page==="row"&&item.selectionId===row.id}
-            draggable={!busy&&!!model.presentation.dragSources[`satellite:${context.contextOccurrenceId}:${key}:${item.selectionId}`]}
-            data-drag-source={`satellite:${context.contextOccurrenceId}:${key}:${item.selectionId}`}
-            onDragStart={event=>{event.stopPropagation();interaction?.start(`satellite:${context.contextOccurrenceId}:${key}:${item.selectionId}`,event);}}
-            onDragEnd={()=>interaction?.end()} onClick={()=>item.kind==="COMPONENT"&&key!=="before"?editComponent(key,item):startLegacy("menu")}>
-            <BarComponentFace item={item} amount={card.sockets.find(socket=>socket.slotKey===key)?.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount} fresh={freshProjection}/>
-          </button>{page==="row"&&item.selectionId===row.id&&activeRow}
-          {item.kind==="CHILD_CONTEXT"&&key==="before"&&<ul className={styles.barChildPreview}>{props.semanticState.contexts.find(child=>child.contextOccurrenceId===item.childContextOccurrenceId)?.slotSelections&&Object.values(props.semanticState.contexts.find(child=>child.contextOccurrenceId===item.childContextOccurrenceId)!.slotSelections).flatMap(selection=>(selection.items as readonly ComponentSelectionV1[]).filter(value=>value.kind==="COMPONENT").map(value=><li key={value.selectionId}>{value.kind==="COMPONENT"?value.label:""}</li>))}</ul>}
-        </div>)}</div>
+        <div className={styles.barLivingTiles} aria-label="Composants économiques">{listGroups(items).map(group=>{const item=group.items[0];return <div key={group.key} data-bar-tile={item.selectionId} data-bar-active-tile={page==='row'&&item.selectionId===row.id} className={page==='row'?styles.barActiveTile:styles.barEconomicTile}>
+          <BarComponentGroup group={group} model={model} owner={context.contextOccurrenceId} slot={key} disabled={busy} choose={chosen=>chosen.kind==='COMPONENT'&&key!=='before'?editComponent(key,chosen):startLegacy('menu')}>{page==='row'&&item.selectionId===row.id&&activeRow}</BarComponentGroup>
+        </div>;})}</div>
         {page==="drinks"&&pagesFor(items,"Pages des consommations")}
       </section>;
     })}
