@@ -122,7 +122,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       // Retain its envelope until an explicit scene/page transition. Growing
       // contents may reserve more rows for access, but the anchor stays pinned.
       if(checkpoint===lastCheckpoint&&(height===lastHeight||height<(lastHeight??0)))return;
-      const surface=barSurface(editor.dataset.barStep??"summary",card?.dataset.richness==="rich",editor.dataset.barAdvanced==="true");
+      const surface=barSurface(editor.dataset.barStep??"summary",card?.dataset.barSurfaceRich==="true",editor.dataset.barAdvanced==="true",card?.dataset.barSurfaceItems==="true");
       lastHeight=height;
       lastCheckpoint=checkpoint;
       const reserve=()=>setExpandedMeasure(previous => previous && previous.id === expandedId && previous.height === height && previous.checkpoint===checkpoint ? previous : { id: expandedId!, height, surface, checkpoint });

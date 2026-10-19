@@ -45,10 +45,12 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
   const before=semantic&&barBefore(model.semanticState,semantic);
   const components=card.sockets.flatMap(socket=>socket.currentItems.filter(item=>item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT").map(item=>({slot:socket.slotKey,item,amount:socket.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount})));
   const route=(slot:"outbound"|"return")=>card.sockets.find(s=>s.slotKey===slot)?.currentItems.find(s=>s.kind==="MOBILITY_INTENT");
+  const visibleGroups=new Set(components.map(component=>component.slot));
+  const parallelContent=visibleGroups.size>1||!!route("outbound")&&!!route("return")||visibleGroups.size>0&&(!!route("outbound")||!!route("return"));
   // Presentation only: decoration yields to actual selected contents, never to a price.
   const richness=before||components.length>2||route("outbound")||route("return")?"rich":components.length||card.fields.placeRef||card.fields.plannedDate||(Array.isArray(card.fields.participantRefs)&&card.fields.participantRefs.length)?"partial":"empty";
   return <article {...surfaceProps} ref={root} className={styles.barLivingCard} data-bar-living-card data-context={card.contextOccurrenceId} data-template-key="night-out" data-expanded={expanded}
-    data-preset-key="bar-apero" data-richness={richness} data-state={card.knowledge} data-removing={removing} aria-busy={removing} aria-label={card.label} onKeyDown={event=>{if(event.key==="Escape"&&expanded&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();living.close();}}}>
+    data-preset-key="bar-apero" data-richness={richness} data-bar-surface-rich={parallelContent} data-bar-surface-items={components.length>0} data-state={card.knowledge} data-removing={removing} aria-busy={removing} aria-label={card.label} onKeyDown={event=>{if(event.key==="Escape"&&expanded&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();living.close();}}}>
     <header className={styles.barLivingHeader}>
       <button type="button" className={styles.barImageTrigger} disabled={locked} aria-label={`Ouvrir ${card.label}`} onClick={()=>open("summary")}><img src="/planned-visuals/builder/clay/drinks/bar-editorial.webp" alt="" className={styles.barLivingImage} width={128} height={128}/></button>
       <div className={styles.barLivingIdentity}><h3><button type="button" disabled={locked} onClick={()=>open("summary")}>{card.label}</button></h3>

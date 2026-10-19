@@ -9,9 +9,9 @@ const { BarPlaceSearch } = require('@/app/mois-a-venir/composer/bar-place-search
 const pending = [], adopted = [];
 globalThis.fetch = async (path, init) => new Promise(resolve => pending.push({ path, resolve, signal: init.signal }));
 const text = n => typeof n === 'string' ? n : n?.children?.map(text).join('') ?? '';
-let key = 'initial', root;
-const mount = () => React.createElement(BarPlaceSearch, { places: [], initialCity: 'Ville fictive', commitOnVerified: true, decisionKey: key,
-  onKnown: () => assert.fail('No invented Canonical identity'), onGoogle: (label, ref) => adopted.push({ label, ref }) });
+let key = 'initial', root, places=[]; const knownAdopted=[]; globalThis.requestAnimationFrame=()=>0;
+const mount = () => React.createElement(BarPlaceSearch, { places, initialCity: 'Ville fictive', commitOnVerified: true, decisionKey: key,
+  onKnown: id => {assert(places.some(place=>place.placeId===id),'No invented Canonical identity');knownAdopted.push(id);}, onGoogle: (label, ref) => adopted.push({ label, ref }) });
 const field = () => root.root.findAll(n => n.type === 'label' && text(n).startsWith('Chercher un bar'))[0].findByType('input');
 const change = async value => act(async () => field().props.onChange({ target: { value } }));
 const wait = async () => act(async () => new Promise(resolve => setTimeout(resolve, 330)));
@@ -50,4 +50,14 @@ try {
   assert.equal(adopted.length,1);
   console.log('PASS UI046 MOCK: loading, error, long owner label, late/out-of-order results rejected; unsupported photo data ignored (no photo rendering claimed)');
   console.log('PASS R5 Google: typing is not a decision; verified single-click admission; minimal identity; changed-card late response rejected. MOCK_PROVIDER_ONLY');
+  places=[{placeId:'known-a',name:'Bar partagé',commune:'Ville A',privatePlace:false,googlePlaceId:'google_linked'}, {placeId:'known-b',name:'Bar partagé',commune:'Ville B',privatePlace:false}];
+  await act(async()=>root.update(mount()));await change('Bar');await wait();
+  await answer(pending.length-1,{suggestions:[{source:'google_places',placeId:'google_linked',primaryText:'Bar partagé',secondaryText:'Ville A'},{source:'google_places',placeId:'google_other_1',primaryText:'Bar autre 1'},{source:'google_places',placeId:'google_other_2',primaryText:'Bar autre 2'}]});
+  const visible=()=>root.root.findAll(n=>n.type==='button'&&n.props.title&&n.props['aria-label']);
+  assert.equal(visible().length,3);assert(visible().some(n=>n.props['aria-label']==='Bar partagé · Ville A'));assert(visible().some(n=>n.props['aria-label']==='Bar partagé · Ville B'));
+  const next=root.root.findAll(n=>n.type==='button'&&n.props['aria-label']==='Résultats de la recherche · suivante')[0];await act(async()=>next.props.onClick({currentTarget:null}));
+  assert.deepEqual(visible().map(n=>n.props['aria-label']),['Bar autre 2']);
+  await act(async()=>root.root.findAll(n=>n.type==='button'&&n.props['aria-label']==='Résultats de la recherche · précédente')[0].props.onClick({currentTarget:null}));
+  await act(async()=>visible().find(n=>n.props['aria-label']==='Bar partagé · Ville B').props.onClick());assert.deepEqual(knownAdopted,['known-b']);
+  console.log('PASS GEO bounded search: all 4 distinct candidates reachable, 3 per page; exact linked Google duplicate only, no name-based identity merge.');
 } finally { if (root) await act(async () => root.unmount()); }
