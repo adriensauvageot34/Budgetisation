@@ -73,7 +73,7 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
         + barRoutes*58 + (tileCount?110:0) + (hasBefore?135:0);
       return { id:context.contextOccurrenceId, kind:"CONTEXT" as const, context, density, spatialFamily:contextFamily(template),
         iconKey:model.presentation.objects[context.contextOccurrenceId].iconKey,
-        width:template === "short-stay" ? 400 : template === "night-out" ? 350 : ["gift", "family-visit"].includes(template) ? 240 : 230,
+        width:bar&&(barRoutes>1||hasBefore&&tileCount>1)?580:template === "short-stay" ? 400 : template === "night-out" ? 350 : ["gift", "family-visit"].includes(template) ? 240 : 230,
         height:bar ? barHeight : template === "short-stay" ? 212 : template === "night-out" ? 212 : template === "gift" ? 148
           : template === "family-visit" ? 142 : density === "SPARSE" ? 140 : density === "RICH" ? 190 : 170 };
     }),

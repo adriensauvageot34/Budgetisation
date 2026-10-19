@@ -1004,8 +1004,8 @@
 .barLivingImage { width:64px; height:64px; flex:none; object-fit:contain; }
 .barLivingTools { display:flex; align-self:flex-start; gap:4px; margin-left:auto; }
 .barLivingTools button { display:grid; place-items:center; width:28px; height:28px; border:0; border-radius:50%; background:#f1eef5; }
-.barLivingCompact { padding:0 12px 12px; display:flex; flex-direction:column; gap:6px; min-height:0; overflow:visible; }
-.barLivingCompact>div:not(.barLivingTiles) { display:flex; gap:6px; }
+.barLivingCompact { padding:0 12px 12px; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:6px; min-height:0; overflow:visible; }
+.barLivingCompact>.barLivingMetadata,.barLivingCompact>.barLivingRoutes,.barLivingCompact>.barInlineAdd { grid-column:1 / -1; }
 .barLivingCompact>button,.barLivingCompact>div>button { text-align:left; border:0; background:#f4f1f6; padding:7px 9px; border-radius:10px; font-size:11px; }
 .barLivingEditor { display:flex; flex-direction:column; gap:9px; padding:0 14px 14px; min-height:0; overflow:visible; }
 .barLivingMetadata { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
@@ -1034,6 +1034,8 @@
    scroll naturally; neither the card nor its dock becomes a scroll container. */
 :global(main):has(.columns[data-bar-living-open=true]) { overflow-y:auto!important; }
 .columns[data-bar-living-open=true] .plateau { overflow-y:visible; }
+:global(main):has(.carouselViewport[data-bar-page=true]) { overflow-y:auto!important; }
+.carouselViewport[data-bar-page=true] .plateau { overflow-y:visible; }
 .barLivingCard { box-sizing:border-box; }
 .barLivingHeader { position:sticky; top:0; z-index:1; background:#fffdfa; }
 .barLivingCard[data-expanded=true] .barLivingHeader { border-bottom:1px solid #f0e8df; }

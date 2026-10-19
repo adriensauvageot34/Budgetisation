@@ -258,7 +258,8 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     dwell.current = setTimeout(() => { dwell.current = null; interaction.over(null); go(active + direction); }, 600); };
   return <>
     <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-drop data-board-page-active={active}
-      style={expandedId ? { minHeight: Math.max(expandedHeight??0,...(layouts[active]??[]).map(box=>(box.row-1+box.rowSpan)*10-5))+36 } : undefined} {...dropProps}
+      data-bar-page={!!expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id])||undefined}
+      style={expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id]) ? { minHeight: Math.max(expandedHeight??0,...(layouts[active]??[]).map(box=>(box.row-1+box.rowSpan)*10-5))+36 } : undefined} {...dropProps}
       onClick={e => { if (e.target === e.currentTarget || e.target instanceof Element && e.target.matches("[data-mosaic],[data-board-page]")) emptyClick(); }}>
       <div className={styles.plateauTrack} style={{ transform: `translateX(-${active * 100}%)` }} data-plateau-track onTransitionEnd={event=>{if(event.target===event.currentTarget)setDeparting(active);}}>
         {layouts.map((inventory, index) => <section key={index} className={styles.plateau} data-board-page={index} data-single-page={layouts.length === 1} aria-label={`Page ${index + 1} sur ${pages.length}`}
