@@ -1164,7 +1164,7 @@
 /* One continuous cream surface at every height; the decorative image never grows
  * with content. It is not a screenshot or a second layer of interactive UI. */
 .barLivingCard { position:relative; isolation:isolate; background:linear-gradient(155deg,#fff7e9,#fcf5ec 420px,#fffaf2); border-color:#e4cdb0; }
-.barLivingCard::before { content:""; position:absolute; z-index:-1; inset:0 0 auto; height:190px; pointer-events:none; background:url('/planned-visuals/builder/clay/scenes/bar-apero-warm-header.webp') right top / auto 190px no-repeat; mask-image:linear-gradient(#000 60%,transparent); }
+.barLivingCard::before { content:""; position:absolute; z-index:-1; inset:0 0 auto; height:min(190px,100%); pointer-events:none; background:url('/planned-visuals/builder/clay/scenes/bar-apero-warm-header.webp') right top / auto 190px no-repeat; mask-image:linear-gradient(#000 60%,transparent); }
 .barLivingHeader { background:transparent; padding:12px 14px 8px; gap:8px; align-items:flex-start; }
 .barLivingIdentity { flex:0 1 auto; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:8px 10px; border-radius:13px; background:rgb(255 253 247 / .9); box-shadow:0 2px 8px #69471908; }
 .barLivingIdentity h3 { flex:initial; margin:0; font-size:15px; line-height:1.3; }
