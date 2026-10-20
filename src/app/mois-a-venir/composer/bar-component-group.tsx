@@ -36,9 +36,12 @@ export function BarGroupFace({group,model,owner,slot,closed=false}:{group:Group;
      </span>
    </span>;
  }
- return <span className={styles.barCompactFace} data-bar-group-face><strong title={component?.label}>{component?.label??'Moment lié'}</strong>
-   <BarProductVisual assetKey={component?.productAssetRef?.assetKey} label={component?.label}/>{badges}
-   {component?.unitBasis&&component.unitBasis!=='ITEM'&&<small>{component.unitBasis==='SHARED'?'Lot partagé':'Par personne tarifée'}</small>}
+ return <span className={styles.barCompactFace} data-bar-group-face>
+   <span className={styles.barOpenTileHeading}><strong title={component?.label}>{component?.label??'Moment lié'}</strong>{badges}</span>
+   <span className={styles.barOpenTileVisual}><BarProductVisual compact assetKey={component?.productAssetRef?.assetKey} label={component?.label}/>
+     {component?.unitBasis==='SHARED'&&<span className={styles.barOpenUnit} role="img" aria-label="Consommation commune · lot" title="Consommation commune · lot"><UsersRound size={13} aria-hidden="true"/></span>}
+     {component?.unitBasis==='PERSON'&&<span className={styles.barOpenUnit} role="img" aria-label="Par personne tarifée" title="Par personne tarifée"><UserRound size={13} aria-hidden="true"/></span>}
+   </span>
    {first.provenance==='PERSONAL_SUGGESTION'&&<small>Suggestion non retenue</small>}
  </span>;
 }

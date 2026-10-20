@@ -1449,3 +1449,40 @@
 .barMomentRailArrows button { border:1px solid #ddcfbb; border-radius:7px; background:#fffaf4; color:#745b37; cursor:pointer; }
 .barMomentRail:focus-visible,.barProgressiveSlot:focus-visible { outline:2px solid #9b733b; outline-offset:2px; }
 .barLivingEditor[data-bar-progressive] .barItemSection>header>.barInlineAdd { display:none; }
+
+/* R7.3: open-card polish only; closed R6.2 and the composition dock keep their geometry. */
+.barLivingCard[data-expanded=true] { height:auto; min-height:0; }
+.barLivingEditor[data-bar-progressive] { gap:6px; padding:6px 12px 8px; }
+.barLivingEditor[data-bar-progressive] .barLivingSections { gap:8px; }
+.barLivingEditor[data-bar-progressive] .barLivingSections:empty { display:none; }
+.barLivingCard[data-expanded=true] .barItemSection>header { min-height:24px; margin-bottom:4px; }
+.barLivingEditor[data-bar-progressive] [data-bar-before]>header { padding-right:0; flex-wrap:nowrap; }
+.barLivingEditor[data-bar-progressive] [data-bar-before]>header .barBeforeArt { position:static; width:46px; height:26px; margin-left:auto; object-fit:contain; }
+.barLivingCard[data-expanded=true] .barBeforeRemove { display:grid; place-items:center; flex:none; width:26px; height:26px; padding:4px; border:0; border-radius:8px; color:#80694d; background:transparent; }
+.barLivingCard[data-expanded=true] .barBeforeRemove:hover { background:#f4e5ce; }
+.barLivingCard[data-expanded=true] .barMomentRail { gap:6px; padding:3px; }
+.barLivingCard[data-expanded=true] .barMomentRail>.barEconomicTile { flex:0 0 128px; min-width:128px; max-width:128px; }
+.barLivingCard[data-expanded=true] .barMomentRail .barGroup { min-width:0; }
+.barLivingCard[data-expanded=true] .barMomentRail .barGroup>button { height:110px; min-height:110px; padding:6px; background:#fffdf7; }
+.barLivingCard[data-expanded=true] .barMomentRail>.barActiveTile { flex-basis:240px; min-width:240px; }
+.barLivingCard[data-expanded=true] .barCompactFace { display:grid; grid-template-rows:32px minmax(0,1fr); gap:2px; height:100%; min-width:0; }
+.barOpenTileHeading { display:grid; grid-template-columns:minmax(0,1fr) max-content; gap:3px; align-items:start; min-width:0; text-align:left; }
+.barOpenTileHeading>strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; font-size:12px; line-height:1.2; }
+.barOpenTileHeading .barCompactBadges { flex-direction:column; flex-wrap:nowrap; align-items:flex-end; gap:2px; }
+.barOpenTileHeading .barCompactBadges>span { padding:1px 4px; font-size:10px; line-height:1.2; border-radius:6px; background:#fff0d7; border-color:#edd4ad; }
+.barOpenTileHeading .barCompactBadges>span:last-child { background:#ffbd56; border-color:#efaa3e; font-weight:650; }
+.barOpenTileHeading .barCompactBadges>[data-price-unknown=true] { border-style:dashed; background:#fff4df; font-weight:500; }
+.barOpenTileVisual { display:grid; place-items:center; position:relative; min-height:0; }
+.barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol { width:80px; height:58px; background:transparent; }
+.barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol img { width:80px; height:58px; object-fit:cover; object-position:right center; border-radius:8px; mix-blend-mode:multiply; }
+.barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol img:is([src*="-closed"],[src*="/r7/"]) { object-position:center; }
+.barOpenUnit { position:absolute; right:0; bottom:0; display:grid; place-items:center; width:18px; height:18px; border-radius:6px; color:#746044; background:#faf4e7; }
+.barLivingCard[data-expanded=true] .barProgressiveSlot { flex:0 0 48px; width:48px; min-height:104px; height:104px; padding:0 3px; box-sizing:border-box; }
+.barLivingCard[data-expanded=true] .barProgressiveSlot:has(small:not(:empty)) { flex-basis:88px; width:88px; }
+.barLivingCard[data-expanded=true] .barProgressiveSlot>span { font-size:24px; }
+.barLivingCard[data-expanded=true] .barProgressiveSlot>small { text-align:center; }
+.barProgressiveAmount>[data-bar-return-direct] { display:inline-flex; align-items:center; gap:3px; padding:3px 5px; border-color:transparent; background:transparent; font-size:11px; color:#796346; }
+.barProgressiveAmount>[data-bar-return-direct]:hover { background:#f5ead7; }
+.barLivingCard[data-expanded=true] .barManage>summary { font-size:11px; color:#796346; border-radius:7px; }
+.barOpenActions { position:absolute; right:0; top:100%; z-index:5; min-width:170px; padding:7px; border:1px solid #dfd0b8; border-radius:10px; background:#fffdf8; box-shadow:0 7px 20px #4a35121a; }
+.barOpenActions small { padding:3px 7px; }

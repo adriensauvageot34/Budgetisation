@@ -31,7 +31,7 @@ import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
 import {prospectivePersonIdentity} from "@/domain/phase2/planned-product";
 import {BarPageControls} from "./bar-pages";
 import type {BarViewMemory} from "./bar-view-memory";
-import {Trash2} from "lucide-react";
+import {Trash2,Undo2} from "lucide-react";
 import styles from "./composer.module.css";
 import {componentPresentationGroups} from '@/domain/phase2/planner/component-group-presentation';
 import {BarComponentGroup} from './bar-component-group';
@@ -219,7 +219,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       onKeyDown={e=>{if(composingAmount.current||e.nativeEvent?.isComposing)return;if(e.key==="Enter"){e.preventDefault();e.stopPropagation();saveInline();}if(e.key==="Escape"){e.preventDefault();e.stopPropagation();inlineCommitted.current=true;setInlineEditing(false);setDirty(false);setQuickAmount("");setError("");}}}/></label>
       :detailed?<strong data-bar-derived-amount>{summary?.knownAmount!=null?money(summary.knownAmount)+(summary.incomplete?" + ?":""):"Coût à préciser"}</strong>
       :<button type="button" data-bar-inline-trigger disabled={busy} title="Modifier les consommations Au bar ; Before et trajets restent indépendants" onClick={beginInline}>{summary?.knownAmount!=null?money(summary.knownAmount):"Coût à préciser"} <span aria-hidden="true">✎</span></button>}
-    {!detailed?<button type="button" disabled={busy} onClick={revealDetails}>Détailler</button>:<button type="button" disabled={busy} onClick={returnDirect}>Revenir au montant direct</button>}
+    {!detailed?<button type="button" disabled={busy} onClick={revealDetails}>Détailler</button>:<button type="button" data-bar-return-direct aria-label="Revenir au montant direct" title="Revenir au montant direct" disabled={busy} onClick={returnDirect}><Undo2 size={12} aria-hidden="true"/>Montant direct</button>}
   </div>;
   const open=(target:BarTarget)=>{if(!guard(()=>resumeOpen(target)))return;
     if(target.startsWith("route:")){const [,dir,key]=target.split(":");setDirection(dir as "outbound"|"return");setAllEndpoints(false);setManual("");if(key==="vehicle"){move("vehicle");}else if(key==="fare"){const actual=barLeg(context,dir as "outbound"|"return");setFare(actual?.pricing?.fare.kind==="MANUAL"?actual.pricing.fare.unitAmount:"");move("fare");}else{setEndpoint(key as "origin"|"destination");move("endpoint");}return;}
@@ -455,7 +455,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     }
     <div className={styles.barLivingSections} data-scene={page}>
     {before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-before data-bar-section="before" aria-label="Avant de sortir">
-      <header><h4>Before</h4><BeforeEditorialArt/><button type="button" className={styles.barInlineAdd} aria-label="Compléter le Before" disabled={busy||beforeLocked} onClick={()=>go("before")}>+ Ajouter</button><details><summary aria-label="Actions du Before">⋯</summary><button type="button" disabled={busy||beforeLocked} onClick={removeBefore}>Retirer le Before</button></details></header>
+      <header><h4>Before</h4><BeforeEditorialArt/><button type="button" className={styles.barBeforeRemove} aria-label="Retirer le Before" title="Retirer le Before" disabled={busy||beforeLocked} onClick={removeBefore}><Trash2 size={14} aria-hidden="true"/></button></header>
       {beforeLocked&&<p>Ce Before est protégé. Ses composants restent consultables.</p>}
       <BarMomentRail label="Objets Before" addLabel="Ajouter un objet au Before" disabled={busy||beforeLocked} dropBlocked={dirty} add={()=>selectMoment("before")} model={model} owner={before.child.contextOccurrenceId} slot="extras">{listGroups([before.bottle,...before.extras]).map(group=>{const item=group.items[0];return <div key={group.key} data-bar-before-item={item.selectionId} data-bar-active-tile={page==='row'&&group.items.some(i=>i.selectionId===row.id)} className={page==='row'&&group.items.some(i=>i.selectionId===row.id)?styles.barActiveTile:styles.barEconomicTile}><BarComponentGroup group={group} model={model} owner={before.child.contextOccurrenceId} slot="$before" disabled={busy||beforeLocked} choose={chosen=>chosen.kind==='COMPONENT'&&editComponent(chosen.selectionId===before.bottle.selectionId?'before-main':'before-extras',chosen)}>{page==='row'&&group.items.some(i=>i.selectionId===row.id)&&activeRow}</BarComponentGroup></div>;})}</BarMomentRail>
 
