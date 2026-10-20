@@ -1552,6 +1552,30 @@
         "asset:automotive:part",
         "choice:automotiveKind:PRODUCT"
       ]
+    },
+    {
+      "key": "drinks/cocktail-closed",
+      "file": "drinks/cocktail-closed.webp",
+      "subject": "R6.2 transparent derivative of the existing cocktail clay illustration. Same product, closed card only.",
+      "choices": [
+        "scene:bar-cocktail-closed"
+      ]
+    },
+    {
+      "key": "drinks/soft-closed",
+      "file": "drinks/soft-closed.webp",
+      "subject": "R6.2 transparent derivative of the existing soft clay illustration. Same product, closed card only.",
+      "choices": [
+        "scene:bar-soft-closed"
+      ]
+    },
+    {
+      "key": "food/tapas-closed",
+      "file": "food/tapas-closed.webp",
+      "subject": "R6.2 transparent derivative of the existing tapas clay illustration. Same product, closed card only.",
+      "choices": [
+        "scene:bar-tapas-closed"
+      ]
     }
   ],
   "exclusions": [

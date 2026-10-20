@@ -1331,6 +1331,7 @@
 .barLivingCard[data-expanded=false] .barLivingHeader strong { font-size:22px; }
 .barLivingCard[data-expanded=false] .barLivingAmount { display:flex; align-items:center; flex-wrap:wrap; gap:5px 8px; }
 .barLivingCompact { padding:0 10px 6px; gap:4px; }
+.barLivingCompact>section { grid-column:1 / -1; }
 .barLivingCompact .barLivingMetadata { gap:5px; }
 .barLivingCompact .barLivingMetadata button { padding:5px 8px; background:rgb(255 253 248 / .93); border:1px solid #e4dac9; color:#403526; }
 .barClosedCostStatus { position:relative; display:inline-flex; align-items:center; gap:3px; max-width:185px; color:#66543a; font-size:10px; line-height:1.25; cursor:help; }
@@ -1352,7 +1353,7 @@
 .barClosedTileVisual { display:grid; place-items:center; position:relative; min-height:0; }
 .barLivingCompact .barClosedTileVisual .barProductSymbol { display:grid; place-items:center; width:100%; height:48px; grid-row:auto; background:transparent; }
 .barLivingCompact .barClosedTileVisual .barProductSymbol img { width:76px; height:48px; object-fit:cover; object-position:right center; mix-blend-mode:multiply; }
-.barLivingCompact .barClosedTileVisual .barProductSymbol:has(img[src*=shared-bottle-closed],img[src*=beer-closed]) img { object-fit:cover; object-position:center; }
+.barLivingCompact .barClosedTileVisual .barProductSymbol:has(img[src*="-closed"]) img { object-fit:cover; object-position:center; }
 .barClosedUnit { position:absolute; right:-2px; bottom:-1px; display:grid; place-items:center; width:20px; height:20px; border-radius:7px; background:#faf8f3; color:#725e3c; }
 .barClosedSuggestion { position:absolute; bottom:0; left:0; padding:2px 4px; border-radius:4px; background:white; color:#746855; font-size:10px; }
 
