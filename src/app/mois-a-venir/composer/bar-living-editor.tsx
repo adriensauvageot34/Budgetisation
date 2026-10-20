@@ -216,7 +216,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       onCompositionStart={()=>{composingAmount.current=true;}} onCompositionEnd={()=>{composingAmount.current=false;}}
       onBlur={()=>{if(dirty)saveInline();else setInlineEditing(false);}}
       onKeyDown={e=>{if(composingAmount.current||e.nativeEvent?.isComposing)return;if(e.key==="Enter"){e.preventDefault();e.stopPropagation();saveInline();}if(e.key==="Escape"){e.preventDefault();e.stopPropagation();inlineCommitted.current=true;setInlineEditing(false);setDirty(false);setQuickAmount("");setError("");}}}/></label>
-      :detailed?<strong data-bar-derived-amount>{summary?.knownAmount!=null?money(summary.knownAmount):"Coût à préciser"}{summary?.incomplete?" + ?":""}</strong>
+      :detailed?<strong data-bar-derived-amount>{summary?.knownAmount!=null?money(summary.knownAmount)+(summary.incomplete?" + ?":""):"Coût à préciser"}</strong>
       :<button type="button" data-bar-inline-trigger disabled={busy} title="Modifier les consommations Au bar ; Before et trajets restent indépendants" onClick={beginInline}>{summary?.knownAmount!=null?money(summary.knownAmount):"Coût à préciser"} <span aria-hidden="true">✎</span></button>}
     {!detailed?<button type="button" disabled={busy} onClick={revealDetails}>Détailler</button>:<button type="button" disabled={busy} onClick={returnDirect}>Revenir au montant direct</button>}
   </div>;

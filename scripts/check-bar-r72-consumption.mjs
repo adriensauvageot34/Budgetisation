@@ -37,6 +37,21 @@ try{
  await check('UNDO_REDO_SNAPSHOTS_AND_CAS_STALE_REJECTED',async()=>{const before=structuredClone(semantic),stale=command('DIRECT');semantic=editNightOut(semantic,{contextOccurrenceId:id,fields:{timingNote:'À préciser'}});assert.throws(()=>editNightOut(semantic,stale.edit),/STALE/);semantic=parsePlanSemanticState(before);transition('DIRECT');const after=structuredClone(semantic);semantic=parsePlanSemanticState(before);assert.deepEqual(current().slotSelections.extras.items,details);semantic=parsePlanSemanticState(after);assert.equal(current().slotSelections.extras.items[0].selectionId,directId);});
  await check('EXPLICIT_ZERO_NOT_UNKNOWN',async()=>{transition('DIRECT',{amount:'0'});assert.deepEqual(current().slotSelections.extras.items[0].cost,{kind:'MANUAL',unitAmount:'0'});transition('DETAILED');assert.equal(current().slotSelections.extras.items[2].cost.kind,'UNKNOWN');});
  await check('LOCKS_FUNDING_LEGACY_AMBIGUOUS_PRESERVED',async()=>{const before=structuredClone(semantic);assert.throws(()=>editNightOut({...semantic,preferences:{anchors:[id],flexibility:{}}},command('DIRECT').edit),/LOCKED/);const financed=line(97206,{kind:'MANUAL',unitAmount:'8'},{fundingAllocations:[{source:'BANK',amount:'8'}]});semantic=editNightOut(semantic,{contextOccurrenceId:id,fields:{},slots:{extras:[...details,financed]}});assert.throws(()=>transition('DIRECT'),/SCOPE_NEEDS_CHOICE/);assert.ok(current().slotSelections.extras.items.some(i=>i.selectionId===financed.selectionId));semantic=before;const legacy={...current(),fields:{fieldSchemaVersion:'context-fields@v2',label:'Ancien bar'}};const original=plannerDigest(legacy);assert.throws(()=>editNightOut(state([], [legacy]),{contextOccurrenceId:id,fields:{},consumption:{mode:'DIRECT',amount:'15',selectionId:uuid(97207),expectedContextDigest:original}}),/LEGACY_NEEDS_CHOICE/);assert.equal(plannerDigest(legacy),original);});
+ await check('INDEPENDENT_ADDITIVE_BEFORE_SHARED_RELOAD_AND_OWNER_PROJECTION',async()=>{
+  const contribution={...line(97211,{kind:'MANUAL',unitAmount:'5'}),optionKey:'main',label:'Contribution',economicScope:{version:'component-economic-scope@v1',kind:'ADDITIVE_CONTRIBUTION',coveredSelectionIds:[uuid(97211)]},fundingAllocations:[{source:'BANK',amount:'5'}]};
+  const bottle={...line(97212,{kind:'MANUAL',unitAmount:'20'}),optionKey:'activity',unitBasis:'SHARED',label:'Bouteille'};
+  semantic=editNightOut(semantic,{contextOccurrenceId:id,fields:{},slots:{main:[contribution]},before:{childContextOccurrenceId:uuid(97213),selectionId:uuid(97214),bottle,extras:[]}});
+  const before=structuredClone(semantic.contexts.find(c=>c.contextOccurrenceId===uuid(97213)));
+  transition('DIRECT',{amount:'15'});await save();semantic=(await readComposerDrafts(scope,'2026-11')).active.semanticState;
+  const directRequests=expandComposableContexts(semantic,fixture(),[]).requests;
+  assert.equal(directRequests.filter(r=>r.label==='Consommations').length,1);
+  assert.deepEqual(directRequests.find(r=>r.label==='Consommations').cost,{kind:'MANUAL',unitAmount:'15'});
+  assert.equal(directRequests.find(r=>r.label==='Bouteille').quantity,'1');
+  assert.deepEqual(current().slotSelections.main.items,[contribution]);
+  transition('DETAILED');assert.deepEqual(current().slotSelections.extras.items,details);
+  assert.deepEqual(semantic.contexts.find(c=>c.contextOccurrenceId===before.contextOccurrenceId),before);
+  assert.deepEqual(current().slotSelections.main.items,[contribution]);
+ });
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  fs.mkdirSync('outputs/bar-r72',{recursive:true});fs.writeFileSync('outputs/bar-r72/consumption.json',JSON.stringify({level:'REAL_SQL_PGLITE_OFFICIAL_DRAFT_RPC_NOT_AUTH_RLS',checks,remoteWrites:0,financialWrites:0},null,2));
 }finally{await pg.close();}
