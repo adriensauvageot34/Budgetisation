@@ -1,0 +1,10 @@
+C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\domain\phase2\planner\night-out-edit.ts:142
+                        throw new TypeError("CONTEXT_PRODUCT_ASSET_UNKNOWN");
+                              ^
+
+TypeError: CONTEXT_PRODUCT_ASSET_UNKNOWN
+    at editNightOut (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\domain\phase2\planner\night-out-edit.ts:142:31)
+    at barClosedFixture (C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\src\server\recette\bar-closed-fixture.ts:15:46)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-r61-closed.mjs:24:87
+
+Node.js v22.18.0

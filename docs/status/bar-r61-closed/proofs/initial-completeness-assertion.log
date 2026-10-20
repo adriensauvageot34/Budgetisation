@@ -1,0 +1,23 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /Montant partiel/. Input:
+
+' Bar / Apéro 68,00 €         Montant partiel           Lieu     Date   Personnes  Au bar Bouteille ×1 20,00 €     Bière ×2 48,00 € '
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-r61-closed.mjs:29:40 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: ' Bar / Apéro 68,00 €         Montant partiel           Lieu     Date   Personnes  Au bar Bouteille ×1 20,00 €     Bière ×2 48,00 € ',
+  expected: /Montant partiel/,
+  operator: 'doesNotMatch'
+}
+
+Node.js v22.18.0

@@ -1,0 +1,277 @@
+[
+  {
+    "label": "rich1440-product2c4e594",
+    "card": {
+      "bottom": 668.5,
+      "height": 295,
+      "right": 1159.0249938964844,
+      "width": 372.2875061035156,
+      "x": 786.7374877929688,
+      "y": 373.5
+    },
+    "cell": {
+      "bottom": 668.5,
+      "height": 295,
+      "right": 1159.0249938964844,
+      "width": 372.2875061035156,
+      "x": 786.7374877929688,
+      "y": 373.5
+    },
+    "internalScroll": false,
+    "overflowX": false,
+    "sha": "2c4e594529d6cb2e2cbab65128943c8bd2307720",
+    "tiles": [
+      {
+        "images": [
+          {
+            "loaded": true,
+            "src": "/planned-visuals/builder/clay/drinks/shared-bottle-closed.webp"
+          }
+        ],
+        "rect": {
+          "bottom": 650.1000366210938,
+          "height": 116,
+          "right": 969.8750457763672,
+          "width": 170.33750915527344,
+          "x": 799.5375366210938,
+          "y": 534.1000366210938
+        },
+        "text": "Bouteille×120,00 €"
+      },
+      {
+        "images": [
+          {
+            "loaded": true,
+            "src": "/planned-visuals/builder/clay/drinks/beer-closed.webp"
+          }
+        ],
+        "rect": {
+          "bottom": 650.1000366210938,
+          "height": 116,
+          "right": 1146.2250061035156,
+          "width": 170.35000610351562,
+          "x": 975.875,
+          "y": 534.1000366210938
+        },
+        "text": "Bière×248,00 €"
+      }
+    ],
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  },
+  {
+    "label": "rich1440-popover-open",
+    "card": {
+      "bottom": 668.5,
+      "height": 295,
+      "right": 1159.0249938964844,
+      "width": 372.2875061035156,
+      "x": 786.7374877929688,
+      "y": 373.5
+    },
+    "cell": {
+      "bottom": 668.5,
+      "height": 295,
+      "right": 1159.0249938964844,
+      "width": 372.2875061035156,
+      "x": 786.7374877929688,
+      "y": 373.5
+    },
+    "internalScroll": false,
+    "overflowX": false,
+    "sha": "2c4e594529d6cb2e2cbab65128943c8bd2307720",
+    "tiles": [
+      {
+        "images": [
+          {
+            "loaded": true,
+            "src": "/planned-visuals/builder/clay/drinks/shared-bottle-closed.webp"
+          }
+        ],
+        "rect": {
+          "bottom": 650.1000366210938,
+          "height": 116,
+          "right": 969.8750457763672,
+          "width": 170.33750915527344,
+          "x": 799.5375366210938,
+          "y": 534.1000366210938
+        },
+        "text": "Bouteille×120,00 €"
+      },
+      {
+        "images": [
+          {
+            "loaded": true,
+            "src": "/planned-visuals/builder/clay/drinks/beer-closed.webp"
+          }
+        ],
+        "rect": {
+          "bottom": 648.1000366210938,
+          "height": 116,
+          "right": 1146.2250061035156,
+          "width": 170.35000610351562,
+          "x": 975.875,
+          "y": 532.1000366210938
+        },
+        "text": "Bière×248,00 €"
+      }
+    ],
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  },
+  {
+    "label": "empty1440-final",
+    "card": {
+      "bottom": 548.5,
+      "height": 175,
+      "right": 1159.0249938964844,
+      "width": 372.2875061035156,
+      "x": 786.7374877929688,
+      "y": 373.5
+    },
+    "cell": {
+      "bottom": 548.5,
+      "height": 175,
+      "right": 1159.0249938964844,
+      "width": 372.2875061035156,
+      "x": 786.7374877929688,
+      "y": 373.5
+    },
+    "internalScroll": false,
+    "overflowX": false,
+    "sha": "2c4e594529d6cb2e2cbab65128943c8bd2307720",
+    "tiles": [],
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  },
+  {
+    "label": "partial1440-final",
+    "card": {
+      "bottom": 668.5,
+      "height": 295,
+      "right": 1159.0249938964844,
+      "width": 372.2875061035156,
+      "x": 786.7374877929688,
+      "y": 373.5
+    },
+    "cell": {
+      "bottom": 668.5,
+      "height": 295,
+      "right": 1159.0249938964844,
+      "width": 372.2875061035156,
+      "x": 786.7374877929688,
+      "y": 373.5
+    },
+    "internalScroll": false,
+    "overflowX": false,
+    "sha": "2c4e594529d6cb2e2cbab65128943c8bd2307720",
+    "tiles": [
+      {
+        "images": [
+          {
+            "loaded": true,
+            "src": "/planned-visuals/builder/clay/drinks/shared-bottle-closed.webp"
+          }
+        ],
+        "rect": {
+          "bottom": 650.1000366210938,
+          "height": 116,
+          "right": 969.8750457763672,
+          "width": 170.33750915527344,
+          "x": 799.5375366210938,
+          "y": 534.1000366210938
+        },
+        "text": "Bouteille×120,00 €"
+      },
+      {
+        "images": [
+          {
+            "loaded": true,
+            "src": "/planned-visuals/builder/clay/drinks/beer-closed.webp"
+          }
+        ],
+        "rect": {
+          "bottom": 650.1000366210938,
+          "height": 116,
+          "right": 1146.2250061035156,
+          "width": 170.35000610351562,
+          "x": 975.875,
+          "y": 534.1000366210938
+        },
+        "text": "Bière×28,00 € + ?"
+      }
+    ],
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  },
+  {
+    "label": "rich1152-active-settled",
+    "card": {
+      "bottom": 508.6000061035156,
+      "height": 295,
+      "right": 943.9125366210938,
+      "width": 381.2000122070313,
+      "x": 562.7125244140625,
+      "y": 213.6000061035156
+    },
+    "cell": {
+      "bottom": 508.6000061035156,
+      "height": 295,
+      "right": 943.9125366210938,
+      "width": 381.2000122070313,
+      "x": 562.7125244140625,
+      "y": 213.6000061035156
+    },
+    "internalScroll": false,
+    "overflowX": false,
+    "sha": "2c4e594529d6cb2e2cbab65128943c8bd2307720",
+    "tiles": [
+      {
+        "images": [
+          {
+            "loaded": true,
+            "src": "/planned-visuals/builder/clay/drinks/shared-bottle-closed.webp"
+          }
+        ],
+        "rect": {
+          "bottom": 490.2000122070313,
+          "height": 116,
+          "right": 750.3125152587891,
+          "width": 174.8000030517578,
+          "x": 575.5125122070312,
+          "y": 374.2000122070313
+        },
+        "text": "Bouteille×120,00 €"
+      },
+      {
+        "images": [
+          {
+            "loaded": true,
+            "src": "/planned-visuals/builder/clay/drinks/beer-closed.webp"
+          }
+        ],
+        "rect": {
+          "bottom": 490.2000122070313,
+          "height": 116,
+          "right": 931.1125030517578,
+          "width": 174.8000030517578,
+          "x": 756.3125,
+          "y": 374.2000122070313
+        },
+        "text": "Bière×248,00 €"
+      }
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1152
+    }
+  }
+]

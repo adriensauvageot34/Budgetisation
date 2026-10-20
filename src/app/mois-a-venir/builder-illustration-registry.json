@@ -1,5 +1,8 @@
 {
   "illustrations": {
+    "drinks/beer-closed": "drinks/beer-closed.webp",
+    "drinks/shared-bottle-closed": "drinks/shared-bottle-closed.webp",
+    "scenes/bar-interior-closed": "scenes/bar-interior-closed.webp",
     "moments/before-editorial": "moments/before-editorial.webp",
     "intent/restaurant": "intent/restaurant.webp",
     "intent/fast-food": "intent/fast-food.webp",
@@ -167,7 +170,10 @@
     "automotive/part": "automotive/part.webp"
   },
   "choices": {
+    "scene:bar-beer-closed": "drinks/beer-closed",
     "scene:bar-before": "moments/before-editorial",
+    "scene:bar-shared-closed": "drinks/shared-bottle-closed",
+    "scene:bar-closed": "scenes/bar-interior-closed",
     "intent:restaurant": "intent/restaurant",
     "module:restaurant": "intent/restaurant",
     "scene:restaurant": "intent/restaurant",

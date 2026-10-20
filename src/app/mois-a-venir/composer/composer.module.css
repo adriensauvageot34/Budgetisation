@@ -1182,7 +1182,7 @@
 .barLivingAmount[data-cost-unknown=true] strong { font-size:14px; font-weight:650; }
 .barLivingTools { align-self:flex-start; }
 .barLivingCard:not([data-expanded=true]) .barLivingTools { position:absolute; right:10px; top:10px; }
-.barLivingCard:not([data-expanded=true]) .barLivingIdentity h3 { flex-basis:100%; margin-right:80px; }
+.barLivingCard:not([data-expanded=true]) .barLivingIdentity h3 { flex-basis:100%; margin-right:28px; }
 .barLivingCard[data-richness=empty]:not([data-expanded=true]) .barLivingImage { width:90px; height:70px; }
 .barLivingCard[data-richness=rich]:not([data-expanded=true]) .barLivingImage { width:64px; height:56px; }
 .barLivingCard[data-expanded=true] .barLivingImage { width:64px; height:56px; }
@@ -1317,7 +1317,34 @@
 .barCompactBadges>span { display:inline-flex; align-items:center; padding:3px 7px; border-radius:8px; background:#fffdf6; border:1px solid #e8dcc6; color:#4c3c24; font-size:12px; line-height:1.25; white-space:nowrap; }
 .barCompactFace>small { font-size:11px; }
 .barItemSection .barEconomicTile { flex:0 1 156px; min-width:126px; max-width:190px; }
-.barLivingCompact .barGroup { flex:0 1 156px; min-width:126px; max-width:190px; }
+/* R6.1 closed card only. Shared editor/dock geometry and semantics are untouched. */
+.barLivingCard[data-expanded=false] {
+  background:#f8edda url('/planned-visuals/builder/clay/scenes/bar-interior-closed.webp') center 60% / cover no-repeat;
+}
+.barLivingCard[data-expanded=false][data-richness=rich] { background-position:center 66%; }
+.barLivingCard[data-expanded=false] .barLivingIdentity { gap:3px 9px; padding:7px 10px; border-radius:13px; background:rgb(255 253 248 / .96); }
+.barLivingCard[data-expanded=false] .barLivingAmount { display:flex; align-items:center; flex-wrap:wrap; gap:5px 8px; }
+.barLivingCompact .barLivingMetadata button { background:#fffdfa; border:1px solid #e4dac9; color:#403526; }
+.barClosedCostStatus { display:inline-flex; align-items:center; gap:4px; max-width:185px; color:#66543a; font-size:11px; line-height:1.25; }
+.barClosedCostStatus:focus-visible { outline:2px solid #795719; outline-offset:3px; border-radius:4px; }
+.barLivingCompact>section>h4,.barLivingCompact [data-bar-before-miniature]>.barSceneBack { width:fit-content; padding:3px 7px; border-radius:7px; background:rgb(255 253 248 / .96); color:#403526; }
+.barLivingCompact .barGroup { flex:1 1 148px; min-width:min(148px,100%); max-width:220px; }
+.barLivingCompact .barGroup>button { height:116px; padding:8px; border-color:#e9e2d7; background:#fff; box-shadow:0 2px 5px #4934160b; }
+.barClosedFace { display:grid; grid-template-rows:32px minmax(0,1fr); height:100%; width:100%; min-width:0; text-align:left; }
+.barClosedTileHeading { display:flex; align-items:flex-start; justify-content:space-between; gap:5px; min-width:0; }
+.barGroup .barClosedTileHeading>strong { min-width:0; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:normal; word-break:normal; font-size:12px; line-height:1.25; }
+.barClosedTileHeading .barCompactBadges { flex:none; align-items:center; flex-wrap:nowrap; gap:3px; }
+.barClosedTileHeading .barCompactBadges>span { padding:2px 4px; font-size:11px; color:#43341f; background:#faf8f3; border-color:#eee7da; }
+.barClosedTileHeading .barCompactBadges>span:first-child { color:#796e5e; border-color:transparent; background:transparent; }
+.barClosedTileHeading .barCompactBadges>span:last-child { font-weight:650; }
+.barClosedTileHeading .barCompactBadges>[data-price-unknown=true] { border-style:dashed; color:#746855; font-weight:500; }
+.barClosedTileVisual { display:grid; place-items:center; position:relative; min-height:0; }
+.barLivingCompact .barClosedTileVisual .barProductSymbol { display:grid; place-items:center; width:100%; height:64px; grid-row:auto; background:transparent; }
+.barLivingCompact .barClosedTileVisual .barProductSymbol img { width:90px; height:64px; object-fit:cover; object-position:right center; mix-blend-mode:multiply; }
+.barLivingCompact .barClosedTileVisual .barProductSymbol:has(img[src*=shared-bottle-closed],img[src*=beer-closed]) img { object-fit:cover; object-position:center; }
+.barClosedUnit { position:absolute; right:1px; bottom:1px; display:grid; place-items:center; width:24px; height:24px; border-radius:8px; background:#faf8f3; color:#725e3c; }
+.barClosedSuggestion { position:absolute; bottom:0; left:0; padding:2px 4px; border-radius:4px; background:white; color:#746855; font-size:10px; }
+
 .barGroupLines { margin-top:6px; padding:7px; border:1px solid #dac5a2; border-radius:10px; background:#fffdf8; }
 .barGroupLines p { margin:0 0 5px; font-size:11px; }
 .barGroupLines>button { display:flex; flex-direction:column; width:100%; padding:6px; margin:3px 0; border:1px solid #e7dccb; border-radius:8px; background:white; text-align:left; font-size:12px; }

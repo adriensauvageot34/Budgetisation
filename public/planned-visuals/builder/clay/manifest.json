@@ -12,6 +12,24 @@
   },
   "illustrations": [
     {
+      "key": "drinks/beer-closed",
+      "file": "drinks/beer-closed.webp",
+      "subject": "Transparent R6.1 derivative of existing clay beer mug, same product identity. Closed card only.",
+      "choices": ["scene:bar-beer-closed"]
+    },
+    {
+      "key": "drinks/shared-bottle-closed",
+      "file": "drinks/shared-bottle-closed.webp",
+      "subject": "R6.1 original neutral clay bottle, transparent, no brand or financial meaning. Closed card only.",
+      "choices": ["scene:bar-shared-closed"]
+    },
+    {
+      "key": "scenes/bar-interior-closed",
+      "file": "scenes/bar-interior-closed.webp",
+      "subject": "R6.1 original panoramic warm luminous clay bar interior. Full closed-card background, decorative only.",
+      "choices": ["scene:bar-closed"]
+    },
+    {
       "key": "moments/before-editorial",
       "file": "moments/before-editorial.webp",
       "subject": "R6 editorial Before: a clay coffee table, two glasses, face-down playing cards and a small neutral bowl. Transparent background, no person, brand, text or purchasable bottle. Decoration only.",
