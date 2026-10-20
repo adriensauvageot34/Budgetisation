@@ -29,15 +29,26 @@ La recette authentifie le compte autorisé mais garde les faits financiers en m�
 
 La première recherche publique « Gare Montpellier Saint Roch » sur la Preview a affiché « Recherche Google indisponible ». Aucun résultat réel n'a été sélectionné. Le code refuse les appels quand `GOOGLE_MAPS_API_KEY` manque ; les métadonnées Vercel, lues sans déchiffrement, montrent la clé Google limitée à une ancienne branche R6 et les clés TomTom/HERE limitées à une ancienne branche de clôture. Aucune de ces variables n'est attribuée à R8.2. Le statut HTTP de cet essai n'a pas été capturé : ne pas le présenter comme directement mesuré. Les logs runtime bornés n'ont pas retourné de trace exploitable.
 
-Une demande d'accord distincte est en attente pour réaffecter seulement les portées Preview des trois clés existantes, sans lire/modifier leurs valeurs ni toucher à Production. Aucune modification de leur portée n'a été exécutée. La réception Google réel et Mobility restent bloquées tant que cet accord et le redéploiement ne sont pas effectifs. Aucun secret n'est inclus dans les preuves.
+Après accord humain explicite, les trois variables existantes ont été réaffectées à la seule branche Preview `codex/bar-r8-2-google-endpoints`. PATCH du seul `gitBranch`, sans lire/modifier les valeurs, types ou targets ; Production inchangée. La relecture des métadonnées confirme Preview/sensitive. Les futurs builds des anciennes branches perdent ces trois overrides ; leurs déploiements immuables existants restent inchangés. Les variables Production sont masquées par Vercel : leur absence dans cette liste ne prouve pas leur absence en Production. Aucun secret n'est inclus dans les preuves.
 
 ### Navigateur exécuté indépendamment du fournisseur
 
 À 1440 × 900, Google OFF : saisie libre explicite, navigation vers l'autre point interceptée par le dialogue RAW, « Continuer à modifier » conserve le texte, admission du texte libre sans identité Google, seule l'origine Aller modifiée, Undo rétablit exactement le digest antérieur. Preuves : `proofs/browser-free-mode.json`, `free-mode-undo.png`. Le calcul reste « À préciser » pour ce repère non géolocalisé. Ce test ne certifie ni Google Details réel ni une sauvegarde Supabase.
 
-### Verdict courant
+### Réception Google réelle après correction de portée
 
-`BAR_R8_2_STATUS = DRAFT_BLOCKED`. `GOOGLE_REAL_BROWSER = BLOCKED`, `GOOGLE_DETAILS_EXACT = NOT_RUN` en réel (tests locaux PASS), `GOOGLE_ENDPOINT_PERSIST = PASS` sur round-trip SQL synthétique uniquement, `FOUR_ENDPOINTS_INDEPENDENT = PASS` sur contrats synthétiques uniquement, `GOOGLE_FREE_MODE = PASS`, `RAW_UNDO = PASS` sur la recette navigateur, `MOBILITY_LIVE = NOT_RUN`, `FINANCE_PARITY = 198/198`, `TYPESCRIPT_BUILD = PASS`. Aucun merge, aucune promotion Production, aucune migration, aucune écriture financière distante.
+Preview `dpl_DGREqoonksd1ocXdEb27MVJ7imP1`, READY, SHA `a9920ee323a0697a439eebfb26bb30d79ee85a21` : arbre produit identique à `f94ef725e8ef8163a2540913f0da3b05a3efc69b` ; différence documentaire uniquement. [Recette finale](https://budgetisation-andenhbdt-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris?r62=empty&r63=1). Auth réelle, données financières synthétiques en mémoire, aucun Draft distant ni Apply.
+
+- Quatre recherches et sélections réelles : Aller départ Montpellier Saint-Roch, arrivée Hôtel de Ville ; Retour Taxi départ Musée Fabre, arrivée Place de la Comédie. Details vérifié avant chaque mutation. Les quatre Place IDs distincts restent associés aux bonnes clés après les retours serveur. Le lieu global « Bar des Trois Jours » reste celui de la fixture.
+- Mobility réel revalide les deux endpoints voiture : route 2,245 km, 447 s, 0,254506 L et 0,51 € de coût d'usage PARTIAL. Carburant de repli de la recette synthétique, péage inconnu ; ne pas certifier ici le prix officiel carburant, HERE ou un tarif taxi. Retour Taxi conserve UNKNOWN, aucun coût voiture copié.
+- Inversion du seul Retour : IDs échangés, Aller inchangé ; Undo digest exact puis Redo des mêmes IDs PASS. Mode libre sur un ancien point Google : RAW confirmé, texte préservé, seul le binding modifié disparaît, Undo restitue le Google ID exact.
+- « Relancer la simulation » : serveur relit le Semantic Draft transmis ; quatre IDs et digest conservés, Preview FRESH. Ceci complète le round-trip JSON SQL synthétique ancien/nouveau ; aucun Reload Supabase personnel revendiqué.
+- Dimensions effectivement mesurées : 1440 × 900 puis 1152 × 720, sans débordement horizontal du document à 1152. Captures complètes et `proofs/browser-live-google.json`. Le parcours fournisseur indisponible initial reste conservé dans les preuves, sans être transformé en PASS.
+- Gates GitHub du SHA testé : Vercel SUCCESS ; aucune workflow Actions ni revue publiée retournée ; PR mergeable, base main inchangée. Pas de contournement de protection GitHub.
+
+### Verdict avant livraison conditionnelle
+
+Gates critiques de livraison PASS : `GOOGLE_REAL_BROWSER = PASS`, `GOOGLE_DETAILS_EXACT = PASS`, `GOOGLE_ENDPOINT_PERSIST = PASS` (round-trip SQL synthétique + relecture serveur en mémoire), `FOUR_ENDPOINTS_INDEPENDENT = PASS` local et navigateur réel, `GOOGLE_FREE_MODE = PASS`, `RAW_UNDO = PASS`, `MOBILITY_LIVE = PASS` limité à la route réelle et au coût PARTIAL avec carburant de repli synthétique, `FINANCE_PARITY = 198/198`, `TYPESCRIPT_BUILD = PASS`. La publication reste conditionnée au merge normal et à Production READY sur le merge SHA, puis smoke authentifié lecture seule. Aucune migration ni écriture financière distante.
 
 La fusion reste interdite si le vrai Google Details, la conservation, la bonne cible ou les contrôles de sécurité échouent. Aucun gain de performance revendiqué.
 

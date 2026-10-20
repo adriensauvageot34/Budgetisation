@@ -1,0 +1,9 @@
+Deployment: dpl_DGREqoonksd1ocXdEb27MVJ7imP1
+Preview READY; target null (Preview), no Production change
+SHA: a9920ee323a0697a439eebfb26bb30d79ee85a21
+Product tree identical to f94ef725e8ef8163a2540913f0da3b05a3efc69b
+Cloning github.com/adriensauvageot34/Budgetisation (Branch: codex/bar-r8-2-google-endpoints, Commit: a9920ee)
+Detected Next.js version: 16.2.6
+Running "npm run build"
+Build Completed in .vercel/build-output [1m]
+Deployment completed

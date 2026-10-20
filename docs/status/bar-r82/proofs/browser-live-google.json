@@ -1,0 +1,127 @@
+{
+  "deployment": "dpl_DGREqoonksd1ocXdEb27MVJ7imP1",
+  "sha": "a9920ee323a0697a439eebfb26bb30d79ee85a21",
+  "productCodeSha": "f94ef725e8ef8163a2540913f0da3b05a3efc69b",
+  "authenticated": true,
+  "world": "SYNTHETIC_MEMORY_ONLY",
+  "remoteDraftWrites": false,
+  "apply": false,
+  "financialWrites": false,
+  "googleProvider": "REAL",
+  "detailsBeforeDecision": true,
+  "exactDirectedIds": [
+    {
+      "direction": "outbound",
+      "points": [
+        {
+          "id": "ChIJpQWCIxOvthIRBBFVV1l2HzA",
+          "target": "Modifier le départ de l’aller",
+          "title": "Montpellier Saint-Roch · Google retenu, adresse relue au calcul"
+        },
+        {
+          "id": "ChIJzx7kbgGuthIRRFvgEnRxrUM",
+          "target": "Modifier l’arrivée de l’aller",
+          "title": "Hôtel de Ville de Montpellier · Google retenu, adresse relue au calcul"
+        }
+      ],
+      "text": "AllerVoiturePeugeot 207Montpellier Saint-RochHôtel de Ville de Montpellier0,51 €Usage partiel · 2.245 kmEstimation partielle2.245 km · 447 s · 0.254506 LCoût d’usage estimé · aucun achat de carburant. Estimation partielle.Prix de carburant de repli · Péage à préciserHeure de départ · facultative"
+    },
+    {
+      "direction": "return",
+      "points": [
+        {
+          "id": "ChIJC4Wu9QmvthIRDmojjnJB6rA",
+          "target": "Modifier le départ du retour",
+          "title": "Musée Fabre · Google retenu, adresse relue au calcul"
+        },
+        {
+          "id": "ChIJp9fGGaevthIRdxE3svrneQI",
+          "target": "Modifier l’arrivée du retour",
+          "title": "Place de la Comédie · Google retenu, adresse relue au calcul"
+        }
+      ],
+      "text": "RetourTaxiMusée FabrePlace de la ComédieTarif inconnuEstimation partielleHeure de départ · facultative"
+    }
+  ],
+  "inversion": [
+    {
+      "direction": "outbound",
+      "points": [
+        "ChIJpQWCIxOvthIRBBFVV1l2HzA",
+        "ChIJzx7kbgGuthIRRFvgEnRxrUM"
+      ]
+    },
+    {
+      "direction": "return",
+      "points": [
+        "ChIJp9fGGaevthIRdxE3svrneQI",
+        "ChIJC4Wu9QmvthIRDmojjnJB6rA"
+      ]
+    }
+  ],
+  "redo": [
+    "ChIJp9fGGaevthIRdxE3svrneQI",
+    "ChIJC4Wu9QmvthIRDmojjnJB6rA"
+  ],
+  "inverseUndoExactDigest": true,
+  "freeModeRemovesOnlyOrigin": true,
+  "freeModeUndoRestoresGoogle": true,
+  "readDigestUnchanged": true,
+  "serverRead": [
+    {
+      "direction": "outbound",
+      "points": [
+        {
+          "id": "ChIJpQWCIxOvthIRBBFVV1l2HzA",
+          "target": "Modifier le départ de l’aller"
+        },
+        {
+          "id": "ChIJzx7kbgGuthIRRFvgEnRxrUM",
+          "target": "Modifier l’arrivée de l’aller"
+        }
+      ],
+      "text": "AllerVoiturePeugeot 207Montpellier Saint-RochHôtel de Ville de Montpellier0,51 €Usage partiel · 2.245 kmEstimation partielle2.245 km · 447 s · 0.254506 LCoût d’usage estimé · aucun achat de carburant. Estimation partielle.Prix de carburant de repli · Péage à préciserHeure de départ · facultative"
+    },
+    {
+      "direction": "return",
+      "points": [
+        {
+          "id": "ChIJC4Wu9QmvthIRDmojjnJB6rA",
+          "target": "Modifier le départ du retour"
+        },
+        {
+          "id": "ChIJp9fGGaevthIRdxE3svrneQI",
+          "target": "Modifier l’arrivée du retour"
+        }
+      ],
+      "text": "RetourTaxiMusée FabrePlace de la ComédieTarif inconnuEstimation partielleHeure de départ · facultative"
+    }
+  ],
+  "finalState": {
+    "digest": "9cf212a94a7b024dad1db390aae62c897ec0e66f0a62fe5ee4a9a82b6e261b54",
+    "preview": "FRESH",
+    "save": "CLEAN"
+  },
+  "barVenueUnchanged": "Bar des Trois Jours",
+  "mobility": {
+    "realRoute": true,
+    "distanceKm": 2.245,
+    "durationSeconds": 447,
+    "estimatedLiters": 0.254506,
+    "usageAmount": 0.51,
+    "costStatus": "PARTIAL",
+    "fuelPrice": "FALLBACK_SYNTHETIC_RECIPE",
+    "toll": "UNKNOWN",
+    "taxiFare": "UNKNOWN_NOT_COPIED"
+  },
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 1152,
+      "height": 720
+    }
+  ]
+}
