@@ -791,7 +791,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
           initialBarView={barViews.current.get(`${draftState.targetMonth}:${livingBarId}`)} onViewChange={rememberCurrentBarView}
           context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}
-          model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} saveStatus={draftTransport?durable.status:"MEMORY"}
+          model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} previewPending={previewStatus==="PENDING"||previewStatus==="STALE"} saveStatus={draftTransport?durable.status:"MEMORY"}
           dockHost={nightDockHost} busy={busy || draftState.preferences.anchors.includes(livingBarId) || draftState.preferences.flexibility[livingBarId]==="PRESERVE"} creating={editor?.nightCreating} admission={editor?.nightAdmission??0} serverError={errorMessage}
           onSave={stage} onCancel={closeDialog} onOpenChild={id=>{const child=shown.board.contexts.find(c=>c.contextOccurrenceId===id);if(child)editContext(child);}} />
           : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>,barHost.node,livingBarId)}

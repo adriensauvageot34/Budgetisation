@@ -38,7 +38,7 @@ export async function barReceptionScope() {
   }]};
   const deps:PlannerDependencies={repository:{readActivePlan:async()=>null,readRevision:async()=>null,readAppliedRequest:async()=>null,applyRevision:async()=>{throw new TypeError('BAR_RECEPTION_APPLY_FORBIDDEN');}},
     readWorld:async(h,m)=>{if(h!==householdId||m!=='2026-11')throw new TypeError('BAR_RECEPTION_SCOPE_INVALID');return structuredClone(facts);},
-    readMobilityOptions:async()=>({places:facts.mobilityFacts?.places??[],vehicle:facts.mobilityFacts?.vehicle??null}),
+    readMobilityOptions:async()=>({places:facts.mobilityFacts?.places??[],vehicle:facts.mobilityFacts?.vehicle??null,vehicleIsUnique:!!facts.mobilityFacts?.vehicle}),
     validateContextReferences:async(_h,refs)=>{if(refs.personIds.length||refs.placeIds.some(id=>!facts.mobilityFacts?.places.some(p=>p.placeId===id)))throw new TypeError('BAR_RECEPTION_REFERENCE_INVALID');}};
   return {userId:user.id,householdId,supabase,deps};
 }
