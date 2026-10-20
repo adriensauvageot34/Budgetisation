@@ -1324,10 +1324,11 @@
 .barLivingCard[data-expanded=false][data-richness=rich] { background-position:center 66%; }
 .barLivingCard[data-expanded=false] .barLivingIdentity { gap:3px 9px; padding:7px 10px; border-radius:13px; background:rgb(255 253 248 / .96); }
 .barLivingCard[data-expanded=false] .barLivingAmount { display:flex; align-items:center; flex-wrap:wrap; gap:5px 8px; }
+.barLivingCompact .barLivingMetadata button { background:#fffdfa; border:1px solid #e4dac9; color:#403526; }
 .barClosedCostStatus { display:inline-flex; align-items:center; gap:4px; max-width:185px; color:#66543a; font-size:11px; line-height:1.25; }
 .barClosedCostStatus:focus-visible { outline:2px solid #795719; outline-offset:3px; border-radius:4px; }
 .barLivingCompact>section>h4,.barLivingCompact [data-bar-before-miniature]>.barSceneBack { width:fit-content; padding:3px 7px; border-radius:7px; background:rgb(255 253 248 / .96); color:#403526; }
-.barLivingCompact .barGroup { flex:1 1 190px; min-width:min(190px,100%); max-width:245px; }
+.barLivingCompact .barGroup { flex:1 1 148px; min-width:min(148px,100%); max-width:220px; }
 .barLivingCompact .barGroup>button { height:116px; padding:8px; border-color:#e9e2d7; background:#fff; box-shadow:0 2px 5px #4934160b; }
 .barClosedFace { display:grid; grid-template-rows:32px minmax(0,1fr); height:100%; width:100%; min-width:0; text-align:left; }
 .barClosedTileHeading { display:flex; align-items:flex-start; justify-content:space-between; gap:5px; min-width:0; }

@@ -17,4 +17,8 @@ Un lot : statut de coût fermé, absence menu/punaise fermés, grip conservé av
 Outil built-in imagegen : bouteille neutre Clay transparente ; bar intérieur panoramique chaud ; dérivé transparent de la bière existante. Fichiers public/planned-visuals/builder/clay/drinks/{shared-bottle-closed,beer-closed}.webp et scenes/bar-interior-closed.webp, registre/manifest mis à jour. Aucune photo Google, marque ou donnée personnelle. Dérivés fermés uniquement ; originaux de la carte ouverte/dock inchangés.
 Prompts : bouteille reconnaissable ivoire/ambre/lavande sans anse antique, marque/prix/personnes ; intérieur panoramique2:1 comptoir chêne clair/étagères/verres décoratifs, centre calme, pas UI/texte ; bière cible existante conservée avec fond ivoire retiré et alpha réel. Conversion sharp de format/dimension uniquement, originaux generated_images conservés.
 
-Preview/visuel/bin-Undo/Production : à vérifier avant livraison, aucun PASS anticipé.
+## Première Preview et correction ciblée
+
+Produit4f5c62b, dpl_7gJY23BCAke4weTMkAC7QyZ56oT4 READY/Next complet. Auth et gate de recette existants, aucune nouvelle session requise. État vide1440 : cardRect=cellRect372,29×175, aucun overflow/scroll interne, fond réel visible. État partiel : prix28€ et groupe8€+? corrects ; défaut visuel reproduit : min-width190px empile les deux tuiles dans une carte372px et porte sa hauteur à415px. Capture initiale partial-1440.png conservée. Patch CSS uniquement : base148px pour deux tuiles juxtaposées et capsules de métadonnées opaques. Retest ciblé sur une seconde Preview justifié par ce défaut, sans nouvelle campagne financière.
+
+Bin/Undo et réception finale/Production : à vérifier, aucun PASS anticipé.
