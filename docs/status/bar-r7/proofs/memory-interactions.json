@@ -1,0 +1,9 @@
+{
+  "environment": "REACT_PGLITE_SYNTHETIC_ONLY",
+  "checks": [
+    {
+      "name": "R7_REOPEN_FAMILY_MEMORY_PRESERVES_MOMENT_OWNER",
+      "status": "PASS"
+    }
+  ]
+}

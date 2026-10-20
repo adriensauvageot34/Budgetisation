@@ -27,7 +27,8 @@ const pg=await createKernelPostgres();
 const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
 const repository=createPlanApplyRepository(pg.client);
 const checks=[];
-const check=async(name,run)=>{try{await run();checks.push({name,status:'PASS'});console.log(name+' PASS');}catch(e){checks.push({name,status:'FAIL',message:e.message});console.log(name+' FAIL: '+e.message);}};
+const r7MemoryOnly=process.argv.includes('--r7-memory');
+const check=async(name,run)=>{if(r7MemoryOnly&&!name.startsWith('R7_'))return;try{await run();checks.push({name,status:'PASS'});console.log(name+' PASS');}catch(e){checks.push({name,status:'FAIL',message:e.message});console.log(name+' FAIL: '+e.message);}};
 const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.props?.['aria-hidden'])==='true'?'':node?.children?.map(text).join('')??'';
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
@@ -133,6 +134,26 @@ await check('R5_VENUE_REMOVE_RETAINS_AUTONOMOUS_LEGS_AND_OTHER_FIELDS',async()=>
  assert.equal(current().fields.placeRef,null);assert.equal(current().fields.venueDecision,null);assert.deepEqual(current().slotSelections,old.slotSelections);assert.equal(current().fields.plannedDate,old.fields.plannedDate);assert.deepEqual(current().fields.participantRefs,old.fields.participantRefs);
 });
 
+await check('R7_REOPEN_FAMILY_MEMORY_PRESERVES_MOMENT_OWNER',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor);
+ let remembered;overrides={onViewChange:view=>{remembered=structuredClone(view);}};await sync();
+ await chooseFamily();await click('Bière');await click('← Ma sortie');
+ assert.equal(dock().props['data-dock-nature'],'OBJECTS');assert.equal(dock().props['aria-label'],'Boissons');
+ await click('+ Before');await chooseFamily('Restauration');await click('Chips');
+ const before=barBefore(model.semanticState,current()),bar=structuredClone(current().slotSelections.extras);
+ const beforeId=before.child.contextOccurrenceId,first=before.bottle.selectionId;
+ await act(async()=>root.unmount());root=null;
+ overrides={...overrides,initialBarView:remembered,initialTarget:'summary'};
+ await act(async()=>{root=create(render());});
+ assert.equal(dock().props['data-dock-nature'],'OBJECTS');assert.equal(dock().props['aria-label'],'Restauration');
+ await click('Chips');
+ const restored=barBefore(model.semanticState,current());
+ assert.equal(restored.child.contextOccurrenceId,beforeId);assert.equal(restored.bottle.selectionId,first);
+ assert.equal(restored.extras.length,1);assert.deepEqual(current().slotSelections.extras,bar);
+ await click('← Ma sortie');await click('Au bar · 1 lignes');
+ assert.equal(dock().props['aria-label'],'Boissons');assert.equal(dock().props['data-dock-nature'],'OBJECTS');
+});
+
 
 await check('R5_NO_MATCH_SEARCH_STAYS_MOUNTED_AND_FREE_PERSON_IS_EXPLICIT',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);await act(async()=>controls(n=>n.props['aria-label']?.startsWith('Modifier les personnes'))[0].props.onClick());
@@ -144,6 +165,7 @@ await check('R5_NO_MATCH_SEARCH_STAYS_MOUNTED_AND_FREE_PERSON_IS_EXPLICIT',async
 });
 
 } finally {if(root)await act(async()=>root.unmount());await pg.close();}
-fs.mkdirSync('docs/status/subassets-r5/proofs',{recursive:true});
-fs.writeFileSync('docs/status/subassets-r5/proofs/react-interactions.json',JSON.stringify({environment:'REACT_PGLITE_SYNTHETIC_ONLY',checks},null,2)+'\n');
+const proofDir=r7MemoryOnly?'docs/status/bar-r7/proofs':'docs/status/subassets-r5/proofs';
+fs.mkdirSync(proofDir,{recursive:true});
+fs.writeFileSync(proofDir+(r7MemoryOnly?'/memory-interactions.json':'/react-interactions.json'),JSON.stringify({environment:'REACT_PGLITE_SYNTHETIC_ONLY',checks},null,2)+'\n');
 if(checks.some(c=>c.status==='FAIL'))process.exitCode=1;

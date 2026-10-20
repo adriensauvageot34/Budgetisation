@@ -327,7 +327,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     ...knownBars.map(place=>({...choice(place.placeId,place.name,()=>choosePlace({kind:"KNOWN",placeId:place.placeId}),"activity",[place.commune,place.address].filter(Boolean).join(" · ")||"Lieu enregistré",place.name.trim().split(/\s+/u).slice(0,2).map(word=>word[0]).join("").toLocaleUpperCase("fr")),showHint:true})),
     ...personalPlaces.filter(place=>!knownBars.some(known=>known.googlePlaceId===place.googlePlaceId)).map(place=>({...choice("personal:"+place.id,place.userLabel,()=>choosePlace({kind:"TEXT",label:place.userLabel,provenance:"USER_DECLARED_PROSPECTIVE"},{provider:"google_places",kind:"BAR_APERO",placeId:place.googlePlaceId}),"activity","Lieu personnel"),showHint:true}))
   ]};
-  if(page==="more"||page==="summary")question={title:"Choisir une famille",nature:"FAMILIES",choices:familyChoices("bar")};
+  if(page==="more"||page==="summary")question=family?{title:family==="food"?"Restauration":"Boissons",nature:"OBJECTS",choices:activeMoment==="before"?beforeChoices():family==="drinks"?[...drinkChoices,sharedChoice]:drinkChoices}:{title:"Choisir une famille",nature:"FAMILIES",choices:familyChoices(activeMoment)};
   if(page==="before"||page==="drinks")question=family?{title:family==="food"?"Restauration":"Boissons",nature:"OBJECTS",choices:page==="before"?beforeChoices():family==="drinks"?[...drinkChoices,sharedChoice]:drinkChoices,search:{value:query,change:setQuery,label:"Chercher un objet"}}:{title:"Choisir une famille",nature:"FAMILIES",choices:familyChoices(page==="before"?"before":"bar")};
   if(page==="outbound"||page==="return"){
     const actualDirection=page; // setDirection also keeps endpoint editing attached to this leg.
