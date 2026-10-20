@@ -1,0 +1,3 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+{"status":"PASS","checks":9,"presets":["bar-apero","techno-night","mascara"],"level":"SYNTHETIC_TRANSPORT_COMPILER_REACT","nativeBrowser":"NOT_RUN","remoteWrites":0,"apply":false}

@@ -110,7 +110,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
       "data-drag-over": sameTarget(interaction?.overTarget ?? null, boardTarget),
       onDragOver: e => { if (boardAccepts && !busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(boardTarget); } else interaction?.over(null); },
       onDragLeave: e => { if (leftSurface(e)) interaction?.over(null); },
-      onDrop: e => { e.preventDefault(); if (boardAccepts && !busy) { if (interaction?.grabbed) interaction.place(boardTarget); else drop(boardTarget, e.dataTransfer.getData("application/x-planner-asset")); } }
+      onDrop: e => { e.preventDefault(); e.stopPropagation(); if (boardAccepts && !busy) { if (interaction) interaction.place(boardTarget); else drop(boardTarget, e.dataTransfer.getData("application/x-planner-asset")); } }
     }} render={item => item.kind === "FIXED" ? <FixedChargeCard facts={item.facts} detached={item.detached} open={() => setFixedOpen(item.detached ? item.facts[0].factKey : "group")} reattach={() => toggleFixed(item.facts[0].factKey)} />
       : item.kind === "CLUSTER" ? <VisualClusterCard node={item} open={() => setOpenClusterId(item.id)} /> : renderAtomic(item)}>
       {interaction?.grabbed?.pack && <article className={styles.packGhost} data-pack-ghost aria-label={`Aperçu de ${interaction.grabbed.label}`}><PlannerIcon iconKey={interaction.grabbed.iconKey} /><h3>{interaction.grabbed.label}</h3>

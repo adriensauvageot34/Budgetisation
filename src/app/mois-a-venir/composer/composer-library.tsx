@@ -9,7 +9,7 @@ import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contra
 import type { ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import styles from "./composer.module.css";
 import { PlannerIcon } from "./planner-icons/planner-icon";
-import { useComposerInteractions } from "./interactions";
+import { useComposerInteractions,publishedDrop } from "./interactions";
 import { composerRenderIndex } from "./render-index";
 import { preloadEditorForAsset, preloadEditorForPreset } from "./editor-chunks";
 
@@ -35,13 +35,13 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
   const tile=(item:LibraryIntention)=>{
     const asset=item.asset, source=model.presentation.dragSources[asset.assetKey];
-    const draggable=!item.preset && (!!source?.editorDropTarget || (composerRenderIndex(model).drops.get(asset.assetKey)??[]).some(d=>d.resolution!=="BLOCKED")) && asset.provenance!=="DERIVED_CONSEQUENCE";
+    const draggable=!!source&&(item.preset?!!publishedDrop(model,asset.assetKey,{kind:'BOARD_ZONE'}):!!source.editorDropTarget||(composerRenderIndex(model).drops.get(asset.assetKey)??[]).some(d=>d.resolution!=="BLOCKED"))&&asset.provenance!=="DERIVED_CONSEQUENCE";
     return <div className={item.preset?styles.libraryTile:styles.libraryGenericTile} key={item.key}>
       <button type="button" className={item.preset?styles.presetTile:styles.libraryGenericChoice} data-preset={item.preset?.presetKey} data-asset={item.preset?undefined:asset.assetKey}
         data-selected={selected===asset.assetKey} disabled={busy}
         onFocus={()=>item.preset?preloadEditorForPreset(asset):preloadEditorForAsset(asset)}
         onClick={()=>activate(item)} draggable={!busy&&draggable} data-drag-source={draggable?asset.assetKey:undefined}
-        onDragStart={event=>{if(interaction)interaction.start(asset.assetKey,event);else{event.dataTransfer.setData("application/x-planner-asset",asset.assetKey);drag(asset.assetKey);}}}
+        onDragStart={event=>{event.stopPropagation();if(busy||!draggable){event.preventDefault();return;}if(interaction)interaction.start(asset.assetKey,event,item.preset?.presetKey);else if(item.preset){event.preventDefault();}else{event.dataTransfer.setData("application/x-planner-asset",asset.assetKey);drag(asset.assetKey);}}}
         onDragEnd={()=>{interaction?.end();drag(null);}}>
         {item.preset?<PresetIllustration preset={item.preset}/>:<PlannerIcon iconKey={asset.iconKey} identityRef={asset.capabilityRef} scale="LIBRARY" className={styles.assetIcon}/>}
         <span>{item.label}</span>
