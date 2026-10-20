@@ -1420,5 +1420,6 @@
 .barCompositionDock[data-dock-nature=FAMILIES] .barProductSymbol img { height:82px; max-height:82px; }
 .barCompositionDock[data-dock-nature=OBJECTS] .barProductSymbol[data-panoramic-art=true] { width:64px; overflow:hidden; }
 .barCompositionDock[data-dock-nature=OBJECTS] .barProductSymbol[data-panoramic-art=true] img { object-fit:cover; object-position:right center; }
+.barCompositionDock[data-dock-nature=OBJECTS] .barProductSymbol[data-panoramic-art=true] img[src*="-closed.webp"] { object-position:center; }
 .barCompositionDock[data-dock-nature=FAMILIES] .barProductSymbol[data-panoramic-art=true] { width:90px; overflow:hidden; }
 .barCompositionDock[data-dock-nature=FAMILIES] .barProductSymbol[data-panoramic-art=true] img { object-fit:cover; object-position:right center; }
