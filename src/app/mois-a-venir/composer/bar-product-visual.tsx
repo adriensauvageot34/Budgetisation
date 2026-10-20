@@ -12,5 +12,5 @@ export function BarProductVisual({assetKey,label="",child=false,closed=false,doc
   const source=dockImage??image;
   const Icon=child?Ticket:key==="car"?Car:key==="train"?Train:key==="bus"?Bus:key==="free"?Footprints:key==="taxi"?CarTaxiFront:key==="place"?MapPin:key==="cocktail"?Martini:key==="tapas"||key==="food"?Utensils:key==="snack"||key==="chips"?Cookie:key==="beer"||key==="drinks"?Beer:key==="wine"?Wine:key==="soft"||key==="water"?GlassWater:/bouteille/iu.test(label)?Amphora:Package;
   const showImage=source&&failedImage!==source;
-  return <span className={styles.barProductSymbol} data-bar-visual={showImage?"clay":"functional-icon"} data-panoramic-art={dock&&key==="food"||undefined} aria-hidden="true">{showImage?<img src={`/planned-visuals/builder/clay/${source}.webp`} alt="" width={48} height={40} draggable={false} onError={()=>setFailedImage(source)}/>:<Icon size={30} strokeWidth={1.7}/>}</span>;
+  return <span className={styles.barProductSymbol} data-bar-visual={showImage?"clay":"functional-icon"} data-panoramic-art={dock&&!!source&&!source.startsWith("r7/")||undefined} aria-hidden="true">{showImage?<img src={`/planned-visuals/builder/clay/${source}.webp`} alt="" width={48} height={40} draggable={false} onError={()=>setFailedImage(source)}/>:<Icon size={30} strokeWidth={1.7}/>}</span>;
 }
