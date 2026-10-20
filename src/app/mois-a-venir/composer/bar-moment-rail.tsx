@@ -1,11 +1,13 @@
 "use client";
-import {useRef,type ReactNode} from 'react';
+import {Children,useEffect,useRef,useState,type ReactNode} from 'react';
 import type {ComposerUiModel} from '@/domain/phase2/planner/composer-ui-contract';
 import {useComposerInteractions,publishedDrop,leftSurface} from './interactions';
 import styles from './composer.module.css';
 /** Presentation only. Targets exist only for published sockets, never guessed owners. */
 export function BarMomentRail({label,children,add,addLabel,disabled=false,model,owner,slot,showAdd=true}:{label:string;children?:ReactNode;add:()=>void;addLabel:string;disabled?:boolean;model?:ComposerUiModel;owner?:string;slot?:string;showAdd?:boolean}){
  const ref=useRef<HTMLDivElement>(null),interaction=useComposerInteractions();
+ const count=Children.count(children),[overflow,setOverflow]=useState(false);
+ useEffect(()=>{const node=ref.current;if(!node)return;const measure=()=>setOverflow(node.scrollWidth>node.clientWidth+2);measure();const observer=new ResizeObserver(measure);observer.observe(node);return()=>observer.disconnect();},[count]);
  const target=owner&&slot?{kind:'CONTEXT_SOCKET' as const,contextOccurrenceId:owner,slotKey:slot}:null;
  const compatible=!!(!disabled&&target&&model&&interaction?.grabbed&&publishedDrop(model,interaction.grabbed.assetKey,target));
  const scroll=(delta:number)=>ref.current?.scrollBy({left:delta,behavior:'smooth'});
@@ -15,6 +17,6 @@ export function BarMomentRail({label,children,add,addLabel,disabled=false,model,
     onClick={add} onDragOver={e=>{e.stopPropagation();if(compatible&&target){e.preventDefault();interaction?.over(target);}}}
     onDragLeave={e=>{e.stopPropagation();if(leftSurface(e))interaction?.over(null);}}
     onDrop={e=>{e.preventDefault();e.stopPropagation();if(compatible&&target)interaction?.place(target);else interaction?.reject();}}>
-    <span aria-hidden="true">+</span><small>{children?'':"Ajouter un objet"}</small></button>}
- </div><div className={styles.barMomentRailArrows}><button type="button" aria-label={`${label} · précédent`} onClick={()=>scroll(-300)}>←</button><button type="button" aria-label={`${label} · suivant`} onClick={()=>scroll(300)}>→</button></div></div>;
+    <span aria-hidden="true">+</span><small>{count?'':"Ajouter un objet"}</small></button>}
+ </div>{overflow&&<div className={styles.barMomentRailArrows}><button type="button" aria-label={`${label} · précédent`} onClick={()=>scroll(-300)}>←</button><button type="button" aria-label={`${label} · suivant`} onClick={()=>scroll(300)}>→</button></div>}</div>;
 }

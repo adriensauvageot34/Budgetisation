@@ -1432,6 +1432,7 @@
 .barProgressiveAmount input { width:100px; min-width:0; padding:5px; font:inherit; font-size:20px; border:1px solid #9a753d; border-radius:8px; background:white; color:#292026; }
 [data-bar-open-amount]:has([data-r72-inline])>[data-bar-amount-fallback] { display:none; }
 .barLivingEditor[data-bar-progressive] .barLivingSections { grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); align-items:start; }
+.barLivingEditor[data-bar-progressive] .barLivingSections:has([data-bar-section=before]):has([data-bar-section=extras]) { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
 .barLivingEditor[data-bar-progressive] [data-bar-section=before] { order:0; }
 .barLivingEditor[data-bar-progressive] [data-bar-section=extras] { order:1; }
 .barLivingEditor[data-bar-progressive] [data-bar-section=food],.barLivingEditor[data-bar-progressive] [data-bar-section=main] { order:2; }
