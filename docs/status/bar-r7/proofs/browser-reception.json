@@ -1,0 +1,87 @@
+{
+  "production73": {
+    "sha": "96b4fd960343b49ad800c97c0f957b1dd513d97d",
+    "deployment": "dpl_2EG2YYSy367mWSvqkrJnZB2J3GNN",
+    "status": "READY",
+    "cardHoldGate": "NOT_RUN_NATIVE_POINTER"
+  },
+  "r7": {
+    "productSha": "0bf24838d0b2e65461dcf0d51163f8ae03b352c6",
+    "deployment": "dpl_2CxFM1fHrPH4oEMQa84etY4s22Gj",
+    "status": "READY",
+    "initialFinalProduct": {
+      "bar": "Au bar+ AjouterBière×2?",
+      "geometry": "summary:bar:false:0:extras:4276a8fc-83f4-42bc-8b2d-703fc3e00ce0|extras:f59a90db-c734-4c0b-9643-5f4eb0927f3a",
+      "preview": "FRESH",
+      "rail": {
+        "scrollWidth": 1322,
+        "width": 1056
+      },
+      "sha": "0bf24838d0b2e65461dcf0d51163f8ae03b352c6"
+    },
+    "finalReopen": {
+      "dock": "← FamillesPlanche / tapasSnackChipsNourriture sur place",
+      "geometry": "summary:bar:false:0:extras:4276a8fc-83f4-42bc-8b2d-703fc3e00ce0|extras:5cedcf7d-c554-4d2b-8e86-118ea93d5d9d|extras:f59a90db-c734-4c0b-9643-5f4eb0927f3a",
+      "nature": "OBJECTS",
+      "preview": "FRESH",
+      "sha": "0bf24838d0b2e65461dcf0d51163f8ae03b352c6",
+      "step": "summary"
+    },
+    "narrow": {
+      "documentWidth": 1152,
+      "height": 720,
+      "rail": {
+        "scrollWidth": 759,
+        "width": 759
+      },
+      "sha": "0bf24838d0b2e65461dcf0d51163f8ae03b352c6",
+      "width": 1152
+    }
+  },
+  "earlierTargetedChecks": {
+    "raw": {
+      "sha": "ef881ccffa7cb60314a52e13b2be77800af8efac",
+      "receipt": {
+        "dirty": "true",
+        "raw": "12,",
+        "saveDisabled": true,
+        "step": "row"
+      }
+    },
+    "scroll": {
+      "sha": "ef881ccffa7cb60314a52e13b2be77800af8efac",
+      "arrow": {
+        "left": 300
+      },
+      "keyboard": {
+        "left": 480
+      },
+      "nativeHorizontal": {
+        "left": 0
+      }
+    },
+    "momentOwner": {
+      "sha": "ef881ccffa7cb60314a52e13b2be77800af8efac",
+      "receipt": {
+        "barLabels": [
+          "Before · 1 lignes",
+          "Au bar · 2 lignes"
+        ],
+        "before": "Before+ Ajouter⋯Retirer le BeforeChips×1?Lot partagéQuantité de lots−+Prix par lot (€)Prix / lot€Détails du posteUnité, financement et nom RetirerEnregistrer",
+        "geometry": "row:before:false:0:before:3fb8fe83-8750-411d-ab4d-883e1952467f|before:41917233-18bc-4a0f-97a9-5c9bc5cdc178|extras:59893a7a-e30d-430a-a49e-26d0cbf2c8c7|extras:a06f682a-3a59-4162-8a18-72e2ab5067c8",
+        "step": "row"
+      }
+    }
+  },
+  "limitations": {
+    "authDraftReload": "NOT_RUN",
+    "apply": "NOT_RUN",
+    "nativeDnd": "NOT_RUN_NATIVE",
+    "completeR7Card": "DEFERRED_B5_CONTRACT",
+    "remoteWrites": 0,
+    "personalDraftWrites": 0,
+    "finance198": "UNCHANGED_NOT_RERUN",
+    "timings": "NOT_A_PERFORMANCE_CERTIFICATE",
+    "batchedGestureRetarget": "One post-reopen navigation batch reached a beer row instead of the intended family; excluded from no-duplicate certification, repeated with fresh AX between gestures. No remote write."
+  }
+}
