@@ -1423,3 +1423,28 @@
 .barCompositionDock[data-dock-nature=OBJECTS] .barProductSymbol[data-panoramic-art=true] img[src*="-closed.webp"] { object-position:center; }
 .barCompositionDock[data-dock-nature=FAMILIES] .barProductSymbol[data-panoramic-art=true] { width:90px; overflow:hidden; }
 .barCompositionDock[data-dock-nature=FAMILIES] .barProductSymbol[data-panoramic-art=true] img { object-fit:cover; object-position:right center; }
+
+/* R7.2: scoped to the opened Bar; closed R6.2 and the R7.1 dock are unchanged. */
+.barProgressiveAmount { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.barProgressiveAmount>button { padding:4px 8px; border:1px solid #dbcab2; border-radius:9px; background:#fffaf2; color:#553f28; cursor:pointer; font-size:12px; }
+.barProgressiveAmount>[data-bar-inline-trigger] { font:inherit; font-weight:700; font-size:22px; border-color:transparent; background:transparent; padding:0; }
+.barProgressiveAmount label { display:flex; align-items:center; gap:6px; font-size:11px; }
+.barProgressiveAmount input { width:100px; min-width:0; padding:5px; font:inherit; font-size:20px; border:1px solid #9a753d; border-radius:8px; background:white; color:#292026; }
+[data-bar-open-amount]:has([data-r72-inline])>[data-bar-amount-fallback] { display:none; }
+.barLivingEditor[data-bar-progressive] .barLivingSections { grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); align-items:start; }
+.barLivingEditor[data-bar-progressive] [data-bar-section=before] { order:0; }
+.barLivingEditor[data-bar-progressive] [data-bar-section=extras] { order:1; }
+.barLivingEditor[data-bar-progressive] [data-bar-section=food],.barLivingEditor[data-bar-progressive] [data-bar-section=main] { order:2; }
+.barLivingEditor[data-bar-progressive] .barItemSection { min-width:0; }
+.barMomentRailWrap { min-width:0; position:relative; }
+.barMomentRail { display:flex; align-items:start; gap:8px; overflow-x:auto; overflow-y:hidden; max-width:100%; min-width:0; scrollbar-width:none; padding:4px; }
+.barMomentRail::-webkit-scrollbar { display:none; }
+.barItemSection .barMomentRail>.barEconomicTile,.barMomentRail>.barActiveTile { flex:0 0 148px; min-width:148px; max-width:none; }
+.barMomentRail>.barActiveTile { flex-basis:240px; }
+.barProgressiveSlot { flex:0 0 80px; min-height:105px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:1px dashed #bca783; border-radius:13px; background:#fffbf3; color:#806136; cursor:pointer; }
+.barProgressiveSlot>span { font-size:28px; }.barProgressiveSlot>small { font-size:11px; }
+.barProgressiveSlot[data-drop-compatible=true] { background:#f0e7ff; outline:2px solid #a47dcf; }
+.barMomentRailArrows { display:flex; justify-content:flex-end; gap:4px; margin-top:3px; }
+.barMomentRailArrows button { border:1px solid #ddcfbb; border-radius:7px; background:#fffaf4; color:#745b37; cursor:pointer; }
+.barMomentRail:focus-visible,.barProgressiveSlot:focus-visible { outline:2px solid #9b733b; outline-offset:2px; }
+.barLivingEditor[data-bar-progressive] .barItemSection>header>.barInlineAdd { display:none; }

@@ -71,6 +71,9 @@ export function transitionNightOutConsumption(context: PlannedContextState, comm
   if (context.templateKey !== "night-out") throw new TypeError("NIGHT_OUT_CONSUMPTION_OWNER_INVALID");
   if (!["DIRECT", "DETAILED"].includes(command.mode)) throw new TypeError("NIGHT_OUT_CONSUMPTION_INVALID");
   const prior = nightOutConsumption(context), extras = nightOutExtras(context);
+  const main = (context.slotSelections.main?.items ?? []) as unknown as readonly ComponentSelectionV1[];
+  if (main.some(i => i.kind === "COMPONENT" && i.economicScope?.kind !== "ADDITIVE_CONTRIBUTION"))
+    throw new TypeError("NIGHT_OUT_CONSUMPTION_LEGACY_MAIN_NEEDS_CHOICE");
   if (prior?.mode === command.mode && command.amount === undefined) return context;
   // Never implicitly reinterpret a historical aggregate or a financed selection.
   const candidates = extras.filter(i => i.selectionId !== prior?.directSelectionId && !(i.kind === "COMPONENT" && i.economicScope?.kind === "ADDITIVE_CONTRIBUTION"));
