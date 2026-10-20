@@ -1,0 +1,334 @@
+{
+  "level": "AUTHENTICATED_PREVIEW_SYNTHETIC_MEMORY_ONLY",
+  "productSha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+  "preview": "https://budgetisation-lhc40zp9t-adriensauvageot34-6137s-projects.vercel.app",
+  "raw": "19, preserved after cancellation; complete 19 explicitly admitted",
+  "advanced": "NightOutEditor menu -> Transport inspected",
+  "guardedLinkedFunded": "LOCAL_OWNER_FIXTURE_PASS_NOT_BROWSER",
+  "providers": "NOT_RUN_REAL; preparePlanningMobility synthetic PASS",
+  "draftWrites": 0,
+  "apply": 0,
+  "scenes": [
+    {
+      "step": "CAR_AND_EXPLICIT_TAXI",
+      "digest": "d2c433fb122b6b9e3b345f0b114ae663cc4ca641ed7aa6907344472a62561a0c",
+      "pageOverflow": false,
+      "preview": "FRESH",
+      "routes": [
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 72.0999984741211,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Synthetic place 0Bar des Trois JoursUsage à préciserÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 576.0499877929688
+        },
+        {
+          "destination": "Synthetic place 0",
+          "height": 41.60000228881836,
+          "origin": "Bar des Trois Jours",
+          "overflow": false,
+          "slot": "return",
+          "text": "RetourTaxiBar des Trois JoursSynthetic place 0Tarif inconnuÀ préciserHeure de départ · facultative",
+          "width": 576.0499877929688
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "step": "OUTBOUND_REVERSED",
+      "digest": "795e4124a3c4dc5966a76874f465f9e57cbafeb6e427a0642b8f43a8ebf55a61",
+      "pageOverflow": false,
+      "preview": "FRESH",
+      "routes": [
+        {
+          "destination": "Synthetic place 0",
+          "height": 42.10000228881836,
+          "origin": "Bar des Trois Jours",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Bar des Trois JoursSynthetic place 0Usage à préciserÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 728.9625244140625
+        },
+        {
+          "destination": "Synthetic place 0",
+          "height": 41.60000228881836,
+          "origin": "Bar des Trois Jours",
+          "overflow": false,
+          "slot": "return",
+          "text": "RetourTaxiBar des Trois JoursSynthetic place 0Tarif inconnuÀ préciserHeure de départ · facultative",
+          "width": 728.9625244140625
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "step": "UNDO_REVERSE",
+      "digest": "d2c433fb122b6b9e3b345f0b114ae663cc4ca641ed7aa6907344472a62561a0c",
+      "pageOverflow": false,
+      "preview": "PENDING",
+      "routes": [
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 42.10000228881836,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Synthetic place 0Bar des Trois JoursEstimation en coursÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 728.9625244140625
+        },
+        {
+          "destination": "Synthetic place 0",
+          "height": 41.60000228881836,
+          "origin": "Bar des Trois Jours",
+          "overflow": false,
+          "slot": "return",
+          "text": "RetourTaxiBar des Trois JoursSynthetic place 0Tarif inconnuÀ préciserHeure de départ · facultative",
+          "width": 728.9625244140625
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "step": "RETURN_REMOVED",
+      "digest": "7daf78fe64ff04c1e58d6a335c8816b5594ffa57c7a8abc027149871e1df1da1",
+      "pageOverflow": false,
+      "preview": "PENDING",
+      "routes": [
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 74.0999984741211,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Synthetic place 0Bar des Trois JoursEstimation en coursÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 499.5874938964844
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "step": "UNDO_RETURN_REMOVAL",
+      "digest": "d2c433fb122b6b9e3b345f0b114ae663cc4ca641ed7aa6907344472a62561a0c",
+      "pageOverflow": false,
+      "preview": "PENDING",
+      "routes": [
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 42.10000228881836,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Synthetic place 0Bar des Trois JoursUsage à préciserÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 728.9625244140625
+        },
+        {
+          "destination": "Synthetic place 0",
+          "height": 41.60000228881836,
+          "origin": "Bar des Trois Jours",
+          "overflow": false,
+          "slot": "return",
+          "text": "RetourTaxiBar des Trois JoursSynthetic place 0Tarif inconnuÀ préciserHeure de départ · facultative",
+          "width": 728.9625244140625
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "step": "DESKTOP_1152",
+      "digest": "d2c433fb122b6b9e3b345f0b114ae663cc4ca641ed7aa6907344472a62561a0c",
+      "pageOverflow": false,
+      "preview": "FRESH",
+      "routes": [
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 42.10000228881836,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Synthetic place 0Bar des Trois JoursUsage à préciserÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 746.7999877929688
+        },
+        {
+          "destination": "Synthetic place 0",
+          "height": 41.60000228881836,
+          "origin": "Bar des Trois Jours",
+          "overflow": false,
+          "slot": "return",
+          "text": "RetourTaxiBar des Trois JoursSynthetic place 0Tarif inconnuÀ préciserHeure de départ · facultative",
+          "width": 746.7999877929688
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1152,
+        720
+      ]
+    },
+    {
+      "step": "RETURN_MANUAL_19",
+      "digest": "ee88cbf4396fedf802f1dc74004892df9a016b922373a2ae704464f9ed7bf261",
+      "pageOverflow": false,
+      "preview": "PENDING",
+      "routes": [
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 72.0999984741211,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Synthetic place 0Bar des Trois JoursEstimation en coursÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 590.3125
+        },
+        {
+          "destination": "Synthetic place 0",
+          "height": 83.5999984741211,
+          "origin": "Bar des Trois Jours",
+          "overflow": false,
+          "slot": "return",
+          "text": "RetourTaxiBar des Trois JoursSynthetic place 019,00 €Tarif prévu · précédentDétails du coûtHeure de départ · facultative",
+          "width": 590.3125
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1152,
+        720
+      ]
+    },
+    {
+      "step": "REVERSE_PRICE_CONFIRMATION_PENDING",
+      "digest": "ee88cbf4396fedf802f1dc74004892df9a016b922373a2ae704464f9ed7bf261",
+      "pageOverflow": false,
+      "preview": "PENDING",
+      "routes": [
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 72.0999984741211,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Synthetic place 0Bar des Trois JoursEstimation en coursÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 590.3125
+        },
+        {
+          "destination": "Synthetic place 0",
+          "height": 83.5999984741211,
+          "origin": "Bar des Trois Jours",
+          "overflow": false,
+          "slot": "return",
+          "text": "RetourTaxiBar des Trois JoursSynthetic place 019,00 €Tarif prévu · précédentDétails du coûtHeure de départ · facultative",
+          "width": 590.3125
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1152,
+        720
+      ]
+    },
+    {
+      "step": "REVERSE_PRICE_ACCEPTED_UNKNOWN",
+      "digest": "b99921cf7edef86d0c2b4f98bab85b8382cced7a09ba91210675ddab3d232631",
+      "pageOverflow": false,
+      "preview": "PENDING",
+      "routes": [
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 42.10000228881836,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Synthetic place 0Bar des Trois JoursEstimation en coursÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 746.7999877929688
+        },
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 41.60000228881836,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "return",
+          "text": "RetourTaxiSynthetic place 0Bar des Trois JoursTarif inconnuÀ préciserHeure de départ · facultative",
+          "width": 746.7999877929688
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1152,
+        720
+      ]
+    },
+    {
+      "step": "UNDO_PRICE_REVERSE",
+      "digest": "ee88cbf4396fedf802f1dc74004892df9a016b922373a2ae704464f9ed7bf261",
+      "pageOverflow": false,
+      "preview": "PENDING",
+      "routes": [
+        {
+          "destination": "Bar des Trois Jours",
+          "height": 42.10000228881836,
+          "origin": "Synthetic place 0",
+          "overflow": false,
+          "slot": "outbound",
+          "text": "AllerVoiturePeugeot 207Synthetic place 0Bar des Trois JoursUsage à préciserÀ préciserCoût d’usage estimé · aucun achat de carburant. Estimation Mobility encore indisponible ; aucun prix n’est supposé.Heure de départ · facultative",
+          "vehicle": "Peugeot 207",
+          "width": 746.7999877929688
+        },
+        {
+          "destination": "Synthetic place 0",
+          "height": 53.60000228881836,
+          "origin": "Bar des Trois Jours",
+          "overflow": false,
+          "slot": "return",
+          "text": "RetourTaxiBar des Trois JoursSynthetic place 019,00 €Tarif prévuDétails du coûtHeure de départ · facultative",
+          "width": 746.7999877929688
+        }
+      ],
+      "save": "CLEAN",
+      "sha": "f3943ee2bc46d7a18c13d260f0e0a27603000f52",
+      "viewport": [
+        1152,
+        720
+      ]
+    }
+  ]
+}

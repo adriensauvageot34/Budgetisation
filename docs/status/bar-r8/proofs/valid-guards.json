@@ -1,0 +1,12 @@
+{
+  "status": "EXECUTED_PASS_LOCAL_OWNER_ONLY",
+  "checks": [
+    "VALID_SHARES_JOURNEY_REJECTED",
+    "LINKED_REVERSAL_REJECTED",
+    "BANK_FUNDED_REVERSAL_REJECTED",
+    "BANK_FUNDED_ENDPOINT_REJECTED",
+    "INPUTS_UNCHANGED"
+  ],
+  "browser": false,
+  "remoteWrites": 0
+}

@@ -20,7 +20,8 @@ Aucun owner, calcul financier, contrat persistant ou migration modifié. Le shel
 - Google/route : 7 contrôles PASS, fournisseurs synthétiques.
 - Mobility dirigée : 6 contrôles PASS, Compiler/C0/Apply/Reload sur PGlite synthétique uniquement.
 - Parité financière : 22 cas × 9 empreintes = 198/198 PASS, zéro écriture distante ; golden inchangé.
-- P3 et parcours R8 : réception finale en cours ; journaux conservés dans les preuves de ce dossier à la clôture.
+- P3 et parcours R8 : 15 contrôles React/owner PASS, dont voiture confirmée avant domicile, préparation Mobility effective avec mock (1 appel route), Taxi indépendant, confirmation d'inversion, retrait d'un sens et heure datée. `proofs/react-owner.log`.
+- Relations SHARES_JOURNEY valides et financement BANK : 5 assertions propriétaires PASS sans modification des entrées (`proofs/valid-guards.json`). Ce contrôle n'est pas une recette navigateur d'un trajet financé.
 
 Les anciennes assertions de présentation ont été actualisées : détails techniques du véhicule uniquement à la demande, contrôles endpoint/prix ciblés par leur nom accessible, famille consommation préparée explicitement pour le test RAW. Les oracles d'identité, de prix UNKNOWN et de conservation restent identiques ; aucun ancien golden modifié.
 
@@ -35,6 +36,12 @@ Voiture, Train, Bus, Marche : illustrations Clay existantes. Les fallbacks reste
 
 ## Réception et livraison
 
-Preview exacte, dimensions réelles, captures, gates GitHub et Production : à compléter après exécution. Aucune promotion avant réception critique PASS. Pas de recette personnelle, de sauvegarde distante ni d'Apply réel.
+Produit testé : `f3943ee2bc46d7a18c13d260f0e0a27603000f52`. PR #77. Preview `dpl_GfK3Pp6XdwQDHs29Vsg1QZHBWX2j`, READY, build Next complet et TypeScript Vercel terminés (`proofs/vercel-build.log`). URL : https://budgetisation-lhc40zp9t-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris?r62=empty&r63=1 .
+
+Vrai navigateur Codex, Auth habituelle mais faits synthétiques en mémoire : 1440×900 et 1152×720 mesurés dans le DOM. Voiture : proposition Peugeot 207, une confirmation, domicile choisi, Bar UUID déjà à destination. Retour : deux choix explicites, Taxi, endpoints inverses et tarif UNKNOWN. Les cinq images transport et Maison chargent. Lignes de 42–72 px selon la largeur disponible, aucune zone vide dans la carte, aucun débordement horizontal ni scroll vertical interne. RAW `19,` retrouvé intact après annulation de navigation. Confirmation d'inversion d'un tarif à 19 € : digest inchangé avant acceptation, remise à UNKNOWN après acceptation, Undo restitue exactement le digest tarifé. Retrait du Retour puis Undo : Aller conservé, digest initial exact retrouvé. Accès avancé NightOutEditor → Transport vérifié. Console : aucune erreur recueillie. `proofs/browser.json` et `browser-assertions.json` ; captures `routes-1440.png`, `routes-1152.png`, `home-dock-1152.png`.
+
+Limites : Live Google/TomTom/HERE non rejoués dans cette recette ; coût Mobility indisponible présenté honnêtement en Preview synthétique, estimation préparée séparément avec mocks par l'owner réel. Heure et garde trajet lié/financé exécutés localement ; pas de certification navigateur financée ni de sauvegarde personnelle authentifiée. Aucun Apply, favori ou Draft distant écrit. Pas de migration, aucun autre preset, After ou répartition.
+
+Décision : `LOT1_READY_FOR_INTEGRATION_GOOGLE_DEFERRED`. Les preuves sont ajoutées dans un commit documentaire distinct ; aucun changement applicatif après le SHA produit testé. Fusion et Production à constater dans la clôture de PR.
 
 Rollback : revert du commit R8 puis déploiement normal. Aucun rollback SQL ou effacement de Draft requis.
