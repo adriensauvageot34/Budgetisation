@@ -1,0 +1,16 @@
+{
+  "cardHeight": 555,
+  "rows": [
+    {
+      "height": 131.40000915527344,
+      "leg": "outbound",
+      "text": "AllerTrain / tramDépart · À préciserArrivée · À préciserTarif à préciserÀ préciser : départ, arrivée"
+    },
+    {
+      "height": 98.4000015258789,
+      "leg": "return",
+      "text": "RetourTaxiDépart · À préciserArrivée · À préciser12,00 €Tarif prévuÀ préciser : départ, arrivée"
+    }
+  ],
+  "width": 1440
+}

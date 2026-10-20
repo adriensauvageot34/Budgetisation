@@ -15,6 +15,8 @@ const geometryPlaces:typeof fetch=async(input,init)=>{
   if(query.includes('erreur'))return Response.json({code:'SIMULATED_PROVIDER_UNAVAILABLE'},{status:503});
   return Response.json({capabilities:{personalSavedPlaces:false},suggestions:query.includes('vide')?[]:Array.from({length:3},(_,i)=>({source:'google_places',placeId:`geometry_fixture_${i}`,primaryText:`Bar fictif ${i+1} de la Promenade des Démonstrations`,secondaryText:'Ville fictive',photos:[{name:'ignored-unpublished-photo',width:10000}]}))});
 };
-export function BarFavoritesReception({model,geometry=false}:{model:ComposerUiModel;geometry?:boolean}){
-  return <BarPlaceTransportContext.Provider value={geometry?geometryPlaces:null}><ComposerShell initialModel={model} transport={transport}/></BarPlaceTransportContext.Provider>;
+export function BarFavoritesReception({model,geometry=false,liveGoogle=false}:{model:ComposerUiModel;geometry?:boolean;liveGoogle?:boolean}){
+  // The live provider uses the ordinary authenticated routes. Composer remains
+  // synthetic and memory-only; this never grants a favourite or Draft writer.
+  return <BarPlaceTransportContext.Provider value={geometry&&!liveGoogle?geometryPlaces:null}><ComposerShell initialModel={model} transport={transport}/></BarPlaceTransportContext.Provider>;
 }

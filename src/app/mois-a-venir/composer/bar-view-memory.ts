@@ -10,6 +10,7 @@ export type BarViewMemory = {
   allBefore: boolean;
   family?: "drinks" | "food" | null;
   families?: Record<"bar" | "before", "drinks" | "food" | null>;
+  moment?: "bar" | "before";
 };
 
 /** Owned by one mounted Composer, scoped to month and occurrence identity. */

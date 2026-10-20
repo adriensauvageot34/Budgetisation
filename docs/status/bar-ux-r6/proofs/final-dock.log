@@ -1,0 +1,8 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS UI093 stable question 25: filter, clear button, input deletion, arrows, keyboard and end tolerance; no resize
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS UI093 stable question 120: filter, clear button, input deletion, arrows, keyboard and end tolerance; no resize
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS UI093 stable question 150: filter, clear button, input deletion, arrows, keyboard and end tolerance; no resize
+PASS R5 L1: 25/120/150 full-search bounded projection; no pager; arrows/keyboard scroll; scene memory; bounded card memory. REACT_FIXTURE_ONLY

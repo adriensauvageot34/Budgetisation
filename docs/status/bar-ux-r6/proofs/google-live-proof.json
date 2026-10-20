@@ -1,0 +1,12 @@
+{
+  "productSha": "90b66069055dc9e9004d45b31ba5e99ddd71714b",
+  "deployment": "dpl_EKkPRa98XL3qnf5qAwWm6a5V9JR3",
+  "query": "Le Rebuffy",
+  "city": "Montpellier",
+  "normalAuthenticatedRoutes": true,
+  "mockTransport": false,
+  "autocompleteRendered": "Le Rebuffy · Rue Rebuffy, Montpellier",
+  "detailsThenMemoryAdmission": true,
+  "canonicalOrFavouriteWrite": false,
+  "draftOrApply": false
+}

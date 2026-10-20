@@ -1,5 +1,6 @@
 {
   "illustrations": {
+    "moments/before-editorial": "moments/before-editorial.webp",
     "intent/restaurant": "intent/restaurant.webp",
     "intent/fast-food": "intent/fast-food.webp",
     "intent/work-meal": "intent/work-meal.webp",
@@ -166,6 +167,7 @@
     "automotive/part": "automotive/part.webp"
   },
   "choices": {
+    "scene:bar-before": "moments/before-editorial",
     "intent:restaurant": "intent/restaurant",
     "module:restaurant": "intent/restaurant",
     "scene:restaurant": "intent/restaurant",

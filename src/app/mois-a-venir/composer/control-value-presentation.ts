@@ -14,7 +14,9 @@ export function controlValuePresentation(card: ComposerCardView, dimension: Cont
   const kind = explicit ? "DECISION" : value !== null && !absentEnvelope ? "REFERENCE" : "UNKNOWN";
   const label = dimension === "unitAmount" ? kind === "DECISION" ? "Prix choisi" : kind === "REFERENCE" ? "Prix de référence" : "Prix à préciser"
     : kind === "DECISION" ? "Choix de ce mois" : kind === "REFERENCE" ? "Référence du mois · pas une décision" : "À prévoir";
-  return { kind, label, value: absentEnvelope ? null : value } as const;
+  const shortLabel = dimension === 'unitAmount' ? kind === 'DECISION' ? 'Prix choisi' : kind === 'REFERENCE' ? 'Référence' : 'À prévoir'
+    : kind === 'DECISION' ? 'Choix du mois' : kind === 'REFERENCE' ? 'Référence du mois' : 'À prévoir';
+  return { kind, label, shortLabel, value: absentEnvelope ? null : value } as const;
 }
 export function controlMainDimension(card: ComposerCardView): "count" | "amount" {
   return card.capability?.fields?.count || typeof card.value.count === "string" ? "count" : "amount";

@@ -1,0 +1,14 @@
+
+> budgetisation@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.6 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Failed to compile.
+
+Error: EPERM: operation not permitted, mkdir 'C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\.next\server\app\api\recette'
+
+
+> Build failed because of webpack errors
