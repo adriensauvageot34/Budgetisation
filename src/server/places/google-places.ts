@@ -49,7 +49,8 @@ export class GoogleRestaurantPlaces {
   async details(placeId: string, sessionToken?: string, kind: ProjectPlaceKind = "RESTAURANT") {
     if (!validGooglePlaceId(placeId)) throw new TypeError("GOOGLE_PLACE_ID_INVALID");
     const query = new URLSearchParams({ languageCode: "fr", regionCode: "fr", ...(sessionToken ? { sessionToken } : {}) });
-    try { return normalizeRestaurantDetails(await this.request(`places/${placeId}?${query}`, DETAILS_MASK), kind); }
+    try { const raw=await this.request(`places/${placeId}?${query}`,kind==="ROUTE_ENDPOINT"?"id,displayName,formattedAddress,addressComponents,location,types":DETAILS_MASK);
+      const place=normalizeRestaurantDetails(raw,kind);if(kind==="ROUTE_ENDPOINT"&&place.placeId!==placeId)throw new TypeError("GOOGLE_ROUTE_ENDPOINT_ID_MISMATCH");return place; }
     catch (error) { throw error instanceof GooglePlacesError ? error : new GooglePlacesError(422); }
   }
   private async photoCandidates(placeId: string) {

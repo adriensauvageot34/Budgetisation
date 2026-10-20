@@ -1,0 +1,30 @@
+{
+  "level": "SYNTHETIC_OWNER_SQL_NOT_AUTH_OR_LIVE",
+  "checks": [
+    {
+      "name": "ENDPOINT_FR_EMPTY_TYPES_EXACT_ID_AND_ORIGINAL_FILTERS",
+      "status": "PASS"
+    },
+    {
+      "name": "DIRECTED_PARSER_STRICT_SCOPE_NO_PROVIDER_SNAPSHOT",
+      "status": "PASS"
+    },
+    {
+      "name": "REVERSE_RETURN_TAXI_AND_FREE_DO_NOT_LEAK_BINDINGS_OR_COSTS",
+      "status": "PASS"
+    },
+    {
+      "name": "SERVER_DETAILS_EACH_EXACT_STOP_TO_EXISTING_MOBILITY",
+      "status": "PASS"
+    },
+    {
+      "name": "FAILED_DETAILS_NEVER_REUSES_OLD_COORDINATES_OR_FARE",
+      "status": "PASS"
+    },
+    {
+      "name": "C0_SQL_ROUNDTRIP_NEW_BINDINGS_AND_OLD_DRAFT_NO_MIGRATION",
+      "status": "PASS"
+    }
+  ],
+  "remoteWrites": 0
+}

@@ -7,6 +7,7 @@ import worldJson from './bar-world.json';
 import {buildPlanningBaseline} from '@/server/phase2/planner/baseline';
 import type {PlanningBaselineSources} from '@/server/phase2/planner/baseline-sources';
 import {barReceptionEnabled,barGeometryReceptionEnabled} from './bar-reception-gate';
+import {preparePlanningMobility} from '@/server/phase2/planner/prospective-mobility-pricing';
 export {barReceptionEnabled} from './bar-reception-gate';
 
 /** Real Supabase Auth, RLS and favourite persistence; financial facts are synthetic.
@@ -37,6 +38,12 @@ export async function barReceptionScope() {
     visits12Months:0,lastVisitDate:null,address:null
   }]};
   const deps:PlannerDependencies={repository:{readActivePlan:async()=>null,readRevision:async()=>null,readAppliedRequest:async()=>null,applyRevision:async()=>{throw new TypeError('BAR_RECEPTION_APPLY_FORBIDDEN');}},
+    // Real providers only after two public Google endpoints were explicitly
+    // selected in this memory-only scene. Never geocode fictitious fixture bars.
+    ...(geometry&&process.env.BAR_GEOMETRY_LIVE_GOOGLE==='1'?{prepareWorld:async(w:PlanningWorldFacts,s:Parameters<typeof preparePlanningMobility>[1])=>{
+      const complete=s.contexts.some(c=>Object.values(c.slotSelections).some(slot=>Array.isArray(slot.items)&&slot.items.some((raw:unknown)=>{const item=raw as {kind?:string;optionKey?:string;routeEndpointBindings?:{origin?:unknown;destination?:unknown}};return item.kind==='MOBILITY_INTENT'&&item.optionKey==='car'&&!!item.routeEndpointBindings?.origin&&!!item.routeEndpointBindings?.destination;})));
+      return complete?preparePlanningMobility(w,s):w;
+    }}:{}),
     readWorld:async(h,m)=>{if(h!==householdId||m!=='2026-11')throw new TypeError('BAR_RECEPTION_SCOPE_INVALID');return structuredClone(facts);},
     readMobilityOptions:async()=>({places:facts.mobilityFacts?.places??[],vehicle:facts.mobilityFacts?.vehicle??null,vehicleIsUnique:!!facts.mobilityFacts?.vehicle}),
     validateContextReferences:async(_h,refs)=>{if(refs.personIds.length||refs.placeIds.some(id=>!facts.mobilityFacts?.places.some(p=>p.placeId===id)))throw new TypeError('BAR_RECEPTION_REFERENCE_INVALID');}};

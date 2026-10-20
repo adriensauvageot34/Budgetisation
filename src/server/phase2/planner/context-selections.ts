@@ -1,5 +1,6 @@
 import "server-only";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
+import {parseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
 import { plannerDigest, plannerInteger, plannerKeys, plannerRecord, plannerString, plannerUuid } from "@/domain/phase2/planner/json";
 import type { ComponentSelectionV1, ComponentSlotDefinition } from "@/domain/phase2/planner/component-contract";
 import type { ContextFieldDefinition } from "@/domain/phase2/planner/context-contract";
@@ -111,13 +112,14 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
   const option = slot.options.find(o => o.optionKey === optionKey && o.kind === value.kind);
   if (!option) throw new TypeError("CONTEXT_COMPONENT_CAPABILITY_FORBIDDEN");
   if (value.kind === "MOBILITY_INTENT") {
-    plannerKeys(value, [...common, "origin", "destination", "returnRequired", "journey", "pricing", "plannedTime", "returnTime", "route", "venueEndpoints"], common);
+    plannerKeys(value, [...common, "origin", "destination", "returnRequired", "journey", "pricing", "plannedTime", "returnTime", "route", "venueEndpoints", "routeEndpointBindings"], common);
     if (value.returnRequired !== undefined && typeof value.returnRequired !== "boolean") throw new TypeError("CONTEXT_MOBILITY_RETURN_INVALID");
     if (value.returnTime != null && value.returnRequired !== true) throw new TypeError("JOURNEY_RETURN_TIME_REQUIRES_RETURN");
     if (value.route !== undefined && (option.mobilityMode !== "CAR"
       || value.journey !== undefined && parseJourneyDeclaration(value.journey)?.relation !== "OWNS_JOURNEY"))
       throw new TypeError("COMPOSER_ROUTE_OWNER_REQUIRED");
     return { ...identity, kind: "MOBILITY_INTENT", origin: place(value.origin), destination: place(value.destination), returnRequired: value.returnRequired === true,
+      ...(value.routeEndpointBindings===undefined?{}:{routeEndpointBindings:parseRouteEndpointBindings(value.routeEndpointBindings,{selectionId:identity.selectionId,origin:place(value.origin),destination:place(value.destination)})}),
       ...(value.venueEndpoints===undefined?{}:{venueEndpoints:parseVenueEndpoints(value.venueEndpoints,{origin:place(value.origin),destination:place(value.destination)})}),
       ...(value.journey === undefined ? {} : { journey: parseJourneyDeclaration(value.journey) }),
       ...(value.pricing === undefined ? {} : { pricing: parseMobilityPricing(value.pricing) }),
@@ -201,6 +203,14 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
     if (context.templateKey === "short-stay" && slot.slotKey === "extras" && items.length && context.fields.fieldSchemaVersion !== "context-fields@v5")
       throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     for (const item of items) if (item.kind === "MOBILITY_INTENT") {
+      if(item.routeEndpointBindings){
+        if(context.templateKey!=="night-out"||!["outbound","return"].includes(slot.slotKey)||item.returnRequired||item.journey&&item.journey.relation!=="OWNS_JOURNEY")throw new TypeError("ROUTE_ENDPOINT_OWNER_INVALID");
+        for(const key of ["origin","destination"] as const)if(item.routeEndpointBindings[key]){
+          if(item.venueEndpoints?.[key])throw new TypeError("ROUTE_ENDPOINT_DOUBLE_BINDING");
+          const stop=key==="origin"?item.route?.stops[0]:item.route?.stops.at(-1);
+          if(item.route?.stops.length&&(!stop||stop.placeId||!sameVenuePlace(item[key],{kind:"TEXT",label:stop.label})))throw new TypeError("ROUTE_ENDPOINT_STOP_MISMATCH");
+        }
+      }
       if(item.venueEndpoints&&(context.templateKey!=="night-out"||!["outbound","return"].includes(slot.slotKey)||item.returnRequired||item.journey&&item.journey.relation!=="OWNS_JOURNEY"))throw new TypeError("NIGHT_OUT_ENDPOINT_OWNER_INVALID");
       if(item.venueEndpoints&&item.route?.stops.length)for(const key of ["origin","destination"] as const){
         const binding=item.venueEndpoints[key],stop=key==="origin"?item.route.stops[0]:item.route.stops.at(-1);

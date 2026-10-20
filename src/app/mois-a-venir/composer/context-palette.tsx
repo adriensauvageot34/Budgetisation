@@ -78,7 +78,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
 }
 
 export type PaletteQuestion = { title: string; identity?:string; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; visualKey?:string; drag?:BarDockDrag; choose: () => void }[];
-  search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string; backToFamilies?:()=>void };
+  search?: { value: string; change: (value: string) => void; label: string }; filterChoices?:boolean; emptyLabel?:string; backToFamilies?:()=>void };
 export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionScroll, onQuestionScrollChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
   questionScroll?:Readonly<Record<string,number>>; onQuestionScrollChange?:(key:string,index:number)=>void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
@@ -97,7 +97,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const answerKey=JSON.stringify([card.contextOccurrenceId,question?.identity??question?.title??""]);
   const productScene=appearance==="bar"&&(question?.nature==="FAMILIES"||question?.nature==="OBJECTS");
   const searchValue=productScene?"":question?.search?.value??searches[answerKey]??"";
-  const catalogue=barDockCatalog(question?.choices??[],searchValue,productScene?question?.choices.length:limits[answerKey]??24);
+  const catalogue=barDockCatalog(question?.choices??[],question?.filterChoices===false?"":searchValue,productScene?question?.choices.length:limits[answerKey]??24);
   // Internal search/"show more" can change the rendered rail while the caller's
   // question object stays identical. Measure the actual projection, not its owner.
   const renderedChoicesKey=JSON.stringify([catalogue.visible.map(choice=>[choice.key,choice.label,choice.hint,choice.showHint]),catalogue.remaining]);

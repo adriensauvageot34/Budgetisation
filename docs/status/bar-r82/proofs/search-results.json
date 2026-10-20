@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "level": "REACT_WITH_SYNTHETIC_NETWORK_NOT_BROWSER",
+  "checks": [
+    "ONE_INPUT",
+    "GOOGLE_EXACT_DETAILS_BEFORE_CHOICE",
+    "LATE_DIFFERENT_LEG_IGNORED",
+    "WRONG_DETAILS_ID_REJECTED_RETRY",
+    "OFF_NO_PROVIDER_REQUEST",
+    "KNOWN_AND_FREE_ALWAYS_AVAILABLE"
+  ],
+  "calls": 5,
+  "remoteWrites": 0
+}

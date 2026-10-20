@@ -1379,6 +1379,10 @@
 .barRouteEvidence[open] { flex-basis:100%; margin-left:0; }
 .barRouteEvidence>small { display:block; margin:4px 0; }
 .barRouteCost { white-space:nowrap; }
+.barEndpointSearch { display:flex; align-items:center; flex-wrap:wrap; gap:6px; min-width:0; }
+.barEndpointSearch>small { flex:1 1 200px; color:#6b5f54; }
+.barGoogleToggle { display:inline-flex; align-items:center; gap:5px; border:1px solid #ded7cb; border-radius:20px; background:#fff; padding:5px 9px; }
+.barGoogleToggle[aria-pressed=true] { border-color:#b29560; background:#fff7e8; }
 .barLivingEditor [data-bar-route-compact=true] { gap:4px 6px; }
 .barLivingEditor [data-bar-route-compact=true] .barRouteStops { flex:1 1 230px; }
 .barLivingEditor [data-bar-route-compact=true] .barRouteStops>[data-bar-route-reverse] { flex:0 0 30px; display:flex; align-items:center; justify-content:center; min-height:30px; border:1px solid #e8dcc8; border-radius:50%; }
