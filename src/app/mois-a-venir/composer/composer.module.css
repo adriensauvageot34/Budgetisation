@@ -1341,7 +1341,7 @@
 .barClosedTileVisual { display:grid; place-items:center; position:relative; min-height:0; }
 .barLivingCompact .barClosedTileVisual .barProductSymbol { display:grid; place-items:center; width:100%; height:64px; grid-row:auto; background:transparent; }
 .barLivingCompact .barClosedTileVisual .barProductSymbol img { width:90px; height:64px; object-fit:cover; object-position:right center; mix-blend-mode:multiply; }
-.barLivingCompact .barClosedTileVisual .barProductSymbol:has(img[src*=shared-bottle-closed]) img { object-fit:cover; object-position:center; }
+.barLivingCompact .barClosedTileVisual .barProductSymbol:has(img[src*=shared-bottle-closed],img[src*=beer-closed]) img { object-fit:cover; object-position:center; }
 .barClosedUnit { position:absolute; right:1px; bottom:1px; display:grid; place-items:center; width:24px; height:24px; border-radius:8px; background:#faf8f3; color:#725e3c; }
 .barClosedSuggestion { position:absolute; bottom:0; left:0; padding:2px 4px; border-radius:4px; background:white; color:#746855; font-size:10px; }
 

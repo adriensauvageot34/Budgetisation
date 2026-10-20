@@ -12,10 +12,13 @@ globalThis.requestAnimationFrame=cb=>{cb();return 0;};globalThis.cancelAnimation
 globalThis.document={activeElement:null,body:{}};globalThis.HTMLElement=class{};
 const {BarLivingCard}=require('@/app/mois-a-venir/composer/bar-living-card');
 const {BarComponentGroup}=require('@/app/mois-a-venir/composer/bar-component-group');
+const {AtomicPopover}=require('@/app/mois-a-venir/composer/atomic-popover');
 const {barClosedFixture}=require('@/server/recette/bar-closed-fixture');
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
 const pg=await createKernelPostgres(),deps={repository:createPlanApplyRepository(pg.client),readWorld:async()=>fixture(),householdPersons:[]};
+// Install UI-only globals after PGlite has initialized in its Node environment.
+globalThis.window={addEventListener(){},removeEventListener(){}};
 let sequence=0,checks=0,root,opened=[],removed=0;const id=crypto.randomUUID();
 const call=async(draft,op={kind:'READ'})=>{const r=await handleComposerRequest(deps,householdId,{...op,sequence:++sequence,targetMonth:'2026-11',draft});assert.equal(r.ok,true,r.message);return r.model;};
 const text=n=>typeof n==='string'?n:(n?.children??[]).map(text).join(' ');
@@ -27,7 +30,7 @@ try{
  let tree=await render(models.empty);assert.match(text(root.toJSON()),/Coût à préciser/);assert.doesNotMatch(text(root.toJSON()),/Montant partiel/);checks++;
  tree=await render(models.partial);const status=tree.findAll(n=>n.props.className?.includes('barClosedCostStatus'))[0];assert.match(status.props['aria-label'],/certains prix restent à préciser/);assert.match(text(root.toJSON()),/Montant partiel/);assert.match(text(root.toJSON()),/\+ \?/);checks++;
  tree=await render(models.rich);const lot=tree.findAll(n=>n.props['aria-label']==='Consommation commune (lot)');assert.equal(lot.length,1);assert.doesNotMatch(text(root.toJSON()),/Lot partagé/);assert.ok(tree.findAll(n=>n.type==='img').some(n=>n.props.src.includes('shared-bottle-closed')));checks++;
- const groups=tree.findAllByType(BarComponentGroup);assert.deepEqual(groups.map(n=>n.props.group.items.length).sort(),[1,2]);const beer=groups.find(n=>n.props.group.items.length===2);await act(async()=>beer.findAll(n=>n.type==='button')[0].props.onClick());assert.equal(beer.findAll(n=>n.props['data-bar-group-line']).length,2);await act(async()=>beer.findAll(n=>n.props['data-bar-group-line'])[1].props.onClick());assert.match(opened.at(-1),/component:extras:ba610000/);checks++;
+ const groups=tree.findAllByType(BarComponentGroup);assert.deepEqual(groups.map(n=>n.props.group.items.length).sort(),[1,2]);const beer=groups.find(n=>n.props.group.items.length===2),popover=beer.findByType(AtomicPopover);let details;await act(async()=>{details=create(popover.props.children(()=>{}));});assert.equal(details.root.findAll(n=>n.props['data-bar-group-line']).length,2);await act(async()=>details.root.findAll(n=>n.props['data-bar-group-line'])[1].props.onClick());assert.match(opened.at(-1),/component:extras:ba610000/);await act(async()=>details.unmount());checks++;
  const grip=tree.findAll(n=>n.type==='button'&&n.props['aria-keyshortcuts']==='Delete')[0];await act(async()=>grip.props.onKeyDown({key:'Delete',preventDefault(){},stopPropagation(){}}));assert.equal(removed,1);checks++;
  tree=await render(models.rich,{preserved:true});const protectedGrip=tree.findAll(n=>n.type==='button'&&n.props['aria-keyshortcuts']==='Delete')[0];await act(async()=>protectedGrip.props.onKeyDown({key:'Delete',preventDefault(){},stopPropagation(){}}));assert.equal(removed,1);assert.equal(tree.findAll(n=>n.type==='button'&&n.props['aria-label']==='Ouvrir Bar / Apéro')[0].props.disabled,false);checks++;
  const stale=structuredClone(models.partial);stale.nightOutSummaries[0].semanticStateDigest='stale';await render(stale);assert.match(text(root.toJSON()),/Estimation à actualiser/);assert.doesNotMatch(text(root.toJSON()),/Montant partiel/);checks++;

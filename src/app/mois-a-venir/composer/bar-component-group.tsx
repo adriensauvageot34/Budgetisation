@@ -4,6 +4,7 @@ import {UsersRound,UserRound} from 'lucide-react';
 import type {ComponentSelectionV1} from '@/domain/phase2/planner/component-contract';
 import type {ComposerUiModel} from '@/domain/phase2/planner/composer-ui-contract';
 import {BarProductVisual} from './bar-product-visual';
+import {AtomicPopover} from './atomic-popover';
 import {BarPageControls} from './bar-pages';
 import {money} from './display';
 import styles from './composer.module.css';
@@ -11,13 +12,17 @@ import {useComposerInteractions} from './interactions';
 
 type Group={key:string;items:readonly ComponentSelectionV1[]};
 /** All membership is retained. Only server rollups of Compiler facts may be totals. */
-export function BarGroupFace({group,model,owner,slot,closed=false}:{group:Group;model:ComposerUiModel;owner:string;slot:string;closed?:boolean}){
+function groupPresentation(group:Group,model:ComposerUiModel,owner:string,slot:string){
  const first=group.items[0],component=first.kind==='COMPONENT'?first:null;
  const projection=model.nightOutComponentGroups?.find(p=>p.contextOccurrenceId===owner&&p.slotKey===slot&&p.groupKey===group.key
    &&p.semanticStateDigest===model.board.draft.semanticStateDigest&&p.selectionIds.length===group.items.length&&group.items.every(i=>p.selectionIds.includes(i.selectionId)));
  const amount=projection?.knownAmount;
  const price=amount!=null?money(amount)+(projection?.incomplete?' + ?':''):group.items.length===1&&component?.cost.kind==='MANUAL'?`${money(component.cost.unitAmount)} / ${component.unitBasis==='SHARED'?'lot':'unité'}`:'?';
  const quantity=projection?.quantity??(group.items.length===1&&component?component.quantity:null);
+ return {first,component,projection,price,quantity};
+}
+export function BarGroupFace({group,model,owner,slot,closed=false}:{group:Group;model:ComposerUiModel;owner:string;slot:string;closed?:boolean}){
+ const {first,component,projection,price,quantity}=groupPresentation(group,model,owner,slot);
  const badges=<span className={styles.barCompactBadges}><span aria-label={quantity?`Quantité ${quantity}${component?.unitBasis==='SHARED'?' lots partagés':''}`:`${group.items.length} lignes conservées`}>{quantity?`×${quantity}`:`${group.items.length} lignes`}</span>
    <span data-price-unknown={price==='?'} aria-label={price==='?'?'Prix à préciser':projection?.incomplete?`Montant connu partiel ${price}`:price}>{price}</span></span>;
  if(closed){
@@ -42,9 +47,15 @@ export function BarComponentGroup({group,model,owner,slot,closed=false,disabled=
  const interaction=useComposerInteractions();
  const dragProps=(item:ComponentSelectionV1)=>{const source=`satellite:${owner}:${slot}:${item.selectionId}`,allowed=!disabled&&!!model.presentation.dragSources[source];return {draggable:allowed,'data-drag-source':allowed?source:undefined,onDragStart:(event:DragEvent<HTMLButtonElement>)=>{event.stopPropagation();if(allowed)interaction?.start(source,event);},onDragEnd:()=>interaction?.end()};};
  const index=Math.min(page,Math.max(0,Math.ceil(group.items.length/4)-1));
+ const view=groupPresentation(group,model,owner,slot);
+ const details=(close?:()=>void)=><section className={styles.barGroupLines} aria-label="Lignes distinctes du groupe"><p>{group.items.length} postes distincts · modifier séparément</p>{group.items.slice(index*4,(index+1)*4).map((item,i)=><button {...dragProps(item)} data-bar-group-line={item.selectionId} key={item.selectionId} type="button" disabled={disabled} onClick={()=>{close?.();choose(item);}}>{item.kind==='COMPONENT'?item.label:'Moment lié'} n°{index*4+i+1}<small>{item.kind==='COMPONENT'&&item.cost.kind==='MANUAL'?`${money(item.cost.unitAmount)} / ${item.unitBasis==='SHARED'?'lot':'unité'}`:'Prix à préciser'}</small></button>)}<BarPageControls index={index} count={Math.ceil(group.items.length/4)} onChange={setPage} label="Lignes du groupe"/></section>;
+ const groupedClosed=closed&&group.items.length>1&&!disabled;
  return <div className={styles.barGroup} data-bar-group data-bar-group-lines={group.items.length}>
-   <button type="button" {...(group.items.length===1?dragProps(group.items[0]):{})} disabled={disabled} aria-expanded={group.items.length>1?expanded:!!children} onClick={()=>group.items.length===1?choose(group.items[0]):setExpanded(v=>!v)}><BarGroupFace closed={closed} group={group} model={model} owner={owner} slot={slot}/></button>
-   {expanded&&group.items.length>1&&<section className={styles.barGroupLines} aria-label="Lignes distinctes du groupe"><p>{group.items.length} postes distincts · modifier séparément</p>{group.items.slice(index*4,(index+1)*4).map((item,i)=><button {...dragProps(item)} data-bar-group-line={item.selectionId} key={item.selectionId} type="button" disabled={disabled} onClick={()=>choose(item)}>{item.kind==='COMPONENT'?item.label:'Moment lié'} n°{index*4+i+1}<small>{item.kind==='COMPONENT'&&item.cost.kind==='MANUAL'?`${money(item.cost.unitAmount)} / ${item.unitBasis==='SHARED'?'lot':'unité'}`:'Prix à préciser'}</small></button>)}<BarPageControls index={index} count={Math.ceil(group.items.length/4)} onChange={setPage} label="Lignes du groupe"/></section>}
+   {groupedClosed?<AtomicPopover label={`${view.component?.label??'Consommations'} · ${group.items.length} postes distincts · ${view.price}`} state="group" focus={()=>{}} icon={<BarGroupFace closed group={group} model={model} owner={owner} slot={slot}/>}>{close=>details(close)}</AtomicPopover>:
+     <button type="button" {...(group.items.length===1?dragProps(group.items[0]):{})} disabled={disabled} aria-expanded={group.items.length>1?expanded:!!children} onClick={()=>group.items.length===1?choose(group.items[0]):setExpanded(v=>!v)}><BarGroupFace closed={closed} group={group} model={model} owner={owner} slot={slot}/></button>}
+
+   {expanded&&group.items.length>1&&details()}
+
    {children}
  </div>;
 }
