@@ -1,0 +1,26 @@
+[
+  {
+    "accent": "#927039",
+    "preset": "bar-apero",
+    "template": "night-out",
+    "tint": "#fffaf0"
+  },
+  {
+    "accent": "#80628c",
+    "preset": null,
+    "template": "night-out",
+    "tint": "#faf7fc"
+  },
+  {
+    "accent": "#547e90",
+    "preset": null,
+    "template": "short-stay",
+    "tint": "#f6fafb"
+  },
+  {
+    "accent": "#648270",
+    "preset": null,
+    "template": "purchase",
+    "tint": "#f7faf7"
+  }
+]

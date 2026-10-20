@@ -1,0 +1,102 @@
+Deployment dpl_97wUXWxJ4LT8eq1UFUrVm36FJzpG ; SHA4f4f7c2 ; READY.
+API events truncated one omitted event; not represented as an exhaustive server log.
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Cloning github.com/adriensauvageot34/Budgetisation (Branch: codex/bar-apero-r6-user-experience, Commit: 4f4f7c2)
+Cloning completed: 2.679s
+Found .vercelignore
+  /.git/hooks/pre-applypatch.sample
+  /.git/hooks/post-update.sample
+  /.git/hooks/fsmonitor-watchman.sample
+  /.git/hooks/commit-msg.sample
+  /.git/hooks/applypatch-msg.sample
+  /.git/HEAD
+  /.git/FETCH_HEAD
+  /.git/description
+  /.git/config
+  /.env.example
+Removed 28 ignored files defined in .vercelignore
+Restored build cache from previous deployment (HEKssjaQzZgJUaatAiSKgbotfDri)
+Running "vercel build"
+Vercel CLI 64.3.1
+Installing dependencies...
+npm warn Unknown env config "cache-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+  run `npm fund` for details
+23 packages are looking for funding
+
+up to date in 658ms
+
+npm warn install-scripts   sharp@0.34.5 (install: node install/check.js || npm run build)
+npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+npm warn install-scripts
+Detected Next.js version: 16.2.6
+Running "npm run build"
+npm warn Unknown env config "cache-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> next build
+> budgetisation@0.1.0 build
+
+  Applying modifyConfig from Vercel
+▲ Next.js 16.2.6 (Turbopack)
+
+  Creating an optimized production build ...
+  Running TypeScript ...
+✓ Compiled successfully in 37.4s
+  Finished TypeScript in 38.8s ...
+  Collecting page data using 1 worker ...
+  Generating static pages using 1 worker (0/8) ...
+  Generating static pages using 1 worker (6/8) 
+  Generating static pages using 1 worker (4/8) 
+  Generating static pages using 1 worker (2/8) 
+✓ Generating static pages using 1 worker (8/8) in 416ms
+  Running onBuildComplete from Vercel
+
+Route (app)
+├ ○ /acces-refuse
+├ ○ /_not-found
+┌ ƒ /
+├ ƒ /api/places/personal
+├ ƒ /api/places/details
+├ ƒ /api/places/autocomplete
+├ ƒ /api/persona-portrait/[name]
+├ ƒ /api/global-v2/query
+├ ƒ /api/cron/composer-history
+├ ƒ /api/composer/preview
+├ ƒ /api/composer/historical-basis
+├ ƒ /api/composer/drafts
+├ ƒ /api/composer/activity-history
+├ ƒ /analyse-globale
+├ ○ /analyse
+├ ○ /parametres
+├ ƒ /operations
+├ ƒ /mois-a-venir/composer/preparer-socle
+├ ƒ /mois-a-venir/composer/preparer-historique
+├ ƒ /mois-a-venir/composer
+├ ƒ /mois-a-venir
+├ ○ /mentions-places
+├ ○ /imports
+├ ƒ /historique/analyse/global
+├ ƒ /historique/[month]
+├ ƒ /historique
+├ ƒ /diagnostic
+├ ƒ /connexion
+├ ƒ /categorie/[slug]
+├ ƒ /api/recette/bar-favoris
+├ ƒ /api/query
+├ ƒ /api/places/photo
+
+ƒ Proxy (Middleware)
+
+
+└ ƒ /recette/bar-favoris
+
+ƒ  (Dynamic)  server-rendered on demand
+○  (Static)   prerendered as static content
+Build Completed in /vercel/output [1m]
+Deploying outputs...
+Deployment completed
+Creating build cache...
+Uploading build cache [172.40 MB]
+Created build cache: 10s
+Build cache uploaded: 2.254s

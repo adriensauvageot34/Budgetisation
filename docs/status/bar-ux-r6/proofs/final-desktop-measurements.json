@@ -1,0 +1,110 @@
+[
+  {
+    "label": "final-rich-1152",
+    "card": {
+      "bottom": 738.6000061035156,
+      "height": 525,
+      "width": 762.7999877929688,
+      "x": 328,
+      "y": 213.6000061035156
+    },
+    "dock": {
+      "height": 97,
+      "top": 819.4000244140625
+    },
+    "documentScroll": false,
+    "height": 720,
+    "horizontalOverflow": false,
+    "internalScroll": [],
+    "overlaps": 0,
+    "routes": [
+      {
+        "height": 39.60000228881836,
+        "leg": "outbound",
+        "text": "AllerTrain / tramÀ préciserÀ préciserTarif ?À préciserÀ préciser : départ, arrivée",
+        "width": 737.2000122070312
+      },
+      {
+        "height": 53.60000228881836,
+        "leg": "return",
+        "text": "RetourTaxiÀ préciserÀ préciser12,00 €Tarif prévuDétails du coûtÀ préciser : départ, arrivée",
+        "width": 737.2000122070312
+      }
+    ],
+    "scene": "summary",
+    "sha": "4f4f7c2201395fd4b62ba93b01b77211cb0596e3",
+    "width": 1152
+  },
+  {
+    "label": "final-rich-1440",
+    "card": {
+      "bottom": 688.5,
+      "height": 525,
+      "width": 754.5625,
+      "x": 328,
+      "y": 163.5
+    },
+    "dock": {
+      "height": 97,
+      "top": 779.2999877929688
+    },
+    "documentScroll": false,
+    "height": 900,
+    "horizontalOverflow": false,
+    "internalScroll": [],
+    "overlaps": 0,
+    "routes": [
+      {
+        "height": 39.60000228881836,
+        "leg": "outbound",
+        "text": "AllerTrain / tramÀ préciserÀ préciserTarif ?À préciserÀ préciser : départ, arrivée",
+        "width": 728.9625244140625
+      },
+      {
+        "height": 53.60000228881836,
+        "leg": "return",
+        "text": "RetourTaxiÀ préciserÀ préciser12,00 €Tarif prévuDétails du coûtÀ préciser : départ, arrivée",
+        "width": 728.9625244140625
+      }
+    ],
+    "scene": "summary",
+    "sha": "4f4f7c2201395fd4b62ba93b01b77211cb0596e3",
+    "width": 1440
+  },
+  {
+    "label": "final-rich-1920",
+    "card": {
+      "bottom": 688.5,
+      "height": 525,
+      "width": 778.2250366210938,
+      "x": 433.2000122070313,
+      "y": 163.5
+    },
+    "dock": {
+      "height": 97,
+      "top": 952.2000122070312
+    },
+    "documentScroll": false,
+    "height": 1080,
+    "horizontalOverflow": false,
+    "internalScroll": [],
+    "overlaps": 0,
+    "routes": [
+      {
+        "height": 39.60000228881836,
+        "leg": "outbound",
+        "text": "AllerTrain / tramÀ préciserÀ préciserTarif ?À préciserÀ préciser : départ, arrivée",
+        "width": 752.625
+      },
+      {
+        "height": 53.60000228881836,
+        "leg": "return",
+        "text": "RetourTaxiÀ préciserÀ préciser12,00 €Tarif prévuDétails du coûtÀ préciser : départ, arrivée",
+        "width": 752.625
+      }
+    ],
+    "scene": "summary",
+    "sha": "4f4f7c2201395fd4b62ba93b01b77211cb0596e3",
+    "width": 1920
+  }
+]

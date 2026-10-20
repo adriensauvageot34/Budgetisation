@@ -1,19 +1,19 @@
-# R6 — diagnostic Google Places
+# R6 — Google Places réel
 
-## Causes établies avant le test fournisseur
+## Causes établies
+La recette géométrique R5 interceptait autocomplete/Details avec geometryPlaces : lieux fictifs, jamais une preuve live. R6 ajoute un opt-in Preview auteur autorisé utilisant le fetch ordinaire, sans transport Draft/favori ni changement Auth/RLS/Apply.
+La ville était proposée implicitement depuis le domicile : supprimé. Seule la commune d'un lieu explicitement choisi peut être reprise ; sinon ville vide. BAR_APERO ne remplace plus une ville omise par Montpellier. Autres familles inchangées.
 
-La recette R5 `BAR_GEOMETRY_RECEPTION=1` interceptait volontairement autocomplete et Details avec `geometryPlaces`. Elle renvoyait des lieux fictifs et refusait Details. Ce chemin n'était pas une preuve du fonctionnement de Google réel. Il reste disponible pour les erreurs et réponses tardives.
+Premier test live503 : métadonnées Vercel sans déchiffrement établissent que la clé serveur existante ciblait seulement une ancienne branche Preview. Réaffectation officielle à R6, valeur omise dans l'appel : aucune clé lue, recopiée, publiée ou committée. Production/global inchangés pendant les tests. Retour de portée possible sans lire le secret.
 
-Le panneau exposait une ville initiale issue du domicile lorsque celui-ci était unique. R6 ne reprend que la commune d'un lieu explicitement choisi ; sans cette décision, ville vide. L'API BAR_APERO ne remplace plus une ville omise par Montpellier. Les autres familles conservent leur contrat existant. Ville facultative, sections Lieux enregistrés / Google Maps / Nom libre, déduplication seulement par identité Google exacte.
+## Circuit et preuves
+BarPlaceSearch → RestaurantSearchSession (300ms,générations/annulations) → POST /api/places/autocomplete BAR_APERO → GoogleRestaurantPlaces. Clic explicite → POST /api/places/details. Fiche compatible de même placeId requise pour BarGoogleRef prospectif.
+Sources distinctes Lieux enregistrés / Google Maps / Nom libre ; identité exacte pour déduplication, pas le texte. Aucun bar transformé en favori, Canonical ou visite historique.
 
-## Circuit de réception réel
+**GOOGLE_REAL_PROVIDER=EXECUTED_PASS_LIMITED_READ_ONLY**.
+Deux vrais parcours :90b6606 configuré puis SHA final4f4f7c2201395fd4b62ba93b01b77211cb0596e3, dpl_97wUXWxJ4LT8eq1UFUrVm36FJzpG.
+Ville explicitement saisie Montpellier, requête publique Le Rebuffy. Résultat Le Rebuffy · Rue Rebuffy, Montpellier. Clic → «Lecture du lieu…» → «Bar Google retenu · itinéraire calculable sous réserve des fournisseurs», choix mémoire.
+Captures final-google-live-results/admitted.png et preview-b-google-live-*. Bandeau de recette : Google réel, faits synthétiques et aucun enregistrement distant. Aucun cookie, clé, adresse privée ou jeton publié.
 
-Preview uniquement, auteur autorisé, Board financier synthétique en mémoire. `BAR_GEOMETRY_LIVE_GOOGLE=1` sélectionne le fetch ordinaire dans la recette existante. Il ne modifie ni Auth, ni RLS, ni les guards d'Apply ; aucun transport Draft/favori n'est ajouté. Le bandeau annonce distinctement Google réel ou lieux simulés.
-
-`BarPlaceSearch` → `RestaurantSearchSession` (300 ms, générations/annulations) → POST `/api/places/autocomplete` (`BAR_APERO`, ville explicitement renseignée ou vide) → `GoogleRestaurantPlaces`. Un clic demande POST `/api/places/details` ; seule une fiche compatible et de même placeId autorise `BarGoogleRef` prospectif. L'identité reste Google, jamais une création Canonical ou une visite passée. `night-out-venue` conserve les rattachements explicites des jambes ; la relecture pour Mobility reste sous son owner existant.
-
-## Preuves actuelles
-
-Mocks exécutés : résultats tardifs et désordonnés, changement de carte pendant Details, absence de sélection à la frappe, données photo non publiées ignorées, erreur503, erreurs401/403/429 compréhensibles, ville vide conservée, trois résultats par page et tous accessibles, sources distinctes. `check-bar-apero-google-route` : sept contrôles de références/round-trip/legs/provenance PASS, fournisseurs simulés.
-
-Fournisseur réel et admission navigateur : EN ATTENTE de la Preview B. Aucun PASS live déduit des mocks. Pas de clé, token, adresse personnelle ou contenu de cookie dans les preuves.
+Mocks distincts PASS :401/403/429/503, réponses tardives/désordonnées, changement de carte pendant Details, pas d'admission à la frappe, quatre résultats accessibles3/page, ville facultative et sources. Routes7 PASS sur fixtures : refs/round-trip/legs/provenance.
+TomTom/HERE/fuel live NOT_RUN ; ce PASS Google ne certifie pas une estimation Mobility réelle ni la persistance durable.
