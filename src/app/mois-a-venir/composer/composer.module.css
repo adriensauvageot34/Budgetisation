@@ -1334,10 +1334,12 @@
 .contextCard { --focus:var(--scene-accent,#9b82c1); border-color:color-mix(in srgb,var(--scene-accent,#9b82c1) 18%,#eee); background:var(--scene-tint,#fff); }
 .contextCard :is(button,input,summary):focus-visible,.barLivingCard :is(button,input,summary):focus-visible { outline-color:var(--scene-accent,#9b82c1); }
 .barRouteLine { container-type:inline-size; }
+.barLivingCard .barLivingRoutes { grid-template-columns:minmax(0,1fr); }
 .barLivingCard .barRouteLine { gap:3px 6px; padding:5px 7px; }
 .barRouteLine>[data-bar-route] { display:flex; align-items:center; gap:5px; flex:0 0 auto; white-space:nowrap; }
 .barRouteStops>button { overflow:hidden; }
 .barRouteStops>button>span { display:block; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+.barRouteStops>button>span { margin-top:0; }
 .barRouteStops>svg { flex:none; }
 .barRouteLine .barRouteEvidence { flex:0 1 auto; margin-left:auto; max-width:100%; color:#766346; }
 .barRouteEvidence>summary { cursor:pointer; padding:3px; }
