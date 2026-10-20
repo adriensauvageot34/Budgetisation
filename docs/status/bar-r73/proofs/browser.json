@@ -1,0 +1,213 @@
+{
+  "before": [
+    {
+      "id": "6fa41230-0c8a-4807-ab8f-170a3a1ffd1c",
+      "rect": {
+        "h": 110.20000457763672,
+        "w": 128
+      },
+      "text": "Chips×1?"
+    },
+    {
+      "id": "559cd537-8154-4d8f-b2a1-65458b215ed2",
+      "rect": {
+        "h": 110.20000457763672,
+        "w": 128
+      },
+      "text": "Bière×1?"
+    },
+    {
+      "id": "75c7a402-40cf-48fb-8513-8e0b8921cc7f",
+      "rect": {
+        "h": 110.20000457763672,
+        "w": 128
+      },
+      "text": "Vin×1?"
+    }
+  ],
+  "jsonVisible": false,
+  "sha": "2b8dbc2049e57ec6a4f16f180bda7bb948c14bdc",
+  "slots": [
+    {
+      "label": "Ajouter un objet au Before",
+      "rect": {
+        "h": 104,
+        "w": 48,
+        "x": 745.7999877929688,
+        "y": 372.5
+      }
+    }
+  ],
+  "viewport": [
+    1440,
+    900
+  ],
+  "native": {
+    "barCount": 0,
+    "events": [
+      {
+        "category": "DOCK",
+        "handler": 97615.20000000298,
+        "name": "dragstart",
+        "start": 97578.70000000298,
+        "x": 980,
+        "y": 795
+      },
+      {
+        "category": "DOCK",
+        "handler": 97653.10000000148,
+        "name": "dragover",
+        "start": 97652.90000000596,
+        "x": 951,
+        "y": 745
+      },
+      {
+        "category": "OTHER",
+        "handler": 97707.30000000448,
+        "name": "dragover",
+        "start": 97707,
+        "x": 865,
+        "y": 595
+      },
+      {
+        "category": "OTHER",
+        "handler": 97720.90000000596,
+        "name": "dragover",
+        "start": 97720.5,
+        "x": 836,
+        "y": 545
+      },
+      {
+        "category": "BAR",
+        "handler": 97762.40000000596,
+        "name": "dragover",
+        "start": 97762,
+        "x": 750,
+        "y": 395
+      },
+      {
+        "category": "BAR",
+        "handler": 97788.20000000298,
+        "name": "drop",
+        "start": 97788.10000000148,
+        "x": 750,
+        "y": 395
+      },
+      {
+        "category": "DOCK",
+        "handler": 97810.30000000448,
+        "name": "dragend",
+        "start": 97809,
+        "x": 750,
+        "y": 395
+      }
+    ],
+    "groups": [
+      1,
+      2,
+      1
+    ]
+  },
+  "beforeRemoveUndo": [
+    "6fa41230-0c8a-4807-ab8f-170a3a1ffd1c",
+    "559cd537-8154-4d8f-b2a1-65458b215ed2",
+    "75c7a402-40cf-48fb-8513-8e0b8921cc7f"
+  ],
+  "rich1440": {
+    "b5Label": "Revenir au montant direct",
+    "b5Text": "Montant direct",
+    "badBeforeSummary": false,
+    "badges": [
+      {
+        "client": 59,
+        "parentW": 128,
+        "scroll": 59,
+        "text": "17,00 € + ?",
+        "w": 60.79999923706055
+      }
+    ],
+    "rails": [
+      {
+        "height": 116,
+        "label": "Objets Before",
+        "scroll": 456,
+        "scrollHeight": 116,
+        "width": 360
+      },
+      {
+        "height": 116,
+        "label": "Au bar",
+        "scroll": 360,
+        "scrollHeight": 116,
+        "width": 360
+      }
+    ],
+    "tiles": [
+      {
+        "h": 110.20000457763672,
+        "label": "Chips×1?",
+        "w": 128
+      },
+      {
+        "h": 110.20000457763672,
+        "label": "Bière×1?",
+        "w": 128
+      },
+      {
+        "h": 110.20000457763672,
+        "label": "Vin×1?",
+        "w": 128
+      },
+      {
+        "h": 110.20000457763672,
+        "label": "Bière×317,00 € + ?",
+        "w": 128
+      }
+    ],
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  "rich1152": {
+    "badge": [
+      {
+        "client": 59,
+        "scroll": 59,
+        "text": "17,00 € + ?"
+      }
+    ],
+    "jsonVisible": false,
+    "rails": [
+      {
+        "height": 116,
+        "label": "Objets Before",
+        "scroll": 456,
+        "scrollHeight": 116,
+        "width": 365
+      },
+      {
+        "height": 116,
+        "label": "Au bar",
+        "scroll": 365,
+        "scrollHeight": 116,
+        "width": 365
+      }
+    ],
+    "viewport": [
+      1152,
+      720
+    ]
+  },
+  "railAfterArrow": {
+    "client": 365,
+    "left": 91.1999969482422,
+    "scroll": 456
+  },
+  "returnDirectConfirmation": "EXECUTED_PASS_CANCELLED_WITHOUT_MUTATION",
+  "headerKeyboardFocus": "Préserver les choix de cette sortie",
+  "nativeUndo": "EXECUTED_PASS",
+  "consoleErrors": 0,
+  "finance": "R72_BASELINE_198_PASS_NOT_RERUN",
+  "remoteFinancialWrites": 0
+}

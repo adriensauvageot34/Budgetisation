@@ -24,5 +24,5 @@ export function BarFavoritesReception({model,geometry=false,liveGoogle=false,tra
   // The live provider uses the ordinary authenticated routes. Composer remains
   // synthetic and memory-only; this never grants a favourite or Draft writer.
   const shell=<ComposerShell initialModel={model} transport={tracedTransport}/>;
-  return <BarPlaceTransportContext.Provider value={geometry&&!liveGoogle?geometryPlaces:null}>{traceDnd?<div style={{height:'100%',display:'flex',flexDirection:'column',minHeight:0}}><output data-r63-contexts={JSON.stringify(contexts)} style={{display:'block',fontSize:10,maxHeight:48,overflow:'auto',flexShrink:0}}>Contexte synthétique relu depuis les réponses serveur : {JSON.stringify(contexts)}</output><div style={{flex:1,minHeight:0}}>{shell}</div></div>:shell}</BarPlaceTransportContext.Provider>;
+  return <BarPlaceTransportContext.Provider value={geometry&&!liveGoogle?geometryPlaces:null}>{traceDnd?<div data-r63-contexts={JSON.stringify(contexts)} style={{height:'100%',display:'flex',flexDirection:'column',minHeight:0}}><div style={{flex:1,minHeight:0}}>{shell}</div></div>:shell}</BarPlaceTransportContext.Provider>;
 }

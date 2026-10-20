@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useRef,useId,type ReactNode,type HTMLAttributes} from "react";
-import { X, Pin, CircleDashed, Info } from "lucide-react";
+import { X, CircleDashed, Info } from "lucide-react";
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 
@@ -76,8 +76,12 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
           : summary?.knownAmount!=null&&summary.incomplete&&<span className={styles.barClosedCostStatus} data-bar-cost-info tabIndex={0} aria-label={incompleteExplanation} aria-describedby={infoId}><CircleDashed size={13} aria-hidden="true"/>Montant partiel<Info size={13} aria-hidden="true"/><span id={infoId} role="tooltip" className={styles.barClosedCostTip}>{incompleteExplanation}</span></span>}
         {(preserved||card.readOnly)&&<small>{card.readOnly?"Lecture seule":"Carte préservée"}</small>}</div></div>
       <div className={styles.barLivingTools}>
-        {expanded&&remove&&<details className={styles.barManage}><summary aria-label="Actions de la sortie" title="Actions de la sortie">⋯</summary><button type="button" disabled={locked} onClick={remove}>Retirer la sortie</button><small>Undo permet de la rétablir.</small></details>}
-        {expanded&&!card.readOnly&&<button type="button" disabled={busy} onClick={preserve} title={preserved?"Libérer les choix de cette sortie pour les modifier":"Préserver les choix de cette sortie · ne déplace pas la carte"} aria-label={preserved?"Libérer les choix de cette sortie":"Préserver les choix de cette sortie"} aria-pressed={preserved}><Pin size={15}/></button>}
+        {expanded&&!card.readOnly&&<details className={styles.barManage}><summary aria-label="Actions de la sortie" title="Préserver ou retirer cette sortie">Actions</summary>
+          <div className={styles.barOpenActions}>
+          <button type="button" disabled={busy} onClick={preserve} aria-label={preserved?"Libérer les choix de cette sortie":"Préserver les choix de cette sortie"} aria-pressed={preserved}>{preserved?"Libérer les choix":"Préserver les choix"}</button>
+          {remove&&<><button type="button" disabled={locked} onClick={remove}>Retirer la sortie</button><small>Undo permet de la rétablir.</small></>}
+          </div>
+        </details>}
         {expanded&&<button type="button" onClick={living.close} aria-label="Replier la carte"><X size={18}/></button>}
       </div>
     </header>
