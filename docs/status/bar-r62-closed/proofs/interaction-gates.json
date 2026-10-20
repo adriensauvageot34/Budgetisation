@@ -1,0 +1,19 @@
+{
+  "product": "25252bb19fdffc41cc80af75822efb7587e66db9",
+  "interactiveCodeTested": "9f47be55bda2c912303907fd9031ae7dc44d57ea",
+  "interactiveCodeDiff": "EMPTY",
+  "hoverOnly": true,
+  "focusOnly": true,
+  "beerSeparatePrice28": true,
+  "keyboardTrashUndoFresh68": true,
+  "nativeHoldDrag": "NOT_RUN_NATIVE_POINTER",
+  "longRail": {
+    "badgesFit": true,
+    "lastFullyVisible": true,
+    "lastWidth": 156,
+    "max": 280,
+    "scrollLeft": 280.79998779296875
+  },
+  "remoteWrites": 0,
+  "apply": false
+}

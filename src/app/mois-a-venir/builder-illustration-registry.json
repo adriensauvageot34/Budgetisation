@@ -167,7 +167,10 @@
     "automotive/bulbs": "automotive/bulbs.webp",
     "automotive/battery": "automotive/battery.webp",
     "automotive/wash": "automotive/wash.webp",
-    "automotive/part": "automotive/part.webp"
+    "automotive/part": "automotive/part.webp",
+    "drinks/cocktail-closed": "drinks/cocktail-closed.webp",
+    "drinks/soft-closed": "drinks/soft-closed.webp",
+    "food/tapas-closed": "food/tapas-closed.webp"
   },
   "choices": {
     "scene:bar-beer-closed": "drinks/beer-closed",
@@ -543,6 +546,9 @@
     "asset:automotive:wash": "automotive/wash",
     "choice:automotiveKind:SERVICE": "automotive/wash",
     "asset:automotive:part": "automotive/part",
-    "choice:automotiveKind:PRODUCT": "automotive/part"
+    "choice:automotiveKind:PRODUCT": "automotive/part",
+    "scene:bar-cocktail-closed": "drinks/cocktail-closed",
+    "scene:bar-soft-closed": "drinks/soft-closed",
+    "scene:bar-tapas-closed": "food/tapas-closed"
   }
 }

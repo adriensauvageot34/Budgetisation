@@ -26,7 +26,7 @@
     {
       "key": "scenes/bar-interior-closed",
       "file": "scenes/bar-interior-closed.webp",
-      "subject": "R6.1 original panoramic warm luminous clay bar interior. Full closed-card background, decorative only.",
+      "subject": "R6.2 original panoramic matte sculpted-clay miniature bar, amber arches and rounded counter, no text or foreground selected product. Closed-card background only.",
       "choices": ["scene:bar-closed"]
     },
     {
@@ -1551,6 +1551,30 @@
       "choices": [
         "asset:automotive:part",
         "choice:automotiveKind:PRODUCT"
+      ]
+    },
+    {
+      "key": "drinks/cocktail-closed",
+      "file": "drinks/cocktail-closed.webp",
+      "subject": "R6.2 transparent derivative of the existing cocktail clay illustration. Same product, closed card only.",
+      "choices": [
+        "scene:bar-cocktail-closed"
+      ]
+    },
+    {
+      "key": "drinks/soft-closed",
+      "file": "drinks/soft-closed.webp",
+      "subject": "R6.2 transparent derivative of the existing soft clay illustration. Same product, closed card only.",
+      "choices": [
+        "scene:bar-soft-closed"
+      ]
+    },
+    {
+      "key": "food/tapas-closed",
+      "file": "food/tapas-closed.webp",
+      "subject": "R6.2 transparent derivative of the existing tapas clay illustration. Same product, closed card only.",
+      "choices": [
+        "scene:bar-tapas-closed"
       ]
     }
   ],
