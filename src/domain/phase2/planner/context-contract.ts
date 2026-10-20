@@ -1,7 +1,7 @@
 import type { ComponentSlotDefinition, ComponentSlotSelectionV1 } from "./component-contract";
 
 export type ContextFieldDefinition = Readonly<{ fieldKey: string; kind: "TEXT" | "DATE" | "CHOICE" | "PERSON_REF" | "PERSON_REFS" | "PLACE_REF" | "COUNT" | "PLANNED_ASSET_REF";
-  required: boolean; choices?: readonly string[]; semanticContract?:"NIGHT_OUT_VENUE" }>;
+  required: boolean; choices?: readonly string[]; semanticContract?:"NIGHT_OUT_VENUE"|"NIGHT_OUT_CONSUMPTION" }>;
 export type ContextCapability = Readonly<{ slotKey: string; action: "SELECT_COMPONENT" | "ATTACH_CHILD_CONTEXT" | "SELECT_MOBILITY_INTENT";
   cardinality: ComponentSlotDefinition["cardinality"]; selectionMode: "ONE_OF" | "MANY";
   optionKeys: readonly string[]; childTemplateKeys: readonly string[] }>;

@@ -14,7 +14,7 @@ import { parseJourneyDeclaration, parseMobilityPricing, parseProspectiveRoute, m
 import { validateComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 import {parseNightOutVenue,parseVenueEndpoints,sameVenuePlace} from "@/domain/phase2/planner/night-out-venue";
 import {parseComponentEconomicScope} from "@/domain/phase2/planner/component-economic-scope";
-import { nightOutConsumption } from "@/domain/phase2/planner/night-out-consumption";
+import { nightOutConsumption, parseNightOutConsumption } from "@/domain/phase2/planner/night-out-consumption";
 
 export function contextDate(raw: unknown, targetMonth: string): string | null {
   if (raw == null) return null;
@@ -70,6 +70,7 @@ function nightProductAssetRef(raw: unknown): PlannedAssetRef {
 }
 export function parseContextField(raw: unknown, field: ContextFieldDefinition, targetMonth: string): unknown {
   if (raw == null) return null;
+  if(field.semanticContract==="NIGHT_OUT_CONSUMPTION")return parseNightOutConsumption(raw);
   if(field.semanticContract==="NIGHT_OUT_VENUE")return parseNightOutVenue(raw);
   if (field.kind === "PLANNED_ASSET_REF") return giftAssetRef(raw);
   if (field.kind === "DATE") return contextDate(raw, targetMonth);
@@ -155,7 +156,7 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
 }
 export function readContextSelections(context: PlannedContextState, targetMonth: string): ReadonlyMap<string, readonly ComponentSelectionV1[]> {
   const template = resolveContextTemplate(context.templateKey);
-  plannerKeys(plannerRecord(context.fields), [...template.fields.map(f => f.fieldKey), "composerPresentation", ...(context.templateKey === "night-out" ? ["nightOutConsumption"] : [])], template.fields.filter(f => f.required).map(f => f.fieldKey));
+  plannerKeys(plannerRecord(context.fields), [...template.fields.map(f => f.fieldKey), "composerPresentation"], template.fields.filter(f => f.required).map(f => f.fieldKey));
   const consumption = nightOutConsumption(context);
   if (consumption) {
     const extras = template.componentSlots.find(s => s.slotKey === "extras")!;
