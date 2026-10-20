@@ -1,0 +1,57 @@
+{
+  "environment": "REACT_PGLITE_SYNTHETIC_ONLY",
+  "checks": [
+    {
+      "name": "R72_PRISTINE_INLINE_ENTER_BLUR_ESCAPE_RAW_AND_REJECTION",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_FAMILIES_OBJECTS_NO_NAVIGATION_MIX",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_F11_FIVE_COCKTAILS_DISTINCT_IDS_SAME_CATALOGUE",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_BEFORE_EMPTY_THEN_CHIPS_NO_PHANTOM_BOTTLE",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_BEFORE_PRIMARY_REMOVAL_ATOMIC_RETAINS_CHILD_AND_REMAINING_DATA",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_RAW_TRAILING_COMMA_NOT_ADMITTED_AND_NAVIGATION_CANCEL_RETAINS",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_DATE_TOGGLE_ATOMIC_RETURN_NO_DOCK",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_PEOPLE_MULTITOGGLE_NO_FINANCIAL_INFERENCE",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_REJECTED_MUTATION_RETAINS_CONTEXT_AND_NOT_SUCCESS",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_MOMENT_FAMILY_MEMORY_AND_NO_DUPLICATE_BEFORE_LAUNCHER",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_VENUE_REMOVE_RETAINS_AUTONOMOUS_LEGS_AND_OTHER_FIELDS",
+      "status": "PASS"
+    },
+    {
+      "name": "R7_REOPEN_FAMILY_MEMORY_PRESERVES_MOMENT_OWNER",
+      "status": "PASS"
+    },
+    {
+      "name": "R5_NO_MATCH_SEARCH_STAYS_MOUNTED_AND_FREE_PERSON_IS_EXPLICIT",
+      "status": "PASS"
+    }
+  ]
+}
