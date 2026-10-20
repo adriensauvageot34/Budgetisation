@@ -1,0 +1,1132 @@
+{
+  "product": "640622c273fea34f5a5f6874d3632404759f02a0",
+  "level": "REAL_BROWSER_NATIVE_PREVIEW_SYNTHETIC_ONLY",
+  "remoteWrites": 0,
+  "apply": false,
+  "initial": [
+    {
+      "contextOccurrenceId": "b8b33a60-638c-4bb4-b9d3-a48b2347ba6a",
+      "templateKey": "night-out",
+      "presetKey": "bar-apero"
+    }
+  ],
+  "afterClick": [
+    {
+      "contextOccurrenceId": "7e8f5df7-c489-4346-8cef-f7e415222830",
+      "templateKey": "night-out",
+      "presetKey": "bar-apero"
+    },
+    {
+      "contextOccurrenceId": "b8b33a60-638c-4bb4-b9d3-a48b2347ba6a",
+      "templateKey": "night-out",
+      "presetKey": "bar-apero"
+    }
+  ],
+  "afterBarDnd": [
+    {
+      "contextOccurrenceId": "1a7a4118-815b-4a25-8227-6bd7c660e3e2",
+      "presetKey": "bar-apero",
+      "templateKey": "night-out"
+    },
+    {
+      "contextOccurrenceId": "7e8f5df7-c489-4346-8cef-f7e415222830",
+      "presetKey": "bar-apero",
+      "templateKey": "night-out"
+    },
+    {
+      "contextOccurrenceId": "b8b33a60-638c-4bb4-b9d3-a48b2347ba6a",
+      "presetKey": "bar-apero",
+      "templateKey": "night-out"
+    }
+  ],
+  "afterTechnoDnd": [
+    {
+      "contextOccurrenceId": "1a7a4118-815b-4a25-8227-6bd7c660e3e2",
+      "templateKey": "night-out",
+      "presetKey": "bar-apero"
+    },
+    {
+      "contextOccurrenceId": "7e8f5df7-c489-4346-8cef-f7e415222830",
+      "templateKey": "night-out",
+      "presetKey": "bar-apero"
+    },
+    {
+      "contextOccurrenceId": "b8b33a60-638c-4bb4-b9d3-a48b2347ba6a",
+      "templateKey": "night-out",
+      "presetKey": "bar-apero"
+    },
+    {
+      "contextOccurrenceId": "d9e8889a-880c-4c0d-b936-d464c54b3273",
+      "templateKey": "night-out",
+      "presetKey": "techno-night"
+    }
+  ],
+  "afterMascaraDnd": [
+    {
+      "contextOccurrenceId": "1a7a4118-815b-4a25-8227-6bd7c660e3e2",
+      "templateKey": "night-out",
+      "presetKey": "bar-apero"
+    },
+    {
+      "contextOccurrenceId": "673e8e7d-0f31-41e7-9e40-dc46a4da1572",
+      "templateKey": "beauty-restock",
+      "presetKey": "mascara"
+    },
+    {
+      "contextOccurrenceId": "7e8f5df7-c489-4346-8cef-f7e415222830",
+      "templateKey": "night-out",
+      "presetKey": "bar-apero"
+    },
+    {
+      "contextOccurrenceId": "b8b33a60-638c-4bb4-b9d3-a48b2347ba6a",
+      "templateKey": "night-out",
+      "presetKey": "bar-apero"
+    },
+    {
+      "contextOccurrenceId": "d9e8889a-880c-4c0d-b936-d464c54b3273",
+      "templateKey": "night-out",
+      "presetKey": "techno-night"
+    }
+  ],
+  "blockedDigestUnchanged": true,
+  "blockedContextsUnchanged": true,
+  "undoCount": 4,
+  "redoContexts": [
+    {
+      "contextOccurrenceId": "1a7a4118-815b-4a25-8227-6bd7c660e3e2",
+      "presetKey": "bar-apero",
+      "templateKey": "night-out"
+    },
+    {
+      "contextOccurrenceId": "673e8e7d-0f31-41e7-9e40-dc46a4da1572",
+      "presetKey": "mascara",
+      "templateKey": "beauty-restock"
+    },
+    {
+      "contextOccurrenceId": "7e8f5df7-c489-4346-8cef-f7e415222830",
+      "presetKey": "bar-apero",
+      "templateKey": "night-out"
+    },
+    {
+      "contextOccurrenceId": "b8b33a60-638c-4bb4-b9d3-a48b2347ba6a",
+      "presetKey": "bar-apero",
+      "templateKey": "night-out"
+    },
+    {
+      "contextOccurrenceId": "d9e8889a-880c-4c0d-b936-d464c54b3273",
+      "presetKey": "techno-night",
+      "templateKey": "night-out"
+    }
+  ],
+  "redoDigestRestored": true,
+  "contextsRestored": true,
+  "simpleClickOpens": true,
+  "controlsNoGhostAndDigestUnchanged": true,
+  "cardHoldNative": "NOT_RUN_NATIVE_POINTER",
+  "cardAttempt": {
+    "events": [
+      {
+        "category": "BAR",
+        "handler": 479034.799999997,
+        "name": "dragstart",
+        "start": 478988.299999997,
+        "x": 1040,
+        "y": 430
+      },
+      {
+        "category": "OTHER",
+        "handler": 479254.09999999776,
+        "name": "click",
+        "start": 479253.3999999985
+      }
+    ],
+    "states": [],
+    "trash": []
+  },
+  "probe": {
+    "drags": [],
+    "eventTimingSupported": true,
+    "events": [
+      {
+        "category": "OTHER",
+        "handler": 29599.599999997765,
+        "name": "click",
+        "start": 29592
+      },
+      {
+        "category": "BAR",
+        "handler": 42791.099999997765,
+        "name": "click",
+        "start": 42789.199999999255
+      },
+      {
+        "category": "OTHER",
+        "handler": 89690,
+        "name": "dragstart",
+        "start": 88647.69999999925,
+        "x": 212,
+        "y": 423
+      },
+      {
+        "category": "OTHER",
+        "handler": 90089.39999999852,
+        "name": "dragenter",
+        "start": 90087.69999999924,
+        "x": 342,
+        "y": 461
+      },
+      {
+        "category": "OTHER",
+        "handler": 90093.69999999924,
+        "name": "dragover",
+        "start": 90092.29999999702,
+        "x": 342,
+        "y": 461
+      },
+      {
+        "category": "OTHER",
+        "handler": 90129.79999999702,
+        "name": "dragenter",
+        "start": 90129.19999999924,
+        "x": 472,
+        "y": 500
+      },
+      {
+        "category": "OTHER",
+        "handler": 90166.5,
+        "name": "dragenter",
+        "start": 90165.69999999924,
+        "x": 601,
+        "y": 538
+      },
+      {
+        "category": "OTHER",
+        "handler": 90216.09999999776,
+        "name": "dragenter",
+        "start": 90214.89999999852,
+        "x": 731,
+        "y": 577
+      },
+      {
+        "category": "OTHER",
+        "handler": 90261.69999999924,
+        "name": "dragover",
+        "start": 90260.5,
+        "x": 861,
+        "y": 615
+      },
+      {
+        "category": "OTHER",
+        "handler": 90327.69999999924,
+        "name": "dragover",
+        "start": 90326.79999999702,
+        "x": 991,
+        "y": 653
+      },
+      {
+        "category": "OTHER",
+        "handler": 90354,
+        "name": "dragover",
+        "start": 90353,
+        "x": 1120,
+        "y": 692
+      },
+      {
+        "category": "OTHER",
+        "handler": 90381.5,
+        "name": "dragover",
+        "start": 90380.69999999924,
+        "x": 1250,
+        "y": 730
+      },
+      {
+        "category": "OTHER",
+        "handler": 90414.19999999924,
+        "name": "drop",
+        "start": 90412.79999999702,
+        "x": 1250,
+        "y": 730
+      },
+      {
+        "category": "OTHER",
+        "handler": 90635.69999999924,
+        "name": "dragend",
+        "start": 90629.79999999702,
+        "x": 1250,
+        "y": 730
+      },
+      {
+        "category": "BAR",
+        "handler": 158475,
+        "name": "click",
+        "start": 158463.69999999923
+      },
+      {
+        "category": "OTHER",
+        "handler": 177422,
+        "name": "dragstart",
+        "start": 176418.09999999776,
+        "x": 92,
+        "y": 436
+      },
+      {
+        "category": "OTHER",
+        "handler": 177546.3999999985,
+        "name": "dragenter",
+        "start": 177545.19999999923,
+        "x": 237,
+        "y": 469
+      },
+      {
+        "category": "OTHER",
+        "handler": 177547.59999999776,
+        "name": "dragover",
+        "start": 177547.19999999923,
+        "x": 237,
+        "y": 469
+      },
+      {
+        "category": "OTHER",
+        "handler": 177570.69999999923,
+        "name": "dragenter",
+        "start": 177570.19999999923,
+        "x": 382,
+        "y": 502
+      },
+      {
+        "category": "OTHER",
+        "handler": 177592.69999999923,
+        "name": "dragenter",
+        "start": 177592.09999999776,
+        "x": 526,
+        "y": 535
+      },
+      {
+        "category": "BAR",
+        "handler": 177622.09999999776,
+        "name": "dragenter",
+        "start": 177621.5,
+        "x": 671,
+        "y": 568
+      },
+      {
+        "category": "BAR",
+        "handler": 177652.3999999985,
+        "name": "dragenter",
+        "start": 177651.8999999985,
+        "x": 816,
+        "y": 601
+      },
+      {
+        "category": "OTHER",
+        "handler": 177681.59999999776,
+        "name": "dragenter",
+        "start": 177680.09999999776,
+        "x": 961,
+        "y": 634
+      },
+      {
+        "category": "OTHER",
+        "handler": 177709.79999999702,
+        "name": "dragover",
+        "start": 177708.8999999985,
+        "x": 1105,
+        "y": 667
+      },
+      {
+        "category": "OTHER",
+        "handler": 177759.69999999923,
+        "name": "dragover",
+        "start": 177759.09999999776,
+        "x": 1250,
+        "y": 700
+      },
+      {
+        "category": "OTHER",
+        "handler": 177793.8999999985,
+        "name": "drop",
+        "start": 177793.59999999776,
+        "x": 1250,
+        "y": 700
+      },
+      {
+        "category": "OTHER",
+        "handler": 178117.79999999702,
+        "name": "dragend",
+        "start": 178109.5,
+        "x": 1250,
+        "y": 700
+      },
+      {
+        "category": "OTHER",
+        "handler": 196878.19999999923,
+        "name": "click",
+        "start": 196876.8999999985
+      },
+      {
+        "category": "OTHER",
+        "handler": 224687.19999999923,
+        "name": "dragstart",
+        "start": 223708.79999999705,
+        "x": 92,
+        "y": 462
+      },
+      {
+        "category": "OTHER",
+        "handler": 224760.79999999705,
+        "name": "dragenter",
+        "start": 224760.59999999776,
+        "x": 255,
+        "y": 485
+      },
+      {
+        "category": "OTHER",
+        "handler": 224761.5,
+        "name": "dragover",
+        "start": 224761.19999999923,
+        "x": 255,
+        "y": 485
+      },
+      {
+        "category": "OTHER",
+        "handler": 224791,
+        "name": "dragenter",
+        "start": 224790.3999999985,
+        "x": 418,
+        "y": 507
+      },
+      {
+        "category": "OTHER",
+        "handler": 224822,
+        "name": "dragover",
+        "start": 224821.5,
+        "x": 581,
+        "y": 530
+      },
+      {
+        "category": "OTHER",
+        "handler": 224849,
+        "name": "dragenter",
+        "start": 224848.3999999985,
+        "x": 744,
+        "y": 552
+      },
+      {
+        "category": "OTHER",
+        "handler": 224873.79999999705,
+        "name": "dragenter",
+        "start": 224873.29999999705,
+        "x": 906,
+        "y": 575
+      },
+      {
+        "category": "OTHER",
+        "handler": 224901.09999999776,
+        "name": "dragenter",
+        "start": 224900.29999999705,
+        "x": 1069,
+        "y": 597
+      },
+      {
+        "category": "OTHER",
+        "handler": 224930.8999999985,
+        "name": "dragenter",
+        "start": 224930.09999999776,
+        "x": 1232,
+        "y": 620
+      },
+      {
+        "category": "OTHER",
+        "handler": 224957.3999999985,
+        "name": "dragenter",
+        "start": 224956.79999999705,
+        "x": 1395,
+        "y": 642
+      },
+      {
+        "category": "OTHER",
+        "handler": 224984.69999999923,
+        "name": "dragend",
+        "start": 224984.5,
+        "x": 1395,
+        "y": 642
+      },
+      {
+        "category": "OTHER",
+        "handler": 299617.3999999985,
+        "name": "dragstart",
+        "start": 299570.8999999985,
+        "x": 92,
+        "y": 462
+      },
+      {
+        "category": "OTHER",
+        "handler": 299687.299999997,
+        "name": "dragenter",
+        "start": 299686.8999999985,
+        "x": 237,
+        "y": 479
+      },
+      {
+        "category": "OTHER",
+        "handler": 299688.09999999776,
+        "name": "dragover",
+        "start": 299687.69999999925,
+        "x": 237,
+        "y": 479
+      },
+      {
+        "category": "OTHER",
+        "handler": 299714.8999999985,
+        "name": "dragenter",
+        "start": 299714.3999999985,
+        "x": 382,
+        "y": 497
+      },
+      {
+        "category": "OTHER",
+        "handler": 299745.5,
+        "name": "dragenter",
+        "start": 299745,
+        "x": 526,
+        "y": 514
+      },
+      {
+        "category": "OTHER",
+        "handler": 299773.69999999925,
+        "name": "dragenter",
+        "start": 299773.19999999925,
+        "x": 671,
+        "y": 531
+      },
+      {
+        "category": "OTHER",
+        "handler": 299799.8999999985,
+        "name": "dragenter",
+        "start": 299799.09999999776,
+        "x": 816,
+        "y": 548
+      },
+      {
+        "category": "OTHER",
+        "handler": 299824.799999997,
+        "name": "dragenter",
+        "start": 299824.19999999925,
+        "x": 961,
+        "y": 566
+      },
+      {
+        "category": "OTHER",
+        "handler": 299852,
+        "name": "dragover",
+        "start": 299851.3999999985,
+        "x": 1105,
+        "y": 583
+      },
+      {
+        "category": "OTHER",
+        "handler": 299917.5,
+        "name": "dragover",
+        "start": 299916.59999999776,
+        "x": 1250,
+        "y": 600
+      },
+      {
+        "category": "OTHER",
+        "handler": 299951.8999999985,
+        "name": "drop",
+        "start": 299951.5,
+        "x": 1250,
+        "y": 600
+      },
+      {
+        "category": "OTHER",
+        "handler": 300276.3999999985,
+        "name": "dragend",
+        "start": 300261.8999999985,
+        "x": 1250,
+        "y": 600
+      },
+      {
+        "category": "OTHER",
+        "handler": 348286.59999999776,
+        "name": "click",
+        "start": 348285.09999999776
+      },
+      {
+        "category": "OTHER",
+        "handler": 375234.3999999985,
+        "name": "dragstart",
+        "start": 374258.799999997,
+        "x": 87,
+        "y": 468
+      },
+      {
+        "category": "OTHER",
+        "handler": 375295.3999999985,
+        "name": "dragenter",
+        "start": 375295.09999999776,
+        "x": 86,
+        "y": 458
+      },
+      {
+        "category": "OTHER",
+        "handler": 375296.09999999776,
+        "name": "dragover",
+        "start": 375295.799999997,
+        "x": 86,
+        "y": 458
+      },
+      {
+        "category": "OTHER",
+        "handler": 375324.5,
+        "name": "dragover",
+        "start": 375324,
+        "x": 85,
+        "y": 448
+      },
+      {
+        "category": "OTHER",
+        "handler": 375352.3999999985,
+        "name": "dragenter",
+        "start": 375352,
+        "x": 85,
+        "y": 438
+      },
+      {
+        "category": "OTHER",
+        "handler": 375380.19999999925,
+        "name": "dragenter",
+        "start": 375379.69999999925,
+        "x": 84,
+        "y": 429
+      },
+      {
+        "category": "OTHER",
+        "handler": 375409,
+        "name": "dragover",
+        "start": 375408.59999999776,
+        "x": 83,
+        "y": 419
+      },
+      {
+        "category": "OTHER",
+        "handler": 375441.19999999925,
+        "name": "dragenter",
+        "start": 375440.799999997,
+        "x": 82,
+        "y": 409
+      },
+      {
+        "category": "OTHER",
+        "handler": 375477.19999999925,
+        "name": "dragenter",
+        "start": 375476.59999999776,
+        "x": 82,
+        "y": 399
+      },
+      {
+        "category": "OTHER",
+        "handler": 375513.19999999925,
+        "name": "dragover",
+        "start": 375512.799999997,
+        "x": 81,
+        "y": 389
+      },
+      {
+        "category": "OTHER",
+        "handler": 375543.69999999925,
+        "name": "dragend",
+        "start": 375542.69999999925,
+        "x": 81,
+        "y": 389
+      },
+      {
+        "category": "OTHER",
+        "handler": 403284.8999999985,
+        "name": "click",
+        "start": 403283.19999999925
+      },
+      {
+        "category": "OTHER",
+        "handler": 405493.5,
+        "name": "click",
+        "start": 405492.3999999985
+      },
+      {
+        "category": "BAR",
+        "handler": 479034.799999997,
+        "name": "dragstart",
+        "start": 478988.299999997,
+        "x": 1040,
+        "y": 430
+      },
+      {
+        "category": "OTHER",
+        "handler": 479254.09999999776,
+        "name": "click",
+        "start": 479253.3999999985
+      },
+      {
+        "category": "OTHER",
+        "handler": 560341,
+        "name": "click",
+        "start": 560339.8999999985
+      },
+      {
+        "category": "BAR",
+        "handler": 576080.5999999978,
+        "name": "click",
+        "start": 576079.299999997
+      },
+      {
+        "category": "BAR",
+        "handler": 629303.1999999993,
+        "name": "click",
+        "start": 629302
+      },
+      {
+        "category": "BAR",
+        "handler": 645589.8999999985,
+        "name": "click",
+        "start": 645588.3999999985
+      },
+      {
+        "category": "OTHER",
+        "handler": 646711.3999999985,
+        "name": "click",
+        "start": 646709.799999997
+      },
+      {
+        "category": "BAR",
+        "handler": 647665.3999999985,
+        "name": "click",
+        "start": 647664.0999999978
+      },
+      {
+        "category": "BAR",
+        "handler": 718240.5999999978,
+        "name": "click",
+        "start": 718238.8999999985
+      }
+    ],
+    "method": "NATIVE_EVENT_TIMING_16MS_THRESHOLD_8MS_QUANTIZATION_NOT_ALL_EVENTS_OR_DISPLAY_PHOTONS",
+    "paints": [
+      {
+        "category": "OTHER",
+        "duration": 14024,
+        "interactionId": 684,
+        "name": "click",
+        "processingEnd": 29742.39999999851,
+        "processingStart": 29598.79999999702,
+        "start": 29592
+      },
+      {
+        "category": "BAR",
+        "duration": 1008,
+        "interactionId": 691,
+        "name": "click",
+        "processingEnd": 42862.39999999851,
+        "processingStart": 42790.89999999851,
+        "start": 42789.199999999255
+      },
+      {
+        "category": "OTHER",
+        "duration": 2792,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 89961.69999999925,
+        "processingStart": 89684.29999999702,
+        "start": 88647.69999999925
+      },
+      {
+        "category": "OTHER",
+        "duration": 1144,
+        "interactionId": 0,
+        "name": "drop",
+        "processingEnd": 90628.79999999702,
+        "processingStart": 90412.79999999702,
+        "start": 90412.79999999702
+      },
+      {
+        "category": "OTHER",
+        "duration": 928,
+        "interactionId": 0,
+        "name": "dragend",
+        "processingEnd": 90636,
+        "processingStart": 90635.5,
+        "start": 90629.79999999702
+      },
+      {
+        "category": "BAR",
+        "duration": 1552,
+        "interactionId": 698,
+        "name": "click",
+        "processingEnd": 158692.09999999776,
+        "processingStart": 158474.09999999776,
+        "start": 158463.69999999923
+      },
+      {
+        "category": "OTHER",
+        "duration": 2648,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 177498.5,
+        "processingStart": 177421.5,
+        "start": 176418.09999999776
+      },
+      {
+        "category": "OTHER",
+        "duration": 1288,
+        "interactionId": 0,
+        "name": "drop",
+        "processingEnd": 178108.69999999923,
+        "processingStart": 177793.59999999776,
+        "start": 177793.59999999776
+      },
+      {
+        "category": "OTHER",
+        "duration": 968,
+        "interactionId": 0,
+        "name": "dragend",
+        "processingEnd": 178118,
+        "processingStart": 178117.59999999776,
+        "start": 178109.5
+      },
+      {
+        "category": "OTHER",
+        "duration": 1688,
+        "interactionId": 705,
+        "name": "click",
+        "processingEnd": 197051.69999999923,
+        "processingStart": 196878.09999999776,
+        "start": 196876.8999999985
+      },
+      {
+        "category": "OTHER",
+        "duration": 2104,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 224742.79999999705,
+        "processingStart": 224687,
+        "start": 223708.79999999705
+      },
+      {
+        "category": "OTHER",
+        "duration": 856,
+        "interactionId": 0,
+        "name": "dragend",
+        "processingEnd": 225020.09999999776,
+        "processingStart": 224984.59999999776,
+        "start": 224984.5
+      },
+      {
+        "category": "OTHER",
+        "duration": 1480,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 299669.799999997,
+        "processingStart": 299617.299999997,
+        "start": 299570.8999999985
+      },
+      {
+        "category": "OTHER",
+        "duration": 1096,
+        "interactionId": 0,
+        "name": "drop",
+        "processingEnd": 300223.3999999985,
+        "processingStart": 299951.59999999776,
+        "start": 299951.5
+      },
+      {
+        "category": "OTHER",
+        "duration": 800,
+        "interactionId": 0,
+        "name": "dragend",
+        "processingEnd": 300367.299999997,
+        "processingStart": 300262.09999999776,
+        "start": 300261.8999999985
+      },
+      {
+        "category": "OTHER",
+        "duration": 856,
+        "interactionId": 712,
+        "name": "click",
+        "processingEnd": 348370.19999999925,
+        "processingStart": 348286.3999999985,
+        "start": 348285.09999999776
+      },
+      {
+        "category": "OTHER",
+        "duration": 2088,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 375276.8999999985,
+        "processingStart": 375234.09999999776,
+        "start": 374258.799999997
+      },
+      {
+        "category": "OTHER",
+        "duration": 848,
+        "interactionId": 0,
+        "name": "dragend",
+        "processingEnd": 375575.09999999776,
+        "processingStart": 375543,
+        "start": 375542.69999999925
+      },
+      {
+        "category": "OTHER",
+        "duration": 3504,
+        "interactionId": 719,
+        "name": "click",
+        "processingEnd": 403355.5,
+        "processingStart": 403284.799999997,
+        "start": 403283.19999999925
+      },
+      {
+        "category": "OTHER",
+        "duration": 1344,
+        "interactionId": 726,
+        "name": "click",
+        "processingEnd": 405558.3999999985,
+        "processingStart": 405493.3999999985,
+        "start": 405492.3999999985
+      },
+      {
+        "category": "BAR",
+        "duration": 48,
+        "interactionId": 0,
+        "name": "dragstart",
+        "processingEnd": 479035.3999999985,
+        "processingStart": 479034.69999999925,
+        "start": 478988.299999997
+      },
+      {
+        "category": "OTHER",
+        "duration": 744,
+        "interactionId": 733,
+        "name": "click",
+        "processingEnd": 479278.799999997,
+        "processingStart": 479254,
+        "start": 479253.3999999985
+      },
+      {
+        "category": "OTHER",
+        "duration": 752,
+        "interactionId": 740,
+        "name": "click",
+        "processingEnd": 560374.799999997,
+        "processingStart": 560340.8999999985,
+        "start": 560339.8999999985
+      },
+      {
+        "category": "BAR",
+        "duration": 976,
+        "interactionId": 747,
+        "name": "click",
+        "processingEnd": 576216.3999999985,
+        "processingStart": 576080.5,
+        "start": 576079.299999997
+      },
+      {
+        "category": "BAR",
+        "duration": 800,
+        "interactionId": 754,
+        "name": "click",
+        "processingEnd": 629361.299999997,
+        "processingStart": 629303,
+        "start": 629302
+      },
+      {
+        "category": "BAR",
+        "duration": 2760,
+        "interactionId": 761,
+        "name": "click",
+        "processingEnd": 645664.5,
+        "processingStart": 645589.6999999993,
+        "start": 645588.3999999985
+      },
+      {
+        "category": "OTHER",
+        "duration": 1688,
+        "interactionId": 768,
+        "name": "click",
+        "processingEnd": 646711.799999997,
+        "processingStart": 646711.1999999993,
+        "start": 646709.799999997
+      },
+      {
+        "category": "BAR",
+        "duration": 784,
+        "interactionId": 775,
+        "name": "click",
+        "processingEnd": 647743.8999999985,
+        "processingStart": 647665.299999997,
+        "start": 647664.0999999978
+      }
+    ],
+    "requests": [],
+    "states": [
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 4659.5,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 29738.099999997765,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 31200.29999999702,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "true",
+        "ms": 89961.39999999851,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 90624.09999999776,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 91898.89999999852,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "true",
+        "ms": 177498.19999999923,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 178018.8999999985,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 179355.3999999985,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "true",
+        "ms": 224742.59999999776,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 225019.79999999705,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "true",
+        "ms": 299669.59999999776,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 300159.19999999925,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 301478.799999997,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "true",
+        "ms": 375276.5,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 375574.799999997,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 403355.299999997,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 404474.69999999925,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 405558.19999999925,
+        "preview": "PENDING",
+        "removing": false,
+        "save": "CLEAN"
+      },
+      {
+        "barPresent": true,
+        "dragging": "false",
+        "ms": 406695.799999997,
+        "preview": "FRESH",
+        "removing": false,
+        "save": "CLEAN"
+      }
+    ]
+  }
+}
