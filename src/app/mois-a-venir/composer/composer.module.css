@@ -1402,3 +1402,19 @@
 .barLivingCard[data-expanded=true] .barProductSymbol { display:grid; place-items:center; width:48px; height:40px; flex:none; }
 .barLivingCard[data-expanded=true] .barProductSymbol img { display:block; width:48px; height:40px; object-fit:cover; object-position:right center; border-radius:8px; }
 .barProductSymbol[data-bar-visual=functional-icon] { display:grid; place-items:center; width:48px; height:40px; color:#6a4e20; background:#f4e8cd; border-radius:9px; }
+
+/* R7: product navigation only; place/people/Mobility docks keep their UI. */
+.barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) header { min-height:28px; justify-content:space-between; }
+.barCompositionDock[data-dock-nature=FAMILIES] header:not(:has(button)) { display:none; }
+.barCompositionDock[data-dock-nature=OBJECTS] .paletteScrollControls { margin-left:auto; }
+.barFamiliesBack { border:0; border-radius:8px; background:transparent; color:#655033; padding:5px 8px; cursor:pointer; font:inherit; font-size:12px; }
+.barFamiliesBack:focus-visible { outline:3px solid #b29058; outline-offset:-2px; }
+.barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .paletteOptions { height:auto; min-height:0; padding:4px; scrollbar-width:none; scroll-snap-type:none; }
+.barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .paletteOptions::-webkit-scrollbar { display:none; }
+.barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .questionAnswer { flex:0 0 132px; min-width:132px; max-width:132px; height:112px; min-height:112px; padding:8px; flex-direction:column; justify-content:center; gap:5px; text-align:center; }
+.barCompositionDock[data-dock-nature=FAMILIES] .questionAnswer { flex-basis:180px; min-width:180px; max-width:180px; height:124px; min-height:124px; }
+.barCompositionDock[data-dock-nature=OBJECTS] .barProductSymbol { flex:0 0 64px; width:76px; height:64px; }
+.barCompositionDock[data-dock-nature=FAMILIES] .barProductSymbol { flex:0 0 82px; width:106px; height:82px; }
+.barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .barProductSymbol img { width:100%; height:100%; object-fit:contain; border-radius:0; mix-blend-mode:multiply; }
+.barCompositionDock[data-dock-nature=FAMILIES] .barProductSymbol[data-panoramic-art=true] { width:90px; overflow:hidden; }
+.barCompositionDock[data-dock-nature=FAMILIES] .barProductSymbol[data-panoramic-art=true] img { object-fit:cover; object-position:right center; }

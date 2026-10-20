@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Check, Sparkle, ArrowLeftRight, Plus, X, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
@@ -77,7 +77,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
 }
 
 export type PaletteQuestion = { title: string; identity?:string; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; choose: () => void }[];
-  search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string };
+  search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string; backToFamilies?:()=>void };
 export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionScroll, onQuestionScrollChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
   questionScroll?:Readonly<Record<string,number>>; onQuestionScrollChange?:(key:string,index:number)=>void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
@@ -93,12 +93,13 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const [limits,setLimits]=useState<Record<string,number>>({});
   const [caption,setCaption]=useState<{key:string;label:string}|null>(null);
   const answerKey=JSON.stringify([card.contextOccurrenceId,question?.identity??question?.title??""]);
-  const searchValue=question?.search?.value??searches[answerKey]??"";
-  const catalogue=barDockCatalog(question?.choices??[],searchValue,limits[answerKey]??24);
+  const productScene=appearance==="bar"&&(question?.nature==="FAMILIES"||question?.nature==="OBJECTS");
+  const searchValue=productScene?"":question?.search?.value??searches[answerKey]??"";
+  const catalogue=barDockCatalog(question?.choices??[],searchValue,productScene?question?.choices.length:limits[answerKey]??24);
   // Internal search/"show more" can change the rendered rail while the caller's
   // question object stays identical. Measure the actual projection, not its owner.
   const renderedChoicesKey=JSON.stringify([catalogue.visible.map(choice=>[choice.key,choice.label,choice.hint,choice.showHint]),catalogue.remaining]);
-  const search=question?.search??(appearance==="bar"&&(question?.choices.length??0)>24?{
+  const search=productScene?undefined:question?.search??(appearance==="bar"&&(question?.choices.length??0)>24?{
     value:searchValue,label:"Rechercher dans ces choix",change:(value:string)=>setSearches(previous=>({...previous,[answerKey]:value}))
   }:undefined);
   const scrollRail=(left:number)=>options.current?.scrollBy({left,behavior:typeof window!=="undefined"&&window.matchMedia?.("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
@@ -114,6 +115,17 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
       options.current?.focus({preventScroll:true});
   },[appearance,answerKey,searchValue]);
   const hasGroups = !!question || groups.length > 0;
+  useEffect(()=>{
+    const node=options.current;if(!productScene||!node)return;
+    const wheel=(event:WheelEvent)=>{
+      if(Math.abs(event.deltaX)>=Math.abs(event.deltaY)||event.ctrlKey)return;
+      const before=node.scrollLeft;
+      node.scrollLeft+=event.deltaY*(event.deltaMode===1?32:event.deltaMode===2?node.clientWidth:1);
+      if(node.scrollLeft!==before)event.preventDefault();
+    };
+    node.addEventListener("wheel",wheel,{passive:false});
+    return()=>node.removeEventListener("wheel",wheel);
+  },[productScene,hasGroups]);
   useLayoutEffect(() => {
     const node = options.current; if (!node) return;
     measureScroll(); const observer = new ResizeObserver(measureScroll); observer.observe(node);
@@ -133,7 +145,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-compact-dock={appearance==='bar'&&question.choices.length<=3&&!search} data-context-palette={card.contextOccurrenceId} data-question-dock data-dock-nature={question.nature} aria-label={question.title}
     onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}>
     {appearance==="bar"&&caption&&caption.key.startsWith(answerKey+":")&&<div role="tooltip" id={optionsId+"-full-label"} className={styles.barDockFullLabel}>{caption.label}</div>}
-    <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>
+    <header>{productScene?(question.nature==="OBJECTS"&&question.backToFamilies&&<button type="button" className={styles.barFamiliesBack} disabled={busy} onClick={question.backToFamilies}>← Familles</button>):<div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>}
       {search && <><input ref={searchInput} disabled={appearance==="bar"&&busy} aria-label={search.label} placeholder={search.label} value={search.value} onChange={event => search.change(event.target.value)} />
         {appearance==="bar"&&search.value&&<button type="button" className={styles.iconButton} disabled={busy} aria-label="Effacer la recherche des choix" onClick={()=>{search.change("");searchInput.current?.focus({preventScroll:true});}}><X size={16}/></button>}</>}
       {(appearance!=="bar"||scroll.before||scroll.after)&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
@@ -146,7 +158,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
       onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}
       onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();scrollRail(event.key==="ArrowRight"?180:-180);}}}>
       {(appearance==="bar"?catalogue.visible:question.choices).map(choice => {const fullLabel=choice.label+(choice.showHint&&choice.hint?" · "+choice.hint:"");const key=answerKey+":"+choice.key;const reveal=()=>{if(appearance==="bar")setCaption(fullLabel.length>36?{key,label:fullLabel}:null);};return <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} aria-label={appearance==="bar"?fullLabel:undefined} aria-describedby={caption?.key===key?optionsId+"-full-label":undefined} disabled={busy} title={appearance==="bar"?fullLabel:choice.hint} onMouseEnter={reveal} onMouseLeave={event=>{if(!event.currentTarget.contains(document.activeElement))setCaption(null);}} onBlur={()=>setCaption(null)} onFocus={event => {event.currentTarget.scrollIntoView?.({block:"nearest",inline:"nearest"});reveal();}} onClick={choice.choose}>
-          {appearance==="bar"&&(/^(bar|house_party|club|option:night-out):/u.test(choice.key)||["shared","drinks","food"].includes(choice.key))?<BarProductVisual assetKey={choice.key} label={choice.label}/>:appearance==="bar"&&choice.key.startsWith("option:night-out:")?<PlannerIcon iconKey={choice.iconKey} scale="PALETTE"/>:choice.symbol?<span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>:<PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}<span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>;})}
+          {appearance==="bar"&&(/^(bar|house_party|club|option:night-out):/u.test(choice.key)||["shared","drinks","food"].includes(choice.key))?<BarProductVisual dock={productScene} assetKey={choice.key} label={choice.label}/>:appearance==="bar"&&choice.key.startsWith("option:night-out:")?<PlannerIcon iconKey={choice.iconKey} scale="PALETTE"/>:choice.symbol?<span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>:<PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}<span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>;})}
       {appearance==="bar"&&catalogue.remaining>0&&<button type="button" className={styles.questionAnswer} onClick={()=>setLimits(previous=>({...previous,[answerKey]:(previous[answerKey]??24)+24}))}>Afficher la suite ({catalogue.remaining})</button>}
       {!(appearance==="bar"?catalogue.total:question.choices.length) && <p>{question.emptyLabel??"Aucun résultat. Vous pouvez saisir votre choix."}</p>}
     </div></section>;
