@@ -5,15 +5,24 @@ import {handleComposerRequest} from '@/server/phase2/planner/composer-service';
 import {BarFavoritesReception} from './reception';
 import {BarDockReception} from './dock-reception';
 import {barGeometryReceptionEnabled} from '@/server/recette/bar-reception-gate';
+import {barClosedFixture} from '@/server/recette/bar-closed-fixture';
 export const dynamic='force-dynamic';
-export default async function Page({searchParams}:{searchParams:Promise<{r5catalog?:string}>}){
+export default async function Page({searchParams}:{searchParams:Promise<{r5catalog?:string;r61?:string}>}){
   if(!barReceptionEnabled())notFound();
   try{
     const scope=await barReceptionScope();
-    const initial=await handleComposerRequest(scope.deps,scope.householdId,{kind:'READ',sequence:0,targetMonth:'2026-11'});
+    let initial=await handleComposerRequest(scope.deps,scope.householdId,{kind:'READ',sequence:0,targetMonth:'2026-11'});
     if(!initial.ok)throw new TypeError('BAR_RECEPTION_OPENING_UNAVAILABLE');
     const search=await searchParams;
     const geometry=barGeometryReceptionEnabled(),liveGoogle=geometry&&process.env.BAR_GEOMETRY_LIVE_GOOGLE==='1';
+    if(search.r61){
+      if(!geometry||!['empty','partial','rich'].includes(search.r61))notFound();
+      const id=crypto.randomUUID();
+      const seed=await handleComposerRequest(scope.deps,scope.householdId,{kind:'DROP',sequence:1,targetMonth:'2026-11',draft:initial.model.semanticState,assetKey:'template:night-out',presetKey:'bar-apero',identity:id,selectionId:crypto.randomUUID(),target:{kind:'BOARD_ZONE'},values:{}});
+      if(!seed.ok)throw new TypeError('BAR_RECEPTION_FIXTURE_UNAVAILABLE');
+      initial=await handleComposerRequest(scope.deps,scope.householdId,{kind:'READ',sequence:2,targetMonth:'2026-11',draft:barClosedFixture(seed.model.semanticState,id,search.r61 as 'empty'|'partial'|'rich')});
+      if(!initial.ok)throw new TypeError('BAR_RECEPTION_FIXTURE_UNAVAILABLE');
+    }
     if(search.r5catalog){
       if(!['25','120','150'].includes(search.r5catalog))notFound();
       const seeded=await handleComposerRequest(scope.deps,scope.householdId,{kind:'DROP',sequence:1,targetMonth:'2026-11',draft:initial.model.semanticState,assetKey:'template:night-out',presetKey:'bar-apero',identity:crypto.randomUUID(),selectionId:crypto.randomUUID(),target:{kind:'BOARD_ZONE'},values:{}});
