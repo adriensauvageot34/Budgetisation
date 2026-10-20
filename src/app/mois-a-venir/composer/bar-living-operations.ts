@@ -4,6 +4,7 @@ import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state
 import type { ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import {stopForPlace} from "@/domain/phase2/planned-routes";
 import {parseNightOutVenue,venueBinding,sameVenuePlace,type NightOutVenueDecision} from "@/domain/phase2/planner/night-out-venue";
+import {reverseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
 
 export type BarTarget = "place" | "date" | "people" | "drinks" | "before" | "outbound" | "return" | "summary" | "quick" | `component:${string}:${string}` | `route:${"outbound"|"return"}:${"origin"|"destination"|"fare"|"vehicle"}`;
 export type BarLeg = Extract<ComponentSelectionV1, {kind:"MOBILITY_INTENT"}>;
@@ -19,11 +20,12 @@ const samePlace = (a: ProspectivePlaceRef | null | undefined, b: ProspectivePlac
  * Drop route evidence rather than persisting stale coordinates/tolls; the owner may
  * resolve the retained canonical endpoints again on the next Preview. */
 export function barEndpoint(leg: BarLeg, key: "origin" | "destination", place: ProspectivePlaceRef | null,
-  priceChoice?: "UNKNOWN" | "RETAIN_MANUAL"): BarLeg {
-  const {venueEndpoints,...independent}=leg;
+  priceChoice?: "UNKNOWN" | "RETAIN_MANUAL",externalIdentityChange=false): BarLeg {
+  const {venueEndpoints,routeEndpointBindings,...independent}=leg;
+  const routeRetained={...routeEndpointBindings};delete routeRetained[key];
   const retained={...venueEndpoints};delete retained[key];
-  const unbound:BarLeg=venueEndpoints?{...independent,...(Object.keys(retained).length?{venueEndpoints:retained}:{})}:leg;
-  if (samePlace(leg[key], place)) {if(unbound!==leg)assertBarRouteEditable(leg);return unbound;}
+  const unbound:BarLeg=venueEndpoints||routeEndpointBindings?{...independent,...(Object.keys(retained).length?{venueEndpoints:retained}:{}),...(Object.keys(routeRetained).length?{routeEndpointBindings:routeRetained}:{})}:leg;
+  if (samePlace(leg[key], place)&&!externalIdentityChange&&!routeEndpointBindings?.[key]) {if(unbound!==leg)assertBarRouteEditable(leg);return unbound;}
   assertBarRouteEditable(leg);
   const boundary = key === "origin" ? leg.route?.stops[0] : leg.route?.stops.at(-1);
   if (boundary && (!leg[key] || !samePlace(leg[key], boundary.placeId
@@ -85,7 +87,7 @@ export function barReverseLeg(leg:BarLeg):BarLeg {
   if(!leg.origin||!leg.destination||(leg.route?.stops.length??0)>2)
     throw Error("Précisez les deux points ; les trajets à étapes se rééditent dans leurs options détaillées.");
   const reversed=barEndpoint(barEndpoint(leg,"origin",leg.destination,"UNKNOWN"),"destination",leg.origin,"UNKNOWN");
-  return {...reversed,...(leg.venueEndpoints?{venueEndpoints:{...(leg.venueEndpoints.destination?{origin:leg.venueEndpoints.destination}:{}),...(leg.venueEndpoints.origin?{destination:leg.venueEndpoints.origin}:{})}}:{})};
+  return {...reversed,...(leg.venueEndpoints?{venueEndpoints:{...(leg.venueEndpoints.destination?{origin:leg.venueEndpoints.destination}:{}),...(leg.venueEndpoints.origin?{destination:leg.venueEndpoints.origin}:{})}}:{}),...(leg.routeEndpointBindings?{routeEndpointBindings:reverseRouteEndpointBindings(leg.routeEndpointBindings,leg.selectionId)}:{})};
 }
 /** Explicit user action only. A new independent leg never inherits a fare,
  * parking, funding or quote. Existing returns require a separate replacement choice. */
@@ -96,6 +98,7 @@ export function barSameModeReturn(context: PlannedContextState, selectionId: str
   return {kind:"EDIT_NIGHT_OUT", edit:{contextOccurrenceId:context.contextOccurrenceId, fields:{}, slots:{return:[{
     kind:"MOBILITY_INTENT", selectionId, optionKey:outbound.optionKey, provenance:"EXPLICIT_USER_DECISION",
     origin:outbound.destination ?? null, destination:outbound.origin ?? null, returnRequired:false,
+    ...(outbound.routeEndpointBindings?{routeEndpointBindings:reverseRouteEndpointBindings(outbound.routeEndpointBindings,selectionId)}:{}),
     ...(outbound.venueEndpoints?{venueEndpoints:{...(outbound.venueEndpoints.destination?{origin:outbound.venueEndpoints.destination}:{}),...(outbound.venueEndpoints.origin?{destination:outbound.venueEndpoints.origin}:{})}}:{}),
     journey:{relation:"OWNS_JOURNEY",certainty:"CERTAIN",targetIntentId:null,externalExpenseId:null,
       externalCostLineIds:[],choice:null,stopIndex:null,accessLegIndex:null},

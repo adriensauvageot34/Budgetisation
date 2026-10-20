@@ -4,6 +4,7 @@ import type { PlannerJson } from "./json";
 import { plannerDigest } from "./json";
 import { plannedAsset, PLANNED_ASSET_CATALOG_VERSION } from "../planned-assets";
 import {parseNightOutVenue,sameVenuePlace,parseVenueEndpoints} from "./night-out-venue";
+import {parseRouteEndpointBindings} from "./route-endpoint";
 import {parseComponentEconomicScope} from "./component-economic-scope";
 import { transitionNightOutConsumption, type NightOutConsumptionCommand } from "./night-out-consumption";
 
@@ -68,6 +69,7 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
   if(Object.hasOwn(edit.fields,"placeRef")&&!Object.hasOwn(edit.fields,"venueDecision"))delete fields.venueDecision;
   if(fields.venueDecision!=null){const venue=parseNightOutVenue(fields.venueDecision);if(!sameVenuePlace(venue.place,fields.placeRef as never))throw new TypeError("NIGHT_OUT_VENUE_CONTEXT_INVALID");fields.fieldSchemaVersion="context-fields@v6";}
   for(const items of Object.values(edit.slots??{}))for(const item of items??[])if(item.kind==="MOBILITY_INTENT"&&item.venueEndpoints)parseVenueEndpoints(item.venueEndpoints,item);
+  for(const items of Object.values(edit.slots??{}))for(const item of items??[])if(item.kind==="MOBILITY_INTENT"&&item.routeEndpointBindings)parseRouteEndpointBindings(item.routeEndpointBindings,item);
   if (Object.keys(edit.fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "venueDecision", "timingNote"].includes(key)))
     throw new TypeError("COMPOSER_NIGHT_OUT_FIELD_INVALID");
   if (Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "venueDecision", "timingNote", "fieldSchemaVersion", "composerPresentation", "nightOutConsumption"].includes(key)))

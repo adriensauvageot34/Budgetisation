@@ -15,6 +15,7 @@ import { materializePlanSlots } from "./plan-slot-resolver";
 import { resolveJourneyRequirements } from "./journey-resolver";
 import type { HistoricalControlAdmission } from "./historical-control-admission";
 import {sameVenuePlace} from "@/domain/phase2/planner/night-out-venue";
+import {parseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
 
 export const PROSPECTIVE_MOBILITY_PRICING_VERSION = "planner-existing-mobility-pricing@v1";
 export type MobilityProviders = Parameters<typeof estimatePlannedCar>[2];
@@ -30,7 +31,7 @@ export function stableMobilityEvidence<T>(value: T): ClocklessMobilityEvidence<T
   return value as ClocklessMobilityEvidence<T>;
 }
 export function journeyPricingDigest(journey: PhysicalJourneyRequirement, intent: MobilityIntent, world: PlanningWorldFacts) {
-  return plannerDigest(JSON.parse(JSON.stringify({ journey, pricing: intent.pricing ?? null, ...(intent.route ? { route: intent.route } : {}),...(intent.venueEndpoints?{venueEndpoints:intent.venueEndpoints}:{}),
+  return plannerDigest(JSON.parse(JSON.stringify({ journey, pricing: intent.pricing ?? null, ...(intent.route ? { route: intent.route } : {}),...(intent.venueEndpoints?{venueEndpoints:intent.venueEndpoints}:{}),...(intent.routeEndpointBindings?{routeEndpointBindings:intent.routeEndpointBindings}:{}),
     costQuotes: world.costQuotes, authority: world.mobilityFacts ? { vehicle: world.mobilityFacts.vehicle, places: world.mobilityFacts.places, history: world.mobilityFacts.history,
       personalAuthority: world.mobilityFacts.personalAuthority.outputHash, evidenceRefs: world.mobilityFacts.evidenceRefs } : null })));
 }
@@ -80,11 +81,17 @@ export async function preparePlanningMobility(world: PlanningWorldFacts, state: 
         const anchor = journey.stops.findIndex((ref, index) => index > 0 && plannerDigest(ref) === plannerDigest(intent.destination));
         const stops = intent.route?.stops ?? journey.stops.map((ref, index) => stopForPlace(ref, ref.kind === "KNOWN" ? facts.places.find(p => p.placeId === ref.placeId)?.name ?? ref.placeId : ref.label,
           index === anchor ? "ROOT_PLACE" : "DIRECT_PLACE"));
+        const endpointBindings=intent.routeEndpointBindings?parseRouteEndpointBindings(intent.routeEndpointBindings,{selectionId:intent.selectionId!,origin:intent.origin,destination:intent.destination}):undefined;
         const googleEndpoints=(["origin","destination"] as const).flatMap(key=>{
           const binding=intent.venueEndpoints?.[key],stopIndex=key==="origin"?0:stops.length-1,stop=stops[stopIndex];
+          const routeBinding=endpointBindings?.[key];
+          if(routeBinding){
+            if(binding||intent.returnRequired||!stop||stop.placeId||!sameVenuePlace(routeBinding.place,intent[key])||!sameVenuePlace(routeBinding.place,journey.stops[key==="origin"?0:journey.stops.length-1])||stop.label!==routeBinding.place.label)throw new TypeError("ROUTE_ENDPOINT_STOP_MISMATCH");
+            return [{stopIndex,placeId:routeBinding.google.placeId,kind:"ROUTE_ENDPOINT" as "BAR_APERO"|"ROUTE_ENDPOINT"}];
+          }
           if(!binding?.venue.google)return [];
           if(intent.returnRequired||!stop||!sameVenuePlace(binding.venue.place,intent[key])||!sameVenuePlace(binding.venue.place,journey.stops[key==="origin"?0:journey.stops.length-1])||stop.placeId||binding.venue.place.kind!=="TEXT"||stop.label!==binding.venue.place.label)throw new TypeError("NIGHT_OUT_ENDPOINT_BINDING_INVALID");
-          return [{stopIndex,placeId:binding.venue.google.placeId,kind:"BAR_APERO" as const}];
+          return [{stopIndex,placeId:binding.venue.google.placeId,kind:"BAR_APERO" as "BAR_APERO"|"ROUTE_ENDPOINT"}];
         });
         const directedFacts={...facts,...(googleEndpoints.length?{googleEndpoints}:{})};
         const date = journey.outbound.kind === "DATED" ? journey.outbound.date : null;

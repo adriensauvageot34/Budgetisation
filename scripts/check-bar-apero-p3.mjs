@@ -34,7 +34,8 @@ const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.
 // control by its accessible name rather than resurrecting redundant buttons.
 const routeMatch=(n,label)=>label==='Départ · À préciser'&&n.props['aria-label']==='Modifier le départ de l’aller'
  ||label==='Reprendre le trajet inverse'&&text(n)==='Reprendre l’inverse'
- ||label==='Préciser le prix du trajet'&&n.props['aria-label']==='Modifier le tarif de l’aller';
+ ||label==='Préciser le prix du trajet'&&n.props['aria-label']==='Modifier le tarif de l’aller'
+ ||label==='Retenir ce point libre'&&text(n)==='Retenir ce nom libre';
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
@@ -64,7 +65,7 @@ const click=async label=>{
   }
   await act(async()=>button(label).props.onClick());steps++;
 };
-const input=label=>{if(label==='Autre point du trajet')label='Nom libre du point de trajet';if(label==='Chercher un bar')label='Rechercher un bar';const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
+const input=label=>{if(label==='Autre point du trajet')return controls(n=>n.type==='input'&&n.props['aria-label']==='Rechercher une adresse ou un lieu')[0];if(label==='Chercher un bar')label='Rechercher un bar';const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
 const change=async(label,value)=>{await act(async()=>{const node=input(label);for(let p=node.parent;p;p=p.parent)p.props.onChangeCapture?.({target:{value}});node.props.onChange({target:{value}});});steps++;};
 const props=()=>({context:model.semanticState.contexts.find(c=>c.contextOccurrenceId===id),model,card:model.board.contexts.find(c=>c.contextOccurrenceId===id),semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],options:model.mobilityOptions,busy:false,fresh:true,dockHost:{},host:{},choose:()=>{},close:()=>{},onCancel:()=>{},onSave:admit,decide:admit,saveStatus:'MEMORY',editor:model.editors.find(e=>e.assetKey==='template:'+model.semanticState.contexts.find(c=>c.contextOccurrenceId===id).templateKey),...overrides});
 const admit=operation=>{if(rejectNext){rejectNext=false;return false;}const semantic=stageLocalDecision(model,model.semanticState,operation);if(!semantic)return false;pendingOps.push(operation);model=visualDraftModel(model,semantic);root?.update(render());return true;};
