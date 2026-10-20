@@ -21,7 +21,23 @@ Base main : `a87aee834a19dc554c9e4c63dbfc5cdaadd34b15`, PR #77 intégrée. Branc
 
 ## Réception réelle et livraison
 
-À compléter sur la Preview du SHA produit final. La recette authentifie le compte autorisé mais garde les faits financiers en mémoire et interdit Apply. Elle utilise les vrais services Google configurés. Mobility réel n'est préparé que lorsqu'un trajet voiture a deux endpoints Google explicitement choisis : aucun géocodage des lieux fictifs initiaux. Aucun Draft personnel ou Plan officiel écrit.
+SHA produit testé : `f94ef725e8ef8163a2540913f0da3b05a3efc69b`. PR Draft [#78](https://github.com/adriensauvageot34/Budgetisation/pull/78). Preview `dpl_EriJeqc3EQCVAcpzmzaT43MqHeRv`, READY, build Next complet terminé. [Recette](https://budgetisation-pgc13iuuy-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris?r62=empty&r63=1).
+
+La recette authentifie le compte autorisé mais garde les faits financiers en mémoire et interdit Apply. Mobility réel n'est préparé que lorsqu'un trajet voiture a deux endpoints Google explicitement choisis : aucun géocodage des lieux fictifs initiaux. Aucun Draft personnel ou Plan officiel écrit.
+
+### Blocage fournisseur réellement observé
+
+La première recherche publique « Gare Montpellier Saint Roch » sur la Preview a affiché « Recherche Google indisponible ». Aucun résultat réel n'a été sélectionné. Le code refuse les appels quand `GOOGLE_MAPS_API_KEY` manque ; les métadonnées Vercel, lues sans déchiffrement, montrent la clé Google limitée à une ancienne branche R6 et les clés TomTom/HERE limitées à une ancienne branche de clôture. Aucune de ces variables n'est attribuée à R8.2. Le statut HTTP de cet essai n'a pas été capturé : ne pas le présenter comme directement mesuré. Les logs runtime bornés n'ont pas retourné de trace exploitable.
+
+Une demande d'accord distincte est en attente pour réaffecter seulement les portées Preview des trois clés existantes, sans lire/modifier leurs valeurs ni toucher à Production. Aucune modification de leur portée n'a été exécutée. La réception Google réel et Mobility restent bloquées tant que cet accord et le redéploiement ne sont pas effectifs. Aucun secret n'est inclus dans les preuves.
+
+### Navigateur exécuté indépendamment du fournisseur
+
+À 1440 × 900, Google OFF : saisie libre explicite, navigation vers l'autre point interceptée par le dialogue RAW, « Continuer à modifier » conserve le texte, admission du texte libre sans identité Google, seule l'origine Aller modifiée, Undo rétablit exactement le digest antérieur. Preuves : `proofs/browser-free-mode.json`, `free-mode-undo.png`. Le calcul reste « À préciser » pour ce repère non géolocalisé. Ce test ne certifie ni Google Details réel ni une sauvegarde Supabase.
+
+### Verdict courant
+
+`BAR_R8_2_STATUS = DRAFT_BLOCKED`. `GOOGLE_REAL_BROWSER = BLOCKED`, `GOOGLE_DETAILS_EXACT = NOT_RUN` en réel (tests locaux PASS), `GOOGLE_ENDPOINT_PERSIST = PASS` sur round-trip SQL synthétique uniquement, `FOUR_ENDPOINTS_INDEPENDENT = PASS` sur contrats synthétiques uniquement, `GOOGLE_FREE_MODE = PASS`, `RAW_UNDO = PASS` sur la recette navigateur, `MOBILITY_LIVE = NOT_RUN`, `FINANCE_PARITY = 198/198`, `TYPESCRIPT_BUILD = PASS`. Aucun merge, aucune promotion Production, aucune migration, aucune écriture financière distante.
 
 La fusion reste interdite si le vrai Google Details, la conservation, la bonne cible ou les contrôles de sécurité échouent. Aucun gain de performance revendiqué.
 
