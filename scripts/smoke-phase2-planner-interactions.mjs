@@ -57,14 +57,14 @@ try{
   check('R3-021-BROWSER',()=>assert.match(evaluate(`document.querySelector(${JSON.stringify(transport)}).title`),/Train/));
   // Library -> independent context -> existing REPARENT, keeping exactly the same identity.
   navigate('RC');const stay=evaluate('document.querySelector("[data-context]").dataset.context');run('fill','input[aria-label="Rechercher une intention"]','Restaurant');run('snapshot','-i');run('scrollintoview','[data-board-drop]');
-  begin('[data-asset="template:restaurant"]');assert.equal(evaluate('document.querySelector("[data-pack-ghost]").textContent.includes("Estimation après ajout")'),true);move('[data-board-drop]');release();
+  begin('[data-asset="template:restaurant"]');assert.equal(evaluate('!!document.querySelector("[data-pack-ghost]")'),false);move('[data-board-drop]');release();
   const independent=evaluate('[...document.querySelectorAll("[data-context]")].find(e=>!e.parentElement.closest("[data-context]")&&e.querySelector("h3").textContent==="Restaurant").dataset.context');
   run('scrollintoview',`[data-context="${stay}"]`);run('snapshot','-i');begin(`[data-context="${independent}"] button[aria-label^="Déplacer "]`);
   run('scrollintoview',`[data-context="${stay}"]`);move(`[data-context="${stay}"] [data-context-focus]`);run('wait','--fn','document.querySelector("[data-cockpit]").dataset.temporary==="true"');screenshot('restaurant-reparent-preview');release();
   check('R3-011-BROWSER',()=>{assert.equal(evaluate(`document.querySelectorAll('[data-context="${independent}"]').length`),1);assert.equal(evaluate(`!!document.querySelector('[data-context="${stay}"] [data-context="${independent}"]')`),true);});
-  // Structural ghosts never invent an accepted component or a pack total.
-  run('fill','input[aria-label="Rechercher une intention"]','Soirée');run('scrollintoview','[data-board-drop]');run('snapshot','-i');const ghostDigest=digest();begin('[data-asset="template:night-out"]');move('[data-board-drop]');screenshot('night-pack-ghost');
-  check('R3-012-BROWSER',()=>{assert.equal(digest(),ghostDigest);assert.ok(evaluate('!!document.querySelector("[data-pack-ghost]")'));assert.equal(evaluate('document.querySelector("[data-pack-ghost]").textContent.includes("Estimation après ajout")'),true);});move('h1');release();assert.equal(digest(),ghostDigest);
+  // Hover highlights the admissible Board without rendering a provisional card.
+  run('fill','input[aria-label="Rechercher une intention"]','Soirée');run('scrollintoview','[data-board-drop]');run('snapshot','-i');const ghostDigest=digest();begin('[data-asset="template:night-out"]');move('[data-board-drop]');screenshot('night-board-highlight');
+  check('R3-012-BROWSER',()=>{assert.equal(digest(),ghostDigest);assert.equal(evaluate('!!document.querySelector("[data-pack-ghost]")'),false);assert.equal(evaluate('document.querySelector("[data-board-drop]").dataset.dragOver'),'true');});move('h1');release();assert.equal(digest(),ghostDigest);
   // Small suggestion hand, actual ACCEPT owner and candidate regeneration.
   navigate('RA');run('click','[data-balance]');ready();run('snapshot','-i');const oldSet=evaluate('document.querySelector("[data-candidate-set]").dataset.candidateSet');screenshot('assistant-hand');
   check('R3-015-BROWSER',()=>{assert.equal(evaluate('!!document.querySelector("dialog[open]")'),false);assert.ok(evaluate('document.querySelectorAll("[data-candidate]").length')>0);});

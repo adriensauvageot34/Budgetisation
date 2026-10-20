@@ -3,6 +3,17 @@ import { createContext, useContext, type DragEvent } from "react";
 import type { ComposerDragSource, ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
+import {composerPreset,type ComposerPresetKey} from '@/domain/phase2/planner/composer-presets';
+
+/** Request-local UI identity; the published source and server DROP remain owners. */
+export type ComposerDragSession=ComposerDragSource&Readonly<{presetKey?:ComposerPresetKey}>;
+export function presetDragSource(model:ComposerUiModel,source:ComposerDragSource,presetKey?:string):ComposerDragSession|null{
+  if(presetKey===undefined)return source;
+  const preset=composerPreset(presetKey),asset=model.library.searchableAssets.find(a=>a.assetKey===source.assetKey);
+  if(!preset||source.protected||source.sourceKey!==source.assetKey||source.selection||source.sourceSocket
+    ||asset?.kind!=='CONTEXT_ASSET'||asset.templateKey!==preset.templateKey||!publishedDrop(model,source.assetKey,{kind:'BOARD_ZONE'}))return null;
+  return {...source,presetKey:preset.presetKey,label:preset.label};
+}
 
 export const sameTarget = (a: DropTarget | null, b: DropTarget) => !!a && a.kind === b.kind && a.contextOccurrenceId === b.contextOccurrenceId && a.slotKey === b.slotKey;
 export function leftSurface(event: DragEvent<HTMLElement>) {
@@ -19,17 +30,18 @@ export function selectionValues(selection?: ComponentSelectionV1): Record<string
     preference: selection.pricing?.preference ?? "FASTEST", parkingMode: selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount === "0" || selection.pricing.parking.unitAmount === "0.00" ? "NO" : "YES" : "UNKNOWN", parkingAmount: selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount : "" };
   return {};
 }
-export function preparedDrop(source: ComposerDragSource, target: DropTarget, identity: string, selectionId: string): ComposerOperation {
+export function preparedDrop(source: ComposerDragSession, target: DropTarget, identity: string, selectionId: string): ComposerOperation {
   return { kind: "DROP", assetKey: source.assetKey, target, values: selectionValues(source.selection), identity,
+    ...(source.presetKey&&target.kind==='BOARD_ZONE'?{presetKey:source.presetKey}:{}),
     selectionId: source.selection?.selectionId ?? selectionId, ...(source.sourceSocket ? { sourceSocket: source.sourceSocket } : {}) };
 }
 export function publishedDrop(model: ComposerUiModel, assetKey: string, target: DropTarget) {
   return model.dropCapabilities.find(d => d.sourceAssetKey === assetKey && sameTarget(d.target, target) && d.resolution !== "BLOCKED");
 }
 export type InteractionView = {
-  grabbed: ComposerDragSource | null; overTarget: DropTarget | null; motion: "snap" | "undo" | "redo" | "recoil" | null;
+  grabbed: ComposerDragSession | null; overTarget: DropTarget | null; motion: "snap" | "undo" | "redo" | "recoil" | null;
   motionTarget: string | null; completenessFocus: boolean; unresolvedRefs: readonly string[];
-  start: (key: string, event: DragEvent<HTMLElement>) => void; end: () => void;
+  start: (key: string, event: DragEvent<HTMLElement>,presetKey?:ComposerPresetKey) => void; end: () => void;
   over: (target: DropTarget | null) => void; place: (target: DropTarget) => void;
   equip: (assetKey: string, target: DropTarget) => void;
   canTarget: (targetRef: string) => boolean; overAssistant: (targetRef: string | null) => void; placeAssistant: (targetRef: string) => void;

@@ -11,7 +11,6 @@ import { ContextCard } from "./context-card";
 import { ContextPalette } from "./context-palette";
 import styles from "./composer.module.css";
 import { useComposerInteractions, sameTarget, leftSurface } from "./interactions";
-import { PlannerIcon } from "./planner-icons/planner-icon";
 import { BoardCarousel } from "./board-carousel";
 import { inventoryItems, inventoryRootRef } from "./inventory-layout";
 import type { AtomicNode, VisualClusterNode, ComposerPresentationNode } from "./presentation/node-types";
@@ -110,11 +109,9 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
       "data-drag-over": sameTarget(interaction?.overTarget ?? null, boardTarget),
       onDragOver: e => { if (boardAccepts && !busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(boardTarget); } else interaction?.over(null); },
       onDragLeave: e => { if (leftSurface(e)) interaction?.over(null); },
-      onDrop: e => { e.preventDefault(); if (boardAccepts && !busy) { if (interaction?.grabbed) interaction.place(boardTarget); else drop(boardTarget, e.dataTransfer.getData("application/x-planner-asset")); } }
+      onDrop: e => { e.preventDefault(); e.stopPropagation(); if (boardAccepts && !busy) { if (interaction) interaction.place(boardTarget); else drop(boardTarget, e.dataTransfer.getData("application/x-planner-asset")); } }
     }} render={item => item.kind === "FIXED" ? <FixedChargeCard facts={item.facts} detached={item.detached} open={() => setFixedOpen(item.detached ? item.facts[0].factKey : "group")} reattach={() => toggleFixed(item.facts[0].factKey)} />
       : item.kind === "CLUSTER" ? <VisualClusterCard node={item} open={() => setOpenClusterId(item.id)} /> : renderAtomic(item)}>
-      {interaction?.grabbed?.pack && <article className={styles.packGhost} data-pack-ghost aria-label={`Aperçu de ${interaction.grabbed.label}`}><PlannerIcon iconKey={interaction.grabbed.iconKey} /><h3>{interaction.grabbed.label}</h3>
-          <div>{interaction.grabbed.pack.map((s, index) => <span key={`${s.label}:${index}`} title={`${s.label} · ${s.provenance}`}><PlannerIcon iconKey={s.iconKey} scale="SATELLITE" /><small>{s.label}</small></span>)}</div><p>Estimation après ajout</p></article>}
     </BoardCarousel>
     {openCluster && <VisualClusterOverlay node={openCluster} focused={focused} close={()=>closeCluster()} renderChild={item => renderAtomic(item, true)} palette={focusedInCluster ? palette : null} trash={trashZone} />}
     {model.presentation.elementCount < 4 && <button data-add-element className={styles.emptyInvitation} disabled={busy} onClick={add}><Plus size={14} /> Ajouter à votre mois</button>}

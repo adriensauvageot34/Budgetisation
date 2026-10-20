@@ -273,12 +273,6 @@
 .dragPreview b { display:block; font-size:11px; color:#756282; }
 .dragPreview small { display:flex; align-items:center; gap:4px; font-size:10px; margin-top:5px; color:#95839f; }
 .dragPreview[data-protected=true] { border-color:#becdad; background:#f7faef; }
-.packGhost { position:absolute; z-index:var(--z-ghost); bottom:12px; right:35px; width:230px; border:1px dashed #b8a7c7; border-radius:18px; padding:15px; opacity:.52; background:#fbf7ff; text-align:center; pointer-events:none; }
-.packGhost>span { display:inline-flex; }
-.packGhost h3 { font-size:12px; margin:5px 0 8px; }
-.packGhost>div { display:flex; justify-content:center; gap:8px; }
-.packGhost>div>span { display:flex; flex-direction:column; align-items:center; gap:3px; }
-.packGhost small,.packGhost p { font-size:9px; color:#927b9e; }
 .trash { position:absolute; z-index:var(--z-trash); bottom:160px; left:50%; transform:translateX(-50%); display:flex; gap:7px; align-items:center; justify-content:center; padding:11px 24px; border:1px solid #dfc4cd; border-radius:13px; background:#fff7f7; color:#a65f72; box-shadow:0 4px 12px #77556518; font-size:11px; animation:trash-in var(--motion-trash) ease-out; }
 .trash[data-drag-over=true] { transform:translateX(-50%) scale(1.04); background:#f9e8ec; }
 .trash[data-protected=true] { background:#f5f8ec; border-color:#d4ddc7; color:#859169; }

@@ -6,7 +6,7 @@ import {rememberBarView,type BarViewMemory} from "./bar-view-memory";
 import {startBarReceptionProbe} from "./bar-reception-probe";
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
 import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
-import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
+import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerCardView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
@@ -24,7 +24,7 @@ import { BalanceLayer } from "./balance-layer";
 import { ComposerResponseGate } from "./draft-controller";
 import { monthLabel } from "./display";
 import styles from "./composer.module.css";
-import { ComposerInteractionContext, preparedDrop, publishedDrop, sameTarget } from "./interactions";
+import { ComposerInteractionContext, preparedDrop, publishedDrop, presetDragSource, sameTarget,type ComposerDragSession } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { money } from "./display";
 import { finishComparison, type ComparisonSnapshot } from "./comparison";
@@ -188,7 +188,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [draftConfirmation, setDraftConfirmation] = useState<DraftConfirmation | null>(null);
   const [draftConfirmationBusy, setDraftConfirmationBusy] = useState(false);
   const [completenessFocus, setCompletenessFocus] = useState(false);
-  const [grabbed, setGrabbed] = useState<ComposerDragSource | null>(null), grab = useRef<ComposerDragSource | null>(null);
+  const [grabbed, setGrabbed] = useState<ComposerDragSession | null>(null), grab = useRef<ComposerDragSession | null>(null);
   const [overTarget, setOverTarget] = useState<DropTarget | null>(null), overRef = useRef<DropTarget | null>(null);
   const dragIdentity = useRef({ identity: "", selectionId: "" }), dragImage = useRef<HTMLDivElement>(null);
   const assistantGrab = useRef<{ targetRef: string; operation: ComposerOperation } | null>(null);
@@ -464,15 +464,16 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     motionTimer.current = setTimeout(() => { setMotion(null); setMotionTarget(null); }, 240);
   }
   function endDrag() { clearHover(); grab.current = null; assistantGrab.current = null; assistantOver.current = null; setGrabbed(null); setSelected(null); setOverTarget(null); overRef.current = null; }
-  function startDrag(key: string, event: DragEvent<HTMLElement>) {
+  function startDrag(key: string, event: DragEvent<HTMLElement>,presetKey?:ComposerPresetKey) {
     if (busyRef.current) { event.preventDefault(); return; }
     inlineEdits.registry.flushPending();
     const cardRef = event.currentTarget.closest<HTMLElement>("[data-control]")?.dataset.control;
     if (cardRef && !inlineEdits.registry.guard(() => {}, new Set([cardRef]))) { event.preventDefault(); return; }
     clearHover();
     const candidate = key.startsWith("assistant:") ? suggestions?.candidates.find(c => `assistant:${c.candidateId}` === key) : null;
-    const source = candidate ? { sourceKey: key, assetKey: key, label: candidate.label, iconKey: shown.presentation.objects[candidate.targetRef]?.iconKey ?? "activity", economicAmount: candidate.impactOnMonthEnd, protected: false }
+    const publishedSource = candidate ? { sourceKey: key, assetKey: key, label: candidate.label, iconKey: shown.presentation.objects[candidate.targetRef]?.iconKey ?? "activity", economicAmount: candidate.impactOnMonthEnd, protected: false }
       : shown.presentation.dragSources[key];
+    const source=publishedSource&&presetDragSource(shown,publishedSource,presetKey);
     if (!source) { event.preventDefault(); return; }
     assistantGrab.current = candidate && suggestions ? { targetRef: candidate.targetRef, operation: { kind: "ACCEPT", candidateId: candidate.candidateId, candidateSetDigest: suggestions.candidateSetDigest } } : null;
     grab.current = source; setGrabbed(source); setSelected(source.assetKey);
@@ -493,6 +494,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     const source = grab.current;
     if (!source || source.protected) return null;
     if (target.kind === "TRASH") return source.removeOperation ?? null;
+    if(source.presetKey&&target.kind!=='BOARD_ZONE')return null;
     if (!publishedDrop(shown, source.assetKey, target)) return null;
     return preparedDrop(source, target, dragIdentity.current.identity, dragIdentity.current.selectionId);
   }
@@ -513,7 +515,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     endDrag();
     if (operation.kind === "DROP" && operation.assetKey.startsWith("template:") && target.kind === "BOARD_ZONE") {
       const asset = shown.library.searchableAssets.find(a => a.assetKey === operation.assetKey);
-      if (asset) { choose(asset, target, undefined, operation.identity); return; }
+      if (asset) { choose(asset, target, undefined, operation.identity,source?.presetKey); return; }
     }
     stage(operation);
   }
