@@ -30,15 +30,20 @@ const repository=createPlanApplyRepository(pg.client);
 const checks=[];
 const check=async(name,run)=>{try{await run();checks.push({name,status:'PASS'});console.log(name+' PASS');}catch(e){checks.push({name,status:'FAIL',message:e.message});console.log(name+' FAIL: '+e.message);}};
 const text=node=>typeof node==='string'?node:node?.type==='small'||String(node?.props?.['aria-hidden'])==='true'?'':node?.children?.map(text).join('')??'';
+// R8 changed the surface, not these owner oracles. Target the same semantic
+// control by its accessible name rather than resurrecting redundant buttons.
+const routeMatch=(n,label)=>label==='Départ · À préciser'&&n.props['aria-label']==='Modifier le départ de l’aller'
+ ||label==='Reprendre le trajet inverse'&&text(n)==='Reprendre l’inverse'
+ ||label==='Préciser le prix du trajet'&&n.props['aria-label']==='Modifier le tarif de l’aller';
 let root,registry,requestRef,pendingOps,model,kind,id,steps,rejectNext=false;
 let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
-const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'||label==='Montant direct'&&n.props['aria-label']==='Modifier le coût prévu'||label==='Bouteille partagée'&&text(n)==='Bouteille'));assert.ok(all.length,'Missing button '+label);return all[0];};
+const button=(label)=>{const all=controls(n=>n.type==='button'&&(routeMatch(n,label)||text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'||label==='Montant direct'&&n.props['aria-label']==='Modifier le coût prévu'||label==='Bouteille partagée'&&text(n)==='Bouteille'));assert.ok(all.length,'Missing button '+label+'; visible='+controls(n=>n.type==='button').map(text).join(' | '));return all[0];};
 const click=async label=>{
   // Cost is now the card header value, outside this editor-only fixture. Exercise
   // its existing targetRequest boundary instead of reintroducing a fake CTA.
   if(label==='Montant direct'&&kind===BarLivingEditor){overrides={...overrides,initialTarget:'quick',targetRequest:(overrides.targetRequest??0)+1};await sync();return;}
-  const matches=()=>controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'||label==='Montant direct'&&n.props['aria-label']==='Modifier le coût prévu'||label==='Bouteille partagée'&&text(n)==='Bouteille'));
+  const matches=()=>controls(n=>n.type==='button'&&(routeMatch(n,label)||text(n).trim()===label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'||label==='Montant direct'&&n.props['aria-label']==='Modifier le coût prévu'||label==='Bouteille partagée'&&text(n)==='Bouteille'));
   for(let i=0;i<12&&!matches().length;i++){
     if(controls(n=>n.props['data-bar-living-editor']!==undefined).length){
       const switchFamily=controls(n=>n.type==='button'&&text(n)==='Changer de famille')[0];
@@ -48,7 +53,7 @@ const click=async label=>{
       if(family&&!['Date','Lieu','Montant direct','Before','Nom libre'].includes(label)){await act(async()=>family.props.onClick());continue;}
       const routes=controls(n=>n.type==='button'&&text(n)==='Trajets proposés')[0];
       if(routes&&['Reprendre le trajet inverse','Même mode qu’à l’aller'].includes(label)){await act(async()=>routes.props.onClick());continue;}
-      const endpointSearch=controls(n=>n.type==='input'&&n.props['aria-label']==='Chercher un point du trajet')[0];
+      const endpointSearch=controls(n=>n.type==='input'&&n.props['aria-label']==='Rechercher une adresse ou un lieu')[0];
       if(endpointSearch&&endpointSearch.props.value!==label){await act(async()=>endpointSearch.props.onChange({target:{value:label}}));continue;}
     }
 
@@ -59,7 +64,7 @@ const click=async label=>{
   }
   await act(async()=>button(label).props.onClick());steps++;
 };
-const input=label=>{const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
+const input=label=>{if(label==='Autre point du trajet')label='Nom libre du point de trajet';if(label==='Chercher un bar')label='Rechercher un bar';const field=controls(n=>n.type==='label'&&text(n).startsWith(label))[0];assert.ok(field,'Missing field '+label+'; labels='+controls(n=>n.type==='label').map(text).join(' | ')+'; buttons='+controls(n=>n.type==='button').map(text).join(' | '));return field.findByType('input');};
 const change=async(label,value)=>{await act(async()=>{const node=input(label);for(let p=node.parent;p;p=p.parent)p.props.onChangeCapture?.({target:{value}});node.props.onChange({target:{value}});});steps++;};
 const props=()=>({context:model.semanticState.contexts.find(c=>c.contextOccurrenceId===id),model,card:model.board.contexts.find(c=>c.contextOccurrenceId===id),semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],options:model.mobilityOptions,busy:false,fresh:true,dockHost:{},host:{},choose:()=>{},close:()=>{},onCancel:()=>{},onSave:admit,decide:admit,saveStatus:'MEMORY',editor:model.editors.find(e=>e.assetKey==='template:'+model.semanticState.contexts.find(c=>c.contextOccurrenceId===id).templateKey),...overrides});
 const admit=operation=>{if(rejectNext){rejectNext=false;return false;}const semantic=stageLocalDecision(model,model.semanticState,operation);if(!semantic)return false;pendingOps.push(operation);model=visualDraftModel(model,semantic);root?.update(render());return true;};
@@ -97,10 +102,11 @@ await check('P3_01_05_PUBLIC_RANKING_HOMONYMS_AND_HONEST_COVERAGE',async()=>{
  await seed();assert.equal(pendingOps.length,0);await click('Lieu');assert.equal(pendingOps.length,0);assert.ok(!labels().some(s=>s.includes('Maison fixture')));assert.ok(controls(n=>n.props['data-bar-knowledge']!==undefined).map(text).join('').includes('couverture non exhaustive'));
  const matches=dock().findAll(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&text(c)==='Bar jumeau').length);assert.equal(matches.length,2);await act(async()=>matches[1].props.onClick());assert.equal(current().fields.placeRef.placeId,b.placeId);
 });
-await check('P3_11_EXPLICIT_HOME_CAR_ATOMIC_NO_PRICE_OR_RETURN',async()=>{
- await seed();await click('Lieu');await act(async()=>dock().findAll(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&text(c)==='Bar jumeau').length)[0].props.onClick());const n=pendingOps.length;await onRoute('outbound');await click('Trajets proposés');assert.equal(pendingOps.length,n);
- const shortcuts=controls(n=>n.type==='button'&&text(n).startsWith('Maison →'));assert.equal(shortcuts.length,1);await act(async()=>shortcuts[0].props.onClick());
- const outbound=current().slotSelections.outbound.items[0];assert.equal(outbound.origin.placeId,home.placeId);assert.equal(outbound.destination.placeId,a.placeId);assert.equal(outbound.route.vehicleRef.vehicleId,vehicle.vehicleId);assert.equal(outbound.route.stops.length,2);assert.equal(outbound.pricing.fare.kind,'UNKNOWN');assert.equal(current().slotSelections.return?.items.length??0,0);assert.equal(pendingOps.length,n+1);
+await check('P3_11_R8_EXPLICIT_HOME_CAR_NO_PRICE_OR_RETURN',async()=>{
+ await seed();await click('Lieu');await act(async()=>dock().findAll(n=>n.type==='button'&&n.findAll(c=>c.type==='strong'&&text(c)==='Bar jumeau').length)[0].props.onClick());const n=pendingOps.length;await onRoute('outbound');assert.equal(pendingOps.length,n);await click('Voiture');
+ assert.equal(current().slotSelections.outbound.items[0].route.vehicleRef,null);assert.equal(current().slotSelections.outbound.items[0].origin,null);
+ await act(async()=>controls(n=>n.type==='button'&&n.props['aria-label']==='Retenir le véhicule de l’aller')[0].props.onClick());await click('Maison fixture');
+ const outbound=current().slotSelections.outbound.items[0];assert.equal(outbound.origin.placeId,home.placeId);assert.equal(outbound.destination.placeId,a.placeId);assert.equal(outbound.route.vehicleRef.vehicleId,vehicle.vehicleId);assert.equal(outbound.route.stops.length,2);assert.equal(outbound.route.stops[0].placeId,home.placeId);assert.equal(outbound.route.stops[1].placeId,a.placeId);assert.equal(outbound.pricing.fare.kind,'UNKNOWN');assert.equal(current().slotSelections.return?.items.length??0,0);assert.equal(pendingOps.length,n+3);
 });
 await check('P3_12_AMBIGUOUS_HOME_OR_VEHICLE_NO_SHORTCUT',async()=>{
  for(const [places,unique] of [[[a,home,{...home,placeId:uuid(99105)}],true],[[a,home],false]]){await seed(places,unique);await act(async()=>admit(barPlaceOperation(current(),{kind:'KNOWN',placeId:a.placeId})));await onRoute('outbound');assert.equal(controls(n=>n.type==='button'&&text(n).startsWith('Maison →')).length,0);assert.equal(current().slotSelections.outbound?.items.length??0,0);}
@@ -117,14 +123,16 @@ await check('P3_15_17_DIRECTED_RETURN_AND_PLACE_ONLY_MUTATION',async()=>{
  await act(async()=>admit(barPlaceOperation(current(),{kind:'KNOWN',placeId:b.placeId})));assert.deepEqual(current().slotSelections,before.slotSelections);assert.equal(current().fields.placeRef.placeId,b.placeId);
 });
 await check('P3_19_RAW_BEFORE_PLACE_CANCEL_AND_SAVE',async()=>{
- await seed();await click('Bière');await change('Prix unitaire (€)','8');await click('Lieu');assert.equal(step(),'row');await click('Continuer à modifier');assert.equal(input('Prix unitaire (€)').props.value,'8');await click('Lieu');await act(async()=>controls(n=>n.props['data-save-workshop']!==undefined)[0].props.onClick());assert.equal(step(),'place');assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'8');
+ await seed();const rawBeer={kind:'COMPONENT',selectionId:uuid(99501),optionKey:'extra',label:'Bière',provenance:'EXPLICIT_USER_DECISION',quantity:'1',unitBasis:'ITEM',cost:{kind:'UNKNOWN'}};
+ await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},slots:{extras:[rawBeer]}}}));
+ overrides={...overrides,initialTarget:`component:extras:${rawBeer.selectionId}`,targetRequest:1};await sync();await change('Prix unitaire (€)','8');await click('Lieu');assert.equal(step(),'row');await click('Continuer à modifier');assert.equal(input('Prix unitaire (€)').props.value,'8');await click('Lieu');await act(async()=>controls(n=>n.props['data-save-workshop']!==undefined)[0].props.onClick());assert.equal(step(),'place');assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'8');
  const before=structuredClone(current());await click('Bar sans historique');assert.deepEqual(current().slotSelections,before.slotSelections);assert.equal(current().fields.placeRef.placeId,c.placeId);
 });
 await check('P3_18_22_TEXT_FALLBACK_NO_COORDINATE_AND_LATER',async()=>{
  await seed();await click('Lieu');await click('Nom libre');await change('Nom ou adresse libre','Bar libre fixture');await click('Retenir ce repère');assert.deepEqual(current().fields.placeRef,{kind:'TEXT',label:'Bar libre fixture',provenance:'USER_DECLARED_PROSPECTIVE'});await onRoute('outbound');await click('Taxi / Uber');assert.equal(current().slotSelections.outbound.items[0].destination.kind,'TEXT');assert.equal(current().slotSelections.outbound.items[0].pricing.fare.kind,'UNKNOWN');
 });
 await check('P3_ENDPOINT_RAW_FREE_POINT_GUARD_AND_REJECTION',async()=>{
- await seed();await onRoute('outbound');await click('Taxi / Uber');await click('Départ · À préciser');await change('Autre point du trajet','Départ saisi fixture');await click('Maison fixture');await click('Continuer à modifier');assert.equal(input('Autre point du trajet').props.value,'Départ saisi fixture');assert.equal(current().slotSelections.outbound.items[0].origin,null);
+ await seed();await onRoute('outbound');await click('Taxi / Uber');await click('Départ · À préciser');await click('Nom libre');await change('Autre point du trajet','Départ saisi fixture');await click('Maison fixture');await click('Continuer à modifier');assert.equal(input('Autre point du trajet').props.value,'Départ saisi fixture');assert.equal(current().slotSelections.outbound.items[0].origin,null);
  rejectNext=true;await click('Retenir ce point libre');assert.equal(input('Autre point du trajet').props.value,'Départ saisi fixture');assert.equal(registry.count(),1);await click('Retenir ce point libre');assert.equal(current().slotSelections.outbound.items[0].origin.kind,'TEXT');assert.equal(current().slotSelections.outbound.items[0].origin.label,'Départ saisi fixture');assert.equal(registry.count(),0);
 });
 await check('P3_20_OWNER_SCOPE_ROLE_DATES_PERSON_FILTER_AND_COMPLETE_PAGINATION',async()=>{
@@ -146,6 +154,25 @@ await check('P3_PREVIEW_APPLY_RELOAD_KNOWN_IDS_PARTIAL_EDIT_AND_NO_OWNER_WRITES'
  let r=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:501,targetMonth:'2026-11',draft:JSON.parse(JSON.stringify(expected))});assert.equal(r.ok,true,r.code);assert.equal(r.model.mobilitySummaries.length,1);assert.equal(r.model.mobilitySummaries[0].cashTransport,'12.00');const calls=pg.rpcCalls;
  r=await handleComposerRequest(deps,householdId,{kind:'APPLY',sequence:502,targetMonth:'2026-11',draft:expected,command:{...r.model.proof,applyRequestId:crypto.randomUUID()}});assert.equal(r.ok,true,r.code+': '+r.message);assert.equal(pg.rpcCalls,calls+1);
  r=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:503,targetMonth:'2026-11'});assert.equal(r.ok,true,r.code);assert.deepEqual(r.model.semanticState,expected);const saved=await repository.readActivePlan(householdId,'2026-11');assert.equal(saved.activeRevision.semanticState.contexts.find(c=>c.contextOccurrenceId===id).fields.placeRef.placeId,b.placeId);assert.equal(JSON.stringify(world),before);await pg.verifyCanaries();
+});
+await check('R8_CAR_TAXI_REVERSE_REMOVE_COST_GUARDS_AND_TIME',async()=>{
+ await seed();await act(async()=>admit(barPlaceOperation(current(),{kind:'KNOWN',placeId:a.placeId})));
+ await onRoute('outbound');await click('Voiture');await act(async()=>controls(n=>n.type==='button'&&n.props['aria-label']==='Retenir le véhicule de l’aller')[0].props.onClick());await click('Maison fixture');
+ const outbound=structuredClone(current().slotSelections.outbound.items[0]);
+ const world=fixture();world.mobilityFacts.places.push({...home,coordinates:{latitude:43.6,longitude:3.8,source:'CANONICAL'}},{...a,coordinates:{latitude:43.7,longitude:3.9,source:'CANONICAL'}});
+ const {providers}=await import('./fixtures/planner-mobility.mjs');const mobility=providers();const {preparePlanningMobility}=require('@/server/phase2/planner/prospective-mobility-pricing');
+ const prepared=await preparePlanningMobility(world,model.semanticState,mobility.value);assert.equal(mobility.calls.routes.length,1);assert.ok(Object.values(prepared.journeyPrices).some(price=>price.economicFuel!==null));
+ await onRoute('return');assert.equal(current().slotSelections.return?.items.length??0,0);await click('Choisir un autre transport');await click('Taxi / Uber');
+ let returning=structuredClone(current().slotSelections.return.items[0]);assert.equal(returning.origin.placeId,a.placeId);assert.equal(returning.destination.placeId,home.placeId);assert.equal(returning.pricing.fare.kind,'UNKNOWN');assert.equal(returning.route,undefined);assert.notEqual(returning.selectionId,outbound.selectionId);assert.deepEqual(current().slotSelections.outbound.items[0],outbound);
+ const action=async name=>act(async()=>controls(n=>n.type==='button'&&n.props['aria-label']===name)[0].props.onClick());
+ await action('Modifier le tarif du retour');await change('Coût prévu du billet ou de la course (€)','19');await click('Retenir le coût du trajet');returning=structuredClone(current().slotSelections.return.items[0]);
+ await action('Inverser les points du retour');assert.deepEqual(current().slotSelections.return.items[0],returning);await click('Continuer à modifier');assert.deepEqual(current().slotSelections.return.items[0],returning);
+ await action('Inverser les points du retour');await click('Inverser ces points');assert.equal(current().slotSelections.return.items[0].origin.placeId,home.placeId);assert.equal(current().slotSelections.return.items[0].pricing.fare.kind,'UNKNOWN');assert.deepEqual(current().slotSelections.outbound.items[0],outbound);
+ await action('Retirer uniquement le retour');assert.equal(current().slotSelections.return.items.length,1);await click('Retirer le trajet');assert.equal(current().slotSelections.return.items.length,0);assert.deepEqual(current().slotSelections.outbound.items[0],outbound);
+ await click('Heure de départ · facultative');await change('Heure de départ de l’aller (facultative)','18:30');await click('Retenir cet horaire');assert.equal(current().slotSelections.outbound.items[0].plannedTime??null,null);assert.ok(controls(n=>n.props.role==='alert'&&text(n).includes('date')).length);
+ await act(async()=>admit({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{plannedDate:'2026-11-12'}}}));await click('Retenir cet horaire');assert.equal(current().slotSelections.outbound.items[0].plannedTime,'18:30');assert.equal(registry.count(),0);
+ const linked={...current().slotSelections.outbound.items[0],journey:{...outbound.journey,relation:'LINKS_EXISTING',externalExpenseId:uuid(99990)}};
+ const {assertBarRouteEditable,barReverseLeg}=require('@/app/mois-a-venir/composer/bar-living-operations');assert.throws(()=>assertBarRouteEditable(linked));assert.throws(()=>barReverseLeg({...outbound,pricing:{...outbound.pricing,fundingAllocations:[{walletId:uuid(99991),amount:'1'}]}}));
 });
 await check('P3_06_10_GOOGLE_EXACT_AMBIGUOUS_RETRY_TEXT_STALE_NO_AUTO_CHOICE',async()=>{
  if(root)await act(async()=>root.unmount());const {BarPlaceSearch}=require('@/app/mois-a-venir/composer/bar-place-search');const previous=globalThis.fetch,calls=[],pending=[],adopted=[];

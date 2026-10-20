@@ -26,7 +26,7 @@ import {BarPlaceSearch,type BarPlaceSearchState} from "./bar-place-search";
 import {barSearchText} from "./bar-search";
 import {barBefore,barBeforePatch,barBeforeRemove} from "./bar-before";
 import {money} from "./display";
-import {BarMetadata,BarRouteLine,BarComponentFace,barPersonLabel} from "./bar-living-details";
+import {BarMetadata,BarRouteLine,BarComponentFace,barPersonLabel,type BarRouteAction} from "./bar-living-details";
 import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
 import {prospectivePersonIdentity} from "@/domain/phase2/planned-product";
 import {BarPageControls} from "./bar-pages";
@@ -40,7 +40,7 @@ import {barDockDrag} from './bar-dock-drag';
 import {nightOutConsumption} from '@/domain/phase2/planner/night-out-consumption';
 import {plannerDigest} from '@/domain/phase2/planner/json';
 
-type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more"|"venue-change"|"known-routes";
+type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"endpoint-free"|"return-choice"|"route-time"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more"|"venue-change"|"known-routes";
 type Component=Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;
 // Reuse published compatible food definitions, under this Bar's component owner.
 // EDIT_NIGHT_OUT admits bar/club/house_party refs; Restaurant remains a separate event.
@@ -52,7 +52,7 @@ function BeforeEditorialArt(){
   const [failed,setFailed]=useState(false);
   return failed?null:<img className={styles.barBeforeArt} src="/planned-visuals/builder/clay/moments/before-editorial.webp" width={80} height={48} alt="" aria-hidden="true" draggable={false} onError={()=>setFailed(true)}/>;
 }
-export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number;initialBarView?:BarViewMemory;onViewChange?:(view:BarViewMemory)=>void}) {
+export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number;initialBarView?:BarViewMemory;previewPending?:boolean;onViewChange?:(view:BarViewMemory)=>void}) {
   const {context,model,card,dockHost,onSave,serverError}=props;
   const busy=props.busy||!!card?.readOnly||props.semanticState.preferences.anchors.includes(context.contextOccurrenceId)||props.semanticState.preferences.flexibility[context.contextOccurrenceId]==="PRESERVE";
   const initialRoute=props.initialTarget?.startsWith("route:")?props.initialTarget.split(":"):null;
@@ -89,6 +89,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const [personName,setPersonName]=useState("");
   const [quickAmount,setQuickAmount]=useState(()=>{const item=barItems(context,"main")[0];return props.initialTarget==="quick"&&item?.kind==="COMPONENT"&&item.cost.kind==="MANUAL"?item.cost.unitAmount:"";}),[pendingAsset,setPendingAsset]=useState<PlannedAsset|null>(null),[pendingShared,setPendingShared]=useState(false);
   const [routeModes,setRouteModes]=useState(props.initialTarget==="outbound"||props.initialTarget==="return");
+  const [routeTime,setRouteTime]=useState("");
   const [direction,setDirection]=useState<"outbound"|"return">(props.initialTarget==="return"||initialRoute?.[1]==="return"?"return":"outbound"),[endpoint,setEndpoint]=useState<"origin"|"destination">(initialRoute?.[2]==="destination"?"destination":"origin");
   const searchScope=page==="endpoint"?`endpoint:${direction}:${endpoint}`:(page==="row"?slot.startsWith("before-")?"before":"drinks":page)+((page==="row"||page==="before"||page==="drinks")?":"+(family??"families"):"");
   const query=queries[searchScope]??"";
@@ -118,9 +119,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     const original=rowItems(slot).find(item=>item.selectionId===row.id);
     if(original?.kind==="COMPONENT")setRow(fromSelection(original));
     setManual("");setPersonName("");setPeople(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);
-    setFare("");setQuickAmount("");setInlineEditing(false);setDirty(false);
+    setFare("");setRouteTime("");setQuickAmount("");setInlineEditing(false);setDirty(false);
   },"bar-living",canSaveBuffer()?{label:page==="row"&&row.costMode==="MANUAL"?`Enregistrer ${row.amount} €`:"Enregistrer cette saisie",run:()=>saveBuffer(),
-    bufferKey:JSON.stringify({page,row,slot,manual,people,personName,fare,quickAmount,direction,slots:context.slotSelections,fields:context.fields,before:before?.child,busy})}:undefined);
+    bufferKey:JSON.stringify({page,row,slot,manual,people,personName,fare,routeTime,quickAmount,direction,slots:context.slotSelections,fields:context.fields,before:before?.child,busy})}:undefined);
   const [resume,setResume]=useState<(()=>void)|null>(null);
   const resumeGo=useCommittedEvent((next:Page)=>go(next));
   const resumeOpen=useCommittedEvent((target:BarTarget)=>open(target));
@@ -142,6 +143,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const resumeDirect=useCommittedEvent(()=>returnDirect());
   const resumeMoment=useCommittedEvent((target:"before"|"bar")=>selectMoment(target));
   const resumeFare=useCommittedEvent(()=>targetFare());
+  const resumeRouteAction=useCommittedEvent((slot:"outbound"|"return",action:BarRouteAction)=>routeAction(slot,action));
+  const resumeMode=useCommittedEvent((key:string,fromHome:boolean)=>chooseMode(key,fromHome));
   // Resume after the admitted Draft has committed, using current handlers rather
   // than a closure that still contains the pre-save slot arrays.
   const guard=(continuation:()=>void)=>rawGuard(()=>setResume(()=>continuation));
@@ -162,9 +165,10 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(inlineEditing)return !busy&&!composingAmount.current&&!!quickAmount.trim()&&!/[.,]$/u.test(quickAmount.trim())&&(decisionAmount(quickAmount.trim().replace(",",".")),true);
     if(busy||page==="row"&&slot.startsWith("before-")&&beforeLocked)return false;
     if(page==="row"){if(/[.,]$/u.test(row.quantity)||row.costMode==="MANUAL"&&/[.,]$/u.test(row.amount))return false;buildComponentRow(row,row.existing?.optionKey??"extra");return true;}
-    if(page==="manual-place"||page==="endpoint")return !!manual.trim();
+    if(page==="manual-place"||page==="endpoint-free")return !!manual.trim();
     if(page==="people")return !personName.trim();
     if(page==="fare"){decisionAmount(fare.trim().replace(",","."));return !!fare.trim();}
+    if(page==="route-time")return !routeTime||/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(routeTime);
 
     return false;
   }catch{return false;}}
@@ -225,6 +229,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(target.startsWith("route:")){const [,dir,key]=target.split(":");setDirection(dir as "outbound"|"return");setAllEndpoints(false);setManual("");if(key==="vehicle"){move("vehicle");}else if(key==="fare"){const actual=barLeg(context,dir as "outbound"|"return");setFare(actual?.pricing?.fare.kind==="MANUAL"?actual.pricing.fare.unitAmount:"");move("fare");}else{setEndpoint(key as "origin"|"destination");move("endpoint");}return;}
     if(target==="quick"&&(!consumption||consumption.mode==="DIRECT")){beginInline();return;}
     if(target==="quick"){returnDirect();return;}
+    if(target==="return"&&!barLeg(context,"return")&&barLeg(context,"outbound")){setDirection("return");move("return-choice");return;}
     if(target==="outbound"||target==="return")setRouteModes(true);
     if(target==="people"){setPeople(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);move("people");return;}
     if(target.startsWith("component:")){const [,slot,id]=target.split(":");const item=rowItems(slot).find(item=>item.selectionId===id);if(item?.kind==="COMPONENT")editComponent(slot,item);return;}
@@ -293,8 +298,12 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     // Validate representability before proposing any destructive price choice.
     const costs=barEndpointCosts(leg,endpoint);
     const unbound=barEndpoint(leg,endpoint,place,"UNKNOWN");
-    const next=bindVenue&&selectedVenue&&place
+    const bound=bindVenue&&selectedVenue&&place
       ?{...unbound,venueEndpoints:{...unbound.venueEndpoints,[endpoint]:venueBinding(selectedVenue)}}:unbound;
+    // Selecting the vehicle before the home must still finish the same declared
+    // two-stop route. Empty stops are an incomplete intention, not a route quote.
+    const next:BarLeg=bound.optionKey==="car"&&bound.route&&bound.route.stops.length===0&&bound.origin&&bound.destination
+      ?{...bound,route:{...bound.route,stops:[stopForPlace(bound.origin,barPlaceLabel(bound.origin,model),"DIRECT_PLACE"),stopForPlace(bound.destination,barPlaceLabel(bound.destination,model),"ROOT_PLACE")]}}:bound;
     if(next!==leg&&costs.length){setPendingEndpoint({leg,key:endpoint,place,...(bindVenue&&selectedVenue?{binding:venueBinding(selectedVenue)}:{})});return false;}
     const admitted=patchLeg(next,direction);if(admitted&&place&&endpoint==="origin"&&!next.destination){setEndpoint("destination");setAllEndpoints(false);setManual("");move("endpoint");}return admitted;
   }catch(failure){setError(failure instanceof Error?failure.message:"Ce lieu ne peut pas être retenu. Le trajet est conservé.");}};
@@ -307,34 +316,65 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   function saveBuffer():boolean {
     if(inlineEditing)return saveInline();
     if(page==="row")return !!saveRow();
-    if(page==="endpoint")return !!chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true);
+    if(page==="endpoint-free")return !!chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true);
     if(page==="manual-place")return choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"});
     if(page==="people")return decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:people}}},"summary");
     if(page==="fare")return saveFare();
+    if(page==="route-time")return saveRouteTime();
     return false;
   }
   const targetEndpoint=(key:"origin"|"destination")=>{if(!guard(()=>resumeEndpoint(key)))return;setEndpoint(key);setAllEndpoints(false);setManual("");move("endpoint");};
   const targetFare=()=>{if(!guard(resumeFare))return;setFare(leg?.pricing?.fare.kind==="MANUAL"?leg.pricing.fare.unitAmount:"");move("fare");};
-  const chooseVehicle=()=>{
-    const vehicle=model.mobilityOptions?.vehicle;if(!leg||!vehicle?.vehicleId)return;
-    try{assertBarRouteEditable(leg);}catch(failure){setError((failure as Error).message);return;}
-    const apply=()=>patchLeg({...leg,route:{version:"composer-mobility-route@v1",vehicleRef:{vehicleId:vehicle.vehicleId!,labelAtSelection:vehicle.label,provenance:"EXPLICIT_USER_DECISION"},
-      ...(leg.route?.manualFuelPrice?{manualFuelPrice:leg.route.manualFuelPrice}:{}),
-      ...(leg.route?.toll?{toll:leg.route.toll}:{}),stops:leg.route?.stops.length?leg.route.stops.map(stop=>{
-        if(leg.route?.vehicleRef?.vehicleId===vehicle.vehicleId)return stop;
+  const chooseVehicle=(actual=leg,slot=direction)=>{
+    const vehicle=model.mobilityOptions?.vehicle;if(!actual||!vehicle?.vehicleId)return;
+    try{assertBarRouteEditable(actual);}catch(failure){setError((failure as Error).message);return;}
+    const apply=()=>{const value:BarLeg={...actual,route:{version:"composer-mobility-route@v1",vehicleRef:{vehicleId:vehicle.vehicleId!,labelAtSelection:vehicle.presentation?.displayName??vehicle.label,provenance:"EXPLICIT_USER_DECISION"},
+      ...(actual.route?.manualFuelPrice?{manualFuelPrice:actual.route.manualFuelPrice}:{}),
+      ...(actual.route?.toll?{toll:actual.route.toll}:{}),stops:actual.route?.stops.length?actual.route.stops.map(stop=>{
+        if(actual.route?.vehicleRef?.vehicleId===vehicle.vehicleId)return stop;
         const {estimatedFuelLiters:_fuel,...retained}=stop;return retained;
-      }):leg.origin&&leg.destination?[stopForPlace(leg.origin,barPlaceLabel(leg.origin,model),"DIRECT_PLACE"),stopForPlace(leg.destination,barPlaceLabel(leg.destination,model),"ROOT_PLACE")]:[]}},direction);
-    if(leg.route?.vehicleRef&&leg.route.vehicleRef.vehicleId!==vehicle.vehicleId)confirm({message:`Changer de véhicule conserve les lieux et les arrêts. Mobility réestimera le coût d’usage avec le véhicule choisi.${leg.route?.toll?.kind==="MANUAL"?` Le péage de ${leg.route.toll.unitAmount} € sera conservé comme estimation déclarée ; aucune classe tarifaire n’est attestée ici.`:""}`,acceptLabel:"Changer de véhicule",accept:apply});else apply();
+      }):actual.origin&&actual.destination?[stopForPlace(actual.origin,barPlaceLabel(actual.origin,model),"DIRECT_PLACE"),stopForPlace(actual.destination,barPlaceLabel(actual.destination,model),"ROOT_PLACE")]:[]}};
+      if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).map(item=>item.selectionId===actual.selectionId?value:item)}}},slot)&&(!value.origin||!value.destination)){setEndpoint(!value.origin?"origin":"destination");setManual("");setAllEndpoints(false);move("endpoint");}
+    };
+    if(actual.route?.vehicleRef&&actual.route.vehicleRef.vehicleId!==vehicle.vehicleId)confirm({message:`Changer de véhicule conserve les lieux et les arrêts. Mobility réestimera le coût d’usage avec le véhicule choisi.${actual.route?.toll?.kind==="MANUAL"?` Le péage de ${actual.route.toll.unitAmount} € sera conservé comme estimation déclarée ; aucune classe tarifaire n’est attestée ici.`:""}`,acceptLabel:"Changer de véhicule",accept:apply});else apply();
+  };
+  const routeAction=(slot:"outbound"|"return",action:BarRouteAction)=>{
+    if(!guard(()=>resumeRouteAction(slot,action)))return;
+    const actual=barLeg(context,slot);if(!actual)return;setDirection(slot);
+    if(action==="mode"){setRouteModes(true);move(slot);return;}
+    if(action==="advanced"){startLegacy("menu");return;}
+    if(action==="time"){setRouteTime(actual.plannedTime??"");move("route-time");return;}
+    if(action==="vehicle"){if(!actual.route?.vehicleRef&&model.mobilityOptions?.vehicleIsUnique)chooseVehicle(actual,slot);else move("vehicle");return;}
+    const admit=(items:readonly ComponentSelectionV1[])=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:items}}},"summary");
+    if(action==="remove"){confirm({message:"Retirer uniquement ce trajet ? Les consommations et l’autre sens restent conservés. Undo permet de le retrouver.",acceptLabel:"Retirer le trajet",accept:()=>admit(barItems(context,slot).filter(item=>item.selectionId!==actual.selectionId))});return;}
+    try{const reversed=barReverseLeg(actual),apply=()=>admit(barItems(context,slot).map(item=>item.selectionId===actual.selectionId?reversed:item));
+      if(barEndpointCosts(actual,"destination").length)confirm({message:"Inverser les points de ce seul trajet remet ses prix à préciser. L’autre sens et ses coûts restent conservés.",acceptLabel:"Inverser ces points",accept:apply});else apply();
+    }catch(failure){setError((failure as Error).message);}
+  };
+  const saveRouteTime=()=>{
+    if(!leg)return false;
+    try{
+      assertBarRouteEditable(leg);
+      if(routeTime&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(routeTime))throw Error("Saisissez une heure complète au format HH:MM.");
+      if(routeTime&&!(direction==="return"?context.fields.endDate??context.fields.plannedDate:context.fields.plannedDate))throw Error("Choisissez d’abord une date pour ce sens. Aucune heure n’a été inventée.");
+      if(leg.pricing?.fundingAllocations.length||barEndpointCosts(leg,"destination").length||(leg.route?.stops.length??0)>2)throw Error("Ce trajet possède des prix, un financement ou des étapes à vérifier. Modifiez son horaire dans les options avancées ; toutes ses décisions sont conservées.");
+      return patchLeg({...leg,plannedTime:routeTime||null},direction);
+    }catch(failure){setError((failure as Error).message);return false;}
   };
   const chooseMode=(optionKey:string,fromHome=false)=>{
+    if(!guard(()=>resumeMode(optionKey,fromHome)))return;
     if(fromHome&&(leg||homes.length!==1||selectedPlace?.kind!=="KNOWN"||!model.mobilityOptions?.vehicleIsUnique||!model.mobilityOptions.vehicle?.vehicleId))return;
     if(leg&&leg.optionKey!==optionKey){try{assertBarRouteEditable(leg);
       if((leg.route?.stops.length??0)>2||leg.pricing?.fundingAllocations.length)throw Error("Ce trajet possède des arrêts intermédiaires ou un financement. Utilisez les options détaillées ; ils sont conservés.");
     }catch(failure){setError((failure as Error).message);return;}}
-    const value:BarLeg=leg?.optionKey===optionKey?leg:{kind:"MOBILITY_INTENT",selectionId:leg?.selectionId??crypto.randomUUID(),optionKey,provenance:"EXPLICIT_USER_DECISION",returnRequired:false,
-      ...(leg?.venueEndpoints?{venueEndpoints:leg.venueEndpoints}:!leg&&selectedVenue?{venueEndpoints:{[direction==="outbound"?"destination":"origin"]:venueBinding(selectedVenue)}}:{}),
+    let inverseOperation:ComposerOperation|null=null;
+    if(!leg&&direction==="return"&&barLeg(context,"outbound"))try{assertBarRouteEditable(barLeg(context,"outbound")!);inverseOperation=barSameModeReturn(context,crypto.randomUUID());}catch(failure){setError((failure as Error).message);return;}
+    const inverse=inverseOperation?.kind==="EDIT_NIGHT_OUT"?inverseOperation.edit.slots?.return?.[0] as BarLeg|undefined:undefined;
+    const seed=leg??inverse;
+    const value:BarLeg=seed?.optionKey===optionKey?seed:{kind:"MOBILITY_INTENT",selectionId:seed?.selectionId??crypto.randomUUID(),optionKey,provenance:"EXPLICIT_USER_DECISION",returnRequired:false,
+      ...(seed?.venueEndpoints?{venueEndpoints:seed.venueEndpoints}:!seed&&selectedVenue?{venueEndpoints:{[direction==="outbound"?"destination":"origin"]:venueBinding(selectedVenue)}}:{}),
       ...(leg?.plannedTime!==undefined?{plannedTime:leg.plannedTime}:{}),...(leg?.returnTime!==undefined?{returnTime:leg.returnTime}:{}),
-      origin:leg?(leg.origin??null):fromHome?{kind:"KNOWN",placeId:homes[0]!.placeId}:(direction==="return"?selectedPlace:null)??null,destination:leg?(leg.destination??null):(direction==="outbound"?selectedPlace:null)??null,
+      origin:seed?(seed.origin??null):fromHome?{kind:"KNOWN",placeId:homes[0]!.placeId}:(direction==="return"?selectedPlace:null)??null,destination:seed?(seed.destination??null):(direction==="outbound"?selectedPlace:null)??null,
       journey:{relation:"OWNS_JOURNEY",certainty:"CERTAIN",targetIntentId:null,externalExpenseId:null,externalCostLineIds:[],choice:null,stopIndex:null,accessLegIndex:null},
       pricing:{fare:{kind:"UNKNOWN"},parking:{kind:"UNKNOWN"},fundingAllocations:[],preference:"FASTEST"},...(optionKey==="car"?{route:{version:"composer-mobility-route@v1" as const,vehicleRef:fromHome?{vehicleId:model.mobilityOptions!.vehicle!.vehicleId!,labelAtSelection:model.mobilityOptions!.vehicle!.label,provenance:"EXPLICIT_USER_DECISION" as const}:null,stops:fromHome?[stopForPlace({kind:"KNOWN",placeId:homes[0]!.placeId},homes[0]!.name,"DIRECT_PLACE"),stopForPlace(selectedPlace!,barPlaceLabel(selectedPlace,model),"ROOT_PLACE")]:[]}}:{})};
     const apply=()=>{if(!patchLeg(value,direction))return;setRouteModes(false);if(!value.origin||!value.destination){setEndpoint(!value.origin?"origin":"destination");setAllEndpoints(false);setManual("");move("endpoint");}};
@@ -373,14 +413,15 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
         &&model.dropCapabilities.some(drop=>drop.sourceAssetKey===asset.assetKey&&drop.target.contextOccurrenceId===context.contextOccurrenceId&&drop.target.slotKey===actualDirection&&drop.resolution!=="BLOCKED"))
         .map(asset=>({...choice(asset.assetKey,asset.label,()=>chooseMode(asset.optionKey!),asset.iconKey,undefined,({car:"🚗",taxi:"🚕",train:"🚆",bus:"🚌",free:"🚶",other:"↗",unknown:"?"} as Record<string,string>)[asset.optionKey??""]),selected:leg?.optionKey===asset.optionKey}))]};
   }
-  if(page==="known-routes")question={title:"Trajets proposés",nature:"KNOWN_ROUTES",choices:[
-      ...(direction==="outbound"&&!leg&&homes.length===1&&selectedPlace?.kind==="KNOWN"&&barPlaces(model.mobilityOptions?.places??[]).some(p=>p.placeId===selectedPlace.placeId)&&model.mobilityOptions?.vehicleIsUnique&&model.mobilityOptions.vehicle?.vehicleId&&model.dropCapabilities.some(drop=>drop.sourceAssetKey==="option:night-out:outbound:car"&&drop.target.contextOccurrenceId===context.contextOccurrenceId&&drop.resolution!=="BLOCKED")?[choice("home-car",`Maison → ${barPlaceLabel(selectedPlace,model)} · ${model.mobilityOptions.vehicle.label}`,()=>chooseMode("car",true),"car","Voiture · aller uniquement · coût à estimer")]:[]),
-      ...(direction==="return"&&barLeg(context,"outbound")&&!barItems(context,"return").length?[choice("same","Reprendre le trajet inverse",()=>{try{decide(barSameModeReturn(context,crypto.randomUUID()),"return");}catch(failure){setError((failure as Error).message);}})]:[]),
-    ]};
-  if((page==="outbound"||page==="return")&&leg&&!routeModes)question={title:"Véhicule de ce trajet",choices:leg.origin&&leg.destination&&leg.optionKey==="car"&&!leg.route?.vehicleRef&&model.mobilityOptions?.vehicle?.vehicleId?[choice("vehicle",model.mobilityOptions.vehicle.presentation?.displayName??model.mobilityOptions.vehicle.label,chooseVehicle,"car")]:[]};
-  if(page==="endpoint")question={title:`${direction==="outbound"?"Aller":"Retour"} · ${endpoint==="origin"?"d’où partir ?":"où arriver ?"}`,identity:`${context.contextOccurrenceId}:${direction}:${endpoint}`,search:{value:query,change:setQuery,label:"Chercher un point du trajet"},choices:[
+  if(page==="return-choice")question={title:"Préparer le retour",nature:"DECISION",choices:[
+    choice("inverse","Reprendre l’inverse",()=>{try{if(!guard(()=>resumeOpen("return")))return;assertBarRouteEditable(barLeg(context,"outbound")!);if(decide(barSameModeReturn(context,crypto.randomUUID()),"summary"))setRouteModes(false);}catch(failure){setError((failure as Error).message);}},"car","Nouveau retour · ses prix restent à préciser"),
+    choice("other-mode","Choisir un autre transport",()=>{setRouteModes(true);move("return");},"train","Points inverses · tarif indépendant")
+  ]};
+  if((page==="outbound"||page==="return")&&leg&&!routeModes)question={title:"Trajet retenu",choices:[]};
+  if(page==="endpoint"||page==="endpoint-free")question={title:`${direction==="outbound"?"Aller":"Retour"} · ${endpoint==="origin"?"d’où partir ?":"où arriver ?"}`,identity:`${context.contextOccurrenceId}:${direction}:${endpoint}`,search:{value:query,change:setQuery,label:"Rechercher une adresse ou un lieu"},choices:[
     ...(selectedPlace&&(!query.trim()||barSearchText(barPlaceLabel(selectedPlace,model)).includes(barSearchText(query)))&&((direction==="outbound"&&endpoint==="destination")||(direction==="return"&&endpoint==="origin"))?[{...choice("bar-text",barPlaceLabel(selectedPlace,model),()=>chooseEndpoint(selectedPlace,false,!!selectedVenue),"activity",selectedVenue?.google?"Bar Google retenu · adresse relue pour le trajet":selectedVenue?"Bar retenu · lier ce point à la sortie":"Repère libre · distance non attestée"),showHint:true}]:[]),
-    ...barEndpointSuggestions(model.mobilityOptions?.places??[],model.householdPersons,direction,endpoint,leg?.[endpoint==="origin"?"destination":"origin"],selectedPlace,query,allEndpoints).map(({place,hint})=>({...choice(place.placeId,place.name,()=>chooseEndpoint({kind:"KNOWN",placeId:place.placeId}),"activity",hint),showHint:true})),
+    ...barEndpointSuggestions(model.mobilityOptions?.places??[],model.householdPersons,direction,endpoint,leg?.[endpoint==="origin"?"destination":"origin"],selectedPlace,query,allEndpoints).map(({place,hint})=>({...choice(place.placeId,place.name,()=>chooseEndpoint({kind:"KNOWN",placeId:place.placeId}),"activity",hint),visualKey:homes.some(home=>home.placeId===place.placeId)?"home":undefined,showHint:true})),
+    {...choice("free-endpoint",query.trim()?`Retenir « ${query.trim()} » comme nom libre`:"Nom libre",()=>{if(query.trim())chooseEndpoint({kind:"TEXT",label:query.trim(),provenance:"USER_DECLARED_PROSPECTIVE"});else {setManual("");go("endpoint-free");}},"activity","Non vérifié · aucune distance inventée"),showHint:true},
     ]};
   if(page==="date")question={title:"Date de la sortie",choices:[]};
   const candidates:ProspectivePersonRef[]=[...props.householdPersons.map(p=>({kind:"HOUSEHOLD_PERSON" as const,personId:p.personId})),...SOCIAL_CONTACTS_V1.map(p=>({kind:"CONTACT" as const,contactKey:p.key}))];
@@ -389,8 +430,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     question={title:"Avec qui ?",nature:"PEOPLE",search:{value:query,change:setQuery,label:"Chercher une personne"},choices:matchingPeople.map(p=>({...choice(prospectivePersonIdentity(p),barPersonLabel(p,model),()=>togglePerson(p),"family-visit"),selected:(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]).some(x=>prospectivePersonIdentity(x)===prospectivePersonIdentity(p))}))};
   }
   if(page==="manual-place"||page==="google")question={title:"Lieux",choices:[]};
-  if(page==="vehicle")question={title:"Véhicule de ce trajet",choices:leg?.optionKey==="car"&&model.mobilityOptions?.vehicle?.vehicleId?[choice("vehicle",`Utiliser ${model.mobilityOptions.vehicle.presentation?.displayName??model.mobilityOptions.vehicle.label}`,chooseVehicle,"car","Choix explicite · ne change pas l’autre sens")]:[]};
+  if(page==="vehicle")question={title:"Véhicule de ce trajet",choices:leg?.optionKey==="car"&&model.mobilityOptions?.vehicle?.vehicleId?[choice("vehicle",model.mobilityOptions.vehicle.presentation?.displayName??model.mobilityOptions.vehicle.label,()=>chooseVehicle(),"car","Retenir explicitement · ne change pas l’autre sens")]:[]};
   if(page==="fare")question={title:"Coût prévu du trajet · sans paiement",choices:[choice("unknown","Prix encore inconnu",()=>{if(leg)patchLeg({...leg,pricing:{fare:{kind:"UNKNOWN"},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);})]};
+  if(page==="route-time")question={title:"Heure facultative de ce sens",choices:[]};
   if(page==="row")question=advancedRow?activeQuestion??{title:"Détails du poste",choices:[]}:family?{title:family==="food"?"Restauration":"Boissons",nature:"OBJECTS",choices:slot.startsWith("before-")?beforeChoices():family==="drinks"?[...drinkChoices,sharedChoice]:drinkChoices,search:{value:queries[(slot.startsWith("before-")?"before":"drinks")+":"+(family??"families")]??"",change:value=>setQueries(previous=>({...previous,[(slot.startsWith("before-")?"before":"drinks")+":"+(family??"families")]:value})),label:"Chercher un objet"}}:{title:"Choisir une famille",nature:"FAMILIES",choices:familyChoices(slot.startsWith("before-")?"before":"bar")};
   if(page==="quick")question={title:"Coût prévu",choices:[]};
   // Bar/Before products have one navigation control in the dock. The RAW
@@ -447,8 +489,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       <button type="button" aria-pressed={activeMoment==='before'} onClick={()=>selectMoment('before')}>Before</button>
       <button type="button" aria-pressed={activeMoment==='bar'} onClick={()=>selectMoment('bar')}>Au bar</button>
     </nav>}
-    {(page==="summary"||["outbound","return","endpoint","fare","vehicle"].includes(page))&&<div className={styles.barLivingRoutes} aria-label="Déplacements">
-      {(["outbound","return"] as const).map(key=>(page==="summary"||key===direction)&&barLeg(context,key)?<BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} navigate={open} active={direction===key&&["outbound","return","endpoint","fare","vehicle"].includes(page)} open={()=>open(key)}/>:null)}
+    {(page==="summary"||["outbound","return","return-choice","endpoint","endpoint-free","fare","vehicle","route-time"].includes(page))&&<div className={styles.barLivingRoutes} aria-label="Déplacements">
+      {(["outbound","return"] as const).map(key=>barLeg(context,key)?<BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} pending={props.previewPending} failed={!!serverError} navigate={open} action={action=>routeAction(key,action)} active={direction===key&&["outbound","return","endpoint","fare","vehicle"].includes(page)} open={()=>open(key)}/>:null)}
       {barLeg(context,"outbound")&&!barLeg(context,"return")&&!barLeg(context,"outbound")!.returnRequired&&<button type="button" data-bar-add-route="return" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("return")}>+ Retour</button>}
       {barLeg(context,"return")&&!barLeg(context,"outbound")&&<button type="button" data-bar-add-route="outbound" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("outbound")}>+ Aller</button>}
     </div>
@@ -497,20 +539,13 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
           <ul>{barVenueAdaptations(context).map(change=><li key={change.slot+change.key}>{change.slot==="outbound"?"Aller":"Retour"} · {change.key==="origin"?"départ":"arrivée"} · {barEndpointCosts(change.leg,change.key).join(", ")||"estimation d’itinéraire à recalculer"}</li>)}</ul>
           <p>Adapter remet à préciser les prix du trajet concernés. Les autres points, coûts et identités sont conservés. Undo rétablit le bar et les trajets ensemble.</p><button type="button" disabled={busy} onClick={()=>commitVenue(false)}>Conserver les trajets</button><button type="button" disabled={busy} onClick={()=>commitVenue(true)}>Adapter les trajets liés</button></section>
         :page==="manual-place"?<><label>Nom ou adresse libre<input autoFocus maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={!manual.trim()||busy} onClick={()=>choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"})}>Retenir ce repère</button><small>Repère textuel uniquement · distance et itinéraire à préciser.</small></>
-        :page==="endpoint"?<><label>Autre point du trajet<input maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!manual.trim()} onClick={()=>chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true)}>Retenir ce point libre</button><small>Repère textuel uniquement · itinéraire et distance à préciser.</small></>
-        :page==="vehicle"?<section data-bar-vehicle><h4>Véhicule de {direction==="outbound"?"l’aller":"retour"}</h4><p>{leg?.route?.vehicleRef?.labelAtSelection??"Aucun véhicule retenu."}</p>{model.mobilityOptions?.vehicle?.presentation&&<details><summary>Caractéristiques du véhicule</summary><p data-bar-vehicle-technical>{model.mobilityOptions.vehicle.presentation.technicalLabel} · profil officiel {model.mobilityOptions.vehicle.presentation.modelRef}</p></details>}<p>Choisissez le véhicule enregistré dans le dock. Son coût d’usage est une estimation ; aucun achat de carburant n’est créé.</p>{!model.mobilityOptions?.vehicle?.vehicleId&&<p>Pas de véhicule estimable dans les références disponibles. Les lieux et les autres coûts restent conservés.</p>}</section>
+        :page==="route-time"?<><label>Heure de départ {direction==="outbound"?"de l’aller":"du retour"} (facultative)<input type="time" value={routeTime} onChange={event=>{setRouteTime(event.target.value);setDirty(true);}}/></label><button type="button" disabled={busy} onClick={saveRouteTime}>Retenir cet horaire</button><small>Une date est nécessaire pour retenir une heure. L’estimation reste possible sans heure.</small><button type="button" onClick={()=>startLegacy("menu")}>Horaire et options avancées</button></>
+        :page==="endpoint-free"?<><label>Nom libre du point de trajet<input maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!manual.trim()} onClick={()=>chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true)}>Retenir ce point libre</button><small>Repère textuel uniquement · itinéraire et distance à préciser.</small></>
+        :page==="vehicle"?<section data-bar-vehicle>{model.mobilityOptions?.vehicle?.presentation&&<details><summary>Caractéristiques du véhicule</summary><p data-bar-vehicle-technical>{model.mobilityOptions.vehicle.presentation.technicalLabel} · profil officiel {model.mobilityOptions.vehicle.presentation.modelRef}</p></details>}{!model.mobilityOptions?.vehicle?.vehicleId&&<p>Pas de véhicule estimable dans les références disponibles. Les lieux et les autres coûts restent conservés. <button type="button" onClick={()=>startLegacy("menu")}>Options du véhicule</button></p>}</section>
         :page==="fare"&&leg?<><label>Coût prévu du billet ou de la course (€)<input autoFocus inputMode="decimal" value={fare} placeholder="Encore inconnu" onChange={event=>{setFare(event.target.value);setDirty(true);}}/></label>
           {leg.pricing?.fare.kind==="QUOTE"&&<p>Le devis reste conservé tant qu’un prix de remplacement n’est pas validé.</p>}
           <button type="button" disabled={busy||!fare.trim()} onClick={saveFare}>Retenir le coût du trajet</button>
           <p>Prix du billet ou de la course, hors carburant estimé, péage et stationnement. Le financement existant reste à vérifier.</p></>
-        :page==="outbound"||page==="return"||page==="known-routes"?<>
-          {direction==="return"&&barLeg(context,"outbound")&&!barItems(context,"return").length&&<button type="button" onClick={()=>chooseMode(barLeg(context,"outbound")!.optionKey)}>Même mode qu’à l’aller</button>}
-          <button type="button" onClick={()=>go(page==="known-routes"?direction:"known-routes")}>{page==="known-routes"?"Choisir un transport":"Trajets proposés"}</button>
-          {leg&&<div className={styles.barLivingMetadata}>{(["origin","destination"] as const).map(key=><button type="button" key={key} onClick={()=>targetEndpoint(key)}>{key==="origin"?"Départ":"Arrivée"} · {barPlaceLabel(leg[key],model)}</button>)}
-            {leg.optionKey==="car"&&model.mobilityOptions?.vehicle?.vehicleId&&<button type="button" onClick={chooseVehicle}>Utiliser {model.mobilityOptions.vehicle.label}</button>}
-            <details><summary aria-label="Actions du trajet">⋯</summary><button type="button" onClick={()=>{setRouteModes(true);move(direction);}}>Changer de transport</button><button type="button" onClick={()=>{try{const reversed=barReverseLeg(leg),apply=()=>patchLeg(reversed,direction);if(barEndpointCosts(leg,"destination").length)confirm({message:"Inverser les points de ce seul trajet remet ses prix à préciser. L’autre sens et ses coûts restent conservés.",acceptLabel:"Inverser ces points",accept:apply});else apply();}catch(failure){setError((failure as Error).message);}}}>Inverser les points</button><button type="button" onClick={()=>confirm({message:"Retirer uniquement ce trajet ? Les consommations et l’autre sens restent conservés.",acceptLabel:"Retirer le trajet",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[direction]:barItems(context,direction).filter(item=>item.selectionId!==leg.selectionId)}}})})}>Retirer ce trajet</button>
-            {leg.optionKey!=="car"&&<button type="button" onClick={targetFare}>Préciser le prix du trajet</button>}
-            <button type="button" onClick={()=>startLegacy("menu")}>Financement ou relation détaillée</button></details></div>}</>
         :null}
       {pendingEndpoint&&<section data-bar-price-arbitration aria-label="Prix affectés de ce trajet">
         <p>Ce point change pour {direction==="outbound"?"l’aller":"le retour"}. À revoir : {barEndpointCosts(pendingEndpoint.leg,pendingEndpoint.key).join(", ")}. Le trajet et ses prix sont encore inchangés.</p>

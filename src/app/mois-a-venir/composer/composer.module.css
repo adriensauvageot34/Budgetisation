@@ -1379,6 +1379,13 @@
 .barRouteEvidence[open] { flex-basis:100%; margin-left:0; }
 .barRouteEvidence>small { display:block; margin:4px 0; }
 .barRouteCost { white-space:nowrap; }
+.barLivingEditor [data-bar-route-compact=true] { gap:4px 6px; }
+.barLivingEditor [data-bar-route-compact=true] .barRouteStops { flex:1 1 230px; }
+.barLivingEditor [data-bar-route-compact=true] .barRouteStops>[data-bar-route-reverse] { flex:0 0 30px; display:flex; align-items:center; justify-content:center; min-height:30px; border:1px solid #e8dcc8; border-radius:50%; }
+.barLivingEditor [data-bar-route-compact=true] [data-proposed=true] { border:1px dashed #b48c45; border-radius:14px; background:#fff4d8; }
+.barLivingEditor [data-bar-route-compact=true] .barRouteEvidence>summary { font-size:10px; }
+.barLivingEditor [data-bar-route-compact=true] .barRouteEvidence>small { font-size:10px; }
+.barLivingEditor [data-bar-route-compact=true]>button:focus-visible,.barLivingEditor [data-bar-route-compact=true] .barRouteStops>button:focus-visible { outline:2px solid #9259b8; outline-offset:2px; }
 .barLivingCard .barRouteCost small { font-size:10px; }
 .barPlaceResults { display:flex; flex-direction:column; gap:5px; }
 .barPlaceResults>section { display:grid; gap:4px; min-width:0; }

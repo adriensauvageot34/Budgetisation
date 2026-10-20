@@ -87,7 +87,8 @@ await test('STRUCTURED_VEHICLE_PRESENTATION_ONLY_OFFICIAL_DECLARATION',()=>{
  const React=require('react'),{renderToStaticMarkup}=require('react-dom/server'),{BarRouteLine}=require('@/app/mois-a-venir/composer/bar-living-details');
  const vehicle={...world.mobilityFacts.vehicle,label:CANONICAL_PEUGEOT_207.fullLabel,presentation};
  const markup=renderToStaticMarkup(React.createElement(BarRouteLine,{slot:'outbound',contextId:uuid(98010),leg:{...leg(),route:{stops:[],vehicleRef:{vehicleId:vehicle.vehicleId,labelAtSelection:vehicle.label}}},model:{board:{draft:{}},mobilityOptions:{vehicle,places:world.mobilityFacts.places}},open:()=>{}}));
- const capsule=markup.match(/<button[^>]*data-bar-vehicle-capsule[^>]*>(.*?)<\/button>/u)?.[1].replace(/<[^>]+>/g,'');assert.equal(capsule,'Peugeot 207');assert.ok(markup.includes(CANONICAL_PEUGEOT_207.fullLabel),'Technical label remains in the accessible details/title');
+ const capsule=markup.match(/<button[^>]*data-bar-vehicle-capsule[^>]*>(.*?)<\/button>/u)?.[1].replace(/<[^>]+>/g,'');assert.equal(capsule,'Peugeot 207');assert.ok(!markup.includes(CANONICAL_PEUGEOT_207.fullLabel),'Compact capsule does not repeat technical characteristics');
+ const editor=fs.readFileSync('src/app/mois-a-venir/composer/bar-living-editor.tsx','utf8');assert.ok(editor.includes('data-bar-vehicle-technical')&&editor.includes('vehicle.presentation.technicalLabel'),'Technical identity remains available on demand in vehicle details');
 });
 fs.mkdirSync('outputs/bar-350',{recursive:true});fs.writeFileSync('outputs/bar-350/residual16-google-route.json',JSON.stringify({proof:'LOCAL_SHARED_OWNER_MOCK_NOT_REAL_PROVIDER_NOT_AUTH',checks},null,2));
 process.exitCode=checks.some(c=>c.status==='FAIL')?1:0;
