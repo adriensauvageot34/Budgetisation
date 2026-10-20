@@ -5,6 +5,7 @@ import { plannerDigest } from "./json";
 import { plannedAsset, PLANNED_ASSET_CATALOG_VERSION } from "../planned-assets";
 import {parseNightOutVenue,sameVenuePlace,parseVenueEndpoints} from "./night-out-venue";
 import {parseComponentEconomicScope} from "./component-economic-scope";
+import { transitionNightOutConsumption, type NightOutConsumptionCommand } from "./night-out-consumption";
 
 export type NightOutBeforeEdit = Readonly<{
   childContextOccurrenceId: string; selectionId: string;
@@ -16,6 +17,7 @@ export type NightOutEdit = Readonly<{
   /** Omitted sockets retain their entire prior structure, including child contexts. */
   slots?: Readonly<Partial<Record<"main" | "food" | "extras" | "outbound" | "return", readonly ComponentSelectionV1[]>>>;
   before?: NightOutBeforeEdit | null;
+  consumption?: NightOutConsumptionCommand;
   coverageReplacement?:Readonly<{version:"night-out-coverage-replacement@v1";selectionId:string;expectedComponentDigest:string}>;
 }>;
 
@@ -43,6 +45,12 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
   if (parent?.templateKey !== "night-out") throw new TypeError("COMPOSER_NIGHT_OUT_TARGET_INVALID");
   const protectedContext = (id: string) => state.preferences.anchors.includes(id) || state.preferences.flexibility[id] === "PRESERVE";
   if (protectedContext(parent.contextOccurrenceId)) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+  if (edit.consumption) {
+    if (Object.keys(edit.fields).length || edit.slots || edit.before !== undefined || edit.coverageReplacement)
+      throw new TypeError("NIGHT_OUT_CONSUMPTION_COMMAND_INVALID");
+    const next = transitionNightOutConsumption(parent, edit.consumption);
+    return parsePlanSemanticState({ ...state, contexts: state.contexts.map(c => c === parent ? next : c) });
+  }
   if(edit.coverageReplacement){
     const proof=edit.coverageReplacement;
     if(proof.version!=="night-out-coverage-replacement@v1"||edit.before!==undefined||Object.keys(edit.fields).length)throw new TypeError("NIGHT_OUT_COVERAGE_REPLACEMENT_INVALID");
@@ -62,7 +70,7 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
   for(const items of Object.values(edit.slots??{}))for(const item of items??[])if(item.kind==="MOBILITY_INTENT"&&item.venueEndpoints)parseVenueEndpoints(item.venueEndpoints,item);
   if (Object.keys(edit.fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "venueDecision", "timingNote"].includes(key)))
     throw new TypeError("COMPOSER_NIGHT_OUT_FIELD_INVALID");
-  if (Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "venueDecision", "timingNote", "fieldSchemaVersion", "composerPresentation"].includes(key)))
+  if (Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "participantRefs", "placeRef", "venueDecision", "timingNote", "fieldSchemaVersion", "composerPresentation", "nightOutConsumption"].includes(key)))
     throw new TypeError("COMPOSER_NIGHT_OUT_FIELD_INVALID");
   if (!["context-fields@v3","context-fields@v6"].includes(String(fields.fieldSchemaVersion)) && Object.keys(fields).some(key => !["label", "plannedDate", "endDate", "fieldSchemaVersion"].includes(key)))
     fields.fieldSchemaVersion = "context-fields@v2";

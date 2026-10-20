@@ -14,6 +14,7 @@ import { parseJourneyDeclaration, parseMobilityPricing, parseProspectiveRoute, m
 import { validateComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 import {parseNightOutVenue,parseVenueEndpoints,sameVenuePlace} from "@/domain/phase2/planner/night-out-venue";
 import {parseComponentEconomicScope} from "@/domain/phase2/planner/component-economic-scope";
+import { nightOutConsumption } from "@/domain/phase2/planner/night-out-consumption";
 
 export function contextDate(raw: unknown, targetMonth: string): string | null {
   if (raw == null) return null;
@@ -154,7 +155,14 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
 }
 export function readContextSelections(context: PlannedContextState, targetMonth: string): ReadonlyMap<string, readonly ComponentSelectionV1[]> {
   const template = resolveContextTemplate(context.templateKey);
-  plannerKeys(plannerRecord(context.fields), [...template.fields.map(f => f.fieldKey), "composerPresentation"], template.fields.filter(f => f.required).map(f => f.fieldKey));
+  plannerKeys(plannerRecord(context.fields), [...template.fields.map(f => f.fieldKey), "composerPresentation", ...(context.templateKey === "night-out" ? ["nightOutConsumption"] : [])], template.fields.filter(f => f.required).map(f => f.fieldKey));
+  const consumption = nightOutConsumption(context);
+  if (consumption) {
+    const extras = template.componentSlots.find(s => s.slotKey === "extras")!;
+    // The inactive representation must pass the very same capability/cost/funding
+    // parser as an active component, but is never returned as a financial fact.
+    for (const item of consumption.inactive) selection(item, extras);
+  }
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
     if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
       || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
