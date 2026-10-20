@@ -35,6 +35,7 @@ let overrides={};
 const controls=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
 const button=(label)=>{const all=controls(n=>n.type==='button'&&(text(n).trim()===label.trim()||text(n).trim()==='+ '+label.trim()||label==='Date'&&n.props['aria-label']==='Modifier la date'||label==='Lieu'&&n.props['aria-label']==='Modifier le lieu'));assert.ok(all.length,'Missing button '+label);return all[0];};
 const click=async label=>{
+  if(label==='+ Before')label='Before';
   // Cost is now the card header value, outside this editor-only fixture. Exercise
   // its existing targetRequest boundary instead of reintroducing a fake CTA.
   if(label==='Montant direct'&&kind===BarLivingEditor){overrides={...overrides,initialTarget:'quick',targetRequest:(overrides.targetRequest??0)+1};await sync();return;}
@@ -53,7 +54,7 @@ const props=()=>({context:model.semanticState.contexts.find(c=>c.contextOccurren
 const admit=operation=>{if(rejectNext){rejectNext=false;return false;}const semantic=stageLocalDecision(model,model.semanticState,operation);if(!semantic)return false;pendingOps.push(operation);model=visualDraftModel(model,semantic);root?.update(render());return true;};
 const render=()=>React.createElement(WorkshopConfirmationProvider,{requestRef},React.createElement(WorkshopChoicesProvider,null,React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(kind,props()))));
 const sync=async()=>{await act(async()=>root.update(render()));};
-const init=async(template,preset,component)=>{if(root)await act(async()=>root.unmount());overrides={};registry=new InlineEditRegistry();requestRef={current:()=>{}};registry.requestConfirmation=(message,accept,save)=>requestRef.current({message,accept,save,acceptLabel:'Abandonner cette saisie'});pendingOps=[];steps=0;id=crypto.randomUUID();kind=component;const r=await handleComposerRequest({repository,readWorld:async()=>fixture(),householdPersons:[]},householdId,{sequence:1,targetMonth:'2026-11',draft:state(),kind:'DROP',assetKey:'template:'+template,presetKey:preset,target:{kind:'BOARD_ZONE'},values:{},identity:id,selectionId:crypto.randomUUID()});assert.equal(r.ok,true,JSON.stringify(r));model=r.model;await act(async()=>{root=create(render(),{createNodeMock:element=>element.type==='dialog'?{open:false,showModal(){this.open=true;},close(){this.open=false;},querySelector(){return{focus(){}};},contains(){return false;}}:null});});};
+const init=async(template,preset,component,pristine=false)=>{if(root)await act(async()=>root.unmount());overrides={};registry=new InlineEditRegistry();requestRef={current:()=>{}};registry.requestConfirmation=(message,accept,save)=>requestRef.current({message,accept,save,acceptLabel:'Abandonner cette saisie'});pendingOps=[];steps=0;id=crypto.randomUUID();kind=component;const r=await handleComposerRequest({repository,readWorld:async()=>fixture(),householdPersons:[]},householdId,{sequence:1,targetMonth:'2026-11',draft:state(),kind:'DROP',assetKey:'template:'+template,presetKey:preset,target:{kind:'BOARD_ZONE'},values:{},identity:id,selectionId:crypto.randomUUID()});assert.equal(r.ok,true,JSON.stringify(r));model=r.model;await act(async()=>{root=create(render(),{createNodeMock:element=>element.type==='dialog'?{open:false,showModal(){this.open=true;},close(){this.open=false;},querySelector(){return{focus(){}};},contains(){return false;}}:null});});if(kind===BarLivingEditor&&!pristine){await click('Détailler');await click('Au bar');}};
 const current=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
 const save=async()=>{const dirty=controls(n=>n.props['data-bar-living-editor']!==undefined)[0]?.props['data-inline-dirty'];if(dirty)await click('Enregistrer');else await click('Date');await sync();};
 const shortInput=label=>input(label);
@@ -68,6 +69,25 @@ const {barBefore,barBeforeRemove}=require('@/app/mois-a-venir/composer/bar-befor
 const dock=()=>controls(n=>n.props['data-bar-dock']===true)[0];
 const chooseFamily=async(label='Boissons')=>click(label);
 try {
+await check('R72_PRISTINE_INLINE_ENTER_BLUR_ESCAPE_RAW_AND_REJECTION',async()=>{
+ await init('night-out','bar-apero',BarLivingEditor,true);
+ assert.equal(controls(n=>n.props['data-bar-dock']===true).length,0);assert.equal(controls(n=>n.props['data-bar-section']).length,0);
+ assert.equal(controls(n=>n.props['aria-label']==='Moments de consommation').length,0);
+ const trigger=()=>controls(n=>n.props['data-bar-inline-trigger']!==undefined)[0];
+ const amount=()=>controls(n=>n.props['data-bar-inline-amount']!==undefined)[0];
+ const key=async value=>act(async()=>amount().props.onKeyDown({key:value,preventDefault(){},stopPropagation(){}}));
+ await act(async()=>trigger().props.onClick());await act(async()=>amount().props.onChange({target:{value:'12,'}}));
+ const before=semanticStateDigest(model.semanticState);await act(async()=>amount().props.onBlur());assert.equal(amount().props.value,'12,');assert.equal(semanticStateDigest(model.semanticState),before);assert.equal(registry.count(),1);
+ await key('Escape');assert.equal(semanticStateDigest(model.semanticState),before);assert.equal(registry.count(),0);
+ await act(async()=>trigger().props.onClick());await act(async()=>amount().props.onChange({target:{value:'15'}}));await key('Enter');
+ assert.equal(current().fields.nightOutConsumption.mode,'DIRECT');assert.equal(current().slotSelections.extras.items.length,1);assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'15');
+ const written=pendingOps.length;await act(async()=>trigger().props.onClick());await act(async()=>amount().props.onChange({target:{value:'0'}}));await act(async()=>amount().props.onBlur());assert.equal(pendingOps.length,written+1);assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'0');
+ await act(async()=>trigger().props.onClick());await act(async()=>amount().props.onChange({target:{value:'20'}}));rejectNext=true;await key('Enter');assert.equal(amount().props.value,'20');assert.equal(current().slotSelections.extras.items[0].cost.unitAmount,'0');await key('Escape');
+ await click('Détailler');assert.equal(current().fields.nightOutConsumption.mode,'DETAILED');assert.equal(controls(n=>n.props['data-bar-section']).length,0);
+ await click('Au bar');await chooseFamily();await click('Bière');await click('Before');await chooseFamily('Restauration');await click('Chips');
+ assert.equal(controls(n=>n.props['data-bar-section']==='extras').length,1);assert.equal(controls(n=>n.props['data-bar-section']==='before').length,1);
+ assert.ok(controls(n=>n.props['data-bar-moment-slot']!==undefined).length>=2);
+});
 await check('R5_FAMILIES_OBJECTS_NO_NAVIGATION_MIX',async()=>{
  await init('night-out','bar-apero',BarLivingEditor);
  assert.equal(dock().props['data-dock-nature'],'FAMILIES');
@@ -150,7 +170,7 @@ await check('R7_REOPEN_FAMILY_MEMORY_PRESERVES_MOMENT_OWNER',async()=>{
  const restored=barBefore(model.semanticState,current());
  assert.equal(restored.child.contextOccurrenceId,beforeId);assert.equal(restored.bottle.selectionId,first);
  assert.equal(restored.extras.length,1);assert.deepEqual(current().slotSelections.extras,bar);
- await click('← Ma sortie');await click('Au bar · 1 lignes');
+ await click('← Ma sortie');await click('Au bar');
  assert.equal(dock().props['aria-label'],'Boissons');assert.equal(dock().props['data-dock-nature'],'OBJECTS');
 });
 

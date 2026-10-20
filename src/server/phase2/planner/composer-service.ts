@@ -32,6 +32,7 @@ import { readPlannerDraft } from "./draft-reader";
 import { parseMobilityPricing } from "./mobility-selections";
 import { patchContextEditorFields, setContextSlotSelections } from "./context-state";
 import { composerAssetIcon, composerPresentation } from "./composer-presentation";
+import {plannedAsset,PLANNED_ASSET_CATALOG_VERSION} from '@/domain/phase2/planned-assets';
 
 const field = (key: string, label: string, kind: ComposerField["kind"] = "TEXT", required = false): ComposerField => ({ key, label, kind, required });
 const choice = (key: string, label: string, choices: readonly (readonly [string, string])[]): ComposerField => ({ ...field(key, label, "CHOICE"), choices: choices.map(([value, label]) => ({ value, label })) });
@@ -130,6 +131,15 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
   const card = model.board.contexts.find(c => c.contextOccurrenceId === target.contextOccurrenceId);
   const slot = resolveContextTemplate(card!.templateKey).componentSlots.find(s => s.slotKey === target.slotKey)!;
   const option = slot.options.find(o => o.optionKey === asset.optionKey && o.kind === asset.optionKind)!;
+  // Product choices reuse the normal published DROP capability. The catalogue
+  // supplies identity only: no default price or historical decision is adopted.
+  const product=values.productAssetKey===undefined?undefined:plannedAsset(values.productAssetKey);
+  const parent=card?.parentContextOccurrenceId&&model.board.contexts.find(c=>c.contextOccurrenceId===card.parentContextOccurrenceId);
+  const isBefore=card?.templateKey==='activity'&&parent&&parent.templateKey==='night-out'
+    &&parent.sockets.find(s=>s.slotKey==='before')?.currentItems.some(i=>i.kind==='CHILD_CONTEXT'&&i.childContextOccurrenceId===card.contextOccurrenceId);
+  if(values.productAssetKey!==undefined&&(!product||!['bar','club','house_party'].includes(product.module)
+    ||option.kind!=='COMPONENT'||option.optionKey!=='extra'||target.slotKey!=='extras'||!(card?.templateKey==='night-out'||isBefore)))
+    throw new TypeError('COMPOSER_PRODUCT_DROP_NOT_ADMITTED');
   const current = card!.sockets.find(s => s.slotKey === target.slotKey)!.currentItems;
   const previous = (request.sourceSocket ? model.board.contexts.find(c => c.contextOccurrenceId === request.sourceSocket!.contextOccurrenceId)
     ?.sockets.find(s => s.slotKey === request.sourceSocket!.slotKey)?.currentItems.find(i => i.selectionId === request.sourceSocket!.selectionId) : undefined)
@@ -187,6 +197,7 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
     : values.parkingAmount?.trim() ? { kind: "MANUAL" as const, unitAmount: decisionAmount(values.parkingAmount) }
       : values.parkingMode === undefined ? priorMobility?.pricing?.parking ?? { kind: "UNKNOWN" as const } : { kind: "UNKNOWN" as const } : undefined;
   const selection: ComponentSelectionV1 = option.kind === "COMPONENT" ? { ...preservedComponent, ...common, kind: "COMPONENT", label: values.label?.trim() || priorComponent?.label || option.label,
+    ...(product?{productAssetRef:{catalogVersion:PLANNED_ASSET_CATALOG_VERSION,assetKey:product.assetKey,labelAtSelection:product.label,provenance:'EXPLICIT_USER_DECISION' as const}}:{}),
     ...declaredQuantity, cost, fundingAllocations: funding, ...(values.binding ? { binding: { mode: values.binding as "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" } } : {}),
     ...(unitBasis ? { unitBasis } : {}), ...(slot.acceptsNeedOccurrence && values.needOccurrenceId ? { needOccurrenceId: values.needOccurrenceId }
       : values.needOccurrenceId === undefined && priorComponent?.needOccurrenceId ? { needOccurrenceId: priorComponent.needOccurrenceId } : {}) }

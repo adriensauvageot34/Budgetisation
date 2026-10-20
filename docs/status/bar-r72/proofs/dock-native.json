@@ -1,0 +1,259 @@
+{
+  "afterDrop": {
+    "barIds": [],
+    "beforeIds": [
+      "dd6a7602-fd7b-4dba-993c-9b3393c08f91",
+      "8cbbe399-12f5-465e-8e08-486e7126b52c"
+    ]
+  },
+  "contexts": [
+    {
+      "contextOccurrenceId": "2b5ae056-1563-49aa-a1da-42e98ecbabec",
+      "presetKey": null,
+      "templateKey": "activity"
+    },
+    {
+      "contextOccurrenceId": "8effe019-c35b-4a70-85a5-57d03e552151",
+      "presetKey": "bar-apero",
+      "templateKey": "night-out"
+    }
+  ],
+  "events": [
+    {
+      "category": "DOCK",
+      "handler": 41951.29999999702,
+      "name": "dragstart",
+      "start": 41900.70000000298,
+      "x": 995,
+      "y": 800
+    },
+    {
+      "category": "DOCK",
+      "handler": 42056.10000000149,
+      "name": "dragenter",
+      "start": 42055.10000000149,
+      "x": 938,
+      "y": 757
+    },
+    {
+      "category": "DOCK",
+      "handler": 42057,
+      "name": "dragover",
+      "start": 42056.79999999702,
+      "x": 938,
+      "y": 757
+    },
+    {
+      "category": "DOCK",
+      "handler": 42105.20000000298,
+      "name": "dragenter",
+      "start": 42103.79999999702,
+      "x": 882,
+      "y": 714
+    },
+    {
+      "category": "OTHER",
+      "handler": 42150.5,
+      "name": "dragenter",
+      "start": 42149.79999999702,
+      "x": 825,
+      "y": 671
+    },
+    {
+      "category": "OTHER",
+      "handler": 42199.79999999702,
+      "name": "dragenter",
+      "start": 42198.89999999851,
+      "x": 768,
+      "y": 628
+    },
+    {
+      "category": "OTHER",
+      "handler": 42237.89999999851,
+      "name": "dragover",
+      "start": 42237,
+      "x": 711,
+      "y": 584
+    },
+    {
+      "category": "BAR",
+      "handler": 42271.89999999851,
+      "name": "dragenter",
+      "start": 42271,
+      "x": 655,
+      "y": 541
+    },
+    {
+      "category": "BAR",
+      "handler": 42304.20000000298,
+      "name": "dragenter",
+      "start": 42303.39999999851,
+      "x": 598,
+      "y": 498
+    },
+    {
+      "category": "BAR",
+      "handler": 42335,
+      "name": "dragenter",
+      "start": 42334.39999999851,
+      "x": 541,
+      "y": 455
+    },
+    {
+      "category": "DOCK",
+      "handler": 42365.60000000149,
+      "name": "dragend",
+      "start": 42365.29999999702,
+      "x": 541,
+      "y": 455
+    },
+    {
+      "category": "DOCK",
+      "handler": 65170.79999999702,
+      "name": "dragstart",
+      "start": 65104.79999999702,
+      "x": 995,
+      "y": 800
+    },
+    {
+      "category": "DOCK",
+      "handler": 65542.70000000298,
+      "name": "dragenter",
+      "start": 65542.39999999851,
+      "x": 935,
+      "y": 754
+    },
+    {
+      "category": "DOCK",
+      "handler": 65543.20000000298,
+      "name": "dragover",
+      "start": 65543.10000000149,
+      "x": 935,
+      "y": 754
+    },
+    {
+      "category": "DOCK",
+      "handler": 65577.29999999702,
+      "name": "dragenter",
+      "start": 65576,
+      "x": 874,
+      "y": 709
+    },
+    {
+      "category": "OTHER",
+      "handler": 65613.60000000149,
+      "name": "dragenter",
+      "start": 65613.20000000298,
+      "x": 814,
+      "y": 663
+    },
+    {
+      "category": "OTHER",
+      "handler": 65647.5,
+      "name": "dragenter",
+      "start": 65646.89999999851,
+      "x": 754,
+      "y": 618
+    },
+    {
+      "category": "OTHER",
+      "handler": 65675.89999999851,
+      "name": "dragover",
+      "start": 65675.20000000298,
+      "x": 693,
+      "y": 572
+    },
+    {
+      "category": "BAR",
+      "handler": 65703.5,
+      "name": "dragenter",
+      "start": 65702.70000000298,
+      "x": 633,
+      "y": 526
+    },
+    {
+      "category": "BAR",
+      "handler": 65732.89999999851,
+      "name": "dragenter",
+      "start": 65732.20000000298,
+      "x": 572,
+      "y": 481
+    },
+    {
+      "category": "BAR",
+      "handler": 65761.70000000298,
+      "name": "dragover",
+      "start": 65761.29999999702,
+      "x": 512,
+      "y": 435
+    },
+    {
+      "category": "BAR",
+      "handler": 65804.5,
+      "name": "drop",
+      "start": 65804.29999999702,
+      "x": 512,
+      "y": 435
+    },
+    {
+      "category": "DOCK",
+      "handler": 65861,
+      "name": "dragend",
+      "start": 65858.10000000149,
+      "x": 512,
+      "y": 435
+    }
+  ],
+  "preview": "FRESH",
+  "productSha": "8fa8b9d711dd1f8465145f29473d431337621e4e",
+  "viewport": [
+    1440,
+    900
+  ],
+  "afterUndo": {
+    "barIds": [],
+    "beforeIds": [
+      "dd6a7602-fd7b-4dba-993c-9b3393c08f91"
+    ]
+  },
+  "afterRedo": {
+    "barIds": [],
+    "beforeIds": [
+      "dd6a7602-fd7b-4dba-993c-9b3393c08f91",
+      "8cbbe399-12f5-465e-8e08-486e7126b52c"
+    ]
+  },
+  "clickDock": {
+    "barIds": [],
+    "beforeIds": [
+      "dd6a7602-fd7b-4dba-993c-9b3393c08f91",
+      "8cbbe399-12f5-465e-8e08-486e7126b52c",
+      "d3d30434-5fee-4945-bb4a-9cbe24309d6c"
+    ],
+    "rail": [
+      {
+        "client": 541,
+        "label": "Objets Before",
+        "scroll": 556
+      }
+    ]
+  },
+  "final": {
+    "barIds": [],
+    "beforeIds": [
+      "dd6a7602-fd7b-4dba-993c-9b3393c08f91",
+      "8cbbe399-12f5-465e-8e08-486e7126b52c",
+      "d3d30434-5fee-4945-bb4a-9cbe24309d6c"
+    ],
+    "preview": "FRESH",
+    "rail": [
+      {
+        "client": 576,
+        "label": "Objets Before",
+        "scroll": 576
+      }
+    ]
+  },
+  "status": "EXECUTED_PASS_NATIVE_DOCK_TO_BEFORE",
+  "remoteFinancialWrites": 0
+}

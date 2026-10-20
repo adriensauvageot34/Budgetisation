@@ -1,0 +1,26 @@
+{
+  "productSha": "31a33150ef3df57acdece62be4955257eb433eca",
+  "environment": "AUTHENTICATED_VERCEL_PREVIEW_MEMORY_ONLY_COMPOSER_FIXTURE",
+  "viewportsMeasured": [[1440,900],[1152,720]],
+  "emptyCard": "EXECUTED_PASS",
+  "inlineEnterBlurEscapeRawGuard": "EXECUTED_PASS",
+  "twoBeerPrices8And9Grouped17": "EXECUTED_PASS",
+  "beforeSeparateChildSharedUnknown": "EXECUTED_PASS",
+  "direct16RestoredThenDetailsRestored": "EXECUTED_PASS_MEMORY_ONLY",
+  "railArrowAndKeyboardScroll": "EXECUTED_PASS",
+  "thirdBeerUnknown17PartialUndoRedo": "EXECUTED_PASS",
+  "nativeDnd": {
+    "status": "ATTEMPTED_NOT_CERTIFIED",
+    "attempts": 2,
+    "source": "published single Cocktail in parent extras",
+    "target": "existing Before child extras plus slot",
+    "observed": "No move; source remained in parent; no console error captured",
+    "cause": "NOT_DETERMINED_PRODUCT_OR_INPUT_TOOL",
+    "handlerTestsAreNativeProof": false
+  },
+  "authenticatedSupabaseDraftPersistence": "NOT_RUN",
+  "remoteFinancialWrites": 0,
+  "remoteApply": 0,
+  "production": "NOT_DEPLOYED",
+  "verdict": "DRAFT_BLOCKED_NATIVE_DND"
+}

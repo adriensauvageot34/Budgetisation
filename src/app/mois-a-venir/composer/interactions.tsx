@@ -6,7 +6,7 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 import {composerPreset,type ComposerPresetKey} from '@/domain/phase2/planner/composer-presets';
 
 /** Request-local UI identity; the published source and server DROP remain owners. */
-export type ComposerDragSession=ComposerDragSource&Readonly<{presetKey?:ComposerPresetKey}>;
+export type ComposerDragSession=ComposerDragSource&Readonly<{presetKey?:ComposerPresetKey;initialValues?:Readonly<Record<string,string>>}>;
 export function presetDragSource(model:ComposerUiModel,source:ComposerDragSource,presetKey?:string):ComposerDragSession|null{
   if(presetKey===undefined)return source;
   const preset=composerPreset(presetKey),asset=model.library.searchableAssets.find(a=>a.assetKey===source.assetKey);
@@ -31,7 +31,7 @@ export function selectionValues(selection?: ComponentSelectionV1): Record<string
   return {};
 }
 export function preparedDrop(source: ComposerDragSession, target: DropTarget, identity: string, selectionId: string): ComposerOperation {
-  return { kind: "DROP", assetKey: source.assetKey, target, values: selectionValues(source.selection), identity,
+  return { kind: "DROP", assetKey: source.assetKey, target, values: {...selectionValues(source.selection),...source.initialValues}, identity,
     ...(source.presetKey&&target.kind==='BOARD_ZONE'?{presetKey:source.presetKey}:{}),
     selectionId: source.selection?.selectionId ?? selectionId, ...(source.sourceSocket ? { sourceSocket: source.sourceSocket } : {}) };
 }
@@ -41,7 +41,7 @@ export function publishedDrop(model: ComposerUiModel, assetKey: string, target: 
 export type InteractionView = {
   grabbed: ComposerDragSession | null; overTarget: DropTarget | null; motion: "snap" | "undo" | "redo" | "recoil" | null;
   motionTarget: string | null; completenessFocus: boolean; unresolvedRefs: readonly string[];
-  start: (key: string, event: DragEvent<HTMLElement>,presetKey?:ComposerPresetKey) => void; end: () => void;
+  start: (key: string, event: DragEvent<HTMLElement>,presetKey?:ComposerPresetKey,initialValues?:Readonly<Record<string,string>>) => void; end: () => void;
   over: (target: DropTarget | null) => void; place: (target: DropTarget) => void;
   equip: (assetKey: string, target: DropTarget) => void;
   canTarget: (targetRef: string) => boolean; overAssistant: (targetRef: string | null) => void; placeAssistant: (targetRef: string) => void;

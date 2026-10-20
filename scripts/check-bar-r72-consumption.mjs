@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {require} from './lib/phase2-ts-loader.mjs';
+import {createKernelPostgres} from './lib/planner-kernel-postgres.mjs';
+import {state,fixture,uuid,householdId} from './fixtures/planner-headless.mjs';
+import {userId} from './fixtures/planner-kernel.mjs';
+const {editNightOut}=require('@/domain/phase2/planner/night-out-edit');
+const {plannerDigest}=require('@/domain/phase2/planner/json');
+const {parsePlanSemanticState,semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
+const {saveComposerDraft,readComposerDrafts}=require('@/server/phase2/planner/composer-draft-service');
+const {expandComposableContexts}=require('@/server/phase2/planner/context-compiler');
+const {validateContextGraph}=require('@/server/phase2/planner/context-selections');
+const id=uuid(97201),directId=uuid(97202);
+let semantic=state([], [{contextOccurrenceId:id,templateKey:'night-out',status:'ACTIVE',parentContextOccurrenceId:null,
+ provenance:'EXPLICIT_USER_DECISION',fields:{fieldSchemaVersion:'context-fields@v2',label:'Bar test',plannedDate:null},slotSelections:{}}]);
+const current=()=>semantic.contexts.find(c=>c.contextOccurrenceId===id);
+const command=(mode,extra={})=>({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id,fields:{},consumption:{mode,expectedContextDigest:plannerDigest(current()),...extra}}});
+const transition=(mode,extra={})=>{semantic=editNightOut(semantic,command(mode,extra).edit);validateContextGraph(semantic);};
+const line=(n,cost,extra={})=>({kind:'COMPONENT',selectionId:uuid(n),optionKey:'extra',provenance:'EXPLICIT_USER_DECISION',label:'Bière',quantity:'1',unitBasis:'ITEM',cost,...extra});
+const checks=[];const check=async(name,run)=>{await run();checks.push({name,status:'PASS'});console.log(name+' PASS');};
+const pg=await createKernelPostgres();
+try{
+ await pg.db.exec('reset role; alter table auth.users add column raw_app_meta_data jsonb;');
+ for(const f of ['20261011130256_p07b_m0_phase2_composer_drafts_fixture_gate.sql','20261011150830_p07_composer_draft_access_v2.sql'])
+  await pg.db.exec('begin;'+fs.readFileSync('supabase/migrations/'+f,'utf8')+'commit;');
+ await pg.db.exec('update private.phase2_composer_draft_access set enabled_for_all=true; set role authenticated;');
+ const supabase={from(table){assert.ok(['phase2_composer_drafts','phase2_month_plans'].includes(table));const filters=[];
+  const q={select(){return q},eq(k,v){assert.match(k,/^[a-z_]+$/);filters.push([k,v]);return q},order(){return q},abortSignal(){return q},maybeSingle(){q.single=true;return q},then(resolve,reject){return pg.db.query(`select to_jsonb(t) as row from public.${table} t where ${filters.map(([k],i)=>k+'=$'+(i+1)).join(' and ')}`,filters.map(([,v])=>v)).then(r=>({data:q.single?r.rows[0]?.row??null:r.rows.map(x=>x.row),error:null}),e=>({data:null,error:e})).then(resolve,reject)}};return q;},rpc(name,args){assert.equal(name,'save_phase2_composer_draft_v2');const q={abortSignal(){return q},then(resolve,reject){const keys=['household_id','target_month','expected_draft_id','expected_draft_version','save_request_id','base_plan_id','base_plan_revision_id','base_plan_revision_number','semantic_state','semantic_state_digest'];return pg.db.query(`select public.save_phase2_composer_draft_v2(${keys.map((_,i)=>'$'+(i+1)).join(',')}) as result`,keys.map(k=>k==='semantic_state'?JSON.stringify(args['p_'+k]):args['p_'+k])).then(r=>({data:r.rows[0].result,error:null}),e=>({data:null,error:e})).then(resolve,reject)}};return q;}};
+ const scope={supabase,userId,householdId};let stored;
+ const save=async()=>{const r=await saveComposerDraft(scope,{targetMonth:'2026-11',semanticState:semantic,digest:semanticStateDigest(semantic),requestId:crypto.randomUUID(),expectedDraftId:stored?.draftId??null,expectedDraftVersion:stored?.version??0,expectedBaseRevisionId:null,expectedBaseRevisionNumber:0});assert.equal(r.ok,true,JSON.stringify(r));stored=r.draft;};
+ await check('DIRECT_15_SINGLE_SUBSTITUTIVE_ENVELOPE',async()=>{transition('DIRECT',{amount:'15',selectionId:directId});const items=current().slotSelections.extras.items;assert.equal(items.length,1);assert.equal(items[0].economicScope.kind,'AGGREGATED_SUBSTITUTIVE_ESTIMATE');assert.equal(items[0].optionKey,'extra');});
+ const directContext=structuredClone(current());
+ await check('DIRECT_DETAIL_NO_DOUBLE_FINANCIAL_REQUEST',async()=>{transition('DETAILED');const requests=expandComposableContexts(semantic,fixture(),[]).requests;assert.equal(requests.some(r=>r.label==='Consommations'),false);assert.deepEqual(current().fields.nightOutConsumption.inactive,[directContext.slotSelections.extras.items[0]]);});
+ await check('DETAIL_EDIT_8_9_UNKNOWN_DISTINCT_IDS',async()=>{semantic=editNightOut(semantic,{contextOccurrenceId:id,fields:{},slots:{extras:[line(97203,{kind:'MANUAL',unitAmount:'8'}),line(97204,{kind:'MANUAL',unitAmount:'9'}),line(97205,{kind:'UNKNOWN'})]}});validateContextGraph(semantic);assert.equal(new Set(current().slotSelections.extras.items.map(i=>i.selectionId)).size,3);});
+ const details=structuredClone(current().slotSelections.extras.items);
+ await check('REAL_SQL_DRAFT_SAVE_READ_PARSER_THEN_RESTORE_DIRECT',async()=>{await save();const snapshot=await readComposerDrafts(scope,'2026-11');semantic=parsePlanSemanticState(snapshot.active.semanticState);assert.equal(semanticStateDigest(semantic),stored.digest);transition('DIRECT');assert.deepEqual(current().slotSelections.extras.items,[directContext.slotSelections.extras.items[0]]);assert.deepEqual(current().fields.nightOutConsumption.inactive,details);await save();semantic=(await readComposerDrafts(scope,'2026-11')).active.semanticState;transition('DETAILED');assert.deepEqual(current().slotSelections.extras.items,details);});
+ await check('UNDO_REDO_SNAPSHOTS_AND_CAS_STALE_REJECTED',async()=>{const before=structuredClone(semantic),stale=command('DIRECT');semantic=editNightOut(semantic,{contextOccurrenceId:id,fields:{timingNote:'À préciser'}});assert.throws(()=>editNightOut(semantic,stale.edit),/STALE/);semantic=parsePlanSemanticState(before);transition('DIRECT');const after=structuredClone(semantic);semantic=parsePlanSemanticState(before);assert.deepEqual(current().slotSelections.extras.items,details);semantic=parsePlanSemanticState(after);assert.equal(current().slotSelections.extras.items[0].selectionId,directId);});
+ await check('EXPLICIT_ZERO_NOT_UNKNOWN',async()=>{transition('DIRECT',{amount:'0'});assert.deepEqual(current().slotSelections.extras.items[0].cost,{kind:'MANUAL',unitAmount:'0'});transition('DETAILED');assert.equal(current().slotSelections.extras.items[2].cost.kind,'UNKNOWN');});
+ await check('LOCKS_FUNDING_LEGACY_AMBIGUOUS_PRESERVED',async()=>{const before=structuredClone(semantic);assert.throws(()=>editNightOut({...semantic,preferences:{anchors:[id],flexibility:{}}},command('DIRECT').edit),/LOCKED/);const financed=line(97206,{kind:'MANUAL',unitAmount:'8'},{fundingAllocations:[{source:'BANK',amount:'8'}]});semantic=editNightOut(semantic,{contextOccurrenceId:id,fields:{},slots:{extras:[...details,financed]}});assert.throws(()=>transition('DIRECT'),/SCOPE_NEEDS_CHOICE/);assert.ok(current().slotSelections.extras.items.some(i=>i.selectionId===financed.selectionId));semantic=before;const legacy={...current(),fields:{fieldSchemaVersion:'context-fields@v2',label:'Ancien bar'}};const original=plannerDigest(legacy);assert.throws(()=>editNightOut(state([], [legacy]),{contextOccurrenceId:id,fields:{},consumption:{mode:'DIRECT',amount:'15',selectionId:uuid(97207),expectedContextDigest:original}}),/LEGACY_NEEDS_CHOICE/);assert.equal(plannerDigest(legacy),original);});
+ await check('INDEPENDENT_ADDITIVE_BEFORE_SHARED_RELOAD_AND_OWNER_PROJECTION',async()=>{
+  const contribution={...line(97211,{kind:'MANUAL',unitAmount:'5'}),optionKey:'main',label:'Contribution',economicScope:{version:'component-economic-scope@v1',kind:'ADDITIVE_CONTRIBUTION',coveredSelectionIds:[uuid(97211)]},fundingAllocations:[{source:'BANK',amount:'5'}]};
+  const bottle={...line(97212,{kind:'MANUAL',unitAmount:'20'}),optionKey:'activity',unitBasis:'SHARED',label:'Bouteille'};
+  semantic=editNightOut(semantic,{contextOccurrenceId:id,fields:{},slots:{main:[contribution]},before:{childContextOccurrenceId:uuid(97213),selectionId:uuid(97214),bottle,extras:[]}});
+  const before=structuredClone(semantic.contexts.find(c=>c.contextOccurrenceId===uuid(97213)));
+  transition('DIRECT',{amount:'15'});await save();semantic=(await readComposerDrafts(scope,'2026-11')).active.semanticState;
+  const directRequests=expandComposableContexts(semantic,fixture(),[]).requests;
+  assert.equal(directRequests.filter(r=>r.label==='Consommations').length,1);
+  assert.deepEqual(directRequests.find(r=>r.label==='Consommations').cost,{kind:'MANUAL',unitAmount:'15'});
+  assert.equal(directRequests.find(r=>r.label==='Bouteille').quantity,'1');
+  assert.deepEqual(current().slotSelections.main.items,[contribution]);
+  transition('DETAILED');assert.deepEqual(current().slotSelections.extras.items,details);
+  assert.deepEqual(semantic.contexts.find(c=>c.contextOccurrenceId===before.contextOccurrenceId),before);
+  assert.deepEqual(current().slotSelections.main.items,[contribution]);
+ });
+ await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
+ await check('ISOLATED_APPLY_RELOAD_RETAINS_BOTH_MODES_AND_VERSIONED_MANIFEST',async()=>{
+  const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
+  const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
+  const deps={repository:createPlanApplyRepository(pg.client),readWorld:async()=>fixture(),householdPersons:[]};
+  const read=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:1,targetMonth:'2026-11',draft:semantic});assert.equal(read.ok,true,read.message);
+  const request={kind:'APPLY',sequence:2,targetMonth:'2026-11',draft:semantic,command:{...read.model.proof,applyRequestId:uuid(97220)}};
+  const applied=await handleComposerRequest(deps,householdId,request);assert.equal(applied.ok,true,applied.message);
+  const active=await deps.repository.readActivePlan(householdId,'2026-11');
+  assert.equal(semanticStateDigest(active.activeRevision.semanticState),semanticStateDigest(semantic));
+  assert.equal(active.activeRevision.compiledManifest.contextRegistry.version,'planner-context-registry@v9-night-consumption');
+  semantic=parsePlanSemanticState(active.activeRevision.semanticState);transition('DIRECT');
+  assert.equal(current().slotSelections.extras.items[0].selectionId,directId);
+  assert.deepEqual(current().slotSelections.extras.items[0].cost,{kind:'MANUAL',unitAmount:'15'});
+  assert.deepEqual(current().fields.nightOutConsumption.inactive,details);
+  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:1,revisions:1});
+ });
+ fs.mkdirSync('outputs/bar-r72',{recursive:true});fs.writeFileSync('outputs/bar-r72/consumption.json',JSON.stringify({level:'REAL_SQL_PGLITE_OFFICIAL_DRAFT_RPC_NOT_AUTH_RLS',checks,remoteWrites:0,financialWrites:0},null,2));
+}finally{await pg.close();}
