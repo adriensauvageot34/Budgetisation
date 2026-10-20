@@ -1,0 +1,32 @@
+{
+  "base": "96b4fd960343b49ad800c97c0f957b1dd513d97d",
+  "candidate": {
+    "exitCode": 1,
+    "error": null
+  },
+  "modules": [
+    {
+      "path": "src/app/mois-a-venir/composer/bar-living-editor.tsx",
+      "sha256": "11f4a17c05700545040735ef1c830afc8b7cffaf5b8c7a24751efde5060e0862",
+      "onlyProbeChange": "relative module imports renamed to baseline counterparts"
+    },
+    {
+      "path": "src/app/mois-a-venir/composer/context-palette.tsx",
+      "sha256": "ede691d61875b06c96bb88b7cfa46300a45357cad1176644a221aec20ab7a9c9",
+      "onlyProbeChange": "relative module imports renamed to baseline counterparts"
+    },
+    {
+      "path": "src/app/mois-a-venir/composer/bar-product-visual.tsx",
+      "sha256": "fb5eeb1e5b0f831a7c3975363906ebcfbe20bf47d5cb4937bda9a727c6171bd1",
+      "onlyProbeChange": "relative module imports renamed to baseline counterparts"
+    }
+  ],
+  "comparability": "Same historical 11-assertion script from baseline. Baseline uses all three changed TSX modules from baseline; candidate uses current product. CSS is not executed by React renderer. No assertions removed or relaxed.",
+  "historicalScriptSha256": "5e480272575ba7e0b05347c3940a4825887cb0abe645221aa885e79a0b0f2339",
+  "baseline": {
+    "exitCode": 1,
+    "error": null
+  },
+  "candidateSha": "9ebf0881595c775b29d07f4d471b83e92735af0f",
+  "productSha": "0bf24838d0b2e65461dcf0d51163f8ae03b352c6"
+}
