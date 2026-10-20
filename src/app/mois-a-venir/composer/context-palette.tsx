@@ -6,7 +6,8 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { displayEquipmentGroups, type EquipmentTile } from "./presentation/palette-groups";
 import styles from "./composer.module.css";
-import { useComposerInteractions } from "./interactions";
+import { publishedDrop,useComposerInteractions } from "./interactions";
+import type {BarDockDrag} from './bar-dock-drag';
 import { barDockCatalog } from "./bar-dock-catalog";
 import { BarProductVisual } from "./bar-product-visual";
 
@@ -76,12 +77,13 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
   </>;
 }
 
-export type PaletteQuestion = { title: string; identity?:string; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; choose: () => void }[];
+export type PaletteQuestion = { title: string; identity?:string; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; drag?:BarDockDrag; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; emptyLabel?:string; backToFamilies?:()=>void };
 export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionScroll, onQuestionScrollChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
   questionScroll?:Readonly<Record<string,number>>; onQuestionScrollChange?:(key:string,index:number)=>void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
 }) {
+  const interaction=useComposerInteractions();
   const groups = question ? [] : displayEquipmentGroups(card, model);
   const assets = new Map(model.library.searchableAssets.map(asset => [asset.assetKey, asset]));
   const [mode, setMode] = useState<"complete" | "all">("complete"), [query, setQuery] = useState("");
@@ -157,7 +159,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
       }} tabIndex={0} aria-label={question.title}
       onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}
       onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();scrollRail(event.key==="ArrowRight"?180:-180);}}}>
-      {(appearance==="bar"?catalogue.visible:question.choices).map(choice => {const fullLabel=choice.label+(choice.showHint&&choice.hint?" · "+choice.hint:"");const key=answerKey+":"+choice.key;const reveal=()=>{if(appearance==="bar")setCaption(fullLabel.length>36?{key,label:fullLabel}:null);};return <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} aria-label={appearance==="bar"?fullLabel:undefined} aria-describedby={caption?.key===key?optionsId+"-full-label":undefined} disabled={busy} title={appearance==="bar"?fullLabel:choice.hint} onMouseEnter={reveal} onMouseLeave={event=>{if(!event.currentTarget.contains(document.activeElement))setCaption(null);}} onBlur={()=>setCaption(null)} onFocus={event => {event.currentTarget.scrollIntoView?.({block:"nearest",inline:"nearest"});reveal();}} onClick={choice.choose}>
+      {(appearance==="bar"?catalogue.visible:question.choices).map(choice => {const fullLabel=choice.label+(choice.showHint&&choice.hint?" · "+choice.hint:"");const key=answerKey+":"+choice.key;const reveal=()=>{if(appearance==="bar")setCaption(fullLabel.length>36?{key,label:fullLabel}:null);}; const source=choice.drag&&model.presentation.dragSources[choice.drag.sourceKey]; const drag=appearance==="bar"&&question.nature==="OBJECTS"&&!busy&&source&&!source.protected&&!source.selection&&!source.sourceSocket&&publishedDrop(model,source.assetKey,choice.drag!.target)?choice.drag:undefined; return <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} aria-label={appearance==="bar"?fullLabel:undefined} aria-describedby={caption?.key===key?optionsId+"-full-label":undefined} disabled={busy} title={appearance==="bar"?fullLabel:choice.hint} onMouseEnter={reveal} onMouseLeave={event=>{if(!event.currentTarget.contains(document.activeElement))setCaption(null);}} onBlur={()=>setCaption(null)} onFocus={event => {event.currentTarget.scrollIntoView?.({block:"nearest",inline:"nearest"});reveal();}} draggable={!!drag} data-drag-source={drag?.sourceKey} onDragStart={event=>{event.stopPropagation();if(drag)interaction?.start(drag.sourceKey,event,undefined,drag.values);else event.preventDefault();}} onDragEnd={()=>interaction?.end()} onClick={choice.choose}>
           {appearance==="bar"&&(/^(bar|house_party|club|option:night-out):/u.test(choice.key)||["shared","drinks","food"].includes(choice.key))?<BarProductVisual dock={productScene} assetKey={choice.key} label={choice.label}/>:appearance==="bar"&&choice.key.startsWith("option:night-out:")?<PlannerIcon iconKey={choice.iconKey} scale="PALETTE"/>:choice.symbol?<span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>:<PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}<span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>;})}
       {appearance==="bar"&&catalogue.remaining>0&&<button type="button" className={styles.questionAnswer} onClick={()=>setLimits(previous=>({...previous,[answerKey]:(previous[answerKey]??24)+24}))}>Afficher la suite ({catalogue.remaining})</button>}
       {!(appearance==="bar"?catalogue.total:question.choices.length) && <p>{question.emptyLabel??"Aucun résultat. Vous pouvez saisir votre choix."}</p>}

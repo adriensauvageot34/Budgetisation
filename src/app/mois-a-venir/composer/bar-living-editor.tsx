@@ -36,6 +36,7 @@ import styles from "./composer.module.css";
 import {componentPresentationGroups} from '@/domain/phase2/planner/component-group-presentation';
 import {BarComponentGroup} from './bar-component-group';
 import {BarMomentRail} from './bar-moment-rail';
+import {barDockDrag} from './bar-dock-drag';
 import {nightOutConsumption} from '@/domain/phase2/planner/night-out-consumption';
 import {plannerDigest} from '@/domain/phase2/planner/json';
 
@@ -345,6 +346,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     const next=refs.some(p=>prospectivePersonIdentity(p)===prospectivePersonIdentity(person))?refs.filter(p=>prospectivePersonIdentity(p)!==prospectivePersonIdentity(person)):[...refs,person];
     if(decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{participantRefs:next}}},"people"))setPeople(next);
   };
+  const coveredMain=[...barItems(context,"main"),...barItems(context,"extras")].find((item):item is Component=>item.kind==="COMPONENT"&&item.economicScope?.kind==="AGGREGATED_SUBSTITUTIVE_ESTIMATE")??barItems(context,"main").find((item):item is Component=>item.kind==="COMPONENT"&&!item.economicScope);
   const choice=(key:string,label:string,choose:()=>void,iconKey="night-out",hint?:string,symbol?:string)=>({key,label,choose,iconKey,hint,symbol});
   const beer=catalog.find(asset=>asset.assetKey==="bar:beer")!;
   const consumptionChoice=(asset:PlannedAsset)=>({...choice(asset.assetKey,asset.label,()=>add(asset),"night-out","Nouvelle ligne · rééditez une tuile pour changer sa quantité",asset.icon),showHint:false});
@@ -394,7 +396,14 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   // Bar/Before products have one navigation control in the dock. The RAW
   // guard must run before changing families, including during row editing.
   if(question.nature==="OBJECTS")question={...question,search:undefined,backToFamilies:()=>{if(guard(()=>setFamily(null)))setFamily(null);}};
-  const coveredMain=[...barItems(context,"main"),...barItems(context,"extras")].find((item):item is Component=>item.kind==="COMPONENT"&&item.economicScope?.kind==="AGGREGATED_SUBSTITUTIVE_ESTIMATE")??barItems(context,"main").find((item):item is Component=>item.kind==="COMPONENT"&&!item.economicScope);
+  if(question.nature==='OBJECTS'&&!busy&&!dirty){
+    const owner=activeMoment==='before'?!beforeLocked&&before?.child.contextOccurrenceId
+      :consumption?.mode!=='DIRECT'&&!coveredMain&&context.contextOccurrenceId;
+    if(owner)question={...question,choices:question.choices.map(item=>{
+      const asset=(activeMoment==='before'?beforeCatalog:catalog).find(a=>a.assetKey===item.key);
+      return asset?{...item,drag:barDockDrag(model,{kind:'CONTEXT_SOCKET',contextOccurrenceId:owner,slotKey:'extras'},asset)}:item;
+    })};
+  }
   if(page==='summary'&&coveredMain)question={title:'Consommations regroupées',choices:[]};
   if(page==="coverage")question={title:`Remplacer ${coveredMain?.label??"le coût retenu"}${coveredMain?.cost.kind==="MANUAL"?" · "+money(coveredMain.cost.unitAmount)+" / lot":""} ?`,choices:[{...choice("included","Détailler à la place",()=>pendingShared?addShared(true):pendingAsset&&add(pendingAsset,true),"night-out","Retire uniquement ce regroupement ; contribution, trajets, Before et repas conservés"),showHint:true},{...choice("extra","Ajouter en plus",()=>pendingShared?addShared(false):pendingAsset&&add(pendingAsset,false),"night-out","Coût supplémentaire indépendant du poste conservé"),showHint:true},choice("cancel","Ne rien ajouter",()=>{setPendingAsset(null);setPendingShared(false);go("drinks");},"activity")]};
   if(["summary","quick"].includes(page)&&(!showMoments||!(openMoments.before||openMoments.bar)))question={title:"",choices:[]};

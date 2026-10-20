@@ -464,7 +464,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     motionTimer.current = setTimeout(() => { setMotion(null); setMotionTarget(null); }, 240);
   }
   function endDrag() { clearHover(); grab.current = null; assistantGrab.current = null; assistantOver.current = null; setGrabbed(null); setSelected(null); setOverTarget(null); overRef.current = null; }
-  function startDrag(key: string, event: DragEvent<HTMLElement>,presetKey?:ComposerPresetKey) {
+  function startDrag(key: string, event: DragEvent<HTMLElement>,presetKey?:ComposerPresetKey,initialValues?:Readonly<Record<string,string>>) {
     if (busyRef.current) { event.preventDefault(); return; }
     inlineEdits.registry.flushPending();
     const cardRef = event.currentTarget.closest<HTMLElement>("[data-control]")?.dataset.control;
@@ -473,7 +473,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     const candidate = key.startsWith("assistant:") ? suggestions?.candidates.find(c => `assistant:${c.candidateId}` === key) : null;
     const publishedSource = candidate ? { sourceKey: key, assetKey: key, label: candidate.label, iconKey: shown.presentation.objects[candidate.targetRef]?.iconKey ?? "activity", economicAmount: candidate.impactOnMonthEnd, protected: false }
       : shown.presentation.dragSources[key];
-    const source=publishedSource&&presetDragSource(shown,publishedSource,presetKey);
+    const resolvedSource=publishedSource&&presetDragSource(shown,publishedSource,presetKey);
+    const source=resolvedSource&&initialValues&&!resolvedSource.selection&&!resolvedSource.sourceSocket&&resolvedSource.sourceKey===resolvedSource.assetKey
+      ?{...resolvedSource,initialValues}:resolvedSource;
     if (!source) { event.preventDefault(); return; }
     assistantGrab.current = candidate && suggestions ? { targetRef: candidate.targetRef, operation: { kind: "ACCEPT", candidateId: candidate.candidateId, candidateSetDigest: suggestions.candidateSetDigest } } : null;
     grab.current = source; setGrabbed(source); setSelected(source.assetKey);
