@@ -1356,8 +1356,8 @@
 .barLivingCard:has([data-bar-scene-density=dense]) .barImageTrigger { opacity:.3; }
 .barManage small { display:block; padding:4px; max-width:180px; }
 .columns[data-bar-living-open=true] .paletteDock:has([data-compact-dock=true]) { min-height:82px; }
-.barCompositionDock[data-compact-dock=true] .paletteOptions { min-height:0; padding-block:3px; }
-.barCompositionDock[data-compact-dock=true] .questionAnswer { min-height:42px; padding:5px 10px; }
+.barCompositionDock[data-compact-dock=true] .paletteOptions { height:48px; min-height:0; padding-block:3px; }
+.barCompositionDock[data-compact-dock=true] .questionAnswer { height:42px; min-height:42px; padding:5px 10px; }
 .barCompositionDock[data-compact-dock=true] .barProductSymbol { width:32px; height:30px; }
 .barCompositionDock[data-compact-dock=true] .barProductSymbol img { width:32px; height:30px; }
 .barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small) { height:72px; min-height:72px; }

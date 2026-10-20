@@ -85,7 +85,7 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialCity,initi
   const known=detail?places.filter(place=>!place.privatePlace&&place.googlePlaceId===detail.placeId):[];
   return <section data-bar-google-search aria-label="Chercher un bar avec Google Maps">
     {!detail&&<><div className={styles.barPlaceFields}><label>Rechercher un bar<input autoFocus maxLength={120} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom du lieu…"/></label>
-    {editCity?<label>Ville facultative<input maxLength={100} value={city} onChange={e=>setCity(e.target.value)}/><button type="button" onClick={()=>setEditCity(false)}>Terminer</button></label>
+    {editCity?<div><label>Ville facultative<input aria-label="Ville facultative" maxLength={100} value={city} onChange={e=>setCity(e.target.value)}/></label><button type="button" onClick={()=>setEditCity(false)}>Terminer</button></div>
       :<div className={styles.barPlaceContext}>{city.trim()?`Autour de ${city}`:"Recherche en France"} <button type="button" onClick={()=>setEditCity(true)}>{city.trim()?"Changer la ville":"Préciser une ville"}</button></div>}</div>
     {city.trim()&&<button type="button" onClick={()=>{setCity("");setEditCity(false);}}>Sans ville imposée</button>}</>}
     <div className={styles.barPlaceResults} data-bar-place-results>
