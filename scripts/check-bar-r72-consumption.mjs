@@ -53,5 +53,21 @@ try{
   assert.deepEqual(current().slotSelections.main.items,[contribution]);
  });
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
+ await check('ISOLATED_APPLY_RELOAD_RETAINS_BOTH_MODES_AND_VERSIONED_MANIFEST',async()=>{
+  const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
+  const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
+  const deps={repository:createPlanApplyRepository(pg.client),readWorld:async()=>fixture(),householdPersons:[]};
+  const read=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:1,targetMonth:'2026-11',draft:semantic});assert.equal(read.ok,true,read.message);
+  const request={kind:'APPLY',sequence:2,targetMonth:'2026-11',draft:semantic,command:{...read.model.proof,applyRequestId:uuid(97220)}};
+  const applied=await handleComposerRequest(deps,householdId,request);assert.equal(applied.ok,true,applied.message);
+  const active=await deps.repository.readActivePlan(householdId,'2026-11');
+  assert.equal(semanticStateDigest(active.activeRevision.semanticState),semanticStateDigest(semantic));
+  assert.equal(active.activeRevision.compiledManifest.contextRegistry.version,'planner-context-registry@v9-night-consumption');
+  semantic=parsePlanSemanticState(active.activeRevision.semanticState);transition('DIRECT');
+  assert.equal(current().slotSelections.extras.items[0].selectionId,directId);
+  assert.deepEqual(current().slotSelections.extras.items[0].cost,{kind:'MANUAL',unitAmount:'15'});
+  assert.deepEqual(current().fields.nightOutConsumption.inactive,details);
+  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:1,revisions:1});
+ });
  fs.mkdirSync('outputs/bar-r72',{recursive:true});fs.writeFileSync('outputs/bar-r72/consumption.json',JSON.stringify({level:'REAL_SQL_PGLITE_OFFICIAL_DRAFT_RPC_NOT_AUTH_RLS',checks,remoteWrites:0,financialWrites:0},null,2));
 }finally{await pg.close();}

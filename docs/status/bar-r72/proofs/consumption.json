@@ -1,0 +1,43 @@
+{
+  "level": "REAL_SQL_PGLITE_OFFICIAL_DRAFT_RPC_NOT_AUTH_RLS",
+  "checks": [
+    {
+      "name": "DIRECT_15_SINGLE_SUBSTITUTIVE_ENVELOPE",
+      "status": "PASS"
+    },
+    {
+      "name": "DIRECT_DETAIL_NO_DOUBLE_FINANCIAL_REQUEST",
+      "status": "PASS"
+    },
+    {
+      "name": "DETAIL_EDIT_8_9_UNKNOWN_DISTINCT_IDS",
+      "status": "PASS"
+    },
+    {
+      "name": "REAL_SQL_DRAFT_SAVE_READ_PARSER_THEN_RESTORE_DIRECT",
+      "status": "PASS"
+    },
+    {
+      "name": "UNDO_REDO_SNAPSHOTS_AND_CAS_STALE_REJECTED",
+      "status": "PASS"
+    },
+    {
+      "name": "EXPLICIT_ZERO_NOT_UNKNOWN",
+      "status": "PASS"
+    },
+    {
+      "name": "LOCKS_FUNDING_LEGACY_AMBIGUOUS_PRESERVED",
+      "status": "PASS"
+    },
+    {
+      "name": "INDEPENDENT_ADDITIVE_BEFORE_SHARED_RELOAD_AND_OWNER_PROJECTION",
+      "status": "PASS"
+    },
+    {
+      "name": "ISOLATED_APPLY_RELOAD_RETAINS_BOTH_MODES_AND_VERSIONED_MANIFEST",
+      "status": "PASS"
+    }
+  ],
+  "remoteWrites": 0,
+  "financialWrites": 0
+}
