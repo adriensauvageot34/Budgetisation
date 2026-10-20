@@ -44,3 +44,9 @@ Preuves : native-evidence.json (événements natifs, transitions, identités, di
 **Seul gate de livraison restant : vraie séquence maintien≥180ms sur fond Bar fermé → déplacement → corbeille → Undo restituant IDs/contenus.** Le cahier R6.3 interdit précisément la fusion automatique tant que ce geste essentiel n'est pas vérifié. MERGE_SHA=NOT_MERGED, PRODUCTION=NOT_DEPLOYED pour R6.3 ; la Production R6.2 reste intacte. Aucun manque d'autorisation Git/Vercel, aucune migration requise.
 
 Contrôle manuel minimal si l'outil ne peut pas maintenir : sur la Preview/recette ouverte, rejoindre la carte Bar riche68€, maintenir le fond libre à droite des consommations environ250ms puis glisser vers Retirer ; cliquer Undo et vérifier la même carte68€ et ses trois lignes. Ne pas cliquer Transformer en Plan. Le probe et le relevé serveur permettent de reprendre cette unique preuve sans recommencer les cas déjà PASS.
+
+## Ajustement demandé après réception — survol du Canvas
+
+Suppression de l'aperçu `packGhost` et de son CSS : aucun panneau de carte provisoire, icône générique, « Moment principal » ou « Estimation après ajout » n'est rendu dans le Canvas pendant le drag. Le contour de compatibilité et la surbrillance existante `data-drag-over` sont conservés ; aucune modification de la résolution du dépôt ou des presets. Le badge natif attaché au pointeur reste distinct de cet aperçu Canvas.
+
+Vérifications exécutées : TypeScript exit 0, les 9 contrôles `check-r63-preset-drag.mjs` PASS, diff --check PASS. Les deux assertions historiques du smoke sont adaptées à l'absence de carte fantôme et à la surbrillance ; cette campagne navigateur n'est pas rejouée pour cet ajustement. Le gate maintien/corbeille demeure NOT_RUN_NATIVE_POINTER, sans fusion ni livraison Production.
