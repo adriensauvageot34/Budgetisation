@@ -1524,6 +1524,16 @@
   .barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .questionAnswer { height:90px; min-height:90px; }
   .barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .barProductSymbol { flex-basis:50px; height:50px; }
   .barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .barProductSymbol img { height:50px; max-height:50px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) { --bar-open-tile-height:60px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingHeader { padding-block:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingIdentity { padding-block:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barItemSection>header { min-height:16px; margin-bottom:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingMetadata { padding-bottom:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingMetadata button { padding-block:3px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingEditor { padding-block:3px; gap:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingSections { gap:4px; }
+  .barLivingEditor[data-bar-progressive] .barLivingRoutes { display:flex; flex-direction:row; flex-wrap:nowrap; flex-shrink:0; gap:6px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x proximity; }
+  .barLivingEditor[data-bar-progressive] .barLivingRoutes>.barRouteLine { flex:0 0 100%; min-width:0; flex-wrap:nowrap; scroll-snap-align:start; }
 }
 .barLivingTools .barQuietAction { width:26px; height:26px; padding:5px; color:#765b3a; background:rgb(255 253 247 / .76); opacity:.52; }
 .barLivingTools .barQuietAction[aria-pressed=true],.barLivingTools .barQuietAction:is(:hover,:focus-visible) { opacity:1; }
