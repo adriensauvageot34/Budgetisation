@@ -4,6 +4,7 @@ import { visualFamily } from "./cluster-rules";
 import type { AtomicNode, ClusterFamily, ComposerPresentationNode, ContentDensity, SpatialFamily, VisualClusterNode } from "./node-types";
 import { stableVisualIdentity } from "../planner-icons/visual-identity";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
+import { barClosedWidth } from "./bar-closed-width";
 
 const clusterLook: Readonly<Record<ClusterFamily, Pick<VisualClusterNode, "title" | "iconKey" | "width" | "height" | "spatialFamily">>> = {
   BEAUTY: { title: "Beauté", iconKey: "beauty", width: 530, height: 165, spatialFamily: "PERSONAL_CARE" },
@@ -72,7 +73,7 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
       const barHeight = 125 + barRoutes*58 + (tileCount||hasBefore?123:0);
       return { id:context.contextOccurrenceId, kind:"CONTEXT" as const, context, density, spatialFamily:contextFamily(template),
         iconKey:model.presentation.objects[context.contextOccurrenceId].iconKey,
-        width:bar&&barRoutes>1?580:template === "short-stay" ? 400 : template === "night-out" ? 350 : ["gift", "family-visit"].includes(template) ? 240 : 230,
+        width:bar?barClosedWidth(context,model):template === "short-stay" ? 400 : template === "night-out" ? 350 : ["gift", "family-visit"].includes(template) ? 240 : 230,
         height:bar ? barHeight : template === "short-stay" ? 212 : template === "night-out" ? 212 : template === "gift" ? 148
           : template === "family-visit" ? 142 : density === "SPARSE" ? 140 : density === "RICH" ? 190 : 170 };
     }),

@@ -98,7 +98,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   BAR16_GOOGLE:barP3Month,
   BARLIVE_PERSONAL:barP3Month,
   ...Object.fromEntries([0,1,2,4,10,15].map(count=>[`BAR350_${count}`,()=>bar350ReceptionMonth(count)])),
-  ...Object.fromEntries(['empty','meta','before','mixed','long','dense','tall'].map(scene=>[`BAR_COMPACT_${scene}`,()=>barCompactMonth(scene)])),
+  ...Object.fromEntries(['empty','meta','before','mixed','long','dense','tall','people1','people3','many'].map(scene=>[`BAR_COMPACT_${scene}`,()=>barCompactMonth(scene)])),
   ...Object.fromEntries([20,40].map(count=>[`BAR_BOARD_${count}`,()=>{const value=bar350ReceptionMonth(4);for(let i=1;i<=count;i++)value.semantic.contexts.push(p4Extra(i));return value;}])),
   P09: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P09C: p09CompatibilityMonth,
@@ -316,7 +316,7 @@ const server = http.createServer(async (request, response) => {
       response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture ${key}</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
       return;
     }
-    if (/^\/planned-visuals\/(?:composer\/presets|builder\/clay\/(?:drinks|food|transport|r7|bar-compact))\/[a-z-]+\.webp$/.test(url.pathname)) {
+    if (/^\/planned-visuals\/(?:composer\/presets|builder\/clay\/(?:drinks|food|transport|r7|bar-compact|scenes))\/[a-z-]+\.webp$/.test(url.pathname)) {
       response.setHeader('Content-Type','image/webp'); response.setHeader('Cache-Control','public,max-age=3600');
       response.end(fs.readFileSync(path.join('public',url.pathname))); return;
     }
