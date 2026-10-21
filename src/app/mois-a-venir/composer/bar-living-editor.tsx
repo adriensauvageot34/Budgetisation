@@ -509,7 +509,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     data-bar-progressive data-bar-geometry-key={`${showMoments}:${openMoments.before}:${openMoments.bar}:${page}:${activeMoment}:${advancedRow}:${itemPage}:${geometryItems}`} data-bar-advanced={advancedRow} data-bar-scene-density={sceneDensity}
     onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();if(page!=="summary")go("summary");else props.onCancel();}}}>
     <fieldset className={styles.barEditableBody} disabled={busy} aria-label="Composition de la sortie">
-    {page!=="summary"&&<button type="button" className={styles.barBackArrow} title="Ma sortie" onClick={()=>go("summary")}>←<span className={styles.barVisuallyHidden}> Ma sortie</span></button>}
+    {/* The Bar title is the guarded return to summary; no duplicate navigation row. */}
     {['place','google','manual-place'].includes(page)&&context.fields.placeRef&&<button type="button" aria-label="Retirer le lieu de la sortie" disabled={busy} onClick={()=>{const clear=()=>decide({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{placeRef:null,venueDecision:null}}});if(!guard(clear))return;if(barVenueAdaptations(context).length)confirm({message:'Retirer uniquement le lieu ? Les trajets et leurs coûts restent conservés.',acceptLabel:'Retirer uniquement le lieu',accept:clear});else clear();}}>Retirer le lieu</button>}
     {amountHost?createPortal(amountControls,amountHost):amountControls}
     {!detailed&&<div className={styles.barConsumptionMode}><button type="button" disabled={busy} onClick={revealDetails}>Détailler les consommations</button></div>}
