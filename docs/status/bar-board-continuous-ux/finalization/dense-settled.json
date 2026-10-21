@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "width": 1152,
+      "height": 720,
+      "count": 54,
+      "overlaps": 0,
+      "pagination": false,
+      "overflow": false
+    },
+    {
+      "count": 54,
+      "height": 900,
+      "overflow": false,
+      "overlaps": 0,
+      "pagination": false,
+      "width": 1440
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "count": 54,
+      "overlaps": 0,
+      "pagination": false,
+      "overflow": false
+    }
+  ],
+  "note": "Measurements after resize transitions; immediate transitional samples preserved separately."
+}

@@ -1,5 +1,7 @@
 # Réception — Bar simplifié et Board horizontal
 
+> Historique de la première tranche. La [finalisation du 21 octobre](finalization.md) décrit le produit final `b33a66e`, les preuves supplémentaires et les réserves de livraison.
+
 ## Références et périmètre
 
 - Base : PR #79 Draft, commit `db5494bb8c2e7d03d7347ab36fd7979577704a34` (produit `9fd388381c4ee65d2cb1648ac36baaf6410dcb8a`).

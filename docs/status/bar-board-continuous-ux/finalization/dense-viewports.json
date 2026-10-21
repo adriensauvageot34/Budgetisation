@@ -1,0 +1,32 @@
+[
+  {
+    "boardWidth": 818,
+    "count": 54,
+    "documentOverflow": false,
+    "h": 720,
+    "overlaps": 3,
+    "pagination": false,
+    "scrollWidth": 8500,
+    "w": 1152
+  },
+  {
+    "boardWidth": 1106,
+    "count": 54,
+    "documentOverflow": false,
+    "h": 900,
+    "overlaps": 50,
+    "pagination": false,
+    "scrollWidth": 7069,
+    "w": 1440
+  },
+  {
+    "boardWidth": 1586,
+    "count": 54,
+    "documentOverflow": false,
+    "h": 1080,
+    "overlaps": 2,
+    "pagination": false,
+    "scrollWidth": 4361,
+    "w": 1920
+  }
+]
