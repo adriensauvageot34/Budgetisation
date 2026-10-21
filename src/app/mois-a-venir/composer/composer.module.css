@@ -1600,8 +1600,6 @@
 @media (max-height:780px) {
   .barLivingCard[data-expanded=true] .barItemSection>header { min-height:18px; margin-bottom:2px; }
   .barLivingEditor[data-bar-progressive] .barLivingSections { gap:4px; }
-}
-@media (max-height:780px) and (max-width:1200px) {
   .barLivingCard[data-expanded=true] { --bar-open-tile-height:clamp(58px,calc((var(--bar-shelf-height,520px) - 220px - var(--bar-route-space))/2),110px); }
   .barLivingCard[data-expanded=true] .barLivingHeader { padding-block:3px; }
   .barLivingCard[data-expanded=true] .barLivingIdentity { padding-block:2px; gap:0; }
