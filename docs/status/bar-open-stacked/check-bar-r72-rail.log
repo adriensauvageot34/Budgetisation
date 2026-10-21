@@ -1,0 +1,2 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+{"checks":7,"status":"PASS","level":"REACT_HANDLERS_ONLY_NOT_NATIVE_DND","remoteWrites":0}
