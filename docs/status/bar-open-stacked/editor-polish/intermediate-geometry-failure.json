@@ -1,0 +1,11 @@
+{
+  "sha": "e9910c224b26c64a246e9506e894c7c3f944618d",
+  "environment": "authenticated Vercel Preview / synthetic memory-only Board",
+  "viewport": [1440, 900],
+  "tileWidth": 144,
+  "stepperButtonWidth": 40,
+  "priceInputWidth": 15.8625,
+  "verdict": "FAIL_PRICE_PLACEHOLDER_CLIPPED",
+  "cause": "Inherited workshopStepper button flex-basis and min-height remained 40px. Local width/height alone did not override them.",
+  "fix": "Local flex-basis 20px and min-height 24px; no owner or financial change."
+}

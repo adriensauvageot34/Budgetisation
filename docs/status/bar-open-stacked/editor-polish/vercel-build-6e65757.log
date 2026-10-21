@@ -1,0 +1,100 @@
+2026-10-21T22:05:10.193Z Running build in Washington, D.C., USA (East) – iad1
+2026-10-21T22:05:10.194Z Build machine configuration: 2 cores, 8 GB
+2026-10-21T22:05:10.332Z Cloning github.com/adriensauvageot34/Budgetisation (Branch: codex/bar-open-stacked-dock, Commit: 6e65757)
+2026-10-21T22:05:14.565Z Cloning completed: 4.233s
+2026-10-21T22:05:14.670Z Found .vercelignore
+2026-10-21T22:05:14.690Z Removed 28 ignored files defined in .vercelignore
+2026-10-21T22:05:14.690Z   /.env.example
+2026-10-21T22:05:14.690Z   /.git/config
+2026-10-21T22:05:14.690Z   /.git/description
+2026-10-21T22:05:14.690Z   /.git/FETCH_HEAD
+2026-10-21T22:05:14.690Z   /.git/HEAD
+2026-10-21T22:05:14.690Z   /.git/hooks/applypatch-msg.sample
+2026-10-21T22:05:14.690Z   /.git/hooks/commit-msg.sample
+2026-10-21T22:05:14.690Z   /.git/hooks/fsmonitor-watchman.sample
+2026-10-21T22:05:14.690Z   /.git/hooks/post-update.sample
+2026-10-21T22:05:14.690Z   /.git/hooks/pre-applypatch.sample
+2026-10-21T22:05:14.759Z Restored build cache from previous deployment (CUMkkdfzVYXoKnTLeEz82Eb3dkJW)
+2026-10-21T22:05:15.080Z Running "vercel build"
+2026-10-21T22:05:15.087Z Vercel CLI 64.7.0
+2026-10-21T22:05:15.503Z Installing dependencies...
+2026-10-21T22:05:15.932Z npm warn Unknown env config "cache-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+2026-10-21T22:05:16.134Z 
+2026-10-21T22:05:16.134Z up to date in 525ms
+2026-10-21T22:05:16.135Z 
+2026-10-21T22:05:16.135Z 23 packages are looking for funding
+2026-10-21T22:05:16.135Z   run `npm fund` for details
+2026-10-21T22:05:16.136Z npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
+2026-10-21T22:05:16.136Z npm warn install-scripts   sharp@0.34.5 (install: node install/check.js || npm run build)
+2026-10-21T22:05:16.136Z npm warn install-scripts
+2026-10-21T22:05:16.136Z npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+2026-10-21T22:05:16.157Z Detected Next.js version: 16.2.6
+2026-10-21T22:05:16.160Z Running "npm run build"
+2026-10-21T22:05:16.236Z npm warn Unknown env config "cache-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+2026-10-21T22:05:16.248Z 
+2026-10-21T22:05:16.248Z > budgetisation@0.1.0 build
+2026-10-21T22:05:16.248Z > next build
+2026-10-21T22:05:16.248Z 
+2026-10-21T22:05:16.765Z   Applying modifyConfig from Vercel
+2026-10-21T22:05:16.867Z ▲ Next.js 16.2.6 (Turbopack)
+2026-10-21T22:05:16.869Z 
+2026-10-21T22:05:16.897Z   Creating an optimized production build ...
+2026-10-21T22:05:43.973Z ✓ Compiled successfully in 26.9s
+2026-10-21T22:05:43.975Z   Running TypeScript ...
+2026-10-21T22:06:15.324Z   Finished TypeScript in 31.3s ...
+2026-10-21T22:06:15.333Z   Collecting page data using 1 worker ...
+2026-10-21T22:06:16.492Z   Generating static pages using 1 worker (0/8) ...
+2026-10-21T22:06:16.804Z   Generating static pages using 1 worker (2/8) 
+2026-10-21T22:06:16.804Z   Generating static pages using 1 worker (4/8) 
+2026-10-21T22:06:16.805Z   Generating static pages using 1 worker (6/8) 
+2026-10-21T22:06:16.805Z ✓ Generating static pages using 1 worker (8/8) in 312ms
+2026-10-21T22:06:16.859Z   Running onBuildComplete from Vercel
+2026-10-21T22:06:17.031Z 
+2026-10-21T22:06:17.034Z Route (app)
+2026-10-21T22:06:17.034Z ┌ ƒ /
+2026-10-21T22:06:17.034Z ├ ○ /_not-found
+2026-10-21T22:06:17.034Z ├ ○ /acces-refuse
+2026-10-21T22:06:17.034Z ├ ○ /analyse
+2026-10-21T22:06:17.035Z ├ ƒ /analyse-globale
+2026-10-21T22:06:17.035Z ├ ƒ /api/composer/activity-history
+2026-10-21T22:06:17.035Z ├ ƒ /api/composer/drafts
+2026-10-21T22:06:17.035Z ├ ƒ /api/composer/historical-basis
+2026-10-21T22:06:17.035Z ├ ƒ /api/composer/preview
+2026-10-21T22:06:17.036Z ├ ƒ /api/cron/composer-history
+2026-10-21T22:06:17.036Z ├ ƒ /api/global-v2/query
+2026-10-21T22:06:17.036Z ├ ƒ /api/persona-portrait/[name]
+2026-10-21T22:06:17.036Z ├ ƒ /api/places/autocomplete
+2026-10-21T22:06:17.036Z ├ ƒ /api/places/details
+2026-10-21T22:06:17.036Z ├ ƒ /api/places/personal
+2026-10-21T22:06:17.036Z ├ ƒ /api/places/photo
+2026-10-21T22:06:17.036Z ├ ƒ /api/query
+2026-10-21T22:06:17.037Z ├ ƒ /api/recette/bar-favoris
+2026-10-21T22:06:17.037Z ├ ƒ /categorie/[slug]
+2026-10-21T22:06:17.037Z ├ ƒ /connexion
+2026-10-21T22:06:17.037Z ├ ƒ /diagnostic
+2026-10-21T22:06:17.037Z ├ ƒ /historique
+2026-10-21T22:06:17.037Z ├ ƒ /historique/[month]
+2026-10-21T22:06:17.037Z ├ ƒ /historique/analyse/global
+2026-10-21T22:06:17.037Z ├ ○ /imports
+2026-10-21T22:06:17.038Z ├ ○ /mentions-places
+2026-10-21T22:06:17.038Z ├ ƒ /mois-a-venir
+2026-10-21T22:06:17.038Z ├ ƒ /mois-a-venir/composer
+2026-10-21T22:06:17.038Z ├ ƒ /mois-a-venir/composer/preparer-historique
+2026-10-21T22:06:17.038Z ├ ƒ /mois-a-venir/composer/preparer-socle
+2026-10-21T22:06:17.038Z ├ ƒ /operations
+2026-10-21T22:06:17.038Z ├ ○ /parametres
+2026-10-21T22:06:17.038Z └ ƒ /recette/bar-favoris
+2026-10-21T22:06:17.038Z 
+2026-10-21T22:06:17.039Z 
+2026-10-21T22:06:17.039Z ƒ Proxy (Middleware)
+2026-10-21T22:06:17.039Z 
+2026-10-21T22:06:17.039Z ○  (Static)   prerendered as static content
+2026-10-21T22:06:17.039Z ƒ  (Dynamic)  server-rendered on demand
+2026-10-21T22:06:17.039Z 
+2026-10-21T22:06:17.432Z Build Completed in .vercel/build-output [1m]
+2026-10-21T22:06:17.448Z Deploying outputs...
+2026-10-21T22:06:24.541Z Deployment completed
+2026-10-21T22:06:24.558Z Creating build cache...
+2026-10-21T22:06:33.097Z Created build cache: 9s
+2026-10-21T22:06:33.097Z Uploading build cache [172.40 MB]
+2026-10-21T22:06:35.354Z Build cache uploaded: 2.257s

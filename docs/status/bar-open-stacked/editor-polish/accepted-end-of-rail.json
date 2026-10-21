@@ -1,0 +1,26 @@
+[
+  {
+    "label": "Réduire la quantité",
+    "ok": true
+  },
+  {
+    "label": "Quantité de lots",
+    "ok": true
+  },
+  {
+    "label": "Augmenter la quantité",
+    "ok": true
+  },
+  {
+    "label": "Prix par lot (€)",
+    "ok": true
+  },
+  {
+    "label": "Options de Planche",
+    "ok": true
+  },
+  {
+    "label": "Retirer ce poste",
+    "ok": true
+  }
+]
