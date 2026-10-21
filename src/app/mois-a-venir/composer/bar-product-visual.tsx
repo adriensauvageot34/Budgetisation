@@ -14,8 +14,9 @@ export function BarProductVisual({assetKey,label="",child=false,closed=false,doc
   // Other assets keep their original resources unchanged.
   const objectKey=(key&&({beer:'beer',vodka:'vodka',rum:'rum',wine:'wine',cocktail:'cocktail',soft:'soft',mixer:'soft',water:'water',shot:'shot',crazy_tiger:'energy',shared:'shared',snack:'snack',chips:'chips',tapas:'tapas'} as Record<string,string>)[key])
     ??(!key&&/bouteille/iu.test(label)?'shared':undefined);
-  const source=objectKey?`bar-compact/${objectKey}`:key==='taxi'?'transport/taxi-r8':key==='home'?'home/house-r8':dockImage??compactImage??image;
+  const transport=!closed&&key?({car:'car',train:'train',bus:'bus',free:'walking',taxi:'taxi'} as Record<string,string>)[key]:undefined;
+  const source=objectKey?`bar-compact/${objectKey}`:transport?`transport/${transport}-compact`:key==='taxi'?'transport/taxi-r8':key==='home'?'home/house-r8':!closed&&key==='food'?'bar-compact/tapas':dockImage??compactImage??image;
   const Icon=child?Ticket:key==="car"?Car:key==="train"?Train:key==="bus"?Bus:key==="free"?Footprints:key==="taxi"?CarTaxiFront:key==="place"?MapPin:key==="cocktail"?Martini:key==="tapas"||key==="food"?Utensils:key==="snack"||key==="chips"?Cookie:key==="beer"||key==="drinks"?Beer:key==="wine"?Wine:key==="soft"||key==="water"?GlassWater:/bouteille/iu.test(label)?Amphora:Package;
   const showImage=source&&failedImage!==source;
-  return <span className={styles.barProductSymbol} data-bar-visual={showImage?"clay":"functional-icon"} data-object-art={!!objectKey||undefined} data-panoramic-art={dock&&!objectKey&&!!source&&!source.startsWith("r7/")||undefined} aria-hidden="true">{showImage?<img src={`/planned-visuals/builder/clay/${source}.${source?.endsWith('-r8')?'png':'webp'}`} alt="" width={48} height={40} draggable={false} onError={()=>setFailedImage(source)}/>:<Icon size={30} strokeWidth={1.7}/>}</span>;
+  return <span className={styles.barProductSymbol} data-bar-visual={showImage?"clay":"functional-icon"} data-object-art={!!objectKey||undefined} aria-hidden="true">{showImage?<img src={`/planned-visuals/builder/clay/${source}.${source?.endsWith('-r8')||source?.endsWith('-compact')?'png':'webp'}`} alt="" width={48} height={40} draggable={false} onError={()=>setFailedImage(source)}/>:<Icon size={30} strokeWidth={1.7}/>}</span>;
 }

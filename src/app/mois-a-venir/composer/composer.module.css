@@ -1609,3 +1609,41 @@
   .barLivingEditor[data-bar-progressive]>.barEditableBody>.barLivingMetadata { padding-bottom:2px; }
   .barLivingEditor[data-bar-progressive] .barLivingMetadata button { padding:2px 6px; }
 }
+
+/* Bar finishing: intrinsic rails and metadata in their existing card anchors. */
+.barCompositionDock>header:empty { display:none; }
+.barCompositionDock>header { min-height:0; padding-block:0; }
+.barCompositionDock .barFamiliesBack { font-size:10px; padding:2px 5px; }
+.barCompositionDock .paletteOptions { width:100%; padding:0; gap:8px; box-shadow:none; scroll-padding-inline:0; }
+.barCompositionDock .paletteOptions[data-overflow-after=true] { box-shadow:none; }
+.barCompositionDock .questionAnswer,.barCompositionDock .questionAnswer:has(small),
+.barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .questionAnswer { flex:0 0 var(--bar-dock-tile,156px); min-width:0; max-width:none; box-sizing:border-box; }
+.barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .paletteOptions { padding:0; gap:8px; }
+.barCompositionDock .barProductSymbol,.barCompositionDock .barProductSymbol[data-panoramic-art=true] { overflow:visible; }
+.barCompositionDock .barProductSymbol img,.barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .barProductSymbol[data-panoramic-art=true] img { object-fit:contain; object-position:center; mix-blend-mode:normal; }
+.barCompositionDock[data-dock-nature=MODES] .barProductSymbol { flex-basis:54px; width:54px; height:44px; }
+.barCompositionDock[data-dock-nature=MODES] .barProductSymbol img { width:54px; height:44px; }
+.barLivingCard[data-expanded=true] .barLivingHeader { border-bottom:0; gap:8px; align-items:flex-start; }
+.barLivingCard[data-expanded=true] .barLivingIdentity { flex:1 1 48%; max-width:none; min-width:0; }
+.barLivingCard[data-expanded=true] .barLivingTools { flex:0 1 48%; min-width:0; max-width:52%; flex-direction:column; align-items:flex-end; gap:3px; }
+.barLivingCard[data-expanded=true] .barMissingPlace { display:inline-flex; padding:1px 3px; margin-left:4px; }
+.barHeaderRoutes { display:flex; flex-direction:column; align-items:flex-end; gap:3px; width:100%; min-width:0; }
+.barLivingTools .barHeaderRoutes>button { display:flex; align-items:center; gap:4px; width:auto; height:auto; max-width:100%; min-width:0; padding:3px 5px; border:1px solid #e6d5ba; border-radius:8px; color:#675034; background:#fff9eddd; font-size:10px; line-height:14px; text-align:left; }
+.barHeaderRoutes .barRouteBadge>span { min-width:0; white-space:normal; overflow-wrap:anywhere; }
+.barRouteBadge>svg { flex:none; }
+.barLivingCard[data-expanded=true] { --bar-route-space:0px; }
+.barLivingCard[data-expanded=true] .barLivingEditor { padding-top:0; }
+.barLivingCard[data-expanded=true]>.barClosedPeopleReserve { position:static; display:flex; align-items:center; justify-content:flex-end; gap:3px; margin-top:auto; padding:3px 10px; min-height:25px; flex:none; }
+.barLivingCard[data-expanded=true]>.barClosedPeopleReserve>[data-context-actions] { width:22px; height:22px; padding:3px; }
+.barLivingCard[data-expanded=true]:has(>.barClosedPeopleReserve) .barMomentRail { padding:3px; }
+.barLivingCard[data-expanded=true] .barMomentRail>:is(.barActiveTile,.barEconomicTile) { flex:0 0 var(--bar-rail-tile,144px); width:var(--bar-rail-tile,144px); min-width:0; max-width:none; box-sizing:border-box; }
+.barLivingCard[data-expanded=true] .barMomentRail { box-shadow:none; background:transparent; }
+.barLivingEditor .barBackArrow { align-self:flex-start; width:22px; min-height:18px; padding:0; border:0; background:transparent; }
+.barLivingCard[data-expanded=true] .barActiveTile>.barGroup>button:first-child { height:calc(var(--bar-open-tile-height) - 30px); min-height:25px; }
+.barLivingCard[data-expanded=true] .barActiveTile .barCompactFace { grid-template-columns:minmax(0,1fr) 36px; grid-template-rows:minmax(0,1fr); }
+.barLivingCard[data-expanded=true] .barActiveTile .barOpenTileVisual { overflow:hidden; }
+.barLivingCard[data-expanded=true] .barActiveTile .barOpenTileVisual .barProductSymbol,
+.barLivingCard[data-expanded=true] .barActiveTile .barOpenTileVisual .barProductSymbol img { width:36px; height:100%; max-width:100%; max-height:36px; object-fit:contain; object-position:center; }
+.barRowActions:empty { display:none; }
+.barLivingCard[data-expanded=true] .barItemSection>header { min-height:18px; margin-bottom:2px; }
+.barLivingEditor[data-bar-progressive] .barLivingSections { gap:4px; }

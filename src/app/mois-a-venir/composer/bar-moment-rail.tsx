@@ -1,5 +1,5 @@
 "use client";
-import {Children,useRef,type ReactNode,type DragEvent} from 'react';
+import {Children,useRef,useLayoutEffect,type ReactNode,type DragEvent} from 'react';
 import type {ComposerUiModel,ComposerDragSource} from '@/domain/phase2/planner/composer-ui-contract';
 import {useComposerInteractions,publishedDrop,leftSurface} from './interactions';
 import styles from './composer.module.css';
@@ -7,6 +7,15 @@ import styles from './composer.module.css';
 export function BarMomentRail({label,children,add,addLabel,disabled=false,dropBlocked=false,model,owner,slot,showAdd=true}:{label:string;children?:ReactNode;add:()=>void;addLabel:string;disabled?:boolean;dropBlocked?:boolean;model?:ComposerUiModel;owner?:string;slot?:string;showAdd?:boolean}){
  const ref=useRef<HTMLDivElement>(null),interaction=useComposerInteractions();
  const count=Children.count(children);
+ useLayoutEffect(()=>{
+   const node=ref.current;if(!node)return;
+   const size=()=>{
+     const gap=6,width=node.clientWidth-6,total=count*144+(showAdd?48:0)+Math.max(0,count+(showAdd?1:0)-1)*gap;
+     const columns=Math.max(1,Math.floor((width-24)/150));
+     node.style.setProperty('--bar-rail-tile',`${total<=width?144:Math.max(90,(width-24-columns*gap)/columns)}px`);
+   };
+   size();const observer=new ResizeObserver(size);observer.observe(node);return()=>observer.disconnect();
+ },[count,showAdd]);
  const target=owner&&slot?{kind:'CONTEXT_SOCKET' as const,contextOccurrenceId:owner,slotKey:slot}:null;
  const allowed=(source:ComposerDragSource|null)=>!!(!disabled&&!dropBlocked&&target&&model&&source&&!source.protected&&publishedDrop(model,source.assetKey,target));
  const compatible=allowed(interaction?.grabbed??null);

@@ -150,11 +150,11 @@ try{
    if(basis==='PERSON')Object.assign(selected,{quantity:'4',quantityEvidenceVersion:'component-quantity@v1',quantityPerPerson:'2',pricedParticipantCount:2});
    await mount(scene);await click(nodes(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Nom personnalisé ·'))[0].props['aria-label']);
    assert.equal(nodes(n=>n.props['data-bar-item-details']!==undefined).length,0);assert.equal(nodes(n=>n.props['data-workshop-component']!==undefined).length,0);
-   assert(button('Retirer ce poste'));assert(button('Options de Nom personnalisé'));
+   assert(button('Retirer ce poste'));assert(button('Unité, financement et nom'));assert.equal(nodes(n=>n.props['data-bar-active-tile']===true)[0].findAll(n=>n.type==='button'&&['Options','Retirer ce poste'].includes(text(n))).length,0);
    const old=structuredClone(parent().slotSelections.extras.items[0]);await click('Augmenter la quantité');
    const changed=parent().slotSelections.extras.items[0];assert.deepEqual(changed.cost,old.cost);assert.deepEqual(changed.fundingAllocations,old.fundingAllocations);assert.equal(changed.selectionId,old.selectionId);assert.equal(changed.label,old.label);assert.equal(changed.unitBasis,basis);
    if(basis==='PERSON'){assert.equal(changed.quantityPerPerson,'3');assert.equal(changed.pricedParticipantCount,2);assert.equal(changed.quantity,'6');}
-   await click('Options de Nom personnalisé');const advanced=nodes(n=>n.props['data-workshop-component']!==undefined)[0];assert(advanced);assert.equal(nodes(n=>n.props['data-bar-active-tile']===true)[0].findAll(n=>n.props['data-workshop-component']!==undefined).length,0,'advanced form is outside rail');
+   await click('Unité, financement et nom');const advanced=nodes(n=>n.props['data-workshop-component']!==undefined)[0];assert(advanced);assert.equal(nodes(n=>n.props['data-bar-active-tile']===true)[0].findAll(n=>n.props['data-workshop-component']!==undefined).length,0,'advanced form is outside rail');
    const advancedRow=advanced.findAll(n=>n.type==='input')[0];assert(advancedRow);await act(async()=>advancedRow.props.onChange({target:{value:'7,50'}}));await click('Conserver ce poste');
    const priced=parent().slotSelections.extras.items[0];assert.deepEqual(priced.cost,{kind:'MANUAL',unitAmount:'7.50'});assert.deepEqual(priced.fundingAllocations,old.fundingAllocations);assert.equal(priced.label,old.label);
    checks.push(`COMPACT_${basis}_QUOTE_FUNDING_PARTIAL_EDIT_AND_CONTEXTUAL_OPTIONS`);
@@ -168,6 +168,12 @@ try{
    await act(async()=>nodes(n=>n.props['data-bar-closed-place']!==undefined)[0].props.onClick());assert.equal(targets.at(-1),'place');await act(async()=>root.unmount());
  }
  await act(async()=>{root=create(React.createElement(BarMetadata,{fields:parent().fields,model,editing:true,open(){}}));});assert.equal(nodes(n=>n.type==='button').length,0);checks.push('SHARED_HEADER_LONG_PLACE_DATE_PEOPLE_AND_NO_REDUNDANT_METADATA');
+ await act(async()=>root.unmount());const {BarRouteLine}=require('@/app/mois-a-venir/composer/bar-living-details');const {mobilityIntentId}=require('@/domain/phase2/planner/identity');
+ const ref={kind:'KNOWN',placeId:fixture.world.mobilityFacts.places[0].placeId};
+ const line={kind:'MOBILITY_INTENT',selectionId:uuid(99701),optionKey:'car',provenance:'EXPLICIT_USER_DECISION',origin:ref,destination:{kind:'TEXT',label:'Le Boom Boom'},route:{vehicleRef:{vehicleId:uuid(9150),labelAtSelection:'Véhicule conservé',provenance:'EXPLICIT_USER_DECISION'},stops:[]}};
+ const copy=structuredClone(line);const routeModel={...model,mobilityOptions:{...model.mobilityOptions,places:fixture.world.mobilityFacts.places},mobilitySummaries:[{contextOccurrenceId:id,ownerIntentId:mobilityIntentId(id,'outbound'),economicFuel:'0.68',status:'PARTIAL',fallbacks:['TOLL_UNAVAILABLE']}]};
+ await act(async()=>{root=create(React.createElement(BarRouteLine,{compact:true,slot:'outbound',leg:line,model:routeModel,contextId:id,open(){}}));});
+ assert.match(text(root.toJSON()),/Aller.*Voiture.*Domicile.*Le Boom Boom.*0,68.*usage partiel/);assert.equal(nodes(n=>n.type==='details').length,0);assert.equal(nodes(n=>n.props['data-bar-vehicle-capsule']!==undefined).length,0);assert.match(nodes(n=>n.type==='button')[0].props.title,/achat de carburant/);assert.deepEqual(line,copy);checks.push('COMPACT_ROUTE_PARTIAL_NO_VEHICLE_DUPLICATE_NO_DECISION_MUTATION');
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  console.log(JSON.stringify({status:'PASS',checks,level:'REACT_REAL_OWNERS_PGLITE_SYNTHETIC_NOT_NATIVE_OR_AUTH',remoteWrites:0}));
 }finally{if(root)await act(async()=>root.unmount());await pg.close();}

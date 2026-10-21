@@ -107,6 +107,15 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   const scrollRail=(left:number)=>options.current?.scrollBy({left,behavior:typeof window!=="undefined"&&window.matchMedia?.("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
   const measureScroll = () => {
     const node = options.current;
+    if(node&&appearance==='bar'){
+      // Size real border boxes, reserving a 24px peek only when another tile
+      // exists. No arbitrary overflow threshold or synthetic scroll controls.
+      const gap=8, preferred=productScene?156:170, count=node.children.length;
+      const width=node.clientWidth;
+      const fits=count*preferred+Math.max(0,count-1)*gap<=width;
+      const columns=Math.max(1,Math.floor((width-24)/(preferred+gap)));
+      node.style.setProperty('--bar-dock-tile',`${fits?preferred:Math.max(80,(width-24-columns*gap)/columns)}px`);
+    }
     const next = { before: !!node && node.scrollLeft > 2, after: !!node && node.scrollLeft + node.clientWidth < node.scrollWidth - 2 };
     setScroll(old => old.before === next.before && old.after === next.after ? old : next);
   };
@@ -150,7 +159,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     <header>{productScene?(question.nature==="OBJECTS"&&question.backToFamilies&&<button type="button" className={styles.barFamiliesBack} disabled={busy} onClick={question.backToFamilies}>← Familles</button>):<div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>}
       {search && <><input ref={searchInput} disabled={appearance==="bar"&&busy} aria-label={search.label} placeholder={search.label} value={search.value} onChange={event => search.change(event.target.value)} />
         {appearance==="bar"&&search.value&&<button type="button" className={styles.iconButton} disabled={busy} aria-label="Effacer la recherche des choix" onClick={()=>{search.change("");searchInput.current?.focus({preventScroll:true});}}><X size={16}/></button>}</>}
-      {(appearance!=="bar"||scroll.before||scroll.after)&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
+      {appearance!=="bar"&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
         <button type="button" aria-label="Réponses précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => scrollRail(-300)}><ChevronLeft size={18} /></button>
         <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => scrollRail(300)}><ChevronRight size={18} /></button>
       </div>}</header>
