@@ -1309,7 +1309,7 @@
 .barLivingCard[data-expanded=false][data-drag-armed=true] { cursor:grabbing; }
 .barLivingCard[data-expanded=false]:focus-visible { outline:3px solid #795719; outline-offset:2px; }
 .barLivingCard[data-expanded=false] .barLivingHeader { padding:10px 14px 8px; gap:7px; }
-.barLivingCard[data-expanded=false]::before { height:min(190px,100%); background-size:auto 240px; mask-image:linear-gradient(#000 45%,transparent); }
+.barLivingCard[data-expanded=false]::before { height:min(190px,100%); background-size:auto 240px; mask-image:linear-gradient(to right,transparent 12%,#000 50%),linear-gradient(#000 45%,transparent); mask-composite:intersect; }
 .barLivingCard[data-expanded=false] .barLivingIdentity { flex:0 1 auto; min-width:0; max-width:min(250px,calc(100% - 96px)); }
 .barLivingCard[data-expanded=false] .barLivingIdentity h3 { display:flex; align-items:baseline; min-width:0; margin-right:0; font-size:15px; }
 .barLivingCard[data-expanded=false] h3>button:first-child { flex:none; }
@@ -1329,7 +1329,7 @@
 .barLivingCard[data-expanded=false]:has(.barClosedPeople)::after { content:""; position:absolute; z-index:-2; inset:0 0 12px; border:1px solid #e4cdb0; border-radius:22px; background:linear-gradient(155deg,#fff7e9,#fcf5ec 420px,#fffaf2); box-shadow:0 3px 10px #5e402314; pointer-events:none; }
 .barLivingCard[data-expanded=false]:has(.barClosedPeople)::before { border-radius:22px 22px 0 0; }
 .barLivingCard[data-expanded=false]:has(.barClosedPeople) .barLivingCompact { padding-bottom:0; }
-.barLivingCard .barClosedPeople { display:flex; flex-direction:row; padding:0; background:transparent; border:0; }
+.barLivingCard .barClosedPeople { display:flex; flex-direction:row-reverse; padding:0; background:transparent; border:0; }
 .barClosedPeople>span { display:grid; place-items:center; min-width:27px; height:27px; padding:0 3px; box-sizing:border-box; margin-left:-5px; border:2px solid #fffaf1; border-radius:50%; background:#e9dcc7; color:#634b31; font-size:10px; box-shadow:0 2px 3px #61400c15; }
 .barLivingCompact>section { grid-column:1 / -1; }
 .barLivingCompact .barLivingMetadata { gap:5px; }
