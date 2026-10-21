@@ -23,25 +23,25 @@ function groupPresentation(group:Group,model:ComposerUiModel,owner:string,slot:s
 }
 export function BarGroupFace({group,model,owner,slot,closed=false}:{group:Group;model:ComposerUiModel;owner:string;slot:string;closed?:boolean}){
  const {first,component,projection,price,quantity}=groupPresentation(group,model,owner,slot);
+ const asset=component?.productAssetRef?.assetKey.split(':').at(-1);
+ const title=(asset&&({shared:'Bouteille',crazy_tiger:'Crazy',mixer:'Diluant',tapas:'Tapas'} as Record<string,string>)[asset])||component?.label||'Moment lié';
  const badges=<span className={styles.barCompactBadges}><span aria-label={quantity?`Quantité ${quantity}${component?.unitBasis==='SHARED'?' lots partagés':''}`:`${group.items.length} lignes conservées`}>{quantity?`×${quantity}`:`${group.items.length} lignes`}</span>
-   <span data-price-unknown={price==='? €'} title={price==='? €'?'Prix à préciser':price} aria-label={price==='? €'?'Prix à préciser':projection?.incomplete?`Montant connu partiel ${price}`:price}>{price}</span></span>;
+   <span data-price-unknown={price==='? €'} aria-label={price==='? €'?'Prix à préciser':projection?.incomplete?`Montant connu partiel ${price}`:price}>{price}</span></span>;
  if(closed){
-   const asset=component?.productAssetRef?.assetKey.split(':').at(-1);
-   const title=(asset&&({shared:'Bouteille',crazy_tiger:'Crazy',mixer:'Diluant',tapas:'Tapas'} as Record<string,string>)[asset])||component?.label||'Moment lié';
    return <span className={styles.barClosedFace} data-bar-group-face data-closed-face>
-     <span className={styles.barClosedTileHeading}><strong title={component?.label??title}>{title}</strong>{badges}<span className={styles.barClosedFullLabel} aria-hidden="true">{component?.label??title}</span></span>
+     <span className={styles.barClosedTileHeading}><strong>{title}</strong>{badges}</span>
      <span className={styles.barClosedTileVisual}><BarProductVisual closed assetKey={component?.productAssetRef?.assetKey} label={component?.label}/>
-       {component?.unitBasis==='SHARED'&&<span className={styles.barClosedUnit} role="img" aria-label="Consommation commune (lot)" title="Consommation commune (lot)"><UsersRound size={16} aria-hidden="true"/></span>}
-       {component?.unitBasis==='PERSON'&&<span className={styles.barClosedUnit} role="img" aria-label="Par personne tarifée" title="Par personne tarifée"><UserRound size={16} aria-hidden="true"/></span>}
+       {component?.unitBasis==='SHARED'&&<span className={styles.barClosedUnit} role="img" aria-label="Consommation commune (lot)"><UsersRound size={16} aria-hidden="true"/></span>}
+       {component?.unitBasis==='PERSON'&&<span className={styles.barClosedUnit} role="img" aria-label="Par personne tarifée"><UserRound size={16} aria-hidden="true"/></span>}
        {first.provenance==='PERSONAL_SUGGESTION'&&<small className={styles.barClosedSuggestion}>Suggestion non retenue</small>}
      </span>
    </span>;
  }
  return <span className={styles.barCompactFace} data-bar-group-face>
-   <span className={styles.barOpenTileHeading}><strong title={component?.label}>{component?.label??'Moment lié'}</strong>{badges}</span>
+   <span className={styles.barOpenTileHeading}><strong>{title}</strong>{badges}</span>
    <span className={styles.barOpenTileVisual}><BarProductVisual compact assetKey={component?.productAssetRef?.assetKey} label={component?.label}/>
-     {component?.unitBasis==='SHARED'&&<span className={styles.barOpenUnit} role="img" aria-label="Consommation commune · lot" title="Consommation commune · lot"><UsersRound size={13} aria-hidden="true"/></span>}
-     {component?.unitBasis==='PERSON'&&<span className={styles.barOpenUnit} role="img" aria-label="Par personne tarifée" title="Par personne tarifée"><UserRound size={13} aria-hidden="true"/></span>}
+     {component?.unitBasis==='SHARED'&&<span className={styles.barOpenUnit} role="img" aria-label="Consommation commune · lot"><UsersRound size={13} aria-hidden="true"/></span>}
+     {component?.unitBasis==='PERSON'&&<span className={styles.barOpenUnit} role="img" aria-label="Par personne tarifée"><UserRound size={13} aria-hidden="true"/></span>}
    </span>
    {first.provenance==='PERSONAL_SUGGESTION'&&<small>Suggestion non retenue</small>}
  </span>;
@@ -54,9 +54,9 @@ export function BarComponentGroup({group,model,owner,slot,closed=false,disabled=
  const view=groupPresentation(group,model,owner,slot);
  const details=(close?:()=>void)=><section className={styles.barGroupLines} aria-label="Lignes distinctes du groupe"><p>{group.items.length} postes distincts · modifier séparément</p>{group.items.slice(index*4,(index+1)*4).map((item,i)=><button {...dragProps(item)} data-bar-group-line={item.selectionId} key={item.selectionId} type="button" disabled={disabled} onClick={()=>{close?.();choose(item);}}>{item.kind==='COMPONENT'?item.label:'Moment lié'} n°{index*4+i+1}<small>{item.kind==='COMPONENT'&&item.cost.kind==='MANUAL'?`${money(item.cost.unitAmount)} / ${item.unitBasis==='SHARED'?'lot':'unité'}`:'Prix à préciser'}</small></button>)}<BarPageControls index={index} count={Math.ceil(group.items.length/4)} onChange={setPage} label="Lignes du groupe"/></section>;
  const groupedClosed=closed&&group.items.length>1&&!disabled;
- return <div className={styles.barGroup} data-bar-group data-bar-group-lines={group.items.length} data-wide-label={closed&&(view.price.length>11||(view.component?.label.length??0)>24)||undefined}>
+ return <div className={styles.barGroup} title="" data-bar-group data-bar-group-lines={group.items.length} data-wide-label={closed&&(view.price.length>11||(view.component?.label.length??0)>24)||undefined}>
    {groupedClosed?<AtomicPopover label={`${view.component?.label??'Consommations'} · ${group.items.length} postes distincts · ${view.price}`} state="group" focus={()=>{}} icon={<BarGroupFace closed group={group} model={model} owner={owner} slot={slot}/>}>{close=>details(close)}</AtomicPopover>:
-     <button type="button" {...(group.items.length===1?dragProps(group.items[0]):{})} disabled={disabled} title={view.component?.label} aria-label={`${view.component?.label??'Moment lié'} · ${view.quantity?`Quantité ${view.quantity}`:`${group.items.length} lignes`} · ${view.price==='? €'?'Prix à préciser':view.price}`} aria-expanded={group.items.length>1?expanded:!!children} onClick={()=>group.items.length===1?choose(group.items[0]):setExpanded(v=>!v)}><BarGroupFace closed={closed} group={group} model={model} owner={owner} slot={slot}/></button>}
+     <button type="button" {...(group.items.length===1?dragProps(group.items[0]):{})} disabled={disabled} aria-label={`${view.component?.label??'Moment lié'} · ${view.quantity?`Quantité ${view.quantity}`:`${group.items.length} lignes`} · ${view.price==='? €'?'Prix à préciser':view.price}`} aria-expanded={group.items.length>1?expanded:!!children} onClick={()=>group.items.length===1?choose(group.items[0]):setExpanded(v=>!v)}><BarGroupFace closed={closed} group={group} model={model} owner={owner} slot={slot}/></button>}
 
    {expanded&&group.items.length>1&&details()}
 

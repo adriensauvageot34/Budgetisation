@@ -31,20 +31,22 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const measuredItems=useMemo(()=>projected.map(item=>compactBarHeights[item.id]&&item.id!==expandedId?{...item,height:compactBarHeights[item.id]}:item),[projected,compactBarHeights,expandedId]);
   const items = dragging ? stableItems.current : measuredItems, layoutSize = dragging ? stableSize.current : size;
   const spatialKey = inventorySpatialKey(items);
-  const expandedHeight = dragging ? stableExpandedHeight.current : expandedMeasure && expandedMeasure.id === expandedId ? expandedMeasure.height : undefined;
+  // The existing shelf observer is the only height budget. Never enlarge it
+  // to fit a card: normal scenes compact; exceptional tasks scroll locally.
+  const shelfHeight=Math.max(195,Math.floor((layoutSize.height+5)/10)*10-5);
+  const expandedHeight = dragging ? stableExpandedHeight.current : expandedId ? Math.min(shelfHeight,expandedMeasure?.id===expandedId?expandedMeasure.height:520) : undefined;
   const previousGeometry=useRef<readonly (readonly InventoryPlacement[])[]>([]), activeAnchor=useRef<InventoryAnchor|undefined>(undefined);
-  const closedGeometry=useRef<readonly InventoryPlacement[]>([]);
   const originPage=previousGeometry.current.findIndex(p=>p.some(box=>box.item.id===expandedId));
   const origin=previousGeometry.current[originPage]?.find(box=>box.item.id===expandedId);
   // At explicit opening choose a usable local origin if the closed card was
   // near the bottom. Once established, this anchor survives fine edits.
   const anchor=expandedId ? activeAnchor.current?.id===expandedId ? activeAnchor.current
-    : {id:expandedId,page:0,column:origin?.column??1,row:origin?.row??1} : undefined;
+    : {id:expandedId,page:0,column:origin?.column??1,row:1} : undefined;
   const surface=expandedMeasure&&expandedMeasure.id===expandedId?expandedMeasure.surface:undefined;
-  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor,continuous:true,previous:expandedId?closedGeometry.current:undefined}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);
+  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor,continuous:true}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);
   useLayoutEffect(()=>{
     previousGeometry.current=geometry;
-    if(!expandedId){activeAnchor.current=undefined;closedGeometry.current=geometry[0]??[];return;}
+    if(!expandedId){activeAnchor.current=undefined;return;}
     const index=geometry.findIndex(p=>p.some(box=>box.item.id===expandedId)),box=geometry[index]?.find(box=>box.item.id===expandedId);
     if(box)activeAnchor.current={id:expandedId,page:index,column:box.column,row:box.row};
   },[geometry,expandedId]);
@@ -98,9 +100,9 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   },[dragging,expandedId,size.width,projected]);
   useLayoutEffect(() => {
     if (!expandedId || dragging) return;
-    // Measure only the living Bar's rendered content. The grid owns the outer
-    // rectangle. A tall living card also grows the page instead of being cut
-    // by the finite shelf; no overlay or semantic edit.
+    // Measure the living content within the shelf left by the in-flow dock.
+    // Normal moments compact to that budget; longer editing tasks retain
+    // their own transient scroll surface without growing the Composer page.
     const board=viewport.current;if(!board)return;
     const findCard=()=>[...board.querySelectorAll<HTMLElement>("[data-inventory-id]")]
       .find(node=>node.dataset.inventoryId===expandedId)?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="true"]');
@@ -120,7 +122,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       const header = card?.querySelector<HTMLElement>("header");
       if (!editor || !header) return; // Keep the previous geometry while the editor loads.
       const checkpoint=`${editor.dataset.barGeometryKey??editor.dataset.barStep??"summary"}:${Math.round(card!.getBoundingClientRect().width)}`;
-      const height = Math.max(240, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + 2));
+      const height = Math.min(shelfHeight,Math.max(195, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + 2)));
       // Provider results, typing, focus and images do not renegotiate a scene.
       // Retain its envelope until an explicit scene/page transition. Growing
       // contents may reserve more rows for access, but the anchor stays pinned.
@@ -140,7 +142,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     mutations.observe(board, { childList: true, subtree: true, characterData: true, attributes:true, attributeFilter:["data-bar-geometry-key"] });
     observeContent(); measure();
     return () => { resize.disconnect(); mutations.disconnect(); };
-  }, [expandedId, dragging, size.width, spatialKey, active]);
+  }, [expandedId, dragging, size.width, size.height, shelfHeight, spatialKey, active]);
   useLayoutEffect(() => {
     if (!dragging) { setDragOrigin(null); return; }
     const sourceKey = interaction?.grabbed?.sourceKey;
@@ -158,11 +160,10 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       const padding = plateau && getComputedStyle(plateau);
       // The shelf budget is the screen space, not its content-driven minHeight.
       // Otherwise reserving rows enlarges the budget and repeatedly repacks it.
-      const top=node.getBoundingClientRect().top+(node.closest('main')?.scrollTop??0)+window.scrollY;
       const value = { width: Math.max(1, node.clientWidth - (padding ? px(padding.paddingLeft) + px(padding.paddingRight) : 0)),
-        // The dock's appearance must not change the packing rows. Its space is
-        // handled by the surrounding scroll layout, not a second shorter pack.
-        height: Math.max(218,window.innerHeight-top-24-(padding ? px(padding.paddingTop)+px(padding.paddingBottom):0)) };
+        // Flex reserves the dock IN FLOW first. Read only the remaining Board
+        // client box (excluding its horizontal scrollbar), never window guesses.
+        height: Math.max(195,node.clientHeight-(padding ? px(padding.paddingTop)+px(padding.paddingBottom):0)) };
       setSize(old => old.width === value.width && old.height === value.height ? old : value); };
     observe(); const observer = new ResizeObserver(observe); observer.observe(node); return () => observer.disconnect();
   }, []);
@@ -242,15 +243,8 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       firstGeometry=signature;
       board.scrollTo({left:barOpeningScroll(left,cell.offsetWidth,board.clientWidth,board.scrollWidth),behavior:boardScrollBehavior()});
       if(reception.current.enabled)board.dataset.barOpeningFocus=JSON.stringify({pass:stabilising?'stabilised':'initial',target:barOpeningScroll(left,cell.offsetWidth,board.clientWidth,board.scrollWidth),width:cell.offsetWidth,viewport:board.clientWidth});
-      let scrollParent:HTMLElement|null=board.parentElement;
-      while(scrollParent&&!(scrollParent.scrollHeight>scrollParent.clientHeight&&/(auto|scroll)/.test(getComputedStyle(scrollParent).overflowY)))scrollParent=scrollParent.parentElement;
-      const page=scrollParent??document.scrollingElement as HTMLElement|null;
-      if(!page)return;
-      const bounds=scrollParent?scrollParent.getBoundingClientRect():{top:0,bottom:window.innerHeight};
-      const top=cellRect.top-matrix.m42,bottom=top+cell.offsetHeight,available=bounds.bottom-bounds.top;
-      // Tall cards reveal their heading instead of centring an invisible middle.
-      const delta=cell.offsetHeight>available-24?top-bounds.top-12:top<bounds.top+12?top-bounds.top-12:bottom>bounds.bottom-12?bottom-bounds.bottom+12:0;
-      if(Math.abs(delta)>2)page.scrollBy({top:delta,behavior:boardScrollBehavior()});
+      // The card starts on the first shelf row and fits its measured height.
+      // Opening never scrolls the Composer/page vertically to reveal the dock.
     };
     frame=requestAnimationFrame(()=>{secondFrame=requestAnimationFrame(()=>{reveal();settle=setTimeout(()=>reveal(true),420);});});
     return()=>{cancelled=true;cancelAnimationFrame(frame);cancelAnimationFrame(secondFrame);clearTimeout(settle);events.forEach(name=>window.removeEventListener(name,cancel));};
@@ -318,7 +312,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   return <>
     <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-continuous data-board-drop data-board-page-active={active} tabIndex={0} aria-label="Board du mois, défilement horizontal"
       data-bar-page={!!expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id])||undefined}
-      style={expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id]) ? { minHeight: Math.max(expandedHeight??0,...(layouts[active]??[]).map(box=>(box.row-1+box.rowSpan)*10-5))+36 } : undefined} {...dropProps}
+      style={{'--bar-shelf-height':`${shelfHeight}px`} as React.CSSProperties} {...dropProps}
       onKeyDown={event=>{if(event.target!==event.currentTarget||!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();viewport.current?.scrollBy({left:event.key==='ArrowRight'?260:-260,behavior:boardScrollBehavior()});}}
       onDragOverCapture={event=>{if(!interaction?.grabbed||!viewport.current)return;const rect=viewport.current.getBoundingClientRect(),x=event.clientX;
         if(x>rect.right-55)viewport.current.scrollLeft+=26;else if(x<rect.left+55)viewport.current.scrollLeft-=26;}}

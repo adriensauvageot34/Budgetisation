@@ -31,7 +31,8 @@ import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
 import {prospectivePersonIdentity} from "@/domain/phase2/planned-product";
 import {BarPageControls} from "./bar-pages";
 import type {BarViewMemory} from "./bar-view-memory";
-import {Trash2,Undo2,Pencil} from "lucide-react";
+import {MoreHorizontal,Pencil,Trash2} from "lucide-react";
+import {AtomicPopover} from "./atomic-popover";
 import styles from "./composer.module.css";
 import {componentPresentationGroups} from '@/domain/phase2/planner/component-group-presentation';
 import {BarComponentGroup} from './bar-component-group';
@@ -50,10 +51,6 @@ const catalog=[...assetsForModule("bar").filter(asset=>!/(?:parking|entry)$/u.te
   ...assetsForModule("house_party").filter(asset=>["snack","chips"].includes(asset.assetKey.split(":").at(-1)??"")),
   ...assetsForModule("club").filter(asset=>asset.assetKey==="club:food")];
 const beforeCatalog=assetsForModule("house_party");
-function BeforeEditorialArt(){
-  const [failed,setFailed]=useState(false);
-  return failed?null:<img className={styles.barBeforeArt} src="/planned-visuals/builder/clay/moments/before-editorial.webp" width={80} height={48} alt="" aria-hidden="true" draggable={false} onError={()=>setFailed(true)}/>;
-}
 export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number;initialBarView?:BarViewMemory;previewPending?:boolean;onViewChange?:(view:BarViewMemory)=>void}) {
   const {context,model,card,dockHost,onSave,serverError}=props;
   const busy=props.busy||!!card?.readOnly||props.semanticState.preferences.anchors.includes(context.contextOccurrenceId)||props.semanticState.preferences.flexibility[context.contextOccurrenceId]==="PRESERVE";
@@ -156,7 +153,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   useEffect(()=>{if(resume){setResume(null);resume();}},[resume]);
   const editorRoot=useRef<HTMLDivElement>(null);
   useEffect(()=>{setAmountHost(editorRoot.current?.closest('[data-bar-living-card]')?.querySelector<HTMLElement>('[data-bar-open-amount]')??null);},[]);
-  useEffect(()=>{if(page==="quick"){setPage("summary");beginInline();}},[page]);
+  useEffect(()=>{if(page==="quick"){setPage("summary");returnDirect();}},[page]);
   const sceneTrigger=useRef<HTMLElement|null>(null);
   useEffect(()=>{
     const trigger=sceneTrigger.current;sceneTrigger.current=null;
@@ -216,8 +213,16 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(!consumption&&barItems(context,"extras").length)confirm({message:"Conserver les consommations existantes comme détails ? Aucun poste ni financement ne sera remplacé.",acceptLabel:"Conserver les détails",accept:apply});else apply();
   };
   const returnDirect=()=>{if(!guard(resumeDirect))return;
-    const apply=()=>{if(consumption?.directSelectionId)decide(modeOperation("DIRECT"));else beginInline();};
-    if(barItems(context,"extras").some(i=>i.selectionId!==consumption?.directSelectionId))confirm({message:"Revenir au montant direct pour les consommations Au bar ? Leurs détails seront conservés inactifs et restaurables. Before, trajets, repas et contributions restent indépendants.",acceptLabel:"Revenir au montant direct",accept:apply});else apply();
+    if(!detailed){beginInline();return;}
+    const apply=()=>{
+      if(consumption?.directSelectionId){
+        const direct=consumption.inactive.find(i=>i.selectionId===consumption.directSelectionId);
+        if(!decide(modeOperation("DIRECT")))return;
+        setQuickAmount(direct?.kind==="COMPONENT"&&direct.cost.kind==="MANUAL"?direct.cost.unitAmount:"");
+        inlineCommitted.current=false;setInlineEditing(true);
+      }else beginInline();
+    };
+    confirm({message:"Passer au montant direct pour Au bar ? Les prix détaillés des consommations Au bar ne seront plus utilisés pour calculer ce moment. Leurs détails seront conservés pour pouvoir revenir en arrière. Le Before, les trajets et les autres contributions indépendantes restent inchangés.",cancelLabel:"Annuler",acceptLabel:"Passer au montant direct",accept:apply});
   };
   const selectMoment=(target:"before"|"bar")=>{if(!guard(()=>resumeMoment(target)))return;if(target==="bar"&&consumption?.mode==="DIRECT"&&!decide(modeOperation("DETAILED"),"drinks"))return;setOpenMoments(v=>({...v,[target]:true}));move(target==="before"?"before":"drinks");};
   const summary=model?.nightOutSummaries?.find(s=>s.contextOccurrenceId===context.contextOccurrenceId);
@@ -227,7 +232,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       onCompositionStart={()=>{composingAmount.current=true;}} onCompositionEnd={()=>{composingAmount.current=false;}}
       onBlur={()=>{if(dirty)saveInline();else setInlineEditing(false);}}
       onKeyDown={e=>{if(composingAmount.current||e.nativeEvent?.isComposing)return;if(e.key==="Enter"){e.preventDefault();e.stopPropagation();saveInline();}if(e.key==="Escape"){e.preventDefault();e.stopPropagation();inlineCommitted.current=true;setInlineEditing(false);setDirty(false);setQuickAmount("");setError("");}}}/></label>
-      :detailed?<strong data-bar-derived-amount aria-label={summary?.knownAmount==null?"Montant à renseigner":undefined}>{summary?.knownAmount!=null?money(summary.knownAmount)+(summary.costIncomplete?" + ?":""):"… €"}</strong>
+      :detailed?<button type="button" data-bar-derived-amount data-bar-inline-trigger disabled={busy} aria-label="Modifier le montant · proposer un montant direct pour Au bar" onClick={returnDirect}>{summary?.knownAmount!=null?money(summary.knownAmount)+(summary.costIncomplete?" + ?":""):"… €"}</button>
       :<button type="button" data-bar-inline-trigger disabled={busy} aria-label={summary?.knownAmount==null?"Modifier les consommations Au bar · Montant à renseigner":undefined} title="Modifier les consommations Au bar ; Before et trajets restent indépendants" onClick={beginInline}>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"} <Pencil className={styles.barAmountPencil} size={14} aria-hidden="true"/></button>}
   </div>;
   const open=(target:BarTarget)=>{if(!guard(()=>resumeOpen(target)))return;
@@ -269,6 +274,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     }catch(failure){setError((failure as Error).message);}
   };
   const removeBefore=()=>{if(!guard(resumeRemoveBefore)||!before)return;confirm({message:`Retirer le Before et ses ${1+before.extras.length} éléments, ainsi que ses éventuels trajets liés ? Les choix du bar restent conservés. Undo restitue le groupe et ses identités.`,acceptLabel:"Retirer le Before",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},before:null}})});};
+  const beforeSource=before&&model.presentation.dragSources[`context-occurrence:${before.child.contextOccurrenceId}`];
+  const beforeDraggable=!!(!busy&&!beforeLocked&&!dirty&&beforeSource&&!beforeSource.protected&&beforeSource.removeOperation);
   const addShared=(included?:boolean)=>{
     if(!guard(()=>resumeShared(included)))return;
     if(included===undefined&&coveredMain){setPendingShared(true);setPendingAsset(null);move("coverage");return;}
@@ -485,6 +492,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const geometryItems=[...Object.keys(context.slotSelections).flatMap(key=>barItems(context,key).map(item=>`${key}:${item.selectionId}`)),
     ...(before?[before.bottle,...before.extras].map(item=>`before:${item.selectionId}`):[])].sort().join("|");
   return <div ref={editorRoot} className={styles.barLivingEditor} tabIndex={-1} aria-label="Configuration de Bar / Apéro" data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
+    data-bar-task={!['summary','before','drinks'].includes(page)||undefined}
     data-bar-progressive data-bar-geometry-key={`${showMoments}:${openMoments.before}:${openMoments.bar}:${page}:${activeMoment}:${advancedRow}:${itemPage}:${geometryItems}`} data-bar-advanced={advancedRow} data-bar-scene-density={sceneDensity}
     onKeyDown={event=>{if(event.key==="Escape"&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();if(page!=="summary")go("summary");else props.onCancel();}}}>
     <fieldset className={styles.barEditableBody} disabled={busy} aria-label="Composition de la sortie">
@@ -493,11 +501,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       {!barLeg(context,"outbound")&&!barLeg(context,"return")&&<button type="button" data-bar-add-route="outbound" className={styles.barMetaTrip} disabled={busy} onClick={()=>open("outbound")}>+ Trajet</button>}
     </BarMetadata>
     {amountHost?createPortal(amountControls,amountHost):amountControls}
-    <div className={styles.barConsumptionMode}>{!detailed?<button type="button" disabled={busy} onClick={revealDetails}>Détailler les consommations</button>:<button type="button" data-bar-return-direct aria-label="Revenir au montant direct" title="Revenir au montant direct" disabled={busy} onClick={returnDirect}><Undo2 size={12} aria-hidden="true"/>Montant direct</button>}</div>
-    {showMoments&&<nav className={styles.barMoments} aria-label="Moments de consommation">
-      <button type="button" aria-pressed={activeMoment==='before'} onClick={()=>selectMoment('before')}>Before</button>
-      <button type="button" aria-pressed={activeMoment==='bar'} onClick={()=>selectMoment('bar')}>Au bar</button>
-    </nav>}
+    {!detailed&&<div className={styles.barConsumptionMode}><button type="button" disabled={busy} onClick={revealDetails}>Détailler les consommations</button></div>}
     {(page==="summary"||["outbound","return","return-choice","endpoint","endpoint-free","fare","vehicle","route-time"].includes(page))&&<div className={styles.barLivingRoutes} aria-label="Déplacements">
       {(["outbound","return"] as const).map(key=>barLeg(context,key)?<BarRouteLine key={key} slot={key} contextId={context.contextOccurrenceId} leg={barLeg(context,key)} model={model} disabled={busy} pending={props.previewPending} failed={!!serverError} navigate={open} action={action=>routeAction(key,action)} active={direction===key&&["outbound","return","endpoint","fare","vehicle"].includes(page)} open={()=>open(key)}/>:null)}
       {barLeg(context,"outbound")&&!barLeg(context,"return")&&!barLeg(context,"outbound")!.returnRequired&&<button type="button" data-bar-add-route="return" className={styles.barInlineAdd} disabled={busy} onClick={()=>open("return")}>+ Retour</button>}
@@ -506,7 +510,11 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     }
     <div className={styles.barLivingSections} data-scene={page}>
     {before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-before data-bar-section="before" aria-label="Avant de sortir">
-      <header><h4>Before</h4><BeforeEditorialArt/><button type="button" className={styles.barBeforeRemove} aria-label="Retirer le Before" title="Retirer le Before" disabled={busy||beforeLocked} onClick={removeBefore}><Trash2 size={14} aria-hidden="true"/></button></header>
+      <header><h4 draggable={beforeDraggable} data-bar-before-drag={beforeDraggable?beforeSource?.sourceKey:undefined}
+        aria-label="Before · moment entier, déplaçable vers la corbeille" onDragStart={event=>{event.stopPropagation();if(!beforeDraggable||!beforeSource){event.preventDefault();return;}interaction?.start(beforeSource.sourceKey,event);}} onDragEnd={()=>interaction?.end()}>Before</h4>
+        <AtomicPopover utility label="Actions du Before" state="MOMENT" focus={()=>{}} icon={<MoreHorizontal size={14}/>}>
+          {close=><button type="button" disabled={busy||beforeLocked} onClick={()=>{close();removeBefore();}}>Retirer le Before</button>}
+        </AtomicPopover></header>
       {beforeLocked&&<p>Ce Before est protégé. Ses composants restent consultables.</p>}
       <BarMomentRail label="Objets Before" addLabel="Ajouter un objet au Before" disabled={busy||beforeLocked} dropBlocked={dirty} add={()=>selectMoment("before")} model={model} owner={before.child.contextOccurrenceId} slot="extras">{listGroups([before.bottle,...before.extras]).map(group=>{const item=group.items[0];return <div key={group.key} data-bar-before-item={item.selectionId} data-bar-active-tile={page==='row'&&group.items.some(i=>i.selectionId===row.id)} className={page==='row'&&group.items.some(i=>i.selectionId===row.id)?styles.barActiveTile:styles.barEconomicTile}><BarComponentGroup group={group} model={model} owner={before.child.contextOccurrenceId} slot="$before" disabled={busy||beforeLocked} choose={chosen=>chosen.kind==='COMPONENT'&&editComponent(chosen.selectionId===before.bottle.selectionId?'before-main':'before-extras',chosen)}>{page==='row'&&group.items.some(i=>i.selectionId===row.id)&&activeRow}</BarComponentGroup></div>;})}</BarMomentRail>
 
