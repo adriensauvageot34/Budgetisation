@@ -46,9 +46,9 @@ Le correctif rend les points d'entrée indépendants de ces flags transitoires :
 | DETAILED vide | PASS ; actions et dock accessibles sans mutation |
 | DIRECT | PASS ; montage/famille Before sans transition, annulation intacte, acceptation explicite avec montant inactif conservé |
 | Dernier poste supprimé | PASS ; deux entrées accessibles, compteur de racines stable |
-| Undo de suppression | PASS limité snapshot ; identités et commandes restaurées via relecture/remontage |
+| Undo de suppression | PASS snapshot + navigateur local réel ; identités et commandes restaurées, puis deux rails visibles après réouverture |
 | Save/Reload | PASS SQL synthétique ; services et RPC Draft existants, JSON complet identique, cinq Before + un Au bar rendus |
-| Fermer/réouvrir | PASS limité démontage/remontage ; données identiques et deux rails accessibles |
+| Fermer/réouvrir | PASS démontage/remontage + navigateur local réel ; données identiques et deux rails accessibles |
 
 Trois contrôles supplémentaires : carte sans métadonnées (pas de date/lieu inventés), vingt composants existants comparés sémantique/DTO/rendu, choix DETAILED depuis le vide avec dock actif. Les dix contrôles précédents RAW, DIRECT, identité, propriétaires et drag publié restent PASS.
 
@@ -62,6 +62,7 @@ Serveur de fixture existant, port 3222, bundle de production React compilé depu
 - `+ Before` → Boissons → Vodka : enfant créé explicitement, rendu visible.
 - `+ Au bar` → Boissons → Cocktail : composant parent, Before toujours visible.
 - Retour « Ma sortie » : les deux moments sont visibles ensemble.
+- Retrait du dernier Cocktail : `+ Au bar` reste accessible, le Before est inchangé. Undo puis réouverture : Vodka et Cocktail réapparaissent dans leurs moments ; capture `undo-reopened.png`.
 - À 1440×720, scène remplie depuis le vide : main **720/720**, carte **363/363**, dock entièrement visible, bas **699,2 px**.
 - Captures : `empty-open.png`, `empty-dock-visible.png`, `filled-from-empty.png` ; mesures `browser-measures.json`.
 
@@ -73,4 +74,14 @@ Le commit produit `975dadf` est poussé ; première Preview READY : https://budg
 
 La recette authentifiée **existante** `/recette/bar-favoris` est préparée uniquement sur cette branche Preview, pour le compte déjà autorisé (`BAR_GEOMETRY_RECEPTION`, `BAR_GEOMETRY_AUTHOR`). Elle utilise des faits synthétiques en mémoire, aucun Draft distant et Apply interdit. Google live n'est pas activé. Ces paramètres ne sont pas de nouveaux droits RLS et ne concernent pas Production. Les prochains builds de cette branche les prendront en compte.
 
-La réception Preview du build incluant cette configuration et les captures associées sera consignée ici séparément. Aucun PASS navigateur authentifié ou sauvegarde Supabase personnelle ne peut être déduit des tests PGlite.
+### Réception authentifiée exécutée
+
+- Preview **READY** : https://budgetisation-6mw3etu3c-adriensauvageot34-6137s-projects.vercel.app/recette/bar-favoris?r62=empty
+- Déploiement `dpl_BGrkkJrXXjb2rBjvbLry98RtwmyF`, SHA testé **`43044ec6332cf7a60626ed74c8e7fe8ea0ab5dea`**, également vérifié dans `data-bar-product-sha` du DOM. Les fichiers `src` et `scripts` sont identiques au commit produit `975dadf`.
+- Session Budgetisation réelle ; Board explicitement synthétique en mémoire, sans enregistrement distant, favori ni Apply. Aucun parcours personnel n'a été modifié.
+- Carte réellement vide : `+ Before` et `+ Au bar` présents ; `+ Before` ouvre son catalogue Boissons/Restauration. Choix explicite Vodka dans Before, puis Cocktail dans Au bar ; retour « Ma sortie » : les deux rails restent visibles, avec quantités 1 et prix UNKNOWN.
+- Largeur effective **1440**, hauteur **720**. Main client/scroll **720/720** ; dock **546,2 → 699,2 px** entièrement visible. Mesures `preview-measures.json`.
+- Captures intégrales : `preview-empty-open.png`, `preview-empty-dock.png`, `preview-filled-from-empty.png`. Aucun message console warn/error dans la collecte finale bornée (10 entrées maximum).
+- Build Next complet du commit produit : compilation, TypeScript, génération 8/8 pages, déploiement terminé **READY** ; journal `vercel-build-975dadf.log`.
+
+**Verdict du correctif : PASS sur les niveaux exécutés** (23 contrôles ciblés, régressions, navigateur local et Preview authentifiée sur données synthétiques). La sauvegarde/relecture est certifiée ici sur PGlite synthétique uniquement : aucun nouveau PASS de persistance Supabase/JWT n'est revendiqué. L'origine exacte du compteur personnel 17 → 16 reste indéterminée. PR #82 maintenue Draft ; aucune fusion ou promotion Production.

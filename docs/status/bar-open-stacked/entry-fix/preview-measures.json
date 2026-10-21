@@ -1,0 +1,32 @@
+{
+  "dock": [
+    {
+      "bottom": 699.2000122070312,
+      "top": 546.2000122070312
+    }
+  ],
+  "height": 720,
+  "main": [
+    {
+      "clientHeight": 720,
+      "scrollHeight": 720
+    }
+  ],
+  "memoryOnly": true,
+  "sections": [
+    {
+      "bottom": 400.80001068115234,
+      "section": "before",
+      "text": "BeforeActions du BeforeVodka×1? €+",
+      "top": 294.6000061035156
+    },
+    {
+      "bottom": 513.0000228881836,
+      "section": "extras",
+      "text": "Au bar+ AjouterCocktail×1? €+",
+      "top": 406.8000183105469
+    }
+  ],
+  "sha": "43044ec6332cf7a60626ed74c8e7fe8ea0ab5dea",
+  "width": 1440
+}
