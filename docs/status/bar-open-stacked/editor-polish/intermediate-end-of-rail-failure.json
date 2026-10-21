@@ -1,0 +1,197 @@
+{
+  "before": [
+    {
+      "class": "composer-module__XdBSUG__carouselViewport",
+      "client": 818,
+      "scroll": 3115,
+      "x": 365.6000061035156
+    }
+  ],
+  "after": [
+    {
+      "class": "composer-module__XdBSUG__carouselViewport",
+      "client": 818,
+      "scroll": 3115,
+      "x": 365.6000061035156
+    }
+  ],
+  "geometry": {
+    "card": [
+      {
+        "bottom": 508.6000061035156,
+        "height": 295,
+        "left": 675.2000122070312,
+        "right": 1140.4000244140625,
+        "top": 213.6000061035156,
+        "width": 465.2000122070313
+      }
+    ],
+    "dock": [
+      {
+        "bottom": 699.2000122070312,
+        "height": 153,
+        "left": 310.8000183105469,
+        "right": 1127.2000427246094,
+        "top": 546.2000122070312,
+        "width": 816.4000244140625
+      }
+    ],
+    "editor": [
+      {
+        "bottom": 507.8000030517578,
+        "client": 221,
+        "height": 236.40000915527344,
+        "left": 676,
+        "right": 1139.6000061035156,
+        "scroll": 234,
+        "top": 271.3999938964844,
+        "width": 463.6000061035156
+      }
+    ],
+    "inputs": [
+      {
+        "bottom": 477.3000183105469,
+        "height": 24,
+        "label": "Quantité de lots",
+        "left": 992.4000244140624,
+        "right": 1017.4000244140624,
+        "top": 453.3000183105469,
+        "width": 25
+      },
+      {
+        "bottom": 476.3000183105469,
+        "height": 22,
+        "label": "Prix par lot (€)",
+        "left": 1043.2000732421875,
+        "right": 1099.062572479248,
+        "top": 454.3000183105469,
+        "width": 55.86249923706055
+      }
+    ],
+    "main": [
+      {
+        "client": 720,
+        "scroll": 720
+      }
+    ],
+    "rails": [
+      {
+        "bottom": 396.0000228881836,
+        "height": 64.20000457763672,
+        "left": 688,
+        "right": 1112.3999938964844,
+        "scroll": 0,
+        "top": 331.8000183105469,
+        "width": 424.3999938964844
+      },
+      {
+        "bottom": 499.0999984741211,
+        "height": 77.5999984741211,
+        "left": 688,
+        "right": 1112.3999938964844,
+        "scroll": 322.3999938964844,
+        "top": 421.5,
+        "width": 424.3999938964844
+      }
+    ],
+    "sha": "6e657576aaaea5adc5bee43c84a3ced32662b2d9",
+    "tiles": [
+      {
+        "active": "false",
+        "bottom": 393.0000190734863,
+        "height": 58.20000076293945,
+        "left": 691,
+        "right": 835,
+        "top": 334.8000183105469,
+        "width": 144
+      },
+      {
+        "active": "false",
+        "bottom": 482.70000076293945,
+        "height": 58.20000076293945,
+        "left": 368.6000061035156,
+        "right": 512.6000061035156,
+        "top": 424.5,
+        "width": 144
+      },
+      {
+        "active": "false",
+        "bottom": 482.70000076293945,
+        "height": 58.20000076293945,
+        "left": 518.6000366210938,
+        "right": 662.6000366210938,
+        "top": 424.5,
+        "width": 144
+      },
+      {
+        "active": "false",
+        "bottom": 482.70000076293945,
+        "height": 58.20000076293945,
+        "left": 668.6000366210938,
+        "right": 812.6000366210938,
+        "top": 424.5,
+        "width": 144
+      },
+      {
+        "active": "false",
+        "bottom": 482.70000076293945,
+        "height": 58.20000076293945,
+        "left": 818.6000366210938,
+        "right": 962.6000366210938,
+        "top": 424.5,
+        "width": 144
+      },
+      {
+        "active": "true",
+        "bottom": 496.0999984741211,
+        "height": 71.5999984741211,
+        "left": 968.6000366210938,
+        "right": 1112.6000366210938,
+        "top": 424.5,
+        "width": 144
+      }
+    ],
+    "viewport": [
+      1152,
+      720
+    ]
+  },
+  "hitTargets": [
+    {
+      "bottom": 477.3000183105469,
+      "label": "Réduire la quantité",
+      "right": 992.4000244140624,
+      "visibleAtCenter": true
+    },
+    {
+      "bottom": 477.3000183105469,
+      "label": "Quantité de lots",
+      "right": 1017.4000244140624,
+      "visibleAtCenter": true
+    },
+    {
+      "bottom": 477.3000183105469,
+      "label": "Augmenter la quantité",
+      "right": 1037.4000244140625,
+      "visibleAtCenter": true
+    },
+    {
+      "bottom": 476.3000183105469,
+      "label": "Prix par lot (€)",
+      "right": 1099.062572479248,
+      "visibleAtCenter": true
+    },
+    {
+      "bottom": 495.0500183105469,
+      "label": "Options de Planche",
+      "right": 1005.9000244140624,
+      "visibleAtCenter": true
+    },
+    {
+      "bottom": 494.3000183105469,
+      "label": "Retirer ce poste",
+      "right": 1108.800048828125,
+      "visibleAtCenter": false
+    }
+  ]
+}

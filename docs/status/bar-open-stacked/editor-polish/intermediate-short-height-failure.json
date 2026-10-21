@@ -1,0 +1,15 @@
+{
+  "sha": "6c5f474f412fff1db8d9f8f8bd749b5a66a723f8",
+  "viewport": [
+    1440,
+    720
+  ],
+  "editor": {
+    "clientHeight": 236,
+    "scrollHeight": 281,
+    "bottom": 477.7
+  },
+  "extrasBottom": 517,
+  "verdict": "FAIL_EDITOR_OVERFLOW_WITH_METADATA_RESERVE",
+  "correction": "Float expanded avatars; shorten active tile body and local rail headers at short desktop heights."
+}

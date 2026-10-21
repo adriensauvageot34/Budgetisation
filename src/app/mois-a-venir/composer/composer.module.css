@@ -130,6 +130,7 @@
 .searchEmpty { padding:15px 4px; font-size:11px; color:var(--muted); }
 .editorLoading { padding:20px; min-height:110px; }
 .board { position:relative; z-index:var(--z-board); min-height:0; min-width:0; display:flex; flex-direction:column; background:transparent; border:0; border-radius:0; }
+.board[data-bar-workspace=true] { container-type:size; container-name:bar-workspace; }
 /* clip prevents native drag autoscroll from bypassing the controlled page transform. */
 .carouselViewport { position:relative; min-height:0; flex:1; overflow:clip; border-radius:10px; }
 .carouselViewport[data-compatible=true] { outline:1px dashed #baa4d2; outline-offset:-1px; }
@@ -1021,14 +1022,10 @@
 .barLivingQuestion [data-night-workshop] h3 { font-size:15px; }
 /* V8: an inline atelier must never reserve the legacy side panel. */
 .columns[data-bar-living-open=true] { padding-right:0; }
-.columns[data-bar-living-open=true] .paletteDock { width:auto; height:auto; flex-basis:auto; min-height:136px; overflow:visible; }
+.columns[data-bar-living-open=true] .paletteDock { width:auto; height:auto; flex:0 0 auto; min-height:0; margin:6px 0 0; overflow:visible; }
 .columns[data-bar-living-open=true] .plateau { min-width:0; }
-/* A living Bar may exceed a short desktop viewport. Let the surrounding page
-   scroll naturally; neither the card nor its dock becomes a scroll container. */
-:global(main):has(.columns[data-bar-living-open=true]) { overflow-y:auto!important; }
-.columns[data-bar-living-open=true] .plateau { overflow-y:visible; }
-:global(main):has(.carouselViewport[data-bar-page=true]) { overflow-y:auto!important; }
-.carouselViewport[data-bar-page=true] .plateau { overflow-y:visible; }
+/* The existing AppShell bounds the Composer. The dock stays in normal flow;
+   its actual height is removed before the Board's ResizeObserver measures. */
 .barLivingCard { box-sizing:border-box; }
 .barLivingHeader { position:sticky; top:0; z-index:1; background:#fffdfa; }
 .barLivingCard[data-expanded=true] .barLivingHeader { border-bottom:1px solid #f0e8df; }
@@ -1078,7 +1075,7 @@
 /* Grid rows own cell height. The old flex-start inheritance otherwise lets an
  * intrinsic card exceed its allocated tracks and cover the next row. */
 .inventoryCell { align-self:stretch; }
-.barLivingMount { display:flex; flex:none; flex-direction:column; min-height:0; overflow:visible; }
+.barLivingMount { display:flex; flex:0 1 auto; flex-direction:column; min-height:0; overflow:visible; }
 .barLivingHost { display:contents; }
 
 /* P2: only the Bar card and its explicitly scoped palette use these rules. */
@@ -1194,7 +1191,7 @@
 .barLivingRoutes { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); align-items:start; }
 .barLivingSections { display:grid; gap:12px; min-width:0; }
 .barLivingSections:empty { display:none; }
-.barLivingSections[data-scene=summary] { grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr)); }
+.barLivingSections[data-scene=summary] { grid-template-columns:minmax(0,1fr); }
 .barItemSection>header { margin-bottom:8px; min-height:30px; }
 .barItemSection h4 { font-size:13px; }
 .barItemSection .barLivingTiles { display:flex; flex-wrap:wrap; align-items:stretch; gap:10px; }
@@ -1348,8 +1345,6 @@
 .barLivingCompact .barGroup>button { position:relative; height:88px; padding:6px; overflow:visible; border-color:#e9e2d7; background:#fffdf8f2; box-shadow:0 2px 5px #4934160b; }
 .barClosedFace { display:block; height:100%; width:100%; min-width:0; text-align:left; }
 .barClosedTileHeading { min-width:0; }
-.barClosedFullLabel { display:none; position:absolute; inset:12px 3px 3px; z-index:3; padding:6px; overflow:auto; overflow-wrap:anywhere; border-radius:7px; background:#fffdf8; color:#493b29; font-size:11px; line-height:14px; pointer-events:none; }
-.barGroup>button:is(:hover,:focus-visible) .barClosedFullLabel { display:block; }
 .barGroup .barClosedTileHeading>strong { position:absolute; left:4px; top:-8px; width:max-content; max-width:calc(100% - 46px); box-sizing:border-box; padding:2px 5px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px; line-height:12px; border:1px solid #e9e1d3; border-radius:7px; background:#fffdf8; z-index:1; }
 .barClosedTileHeading .barCompactBadges { display:contents; }
 .barClosedTileHeading .barCompactBadges>span { position:absolute; z-index:1; max-width:calc(100% - 12px); overflow:hidden; text-overflow:ellipsis; box-sizing:border-box; padding:2px 4px; font-size:10px; line-height:12px; color:#59452f; background:#f7ecdb; border-color:#e7d9c2; box-shadow:none; }
@@ -1407,9 +1402,6 @@
 .barPlaceResults h4 { margin:0; font-size:11px; color:#75603d; }
 .barPlaceResults .barPlaceChoice { width:100%; height:48px; }
 .barPlaceResults [data-bar-place-source=text] { justify-items:start; }
-.barBeforeEmpty,.barLivingEditor [data-bar-before]>header { position:relative; padding-right:86px; }
-.barBeforeArt { position:absolute; right:0; top:50%; transform:translateY(-50%); width:80px; height:48px; object-fit:contain; pointer-events:none; }
-.barLivingEditor[data-bar-scene-density=dense] .barBeforeArt { display:none; }
 .barManage small { display:block; padding:4px; max-width:180px; }
 .columns[data-bar-living-open=true] .paletteDock:has([data-compact-dock=true]) { min-height:82px; }
 .barCompositionDock[data-compact-dock=true] .paletteOptions { height:48px; min-height:0; padding-block:3px; }
@@ -1457,12 +1449,13 @@
 .barProgressiveAmount label { display:flex; align-items:center; gap:6px; font-size:11px; }
 .barProgressiveAmount input { width:100px; min-width:0; padding:5px; font:inherit; font-size:20px; border:1px solid #9a753d; border-radius:8px; background:white; color:#292026; }
 .barLivingCard [data-bar-open-amount]:has([data-r72-inline])>[data-bar-amount-fallback] { display:none; }
-.barLivingEditor[data-bar-progressive] .barLivingSections { grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); align-items:start; }
-.barLivingEditor[data-bar-progressive] .barLivingSections:has([data-bar-section=before]):has([data-bar-section=extras]) { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+.barLivingEditor[data-bar-progressive] .barLivingSections { grid-template-columns:minmax(0,1fr); align-items:start; }
 .barLivingEditor[data-bar-progressive] [data-bar-section=before] { order:0; }
 .barLivingEditor[data-bar-progressive] [data-bar-section=extras] { order:1; }
 .barLivingEditor[data-bar-progressive] [data-bar-section=food],.barLivingEditor[data-bar-progressive] [data-bar-section=main] { order:2; }
 .barLivingEditor[data-bar-progressive] .barItemSection { min-width:0; }
+.barLivingEditor[data-bar-progressive] .barItemSection[data-bar-empty=true] { display:flex; align-items:center; gap:8px; min-height:30px; }
+.barLivingEditor[data-bar-progressive] .barItemSection[data-bar-empty=true] h4 { margin:0; }
 .barMomentRailWrap { min-width:0; position:relative; }
 .barMomentRail { display:flex; align-items:start; gap:8px; overflow-x:auto; overflow-y:hidden; max-width:100%; min-width:0; scrollbar-width:none; padding:4px; }
 .barMomentRail::-webkit-scrollbar { display:none; }
@@ -1471,25 +1464,29 @@
 .barProgressiveSlot { flex:0 0 80px; min-height:105px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:1px dashed #bca783; border-radius:13px; background:#fffbf3; color:#806136; cursor:pointer; }
 .barProgressiveSlot>span { font-size:28px; }.barProgressiveSlot>small { font-size:11px; }
 .barProgressiveSlot[data-drop-compatible=true] { background:#f0e7ff; outline:2px solid #a47dcf; }
-.barMomentRailArrows { display:flex; justify-content:flex-end; gap:4px; margin-top:3px; }
-.barMomentRailArrows button { border:1px solid #ddcfbb; border-radius:7px; background:#fffaf4; color:#745b37; cursor:pointer; }
 .barMomentRail:focus-visible,.barProgressiveSlot:focus-visible { outline:2px solid #9b733b; outline-offset:2px; }
 .barLivingEditor[data-bar-progressive] .barItemSection>header>.barInlineAdd { display:none; }
 
 /* R7.3: open-card polish only; closed R6.2 and the composition dock keep their geometry. */
-.barLivingCard[data-expanded=true] { height:100%; min-height:0; }
-.barLivingEditor[data-bar-progressive] { gap:6px; padding:6px 12px 8px; }
-.barLivingEditor[data-bar-progressive] .barLivingSections { gap:8px; }
+.barLivingCard[data-expanded=true] { height:100%; max-height:var(--bar-shelf-height,520px); min-height:0; --bar-route-space:0px; --bar-open-tile-height:clamp(72px,calc((var(--bar-shelf-height,520px) - 220px - var(--bar-route-space))/2),110px); }
+.barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) { --bar-route-space:56px; }
+.barLivingEditor[data-bar-progressive] { gap:4px; padding:6px 12px 6px; }
+.barLivingEditor[data-bar-progressive] .barLivingSections { gap:6px; }
 .barLivingEditor[data-bar-progressive] .barLivingSections:empty { display:none; }
 .barLivingCard[data-expanded=true] .barItemSection>header { min-height:24px; margin-bottom:4px; }
 .barLivingEditor[data-bar-progressive] [data-bar-before]>header { padding-right:0; flex-wrap:nowrap; }
-.barLivingEditor[data-bar-progressive] [data-bar-before]>header .barBeforeArt { position:static; width:46px; height:26px; margin-left:auto; object-fit:contain; }
-.barLivingCard[data-expanded=true] .barBeforeRemove { display:grid; place-items:center; flex:none; width:26px; height:26px; padding:4px; border:0; border-radius:8px; color:#80694d; background:transparent; }
-.barLivingCard[data-expanded=true] .barBeforeRemove:hover { background:#f4e5ce; }
+.barLivingEditor[data-bar-progressive] [data-bar-before-drag] { cursor:grab; }
+.barLivingEditor[data-bar-progressive] .barItemSection>header>[data-context-actions] { margin-left:auto; width:24px; height:22px; padding:3px; color:#80694d; }
+.barLivingCard[data-expanded=true] .barLivingHeader { flex:none; padding:7px 12px 6px; }
+.barLivingCard[data-expanded=true] .barLivingIdentity { padding:6px 8px; }
+.barLivingCard[data-expanded=true] .barLivingAmount { display:flex; align-items:center; flex-wrap:wrap; gap:3px 7px; }
+.barLivingEditor .barLivingRoutes:empty { display:none; }
+.barLivingEditor[data-bar-progressive] { flex:0 1 auto; min-height:0; }
+.barLivingEditor[data-bar-task=true] { overflow-y:auto; overscroll-behavior-y:contain; }
 .barLivingCard[data-expanded=true] .barMomentRail { gap:6px; padding:3px; }
 .barLivingCard[data-expanded=true] .barMomentRail>.barEconomicTile { flex:0 0 128px; min-width:128px; max-width:128px; }
 .barLivingCard[data-expanded=true] .barMomentRail .barGroup { min-width:0; }
-.barLivingCard[data-expanded=true] .barMomentRail .barGroup>button { height:110px; min-height:110px; padding:6px; background:#fffdf7; }
+.barLivingCard[data-expanded=true] .barMomentRail .barGroup>button { height:var(--bar-open-tile-height); min-height:var(--bar-open-tile-height); padding:6px; background:#fffdf7; }
 .barLivingCard[data-expanded=true] .barMomentRail>.barActiveTile { flex-basis:240px; min-width:240px; }
 .barLivingCard[data-expanded=true] .barCompactFace { display:grid; grid-template-rows:32px minmax(0,1fr); gap:2px; height:100%; min-width:0; }
 .barOpenTileHeading { display:grid; grid-template-columns:minmax(0,1fr) max-content; gap:3px; align-items:start; min-width:0; text-align:left; }
@@ -1499,12 +1496,12 @@
 .barOpenTileHeading .barCompactBadges>span:last-child { background:#ffbd56; border-color:#efaa3e; font-weight:650; }
 .barOpenTileHeading .barCompactBadges>[data-price-unknown=true] { border-style:dashed; background:#f7eedf; border-color:#e7d9c2; color:#75624a; font-weight:500; }
 .barOpenTileVisual { display:grid; place-items:center; position:relative; min-height:0; }
-.barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol { width:80px; height:58px; background:transparent; }
-.barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol img { width:80px; height:58px; object-fit:cover; object-position:right center; border-radius:8px; mix-blend-mode:multiply; }
+.barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol { width:80px; height:min(58px,calc(var(--bar-open-tile-height) - 44px)); background:transparent; }
+.barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol img { width:80px; height:min(58px,calc(var(--bar-open-tile-height) - 44px)); min-height:0; object-fit:contain; object-position:center; border-radius:0; mix-blend-mode:normal; }
 .barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol img:is([src*="-closed"],[src*="/r7/"]) { object-position:center; }
 .barLivingCard .barProductSymbol[data-object-art=true] img,.barCompositionDock .barProductSymbol[data-object-art=true] img { object-fit:contain; object-position:center; mix-blend-mode:normal; border-radius:0; }
 .barOpenUnit { position:absolute; right:0; bottom:0; display:grid; place-items:center; width:18px; height:18px; border-radius:6px; color:#746044; background:#faf4e7; }
-.barLivingCard[data-expanded=true] .barProgressiveSlot { flex:0 0 48px; width:48px; min-height:104px; height:104px; padding:0 3px; box-sizing:border-box; }
+.barLivingCard[data-expanded=true] .barProgressiveSlot { flex:0 0 48px; width:48px; min-height:var(--bar-open-tile-height); height:var(--bar-open-tile-height); padding:0 3px; box-sizing:border-box; }
 .barLivingCard[data-expanded=true] .barProgressiveSlot:has(small:not(:empty)) { flex-basis:88px; width:88px; }
 .barLivingCard[data-expanded=true] .barProgressiveSlot>span { font-size:24px; }
 .barLivingCard[data-expanded=true] .barProgressiveSlot>small { text-align:center; }
@@ -1523,6 +1520,23 @@
 .barConsumptionMode { display:flex; justify-content:flex-start; min-height:24px; }
 .barConsumptionMode button { display:inline-flex; align-items:center; gap:4px; border:0; background:transparent; color:#795a36; padding:3px 6px; font-size:11px; cursor:pointer; }
 .barConsumptionMode button:hover,.barConsumptionMode button:focus-visible { background:#f5ead7; border-radius:7px; }
+/* Short desktop workspace: reduce decorative dock artwork before taking any
+   space away from the two moment rails. No new viewport observer or overlay. */
+@container bar-workspace (max-height:640px) {
+  .barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .questionAnswer { height:90px; min-height:90px; }
+  .barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .barProductSymbol { flex-basis:50px; height:50px; }
+  .barCompositionDock:is([data-dock-nature=FAMILIES],[data-dock-nature=OBJECTS]) .barProductSymbol img { height:50px; max-height:50px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) { --bar-open-tile-height:60px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingHeader { padding-block:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingIdentity { padding-block:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barItemSection>header { min-height:16px; margin-bottom:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingMetadata { padding-bottom:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingMetadata button { padding-block:3px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingEditor { padding-block:3px; gap:2px; }
+  .barLivingCard[data-expanded=true]:has(.barLivingRoutes:not(:empty)) .barLivingSections { gap:4px; }
+  .barLivingEditor[data-bar-progressive] .barLivingRoutes { display:flex; flex-direction:row; flex-wrap:nowrap; flex-shrink:0; gap:6px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x proximity; }
+  .barLivingEditor[data-bar-progressive] .barLivingRoutes>.barRouteLine { flex:0 0 100%; min-width:0; flex-wrap:nowrap; scroll-snap-align:start; }
+}
 .barLivingTools .barQuietAction { width:26px; height:26px; padding:5px; color:#765b3a; background:rgb(255 253 247 / .76); opacity:.52; }
 .barLivingTools .barQuietAction[aria-pressed=true],.barLivingTools .barQuietAction:is(:hover,:focus-visible) { opacity:1; }
 @media (prefers-reduced-motion:reduce) { .barLivingTools .barQuietAction { transition:none; } }
@@ -1531,13 +1545,14 @@
 .barPlaceCompact { position:relative; min-width:0; }
 .barPlaceSearchField { display:flex; align-items:center; height:44px; min-width:0; border:1px solid #c9b693; border-radius:12px; background:#fffdf8; box-shadow:0 2px 8px #4c2b0a0d; }
 .barPlaceSearchField:focus-within { outline:2px solid #aa7841; outline-offset:1px; }
-.barPlaceSearchField input { flex:1; min-width:0; width:100%; height:100%; padding:0 12px; border:0; outline:0; background:transparent; color:#302a25; font:inherit; font-size:14px; }
+.barPlaceSearchField input { flex:1; min-width:0; width:100%; height:100%; box-sizing:border-box; padding:0 12px; border:0; outline:0; background:transparent; color:#302a25; font:inherit; font-size:14px; }
+.barLivingCard .barPlaceSearchField input:focus-visible { outline:2px solid #7448d8; outline-offset:-3px; border-radius:10px 0 0 10px; }
 .barPlaceSearchField [data-bar-google-toggle] { display:grid; flex:none; place-items:center; width:38px; height:38px; margin-right:3px; border:0; border-radius:9px; background:transparent; color:#8f816c; cursor:pointer; }
 .barPlaceSearchField [data-bar-google-toggle][aria-pressed=true] { color:#2376c8; background:#ecf4ff; }
 .barPlaceSearchField [data-bar-google-toggle] img { display:block; width:26px; height:26px; }
 .barPlaceSearchField [data-bar-google-toggle][aria-pressed=false] { background:#eee9e1; }
 .barPlaceSearchField [data-bar-google-toggle][aria-pressed=false] img { opacity:.4; }
-.barPlaceSearchField [data-bar-google-toggle]:focus-visible { outline:2px solid #aa7841; }
+.barLivingCard .barPlaceSearchField [data-bar-google-toggle]:focus-visible { outline:2px solid #7448d8; outline-offset:-2px; }
 .barPlaceSuggestions { position:fixed; z-index:1000; display:grid; align-content:start; gap:3px; overflow-y:auto; padding:5px; border:1px solid #cbb994; border-radius:11px; background:#fffdf8; box-shadow:0 10px 28px #291a1633; box-sizing:border-box; }
 .barPlaceSuggestions .barPlaceChoice { width:100%; height:auto; min-height:43px; padding:5px 9px; display:flex; align-items:center; justify-content:space-between; gap:8px; border:0; text-align:left; }
 .barPlaceSuggestions .barPlaceChoice:is(:hover,:focus-visible) { background:#f9edda; }
@@ -1557,3 +1572,40 @@
 .carouselViewport[data-board-continuous] .mosaic { max-width:none; margin-inline:0; margin-block:0; }
 .carouselViewport[data-board-continuous] .inventoryCell { transform-origin:top left; }
 @media (prefers-reduced-motion:reduce) { .carouselViewport[data-board-continuous] { scroll-behavior:auto; } }
+
+/* PR82: selection keeps the same rail footprint; editor follows the actual group DOM. */
+.barLivingCard[data-expanded=true] .barLivingIdentity { max-width:calc(100% - 148px); }
+.barLivingCard[data-expanded=true] .barLivingIdentity h3 { display:flex; align-items:baseline; min-width:0; }
+.barLivingCard[data-expanded=true] h3>button:first-child { flex:none; }
+.barLivingCard[data-expanded=true] h3>span { margin-inline:4px; }
+.barLivingCard[data-expanded=true]>.barClosedPeopleReserve { position:absolute; right:12px; bottom:4px; min-height:0; padding:0; z-index:2; }
+.barLivingCard[data-expanded=true]:has(>.barClosedPeopleReserve) .barMomentRail { padding-right:64px; box-sizing:border-box; }
+.barLivingEditor[data-bar-task=true] { overflow-x:hidden; }
+.barLivingMetadata:not(:has(button)) { display:none; }
+.barLivingCard[data-expanded=true] .barMomentRail>:is(.barActiveTile,.barEconomicTile) { flex:0 0 144px; width:144px; min-width:144px; max-width:144px; }
+.barLivingCard[data-expanded=true] .barMomentRail>.barActiveTile { display:block; padding:0; gap:0; box-sizing:border-box; }
+.barLivingCard[data-expanded=true] .barActiveTile>.barGroup { width:100%; }
+.barLivingCard[data-expanded=true] .barActiveTile>.barGroup>button:first-child { display:block; width:100%; height:calc(var(--bar-open-tile-height) - 42px); min-height:28px; padding:2px 5px; border:0; background:transparent; }
+.barLivingCard[data-expanded=true] .barActiveTile .barCompactFace { grid-template-rows:minmax(0,1fr); grid-template-columns:minmax(0,1fr) 32px; gap:2px; }
+.barLivingCard[data-expanded=true] .barActiveTile .barOpenTileVisual .barProductSymbol,
+.barLivingCard[data-expanded=true] .barActiveTile .barOpenTileVisual .barProductSymbol img { height:100%; max-height:32px; min-height:0; }
+.barLivingCard[data-expanded=true] .barActiveTile>.barGroup>.barEditableBody { display:block; width:100%; min-width:0; margin:0; padding:0 3px; border:0; box-sizing:border-box; }
+.barLivingCard .barActiveTile [data-bar-short-row] .barRowControls { display:flex; flex-wrap:nowrap; justify-content:space-between; gap:3px; width:100%; min-width:0; }
+.barLivingCard .barActiveTile [data-bar-short-row] .workshopStepper { gap:0; flex:none; }
+.barLivingCard .barActiveTile [data-bar-short-row] .workshopStepper button { flex:0 0 20px; width:20px; height:24px; min-height:24px; padding:0; font-size:12px; }
+.barLivingCard .barActiveTile [data-bar-short-row] .workshopStepper input { width:25px; max-width:25px; height:24px; padding:0; font-size:11px; border-radius:4px; }
+.barLivingCard .barActiveTile [data-bar-short-row] .barInlinePrice { flex:1; min-width:0; height:24px; padding:0 2px; border-radius:5px; gap:1px; font-size:10px; }
+.barLivingCard .barActiveTile [data-bar-short-row] .barInlinePrice input { width:100%; min-width:0; max-width:100%; height:22px; padding:0; font-size:10px; }
+.barRowActions { display:flex; align-items:center; justify-content:space-between; min-height:18px; gap:2px; }
+.barLivingCard .barActiveTile .barRowActions button { display:inline-flex; align-items:center; border:0; background:transparent; padding:2px 1px; min-width:0; font-size:9px; }
+.barLivingCard .barActiveTile .barRowActions [data-bar-row-save] { font-weight:650; }
+@media (max-height:780px) {
+  .barLivingCard[data-expanded=true] .barItemSection>header { min-height:18px; margin-bottom:2px; }
+  .barLivingEditor[data-bar-progressive] .barLivingSections { gap:4px; }
+  .barLivingCard[data-expanded=true] { --bar-open-tile-height:clamp(58px,calc((var(--bar-shelf-height,520px) - 220px - var(--bar-route-space))/2),110px); }
+  .barLivingCard[data-expanded=true] .barLivingHeader { padding-block:3px; }
+  .barLivingCard[data-expanded=true] .barLivingIdentity { padding-block:2px; gap:0; }
+  .barLivingCard[data-expanded=true] .barLivingIdentity h3 { font-size:13px; line-height:17px; }
+  .barLivingEditor[data-bar-progressive]>.barEditableBody>.barLivingMetadata { padding-bottom:2px; }
+  .barLivingEditor[data-bar-progressive] .barLivingMetadata button { padding:2px 6px; }
+}

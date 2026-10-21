@@ -1,0 +1,3206 @@
+{
+  "baseSha": "2b1c2294450201483a334769174c24ffbada53fb",
+  "level": "LOCAL_SYNTHETIC_BROWSER",
+  "before": {
+    "1440x720": {
+      "board": {
+        "clientHeight": 731,
+        "clientWidth": 1096,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 882,
+          "height": 741,
+          "left": 310,
+          "right": 1406.4000244140625,
+          "top": 141,
+          "width": 1096.4000244140625,
+          "x": 310,
+          "y": 141
+        },
+        "scrollHeight": 731,
+        "scrollTop": 0,
+        "scrollWidth": 2013
+      },
+      "card": {
+        "clientHeight": 423,
+        "clientWidth": 753,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 566,
+          "height": 425,
+          "left": 480.9500122070313,
+          "right": 1235.2000122070312,
+          "top": 141,
+          "width": 754.25,
+          "x": 480.9500122070313,
+          "y": 141
+        },
+        "scrollHeight": 423,
+        "scrollTop": 0,
+        "scrollWidth": 753
+      },
+      "centerError": -0.125,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 146,
+        "clientWidth": 1071,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 1028.7999877929688,
+          "height": 146,
+          "left": 322.8000183105469,
+          "right": 1393.600067138672,
+          "top": 882.7999877929688,
+          "width": 1070.800048828125,
+          "x": 322.8000183105469,
+          "y": 882.7999877929688
+        },
+        "scrollHeight": 146,
+        "scrollTop": 0,
+        "scrollWidth": 1071
+      },
+      "dockVisible": false,
+      "editor": {
+        "clientHeight": 313,
+        "clientWidth": 753,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 560.1000213623047,
+          "height": 313.20001220703125,
+          "left": 481.75,
+          "right": 1234.4000244140625,
+          "top": 246.90000915527344,
+          "width": 752.6500244140625,
+          "x": 481.75,
+          "y": 246.90000915527344
+        },
+        "scrollHeight": 313,
+        "scrollTop": 0,
+        "scrollWidth": 753
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 450,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 699.2000274658203,
+          "height": 450.3000183105469,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 248.90000915527344,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 248.90000915527344
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 720,
+        "clientWidth": 1430,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 720,
+          "height": 720,
+          "left": 0,
+          "right": 1440,
+          "top": 0,
+          "width": 1440,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 1030,
+        "scrollTop": 0,
+        "scrollWidth": 1430
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 360,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 523.5000228881836,
+              "height": 116.20000457763672,
+              "left": 493.75,
+              "right": 854.0750122070312,
+              "top": 407.3000183105469,
+              "width": 360.3250122070313,
+              "x": 493.75,
+              "y": 407.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 724
+          },
+          "rect": {
+            "bottom": 552.1000213623047,
+            "height": 174.8000030517578,
+            "left": 493.75,
+            "right": 854.0750122070312,
+            "top": 377.3000183105469,
+            "width": 360.3250122070313,
+            "x": 493.75,
+            "y": 377.3000183105469
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 360,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 521.5000228881836,
+              "height": 116.20000457763672,
+              "left": 862.0750122070312,
+              "right": 1222.4000244140625,
+              "top": 405.3000183105469,
+              "width": 360.3250122070313,
+              "x": 862.0750122070312,
+              "y": 405.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 360
+          },
+          "rect": {
+            "bottom": 521.5000152587891,
+            "height": 144.1999969482422,
+            "left": 862.0750122070312,
+            "right": 1222.4000244140625,
+            "top": 377.3000183105469,
+            "width": 360.3250122070313,
+            "x": 862.0750122070312,
+            "y": 377.3000183105469
+          }
+        }
+      ],
+      "shelf": "",
+      "viewport": [
+        1440,
+        720
+      ]
+    },
+    "1440x900": {
+      "board": {
+        "clientHeight": 731,
+        "clientWidth": 1096,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 882,
+          "height": 741,
+          "left": 310,
+          "right": 1406.4000244140625,
+          "top": 141,
+          "width": 1096.4000244140625,
+          "x": 310,
+          "y": 141
+        },
+        "scrollHeight": 731,
+        "scrollTop": 0,
+        "scrollWidth": 2013
+      },
+      "card": {
+        "clientHeight": 423,
+        "clientWidth": 753,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 566,
+          "height": 425,
+          "left": 480.9500122070313,
+          "right": 1235.2000122070312,
+          "top": 141,
+          "width": 754.25,
+          "x": 480.9500122070313,
+          "y": 141
+        },
+        "scrollHeight": 423,
+        "scrollTop": 0,
+        "scrollWidth": 753
+      },
+      "centerError": -0.125,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 146,
+        "clientWidth": 1071,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 1028.7999877929688,
+          "height": 146,
+          "left": 322.8000183105469,
+          "right": 1393.600067138672,
+          "top": 882.7999877929688,
+          "width": 1070.800048828125,
+          "x": 322.8000183105469,
+          "y": 882.7999877929688
+        },
+        "scrollHeight": 146,
+        "scrollTop": 0,
+        "scrollWidth": 1071
+      },
+      "dockVisible": false,
+      "editor": {
+        "clientHeight": 313,
+        "clientWidth": 753,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 560.1000213623047,
+          "height": 313.20001220703125,
+          "left": 481.75,
+          "right": 1234.4000244140625,
+          "top": 246.90000915527344,
+          "width": 752.6500244140625,
+          "x": 481.75,
+          "y": 246.90000915527344
+        },
+        "scrollHeight": 313,
+        "scrollTop": 0,
+        "scrollWidth": 753
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 630,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 879.1999969482422,
+          "height": 630.2999877929688,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 248.90000915527344,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 248.90000915527344
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 900,
+        "clientWidth": 1430,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 900,
+          "height": 900,
+          "left": 0,
+          "right": 1440,
+          "top": 0,
+          "width": 1440,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 1030,
+        "scrollTop": 0,
+        "scrollWidth": 1430
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 360,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 523.5000228881836,
+              "height": 116.20000457763672,
+              "left": 493.75,
+              "right": 854.0750122070312,
+              "top": 407.3000183105469,
+              "width": 360.3250122070313,
+              "x": 493.75,
+              "y": 407.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 724
+          },
+          "rect": {
+            "bottom": 552.1000213623047,
+            "height": 174.8000030517578,
+            "left": 493.75,
+            "right": 854.0750122070312,
+            "top": 377.3000183105469,
+            "width": 360.3250122070313,
+            "x": 493.75,
+            "y": 377.3000183105469
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 360,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 521.5000228881836,
+              "height": 116.20000457763672,
+              "left": 862.0750122070312,
+              "right": 1222.4000244140625,
+              "top": 405.3000183105469,
+              "width": 360.3250122070313,
+              "x": 862.0750122070312,
+              "y": 405.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 360
+          },
+          "rect": {
+            "bottom": 521.5000152587891,
+            "height": 144.1999969482422,
+            "left": 862.0750122070312,
+            "right": 1222.4000244140625,
+            "top": 377.3000183105469,
+            "width": 360.3250122070313,
+            "x": 862.0750122070312,
+            "y": 377.3000183105469
+          }
+        }
+      ],
+      "shelf": "",
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    "1152x720": {
+      "board": {
+        "clientHeight": 731,
+        "clientWidth": 808,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 932.1000061035156,
+          "height": 741,
+          "left": 310,
+          "right": 1118.4000244140625,
+          "top": 191.1000061035156,
+          "width": 808.4000244140625,
+          "x": 310,
+          "y": 191.1000061035156
+        },
+        "scrollHeight": 731,
+        "scrollTop": 0,
+        "scrollWidth": 1746
+      },
+      "card": {
+        "clientHeight": 423,
+        "clientWidth": 770,
+        "overflowY": "clip",
+        "rect": {
+          "bottom": 616.1000061035156,
+          "height": 425,
+          "left": 491.6000061035156,
+          "right": 1263.4875183105469,
+          "top": 191.1000061035156,
+          "width": 771.8875122070312,
+          "x": 491.6000061035156,
+          "y": 191.1000061035156
+        },
+        "scrollHeight": 423,
+        "scrollTop": 0,
+        "scrollWidth": 770
+      },
+      "centerError": 163.34375,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 146,
+        "clientWidth": 783,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 1078.9000244140625,
+          "height": 146,
+          "left": 322.8000183105469,
+          "right": 1105.6000061035156,
+          "top": 932.9000244140624,
+          "width": 782.7999877929688,
+          "x": 322.8000183105469,
+          "y": 932.9000244140624
+        },
+        "scrollHeight": 146,
+        "scrollTop": 0,
+        "scrollWidth": 783
+      },
+      "dockVisible": false,
+      "editor": {
+        "clientHeight": 313,
+        "clientWidth": 770,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 610.2000122070312,
+          "height": 313.20001220703125,
+          "left": 492.3999938964844,
+          "right": 1262.687530517578,
+          "top": 297,
+          "width": 770.2875366210938,
+          "x": 492.3999938964844,
+          "y": 297
+        },
+        "scrollHeight": 313,
+        "scrollTop": 0,
+        "scrollWidth": 770
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 400,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 699.2000122070312,
+          "height": 400.2000122070313,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 299,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 299
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 720,
+        "clientWidth": 1142,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 720,
+          "height": 720,
+          "left": 0,
+          "right": 1152,
+          "top": 0,
+          "width": 1152,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 1080,
+        "scrollTop": 0,
+        "scrollWidth": 1142
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 369,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 573.5999984741211,
+              "height": 116.20000457763672,
+              "left": 504.3999938964844,
+              "right": 873.5375061035156,
+              "top": 457.3999938964844,
+              "width": 369.1375122070313,
+              "x": 504.3999938964844,
+              "y": 457.3999938964844
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 724
+          },
+          "rect": {
+            "bottom": 602.1999969482422,
+            "height": 174.8000030517578,
+            "left": 504.3999938964844,
+            "right": 873.5375061035156,
+            "top": 427.3999938964844,
+            "width": 369.1375122070313,
+            "x": 504.3999938964844,
+            "y": 427.3999938964844
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 369,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 571.5999984741211,
+              "height": 116.20000457763672,
+              "left": 881.5375366210938,
+              "right": 1250.687530517578,
+              "top": 455.3999938964844,
+              "width": 369.1499938964844,
+              "x": 881.5375366210938,
+              "y": 455.3999938964844
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 369
+          },
+          "rect": {
+            "bottom": 571.5999908447266,
+            "height": 144.1999969482422,
+            "left": 881.5375366210938,
+            "right": 1250.687530517578,
+            "top": 427.3999938964844,
+            "width": 369.1499938964844,
+            "x": 881.5375366210938,
+            "y": 427.3999938964844
+          }
+        }
+      ],
+      "shelf": "",
+      "viewport": [
+        1152,
+        720
+      ]
+    },
+    "1920x1080": {
+      "board": {
+        "clientHeight": 751,
+        "clientWidth": 1586,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 902.4000244140624,
+          "height": 761.4000244140625,
+          "left": 310,
+          "right": 1896,
+          "top": 141,
+          "width": 1586,
+          "x": 310,
+          "y": 141
+        },
+        "scrollHeight": 751,
+        "scrollTop": 0,
+        "scrollWidth": 1760
+      },
+      "card": {
+        "clientHeight": 423,
+        "clientWidth": 777,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 566,
+          "height": 425,
+          "left": 640.875,
+          "right": 1419,
+          "top": 141,
+          "width": 778.125,
+          "x": 640.875,
+          "y": 141
+        },
+        "scrollHeight": 423,
+        "scrollTop": 0,
+        "scrollWidth": 777
+      },
+      "centerError": -73.0625,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 146,
+        "clientWidth": 1560,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 1049.2000122070312,
+          "height": 146,
+          "left": 322.8000183105469,
+          "right": 1883.2000427246096,
+          "top": 903.2000122070312,
+          "width": 1560.4000244140625,
+          "x": 322.8000183105469,
+          "y": 903.2000122070312
+        },
+        "scrollHeight": 146,
+        "scrollTop": 0,
+        "scrollWidth": 1560
+      },
+      "dockVisible": true,
+      "editor": {
+        "clientHeight": 313,
+        "clientWidth": 777,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 560.1000213623047,
+          "height": 313.20001220703125,
+          "left": 641.6749877929688,
+          "right": 1418.2000122070312,
+          "top": 246.90000915527344,
+          "width": 776.5250244140625,
+          "x": 641.6749877929688,
+          "y": 246.90000915527344
+        },
+        "scrollHeight": 313,
+        "scrollTop": 0,
+        "scrollWidth": 777
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 810,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 1059.1999969482422,
+          "height": 810.2999877929688,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 248.90000915527344,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 248.90000915527344
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 1080,
+        "clientWidth": 1920,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 1080,
+          "height": 1080,
+          "left": 0,
+          "right": 1920,
+          "top": 0,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 1080,
+        "scrollTop": 0,
+        "scrollWidth": 1920
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 372,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 523.5000228881836,
+              "height": 116.20000457763672,
+              "left": 653.6749877929688,
+              "right": 1025.9375,
+              "top": 407.3000183105469,
+              "width": 372.2625122070313,
+              "x": 653.6749877929688,
+              "y": 407.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 724
+          },
+          "rect": {
+            "bottom": 552.1000213623047,
+            "height": 174.8000030517578,
+            "left": 653.6749877929688,
+            "right": 1025.9375,
+            "top": 377.3000183105469,
+            "width": 372.2625122070313,
+            "x": 653.6749877929688,
+            "y": 377.3000183105469
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 372,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 521.5000228881836,
+              "height": 116.20000457763672,
+              "left": 1033.9375,
+              "right": 1406.2000122070312,
+              "top": 405.3000183105469,
+              "width": 372.2625122070313,
+              "x": 1033.9375,
+              "y": 405.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 372
+          },
+          "rect": {
+            "bottom": 521.5000152587891,
+            "height": 144.1999969482422,
+            "left": 1033.9375,
+            "right": 1406.2000122070312,
+            "top": 377.3000183105469,
+            "width": 372.2625122070313,
+            "x": 1033.9375,
+            "y": 377.3000183105469
+          }
+        }
+      ],
+      "shelf": "",
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  },
+  "after": {
+    "1440x720": {
+      "board": {
+        "clientHeight": 429,
+        "clientWidth": 1106,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 580.3999938964844,
+          "height": 439.3999938964844,
+          "left": 310,
+          "right": 1416,
+          "top": 141,
+          "width": 1106,
+          "x": 310,
+          "y": 141
+        },
+        "scrollHeight": 429,
+        "scrollTop": 0,
+        "scrollWidth": 2495
+      },
+      "card": {
+        "clientHeight": 403,
+        "clientWidth": 759,
+        "overflowY": "clip",
+        "rect": {
+          "bottom": 546,
+          "height": 405,
+          "left": 482.8250122070313,
+          "right": 1243.8250122070312,
+          "top": 141,
+          "width": 761,
+          "x": 482.8250122070313,
+          "y": 141
+        },
+        "scrollHeight": 403,
+        "scrollTop": 0,
+        "scrollWidth": 759
+      },
+      "centerError": 0.32501220703125,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 112,
+        "clientWidth": 1104,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 699.2000122070312,
+          "height": 112,
+          "left": 310.8000183105469,
+          "right": 1415.2000427246094,
+          "top": 587.2000122070312,
+          "width": 1104.4000244140625,
+          "x": 310.8000183105469,
+          "y": 587.2000122070312
+        },
+        "scrollHeight": 112,
+        "scrollTop": 0,
+        "scrollWidth": 1104
+      },
+      "dockVisible": true,
+      "editor": {
+        "clientHeight": 322,
+        "clientWidth": 759,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 541.5000152587891,
+          "height": 322.20001220703125,
+          "left": 483.625,
+          "right": 1243.0250244140625,
+          "top": 219.3000030517578,
+          "width": 759.4000244140625,
+          "x": 483.625,
+          "y": 219.3000030517578
+        },
+        "scrollHeight": 322,
+        "scrollTop": 0,
+        "scrollWidth": 759
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 450,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 699.2000274658203,
+          "height": 450.3000183105469,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 248.90000915527344,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 248.90000915527344
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 720,
+        "clientWidth": 1440,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 720,
+          "height": 720,
+          "left": 0,
+          "right": 1440,
+          "top": 0,
+          "width": 1440,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 720,
+        "scrollTop": 0,
+        "scrollWidth": 1440
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 99,
+            "clientWidth": 735,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 398.80001068115234,
+              "height": 98.70000457763672,
+              "left": 495.625,
+              "right": 1231.0250244140625,
+              "top": 300.1000061035156,
+              "width": 735.4000244140625,
+              "x": 495.625,
+              "y": 300.1000061035156
+            },
+            "scrollHeight": 99,
+            "scrollTop": 0,
+            "scrollWidth": 735
+          },
+          "rect": {
+            "bottom": 398.80001068115234,
+            "height": 126.70000457763672,
+            "left": 495.625,
+            "right": 1231.0250244140625,
+            "top": 272.1000061035156,
+            "width": 735.4000244140625,
+            "x": 495.625,
+            "y": 272.1000061035156
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 99,
+            "clientWidth": 735,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 533.5000228881836,
+              "height": 98.70000457763672,
+              "left": 495.625,
+              "right": 1231.0250244140625,
+              "top": 434.8000183105469,
+              "width": 735.4000244140625,
+              "x": 495.625,
+              "y": 434.8000183105469
+            },
+            "scrollHeight": 99,
+            "scrollTop": 0,
+            "scrollWidth": 735
+          },
+          "rect": {
+            "bottom": 533.5000228881836,
+            "height": 126.70000457763672,
+            "left": 495.625,
+            "right": 1231.0250244140625,
+            "top": 406.8000183105469,
+            "width": 735.4000244140625,
+            "x": 495.625,
+            "y": 406.8000183105469
+          }
+        }
+      ],
+      "shelf": "405px",
+      "viewport": [
+        1440,
+        720
+      ]
+    },
+    "1440x900": {
+      "board": {
+        "clientHeight": 575,
+        "clientWidth": 1106,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 726.4000244140625,
+          "height": 585.4000244140625,
+          "left": 310,
+          "right": 1416,
+          "top": 141,
+          "width": 1106,
+          "x": 310,
+          "y": 141
+        },
+        "scrollHeight": 575,
+        "scrollTop": 0,
+        "scrollWidth": 1955
+      },
+      "card": {
+        "clientHeight": 443,
+        "clientWidth": 760,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 586,
+          "height": 445,
+          "left": 482.8250122070313,
+          "right": 1244.2000122070312,
+          "top": 141,
+          "width": 761.375,
+          "x": 482.8250122070313,
+          "y": 141
+        },
+        "scrollHeight": 443,
+        "scrollTop": 0,
+        "scrollWidth": 760
+      },
+      "centerError": 0.51251220703125,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 146,
+        "clientWidth": 1104,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 879.2000122070312,
+          "height": 146,
+          "left": 310.8000183105469,
+          "right": 1415.2000427246094,
+          "top": 733.2000122070312,
+          "width": 1104.4000244140625,
+          "x": 310.8000183105469,
+          "y": 733.2000122070312
+        },
+        "scrollHeight": 146,
+        "scrollTop": 0,
+        "scrollWidth": 1104
+      },
+      "dockVisible": true,
+      "editor": {
+        "clientHeight": 357,
+        "clientWidth": 760,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 576.5000152587891,
+          "height": 357.20001220703125,
+          "left": 483.625,
+          "right": 1243.4000244140625,
+          "top": 219.3000030517578,
+          "width": 759.7750244140625,
+          "x": 483.625,
+          "y": 219.3000030517578
+        },
+        "scrollHeight": 357,
+        "scrollTop": 0,
+        "scrollWidth": 760
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 630,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 879.1999969482422,
+          "height": 630.2999877929688,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 248.90000915527344,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 248.90000915527344
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 900,
+        "clientWidth": 1440,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 900,
+          "height": 900,
+          "left": 0,
+          "right": 1440,
+          "top": 0,
+          "width": 1440,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 900,
+        "scrollTop": 0,
+        "scrollWidth": 1440
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 736,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 416.30001068115234,
+              "height": 116.20000457763672,
+              "left": 495.625,
+              "right": 1231.4000244140625,
+              "top": 300.1000061035156,
+              "width": 735.7750244140625,
+              "x": 495.625,
+              "y": 300.1000061035156
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 736
+          },
+          "rect": {
+            "bottom": 416.3000030517578,
+            "height": 144.1999969482422,
+            "left": 495.625,
+            "right": 1231.4000244140625,
+            "top": 272.1000061035156,
+            "width": 735.7750244140625,
+            "x": 495.625,
+            "y": 272.1000061035156
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 736,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 568.5000228881836,
+              "height": 116.20000457763672,
+              "left": 495.625,
+              "right": 1231.4000244140625,
+              "top": 452.3000183105469,
+              "width": 735.7750244140625,
+              "x": 495.625,
+              "y": 452.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 736
+          },
+          "rect": {
+            "bottom": 568.5000152587891,
+            "height": 144.1999969482422,
+            "left": 495.625,
+            "right": 1231.4000244140625,
+            "top": 424.3000183105469,
+            "width": 735.7750244140625,
+            "x": 495.625,
+            "y": 424.3000183105469
+          }
+        }
+      ],
+      "shelf": "555px",
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    "1152x720": {
+      "board": {
+        "clientHeight": 379,
+        "clientWidth": 818,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 580.4000244140625,
+          "height": 389.3000183105469,
+          "left": 310,
+          "right": 1128,
+          "top": 191.1000061035156,
+          "width": 818,
+          "x": 310,
+          "y": 191.1000061035156
+        },
+        "scrollHeight": 379,
+        "scrollTop": 0,
+        "scrollWidth": 2719
+      },
+      "card": {
+        "clientHeight": 353,
+        "clientWidth": 780,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 546.1000061035156,
+          "height": 355,
+          "left": 495.2000122070313,
+          "right": 1277.2000122070312,
+          "top": 191.1000061035156,
+          "width": 782,
+          "x": 495.2000122070313,
+          "y": 191.1000061035156
+        },
+        "scrollHeight": 359,
+        "scrollTop": 0,
+        "scrollWidth": 780
+      },
+      "centerError": 167.20001220703125,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 112,
+        "clientWidth": 816,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 699.2000122070312,
+          "height": 112,
+          "left": 310.8000183105469,
+          "right": 1127.2000427246094,
+          "top": 587.2000122070312,
+          "width": 816.4000244140625,
+          "x": 310.8000183105469,
+          "y": 587.2000122070312
+        },
+        "scrollHeight": 112,
+        "scrollTop": 0,
+        "scrollWidth": 816
+      },
+      "dockVisible": true,
+      "editor": {
+        "clientHeight": 281,
+        "clientWidth": 780,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 550.6000061035156,
+          "height": 281.20001220703125,
+          "left": 496,
+          "right": 1276.4000244140625,
+          "top": 269.3999938964844,
+          "width": 780.4000244140625,
+          "x": 496,
+          "y": 269.3999938964844
+        },
+        "scrollHeight": 281,
+        "scrollTop": 0,
+        "scrollWidth": 780
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 400,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 699.2000122070312,
+          "height": 400.2000122070313,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 299,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 299
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 720,
+        "clientWidth": 1152,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 720,
+          "height": 720,
+          "left": 0,
+          "right": 1152,
+          "top": 0,
+          "width": 1152,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 720,
+        "scrollTop": 0,
+        "scrollWidth": 1152
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 78,
+            "clientWidth": 756,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 428.400016784668,
+              "height": 78.20000457763672,
+              "left": 508,
+              "right": 1264.4000244140625,
+              "top": 350.20001220703125,
+              "width": 756.4000244140625,
+              "x": 508,
+              "y": 350.20001220703125
+            },
+            "scrollHeight": 78,
+            "scrollTop": 0,
+            "scrollWidth": 756
+          },
+          "rect": {
+            "bottom": 428.400016784668,
+            "height": 106.20000457763672,
+            "left": 508,
+            "right": 1264.4000244140625,
+            "top": 322.20001220703125,
+            "width": 756.4000244140625,
+            "x": 508,
+            "y": 322.20001220703125
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 78,
+            "clientWidth": 756,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 542.5999984741211,
+              "height": 78.20000457763672,
+              "left": 508,
+              "right": 1264.4000244140625,
+              "top": 464.3999938964844,
+              "width": 756.4000244140625,
+              "x": 508,
+              "y": 464.3999938964844
+            },
+            "scrollHeight": 78,
+            "scrollTop": 0,
+            "scrollWidth": 756
+          },
+          "rect": {
+            "bottom": 542.5999984741211,
+            "height": 106.20000457763672,
+            "left": 508,
+            "right": 1264.4000244140625,
+            "top": 436.3999938964844,
+            "width": 756.4000244140625,
+            "x": 508,
+            "y": 436.3999938964844
+          }
+        }
+      ],
+      "shelf": "355px",
+      "viewport": [
+        1152,
+        720
+      ]
+    },
+    "1920x1080": {
+      "board": {
+        "clientHeight": 765,
+        "clientWidth": 1586,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 906.4000244140624,
+          "height": 765.4000244140625,
+          "left": 310,
+          "right": 1896,
+          "top": 141,
+          "width": 1586,
+          "x": 310,
+          "y": 141
+        },
+        "scrollHeight": 765,
+        "scrollTop": 0,
+        "scrollWidth": 1586
+      },
+      "card": {
+        "clientHeight": 443,
+        "clientWidth": 777,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 586,
+          "height": 445,
+          "left": 800.875,
+          "right": 1579,
+          "top": 141,
+          "width": 778.125,
+          "x": 800.875,
+          "y": 141
+        },
+        "scrollHeight": 443,
+        "scrollTop": 0,
+        "scrollWidth": 777
+      },
+      "centerError": 86.9375,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 146,
+        "clientWidth": 1584,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 1059.2000122070312,
+          "height": 146,
+          "left": 310.8000183105469,
+          "right": 1895.2000427246096,
+          "top": 913.2000122070312,
+          "width": 1584.4000244140625,
+          "x": 310.8000183105469,
+          "y": 913.2000122070312
+        },
+        "scrollHeight": 146,
+        "scrollTop": 0,
+        "scrollWidth": 1584
+      },
+      "dockVisible": true,
+      "editor": {
+        "clientHeight": 357,
+        "clientWidth": 777,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 576.5000152587891,
+          "height": 357.20001220703125,
+          "left": 801.6749877929688,
+          "right": 1578.2000122070312,
+          "top": 219.3000030517578,
+          "width": 776.5250244140625,
+          "x": 801.6749877929688,
+          "y": 219.3000030517578
+        },
+        "scrollHeight": 357,
+        "scrollTop": 0,
+        "scrollWidth": 777
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 810,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 1059.1999969482422,
+          "height": 810.2999877929688,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 248.90000915527344,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 248.90000915527344
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 1080,
+        "clientWidth": 1920,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 1080,
+          "height": 1080,
+          "left": 0,
+          "right": 1920,
+          "top": 0,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 1080,
+        "scrollTop": 0,
+        "scrollWidth": 1920
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 753,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 416.30001068115234,
+              "height": 116.20000457763672,
+              "left": 813.6749877929688,
+              "right": 1566.2000122070312,
+              "top": 300.1000061035156,
+              "width": 752.5250244140625,
+              "x": 813.6749877929688,
+              "y": 300.1000061035156
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 753
+          },
+          "rect": {
+            "bottom": 416.3000030517578,
+            "height": 144.1999969482422,
+            "left": 813.6749877929688,
+            "right": 1566.2000122070312,
+            "top": 272.1000061035156,
+            "width": 752.5250244140625,
+            "x": 813.6749877929688,
+            "y": 272.1000061035156
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 753,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 568.5000228881836,
+              "height": 116.20000457763672,
+              "left": 813.6749877929688,
+              "right": 1566.2000122070312,
+              "top": 452.3000183105469,
+              "width": 752.5250244140625,
+              "x": 813.6749877929688,
+              "y": 452.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 753
+          },
+          "rect": {
+            "bottom": 568.5000152587891,
+            "height": 144.1999969482422,
+            "left": 813.6749877929688,
+            "right": 1566.2000122070312,
+            "top": 424.3000183105469,
+            "width": 752.5250244140625,
+            "x": 813.6749877929688,
+            "y": 424.3000183105469
+          }
+        }
+      ],
+      "shelf": "745px",
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  },
+  "closedBefore": {
+    "board": {
+      "clientHeight": 729,
+      "clientWidth": 1106,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 880,
+        "height": 739,
+        "left": 310,
+        "right": 1416,
+        "top": 141,
+        "width": 1106,
+        "x": 310,
+        "y": 141
+      },
+      "scrollHeight": 729,
+      "scrollTop": 0,
+      "scrollWidth": 1183
+    },
+    "card": {
+      "clientHeight": 243,
+      "clientWidth": 528,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 386,
+        "height": 245,
+        "left": 790.8250122070312,
+        "right": 1320.7875366210938,
+        "top": 141,
+        "width": 529.9625244140625,
+        "x": 790.8250122070312,
+        "y": 141
+      },
+      "scrollHeight": 243,
+      "scrollTop": 0,
+      "scrollWidth": 528
+    },
+    "centerError": 192.8062744140625,
+    "collisions": 0,
+    "dock": null,
+    "dockVisible": false,
+    "editor": null,
+    "expanded": "false",
+    "library": {
+      "clientHeight": 630,
+      "clientWidth": 257,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 879.1999969482422,
+        "height": 630.2999877929688,
+        "left": 24.80000114440918,
+        "right": 291.19999504089355,
+        "top": 248.90000915527344,
+        "width": 266.3999938964844,
+        "x": 24.80000114440918,
+        "y": 248.90000915527344
+      },
+      "scrollHeight": 887,
+      "scrollTop": 0,
+      "scrollWidth": 257
+    },
+    "main": {
+      "clientHeight": 900,
+      "clientWidth": 1440,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 900,
+        "height": 900,
+        "left": 0,
+        "right": 1440,
+        "top": 0,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "scrollHeight": 900,
+      "scrollTop": 0,
+      "scrollWidth": 1440
+    },
+    "pageOverflow": false,
+    "sections": [],
+    "shelf": "705px",
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  "final": {
+    "1440x900": {
+      "board": {
+        "clientHeight": 575,
+        "clientWidth": 1106,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 726.4000244140625,
+          "height": 585.4000244140625,
+          "left": 310,
+          "right": 1416,
+          "top": 141,
+          "width": 1106,
+          "x": 310,
+          "y": 141
+        },
+        "scrollHeight": 575,
+        "scrollTop": 0,
+        "scrollWidth": 1955
+      },
+      "card": {
+        "clientHeight": 433,
+        "clientWidth": 760,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 576,
+          "height": 435,
+          "left": 482.8250122070313,
+          "right": 1244.2000122070312,
+          "top": 141,
+          "width": 761.375,
+          "x": 482.8250122070313,
+          "y": 141
+        },
+        "scrollHeight": 433,
+        "scrollTop": 0,
+        "scrollWidth": 760
+      },
+      "centerError": 0.51251220703125,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 146,
+        "clientWidth": 1104,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 879.2000122070312,
+          "height": 146,
+          "left": 310.8000183105469,
+          "right": 1415.2000427246094,
+          "top": 733.2000122070312,
+          "width": 1104.4000244140625,
+          "x": 310.8000183105469,
+          "y": 733.2000122070312
+        },
+        "scrollHeight": 146,
+        "scrollTop": 0,
+        "scrollWidth": 1104
+      },
+      "dockVisible": true,
+      "editor": {
+        "clientHeight": 351,
+        "clientWidth": 760,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 570.5000152587891,
+          "height": 351.20001220703125,
+          "left": 483.625,
+          "right": 1243.4000244140625,
+          "top": 219.3000030517578,
+          "width": 759.7750244140625,
+          "x": 483.625,
+          "y": 219.3000030517578
+        },
+        "scrollHeight": 351,
+        "scrollTop": 0,
+        "scrollWidth": 760
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 630,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 879.1999969482422,
+          "height": 630.2999877929688,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 248.90000915527344,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 248.90000915527344
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 900,
+        "clientWidth": 1440,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 900,
+          "height": 900,
+          "left": 0,
+          "right": 1440,
+          "top": 0,
+          "width": 1440,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 900,
+        "scrollTop": 0,
+        "scrollWidth": 1440
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 736,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 414.30001068115234,
+              "height": 116.20000457763672,
+              "left": 495.625,
+              "right": 1231.4000244140625,
+              "top": 298.1000061035156,
+              "width": 735.7750244140625,
+              "x": 495.625,
+              "y": 298.1000061035156
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 736
+          },
+          "rect": {
+            "bottom": 414.3000030517578,
+            "height": 144.1999969482422,
+            "left": 495.625,
+            "right": 1231.4000244140625,
+            "top": 270.1000061035156,
+            "width": 735.7750244140625,
+            "x": 495.625,
+            "y": 270.1000061035156
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 736,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 564.5000228881836,
+              "height": 116.20000457763672,
+              "left": 495.625,
+              "right": 1231.4000244140625,
+              "top": 448.3000183105469,
+              "width": 735.7750244140625,
+              "x": 495.625,
+              "y": 448.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 736
+          },
+          "rect": {
+            "bottom": 564.5000152587891,
+            "height": 144.1999969482422,
+            "left": 495.625,
+            "right": 1231.4000244140625,
+            "top": 420.3000183105469,
+            "width": 735.7750244140625,
+            "x": 495.625,
+            "y": 420.3000183105469
+          }
+        }
+      ],
+      "shelf": "555px",
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    "1440x720": {
+      "board": {
+        "clientHeight": 429,
+        "clientWidth": 1106,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 580.3999938964844,
+          "height": 439.3999938964844,
+          "left": 310,
+          "right": 1416,
+          "top": 141,
+          "width": 1106,
+          "x": 310,
+          "y": 141
+        },
+        "scrollHeight": 429,
+        "scrollTop": 0,
+        "scrollWidth": 2495
+      },
+      "card": {
+        "clientHeight": 403,
+        "clientWidth": 760,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 546,
+          "height": 405,
+          "left": 482.2375183105469,
+          "right": 1243.6125183105469,
+          "top": 141,
+          "width": 761.375,
+          "x": 482.2375183105469,
+          "y": 141
+        },
+        "scrollHeight": 403,
+        "scrollTop": 0,
+        "scrollWidth": 760
+      },
+      "centerError": -0.074981689453125,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 112,
+        "clientWidth": 1104,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 699.2000122070312,
+          "height": 112,
+          "left": 310.8000183105469,
+          "right": 1415.2000427246094,
+          "top": 587.2000122070312,
+          "width": 1104.4000244140625,
+          "x": 310.8000183105469,
+          "y": 587.2000122070312
+        },
+        "scrollHeight": 112,
+        "scrollTop": 0,
+        "scrollWidth": 1104
+      },
+      "dockVisible": true,
+      "editor": {
+        "clientHeight": 320,
+        "clientWidth": 760,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 539.5000152587891,
+          "height": 320.20001220703125,
+          "left": 483.0375061035156,
+          "right": 1242.812530517578,
+          "top": 219.3000030517578,
+          "width": 759.7750244140625,
+          "x": 483.0375061035156,
+          "y": 219.3000030517578
+        },
+        "scrollHeight": 320,
+        "scrollTop": 0,
+        "scrollWidth": 760
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 450,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 699.2000274658203,
+          "height": 450.3000183105469,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 248.90000915527344,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 248.90000915527344
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 720,
+        "clientWidth": 1440,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 720,
+          "height": 720,
+          "left": 0,
+          "right": 1440,
+          "top": 0,
+          "width": 1440,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 720,
+        "scrollTop": 0,
+        "scrollWidth": 1440
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 99,
+            "clientWidth": 736,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 400.80001068115234,
+              "height": 98.70000457763672,
+              "left": 495.0375061035156,
+              "right": 1230.812530517578,
+              "top": 302.1000061035156,
+              "width": 735.7750244140625,
+              "x": 495.0375061035156,
+              "y": 302.1000061035156
+            },
+            "scrollHeight": 99,
+            "scrollTop": 0,
+            "scrollWidth": 736
+          },
+          "rect": {
+            "bottom": 400.80001068115234,
+            "height": 126.70000457763672,
+            "left": 495.0375061035156,
+            "right": 1230.812530517578,
+            "top": 274.1000061035156,
+            "width": 735.7750244140625,
+            "x": 495.0375061035156,
+            "y": 274.1000061035156
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 99,
+            "clientWidth": 736,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 533.5000228881836,
+              "height": 98.70000457763672,
+              "left": 495.0375061035156,
+              "right": 1230.812530517578,
+              "top": 434.8000183105469,
+              "width": 735.7750244140625,
+              "x": 495.0375061035156,
+              "y": 434.8000183105469
+            },
+            "scrollHeight": 99,
+            "scrollTop": 0,
+            "scrollWidth": 736
+          },
+          "rect": {
+            "bottom": 533.5000228881836,
+            "height": 126.70000457763672,
+            "left": 495.0375061035156,
+            "right": 1230.812530517578,
+            "top": 406.8000183105469,
+            "width": 735.7750244140625,
+            "x": 495.0375061035156,
+            "y": 406.8000183105469
+          }
+        }
+      ],
+      "shelf": "405px",
+      "viewport": [
+        1440,
+        720
+      ]
+    },
+    "1152x720": {
+      "board": {
+        "clientHeight": 379,
+        "clientWidth": 818,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 580.4000244140625,
+          "height": 389.3000183105469,
+          "left": 310,
+          "right": 1128,
+          "top": 191.1000061035156,
+          "width": 818,
+          "x": 310,
+          "y": 191.1000061035156
+        },
+        "scrollHeight": 379,
+        "scrollTop": 0,
+        "scrollWidth": 2719
+      },
+      "card": {
+        "clientHeight": 353,
+        "clientWidth": 780,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 546.1000061035156,
+          "height": 355,
+          "left": 328,
+          "right": 1110,
+          "top": 191.1000061035156,
+          "width": 782,
+          "x": 328,
+          "y": 191.1000061035156
+        },
+        "scrollHeight": 353,
+        "scrollTop": 0,
+        "scrollWidth": 780
+      },
+      "centerError": 0,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 112,
+        "clientWidth": 816,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 699.2000122070312,
+          "height": 112,
+          "left": 310.8000183105469,
+          "right": 1127.2000427246094,
+          "top": 587.2000122070312,
+          "width": 816.4000244140625,
+          "x": 310.8000183105469,
+          "y": 587.2000122070312
+        },
+        "scrollHeight": 112,
+        "scrollTop": 0,
+        "scrollWidth": 816
+      },
+      "dockVisible": true,
+      "editor": {
+        "clientHeight": 276,
+        "clientWidth": 780,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 545.2999877929688,
+          "height": 275.8999938964844,
+          "left": 328.8000183105469,
+          "right": 1109.2000427246094,
+          "top": 269.3999938964844,
+          "width": 780.4000244140625,
+          "x": 328.8000183105469,
+          "y": 269.3999938964844
+        },
+        "scrollHeight": 276,
+        "scrollTop": 0,
+        "scrollWidth": 780
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 400,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 699.2000122070312,
+          "height": 400.2000122070313,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 299,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 299
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 720,
+        "clientWidth": 1152,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 720,
+          "height": 720,
+          "left": 0,
+          "right": 1152,
+          "top": 0,
+          "width": 1152,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 720,
+        "scrollTop": 0,
+        "scrollWidth": 1152
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 78,
+            "clientWidth": 756,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 430.400016784668,
+              "height": 78.20000457763672,
+              "left": 340.8000183105469,
+              "right": 1097.2000427246094,
+              "top": 352.20001220703125,
+              "width": 756.4000244140625,
+              "x": 340.8000183105469,
+              "y": 352.20001220703125
+            },
+            "scrollHeight": 78,
+            "scrollTop": 0,
+            "scrollWidth": 756
+          },
+          "rect": {
+            "bottom": 430.400016784668,
+            "height": 106.20000457763672,
+            "left": 340.8000183105469,
+            "right": 1097.2000427246094,
+            "top": 324.20001220703125,
+            "width": 756.4000244140625,
+            "x": 340.8000183105469,
+            "y": 324.20001220703125
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 78,
+            "clientWidth": 756,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 542.5999984741211,
+              "height": 78.20000457763672,
+              "left": 340.8000183105469,
+              "right": 1097.2000427246094,
+              "top": 464.3999938964844,
+              "width": 756.4000244140625,
+              "x": 340.8000183105469,
+              "y": 464.3999938964844
+            },
+            "scrollHeight": 78,
+            "scrollTop": 0,
+            "scrollWidth": 756
+          },
+          "rect": {
+            "bottom": 542.5999984741211,
+            "height": 106.20000457763672,
+            "left": 340.8000183105469,
+            "right": 1097.2000427246094,
+            "top": 436.3999938964844,
+            "width": 756.4000244140625,
+            "x": 340.8000183105469,
+            "y": 436.3999938964844
+          }
+        }
+      ],
+      "shelf": "355px",
+      "viewport": [
+        1152,
+        720
+      ]
+    },
+    "1920x1080": {
+      "board": {
+        "clientHeight": 765,
+        "clientWidth": 1586,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 906.4000244140624,
+          "height": 765.4000244140625,
+          "left": 310,
+          "right": 1896,
+          "top": 141,
+          "width": 1586,
+          "x": 310,
+          "y": 141
+        },
+        "scrollHeight": 765,
+        "scrollTop": 0,
+        "scrollWidth": 1586
+      },
+      "card": {
+        "clientHeight": 433,
+        "clientWidth": 777,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 576,
+          "height": 435,
+          "left": 564.4375,
+          "right": 1342.5625,
+          "top": 141,
+          "width": 778.125,
+          "x": 564.4375,
+          "y": 141
+        },
+        "scrollHeight": 433,
+        "scrollTop": 0,
+        "scrollWidth": 777
+      },
+      "centerError": -149.5,
+      "collisions": 0,
+      "dock": {
+        "clientHeight": 146,
+        "clientWidth": 1584,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 1059.2000122070312,
+          "height": 146,
+          "left": 310.8000183105469,
+          "right": 1895.2000427246096,
+          "top": 913.2000122070312,
+          "width": 1584.4000244140625,
+          "x": 310.8000183105469,
+          "y": 913.2000122070312
+        },
+        "scrollHeight": 146,
+        "scrollTop": 0,
+        "scrollWidth": 1584
+      },
+      "dockVisible": true,
+      "editor": {
+        "clientHeight": 351,
+        "clientWidth": 777,
+        "overflowY": "visible",
+        "rect": {
+          "bottom": 570.5000152587891,
+          "height": 351.20001220703125,
+          "left": 565.2374877929688,
+          "right": 1341.7625122070312,
+          "top": 219.3000030517578,
+          "width": 776.5250244140625,
+          "x": 565.2374877929688,
+          "y": 219.3000030517578
+        },
+        "scrollHeight": 351,
+        "scrollTop": 0,
+        "scrollWidth": 777
+      },
+      "expanded": "true",
+      "library": {
+        "clientHeight": 810,
+        "clientWidth": 257,
+        "overflowY": "auto",
+        "rect": {
+          "bottom": 1059.1999969482422,
+          "height": 810.2999877929688,
+          "left": 24.80000114440918,
+          "right": 291.19999504089355,
+          "top": 248.90000915527344,
+          "width": 266.3999938964844,
+          "x": 24.80000114440918,
+          "y": 248.90000915527344
+        },
+        "scrollHeight": 887,
+        "scrollTop": 0,
+        "scrollWidth": 257
+      },
+      "main": {
+        "clientHeight": 1080,
+        "clientWidth": 1920,
+        "overflowY": "hidden",
+        "rect": {
+          "bottom": 1080,
+          "height": 1080,
+          "left": 0,
+          "right": 1920,
+          "top": 0,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "scrollHeight": 1080,
+        "scrollTop": 0,
+        "scrollWidth": 1920
+      },
+      "pageOverflow": false,
+      "sections": [
+        {
+          "key": "before",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 753,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 414.30001068115234,
+              "height": 116.20000457763672,
+              "left": 577.2374877929688,
+              "right": 1329.7625122070312,
+              "top": 298.1000061035156,
+              "width": 752.5250244140625,
+              "x": 577.2374877929688,
+              "y": 298.1000061035156
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 753
+          },
+          "rect": {
+            "bottom": 414.3000030517578,
+            "height": 144.1999969482422,
+            "left": 577.2374877929688,
+            "right": 1329.7625122070312,
+            "top": 270.1000061035156,
+            "width": 752.5250244140625,
+            "x": 577.2374877929688,
+            "y": 270.1000061035156
+          }
+        },
+        {
+          "key": "extras",
+          "rail": {
+            "clientHeight": 116,
+            "clientWidth": 753,
+            "overflowY": "hidden",
+            "rect": {
+              "bottom": 564.5000228881836,
+              "height": 116.20000457763672,
+              "left": 577.2374877929688,
+              "right": 1329.7625122070312,
+              "top": 448.3000183105469,
+              "width": 752.5250244140625,
+              "x": 577.2374877929688,
+              "y": 448.3000183105469
+            },
+            "scrollHeight": 116,
+            "scrollTop": 0,
+            "scrollWidth": 753
+          },
+          "rect": {
+            "bottom": 564.5000152587891,
+            "height": 144.1999969482422,
+            "left": 577.2374877929688,
+            "right": 1329.7625122070312,
+            "top": 420.3000183105469,
+            "width": 752.5250244140625,
+            "x": 577.2374877929688,
+            "y": 420.3000183105469
+          }
+        }
+      ],
+      "shelf": "745px",
+      "viewport": [
+        1920,
+        1080
+      ]
+    }
+  },
+  "closedFresh": {
+    "board": {
+      "clientHeight": 499,
+      "clientWidth": 818,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 700,
+        "height": 508.8999938964844,
+        "left": 310,
+        "right": 1128,
+        "top": 191.1000061035156,
+        "width": 818,
+        "x": 310,
+        "y": 191.1000061035156
+      },
+      "scrollHeight": 525,
+      "scrollTop": 0,
+      "scrollWidth": 1768
+    },
+    "card": {
+      "clientHeight": 243,
+      "clientWidth": 543,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 436.1000061035156,
+        "height": 245,
+        "left": 1017.7999877929688,
+        "right": 1562.2000122070312,
+        "top": 191.1000061035156,
+        "width": 544.4000244140625,
+        "x": 1017.7999877929688,
+        "y": 191.1000061035156
+      },
+      "scrollHeight": 243,
+      "scrollTop": 0,
+      "scrollWidth": 543
+    },
+    "centerError": 571,
+    "collisions": 4,
+    "dock": null,
+    "dockVisible": false,
+    "editor": null,
+    "expanded": "false",
+    "library": {
+      "clientHeight": 400,
+      "clientWidth": 257,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 699.2000122070312,
+        "height": 400.2000122070313,
+        "left": 24.80000114440918,
+        "right": 291.19999504089355,
+        "top": 299,
+        "width": 266.3999938964844,
+        "x": 24.80000114440918,
+        "y": 299
+      },
+      "scrollHeight": 887,
+      "scrollTop": 0,
+      "scrollWidth": 257
+    },
+    "main": {
+      "clientHeight": 720,
+      "clientWidth": 1152,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 720,
+        "height": 720,
+        "left": 0,
+        "right": 1152,
+        "top": 0,
+        "width": 1152,
+        "x": 0,
+        "y": 0
+      },
+      "scrollHeight": 720,
+      "scrollTop": 0,
+      "scrollWidth": 1152
+    },
+    "pageOverflow": false,
+    "sections": [],
+    "shelf": "475px",
+    "viewport": [
+      1152,
+      720
+    ]
+  },
+  "closedAfter": {
+    "board": {
+      "clientHeight": 919,
+      "clientWidth": 1586,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 1060,
+        "height": 919,
+        "left": 310,
+        "right": 1896,
+        "top": 141,
+        "width": 1586,
+        "x": 310,
+        "y": 141
+      },
+      "scrollHeight": 919,
+      "scrollTop": 0,
+      "scrollWidth": 1586
+    },
+    "card": {
+      "clientHeight": 433,
+      "clientWidth": 776,
+      "overflowY": "clip",
+      "rect": {
+        "bottom": 576,
+        "height": 435,
+        "left": 563.875,
+        "right": 1341.875,
+        "top": 141,
+        "width": 778,
+        "x": 563.875,
+        "y": 141
+      },
+      "scrollHeight": 433,
+      "scrollTop": 0,
+      "scrollWidth": 776
+    },
+    "centerError": -150.125,
+    "collisions": 0,
+    "dock": null,
+    "dockVisible": false,
+    "editor": null,
+    "expanded": "false",
+    "library": {
+      "clientHeight": 810,
+      "clientWidth": 257,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 1059.1999969482422,
+        "height": 810.2999877929688,
+        "left": 24.80000114440918,
+        "right": 291.19999504089355,
+        "top": 248.90000915527344,
+        "width": 266.3999938964844,
+        "x": 24.80000114440918,
+        "y": 248.90000915527344
+      },
+      "scrollHeight": 887,
+      "scrollTop": 0,
+      "scrollWidth": 257
+    },
+    "main": {
+      "clientHeight": 1080,
+      "clientWidth": 1920,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 1080,
+        "height": 1080,
+        "left": 0,
+        "right": 1920,
+        "top": 0,
+        "width": 1920,
+        "x": 0,
+        "y": 0
+      },
+      "scrollHeight": 1080,
+      "scrollTop": 0,
+      "scrollWidth": 1920
+    },
+    "pageOverflow": false,
+    "sections": [],
+    "shelf": "745px",
+    "viewport": [
+      1920,
+      1080
+    ]
+  },
+  "task": {
+    "board": {
+      "clientHeight": 338,
+      "clientWidth": 818,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 539.4000244140625,
+        "height": 348.3000183105469,
+        "left": 310,
+        "right": 1128,
+        "top": 191.1000061035156,
+        "width": 818,
+        "x": 310,
+        "y": 191.1000061035156
+      },
+      "scrollHeight": 338,
+      "scrollTop": 0,
+      "scrollWidth": 3590
+    },
+    "card": {
+      "clientHeight": 313,
+      "clientWidth": 464,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 506.1000061035156,
+        "height": 315,
+        "left": 328,
+        "right": 793.2000122070312,
+        "top": 191.1000061035156,
+        "width": 465.2000122070313,
+        "x": 328,
+        "y": 191.1000061035156
+      },
+      "scrollHeight": 313,
+      "scrollTop": 0,
+      "scrollWidth": 464
+    },
+    "centerError": -158.39999389648438,
+    "collisions": 0,
+    "dock": {
+      "clientHeight": 153,
+      "clientWidth": 816,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 699.2000122070312,
+        "height": 153,
+        "left": 310.8000183105469,
+        "right": 1127.2000427246094,
+        "top": 546.2000122070312,
+        "width": 816.4000244140625,
+        "x": 310.8000183105469,
+        "y": 546.2000122070312
+      },
+      "scrollHeight": 153,
+      "scrollTop": 0,
+      "scrollWidth": 816
+    },
+    "dockVisible": true,
+    "editor": {
+      "clientHeight": 221,
+      "clientWidth": 448,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 505.3000030517578,
+        "height": 235.90000915527344,
+        "left": 328.8000183105469,
+        "right": 792.4000244140625,
+        "top": 269.3999938964844,
+        "width": 463.6000061035156,
+        "x": 328.8000183105469,
+        "y": 269.3999938964844
+      },
+      "scrollHeight": 466,
+      "scrollTop": 119.1999969482422,
+      "scrollWidth": 786
+    },
+    "expanded": "true",
+    "library": {
+      "clientHeight": 400,
+      "clientWidth": 257,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 699.2000122070312,
+        "height": 400.2000122070313,
+        "left": 24.80000114440918,
+        "right": 291.19999504089355,
+        "top": 299,
+        "width": 266.3999938964844,
+        "x": 24.80000114440918,
+        "y": 299
+      },
+      "scrollHeight": 887,
+      "scrollTop": 0,
+      "scrollWidth": 257
+    },
+    "main": {
+      "clientHeight": 720,
+      "clientWidth": 1152,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 720,
+        "height": 720,
+        "left": 0,
+        "right": 1152,
+        "top": 0,
+        "width": 1152,
+        "x": 0,
+        "y": 0
+      },
+      "scrollHeight": 720,
+      "scrollTop": 0,
+      "scrollWidth": 1152
+    },
+    "pageOverflow": false,
+    "sections": [
+      {
+        "key": "before",
+        "rail": {
+          "clientHeight": 231,
+          "clientWidth": 424,
+          "overflowY": "hidden",
+          "rect": {
+            "bottom": 498.00001525878906,
+            "height": 231.40000915527344,
+            "left": 340.8000183105469,
+            "right": 765.2000122070312,
+            "top": 266.6000061035156,
+            "width": 424.3999938964844,
+            "x": 340.8000183105469,
+            "y": 266.6000061035156
+          },
+          "scrollHeight": 231,
+          "scrollTop": 0,
+          "scrollWidth": 970
+        },
+        "rect": {
+          "bottom": 498,
+          "height": 259.3999938964844,
+          "left": 340.8000183105469,
+          "right": 765.2000122070312,
+          "top": 238.6000061035156,
+          "width": 424.3999938964844,
+          "x": 340.8000183105469,
+          "y": 238.6000061035156
+        }
+      },
+      {
+        "key": "extras",
+        "rail": {
+          "clientHeight": 78,
+          "clientWidth": 424,
+          "overflowY": "hidden",
+          "rect": {
+            "bottom": 610.2000045776367,
+            "height": 78.20000457763672,
+            "left": 340.8000183105469,
+            "right": 765.2000122070312,
+            "top": 532,
+            "width": 424.3999938964844,
+            "x": 340.8000183105469,
+            "y": 532
+          },
+          "scrollHeight": 78,
+          "scrollTop": 0,
+          "scrollWidth": 424
+        },
+        "rect": {
+          "bottom": 610.2000045776367,
+          "height": 106.20000457763672,
+          "left": 340.8000183105469,
+          "right": 765.2000122070312,
+          "top": 504,
+          "width": 424.3999938964844,
+          "x": 340.8000183105469,
+          "y": 504
+        }
+      }
+    ],
+    "shelf": "315px",
+    "viewport": [
+      1152,
+      720
+    ]
+  },
+  "closedReference": {
+    "board": {
+      "clientHeight": 731,
+      "clientWidth": 1106,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 882,
+        "height": 741,
+        "left": 310,
+        "right": 1416,
+        "top": 141,
+        "width": 1106,
+        "x": 310,
+        "y": 141
+      },
+      "scrollHeight": 731,
+      "scrollTop": 0,
+      "scrollWidth": 1948
+    },
+    "card": {
+      "clientHeight": 243,
+      "clientWidth": 528,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 546,
+        "height": 245,
+        "left": 1026.8250732421875,
+        "right": 1556.78759765625,
+        "top": 301,
+        "width": 529.9625244140625,
+        "x": 1026.8250732421875,
+        "y": 301
+      },
+      "scrollHeight": 243,
+      "scrollTop": 0,
+      "scrollWidth": 528
+    },
+    "centerError": 428.8063354492187,
+    "collisions": 2,
+    "dock": null,
+    "dockVisible": false,
+    "editor": null,
+    "expanded": "false",
+    "library": {
+      "clientHeight": 630,
+      "clientWidth": 257,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 879.1999969482422,
+        "height": 630.2999877929688,
+        "left": 24.80000114440918,
+        "right": 291.19999504089355,
+        "top": 248.90000915527344,
+        "width": 266.3999938964844,
+        "x": 24.80000114440918,
+        "y": 248.90000915527344
+      },
+      "scrollHeight": 887,
+      "scrollTop": 0,
+      "scrollWidth": 257
+    },
+    "main": {
+      "clientHeight": 900,
+      "clientWidth": 1440,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 900,
+        "height": 900,
+        "left": 0,
+        "right": 1440,
+        "top": 0,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "scrollHeight": 900,
+      "scrollTop": 0,
+      "scrollWidth": 1440
+    },
+    "pageOverflow": false,
+    "sections": [],
+    "shelf": "",
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  "closedCandidate": {
+    "board": {
+      "clientHeight": 729,
+      "clientWidth": 1106,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 880,
+        "height": 739,
+        "left": 310,
+        "right": 1416,
+        "top": 141,
+        "width": 1106,
+        "x": 310,
+        "y": 141
+      },
+      "scrollHeight": 729,
+      "scrollTop": 0,
+      "scrollWidth": 1948
+    },
+    "card": {
+      "clientHeight": 243,
+      "clientWidth": 528,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 546,
+        "height": 245,
+        "left": 1026.8250732421875,
+        "right": 1556.78759765625,
+        "top": 301,
+        "width": 529.9625244140625,
+        "x": 1026.8250732421875,
+        "y": 301
+      },
+      "scrollHeight": 243,
+      "scrollTop": 0,
+      "scrollWidth": 528
+    },
+    "centerError": 428.8063354492187,
+    "collisions": 2,
+    "dock": null,
+    "dockVisible": false,
+    "editor": null,
+    "expanded": "false",
+    "library": {
+      "clientHeight": 630,
+      "clientWidth": 257,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 879.1999969482422,
+        "height": 630.2999877929688,
+        "left": 24.80000114440918,
+        "right": 291.19999504089355,
+        "top": 248.90000915527344,
+        "width": 266.3999938964844,
+        "x": 24.80000114440918,
+        "y": 248.90000915527344
+      },
+      "scrollHeight": 887,
+      "scrollTop": 0,
+      "scrollWidth": 257
+    },
+    "main": {
+      "clientHeight": 900,
+      "clientWidth": 1440,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 900,
+        "height": 900,
+        "left": 0,
+        "right": 1440,
+        "top": 0,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "scrollHeight": 900,
+      "scrollTop": 0,
+      "scrollWidth": 1440
+    },
+    "pageOverflow": false,
+    "sections": [],
+    "shelf": "705px",
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  "centering": "{\"pass\":\"stabilised\",\"target\":0,\"width\":778,\"viewport\":1586}",
+  "routes": {
+    "board": {
+      "clientHeight": 379,
+      "clientWidth": 818,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 580.4000244140625,
+        "height": 389.3000183105469,
+        "left": 310,
+        "right": 1128,
+        "top": 191.1000061035156,
+        "width": 818,
+        "x": 310,
+        "y": 191.1000061035156
+      },
+      "scrollHeight": 452,
+      "scrollTop": 0,
+      "scrollWidth": 11668
+    },
+    "card": {
+      "clientHeight": 353,
+      "clientWidth": 780,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 546.1000061035156,
+        "height": 355,
+        "left": 328,
+        "right": 1110,
+        "top": 191.1000061035156,
+        "width": 782,
+        "x": 328,
+        "y": 191.1000061035156
+      },
+      "scrollHeight": 451,
+      "scrollTop": 0,
+      "scrollWidth": 780
+    },
+    "centerError": 0,
+    "collisions": 0,
+    "dock": {
+      "clientHeight": 112,
+      "clientWidth": 816,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 699.2000122070312,
+        "height": 112,
+        "left": 310.8000183105469,
+        "right": 1127.2000427246094,
+        "top": 587.2000122070312,
+        "width": 816.4000244140625,
+        "x": 310.8000183105469,
+        "y": 587.2000122070312
+      },
+      "scrollHeight": 112,
+      "scrollTop": 0,
+      "scrollWidth": 816
+    },
+    "dockVisible": true,
+    "editor": {
+      "clientHeight": 276,
+      "clientWidth": 780,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 545.2999877929688,
+        "height": 275.8999938964844,
+        "left": 328.8000183105469,
+        "right": 1109.2000427246094,
+        "top": 269.3999938964844,
+        "width": 780.4000244140625,
+        "x": 328.8000183105469,
+        "y": 269.3999938964844
+      },
+      "scrollHeight": 374,
+      "scrollTop": 0,
+      "scrollWidth": 780
+    },
+    "expanded": "true",
+    "library": {
+      "clientHeight": 400,
+      "clientWidth": 257,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 699.2000122070312,
+        "height": 400.2000122070313,
+        "left": 24.80000114440918,
+        "right": 291.19999504089355,
+        "top": 299,
+        "width": 266.3999938964844,
+        "x": 24.80000114440918,
+        "y": 299
+      },
+      "scrollHeight": 887,
+      "scrollTop": 0,
+      "scrollWidth": 257
+    },
+    "main": {
+      "clientHeight": 720,
+      "clientWidth": 1152,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 720,
+        "height": 720,
+        "left": 0,
+        "right": 1152,
+        "top": 0,
+        "width": 1152,
+        "x": 0,
+        "y": 0
+      },
+      "scrollHeight": 720,
+      "scrollTop": 0,
+      "scrollWidth": 1152
+    },
+    "pageOverflow": false,
+    "sections": [
+      {
+        "key": "before",
+        "rail": {
+          "clientHeight": 78,
+          "clientWidth": 756,
+          "overflowY": "hidden",
+          "rect": {
+            "bottom": 531.0999984741211,
+            "height": 78.20000457763672,
+            "left": 340.8000183105469,
+            "right": 1097.2000427246094,
+            "top": 452.8999938964844,
+            "width": 756.4000244140625,
+            "x": 340.8000183105469,
+            "y": 452.8999938964844
+          },
+          "scrollHeight": 78,
+          "scrollTop": 0,
+          "scrollWidth": 756
+        },
+        "rect": {
+          "bottom": 531.0999984741211,
+          "height": 106.20000457763672,
+          "left": 340.8000183105469,
+          "right": 1097.2000427246094,
+          "top": 424.8999938964844,
+          "width": 756.4000244140625,
+          "x": 340.8000183105469,
+          "y": 424.8999938964844
+        }
+      },
+      {
+        "key": "extras",
+        "rail": {
+          "clientHeight": 78,
+          "clientWidth": 756,
+          "overflowY": "hidden",
+          "rect": {
+            "bottom": 643.3000411987305,
+            "height": 78.20000457763672,
+            "left": 340.8000183105469,
+            "right": 1097.2000427246094,
+            "top": 565.1000366210938,
+            "width": 756.4000244140625,
+            "x": 340.8000183105469,
+            "y": 565.1000366210938
+          },
+          "scrollHeight": 78,
+          "scrollTop": 0,
+          "scrollWidth": 756
+        },
+        "rect": {
+          "bottom": 643.3000411987305,
+          "height": 106.20000457763672,
+          "left": 340.8000183105469,
+          "right": 1097.2000427246094,
+          "top": 537.1000366210938,
+          "width": 756.4000244140625,
+          "x": 340.8000183105469,
+          "y": 537.1000366210938
+        }
+      }
+    ],
+    "shelf": "355px",
+    "viewport": [
+      1152,
+      720
+    ]
+  },
+  "routesFinal": {
+    "board": {
+      "clientHeight": 379,
+      "clientWidth": 818,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 580.4000244140625,
+        "height": 389.3000183105469,
+        "left": 310,
+        "right": 1128,
+        "top": 191.1000061035156,
+        "width": 818,
+        "x": 310,
+        "y": 191.1000061035156
+      },
+      "scrollHeight": 379,
+      "scrollTop": 0,
+      "scrollWidth": 11668
+    },
+    "card": {
+      "clientHeight": 353,
+      "clientWidth": 780,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 546.1000061035156,
+        "height": 355,
+        "left": 328,
+        "right": 1110,
+        "top": 191.1000061035156,
+        "width": 782,
+        "x": 328,
+        "y": 191.1000061035156
+      },
+      "scrollHeight": 353,
+      "scrollTop": 0,
+      "scrollWidth": 780
+    },
+    "centerError": 0,
+    "collisions": 0,
+    "dock": {
+      "clientHeight": 112,
+      "clientWidth": 816,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 699.2000122070312,
+        "height": 112,
+        "left": 310.8000183105469,
+        "right": 1127.2000427246094,
+        "top": 587.2000122070312,
+        "width": 816.4000244140625,
+        "x": 310.8000183105469,
+        "y": 587.2000122070312
+      },
+      "scrollHeight": 112,
+      "scrollTop": 0,
+      "scrollWidth": 816
+    },
+    "dockVisible": true,
+    "editor": {
+      "clientHeight": 293,
+      "clientWidth": 780,
+      "overflowY": "visible",
+      "rect": {
+        "bottom": 545.3000030517578,
+        "height": 292.8999938964844,
+        "left": 328.8000183105469,
+        "right": 1109.2000427246094,
+        "top": 252.40000915527344,
+        "width": 780.4000244140625,
+        "x": 328.8000183105469,
+        "y": 252.40000915527344
+      },
+      "scrollHeight": 293,
+      "scrollTop": 0,
+      "scrollWidth": 780
+    },
+    "expanded": "true",
+    "library": {
+      "clientHeight": 400,
+      "clientWidth": 257,
+      "overflowY": "auto",
+      "rect": {
+        "bottom": 699.2000122070312,
+        "height": 400.2000122070313,
+        "left": 24.80000114440918,
+        "right": 291.19999504089355,
+        "top": 299,
+        "width": 266.3999938964844,
+        "x": 24.80000114440918,
+        "y": 299
+      },
+      "scrollHeight": 887,
+      "scrollTop": 0,
+      "scrollWidth": 257
+    },
+    "main": {
+      "clientHeight": 720,
+      "clientWidth": 1152,
+      "overflowY": "hidden",
+      "rect": {
+        "bottom": 720,
+        "height": 720,
+        "left": 0,
+        "right": 1152,
+        "top": 0,
+        "width": 1152,
+        "x": 0,
+        "y": 0
+      },
+      "scrollHeight": 720,
+      "scrollTop": 0,
+      "scrollWidth": 1152
+    },
+    "pageOverflow": false,
+    "sections": [
+      {
+        "key": "before",
+        "rail": {
+          "clientHeight": 66,
+          "clientWidth": 756,
+          "overflowY": "hidden",
+          "rect": {
+            "bottom": 453.2000045776367,
+            "height": 66.20000457763672,
+            "left": 340.8000183105469,
+            "right": 1097.2000427246094,
+            "top": 387,
+            "width": 756.4000244140625,
+            "x": 340.8000183105469,
+            "y": 387
+          },
+          "scrollHeight": 66,
+          "scrollTop": 0,
+          "scrollWidth": 756
+        },
+        "rect": {
+          "bottom": 453.2000045776367,
+          "height": 90.20000457763672,
+          "left": 340.8000183105469,
+          "right": 1097.2000427246094,
+          "top": 363,
+          "width": 756.4000244140625,
+          "x": 340.8000183105469,
+          "y": 363
+        }
+      },
+      {
+        "key": "extras",
+        "rail": {
+          "clientHeight": 66,
+          "clientWidth": 756,
+          "overflowY": "hidden",
+          "rect": {
+            "bottom": 544.900016784668,
+            "height": 66.20000457763672,
+            "left": 340.8000183105469,
+            "right": 1097.2000427246094,
+            "top": 478.7000122070313,
+            "width": 756.4000244140625,
+            "x": 340.8000183105469,
+            "y": 478.7000122070313
+          },
+          "scrollHeight": 66,
+          "scrollTop": 0,
+          "scrollWidth": 756
+        },
+        "rect": {
+          "bottom": 544.900016784668,
+          "height": 87.70000457763672,
+          "left": 340.8000183105469,
+          "right": 1097.2000427246094,
+          "top": 457.2000122070313,
+          "width": 756.4000244140625,
+          "x": 340.8000183105469,
+          "y": 457.2000122070313
+        }
+      }
+    ],
+    "shelf": "355px",
+    "viewport": [
+      1152,
+      720
+    ]
+  }
+}

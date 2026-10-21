@@ -1,0 +1,13 @@
+{
+  "sha": "21f6f689762f982111f202e110f4835f047be13c",
+  "viewport": [
+    1152,
+    720
+  ],
+  "editor": {
+    "client": 216,
+    "scroll": 262
+  },
+  "verdict": "FAIL_1152_HEADER_WRAP_HEIGHT",
+  "correction": "Height-only compact header, metadata controls and inactive tile for short desktop viewports; no Board/packer change."
+}

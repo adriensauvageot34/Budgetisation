@@ -1,0 +1,17 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: missing empty Before entry
+    at assertEntry (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-open-stacked.mjs:110:25)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-a2-a3-performance/scripts/check-bar-open-stacked.mjs:111:23 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '=='
+}
+
+Node.js v22.18.0

@@ -39,7 +39,7 @@ try{
   for(const counter of hidden){assert.equal(counter.type,'span');assert.equal(counter.props.onClick,undefined);assert.equal(counter.props.tabIndex,undefined);}if(hidden.length)assert.equal(hidden[0].children.join(''),'+3');
   if(!['empty','meta'].includes(scene)){
    const crazy=tree.find(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Crazy Tiger sans alcool ·'));
-   assert.equal(crazy.findByType('strong').children.join(''),'Crazy');assert.equal(crazy.props.title,'Crazy Tiger sans alcool');
+   assert.equal(crazy.findByType('strong').children.join(''),'Crazy');assert.equal(crazy.props.title,undefined);assert.match(crazy.props['aria-label'],/^Crazy Tiger sans alcool/);
    assert.equal(crazy.find(n=>n.type==='span'&&n.props['data-price-unknown']===true).children.join(''),'? €');
    const img=crazy.findByType('img');await act(async()=>img.props.onError());assert.equal(crazy.findAllByType('img').length,0,'image failure keeps a functional icon and full button name');
   }

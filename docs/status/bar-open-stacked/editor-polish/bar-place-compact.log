@@ -1,0 +1,2 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+{"status":"PASS","level":"REACT_FIXTURE_NOT_BROWSER","checks":["ONE_FIELD","NO_SEPARATE_FREE_PANEL","TOGGLE_RETAINS_RAW","TOGGLE_NO_DECISION","ENTER_FREE_DECISION","NO_PROVIDER_CALL_OFF"]}
