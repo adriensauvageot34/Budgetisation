@@ -13,6 +13,10 @@ export function BarMomentRail({label,children,add,addLabel,disabled=false,dropBl
      const gap=6,width=node.clientWidth-6,total=count*144+(showAdd?48:0)+Math.max(0,count+(showAdd?1:0)-1)*gap;
      const columns=Math.max(1,Math.floor((width-24)/150));
      node.style.setProperty('--bar-rail-tile',`${total<=width?144:Math.max(90,(width-24-columns*gap)/columns)}px`);
+     const active=node.querySelector<HTMLElement>('[data-bar-active-tile="true"]');
+     if(active){const tile=active.getBoundingClientRect(),bounds=node.getBoundingClientRect();
+       if(tile.right>bounds.right-3)node.scrollLeft+=tile.right-bounds.right+3;
+       else if(tile.left<bounds.left+3)node.scrollLeft-=bounds.left+3-tile.left;}
    };
    size();const observer=new ResizeObserver(size);observer.observe(node);return()=>observer.disconnect();
  },[count,showAdd]);

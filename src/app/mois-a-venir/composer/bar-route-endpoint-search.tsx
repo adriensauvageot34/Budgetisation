@@ -55,6 +55,6 @@ export function BarRouteEndpointSearch({identity,decisionKey,query,change,choose
     {status&&<small role="status">{status}</small>}
     {failed&&<button type="button" disabled={disabled} onClick={()=>setAttempt(x=>x+1)}>Réessayer la recherche</button>}
     {retry&&<button type="button" disabled={disabled||loading} onClick={()=>void select(retry)}>Réessayer cette adresse</button>}
-    {dockHost&&createPortal(<ContextPalette card={card} model={model} appearance="bar" busy={disabled} configure choose={()=>{}} close={()=>{}} question={{title:"Choisir le point du trajet",identity,choices,filterChoices:false,search:{label:"Rechercher une adresse ou un lieu",value:query,change}}}/>,dockHost)}
+    {dockHost&&createPortal(<ContextPalette card={card} model={model} appearance="bar" busy={disabled} configure choose={()=>{}} close={()=>{}} question={{title:"Choisir le point du trajet",identity,choices,filterChoices:false,emptyLabel:"Aucune adresse vérifiée. Recherchez un lieu ou réessayez.",search:{label:"Rechercher une adresse ou un lieu",value:query,change}}}/>,dockHost)}
   </section>;
 }

@@ -7,7 +7,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT=true;globalThis.ResizeObserver=class{observe
 const {BarRouteEndpointSearch}=require('@/app/mois-a-venir/composer/bar-route-endpoint-search'),{BarPlaceTransportContext}=require('@/app/mois-a-venir/composer/bar-place-transport');
 const {barEndpointSuggestions,barDistinctPlaces,barEndpointLabel}=require('@/app/mois-a-venir/composer/bar-place-knowledge');
 const base={name:'Même nom',commune:'Ville synthétique',nature:'Commerce',usage:'Bar',subtype:null,privatePlace:false,relationships:[],coordinates:{latitude:43.6,longitude:3.9,source:'CANONICAL'}};
-const places=[{...base,placeId:'one',googlePlaceId:'google_one'},{...base,placeId:'two',googlePlaceId:'google_one'},{...base,placeId:'three',googlePlaceId:'google_three'},{...base,placeId:'four',coordinates:undefined},{...base,placeId:'home',name:'Nom de domicile long',privatePlace:true,nature:'Domicile privé',usage:'Domicile',subtype:'Domicile principal'}];
+const places=[{...base,placeId:'one',googlePlaceId:'google_one'},{...base,placeId:'two',googlePlaceId:'google_one'},{...base,placeId:'three',googlePlaceId:'google_three'},{...base,placeId:'four',coordinates:undefined},{...base,placeId:'home',coordinates:undefined,routeResolvable:true,name:'Nom de domicile long',privatePlace:true,nature:'Domicile privé',usage:'Domicile',subtype:'Domicile principal'}];
 assert.deepEqual(barDistinctPlaces(places).map(p=>p.placeId),['one','three','four','home']);
 assert.equal(barEndpointLabel(places[4]),'Domicile');
 const available=barEndpointSuggestions(places,[],'outbound','origin',null,undefined,'',true).map(x=>x.place.placeId);assert.deepEqual(new Set(available),new Set(['one','three','home']));

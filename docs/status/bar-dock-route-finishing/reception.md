@@ -35,3 +35,11 @@ Les journaux locaux sont dans `outputs/bar-dock-route-finishing/`. Les fixtures 
 Les résultats navigateur et le lien au SHA exact sont consignés dans la PR après le build READY. Ne pas interpréter le point de contrôle local comme une certification navigateur, fournisseur live ou sauvegarde personnelle.
 
 Aucune modification de Production, donnée personnelle ou Plan officiel autorisée/exécutée dans cette tranche.
+
+## Corrections regroupées après la première Preview
+
+Preview initiale `96f20bb`, READY (`dpl_BANqWXSnQT5cZ5CCmSYbyqfunvdN`) : connexion authentifiée réussie, Board exclusivement synthétique en mémoire. Deux défauts reproduits et conservés dans la preuve locale `initial-short-desktop.jpg` : débordement vertical de l’éditeur dans une cellule courte ; domicile masqué par le filtre d’adresse car le modèle UI ne publie pas ses coordonnées privées.
+
+Corrections : rails dimensionnés depuis le conteneur réel de l’éditeur, footer distinct des rails, validation RAW dans le dock plutôt que sous la tuile ; révélation de la tuile active après redimensionnement du rail. Le serveur publie seulement `routeResolvable` pour les lieux privés et les identités Google publiques admissibles pour le dédoublonnage. Pas d’adresse ni de coordonnées privées ajoutées au modèle UI ; champ dérivé facultatif, jamais persisté dans un Plan/Draft.
+
+Réexécution ciblée : Bar ouvert 28 PASS (incluant le modèle UI propriétaire et confidentialité du domicile), recherche endpoints PASS, TypeScript PASS et parité 198/198 PASS. La confirmation navigateur est limitée à une deuxième Preview du code regroupé, avec les mêmes protections.

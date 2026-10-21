@@ -35,7 +35,7 @@ const pg=await createKernelPostgres(),fixture=barCompactMonth('mixed'),id=uuid(9
 // this pre-existing normalization with a change to a component.
 for(const c of fixture.semantic.contexts)for(const slot of Object.values(c.slotSelections))for(const item of slot.items)if(item.kind==='COMPONENT')item.binding??={mode:'AUTO'};
 globalThis.window={addEventListener(){},removeEventListener(){}};
-const deps={repository:createPlanApplyRepository(pg.client),readWorld:async()=>fixture.world,householdPersons:[]};
+const deps={repository:createPlanApplyRepository(pg.client),readWorld:async()=>fixture.world,readMobilityOptions:async()=>({places:fixture.world.mobilityFacts.places,vehicle:fixture.world.mobilityFacts.vehicle}),householdPersons:[]};
 let root,model,ops=[],dragKey,sequence=0;const checks=[];
 const parent=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
 const child=()=>barBefore(model.semanticState,parent())?.child;
@@ -52,7 +52,7 @@ const render=()=>React.createElement(WorkshopConfirmationProvider,{requestRef},R
  React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(ComposerInteractionContext.Provider,{value:{start(key){dragKey=key;},end(){}}},React.createElement(BarLivingEditor,editorProps())))));
 const confirmation=()=>nodes(n=>n.type==='dialog'&&n.props['data-workshop-confirmation']!==undefined)[0];
 try{
- const read=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:++sequence,targetMonth:'2026-11',draft:fixture.semantic});assert(read.ok,read.message);model=read.model;
+ const read=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:++sequence,targetMonth:'2026-11',draft:fixture.semantic});assert(read.ok,read.message);model=read.model;const homeOption=model.mobilityOptions.places.find(p=>p.privatePlace);assert.equal(homeOption.routeResolvable,true);assert.equal(homeOption.coordinates,undefined);assert.equal(homeOption.address,undefined);
  await act(async()=>{root=create(render(),{createNodeMock:e=>e.type==='dialog'?{open:false,showModal(){this.open=true;},close(){this.open=false;},contains(){return false;},querySelector(){return{focus(){}};}}:null});});
  assert.equal(nodes(n=>n.type==='nav'&&n.props['aria-label']==='Moments de consommation').length,0);
  assert.equal(nodes(n=>n.props['data-bar-return-direct']!==undefined).length,0);

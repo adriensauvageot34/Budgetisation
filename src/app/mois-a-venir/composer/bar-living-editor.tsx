@@ -468,7 +468,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       return asset?{...item,drag:barDockDrag(model,{kind:'CONTEXT_SOCKET',contextOccurrenceId:owner,slotKey:'extras'},asset)}:item;
     })};
   }
-  if(page==='row'&&!advancedRow)question={...question,choices:[...question.choices,
+  if(page==='row'&&!advancedRow)question={...question,choices:[...(dirty&&canSaveBuffer()?[choice('component-save','Enregistrer',()=>saveRow(),'activity')]:[]),...question.choices,
     choice('component-details','Unité, financement et nom',()=>setAdvancedRow(true),'activity'),
     choice('component-remove','Retirer ce poste',remove,'activity')]};
   if((page==='outbound'||page==='return')&&leg)question={...question,choices:[...question.choices,
@@ -489,7 +489,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
           </span></label>
           <label className={styles.barInlinePrice}><span className={styles.barVisuallyHidden}>{row.unitBasis==="SHARED"?"Prix par lot (€)":"Prix unitaire (€)"}</span><input aria-label={row.unitBasis==="SHARED"?"Prix par lot (€)":"Prix unitaire (€)"} title={row.costMode==="QUOTE"?"Devis conservé ; saisir un prix le remplacera explicitement.":row.unitBasis==="SHARED"?"Prix par lot":"Prix unitaire"} inputMode="decimal" placeholder={row.costMode==="QUOTE"?"Devis":"À préciser"} value={row.costMode==="MANUAL"?row.amount:""} onChange={e=>{setRow(r=>({...r,amount:e.target.value,costMode:e.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}));setDirty(true);}}/><span aria-hidden="true">€</span></label>
           </div>
-          <div className={styles.barRowActions}>{dirty&&<button type="button" data-bar-row-save disabled={!canSaveBuffer()} onClick={()=>saveRow()}>Enregistrer</button>}</div>
+
           </div></fieldset>;
   const sectionLabels={extras:"Au bar",before:"Avant de sortir",food:"Repas",main:barItems(context,"main").some(item=>item.kind==="COMPONENT"&&item.label==="Consommations regroupées")?"Consommations regroupées":"Entrées / contribution"};
   const listGroups=(items:readonly ComponentSelectionV1[])=>componentPresentationGroups(items);

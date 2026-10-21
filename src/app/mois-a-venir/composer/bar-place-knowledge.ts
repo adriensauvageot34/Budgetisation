@@ -5,6 +5,7 @@ import type {ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 
 /** Only owner-published address evidence, never a name similarity. */
 export function barResolvablePlace(place:PlannedPlaceOption){
+  if(place.routeResolvable!==undefined)return place.routeResolvable;
   return !!place.googlePlaceId||!!place.address?.trim()||!!place.coordinates&&Number.isFinite(place.coordinates.latitude)&&Number.isFinite(place.coordinates.longitude);
 }
 export function barDistinctPlaces(places:readonly PlannedPlaceOption[]){

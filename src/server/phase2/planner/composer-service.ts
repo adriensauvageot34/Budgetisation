@@ -92,6 +92,8 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
     ...(mobilityOptions ? { mobilityOptions: { vehicle: mobilityOptions.vehicle, vehicleIsUnique: mobilityOptions.vehicleIsUnique, placeKnowledge: mobilityOptions.placeKnowledge, places: mobilityOptions.places.map(p => ({
       placeId: p.placeId, name: p.name, commune: p.commune, nature: p.nature, usage: p.usage, subtype: p.subtype, privatePlace: p.privatePlace,
       relationships: p.relationships,
+      routeResolvable: !!p.googlePlaceId||!!p.address?.trim()||!!p.coordinates&&Number.isFinite(p.coordinates.latitude)&&Number.isFinite(p.coordinates.longitude),
+      ...(!p.privatePlace&&p.googlePlaceId?{googlePlaceId:p.googlePlaceId}:{}),
       ...(mobilityOptions.placeKnowledge ? { currentRelationships: p.currentRelationships, ...(!p.privatePlace ? { visits12Months: p.visits12Months, lastVisitDate: p.lastVisitDate } : {}) } : {}),
       ...(!p.privatePlace && p.address ? { address: p.address } : {}) })) } } : {}),
     mobilitySummaries: mobilitySummaries(preview.compiled.journeys, preview.compiled.journeyPrices),
