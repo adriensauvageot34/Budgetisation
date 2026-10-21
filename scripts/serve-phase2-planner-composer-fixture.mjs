@@ -94,6 +94,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   BAR16_GOOGLE:barP3Month,
   BARLIVE_PERSONAL:barP3Month,
   ...Object.fromEntries([0,1,2,4,10,15].map(count=>[`BAR350_${count}`,()=>bar350ReceptionMonth(count)])),
+  ...Object.fromEntries([20,40].map(count=>[`BAR_BOARD_${count}`,()=>{const value=bar350ReceptionMonth(4);for(let i=1;i<=count;i++)value.semantic.contexts.push(p4Extra(i));return value;}])),
   P09: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P09C: p09CompatibilityMonth,
   P09S: p09CompatibilityMonth,

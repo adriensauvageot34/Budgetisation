@@ -47,8 +47,11 @@ export function startBarReceptionProbe(root: HTMLElement) {
       const neighbors=[...root.querySelectorAll<HTMLElement>('[data-inventory-id]')].filter(node=>!node.contains(card)&&visible(node));
       const collisions=neighbors.filter(node=>{const n=node.getBoundingClientRect();return Math.min(b.right,n.right)-Math.max(b.left,n.left)>2&&Math.min(b.bottom,n.bottom)-Math.max(b.top,n.top)>2;});
       const dock=root.querySelector<HTMLElement>('[data-bar-dock]');
-      samples.push({run,ms:Math.round((performance.now()-started)*100)/100,scene:card.querySelector('[data-bar-step]')?.getAttribute('data-bar-step')??'closed',
-        bar:rect(card),collisions:collisions.map(rect),neighbors:neighbors.slice(0,8).map(rect),
+      const host=card.closest('[data-inventory-id]'),board=root.querySelector('[data-board-scroll]');
+      samples.push({run,ms:Math.round((performance.now()-started)*100)/100,scene:card.querySelector('[data-bar-step]')?.getAttribute('data-bar-step')??'closed',expanded:card.dataset.expanded,
+        bar:rect(card),transform:getComputedStyle(card).transform,hostTransform:host?getComputedStyle(host).transform:null,
+        scrollLeft:board?.scrollLeft??0,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,
+        collisions:collisions.map(rect),neighbors:neighbors.slice(0,24).map((node,index)=>({index,...rect(node),transform:getComputedStyle(node).transform})),
         cardScroll:[card.scrollWidth,card.clientWidth,card.scrollHeight,card.clientHeight],
         dockScroll:dock?[dock.scrollWidth,dock.clientWidth,dock.scrollHeight,dock.clientHeight]:null,
         focusTag:document.activeElement?.tagName??null,mutations,resizes});
@@ -58,7 +61,7 @@ export function startBarReceptionProbe(root: HTMLElement) {
   }
   const begin=(event?:Event)=>{
     if(event?.isTrusted&&events.length<400){const target=event.target instanceof Element?event.target:null;events.push({name:event.type,category:category(target),start:event.timeStamp,handler:performance.now(),...(event.type.startsWith('drag')||event.type==='drop'?{x:(event as DragEvent).clientX,y:(event as DragEvent).clientY}:{})});publishLatency();}
-    if(total>=900||run>=40)return;started=performance.now();run++;left=18;if(!frame)frame=requestAnimationFrame(sample);
+    if(total>=900||run>=40)return;started=performance.now();run++;left=32;if(!frame)frame=requestAnimationFrame(sample);
   };
   const observeState=()=>{
     const state={preview:root.dataset.previewState,save:root.dataset.saveState,dragging:root.dataset.dragging,

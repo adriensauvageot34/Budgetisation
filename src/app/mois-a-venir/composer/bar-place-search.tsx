@@ -1,7 +1,6 @@
 "use client";
 import {useCallback,useEffect,useId,useRef,useState} from "react";
 import {createPortal} from "react-dom";
-import {MapPin} from "lucide-react";
 import {RestaurantSearchSession,validGooglePlaceId,type RestaurantSuggestion,type SelectedRestaurantPlace} from "@/domain/phase2/restaurant-places";
 import type {PlannedPlaceOption} from "@/domain/phase2/planned-places";
 import {GoogleMapsAttribution} from "../restaurant-place-search";
@@ -102,8 +101,8 @@ export function BarPlaceSearch({places,onKnown,onText,onGoogle,initialSearch,onS
         placeholder={googleOn?"Rechercher un bar ou un lieu…":"Nom du lieu…"} onFocus={()=>{setFocused(true);setDismissed(false);}}
         onBlur={event=>{const next=event.relatedTarget as HTMLElement|null;if(next&&suggestionPanel.current?.contains(next))return;setFocused(false);}}
         onChange={event=>{setQuery(event.target.value);setDismissed(false);}}
-        onKeyDown={event=>{if(event.key==="ArrowDown"&&showSuggestions){event.preventDefault();firstSuggestion();}else if(event.key==="Enter"&&!googleOn){event.preventDefault();acceptFree();}else if(event.key==="Escape"){setDismissed(true);setFocused(false);}}}/>
-      <button type="button" data-bar-google-toggle aria-label={googleOn?"Désactiver Google Maps et saisir un nom libre":"Activer la recherche Google Maps"} title={googleOn?"Google Maps actif · passer au nom libre":"Nom libre · activer Google Maps"} aria-pressed={googleOn} onClick={()=>{setGoogleOn(value=>!value);setDetail(null);setDismissed(false);setFocused(true);searchField.current?.querySelector('input')?.focus();}}><MapPin aria-hidden="true" size={18}/></button>
+        onKeyDown={event=>{if(event.key==="ArrowDown"&&showSuggestions){event.preventDefault();firstSuggestion();}else if(event.key==="Enter"&&!googleOn){event.preventDefault();acceptFree();}else if(event.key==="Escape"&&showSuggestions){event.preventDefault();event.stopPropagation();setDismissed(true);setFocused(false);}}}/>
+      <button type="button" data-bar-google-toggle aria-label={googleOn?"Désactiver Google Maps et saisir un nom libre":"Activer la recherche Google Maps"} title={googleOn?"Google Maps actif · passer au nom libre":"Nom libre · activer Google Maps"} aria-pressed={googleOn} onClick={()=>{setGoogleOn(value=>!value);setDetail(null);setDismissed(false);setFocused(true);searchField.current?.querySelector('input')?.focus();}}><img src="/brands/google-maps.png" width={26} height={26} alt=""/></button>
     </div>}
     {showSuggestions&&position&&typeof document!=="undefined"&&createPortal(<div ref={suggestionPanel} id={suggestionId} role="region" aria-label="Suggestions de lieux" data-bar-place-suggestions className={styles.barPlaceSuggestions} style={position}
       onPointerDown={event=>event.preventDefault()} onBlur={event=>{const next=event.relatedTarget as HTMLElement|null;if(!next||!suggestionPanel.current?.contains(next)){setFocused(false);}}} onKeyDown={event=>{if(event.key==="Escape"){event.preventDefault();setDismissed(true);searchField.current?.querySelector('input')?.focus();}}}>

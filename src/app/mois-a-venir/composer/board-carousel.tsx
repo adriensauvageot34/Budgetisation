@@ -8,6 +8,7 @@ import { useComposerInteractions } from "./interactions";
 import styles from "./composer.module.css";
 import {barSurface, type BarSurface, type InventoryAnchor} from "./bar-surface";
 import type {InventoryPlacement} from "./inventory-layout";
+const boardScrollBehavior=():ScrollBehavior=>matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
 
 export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps, revealSequence, revealFocused, expandedId }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;
   expandedId?: string; revealSequence?: number; revealFocused?: () => void;
@@ -32,6 +33,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const spatialKey = inventorySpatialKey(items);
   const expandedHeight = dragging ? stableExpandedHeight.current : expandedMeasure && expandedMeasure.id === expandedId ? expandedMeasure.height : undefined;
   const previousGeometry=useRef<readonly (readonly InventoryPlacement[])[]>([]), activeAnchor=useRef<InventoryAnchor|undefined>(undefined);
+  const closedGeometry=useRef<readonly InventoryPlacement[]>([]);
   const originPage=previousGeometry.current.findIndex(p=>p.some(box=>box.item.id===expandedId));
   const origin=previousGeometry.current[originPage]?.find(box=>box.item.id===expandedId);
   // At explicit opening choose a usable local origin if the closed card was
@@ -39,22 +41,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const anchor=expandedId ? activeAnchor.current?.id===expandedId ? activeAnchor.current
     : {id:expandedId,page:0,column:origin?.column??1,row:origin?.row??1} : undefined;
   const surface=expandedMeasure&&expandedMeasure.id===expandedId?expandedMeasure.surface:undefined;
-  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor,continuous:true}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);
+  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor,continuous:true,previous:expandedId?closedGeometry.current:undefined}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);
   useLayoutEffect(()=>{
     previousGeometry.current=geometry;
-    if(!expandedId){activeAnchor.current=undefined;return;}
+    if(!expandedId){activeAnchor.current=undefined;closedGeometry.current=geometry[0]??[];return;}
     const index=geometry.findIndex(p=>p.some(box=>box.item.id===expandedId)),box=geometry[index]?.find(box=>box.item.id===expandedId);
     if(box)activeAnchor.current={id:expandedId,page:index,column:box.column,row:box.row};
   },[geometry,expandedId]);
-  useLayoutEffect(()=>{
-    if(!expandedId||!viewport.current)return;
-    const board=viewport.current,card=[...board.querySelectorAll<HTMLElement>('[data-inventory-id]')].find(node=>node.dataset.inventoryId===expandedId);
-    if(!card)return;
-    const frame=requestAnimationFrame(()=>{const area=board.getBoundingClientRect(),box=card.getBoundingClientRect();
-      if(box.left<area.left+20||box.right>area.right-20)board.scrollTo({left:board.scrollLeft+box.left-area.left-24,behavior:'smooth'});
-    });
-    return()=>cancelAnimationFrame(frame);
-  },[expandedId]);
   useLayoutEffect(()=>note('repacks'),[geometry]);
   const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);
   const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);
@@ -87,7 +80,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     const resize=new ResizeObserver(()=>{note('resizes');measure(true);});
     function observe(){resize.disconnect();for(const card of cards())for(const child of card.children)if(child instanceof HTMLElement)resize.observe(child);}
     function measure(synchronous=false){note('measures');const heights:Record<string,number>={};for(const card of cards()){
-      const id=card.dataset.context;if(!id)continue;
+      const id=card.dataset.context;if(!id||card.getAnimations().some(animation=>animation.playState==='running'))continue;
       heights[id]=Math.max(130,Math.ceil([...card.children].reduce((sum,child)=>sum+child.getBoundingClientRect().height,0)+2));
     }
       const signature=JSON.stringify(heights);if(signature===lastSignature)return;lastSignature=signature;
@@ -122,6 +115,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     function measure(synchronous=false) {
       note('measures');
       card=findCard();
+      if(card?.getAnimations().some(animation=>animation.playState==='running'))return;
       const editor = card?.querySelector<HTMLElement>("[data-bar-living-editor]");
       const header = card?.querySelector<HTMLElement>("header");
       if (!editor || !header) return; // Keep the previous geometry while the editor loads.
@@ -162,13 +156,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     const px = (value: string) => Number(value.replace("px", "")) || 0;
     const observe = () => { const plateau = node.querySelector<HTMLElement>("[data-board-page]");
       const padding = plateau && getComputedStyle(plateau);
-      const dock=node.parentElement?.querySelector<HTMLElement>('[data-palette-dock]');
-      const navigation=node.parentElement?.querySelector<HTMLElement>('[data-carousel-nav]');
       // The shelf budget is the screen space, not its content-driven minHeight.
       // Otherwise reserving rows enlarges the budget and repeatedly repacks it.
       const top=node.getBoundingClientRect().top+(node.closest('main')?.scrollTop??0)+window.scrollY;
       const value = { width: Math.max(1, node.clientWidth - (padding ? px(padding.paddingLeft) + px(padding.paddingRight) : 0)),
-        height: Math.max(218,window.innerHeight-top-(dock?.getBoundingClientRect().height??0)-(navigation?.getBoundingClientRect().height??0)-24-(padding ? px(padding.paddingTop)+px(padding.paddingBottom):0)) };
+        // The dock's appearance must not change the packing rows. Its space is
+        // handled by the surrounding scroll layout, not a second shorter pack.
+        height: Math.max(218,window.innerHeight-top-24-(padding ? px(padding.paddingTop)+px(padding.paddingBottom):0)) };
       setSize(old => old.width === value.width && old.height === value.height ? old : value); };
     observe(); const observer = new ResizeObserver(observe); observer.observe(node); return () => observer.disconnect();
   }, []);
@@ -177,13 +171,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     if (!current) return;
     const cells = [...current.querySelectorAll<HTMLElement>("[data-inventory-id]")];
     const rects = new Map<string, DOMRect>();
-    for (const cell of cells) { cell.getAnimations().forEach(animation => animation.cancel()); rects.set(cell.dataset.inventoryId!, cell.getBoundingClientRect()); }
+    // Layout coordinates exclude scroll and in-flight translations. Repeated
+    // content measurements must not cancel an unchanged transition.
+    for (const cell of cells) rects.set(cell.dataset.inventoryId!,new DOMRect(cell.offsetLeft,cell.offsetTop,cell.offsetWidth,cell.offsetHeight));
     const before = previousScene.current, samePage = before.page === active;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // A growing living card must reserve its final surface immediately. FLIP
-    // translations of its neighbours crossed the active form in reception.
-    // A folded rich Bar also changes height during removal/Undo and Preview.
-    // Keep those pages still; pages without a Bar retain ordinary Board motion.
+    // The packer reserves the final surface immediately. Animate the Bar's
+    // actual dimensions, never scale its text; neighbours only translate.
     const hasLivingBar = cells.some(cell => !!cell.querySelector('[data-bar-living-card]'));
     if (samePage && before.rects.size && !dragging && !reduced) for (const cell of cells) {
       const id = cell.dataset.inventoryId!, currentRect = rects.get(id)!;
@@ -203,14 +197,20 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
         }
       }
       if (!origin) continue;
+      if(origin.x===currentRect.x&&origin.y===currentRect.y&&origin.width===currentRect.width&&origin.height===currentRect.height&&!entering)continue;
+      const bar=cell.querySelector<HTMLElement>('[data-bar-living-card]');
+      const running=cell.getAnimations().some(animation=>animation.playState==='running')||bar?.getAnimations().some(animation=>animation.playState==='running');
+      if(running){const transform=getComputedStyle(cell).transform,matrix=transform==='none'?new DOMMatrixReadOnly():new DOMMatrixReadOnly(transform);
+        origin=new DOMRect(cell.offsetLeft+matrix.m41,cell.offsetTop+matrix.m42,bar?.getBoundingClientRect().width??currentRect.width,bar?.getBoundingClientRect().height??currentRect.height);
+      }
+      cell.getAnimations().forEach(animation=>animation.cancel());bar?.getAnimations().forEach(animation=>animation.cancel());
       const dx = origin.x - currentRect.x, dy = origin.y - currentRect.y;
       const grows=cell.dataset.inventoryId===expandedId||cell.dataset.inventoryId===before.expandedId;
-      const sx=grows?origin.width/currentRect.width:1,sy=grows?origin.height/currentRect.height:1;
-      if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(sx-1)<.02 && Math.abs(sy-1)<.02 && !entering) {
-        continue;
+      if(grows&&bar&&(Math.abs(origin.width-bar.offsetWidth)>2||Math.abs(origin.height-bar.offsetHeight)>2)){
+        bar.animate([{width:`${origin.width}px`,height:`${origin.height}px`,overflow:'clip'},{width:`${bar.offsetWidth}px`,height:`${bar.offsetHeight}px`,overflow:'clip'}],{duration:240,delay:expandedId?120:0,fill:'backwards',easing:'cubic-bezier(.2,.75,.25,1)'});
       }
-      cell.animate([{ transform:`translate(${dx}px, ${dy}px) scale(${entering ? .95 : sx}, ${entering ? .95 : sy})`, opacity:entering ? .45 : 1 },
-        { transform:"translate(0, 0) scale(1, 1)", opacity:1 }], { duration:entering ? 290 : grows ? 280 : 240, easing:"cubic-bezier(.2,.75,.25,1)" });
+      if(Math.abs(dx)>2||Math.abs(dy)>2||entering)cell.animate([{transform:`translate(${dx}px, ${dy}px)`,opacity:entering ? .45 : 1},
+        {transform:'translate(0, 0)',opacity:1}],{duration:expandedId||before.expandedId?120:240,delay:!expandedId&&before.expandedId?240:0,fill:'backwards',easing:'cubic-bezier(.2,.75,.25,1)'});
     }
     previousScene.current = { page:active, expandedId, hasLivingBar, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
       .map(placement => [placement.item.id, placement.item.kind === "CLUSTER" ? placement.item.children.map(child => child.id) : []] as const) ?? []) };
@@ -257,9 +257,9 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       if (focusedRequest.current === revealSequence && !lostBarFocus) return;
       const target = barFocusTarget ?? cell;
       if (!target || target.closest('[inert]')) return;
-      if(cell&&viewport.current){const bounds=viewport.current.getBoundingClientRect(),card=cell.getBoundingClientRect();
-        if(card.left<bounds.left+24)viewport.current.scrollBy({left:card.left-bounds.left-24,behavior:'smooth'});
-        else if(card.right>bounds.right-24)viewport.current.scrollBy({left:card.right-bounds.right+24,behavior:'smooth'});
+      if(cell&&viewport.current){const bounds=viewport.current.getBoundingClientRect(),card=target.getBoundingClientRect();
+        if(card.left<bounds.left+24)viewport.current.scrollBy({left:card.left-bounds.left-24,behavior:boardScrollBehavior()});
+        else if(card.right>bounds.right-24)viewport.current.scrollBy({left:card.right-bounds.right+24,behavior:boardScrollBehavior()});
       }
       target.focus({ preventScroll: true });
       if (document.activeElement === target) focusedRequest.current = revealSequence;
@@ -278,7 +278,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-continuous data-board-drop data-board-page-active={active} tabIndex={0} aria-label="Board du mois, défilement horizontal"
       data-bar-page={!!expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id])||undefined}
       style={expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id]) ? { minHeight: Math.max(expandedHeight??0,...(layouts[active]??[]).map(box=>(box.row-1+box.rowSpan)*10-5))+36 } : undefined} {...dropProps}
-      onKeyDown={event=>{if(event.target!==event.currentTarget||!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();viewport.current?.scrollBy({left:event.key==='ArrowRight'?260:-260,behavior:'smooth'});}}
+      onKeyDown={event=>{if(event.target!==event.currentTarget||!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();viewport.current?.scrollBy({left:event.key==='ArrowRight'?260:-260,behavior:boardScrollBehavior()});}}
       onDragOverCapture={event=>{if(!interaction?.grabbed||!viewport.current)return;const rect=viewport.current.getBoundingClientRect(),x=event.clientX;
         if(x>rect.right-55)viewport.current.scrollLeft+=26;else if(x<rect.left+55)viewport.current.scrollLeft-=26;}}
       onClick={e => { if (e.target === e.currentTarget || e.target instanceof Element && e.target.matches("[data-mosaic],[data-board-page]")) emptyClick(); }}>

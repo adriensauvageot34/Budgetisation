@@ -744,6 +744,14 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         }} /> : null;
   return <WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
+    onClickCapture={event=>{
+      if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-bar-place-suggestions],[popover],dialog'))return;
+      // Capture the click across the whole Composer, including the Library.
+      // A RAW refusal also stops the clicked control's action, not only closing.
+      if(!inlineEdits.registry.guard(closeDialog)){event.preventDefault();event.stopPropagation();return;}
+      closeDialog();
+    }}
+    onKeyDown={event=>{if(event.key==='Escape'&&!event.defaultPrevented&&livingBarId&&!document.querySelector('dialog[open],[popover]:popover-open')){event.preventDefault();closeDialog();}}}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
       <h1>Composer <span>· {monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus} data-draft-status data-state={draftTransport ? durable.status : "MEMORY"}>{draftTransport ? ({ CLEAN: "Aucun brouillon enregistré", DIRTY: "Modifications locales", SAVING: "Sauvegarde en cours…", SAVED: "Sauvegardé", ERROR: "Sauvegarde non confirmée", CONFLICT: "Conflit de version", OFFLINE: "Hors ligne · non enregistré" }[durable.status]) : "Brouillon en mémoire"}</span>

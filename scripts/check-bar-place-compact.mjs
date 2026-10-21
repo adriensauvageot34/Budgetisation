@@ -19,6 +19,8 @@ try{
   await act(async()=>{root=create(mount());});
   assert.equal(root.root.findAllByType('input').length,1);
   assert.equal(toggle().props['aria-pressed'],false);
+  assert.equal(toggle().findByType('img').props.src,'/brands/google-maps.png');
+  assert.equal(toggle().findByType('img').props.width,26);
   assert.equal(root.root.findAll(node=>node.type==='button'&&node.props['aria-label']==='Nom libre').length,0,'no separate free-mode panel');
   await act(async()=>input().props.onChange({target:{value:'Bar libre fixture'}}));
   assert.equal(decisions.length,0,'typing is not a decision');
