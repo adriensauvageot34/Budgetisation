@@ -1579,6 +1579,8 @@
 .barLivingCard[data-expanded=true] h3>button:first-child { flex:none; }
 .barLivingCard[data-expanded=true] h3>span { margin-inline:4px; }
 .barLivingCard[data-expanded=true]>.barClosedPeopleReserve { position:absolute; right:12px; bottom:4px; min-height:0; padding:0; z-index:2; }
+.barLivingCard[data-expanded=true]:has(>.barClosedPeopleReserve) .barMomentRail { padding-right:64px; box-sizing:border-box; }
+.barLivingEditor[data-bar-task=true] { overflow-x:hidden; }
 .barLivingMetadata:not(:has(button)) { display:none; }
 .barLivingCard[data-expanded=true] .barMomentRail>:is(.barActiveTile,.barEconomicTile) { flex:0 0 144px; width:144px; min-width:144px; max-width:144px; }
 .barLivingCard[data-expanded=true] .barMomentRail>.barActiveTile { display:block; padding:0; gap:0; box-sizing:border-box; }
