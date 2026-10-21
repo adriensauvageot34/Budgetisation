@@ -6,7 +6,7 @@ import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contra
 import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRef, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";
 import { useComposerInteractions } from "./interactions";
 import styles from "./composer.module.css";
-import {barSurface, type BarSurface, type InventoryAnchor} from "./bar-surface";
+import {barSurface,barOpeningScroll, type BarSurface, type InventoryAnchor} from "./bar-surface";
 import type {InventoryPlacement} from "./inventory-layout";
 const boardScrollBehavior=():ScrollBehavior=>matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
 
@@ -215,6 +215,47 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     previousScene.current = { page:active, expandedId, hasLivingBar, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
       .map(placement => [placement.item.id, placement.item.kind === "CLUSTER" ? placement.item.children.map(child => child.id) : []] as const) ?? []) };
   }, [geometry, active, dragging, expandedId]);
+  const openingIdentity=useRef<string|undefined>(undefined);
+  useEffect(()=>{
+    if(!expandedId){openingIdentity.current=undefined;return;}
+    if(dragging||openingIdentity.current===expandedId)return;
+    openingIdentity.current=expandedId;
+    const board=viewport.current;if(!board)return;
+    const openingProbe=(stage:string)=>{if(reception.current.enabled)board.dataset.barOpeningFocus=JSON.stringify({stage});};
+    openingProbe('scheduled');
+    let cancelled=false,firstGeometry='',frame=0,secondFrame=0,settle:ReturnType<typeof setTimeout>|undefined;
+    const openedAt=performance.now();
+    const cancel=(event:Event)=>{if(event.timeStamp>openedAt){cancelled=true;openingProbe(`user-${event.type}`);}};
+    // User input always wins over the optional, single stabilisation pass.
+    const events=['wheel','touchstart','pointerdown','keydown'] as const;
+    events.forEach(name=>window.addEventListener(name,cancel,{passive:true}));
+    const reveal=(stabilising=false)=>{
+      if(cancelled)return;
+      const cell=[...board.querySelectorAll<HTMLElement>('[data-inventory-id]')].find(node=>node.dataset.inventoryId===expandedId);
+      if(!cell||!cell.querySelector('[data-bar-living-card][data-expanded="true"]')){openingProbe('surface-unavailable');return;}
+      // Final layout coordinates exclude in-flight FLIP transforms.
+      const rect=board.getBoundingClientRect(),cellRect=cell.getBoundingClientRect();
+      const transform=getComputedStyle(cell).transform,matrix=transform==='none'?new DOMMatrixReadOnly():new DOMMatrixReadOnly(transform);
+      const left=cellRect.left-matrix.m41-rect.left+board.scrollLeft;
+      const signature=`${left}:${cell.offsetTop}:${cell.offsetWidth}:${cell.offsetHeight}`;
+      if(stabilising&&signature===firstGeometry)return;
+      firstGeometry=signature;
+      board.scrollTo({left:barOpeningScroll(left,cell.offsetWidth,board.clientWidth,board.scrollWidth),behavior:boardScrollBehavior()});
+      if(reception.current.enabled)board.dataset.barOpeningFocus=JSON.stringify({pass:stabilising?'stabilised':'initial',target:barOpeningScroll(left,cell.offsetWidth,board.clientWidth,board.scrollWidth),width:cell.offsetWidth,viewport:board.clientWidth});
+      let scrollParent:HTMLElement|null=board.parentElement;
+      while(scrollParent&&!(scrollParent.scrollHeight>scrollParent.clientHeight&&/(auto|scroll)/.test(getComputedStyle(scrollParent).overflowY)))scrollParent=scrollParent.parentElement;
+      const page=scrollParent??document.scrollingElement as HTMLElement|null;
+      if(!page)return;
+      const bounds=scrollParent?scrollParent.getBoundingClientRect():{top:0,bottom:window.innerHeight};
+      const top=cellRect.top-matrix.m42,bottom=top+cell.offsetHeight,available=bounds.bottom-bounds.top;
+      // Tall cards reveal their heading instead of centring an invisible middle.
+      const delta=cell.offsetHeight>available-24?top-bounds.top-12:top<bounds.top+12?top-bounds.top-12:bottom>bounds.bottom-12?bottom-bounds.bottom+12:0;
+      if(Math.abs(delta)>2)page.scrollBy({top:delta,behavior:boardScrollBehavior()});
+    };
+    frame=requestAnimationFrame(()=>{secondFrame=requestAnimationFrame(()=>{reveal();settle=setTimeout(()=>reveal(true),420);});});
+    return()=>{cancelled=true;cancelAnimationFrame(frame);cancelAnimationFrame(secondFrame);clearTimeout(settle);events.forEach(name=>window.removeEventListener(name,cancel));};
+    // Opening identity only: prices, providers and observers never restart this.
+  },[expandedId,dragging]);
   const focusPage = inventoryPageFor(pages, focused, model);
   useEffect(()=>{
     if(!expandedId||dragging||focusPage<0)return;
@@ -257,7 +298,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       if (focusedRequest.current === revealSequence && !lostBarFocus) return;
       const target = barFocusTarget ?? cell;
       if (!target || target.closest('[inert]')) return;
-      if(cell&&viewport.current){const bounds=viewport.current.getBoundingClientRect(),card=target.getBoundingClientRect();
+      if(cell&&viewport.current&&!cell.querySelector('[data-bar-living-card][data-expanded="true"]')){const bounds=viewport.current.getBoundingClientRect(),card=target.getBoundingClientRect();
         if(card.left<bounds.left+24)viewport.current.scrollBy({left:card.left-bounds.left-24,behavior:boardScrollBehavior()});
         else if(card.right>bounds.right-24)viewport.current.scrollBy({left:card.right-bounds.right+24,behavior:boardScrollBehavior()});
       }

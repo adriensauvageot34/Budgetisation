@@ -66,14 +66,13 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
       const tileCount = context.sockets.reduce((n, s) => n + s.currentItems.filter(i => i.kind === "COMPONENT" || i.kind === "CHILD_CONTEXT").length, 0);
       // Geometry only: keep the small, empty intention compact; grow with its visible content.
       const barRoutes = context.sockets.filter(socket=>["outbound","return"].includes(socket.slotKey)&&socket.currentItems.some(item=>item.kind==="MOBILITY_INTENT")).length;
-      // Compact Bar shows at most two products. Its allocated tracks must not
-      // grow with fifteen hidden previews or reserve absent route rows.
+      // One horizontal rail regardless of moment count. Metadata has dedicated
+      // positions; intrinsic measurement refines this initial envelope.
       const hasBefore=context.sockets.some(socket=>socket.slotKey==="before"&&socket.currentItems.length);
-      const barHeight = 140 + (context.fields.placeRef || context.fields.plannedDate || (Array.isArray(context.fields.participantRefs) && context.fields.participantRefs.length) ? 40 : 0)
-        + barRoutes*58 + (tileCount?110:0) + (hasBefore?135:0);
+      const barHeight = 125 + barRoutes*58 + (tileCount||hasBefore?123:0);
       return { id:context.contextOccurrenceId, kind:"CONTEXT" as const, context, density, spatialFamily:contextFamily(template),
         iconKey:model.presentation.objects[context.contextOccurrenceId].iconKey,
-        width:bar&&(barRoutes>1||hasBefore&&tileCount>1)?580:template === "short-stay" ? 400 : template === "night-out" ? 350 : ["gift", "family-visit"].includes(template) ? 240 : 230,
+        width:bar&&barRoutes>1?580:template === "short-stay" ? 400 : template === "night-out" ? 350 : ["gift", "family-visit"].includes(template) ? 240 : 230,
         height:bar ? barHeight : template === "short-stay" ? 212 : template === "night-out" ? 212 : template === "gift" ? 148
           : template === "family-visit" ? 142 : density === "SPARSE" ? 140 : density === "RICH" ? 190 : 170 };
     }),

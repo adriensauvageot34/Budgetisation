@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useRef,useId,type ReactNode,type HTMLAttributes} from "react";
-import { CircleDashed, Info, Pin, Trash2 } from "lucide-react";
+import { CircleDashed, Info, Pin, Trash2, Plus } from "lucide-react";
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 
@@ -14,7 +14,8 @@ import styles from "./composer.module.css";
 import {barBefore} from "./bar-before";
 import {componentPresentationGroups} from '@/domain/phase2/planner/component-group-presentation';
 import {BarComponentGroup} from './bar-component-group';
-import {BarMetadata,BarRouteLine,BarComponentFace,barPlaceLabel,barModeLabel,barPeopleLabel} from "./bar-living-details";
+import {BarRouteLine,barPlaceLabel,barModeLabel,barPeopleLabel,barDateLabel,barPersonLabel} from "./bar-living-details";
+import type {ProspectivePersonRef,ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 import {nightOutConsumption} from "@/domain/phase2/planner/night-out-consumption";
 export {barPlaceLabel,barModeLabel,barPeopleLabel};
 
@@ -52,8 +53,23 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
   const components=card.sockets.flatMap(socket=>socket.currentItems.filter(item=>(item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT")&&item.selectionId!==directSelectionId).map(item=>({slot:socket.slotKey,item,amount:socket.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount})));
   // The summary may also be incomplete because context information is missing.
   // Do not claim missing prices unless the published line evaluations say so.
-  const incompleteExplanation=summary?.knownAmount!=null?`${money(summary.knownAmount)} connus, ${components.some(c=>c.item.kind==='COMPONENT'&&c.amount==null)?'certains prix restent à préciser':'un trajet prévu reste à chiffrer'}`:'';
+  const missingComponentPrice=components.some(c=>c.item.kind==='COMPONENT'&&c.amount==null)||model.nightOutComponentGroups?.some(group=>group.contextOccurrenceId===before?.child.contextOccurrenceId&&group.semanticStateDigest===model.board.draft.semanticStateDigest&&group.incomplete);
+  const incompleteExplanation=summary?.knownAmount!=null?`${money(summary.knownAmount)} connus, ${missingComponentPrice?'certains prix restent à préciser':'certains coûts restent à chiffrer'}`:'';
   const route=(slot:"outbound"|"return")=>card.sockets.find(s=>s.slotKey===slot)?.currentItems.find(s=>s.kind==="MOBILITY_INTENT");
+  const place=card.fields.placeRef as ProspectivePlaceRef|undefined;
+  const date=barDateLabel(card.fields.plannedDate);
+  const people=Array.isArray(card.fields.participantRefs)?card.fields.participantRefs as ProspectivePersonRef[]:[];
+  const placeLabel=place?barPlaceLabel(place,model):null;
+  // Presentation groups retain their owner and slot. Before remains a child.
+  const moments=[
+    ...(before?[{key:'$before',label:'Before',owner:before.child.contextOccurrenceId,slot:'$before',groups:beforeGroups,
+      target:(selectionId:string):BarTarget=>selectionId===before.bottle.selectionId?`component:before-main:${selectionId}`:`component:before-extras:${selectionId}`}]:[]),
+    ...(["extras","food","main","before"] as const).flatMap(slot=>{
+      const items=components.filter(c=>c.slot===slot&&(slot!=="before"||!before));if(!items.length)return [];
+      const label=slot==="extras"?"Au bar":slot==="food"?"Repas":slot==="before"?"Avant de sortir":items.some(c=>c.item.kind==="COMPONENT"&&c.item.label==="Consommations regroupées")?"Consommations regroupées":"Entrées / contribution";
+      return [{key:slot,label,owner:card.contextOccurrenceId,slot,groups:componentPresentationGroups(items.map(c=>c.item)),target:(selectionId:string):BarTarget=>`component:${slot}:${selectionId}`}];
+    })
+  ];
   const visibleGroups=new Set(components.map(component=>component.slot));
   const parallelContent=visibleGroups.size>1||!!route("outbound")&&!!route("return")||visibleGroups.size>0&&(!!route("outbound")||!!route("return"));
   // Presentation only: decoration yields to actual selected contents, never to a price.
@@ -70,13 +86,16 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
       if(event.key==="Escape"&&expanded&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();living.close();}
     }}>
     <header className={styles.barLivingHeader}>
-      <div className={styles.barLivingIdentity}><h3><button type="button" disabled={busy||card.readOnly||removing} aria-label={`Ouvrir ${card.label}`} onClick={()=>open("summary")}>{card.label}</button></h3>
+      <div className={styles.barLivingIdentity}><h3><button type="button" disabled={busy||card.readOnly||removing} aria-label={`Ouvrir ${card.label}`} onClick={()=>open("summary")}>{!expanded&&place?"Bar":card.label}</button>
+        {!expanded&&place&&<><span aria-hidden="true"> · </span><button type="button" data-bar-closed-place className={styles.barClosedPlace} disabled={locked} title={placeLabel??undefined} aria-label={`Modifier le lieu · ${placeLabel}`} onClick={()=>open('place')}><span>{placeLabel}</span></button></>}
+      </h3>
         <div className={styles.barLivingAmount} data-cost-unknown={summary?.knownAmount==null}>{expanded?<div data-bar-open-amount><strong data-bar-amount-fallback aria-label={summary?.knownAmount==null?"Montant à renseigner":undefined}>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></div>:<button type="button" data-bar-amount-trigger className={styles.barAmountTrigger} disabled={locked} aria-label={summary?.knownAmount==null?"Modifier l’estimation des consommations · Montant à renseigner":"Modifier l’estimation des consommations"} title="Choisir la portée à modifier · aucun total calculé n’est écrasé" onClick={()=>open("quick")}><strong>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></button>}
         {expanded ? summary?.knownAmount!=null&&<>{!fresh?<small>Estimation à actualiser</small>:summary.costIncomplete?<small aria-label={incompleteExplanation}>Montant partiel</small>:null}</>
           : !fresh&&summary ? <span className={styles.barClosedCostStatus} data-bar-cost-info tabIndex={0} aria-describedby={infoId}><Info size={13} aria-hidden="true"/>Estimation à actualiser<span id={infoId} role="tooltip" className={styles.barClosedCostTip}>La projection précédente doit être actualisée avant de servir de projection actuelle.</span></span>
           : summary?.knownAmount!=null&&summary.costIncomplete&&<span className={styles.barClosedCostStatus} data-bar-cost-info tabIndex={0} aria-label={incompleteExplanation} aria-describedby={infoId}><CircleDashed size={13} aria-hidden="true"/>Montant partiel<Info size={13} aria-hidden="true"/><span id={infoId} role="tooltip" className={styles.barClosedCostTip}>{incompleteExplanation}</span></span>}
         {(preserved||card.readOnly)&&<small>{card.readOnly?"Lecture seule":"Carte préservée"}</small>}</div></div>
       <div className={styles.barLivingTools}>
+        {!expanded&&date&&<button type="button" className={styles.barClosedDate} data-bar-closed-date disabled={locked} aria-label={`Modifier la date · ${date}`} onClick={()=>open('date')}>{date}</button>}
         {expanded&&!card.readOnly&&<>
           <button type="button" className={styles.barQuietAction} disabled={busy} onClick={preserve} aria-label={preserved?"Libérer les choix de cette sortie":"Préserver les choix de cette sortie"} title={preserved?"Libérer les choix":"Préserver les choix"} aria-pressed={preserved}><Pin size={15}/></button>
           {remove&&<button type="button" className={styles.barQuietAction} disabled={locked} onClick={remove} aria-label="Retirer la sortie" title="Retirer la sortie · Undo pour rétablir"><Trash2 size={15}/></button>}
@@ -85,17 +104,27 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
     </header>
     {removing&&<p role="status" data-bar-removal-pending>Retrait en cours… Votre brouillon reste conservé jusqu’à confirmation.</p>}
     {expanded ? living.content : <div className={styles.barLivingCompact}>
-      <BarMetadata fields={card.fields} model={model} open={open} disabled={locked}/>
+      {(!place||!date||!people.length)&&<nav className={styles.barClosedMissing} aria-label="Compléter la sortie">
+        {!place&&<button type="button" disabled={locked} aria-label="Modifier le lieu" onClick={()=>open('place')}><Plus size={12}/>Lieu</button>}
+        {!date&&<button type="button" disabled={locked} aria-label="Modifier la date" onClick={()=>open('date')}><Plus size={12}/>Date</button>}
+        {!people.length&&<button type="button" disabled={locked} aria-label="Modifier les personnes · Personnes à préciser" onClick={()=>open('people')}><Plus size={12}/>Personnes</button>}
+      </nav>}
       <div className={styles.barLivingRoutes}>{(["outbound","return"] as const).map(slot=>{const leg=route(slot);return leg?.kind==="MOBILITY_INTENT"?<BarRouteLine key={slot} slot={slot} contextId={card.contextOccurrenceId} leg={leg} model={model} disabled={locked} navigate={open} open={()=>open(slot)}/>:null;})}</div>
       {route("outbound")?.kind==="MOBILITY_INTENT"&&!route("return")&&!route("outbound")?.returnRequired&&<button type="button" className={styles.barInlineAdd} disabled={locked} onClick={()=>open("return")}>+ Retour</button>}
-      {before&&<section data-bar-before-miniature><button type="button" className={styles.barSceneBack} disabled={locked} onClick={()=>open("before")}>Before · {1+before.extras.length} lignes</button><div className={styles.barLivingTiles} data-bar-closed-rail tabIndex={0} aria-label="Consommations Before · faire défiler si nécessaire">{beforeGroups.slice(0,5).map(group=><BarComponentGroup closed key={group.key} group={group} model={model} owner={before.child.contextOccurrenceId} slot="$before" disabled={locked} choose={item=>open(item.selectionId===before.bottle.selectionId?`component:before-main:${item.selectionId}`:`component:before-extras:${item.selectionId}`)}/>)}{beforeGroups.length>5&&<button type="button" disabled={locked} onClick={()=>open("before")}>+{beforeGroups.length-5} groupes</button>}</div></section>}
-      {(["extras","food","main","before"] as const).map(slot=>{
-        const items=components.filter(c=>c.slot===slot&&(slot!=="before"||!before));if(!items.length)return null;
-        const label=slot==="extras"?"Au bar":slot==="food"?"Repas":slot==="before"?"Avant de sortir":items.some(c=>c.item.kind==="COMPONENT"&&c.item.label==="Consommations regroupées")?"Consommations regroupées":"Entrées / contribution";
-        const groups=componentPresentationGroups(items.map(c=>c.item));
-        return <section key={slot} aria-label={label}><h4>{label}</h4><div className={styles.barLivingTiles} data-bar-closed-rail tabIndex={0} aria-label={`${label} · faire défiler si nécessaire`}>{groups.slice(0,5).map(group=><BarComponentGroup closed key={group.key} group={group} model={model} owner={card.contextOccurrenceId} slot={slot} disabled={locked} choose={item=>open(`component:${slot}:${item.selectionId}`)}/>)}{groups.length>5&&<button type="button" className={styles.barMoreCount} disabled={locked} onClick={()=>open(slot==="extras"?"drinks":"summary")} aria-label={`Voir les ${groups.length} groupes · ${items.length} postes existants`}>+{groups.length-5} groupes</button>}</div></section>;
-      })}
+      {moments.length>0&&<div className={styles.barClosedMoments} data-bar-closed-rail tabIndex={0} role="region" aria-label="Moments de la sortie · faire défiler horizontalement" onKeyDown={event=>{
+        if(event.target!==event.currentTarget||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+        event.preventDefault();event.stopPropagation();const rail=event.currentTarget;
+        rail.scrollTo({left:event.key==='Home'?0:event.key==='End'?rail.scrollWidth:rail.scrollLeft+(event.key==='ArrowRight'?140:-140),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+      }}>{moments.map(moment=><section key={moment.key} className={styles.barClosedMoment} aria-label={moment.label} data-bar-moment={moment.key}>
+        <h4>{moment.label}</h4><div className={styles.barLivingTiles}>
+          {(moments.length>1?moment.groups.slice(0,2):moment.groups).map(group=><BarComponentGroup closed key={group.key} group={group} model={model} owner={moment.owner} slot={moment.slot} disabled={locked} choose={item=>open(moment.target(item.selectionId))}/>)}
+          {moments.length>1&&moment.groups.length>2&&<span className={styles.barMoreCount} data-bar-hidden-groups aria-label={`${moment.groups.length-2} autres groupes dans ${moment.label}`}>+{moment.groups.length-2}</span>}
+        </div>
+      </section>)}</div>}
       {richness==="empty"&&!locked&&<button type="button" className={styles.barInlineAdd} onClick={()=>open("summary")}>Composer cette sortie <span aria-hidden="true">↗</span></button>}
+      {people.length>0&&<div className={styles.barClosedPeopleReserve}><button type="button" className={styles.barClosedPeople} data-bar-closed-people disabled={locked} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)} onClick={()=>open('people')}>
+        {people.slice(0,3).map((person,index)=><span key={index} aria-hidden="true">{barPersonLabel(person,model).split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('')}</span>)}{people.length>3&&<span aria-hidden="true">+{people.length-3}</span>}
+      </button></div>}
     </div>}
   </article>;
 }

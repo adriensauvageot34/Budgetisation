@@ -1309,10 +1309,21 @@
 .barLivingCard[data-expanded=false][data-drag-armed=true] { cursor:grabbing; }
 .barLivingCard[data-expanded=false]:focus-visible { outline:3px solid #795719; outline-offset:2px; }
 .barLivingCard[data-expanded=false] .barLivingHeader { padding:10px 14px 8px; gap:7px; }
-.barLivingCard[data-expanded=false] .barLivingIdentity h3 { margin-right:0; font-size:15px; }
+.barLivingCard[data-expanded=false] .barLivingIdentity { flex:1; min-width:0; }
+.barLivingCard[data-expanded=false] .barLivingIdentity h3 { display:flex; align-items:baseline; min-width:0; margin-right:0; font-size:15px; }
+.barLivingCard[data-expanded=false] h3>button:first-child { flex:none; }
+.barLivingCard[data-expanded=false] h3>span { margin-inline:4px; }
+.barLivingHeader h3 .barClosedPlace { min-width:0; flex:1; overflow:hidden; }
+.barClosedPlace>span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.barLivingCard .barLivingTools .barClosedDate { display:block; width:auto; height:auto; max-width:108px; white-space:nowrap; padding:4px 6px; font-size:10px; border-radius:9px; background:#fff9ec; color:#72593d; }
 .barLivingCard[data-expanded=false] .barLivingHeader strong { font-size:22px; }
 .barLivingCard[data-expanded=false] .barLivingAmount { display:flex; align-items:center; flex-wrap:wrap; gap:5px 8px; }
-.barLivingCompact { padding:0 10px 6px; gap:4px; }
+.barLivingCompact { padding:0 10px 8px; gap:4px; }
+.barClosedMissing { display:flex; gap:5px; grid-column:1 / -1; }
+.barClosedMissing button { display:inline-flex; align-items:center; gap:3px; padding:3px 6px; border:1px solid #e4dac9; border-radius:12px; background:#fffdf4eb; font-size:11px; }
+.barClosedPeopleReserve { grid-column:1 / -1; min-height:25px; display:flex; justify-content:flex-end; padding:0 2px; }
+.barLivingCard .barClosedPeople { display:flex; flex-direction:row; padding:0; background:transparent; border:0; }
+.barClosedPeople>span { display:grid; place-items:center; min-width:27px; height:27px; padding:0 3px; box-sizing:border-box; margin-left:-5px; border:2px solid #fffaf1; border-radius:50%; background:#e9dcc7; color:#634b31; font-size:10px; box-shadow:0 2px 3px #61400c15; }
 .barLivingCompact>section { grid-column:1 / -1; }
 .barLivingCompact .barLivingMetadata { gap:5px; }
 .barLivingCompact .barLivingMetadata button { padding:5px 8px; background:rgb(255 253 248 / .93); border:1px solid #e4dac9; color:#403526; }
@@ -1320,22 +1331,27 @@
 .barClosedCostStatus:focus-visible { outline:2px solid #795719; outline-offset:3px; border-radius:4px; }
 .barClosedCostTip { display:none; position:absolute; top:calc(100% + 5px); right:0; width:230px; max-width:65vw; padding:8px 10px; z-index:8; background:#fffdf8; color:#403526; border:1px solid #c8a56f; border-radius:9px; box-shadow:0 3px 8px #0002; font-size:12px; line-height:1.4; pointer-events:none; }
 .barClosedCostStatus:is(:hover,:focus-visible) .barClosedCostTip { display:block; }
-.barLivingCompact>section>h4,.barLivingCompact [data-bar-before-miniature]>.barSceneBack { width:fit-content; margin:0; padding:2px 7px; border-radius:7px; background:rgb(255 253 248 / .93); color:#403526; font-size:11px; }
-.barLivingCompact [data-bar-closed-rail] { flex-wrap:nowrap; align-items:stretch; gap:6px; padding:11px 1px 4px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
-.barLivingCompact .barGroup { flex:0 0 clamp(104px,calc((100% - 12px)/3),128px); width:auto; min-width:0; max-width:none; }
-.barLivingCompact .barGroup[data-wide-label=true] { flex-basis:156px; }
-.barLivingCompact .barGroup>button { position:relative; height:96px; padding:13px 7px 5px; overflow:visible; border-color:#e9e2d7; background:rgb(255 253 248 / .95); box-shadow:0 2px 5px #4934160b; }
-.barClosedFace { display:grid; grid-template-rows:28px minmax(0,1fr); height:100%; width:100%; min-width:0; text-align:left; }
+.barClosedMoments { display:flex; gap:10px; grid-column:1 / -1; min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; overscroll-behavior-inline:contain; padding:1px 2px 4px; scrollbar-width:none; }
+.barClosedMoments::-webkit-scrollbar { display:none; }
+.barClosedMoments:focus-visible { outline:2px solid #927039; outline-offset:-2px; border-radius:8px; }
+.barClosedMoment { flex:none; min-width:0; }
+.barClosedMoment>h4 { width:fit-content; max-width:200px; margin:0 0 13px; padding:2px 6px; border-radius:7px; background:#fffdf4eb; color:#54422d; font-size:10px; }
+.barLivingCompact .barClosedMoment .barLivingTiles { flex-wrap:nowrap; gap:7px; align-items:center; }
+.barLivingCompact .barGroup,.barLivingCompact .barGroup[data-wide-label=true] { flex:0 0 132px; width:132px; min-width:0; max-width:132px; }
+.barLivingCompact .barGroup>button { position:relative; height:88px; padding:6px; overflow:visible; border-color:#e9e2d7; background:#fffdf8f2; box-shadow:0 2px 5px #4934160b; }
+.barClosedFace { display:block; height:100%; width:100%; min-width:0; text-align:left; }
 .barClosedTileHeading { min-width:0; }
-.barGroup .barClosedTileHeading>strong { min-width:0; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:normal; word-break:normal; font-size:12px; line-height:1.15; }
-.barClosedTileHeading .barCompactBadges { position:absolute; top:-9px; right:3px; align-items:center; flex-wrap:nowrap; gap:3px; z-index:1; }
-.barClosedTileHeading .barCompactBadges>span { padding:3px 5px; font-size:10px; line-height:1.2; color:#43341f; background:#fff1d8; border-color:#edd4aa; box-shadow:0 2px 4px #61400c0d; }
-.barClosedTileHeading .barCompactBadges>span:last-child { font-weight:700; background:#ffb643; border-color:#eea030; color:#392609; }
-.barClosedTileHeading .barCompactBadges>[data-price-unknown=true] { border-style:dashed; background:#fff4dd; color:#6d532f; font-weight:500; }
-.barClosedTileVisual { display:grid; place-items:center; position:relative; min-height:0; }
-.barLivingCompact .barClosedTileVisual .barProductSymbol { display:grid; place-items:center; width:100%; height:48px; grid-row:auto; background:transparent; }
-.barLivingCompact .barClosedTileVisual .barProductSymbol img { width:76px; height:48px; object-fit:cover; object-position:right center; mix-blend-mode:multiply; }
-.barLivingCompact .barClosedTileVisual .barProductSymbol:has(img[src*="-closed"]) img { object-fit:cover; object-position:center; }
+.barClosedFullLabel { display:none; position:absolute; inset:12px 3px 3px; z-index:3; padding:6px; overflow:auto; overflow-wrap:anywhere; border-radius:7px; background:#fffdf8; color:#493b29; font-size:11px; line-height:14px; pointer-events:none; }
+.barGroup>button:is(:hover,:focus-visible) .barClosedFullLabel { display:block; }
+.barGroup .barClosedTileHeading>strong { position:absolute; left:4px; top:-12px; width:83px; height:29px; box-sizing:border-box; padding:3px 5px; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; font-size:10px; line-height:12px; border:1px solid #e9e1d3; border-radius:8px; background:#fffdf8; z-index:1; }
+.barClosedTileHeading .barCompactBadges { display:contents; }
+.barClosedTileHeading .barCompactBadges>span { position:absolute; z-index:1; max-width:calc(100% - 12px); overflow:hidden; text-overflow:ellipsis; box-sizing:border-box; padding:2px 4px; font-size:10px; line-height:12px; color:#59452f; background:#f7ecdb; border-color:#e7d9c2; box-shadow:none; }
+.barClosedTileHeading .barCompactBadges>span:first-child { top:3px; right:4px; max-width:34px; }
+.barClosedTileHeading .barCompactBadges>span:last-child { bottom:4px; right:4px; font-weight:650; background:#f4dfba; border-color:#e2c89b; }
+.barClosedTileHeading .barCompactBadges>[data-price-unknown=true] { border-style:dashed; background:#f7eedf; color:#75624a; font-weight:500; }
+.barClosedTileVisual { display:grid; place-items:center; position:relative; height:100%; min-height:0; }
+.barLivingCompact .barClosedTileVisual .barProductSymbol { display:grid; place-items:center; width:100%; height:64px; background:transparent; }
+.barLivingCompact .barClosedTileVisual .barProductSymbol img { width:84px; height:64px; object-fit:contain; object-position:center; mix-blend-mode:normal; }
 .barClosedUnit { position:absolute; right:-2px; bottom:-1px; display:grid; place-items:center; width:20px; height:20px; border-radius:7px; background:#faf8f3; color:#725e3c; }
 .barClosedSuggestion { position:absolute; bottom:0; left:0; padding:2px 4px; border-radius:4px; background:white; color:#746855; font-size:10px; }
 
@@ -1474,11 +1490,12 @@
 .barOpenTileHeading .barCompactBadges { flex-direction:column; flex-wrap:nowrap; align-items:flex-end; gap:2px; }
 .barOpenTileHeading .barCompactBadges>span { padding:1px 4px; font-size:10px; line-height:1.2; border-radius:6px; background:#fff0d7; border-color:#edd4ad; }
 .barOpenTileHeading .barCompactBadges>span:last-child { background:#ffbd56; border-color:#efaa3e; font-weight:650; }
-.barOpenTileHeading .barCompactBadges>[data-price-unknown=true] { border-style:dashed; background:#fff4df; font-weight:500; }
+.barOpenTileHeading .barCompactBadges>[data-price-unknown=true] { border-style:dashed; background:#f7eedf; border-color:#e7d9c2; color:#75624a; font-weight:500; }
 .barOpenTileVisual { display:grid; place-items:center; position:relative; min-height:0; }
 .barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol { width:80px; height:58px; background:transparent; }
 .barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol img { width:80px; height:58px; object-fit:cover; object-position:right center; border-radius:8px; mix-blend-mode:multiply; }
 .barLivingCard[data-expanded=true] .barOpenTileVisual .barProductSymbol img:is([src*="-closed"],[src*="/r7/"]) { object-position:center; }
+.barLivingCard .barProductSymbol[data-object-art=true] img,.barCompositionDock .barProductSymbol[data-object-art=true] img { object-fit:contain; object-position:center; mix-blend-mode:normal; border-radius:0; }
 .barOpenUnit { position:absolute; right:0; bottom:0; display:grid; place-items:center; width:18px; height:18px; border-radius:6px; color:#746044; background:#faf4e7; }
 .barLivingCard[data-expanded=true] .barProgressiveSlot { flex:0 0 48px; width:48px; min-height:104px; height:104px; padding:0 3px; box-sizing:border-box; }
 .barLivingCard[data-expanded=true] .barProgressiveSlot:has(small:not(:empty)) { flex-basis:88px; width:88px; }
