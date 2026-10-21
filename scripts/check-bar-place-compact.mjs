@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import Module,{createRequire} from 'node:module';
+import {require} from './lib/phase2-ts-loader.mjs';
+const rr=createRequire(new URL('../outputs/l4c-test-tools/package.json',import.meta.url));
+const React=rr('react'),{create,act}=rr('react-test-renderer'),original=Module._load;
+Module._load=function(name,...args){return name==='react'?React:name==='react-dom'?{createPortal:node=>node}:original.call(this,name,...args);};
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+globalThis.window={innerHeight:900,innerWidth:1440,addEventListener(){},removeEventListener(){}};
+globalThis.document={body:{},addEventListener(){},removeEventListener(){}};
+const {BarPlaceSearch}=require('@/app/mois-a-venir/composer/bar-place-search');
+const {BarPlaceTransportContext}=require('@/app/mois-a-venir/composer/bar-place-transport');
+const calls=[],decisions=[],states=[];
+const transport=async(path,init)=>{calls.push({path,body:JSON.parse(init.body)});return Response.json({suggestions:[]});};
+const props={places:[],onKnown:id=>decisions.push(['KNOWN',id]),onText:label=>decisions.push(['TEXT',label]),onGoogle:(label,ref)=>decisions.push(['GOOGLE',label,ref]),initialSearch:{query:'',city:'',resultPage:0,googleOn:false},onSearchChange:state=>states.push(state)};
+let root;const mount=()=>React.createElement(BarPlaceTransportContext.Provider,{value:transport},React.createElement(BarPlaceSearch,props));
+const input=()=>root.root.findByProps({role:'combobox'});
+const toggle=()=>root.root.findByProps({'data-bar-google-toggle':true});
+try{
+  await act(async()=>{root=create(mount());});
+  assert.equal(root.root.findAllByType('input').length,1);
+  assert.equal(toggle().props['aria-pressed'],false);
+  assert.equal(root.root.findAll(node=>node.type==='button'&&node.props['aria-label']==='Nom libre').length,0,'no separate free-mode panel');
+  await act(async()=>input().props.onChange({target:{value:'Bar libre fixture'}}));
+  assert.equal(decisions.length,0,'typing is not a decision');
+  await act(async()=>toggle().props.onClick());
+  assert.equal(input().props.value,'Bar libre fixture','toggle retains the text');
+  assert.equal(toggle().props['aria-pressed'],true);
+  assert.equal(decisions.length,0,'toggle is not a decision');
+  await act(async()=>toggle().props.onClick());
+  await act(async()=>input().props.onKeyDown({key:'Enter',preventDefault(){}}));
+  assert.deepEqual(decisions,[['TEXT','Bar libre fixture']]);
+  assert(states.some(state=>state.googleOn===true)&&states.at(-1).googleOn===false);
+  assert.equal(calls.length,0,'free mode never calls Google');
+  console.log(JSON.stringify({status:'PASS',level:'REACT_FIXTURE_NOT_BROWSER',checks:['ONE_FIELD','NO_SEPARATE_FREE_PANEL','TOGGLE_RETAINS_RAW','TOGGLE_NO_DECISION','ENTER_FREE_DECISION','NO_PROVIDER_CALL_OFF']}));
+}finally{if(root)await act(async()=>root.unmount());}

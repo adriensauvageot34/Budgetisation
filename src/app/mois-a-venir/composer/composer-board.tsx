@@ -103,7 +103,13 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
       else if (!busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(trashTarget); } }}
     onDragLeave={() => interaction?.over(null)} onDrop={e => { e.preventDefault(); e.stopPropagation(); if (!busy) interaction?.place(trashTarget); }}>
     {interaction?.grabbed?.protected ? <LockKeyhole size={17} /> : <Trash2 size={17} />}{interaction?.grabbed?.protected ? "Protégée" : "Retirer"}</div>;
-  return <section className={styles.board} aria-label="Board du mois">
+  return <section className={styles.board} aria-label="Board du mois" onPointerDownCapture={event=>{
+    if(!livingBar?.id||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-bar-place-suggestions],[popover],dialog'))return;
+    // Use the existing RAW guard before the outside click reaches another card.
+    // A refused discard leaves both the editor and its Draft intact.
+    if(inlineEdits&&!inlineEdits.guard(livingBar.close,new Set([livingBar.id]))){event.preventDefault();event.stopPropagation();return;}
+    livingBar.close();
+  }}>
     <div className={styles.boardHeading}><h2>Votre mois prend forme</h2><span>Socle · habitudes et enveloppes · intentions</span></div>
     <BoardCarousel expandedId={livingBar?.id} model={model} inventory={items} focused={focused} revealSequence={(reveal?.sequence ?? 0) + selectionReveal} revealFocused={revealFocused} emptyClick={() => focus(null)} dropProps={{ "data-compatible": boardAccepts,
       "data-drag-over": sameTarget(interaction?.overTarget ?? null, boardTarget),

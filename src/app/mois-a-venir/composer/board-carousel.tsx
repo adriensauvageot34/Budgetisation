@@ -37,15 +37,24 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   // At explicit opening choose a usable local origin if the closed card was
   // near the bottom. Once established, this anchor survives fine edits.
   const anchor=expandedId ? activeAnchor.current?.id===expandedId ? activeAnchor.current
-    : {id:expandedId,page:origin?originPage:Math.max(0,Math.min(page,previousGeometry.current.length-1)),column:1,row:1} : undefined;
+    : {id:expandedId,page:0,column:origin?.column??1,row:origin?.row??1} : undefined;
   const surface=expandedMeasure&&expandedMeasure.id===expandedId?expandedMeasure.surface:undefined;
-  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);
+  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height, dragging ? stableExpanded.current : expandedId, expandedHeight,{surface,anchor,continuous:true}), [spatialKey,layoutSize.width,layoutSize.height,dragging,expandedId,expandedHeight,surface,anchor?.id,anchor?.page,anchor?.column,anchor?.row]);
   useLayoutEffect(()=>{
     previousGeometry.current=geometry;
     if(!expandedId){activeAnchor.current=undefined;return;}
     const index=geometry.findIndex(p=>p.some(box=>box.item.id===expandedId)),box=geometry[index]?.find(box=>box.item.id===expandedId);
     if(box)activeAnchor.current={id:expandedId,page:index,column:box.column,row:box.row};
   },[geometry,expandedId]);
+  useLayoutEffect(()=>{
+    if(!expandedId||!viewport.current)return;
+    const board=viewport.current,card=[...board.querySelectorAll<HTMLElement>('[data-inventory-id]')].find(node=>node.dataset.inventoryId===expandedId);
+    if(!card)return;
+    const frame=requestAnimationFrame(()=>{const area=board.getBoundingClientRect(),box=card.getBoundingClientRect();
+      if(box.left<area.left+20||box.right>area.right-20)board.scrollTo({left:board.scrollLeft+box.left-area.left-24,behavior:'smooth'});
+    });
+    return()=>cancelAnimationFrame(frame);
+  },[expandedId]);
   useLayoutEffect(()=>note('repacks'),[geometry]);
   const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);
   const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);
@@ -158,7 +167,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       // The shelf budget is the screen space, not its content-driven minHeight.
       // Otherwise reserving rows enlarges the budget and repeatedly repacks it.
       const top=node.getBoundingClientRect().top+(node.closest('main')?.scrollTop??0)+window.scrollY;
-      const value = { width: Math.max(1, (plateau?.clientWidth ?? node.clientWidth) - (padding ? px(padding.paddingLeft) + px(padding.paddingRight) : 0)),
+      const value = { width: Math.max(1, node.clientWidth - (padding ? px(padding.paddingLeft) + px(padding.paddingRight) : 0)),
         height: Math.max(218,window.innerHeight-top-(dock?.getBoundingClientRect().height??0)-(navigation?.getBoundingClientRect().height??0)-24-(padding ? px(padding.paddingTop)+px(padding.paddingBottom):0)) };
       setSize(old => old.width === value.width && old.height === value.height ? old : value); };
     observe(); const observer = new ResizeObserver(observe); observer.observe(node); return () => observer.disconnect();
@@ -176,7 +185,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     // A folded rich Bar also changes height during removal/Undo and Preview.
     // Keep those pages still; pages without a Bar retain ordinary Board motion.
     const hasLivingBar = cells.some(cell => !!cell.querySelector('[data-bar-living-card]'));
-    if (samePage && before.rects.size && !dragging && !reduced && !expandedId && !before.expandedId && !hasLivingBar && !before.hasLivingBar) for (const cell of cells) {
+    if (samePage && before.rects.size && !dragging && !reduced) for (const cell of cells) {
       const id = cell.dataset.inventoryId!, currentRect = rects.get(id)!;
       let origin = before.rects.get(id), entering = false;
       if (!origin) {
@@ -195,11 +204,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       }
       if (!origin) continue;
       const dx = origin.x - currentRect.x, dy = origin.y - currentRect.y;
-      if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && !entering) {
+      const grows=cell.dataset.inventoryId===expandedId||cell.dataset.inventoryId===before.expandedId;
+      const sx=grows?origin.width/currentRect.width:1,sy=grows?origin.height/currentRect.height:1;
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(sx-1)<.02 && Math.abs(sy-1)<.02 && !entering) {
         continue;
       }
-      cell.animate([{ transform:`translate(${dx}px, ${dy}px) scale(${entering ? .95 : 1})`, opacity:entering ? .45 : 1 },
-        { transform:"translate(0, 0) scale(1)", opacity:1 }], { duration:entering ? 290 : 220, easing:"cubic-bezier(.2,.75,.25,1)" });
+      cell.animate([{ transform:`translate(${dx}px, ${dy}px) scale(${entering ? .95 : sx}, ${entering ? .95 : sy})`, opacity:entering ? .45 : 1 },
+        { transform:"translate(0, 0) scale(1, 1)", opacity:1 }], { duration:entering ? 290 : grows ? 280 : 240, easing:"cubic-bezier(.2,.75,.25,1)" });
     }
     previousScene.current = { page:active, expandedId, hasLivingBar, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
       .map(placement => [placement.item.id, placement.item.kind === "CLUSTER" ? placement.item.children.map(child => child.id) : []] as const) ?? []) };
@@ -246,6 +257,10 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       if (focusedRequest.current === revealSequence && !lostBarFocus) return;
       const target = barFocusTarget ?? cell;
       if (!target || target.closest('[inert]')) return;
+      if(cell&&viewport.current){const bounds=viewport.current.getBoundingClientRect(),card=cell.getBoundingClientRect();
+        if(card.left<bounds.left+24)viewport.current.scrollBy({left:card.left-bounds.left-24,behavior:'smooth'});
+        else if(card.right>bounds.right-24)viewport.current.scrollBy({left:card.right-bounds.right+24,behavior:'smooth'});
+      }
       target.focus({ preventScroll: true });
       if (document.activeElement === target) focusedRequest.current = revealSequence;
     });
@@ -253,19 +268,25 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   }, [focused, revealSequence, dragging, active, focusPage, model, pages, departing]);
   useEffect(() => { if (!interaction?.grabbed) { cancelDwell(); dwellEdge.current = null; } }, [interaction?.grabbed]);
   useEffect(() => () => cancelDwell(), []);
-  const edge = (direction: -1 | 1) => { if (!interaction?.grabbed || dwell.current || dwellEdge.current === direction || active + direction < 0 || active + direction >= pages.length) return;
-    dwellEdge.current = direction;
-    dwell.current = setTimeout(() => { dwell.current = null; interaction.over(null); go(active + direction); }, 600); };
+  const strip=layouts[0]??[];
+  const stripColumns=Math.max(inventoryColumns(layoutSize.width),...strip.map(box=>box.column+box.columnSpan-1));
+  const availableWidth=Math.max(212,Math.min(1330,layoutSize.width));
+  const baseColumns=inventoryColumns(availableWidth);
+  const trackWidth=(availableWidth-(baseColumns-1)*10)/baseColumns;
+  const stripWidth=Math.max(availableWidth,stripColumns*(trackWidth+10)-10);
   return <>
-    <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-drop data-board-page-active={active}
+    <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-continuous data-board-drop data-board-page-active={active} tabIndex={0} aria-label="Board du mois, défilement horizontal"
       data-bar-page={!!expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id])||undefined}
       style={expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id]) ? { minHeight: Math.max(expandedHeight??0,...(layouts[active]??[]).map(box=>(box.row-1+box.rowSpan)*10-5))+36 } : undefined} {...dropProps}
+      onKeyDown={event=>{if(event.target!==event.currentTarget||!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();viewport.current?.scrollBy({left:event.key==='ArrowRight'?260:-260,behavior:'smooth'});}}
+      onDragOverCapture={event=>{if(!interaction?.grabbed||!viewport.current)return;const rect=viewport.current.getBoundingClientRect(),x=event.clientX;
+        if(x>rect.right-55)viewport.current.scrollLeft+=26;else if(x<rect.left+55)viewport.current.scrollLeft-=26;}}
       onClick={e => { if (e.target === e.currentTarget || e.target instanceof Element && e.target.matches("[data-mosaic],[data-board-page]")) emptyClick(); }}>
-      <div className={styles.plateauTrack} style={{ transform: `translateX(-${active * 100}%)` }} data-plateau-track onTransitionEnd={event=>{if(event.target===event.currentTarget)setDeparting(active);}}>
-        {layouts.map((inventory, index) => <section key={index} className={styles.plateau} data-board-page={index} data-single-page={layouts.length === 1} aria-label={`Page ${index + 1} sur ${pages.length}`}
+      <div className={styles.plateauTrack} data-plateau-track>
+        {layouts.map((inventory, index) => <section key={index} className={styles.plateau} data-board-page={index} data-single-page={layouts.length === 1} aria-label="Espace de composition du mois"
           aria-hidden={index !== active} inert={index !== active}>
           <div className={styles.mosaic} data-mosaic data-has-focus={!!focused} data-completeness-focus={interaction?.completenessFocus}
-            style={{ "--board-columns":inventoryColumns(layoutSize.width) } as React.CSSProperties}>
+            style={{ "--board-columns":stripColumns,gridTemplateColumns:`repeat(${stripColumns},${trackWidth}px)`,width:stripWidth } as React.CSSProperties}>
             {inventoryMountedPage(index,active,departing,mode,pinned) && inventory.map(({ item, column, row, columnSpan, rowSpan }) => <div key={item.id} className={styles.inventoryCell} data-inventory-id={item.id} tabIndex={-1}
               data-column-span={columnSpan} data-row-span={rowSpan} data-requested-surface={item.id===expandedId?surface?.size??"compact":undefined} data-geometry-scene={item.id===expandedId?surface?.scene:undefined}
               data-preferred-width={item.id===expandedId?surface?.preferredWidth:undefined} data-min-usable-width={item.id===expandedId?surface?.minUsableWidth:undefined}
@@ -277,12 +298,6 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
         </section>)}
       </div>
       {children}
-      {interaction?.grabbed && pages.length > 1 && ([-1, 1] as const).map(direction => <div key={direction} className={styles.pageEdge} data-board-edge={direction === 1 ? "next" : "previous"}
-        data-available={active + direction >= 0 && active + direction < pages.length} aria-hidden="true"
-        onDragEnter={e => { e.stopPropagation(); edge(direction); }} onDragOver={e => { e.preventDefault(); e.stopPropagation(); interaction.over(null); edge(direction); }}
-        onDragLeave={() => { cancelDwell(); dwellEdge.current = null; }} onDrop={e => { e.preventDefault(); e.stopPropagation(); cancelDwell(); dwellEdge.current = null; interaction.over(null); }}>
-        {direction === 1 ? <><span>Page suivante</span><ChevronRight size={19} /></> : <><ChevronLeft size={19} /><span>Page précédente</span></>}
-      </div>)}
     </div>
     {pages.length > 1 && <nav className={styles.plateauNavigation} aria-label="Pages du mois" data-carousel-nav data-single-page={pages.length === 1}
       onKeyDown={e => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return; e.preventDefault(); const next = e.key === "Home" ? 0 : e.key === "End" ? pages.length - 1 : active + (e.key === "ArrowRight" ? 1 : -1); go(next);

@@ -10,7 +10,7 @@ import {useWorkshopRaw} from './inline-edit-registry';
 /** Capability remains OFF until the personal-place owner SQL is reviewed.
  * Saving a favourite never selects a venue, creates KNOWN, or changes a route.
  */
-export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-personal-place',onSuggestions}:{detail:SelectedRestaurantPlace|null;query:string;onChoose?:(label:string,ref:BarGoogleRef)=>void;rawTargetRef?:string;onSuggestions?:(places:readonly PersonalGooglePlace[])=>void}) {
+export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-personal-place',onSuggestions,suggestionsOnly=false}:{detail:SelectedRestaurantPlace|null;query:string;onChoose?:(label:string,ref:BarGoogleRef)=>void;rawTargetRef?:string;onSuggestions?:(places:readonly PersonalGooglePlace[])=>void;suggestionsOnly?:boolean}) {
   const [enabled,setEnabled]=useState(false),[places,setPlaces]=useState<PersonalGooglePlace[]>([]),[label,setLabel]=useState('');
   const [status,setStatus]=useState(''),[busy,setBusy]=useState(false),[page,setPage]=useState(0);
   const [lastReceipt,setLastReceipt]=useState<{requestId:string;status:string;version?:number}|null>(null);
@@ -28,7 +28,7 @@ export function BarPersonalPlaces({detail,query,onChoose,rawTargetRef='bar-perso
   const guardPersonal=useWorkshopRaw(rawTargetRef,enabled&&!!label.trim()&&(editing?label.trim()!==editing.userLabel:!!detail&&existing?.status!=='SAVED'),()=>{setLabel('');setEditingId(null);},`bar-personal-label:${rawVersion}`);
   const guarded=(run:()=>void)=>{if(guardPersonal(run))run();};
   useEffect(()=>{onSuggestions?.(enabled?places.filter(place=>place.status==='SAVED'):[]);},[enabled,places,onSuggestions]);
-  if(!enabled)return null;
+  if(!enabled||suggestionsOnly&&!detail)return null;
   const matches=places.filter(p=>p.status===(showArchives?'ARCHIVED':'SAVED')&&p.userLabel.toLocaleLowerCase('fr').includes(query.trim().toLocaleLowerCase('fr')));
   const effectivePage=Math.min(page,Math.max(0,Math.ceil(matches.length/3)-1));
   const rename=(p:PersonalGooglePlace)=>guarded(()=>{setEditingId(p.id);setLabel(p.userLabel);setRawVersion(v=>v+1);});

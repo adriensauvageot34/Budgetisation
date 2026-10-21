@@ -29,7 +29,7 @@ const columnGap = 10, rowGap = 5, rowTrack = 5;
 export const inventoryColumns = (width: number) => Math.max(2, Math.min(18, Math.floor((Math.max(212, Math.min(1330, width)) + columnGap) / 76)));
 
 export function inventoryLayoutPages(items: readonly InventoryItem[], width: number, height: number, expandedId?: string, expandedHeight = 520,
-  options: { surface?: BarSurface; anchor?: InventoryAnchor } = {}): InventoryPlacement[][] {
+  options: { surface?: BarSurface; anchor?: InventoryAnchor; continuous?: boolean } = {}): InventoryPlacement[][] {
   const availableWidth = Math.max(212, Math.min(1330, width));
   const columns = inventoryColumns(availableWidth), columnWidth = (availableWidth - (columns - 1) * columnGap) / columns;
   // The measured viewport already excludes pagination and the palette.
@@ -45,6 +45,30 @@ export function inventoryLayoutPages(items: readonly InventoryItem[], width: num
     const requested=Math.ceil(((expanded?expandedHeight:item.height)+rowGap)/(rowTrack+rowGap));
     return {columnSpan,rowSpan:Math.max(1,livingBar?requested:Math.min(maxTracks,requested)),livingBar};
   };
+  if(options.continuous){
+    const strip:InventoryPlacement[]=[],occupied=new Set<string>();
+    const occupyStrip=(item:InventoryItem,column:number,row:number,columnSpan:number,rowSpan:number)=>{
+      for(let y=row;y<row+rowSpan;y++)for(let x=column;x<column+columnSpan;x++)occupied.add(`${x}:${y}`);
+      strip.push({item,column:column+1,row:row+1,columnSpan,rowSpan});
+    };
+    const pinned=items.find(item=>item.id===expandedId&&item.id===options.anchor?.id&&dimensions(item).livingBar);
+    if(pinned&&options.anchor){const {columnSpan,rowSpan}=dimensions(pinned);
+      occupyStrip(pinned,Math.max(0,options.anchor.column-1),Math.max(0,options.anchor.row-1),columnSpan,rowSpan);
+    }
+    for(const item of items){
+      if(item===pinned)continue;
+      const {columnSpan,rowSpan}=dimensions(item),rowLimit=Math.max(maxTracks,rowSpan);
+      let placed=false;
+      // Keep the viewport-height shelf, then extend only as many columns as
+      // needed. Stable input order and the same dimension contract as pages.
+      for(let column=0;!placed;column++)for(let row=0;!placed&&row<=rowLimit-rowSpan;row++){
+        let free=true;for(let y=row;free&&y<row+rowSpan;y++)for(let x=column;x<column+columnSpan;x++)if(occupied.has(`${x}:${y}`)){free=false;break;}
+        if(free){occupyStrip(item,column,row,columnSpan,rowSpan);placed=true;}
+      }
+    }
+    const order=new Map(items.map((item,index)=>[item.id,index]));
+    return [strip.sort((a,b)=>order.get(a.item.id)!-order.get(b.item.id)!)];
+  }
   const occupy=(index:number,item:InventoryItem,column:number,row:number,columnSpan:number,rowSpan:number)=>{
     ensurePage(index);
     for(let y=row;y<row+rowSpan;y++)for(let x=column;x<column+columnSpan;x++)occupancy[index].add(y*columns+x);

@@ -70,7 +70,7 @@ export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly
   personalGooglePlacesEnabled?: true;
   mobilitySummaries?: readonly ComposerMobilitySummary[];
   /** Display subtotal of already evaluated Compiler components and owned journeys; never an Apply input. */
-  nightOutSummaries?: readonly Readonly<{contextOccurrenceId: string; semanticStateDigest: string; knownAmount: string | null; incomplete: boolean}>[];
+  nightOutSummaries?: readonly Readonly<{contextOccurrenceId: string; semanticStateDigest: string; knownAmount: string | null; incomplete: boolean; costIncomplete: boolean}>[];
   nightOutComponentGroups?: readonly import('./component-group-presentation').ComponentGroupProjection[];
   proof: Omit<PlannerApplyCommand, "applyRequestId">;
   appliedContextIds: readonly string[];
