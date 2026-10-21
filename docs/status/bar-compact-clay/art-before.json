@@ -1,0 +1,135 @@
+[
+  {
+    "file": "drinks/vodka",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "drinks/energy",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "drinks/beer",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "food/tapas",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "drinks/beer-closed",
+    "width": 1200,
+    "height": 600,
+    "alpha": true,
+    "opaque": false
+  },
+  {
+    "file": "drinks/cocktail-closed",
+    "width": 1200,
+    "height": 600,
+    "alpha": true,
+    "opaque": false
+  },
+  {
+    "file": "drinks/soft-closed",
+    "width": 1200,
+    "height": 600,
+    "alpha": true,
+    "opaque": false
+  },
+  {
+    "file": "drinks/shared-bottle-closed",
+    "width": 1200,
+    "height": 600,
+    "alpha": true,
+    "opaque": false
+  },
+  {
+    "file": "r7/shot",
+    "width": 320,
+    "height": 320,
+    "alpha": true,
+    "opaque": false
+  },
+  {
+    "file": "r7/water",
+    "width": 320,
+    "height": 320,
+    "alpha": true,
+    "opaque": false
+  },
+  {
+    "file": "r7/wine",
+    "width": 320,
+    "height": 320,
+    "alpha": true,
+    "opaque": false
+  },
+  {
+    "file": "food/chips",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "food/snack",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "drinks/rum",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "drinks/wine-glass",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "drinks/soft",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "drinks/water",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "drinks/shot",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  },
+  {
+    "file": "drinks/wine-bottle",
+    "width": 1200,
+    "height": 600,
+    "alpha": false,
+    "opaque": true
+  }
+]
