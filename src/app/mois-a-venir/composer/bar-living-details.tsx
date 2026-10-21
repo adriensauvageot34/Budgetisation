@@ -33,12 +33,12 @@ export function BarMetadata({fields,model,open,editing=false,disabled=false,acti
  const googleVenue=fields.venueDecision?!!parseNightOutVenue(fields.venueDecision).google:false;
  return <nav className={styles.barLivingMetadata} aria-label="Précisions de la sortie">
    {children}
-   <button type="button" aria-label="Modifier le lieu" aria-pressed={active==="place"||active==="manual-place"||active==="google"} disabled={disabled} onClick={()=>open("place")} title={place?.kind==="KNOWN"?"Lieu enregistré · identité conservée":googleVenue?"Bar Google retenu · itinéraire calculable sous réserve des fournisseurs":"Repère textuel · itinéraire à préciser"}>{place?<MapPin size={14}/>:<Plus size={14}/>} {place?barPlaceLabel(place,model):"Lieu"}</button>
-   {place&&removePlace&&<button type="button" aria-label="Retirer le lieu de la sortie" disabled={disabled} onClick={removePlace}><X size={14}/></button>}
-   <button type="button" aria-label="Modifier la date" aria-pressed={active==="date"} disabled={disabled} onClick={()=>open("date")}>{date?<CalendarDays size={14}/>:<Plus size={14}/>} {date??"Date"}</button>
-   <button type="button" className={styles.barPeople} aria-pressed={active==="people"} disabled={disabled} onClick={()=>open("people")} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)}>
+   {(!editing||!place)&&<button type="button" aria-label="Modifier le lieu" aria-pressed={active==="place"||active==="manual-place"||active==="google"} disabled={disabled} onClick={()=>open("place")} title={place?.kind==="KNOWN"?"Lieu enregistré · identité conservée":googleVenue?"Bar Google retenu · itinéraire calculable sous réserve des fournisseurs":"Repère textuel · itinéraire à préciser"}>{place?<MapPin size={14}/>:<Plus size={14}/>} {place?barPlaceLabel(place,model):"Lieu"}</button>}
+   {place&&removePlace&&(!editing||active==="place"||active==="google"||active==="manual-place")&&<button type="button" aria-label="Retirer le lieu de la sortie" disabled={disabled} onClick={removePlace}><X size={14}/></button>}
+   {(!editing||!date)&&<button type="button" aria-label="Modifier la date" aria-pressed={active==="date"} disabled={disabled} onClick={()=>open("date")}>{date?<CalendarDays size={14}/>:<Plus size={14}/>} {date??"Date"}</button>}
+   {(!editing||!people.length)&&<button type="button" className={styles.barPeople} aria-pressed={active==="people"} disabled={disabled} onClick={()=>open("people")} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)}>
      {active==="people"?<><Users size={14}/>{people.length?`${people.length} personne${people.length>1?"s":""}`:"Personnes"}</>:<>{people.length?people.slice(0,3).map((p,i)=>{const label=barPersonLabel(p,model);return <span key={i}><i aria-hidden="true">{label.split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join("")}</i>{label.split(/\s+/)[0]}</span>;}):<><Plus size={14}/>Personnes</>}{people.length>3&&<span>+{people.length-3}</span>}</>}
-   </button>
+   </button>}
  </nav>;
 }
 export type BarRouteAction="mode"|"vehicle"|"reverse"|"remove"|"advanced"|"time";

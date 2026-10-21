@@ -143,6 +143,31 @@ try{
  const reloaded=(await readComposerDrafts(scope,'2026-11')).active.semanticState;assert.deepEqual(parsePlanSemanticState(reloaded),toSave);await mount(reloaded);
  assert(nodes(n=>n.props['data-bar-before-item']).length===5);assert(nodes(n=>n.props['data-bar-tile']).length===1);checks.push('OFFICIAL_DRAFT_SAVE_RELOAD_COMPONENTS_VISIBLE_SYNTHETIC');
  const beforeRemount=structuredClone(model.semanticState);await mount(beforeRemount);assert.deepEqual(model.semanticState,beforeRemount);assert(button('Ajouter un objet au Before'));assert(button('Ajouter une consommation'));checks.push('CLOSE_REOPEN_RETAINS_MOMENTS_AND_IDENTITIES');
+ // Compact editing must retain every richer economic attribute on partial edits.
+ for(const basis of ['ITEM','SHARED','PERSON']){
+   const scene=barCompactMonth('mixed').semantic,selected=scene.contexts[0].slotSelections.extras.items[0];
+   Object.assign(selected,{unitBasis:basis,cost:{kind:'QUOTE',quoteKey:'synthetic-component-quote'},fundingAllocations:[{source:'BANK',amount:'3'}],label:'Nom personnalisé'});
+   if(basis==='PERSON')Object.assign(selected,{quantity:'4',quantityEvidenceVersion:'component-quantity@v1',quantityPerPerson:'2',pricedParticipantCount:2});
+   await mount(scene);await click(nodes(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Nom personnalisé ·'))[0].props['aria-label']);
+   assert.equal(nodes(n=>n.props['data-bar-item-details']!==undefined).length,0);assert.equal(nodes(n=>n.props['data-workshop-component']!==undefined).length,0);
+   assert(button('Retirer ce poste'));assert(button('Options de Nom personnalisé'));
+   const old=structuredClone(parent().slotSelections.extras.items[0]);await click('Augmenter la quantité');
+   const changed=parent().slotSelections.extras.items[0];assert.deepEqual(changed.cost,old.cost);assert.deepEqual(changed.fundingAllocations,old.fundingAllocations);assert.equal(changed.selectionId,old.selectionId);assert.equal(changed.label,old.label);assert.equal(changed.unitBasis,basis);
+   if(basis==='PERSON'){assert.equal(changed.quantityPerPerson,'3');assert.equal(changed.pricedParticipantCount,2);assert.equal(changed.quantity,'6');}
+   await click('Options de Nom personnalisé');const advanced=nodes(n=>n.props['data-workshop-component']!==undefined)[0];assert(advanced);assert.equal(nodes(n=>n.props['data-bar-active-tile']===true)[0].findAll(n=>n.props['data-workshop-component']!==undefined).length,0,'advanced form is outside rail');
+   const advancedRow=advanced.findAll(n=>n.type==='input')[0];assert(advancedRow);await act(async()=>advancedRow.props.onChange({target:{value:'7,50'}}));await click('Conserver ce poste');
+   const priced=parent().slotSelections.extras.items[0];assert.deepEqual(priced.cost,{kind:'MANUAL',unitAmount:'7.50'});assert.deepEqual(priced.fundingAllocations,old.fundingAllocations);assert.equal(priced.label,old.label);
+   checks.push(`COMPACT_${basis}_QUOTE_FUNDING_PARTIAL_EDIT_AND_CONTEXTUAL_OPTIONS`);
+ }
+ const {BarMetadata}=require('@/app/mois-a-venir/composer/bar-living-details');const {BarLivingCard}=require('@/app/mois-a-venir/composer/bar-living-card');
+ await mount(barCompactMonth('long').semantic);await act(async()=>root.unmount());
+ const headerCard=model.board.contexts.find(c=>c.contextOccurrenceId===id),targets=[];
+ for(const expanded of [false,true]){
+   await act(async()=>{root=create(React.createElement(BarLivingCard,{card:headerCard,model,living:{id:expanded?id:undefined,open:(c,target)=>targets.push(target),close(){}},busy:false,preserved:false,preserve(){},drag(){}}));});
+   assert.equal(nodes(n=>n.props['data-bar-closed-place']!==undefined).length,1);assert.equal(nodes(n=>n.props['data-bar-closed-date']!==undefined).length,1);assert.equal(nodes(n=>n.props['data-bar-closed-people']!==undefined).length,1);assert.match(text(root.toJSON()),/\+4/);
+   await act(async()=>nodes(n=>n.props['data-bar-closed-place']!==undefined)[0].props.onClick());assert.equal(targets.at(-1),'place');await act(async()=>root.unmount());
+ }
+ await act(async()=>{root=create(React.createElement(BarMetadata,{fields:parent().fields,model,editing:true,open(){}}));});assert.equal(nodes(n=>n.type==='button').length,0);checks.push('SHARED_HEADER_LONG_PLACE_DATE_PEOPLE_AND_NO_REDUNDANT_METADATA');
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  console.log(JSON.stringify({status:'PASS',checks,level:'REACT_REAL_OWNERS_PGLITE_SYNTHETIC_NOT_NATIVE_OR_AUTH',remoteWrites:0}));
 }finally{if(root)await act(async()=>root.unmount());await pg.close();}

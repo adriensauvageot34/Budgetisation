@@ -86,8 +86,8 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
       if(event.key==="Escape"&&expanded&&!document.querySelector("dialog[open],[popover]:popover-open")){event.preventDefault();event.stopPropagation();living.close();}
     }}>
     <header className={styles.barLivingHeader}>
-      <div className={styles.barLivingIdentity}><h3><button type="button" disabled={busy||card.readOnly||removing} aria-label={`Ouvrir ${card.label}`} onClick={()=>open("summary")}>{!expanded&&place?"Bar":card.label}</button>
-        {!expanded&&place&&<><span aria-hidden="true"> · </span><button type="button" data-bar-closed-place className={styles.barClosedPlace} disabled={locked} title={placeLabel??undefined} aria-label={`Modifier le lieu · ${placeLabel}`} onClick={()=>open('place')}><span>{placeLabel}</span></button></>}
+      <div className={styles.barLivingIdentity}><h3><button type="button" disabled={busy||card.readOnly||removing} aria-label={`Ouvrir ${card.label}`} onClick={()=>open("summary")}>{place?"Bar":card.label}</button>
+        {place&&<><span aria-hidden="true"> · </span><button type="button" data-bar-closed-place className={styles.barClosedPlace} disabled={locked} title={placeLabel??undefined} aria-label={`Modifier le lieu · ${placeLabel}`} onClick={()=>open('place')}><span>{placeLabel}</span></button></>}
       </h3>
         <div className={styles.barLivingAmount} data-cost-unknown={summary?.knownAmount==null}>{expanded?<div data-bar-open-amount><strong data-bar-amount-fallback aria-label={summary?.knownAmount==null?"Montant à renseigner":undefined}>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></div>:<button type="button" data-bar-amount-trigger className={styles.barAmountTrigger} disabled={locked} aria-label={summary?.knownAmount==null?"Modifier l’estimation des consommations · Montant à renseigner":"Modifier l’estimation des consommations"} title="Choisir la portée à modifier · aucun total calculé n’est écrasé" onClick={()=>open("quick")}><strong>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></button>}
         {expanded ? summary?.knownAmount!=null&&<>{!fresh?<small>Estimation à actualiser</small>:summary.costIncomplete?<small aria-label={incompleteExplanation}>Montant partiel</small>:null}</>
@@ -95,7 +95,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
           : summary?.knownAmount!=null&&summary.costIncomplete&&<span className={styles.barClosedCostStatus} data-bar-cost-info tabIndex={0} aria-label={incompleteExplanation} aria-describedby={infoId}><CircleDashed size={13} aria-hidden="true"/>Montant partiel<Info size={13} aria-hidden="true"/><span id={infoId} role="tooltip" className={styles.barClosedCostTip}>{incompleteExplanation}</span></span>}
         {(preserved||card.readOnly)&&<small>{card.readOnly?"Lecture seule":"Carte préservée"}</small>}</div></div>
       <div className={styles.barLivingTools}>
-        {!expanded&&date&&<button type="button" className={styles.barClosedDate} data-bar-closed-date disabled={locked} aria-label={`Modifier la date · ${date}`} onClick={()=>open('date')}>{date}</button>}
+        {date&&<button type="button" className={styles.barClosedDate} data-bar-closed-date disabled={locked} aria-label={`Modifier la date · ${date}`} onClick={()=>open('date')}>{date}</button>}
         {expanded&&!card.readOnly&&<>
           <button type="button" className={styles.barQuietAction} disabled={busy} onClick={preserve} aria-label={preserved?"Libérer les choix de cette sortie":"Préserver les choix de cette sortie"} title={preserved?"Libérer les choix":"Préserver les choix"} aria-pressed={preserved}><Pin size={15}/></button>
           {remove&&<button type="button" className={styles.barQuietAction} disabled={locked} onClick={remove} aria-label="Retirer la sortie" title="Retirer la sortie · Undo pour rétablir"><Trash2 size={15}/></button>}
@@ -126,5 +126,8 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
         {people.slice(0,3).map((person,index)=><span key={index} aria-hidden="true">{barPersonLabel(person,model).split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('')}</span>)}{people.length>3&&<span aria-hidden="true">+{people.length-3}</span>}
       </button></div>}
     </div>}
+    {expanded&&people.length>0&&<div className={styles.barClosedPeopleReserve}><button type="button" className={styles.barClosedPeople} data-bar-closed-people disabled={locked} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)} onClick={()=>open('people')}>
+      {people.slice(0,3).map((person,index)=><span key={index} aria-hidden="true">{barPersonLabel(person,model).split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('')}</span>)}{people.length>3&&<span aria-hidden="true">+{people.length-3}</span>}
+    </button></div>}
   </article>;
 }
