@@ -31,7 +31,7 @@
 - `git diff --check` : PASS.
 - Build Vercel Preview Next : `READY` au SHA produit exact.
 
-Captures de la fixture locale : [Board ouvert à 1920 px](images/board-open-1920.png), [rendu à viewport effectif 1152 px](images/board-open-1152.png). Cette dernière capture conserve le canevas externe de l'outil à 1920 px et ne prouve donc pas à elle seule une capture native à 1152 px ; la largeur effective de la page a été relevée via `innerWidth=1152`.
+Captures de la fixture locale : [montant inconnu](images/amount-unknown.png), [champ au même emplacement](images/amount-inline-input.png), [montant direct 40 € sans tuile fictive](images/amount-direct-40.png), [recherche de lieu compacte](images/place-compact.png), [suggestion de nom libre](images/place-free-suggestion.png), [Board ouvert à 1920 px](images/board-open-1920.png), [rendu à viewport effectif 1152 px](images/board-open-1152.png). Cette dernière capture conserve le canevas externe de l'outil à 1920 px et ne prouve donc pas à elle seule une capture native à 1152 px ; la largeur effective de la page a été relevée via `innerWidth=1152`.
 
 ## Réserves
 
