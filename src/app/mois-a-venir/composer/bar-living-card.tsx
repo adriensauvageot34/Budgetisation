@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useRef,useId,type ReactNode,type HTMLAttributes} from "react";
-import { X, CircleDashed, Info } from "lucide-react";
+import { CircleDashed, Info, Pin, Trash2 } from "lucide-react";
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 
@@ -15,6 +15,7 @@ import {barBefore} from "./bar-before";
 import {componentPresentationGroups} from '@/domain/phase2/planner/component-group-presentation';
 import {BarComponentGroup} from './bar-component-group';
 import {BarMetadata,BarRouteLine,BarComponentFace,barPlaceLabel,barModeLabel,barPeopleLabel} from "./bar-living-details";
+import {nightOutConsumption} from "@/domain/phase2/planner/night-out-consumption";
 export {barPlaceLabel,barModeLabel,barPeopleLabel};
 
 export type LivingBar = {id?:string; removingId?:string; content?:ReactNode; open:(card:ComposerContextCardView,target:BarTarget)=>void; close:()=>void};
@@ -35,7 +36,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
       const scene=root.current?.querySelector<HTMLElement>('[data-bar-living-editor]')?.dataset.barStep;
       const sceneFocus=expanded&&(scene==="place"||scene==="google")?root.current?.querySelector<HTMLElement>('[data-bar-google-search] input')
         :expanded&&scene==="date"?root.current?.querySelector<HTMLElement>('[data-bar-calendar] button[tabindex="0"]'):null;
-      (sceneFocus??root.current?.querySelector<HTMLButtonElement>(expanded?'button[aria-label="Replier la carte"]':"h3 button"))?.focus({preventScroll:true});
+      (sceneFocus??root.current?.querySelector<HTMLButtonElement>("h3 button"))?.focus({preventScroll:true});
     });wasExpanded.current=expanded;return()=>cancelAnimationFrame(frame);}
   },[expanded]);
   const summary=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===card.contextOccurrenceId);
@@ -45,12 +46,13 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
   const open=(target:BarTarget)=>living.open(card,target), locked=busy||preserved||card.readOnly||removing;
   const {suppressClick,...surfaceDrag}=useBarClosedDrag(`context-occurrence:${card.contextOccurrenceId}`,!expanded&&!locked);
   const semantic=model.semanticState.contexts.find(c=>c.contextOccurrenceId===card.contextOccurrenceId);
+  const directSelectionId=semantic?nightOutConsumption(semantic)?.directSelectionId:null;
   const before=semantic&&barBefore(model.semanticState,semantic);
   const beforeGroups=before?componentPresentationGroups([before.bottle,...before.extras]):[];
-  const components=card.sockets.flatMap(socket=>socket.currentItems.filter(item=>item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT").map(item=>({slot:socket.slotKey,item,amount:socket.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount})));
+  const components=card.sockets.flatMap(socket=>socket.currentItems.filter(item=>(item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT")&&item.selectionId!==directSelectionId).map(item=>({slot:socket.slotKey,item,amount:socket.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount})));
   // The summary may also be incomplete because context information is missing.
   // Do not claim missing prices unless the published line evaluations say so.
-  const incompleteExplanation=summary?.knownAmount!=null?`${money(summary.knownAmount)} connus, ${components.some(c=>c.item.kind==='COMPONENT'&&c.amount==null)?'certains prix restent à préciser':'estimation encore incomplète'}`:'';
+  const incompleteExplanation=summary?.knownAmount!=null?`${money(summary.knownAmount)} connus, ${components.some(c=>c.item.kind==='COMPONENT'&&c.amount==null)?'certains prix restent à préciser':'un trajet prévu reste à chiffrer'}`:'';
   const route=(slot:"outbound"|"return")=>card.sockets.find(s=>s.slotKey===slot)?.currentItems.find(s=>s.kind==="MOBILITY_INTENT");
   const visibleGroups=new Set(components.map(component=>component.slot));
   const parallelContent=visibleGroups.size>1||!!route("outbound")&&!!route("return")||visibleGroups.size>0&&(!!route("outbound")||!!route("return"));
@@ -70,18 +72,15 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
     <header className={styles.barLivingHeader}>
       <div className={styles.barLivingIdentity}><h3><button type="button" disabled={busy||card.readOnly||removing} aria-label={`Ouvrir ${card.label}`} onClick={()=>open("summary")}>{card.label}</button></h3>
         <div className={styles.barLivingAmount} data-cost-unknown={summary?.knownAmount==null}>{expanded?<div data-bar-open-amount><strong data-bar-amount-fallback aria-label={summary?.knownAmount==null?"Montant à renseigner":undefined}>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></div>:<button type="button" data-bar-amount-trigger className={styles.barAmountTrigger} disabled={locked} aria-label={summary?.knownAmount==null?"Modifier l’estimation des consommations · Montant à renseigner":"Modifier l’estimation des consommations"} title="Choisir la portée à modifier · aucun total calculé n’est écrasé" onClick={()=>open("quick")}><strong>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></button>}
-        {expanded ? summary?.knownAmount!=null&&<small>{fresh?summary.incomplete?"connus · coûts à préciser":"Coût prévu":"Résultat précédent · actualisation"}</small>
+        {expanded ? summary?.knownAmount!=null&&<>{!fresh?<small>Estimation à actualiser</small>:summary.costIncomplete?<small aria-label={incompleteExplanation}>Montant partiel</small>:null}</>
           : !fresh&&summary ? <span className={styles.barClosedCostStatus} data-bar-cost-info tabIndex={0} aria-describedby={infoId}><Info size={13} aria-hidden="true"/>Estimation à actualiser<span id={infoId} role="tooltip" className={styles.barClosedCostTip}>La projection précédente doit être actualisée avant de servir de projection actuelle.</span></span>
-          : summary?.knownAmount!=null&&summary.incomplete&&<span className={styles.barClosedCostStatus} data-bar-cost-info tabIndex={0} aria-label={incompleteExplanation} aria-describedby={infoId}><CircleDashed size={13} aria-hidden="true"/>Montant partiel<Info size={13} aria-hidden="true"/><span id={infoId} role="tooltip" className={styles.barClosedCostTip}>{incompleteExplanation}</span></span>}
+          : summary?.knownAmount!=null&&summary.costIncomplete&&<span className={styles.barClosedCostStatus} data-bar-cost-info tabIndex={0} aria-label={incompleteExplanation} aria-describedby={infoId}><CircleDashed size={13} aria-hidden="true"/>Montant partiel<Info size={13} aria-hidden="true"/><span id={infoId} role="tooltip" className={styles.barClosedCostTip}>{incompleteExplanation}</span></span>}
         {(preserved||card.readOnly)&&<small>{card.readOnly?"Lecture seule":"Carte préservée"}</small>}</div></div>
       <div className={styles.barLivingTools}>
-        {expanded&&!card.readOnly&&<details className={styles.barManage}><summary aria-label="Actions de la sortie" title="Préserver ou retirer cette sortie">Actions</summary>
-          <div className={styles.barOpenActions}>
-          <button type="button" disabled={busy} onClick={preserve} aria-label={preserved?"Libérer les choix de cette sortie":"Préserver les choix de cette sortie"} aria-pressed={preserved}>{preserved?"Libérer les choix":"Préserver les choix"}</button>
-          {remove&&<><button type="button" disabled={locked} onClick={remove}>Retirer la sortie</button><small>Undo permet de la rétablir.</small></>}
-          </div>
-        </details>}
-        {expanded&&<button type="button" onClick={living.close} aria-label="Replier la carte"><X size={18}/></button>}
+        {expanded&&!card.readOnly&&<>
+          <button type="button" className={styles.barQuietAction} disabled={busy} onClick={preserve} aria-label={preserved?"Libérer les choix de cette sortie":"Préserver les choix de cette sortie"} title={preserved?"Libérer les choix":"Préserver les choix"} aria-pressed={preserved}><Pin size={15}/></button>
+          {remove&&<button type="button" className={styles.barQuietAction} disabled={locked} onClick={remove} aria-label="Retirer la sortie" title="Retirer la sortie · Undo pour rétablir"><Trash2 size={15}/></button>}
+        </>}
       </div>
     </header>
     {removing&&<p role="status" data-bar-removal-pending>Retrait en cours… Votre brouillon reste conservé jusqu’à confirmation.</p>}

@@ -98,7 +98,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const searchScope=page==="endpoint"?`endpoint:${direction}:${endpoint}`:(page==="row"?slot.startsWith("before-")?"before":"drinks":page)+((page==="row"||page==="before"||page==="drinks")?":"+(family??"families"):"");
   const query=queries[searchScope]??"";
   const setQuery=(value:string)=>{setQueries(previous=>({...previous,[searchScope]:value}));if(searchScope==="place")setGoogleSearch(undefined);};
-  const saveGoogleSearch=useCallback((state:BarPlaceSearchState)=>{setGoogleSearch(previous=>previous?.query===state.query&&previous.city===state.city&&previous.resultPage===state.resultPage&&previous.detail===state.detail&&previous.detailReadAt===state.detailReadAt?previous:state);setQueries(previous=>previous.place===state.query?previous:{...previous,place:state.query});},[]);
+  const saveGoogleSearch=useCallback((state:BarPlaceSearchState)=>{setGoogleSearch(previous=>previous?.query===state.query&&previous.city===state.city&&previous.googleOn===state.googleOn&&previous.resultPage===state.resultPage&&previous.detail===state.detail&&previous.detailReadAt===state.detailReadAt&&previous.personalPlacesEnabled===state.personalPlacesEnabled?previous:state);setQueries(previous=>previous.place===state.query?previous:{...previous,place:state.query});},[]);
   const savedPages=useRef<Record<string,number>>({...props.initialBarView?.pages});
   const previousPage=useRef(page);
   useEffect(()=>{
@@ -222,14 +222,13 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const selectMoment=(target:"before"|"bar")=>{if(!guard(()=>resumeMoment(target)))return;if(target==="bar"&&consumption?.mode==="DIRECT"&&!decide(modeOperation("DETAILED"),"drinks"))return;setOpenMoments(v=>({...v,[target]:true}));move(target==="before"?"before":"drinks");};
   const summary=model?.nightOutSummaries?.find(s=>s.contextOccurrenceId===context.contextOccurrenceId);
   const amountControls=<div data-r72-inline className={styles.barProgressiveAmount}>
-    {inlineEditing?<label>Consommations (€)<input data-bar-inline-amount autoFocus aria-label="Coût prévu des consommations (€)" inputMode="decimal" value={quickAmount} disabled={busy}
+    {inlineEditing?<label className={styles.barInlineAmountLabel}><span className={styles.barVisuallyHidden}>Coût prévu des consommations (€)</span><input data-bar-inline-amount autoFocus aria-label="Coût prévu des consommations (€)" inputMode="decimal" value={quickAmount} disabled={busy}
       onChange={e=>{inlineCommitted.current=false;setQuickAmount(e.target.value);setDirty(true);}}
       onCompositionStart={()=>{composingAmount.current=true;}} onCompositionEnd={()=>{composingAmount.current=false;}}
       onBlur={()=>{if(dirty)saveInline();else setInlineEditing(false);}}
       onKeyDown={e=>{if(composingAmount.current||e.nativeEvent?.isComposing)return;if(e.key==="Enter"){e.preventDefault();e.stopPropagation();saveInline();}if(e.key==="Escape"){e.preventDefault();e.stopPropagation();inlineCommitted.current=true;setInlineEditing(false);setDirty(false);setQuickAmount("");setError("");}}}/></label>
-      :detailed?<strong data-bar-derived-amount aria-label={summary?.knownAmount==null?"Montant à renseigner":undefined}>{summary?.knownAmount!=null?money(summary.knownAmount)+(summary.incomplete?" + ?":""):"… €"}</strong>
+      :detailed?<strong data-bar-derived-amount aria-label={summary?.knownAmount==null?"Montant à renseigner":undefined}>{summary?.knownAmount!=null?money(summary.knownAmount)+(summary.costIncomplete?" + ?":""):"… €"}</strong>
       :<button type="button" data-bar-inline-trigger disabled={busy} aria-label={summary?.knownAmount==null?"Modifier les consommations Au bar · Montant à renseigner":undefined} title="Modifier les consommations Au bar ; Before et trajets restent indépendants" onClick={beginInline}>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"} <Pencil className={styles.barAmountPencil} size={14} aria-hidden="true"/></button>}
-    {!detailed?<button type="button" disabled={busy} onClick={revealDetails}>Détailler</button>:<button type="button" data-bar-return-direct aria-label="Revenir au montant direct" title="Revenir au montant direct" disabled={busy} onClick={returnDirect}><Undo2 size={12} aria-hidden="true"/>Montant direct</button>}
   </div>;
   const open=(target:BarTarget)=>{if(!guard(()=>resumeOpen(target)))return;
     if(target.startsWith("route:")){const [,dir,key]=target.split(":");setDirection(dir as "outbound"|"return");setAllEndpoints(false);setManual("");if(key==="vehicle"){move("vehicle");}else if(key==="fare"){const actual=barLeg(context,dir as "outbound"|"return");setFare(actual?.pricing?.fare.kind==="MANUAL"?actual.pricing.fare.unitAmount:"");move("fare");}else{setEndpoint(key as "origin"|"destination");move("endpoint");}return;}
@@ -245,7 +244,6 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const homes=barHomePlaces(model.mobilityOptions?.places??[]);
   const homeCities=[...new Set(homes.map(place=>place.commune?.trim()).filter((value):value is string=>!!value))];
   // A household address is not consent to constrain a public-place search.
-  const searchCity=selectedPlace?.kind==="KNOWN"?model.mobilityOptions?.places.find(place=>place.placeId===selectedPlace.placeId)?.commune??undefined:undefined;
   const selectedVenue=context.fields.venueDecision?parseNightOutVenue(context.fields.venueDecision):null;
   const choosePlace=(place:ProspectivePlaceRef,google?:BarGoogleRef)=>{
     const venue=parseNightOutVenue({version:"night-out-venue@v1",decisionId:crypto.randomUUID(),place,...(google?{google}:{}),provenance:"EXPLICIT_USER_DECISION"});
@@ -477,7 +475,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const listGroups=(items:readonly ComponentSelectionV1[])=>componentPresentationGroups(items);
 
   const beforeScene=page==="summary"&&activeMoment==='before'||page==="before"||page==="row"&&slot.startsWith("before-");
-  const momentItems=beforeScene?before?[before.bottle,...before.extras]:[]:barItems(context,'extras');
+  const momentItems=beforeScene?before?[before.bottle,...before.extras]:[]:barItems(context,'extras').filter(item=>item.selectionId!==consumption?.directSelectionId);
   const displayedGroups=page==='row'?1:beforeScene||page==='drinks'||page==='summary'?componentPresentationGroups(momentItems).length:0;
   const sceneDensity=displayedGroups>2?'dense':displayedGroups?'partial':'empty';
   const admittedPeople=Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[];
@@ -495,6 +493,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       {!barLeg(context,"outbound")&&!barLeg(context,"return")&&<button type="button" data-bar-add-route="outbound" className={styles.barMetaTrip} disabled={busy} onClick={()=>open("outbound")}>+ Trajet</button>}
     </BarMetadata>
     {amountHost?createPortal(amountControls,amountHost):amountControls}
+    <div className={styles.barConsumptionMode}>{!detailed?<button type="button" disabled={busy} onClick={revealDetails}>Détailler les consommations</button>:<button type="button" data-bar-return-direct aria-label="Revenir au montant direct" title="Revenir au montant direct" disabled={busy} onClick={returnDirect}><Undo2 size={12} aria-hidden="true"/>Montant direct</button>}</div>
     {showMoments&&<nav className={styles.barMoments} aria-label="Moments de consommation">
       <button type="button" aria-pressed={activeMoment==='before'} onClick={()=>selectMoment('before')}>Before</button>
       <button type="button" aria-pressed={activeMoment==='bar'} onClick={()=>selectMoment('bar')}>Au bar</button>
@@ -514,7 +513,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     </section>}
     {!before&&openMoments.before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-section="before"><h4>Before</h4><BarMomentRail label="Objets Before" addLabel="Ajouter un objet au Before" disabled={busy} dropBlocked={dirty} add={()=>selectMoment("before")}/></section>}
     {(["extras","before","food","main"] as const).map(key=>{
-      const items=barItems(context,key).filter(item=>item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT");
+      const items=barItems(context,key).filter(item=>(item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT")&&item.selectionId!==consumption?.directSelectionId);
       if(key==="before"&&before)return null;
       if(key==='extras'&&(!detailed||!openMoments.bar&&!barItems(context,'extras').length))return null;
       if(page!=="summary"&&!(key==="extras"&&["drinks","before","row"].includes(page))&&!(page==="row"&&key===slot))return null;
@@ -528,8 +527,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     })}
     </div>
     <section className={styles.barLivingQuestion} aria-label="Décision en cours">
-      {(page==="place"||page==="google")&&<BarPlaceSearch rawTargetRef={context.contextOccurrenceId} personalPlacesCapability={model.personalGooglePlacesEnabled===true} initialCity={searchCity} initialSearch={googleSearch??{query:queries.place??"",city:searchCity??"",resultPage:0}} onSearchChange={saveGoogleSearch} onPersonalSuggestions={savePersonalSuggestions} commitOnVerified decisionKey={JSON.stringify(context)} onManual={()=>go("manual-place")} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})} onText={label=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"})} onGoogle={(label,ref)=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"},ref)}/>}
-      {page==="place"&&<details data-bar-knowledge><summary>Historique et sources</summary>{model.mobilityOptions?.placeKnowledge?<p>{model.mobilityOptions.placeKnowledge.fromDate} – {model.mobilityOptions.placeKnowledge.throughDate} · couverture non exhaustive{model.mobilityOptions.placeKnowledge.placesTruncated?" · liste limitée à 500 lieux":""}</p>:<p>Lieux enregistrés · historique non établi.</p>}</details>}
+      {(page==="place"||page==="google")&&<BarPlaceSearch rawTargetRef={context.contextOccurrenceId} personalPlacesCapability={model.personalGooglePlacesEnabled===true} initialSearch={googleSearch??{query:queries.place??"",city:"",resultPage:0}} onSearchChange={saveGoogleSearch} onPersonalSuggestions={savePersonalSuggestions} commitOnVerified decisionKey={JSON.stringify(context)} onManual={()=>go("manual-place")} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})} onText={label=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"})} onGoogle={(label,ref)=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"},ref)}/>}
       {page==="row"?null:page==="legacy"?<NightOutEditor {...props} key={legacyKey} embedded initialView={legacy} onSave={operation=>{const admitted=!busy&&onSave(operation);if(admitted){setDirty(false);move(legacy==="calendar"?"drinks":"summary");}return admitted;}} onCancel={()=>go("summary")}/>
         :page==="date"?<div className={styles.barInlineCalendar} data-bar-calendar onKeyDown={event=>{
           const keys=["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End"];if(!keys.includes(event.key))return;

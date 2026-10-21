@@ -49,12 +49,13 @@ export function nightOutSummaries(model: MonthComposerReadModel) {
         || !!component.physicalJourneyRequirementId && journeyIds.has(component.physicalJourneyRequirementId)))
       .map(component => component.evaluation.economicAmount);
     let incomplete = model.board.contexts.some(card => ids.has(card.contextOccurrenceId) && card.knowledge !== "KNOWN");
+    let costIncomplete = amounts.some(amount => amount === null);
     for (const journey of journeys) {
       const price = compiled.journeyPrices.find(price => price.journeyId === journey.physicalJourneyRequirementId);
-      if (!price || price.status !== "RESOLVED") incomplete = true;
+      if (!price || price.status !== "RESOLVED") { incomplete = true; costIncomplete = true; }
     }
     const known = amounts.filter((amount): amount is string => amount !== null);
     return {contextOccurrenceId:context.contextOccurrenceId,semanticStateDigest:model.preview.semanticStateDigest,knownAmount:known.length ? known.reduce((total,amount)=>total.plus(amount),new Big(0)).toFixed(2) : null,
-      incomplete:incomplete || amounts.some(amount=>amount===null)};
+      incomplete:incomplete || costIncomplete,costIncomplete};
   });
 }

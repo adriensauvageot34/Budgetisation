@@ -1,0 +1,10 @@
+{
+  "rawLibrary": {
+    "confirmation": true,
+    "rawRetained": "41,",
+    "cancelRetainedAmount": "40.00",
+    "closedAfterEscape": true,
+    "save": "SAVED",
+    "level": "LOCAL_SYNTHETIC_BROWSER"
+  }
+}
