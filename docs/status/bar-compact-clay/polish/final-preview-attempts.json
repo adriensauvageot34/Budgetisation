@@ -1,0 +1,12 @@
+{
+  "productSha": "8712ce6b650efa3ebd127b4c5eb5bc0b1c1b75d7",
+  "project": "budgetisation",
+  "branch": "codex/bar-compact-clay-focus",
+  "scope": "PREVIEW_ONLY",
+  "automaticDeploymentFound": false,
+  "apiTargetPreview": "400_INVALID_TARGET_NO_DEPLOYMENT_CREATED",
+  "apiOmittedTarget": "AUTO_REVIEW_REFUSED_AMBIGUOUS_TARGET_NO_DEPLOYMENT_CREATED",
+  "cliWhoami": "LOGGED_OUT_EXIT_1",
+  "productionMutation": false,
+  "officialTargetDocumentation": "https://vercel.com/docs/rest-api/deployments/create-a-new-deployment"
+}

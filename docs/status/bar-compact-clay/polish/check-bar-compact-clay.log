@@ -1,0 +1,10 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+{"status":"PASS","checks":12,"dimensions":{"empty":{"width":350,"height":125},"meta":{"width":350,"height":125},"before":{"width":350,"height":248},"mixed":{"width":523,"height":248},"long":{"width":523,"height":248},"people1":{"width":523,"height":248},"people3":{"width":523,"height":248},"many":{"width":703,"height":248},"tall":{"width":580,"height":364}},"level":"SYNTHETIC_COMPILER_REACT_AND_SCROLL_GEOMETRY","remoteWrites":0}
