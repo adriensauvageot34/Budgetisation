@@ -1,0 +1,309 @@
+[
+  {
+    "scene": "mixed-open-after-window-resize",
+    "boardScroll": 662.4000244140625,
+    "centerError": 48.79998779296875,
+    "expanded": "true",
+    "groups": 6,
+    "height": 425,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": "{\"pass\":\"initial\",\"target\":662.0250244140625,\"width\":735,\"viewport\":936}",
+    "railCount": 0,
+    "titles": [],
+    "viewport": [
+      1159,
+      812
+    ],
+    "width": 780,
+    "x": 376.6000061035156,
+    "y": 191.1000061035156
+  },
+  {
+    "scene": "manual-scroll-1",
+    "boardScroll": 922.4000244140624,
+    "centerError": -211.20001983642575,
+    "expanded": "true",
+    "groups": 6,
+    "height": 425,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": "{\"stage\":\"user-wheel\"}",
+    "railCount": 0,
+    "titles": [],
+    "viewport": [
+      1159,
+      812
+    ],
+    "width": 780,
+    "x": 116.5999984741211,
+    "y": 103.0999984741211
+  },
+  {
+    "scene": "meta",
+    "boardScroll": 0,
+    "centerError": -115.74371337890624,
+    "expanded": "false",
+    "groups": 0,
+    "height": 135,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": null,
+    "railCount": 0,
+    "titles": [],
+    "viewport": [
+      1440,
+      900
+    ],
+    "width": 375.6875,
+    "x": 559.4125366210938,
+    "y": 511
+  },
+  {
+    "scene": "reference-open-later-observation",
+    "boardScroll": 260,
+    "centerError": -30.95001220703125,
+    "expanded": "true",
+    "groups": 6,
+    "height": 425,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": null,
+    "railCount": 0,
+    "titles": [],
+    "viewport": [
+      1440,
+      900
+    ],
+    "width": 601.4000244140625,
+    "x": 526.5499877929688,
+    "y": -17.399999618530273,
+    "excludedFromClosedComparison": true,
+    "note": "Reference was open at this later observation; the earlier closed capture is recorded separately."
+  },
+  {
+    "scene": "before-only",
+    "boardScroll": 0,
+    "centerError": 115.66876220703124,
+    "expanded": "false",
+    "groups": 5,
+    "height": 255,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": null,
+    "railCount": 1,
+    "titles": [
+      "Vodka",
+      "Crazy",
+      "Diluant",
+      "Chips",
+      "Bière"
+    ],
+    "viewport": [
+      1440,
+      900
+    ],
+    "width": 375.6875,
+    "x": 790.8250122070312,
+    "y": 141
+  },
+  {
+    "scene": "long",
+    "boardScroll": 0,
+    "centerError": -346.53125,
+    "expanded": "false",
+    "groups": 3,
+    "height": 255,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": null,
+    "railCount": 1,
+    "titles": [
+      "Vodka",
+      "Crazy",
+      "Tapas"
+    ],
+    "viewport": [
+      1920,
+      1080
+    ],
+    "width": 384.0625,
+    "x": 564.4375,
+    "y": 351
+  },
+  {
+    "scene": "empty-final",
+    "boardScroll": 0,
+    "centerError": -115.74371337890624,
+    "expanded": "false",
+    "groups": 0,
+    "height": 155,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": null,
+    "railCount": 0,
+    "titles": [],
+    "viewport": [
+      1440,
+      900
+    ],
+    "width": 375.6875,
+    "x": 559.4125366210938,
+    "y": 511
+  },
+  {
+    "scene": "dense-closed-final",
+    "boardScroll": 0,
+    "centerError": 2494.800048828125,
+    "expanded": "false",
+    "groups": 3,
+    "height": 255,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": null,
+    "railCount": 1,
+    "titles": [
+      "Vodka",
+      "Crazy",
+      "Tapas"
+    ],
+    "viewport": [
+      1152,
+      720
+    ],
+    "width": 386,
+    "x": 3020.800048828125,
+    "y": 411.1000061035156
+  },
+  {
+    "scene": "dense-open-final",
+    "boardScroll": 2659.199951171875,
+    "centerError": -0.600006103515625,
+    "expanded": "true",
+    "groups": 6,
+    "height": 425,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": "{\"pass\":\"stabilised\",\"target\":2658.800048828125,\"width\":772,\"viewport\":808}",
+    "railCount": 0,
+    "titles": [],
+    "viewport": [
+      1152,
+      720
+    ],
+    "width": 772,
+    "x": 327.6000061035156,
+    "y": 183.1000061035156
+  },
+  {
+    "scene": "dense-manual-scroll",
+    "boardScroll": 2919.199951171875,
+    "centerError": -260.60001373291016,
+    "expanded": "true",
+    "groups": 6,
+    "height": 425,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": "{\"stage\":\"user-keydown\"}",
+    "railCount": 0,
+    "titles": [],
+    "viewport": [
+      1152,
+      720
+    ],
+    "width": 772,
+    "x": 67.5999984741211,
+    "y": 239.1000061035156
+  },
+  {
+    "scene": "tall-open-final",
+    "boardScroll": 3049.60009765625,
+    "centerError": 0,
+    "expanded": "true",
+    "groups": 6,
+    "height": 535,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": "{\"pass\":\"stabilised\",\"target\":3049.7998962402344,\"width\":772,\"viewport\":808}",
+    "railCount": 0,
+    "titles": [],
+    "viewport": [
+      1152,
+      720
+    ],
+    "width": 772,
+    "x": 328.20001220703125,
+    "y": 183.1000061035156
+  },
+  {
+    "scene": "dense-closed-after-folding",
+    "boardScroll": 2677.60009765625,
+    "centerError": -182.79998779296875,
+    "expanded": "false",
+    "groups": 3,
+    "height": 255,
+    "imagesLoaded": true,
+    "overlaps": 0,
+    "pageOverflow": false,
+    "probe": "{\"stage\":\"user-keydown\"}",
+    "railCount": 1,
+    "titles": [
+      "Vodka",
+      "Crazy",
+      "Tapas"
+    ],
+    "viewport": [
+      1152,
+      720
+    ],
+    "width": 386,
+    "x": 343.20001220703125,
+    "y": 411.1000061035156
+  },
+  {
+    "scene": "initial-centering-before-window-resize",
+    "viewport": [
+      1280,
+      720
+    ],
+    "centerError": -0.8125,
+    "boardScroll": 662.4000244140625,
+    "source": "first observed final-bundle opening; later window resize recorded separately"
+  },
+  {
+    "scene": "closed-comparison-original-capture",
+    "baseline": {
+      "sha": "59ee044",
+      "viewport": [
+        1440,
+        900
+      ],
+      "width": 607.1000366210938,
+      "height": 415,
+      "rails": 2,
+      "image": "images/before-mixed.png"
+    },
+    "candidate": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "width": 375.6875,
+      "height": 255,
+      "rails": 1,
+      "image": "images/after-mixed.png"
+    },
+    "note": "Measurements returned immediately before these saved captures. Subsequent title shortening and unit-marker CSS do not change these dimensions."
+  }
+]

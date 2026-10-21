@@ -1,0 +1,17 @@
+{
+  "calendar": {
+    "calendar": true,
+    "focusLabel": "2026-11-14",
+    "focusTag": "BUTTON"
+  },
+  "people": {
+    "people": true,
+    "step": "people"
+  },
+  "place": {
+    "inputCount": 1,
+    "search": true,
+    "step": "place"
+  },
+  "level": "LOCAL_SYNTHETIC_BROWSER_NO_REMOTE_WRITES"
+}

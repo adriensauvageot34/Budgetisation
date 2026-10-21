@@ -1,0 +1,4 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+{"status":"PASS","level":"REACT_PRESENTATION_HANDLERS_NOT_BROWSER","checks":["PARTIAL_BADGE","SHARED_ICON_NO_LINE","LONG_TITLE","TRANSPARENT_WINE","DATA_UNCHANGED","CLOSED_UNIT_UNCHANGED","KEYBOARD_ACTIONS_PRESENT","PRESERVE_REMOVE_COLLAPSE_CALLBACKS"],"remoteWrites":0,"finance":"BASELINE_198_PASS_NOT_RERUN"}

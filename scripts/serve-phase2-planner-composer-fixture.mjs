@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import {barP3Month,barP3Knowledge} from './fixtures/bar-apero-p3.mjs';
 import {bar350ReceptionMonth} from './fixtures/bar-apero-350-reception.mjs';
+import {barCompactMonth} from './fixtures/bar-compact-clay.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -76,7 +77,10 @@ const built = await build({ entryPoints: [p4dMeasuring ? 'scripts/lib/planner-co
     if(!l1OriginalUi.has(path.basename(args.path)))return;
     const file=path.relative(process.cwd(),args.path).replaceAll('\\','/');
     return {contents:execFileSync('git',['show',`d965d54713c20d3ab614e3fe730ee70af2876ea8:${file}`],{encoding:'utf8',maxBuffer:4000000}),loader:args.path.endsWith('.css')?'local-css':'tsx',resolveDir:path.dirname(args.path)};
-  });}}] : []),p4dFixturePlugin(),p4FixturePlugin(),p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
+  });}}] : []),...(process.env.BAR_COMPACT_REFERENCE==='1'?[{name:'bar-compact-approved-reference',setup(builder){builder.onLoad({filter:/[\\/]src[\\/]app[\\/]mois-a-venir[\\/]composer[\\/].*\.(tsx?|css)$/},args=>{
+    const file=path.relative(process.cwd(),args.path).replaceAll('\\','/');
+    return {contents:execFileSync('git',['show',`59ee044d91553d38add9e7d53949a450ac437f2f:${file}`],{encoding:'utf8',maxBuffer:4000000}),loader:args.path.endsWith('.css')?'local-css':'tsx',resolveDir:path.dirname(args.path)};
+  });}}]:[]),p4dFixturePlugin(),p4FixturePlugin(),p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
     builder.onLoad({filter:/.*/,namespace:'fixture-host'},args=>({contents:mocks[args.path],loader:'js',resolveDir:process.cwd()})); }}] });
 if(p4Split)fs.writeFileSync(path.join(out,'bundle-meta.json'),JSON.stringify(built.metafile,null,2));
 const globalCss = process.env.PLANNER_C8_GLOBAL_CSS
@@ -94,6 +98,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   BAR16_GOOGLE:barP3Month,
   BARLIVE_PERSONAL:barP3Month,
   ...Object.fromEntries([0,1,2,4,10,15].map(count=>[`BAR350_${count}`,()=>bar350ReceptionMonth(count)])),
+  ...Object.fromEntries(['empty','meta','before','mixed','long','dense','tall','people1','people3','many'].map(scene=>[`BAR_COMPACT_${scene}`,()=>barCompactMonth(scene)])),
   ...Object.fromEntries([20,40].map(count=>[`BAR_BOARD_${count}`,()=>{const value=bar350ReceptionMonth(4);for(let i=1;i<=count;i++)value.semantic.contexts.push(p4Extra(i));return value;}])),
   P09: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P09C: p09CompatibilityMonth,
@@ -311,7 +316,7 @@ const server = http.createServer(async (request, response) => {
       response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture ${key}</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
       return;
     }
-    if (/^\/planned-visuals\/(?:composer\/presets|builder\/clay\/(?:drinks|food|transport))\/[a-z-]+\.webp$/.test(url.pathname)) {
+    if (/^\/planned-visuals\/(?:composer\/presets|builder\/clay\/(?:drinks|food|transport|r7|bar-compact|scenes))\/[a-z-]+\.webp$/.test(url.pathname)) {
       response.setHeader('Content-Type','image/webp'); response.setHeader('Cache-Control','public,max-age=3600');
       response.end(fs.readFileSync(path.join('public',url.pathname))); return;
     }
@@ -322,6 +327,7 @@ const server = http.createServer(async (request, response) => {
     const variantOrigin = p4Measuring && assetOrigin ? url.searchParams.get('ui') === 'P4A' ? process.env.PLANNER_C8_REFERENCE_ASSET_ORIGIN
       : url.searchParams.get('ui') === 'FAULT' ? process.env.PLANNER_C8_FAULT_ASSET_ORIGIN : null : null;
     const documentHost = url.searchParams.get('l31Trace') === '1' ? host.replace('</body>', l31DragTrace + '</body>') : host;
+    response.setHeader('Cache-Control','no-store');
     response.setHeader('Content-Type', 'text/html'); response.end(variantOrigin ? documentHost.replaceAll(assetOrigin, variantOrigin) : documentHost);
   } catch (error) { console.error(error.message); response.writeHead(500); response.end('Fixture failed'); }
 });

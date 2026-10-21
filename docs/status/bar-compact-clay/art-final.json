@@ -1,0 +1,80 @@
+[
+  {
+    "file": "vodka.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "rum.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "energy.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "chips.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "snack.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "tapas.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "beer.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "cocktail.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "soft.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "shared.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "wine.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "shot.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  },
+  {
+    "file": "water.webp",
+    "alpha": true,
+    "width": 256,
+    "height": 256
+  }
+]
