@@ -1578,13 +1578,13 @@
 .barLivingCard[data-expanded=true] .barLivingIdentity h3 { display:flex; align-items:baseline; min-width:0; }
 .barLivingCard[data-expanded=true] h3>button:first-child { flex:none; }
 .barLivingCard[data-expanded=true] h3>span { margin-inline:4px; }
-.barLivingCard[data-expanded=true]>.barClosedPeopleReserve { flex:none; margin-top:auto; padding:0 14px 3px; min-height:27px; }
+.barLivingCard[data-expanded=true]>.barClosedPeopleReserve { position:absolute; right:12px; bottom:4px; min-height:0; padding:0; z-index:2; }
 .barLivingMetadata:not(:has(button)) { display:none; }
 .barLivingCard[data-expanded=true] .barMomentRail>:is(.barActiveTile,.barEconomicTile) { flex:0 0 144px; width:144px; min-width:144px; max-width:144px; }
 .barLivingCard[data-expanded=true] .barMomentRail>.barActiveTile { display:block; padding:0; gap:0; box-sizing:border-box; }
 .barLivingCard[data-expanded=true] .barActiveTile>.barGroup { width:100%; }
-.barLivingCard[data-expanded=true] .barActiveTile>.barGroup>button:first-child { display:block; width:100%; height:calc(var(--bar-open-tile-height) - 48px); min-height:32px; padding:2px 5px; border:0; background:transparent; }
-.barLivingCard[data-expanded=true] .barActiveTile .barCompactFace { grid-template-rows:22px minmax(0,1fr); gap:0; }
+.barLivingCard[data-expanded=true] .barActiveTile>.barGroup>button:first-child { display:block; width:100%; height:calc(var(--bar-open-tile-height) - 42px); min-height:28px; padding:2px 5px; border:0; background:transparent; }
+.barLivingCard[data-expanded=true] .barActiveTile .barCompactFace { grid-template-rows:minmax(0,1fr); grid-template-columns:minmax(0,1fr) 32px; gap:2px; }
 .barLivingCard[data-expanded=true] .barActiveTile .barOpenTileVisual .barProductSymbol,
 .barLivingCard[data-expanded=true] .barActiveTile .barOpenTileVisual .barProductSymbol img { height:100%; max-height:32px; min-height:0; }
 .barLivingCard[data-expanded=true] .barActiveTile>.barGroup>.barEditableBody { display:block; width:100%; min-width:0; margin:0; padding:0 3px; border:0; box-sizing:border-box; }
@@ -1594,6 +1594,10 @@
 .barLivingCard .barActiveTile [data-bar-short-row] .workshopStepper input { width:25px; max-width:25px; height:24px; padding:0; font-size:11px; border-radius:4px; }
 .barLivingCard .barActiveTile [data-bar-short-row] .barInlinePrice { flex:1; min-width:0; height:24px; padding:0 2px; border-radius:5px; gap:1px; font-size:10px; }
 .barLivingCard .barActiveTile [data-bar-short-row] .barInlinePrice input { width:100%; min-width:0; max-width:100%; height:22px; padding:0; font-size:10px; }
-.barRowActions { display:flex; align-items:center; justify-content:space-between; min-height:23px; gap:2px; }
+.barRowActions { display:flex; align-items:center; justify-content:space-between; min-height:18px; gap:2px; }
 .barLivingCard .barActiveTile .barRowActions button { display:inline-flex; align-items:center; border:0; background:transparent; padding:2px 1px; min-width:0; font-size:9px; }
 .barLivingCard .barActiveTile .barRowActions [data-bar-row-save] { font-weight:650; }
+@media (max-height:780px) {
+  .barLivingCard[data-expanded=true] .barItemSection>header { min-height:18px; margin-bottom:2px; }
+  .barLivingEditor[data-bar-progressive] .barLivingSections { gap:4px; }
+}
