@@ -31,7 +31,7 @@ import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
 import {prospectivePersonIdentity} from "@/domain/phase2/planned-product";
 import {BarPageControls} from "./bar-pages";
 import type {BarViewMemory} from "./bar-view-memory";
-import {Trash2,Undo2} from "lucide-react";
+import {Trash2,Undo2,Pencil} from "lucide-react";
 import styles from "./composer.module.css";
 import {componentPresentationGroups} from '@/domain/phase2/planner/component-group-presentation';
 import {BarComponentGroup} from './bar-component-group';
@@ -227,8 +227,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       onCompositionStart={()=>{composingAmount.current=true;}} onCompositionEnd={()=>{composingAmount.current=false;}}
       onBlur={()=>{if(dirty)saveInline();else setInlineEditing(false);}}
       onKeyDown={e=>{if(composingAmount.current||e.nativeEvent?.isComposing)return;if(e.key==="Enter"){e.preventDefault();e.stopPropagation();saveInline();}if(e.key==="Escape"){e.preventDefault();e.stopPropagation();inlineCommitted.current=true;setInlineEditing(false);setDirty(false);setQuickAmount("");setError("");}}}/></label>
-      :detailed?<strong data-bar-derived-amount>{summary?.knownAmount!=null?money(summary.knownAmount)+(summary.incomplete?" + ?":""):"Coût à préciser"}</strong>
-      :<button type="button" data-bar-inline-trigger disabled={busy} title="Modifier les consommations Au bar ; Before et trajets restent indépendants" onClick={beginInline}>{summary?.knownAmount!=null?money(summary.knownAmount):"Coût à préciser"} <span aria-hidden="true">✎</span></button>}
+      :detailed?<strong data-bar-derived-amount aria-label={summary?.knownAmount==null?"Montant à renseigner":undefined}>{summary?.knownAmount!=null?money(summary.knownAmount)+(summary.incomplete?" + ?":""):"… €"}</strong>
+      :<button type="button" data-bar-inline-trigger disabled={busy} aria-label={summary?.knownAmount==null?"Modifier les consommations Au bar · Montant à renseigner":undefined} title="Modifier les consommations Au bar ; Before et trajets restent indépendants" onClick={beginInline}>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"} <Pencil className={styles.barAmountPencil} size={14} aria-hidden="true"/></button>}
     {!detailed?<button type="button" disabled={busy} onClick={revealDetails}>Détailler</button>:<button type="button" data-bar-return-direct aria-label="Revenir au montant direct" title="Revenir au montant direct" disabled={busy} onClick={returnDirect}><Undo2 size={12} aria-hidden="true"/>Montant direct</button>}
   </div>;
   const open=(target:BarTarget)=>{if(!guard(()=>resumeOpen(target)))return;

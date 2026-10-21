@@ -995,7 +995,6 @@
 .barLivingHeader h3 button { border:0; background:transparent; padding:0; text-align:left; }
 .barLivingHeader strong { font-size:14px; }
 .barLivingHeader small { display:block; font-size:11px; color:#686276; }
-.barLivingImage { width:64px; height:64px; flex:none; object-fit:contain; }
 .barLivingTools { display:flex; align-self:flex-start; gap:4px; margin-left:auto; }
 .barLivingTools button { display:grid; place-items:center; width:28px; height:28px; border:0; border-radius:50%; background:#f1eef5; }
 .barLivingCompact { padding:0 12px 12px; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:6px; min-height:0; overflow:visible; }
@@ -1035,7 +1034,6 @@
 .barLivingCard[data-expanded=true] .barLivingHeader { border-bottom:1px solid #f0e8df; }
 .barLivingHeader>div:not(.barLivingTools) { min-width:0; }
 .barLivingHeader h3 button { overflow-wrap:anywhere; }
-.barLivingImage { width:88px; height:64px; object-fit:cover; border-radius:12px; }
 .barLivingMetadata button { display:inline-flex; align-items:center; gap:6px; }
 .barLivingMetadata .barPeople { background:transparent; border:0; padding:2px; }
 .barPeople>span { display:inline-flex; align-items:center; gap:4px; font-size:11px; }
@@ -1084,7 +1082,6 @@
 .barLivingHost { display:contents; }
 
 /* P2: only the Bar card and its explicitly scoped palette use these rules. */
-.barLivingCard .barImageTrigger { flex:none; border:0; padding:0; background:transparent; border-radius:12px; }
 .barLivingCard .barInlineAdd { display:inline-flex; align-items:center; gap:6px; width:fit-content; max-width:100%; border:1px dashed #d8cbb4; border-radius:10px; padding:6px 9px; background:#fffaf0; color:#76603f; font-size:11px; }
 .barLivingCard .barMoreCount { flex:0 0 auto; align-self:center; border:1px solid #dfd4bd; border-radius:50%; min-width:34px; min-height:34px; background:#f8efdf; font-size:12px; }
 .barLivingCompact { gap:8px; overflow:visible; }
@@ -1164,26 +1161,19 @@
 .barLivingCard [data-bar-calendar] h4 { margin:4px 0; }
 .barLivingCard .barProductSymbol img { display:block; width:40px; height:40px; object-fit:contain; }
 
-/* Editorial Bar: intrinsic compositions, scoped to this living card only.
- * Artwork occupies the existing identity area; selected objects remain real DOM. */
-.barLivingCard { background:radial-gradient(ellipse at 0 0,#fae8d0,transparent 65%),#fffdf9; border-color:#ded1be; }
-.barLivingHeader { background:transparent; padding:10px 12px; gap:10px; }
-.barLivingHeader .barLivingImage { width:76px; height:60px; object-fit:contain; border-radius:0; }
-.barLivingIdentity { flex:1; display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; }
-.barLivingIdentity h3 { flex:1 1 150px; margin:0; }
+/* One continuous cream surface at every height; the decorative image never grows
+ * with content. It is not a screenshot or a second layer of interactive UI. */
+.barLivingCard { position:relative; isolation:isolate; background:linear-gradient(155deg,#fff7e9,#fcf5ec 420px,#fffaf2); border-color:#e4cdb0; }
+.barLivingCard::before { content:""; position:absolute; z-index:-1; inset:0 0 auto; height:min(190px,100%); pointer-events:none; background:url('/planned-visuals/builder/clay/scenes/bar-apero-warm-header.webp') right top / auto 190px no-repeat; mask-image:linear-gradient(#000 60%,transparent); }
+.barLivingHeader { background:transparent; padding:12px 14px 8px; gap:8px; align-items:flex-start; }
+.barLivingIdentity { flex:0 1 auto; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:8px 10px; border-radius:13px; background:rgb(255 253 247 / .9); box-shadow:0 2px 8px #69471908; }
+.barLivingIdentity h3 { flex:initial; margin:0; font-size:15px; line-height:1.3; }
 .barLivingAmount { flex:0 1 auto; }
 .barLivingHeader strong { font-size:23px; line-height:1.2; }
-.barLivingAmount[data-cost-unknown=true] strong { font-size:14px; font-weight:650; }
+.barLivingAmount[data-cost-unknown=true] strong { font-size:23px; font-weight:700; }
 .barLivingTools { align-self:flex-start; }
-.barLivingCard:not([data-expanded=true]) .barLivingTools { position:absolute; right:10px; top:10px; }
-.barLivingCard:not([data-expanded=true]) .barLivingIdentity h3 { flex-basis:100%; margin-right:28px; }
-.barLivingCard[data-richness=empty]:not([data-expanded=true]) .barLivingImage { width:90px; height:70px; }
-.barLivingCard[data-richness=rich]:not([data-expanded=true]) .barLivingImage { width:64px; height:56px; }
-.barLivingCard[data-expanded=true] .barLivingImage { width:64px; height:56px; }
-.barLivingCard[data-expanded=true] .barLivingIdentity { flex-wrap:wrap; justify-content:flex-start; }
-.barLivingCard[data-expanded=true] .barLivingIdentity h3 { flex:0 1 auto; }
 .barLivingCard[data-expanded=true] .barLivingAmount { margin-left:0; }
-.barLivingCard[data-expanded=true] .barLivingTools { align-self:center; }
+.barLivingCard[data-expanded=true] .barLivingTools { align-self:flex-start; }
 .barLivingCompact h4 { margin:0 0 6px; font-size:12px; color:#76603f; }
 .barLivingCompact>.barLivingMetadata:empty { display:none; }
 .barLivingCompact .barLivingTiles>button { display:grid; grid-template-columns:36px minmax(0,1fr); text-align:left; align-content:center; align-items:center; gap:2px 5px; min-height:66px; padding:7px; }
@@ -1313,14 +1303,12 @@
 .barItemSection .barEconomicTile { flex:0 1 156px; min-width:126px; max-width:190px; }
 /* R6.2 closed card only. Shared editor/dock geometry and semantics are untouched. */
 .barLivingCard[data-expanded=false] {
-  background:#f8edda url('/planned-visuals/builder/clay/scenes/bar-interior-closed.webp') center 60% / cover no-repeat;
   cursor:grab;
 }
+.barLivingCard[data-expanded=false][data-grabbed=true] { opacity:.65; box-shadow:0 8px 20px #62452224; }
 .barLivingCard[data-expanded=false][data-drag-armed=true] { cursor:grabbing; }
 .barLivingCard[data-expanded=false]:focus-visible { outline:3px solid #795719; outline-offset:2px; }
-.barLivingCard[data-expanded=false] .barLivingHeader { padding:8px 10px; gap:7px; }
-.barLivingCard[data-expanded=false]:is([data-richness=empty],[data-richness=partial],[data-richness=rich]) .barLivingImage { width:52px; height:44px; }
-.barLivingCard[data-expanded=false] .barLivingIdentity { gap:2px 7px; padding:6px 9px; border-radius:13px; background:rgb(255 253 248 / .94); }
+.barLivingCard[data-expanded=false] .barLivingHeader { padding:10px 14px 8px; gap:7px; }
 .barLivingCard[data-expanded=false] .barLivingIdentity h3 { margin-right:0; font-size:15px; }
 .barLivingCard[data-expanded=false] .barLivingHeader strong { font-size:22px; }
 .barLivingCard[data-expanded=false] .barLivingAmount { display:flex; align-items:center; flex-wrap:wrap; gap:5px 8px; }
@@ -1399,7 +1387,6 @@
 .barBeforeEmpty,.barLivingEditor [data-bar-before]>header { position:relative; padding-right:86px; }
 .barBeforeArt { position:absolute; right:0; top:50%; transform:translateY(-50%); width:80px; height:48px; object-fit:contain; pointer-events:none; }
 .barLivingEditor[data-bar-scene-density=dense] .barBeforeArt { display:none; }
-.barLivingCard:has([data-bar-scene-density=dense]) .barImageTrigger { opacity:.3; }
 .barManage small { display:block; padding:4px; max-width:180px; }
 .columns[data-bar-living-open=true] .paletteDock:has([data-compact-dock=true]) { min-height:82px; }
 .barCompositionDock[data-compact-dock=true] .paletteOptions { height:48px; min-height:0; padding-block:3px; }
@@ -1439,6 +1426,11 @@
 .barProgressiveAmount { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 .barProgressiveAmount>button { padding:4px 8px; border:1px solid #dbcab2; border-radius:9px; background:#fffaf2; color:#553f28; cursor:pointer; font-size:12px; }
 .barProgressiveAmount>[data-bar-inline-trigger] { font:inherit; font-weight:700; font-size:22px; border-color:transparent; background:transparent; padding:0; }
+.barAmountPencil { display:inline-block; width:14px; height:14px; flex:none; vertical-align:baseline; color:#84735e; opacity:.35; transition:opacity 120ms; }
+[data-bar-inline-trigger]:is(:hover,:focus-visible) .barAmountPencil { opacity:1; }
+.barLivingCard .barLivingAmount strong,.barProgressiveAmount>[data-bar-inline-trigger] { overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.barLivingCard .barLivingMetadata button,.barLivingCompact>.barInlineAdd { background:rgb(255 252 244 / .94); border-color:#e5d5bc; color:#51412d; }
+@media (prefers-reduced-motion:reduce) { .barAmountPencil { transition:none; } }
 .barProgressiveAmount label { display:flex; align-items:center; gap:6px; font-size:11px; }
 .barProgressiveAmount input { width:100px; min-width:0; padding:5px; font:inherit; font-size:20px; border:1px solid #9a753d; border-radius:8px; background:white; color:#292026; }
 [data-bar-open-amount]:has([data-r72-inline])>[data-bar-amount-fallback] { display:none; }

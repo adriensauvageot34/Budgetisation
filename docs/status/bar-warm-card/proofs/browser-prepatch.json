@@ -1,0 +1,56 @@
+{
+  "sha": "fda11583309b60fcfe355581b783c8e805cf0300",
+  "deployment": "dpl_F1Wcrpw3qtLkDtMtnGjyDuq1Rtvz",
+  "source": "authenticated Preview with in-memory synthetic recipe",
+  "closed": {
+    "actions": [
+      "Lieu",
+      "Date",
+      "Personnes",
+      "Composer cette sortie ↗"
+    ],
+    "artHeight": "190px",
+    "card": {
+      "expanded": "false",
+      "height": 165,
+      "state": "UNKNOWN",
+      "width": 384.1125183105469,
+      "x": 906.1375122070312,
+      "y": 373.5
+    },
+    "documentWidth": 1920,
+    "headerMiniatures": 0,
+    "mainAmount": "… €",
+    "viewport": [
+      1920,
+      1080
+    ]
+  },
+  "richOpen": {
+    "amount": "68,00 € + ?",
+    "artHeight": "190px",
+    "bar": true,
+    "before": false,
+    "card": {
+      "expanded": "true",
+      "height": 355.8999938964844,
+      "width": 608.2374877929688
+    },
+    "documentWidth": 1152,
+    "draggable": null,
+    "viewport": [
+      1152,
+      720
+    ]
+  },
+  "longClosed": {
+    "amount": "12 434,67 €",
+    "cardWidth": 381.2000122070313,
+    "documentWidth": 1152,
+    "triggerWidth": 116.3000030517578,
+    "viewport": [
+      1152,
+      720
+    ]
+  }
+}
