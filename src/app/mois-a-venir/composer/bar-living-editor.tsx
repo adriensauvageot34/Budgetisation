@@ -209,8 +209,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const detailed=consumption?.mode==="DETAILED"||!consumption&&barItems(context,"extras").length>0;
   const showMoments=detailsChosen||detailed||!!before;
   const revealDetails=()=>{if(!guard(resumeDetails))return;
-    const apply=()=>{if(decide(modeOperation("DETAILED",{...(!consumption?{acceptLegacy:true}:{})})))setDetailsChosen(true);};
-    if(!consumption&&barItems(context,"extras").length)confirm({message:"Conserver les consommations existantes comme détails ? Aucun poste ni financement ne sera remplacé.",acceptLabel:"Conserver les détails",accept:apply});else apply();
+    const apply=()=>{if(decide(modeOperation("DETAILED",{...(!consumption?{acceptLegacy:true}:{})}),"drinks")){setDetailsChosen(true);setOpenMoments(v=>({...v,bar:true}));}};
+    if(consumption?.mode==='DIRECT')confirm({message:"Détailler les consommations Au bar ? Le montant direct ne sera plus utilisé pour ce moment. Il restera conservé pour pouvoir revenir en arrière. Le Before, les trajets et les autres contributions restent inchangés.",cancelLabel:"Annuler",acceptLabel:"Détailler Au bar",accept:apply});
+    else if(!consumption&&barItems(context,"extras").length)confirm({message:"Conserver les consommations existantes comme détails ? Aucun poste ni financement ne sera remplacé.",acceptLabel:"Conserver les détails",accept:apply});else apply();
   };
   const returnDirect=()=>{if(!guard(resumeDirect))return;
     if(!detailed){beginInline();return;}
@@ -224,7 +225,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     };
     confirm({message:"Passer au montant direct pour Au bar ? Les prix détaillés des consommations Au bar ne seront plus utilisés pour calculer ce moment. Leurs détails seront conservés pour pouvoir revenir en arrière. Le Before, les trajets et les autres contributions indépendantes restent inchangés.",cancelLabel:"Annuler",acceptLabel:"Passer au montant direct",accept:apply});
   };
-  const selectMoment=(target:"before"|"bar")=>{if(!guard(()=>resumeMoment(target)))return;if(target==="bar"&&consumption?.mode==="DIRECT"&&!decide(modeOperation("DETAILED"),"drinks"))return;setOpenMoments(v=>({...v,[target]:true}));move(target==="before"?"before":"drinks");};
+  const selectMoment=(target:"before"|"bar")=>{if(!guard(()=>resumeMoment(target)))return;if(target==="bar"&&consumption?.mode==="DIRECT"){revealDetails();return;}setOpenMoments(v=>({...v,[target]:true}));move(target==="before"?"before":"drinks");};
   const summary=model?.nightOutSummaries?.find(s=>s.contextOccurrenceId===context.contextOccurrenceId);
   const amountControls=<div data-r72-inline className={styles.barProgressiveAmount}>
     {inlineEditing?<label className={styles.barInlineAmountLabel}><span className={styles.barVisuallyHidden}>Coût prévu des consommations (€)</span><input data-bar-inline-amount autoFocus aria-label="Coût prévu des consommations (€)" inputMode="decimal" value={quickAmount} disabled={busy}
@@ -519,12 +520,14 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       <BarMomentRail label="Objets Before" addLabel="Ajouter un objet au Before" disabled={busy||beforeLocked} dropBlocked={dirty} add={()=>selectMoment("before")} model={model} owner={before.child.contextOccurrenceId} slot="extras">{listGroups([before.bottle,...before.extras]).map(group=>{const item=group.items[0];return <div key={group.key} data-bar-before-item={item.selectionId} data-bar-active-tile={page==='row'&&group.items.some(i=>i.selectionId===row.id)} className={page==='row'&&group.items.some(i=>i.selectionId===row.id)?styles.barActiveTile:styles.barEconomicTile}><BarComponentGroup group={group} model={model} owner={before.child.contextOccurrenceId} slot="$before" disabled={busy||beforeLocked} choose={chosen=>chosen.kind==='COMPONENT'&&editComponent(chosen.selectionId===before.bottle.selectionId?'before-main':'before-extras',chosen)}>{page==='row'&&group.items.some(i=>i.selectionId===row.id)&&activeRow}</BarComponentGroup></div>;})}</BarMomentRail>
 
     </section>}
-    {!before&&openMoments.before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-section="before"><h4>Before</h4><BarMomentRail label="Objets Before" addLabel="Ajouter un objet au Before" disabled={busy} dropBlocked={dirty} add={()=>selectMoment("before")}/></section>}
+    {!before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-section="before" data-bar-empty="true"><h4>Before</h4><button type="button" className={styles.barInlineAdd} disabled={busy} onClick={()=>selectMoment("before")}>+ Before</button></section>}
     {(["extras","before","food","main"] as const).map(key=>{
       const items=barItems(context,key).filter(item=>(item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT")&&item.selectionId!==consumption?.directSelectionId);
       if(key==="before"&&before)return null;
-      if(key==='extras'&&(!detailed||!openMoments.bar&&!barItems(context,'extras').length))return null;
       if(page!=="summary"&&!(key==="extras"&&["drinks","before","row"].includes(page))&&!(page==="row"&&key===slot))return null;
+      // An empty moment is still an entry point, independent of transient
+      // navigation flags. Rendering it never switches DIRECT or creates data.
+      if(key==='extras'&&(!detailed||!items.length))return <section key={key} className={styles.barItemSection} data-bar-section="extras" data-bar-empty="true" aria-label="Au bar"><h4>Au bar</h4><button type="button" className={styles.barInlineAdd} disabled={busy} onClick={()=>selectMoment("bar")}>+ Au bar</button></section>;
       if(!items.length&&key!=="extras")return null;
       return <section key={key} className={styles.barItemSection} data-bar-section={key} aria-label={sectionLabels[key]}>
         <header><h4>{sectionLabels[key]}</h4>{key==="extras"&&<button type="button" className={styles.barInlineAdd} disabled={busy} aria-label="Ajouter une consommation" onClick={()=>go("drinks")}>+ Ajouter</button>}{page==="summary"&&items.length>2&&<button type="button" onClick={()=>{if(key==="extras")go("drinks");else startLegacy("menu");}}>Voir les {items.length} postes</button>}</header>

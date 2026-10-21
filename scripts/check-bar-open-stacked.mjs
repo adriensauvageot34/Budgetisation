@@ -1,10 +1,12 @@
 /** Targeted interaction/owner proof. No native input or authenticated claim. */
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import Module,{createRequire} from 'node:module';
 import {require} from './lib/phase2-ts-loader.mjs';
 import {barCompactMonth} from './fixtures/bar-compact-clay.mjs';
 import {householdId,uuid} from './fixtures/planner-headless.mjs';
 import {createKernelPostgres} from './lib/planner-kernel-postgres.mjs';
+import {userId} from './fixtures/planner-kernel.mjs';
 const rr=createRequire(new URL('../outputs/l4c-test-tools/package.json',import.meta.url));
 const React=rr('react'),{create,act}=rr('react-test-renderer'),load=Module._load;
 Module._load=function(name,...args){if(name==='react')return React;if(name==='react-dom')return{createPortal:n=>n};return load.call(this,name,...args);};
@@ -20,8 +22,13 @@ const {InlineEditRegistry,InlineEditContext}=require('@/app/mois-a-venir/compose
 const {ComposerInteractionContext}=require('@/app/mois-a-venir/composer/interactions');
 const {stageLocalDecision,visualDraftModel}=require('@/app/mois-a-venir/composer/local-draft');
 const {nightOutConsumption}=require('@/domain/phase2/planner/night-out-consumption');
+const {barBefore}=require('@/app/mois-a-venir/composer/bar-before');
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
+const {editNightOut}=require('@/domain/phase2/planner/night-out-edit');
+const {plannerDigest}=require('@/domain/phase2/planner/json');
+const {parsePlanSemanticState,semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
+const {saveComposerDraft,readComposerDrafts}=require('@/server/phase2/planner/composer-draft-service');
 const pg=await createKernelPostgres(),fixture=barCompactMonth('mixed'),id=uuid(99500),childId=uuid(99501);
 // Explicit owner default in the input fixture: an unrelated DROP normalizes
 // omitted bindings to AUTO. Compare complete decisions rather than conflating
@@ -31,7 +38,7 @@ globalThis.window={addEventListener(){},removeEventListener(){}};
 const deps={repository:createPlanApplyRepository(pg.client),readWorld:async()=>fixture.world,householdPersons:[]};
 let root,model,ops=[],dragKey,sequence=0;const checks=[];
 const parent=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
-const child=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===childId);
+const child=()=>barBefore(model.semanticState,parent())?.child;
 const registry=new InlineEditRegistry(),requestRef={current(){}};
 registry.requestConfirmation=(message,accept,save)=>requestRef.current({message,accept,save,acceptLabel:'Abandonner cette saisie'});
 const nodes=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(n));
@@ -69,7 +76,7 @@ try{
  await act(async()=>amount().props.onKeyDown({key:'Enter',nativeEvent:{},preventDefault(){},stopPropagation(){}}));
  assert.equal(nightOutConsumption(parent()).mode,'DIRECT');assert.deepEqual(child(),beforeState);
  assert.equal(nightOutConsumption(parent()).inactive.length,originalParent.slotSelections.extras.items.length);checks.push('DIRECT_ONLY_AU_BAR_PRESERVES_BEFORE');
- await click('Détailler les consommations');assert.equal(nightOutConsumption(parent()).mode,'DETAILED');assert.deepEqual(parent().slotSelections.extras,originalParent.slotSelections.extras);checks.push('DETAILS_RESTORE_EXACT_IDENTITIES');
+ await click('Détailler les consommations');assert.equal(nightOutConsumption(parent()).mode,'DIRECT');await click('Détailler Au bar');assert.equal(nightOutConsumption(parent()).mode,'DETAILED');assert.deepEqual(parent().slotSelections.extras,originalParent.slotSelections.extras);checks.push('DETAILS_RESTORE_EXACT_IDENTITIES');
  await click('Ajouter un objet au Before');await click('Boissons');await click('Rhum');
  assert.equal(child().slotSelections.extras.items.length,beforeState.slotSelections.extras.items.length+1);assert.deepEqual(parent().slotSelections.extras,originalParent.slotSelections.extras);checks.push('PLUS_BEFORE_OWNS_ADDITION');
  const beforeQuantity=structuredClone(child());
@@ -90,6 +97,52 @@ try{
  await click('Ajouter une consommation');await click('Abandonner cette saisie');await click('Boissons');await click('Bière');
  assert.equal(parent().slotSelections.extras.items.length,originalParent.slotSelections.extras.items.length+1);assert.equal(child().slotSelections.extras.items.length,beforeState.slotSelections.extras.items.length+1);checks.push('PLUS_AU_BAR_NEVER_WRITES_BEFORE');
  const final=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:++sequence,targetMonth:'2026-11',draft:model.semanticState});assert(final.ok,final.message);checks.push('COMPILER_READ_RETAINS_ADMITTED_STATE');
+
+ // Empty / partially populated / DIRECT are independent entry states, never
+ // inferred from the already populated mixed fixture above.
+ const mount=async semantic=>{
+   if(root)await act(async()=>root.unmount());root=null;ops=[];
+   const read=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:++sequence,targetMonth:'2026-11',draft:semantic});assert(read.ok,read.message);model=read.model;
+   const admitted=structuredClone(model.semanticState);
+   await act(async()=>{root=create(render(),{createNodeMock:e=>e.type==='dialog'?{open:false,showModal(){this.open=true;},close(){this.open=false;},contains(){return false;},querySelector(){return{focus(){}};}}:null});});
+   assert.deepEqual(model.semanticState,admitted,'mount is presentation only');assert.equal(ops.length,0);return admitted;
+ };
+ const empty=()=>barCompactMonth('meta').semantic;
+ const assertEntry=()=>{assert(button('+ Before'),'missing empty Before entry');assert(button('+ Au bar'),'missing empty Au bar entry');};
+ await mount(barCompactMonth('empty').semantic);assertEntry();assert.equal(parent().fields.plannedDate,null);assert.equal(parent().fields.placeRef,null);checks.push('NO_METADATA_EMPTY_ENTRY_NO_INVENTED_DECISION');
+ await mount(empty());assertEntry();await click('+ Before');assert.equal(ops.length,0);await click('Boissons');await click('Vodka');
+ assert(child());assert.equal(child().slotSelections.main.items[0].label,'Vodka');assert.equal(parent().slotSelections.extras?.items.length??0,0);checks.push('EMPTY_CREATE_BEFORE');
+ await mount(empty());assertEntry();await click('+ Au bar');assert.equal(ops.length,0);await click('Boissons');await click('Bière');
+ assert.equal(parent().slotSelections.extras.items[0].label,'Bière');assert.equal(child(),undefined);checks.push('EMPTY_ADD_AU_BAR');
+ await mount(barCompactMonth('before').semantic);assert(button('Ajouter un objet au Before'));assert(button('+ Au bar'));
+ const existingBefore=structuredClone(child());await click('+ Au bar');await click('Boissons');await click('Cocktail');assert.deepEqual(child(),existingBefore);checks.push('BEFORE_PRESENT_BAR_EMPTY_BOTH_PATHS');
+ const onlyBar=structuredClone(barCompactMonth('mixed').semantic);onlyBar.contexts=onlyBar.contexts.filter(c=>c.contextOccurrenceId!==childId);delete onlyBar.contexts[0].slotSelections.before;
+ await mount(onlyBar);assert(button('+ Before'));assert(nodes(n=>n.props['aria-label']?.startsWith('Planche de tapas · Quantité 1 ·')).length);assert(button('Ajouter une consommation'));checks.push('BAR_PRESENT_BEFORE_ABSENT');
+ const twenty=structuredClone(onlyBar);twenty.contexts[0].slotSelections.extras.items=Array.from({length:20},(_,i)=>({...structuredClone(onlyBar.contexts[0].slotSelections.extras.items[0]),selectionId:uuid(99900+i),label:`Consommation synthétique ${i+1}`}));
+ const twentyAdmitted=await mount(twenty);assert.equal(parent().slotSelections.extras.items.length,20);assert.equal(model.board.contexts.find(c=>c.contextOccurrenceId===id).sockets.find(s=>s.slotKey==='extras').currentItems.length,20);
+ assert.equal(nodes(n=>n.props['data-bar-group']!==undefined).reduce((sum,n)=>sum+Number(n.props['data-bar-group-lines']),0),20);assert(button('+ Before'));assert(button('Ajouter une consommation'));assert.deepEqual(model.semanticState,twentyAdmitted);checks.push('TWENTY_EXISTING_COMPONENTS_MODEL_AND_RENDER_PARITY');
+ let detailedEmpty=empty();detailedEmpty=editNightOut(detailedEmpty,{contextOccurrenceId:id,fields:{},consumption:{mode:'DETAILED',expectedContextDigest:plannerDigest(detailedEmpty.contexts[0]),acceptLegacy:true}});
+ await mount(detailedEmpty);assertEntry();await click('+ Au bar');assert.equal(ops.length,0);assert(button('Boissons'));checks.push('DETAILED_EMPTY_ADDITION_AVAILABLE');
+ await mount(empty());await click('Détailler les consommations');assert.equal(nightOutConsumption(parent()).mode,'DETAILED');assert(button('Boissons'));assert(button('+ Before'));assert(button('+ Au bar'));checks.push('CHOOSE_DETAILS_OPENS_EMPTY_DOCK');
+ let direct=empty();direct=editNightOut(direct,{contextOccurrenceId:id,fields:{},consumption:{mode:'DIRECT',amount:'40',selectionId:uuid(99981),expectedContextDigest:plannerDigest(direct.contexts[0]),acceptLegacy:true}});
+ const directAdmitted=await mount(direct);assertEntry();await click('+ Before');assert.equal(ops.length,0);assert.deepEqual(model.semanticState,directAdmitted);
+ await click('+ Au bar');assert(confirmation(),'DIRECT needs explicit confirmation before switching');assert.equal(ops.length,0);await click('Annuler');assert.deepEqual(model.semanticState,directAdmitted);
+ await click('+ Au bar');await click('Détailler Au bar');assert.equal(nightOutConsumption(parent()).mode,'DETAILED');assert(nightOutConsumption(parent()).inactive.some(i=>i.selectionId===uuid(99981)));assert(button('Boissons'));checks.push('DIRECT_NO_AUTOMATIC_TRANSITION_AND_CANCEL_PRESERVES');
+ await mount(onlyBar);const beforeDeletion=structuredClone(model.semanticState),priorCount=model.presentation.elementCount;
+ await click(nodes(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Planche de tapas · Quantité 1 ·'))[0].props['aria-label']);await click('Retirer ce poste');
+ assert.equal(parent().slotSelections.extras.items.length,0);assert(button('+ Before'));assert(button('+ Au bar'));checks.push('LAST_ITEM_REMOVAL_KEEPS_ACCESS');
+ const deletedRead=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:++sequence,targetMonth:'2026-11',draft:model.semanticState});assert(deletedRead.ok);assert.equal(deletedRead.model.presentation.elementCount,priorCount,'removing a component is not removing a Board root');
+ await mount(beforeDeletion);assert.deepEqual(parent().slotSelections.extras,beforeDeletion.contexts[0].slotSelections.extras);assert(button('Ajouter une consommation'));checks.push('UNDO_SNAPSHOT_RESTORES_VISIBLE_IDENTITIES');
+ // Exercise the existing Draft RPC/services on synthetic Postgres only.
+ await pg.db.exec('reset role; alter table auth.users add column raw_app_meta_data jsonb;');
+ for(const file of ['20261011130256_p07b_m0_phase2_composer_drafts_fixture_gate.sql','20261011150830_p07_composer_draft_access_v2.sql'])await pg.db.exec('begin;'+fs.readFileSync('supabase/migrations/'+file,'utf8')+'commit;');
+ await pg.db.exec('update private.phase2_composer_draft_access set enabled_for_all=true; set role authenticated;');
+ const supabase={from(table){assert(['phase2_composer_drafts','phase2_month_plans'].includes(table));const filters=[];const q={select(){return q;},eq(k,v){assert.match(k,/^[a-z_]+$/);filters.push([k,v]);return q;},order(){return q;},abortSignal(){return q;},maybeSingle(){q.single=true;return q;},then(resolve,reject){return pg.db.query(`select to_jsonb(t) as row from public.${table} t where ${filters.map(([k],i)=>k+'=$'+(i+1)).join(' and ')}`,filters.map(([,v])=>v)).then(r=>({data:q.single?r.rows[0]?.row??null:r.rows.map(x=>x.row),error:null}),e=>({data:null,error:e})).then(resolve,reject);}};return q;},rpc(name,args){assert.equal(name,'save_phase2_composer_draft_v2');const q={abortSignal(){return q;},then(resolve,reject){const keys=['household_id','target_month','expected_draft_id','expected_draft_version','save_request_id','base_plan_id','base_plan_revision_id','base_plan_revision_number','semantic_state','semantic_state_digest'];return pg.db.query(`select public.save_phase2_composer_draft_v2(${keys.map((_,i)=>'$'+(i+1)).join(',')}) as result`,keys.map(k=>k==='semantic_state'?JSON.stringify(args['p_'+k]):args['p_'+k])).then(r=>({data:r.rows[0].result,error:null}),e=>({data:null,error:e})).then(resolve,reject);}};return q;}};
+ await mount(fixture.semantic);const toSave=structuredClone(model.semanticState),scope={supabase,userId,householdId};
+ const saved=await saveComposerDraft(scope,{targetMonth:'2026-11',semanticState:toSave,digest:semanticStateDigest(toSave),requestId:crypto.randomUUID(),expectedDraftId:null,expectedDraftVersion:0,expectedBaseRevisionId:null,expectedBaseRevisionNumber:0});assert(saved.ok,JSON.stringify(saved));
+ const reloaded=(await readComposerDrafts(scope,'2026-11')).active.semanticState;assert.deepEqual(parsePlanSemanticState(reloaded),toSave);await mount(reloaded);
+ assert(nodes(n=>n.props['data-bar-before-item']).length===5);assert(nodes(n=>n.props['data-bar-tile']).length===1);checks.push('OFFICIAL_DRAFT_SAVE_RELOAD_COMPONENTS_VISIBLE_SYNTHETIC');
+ const beforeRemount=structuredClone(model.semanticState);await mount(beforeRemount);assert.deepEqual(model.semanticState,beforeRemount);assert(button('Ajouter un objet au Before'));assert(button('Ajouter une consommation'));checks.push('CLOSE_REOPEN_RETAINS_MOMENTS_AND_IDENTITIES');
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  console.log(JSON.stringify({status:'PASS',checks,level:'REACT_REAL_OWNERS_PGLITE_SYNTHETIC_NOT_NATIVE_OR_AUTH',remoteWrites:0}));
 }finally{if(root)await act(async()=>root.unmount());await pg.close();}

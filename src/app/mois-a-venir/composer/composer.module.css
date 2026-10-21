@@ -1454,6 +1454,8 @@
 .barLivingEditor[data-bar-progressive] [data-bar-section=extras] { order:1; }
 .barLivingEditor[data-bar-progressive] [data-bar-section=food],.barLivingEditor[data-bar-progressive] [data-bar-section=main] { order:2; }
 .barLivingEditor[data-bar-progressive] .barItemSection { min-width:0; }
+.barLivingEditor[data-bar-progressive] .barItemSection[data-bar-empty=true] { display:flex; align-items:center; gap:8px; min-height:30px; }
+.barLivingEditor[data-bar-progressive] .barItemSection[data-bar-empty=true] h4 { margin:0; }
 .barMomentRailWrap { min-width:0; position:relative; }
 .barMomentRail { display:flex; align-items:start; gap:8px; overflow-x:auto; overflow-y:hidden; max-width:100%; min-width:0; scrollbar-width:none; padding:4px; }
 .barMomentRail::-webkit-scrollbar { display:none; }
