@@ -12,6 +12,8 @@ export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commu
   currentRelationships?: readonly { personId: string; role: string }[];
   brandLabel?: string | null;
   address?: string | null; coordinates?: import("./planned-car").RouteCoordinates; googlePlaceId?: string;
+  /** Ephemeral UI admission evidence; private coordinates need not be exposed. */
+  routeResolvable?: boolean;
   relationships: readonly { personName: string; role: string }[] }>;
 export type PlannedPlaceKnowledge = Readonly<{ source: "RECORDED_PERSON_DAYS";
   fromDate: string; throughDate: string; coverage: "AVAILABLE_RECORDS";

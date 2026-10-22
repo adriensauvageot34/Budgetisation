@@ -122,7 +122,11 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       const header = card?.querySelector<HTMLElement>("header");
       if (!editor || !header) return; // Keep the previous geometry while the editor loads.
       const checkpoint=`${editor.dataset.barGeometryKey??editor.dataset.barStep??"summary"}:${Math.round(card!.getBoundingClientRect().width)}`;
-      const height = Math.min(shelfHeight,Math.max(195, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + 2)));
+      // The open card's people/actions footer is now in flow. Include it in
+      // the existing reservation; otherwise every scene change can shrink
+      // the card below its two rails and place avatars over the last row.
+      const footer=card?.querySelector<HTMLElement>(':scope > [data-bar-open-footer]');
+      const height = Math.min(shelfHeight,Math.max(195, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + (footer?.getBoundingClientRect().height??0) + 2)));
       // Provider results, typing, focus and images do not renegotiate a scene.
       // Retain its envelope until an explicit scene/page transition. Growing
       // contents may reserve more rows for access, but the anchor stays pinned.

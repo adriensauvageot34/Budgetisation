@@ -12,6 +12,7 @@ import {BarProductVisual} from "./bar-product-visual";
 import {money} from "./display";
 import type {BarTarget,BarLeg} from "./bar-living-operations";
 import styles from "./composer.module.css";
+import {barEndpointLabel} from './bar-place-knowledge';
 
 export const barPlaceLabel=(ref:ProspectivePlaceRef|null|undefined,model:ComposerUiModel)=>ref?.kind==="TEXT"?ref.label:ref?.kind==="KNOWN"?model.mobilityOptions?.places.find(p=>p.placeId===ref.placeId)?.name??"Lieu enregistré":"À préciser";
 export const barModeLabel=(key:string)=>({car:"Voiture",train:"Train / tram",bus:"Bus",taxi:"Taxi",free:"À pied",other:"Autre mode",unknown:"Mode à préciser"} as Record<string,string>)[key]??"Trajet";
@@ -42,7 +43,7 @@ export function BarMetadata({fields,model,open,editing=false,disabled=false,acti
  </nav>;
 }
 export type BarRouteAction="mode"|"vehicle"|"reverse"|"remove"|"advanced"|"time";
-export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=false,active=false,action,pending=false,failed=false}: {slot:"outbound"|"return";contextId:string;leg?:BarLeg;model:ComposerUiModel;open:()=>void;navigate?:(target:BarTarget)=>void;disabled?:boolean;active?:boolean;action?:(action:BarRouteAction)=>void;pending?:boolean;failed?:boolean}){
+export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=false,active=false,action,pending=false,failed=false,compact=false}: {slot:"outbound"|"return";contextId:string;leg?:BarLeg;model:ComposerUiModel;open:()=>void;navigate?:(target:BarTarget)=>void;disabled?:boolean;active?:boolean;action?:(action:BarRouteAction)=>void;pending?:boolean;failed?:boolean;compact?:boolean}){
  const summary=model.mobilitySummaries?.find(s=>s.contextOccurrenceId===contextId&&s.ownerIntentId===mobilityIntentId(contextId,slot));
  const fresh=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===contextId)?.semanticStateDigest===model.board.draft.semanticStateDigest;
  const Icon=leg?.optionKey==="car"?Car:leg?.optionKey==="taxi"?CarTaxiFront:leg?.optionKey==="train"?Train:leg?.optionKey==="bus"?Bus:leg?.optionKey==="free"?Footprints:ArrowRight;
@@ -56,6 +57,14 @@ export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=fa
  const proposed=!vehicle&&model.mobilityOptions?.vehicleIsUnique&&model.mobilityOptions.vehicle?.vehicleId?model.mobilityOptions.vehicle:null;
  const vehicleLabel=vehicleDisplay??vehicle?.labelAtSelection??proposed?.presentation?.displayName??proposed?.label??"Choisir un véhicule";
  const estimating=pending&&!failed&&!!leg?.origin&&!!leg?.destination&&(leg.optionKey!=="car"||!!vehicle)&&!fresh;
+ if(compact){
+   const label=(ref:ProspectivePlaceRef|null|undefined)=>{const place=ref?.kind==='KNOWN'?model.mobilityOptions?.places.find(p=>p.placeId===ref.placeId):undefined;return place?barEndpointLabel(place):barPlaceLabel(ref,model);};
+   const amount=failed?'Estimation indisponible':estimating?'Estimation en cours':cost!=null?`${money(cost)} (${leg?.optionKey==='car'?summary?.status==='PARTIAL'?'usage partiel':'usage estimé':'tarif prévu'}${!fresh?' · précédent':''})`:leg?.optionKey==='car'?'Usage à préciser':'Tarif inconnu';
+   const description=[leg?.optionKey==='car'?'Coût d’usage estimé ≠ achat de carburant':null,...availability,missing.length?`À préciser : ${missing.join(', ')}`:null,summary?.toll!=null?`Péage ${money(summary.toll)}`:null,summary?.parking!=null?`Stationnement ${money(summary.parking)}`:null,(leg?.route?.stops.length??0)>2?`${leg!.route!.stops.length-2} étapes intermédiaires conservées`:null].filter(Boolean).join(' · ');
+   return <button type="button" className={styles.barRouteBadge} data-bar-route-module={slot} data-bar-route={slot} aria-pressed={active} disabled={disabled} onClick={open} title={description} aria-label={`${slot==='outbound'?'Modifier l’aller':'Modifier le retour'} · ${description}`}>
+     <Icon size={13}/><span><b>{leg?.returnRequired?'Aller-retour':slot==='outbound'?'Aller':'Retour'}</b> · {barModeLabel(leg?.optionKey??'unknown')} · {label(leg?.origin)} {leg?.returnRequired?'⇄':'→'} {label(leg?.destination)} · {amount}</span>
+   </button>;
+ }
  return <div className={styles.barRouteLine} data-bar-route-module={slot} data-active={active} data-bar-route-compact={!!action}>
    <button type="button" data-bar-route={slot} aria-pressed={active} disabled={disabled} onClick={()=>action?action("mode"):open()}><b>{leg?.returnRequired?"Aller-retour":slot==="outbound"?"Aller":"Retour"}</b><Icon size={17}/>{leg?barModeLabel(leg.optionKey):"Déplacement"}</button>
    {leg&&<>{leg.optionKey==="car"&&<button type="button" data-bar-vehicle-capsule data-proposed={!!proposed} title={proposed?"Véhicule proposé · cliquez pour le retenir":vehicleLabel} disabled={disabled} onClick={()=>action?action("vehicle"):go("vehicle")} aria-label={`${proposed?"Retenir":"Modifier"} le véhicule ${slot==="outbound"?"de l’aller":"du retour"}`}><Car size={14}/><span>{vehicleLabel}{proposed?" · Retenir":""}</span></button>}

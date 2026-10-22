@@ -43,7 +43,13 @@ export async function barReceptionScope() {
     ...(geometry&&process.env.BAR_GEOMETRY_LIVE_GOOGLE==='1'?{prepareWorld:async(w:PlanningWorldFacts,s:Parameters<typeof preparePlanningMobility>[1])=>{
       const complete=s.contexts.some(c=>Object.values(c.slotSelections).some(slot=>Array.isArray(slot.items)&&slot.items.some((raw:unknown)=>{const item=raw as {kind?:string;optionKey?:string;routeEndpointBindings?:{origin?:unknown;destination?:unknown}};return item.kind==='MOBILITY_INTENT'&&item.optionKey==='car'&&!!item.routeEndpointBindings?.origin&&!!item.routeEndpointBindings?.destination;})));
       return complete?preparePlanningMobility(w,s):w;
-    }}:{}),
+    }}:geometry?{prepareWorld:async(w,s)=>preparePlanningMobility(w,s,{
+      // Deterministic provider replies, only in this authenticated, memory-only
+      // receipt. The ordinary Mobility owner computes all costs and statuses.
+      route:{geocode:async()=>({latitude:43.61,longitude:3.9,source:'TOMTOM_GEOCODE'}),estimateCarRoute:async()=>({provider:'TOMTOM',distanceKm:'5',durationSeconds:600,liters:'0.34',segments:[{distanceKm:'5',liters:'0.34'}],geometry:[],geometryHash:null,hasToll:null,timeBasis:'TYPICAL_NO_DATE',sampleTimes:[],routeMethodRef:'synthetic-receipt-route@v1',consumptionModelRef:'synthetic-receipt-consumption@v1'})},
+      fuel:{getReference:async()=>({pricePerLiter:'2.00',source:'FR_GOV_FUEL_INSTANT_V2',methodRef:'synthetic-receipt-fuel@v1',observedAt:'2026-10-01T10:00:00Z',calculatedAt:'2026-10-01T10:00:00Z',quality:'FRESH',sampleCount:3,radiusKm:15,minimum:'2.00',maximum:'2.00'})},
+      toll:{estimateTolls:async()=>({status:'UNAVAILABLE',amount:null,currency:'EUR',provider:'HERE',methodRef:'synthetic-receipt-toll@v1',routeImportedFrom:'TOMTOM',geometryHash:null,components:[]})}
+    })}:{}),
     readWorld:async(h,m)=>{if(h!==householdId||m!=='2026-11')throw new TypeError('BAR_RECEPTION_SCOPE_INVALID');return structuredClone(facts);},
     readMobilityOptions:async()=>({places:facts.mobilityFacts?.places??[],vehicle:facts.mobilityFacts?.vehicle??null,vehicleIsUnique:!!facts.mobilityFacts?.vehicle}),
     validateContextReferences:async(_h,refs)=>{if(refs.personIds.length||refs.placeIds.some(id=>!facts.mobilityFacts?.places.some(p=>p.placeId===id)))throw new TypeError('BAR_RECEPTION_REFERENCE_INVALID');}};

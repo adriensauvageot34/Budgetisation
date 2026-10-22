@@ -3,14 +3,26 @@ import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import {barSearchText} from "./bar-search";
 import type {ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 
+/** Only owner-published address evidence, never a name similarity. */
+export function barResolvablePlace(place:PlannedPlaceOption){
+  if(place.routeResolvable!==undefined)return place.routeResolvable;
+  return !!place.googlePlaceId||!!place.address?.trim()||!!place.coordinates&&Number.isFinite(place.coordinates.latitude)&&Number.isFinite(place.coordinates.longitude);
+}
+export function barDistinctPlaces(places:readonly PlannedPlaceOption[]){
+  const ids=new Set<string>(),google=new Set<string>();
+  return places.filter(place=>{if(ids.has(place.placeId)||place.googlePlaceId&&google.has(place.googlePlaceId))return false;
+    ids.add(place.placeId);if(place.googlePlaceId)google.add(place.googlePlaceId);return true;});
+}
+export const barEndpointLabel=(place:PlannedPlaceOption)=>barHomePlaces([place]).length?'Domicile':place.name;
+
 /** Presentation ranking of owner observations, never a prediction or decision. */
 export function barPlaces(places: readonly PlannedPlaceOption[], query = "") {
   const needle = barSearchText(query);
-  return places.filter(place => !place.privatePlace && (derivePlannedPlaceRoles(place).includes("BAR") || !!needle)
+  return barDistinctPlaces(places.filter(place => !place.privatePlace && (derivePlannedPlaceRoles(place).includes("BAR") || !!needle)
     && barSearchText(`${place.name} ${place.commune ?? ""} ${place.address ?? ""}`).includes(needle))
     .sort((a, b) => (b.visits12Months ?? 0) - (a.visits12Months ?? 0)
       || (b.lastVisitDate ?? "").localeCompare(a.lastVisitDate ?? "")
-      || a.name.localeCompare(b.name, "fr") || a.placeId.localeCompare(b.placeId));
+      || a.name.localeCompare(b.name, "fr") || a.placeId.localeCompare(b.placeId)));
 }
 export function barPlaceHint(place: PlannedPlaceOption, knowledge?: PlannedPlaceKnowledge) {
   const location = [place.commune, place.address].filter(Boolean).join(" · ") || `Réf. ${place.placeId.slice(-6)}`;
@@ -41,7 +53,8 @@ export function barEndpointPlaces(places: readonly PlannedPlaceOption[], persons
 export function barEndpointSuggestions(places:readonly PlannedPlaceOption[],persons:readonly {personId:string;displayName:string}[],
   direction:"outbound"|"return",endpoint:"origin"|"destination",other:ProspectivePlaceRef|null|undefined,venue:ProspectivePlaceRef|undefined,query="",all=false){
   const needle=barSearchText(query),towardVenue=direction==="outbound"?endpoint==="destination":endpoint==="origin";
-  return barEndpointPlaces(places,persons).filter(({place})=>other?.kind!=="KNOWN"||place.placeId!==other.placeId)
+  const otherPlace=other?.kind==='KNOWN'?places.find(p=>p.placeId===other.placeId):undefined;
+  return barEndpointPlaces(barDistinctPlaces(places.filter(barResolvablePlace)),persons).filter(({place})=>other?.kind!=="KNOWN"||place.placeId!==other.placeId&&(!otherPlace?.googlePlaceId||place.googlePlaceId!==otherPlace.googlePlaceId))
     .filter(({place,hint})=>needle?barSearchText(`${place.name} ${place.commune??""} ${place.address??""}`).includes(needle)
       :all||towardVenue&&venue?.kind==="KNOWN"&&place.placeId===venue.placeId||/^(Maison|Travail|Lieu lié)/u.test(hint))
     .filter(({place})=>!!needle||all||towardVenue||venue?.kind!=="KNOWN"||place.placeId!==venue.placeId)
