@@ -18,7 +18,7 @@ export default async function Page({searchParams}:{searchParams:Promise<{r5catal
     const geometry=barGeometryReceptionEnabled(),liveGoogle=geometry&&process.env.BAR_GEOMETRY_LIVE_GOOGLE==='1';
     const closedScenario=search.r62??search.r61;
     if(closedScenario){
-      if(!geometry||!['empty','partial','rich','three','five','wide','long'].includes(closedScenario))notFound();
+      if(!geometry||!['empty','partial','rich','three','five','wide','long','d1'].includes(closedScenario))notFound();
       const id=crypto.randomUUID();
       const seed=await handleComposerRequest(scope.deps,scope.householdId,{kind:'DROP',sequence:1,targetMonth:'2026-11',draft:initial.model.semanticState,assetKey:'template:night-out',presetKey:'bar-apero',identity:id,selectionId:crypto.randomUUID(),target:{kind:'BOARD_ZONE'},values:{}});
       if(!seed.ok)throw new TypeError('BAR_RECEPTION_FIXTURE_UNAVAILABLE');

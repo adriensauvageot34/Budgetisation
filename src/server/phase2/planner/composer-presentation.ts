@@ -1,4 +1,5 @@
 import "server-only";
+import {globalConsumptionCovers} from '@/domain/phase2/planner/night-out-consumption';
 import Big from "big.js";
 import type { MonthComposerReadModel, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerPresentation, ComposerObjectPresentation, ComposerSocketPresentation, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
@@ -101,13 +102,14 @@ export function composerPresentation(model: MonthComposerReadModel): ComposerPre
           ? journey.mode === "CAR" ? price.parking === null ? null : transportTotals(price.economicFuel, price.toll, price.parking).economic : price.fare : null
           : socket.evaluations?.find(e => e.selectionId === item.selectionId)?.economicAmount ?? null;
         const suggested = item.provenance === "PERSONAL_SUGGESTION";
+        const descriptive = globalConsumptionCovers(model.semanticState.contexts,card.contextOccurrenceId,socket.slotKey,item.selectionId);
         const derived = card.readOnly || socket.visualState === "DERIVED" || asset?.provenance === "DERIVED_CONSEQUENCE";
         return { selectionId: item.selectionId, label: child?.label ?? (item.kind === "COMPONENT" ? item.label : asset?.label ?? socket.label ?? item.optionKey),
           iconKey: child ? icon(child.templateKey) : asset ? composerAssetIcon(asset, model) : icon(socket.slotKey),
-          state: suggested ? "SUGGESTED" : derived ? "DERIVED" : item.kind === "UNRESOLVED" || item.kind === "COMPONENT" && amount === null
+          state: suggested ? "SUGGESTED" : derived ? "DERIVED" : item.kind === "UNRESOLVED" || item.kind === "COMPONENT" && amount === null && !descriptive
             || item.kind === "MOBILITY_INTENT" && (!journey || journey.pricingState !== "RESOLVED") ? "UNRESOLVED" : "CHOSEN",
           economicAmount: suggested ? null : amount,
-          costCaption: journey && !ownsPrice ? `Montant déjà compté avec ${model.board.contexts.find(c => c.contextOccurrenceId === journey.ownerContextOccurrenceId)?.label ?? "l’intention liée"}` : null,
+          costCaption: descriptive ? "Compris dans le prix global des consommations" : journey && !ownsPrice ? `Montant déjà compté avec ${model.board.contexts.find(c => c.contextOccurrenceId === journey.ownerContextOccurrenceId)?.label ?? "l’intention liée"}` : null,
           details: suggested ? ["Suggestion personnelle · hors coût tant que non acceptée"] : item.kind === "MOBILITY_INTENT" ? [
             journey && !ownsPrice ? `Trajet partagé · compté une fois dans ${model.board.contexts.find(c => c.contextOccurrenceId === journey.ownerContextOccurrenceId)?.label ?? "son intention propriétaire"}` : "Mobilité évaluée par le serveur dans le mois",
             ...(journey?.mode === "CAR" ? ["Usage économique du carburant · sans débit Banque automatique"] : [])]

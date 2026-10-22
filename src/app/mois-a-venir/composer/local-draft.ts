@@ -10,6 +10,7 @@ import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
+import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 
 function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, contextId: string, slotKey: string,
@@ -30,8 +31,8 @@ function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, co
     for (const child of state.contexts) if (child.parentContextOccurrenceId && removed.has(child.parentContextOccurrenceId)) removed.add(child.contextOccurrenceId);
   }
   if ([...removed].some(id => state.preferences.anchors.includes(id) || state.preferences.flexibility[id] === "PRESERVE")) return null;
-  return parsePlanSemanticState({ ...state, contexts: state.contexts.filter(c => !removed.has(c.contextOccurrenceId)).map(c =>
-    c.contextOccurrenceId === contextId ? { ...c, slotSelections: { ...c.slotSelections, [slotKey]: { items } } } : c) });
+  return parsePlanSemanticState(refreshGlobalConsumption({ ...state, contexts: state.contexts.filter(c => !removed.has(c.contextOccurrenceId)).map(c =>
+    c.contextOccurrenceId === contextId ? { ...c, slotSelections: { ...c.slotSelections, [slotKey]: { items } } } : c) }));
 }
 
 /** Draft decisions only. The Compiler/V2 server remains the sole financial authority. */

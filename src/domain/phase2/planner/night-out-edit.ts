@@ -6,7 +6,7 @@ import { plannedAsset, PLANNED_ASSET_CATALOG_VERSION } from "../planned-assets";
 import {parseNightOutVenue,sameVenuePlace,parseVenueEndpoints} from "./night-out-venue";
 import {parseRouteEndpointBindings} from "./route-endpoint";
 import {parseComponentEconomicScope} from "./component-economic-scope";
-import { transitionNightOutConsumption, type NightOutConsumptionCommand } from "./night-out-consumption";
+import { transitionNightOutConsumption, transitionNightOutGlobal, refreshGlobalConsumption, type NightOutConsumptionCommand, type NightOutGlobalCommand } from "./night-out-consumption";
 
 export type NightOutBeforeEdit = Readonly<{
   childContextOccurrenceId: string; selectionId: string;
@@ -19,6 +19,7 @@ export type NightOutEdit = Readonly<{
   slots?: Readonly<Partial<Record<"main" | "food" | "extras" | "outbound" | "return", readonly ComponentSelectionV1[]>>>;
   before?: NightOutBeforeEdit | null;
   consumption?: NightOutConsumptionCommand;
+  globalConsumption?: NightOutGlobalCommand;
   coverageReplacement?:Readonly<{version:"night-out-coverage-replacement@v1";selectionId:string;expectedComponentDigest:string}>;
 }>;
 
@@ -46,6 +47,11 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
   if (parent?.templateKey !== "night-out") throw new TypeError("COMPOSER_NIGHT_OUT_TARGET_INVALID");
   const protectedContext = (id: string) => state.preferences.anchors.includes(id) || state.preferences.flexibility[id] === "PRESERVE";
   if (protectedContext(parent.contextOccurrenceId)) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+  if (edit.globalConsumption) {
+    if (Object.keys(edit.fields).length || edit.slots || edit.before !== undefined || edit.consumption || edit.coverageReplacement)
+      throw new TypeError("NIGHT_OUT_GLOBAL_COMMAND_INVALID");
+    return parsePlanSemanticState(transitionNightOutGlobal(state, parent, edit.globalConsumption));
+  }
   if (edit.consumption) {
     if (Object.keys(edit.fields).length || edit.slots || edit.before !== undefined || edit.coverageReplacement)
       throw new TypeError("NIGHT_OUT_CONSUMPTION_COMMAND_INVALID");
@@ -131,5 +137,5 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
         || ref.provenance !== "EXPLICIT_USER_DECISION" || ref.labelAtSelection !== asset.label) throw new TypeError("CONTEXT_PRODUCT_ASSET_UNKNOWN");
     }
   }
-  return parsePlanSemanticState({ ...state, contexts });
+  return parsePlanSemanticState(refreshGlobalConsumption({ ...state, contexts }));
 }

@@ -164,7 +164,7 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
     const extras = template.componentSlots.find(s => s.slotKey === "extras")!;
     // The inactive representation must pass the very same capability/cost/funding
     // parser as an active component, but is never returned as a financial fact.
-    for (const item of consumption.inactive) selection(item, extras);
+    for (const item of (consumption.version === "night-out-consumption@v1" ? consumption.inactive : consumption.legacyV1?.inactive ?? [])) selection(item, extras);
   }
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
     if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"

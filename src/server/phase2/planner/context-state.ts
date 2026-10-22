@@ -6,6 +6,7 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 import { plannedAsset, type PlannedAssetRef } from "@/domain/phase2/planned-assets";
 import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
 import { parseContextField, validateContextGraph } from "./context-selections";
+import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
 
 const children = (items: readonly ComponentSelectionV1[]): string[] => items.flatMap(item => item.kind === "CHILD_CONTEXT" ? [item.childContextOccurrenceId] : []);
 function prune(contexts: readonly PlannedContextState[], removedIds: readonly string[]): PlannedContextState[] {
@@ -73,7 +74,7 @@ export function setContextSlotSelections(raw: PlanSemanticStateV1, contextId: st
   const before = graph.selections.get(contextId)!.get(slotKey)!;
   const keep = new Set(children(items)), removed = children(before).filter(id => !keep.has(id));
   const contexts = prune(state.contexts.map(c => c.contextOccurrenceId === contextId ? withItems(c, slotKey, items) : c), removed);
-  return finish({ ...state, contexts });
+  return finish(refreshGlobalConsumption({ ...state, contexts }));
 }
 export function acceptContextSuggestion(raw: PlanSemanticStateV1, contextId: string, slotKey: string, selectionId: string): PlanSemanticStateV1 {
   const state = parsePlanSemanticState(raw), graph = validateContextGraph(state);
@@ -99,7 +100,7 @@ export function reparentContext(raw: PlanSemanticStateV1, childId: string, paren
   const items = slot.cardinality === "REPEATING" ? [...prior, item] : [item];
   const removed = slot.cardinality === "REPEATING" ? [] : children(prior);
   contexts = prune(contexts.map(c => c.contextOccurrenceId === parentId ? withItems(c, slotKey, items) : c), removed);
-  return finish({ ...state, contexts });
+  return finish(refreshGlobalConsumption({ ...state, contexts }));
 }
 /** Promotion exchanges the placeholder for a socket reference in one semantic transformation. */
 export function promoteComponentToChildContext(raw: PlanSemanticStateV1, parentId: string, slotKey: string,

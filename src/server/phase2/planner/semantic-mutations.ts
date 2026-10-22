@@ -5,6 +5,7 @@ import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state
 import type { SemanticMutation } from "@/domain/phase2/planner/adjustment-contract";
 import { setContextSlotSelections, reparentContext } from "./context-state";
 import { validateContextGraph } from "./context-selections";
+import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
 
 /** Stable decision identity across speculative previews; Context identity stays user supplied. */
 function decisionId(month: string, slot: string) {
@@ -39,5 +40,5 @@ export function mutatePlanSemanticState(raw: PlanSemanticStateV1, mutation: Sema
       preferences: { ...state.preferences, anchors: state.preferences.anchors.filter(a => !removed.has(a)),
         flexibility: Object.fromEntries(Object.entries(state.preferences.flexibility).filter(([ref]) => !removed.has(ref))) } };
   } else throw new TypeError("PLANNER_MUTATION_UNSUPPORTED");
-  const parsed = parsePlanSemanticState(next); validateContextGraph(parsed); return parsed;
+  const parsed = parsePlanSemanticState(refreshGlobalConsumption(next)); validateContextGraph(parsed); return parsed;
 }
