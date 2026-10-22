@@ -31,7 +31,7 @@ import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
 import {prospectivePersonIdentity} from "@/domain/phase2/planned-product";
 import {BarPageControls} from "./bar-pages";
 import type {BarViewMemory} from "./bar-view-memory";
-import {MoreHorizontal,Pencil,Route} from "lucide-react";
+import {MoreHorizontal,Pencil,Route,MapPin,ArrowLeftRight,Clock3,CarFront,Ticket,Trash2} from "lucide-react";
 import {AtomicPopover} from "./atomic-popover";
 import styles from "./composer.module.css";
 import {componentPresentationGroups} from '@/domain/phase2/planner/component-group-presentation';
@@ -471,11 +471,6 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   if(page==='row'&&!advancedRow)question={...question,choices:[...(dirty&&canSaveBuffer()?[choice('component-save','Enregistrer',()=>saveRow(),'activity')]:[]),...question.choices,
     choice('component-details','Unité, financement et nom',()=>setAdvancedRow(true),'activity'),
     choice('component-remove','Retirer ce poste',remove,'activity')]};
-  if((page==='outbound'||page==='return')&&leg)question={...question,choices:[...question.choices,
-    choice('origin','Modifier le départ',()=>targetEndpoint('origin'),'activity'),choice('destination','Modifier l’arrivée',()=>targetEndpoint('destination'),'activity'),
-    ...(leg.optionKey==='car'?[choice('vehicle','Choisir le véhicule',()=>routeAction(direction,'vehicle'),'car')]:[choice('fare','Prix du trajet',targetFare,'activity')]),
-    choice('time','Heure de départ',()=>routeAction(direction,'time'),'activity'),choice('journey','Étapes, péages et financement',()=>routeAction(direction,'advanced'),'activity'),
-    choice('reverse','Inverser ce sens',()=>routeAction(direction,'reverse'),'activity'),choice('remove-route','Retirer ce trajet',()=>routeAction(direction,'remove'),'activity')]};
   if(page==='summary'&&coveredMain)question={title:'Consommations regroupées',choices:[]};
   if(page==="coverage")question={title:`Remplacer ${coveredMain?.label??"le coût retenu"}${coveredMain?.cost.kind==="MANUAL"?" · "+money(coveredMain.cost.unitAmount)+" / lot":""} ?`,choices:[{...choice("included","Détailler à la place",()=>pendingShared?addShared(true):pendingAsset&&add(pendingAsset,true),"night-out","Retire uniquement ce regroupement ; contribution, trajets, Before et repas conservés"),showHint:true},{...choice("extra","Ajouter en plus",()=>pendingShared?addShared(false):pendingAsset&&add(pendingAsset,false),"night-out","Coût supplémentaire indépendant du poste conservé"),showHint:true},choice("cancel","Ne rien ajouter",()=>{setPendingAsset(null);setPendingShared(false);go("drinks");},"activity")]};
   if(["summary","quick"].includes(page)&&(!showMoments||!(openMoments.before||openMoments.bar)))question={title:"",choices:[]};
@@ -548,6 +543,20 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     })}
     </div>
     <section className={styles.barLivingQuestion} aria-label="Décision en cours">
+      {(page==='outbound'||page==='return')&&leg&&<section className={styles.barRouteEditor} data-bar-route-controls aria-label={`Réglages de ${direction==='outbound'?'l’aller':'retour'}`}>
+        <div className={styles.barRoutePoints}>
+          <button type="button" disabled={busy} aria-label="Modifier le départ" onClick={()=>targetEndpoint('origin')}><MapPin size={16}/><span><small>Départ</small><strong>{leg.origin?barPlaceLabel(leg.origin,model):'À préciser'}</strong></span></button>
+          <button type="button" disabled={busy} aria-label="Modifier l’arrivée" onClick={()=>targetEndpoint('destination')}><MapPin size={16}/><span><small>Arrivée</small><strong>{leg.destination?barPlaceLabel(leg.destination,model):'À préciser'}</strong></span></button>
+        </div>
+        <div className={styles.barRouteTools}>
+          <button type="button" disabled={busy} aria-label="Changer le transport" onClick={()=>routeAction(direction,'mode')}><Route size={15}/>Transport</button>
+          {leg.optionKey==='car'?<button type="button" disabled={busy} onClick={()=>routeAction(direction,'vehicle')}><CarFront size={15}/>Choisir le véhicule</button>:<button type="button" disabled={busy} onClick={targetFare}><Ticket size={15}/>Prix du trajet</button>}
+          <button type="button" disabled={busy} onClick={()=>routeAction(direction,'time')}><Clock3 size={15}/>Heure de départ</button>
+          <button type="button" disabled={busy} onClick={()=>routeAction(direction,'advanced')}><Route size={15}/>Étapes, péages et financement</button>
+          <button type="button" disabled={busy} onClick={()=>routeAction(direction,'reverse')}><ArrowLeftRight size={15}/>Inverser ce sens</button>
+          <button type="button" disabled={busy} onClick={()=>routeAction(direction,'remove')}><Trash2 size={15}/>Retirer ce trajet</button>
+        </div>
+      </section>}
       {(page==="place"||page==="google")&&<BarPlaceSearch rawTargetRef={context.contextOccurrenceId} personalPlacesCapability={model.personalGooglePlacesEnabled===true} initialSearch={googleSearch??{query:queries.place??"",city:"",resultPage:0}} onSearchChange={saveGoogleSearch} onPersonalSuggestions={savePersonalSuggestions} commitOnVerified decisionKey={JSON.stringify(context)} onManual={()=>go("manual-place")} places={model.mobilityOptions?.places??[]} onKnown={id=>choosePlace({kind:"KNOWN",placeId:id})} onText={label=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"})} onGoogle={(label,ref)=>choosePlace({kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"},ref)}/>}
       {page==="row"?advancedRow&&<WorkshopComponentRow key={row.id} title={row.label} row={row} onChange={next=>{setRow(next);setDirty(true);}} onSave={()=>saveRow()} busy={busy} participantCount={admittedPeople.length} back={{label:"Retour à la tuile",action:()=>setAdvancedRow(false)}}/>:page==="legacy"?<NightOutEditor {...props} key={legacyKey} embedded initialView={legacy} onSave={operation=>{const admitted=!busy&&onSave(operation);if(admitted){setDirty(false);move(legacy==="calendar"?"drinks":"summary");}return admitted;}} onCancel={()=>go("summary")}/>
         :page==="date"?<div className={styles.barInlineCalendar} data-bar-calendar onKeyDown={event=>{
@@ -568,7 +577,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
           <ul>{barVenueAdaptations(context).map(change=><li key={change.slot+change.key}>{change.slot==="outbound"?"Aller":"Retour"} · {change.key==="origin"?"départ":"arrivée"} · {barEndpointCosts(change.leg,change.key).join(", ")||"estimation d’itinéraire à recalculer"}</li>)}</ul>
           <p>Adapter remet à préciser les prix du trajet concernés. Les autres points, coûts et identités sont conservés. Undo rétablit le bar et les trajets ensemble.</p><button type="button" disabled={busy} onClick={()=>commitVenue(false)}>Conserver les trajets</button><button type="button" disabled={busy} onClick={()=>commitVenue(true)}>Adapter les trajets liés</button></section>
         :page==="manual-place"?<><label>Nom ou adresse libre<input autoFocus maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={!manual.trim()||busy} onClick={()=>choosePlace({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"})}>Retenir ce repère</button><small>Repère textuel uniquement · distance et itinéraire à préciser.</small></>
-        :page==="endpoint"&&leg?<><small>Choisissez une adresse vérifiée. Les anciens repères textuels restent conservés tant qu’ils ne sont pas remplacés.</small><BarRouteEndpointSearch key={leg.selectionId+':'+direction+':'+endpoint} identity={leg.selectionId+':'+direction+':'+endpoint} decisionKey={JSON.stringify(leg)} query={query} change={setQuery} choose={(label,googleId)=>chooseEndpoint({kind:'TEXT',label,provenance:'USER_DECLARED_PROSPECTIVE'},false,false,googleId)} known={question.choices} card={card} model={model} dockHost={dockHost} disabled={busy}/></>
+        :page==="endpoint"&&leg?<><small>Choisissez une adresse vérifiée. Les anciens repères textuels restent conservés tant qu’ils ne sont pas remplacés.</small><BarRouteEndpointSearch key={leg.selectionId+':'+direction+':'+endpoint} identity={leg.selectionId+':'+direction+':'+endpoint} decisionKey={JSON.stringify(leg)} query={query} change={setQuery} choose={(label,googleId)=>chooseEndpoint({kind:'TEXT',label,provenance:'USER_DECLARED_PROSPECTIVE'},false,false,googleId)} known={question.choices} disabled={busy}/></>
         :page==="route-time"?<><label>Heure de départ {direction==="outbound"?"de l’aller":"du retour"} (facultative)<input type="time" value={routeTime} onChange={event=>{setRouteTime(event.target.value);setDirty(true);}}/></label><button type="button" disabled={busy} onClick={saveRouteTime}>Retenir cet horaire</button><small>Une date est nécessaire pour retenir une heure. L’estimation reste possible sans heure.</small><button type="button" onClick={()=>startLegacy("menu")}>Horaire et options avancées</button></>
         :page==="endpoint-free"?<><label>Nom libre du point de trajet<input maxLength={120} value={manual} onChange={e=>{setManual(e.target.value);setDirty(true);}}/></label><button type="button" disabled={busy||!manual.trim()} onClick={()=>chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true)}>Retenir ce point libre</button><small>Repère textuel uniquement · itinéraire et distance à préciser.</small></>
         :page==="vehicle"?<section data-bar-vehicle>{model.mobilityOptions?.vehicle?.presentation&&<details><summary>Caractéristiques du véhicule</summary><p data-bar-vehicle-technical>{model.mobilityOptions.vehicle.presentation.technicalLabel} · profil officiel {model.mobilityOptions.vehicle.presentation.modelRef}</p></details>}{!model.mobilityOptions?.vehicle?.vehicleId&&<p>Pas de véhicule estimable dans les références disponibles. Les lieux et les autres coûts restent conservés. <button type="button" onClick={()=>startLegacy("menu")}>Options du véhicule</button></p>}</section>
@@ -583,9 +592,10 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
         <button type="button" disabled={busy} onClick={()=>resolveEndpoint("UNKNOWN")}>Mettre ces prix à préciser</button>
         <button type="button" onClick={()=>setPendingEndpoint(null)}>Conserver cet itinéraire</button>
       </section>}
+      {['return-choice','vehicle','fare'].includes(page)&&<div className={styles.barRouteTools} data-bar-route-choices aria-label={question.title}>{question.choices.map(item=><button type="button" key={item.key} disabled={busy} onClick={item.choose}>{item.label}</button>)}</div>}
       {(error||serverError)&&<p role="alert">{error||serverError}</p>}
     </section>
     </fieldset>
-    {page!=="legacy"&&page!=="endpoint"&&(question.choices.length>0||!!question.search)&&dockHost&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure appearance="bar" question={question} questionScroll={dockScroll} onQuestionScrollChange={saveDockScroll} choose={()=>{}} close={()=>go("summary")}/>,dockHost)}
+    {!['legacy','endpoint','return-choice','vehicle','fare'].includes(page)&&(question.choices.length>0||!!question.search)&&dockHost&&createPortal(<ContextPalette card={card} model={model} busy={busy} configure appearance="bar" question={question} questionScroll={dockScroll} onQuestionScrollChange={saveDockScroll} choose={()=>{}} close={()=>go("summary")}/>,dockHost)}
   </div>;
 }

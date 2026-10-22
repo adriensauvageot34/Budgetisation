@@ -1,7 +1,6 @@
 "use client";
 import {useEffect,useRef,useId,type ReactNode,type HTMLAttributes} from "react";
-import { CircleDashed, Info, Plus, CalendarDays, Users, MoreHorizontal } from "lucide-react";
-import {AtomicPopover} from './atomic-popover';
+import { CircleDashed, Info, Plus, CalendarDays, Users } from "lucide-react";
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 
@@ -129,8 +128,6 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
     {expanded&&<div className={styles.barClosedPeopleReserve} data-bar-open-footer><button type="button" className={styles.barClosedPeople} data-bar-closed-people disabled={locked} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)} onClick={()=>open('people')}>
       {!people.length&&<><Users size={14}/><Plus size={10}/></>}
       {people.slice(0,3).map((person,index)=><span key={index} aria-hidden="true">{barPersonLabel(person,model).split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('')}</span>)}{people.length>3&&<span aria-hidden="true">+{people.length-3}</span>}
-    </button>{!card.readOnly&&<AtomicPopover utility label="Actions de la sortie" state="CONTEXT" focus={()=>{}} icon={<MoreHorizontal size={14}/>}>
-      {close=><><button type="button" disabled={busy} onClick={()=>{close();preserve();}}>{preserved?'Libérer les choix de cette sortie':'Préserver les choix de cette sortie'}</button>{remove&&<button type="button" disabled={locked} onClick={()=>{close();remove();}}>Retirer la sortie · Undo disponible</button>}</>}
-    </AtomicPopover>}</div>}
+    </button></div>}
   </article>;
 }

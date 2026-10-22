@@ -36,7 +36,7 @@ const pg=await createKernelPostgres(),fixture=barCompactMonth('mixed'),id=uuid(9
 for(const c of fixture.semantic.contexts)for(const slot of Object.values(c.slotSelections))for(const item of slot.items)if(item.kind==='COMPONENT')item.binding??={mode:'AUTO'};
 globalThis.window={addEventListener(){},removeEventListener(){}};
 const deps={repository:createPlanApplyRepository(pg.client),readWorld:async()=>fixture.world,readMobilityOptions:async()=>({places:fixture.world.mobilityFacts.places,vehicle:fixture.world.mobilityFacts.vehicle}),householdPersons:[]};
-let root,model,ops=[],dragKey,sequence=0;const checks=[];
+let root,model,ops=[],dragKey,sequence=0,initialTarget;const checks=[];
 const parent=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
 const child=()=>barBefore(model.semanticState,parent())?.child;
 const registry=new InlineEditRegistry(),requestRef={current(){}};
@@ -45,7 +45,7 @@ const nodes=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(
 const text=n=>typeof n==='string'?n:n?.children?.map(text).join('')??'';
 const button=label=>nodes(n=>n.type==='button'&&(n.props['aria-label']===label||text(n)===label))[0];
 const click=async label=>{const b=button(label);assert(b,`Missing ${label}`);await act(async()=>b.props.onClick());};
-const editorProps=()=>({context:parent(),card:model.board.contexts.find(c=>c.contextOccurrenceId===id),model,semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],options:model.mobilityOptions,busy:false,fresh:true,dockHost:{},onCancel(){},onSave:operation=>{
+const editorProps=()=>({initialTarget,context:parent(),card:model.board.contexts.find(c=>c.contextOccurrenceId===id),model,semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],options:model.mobilityOptions,busy:false,fresh:true,dockHost:{},onCancel(){},onSave:operation=>{
  const next=stageLocalDecision(model,model.semanticState,operation);if(!next)return false;ops.push(operation);model=visualDraftModel(model,next);root.update(render());return true;
 }});
 const render=()=>React.createElement(WorkshopConfirmationProvider,{requestRef},React.createElement(WorkshopChoicesProvider,null,
@@ -164,7 +164,7 @@ try{
  const headerCard=model.board.contexts.find(c=>c.contextOccurrenceId===id),targets=[];
  for(const expanded of [false,true]){
    await act(async()=>{root=create(React.createElement(BarLivingCard,{card:headerCard,model,living:{id:expanded?id:undefined,open:(c,target)=>targets.push(target),close(){}},busy:false,preserved:false,preserve(){},drag(){}}));});
-   assert.equal(nodes(n=>n.props['data-bar-closed-place']!==undefined).length,1);assert.equal(nodes(n=>n.props['data-bar-closed-date']!==undefined).length,1);assert.equal(nodes(n=>n.props['data-bar-closed-people']!==undefined).length,1);assert.match(text(root.toJSON()),/\+4/);
+   assert.equal(nodes(n=>n.props['data-bar-closed-place']!==undefined).length,1);assert.equal(nodes(n=>n.props['data-bar-closed-date']!==undefined).length,1);assert.equal(nodes(n=>n.props['data-bar-closed-people']!==undefined).length,1);assert.match(text(root.toJSON()),/\+4/);assert.equal(nodes(n=>n.props['aria-label']==='Actions de la sortie').length,0);
    await act(async()=>nodes(n=>n.props['data-bar-closed-place']!==undefined)[0].props.onClick());assert.equal(targets.at(-1),'place');await act(async()=>root.unmount());
  }
  await act(async()=>{root=create(React.createElement(BarMetadata,{fields:parent().fields,model,editing:true,open(){}}));});assert.equal(nodes(n=>n.type==='button').length,0);checks.push('SHARED_HEADER_LONG_PLACE_DATE_PEOPLE_AND_NO_REDUNDANT_METADATA');
@@ -174,6 +174,11 @@ try{
  const copy=structuredClone(line);const routeModel={...model,mobilityOptions:{...model.mobilityOptions,places:fixture.world.mobilityFacts.places},mobilitySummaries:[{contextOccurrenceId:id,ownerIntentId:mobilityIntentId(id,'outbound'),economicFuel:'0.68',status:'PARTIAL',fallbacks:['TOLL_UNAVAILABLE']}]};
  await act(async()=>{root=create(React.createElement(BarRouteLine,{compact:true,slot:'outbound',leg:line,model:routeModel,contextId:id,open(){}}));});
  assert.match(text(root.toJSON()),/Aller.*Voiture.*Domicile.*Le Boom Boom.*0,68.*usage partiel/);assert.equal(nodes(n=>n.type==='details').length,0);assert.equal(nodes(n=>n.props['data-bar-vehicle-capsule']!==undefined).length,0);assert.match(nodes(n=>n.type==='button')[0].props.title,/achat de carburant/);assert.deepEqual(line,copy);checks.push('COMPACT_ROUTE_PARTIAL_NO_VEHICLE_DUPLICATE_NO_DECISION_MUTATION');
+ initialTarget='outbound';await mount(barCompactMonth('tall').semantic);const beforeRouteNavigation=structuredClone(model.semanticState);
+ const routeControls=nodes(n=>n.props['data-bar-route-controls']!==undefined)[0];assert(routeControls);
+ for(const label of ['Modifier le départ','Modifier l’arrivée','Heure de départ','Inverser ce sens','Retirer ce trajet'])assert(routeControls.findAll(n=>n.type==='button'&&(n.props['aria-label']===label||text(n)===label)).length,label);
+ const modeDock=nodes(n=>n.props['data-bar-dock']===true)[0];assert(modeDock);assert.equal(modeDock.props['data-dock-nature'],'MODES');assert(!/Modifier le départ|Inverser ce sens|Heure de départ/.test(text(modeDock)));
+ await click('Modifier le départ');assert.equal(nodes(n=>n.props['data-bar-dock']===true).length,0);assert(nodes(n=>n.props['data-bar-route-search']!==undefined).length);assert.deepEqual(model.semanticState,beforeRouteNavigation);checks.push('ROUTE_TOOLS_AND_ADDRESSES_IN_CARD_DOCK_MODES_ONLY_NO_MUTATION');
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  console.log(JSON.stringify({status:'PASS',checks,level:'REACT_REAL_OWNERS_PGLITE_SYNTHETIC_NOT_NATIVE_OR_AUTH',remoteWrites:0}));
 }finally{if(root)await act(async()=>root.unmount());await pg.close();}

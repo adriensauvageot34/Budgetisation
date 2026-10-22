@@ -1,20 +1,17 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
-import {createPortal} from "react-dom";
 import {RestaurantSearchSession,validGooglePlaceId,type RestaurantSuggestion,type SelectedRestaurantPlace} from "@/domain/phase2/restaurant-places";
-import type {ComposerUiModel} from "@/domain/phase2/planner/composer-ui-contract";
-import type {ComposerContextCardView} from "@/domain/phase2/planner/composer-contract";
-import {ContextPalette,type PaletteQuestion} from "./context-palette";
+import type {PaletteQuestion} from "./context-palette";
 import {useBarPlaceTransport} from "./bar-place-transport";
 import {GoogleMapsAttribution} from "../restaurant-place-search";
 import {useCommittedEvent} from "./use-committed-event";
 import styles from "./composer.module.css";
 
 /** Transient discovery only. The admitted directed binding lives in the Draft. */
-export function BarRouteEndpointSearch({identity,decisionKey,query,change,choose,known,card,model,dockHost,disabled=false}:{
+export function BarRouteEndpointSearch({identity,decisionKey,query,change,choose,known,disabled=false}:{
   identity:string;decisionKey:string;query:string;change:(value:string)=>void;
   choose:(label:string,placeId:string)=>void;known:PaletteQuestion["choices"];
-  card:ComposerContextCardView;model:ComposerUiModel;dockHost?:HTMLElement|null;disabled?:boolean;
+  disabled?:boolean;
 }){
   const request=useBarPlaceTransport(),session=useRef(new RestaurantSearchSession()),generation=useRef(0),abort=useRef<AbortController|null>(null);
   const tokenScope=useRef("");
@@ -51,10 +48,10 @@ export function BarRouteEndpointSearch({identity,decisionKey,query,change,choose
   };
   const choices:PaletteQuestion["choices"]=[...results.filter(s=>!known.some(k=>k.key===`google-route:${s.placeId}`)).map(s=>({key:`google-route:${s.placeId}`,iconKey:"activity",label:s.primaryText,hint:s.secondaryText??"Adresse à vérifier",showHint:true,choose:()=>void select(s)})),...known];
   return <section className={styles.barEndpointSearch} data-bar-route-search={identity} aria-label="Point du trajet">
+    <input autoFocus disabled={disabled} aria-label="Rechercher une adresse ou un lieu" placeholder="Adresse ou lieu enregistré…" value={query} onChange={event=>change(event.target.value)}/><div className={styles.barRouteAddressChoices}>{choices.map(item=><button type="button" key={item.key} disabled={disabled} onClick={item.choose}><strong>{item.label}</strong>{item.hint&&<small>{item.hint}</small>}</button>)}{!choices.length&&!loading&&<small>Aucune adresse vérifiée. Recherchez un lieu ou réessayez.</small>}</div>
     {results.length>0&&<GoogleMapsAttribution showPolicyLink/>}
     {status&&<small role="status">{status}</small>}
     {failed&&<button type="button" disabled={disabled} onClick={()=>setAttempt(x=>x+1)}>Réessayer la recherche</button>}
     {retry&&<button type="button" disabled={disabled||loading} onClick={()=>void select(retry)}>Réessayer cette adresse</button>}
-    {dockHost&&createPortal(<ContextPalette card={card} model={model} appearance="bar" busy={disabled} configure choose={()=>{}} close={()=>{}} question={{title:"Choisir le point du trajet",identity,choices,filterChoices:false,emptyLabel:"Aucune adresse vérifiée. Recherchez un lieu ou réessayez.",search:{label:"Rechercher une adresse ou un lieu",value:query,change}}}/>,dockHost)}
   </section>;
 }
