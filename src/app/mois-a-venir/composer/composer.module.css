@@ -1647,10 +1647,10 @@
 .barRowActions:empty { display:none; }
 .barLivingCard[data-expanded=true] .barItemSection>header { min-height:18px; margin-bottom:2px; }
 .barLivingEditor[data-bar-progressive] .barLivingSections { gap:4px; }
-/* Size moment illustrations from the actual packed card, never the full Board shelf. */
-.barLivingCard[data-expanded=true] .barLivingMount { flex:1 1 auto; min-height:0; }
-.barLivingCard[data-expanded=true] .barLivingEditor[data-bar-progressive] { flex:1 1 auto; container-type:size; container-name:bar-editor; min-height:0; overflow:visible; }
-.barLivingCard[data-expanded=true] .barLivingEditor[data-bar-progressive] .barLivingSections { --bar-open-tile-height:clamp(40px,calc((100cqh - 58px) / 2),110px); }
+/* Natural content height; shelf budget only limits the moment illustrations. */
+.barLivingCard[data-expanded=true] .barLivingMount { flex:0 1 auto; min-height:0; }
+.barLivingCard[data-expanded=true] .barLivingEditor[data-bar-progressive] { flex:0 1 auto; min-height:0; overflow:visible; }
+.barLivingCard[data-expanded=true] .barLivingEditor[data-bar-progressive] .barLivingSections { --bar-open-tile-height:clamp(40px,calc((var(--bar-editor-budget,320px) - 64px) / 2),110px); }
 .barLivingCard[data-expanded=true] .barLivingEditor[data-bar-progressive] .barItemSection>header { min-height:18px; height:18px; margin-bottom:2px; }
 .barLivingCard[data-expanded=true] .barActiveTile>.barGroup>button:first-child { height:calc(var(--bar-open-tile-height) - 26px); min-height:16px; }
 .barLivingCard[data-expanded=true] .barActiveTile .barOpenTileHeading .barCompactBadges { display:none; }
