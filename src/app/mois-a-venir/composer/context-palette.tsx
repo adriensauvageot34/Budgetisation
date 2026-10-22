@@ -1,5 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { Check, Sparkle, ArrowLeftRight, Plus, X, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Sparkle, ArrowLeft, ArrowLeftRight, Plus, X, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -156,7 +156,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-compact-dock={appearance==='bar'&&question.choices.length<=3&&!search} data-context-palette={card.contextOccurrenceId} data-question-dock data-dock-nature={question.nature} aria-label={question.title}
     onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}>
     {appearance==="bar"&&caption&&caption.key.startsWith(answerKey+":")&&<div role="tooltip" id={optionsId+"-full-label"} className={styles.barDockFullLabel}>{caption.label}</div>}
-    <header>{productScene?(question.nature==="OBJECTS"&&question.backToFamilies&&<button type="button" className={styles.barFamiliesBack} disabled={busy} onClick={question.backToFamilies}>← Familles</button>):<div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>}
+    <header>{appearance==="bar"?(question.nature==="OBJECTS"&&question.backToFamilies&&<button type="button" className={styles.barFamiliesBack} aria-label="Revenir aux catégories" title="Revenir aux catégories" disabled={busy} onClick={question.backToFamilies}><ArrowLeft size={15}/></button>):<div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>}
       {search && <><input ref={searchInput} disabled={appearance==="bar"&&busy} aria-label={search.label} placeholder={search.label} value={search.value} onChange={event => search.change(event.target.value)} />
         {appearance==="bar"&&search.value&&<button type="button" className={styles.iconButton} disabled={busy} aria-label="Effacer la recherche des choix" onClick={()=>{search.change("");searchInput.current?.focus({preventScroll:true});}}><X size={16}/></button>}</>}
       {appearance!=="bar"&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">

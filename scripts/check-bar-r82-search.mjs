@@ -14,7 +14,7 @@ const available=barEndpointSuggestions(places,[],'outbound','origin',null,undefi
 assert.deepEqual(barEndpointSuggestions(places,[],'outbound','origin',{kind:'KNOWN',placeId:'one'},undefined,'',true).map(x=>x.place.placeId),['home','three']);
 const selected=[],calls=[],pending=[];let root;
 const request=async(path,init)=>{const body=JSON.parse(init.body);calls.push({path,kind:body.context.kind});if(path.endsWith('autocomplete'))return Response.json({suggestions:[{source:'google_places',placeId:'ChIJ_search_fixture',primaryText:'Gare publique',secondaryText:'France'}]});return new Promise(resolve=>pending.push(resolve));};
-let props={identity:'outbound:origin',decisionKey:'draft1',query:'Gare',change(){},choose:(label,id)=>selected.push({label,id}),known:[{key:'home',label:'Maison admissible',iconKey:'activity',choose(){}}],card:{contextOccurrenceId:'bar',label:'Bar'},model:{library:{searchableAssets:[]},presentation:{objects:{},dragSources:{}}},dockHost:{}};
+let props={inline:true,identity:'outbound:origin',decisionKey:'draft1',query:'Gare',change(){},choose:(label,id)=>selected.push({label,id}),known:[{key:'home',label:'Maison admissible',iconKey:'activity',choose(){}}],card:{contextOccurrenceId:'bar',label:'Bar'},model:{library:{searchableAssets:[]},presentation:{objects:{},dragSources:{}}},dockHost:{}};
 const render=()=>React.createElement(BarPlaceTransportContext.Provider,{value:request},React.createElement(BarRouteEndpointSearch,props));
 const waitSearch=()=>act(async()=>new Promise(resolve=>setTimeout(resolve,340)));
 const text=n=>typeof n==='string'?n:(n?.children??[]).map(text).join('');
@@ -28,5 +28,5 @@ try{
  await act(async()=>button('Réessayer cette adresse').props.onClick());await act(async()=>pending.shift()(Response.json({place:detail})));assert.deepEqual(selected,[{label:'Gare publique',id:'ChIJ_search_fixture'}]);
  props={...props,disabled:true,query:'Autre adresse'};await act(async()=>root.update(render()));const before=calls.length;await waitSearch();assert.equal(calls.length,before);assert.ok(button('Maison admissible'));assert.equal(button('Nom libre'),undefined);
  const result={status:'PASS',level:'REACT_WITH_SYNTHETIC_NETWORK_NOT_BROWSER',checks:['ONE_INPUT','GOOGLE_EXACT_DETAILS_BEFORE_CHOICE','LATE_DIFFERENT_LEG_IGNORED','WRONG_DETAILS_ID_REJECTED_RETRY','DISABLED_NO_PROVIDER_REQUEST','NO_NEW_UNVERIFIED_TEXT_ENDPOINT','NO_GOOGLE_SWITCH'],calls:calls.length,remoteWrites:0};
- assert.equal(root.root.findAll(n=>n.type==='input').length,1);fs.mkdirSync('outputs/bar-r82',{recursive:true});fs.writeFileSync('outputs/bar-r82/search-results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+ assert.equal(root.root.findAll(n=>n.type==='input').length,1);assert.equal(root.root.findAll(n=>n.props['data-bar-dock']===true).length,0,'route addresses stay inside the card');fs.mkdirSync('outputs/bar-r82',{recursive:true});fs.writeFileSync('outputs/bar-r82/search-results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{if(root)await act(async()=>root.unmount());}
