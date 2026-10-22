@@ -45,3 +45,9 @@ Corrections : rails dimensionnés depuis le conteneur réel de l’éditeur, foo
 Réexécution ciblée : Bar ouvert 28 PASS (incluant le modèle UI propriétaire et confidentialité du domicile), recherche endpoints PASS, TypeScript PASS et parité 198/198 PASS. La confirmation navigateur est limitée à une deuxième Preview du code regroupé, avec les mêmes protections.
 
 La construction intermédiaire `c405791` a été annulée avant réception : suppression finale d’une ligne de retour « Ma sortie » redondante avec le titre Bar (même navigation protégée). Le contrôle Bar ouvert a été rejoué sur cette suppression ciblée ; aucun changement métier supplémentaire. Une seule Preview de confirmation est destinée à la réception finale.
+
+## Correction résiduelle démontrée sur la confirmation d20e4b4
+
+Les interactions RAW/validation/Undo, choix explicite du Domicile, coût propriétaire partiel 0,68 €, retour, changement Train puis Undo ont été exécutées en navigateur authentifié, exclusivement en mémoire. Le cas date + deux trajets + participant a révélé une réserve de hauteur insuffisante : l'ancien calcul de BoardCarousel additionnait header + éditeur mais omettait le footer désormais dans le flux. À 1440×720, éditeur client 110px / contenu 136px ; avatars sur le rail inférieur.
+
+Correction strictement bornée : marquer le footer ouvert et inclure sa hauteur réelle dans la réservation existante. Aucun changement de packing, d'ancrage, de scroll ou de données. Bar ouvert 28 contrôles PASS après correction. Cette anomalie n'est pas déclarée PASS sur d20e4b4. Une dernière construction de la PR est nécessaire pour vérifier cette correction exacte ; cela dépasse la confirmation initialement prévue, sans relancer les campagnes financières ou fournisseurs déjà réussies.

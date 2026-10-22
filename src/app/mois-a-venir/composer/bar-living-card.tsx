@@ -126,7 +126,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
         {people.slice(0,3).map((person,index)=><span key={index} aria-hidden="true">{barPersonLabel(person,model).split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('')}</span>)}{people.length>3&&<span aria-hidden="true">+{people.length-3}</span>}
       </button></div>}
     </div>}
-    {expanded&&<div className={styles.barClosedPeopleReserve}><button type="button" className={styles.barClosedPeople} data-bar-closed-people disabled={locked} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)} onClick={()=>open('people')}>
+    {expanded&&<div className={styles.barClosedPeopleReserve} data-bar-open-footer><button type="button" className={styles.barClosedPeople} data-bar-closed-people disabled={locked} aria-label={`Modifier les personnes · ${barPeopleLabel(people,model)}`} title={barPeopleLabel(people,model)} onClick={()=>open('people')}>
       {!people.length&&<><Users size={14}/><Plus size={10}/></>}
       {people.slice(0,3).map((person,index)=><span key={index} aria-hidden="true">{barPersonLabel(person,model).split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('')}</span>)}{people.length>3&&<span aria-hidden="true">+{people.length-3}</span>}
     </button>{!card.readOnly&&<AtomicPopover utility label="Actions de la sortie" state="CONTEXT" focus={()=>{}} icon={<MoreHorizontal size={14}/>}>
