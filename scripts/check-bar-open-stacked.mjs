@@ -174,9 +174,15 @@ try{
  await act(async()=>root.unmount());const {BarRouteLine}=require('@/app/mois-a-venir/composer/bar-living-details');const {mobilityIntentId}=require('@/domain/phase2/planner/identity');
  const ref={kind:'KNOWN',placeId:fixture.world.mobilityFacts.places[0].placeId};
  const line={kind:'MOBILITY_INTENT',selectionId:uuid(99701),optionKey:'car',provenance:'EXPLICIT_USER_DECISION',origin:ref,destination:{kind:'TEXT',label:'Le Boom Boom'},route:{vehicleRef:{vehicleId:uuid(9150),labelAtSelection:'Véhicule conservé',provenance:'EXPLICIT_USER_DECISION'},stops:[]}};
- const copy=structuredClone(line);const routeModel={...model,mobilityOptions:{...model.mobilityOptions,places:fixture.world.mobilityFacts.places},mobilitySummaries:[{contextOccurrenceId:id,ownerIntentId:mobilityIntentId(id,'outbound'),economicFuel:'0.68',status:'PARTIAL',fallbacks:['TOLL_UNAVAILABLE']}]};
+ const copy=structuredClone(line);const routeModel={...model,nightOutSummaries:[{contextOccurrenceId:id,semanticStateDigest:model.board.draft.semanticStateDigest}],mobilityOptions:{...model.mobilityOptions,places:fixture.world.mobilityFacts.places},mobilitySummaries:[{contextOccurrenceId:id,ownerIntentId:mobilityIntentId(id,'outbound'),economicFuel:'0.68',status:'PARTIAL',fallbacks:['TOLL_UNAVAILABLE']}]};
  await act(async()=>{root=create(React.createElement(BarRouteLine,{compact:true,slot:'outbound',leg:line,model:routeModel,contextId:id,open(){}}));});
- assert.match(text(root.toJSON()),/Domicile.*Voiture.*Le Boom Boom.*0,68.*usage partiel/);assert(!text(root.toJSON()).includes('Aller'));assert.equal(nodes(n=>n.type==='details').length,0);assert.equal(nodes(n=>n.props['data-bar-vehicle-capsule']!==undefined).length,0);assert.match(nodes(n=>n.type==='button')[0].props.title,/achat de carburant/);assert.deepEqual(line,copy);checks.push('COMPACT_ROUTE_PARTIAL_NO_VEHICLE_DUPLICATE_NO_DECISION_MUTATION');
+ assert.match(text(root.toJSON()),/Domicile.*Voiture.*Le Boom Boom.*≈ 0,68/);assert(!/Aller|Estimation partielle|Tarif inconnu/.test(text(root.toJSON())));assert.equal(nodes(n=>n.type==='details').length,0);assert.equal(nodes(n=>n.props['data-bar-vehicle-capsule']!==undefined).length,0);assert.match(nodes(n=>n.type==='button')[0].props.title,/usage partiel.*achat de carburant/);assert.deepEqual(line,copy);checks.push('COMPACT_ROUTE_PARTIAL_NO_VEHICLE_DUPLICATE_NO_DECISION_MUTATION');
+ for(const [cost,stale,failed] of [[null,false,false],['0.68',true,false],['0.68',false,true],['0.00',false,false]]){
+   const variant={...routeModel,nightOutSummaries:stale?[]:routeModel.nightOutSummaries,mobilitySummaries:[{...routeModel.mobilitySummaries[0],economicFuel:cost}]};
+   await act(async()=>root.update(React.createElement(BarRouteLine,{compact:true,slot:'outbound',leg:line,model:variant,contextId:id,failed,open(){}})));
+   assert.equal(text(root.toJSON()).includes('€'),cost!==null&&!stale&&!failed);assert(!/Tarif inconnu|Estimation partielle/.test(text(root.toJSON())));
+ }
+ checks.push('COMPACT_COST_UNKNOWN_STALE_FAILED_HIDDEN_KNOWN_ZERO_VISIBLE');
  initialTarget='outbound';await mount(barCompactMonth('tall').semantic);const beforeRouteNavigation=structuredClone(model.semanticState);
  const routeControls=nodes(n=>n.props['data-bar-route-controls']!==undefined)[0];assert(routeControls);
  for(const label of ['Modifier le départ','Modifier l’arrivée','Heure de départ','Inverser ce sens','Retirer ce trajet'])assert(routeControls.findAll(n=>n.type==='button'&&(n.props['aria-label']===label||text(n)===label)).length,label);

@@ -59,10 +59,10 @@ export function BarRouteLine({slot,leg,model,open,navigate,contextId,disabled=fa
  const estimating=pending&&!failed&&!!leg?.origin&&!!leg?.destination&&(leg.optionKey!=="car"||!!vehicle)&&!fresh;
  if(compact){
    const label=(ref:ProspectivePlaceRef|null|undefined)=>{const place=ref?.kind==='KNOWN'?model.mobilityOptions?.places.find(p=>p.placeId===ref.placeId):undefined;return place?barEndpointLabel(place):barPlaceLabel(ref,model);};
-   const amount=failed?'Estimation indisponible':estimating?'Estimation en cours':cost!=null?`${money(cost)} (${leg?.optionKey==='car'?summary?.status==='PARTIAL'?'usage partiel':'usage estimé':'tarif prévu'}${!fresh?' · précédent':''})`:leg?.optionKey==='car'?'Usage à préciser':'Tarif inconnu';
-   const description=[leg?.optionKey==='car'?'Coût d’usage estimé ≠ achat de carburant':null,...availability,missing.length?`À préciser : ${missing.join(', ')}`:null,summary?.toll!=null?`Péage ${money(summary.toll)}`:null,summary?.parking!=null?`Stationnement ${money(summary.parking)}`:null,(leg?.route?.stops.length??0)>2?`${leg!.route!.stops.length-2} étapes intermédiaires conservées`:null].filter(Boolean).join(' · ');
+   const amount=!failed&&!estimating&&fresh&&cost!=null?`${leg?.optionKey==='car'?'≈ ':''}${money(cost)}`:'';
+   const description=[leg?.returnRequired?'Trajet aller-retour':null,leg?.optionKey==='car'?`Coût d’usage ${summary?.status==='PARTIAL'?'partiel':'estimé'} ≠ achat de carburant`:null,failed?'Estimation indisponible':estimating?'Estimation en cours':!fresh?'Projection à actualiser':cost==null?'Prix non renseigné':null,...availability,missing.length?`À préciser : ${missing.join(', ')}`:null,summary?.toll!=null?`Péage ${money(summary.toll)}`:null,summary?.parking!=null?`Stationnement ${money(summary.parking)}`:null,(leg?.route?.stops.length??0)>2?`${leg!.route!.stops.length-2} étapes intermédiaires conservées`:null].filter(Boolean).join(' · ');
    return <button type="button" className={styles.barRouteBadge} data-bar-route-module={slot} data-bar-route={slot} aria-pressed={active} disabled={disabled} onClick={open} title={description} aria-label={`${slot==='outbound'?'Modifier l’aller':'Modifier le retour'} · ${description}`}>
-     <Icon size={13}/><span>{label(leg?.origin)} – {barModeLabel(leg?.optionKey??'unknown')} {leg?.returnRequired?'⇄':'–'} {label(leg?.destination)} · {amount}</span>
+     <Icon size={13}/><span>{label(leg?.origin)} – {barModeLabel(leg?.optionKey??'unknown')} {leg?.returnRequired?'⇄':'–'} {label(leg?.destination)}{amount&&<> · {amount}</>}</span>
    </button>;
  }
  return <div className={styles.barRouteLine} data-bar-route-module={slot} data-active={active} data-bar-route-compact={!!action}>
