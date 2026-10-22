@@ -108,7 +108,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
         {!date&&<button type="button" disabled={locked} aria-label="Modifier la date" onClick={()=>open('date')}><Plus size={12}/>Date</button>}
         {!people.length&&<button type="button" disabled={locked} aria-label="Modifier les personnes · Personnes à préciser" onClick={()=>open('people')}><Plus size={12}/>Personnes</button>}
       </nav>}
-      <div className={styles.barLivingRoutes}>{(["outbound","return"] as const).map(slot=>{const leg=route(slot);return leg?.kind==="MOBILITY_INTENT"?<BarRouteLine key={slot} slot={slot} contextId={card.contextOccurrenceId} leg={leg} model={model} disabled={locked} navigate={open} open={()=>open(slot)}/>:null;})}</div>
+      <div className={styles.barLivingRoutes}>{(["outbound","return"] as const).map(slot=>{const leg=route(slot);return leg?.kind==="MOBILITY_INTENT"?<BarRouteLine compact key={slot} slot={slot} contextId={card.contextOccurrenceId} leg={leg} model={model} disabled={locked} navigate={open} open={()=>open(slot)}/>:null;})}</div>
       {route("outbound")?.kind==="MOBILITY_INTENT"&&!route("return")&&!route("outbound")?.returnRequired&&<button type="button" className={styles.barInlineAdd} disabled={locked} onClick={()=>open("return")}>+ Retour</button>}
       {moments.length>0&&<div className={styles.barClosedMoments} data-bar-closed-rail tabIndex={0} role="region" aria-label="Moments de la sortie · faire défiler horizontalement" onKeyDown={event=>{
         if(event.target!==event.currentTarget||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;

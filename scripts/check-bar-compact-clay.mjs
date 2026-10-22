@@ -25,6 +25,11 @@ try{
   assert.equal(result.ok,true,`${scene}: ${result.code??result.message}`);const model=result.model,card=model.board.contexts.find(c=>c.contextOccurrenceId===id);
   await act(async()=>{root?.unmount();root=create(React.createElement(BarLivingCard,{card,model,living:{open:(_c,target)=>targets.push(target),close(){}},busy:false,preserved:false,preserve(){},drag(){}}));});
   const tree=root.root,groups=tree.findAllByType(BarComponentGroup),rails=tree.findAll(n=>n.type==='div'&&n.props['data-bar-closed-rail']);
+  if(scene==='tall'){
+    assert.equal(tree.findAll(n=>n.type==='details'&&n.props['data-bar-route-availability']!==undefined).length,0);
+    const routes=tree.findAll(n=>n.type==='button'&&n.props['data-bar-route-module']!==undefined);assert.equal(routes.length,2);
+    for(const route of routes){const visible=route.findAll(n=>typeof n.type==='string').map(n=>typeof n.children?.[0]==='string'?n.children.join(''):'').join(' ');assert(!/Aller|Retour|Tarif inconnu|Estimation partielle/.test(visible));assert(route.props['aria-label'].startsWith('Modifier'));await act(async()=>route.props.onClick());assert(['outbound','return'].includes(targets.at(-1)));}
+  }
   assert.equal(rails.length,['empty','meta'].includes(scene)?0:1,'single shared rail');
   assert.equal(groups.length,scene==='before'?5:['empty','meta'].includes(scene)?0:scene==='many'?4:3,`${scene}: visible presentation groups`);
   if(scene==='empty')assert.equal(tree.findAll(n=>n.type==='nav'&&n.props['aria-label']==='Compléter la sortie').length,1);

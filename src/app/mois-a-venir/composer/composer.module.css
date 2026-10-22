@@ -1682,3 +1682,6 @@
 .barRouteAddressChoices>button { display:grid; gap:3px; padding:8px 10px; text-align:left; border:1px solid #e8dac4; border-radius:10px; background:#fffdf8; }
 .barRouteAddressChoices strong { font-size:12px; }
 .barRouteAddressChoices small { font-size:10px; color:#8a775d; }
+.barLivingCard[data-expanded=false] .barLivingRoutes { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.barLivingCard[data-expanded=false] .barLivingRoutes>.barRouteBadge { display:inline-flex; align-items:center; gap:4px; width:max-content; max-width:100%; min-height:25px; padding:3px 6px; border:1px solid #e6d5ba; border-radius:8px; background:#fff9eddd; text-align:left; }
+.barLivingCard[data-expanded=false] .barLivingRoutes>.barRouteBadge>span { margin:0; font-size:10px; line-height:14px; color:#675034; }
