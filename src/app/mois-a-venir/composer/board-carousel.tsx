@@ -126,6 +126,10 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       // the existing reservation; otherwise every scene change can shrink
       // the card below its two rails and place avatars over the last row.
       const footer=card?.querySelector<HTMLElement>(':scope > [data-bar-open-footer]');
+      // Bound tile sizing by the available shelf, not the card's allocated
+      // height. The editor can then report its natural content height and
+      // release the empty space below its rails without a sizing feedback loop.
+      editor.style.setProperty('--bar-editor-budget',`${Math.max(0,shelfHeight-header.getBoundingClientRect().height-(footer?.getBoundingClientRect().height??0)-2)}px`);
       const height = Math.min(shelfHeight,Math.max(195, Math.ceil(header.getBoundingClientRect().height + editor.scrollHeight + (footer?.getBoundingClientRect().height??0) + 2)));
       // Provider results, typing, focus and images do not renegotiate a scene.
       // Retain its envelope until an explicit scene/page transition. Growing
