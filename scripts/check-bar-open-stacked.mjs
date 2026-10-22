@@ -12,7 +12,7 @@ const React=rr('react'),{create,act}=rr('react-test-renderer'),load=Module._load
 Module._load=function(name,...args){if(name==='react')return React;if(name==='react-dom')return{createPortal:n=>n};return load.call(this,name,...args);};
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 globalThis.requestAnimationFrame=cb=>{cb();return 0;};globalThis.cancelAnimationFrame=()=>{};
-globalThis.HTMLElement=class{};globalThis.ResizeObserver=class{observe(){}disconnect(){}};
+globalThis.HTMLElement=class{};globalThis.HTMLInputElement=class extends globalThis.HTMLElement{};globalThis.ResizeObserver=class{observe(){}disconnect(){}};
 globalThis.document={activeElement:null,body:{},addEventListener(){},removeEventListener(){},querySelector(){return null;}};
 globalThis.fetch=async()=>{throw Error('REMOTE_NETWORK_FORBIDDEN');};
 const {BarLivingEditor}=require('@/app/mois-a-venir/composer/bar-living-editor');
@@ -45,6 +45,7 @@ const nodes=predicate=>root.root.findAll(n=>typeof n.type==='string'&&predicate(
 const text=n=>typeof n==='string'?n:n?.children?.map(text).join('')??'';
 const button=label=>nodes(n=>n.type==='button'&&(n.props['aria-label']===label||text(n)===label))[0];
 const click=async label=>{const b=button(label);assert(b,`Missing ${label}`);await act(async()=>b.props.onClick());};
+const enterRow=async(isComposing=false)=>{const field=nodes(n=>n.type==='fieldset'&&typeof n.props.onKeyDown==='function')[0];assert(field);await act(async()=>field.props.onKeyDown({key:'Enter',target:new HTMLInputElement(),nativeEvent:{isComposing},preventDefault(){},stopPropagation(){}}));};
 const editorProps=()=>({initialTarget,context:parent(),card:model.board.contexts.find(c=>c.contextOccurrenceId===id),model,semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],options:model.mobilityOptions,busy:false,fresh:true,dockHost:{},onCancel(){},onSave:operation=>{
  const next=stageLocalDecision(model,model.semanticState,operation);if(!next)return false;ops.push(operation);model=visualDraftModel(model,next);root.update(render());return true;
 }});
@@ -81,9 +82,9 @@ try{
  assert.equal(child().slotSelections.extras.items.length,beforeState.slotSelections.extras.items.length+1);assert.deepEqual(parent().slotSelections.extras,originalParent.slotSelections.extras);checks.push('PLUS_BEFORE_OWNS_ADDITION');
  const beforeQuantity=structuredClone(child());
  const input=label=>nodes(n=>n.type==='input'&&n.props['aria-label']===label)[0];
- await act(async()=>input('Quantité totale').props.onChange({target:{value:'2'}}));await click('Enregistrer');
+ await act(async()=>input('Quantité totale').props.onChange({target:{value:'2'}}));await enterRow();
  await click(nodes(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Rhum · Quantité 2 ·'))[0].props['aria-label']);
- await act(async()=>input('Prix unitaire (€)').props.onChange({target:{value:'8'}}));await click('Enregistrer');
+ await act(async()=>input('Prix unitaire (€)').props.onChange({target:{value:'8'}}));const beforeIme=structuredClone(model.semanticState);await enterRow(true);assert.deepEqual(model.semanticState,beforeIme);await enterRow();
  const changed=child().slotSelections.extras.items.find(i=>i.label==='Rhum');assert.equal(changed.quantity,'2');assert.equal(changed.cost.unitAmount,'8');
  assert.deepEqual(child().slotSelections.extras.items.filter(i=>i.selectionId!==changed.selectionId),beforeQuantity.slotSelections.extras.items.filter(i=>i.selectionId!==changed.selectionId));
  assert.deepEqual(parent().slotSelections.extras,originalParent.slotSelections.extras);checks.push('QUANTITY_PRICE_ONLY_TOUCH_SELECTED_BEFORE_ITEM');
@@ -92,7 +93,7 @@ try{
    ??row.findAll(n=>n.type==='input')[0];assert(quantity);
  await act(async()=>quantity.props.onChange({target:{value:'2,'}}));
  assert.equal(nodes(n=>n.props['data-bar-before-drag']!==undefined).length,0,'RAW removes drag admission');
- const beforeRaw=structuredClone(model.semanticState);await click('Ajouter une consommation');assert.match(text(confirmation()),/saisie/i);assert.deepEqual(model.semanticState,beforeRaw);
+ const beforeRaw=structuredClone(model.semanticState);await enterRow();assert.deepEqual(model.semanticState,beforeRaw);await click('Ajouter une consommation');assert.match(text(confirmation()),/saisie/i);assert.deepEqual(model.semanticState,beforeRaw);
  await click('Continuer à modifier');assert.equal(nodes(n=>n.type==='input'&&n.props.value==='2,').length,1);checks.push('RAW_TRANSITION_CANCEL_PRESERVES_BUFFER');
  await click('Ajouter une consommation');await click('Abandonner cette saisie');await click('Boissons');await click('Bière');
  assert.equal(parent().slotSelections.extras.items.length,originalParent.slotSelections.extras.items.length+1);assert.equal(child().slotSelections.extras.items.length,beforeState.slotSelections.extras.items.length+1);checks.push('PLUS_AU_BAR_NEVER_WRITES_BEFORE');
@@ -129,7 +130,9 @@ try{
  await click('+ Au bar');assert(confirmation(),'DIRECT needs explicit confirmation before switching');assert.equal(ops.length,0);await click('Annuler');assert.deepEqual(model.semanticState,directAdmitted);
  await click('+ Au bar');await click('Détailler Au bar');assert.equal(nightOutConsumption(parent()).mode,'DETAILED');assert(nightOutConsumption(parent()).inactive.some(i=>i.selectionId===uuid(99981)));assert(button('Boissons'));checks.push('DIRECT_NO_AUTOMATIC_TRANSITION_AND_CANCEL_PRESERVES');
  await mount(onlyBar);const beforeDeletion=structuredClone(model.semanticState),priorCount=model.presentation.elementCount;
- await click(nodes(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Planche de tapas · Quantité 1 ·'))[0].props['aria-label']);await click('Retirer ce poste');
+ const lastTile=nodes(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Planche de tapas · Quantité 1 ·'))[0],lastSource=model.presentation.dragSources[lastTile.props['data-drag-source']];assert(lastSource?.removeOperation);assert.equal(lastTile.props.draggable,true);
+ await act(async()=>lastTile.props.onDragStart({stopPropagation(){}}));assert.equal(dragKey,lastSource.sourceKey);
+ const removeLast=await handleComposerRequest(deps,householdId,{...lastSource.removeOperation,sequence:++sequence,targetMonth:'2026-11',draft:model.semanticState});assert(removeLast.ok,removeLast.message);model=removeLast.model;await act(async()=>root.update(render()));
  assert.equal(parent().slotSelections.extras.items.length,0);assert(button('+ Before'));assert(button('+ Au bar'));checks.push('LAST_ITEM_REMOVAL_KEEPS_ACCESS');
  const deletedRead=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:++sequence,targetMonth:'2026-11',draft:model.semanticState});assert(deletedRead.ok);assert.equal(deletedRead.model.presentation.elementCount,priorCount,'removing a component is not removing a Board root');
  await mount(beforeDeletion);assert.deepEqual(parent().slotSelections.extras,beforeDeletion.contexts[0].slotSelections.extras);assert(button('Ajouter une consommation'));checks.push('UNDO_SNAPSHOT_RESTORES_VISIBLE_IDENTITIES');
@@ -150,14 +153,14 @@ try{
    if(basis==='PERSON')Object.assign(selected,{quantity:'4',quantityEvidenceVersion:'component-quantity@v1',quantityPerPerson:'2',pricedParticipantCount:2});
    await mount(scene);await click(nodes(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Nom personnalisé ·'))[0].props['aria-label']);
    assert.equal(nodes(n=>n.props['data-bar-item-details']!==undefined).length,0);assert.equal(nodes(n=>n.props['data-workshop-component']!==undefined).length,0);
-   assert(button('Retirer ce poste'));assert(button('Unité, financement et nom'));assert.equal(nodes(n=>n.props['data-bar-active-tile']===true)[0].findAll(n=>n.type==='button'&&['Options','Retirer ce poste'].includes(text(n))).length,0);
+   for(const label of ['Retirer ce poste','Unité, financement et nom','Enregistrer'])assert.equal(button(label),undefined);assert.equal(nodes(n=>n.props['data-bar-active-tile']===true)[0].findAll(n=>n.type==='button'&&['Options','Retirer ce poste'].includes(text(n))).length,0);
    const old=structuredClone(parent().slotSelections.extras.items[0]);await click('Augmenter la quantité');
    const changed=parent().slotSelections.extras.items[0];assert.deepEqual(changed.cost,old.cost);assert.deepEqual(changed.fundingAllocations,old.fundingAllocations);assert.equal(changed.selectionId,old.selectionId);assert.equal(changed.label,old.label);assert.equal(changed.unitBasis,basis);
    if(basis==='PERSON'){assert.equal(changed.quantityPerPerson,'3');assert.equal(changed.pricedParticipantCount,2);assert.equal(changed.quantity,'6');}
-   await click('Unité, financement et nom');const advanced=nodes(n=>n.props['data-workshop-component']!==undefined)[0];assert(advanced);assert.equal(nodes(n=>n.props['data-bar-active-tile']===true)[0].findAll(n=>n.props['data-workshop-component']!==undefined).length,0,'advanced form is outside rail');
-   const advancedRow=advanced.findAll(n=>n.type==='input')[0];assert(advancedRow);await act(async()=>advancedRow.props.onChange({target:{value:'7,50'}}));await click('Conserver ce poste');
+   const selectedTile=nodes(n=>n.type==='button'&&n.props['aria-label']?.startsWith('Nom personnalisé ·'))[0];await click(selectedTile.props['aria-label']);
+   const price=nodes(n=>n.type==='input'&&n.props['aria-label']?.startsWith('Prix '))[0];assert(price);await act(async()=>price.props.onChange({target:{value:'7,50'}}));await enterRow();
    const priced=parent().slotSelections.extras.items[0];assert.deepEqual(priced.cost,{kind:'MANUAL',unitAmount:'7.50'});assert.deepEqual(priced.fundingAllocations,old.fundingAllocations);assert.equal(priced.label,old.label);
-   checks.push(`COMPACT_${basis}_QUOTE_FUNDING_PARTIAL_EDIT_AND_CONTEXTUAL_OPTIONS`);
+   checks.push(`COMPACT_${basis}_QUOTE_FUNDING_ENTER_PARTIAL_EDIT_NO_DOCK_ACTIONS`);
  }
  const {BarMetadata}=require('@/app/mois-a-venir/composer/bar-living-details');const {BarLivingCard}=require('@/app/mois-a-venir/composer/bar-living-card');
  await mount(barCompactMonth('long').semantic);await act(async()=>root.unmount());
@@ -173,12 +176,12 @@ try{
  const line={kind:'MOBILITY_INTENT',selectionId:uuid(99701),optionKey:'car',provenance:'EXPLICIT_USER_DECISION',origin:ref,destination:{kind:'TEXT',label:'Le Boom Boom'},route:{vehicleRef:{vehicleId:uuid(9150),labelAtSelection:'Véhicule conservé',provenance:'EXPLICIT_USER_DECISION'},stops:[]}};
  const copy=structuredClone(line);const routeModel={...model,mobilityOptions:{...model.mobilityOptions,places:fixture.world.mobilityFacts.places},mobilitySummaries:[{contextOccurrenceId:id,ownerIntentId:mobilityIntentId(id,'outbound'),economicFuel:'0.68',status:'PARTIAL',fallbacks:['TOLL_UNAVAILABLE']}]};
  await act(async()=>{root=create(React.createElement(BarRouteLine,{compact:true,slot:'outbound',leg:line,model:routeModel,contextId:id,open(){}}));});
- assert.match(text(root.toJSON()),/Aller.*Voiture.*Domicile.*Le Boom Boom.*0,68.*usage partiel/);assert.equal(nodes(n=>n.type==='details').length,0);assert.equal(nodes(n=>n.props['data-bar-vehicle-capsule']!==undefined).length,0);assert.match(nodes(n=>n.type==='button')[0].props.title,/achat de carburant/);assert.deepEqual(line,copy);checks.push('COMPACT_ROUTE_PARTIAL_NO_VEHICLE_DUPLICATE_NO_DECISION_MUTATION');
+ assert.match(text(root.toJSON()),/Domicile.*Voiture.*Le Boom Boom.*0,68.*usage partiel/);assert(!text(root.toJSON()).includes('Aller'));assert.equal(nodes(n=>n.type==='details').length,0);assert.equal(nodes(n=>n.props['data-bar-vehicle-capsule']!==undefined).length,0);assert.match(nodes(n=>n.type==='button')[0].props.title,/achat de carburant/);assert.deepEqual(line,copy);checks.push('COMPACT_ROUTE_PARTIAL_NO_VEHICLE_DUPLICATE_NO_DECISION_MUTATION');
  initialTarget='outbound';await mount(barCompactMonth('tall').semantic);const beforeRouteNavigation=structuredClone(model.semanticState);
  const routeControls=nodes(n=>n.props['data-bar-route-controls']!==undefined)[0];assert(routeControls);
  for(const label of ['Modifier le départ','Modifier l’arrivée','Heure de départ','Inverser ce sens','Retirer ce trajet'])assert(routeControls.findAll(n=>n.type==='button'&&(n.props['aria-label']===label||text(n)===label)).length,label);
  const modeDock=nodes(n=>n.props['data-bar-dock']===true)[0];assert(modeDock);assert.equal(modeDock.props['data-dock-nature'],'MODES');assert(!/Modifier le départ|Inverser ce sens|Heure de départ/.test(text(modeDock)));
- await click('Modifier le départ');assert.equal(nodes(n=>n.props['data-bar-dock']===true).length,0);assert(nodes(n=>n.props['data-bar-route-search']!==undefined).length);assert.deepEqual(model.semanticState,beforeRouteNavigation);checks.push('ROUTE_TOOLS_AND_ADDRESSES_IN_CARD_DOCK_MODES_ONLY_NO_MUTATION');
+ await click('Modifier le départ');assert.equal(nodes(n=>n.props['data-bar-dock']===true).length,0);assert(nodes(n=>n.props['data-bar-route-search']!==undefined).length);assert(!text(root.toJSON()).includes('Choisissez une adresse vérifiée'));assert.deepEqual(model.semanticState,beforeRouteNavigation);checks.push('ROUTE_TOOLS_AND_ADDRESSES_IN_CARD_DOCK_MODES_ONLY_NO_MUTATION');
  await pg.verifyCanaries();assert.deepEqual(await pg.counts(),{plans:0,revisions:0});
  console.log(JSON.stringify({status:'PASS',checks,level:'REACT_REAL_OWNERS_PGLITE_SYNTHETIC_NOT_NATIVE_OR_AUTH',remoteWrites:0}));
 }finally{if(root)await act(async()=>root.unmount());await pg.close();}
