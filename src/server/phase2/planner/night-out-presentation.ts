@@ -4,6 +4,7 @@ import type { MonthComposerReadModel } from "@/domain/phase2/planner/composer-co
 import {componentPresentationGroups,type ComponentGroupProjection} from '@/domain/phase2/planner/component-group-presentation';
 import type {ComponentSelectionV1} from '@/domain/phase2/planner/component-contract';
 import {componentId} from '@/domain/phase2/planner/identity';
+import {globalConsumptionCovers} from '@/domain/phase2/planner/night-out-consumption';
 
 /** Roll up already evaluated Compiler facts. Never re-price a selection. */
 export function nightOutComponentGroups(model:MonthComposerReadModel):ComponentGroupProjection[]{
@@ -28,7 +29,7 @@ export function nightOutComponentGroups(model:MonthComposerReadModel):ComponentG
       return {contextOccurrenceId:context.contextOccurrenceId,slotKey,groupKey:group.key,selectionIds:group.items.map(i=>i.selectionId),semanticStateDigest:model.preview.semanticStateDigest,
         quantity:components.length===group.items.length?components.reduce((sum,item)=>sum.plus(item.quantity),new Big(0)).toString():null,
         unitBasis:components[0]?.unitBasis??'ITEM',knownAmount:known.length?known.reduce((sum,v)=>sum.plus(v),new Big(0)).toFixed(2):null,
-        incomplete:amounts.some(v=>v===null)};
+        incomplete:amounts.some((v,index)=>v===null&&!globalConsumptionCovers(contexts,context.contextOccurrenceId,slotKey,group.items[index].selectionId))};
     });
   });});
 }

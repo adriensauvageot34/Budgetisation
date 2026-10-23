@@ -9,6 +9,7 @@ import { resolveContextTemplate, CONTEXT_REGISTRY_VERSION } from "./context-regi
 import { contextDate, validateContextGraph } from "./context-selections";
 import { resolveComponentCost } from "./cost-resolver";
 import { resolveRenewalComponentBinding } from "./renewal-compiler";
+import { nightOutConsumption, consumptionReferenceKey } from "@/domain/phase2/planner/night-out-consumption";
 
 export const CONTEXT_COMPILER_VERSION = "planner-context-compiler@v3-renewals";
 function resolveBinding(option: ComponentOptionDefinition, domain: string | null, item: Extract<ComponentSelectionV1, { kind: "COMPONENT" }>,
@@ -37,6 +38,10 @@ function resolveBinding(option: ComponentOptionDefinition, domain: string | null
 export function expandComposableContexts(state: PlanSemanticStateV1, world: PlanningWorldFacts, planSlots: readonly CompiledPlanSlot[]) {
   const graph = validateContextGraph(state), requests: ComponentRequest[] = [], contexts: CompiledContext[] = [], mobilityIntents: MobilityIntent[] = [];
   const constraints: ConstraintResult[] = [];
+  const covered = new Set(state.contexts.flatMap(context => {
+    const mode = nightOutConsumption(context);
+    return mode?.version === "night-out-consumption@v2" && mode.mode === "GLOBAL" ? mode.covered.map(consumptionReferenceKey) : [];
+  }));
   const add = (code: string, targetRef: string, severity: "WARN" | "INFO" = "WARN") => constraints.push({ code, targetRef, severity,
     scope: "CONTEXT", candidate: null, reference: null, evidenceRefs: [], confidence: "HIGH", remediation: null, policyVersion: CONTEXT_COMPILER_VERSION });
   const active = (id: string): boolean => {
@@ -72,6 +77,9 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
             knowledge: option.mobilityMode === "FREE" ? "DECLARED" : option.mobilityMode === "UNKNOWN" ? "UNKNOWN" : "PARTIAL" });
           continue;
         }
+        // Keep descriptive selections in their original compiled sockets, but
+        // emit no priced/UNKNOWN/zero financial contribution for covered facts.
+        if (covered.has(consumptionReferenceKey({contextOccurrenceId: context.contextOccurrenceId, slotKey: slot.slotKey, selectionId: item.selectionId}))) continue;
         const id = componentId(context.contextOccurrenceId, slot.slotKey, item.selectionId); componentIds.push(id);
         const durationUnknown = item.lodgingPricing?.basis === "PER_NIGHT" && item.lodgingPricing.nightCount === null;
         if (durationUnknown) add("CONTEXT_LODGING_DURATION_UNKNOWN", id);
@@ -95,6 +103,17 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
       compiledSlots.push({ contextOccurrenceId: context.contextOccurrenceId, slotKey: slot.slotKey, role: slot.role, cardinality: slot.cardinality,
         state: unresolved ? "UNRESOLVED" : accepted.some(item => item.kind !== "UNRESOLVED") ? "RESOLVED" : items.length ? "SUGGESTED" : "EMPTY",
         selections: items, componentIds, childContextIds, mobilityIntentIds, contributes });
+    }
+    const consumption = nightOutConsumption(context);
+    if (contributes && consumption?.version === "night-out-consumption@v2" && consumption.mode === "GLOBAL") {
+      const id = componentId(context.contextOccurrenceId, "extras", consumption.globalSelectionId);
+      requests.push({componentId: id, ownerRef: context.contextOccurrenceId, contextOccurrenceId: context.contextOccurrenceId,
+        externalEntryId: null, externalLineId: null, role: "extras", label: "Consommations de la sortie", quantity: "1",
+        cost: {kind: "MANUAL", unitAmount: consumption.amount}, fundingAllocations: [], plannedDate,
+        binding: {slotIdentityKey: null, relation: "NO_RELATED_SLOT", displacement: "KNOWN", amount: null, count: null},
+        selectionProvenance: "EXPLICIT_USER_DECISION", bindingEvidenceRefs: ["contract:night-out-consumption@v2", ...consumption.covered.map(ref => `decision:${ref.contextOccurrenceId}:${ref.slotKey}:${ref.selectionId}`)]});
+      const extras = compiledSlots.find(s => s.slotKey === "extras")!;
+      compiledSlots[compiledSlots.indexOf(extras)] = {...extras, componentIds: [...extras.componentIds, id], state: "RESOLVED"};
     }
     const economicSelections = compiledSlots.flatMap(s => s.selections).filter(item => item.provenance !== "PERSONAL_SUGGESTION"
       && (item.kind === "COMPONENT" || item.kind === "CHILD_CONTEXT")).length;

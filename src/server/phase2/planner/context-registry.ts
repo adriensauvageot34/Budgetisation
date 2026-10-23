@@ -2,6 +2,7 @@ import "server-only";
 import type { ComponentOptionDefinition, ComponentSlotDefinition } from "@/domain/phase2/planner/component-contract";
 import type { ContextCapability, ContextFieldDefinition, ContextRegistryV1, ContextTemplateV1 } from "@/domain/phase2/planner/context-contract";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
+import { nightOutConsumption } from "@/domain/phase2/planner/night-out-consumption";
 
 export const CONTEXT_REGISTRY_VERSION = "planner-context-registry@v3-renewals";
 export const GIFT_ASSET_CONTEXT_REGISTRY_VERSION = "planner-context-registry@v4-gift-asset";
@@ -97,6 +98,8 @@ const coverageRegistry=freeze<ContextRegistryV1>({version:"planner-context-regis
 const registry=freeze<ContextRegistryV1>({version:"planner-context-registry@v9-night-consumption",templates:coverageRegistry.templates.map(t=>t.templateKey!=="night-out"?t:{...t,version:"night-out@v4",
   fields:[...t.fields,{fieldKey:"nightOutConsumption",kind:"TEXT" as const,required:false,semanticContract:"NIGHT_OUT_CONSUMPTION" as const}]})});
 export const publishContextRegistry = (): ContextRegistryV1 => registry;
+const globalConsumptionRegistry = freeze<ContextRegistryV1>({version: "planner-context-registry@v10-bar-global-consumption",
+  templates: registry.templates.map(t => t.templateKey === "night-out" ? {...t, version: "night-out@v5"} : t)});
 /** Preserve the exact registry manifest previously emitted for v2 revisions. */
 const v2Registry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION,
   templates: giftRegistry.templates.map(template => ({ ...template,
@@ -113,6 +116,7 @@ const legacyRegistry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VER
   templates: v2Registry.templates.map(template => ({ ...template,
     fields: template.fields.filter(field => isLegacyContextField(template.templateKey, field.fieldKey)) })) });
 export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
+  if (state.contexts.some(context => nightOutConsumption(context)?.version === "night-out-consumption@v2")) return globalConsumptionRegistry;
   if (state.contexts.some(context=>context.fields.nightOutConsumption!==undefined))return registry;
   if (state.contexts.some(context=>Object.values(context.slotSelections).some(slot=>Array.isArray(slot.items)&&slot.items.some(item=>item&&typeof item==="object"&&!Array.isArray(item)&&Object.hasOwn(item,"economicScope")))))return coverageRegistry;
   if (state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v6")) return venueRegistry;

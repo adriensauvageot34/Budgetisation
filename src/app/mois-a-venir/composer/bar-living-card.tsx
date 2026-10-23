@@ -16,7 +16,7 @@ import {componentPresentationGroups} from '@/domain/phase2/planner/component-gro
 import {BarComponentGroup} from './bar-component-group';
 import {BarRouteLine,barPlaceLabel,barModeLabel,barPeopleLabel,barDateLabel,barPersonLabel} from "./bar-living-details";
 import type {ProspectivePersonRef,ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
-import {nightOutConsumption} from "@/domain/phase2/planner/night-out-consumption";
+import {nightOutDirectSelectionId,globalConsumptionCovers} from "@/domain/phase2/planner/night-out-consumption";
 export {barPlaceLabel,barModeLabel,barPeopleLabel};
 
 export type LivingBar = {id?:string; removingId?:string; content?:ReactNode; open:(card:ComposerContextCardView,target:BarTarget)=>void; close:()=>void};
@@ -47,13 +47,13 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
   const open=(target:BarTarget)=>living.open(card,target), locked=busy||preserved||card.readOnly||removing;
   const {suppressClick,...surfaceDrag}=useBarClosedDrag(`context-occurrence:${card.contextOccurrenceId}`,!expanded&&!locked);
   const semantic=model.semanticState.contexts.find(c=>c.contextOccurrenceId===card.contextOccurrenceId);
-  const directSelectionId=semantic?nightOutConsumption(semantic)?.directSelectionId:null;
+  const directSelectionId=semantic?nightOutDirectSelectionId(semantic):null;
   const before=semantic&&barBefore(model.semanticState,semantic);
   const beforeGroups=before?componentPresentationGroups([before.bottle,...before.extras]):[];
   const components=card.sockets.flatMap(socket=>socket.currentItems.filter(item=>(item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT")&&item.selectionId!==directSelectionId).map(item=>({slot:socket.slotKey,item,amount:socket.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount})));
   // The summary may also be incomplete because context information is missing.
   // Do not claim missing prices unless the published line evaluations say so.
-  const missingComponentPrice=components.some(c=>c.item.kind==='COMPONENT'&&c.amount==null)||model.nightOutComponentGroups?.some(group=>group.contextOccurrenceId===before?.child.contextOccurrenceId&&group.semanticStateDigest===model.board.draft.semanticStateDigest&&group.incomplete);
+  const missingComponentPrice=components.some(c=>c.item.kind==='COMPONENT'&&c.amount==null&&!globalConsumptionCovers(model.semanticState.contexts,card.contextOccurrenceId,c.slot,c.item.selectionId))||model.nightOutComponentGroups?.some(group=>group.contextOccurrenceId===before?.child.contextOccurrenceId&&group.semanticStateDigest===model.board.draft.semanticStateDigest&&group.incomplete);
   const incompleteExplanation=summary?.knownAmount!=null?`${money(summary.knownAmount)} connus, ${missingComponentPrice?'certains prix restent à préciser':'certains coûts restent à chiffrer'}`:'';
   const route=(slot:"outbound"|"return")=>card.sockets.find(s=>s.slotKey===slot)?.currentItems.find(s=>s.kind==="MOBILITY_INTENT");
   const place=card.fields.placeRef as ProspectivePlaceRef|undefined;

@@ -1,0 +1,65 @@
+/** D1 checkpoint B: React interactions + isolated SQL RPCs, no remote network. */
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import Module,{createRequire} from 'node:module';
+import {require} from './lib/phase2-ts-loader.mjs';
+import {d1Fixture,globalCommand,toGlobal,toDetail,compiledD1,totalD1,parentId,beforeId} from './check-bar-d1-global.mjs';
+import {fixture,uuid,householdId,providers} from './fixtures/planner-mobility.mjs';
+import {userId} from './fixtures/planner-kernel.mjs';
+import {createKernelPostgres} from './lib/planner-kernel-postgres.mjs';
+const rr=createRequire(new URL('../outputs/l4c-test-tools/package.json',import.meta.url)),React=rr('react'),{create,act}=rr('react-test-renderer'),load=Module._load;
+Module._load=function(name,...args){if(name==='react')return React;if(name==='react-dom')return{createPortal:n=>n};return load.call(this,name,...args);};
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;globalThis.requestAnimationFrame=cb=>{cb();return 0;};globalThis.cancelAnimationFrame=()=>{};
+globalThis.HTMLElement=class{};globalThis.HTMLInputElement=class extends HTMLElement{};globalThis.ResizeObserver=class{observe(){}disconnect(){}};
+globalThis.document={activeElement:null,body:{},addEventListener(){},removeEventListener(){},querySelector(){return null;}};
+
+const {BarLivingEditor}=require('@/app/mois-a-venir/composer/bar-living-editor');
+const {WorkshopConfirmationProvider}=require('@/app/mois-a-venir/composer/workshop-confirmation');
+const {WorkshopChoicesProvider}=require('@/app/mois-a-venir/composer/workshop-choices');
+const {InlineEditRegistry,InlineEditContext}=require('@/app/mois-a-venir/composer/inline-edit-registry');
+const {stageLocalDecision,visualDraftModel}=require('@/app/mois-a-venir/composer/local-draft');
+const {editNightOut}=require('@/domain/phase2/planner/night-out-edit');
+const {parsePlanSemanticState,semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
+const {saveComposerDraft,readComposerDrafts}=require('@/server/phase2/planner/composer-draft-service');
+const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
+const {preparePlanningMobility}=require('@/server/phase2/planner/prospective-mobility-pricing');
+const {createPlanApplyRepository}=require('@/server/phase2/planner/repository');
+const pg=await createKernelPostgres(),repository=createPlanApplyRepository(pg.client);
+globalThis.window={addEventListener(){},removeEventListener(){}};globalThis.fetch=async()=>{throw Error('REMOTE_NETWORK_FORBIDDEN');};
+const deps={repository,readWorld:async()=>fixture(),prepareWorld:(w,s)=>preparePlanningMobility(w,s,providers().value),householdPersons:[],validateContextReferences:async(_h,refs)=>{assert.equal(refs.personIds.length,0);assert.ok(refs.placeIds.every(id=>fixture().mobilityFacts.places.some(p=>p.placeId===id)));}};
+let model,root,ops=[],seq=0;const checks=[],registry=new InlineEditRegistry(),requestRef={current(){}};
+const check=async(name,run)=>{await run();checks.push({name,status:'PASS'});console.log(name+' PASS');};
+const parent=()=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===parentId);
+const nodes=p=>root.root.findAll(n=>typeof n.type==='string'&&p(n));
+const text=n=>typeof n==='string'?n:Array.isArray(n)?n.map(text).join(''):n?.children?.map(text).join('')??'';
+const button=label=>nodes(n=>n.type==='button'&&(n.props['aria-label']===label||text(n)===label))[0];
+const click=async label=>{const b=button(label);assert(b,'Missing '+label);await act(async()=>b.props.onClick());};
+const render=()=>React.createElement(WorkshopConfirmationProvider,{requestRef},React.createElement(WorkshopChoicesProvider,null,React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(BarLivingEditor,{context:parent(),card:model.board.contexts.find(c=>c.contextOccurrenceId===parentId),model,semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],busy:false,fresh:true,dockHost:{},onCancel(){},onSave:operation=>{const next=stageLocalDecision(model,model.semanticState,operation);assert(next);ops.push(operation);model=visualDraftModel(model,next);root.update(render());return true;}}))));
+const accept=async()=>{const b=nodes(n=>n.type==='button'&&n.props['data-confirm-workshop']!==undefined)[0];assert(b);await act(async()=>b.props.onClick());};
+const read=async semantic=>{const r=await handleComposerRequest(deps,householdId,{kind:'READ',sequence:++seq,targetMonth:'2026-11',draft:semantic});assert(r.ok,r.message);return r.model;};
+try{
+ model=await read(d1Fixture());
+ await act(async()=>{root=create(render(),{createNodeMock:e=>e.type==='dialog'?{open:false,showModal(){this.open=true;},close(){this.open=false;},contains(){return false;},querySelector(){return{focus(){}};}}:null});});
+ await check('UI_CANCEL_CONFIRMATION_DOES_NOT_MUTATE',async()=>{await click('Modifier le prix global des consommations');assert.match(text(root.toJSON()),/Utiliser un prix global/);assert.equal(ops.length,0);const cancel=nodes(n=>n.type==='button'&&n.props['data-keep-editing']!==undefined)[0];await act(async()=>cancel.props.onClick());assert.equal(ops.length,0);});
+ await check('UI_ONE_CONFIRM_ENTER_40_DOUBLE_ENTER_SINGLE_MUTATION',async()=>{await click('Modifier le prix global des consommations');await accept();const input=nodes(n=>n.props['data-bar-inline-amount']!==undefined)[0];await act(async()=>input.props.onChange({target:{value:'40'}}));const enter={key:'Enter',nativeEvent:{},preventDefault(){},stopPropagation(){}};await act(async()=>{input.props.onKeyDown(enter);input.props.onKeyDown(enter);});assert.equal(ops.length,1);assert.equal(parent().fields.nightOutConsumption.mode,'GLOBAL');model=await read(model.semanticState);await act(async()=>root.update(render()));assert.match(text(root.toJSON()),/51,00/);assert.match(text(root.toJSON()),/40,00/);assert.equal(nodes(n=>n.props['data-price-unknown']!==undefined).length,0);assert.equal(nodes(n=>n.props['aria-label']==='Revenir aux prix détaillés').length,0);});
+ await check('UI_QUANTITY_ONLY_SIX_NO_PRICE_FIELD_GLOBAL_UNCHANGED',async()=>{const tile=nodes(n=>n.type==='button'&&String(n.props['aria-label']).startsWith('Bière · Quantité'))[0];assert(tile);await act(async()=>tile.props.onClick());assert.equal(nodes(n=>n.type==='input'&&String(n.props['aria-label']).includes('Prix')).length,0);await click('Augmenter la quantité');await click('Augmenter la quantité');assert.equal(parent().slotSelections.extras.items[0].quantity,'6');assert.equal(parent().slotSelections.extras.items[0].cost.unitAmount,'5');assert.equal(totalD1(await compiledD1(model.semanticState)),'51.00');});
+ const globalSix=structuredClone(model.semanticState);
+ await check('UI_RETURN_DETAIL_61_PRICE_BADGES_RETURN_GLOBAL_REUSES_40',async()=>{await click('Revenir aux prix détaillés');model=await read(model.semanticState);await act(async()=>root.update(render()));assert.equal(totalD1(await compiledD1(model.semanticState)),'61.00');assert.ok(nodes(n=>n.props['data-price-unknown']!==undefined).length);await click('Reprendre le prix global');await accept();const input=nodes(n=>n.props['data-bar-inline-amount']!==undefined)[0];assert.equal(input.props.value,'40');await act(async()=>input.props.onKeyDown({key:'Enter',nativeEvent:{},preventDefault(){},stopPropagation(){}}));assert.equal(totalD1(await compiledD1(model.semanticState)),'51.00');});
+ await check('UI_CONFIRMATION_STALE_WHEN_BEFORE_CHANGES',async()=>{model=await read(toDetail(model.semanticState));await act(async()=>root.update(render()));await click('Modifier le prix global des consommations');const c=model.semanticState.contexts.find(c=>c.contextOccurrenceId===beforeId);const changed=editNightOut(model.semanticState,{contextOccurrenceId:parentId,fields:{},before:{childContextOccurrenceId:beforeId,selectionId:parent().slotSelections.before.items[0].selectionId,bottle:c.slotSelections.main.items[0],extras:[{...c.slotSelections.extras.items[0],quantity:'2'}]}});model=await read(changed);await act(async()=>root.update(render()));const before=ops.length;await accept();assert.equal(ops.length,before);assert.match(text(root.toJSON()),/changé entre-temps/);});
+ await check('UNDO_REDO_SQL_DRAFT_RELOAD_CAS_AND_LOST_RESPONSE',async()=>{
+  const detail=toDetail(globalSix);assert.equal(totalD1(await compiledD1(parsePlanSemanticState(globalSix))),'51.00');assert.equal(totalD1(await compiledD1(parsePlanSemanticState(detail))),'61.00');
+  await pg.db.exec('reset role; alter table auth.users add column raw_app_meta_data jsonb;');
+  for(const file of ['20261011130256_p07b_m0_phase2_composer_drafts_fixture_gate.sql','20261011150830_p07_composer_draft_access_v2.sql'])await pg.db.exec('begin;'+fs.readFileSync('supabase/migrations/'+file,'utf8')+'commit;');
+  await pg.db.exec('update private.phase2_composer_draft_access set enabled_for_all=true; set role authenticated;');
+  const supabase={from(table){assert.ok(['phase2_composer_drafts','phase2_month_plans'].includes(table));const filters=[];const q={select(){return q;},eq(k,v){assert.match(k,/^[a-z_]+$/);filters.push([k,v]);return q;},order(){return q;},abortSignal(){return q;},maybeSingle(){q.single=true;return q;},then(resolve,reject){return pg.db.query(`select to_jsonb(t) as row from public.${table} t where ${filters.map(([k],i)=>k+'=$'+(i+1)).join(' and ')}`,filters.map(([,v])=>v)).then(r=>({data:q.single?r.rows[0]?.row??null:r.rows.map(x=>x.row),error:null}),e=>({data:null,error:e})).then(resolve,reject);}};return q;},rpc(name,args){assert.equal(name,'save_phase2_composer_draft_v2');const keys=['household_id','target_month','expected_draft_id','expected_draft_version','save_request_id','base_plan_id','base_plan_revision_id','base_plan_revision_number','semantic_state','semantic_state_digest'];const q={abortSignal(){return q;},then(resolve,reject){return pg.db.query(`select public.save_phase2_composer_draft_v2(${keys.map((_,i)=>'$'+(i+1)).join(',')}) as result`,keys.map(k=>k==='semantic_state'?JSON.stringify(args['p_'+k]):args['p_'+k])).then(r=>({data:r.rows[0].result,error:null}),e=>({data:null,error:e})).then(resolve,reject);}};return q;}};
+  const scope={supabase,userId,householdId};let stored;
+  const request=s=>({targetMonth:'2026-11',semanticState:s,digest:semanticStateDigest(s),requestId:crypto.randomUUID(),expectedDraftId:stored?.draftId??null,expectedDraftVersion:stored?.version??0,expectedBaseRevisionId:null,expectedBaseRevisionNumber:0});
+  const first=request(globalSix),saved=await saveComposerDraft(scope,first);assert(saved.ok,JSON.stringify(saved));stored=saved.draft;
+  const replay=await saveComposerDraft(scope,first);assert(replay.ok);assert.equal(replay.draft.version,stored.version);
+  let reloaded=(await readComposerDrafts(scope,'2026-11')).active;assert.equal(reloaded.digest,semanticStateDigest(globalSix));assert.deepEqual(reloaded.semanticState,globalSix);
+  const stale=request(detail),second=await saveComposerDraft(scope,request(detail));assert(second.ok);stored=second.draft;const refused=await saveComposerDraft(scope,stale);assert.equal(refused.ok,false);
+  const restored=toGlobal((await readComposerDrafts(scope,'2026-11')).active.semanticState);assert.equal(parentId,restored.contexts.find(c=>c.fields.nightOutConsumption)?.contextOccurrenceId);assert.equal(totalD1(await compiledD1(restored)),'51.00');
+ });
+ await check('PREVIEW_APPLY_RELOAD_IDEMPOTENCE_ISOLATED_SQL_ONLY',async()=>{const m=await read(globalSix);const request={kind:'APPLY',sequence:++seq,targetMonth:'2026-11',draft:globalSix,command:{...m.proof,applyRequestId:uuid(99130)}};const applied=await handleComposerRequest(deps,householdId,request);assert(applied.ok,JSON.stringify(applied));const replay=await handleComposerRequest(deps,householdId,request);assert(replay.ok,JSON.stringify(replay));const active=await repository.readActivePlan(householdId,'2026-11');assert.equal(semanticStateDigest(active.activeRevision.semanticState),semanticStateDigest(globalSix));assert.equal(active.activeRevision.compiledManifest.contextRegistry.version,'planner-context-registry@v10-bar-global-consumption');assert.equal(totalD1(await compiledD1(toDetail(active.activeRevision.semanticState))),'61.00');assert.deepEqual(await pg.counts(),{plans:1,revisions:1});await pg.verifyCanaries();});
+ fs.mkdirSync('outputs/bar-d1',{recursive:true});fs.writeFileSync('outputs/bar-d1/checkpoint-b.json',JSON.stringify({level:'REACT_INTERACTION_PLUS_REAL_SQL_PGLITE_NOT_AUTHENTICATED_SUPABASE',checks,remoteWrites:0,financialSourceWrites:0,isolatedPlans:1,isolatedRevisions:1},null,2));
+}finally{if(root)await act(async()=>root.unmount());await pg.close();}

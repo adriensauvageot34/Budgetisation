@@ -1,7 +1,7 @@
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { componentPresentationGroups } from "@/domain/phase2/planner/component-group-presentation";
-import { nightOutConsumption } from "@/domain/phase2/planner/night-out-consumption";
+import { nightOutDirectSelectionId } from "@/domain/phase2/planner/night-out-consumption";
 import { barBefore } from "../bar-before";
 
 /** Preferred envelope of the EXISTING closed rail, not another layout engine.
@@ -11,7 +11,7 @@ import { barBefore } from "../bar-before";
 export function barClosedWidth(card: ComposerContextCardView, model: ComposerUiModel) {
   const semantic = model.semanticState.contexts.find(c => c.contextOccurrenceId === card.contextOccurrenceId);
   const before = semantic && barBefore(model.semanticState, semantic);
-  const direct = semantic && nightOutConsumption(semantic)?.directSelectionId;
+  const direct = semantic && nightOutDirectSelectionId(semantic);
   const counts = [
     ...(before ? [componentPresentationGroups([before.bottle, ...before.extras]).length] : []),
     ...["extras", "food", "main", "before"].flatMap(slot => {
