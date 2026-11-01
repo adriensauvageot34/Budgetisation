@@ -7,6 +7,7 @@ import { controlValuePresentation, controlValueSummary } from "./control-value-p
 import styles from "./composer.module.css";
 import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
+import { ComposerMonthRead, monthReadTargets } from "./month-read";
 
 /** Non-modal, local presentation of the already admitted model. No transport. */
 export function ComposerFinancialInspector({ model, mode, stale, focused, focus, close }: {
@@ -28,7 +29,8 @@ export function ComposerFinancialInspector({ model, mode, stale, focused, focus,
     ...model.board.contexts.map(card => ({ ref: card.contextOccurrenceId, label: card.label,
       caption: knowledgeLabel(card.knowledge), valueStatus: undefined, locked: card.readOnly, access: card.readOnly ? "Source externe · lecture seule" : "Voir la carte",
       hint: card.sockets.filter(socket => socket.visualState === "UNRESOLVED").map(socket => socket.label).filter(Boolean).join(" · ") || "Choix ou coût à préciser" }))];
-  const shown = mode === "UNRESOLVED" ? rows.filter(row => model.presentation.unresolvedRefs.includes(row.ref)) : rows;
+  const monthlyTargets = monthReadTargets(model);
+  const shown = mode === "UNRESOLVED" ? rows.filter(row => model.presentation.unresolvedRefs.includes(row.ref)) : rows.filter(row => !monthlyTargets.has(row.ref));
   return <aside ref={panel} className={styles.financialInspector} data-financial-inspector data-mode={mode} aria-labelledby="composer-finances-title"
     onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); } }}>
     <header><div><small>VOTRE MOIS EN CLAIR</small><h2 id="composer-finances-title" tabIndex={-1}>{mode === "FINANCE" ? "Les finances du mois" : "Les éléments à préciser"}</h2></div>
@@ -38,9 +40,11 @@ export function ComposerFinancialInspector({ model, mode, stale, focused, focus,
         <h3>{controls.find(c => c.targetRef === focused)?.label} · repères et provenance</h3>
         <CardKnowledgePanel knowledge={model.cardKnowledge[`control:${focused}`]} />
       </section>}
-      {mode === "FINANCE" ? <ComposerProjectionDetails projection={model.board.cockpit} stale={stale} /> : <p className={styles.financeExplanation}>Une information à préciser peut rester dans un brouillon sauvegardé. Elle n’est pas forcément bloquante. Le contrôle de transformation en Plan vérifie les contraintes réelles.</p>}
+      {mode === "FINANCE" ? <><ComposerMonthRead model={model} stale={stale} focused={focused} focus={focus} />
+        <details className={styles.cockpitDetails}><summary>Projection et financement du mois</summary>
+          <ComposerProjectionDetails projection={model.board.cockpit} stale={stale} /></details></> : <p className={styles.financeExplanation}>Une information à préciser peut rester dans un brouillon sauvegardé. Elle n’est pas forcément bloquante. Le contrôle de transformation en Plan vérifie les contraintes réelles.</p>}
       <section className={styles.financeDecisions} aria-label={mode === "FINANCE" ? "Retrouver une décision sur le Board" : "Décisions à préciser"}>
-        <h3>{mode === "FINANCE" ? "Retrouver mes décisions" : `${shown.length} élément(s) à regarder`}</h3>
+        <h3>{mode === "FINANCE" ? "Autres cartes du mois" : `${shown.length} élément(s) à regarder`}</h3>
         {mode === "FINANCE" && <p>Chaque ligne rejoint sa carte par son identité. Les montants ne sont pas additionnés ici.</p>}
         {shown.map(row => <button key={row.ref} data-inspector-target={row.ref} data-value-status={row.valueStatus} aria-current={focused === row.ref ? "true" : undefined} onClick={() => focus(row.ref)}>
           <span><strong>{row.label}</strong><small>{mode === "UNRESOLVED" && !row.locked ? row.hint : row.access}</small></span>

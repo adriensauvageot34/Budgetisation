@@ -807,6 +807,25 @@
 .financialInspector h2:focus { outline:none; }
 .inspectorScroll { min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 16px 20px; scrollbar-width:thin; }
 .financialInspector .projectionDetails { overflow:visible; padding:0; }
+.monthRead { padding:12px 0 8px; }
+.monthReadPeriod { margin:0 0 5px; font-size:12px; color:#51415f; }
+.monthReadNotice { margin:5px 0 9px; font-size:11px; line-height:1.45; color:#74657d; }
+.monthReadGroup { margin:10px 0 0; }
+.monthReadGroup h3 { display:flex; align-items:baseline; gap:7px; margin:0; padding:6px 0; border-bottom:1px solid #e9e2ef; font-size:12px; color:#554362; }
+.monthReadGroup h3>span { font-size:10px; font-weight:400; color:#786a80; }
+.monthReadRow { border-bottom:1px solid #f0ebf4; min-width:0; }
+.monthReadRow>summary { display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:9px 2px; cursor:pointer; list-style:none; }
+.monthReadRow>summary::-webkit-details-marker { display:none; }
+.monthReadRow>summary::after { content:"+"; flex:0 0 auto; font-size:13px; color:#897591; }
+.monthReadRow[open]>summary::after { content:"−"; }
+.monthReadRow summary>span { flex:1; min-width:0; }
+.monthReadRow strong { display:block; font-size:12px; font-weight:600; overflow-wrap:anywhere; }
+.monthReadRow small { display:block; margin-top:3px; font-size:10px; line-height:1.4; color:#796b81; }
+.monthReadRow small svg { display:inline; vertical-align:-1px; }
+.monthReadRow b { flex:0 1 44%; font-size:12px; font-weight:600; text-align:right; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.monthReadDetail { margin:0 0 9px; padding:7px 9px; border-radius:8px; background:#f8f5fb; font-size:11px; line-height:1.5; color:#6b5976; }
+.monthReadDetail p { margin:3px 0; overflow-wrap:anywhere; }
+.monthReadDetail button { padding:5px 0; border:0; background:transparent; text-decoration:underline; text-underline-offset:3px; color:#704b91; font-size:11px; }
 .financeExplanation { font-size:12px; line-height:1.5; color:#6d5f78; margin:10px 0; }
 .financeSummary { padding:15px 13px; margin:14px 0 10px; border:1px solid #e8dcf0; border-radius:13px; background:#faf6fd; }
 .financeSummary>span { font-size:12px; color:#6c547d; }

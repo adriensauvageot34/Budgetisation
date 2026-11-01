@@ -10,6 +10,7 @@ import type { FamilyVisitEdit } from "./family-visit-edit";
 import type { RestaurantEdit } from "./restaurant-edit";
 import type { GuidedContextEdit } from "./guided-context-edit";
 import type { PlannedMobilityOptions } from "../planned-places";
+import type { BaselineStructuralFact, BaselineSavingsReservation } from "./baseline-contract";
 
 export type ComposerMobilitySummary = Readonly<{ contextOccurrenceId: string; journeyId: string; ownerIntentId?: string; requestDigest: string;
   status: "RESOLVED" | "PARTIAL" | "UNKNOWN"; distanceKm: string | null; economicFuel: string | null; durationSeconds?:number|null; fuelLiters?:string|null;
@@ -64,6 +65,14 @@ export type ComposerDragSource = Readonly<{
 }>;
 /** Excludes Baseline snapshots, canonical evidence and financial adapter entries. */
 export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly<{
+  /** Display-only subset of the same authorized read. No Canonical rows or new authority. */
+  monthRead?: Readonly<{
+    targetMonth: string; knowledgeCutoff: string;
+    resources: readonly BaselineStructuralFact[];
+    savingsReservations: readonly BaselineSavingsReservation[];
+    controlDomains: Readonly<Record<string, string>>;
+    sourceOwners: Readonly<Record<string, string>>;
+  }>;
   householdPersons: readonly Readonly<{ personId: string; displayName: string }>[];
   mobilityOptions?: PlannedMobilityOptions;
   /** UI availability only; the personal-place server reauthorizes every call. */
