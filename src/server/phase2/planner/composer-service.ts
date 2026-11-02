@@ -87,12 +87,36 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
         ? `Réserver ${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(p.semanticMutation.value.amount))}` : p.label) })) } : null });
   const mobilityOptions = view.semanticState.contexts.some(c => resolveContextTemplate(c.templateKey).fields.some(f => f.kind === "PLACE_REF")) && deps.readMobilityOptions
     ? await deps.readMobilityOptions(household) : undefined;
+  const baselineControlRefs = new Set(view.board.baselineControls.map(card => card.targetRef));
+  const controlDomains = Object.fromEntries(preview.compiled.planSlots.flatMap(({ baseline }) => {
+    const domain = baseline.semanticKey;
+    return (domain === "groceries" || domain === "tobacco-vape") && baselineControlRefs.has(baseline.slotIdentityKey)
+      ? [[baseline.slotIdentityKey, domain] as const] : [];
+  }));
+  // An unknown envelope can become visible in a pending local Draft. Savings
+  // cards also provide the existing fallback when a reservation is not listed.
+  const monthCards = [...view.board.baselineControls.filter(card => Object.hasOwn(controlDomains, card.targetRef)),
+    ...view.board.discretionaryControls, ...view.board.savings];
+  const monthSourceRefs = new Set([
+    ...preview.baseline.structuralFacts.resources.flatMap(fact => fact.sourceRefs),
+    ...(view.board.structuralObligations ?? []).flatMap(fact => fact.sourceRefs),
+    ...preview.baseline.structuralFacts.savingsReservations.flatMap(reservation => reservation.sourceRefs),
+    ...monthCards.flatMap(card => Array.isArray(card.value.sourceRefs)
+      ? card.value.sourceRefs.filter((ref): ref is string => typeof ref === "string") : []),
+  ]);
   return { ...view, householdPersons: deps.householdPersons ?? [],
     monthRead: { targetMonth: preview.baseline.targetMonth, knowledgeCutoff: preview.baseline.knowledgeCutoff,
-      resources: preview.baseline.structuralFacts.resources,
-      savingsReservations: preview.baseline.structuralFacts.savingsReservations,
-      controlDomains: Object.fromEntries(preview.compiled.planSlots.map(slot => [slot.baseline.slotIdentityKey, slot.baseline.semanticKey])),
-      sourceOwners: Object.fromEntries(preview.baseline.sourceRefs.map(source => [source.sourceKey, source.owner])) },
+      resources: preview.baseline.structuralFacts.resources.map(fact => ({ factKey: fact.factKey, label: fact.label,
+        value: { low: fact.value.low, central: fact.value.central, high: fact.value.high },
+        knowledge: fact.knowledge, dueDate: fact.dueDate, sourceRefs: [...fact.sourceRefs],
+        role: fact.metadata.role === "STOCK_NOT_INCOME" ? "STOCK_NOT_INCOME" : "RESOURCE" })),
+      savingsReservations: preview.baseline.structuralFacts.savingsReservations.map(reservation => ({
+        reservationId: reservation.reservationId, label: reservation.label, amount: reservation.amount,
+        dueDate: reservation.dueDate, adjustability: reservation.adjustability, source: reservation.source,
+        sourceRefs: [...reservation.sourceRefs] })),
+      controlDomains,
+      sourceOwners: Object.fromEntries(preview.baseline.sourceRefs.filter(source => monthSourceRefs.has(source.sourceKey))
+        .map(source => [source.sourceKey, source.owner])) },
     ...(process.env.BAR_PERSONAL_PLACES_ENABLED==='1'?{personalGooglePlacesEnabled:true as const}:{}),
     ...(mobilityOptions ? { mobilityOptions: { vehicle: mobilityOptions.vehicle, vehicleIsUnique: mobilityOptions.vehicleIsUnique, placeKnowledge: mobilityOptions.placeKnowledge, places: mobilityOptions.places.map(p => ({
       placeId: p.placeId, name: p.name, commune: p.commune, nature: p.nature, usage: p.usage, subtype: p.subtype, privatePlace: p.privatePlace,

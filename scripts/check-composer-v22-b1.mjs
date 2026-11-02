@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { require } from './lib/phase2-ts-loader.mjs';
 import { readMonthFixture, monthFixture } from './fixtures/composer-v22-b1.mjs';
-import { householdId, uuid, selections, component, context } from './fixtures/planner-headless.mjs';
+import { householdId, uuid, selections, component, context, rebuild } from './fixtures/planner-headless.mjs';
 const React = require('react'), { renderToStaticMarkup } = require('react-dom/server');
 const { ComposerMonthRead, monthReadTargets, monthControlReading } = require('@/app/mois-a-venir/composer/month-read');
 const { ComposerFinancialInspector } = require('@/app/mois-a-venir/composer/composer-financial-inspector');
-const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
+const { handleComposerRequest, composerUiModel } = require('@/server/phase2/planner/composer-service');
+const { readMonthComposer } = require('@/server/phase2/planner/read-model');
 const { editRestaurant } = require('@/domain/phase2/planner/restaurant-edit');
 const { evaluatePlanScenario } = require('@/server/phase2/planner/preview');
 globalThis.fetch = async () => { throw Error('B1_REMOTE_NETWORK_FORBIDDEN'); };
@@ -125,4 +126,67 @@ await check('B1-UX-12-INACTIVE-RESERVATION-HAS-NO-FALSE-BOARD-LINK', () => {
   assert.match(view,/Réservation à zéro/);assert.match(view,/0,00/);
   assert.match(view,/Réservation publiée sans carte active sur le Board/);
 });
-console.log(`B1 + UX-R1 ${checks}/${checks} PASS · synthetic memory only · SQL=0 remote=0 writers=0`);
+await check('B1-MIN-13-SERIALIZED-MONTH-READ-IS-AN-ALLOWLIST', async () => {
+  const f=monthFixture(), read=structuredClone(await readMonthComposer(f.deps,householdId,'2026-11',f.semantic));
+  const resource=read.preview.baseline.structuralFacts.resources[0];
+  // Future owner fields must not cross the UI boundary merely because they exist.
+  resource.metadata.extra='SYNTHETIC_OMIT_METADATA';resource.value.extra='SYNTHETIC_OMIT_RANGE';
+  read.preview.baseline.structuralFacts.savingsReservations[0].extra='SYNTHETIC_OMIT_RESERVATION';
+  read.preview.baseline.sourceRefs.push({sourceKey:'synthetic:unused',owner:'SYNTHETIC_OMIT_OWNER',digest:'synthetic',evidenceRefs:[]});
+  const before=JSON.stringify(read), model=await composerUiModel(f.deps,householdId,read);
+  const serialized=JSON.stringify(model.monthRead), dto=JSON.parse(serialized);
+  assert.deepEqual(Object.keys(dto).sort(),['controlDomains','knowledgeCutoff','resources','savingsReservations','sourceOwners','targetMonth']);
+  for(const row of dto.resources){
+    assert.deepEqual(Object.keys(row).sort(),['dueDate','factKey','knowledge','label','role','sourceRefs','value']);
+    assert.deepEqual(Object.keys(row.value).sort(),['central','high','low']);
+    const owner=read.preview.baseline.structuralFacts.resources.find(fact=>fact.factKey===row.factKey);
+    assert.deepEqual(row.value,{low:owner.value.low,central:owner.value.central,high:owner.value.high});
+    assert.equal(row.knowledge,owner.knowledge);assert.equal(row.dueDate,owner.dueDate);
+    assert.deepEqual(row.sourceRefs,owner.sourceRefs);
+  }
+  for(const row of dto.savingsReservations){
+    assert.deepEqual(Object.keys(row).sort(),['adjustability','amount','dueDate','label','reservationId','source','sourceRefs']);
+    const owner=read.preview.baseline.structuralFacts.savingsReservations.find(r=>r.reservationId===row.reservationId);
+    assert.equal(row.amount,owner.amount);assert.equal(row.adjustability,owner.adjustability);assert.equal(row.source,owner.source);
+  }
+  assert.deepEqual(Object.values(dto.controlDomains).sort(),['groceries','tobacco-vape']);
+  assert(Object.keys(dto.controlDomains).every(ref=>model.board.baselineControls.some(card=>card.targetRef===ref)));
+  assert(!Object.hasOwn(dto.sourceOwners,'synthetic:unused'));assert.doesNotMatch(serialized,/SYNTHETIC_OMIT/);
+  assert.equal(JSON.stringify(read),before);assert.equal(f.writes.length,0);
+});
+await check('B1-MIN-14-STOCK-ROLE-DATE-ZERO-AND-SIX-GROUPS-PRESERVED', async () => {
+  const f=monthFixture();f.world.monthInputs.openingBalance={amount:'0.00',asOfDate:'2026-11-01'};rebuild(f.world);
+  const result=await handleComposerRequest(f.deps,householdId,{kind:'READ',sequence:0,targetMonth:'2026-11',draft:f.semantic});
+  assert.equal(result.ok,true);
+  const dto=JSON.parse(JSON.stringify(result.model.monthRead)), stock=dto.resources.find(r=>r.factKey==='bank:observed-stock');
+  assert.equal(stock.role,'STOCK_NOT_INCOME');assert.equal(stock.value.central,'0.00');assert.equal(stock.dueDate,'2026-11-01');
+  assert(!Object.hasOwn(stock,'metadata'));assert.equal(dto.sourceOwners[stock.sourceRefs[0]],'phase2_month_inputs');
+  const view=html(result.model), start=view.indexOf('data-month-row="bank:observed-stock"');assert(start>=0);
+  const row=view.slice(start,view.indexOf('</details>',start));
+  assert.match(row,/Solde bancaire déclaré/);assert.match(row,/Stock déclaré · pas un revenu/);
+  assert.match(row,/0,00/);assert.match(row,/Observation déclarée : 1 nov\. 2026/);assert.match(row,/Informations saisies pour ce mois/);
+  for(const group of ['charges','resources','groceries','tobacco','savings','envelopes'])assert(view.includes(`data-month-group="${group}"`));
+  assert.equal(f.writes.length,0);
+});
+await check('B1-MIN-15-ONLY-CONSUMED-SOURCES-INCLUDING-PENDING-ENVELOPES', async () => {
+  const f=monthFixture(), read=structuredClone(await readMonthComposer(f.deps,householdId,'2026-11',f.semantic));
+  const envelope=read.board.discretionaryControls.find(card=>card.value.inclusion==='SUGGESTION_ONLY');assert(envelope);
+  envelope.value.sourceRefs=['synthetic:pending-envelope'];
+  const other=read.board.baselineControls.find(card=>!['groceries','tobacco-vape'].includes(
+    read.preview.compiled.planSlots.find(slot=>slot.baseline.slotIdentityKey===card.targetRef).baseline.semanticKey));assert(other);
+  other.value.sourceRefs=['synthetic:other-card'];
+  read.preview.baseline.sourceRefs.push(
+    {sourceKey:'synthetic:pending-envelope',owner:'CanonicalEconomicHistory',digest:'synthetic',evidenceRefs:[]},
+    {sourceKey:'synthetic:other-card',owner:'UNUSED_OTHER_OWNER',digest:'synthetic',evidenceRefs:[]});
+  const model=await composerUiModel(f.deps,householdId,read);
+  assert.equal(model.monthRead.sourceOwners['synthetic:pending-envelope'],'CanonicalEconomicHistory');
+  assert(!Object.hasOwn(model.monthRead.sourceOwners,'synthetic:other-card'));
+  assert(!Object.hasOwn(model.monthRead.controlDomains,other.targetRef));
+  const pending=structuredClone(model), card=pending.board.discretionaryControls.find(c=>c.targetRef===envelope.targetRef);
+  Object.assign(card.value,{amount:'12.00',decisionValue:{amount:'12.00'},projectionPending:true});
+  const view=html(pending,true), start=view.indexOf(`data-month-row="${card.targetRef}"`);assert(start>=0);
+  const row=view.slice(start,view.indexOf('</details>',start));
+  assert.match(row,/Historique économique/);assert.match(row,/Projection à recalculer/);
+  assert.doesNotMatch(row,/Source non détaillée|12,00/);assert.equal(f.writes.length,0);
+});
+console.log(`B1 + UX-R1 + MIN ${checks}/${checks} PASS · synthetic memory only · SQL=0 remote=0 writers=0`);

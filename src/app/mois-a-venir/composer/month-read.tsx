@@ -1,7 +1,6 @@
 import { LockKeyhole } from "lucide-react";
 import type { ComposerCardView } from "@/domain/phase2/planner/composer-contract";
-import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
-import type { BaselineStructuralFact } from "@/domain/phase2/planner/baseline-contract";
+import type { ComposerUiModel, ComposerMonthReadResource } from "@/domain/phase2/planner/composer-ui-contract";
 import type { PlannerJsonObject } from "@/domain/phase2/planner/json";
 import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { knowledgeLabel, money, monthLabel, quantityLabel } from "./display";
@@ -66,8 +65,7 @@ export function ComposerMonthRead({ model, stale, focused, focus }: {
     const labels = refs.flatMap(ref => facts?.sourceOwners[ref] ? [sourceLabel(facts.sourceOwners[ref])] : []);
     return [...new Set(labels)].join(" · ") || "Source non détaillée";
   };
-  const factRow = (fact: BaselineStructuralFact, resource: boolean): Row => {
-    const stock = fact.metadata.role === "STOCK_NOT_INCOME";
+  const factRow = (fact: Omit<ComposerMonthReadResource, "role">, resource: boolean, stock = false): Row => {
     const funding = fact.factKey === "benefit:swile" ? "Swile" : fact.factKey === "benefit:edenred" ? "Edenred" : null;
     return { id: fact.factKey, label: stock ? "Solde bancaire déclaré" : funding ? `Financement ${funding}` : fact.label,
       value: money(fact.value.central), knowledge: knowledgeLabel(fact.knowledge), source: sources(fact.sourceRefs),
@@ -109,7 +107,7 @@ export function ComposerMonthRead({ model, stale, focused, focus }: {
   }
   const groups = [
     { key: "charges", label: "Charges prévues", rows: (model.board.structuralObligations ?? []).map(fact => factRow(fact, false)), empty: "Aucune charge publiée dans cette lecture." },
-    { key: "resources", label: "Ressources", rows: (facts?.resources ?? []).map(fact => factRow(fact, true)), empty: "Détail des ressources non publié dans cette lecture." },
+    { key: "resources", label: "Ressources", rows: (facts?.resources ?? []).map(fact => factRow(fact, true, fact.role === "STOCK_NOT_INCOME")), empty: "Détail des ressources non publié dans cette lecture." },
     { key: "groceries", label: "Courses", rows: controls.filter(card => facts?.controlDomains[card.targetRef] === "groceries").map(controlRow), empty: "Référence Courses non publiée." },
     { key: "tobacco", label: "Tabac", rows: controls.filter(card => facts?.controlDomains[card.targetRef] === "tobacco-vape").map(controlRow), empty: "Référence Tabac non publiée." },
     { key: "savings", label: "Épargne réservée", rows: savings, empty: "Aucune réservation publiée dans cette lecture." },
