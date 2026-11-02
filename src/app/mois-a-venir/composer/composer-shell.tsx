@@ -13,6 +13,7 @@ import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/p
 import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
 import type { SemanticMutation, PlanBalanceSuggestions } from "@/domain/phase2/planner/adjustment-contract";
 import { composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import { libraryOccurrences } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
 import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
@@ -730,6 +731,24 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stableDetails=useCommittedEvent(openProjectionDetails);
   const stableFocus=useCommittedEvent((id:string|null)=>{if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId)&&!inlineEdits.registry.guard(()=>stableFocus(id)))return;setFocusedContext(id);if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId))setEditor(null);});
   const stableRevealFocus=useCommittedEvent((id:string|null)=>{stableFocus(id);if(id)setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));});
+  const stableLibraryOpen=useCommittedEvent((id:string)=>{
+    if(busyRef.current)return;
+    const occurrence=libraryOccurrences(shown).find(row=>row.contextOccurrenceId===id);
+    const card=shown.board.contexts.find(card=>card.contextOccurrenceId===id);
+    if(!occurrence||!card)return;
+    const editingId=editor?.catalogContextId??editor?.restaurantContextId??editor?.equipment?.target.contextOccurrenceId;
+    if(occurrence.action==="EDIT"&&editingId===id){
+      const panel=editor?.restaurantContextId?document.querySelector<HTMLElement>("[data-restaurant-editor]"):dialog.current;
+      (panel?.querySelector<HTMLElement>("input,select,textarea")??panel?.querySelector<HTMLElement>("button"))?.focus();
+      return; // Keep the mounted editor and its unaccepted RAW values.
+    }
+    const origin=document.activeElement as HTMLElement|null;
+    if(!inlineEdits.registry.guard(()=>{if(origin?.isConnected)origin.focus();stableLibraryOpen(id);}))return;
+    invoker.current=origin;
+    setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));
+    if(occurrence.action==="EDIT")editContext(card);
+    else {clearHover();setEditor(null);setProjectionOpen(false);setUnresolvedOpen(false);setFocusedContext(id);}
+  });
   // Accepted context changes (also Undo/Redo and child edits) replace workshop buffers.
   // Preview responses with the same semantic content leave RAW inputs untouched.
   const workshopKey = (id: string) => canonicalPlannerJson(draftState.contexts.filter(context => context.contextOccurrenceId === id || context.parentContextOccurrenceId === id));
@@ -795,7 +814,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
-    <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} />
+    <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} openContext={stableLibraryOpen} />
       {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
           initialBarView={barViews.current.get(`${draftState.targetMonth}:${livingBarId}`)} onViewChange={rememberCurrentBarView}
           context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}

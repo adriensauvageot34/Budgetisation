@@ -2,7 +2,7 @@ import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { memo, useState, useRef, useEffect, useMemo } from "react";
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
-import { composerLibraryIndex, filterLibraryIntentions, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
+import { composerLibraryIndex, filterLibraryIntentions, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
 import { Search, Star } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
@@ -15,8 +15,8 @@ import { preloadEditorForAsset, preloadEditorForPreset } from "./editor-chunks";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
 export const ComposerLibrary=memo(ComposerLibraryView);
-function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,drag,inspectContext}:{model:ComposerUiModel;openToken:number;busy:boolean;selected:string|null;
-  choose:(asset:ComposerAssetView)=>void;choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void;drag:(key:string|null)=>void;inspectContext:(id:string)=>void}) {
+function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,drag,inspectContext,openContext}:{model:ComposerUiModel;openToken:number;busy:boolean;selected:string|null;
+  choose:(asset:ComposerAssetView)=>void;choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void;drag:(key:string|null)=>void;inspectContext:(id:string)=>void;openContext:(id:string)=>void}) {
   const [space,setSpace]=useState<"add"|"manage">("add"),[query,setQuery]=useState(""),[opened,setOpened]=useState<string|null>("SOCIAL");
   const [expanded,setExpanded]=useState<ReadonlySet<string>>(()=>new Set()),[favorites,setFavorites]=useState<readonly string[]>([]);
   const [favoriteNotice,setFavoriteNotice]=useState("");
@@ -30,21 +30,23 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(next));setFavoriteNotice("");}catch{setFavoriteNotice("Favoris conservés pour cette session uniquement.");}
   };
   const matches=useMemo(()=>filterLibraryIntentions(index.intentions,query),[index.intentions,query]);
+  const occurrences=useMemo(()=>query.trim()?filterLibraryIntentions(index.occurrences,query):[],[index.occurrences,query]);
   const favoriteItems=matches.filter(item=>favorites.includes(item.key));
   const categories=LIBRARY_CATEGORIES.map(([key,label])=>({key,label,items:matches.filter(item=>item.category===key)})).filter(g=>g.items.length);
   const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
+  const focusActions=()=>search.current?.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-existing-action]:not(:disabled),[data-library-add-action]:not(:disabled)")?.focus();
   const tile=(item:LibraryIntention)=>{
     const asset=item.asset, source=model.presentation.dragSources[asset.assetKey];
     const draggable=!!source&&(item.preset?!!publishedDrop(model,asset.assetKey,{kind:'BOARD_ZONE'}):!!source.editorDropTarget||(composerRenderIndex(model).drops.get(asset.assetKey)??[]).some(d=>d.resolution!=="BLOCKED"))&&asset.provenance!=="DERIVED_CONSEQUENCE";
     return <div className={item.preset?styles.libraryTile:styles.libraryGenericTile} key={item.key}>
       <button type="button" className={item.preset?styles.presetTile:styles.libraryGenericChoice} data-preset={item.preset?.presetKey} data-asset={item.preset?undefined:asset.assetKey}
-        data-selected={selected===asset.assetKey} disabled={busy}
+        data-selected={selected===asset.assetKey} data-library-add-action={query.trim()?item.key:undefined} disabled={busy}
         onFocus={()=>item.preset?preloadEditorForPreset(asset):preloadEditorForAsset(asset)}
         onClick={()=>activate(item)} draggable={!busy&&draggable} data-drag-source={draggable?asset.assetKey:undefined}
         onDragStart={event=>{event.stopPropagation();if(busy||!draggable){event.preventDefault();return;}if(interaction)interaction.start(asset.assetKey,event,item.preset?.presetKey);else if(item.preset){event.preventDefault();}else{event.dataTransfer.setData("application/x-planner-asset",asset.assetKey);drag(asset.assetKey);}}}
         onDragEnd={()=>{interaction?.end();drag(null);}}>
         {item.preset?<PresetIllustration preset={item.preset}/>:<PlannerIcon iconKey={asset.iconKey} identityRef={asset.capabilityRef} scale="LIBRARY" className={styles.assetIcon}/>}
-        <span>{item.label}</span>
+        <span>{query.trim()?`${index.occurrences.some(row=>row.presetKey===item.preset?.presetKey)?"Ajouter un autre":"Ajouter"} ${item.label}`:item.label}</span>
       </button>
       <button type="button" className={styles.libraryFavorite} aria-label={`${favorites.includes(item.key)?"Retirer":"Épingler"} ${item.label}`} aria-pressed={favorites.includes(item.key)} onClick={()=>toggleFavorite(item.key)}><Star size={13} fill={favorites.includes(item.key)?"currentColor":"none"}/></button>
     </div>;
@@ -53,9 +55,19 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     <header className={styles.panelHeader}><h2><button className={styles.libraryOpen} data-library-open onClick={()=>search.current?.focus()}>Que veux-tu prévoir ?</button></h2></header>
     <nav className={styles.libraryTabs} aria-label="Espaces de la bibliothèque"><button type="button" aria-pressed={space==="add"} onClick={()=>setSpace("add")}>À ajouter</button><button type="button" aria-pressed={space==="manage"} onClick={()=>setSpace("manage")}>À piloter</button></nav>
     <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="add"?"Soirée, repas, achat…":"Budget ou cagnotte…"} value={query} onChange={e=>setQuery(e.target.value)}
-      onKeyDown={e=>{if(e.key==="Enter"&&space==="add"&&query&&matches[0]&&!busy){e.preventDefault();activate(matches[0]);}else if(e.key==="ArrowDown"){e.preventDefault();e.currentTarget.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-scroll] button")?.focus();}}}/></label>
+      onKeyDown={e=>{if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
+        if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}else focusActions();
+      }else if(e.key==="ArrowDown"){e.preventDefault();e.currentTarget.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-scroll] button:not(:disabled)")?.focus();}}}/></label>
     <div className={styles.libraryScroll} data-library-scroll onKeyDown={e=>{if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key)||!(e.target instanceof HTMLButtonElement))return;e.preventDefault();const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));const at=buttons.indexOf(e.target);buttons[e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowUp"?-1:1)))]?.focus();}}>
     {space==="add"?<>
+      {!!query.trim()&&occurrences.length>0&&<section className={styles.libraryExisting} aria-label="Intentions du mois" data-library-existing>
+        <h3>Dans ce mois</h3><p>{occurrences.length===1?"Retrouvez cette intention, ou ajoutez-en une autre explicitement.":"Choisissez l’intention à ouvrir ; aucun ajout automatique."}</p>
+        {occurrences.map((row,index)=><button key={row.contextOccurrenceId} type="button" className={styles.libraryExistingAction}
+          data-library-existing-action={row.contextOccurrenceId} disabled={busy} onClick={()=>openContext(row.contextOccurrenceId)}>
+          <strong>{row.action==="EDIT"?"Modifier":"Voir"} {row.label}</strong>
+          <small>{occurrences.length>1?`Occurrence ${index+1} · `:""}{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.action==="EDIT"?"Éditeur de cette carte":"Lecture seule sur le Board"}</small>
+        </button>)}
+      </section>}
       {favoriteItems.length>0&&<section className={styles.assetGroup} data-library-favorites><h3>Épinglés par vous</h3><div className={styles.presetGrid}>{favoriteItems.filter(i=>i.preset).map(tile)}</div>{favoriteItems.filter(i=>!i.preset).map(tile)}</section>}
       <p className={styles.libraryLocalNote}>Favoris locaux à ce navigateur · aucun budget engagé.{favoriteNotice&&` ${favoriteNotice}`}</p>
       {categories.map(group=>{const searching=!!query.trim(),isOpen=searching||opened===group.key,all=searching||expanded.has(group.key);
@@ -75,7 +87,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
           </div>}
         </div>}
       </section>;})}
-      {!matches.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. Les compléments se trouvent dans la palette de leur carte.</p>}
+      {!matches.length&&!occurrences.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. Les compléments se trouvent dans la palette de leur carte.</p>}
     </>:<>
       <p className={styles.libraryLocalNote}>Retrouvez la carte déjà présente dans votre mois. Aucun doublon n’est créé.</p>
       {(["Habitudes", "Enveloppes", "Réservations", "Autres références"] as const).map(group => {
