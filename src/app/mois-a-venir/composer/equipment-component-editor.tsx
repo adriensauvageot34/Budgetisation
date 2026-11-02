@@ -12,7 +12,7 @@ import { WorkshopDock } from "./workshop-dock";
 /** Presentation adapter only: the existing DROP operation validates/adopts these values. */
 export function componentEditorValues(row: Row, original: Record<string,string>): Record<string,string> {
   return {...original,label:row.label,quantity:row.quantity,unitBasis:row.unitBasis==="LEGACY_PERSON"?"PERSON":row.unitBasis,
-    personCount:row.personCount,costMode:row.costMode==="UNKNOWN"?"UNKNOWN":"AUTO",amount:row.amount,
+    personCount:row.personCount,costMode:row.costMode==="UNKNOWN"?"UNKNOWN":"AUTO",amount:row.amount.trim().replace(",","."),
     funding:row.fundingMode==="UNDECIDED"?"":row.fundingMode,fundingAmount:row.fundingAmount,binding:row.binding};
 }
 export function EquipmentComponentEditor({asset,target,model,values,selection,knowledge,busy,host,onValues,onSave,onSummary}:{
