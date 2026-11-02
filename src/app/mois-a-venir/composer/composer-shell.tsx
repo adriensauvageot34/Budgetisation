@@ -834,6 +834,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
             {editorLoadError && <button type="button" onClick={() => setEditorLoadRetry(n => n + 1)}>Réessayer l’éditeur</button>}<button type="button" onClick={closeDialog}>Retour au Board</button></section>
           : undefined} />
       {(projectionOpen || unresolvedOpen) && <ComposerFinancialInspector model={shown} mode={unresolvedOpen ? "UNRESOLVED" : "FINANCE"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} focused={focusedContext}
+        busy={busy} decide={stage}
         focus={navigateDecision} close={() => { setProjectionOpen(false); setUnresolvedOpen(false); setCompletenessFocus(false); }} />}</div>
     {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}

@@ -1,6 +1,7 @@
 import { LockKeyhole } from "lucide-react";
 import type { ComposerCardView } from "@/domain/phase2/planner/composer-contract";
-import type { ComposerUiModel, ComposerMonthReadResource } from "@/domain/phase2/planner/composer-ui-contract";
+import type { ComposerUiModel, ComposerMonthReadResource, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
+import { CoursesMonthTarget } from "./courses-month-target";
 import type { PlannerJsonObject } from "@/domain/phase2/planner/json";
 import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { knowledgeLabel, money, monthLabel, quantityLabel } from "./display";
@@ -54,8 +55,9 @@ export function monthControlReading(model: ComposerUiModel, card: ComposerCardVi
     referenceValue: history?.unit === "EUR_PER_MONTH" ? money(history.value) : fallback ?? undefined };
 }
 
-export function ComposerMonthRead({ model, stale, focused, focus }: {
+export function ComposerMonthRead({ model, stale, focused, focus, busy = false, decide }: {
   model: ComposerUiModel; stale: boolean; focused: string | null; focus: (ref: string) => void;
+  busy?: boolean; decide?: (operation: ComposerOperation) => boolean;
 }) {
   const month = model.board.targetMonth;
   const facts = model.monthRead?.targetMonth === month ? model.monthRead : undefined;
@@ -129,6 +131,8 @@ export function ComposerMonthRead({ model, stale, focused, focus }: {
           {row.referenceValue && <p>{group.key === "savings" ? "Montant déclaré" : "Repère publié"} : {row.referenceValue}</p>}
           {row.protected && <p>Protection conservée · aucune modification depuis cette consultation.</p>}
           {row.targetNote && <p>{row.targetNote}</p>}
+          {group.key === "groceries" && decide && controls.filter(card => card.targetRef === row.id).map(card =>
+            <CoursesMonthTarget key={`${month}:${card.targetRef}`} model={model} card={card} busy={busy} decide={decide} />)}
           {row.targetRef && <button type="button" data-month-target={row.targetRef} aria-current={focused === row.targetRef ? "true" : undefined}
             onClick={() => { if (row.targetRef) focus(row.targetRef); }}>Voir la carte sur le Board</button>}
         </div>
