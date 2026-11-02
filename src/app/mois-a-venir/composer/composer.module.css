@@ -807,6 +807,30 @@
 .financialInspector h2:focus { outline:none; }
 .inspectorScroll { min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 16px 20px; scrollbar-width:thin; }
 .financialInspector .projectionDetails { overflow:visible; padding:0; }
+.monthRead { padding:10px 0 5px; }
+.monthReadPeriod { margin:0 0 4px; font-size:13px; line-height:1.45; color:#493753; }
+.monthReadNotice { margin:4px 0 8px; font-size:12px; line-height:1.45; color:#62546b; }
+.monthReadGroup { margin:0; border-bottom:1px solid #e6deec; }
+.monthReadGroup>summary { display:flex; align-items:center; gap:10px; min-height:43px; padding:9px 2px; list-style:none; cursor:pointer; color:#4c375a; }
+.monthReadGroup>summary::-webkit-details-marker { display:none; }
+.monthReadGroup>summary::after { content:"⌄"; flex:0 0 20px; text-align:center; font-size:20px; line-height:1; }
+.monthReadGroup[open]>summary::after { content:"⌃"; }
+.monthReadGroup>summary:hover { background:#f8f4fb; }
+.monthReadGroup h3 { display:flex; flex:1; align-items:center; justify-content:space-between; gap:8px; margin:0; font-size:13px; line-height:1.4; font-weight:700; }
+.monthReadGroup h3>span { min-width:24px; padding:2px 6px; border-radius:5px; background:#f0eaf5; text-align:center; font-size:12px; font-weight:500; color:#584565; }
+.monthReadRow { border-bottom:1px solid #f0ebf4; min-width:0; }
+.monthReadRow>summary { display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:10px 2px; cursor:pointer; list-style:none; }
+.monthReadRow>summary::-webkit-details-marker { display:none; }
+.monthReadRow>summary::after { content:"+"; flex:0 0 18px; text-align:center; font-size:18px; color:#67506f; }
+.monthReadRow[open]>summary::after { content:"−"; }
+.monthReadRow summary>span { flex:1; min-width:0; }
+.monthReadRow strong { display:block; font-size:13px; line-height:1.45; font-weight:600; overflow-wrap:anywhere; }
+.monthReadRow small { display:block; margin-top:3px; font-size:12px; line-height:1.45; color:#62546b; }
+.monthReadRow small svg { display:inline; vertical-align:-1px; }
+.monthReadRow b { flex:0 1 44%; font-size:13px; line-height:1.45; font-weight:600; text-align:right; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.monthReadDetail { margin:0 0 9px; padding:8px 10px; border-radius:8px; background:#f8f5fb; font-size:12px; line-height:1.55; color:#584565; }
+.monthReadDetail p { margin:3px 0; overflow-wrap:anywhere; }
+.monthReadDetail button { min-height:32px; padding:6px 0; border:0; background:transparent; text-decoration:underline; text-underline-offset:3px; color:#654079; font-size:12px; }
 .financeExplanation { font-size:12px; line-height:1.5; color:#6d5f78; margin:10px 0; }
 .financeSummary { padding:15px 13px; margin:14px 0 10px; border:1px solid #e8dcf0; border-radius:13px; background:#faf6fd; }
 .financeSummary>span { font-size:12px; color:#6c547d; }

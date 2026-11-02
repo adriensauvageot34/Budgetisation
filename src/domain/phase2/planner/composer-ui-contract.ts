@@ -10,6 +10,7 @@ import type { FamilyVisitEdit } from "./family-visit-edit";
 import type { RestaurantEdit } from "./restaurant-edit";
 import type { GuidedContextEdit } from "./guided-context-edit";
 import type { PlannedMobilityOptions } from "../planned-places";
+import type { PlannerKnowledge } from "./diagnostics";
 
 export type ComposerMobilitySummary = Readonly<{ contextOccurrenceId: string; journeyId: string; ownerIntentId?: string; requestDigest: string;
   status: "RESOLVED" | "PARTIAL" | "UNKNOWN"; distanceKm: string | null; economicFuel: string | null; durationSeconds?:number|null; fuelLiters?:string|null;
@@ -62,8 +63,29 @@ export type ComposerDragSource = Readonly<{
   editorTargetRef?: string; editorDropTarget?: DropTarget;
   pack?: readonly Readonly<{ label: string; iconKey: string; provenance: string }>[];
 }>;
+/** Display-only facts: never serialize the owner's metadata or evidence payload. */
+export type ComposerMonthReadResource = Readonly<{
+  factKey: string; label: string;
+  value: Readonly<{ low: string | null; central: string | null; high: string | null }>;
+  knowledge: PlannerKnowledge; dueDate: string | null; sourceRefs: readonly string[];
+  role: "RESOURCE" | "STOCK_NOT_INCOME";
+}>;
+export type ComposerMonthReadReservation = Readonly<{
+  reservationId: string; label: string; amount: string; dueDate: string | null;
+  adjustability: "PROTECTED" | "ADJUSTABLE"; source: "MONTH_INPUT" | "ANNUAL_PLAN";
+  sourceRefs: readonly string[];
+}>;
+export type ComposerMonthRead = Readonly<{
+  targetMonth: string; knowledgeCutoff: string;
+  resources: readonly ComposerMonthReadResource[];
+  savingsReservations: readonly ComposerMonthReadReservation[];
+  controlDomains: Readonly<Record<string, "groceries" | "tobacco-vape">>;
+  sourceOwners: Readonly<Record<string, string>>;
+}>;
 /** Excludes Baseline snapshots, canonical evidence and financial adapter entries. */
 export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly<{
+  /** Display-only subset of the same authorized read. No Canonical rows or new authority. */
+  monthRead?: ComposerMonthRead;
   householdPersons: readonly Readonly<{ personId: string; displayName: string }>[];
   mobilityOptions?: PlannedMobilityOptions;
   /** UI availability only; the personal-place server reauthorizes every call. */
