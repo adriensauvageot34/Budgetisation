@@ -224,7 +224,13 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
         <label>Enveloppe liée à cet achat<select name="budgetDomain" defaultValue={String(context.fields.budgetDomain ?? "")}><option value="">À préciser</option>
           {model.editors.find(editor => editor.assetKey === "template:purchase")?.fields.find(field => field.key === "budgetDomain")?.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select></label>
         <button type="button" onClick={() => { const product = panel.current?.querySelector<HTMLInputElement>('input[name="productLabel"]')?.value ?? ""; const merchant = panel.current?.querySelector<HTMLInputElement>('input[name="merchantLabel"]')?.value ?? ""; const domain = panel.current?.querySelector<HTMLSelectElement>('select[name="budgetDomain"]')?.value ?? ""; fields({productLabel:product || null,merchantLabel:merchant || null,budgetDomain:domain || null},"product"); }}>Conserver ces précisions</button></>}
-      {step === "participants" && <><PlannedContactField label="Ajouter une personne" value={person} householdPersons={model.householdPersons} onChange={next => { setRaw(true); setPerson(next); }} />
+      {step === "participants" && <>{context.templateKey === "restaurant" && refs.length > 0 && <ul className={styles.restaurantParticipants} aria-label="Participants prévus">
+        {refs.map((ref, index) => <li key={`${prospectivePersonIdentity(ref)}:${index}`}><span>{personLabel(ref)}</span>
+          <button type="button" disabled={busy} aria-label={`Retirer ${personLabel(ref)} des participants`} onClick={() => {
+            const remove = () => fields({ participantRefs: refs.filter((_, position) => position !== index) }, "participants");
+            if (leaveRaw(remove)) remove();
+          }}>Retirer</button></li>)}
+      </ul>}<PlannedContactField label="Ajouter une personne" value={person} householdPersons={model.householdPersons} onChange={next => { setRaw(true); setPerson(next); }} />
         <button type="button" disabled={!person || person.kind === "TEXT" && !person.label.trim()} onClick={() => {
           if (person && !refs.some(ref => prospectivePersonIdentity(ref) === prospectivePersonIdentity(person))) fields({ participantRefs: [...refs, person] }, "participants");
         }}>Ajouter aux participants</button><p>Les participants ne multiplient pas le montant prévu.</p></>}
