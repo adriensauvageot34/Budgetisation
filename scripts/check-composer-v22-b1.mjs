@@ -3,7 +3,7 @@ import { require } from './lib/phase2-ts-loader.mjs';
 import { readMonthFixture, monthFixture } from './fixtures/composer-v22-b1.mjs';
 import { householdId, uuid, selections, component, context } from './fixtures/planner-headless.mjs';
 const React = require('react'), { renderToStaticMarkup } = require('react-dom/server');
-const { ComposerMonthRead, monthReadTargets } = require('@/app/mois-a-venir/composer/month-read');
+const { ComposerMonthRead, monthReadTargets, monthControlReading } = require('@/app/mois-a-venir/composer/month-read');
 const { ComposerFinancialInspector } = require('@/app/mois-a-venir/composer/composer-financial-inspector');
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { editRestaurant } = require('@/domain/phase2/planner/restaurant-edit');
@@ -29,14 +29,16 @@ await check('B1-02-FIVE-GROUPS-AND-PUBLISHED-RESOURCES', () => {
 });
 await check('B1-03-UNKNOWN-PARTIAL-ZERO-AND-STALE-DISTINCT', async () => {
   const unknown = await readMonthFixture('2026-11', false, true), view = html(unknown.model);
-  const tobacco = /data-month-group="tobacco"[\s\S]*?(?=<section|$)/u.exec(view)?.[0];
+  // Group containers changed from sections to native disclosures; keep the same negative scoped to Tabac.
+  const tobacco = view.slice(view.indexOf('data-month-group="tobacco"'), view.indexOf('data-month-group="savings"'));
   assert.match(tobacco, /À définir|À préciser/); assert.doesNotMatch(tobacco, /0,00/);
   const partial = structuredClone(november.model);
   const groceries = partial.board.baselineControls.find(card => partial.monthRead.controlDomains[card.targetRef] === 'groceries');
   partial.cardKnowledge[`control:${groceries.targetRef}`].dimensions[0].evidenceState = 'PARTIAL';
   assert.match(html(partial), /À compléter/); assert.match(html(partial), /325,00/);
   const stale = html(november.model, true);
-  assert.match(stale, /Actualisation en attente/); assert.match(stale, /À recalculer/); assert.match(stale, /500,00/);
+  assert.match(stale, /Actualisation en attente/); assert.match(stale, /Dernière référence connue/);
+  assert.match(stale, /325,00/); assert.match(stale, /500,00/);
   assert.match(view, /Réservation à zéro/); assert.match(view, /0,00/);
 });
 await check('B1-04-PROTECTED-SAVINGS-AND-SAFETY-RESERVE-VISIBLE', () => {
@@ -84,4 +86,43 @@ await check('B1-09-RESTAURANT-IDENTITY-AND-COMPILER-REGRESSION', () => {
   const protectedState={...next,preferences:{...next.preferences,anchors:[id]}};
   assert.throws(()=>editRestaurant(protectedState,{contextOccurrenceId:id,fields:{label:'Refus'}}),/LOCKED/);
 });
-console.log(`B1 ${checks}/${checks} PASS · synthetic memory only · SQL=0 remote=0 writers=0`);
+await check('B1-UX-10-STALE-KEEPS-OWNER-REFERENCES-NOT-OPTIMISTIC-VALUES', () => {
+  const pending=structuredClone(november.model);
+  const groceries=pending.board.baselineControls.find(card=>pending.monthRead.controlDomains[card.targetRef]==='groceries');
+  Object.assign(groceries.value,{amount:'9999.00',decisionValue:{amount:'9999.00'},projectionPending:true});
+  const saving=pending.board.savings.find(card=>card.targetRef===`savings:${uuid(700)}`);
+  Object.assign(saving.value,{amount:'8888.00',decisionValue:{amount:'8888.00'},projectionPending:true});
+  const before=JSON.stringify(pending), view=html(pending,true), reading=monthControlReading(pending,groceries,true);
+  assert.match(reading.value,/325,00/);assert.equal(reading.origin,'HISTORICAL');
+  assert.match(view,/100,00/);assert.doesNotMatch(view,/9999|9.?999|8888|8.?888/);
+  assert.match(view,/Dernière valeur connue · actualisation en attente/);
+  assert.equal(JSON.stringify(pending),before);
+  assert.match(html(november.model),/Référence historique · non choisie/);
+});
+await check('B1-UX-11-STALE-UNKNOWN-OLD-DTO-AND-SUGGESTION-ZERO-STAY-HONEST', () => {
+  const legacy=structuredClone(november.model);delete legacy.monthRead;
+  const saving=legacy.board.savings.find(card=>card.targetRef===`savings:${uuid(700)}`);
+  saving.value.amount='7777.00';saving.value.decisionValue={amount:'7777.00'};delete saving.value.referenceValue;
+  const reading=monthControlReading(legacy,saving,true);
+  assert.equal(reading.origin,'UNKNOWN');assert.equal(reading.value,'Projection à recalculer');
+  assert.doesNotMatch(html(legacy,true),/7777|7.?777/);
+  const optional=legacy.board.discretionaryControls.find(card=>card.value.inclusion==='SUGGESTION_ONLY');
+  optional.value.amount='2222.00';optional.value.decisionValue={amount:'2222.00'};
+  const noReference=monthControlReading(legacy,optional,true);
+  assert.equal(noReference.origin,'UNKNOWN');assert.equal(noReference.value,'Projection à recalculer');
+  const current=structuredClone(november.model);
+  const groceries=current.board.baselineControls.find(card=>current.monthRead.controlDomains[card.targetRef]==='groceries');
+  const history=current.cardKnowledge[`control:${groceries.targetRef}`].dimensions.find(d=>d.key==='MONTH_AMOUNT');
+  history.value='0.00';history.evidenceState='KNOWN';
+  assert.match(monthControlReading(current,groceries,true).value,/0,00/);
+  assert.equal(monthControlReading(current,groceries,true).origin,'HISTORICAL');
+});
+await check('B1-UX-12-INACTIVE-RESERVATION-HAS-NO-FALSE-BOARD-LINK', () => {
+  const inactive=`savings:${uuid(777)}`,protectedRef=`savings:${uuid(778)}`,view=html(november.model);
+  assert(november.model.presentation.availableReservationRefs.includes(inactive));
+  assert(!view.includes(`data-month-target="${inactive}"`));
+  assert(view.includes(`data-month-target="${protectedRef}"`));
+  assert.match(view,/Réservation à zéro/);assert.match(view,/0,00/);
+  assert.match(view,/Réservation publiée sans carte active sur le Board/);
+});
+console.log(`B1 + UX-R1 ${checks}/${checks} PASS · synthetic memory only · SQL=0 remote=0 writers=0`);
