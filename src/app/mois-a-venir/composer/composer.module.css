@@ -807,6 +807,8 @@
 .boardHeading { flex:0 0 auto; min-height:35px; padding:2px 16px 10px; display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 14px; }
 .boardHeading h2 { margin:0; font-size:13px; font-weight:650; color:#62566f; }
 .boardHeading span { font-size:10px; color:#94899e; }
+.monthCardsToggle { margin-left:auto; border:1px solid #e2d9ec; border-radius:8px; padding:5px 8px; background:#fff; color:#62566f; font-size:11px; cursor:pointer; }
+.monthCardsToggle:focus-visible { outline:2px solid #8054aa; outline-offset:2px; }
 .plateau .mosaic { margin-block:0; }
 .plateau { padding-top:0; }
 .card[data-card-family=PROTECTED] { border-color:#e5e7ed; background:linear-gradient(150deg,#fff,#f8f9fc); }

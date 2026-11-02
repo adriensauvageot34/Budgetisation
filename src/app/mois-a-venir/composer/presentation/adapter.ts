@@ -9,6 +9,7 @@ import { barClosedWidth } from "./bar-closed-width";
 const clusterLook: Readonly<Record<ClusterFamily, Pick<VisualClusterNode, "title" | "iconKey" | "width" | "height" | "spatialFamily">>> = {
   BEAUTY: { title: "Beauté", iconKey: "beauty", width: 530, height: 165, spatialFamily: "PERSONAL_CARE" },
   FOOD: { title: "Restauration", iconKey: "restaurant", width: 460, height: 165, spatialFamily: "FOOD" },
+  ACTIVITY: { title: "Activités et loisirs", iconKey: "activity", width: 460, height: 165, spatialFamily: "OTHER" },
 };
 
 /** Presentation density uses only values and references already published by the Composer. */
@@ -58,7 +59,7 @@ export function semanticRank(node: ComposerPresentationNode): number {
 }
 
 /** Reversible, deterministic projection of the existing Board. No DTO or state mutation. */
-export function composePresentationNodes(model: ComposerUiModel): ComposerPresentationNode[] {
+export function composePresentationNodes(model: ComposerUiModel, showMonthCards = true): ComposerPresentationNode[] {
   const available = new Set(model.presentation.availableReservationRefs ?? []);
   const roots: AtomicNode[] = [
     ...model.board.contexts.filter(context => !context.parentContextOccurrenceId).map(context => {
@@ -77,7 +78,7 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
         height:bar ? barHeight : template === "short-stay" ? 212 : template === "night-out" ? 212 : template === "gift" ? 148
           : template === "family-visit" ? 142 : density === "SPARSE" ? 140 : density === "RICH" ? 190 : 170 };
     }),
-    ...[...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings]
+    ...(showMonthCards ? [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings] : [])
       .filter(control => !available.has(control.targetRef)).map(control => {
         const view = model.presentation.objects[control.targetRef], density = controlDensity(control, model);
         const spatialFamily = controlFamily(control, view.iconKey);
@@ -86,7 +87,7 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
           height:control.kind === "SAVINGS" ? 165 : control.capability?.fields?.count?.status === "EDITABLE" ? 205 : density === "SPARSE" ? 128 : density === "RICH" ? 155 : 142 };
       }),
   ];
-  const groups: Record<ClusterFamily, AtomicNode[]> = { BEAUTY:[], FOOD:[] };
+  const groups: Record<ClusterFamily, AtomicNode[]> = { BEAUTY:[], FOOD:[], ACTIVITY:[] };
   for (const node of roots) { const family = visualFamily(node, model); if (family) groups[family].push(node); }
   const clustered = new Set<string>();
   const clusters = (Object.keys(groups) as ClusterFamily[]).flatMap(family => {
