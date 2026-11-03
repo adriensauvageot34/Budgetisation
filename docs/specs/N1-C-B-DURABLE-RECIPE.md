@@ -2,6 +2,8 @@
 
 G-A option A est approuvée par le mandat de finalisation de #98 : un brouillon organisationnel peut être sauvegardé avec des trajets UNKNOWN / non évalués. Cela ne vaut ni complétude Mobility, ni FRESH, ni APPLIED. G-B et G-C restent ouverts.
 
+**Réception de durcissement : STOP_LOCAL[N1_GLOBAL_LOCK] pour toute utilisation partagée.** La contention globale est reproduite par barrières PostgreSQL, y compris autre foyer/mois et Auth. Aucun fence commun reçu ne couvre encore les dépendances réelles de l'owner/C4 et tous leurs writers. Les verrous restent conservateurs dans les recettes isolées ; la factory runtime partagée reste explicitement fermée même avec gates et noms de credentials configurés. Le Save→Reload local reste disponible via la factory explicite de recette. Une simple réduction aux tables de fixture ne serait pas une correction du protocole réel.
+
 Le raccord utilise les vrais `ComposerShell`, hooks, transport HTTP, admission N1-A/B, contrat C-A, reader et writer. Aucun second Composer ni nouvel autosave relationnel. Le SQL reste un candidat hors `migrations/`. Rien n’est activé à distance.
 
 ## Sources de vérité et cycle utilisateur
@@ -45,7 +47,7 @@ L’enveloppe n’est pas un journal d’idempotence permanent : après une muta
 - `COMPOSER_ROOT_RELATIONS_DURABLE_SAVE_ENABLED === true` (même convention).
 - Gate SQL privée OFF par défaut.
 - Rôle créé NOLOGIN / NOINHERIT ; aucune clé provisionnée par le candidat.
-- Le runtime ne construit le pool qu’avec les deux gates ON et les deux paramètres privés `COMPOSER_ROOT_RELATIONS_DATABASE_URL` et `COMPOSER_ROOT_RELATIONS_AUTHORITY_KEY`.
+- Le runtime ne construit **aucun** pool partagé : `runtimeRootRelationWriter()` reste fermé jusqu’à réception d’un protocole ciblé. Les recettes isolées construisent explicitement leur writer et leur clé aléatoire locale. Configurer les deux paramètres privés autrefois envisagés ne suffit donc plus à ouvrir le parcours.
 
 Aucune de ces configurations distantes n’est créée ou modifiée. Flags OFF refusent avant Auth et lecture. Le candidat seul ne rend pas Save accessible. Aucun workflow GitHub suivi ni hook install/build/deploy ne l’applique ; build est `next build` et `vercel.json` n’a aucune commande SQL. Le contrôle n’atteste pas la configuration extérieure d’une intégration Supabase : conserver le fichier hors `migrations/` jusqu’à autorisation distincte.
 
@@ -56,6 +58,8 @@ PostgreSQL natif 17, cluster dédié créé pour cette recette, écoute uniqueme
 ```text
 node scripts/check-root-relation-durable-postgres.mjs
 node scripts/check-root-relation-authority.mjs
+node scripts/check-root-relation-contention.mjs
+node scripts/check-root-relation-writer-lifetime.mjs
 node scripts/check-root-relation-shell-native.mjs
 node scripts/check-root-relation-durable-http.mjs
 node scripts/check-composer-root-relation-durable-contract.mjs
@@ -72,7 +76,11 @@ Les fixtures lisent le World et la permission indépendante depuis PostgreSQL ap
 
 ## Limites et seuil suivant
 
-Le verdict local ne vaut pas autorisation de migration ou activation. Le gel de toutes les tables est volontairement très large : coût de contention, interactions avec Auth et writers existants, durée des lectures réseau et bornage opérationnel doivent être étudiés avant tout usage partagé. Les requêtes SQL ont lock_timeout 4 s et statement_timeout 25 s ; la durée globale des appels Auth/canoniques sous verrou n’est pas encore un budget opérationnel certifié.
+Le verdict local ne vaut pas autorisation de migration ou activation. Le gel de toutes les tables reste disproportionné pour une base partagée. Le writer est maintenant borné à **8 s au total après acquisition de connexion**, incluant l’ouverture SQL, les phases Auth/World/C4 et COMMIT. À expiration, la connexion est détruite, le callback tardif ne peut plus signer/committer, et une transaction incertaine n’est jamais recyclée. La connexion au pool est bornée séparément à 10 s. PostgreSQL 17 configure avant BEGIN transaction_timeout=10 s, idle_in_transaction_session_timeout=9 s, statement_timeout=8 s et lock_timeout=1 s ; l’ouverture signée impose aussi ces limites côté SQL. Les tests raccourcissent ces bornes pour prouver la récupération, sans les étendre. Les anciennes limites statement/lock seules ne bornaient pas l’attente JavaScript idle-in-transaction. La borne limite la durée, **pas le nombre de foyers affectés**, et ne rend pas ce protocole acceptable pour exploitation partagée.
+
+Le rôle dédié est recontrôlé à chaque ouverture signée (attributs, memberships, grants directs Draft/clé/primitive) au lieu de ne l’être qu’à l’installation du candidat. Un administrateur qui ajoute un grant lui donne néanmoins ce grant en SQL direct : ce contrôle ferme le helper mais ne prétend pas neutraliser un administrateur. Les signatures, source complète, CAS et contrôle privé des anciennes relations restent inchangés.
+
+Inventaire réel de la fixture de contention : onze tables EXCLUSIVE, dont la table volontairement sans rapport `public.n1_unrelated`. SELECT simple continue ; les writers attendent. Le parcours ne fige ni un nouveau schéma extérieur, ni une table créée après l’énumération. Le nombre de tables réelles du projet distant n’a pas été lu. Un advisory lock par foyer ou une ligne household_revisions isolée ne suffisent pas : les writers Auth, accès privé V2, inputs/planned expenses, publications et faits compilés n’ont pas un protocole commun attesté. Le trigger de révision d’historique existant ne couvre qu’une liste de tables, pas l’ensemble de cette autorité.
 
 Une révocation committée avant la prise des verrous est revalidée et refuse Save. Une révocation demandée après leur acquisition est sérialisée après le commit ; elle n’est pas prétendue déjà effective au point de linéarisation du Save. Les permissions dépendant de faits hors des schémas gelés, de DDL/attributs de rôles, de providers externes ou de la validité d’un vrai token ne sont pas certifiées par la recette locale. La future réception doit établir leur inventaire et leur binding avant activation.
 

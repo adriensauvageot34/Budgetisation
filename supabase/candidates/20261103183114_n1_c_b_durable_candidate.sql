@@ -235,6 +235,20 @@ begin
   if session_user<>'composer_n1_server' or actor is null or household is null
     or month is null or month<>date_trunc('month',month)::date then
     raise exception using errcode='42501',message='N1_SERVER_AUTHORITY_REQUIRED';end if;
+  -- Recheck drift since provisioning, not just at candidate installation.
+  if exists(select 1 from pg_roles where rolname=session_user and
+    (rolsuper or rolcreaterole or rolcreatedb or rolreplication or rolbypassrls or rolinherit))
+    or exists(select 1 from pg_auth_members m join pg_roles r on r.oid=m.member or r.oid=m.roleid where r.rolname=session_user)
+    or has_table_privilege(session_user,'public.phase2_composer_drafts','SELECT,INSERT,UPDATE,DELETE')
+    or has_table_privilege(session_user,'private.phase2_root_authority_key','SELECT,INSERT,UPDATE,DELETE')
+    or has_function_privilege(session_user,'private.store_phase2_root_draft_v1(uuid,uuid,jsonb,jsonb)','EXECUTE') then
+    raise exception using errcode='42501',message='N1_SERVER_ROLE_UNSAFE';end if;
+  -- Independent DB guard for idle authority/network phases, including a lost Node process.
+  -- This conservative GLOBAL protocol remains LOCAL-ONLY, not shared-database readiness.
+  perform set_config('transaction_timeout','10s',true);
+  perform set_config('idle_in_transaction_session_timeout','9s',true);
+  perform set_config('statement_timeout','8s',true);
+  perform set_config('lock_timeout','1s',true);
   -- Even opening/reading the private source needs a transaction-bound server session
   -- signature. The dedicated SQL credential alone must not impersonate arbitrary users.
   select signing_key into secret from private.phase2_root_authority_key where singleton;
