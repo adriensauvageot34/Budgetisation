@@ -45,7 +45,7 @@ import { EquipmentComponentEditor } from "./equipment-component-editor";
 import { WorkshopChoicesProvider } from "./workshop-choices";
 import { WorkshopConfirmationProvider } from "./workshop-confirmation";
 import { InlineEditContext, useOwnedInlineEdits } from "./inline-edit-registry";
-import { composerLocalFrameDigest, guardRootMemberTransition, parseComposerLocalFrame, type ComposerLocalFrame } from "@/domain/phase2/planner/root-relation-local";
+import { assertRootRelationDraftAuthority, composerLocalFrameDigest, guardRootMemberTransition, parseComposerLocalFrame, type ComposerLocalFrame } from "@/domain/phase2/planner/root-relation-local";
 import type { RootContextRelationV1, RootRelationCapabilities, RootRelationMutation } from "@/domain/phase2/planner/root-relation-contract";
 import type { RootRelationAccess, RootRelationBinding, RootRelationTransport, RootRelationRequest } from "@/domain/phase2/planner/root-relation-ui-contract";
 import { rootRelationHttp, rootRelationMessage } from "./root-relation-http";
@@ -68,7 +68,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   rootRelationAccess?: RootRelationAccess | null; rootRelationTransport?: RootRelationTransport;
 }) {
   const [recovered] = useState(() => rootRelationAccess ? readRootWorkspace(rootRelationAccess.scopeKey) : undefined);
-  const [relationSession, setRelationSession] = useState(!!recovered), relationSessionRef = useRef(!!recovered);
+  const recoveredSession = !!recovered && recovered.relationSession !== false;
+  const [relationSession, setRelationSession] = useState(recoveredSession), relationSessionRef = useRef(recoveredSession);
+  const [rootWorkspacePending, setRootWorkspacePending] = useState(!!recovered);
   const [relations, setRelations] = useState<readonly RootContextRelationV1[]>(recovered?.frame.relations ?? []);
   const relationRef = useRef(relations), relationBinding = useRef<RootRelationBinding | null>(recovered?.binding ?? null);
   const [relationOpen, setRelationOpen] = useState(false), [relationCaps, setRelationCaps] = useState<RootRelationCapabilities | null>(null);
@@ -188,10 +190,18 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [applyReceipt, setApplyReceipt] = useState<ComposerApplyReceipt | null>(null);
   const [comparison, setComparison] = useState<ComparisonSnapshot | null>(null);
   const durable = useDurableDraft(draftTransport, recovered?.drafts ?? initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison || relationSession);
+  const financialExitReady = useCommittedEvent(() => durable.status === "SAVED" && !durable.unsaved
+    && durable.snapshot?.active?.digest === semanticStateDigest(localDraft.current));
   useLayoutEffect(() => {
-    if (relationSession && rootRelationAccess && relationBinding.current) rememberRootWorkspace(rootRelationAccess.scopeKey,
-      { frame: { draft: draftState, relations }, model, past, future, binding: relationBinding.current, drafts: durable.snapshot });
-  }, [relationSession, rootRelationAccess, draftState, relations, model, past, future, durable.snapshot]);
+    if (rootWorkspacePending && rootRelationAccess && relationBinding.current) rememberRootWorkspace(rootRelationAccess.scopeKey,
+      { frame: { draft: draftState, relations }, model, past, future, binding: relationBinding.current, drafts: durable.snapshot, relationSession });
+  }, [rootWorkspacePending, relationSession, rootRelationAccess, draftState, relations, model, past, future, durable.snapshot]);
+  useEffect(() => {
+    if (rootWorkspacePending && !relationSession && financialExitReady()) {
+      if (rootRelationAccess) discardRootWorkspace(rootRelationAccess.scopeKey);
+      setRootWorkspacePending(false);
+    }
+  }, [rootWorkspacePending, relationSession, rootRelationAccess, durable.status, durable.unsaved, durable.snapshot, financialExitReady]);
   const skipUnloadWarning = useRef(false);
   const savedReloadSafe = !relationSession && !!draftTransport && !comparison && durable.online && durable.status === "SAVED" && !durable.unsaved
     && durable.snapshot?.active?.digest === semanticStateDigest(draftState);
@@ -229,7 +239,11 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const motionTimer = useRef<ReturnType<typeof setTimeout> | null>(null), nextMotionTarget = useRef<string | null>(null);
   const frameNow = (): ComposerLocalFrame => ({ draft: localDraft.current, relations: relationRef.current });
   const transitionAllowed = (next: PlanSemanticStateV1) => {
-    try { if (relationSessionRef.current) guardRootMemberTransition(localDraft.current, next, relationRef.current); return true; }
+    try { if (relationSessionRef.current) {
+      if (!durable.snapshot?.active) throw new Error("N1_DRAFT_ACCESS_DENIED");
+      assertRootRelationDraftAuthority(durable.snapshot.active.semanticState, next);
+      guardRootMemberTransition(localDraft.current, next, relationRef.current);
+    } return true; }
     catch (error) { const text = rootRelationMessage(error instanceof Error ? error.message : "N1_TRANSITION_REFUSED"); setMessage(text); setErrorMessage(text); return false; }
   };
   const install = (next: ComposerUiModel) => { if (!transitionAllowed(next.semanticState)) return false;
@@ -322,7 +336,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       if (response.capabilities.stateDigest !== nextDigest || next.draft.targetMonth !== before.draft.targetMonth
         || (!proposed && semanticStateDigest(next.draft) !== semanticStateDigest(before.draft))
         || (proposed && nextDigest !== composerLocalFrameDigest(proposed))) throw new Error("N1_STATE_STALE");
-      if (nextDigest !== digest) {
+      if (nextDigest !== digest || history !== "push") {
         if (history === "push") { setPast(p => [...p, before]); setFuture([]); }
         else if (history === "undo") { setPast(p => p.slice(0, -1)); setFuture(f => [...f, before]); }
         else { setFuture(f => f.slice(0, -1)); setPast(p => [...p, before]); }
@@ -343,40 +357,61 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if (!inlineEdits.registry.guard(openRelations, undefined, false)) return;
     if (!relationSessionRef.current) {
       const active = durable.snapshot?.active;
-      if (!active || durable.snapshot?.baseStale || !durable.suspendNow()) {
+      if (!active || durable.snapshot?.baseStale) {
         setMessage("Un brouillon privé accessible et une sauvegarde terminée sont nécessaires pour organiser une sortie."); return;
       }
+      try { assertRootRelationDraftAuthority(active.semanticState, localDraft.current); }
+      catch (error) { const text = rootRelationMessage(error instanceof Error ? error.message : "N1_DRAFT_AUTHORITY_MISMATCH"); setMessage(text); setErrorMessage(text); return; }
+      if (!durable.suspendNow()) { setMessage("Attendez la fin de la sauvegarde en cours avant d’organiser une sortie."); return; }
       relationBinding.current = { draftId: active.draftId, version: active.version };
-      relationSessionRef.current = true; setRelationSession(true);
+      relationSessionRef.current = true; setRelationSession(true); setRootWorkspacePending(true);
     }
     prepareDialogFocus(); setRelationOpen(true); void admitRelation();
+  }
+  function clearRelationDecisions() {
+    relationRef.current = []; setRelations([]);
+    setPast(items => items.map(frame => ({ ...frame, relations: [] }))); setFuture(items => items.map(frame => ({ ...frame, relations: [] })));
+    relationSessionRef.current = false; setRelationSession(false); setRelationOpen(false); setRelationCaps(null); relationToken.current = "";
   }
   function discardRelations() {
     if (busyRef.current) return;
     if (!inlineEdits.registry.guard(discardRelations, undefined, false)) return;
     confirmationRequest.current({ message: "Abandonner l’organisation locale et son historique de liens ? Les activités financières seront conservées. La sauvegarde habituelle du brouillon reprendra.", acceptLabel: "Abandonner l’organisation", accept: () => {
       if (busyRef.current) return;
-      relationRef.current = []; setRelations([]); setPast(items => items.map(frame => ({ ...frame, relations: [] }))); setFuture(items => items.map(frame => ({ ...frame, relations: [] })));
-      relationSessionRef.current = false; setRelationSession(false); setRelationOpen(false); setRelationCaps(null); relationToken.current = "";
-      if (rootRelationAccess) discardRootWorkspace(rootRelationAccess.scopeKey);
+      clearRelationDecisions();
+      // Keep the financial frame recoverable across SPA/back until the existing writer confirms it.
+      // Ending N1 resumes V1 autosave; a scheduled Save is not a receipt.
+      if (financialExitReady()) { if (rootRelationAccess) discardRootWorkspace(rootRelationAccess.scopeKey); setRootWorkspacePending(false); }
       setMessage("Organisation locale abandonnée. Les activités sont conservées dans le brouillon financier.");
     } });
   }
   useEffect(() => {
-    if (!relationSession) return;
+    if (!rootWorkspacePending) return;
     const leave = (event: MouseEvent) => {
       const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
       if (!link || link.download || link.target === "_blank" || link.href === window.location.href) return;
       event.preventDefault(); event.stopPropagation();
-      // Full-document links cannot retain module memory: require explicit loss acknowledgement.
-      const navigate = () => confirmationRequest.current({ message: "Cette navigation recharge la page et perdra l’organisation locale non sauvegardée. Quitter et abandonner cette organisation ?", acceptLabel: "Abandonner et quitter", accept: () => {
-        if (busyRef.current) return;
-        if (rootRelationAccess) discardRootWorkspace(rootRelationAccess.scopeKey); skipUnloadWarning.current = true; window.location.assign(link.href);
-      } });
+      const blockFinancialExit = () => {
+        setMessage(relationSessionRef.current
+          ? "Sortie bloquée : votre brouillon financier n’est pas confirmé. Abandonnez uniquement l’organisation locale, puis attendez la sauvegarde financière avant de quitter."
+          : "Sortie bloquée : attendez la sauvegarde financière confirmée. En cas d’erreur ou de conflit, vos décisions restent dans cette page.");
+      };
+      // Refusing exit must preserve RAW, history, finance AND relations. Never discard a buffer first.
+      if (!financialExitReady()) { blockFinancialExit(); return; }
+      const navigate = () => {
+        if (!financialExitReady()) { blockFinancialExit(); return; }
+        confirmationRequest.current({ message: "Votre brouillon financier est sauvegardé. Quitter et abandonner uniquement l’organisation locale non sauvegardée ?", acceptLabel: "Abandonner l’organisation et quitter", accept: () => {
+          if (busyRef.current) return;
+          if (!financialExitReady()) { blockFinancialExit(); return; }
+          clearRelationDecisions();
+          if (rootRelationAccess) discardRootWorkspace(rootRelationAccess.scopeKey);
+          setRootWorkspacePending(false); skipUnloadWarning.current = true; window.location.assign(link.href);
+        } });
+      };
       if (!busyRef.current && inlineEdits.registry.guard(navigate, undefined, false)) navigate();
     };
     document.addEventListener("click", leave, true); return () => document.removeEventListener("click", leave, true);
-  }, [relationSession, rootRelationAccess, inlineEdits.registry]);
+  }, [rootWorkspacePending, rootRelationAccess, inlineEdits.registry, financialExitReady]);
   useEffect(() => { scheduler.current.revive(); return () => { if (timer.current) clearTimeout(timer.current); if (motionTimer.current) clearTimeout(motionTimer.current); gate.current.invalidate(); scheduler.current.dispose(); }; }, []);
   useEffect(() => {
     const historyKey = (event: KeyboardEvent) => {
@@ -929,6 +964,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
     {relationSession && <div className={relationStyles.notice} data-root-local-notice role="status">Organisation locale non sauvegardée · {relations.length} sortie(s). Sauvegarde et Apply suspendus. <button disabled={busy} onClick={openRelations}>Organiser une sortie</button> <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}
+    {rootWorkspacePending && !relationSession && <div className={relationStyles.notice} data-root-financial-pending role="status">Organisation abandonnée ; décisions financières conservées. Attendez leur sauvegarde confirmée avant de quitter. La mémoire de cet onglet reste temporaire.</div>}
     {relationOpen && <RootRelationCommands model={shown} relations={relations} capabilities={relationCaps} busy={busy} error={errorMessage}
       command={(mutation, focusId) => admitRelation(mutation, undefined, "push", focusId)} close={() => setRelationOpen(false)} abandon={discardRelations}
       undo={() => stage({ kind: "READ" }, "undo", past.at(-1))} redo={() => stage({ kind: "READ" }, "redo", future.at(-1))} canUndo={!!past.length} canRedo={!!future.length} />}

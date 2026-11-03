@@ -29,6 +29,7 @@ export function RootRelationCommands({ model, relations, capabilities, busy, err
     onCancel={event => { event.preventDefault(); guarded(close); }}>
     <h2 id="root-command-title" tabIndex={-1}>Organiser une sortie</h2>
     <p className={styles.notice}>Organisation locale non sauvegardée. Sauvegarde et transformation en Plan suspendues jusqu’à l’abandon explicite. Un rechargement complet perd cette organisation après avertissement.</p>
+    <p>Seules les activités déjà sauvegardées peuvent être reliées. Les activités sauvegardées doivent garder leur identité, mois, rattachement et protections ; enregistrez d’abord leurs suppressions ou changements de protection hors organisation. Les montants financiers locaux restent conservés.</p>
     {error && <p role="alert">{error}</p>}
     <section aria-label="Nouvelle sortie">
       <label>Première activité<select value={first} disabled={busy} onChange={event => setFirst(event.target.value)}><option value="">Choisir</option>{eligible.map(id => <option key={id} value={id}>{label(id)}</option>)}</select></label>

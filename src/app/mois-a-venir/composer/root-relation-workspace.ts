@@ -4,7 +4,8 @@ import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contra
 import type { ComposerDraftSnapshot } from "@/domain/phase2/planner/composer-draft-contract";
 import type { RootRelationBinding } from "@/domain/phase2/planner/root-relation-ui-contract";
 export type RootRelationWorkspace = Readonly<{ frame: ComposerLocalFrame; model: ComposerUiModel;
-  past: ComposerLocalFrame[]; future: ComposerLocalFrame[]; binding: RootRelationBinding; drafts: ComposerDraftSnapshot | null }>;
+  past: ComposerLocalFrame[]; future: ComposerLocalFrame[]; binding: RootRelationBinding; drafts: ComposerDraftSnapshot | null;
+  relationSession: boolean }>;
 // Tab memory only. Survives SPA back/remount; never crosses an authenticated scope or a hard reload.
 const pending = new Map<string, RootRelationWorkspace>();
 const warn = (event: BeforeUnloadEvent) => { if (pending.size) event.preventDefault(); };
