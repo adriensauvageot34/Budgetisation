@@ -1,0 +1,11 @@
+.dialog { width: min(42rem, calc(100vw - 2rem)); max-height: 85vh; overflow: auto; border: 1px solid #ccd3dd; border-radius: 16px; padding: 24px; color: #182236; }
+.dialog::backdrop { background: #18223666; }
+.dialog h2 { font-size: 1.4rem; font-weight: 750; }
+.dialog section { margin: 16px 0; border-top: 1px solid #ddd; padding-top: 12px; }
+.dialog label { display: block; margin: 10px 0; }
+.dialog select { display: block; width: 100%; padding: 7px; border: 1px solid #abb5c5; border-radius: 5px; }
+.dialog button { border: 1px solid #abb5c5; border-radius: 6px; padding: 7px 10px; margin: 4px; }
+.dialog button:disabled { opacity: .45; }
+.dialog ol { list-style: decimal; padding-left: 24px; }
+.dialog li { margin: 12px 0; }
+.notice { padding: 8px 16px; background: #fff4d6; color: #533d03; font-size: .85rem; }

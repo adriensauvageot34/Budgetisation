@@ -34,6 +34,8 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
   const inFlight = useRef(false);
   const pendingRequest = useRef<{ digest: string; command: ComposerDraftSaveCommand } | null>(null);
   const blocked = useRef(!!initial?.baseStale);
+  const suspension = useRef(suspended);
+  suspension.current = suspended;
 
   const updateSnapshot = useCallback((next: ComposerDraftSnapshot) => {
     currentSnapshot.current = next; setSnapshot(next);
@@ -41,7 +43,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
   const clearTimer = () => { if (timer.current) clearTimeout(timer.current); timer.current = null; };
 
   const flush = useCallback(async () => {
-    if (!transport || inFlight.current || blocked.current || suspended) return;
+    if (!transport || inFlight.current || blocked.current || suspension.current) return;
     if (!navigator.onLine) { setStatus("OFFLINE"); setMessage("Hors ligne : modifications non enregistrées."); return; }
     const draft = currentState.current, digest = semanticStateDigest(draft);
     if (digest === confirmed.current) return;
@@ -79,7 +81,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
       setMessage("Sauvegarde non confirmée. Votre travail reste dans cette page ; réessayez.");
     } finally {
       inFlight.current = false;
-      if (!blocked.current && semanticStateDigest(currentState.current) !== confirmed.current
+      if (!suspension.current && !blocked.current && semanticStateDigest(currentState.current) !== confirmed.current
         && semanticStateDigest(currentState.current) !== digest) {
         clearTimer(); timer.current = setTimeout(() => void flush(), 1000);
       }
@@ -111,7 +113,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
 
   const retry = () => { blocked.current = false; void flush(); };
   const refresh = async () => {
-    if (!transport) return;
+    if (!transport || suspension.current) return;
     try {
       const latest = await transport.read(targetMonth);
       updateSnapshot(latest);
@@ -123,7 +125,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
       : "Impossible de relire le brouillon."); }
   };
   const lifecycle = async (kind: "ARCHIVE" | "RESTORE", draft: StoredComposerDraft, discardLocal = false): Promise<boolean> => {
-    if (!transport || !navigator.onLine || inFlight.current || !discardLocal && (status === "DIRTY" || status === "ERROR" || status === "OFFLINE")) return false;
+    if (!transport || suspension.current || !navigator.onLine || inFlight.current || !discardLocal && (status === "DIRTY" || status === "ERROR" || status === "OFFLINE")) return false;
     clearTimer(); blocked.current = true; inFlight.current = true;
     const command = { targetMonth, draftId: draft.draftId, expectedDraftVersion: draft.version, requestId: crypto.randomUUID() };
     try {
@@ -154,6 +156,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
       setStatus("ERROR"); setMessage("Réponse incertaine. Relisez le brouillon avant de réessayer."); return false;
     } finally { inFlight.current = false; }
   };
-  return { snapshot, status, message, online, retry, refresh, lifecycle,
+  const suspendNow = () => { if (inFlight.current) return false; suspension.current = true; clearTimer(); return true; };
+  return { snapshot, status, message, online, retry, refresh, lifecycle, suspendNow,
     unsaved: !!transport && stateDigest !== confirmed.current, enabled: !!transport };
 }
