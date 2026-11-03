@@ -31,8 +31,8 @@ export class InlineEditRegistry {
     for (const [key, edit] of raw) { this.set(key, null); edit.discard(); }
     return true;
   }
-  guard(continueAfterDiscard: () => void, targets?: ReadonlySet<string>, allowSave = true): boolean {
-    const raw = [...this.fields.entries()].filter(([, edit]) => edit.kind === "RAW" && (!targets || targets.has(edit.targetRef)));
+  guard(continueAfterDiscard: () => void, targets?: ReadonlySet<string>, allowSave = true, excludedTargets?: ReadonlySet<string>): boolean {
+    const raw = [...this.fields.entries()].filter(([, edit]) => edit.kind === "RAW" && (!targets || targets.has(edit.targetRef)) && !excludedTargets?.has(edit.targetRef));
     if (!raw.length) return true;
     const unchanged = () => raw.every(([key, edit]) => this.fields.get(key) === edit);
     this.requestConfirmation("Votre saisie n’est pas encore validée. Les décisions déjà conservées resteront dans le brouillon.", () => {

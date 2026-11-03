@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { createHash } from "node:crypto";
 import { withProductAuthentication } from "@/app/product-query";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
@@ -18,15 +19,16 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   const month = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : new Date().toISOString().slice(0, 7);
   const observed = await observeSnapshot(() => withProductAuthentication(async () => {
     const { deps, householdId, userId, supabase } = await authorizedPlanner();
-    if (process.env.COMPOSER_P14_P1_READ_REUSE !== "0") return readComposerOpening(deps, householdId, month,
-      () => composerDraftAutosaveEnabledFor(userId) ? readComposerDrafts({ supabase, userId, householdId }, month) : Promise.resolve(null));
+    const rootRelationAccess = composerDraftAutosaveEnabledFor(userId) ? { scopeKey: createHash("sha256").update(`${userId}:${householdId}:${month}`).digest("hex") } : null;
+    if (process.env.COMPOSER_P14_P1_READ_REUSE !== "0") return { ...await readComposerOpening(deps, householdId, month,
+      () => composerDraftAutosaveEnabledFor(userId) ? readComposerDrafts({ supabase, userId, householdId }, month) : Promise.resolve(null)), rootRelationAccess };
     const drafts = composerDraftAutosaveEnabledFor(userId) ? await readComposerDrafts({ supabase, userId, householdId }, month) : null;
     const model = await composerUiModel(deps, householdId,
       await readMonthComposer(deps, householdId, month, drafts?.active?.semanticState));
-    return { model, drafts };
+    return { model, drafts, rootRelationAccess };
   }));
-  const { model, drafts } = observed.value;
-  return <><ComposerShell initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
+  const { model, drafts, rootRelationAccess } = observed.value;
+  return <><ComposerShell key={rootRelationAccess?.scopeKey ?? month} rootRelationAccess={rootRelationAccess} initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
     durableDraftHttp={!!drafts} />
     {observed.metrics && <span hidden data-snap-server={JSON.stringify(observed.metrics)} />}</>;
 }
