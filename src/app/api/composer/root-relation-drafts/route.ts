@@ -1,10 +1,6 @@
-import { authorizedPlanner } from "@/server/phase2/planner/runtime";
-import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
+import { rootRelationDurableRuntime } from "@/server/phase2/planner/root-relation-durable-runtime";
 import { rootRelationDurableHttp } from "@/server/phase2/planner/root-relation-durable-http";
 export const dynamic = "force-dynamic";
-const handle = (request: Request) => rootRelationDurableHttp(request, async () => {
-  const scope = await authorizedPlanner();
-  return { ...scope, admission: { ...scope, editorEnabled: composerDraftAutosaveEnabledFor(scope.userId) } };
-});
+const handle = (request: Request) => rootRelationDurableHttp(request, rootRelationDurableRuntime);
 export const GET = handle;
 export const POST = handle;

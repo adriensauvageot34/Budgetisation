@@ -1,95 +1,79 @@
-# N1-C-B — local SQL recipe, durable path deliberately closed
+# N1-C-B — Save / Reload local et autorité transactionnelle
 
-Status: **PARTIAL**, not a completed vertical Save→Reload feature. No rollout or remote migration permission.
+G-A option A est approuvée par le mandat de finalisation de #98 : un brouillon organisationnel peut être sauvegardé avec des trajets UNKNOWN / non évalués. Cela ne vaut ni complétude Mobility, ni FRESH, ni APPLIED. G-B et G-C restent ouverts.
 
-## What exists
+Le raccord utilise les vrais `ComposerShell`, hooks, transport HTTP, admission N1-A/B, contrat C-A, reader et writer. Aucun second Composer ni nouvel autosave relationnel. Le SQL reste un candidat hors `migrations/`. Rien n’est activé à distance.
 
-N1-A/B/C-A remain the owners of relation structure, private admission, history, financial preservation, full-document codecs and receipt validation. Their version strings and historical V1 implementations are unchanged.
+## Sources de vérité et cycle utilisateur
 
-This tranche adds:
+- Un document N1 est complet : finance V1 conservée, version explicite N1 et relations ordonnées. La projection V1 sert uniquement aux publications financières READ et au rendu ; elle ne passe jamais dans le writer V1 sur une ligne N1.
+- Tant qu’une session relationnelle est active, l’autosave financier V1 est suspendu. Un bouton explicite Save conserve le document entier. DIRTY devient SAVED uniquement après reçu autoritatif validé par C-A ; aucun timer ne vaut reçu.
+- Un reçu tardif avance le CAS connu sans installer son document sur une décision locale plus récente. Une réponse perdue conserve la commande exacte ; le retry est idempotent. Une nouvelle proposition après réponse incertaine réconcilie d’abord la commande précédente via le reader.
+- Reload refuse DIRTY, une édition apparue pendant la lecture, une source incompatible ou des métadonnées contradictoires à version/digest égaux. Il relit par HTTP, puis recharge réellement la page. Le nouveau Shell restaure le document stocké ; l’historique démarre vide après rechargement complet.
+- Le registre RAW garde ses confirmations et son retour du focus. Les modifications financières, liens et historique restent en cache temporaire jusqu’au reçu confirmé, hors RAW.
+- Abandon sur source V1 reprend le mécanisme financier historique. Abandon sur source N1 restaure les liens sauvegardés dans le frame et l’historique, conserve les finances DIRTY et garde le writer N1 actif. Undo ne peut ressusciter les liens abandonnés.
+- Le scope du cache applicatif est dérivé de l’utilisateur, du foyer et du mois. La page donne une clé React identique à ce scope. Le serveur vérifie toujours le scope indépendamment.
+- Apply, remplacement, archive et Restore N1 restent bloqués : aucune tranche N1-D n’est introduite.
 
-- A candidate SQL file at `supabase/candidates/20261103183114_n1_c_b_durable_candidate.sql`, generated initially with the official migration CLI and deliberately moved **outside `migrations/` before publication**.
-- Six replacement private legacy functions, preserving their historical bodies except for ten guards immediately after locked Draft reads. Public V1/V2 Save/Archive/Restore wrappers and grants remain unchanged. N1 refuses before replay or mutation; V1 remains functional.
-- A version-dispatching structural constraint accepting historical V1 and the complete N1 document without converting stored rows. N1 adds organization only; no new financial Context, component, amount, itinerary or group total.
-- A private storage primitive with full source identity comparison under row lock, request envelope idempotence, base validation, concurrent-create serialization and a separate SQL gate defaulting OFF.
-- A native PostgreSQL recipe testing actual transactions and concurrent connections. Its Auth functions and membership source are explicitly synthetic.
-- A complete-document authenticated reader, versioned HTTP transport and real route `/api/composer/root-relation-drafts`, with separate server gates and a closed policy boundary. These are **not installed in ComposerShell**.
+## Frontière d’autorité
 
-## Exact writer inventory
+1. La route appelle `authorizedPlanner()`. Le navigateur ne fournit ni acteur ni foyer ni grant.
+2. Le writer exige une vraie connexion `session_user=composer_n1_server`, jamais le propriétaire SQL.
+3. L’ouverture reçoit une signature HMAC privée liant session serveur vérifiée, foyer/mois, nonce, backend et transaction. Le rôle SQL seul ne peut même pas obtenir la source privée par cette ouverture.
+4. SQL vérifie la signature avant de retourner la source, puis gèle les tables ordinaires/partitionnées des schémas `public`, `private`, `auth` en EXCLUSIVE, dans un ordre stable. SELECT reste possible depuis le reader authentifié séparé ; mutations et verrous concurrents attendent. Ce protocole conservateur couvre également les lignes absentes.
+5. SQL revalide Auth synthétique / accès V2 / foyer / gate. Le serveur reconstruit ensuite `authorizedPlanner()` et ses dépendances sans réutiliser la publication antérieure. Il relit la source complète puis republie les capabilities privées et proposées par le véritable owner C4/N1.
+6. Une seconde signature lie paquet exact, identité complète source, admission C4/politique, acteur/foyer/mois, nonce/backend/transaction et G-A. SQL contrôle ce binding, l’usage unique, les identités et la primitive CAS existante.
+7. L’adaptateur valide le reçu de la ligne écrite et ne le retourne qu’après COMMIT. Un échec de commit ne devient pas SAVED.
 
-The tracked migrations define only these mutators of `phase2_composer_drafts`:
+La clé HMAC est indépendante du credential SQL ; elle n’est pas retournée ni loggée. Les helpers et la table de clé ne sont pas exposés aux clients. Aucun service-role RPC n’est ouvert. Le rôle dédié n’a pas EXECUTE sur la primitive de stockage, ni SELECT sur les Drafts ou la clé. Seuls les deux helpers signés lui sont accordés. Les requêtes privées ordinaires restent sous le client utilisateur/RLS.
 
-| Migration | Private functions | Public wrappers |
-|---|---|---|
-| `20261011130256_p07b_m0_phase2_composer_drafts_fixture_gate.sql` | save/archive/restore_phase2_composer_draft_v1 | same names in public |
-| `20261011150830_p07_composer_draft_access_v2.sql` | save/archive/restore_phase2_composer_draft_v2 | same names in public |
+Le modèle protège contre la commande forgée par un client et contre le credential SQL seul ; il ne prétend pas résister au propriétaire de la base ou à une compromission du serveur détenant aussi la clé.
 
-There is no tracked DELETE RPC; ordinary clients have SELECT only, under the historical author/household policies. The v1 fixture gate and v2 access gate, author checks, membership function, CAS and requestId checks remain in place. Direct database owner/administrator SQL is privileged and not made safe by an application gate. The deployed catalog is **not inspected** by this mandate.
+## SQL candidat et compatibilité
 
-The historical Save function has three locked Draft reads: existing active on create, post-conflict read, and ordinary update. Each lifecycle function has one. All ten sites receive a guard. Restore against an old V1 archive refuses when another active Draft exists; it never replaces that active Draft.
+Fichier unique : `supabase/candidates/20261103183114_n1_c_b_durable_candidate.sql`.
 
-## Storage primitive is not a user Save writer
+Les six fonctions privées legacy gardent leurs corps historiques et dix refus après lecture verrouillée, avant replay/mutation. Save, replay, archive et Restore V1/V2 refusent N1 sans downgrade. Les wrappers et privilèges publics historiques restent inchangés. V1 reste fonctionnel. Les clients ordinaires ont SELECT seulement sur les Drafts.
 
-`private.store_phase2_root_draft_v1(actor, household, packet, source_identity)`:
+La primitive privée conserve le document entier, source complète, base de Plan, auteur/foyer/mois/lifecycle, CAS et enveloppe de la dernière commande. Deux créations SQL concurrentes ont un seul gagnant ; l’admission UI exige toutefois un Draft privé préexistant. La création relationnelle durable depuis zéro n’est pas un droit ajouté par ce raccord.
 
-1. Requires the private SQL gate, initially OFF. The enabled row is held FOR SHARE through commit.
-2. Requires actor equality with `auth.uid()`, existing v2 admission and household access.
-3. Checks wire/document versions, structural validity, size, binding and base pairs.
-4. Serializes N1 creations with a scoped advisory lock; existing ACTIVE uniqueness also remains.
-5. Locks the selected private ACTIVE Draft and compares the full identity excluding observation timestamps/retention and the internal command ledger.
-6. Replays only the same packet **and source identity** and the exact corresponding result metadata, base, document and digest.
-7. Locks the Plan table in SHARE mode and the Plan row FOR SHARE, including protection of an absent-plan race. This broad table lock is conservative and requires review before any production use.
-8. Stores the complete JSON, increments CAS once and preserves row identity, base, lifecycle and metadata. Create supplies all retention fields.
+L’enveloppe n’est pas un journal d’idempotence permanent : après une mutation ultérieure, une ancienne commande est refusée. Les observations temporelles ne remplacent pas l’identité de mutation.
 
-`n1_last_command` retains only the latest request envelope and source identity; it is not a permanent idempotency ledger. An older request after a later mutation is refused, not replayed blindly. Source identity includes full semantic JSON and mutation metadata, not just version/digest. Source and envelope storage increase per-row storage and need production sizing review.
+## Gates et configuration non provisionnée
 
-**All EXECUTE privileges are revoked from PUBLIC, anon, authenticated AND service_role. There is no public wrapper and no server credential factory for this primitive.** Only the database owner can execute the local recipe. This is intentional, not a missing grant to fix automatically.
+- `COMPOSER_ROOT_RELATIONS_ENABLED === true` (chaîne exacte `"true"`).
+- `COMPOSER_ROOT_RELATIONS_DURABLE_SAVE_ENABLED === true` (même convention).
+- Gate SQL privée OFF par défaut.
+- Rôle créé NOLOGIN / NOINHERIT ; aucune clé provisionnée par le candidat.
+- Le runtime ne construit le pool qu’avec les deux gates ON et les deux paramètres privés `COMPOSER_ROOT_RELATIONS_DATABASE_URL` et `COMPOSER_ROOT_RELATIONS_AUTHORITY_KEY`.
 
-The SQL validator overlaps TypeScript on versions, relation shape, UUIDs, unique ids/membership, members existing as admitted roots, month, provenance, member order, graph and size. It reuses the historical V1 SQL validator for the financial envelope. It does not duplicate every C4 value grammar, financial rule or permission in SQL. SQL recomputes the SHA-256 digest using the existing TypeScript canonical JSON convention (including UTF-16 key order and number notation, with boundary tests). Strict TypeScript parsing and its digest verification remain required at server/reader boundaries. The storage primitive alone is not an admission of arbitrary JSON and is not exposed to callers that could bypass those boundaries.
+Aucune de ces configurations distantes n’est créée ou modifiée. Flags OFF refusent avant Auth et lecture. Le candidat seul ne rend pas Save accessible. Aucun workflow GitHub suivi ni hook install/build/deploy ne l’applique ; build est `next build` et `vercel.json` n’a aucune commande SQL. Le contrôle n’atteste pas la configuration extérieure d’une intégration Supabase : conserver le fichier hors `migrations/` jusqu’à autorisation distincte.
 
-## Why the positive runtime path stops
+## Recettes reproductibles
 
-Two dependencies are not received:
-
-1. **G-A.** No official owner in these N1 contracts attests completeness of a ROOT GROUP journey. The JourneyResolver processes explicit Mobility intents; an empty intent list or a financial FRESH result does not attest a complete group itinerary. Implementing a new group/Mobility doctrine is outside this tranche. `rootRelationDurablePolicy` returns `N1_G_A_POLICY_UNDECIDED` for every proposed group. Neither option A (incomplete organizational Draft saveable) nor B (completeness required) is approved for Production.
-2. **Transaction-bound authority.** Existing F01 publishes fresh private/proposed C4 rights in server JavaScript before writing. CAS under SQL lock protects the source Draft/base, but it does not by itself prove that all authorization facts remain valid at commit. The repository does not provide a received protocol tying that publication and its permission revision to a callable SQL writer. Opening a service-role RPC or accepting a client grant/token would bypass this dependency. Runtime therefore also has an explicit `N1_SQL_AUTHORITY_NOT_RECEIVED` stop; no SQL writer is obtained or called.
-
-The HTTP handler authenticates through `authorizedPlanner`, uses the ordinary scoped client for reads, refuses browser-provided household/grants, invokes existing private admission/owner and validates local CAS/reconciliation. G-A blocks before any successful receipt is returned. Tests cannot replace that policy with an unconditional true to claim a vertical PASS.
-
-## Gates and exposure
-
-- Existing `COMPOSER_ROOT_RELATIONS_ENABLED === "true"` stays unchanged.
-- New `COMPOSER_ROOT_RELATIONS_DURABLE_SAVE_ENABLED === "true"` is required too.
-- Both default OFF; the HTTP handler checks them before authorization or reads.
-- SQL recipe gate `private.phase2_root_durable_gate.enabled` defaults false and is not client-readable/writable.
-- Policy remains closed even if both application flags were accidentally true.
-- Private storage EXECUTE remains revoked even if its SQL gate is enabled by an administrator.
-- No Vercel variable, Supabase project, remote schema or setting is changed.
-
-## Explicitly not integrated
-
-ComposerShell, page opening, the financial autosave, RAW/focus/history/navigation, root workspace recovery and the existing editor are unchanged. No new button claims a Save that cannot be admitted. No second autosave is introduced. A persisted N1 Draft is not silently projected into the historical V1 writer.
-
-Consequently the complete Shell→HTTP→admission→writer→DB→reader→Shell scenario is **NOT_RUN**, and SAVED_LOCAL_ISOLATED is **NOT_ATTESTED**. The positive SQL-owner recipe and the HTTP fail-closed scenario are different proofs, never stitched together as a user Save. Save/Reload, full source/history recovery, delayed Reload protection in the Shell and authorized lifecycle integration remain to be completed after the blocking authority/policy boundary is received.
-
-## Local reproduction
-
-Use a fresh native PostgreSQL 17 cluster created solely for these scripts, listening on `127.0.0.1:55439`, data directory `../p-grp-n1-c-b/pg-isolated` relative to the repository. Do not point these scripts at a pre-existing cluster. The SQL script checks the actual server data directory before creating a fresh `n1cb_recipe_*` database. It never accepts a database URL or password; it refuses any request for a secret.
-
-Run:
+PostgreSQL natif 17, cluster dédié créé pour cette recette, écoute uniquement `127.0.0.1:55439`, `data_directory=../p-grp-n1-c-b/pg-isolated` depuis le dépôt. Les scripts vérifient ce chemin réel avant toute création de base. Ils n’acceptent aucun URL/password distant. Toutes les identités, sessions, World, permissions et décisions sont synthétiques.
 
 ```text
 node scripts/check-root-relation-durable-postgres.mjs
+node scripts/check-root-relation-authority.mjs
+node scripts/check-root-relation-shell-native.mjs
 node scripts/check-root-relation-durable-http.mjs
 node scripts/check-composer-root-relation-durable-contract.mjs
+node scripts/check-composer-root-relation-boundary.mjs
+node scripts/check-composer-root-relation-exit.mjs
+node scripts/check-composer-root-relation-gate.mjs
 node node_modules/typescript/bin/tsc --noEmit --incremental false
 git diff --check
 ```
 
-The native SQL test does execute actual migrations/transactions and uses different connections for races, with synthetic roles, `auth.uid()` and membership functions. It does **not** certify real Supabase Auth/RLS. The HTTP test uses real loopback HTTP, transport, service and owner with synthetic auth/rows, and makes zero SQL writes. It does **not** certify SQL Save from the UI.
+Le test Shell utilise `COMPOSER_REACT_TEST_TOOLS` pour une installation React/test-renderer/esbuild déjà disponible. Il monte le vrai Shell et ses hooks, avec feuilles visuelles/DOM simulées, et traverse le vrai HTTP, le writer non propriétaire et PostgreSQL. Une recette navigateur native complémentaire monte aussi les vrais composants visuels via `scripts/serve-root-relation-durable.mjs` à `127.0.0.1:3131` (`PLANNER_BROWSER_TOOLS` pour esbuild, `N1_RECIPE_GLOBAL_CSS` pour le CSS global compilé). Seul l’hébergement Next/navigation/runtime est substitué. Sa session HttpOnly locale est contrôlée ; ce n’est pas Supabase Auth.
 
-## Publication and next decision
+Les fixtures lisent le World et la permission indépendante depuis PostgreSQL après le verrou. Elles ne remplacent pas C4 par une autorisation forcée. Les scénarios comprennent le parcours utilisateur complet, deux sessions concurrentes, révocation indépendante, changement de base, ouverture/commit forgés, signature d’une autre transaction, legacy clients, retry après commit perdu, nouvelles décisions après reçu tardif, RAW, Undo/Redo, abandon, navigation et Reload retardé.
 
-No tracked GitHub workflows are present, build is `next build`, no install/prebuild/postbuild migration command exists and `vercel.json` contains no migration command. Supabase external integration settings are not certified; candidate packaging outside `migrations/` avoids making this file a default auto-migration input. Do not move it into that directory or apply it remotely without separate review.
+## Limites et seuil suivant
 
-One Draft PR only. No merge or manual deployment. Future receipt must establish a transaction-bound trusted authority mechanism and the G-A policy/completeness boundary, complete the real Shell Save/Reload and history/navigation protections, then receive synthetic vertical and explicitly authorized isolated Auth/RLS before activation. G-B/G-C stay open; no #93 change, N1-D, N2/N3/N4, Apply or Finance/Mobility calculation is introduced.
+Le verdict local ne vaut pas autorisation de migration ou activation. Le gel de toutes les tables est volontairement très large : coût de contention, interactions avec Auth et writers existants, durée des lectures réseau et bornage opérationnel doivent être étudiés avant tout usage partagé. Les requêtes SQL ont lock_timeout 4 s et statement_timeout 25 s ; la durée globale des appels Auth/canoniques sous verrou n’est pas encore un budget opérationnel certifié.
+
+Une révocation committée avant la prise des verrous est revalidée et refuse Save. Une révocation demandée après leur acquisition est sérialisée après le commit ; elle n’est pas prétendue déjà effective au point de linéarisation du Save. Les permissions dépendant de faits hors des schémas gelés, de DDL/attributs de rôles, de providers externes ou de la validité d’un vrai token ne sont pas certifiées par la recette locale. La future réception doit établir leur inventaire et leur binding avant activation.
+
+Restent nécessaires : revue indépendante du candidat et de la frontière de signature, étude d’un protocole de verrouillage ciblé coopérant avec les writers réels, provisionnement privé séparément autorisé, tests Supabase Auth/RLS réels inter-foyers dans une cible isolée autorisée, puis décision de migration/activation. G-B/G-C restent ouverts. Aucun Apply, trajet fictif, total de groupe, N1-D ou modification de #93.

@@ -195,6 +195,123 @@ begin
 end $$;
 revoke all on function private.store_phase2_root_draft_v1(uuid,uuid,jsonb,jsonb) from public,anon,authenticated,service_role;
 
+-- Server-only transaction authority. No service_role/client RPC grant. Deployment of the
+-- candidate alone provisions neither a login nor a signing key, and leaves the SQL gate OFF.
+do $$begin
+  if not exists(select 1 from pg_roles where rolname='composer_n1_server') then
+    create role composer_n1_server nologin noinherit;
+  end if;
+  if exists(select 1 from pg_roles where rolname='composer_n1_server' and
+    (rolsuper or rolcreaterole or rolcreatedb or rolreplication or rolbypassrls or rolinherit))
+    or exists(select 1 from pg_auth_members m join pg_roles r on r.oid=m.member or r.oid=m.roleid
+      where r.rolname='composer_n1_server') then
+    raise exception 'N1_SERVER_ROLE_UNSAFE';end if;
+end$$;
+grant usage on schema private to composer_n1_server;
+create table private.phase2_root_authority_key(singleton boolean primary key default true check(singleton),
+  signing_key bytea check(signing_key is null or octet_length(signing_key)=32));
+insert into private.phase2_root_authority_key(singleton) values(true);
+alter table private.phase2_root_authority_key enable row level security;
+revoke all on private.phase2_root_authority_key from public,anon,authenticated,service_role,composer_n1_server;
+
+create function private.root_draft_mac_v1(secret bytea,message text) returns text
+language plpgsql immutable strict security invoker set search_path='' as $$
+declare padded bytea := secret||decode(repeat('00',64-octet_length(secret)),'hex');
+  inner_pad bytea := padded;outer_pad bytea := padded;i integer;
+begin
+  if octet_length(secret)<>32 then raise exception 'N1_AUTHORITY_KEY_INVALID';end if;
+  for i in 0..63 loop
+    inner_pad:=set_byte(inner_pad,i,get_byte(padded,i)#54);
+    outer_pad:=set_byte(outer_pad,i,get_byte(padded,i)#92);
+  end loop;
+  return encode(sha256(outer_pad||sha256(inner_pad||convert_to(message,'UTF8'))),'hex');
+end$$;
+revoke all on function private.root_draft_mac_v1(bytea,text) from public,anon,authenticated,service_role,composer_n1_server;
+
+create function private.begin_root_draft_authority_v1(actor uuid,household uuid,month date,proof jsonb,signature text) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare t record;u jsonb;d public.phase2_composer_drafts;nonce uuid:=gen_random_uuid();secret bytea;
+begin
+  if session_user<>'composer_n1_server' or actor is null or household is null
+    or month is null or month<>date_trunc('month',month)::date then
+    raise exception using errcode='42501',message='N1_SERVER_AUTHORITY_REQUIRED';end if;
+  -- Even opening/reading the private source needs a transaction-bound server session
+  -- signature. The dedicated SQL credential alone must not impersonate arbitrary users.
+  select signing_key into secret from private.phase2_root_authority_key where singleton;
+  if secret is null or proof is null or signature is null
+    or proof-array['kind','userId','householdId','targetMonth','transactionId','backendId','nonce']<>'{}'::jsonb
+    or proof->>'kind' is distinct from 'n1-session-scope@1'
+    or proof->>'userId' is distinct from actor::text or proof->>'householdId' is distinct from household::text
+    or proof->>'targetMonth' is distinct from to_char(month,'YYYY-MM')
+    or proof->>'transactionId' is distinct from pg_current_xact_id()::text
+    or proof->>'backendId' is distinct from pg_backend_pid()::text
+    or coalesce(proof->>'nonce','') !~ '^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$'
+    or private.root_draft_mac_v1(secret,private.phase2_n1_canonical_json_v1(proof)) is distinct from signature then
+    raise exception using errcode='42501',message='N1_SESSION_PROOF_INVALID';end if;
+  -- Conservative, bounded recipe protocol: freeze every ordinary DB table used by
+  -- Auth/private/canonical facts before a FRESH server publication, including phantom rows.
+  -- EXCLUSIVE permits ordinary SELECT (including the separate scoped read client) but
+  -- prevents competing writers/row lockers until commit. No remote provider is made authoritative.
+  for t in select n.nspname,c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname in ('public','private','auth') and c.relkind in ('r','p')
+    order by n.nspname,c.relname loop
+    execute format('lock table %I.%I in exclusive mode',t.nspname,t.relname);
+  end loop;
+  if not exists(select 1 from private.phase2_root_durable_gate where singleton and enabled)
+    or not exists(select 1 from private.phase2_root_authority_key where singleton and signing_key is not null) then
+    raise exception using errcode='42501',message='N1_DURABLE_DISABLED';end if;
+  perform set_config('request.jwt.claim.sub',actor::text,true);
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',actor,'role','authenticated')::text,true);
+  select to_jsonb(x) into u from auth.users x where x.id=actor;
+  if u is null or u->>'deleted_at' is not null
+    or (u->>'banned_until' is not null and (u->>'banned_until')::timestamptz>clock_timestamp())
+    or not coalesce(private.phase2_composer_draft_access_allowed_v2(),false)
+    or not coalesce(private.user_has_household_access(household),false) then
+    raise exception using errcode='42501',message='N1_DRAFT_ACCESS_DENIED';end if;
+  select * into d from public.phase2_composer_drafts where owner_user_id=actor
+    and household_id=household and target_month=month and lifecycle='ACTIVE';
+  perform set_config('budgetisation.n1.nonce',nonce::text,true);
+  perform set_config('budgetisation.n1.used','0',true);
+  return jsonb_build_object('nonce',nonce,'transactionId',pg_current_xact_id()::text,'backendId',pg_backend_pid()::text,
+    'source',case when d.draft_id is null then null else private.phase2_root_draft_identity_v1(d) end);
+end$$;
+revoke all on function private.begin_root_draft_authority_v1(uuid,uuid,date,jsonb,text) from public,anon,authenticated,service_role;
+grant execute on function private.begin_root_draft_authority_v1(uuid,uuid,date,jsonb,text) to composer_n1_server;
+
+create function private.commit_root_draft_authority_v1(packet jsonb,source_identity jsonb,admission jsonb,signature text) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare secret bytea;d public.phase2_composer_drafts;actor uuid;household uuid;month date;actual_source jsonb;
+begin
+  if session_user<>'composer_n1_server' or admission is null or signature is null
+    or admission-array['nonce','transactionId','backendId','userId','householdId','targetMonth',
+      'packetDigest','sourceDigest','authorityDigest','policy']<>'{}'::jsonb
+    or admission->>'nonce' is distinct from current_setting('budgetisation.n1.nonce',true)
+    or admission->>'transactionId' is distinct from pg_current_xact_id()::text
+    or admission->>'backendId' is distinct from pg_backend_pid()::text
+    or current_setting('budgetisation.n1.used',true) is distinct from '0'
+    or admission->>'policy' is distinct from 'g-a-organizational-draft@1'
+    or coalesce(admission->>'authorityDigest','') !~ '^[a-f0-9]{64}$'
+    or admission->>'packetDigest' is distinct from encode(sha256(convert_to(private.phase2_n1_canonical_json_v1(packet),'UTF8')),'hex')
+    or admission->>'sourceDigest' is distinct from encode(sha256(convert_to(private.phase2_n1_canonical_json_v1(coalesce(source_identity,'null'::jsonb)),'UTF8')),'hex') then
+    raise exception using errcode='42501',message='N1_ADMISSION_INVALID';end if;
+  select signing_key into secret from private.phase2_root_authority_key where singleton;
+  if secret is null or private.root_draft_mac_v1(secret,private.phase2_n1_canonical_json_v1(admission)) is distinct from signature then
+    raise exception using errcode='42501',message='N1_ADMISSION_INVALID';end if;
+  actor:=(admission->>'userId')::uuid;household:=(admission->>'householdId')::uuid;
+  month:=(admission->>'targetMonth'||'-01')::date;
+  if actor is distinct from auth.uid() or admission->>'targetMonth' is distinct from packet#>>'{command,targetMonth}' then
+    raise exception using errcode='42501',message='N1_ADMISSION_INVALID';end if;
+  select * into d from public.phase2_composer_drafts where owner_user_id=actor and household_id=household
+    and target_month=month and lifecycle='ACTIVE';
+  actual_source:=case when d.draft_id is null then null else private.phase2_root_draft_identity_v1(d) end;
+  if actual_source is distinct from source_identity then
+    raise exception using errcode='40001',message='N1_DRAFT_CONFLICT';end if;
+  perform set_config('budgetisation.n1.used','1',true);
+  return private.store_phase2_root_draft_v1(actor,household,packet,source_identity);
+end$$;
+revoke all on function private.commit_root_draft_authority_v1(jsonb,jsonb,jsonb,text) from public,anon,authenticated,service_role;
+grant execute on function private.commit_root_draft_authority_v1(jsonb,jsonb,jsonb,text) to composer_n1_server;
+
 -- LEGACY FUNCTIONS BELOW: exact historical bodies with a guard immediately after EVERY
 -- SELECT ... FOR UPDATE. Checks precede requestId replay and any mutation. Public wrappers unchanged.
 

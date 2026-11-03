@@ -197,5 +197,5 @@ try{
  });
  console.log(JSON.stringify({status:'PASS',checks,database,nativeVersion,clusterDirectory:dir,sqlCalls:rpcCalls,
   level:'NATIVE_SQL_STORAGE_AND_ROLES_LOCAL_ONLY',syntheticAuth:true,productionAuthRls:'NOT_RUN',
-  shellToSql:'NOT_RUN_G_A_AND_TRANSACTION_AUTHORITY_NOT_RECEIVED',savedLocalIsolated:'NOT_ATTESTED',remoteConnections:0}));
+  shellToSql:'NOT_EXERCISED_BY_THIS_SQL_ONLY_SUITE',savedLocalIsolated:'SEE_SEPARATE_VERTICAL_RECIPE',remoteConnections:0}));
 }finally{await Promise.allSettled(clients.map(client=>client.end()));}

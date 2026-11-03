@@ -39,7 +39,7 @@ try{
   const{readComposerDrafts}=require('@/server/phase2/planner/composer-draft-service');await assert.rejects(()=>readComposerDrafts(scope,'2026-11'),/PLANNER_SEMANTIC_VERSION_UNSUPPORTED/);
   f.row.semantic_state=original;f.row.semantic_state_digest=digest;
  });
- await check('REAL_HTTP_FULL_PROPOSAL_REACHES_OWNER_THEN_G_A_FAILS_CLOSED',async()=>{await reject('N1_G_A_POLICY_UNDECIDED');});
+ await check('G_A_OPTION_A_DOES_NOT_BYPASS_MISSING_TRANSACTION_AUTHORITY',async()=>{await reject('N1_SQL_AUTHORITY_NOT_RECEIVED');});
  await check('STALE_SOURCE_IS_AN_EXPLICIT_CONFLICT_BEFORE_POLICY',async()=>{await reject('N1_DRAFT_CONFLICT',{...packet,command:{...packet.command,expectedDraftVersion:2}});});
  await check('CLIENT_GRANT_AND_FOREIGN_HOUSEHOLD_ARE_NOT_AUTHORITY',async()=>{await reject('PLANNER_FIELDS_INVALID',{...packet,canManageRelations:true});
  await reject('PLANNER_FIELDS_INVALID',{...packet,command:{...packet.command,householdId:'f07b0000-0000-4000-8000-000000000002'}});});
@@ -49,5 +49,5 @@ try{
  await reject('N1_DRAFT_AUTHORITY_MISMATCH');f.row.semantic_state=original;f.row.semantic_state_digest=old;});
  await check('SESSION_LOSS_HAS_NO_WRITER_OR_MUTATION',async()=>{authenticated=false;await reject('AUTHENTICATION_REQUIRED');authenticated=true;});
  console.log(JSON.stringify({status:'PASS',checks,level:'REAL_LOCAL_HTTP_TRANSPORT_SERVICE_OWNER_SYNTHETIC_AUTH_ROWS',requests:network,realSqlWriters:0,
-  shellToSql:'NOT_RUN_G_A_AND_SQL_AUTHORITY',saved:'NOT_ATTESTED',authRls:'NOT_RUN',remoteConnections:0}));
+  shellToSql:'NOT_EXERCISED_BY_THIS_SYNTHETIC_HTTP_ONLY_SUITE',saved:'SEE_SEPARATE_VERTICAL_RECIPE',authRls:'NOT_RUN',remoteConnections:0}));
 }finally{globalThis.fetch=nativeFetch;delete process.env.COMPOSER_ROOT_RELATIONS_ENABLED;delete process.env.COMPOSER_ROOT_RELATIONS_DURABLE_SAVE_ENABLED;server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

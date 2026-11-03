@@ -27,6 +27,6 @@ export async function rootRelationDurableHttp(request: Request, authorize: () =>
     if (error instanceof BootstrapAuthenticationRequiredError) return reply({ ok: false, code: "AUTHENTICATION_REQUIRED" }, 401);
     const code = error instanceof TypeError && /^(N1_|PLANNER_)[A-Z0-9_]+$/u.test(error.message) ? error.message : "N1_DURABLE_UNAVAILABLE";
     return reply({ ok: false, code }, /ACCESS|PERMISSION|PRESERV|AUTHORITY/.test(code) ? 403
-      : /CONFLICT|STALE|REUSED/.test(code) ? 409 : /UNDECIDED|NOT_RECEIVED/.test(code) ? 503 : 400);
+      : /CONFLICT|STALE|REUSED/.test(code) ? 409 : /UNAVAILABLE|UNDECIDED|NOT_RECEIVED/.test(code) ? 503 : 400);
   }
 }
