@@ -3,6 +3,8 @@ import type { PlanSemanticStateV1, PlannedContextState } from "./semantic-state"
 import type { PlanProjectionV1 } from "./projection-contract";
 import type { PlannerKnowledge } from "./diagnostics";
 import type { ComponentSelectionV1 } from "./component-contract";
+// N1 is a dedicated versioned slice, not admitted by legacy ComposerRequest/Save/Apply.
+export type { RootRelationMutation, RootRelationCommand } from "./root-relation-contract";
 export type SemanticMutation =
   | Readonly<{ kind: "SET_STATE"; targetRef: string; value: PlannerJsonObject }>
   | Readonly<{ kind: "REMOVE_CONTEXT"; contextOccurrenceId: string }>
