@@ -73,9 +73,20 @@ export function validateRootRelationDraftSaveReceipt(rawPacket: unknown, rawRece
     throw new RootRelationDraftError("N1_DRAFT_SCOPE_MISMATCH");
   if (!known && command.expectedDraftId !== null) throw new RootRelationDraftError("N1_DRAFT_BINDING_INVALID");
   if (known && known.version < saved.version && (known.version !== command.expectedDraftVersion
-    || known.digest !== command.expectedDraftDigest || known.semanticState.version !== command.expectedDocumentVersion))
+    || known.digest !== command.expectedDraftDigest || known.semanticState.version !== command.expectedDocumentVersion
+    || known.baseRevisionId !== command.expectedBaseRevisionId || known.baseRevisionNumber !== command.expectedBaseRevisionNumber))
     throw new RootRelationDraftError("N1_DRAFT_CONFLICT");
-  if (known && known.version === saved.version && known.digest !== saved.digest) throw new RootRelationDraftError("N1_DRAFT_CONFLICT");
+  if (known && known.version < saved.version && known.lastMutationRequestId === command.requestId)
+    throw new RootRelationDraftError("N1_DRAFT_REQUEST_ID_REUSED");
+  // Same version means the same contractual mutation, not merely the same semantic content.
+  // Dates are observation metadata; they do not identify a mutation or grant a capability.
+  if (known && known.version === saved.version && (known.digest !== saved.digest
+    || known.semanticState.version !== saved.semanticState.version
+    || canonicalPlannerJson(known.semanticState) !== canonicalPlannerJson(saved.semanticState)
+    || known.baseRevisionId !== saved.baseRevisionId || known.baseRevisionNumber !== saved.baseRevisionNumber
+    || known.lastMutationRequestId !== saved.lastMutationRequestId || known.lastMutationKind !== saved.lastMutationKind
+    || known.lastMutationExpectedVersion !== saved.lastMutationExpectedVersion))
+    throw new RootRelationDraftError("N1_DRAFT_CONFLICT");
   if (rootRelationDraftDocumentDigest(localDocument) !== command.digest) throw new RootRelationDraftError("N1_DRAFT_LOCAL_CHANGED");
   return { kind: "VALIDATED_RECEIPT_ONLY" as const, draft: saved, replayed: receipt.replayed };
 }

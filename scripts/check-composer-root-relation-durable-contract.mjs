@@ -70,6 +70,7 @@ await check('T4_UNKNOWN_VERSIONS_FIELDS_AND_DIGEST_REFUSED',()=>{
  reject('N1_DRAFT_DIGEST_MISMATCH',()=>codec.parseRootRelationDraftSavePacket({...packet(),command:{...packet().command,digest:'0'.repeat(64)}}));
  reject('PLANNER_FIELDS_INVALID',()=>codec.parseRootRelationDraftSavePacket({...packet(),canManageRelations:true}));
  reject('N1_DRAFT_DOCUMENT_UNSUPPORTED',()=>codec.parseRootRelationDraftSavePacket({...packet(),command:{...packet().command,expectedDocumentVersion:'future'}}));
+ reject('N1_DRAFT_TRANSPORT_UNSUPPORTED',()=>boundary.validateRootRelationDraftSaveReceipt(packet(),{...receipt(packet()),contract:'composer-draft-http@future'},current,document));
 });
 await check('T5_CAS_CONCURRENT_REORDERS_STALE_READ_AND_LATE_RESPONSE',()=>{
  const expanded=state.parseRootRelationPlanState({...document,rootRelations:[{...document.rootRelations[0],orderedContextIds:[a,b,c]}]});const source=record(expanded);let remoteRow=source;
@@ -124,5 +125,71 @@ await check('T8_OLD_APPLICATION_REFUSES_N1_ROW_SQL_GUARD_DEFERRED',async()=>{
  const old={...packet().command,semanticState:v1,digest:semanticStateDigest(v1)};assert.equal((await saveComposerDraft(f.scope(),old)).ok,false);assert.equal(rpc,0);
  Object.assign(f.row,JSON.parse(before));codec.assertRootRelationDraftClient(V1_HTTP,v1);
 });
+const receiptMatrix=[];
+await check('T9_RECEIPT_CONTRADICTORY_MATRIX_AND_INPUT_ATOMICITY',()=>{
+ const baseId=uuid(98801),otherBaseId=uuid(98802),requestA=uuid(98803),requestB=uuid(98804);
+ const source={...current,baseRevisionId:baseId,baseRevisionNumber:2,lastMutationExpectedVersion:current.version-1};
+ const P=packet(document,source,requestA);Object.assign(P.command,{expectedBaseRevisionId:baseId,expectedBaseRevisionNumber:2});
+ const R=receipt(P);Object.assign(R.draft,{baseRevisionId:baseId,baseRevisionNumber:2});const saved=R.draft;
+ const alteredDocument=state.parseRootRelationPlanState({...document,rootRelations:[{...document.rootRelations[0],orderedContextIds:[b,a]}]});
+ const version1=state.rootRelationBaseState(document); // Read-only test comparison/fixture; never a Save projection.
+ const defaults={packet:P,receipt:R,known:saved,local:document};
+ function row(name,overrides={},expected='VALIDATED_RECEIPT_ONLY'){
+  const input=structuredClone({...defaults,...overrides});
+  // Reject cases must reach the actual receipt validator with structurally valid packet, records and local document.
+  codec.parseRootRelationDraftSavePacket(input.packet);codec.parseCompatibleRootRelationDraft(input.receipt.draft);
+  if(input.known!==null)codec.parseCompatibleRootRelationDraft(input.known);codec.readRootRelationDraftDocument(input.local);
+  const before=JSON.stringify(input);let actual;
+  try{actual=boundary.validateRootRelationDraftSaveReceipt(input.packet,input.receipt,input.known,input.local).kind;}
+  catch(error){actual=error.code??error.message;}
+  assert.equal(actual,expected,name);assert.equal(JSON.stringify(input),before,name+' must not mutate inputs');
+  receiptMatrix.push({name,expected,actual,structurallyValid:true,inputsUnchanged:true});
+ }
+ row('SOURCE_EXPECTED_ACCEPTED',{known:source});
+ row('SAME_RECEIPT_ACCEPTED');
+ row('SAME_RECEIPT_REPLAY_ACCEPTED',{receipt:{...R,replayed:true}});
+ row('REPLAY_WITH_EXPECTED_SOURCE_ACCEPTED',{known:source,receipt:{...R,replayed:true}});
+ row('PREVIOUS_SOURCE_MUTATION_KIND_IS_NOT_NEW_RECEIPT_IDENTITY',{known:{...source,lastMutationKind:'RESTORE'}});
+ row('OBSERVATION_LAST_SAVED_AT_IS_NOT_IDENTITY',{known:{...saved,lastSavedAt:'2026-11-03T20:00:00Z'}});
+ row('OBSERVATION_ARCHIVED_AT_IS_NOT_IDENTITY',{known:{...saved,archivedAt:'2026-11-01T10:00:00Z'}});
+ row('SOURCE_OBSERVATION_DATE_ACCEPTED',{known:{...source,lastSavedAt:'2026-11-02T12:00:00Z'}});
+ row('F_CA_01_A_SAME_VERSION_DIFFERENT_REQUEST',{known:{...saved,lastMutationRequestId:requestB}},'N1_DRAFT_CONFLICT');
+ row('F_CA_01_B_SAME_VERSION_DIFFERENT_BASE_ID',{known:{...saved,baseRevisionId:otherBaseId}},'N1_DRAFT_CONFLICT');
+ row('SAME_VERSION_DIFFERENT_BASE_NUMBER',{known:{...saved,baseRevisionNumber:3}},'N1_DRAFT_CONFLICT');
+ row('SAME_VERSION_DIFFERENT_MUTATION_KIND',{known:{...saved,lastMutationKind:'RESTORE'}},'N1_DRAFT_CONFLICT');
+ row('SAME_VERSION_DIFFERENT_MUTATION_EXPECTATION',{known:{...saved,lastMutationExpectedVersion:source.version-1}},'N1_DRAFT_CONFLICT');
+ row('CONTRADICTORY_REPLAY_REQUEST',{known:{...saved,lastMutationRequestId:requestB},receipt:{...R,replayed:true}},'N1_DRAFT_CONFLICT');
+ row('CONTRADICTORY_REPLAY_BASE',{known:{...saved,baseRevisionNumber:3},receipt:{...R,replayed:true}},'N1_DRAFT_CONFLICT');
+ row('SOURCE_DIFFERENT_BASE_ID',{known:{...source,baseRevisionId:otherBaseId}},'N1_DRAFT_CONFLICT');
+ row('SOURCE_DIFFERENT_BASE_NUMBER',{known:{...source,baseRevisionNumber:3}},'N1_DRAFT_CONFLICT');
+ row('SOURCE_ALREADY_USED_REQUEST',{known:{...source,lastMutationRequestId:requestA}},'N1_DRAFT_REQUEST_ID_REUSED');
+ row('SOURCE_REUSED_REQUEST_IS_NOT_REPLAY',{known:{...source,lastMutationRequestId:requestA},receipt:{...R,replayed:true}},'N1_DRAFT_REQUEST_ID_REUSED');
+ row('KNOWN_TOO_OLD',{known:{...source,version:source.version-1}},'N1_DRAFT_CONFLICT');
+ row('KNOWN_NEWER',{known:{...saved,version:saved.version+1}},'N1_DRAFT_STALE_RESPONSE');
+ row('KNOWN_FOREIGN_DRAFT',{known:{...saved,draftId:uuid(98805)}},'N1_DRAFT_STALE_RESPONSE');
+ row('KNOWN_ARCHIVED',{known:{...saved,lifecycle:'ABANDONED',archivedAt:'2026-11-03T10:00:00Z'}},'N1_DRAFT_SCOPE_MISMATCH');
+ const foreignMonth=state.parseRootRelationPlanState({...document,targetMonth:'2026-12',contexts:document.contexts.map(context=>({...context,fields:{...context.fields,...(typeof context.fields.plannedDate==='string'?{plannedDate:'2026-12-12'}:{})}})),rootRelations:document.rootRelations.map(relation=>({...relation,targetMonth:'2026-12'}))});
+ row('KNOWN_FOREIGN_MONTH',{known:{...saved,semanticState:foreignMonth,digest:codec.rootRelationDraftDocumentDigest(foreignMonth)}},'N1_DRAFT_SCOPE_MISMATCH');
+ // Document/digest and semantic version/digest vary together: a fabricated digest alone would fail the parser.
+ row('SAME_VERSION_DIFFERENT_DOCUMENT_AND_DIGEST',{known:{...saved,semanticState:alteredDocument,digest:codec.rootRelationDraftDocumentDigest(alteredDocument)}},'N1_DRAFT_CONFLICT');
+ row('SAME_VERSION_V1_FORMAT',{known:{...saved,semanticState:version1,digest:semanticStateDigest(version1)}},'N1_DRAFT_CONFLICT');
+ row('SOURCE_DIFFERENT_DOCUMENT_AND_DIGEST',{known:{...source,semanticState:alteredDocument,digest:codec.rootRelationDraftDocumentDigest(alteredDocument)}},'N1_DRAFT_CONFLICT');
+ row('LOCAL_CHANGED_AFTER_COMMAND',{local:alteredDocument},'N1_DRAFT_LOCAL_CHANGED');
+ row('LOCAL_V1_CANNOT_REPLACE_N1_PROPOSAL',{local:version1},'N1_DRAFT_LOCAL_CHANGED');
+ row('RECEIPT_DIFFERENT_DOCUMENT',{receipt:{...R,draft:{...saved,semanticState:alteredDocument,digest:codec.rootRelationDraftDocumentDigest(alteredDocument)}}},'N1_DRAFT_RECEIPT_INVALID');
+ row('RECEIPT_V1_DOWNGRADE',{receipt:{...R,draft:{...saved,semanticState:version1,digest:semanticStateDigest(version1)}}},'N1_DRAFT_RECEIPT_INVALID');
+ row('RECEIPT_WRONG_REQUEST',{receipt:{...R,draft:{...saved,lastMutationRequestId:requestB}}},'N1_DRAFT_RECEIPT_INVALID');
+ row('RECEIPT_WRONG_BASE',{receipt:{...R,draft:{...saved,baseRevisionNumber:3}}},'N1_DRAFT_RECEIPT_INVALID');
+ row('RECEIPT_WRONG_MUTATION',{receipt:{...R,draft:{...saved,lastMutationKind:'RESTORE'}}},'N1_DRAFT_RECEIPT_INVALID');
+ row('RECEIPT_WRONG_MUTATION_EXPECTATION',{receipt:{...R,draft:{...saved,lastMutationExpectedVersion:source.version-1}}},'N1_DRAFT_RECEIPT_INVALID');
+ row('RECEIPT_WRONG_DRAFT_ID',{receipt:{...R,draft:{...saved,draftId:uuid(98808)}}},'N1_DRAFT_RECEIPT_INVALID');
+ row('RECEIPT_OLD_VERSION',{receipt:{...R,draft:{...saved,version:source.version}}},'N1_DRAFT_RECEIPT_INVALID');
+ row('RECEIPT_FUTURE_VERSION',{receipt:{...R,draft:{...saved,version:saved.version+1}}},'N1_DRAFT_RECEIPT_INVALID');
+ row('EXISTING_DRAFT_MISSING_KNOWN',{known:null},'N1_DRAFT_BINDING_INVALID');
+ const C=packet(document,null,uuid(98806));row('CREATE_FROM_VERSION_ZERO',{packet:C,receipt:receipt(C),known:null});
+ row('CREATE_IDENTICAL_REPLAY',{packet:C,receipt:{...receipt(C),replayed:true},known:receipt(C).draft});
+ const upgrade=packet(document,oldRecord,uuid(98807));row('V1_SOURCE_EXPLICIT_UPGRADE',{packet:upgrade,receipt:receipt(upgrade),known:oldRecord});
+ console.log(JSON.stringify({receiptMatrix}));
+});
 assert.equal(network,0);assert.equal(rpc,0);assert.deepEqual(f.writes,[]);
-console.log(JSON.stringify({status:'PASS',checks,level:'PURE_CONTRACT_REAL_V1_SERVICE_SYNTHETIC_ROWS_AND_CAS_MODEL',sql:0,rpc,network,realWriters:0,durableSave:'NOT_RUN',durableReload:'NOT_RUN',sqlOldClientGuard:'NOT_RUN',authRls:'NOT_RUN',apply:'NOT_RUN'}));
+console.log(JSON.stringify({status:'PASS',checks,receiptMatrixCases:receiptMatrix.length,level:'PURE_CONTRACT_REAL_V1_SERVICE_SYNTHETIC_ROWS_AND_CAS_MODEL',sql:0,rpc,network,realWriters:0,durableSave:'NOT_RUN',durableReload:'NOT_RUN',sqlOldClientGuard:'NOT_RUN',authRls:'NOT_RUN',apply:'NOT_RUN'}));
