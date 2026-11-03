@@ -304,7 +304,11 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if (inlineEdits.registry.flushPending()) return false;
     if (!inlineEdits.registry.guard(() => void admitRelation(mutation, proposed, history, focusId), undefined, false,
       mutation ? new Set([ROOT_COMMAND_BUFFER]) : undefined)) return false;
-    clearHover(); scheduler.current.cancel(); gate.current.invalidate();
+    clearHover();
+    // Relation-only commands cannot obsolete the financial preview. In particular,
+    // keep the revalidation started when a memory workspace is remounted.
+    if (proposed && semanticStateDigest(proposed.draft) !== semanticStateDigest(localDraft.current)) scheduler.current.cancel();
+    gate.current.invalidate();
     const before = frameNow(), digest = composerLocalFrameDigest(before), sequence = ++relationSequence.current;
     const common = { sequence, targetMonth: before.draft.targetMonth, binding: relationBinding.current, frame: before };
     const request: RootRelationRequest = mutation ? { ...common, kind: "MUTATE", mutation, authorityToken: relationToken.current, expectedStateDigest: digest }
