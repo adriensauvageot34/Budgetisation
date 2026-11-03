@@ -84,3 +84,6 @@ export const semanticStateDigest = (state: unknown): string => plannerDigest(par
 export const emptyPlanSemanticState = (targetMonth: string): PlanSemanticStateV1 => parsePlanSemanticState({
   version: PLAN_SEMANTIC_STATE_VERSION, targetMonth, controls: [], contexts: [], preferences: { anchors: [], flexibility: {} },
 });
+
+// Explicit local extension; the historical V1 parser and digest above are unchanged.
+export type { RootRelationPlanState } from "./root-relation-contract";

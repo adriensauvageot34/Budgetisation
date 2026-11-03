@@ -7,6 +7,9 @@ import { setContextSlotSelections, reparentContext } from "./context-state";
 import { validateContextGraph } from "./context-selections";
 import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
 
+// Same Planner mutation boundary, separate local version. No HTTP or durable writer route in N1-A.
+export { admitRootRelationMutation, publishRootRelationCapabilities } from "./root-relation-owner";
+
 /** Stable decision identity across speculative previews; Context identity stays user supplied. */
 function decisionId(month: string, slot: string) {
   const h = plannerDigest({ owner: "planner-headless-control", month, slot });
