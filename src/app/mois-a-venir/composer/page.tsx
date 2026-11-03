@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { withProductAuthentication } from "@/app/product-query";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
+import { composerRootRelationsEnabled } from "@/server/phase2/planner/root-relation-cutover";
 import { readMonthComposer } from "@/server/phase2/planner/read-model";
 import { composerUiModel } from "@/server/phase2/planner/composer-service";
 import { readComposerOpening } from "@/server/phase2/planner/composer-opening";
@@ -19,7 +20,9 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   const month = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : new Date().toISOString().slice(0, 7);
   const observed = await observeSnapshot(() => withProductAuthentication(async () => {
     const { deps, householdId, userId, supabase } = await authorizedPlanner();
-    const rootRelationAccess = composerDraftAutosaveEnabledFor(userId) ? { scopeKey: createHash("sha256").update(`${userId}:${householdId}:${month}`).digest("hex") } : null;
+    const rootRelationAccess = composerDraftAutosaveEnabledFor(userId) ? {
+      scopeKey: createHash("sha256").update(`${userId}:${householdId}:${month}`).digest("hex"), enabled: composerRootRelationsEnabled(),
+    } : null;
     if (process.env.COMPOSER_P14_P1_READ_REUSE !== "0") return { ...await readComposerOpening(deps, householdId, month,
       () => composerDraftAutosaveEnabledFor(userId) ? readComposerDrafts({ supabase, userId, householdId }, month) : Promise.resolve(null)), rootRelationAccess };
     const drafts = composerDraftAutosaveEnabledFor(userId) ? await readComposerDrafts({ supabase, userId, householdId }, month) : null;

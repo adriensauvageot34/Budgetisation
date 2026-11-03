@@ -9,6 +9,7 @@ const {composerLocalFrameDigest:digest}=require('@/domain/phase2/planner/root-re
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const {presetCreationFields}=require('@/domain/phase2/planner/composer-presets');
 const {stageLocalDecision}=require('@/app/mois-a-venir/composer/local-draft');
+process.env.COMPOSER_ROOT_RELATIONS_ENABLED='true'; // Synthetic process only; never a deployment configuration.
 const {BootstrapAuthenticationRequiredError}=require('@/server/bootstrap/errors');
 let remote=0;globalThis.fetch=async()=>{remote++;throw Error('F01_REMOTE_FORBIDDEN');};
 const f=await localRelationsFixture(),[a,b,c]=f.ids,g=f.groupId,world=JSON.stringify(f.world);let sequence=0;

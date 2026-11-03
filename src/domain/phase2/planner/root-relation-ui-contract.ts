@@ -2,7 +2,8 @@ import type { ComposerLocalFrame } from "./root-relation-local";
 import type { RootRelationCapabilities, RootRelationMutation } from "./root-relation-contract";
 export const ROOT_RELATION_HTTP_CONTRACT = "composer-root-relations-local@1";
 export type RootRelationBinding = Readonly<{ draftId: string; version: number }>;
-export type RootRelationAccess = Readonly<{ scopeKey: string }>;
+/** Server availability hint, never an authorization grant. Scope also permits conservative recovery after revocation. */
+export type RootRelationAccess = Readonly<{ scopeKey: string; enabled: boolean }>;
 type RequestBase = Readonly<{ sequence: number; targetMonth: string; binding: RootRelationBinding; frame: ComposerLocalFrame }>;
 export type RootRelationRequest = RequestBase & (
   | Readonly<{ kind: "READ" }>

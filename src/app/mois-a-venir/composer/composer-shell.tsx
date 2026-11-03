@@ -71,6 +71,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const recoveredSession = !!recovered && recovered.relationSession !== false;
   const [relationSession, setRelationSession] = useState(recoveredSession), relationSessionRef = useRef(recoveredSession);
   const [rootWorkspacePending, setRootWorkspacePending] = useState(!!recovered);
+  const [relationRevoked, setRelationRevoked] = useState(false);
+  const rootRelationsAvailable = rootRelationAccess?.enabled === true && !relationRevoked;
   const [relations, setRelations] = useState<readonly RootContextRelationV1[]>(recovered?.frame.relations ?? []);
   const relationRef = useRef(relations), relationBinding = useRef<RootRelationBinding | null>(recovered?.binding ?? null);
   const [relationOpen, setRelationOpen] = useState(false), [relationCaps, setRelationCaps] = useState<RootRelationCapabilities | null>(null);
@@ -314,7 +316,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   }
   const clearHover = () => { if (timer.current) clearTimeout(timer.current); pendingHover.current = null; if (!busyRef.current) gate.current.invalidate(); setHoverModel(null); setHoverPending(false); setInteractionImpact(null); };
   async function admitRelation(mutation?: RootRelationMutation, proposed?: ComposerLocalFrame, history: "push" | "undo" | "redo" = "push", focusId?: string): Promise<boolean> {
-    if (busyRef.current || !relationSessionRef.current || !relationBinding.current) return false;
+    if (busyRef.current || !rootRelationsAvailable || !relationSessionRef.current || !relationBinding.current) return false;
     if (inlineEdits.registry.flushPending()) return false;
     if (!inlineEdits.registry.guard(() => void admitRelation(mutation, proposed, history, focusId), undefined, false,
       mutation ? new Set([ROOT_COMMAND_BUFFER]) : undefined)) return false;
@@ -330,7 +332,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     busyRef.current = true; setBusy(true); setErrorMessage(null);
     try {
       const response = await rootRelationTransport(request);
-      if (!response.ok) throw new Error(response.code);
+      if (!response.ok) {
+        if (response.code === "N1_DISABLED") { setRelationRevoked(true); setRelationOpen(false); }
+        throw new Error(response.code);
+      }
       if (sequence !== relationSequence.current || response.sequence !== sequence || response.sourceDigest !== digest || composerLocalFrameDigest(frameNow()) !== digest) throw new Error("N1_STATE_STALE");
       const next = parseComposerLocalFrame(response.frame), nextDigest = composerLocalFrameDigest(next);
       if (response.capabilities.stateDigest !== nextDigest || next.draft.targetMonth !== before.draft.targetMonth
@@ -352,7 +357,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     finally { busyRef.current = false; setBusy(false); }
   }
   function openRelations() {
-    if (busyRef.current || pendingApply || comparison || !rootRelationAccess) return;
+    if (busyRef.current || pendingApply || comparison || !rootRelationsAvailable) return;
     if (inlineEdits.registry.flushPending()) return;
     if (!inlineEdits.registry.guard(openRelations, undefined, false)) return;
     if (!relationSessionRef.current) {
@@ -939,7 +944,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
                 {!!model.presentation.unresolvedCount && <button data-show-unresolved onClick={showUnresolved}>Afficher les éléments</button>}</div>}
             </div></>}
         <AtomicPopover utility label="Options du mois" state="ACTIONS" focus={() => {}} icon={<><MoreHorizontal size={17} /><span>Options</span></>}>{close => <div className={styles.popoverActions} data-workshop-options>
-          {rootRelationAccess && <button data-root-organize disabled={busy || !!pendingApply || !!comparison || !relationSession && (!durable.snapshot?.active || durable.status === "SAVING" || !!durable.snapshot?.baseStale)} onClick={() => { close(); openRelations(); }}>Organiser une sortie</button>}
+          {rootRelationsAvailable && <button data-root-organize disabled={busy || !!pendingApply || !!comparison || !relationSession && (!durable.snapshot?.active || durable.status === "SAVING" || !!durable.snapshot?.baseStale)} onClick={() => { close(); openRelations(); }}>Organiser une sortie</button>}
           {!comparison && <button data-compare disabled={relationSession || busy || previewStatus !== "FRESH"} onClick={() => { close(); compare(); }}><ArrowLeftRight size={14} /> Comparer temporairement</button>}
           <button data-preview disabled={busy} onClick={() => { close(); void run({ kind: "READ" }, "none"); }}>{previewStatus === "FAILED" || previewStatus === "STALE" ? "Réessayer la simulation" : "Relancer la simulation"}</button>
           <button data-balance disabled={busy} onClick={() => { close(); clearHover(); setBalanceOpen(v => !v); if (!balanceOpen) void run({ kind: "SUGGESTIONS" }, "none"); }}>Suggestions pour mon mois</button>
@@ -963,9 +968,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
-    {relationSession && <div className={relationStyles.notice} data-root-local-notice role="status">Organisation locale non sauvegardée · {relations.length} sortie(s). Sauvegarde et Apply suspendus. <button disabled={busy} onClick={openRelations}>Organiser une sortie</button> <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}
+    {relationSession && rootRelationsAvailable && <div className={relationStyles.notice} data-root-local-notice role="status">Organisation locale non sauvegardée · {relations.length} sortie(s). Sauvegarde et Apply suspendus. <button disabled={busy} onClick={openRelations}>Organiser une sortie</button> <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}
+    {relationSession && !rootRelationsAvailable && <div className={relationStyles.notice} data-root-revoked-notice role="status">Organisation de sorties indisponible. Vos essais locaux sont conservés ; sauvegarde et Apply restent suspendus jusqu’à l’abandon explicite de cette organisation. <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}
     {rootWorkspacePending && !relationSession && <div className={relationStyles.notice} data-root-financial-pending role="status">Organisation abandonnée ; décisions financières conservées. Attendez leur sauvegarde confirmée avant de quitter. La mémoire de cet onglet reste temporaire.</div>}
-    {relationOpen && <RootRelationCommands model={shown} relations={relations} capabilities={relationCaps} busy={busy} error={errorMessage}
+    {relationOpen && rootRelationsAvailable && <RootRelationCommands model={shown} relations={relations} capabilities={relationCaps} busy={busy} error={errorMessage}
       command={(mutation, focusId) => admitRelation(mutation, undefined, "push", focusId)} close={() => setRelationOpen(false)} abandon={discardRelations}
       undo={() => stage({ kind: "READ" }, "undo", past.at(-1))} redo={() => stage({ kind: "READ" }, "redo", future.at(-1))} canUndo={!!past.length} canRedo={!!future.length} />}
     <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} openContext={stableLibraryOpen} />

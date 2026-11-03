@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';import path from 'node:path';import Module,{createRequire}from'node:module';
 import {require}from'./lib/phase2-ts-loader.mjs';import{localRelationsFixture}from'./fixtures/composer-root-relation-local.mjs';
 const f=await localRelationsFixture();
+process.env.COMPOSER_ROOT_RELATIONS_ENABLED='true'; // Synthetic process only.
 const rr=createRequire(process.env.COMPOSER_REACT_TEST_TOOLS??new URL('../outputs/l4c-test-tools/package.json',import.meta.url));
 const React=rr('react'),{create,act}=rr('react-test-renderer');globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let board,commands,confirmation,registry;
@@ -35,7 +36,7 @@ const clickLink=async()=>{confirmation=null;const link=new Element();link.href='
 const warns=()=>{let warned=false;for(const fn of winEvents.get('beforeunload')??[])fn({preventDefault(){warned=true;}});return warned;};
 async function mount(same=false){if(!same){key='f02-synthetic-'+(++counter);saves=[];navigated=null;confirmation=null;props={initialModel:f.access.model,initialDrafts:f.drafts,
  draftTransport:{read:async()=>f.drafts,save:async command=>{saves.push(command);return new Promise(resolve=>{resolveSave=resolve;});},archive:async()=>{throw Error('FORBIDDEN');},restore:async()=>{throw Error('FORBIDDEN');}},
- transport:async()=>{throw Error('PREVIEW_TIMER_NOT_EXECUTED');},rootRelationAccess:{scopeKey:key},rootRelationTransport:r=>handleRootRelationRequest(f.scope(),r)};}
+ transport:async()=>{throw Error('PREVIEW_TIMER_NOT_EXECUTED');},rootRelationAccess:{scopeKey:key,enabled:true},rootRelationTransport:r=>handleRootRelationRequest(f.scope(),r)};}
  await act(async()=>{root=create(React.createElement(ComposerShell,props),{createNodeMock:()=>({open:false,close(){this.open=false;},showModal(){this.open=true;},querySelector(){return null;},contains(){return false;},focus(){}})});});}
 async function unmount(clear=true){await act(async()=>root?.unmount());if(clear)discardRootWorkspace(key);}
 async function changeFinance(){await act(async()=>{assert(board.request({kind:'MUTATE',mutation:{kind:'SET_STATE',targetRef:course.targetRef,value:{amount:'350.00'}}}));});assert.notEqual(element().props['data-digest'],initialDigest);}

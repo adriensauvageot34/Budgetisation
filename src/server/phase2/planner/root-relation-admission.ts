@@ -11,12 +11,14 @@ import { semanticStateDigest } from "@/domain/phase2/planner/semantic-state";
 import type { PlannerDependencies } from "./apply";
 import { handleComposerRequest } from "./composer-service";
 import { admitRootRelationMutation, publishRootRelationCapabilities } from "./root-relation-owner";
+import { composerRootRelationsEnabled } from "./root-relation-cutover";
 
 /** Supplied ONLY by authenticated server scope. No client user/household/model/grant accepted. */
 export type RootRelationServerScope = Readonly<{ userId: string; householdId: string; editorEnabled: boolean;
   deps: PlannerDependencies; readDrafts(month: string): Promise<ComposerDraftSnapshot> }>;
 
 export async function handleRootRelationRequest(scope: RootRelationServerScope, raw: unknown): Promise<RootRelationResponse> {
+  if (!composerRootRelationsEnabled()) throw new TypeError("N1_DISABLED");
   const request = plannerRecord(raw), kind = request.kind;
   if (!["READ", "MUTATE", "RESTORE"].includes(String(kind))) throw new TypeError("N1_OPERATION_UNSUPPORTED");
   plannerKeys(request, ["kind", "sequence", "targetMonth", "binding", "frame", ...(kind === "READ" ? []

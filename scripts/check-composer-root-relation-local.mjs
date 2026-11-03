@@ -4,6 +4,7 @@ import { localRelationsFixture } from './fixtures/composer-root-relation-local.m
 import { uuid } from './fixtures/planner-headless.mjs';
 import { require } from './lib/phase2-ts-loader.mjs';
 const {rootRelationPost} = require('@/server/phase2/planner/root-relation-http');
+process.env.COMPOSER_ROOT_RELATIONS_ENABLED='true'; // Synthetic process only; preserve all admission checks.
 const {BootstrapAuthenticationRequiredError} = require('@/server/bootstrap/errors');
 const {ROOT_RELATION_HTTP_CONTRACT:contract} = require('@/domain/phase2/planner/root-relation-ui-contract');
 const {composerLocalFrameDigest:digest,guardRootMemberTransition:guard,rootRelationDocument} = require('@/domain/phase2/planner/root-relation-local');

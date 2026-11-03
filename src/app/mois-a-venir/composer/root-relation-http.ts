@@ -6,6 +6,7 @@ export const rootRelationHttp: RootRelationTransport = async request => {
   return response.json();
 };
 export function rootRelationMessage(code: string) {
+  if (code === "N1_DISABLED") return "L’organisation de sorties est indisponible. Vos essais restent ici ; abandonnez explicitement l’organisation locale pour reprendre la sauvegarde financière.";
   if (code === "N1_DRAFT_AUTHORITY_MISMATCH") return "Une identité, un mois, un rattachement ou une protection d’activité diffère du brouillon sauvegardé. Conservez vos changements et enregistrez-les hors organisation locale avant de réessayer.";
   if (code === "N1_MEMBER_REQUIRES_SAVED_CONTEXT") return "Cette activité doit d’abord être sauvegardée dans votre brouillon privé avant de pouvoir être reliée. Les changements locaux sont conservés.";
   if (/STALE|VERSION_CHANGED/.test(code)) return "La version du brouillon ou du Plan a changé. L’organisation locale reste ici ; aucune sauvegarde ni application n’a été lancée.";
