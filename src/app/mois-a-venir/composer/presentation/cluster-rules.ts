@@ -7,6 +7,7 @@ export function visualFamily(node: AtomicNode, model: ComposerUiModel): ClusterF
   if (node.context) {
     if (node.context.templateKey === "beauty-restock") return "BEAUTY";
     if (["restaurant", "fast-food", "delivery"].includes(node.context.templateKey)) return "FOOD";
+    if (node.context.templateKey === "activity") return "ACTIVITY";
     return null;
   }
   if (!node.control || node.control.kind === "SAVINGS") return null;
