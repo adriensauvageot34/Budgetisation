@@ -8,10 +8,25 @@ import { editNightOut } from "@/domain/phase2/planner/night-out-edit";
 import { editShortStay } from "@/domain/phase2/planner/short-stay-edit";
 import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
+import { validateRestaurantDetailsTransition } from "@/domain/phase2/planner/restaurant-included-details";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
 import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
+
+/** Presentation of known owner refusals only; this does not admit a decision. */
+export function restaurantLocalRefusalMessage(error: unknown): string | null {
+  if (!(error instanceof TypeError)) return null;
+  switch (error.message) {
+    case "RESTAURANT_INCLUDED_DETAILS_PARENT_INVALID":
+      return "Cette addition contient des détails déjà inclus. Ouvrez l’éditeur Restaurant et retirez explicitement ces détails avant de retirer ou remplacer l’addition.";
+    case "RESTAURANT_INCLUDED_DETAILS_REVIEW_REQUIRED":
+      return "Ouvrez l’éditeur Restaurant pour confirmer la conservation ou le retrait des détails inclus avant de modifier le montant de l’addition.";
+    case "RESTAURANT_INCLUDED_DETAILS_OWNER_REQUIRED":
+      return "Modifiez les détails déjà inclus depuis l’éditeur Restaurant. Votre brouillon est conservé.";
+    default: return null;
+  }
+}
 
 function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, contextId: string, slotKey: string,
   items: readonly ComponentSelectionV1[]): PlanSemanticStateV1 | null {
@@ -37,6 +52,12 @@ function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, co
 
 /** Draft decisions only. The Compiler/V2 server remains the sole financial authority. */
 export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStateV1, operation: ComposerOperation): PlanSemanticStateV1 | null {
+  const next = stageDecision(model, raw, operation);
+  if (next) validateRestaurantDetailsTransition(raw, next, operation.kind === "EDIT_RESTAURANT" ? operation.edit : undefined);
+  return next;
+}
+
+function stageDecision(model: ComposerUiModel, raw: PlanSemanticStateV1, operation: ComposerOperation): PlanSemanticStateV1 | null {
   const state = parsePlanSemanticState(raw);
   if (operation.kind === "DROP" && operation.target.kind === "BOARD_ZONE" && operation.assetKey.startsWith("template:")) {
     const capability = model.dropCapabilities.find(c => c.sourceAssetKey === operation.assetKey && c.target.kind === "BOARD_ZONE" && c.resolution !== "BLOCKED");
@@ -54,6 +75,7 @@ export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStat
   if (operation.kind === "EDIT_CONTEXT") {
     const context = state.contexts.find(c => c.contextOccurrenceId === operation.contextOccurrenceId);
     if (!context) return null;
+    if (Object.hasOwn(operation.values, "restaurantIncludedDetails")) throw new TypeError("RESTAURANT_INCLUDED_DETAILS_OWNER_REQUIRED");
     const allowed = new Set(model.editors.find(e => e.assetKey === `template:${context.templateKey}`)?.fields.map(f => f.key) ?? []);
     if (Object.keys(operation.values).some(key => !allowed.has(key))) return null;
     return parsePlanSemanticState({ ...state, contexts: state.contexts.map(c => {
