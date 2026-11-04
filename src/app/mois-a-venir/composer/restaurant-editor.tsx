@@ -3,6 +3,7 @@
 import { guidedContextShape, type GuidedContextEdit } from "@/domain/phase2/planner/guided-context-edit";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import type { RestaurantEdit } from "@/domain/phase2/planner/restaurant-edit";
+import { restaurantIncludedDetails, restaurantMealTariff, type RestaurantIncludedDetail, type RestaurantDetailsDecision } from "@/domain/phase2/planner/restaurant-included-details";
 import { PresetIllustration } from "./preset-illustration";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -31,7 +32,8 @@ import { money } from "./display";
 import styles from "./composer.module.css";
 
 type Component = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
-type Step = "product" | "participants" | "place" | "date" | "budget" | "binding" | "complete" | null;
+type Step = "product" | "participants" | "place" | "date" | "budget" | "binding" | "complete" | "included" | null;
+type IncludedBuffer = { id: string; label: string; amount: string; quantity: string; unitBasis: "" | "ITEM" | "PERSON" | "SHARED" };
 const restaurantQuestions = [{ id: "participants", key: "participantRefs", title: "Qui vient au restaurant ?" },
   { id: "place", key: "placeRef", title: "Où allez-vous manger ?" },
   { id: "date", key: "plannedDate", title: "Quand est prévu ce restaurant ?" },
@@ -56,11 +58,13 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const shape = { ...baseShape, envelope: context.templateKey === "purchase" ? purchaseEnvelope : baseShape.envelope };
   const quickPurchase = context.templateKey === "purchase" && !!preset && !isDetailed(context);
   const mainSlot = shape.slot, heading = typeof context.fields.productLabel === "string" ? context.fields.productLabel : card.label;
-  const operation = (edit: GuidedContextEdit): ComposerOperation => context.templateKey === "restaurant" ? { kind: "EDIT_RESTAURANT", edit: edit as RestaurantEdit } : { kind: "EDIT_PRESET_CONTEXT", edit };
+  const operation = (edit: GuidedContextEdit & Pick<RestaurantEdit, "includedDetails" | "includedDetailsAfterMealChange">): ComposerOperation => context.templateKey === "restaurant" ? { kind: "EDIT_RESTAURANT", edit: edit as RestaurantEdit } : { kind: "EDIT_PRESET_CONTEXT", edit };
   const questions: readonly {id: Exclude<Step,null>; key: string; title:string}[] = [
     ...(context.templateKey === "purchase" ? [{id:"product" as const,key:"productLabel",title:"Quel article ou achat préparez-vous ?"}] : []),
     ...restaurantQuestions.filter(q => (q.id !== "participants" || shape.participants) && (q.id !== "binding" || !!shape.envelope)).map(q => ({...q,key:q.key === "meal" ? mainSlot : q.key,title:preset ? ({participants:"Qui est concerné ?",place:"Où prévoyez-vous ce moment ?",date:"Quand ? Vous pouvez décider plus tard.",budget:"Quel budget souhaitez-vous prévoir ?",binding:"Dans quelle enveloppe ?"}[q.id]) : q.title}))];
   const main = components(context, mainSlot)[0], extras = components(context, "extras");
+  const included = restaurantIncludedDetails(context);
+  const [includedRow, setIncludedRow] = useState<IncludedBuffer | null>(null);
   const [step, setStep] = useState<Step>(null);
   const [summaryPage, setSummaryPage] = useState(0), [extraPage, setExtraPage] = useState(0), [equipmentPage, setEquipmentPage] = useState(0);
   const [formKey, setFormKey] = useState(0);
@@ -76,6 +80,13 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const [equipmentValues, setEquipmentValues] = useState<Record<string, string>>({});
   const [allOptions, setAllOptions] = useState(false), [error, setError] = useState("");
   const [raw, setRaw] = useState(false);
+  const includedSignature = canonicalPlannerJson(included), priorIncluded = useRef(includedSignature);
+  useEffect(() => {
+    if (priorIncluded.current === includedSignature) return;
+    priorIncluded.current = includedSignature;
+    setIncludedRow(null); setRaw(false);
+    setStep(previous => previous === "included" ? "complete" : previous);
+  }, [includedSignature]);
   const panel = useRef<HTMLElement>(null);
   const mealSignature = canonicalPlannerJson(main??null), priorMeal = useRef(mealSignature), admittedMode = useRef<{signature:string;detail:boolean}|null>(null);
   // A confirmed semantic change (including Undo/Redo) supersedes the input buffer.
@@ -96,7 +107,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const known = model.cardKnowledge[`template:${context.templateKey}`];
   const suggestion = known?.dimensions.find(d => d.key === "UNIT_PRICE" && d.value !== null && d.suggestionPolicy === "OFFER_PREFILL");
   const resetBuffer = () => {
-    setRaw(false); setError(""); setExtraRow(null); setEquipment(null); setPerson(undefined);
+    setRaw(false); setError(""); setExtraRow(null); setIncludedRow(null); setEquipment(null); setPerson(undefined);
     setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
     setRow(main ? fromSelection(main) : { ...fresh(shape.total), unitBasis: "SHARED" });
     setDetail(admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context)); setFormKey(key => key + 1);
@@ -104,7 +115,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const leaveRaw = useWorkshopRaw(context.contextOccurrenceId, raw, resetBuffer);
   const open = (next: Step) => {
     if (!leaveRaw(() => open(next))) return;
-    setStep(next); setError(""); setExtraRow(null); setExtraAdded(false); setEquipment(null); setFormKey(k => k + 1);
+    setStep(next); setError(""); setExtraRow(null); setIncludedRow(null); setExtraAdded(false); setEquipment(null); setFormKey(k => k + 1);
     setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
     setRow(main ? fromSelection(main) : { ...fresh(context.templateKey === "purchase" && typeof context.fields.productLabel === "string" ? context.fields.productLabel : shape.total), unitBasis: "SHARED" }); setDetail(admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context));
   };
@@ -124,17 +135,45 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const fields = (patch: Record<string, PlannerJson>, id: Step) => {
     if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, fields: patch }))) advance(id);
   };
-  const saveBudget = (selectedRow = row, replaceConfirmed = false) => {
+  const saveBudget = (selectedRow = row, replaceConfirmed = false, includedDecision?: RestaurantDetailsDecision): boolean => {
     try {
       const item = buildComponentRow({ ...selectedRow, edited: true }, shape.option);
+      if (included && !includedDecision && restaurantMealTariff(context) !== restaurantMealTariff({
+        ...context, slotSelections: { ...context.slotSelections, meal: { items: [item] } } })) {
+        confirm({ message: "Le montant de l’addition change. Les détails sont-ils toujours compris dans cette addition ?",
+          acceptLabel: "Conserver les détails inclus", cancelLabel: "Continuer à modifier",
+          accept: () => { saveBudget(selectedRow, replaceConfirmed, "KEEP_CONFIRMED"); },
+          save: { label: "Retirer les détails inclus", run: () => saveBudget(selectedRow, replaceConfirmed, "REMOVE_ALL") } });
+        return false;
+      }
       if (!detail && extras.length && !replaceConfirmed) {
         confirm({ message: "Remplacer les postes par ce coût total ? Les compléments seront retirés une seule fois. Undo restaure le détail.",
-          acceptLabel: "Remplacer par ce total", accept: () => saveBudget(selectedRow, true) }); return;
+          acceptLabel: "Remplacer par ce total", accept: () => { saveBudget(selectedRow, true, includedDecision); } }); return false;
       }
       admittedMode.current={signature:canonicalPlannerJson(item),detail};
       if (send(operation({ contextOccurrenceId: context.contextOccurrenceId,
-        slots: { [mainSlot]: [item], ...(!detail ? { extras: [] } : {}) } }))) advance("budget");
-    } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez le budget."); }
+        slots: { [mainSlot]: [item], ...(!detail ? { extras: [] } : {}) },
+        ...(includedDecision ? { includedDetailsAfterMealChange: includedDecision } : {}) }))) { advance("budget"); return true; }
+      return false;
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez le budget."); return false; }
+  };
+  const openIncluded = (item?: RestaurantIncludedDetail, label = "") => {
+    if (!leaveRaw(() => openIncluded(item, label))) return;
+    if (!main) { open("budget"); setError("Précisez d’abord l’addition à laquelle rattacher ce détail."); return; }
+    setIncludedRow({ id: item?.detailId ?? crypto.randomUUID(), label: item?.label ?? label,
+      amount: item?.amount.kind === "DECLARED_LINE_TOTAL" ? item.amount.value : "", quantity: item?.quantity ?? "", unitBasis: item?.unitBasis ?? "" });
+    setStep("included"); setExtraRow(null); setEquipment(null); setError(""); setFormKey(key => key + 1);
+  };
+  const saveIncluded = () => {
+    if (!includedRow || !main) return;
+    const item: RestaurantIncludedDetail = { detailId: includedRow.id, label: includedRow.label.trim(), included: true,
+      quantity: includedRow.quantity.trim() ? includedRow.quantity.trim().replace(",", ".") : null, unitBasis: includedRow.unitBasis || null,
+      amount: includedRow.amount.trim() ? { kind: "DECLARED_LINE_TOTAL", value: includedRow.amount.trim().replace(",", ".") } : { kind: "UNKNOWN" },
+      provenance: "EXPLICIT_USER_DECISION" };
+    if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, includedDetails: { version: "restaurant-included-details@v1",
+      mealSelectionId: main.selectionId, items: [...(included?.items ?? []).filter(old => old.detailId !== item.detailId), item] } }))) {
+      setIncludedRow(null); advance("included");
+    }
   };
   const chooseMode = (next: boolean) => {
     if(next===detail)return;
@@ -195,6 +234,8 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const summaryChoices = [tile("amount",context.templateKey==="purchase"?"Coût direct":context.templateKey==="delivery"?"Commande complète":context.templateKey==="activity"?"Billets / coût direct":"Montant rapide",()=>open("budget"),card.templateKey,"Sans date ni participants obligatoires"),
     tile("detail",context.templateKey==="purchase"?"Articles":context.templateKey==="activity"?"Tarif et quantité":"Détailler le repas",()=>{if (!leaveRaw(() => { open("budget"); if(!detail) chooseMode(true); })) return; open("budget"); if(!detail) chooseMode(true); }),
     tile("extras",context.templateKey==="delivery"?"Frais non inclus":"Compléments",()=>open("complete"),"activity"),
+    ...(context.templateKey === "restaurant" ? [tile("included", "Déjà compris dans l’addition", () => openIncluded(), "restaurant",
+      included ? `${included.items.length} détail(s) conservé(s)` : "Décrire sans augmenter l’addition")] : []),
     ...(context.templateKey==="purchase"?[tile("product","Article / vendeur",()=>open("product"),"purchase")]:[tile("place",context.templateKey==="activity"?"Destination":"Lieu / restaurant",()=>open("place"),"family-visit")]),
     ...(shape.participants?[tile("people","Personnes",()=>open("participants"),"family-visit")]:[]),
     ...(shape.envelope?[tile("binding","Enveloppe liée",()=>open("binding"),"purchase")]:[]),tile("date","Date facultative",()=>open("date"),"activity"),
@@ -219,7 +260,18 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       <span>{summaryPage + 1} / {Math.ceil(summaryEntries.length / summaryPageSize)}</span><button type="button" disabled={(summaryPage + 1) * summaryPageSize >= summaryEntries.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}</>
       : <button type="button" className={styles.nightLink} onClick={() => open(null)}>← Retour au résumé</button>}
     {step !== null && <div className={styles.restaurantQuestion} key={`${step}:${formKey}`}>
-      <h3 data-restaurant-focus tabIndex={-1}>{quickPurchase && step === "budget" ? "Quel montant souhaitez-vous prévoir ?" : questions.find(q => q.id === step)?.title ?? (step === "complete" ? "Les petits plus" : "Votre intention est dans le brouillon")}</h3>
+      <h3 data-restaurant-focus tabIndex={-1}>{step === "included" ? "Déjà compris dans l’addition" : quickPurchase && step === "budget" ? "Quel montant souhaitez-vous prévoir ?" : questions.find(q => q.id === step)?.title ?? (step === "complete" ? "Les petits plus" : "Votre intention est dans le brouillon")}</h3>
+      {step === "included" && includedRow && <form onSubmit={event => { event.preventDefault(); saveIncluded(); }}>
+        <p>Ce détail est compris dans l’addition. Son montant décrit toute la ligne et ne s’ajoute pas au coût prévu.</p>
+        <label>Nature du détail<input autoFocus value={includedRow.label} maxLength={1024} onChange={event => { setRaw(true); setIncludedRow({ ...includedRow, label: event.target.value }); }} /></label>
+        <label>Montant de la ligne compris (€)<input inputMode="decimal" placeholder="Inconnu" value={includedRow.amount} onChange={event => { setRaw(true); setIncludedRow({ ...includedRow, amount: event.target.value }); }} /></label>
+        <label>Quantité descriptive facultative<input inputMode="decimal" placeholder="Inconnue" value={includedRow.quantity} onChange={event => { setRaw(true); setIncludedRow({ ...includedRow, quantity: event.target.value }); }} /></label>
+        <label>Unité descriptive<select value={includedRow.unitBasis} onChange={event => { setRaw(true); setIncludedRow({ ...includedRow, unitBasis: event.target.value as IncludedBuffer["unitBasis"] }); }}>
+          <option value="">Inconnue</option><option value="ITEM">Élément</option><option value="PERSON">Personne</option><option value="SHARED">Partagé</option>
+        </select></label>
+        <p>La quantité et les participants ne multiplient pas ce montant. Un champ vide reste inconnu.</p>
+        <button type="submit" disabled={busy || !includedRow.label.trim()}>Conserver ce détail inclus</button>
+      </form>}
       {step === "product" && <><label>Article ou commande<input defaultValue={String(context.fields.productLabel ?? "")} name="productLabel" /></label><label>Vendeur facultatif<input defaultValue={String(context.fields.merchantLabel ?? "")} name="merchantLabel" /></label>
         <label>Enveloppe liée à cet achat<select name="budgetDomain" defaultValue={String(context.fields.budgetDomain ?? "")}><option value="">À préciser</option>
           {model.editors.find(editor => editor.assetKey === "template:purchase")?.fields.find(field => field.key === "budgetDomain")?.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select></label>
@@ -247,6 +299,20 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
         {detail && extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button key={item.selectionId} type="button" onClick={() => { if (!leaveRaw(() => { setStep("complete"); setExtraRow(fromSelection(item)); })) return; setStep("complete"); setExtraRow(fromSelection(item)); }}>{item.label} · {priceCaption(item)}</button>)}</>}
       {step === "binding" && <p>Le Compiler vérifie l’enveloppe réellement disponible. Sans enveloppe admissible, la relation restera à préciser. Les compléments libres sont des postes distincts.</p>}
       {step === "complete" && !extraRow && !equipment && <>{extraAdded ? <p role="status">Poste ajouté au brouillon.</p> : <p>Ajoutez uniquement les compléments qui ne sont pas déjà compris dans le montant.</p>}
+        {context.templateKey === "restaurant" && <section aria-label="Détails compris dans l’addition">
+          <h4>Déjà compris dans l’addition</h4>
+          {included?.items.map(item => <div key={item.detailId}>
+            <span>{item.label} · {item.amount.kind === "UNKNOWN" ? "Montant inconnu" : money(item.amount.value)} · compris dans l’addition</span>
+            <button type="button" disabled={busy} onClick={() => openIncluded(item)}>Modifier le détail {item.label}</button>
+            <button type="button" disabled={busy} aria-label={`Retirer le détail inclus ${item.label}`} onClick={() => {
+              const remove = () => { const remaining = included.items.filter(old => old.detailId !== item.detailId);
+                send(operation({ contextOccurrenceId: context.contextOccurrenceId, includedDetails: remaining.length ? { ...included, items: remaining } : null })); };
+              if (leaveRaw(remove)) remove();
+            }}>Retirer le détail</button>
+          </div>)}
+          <button type="button" disabled={busy || !main} onClick={() => openIncluded()}>Ajouter un détail déjà inclus</button>
+          <h4>Réellement en plus</h4>
+        </section>}
         {extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button type="button" key={item.selectionId} onClick={() => setExtraRow(fromSelection(item))}>{item.label} · {priceCaption(item)}</button>)}
         {extras.length > 3 && <div className={styles.nightPage}><button type="button" disabled={extraPage === 0} onClick={() => setExtraPage(page => page - 1)}>Précédent</button><span>{extraPage + 1} / {Math.ceil(extras.length / 3)}</span><button type="button" disabled={(extraPage + 1) * 3 >= extras.length} onClick={() => setExtraPage(page => page + 1)}>Suivant</button></div>}
         <button type="button" onClick={() => {

@@ -97,9 +97,18 @@ const venueRegistry=freeze<ContextRegistryV1>({version:"planner-context-registry
 const coverageRegistry=freeze<ContextRegistryV1>({version:"planner-context-registry@v8-night-coverage",templates:venueRegistry.templates.map(t=>t.templateKey==="night-out"?{...t,version:"night-out@v3"}:t)});
 const registry=freeze<ContextRegistryV1>({version:"planner-context-registry@v9-night-consumption",templates:coverageRegistry.templates.map(t=>t.templateKey!=="night-out"?t:{...t,version:"night-out@v4",
   fields:[...t.fields,{fieldKey:"nightOutConsumption",kind:"TEXT" as const,required:false,semanticContract:"NIGHT_OUT_CONSUMPTION" as const}]})});
-export const publishContextRegistry = (): ContextRegistryV1 => registry;
+export const publishContextRegistry = (): ContextRegistryV1 => restaurantDetailsRegistry;
 const globalConsumptionRegistry = freeze<ContextRegistryV1>({version: "planner-context-registry@v10-bar-global-consumption",
   templates: registry.templates.map(t => t.templateKey === "night-out" ? {...t, version: "night-out@v5"} : t)});
+// Opt-in manifest version: old Drafts keep their exact historical registry.
+function withRestaurantDetails(source: ContextRegistryV1): ContextRegistryV1 {
+  return freeze<ContextRegistryV1>({ version: "planner-context-registry@v11-restaurant-included-details",
+  templates: source.templates.map(t => t.templateKey !== "restaurant" ? t : { ...t, version: "restaurant@v2",
+    fields: [...t.fields, { fieldKey: "restaurantIncludedDetails", kind: "TEXT" as const, required: false,
+      semanticContract: "RESTAURANT_INCLUDED_DETAILS" as const }] }) });
+}
+const restaurantDetailsRegistry = withRestaurantDetails(registry);
+const restaurantDetailsManifestRegistry = withRestaurantDetails(globalConsumptionRegistry);
 /** Preserve the exact registry manifest previously emitted for v2 revisions. */
 const v2Registry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION,
   templates: giftRegistry.templates.map(template => ({ ...template,
@@ -116,6 +125,7 @@ const legacyRegistry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VER
   templates: v2Registry.templates.map(template => ({ ...template,
     fields: template.fields.filter(field => isLegacyContextField(template.templateKey, field.fieldKey)) })) });
 export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
+  if (state.contexts.some(context => Object.hasOwn(context.fields, "restaurantIncludedDetails"))) return restaurantDetailsManifestRegistry;
   if (state.contexts.some(context => nightOutConsumption(context)?.version === "night-out-consumption@v2")) return globalConsumptionRegistry;
   if (state.contexts.some(context=>context.fields.nightOutConsumption!==undefined))return registry;
   if (state.contexts.some(context=>Object.values(context.slotSelections).some(slot=>Array.isArray(slot.items)&&slot.items.some(item=>item&&typeof item==="object"&&!Array.isArray(item)&&Object.hasOwn(item,"economicScope")))))return coverageRegistry;
@@ -126,7 +136,7 @@ export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegi
   return state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v2") ? v2Registry : legacyRegistry;
 }
 export function resolveContextTemplate(key: string): ContextTemplateV1 {
-  const found = registry.templates.find(t => t.templateKey === key);
+  const found = restaurantDetailsRegistry.templates.find(t => t.templateKey === key);
   if (!found) throw new TypeError(`PLANNER_CONTEXT_TEMPLATE_UNSUPPORTED:${key}`);
   return found;
 }

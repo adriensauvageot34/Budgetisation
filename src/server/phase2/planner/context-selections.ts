@@ -2,6 +2,7 @@ import "server-only";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import {parseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
 import { plannerDigest, plannerInteger, plannerKeys, plannerRecord, plannerString, plannerUuid } from "@/domain/phase2/planner/json";
+import { parseRestaurantIncludedDetails, restaurantIncludedDetails } from "@/domain/phase2/planner/restaurant-included-details";
 import type { ComponentSelectionV1, ComponentSlotDefinition } from "@/domain/phase2/planner/component-contract";
 import type { ContextFieldDefinition } from "@/domain/phase2/planner/context-contract";
 import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
@@ -70,6 +71,7 @@ function nightProductAssetRef(raw: unknown): PlannedAssetRef {
   return { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection, provenance: "EXPLICIT_USER_DECISION" };
 }
 export function parseContextField(raw: unknown, field: ContextFieldDefinition, targetMonth: string): unknown {
+  if (field.semanticContract === "RESTAURANT_INCLUDED_DETAILS") return parseRestaurantIncludedDetails(raw);
   if (raw == null) return null;
   if(field.semanticContract==="NIGHT_OUT_CONSUMPTION")return parseNightOutConsumption(raw);
   if(field.semanticContract==="NIGHT_OUT_VENUE")return parseNightOutVenue(raw);
@@ -157,6 +159,7 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
     ...(value.needOccurrenceId === undefined ? {} : { needOccurrenceId: plannerString(value.needOccurrenceId) }) };
 }
 export function readContextSelections(context: PlannedContextState, targetMonth: string): ReadonlyMap<string, readonly ComponentSelectionV1[]> {
+  restaurantIncludedDetails(context);
   const template = resolveContextTemplate(context.templateKey);
   plannerKeys(plannerRecord(context.fields), [...template.fields.map(f => f.fieldKey), "composerPresentation"], template.fields.filter(f => f.required).map(f => f.fieldKey));
   const consumption = nightOutConsumption(context);
