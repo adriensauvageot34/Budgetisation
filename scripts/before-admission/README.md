@@ -6,9 +6,9 @@ Depuis la racine du dépôt :
 node scripts/check-before-admission.mjs
 ```
 
-Le runner exécute les 54 groupes de finalisation existants puis cinq groupes
-spécialisés d'historique. Les PASS comprennent des refus attendus : ils ne
-certifient pas que tous les parcours sont sauvegardables.
+Le runner exécute 60 groupes, dont cinq groupes spécialisés d'historique et
+un contrôle du retour par Redo au brouillon confirmé après un refus local.
+Le décompte inclut les refus attendus.
 
 Utiliser les dépendances du dépôt, notamment TypeScript et PGlite. La suite Shell
 nécessite aussi React et react-test-renderer de versions identiques. Par défaut,

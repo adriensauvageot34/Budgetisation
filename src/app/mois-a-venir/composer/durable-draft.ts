@@ -37,6 +37,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
   const inFlight = useRef(false);
   const pendingRequest = useRef<{ digest: string; command: ComposerDraftSaveCommand } | null>(null);
   const blocked = useRef(!!initial?.baseStale);
+  const localAdmissionRefusal = useRef(false);
   const suspension = useRef(suspended);
   suspension.current = suspended;
 
@@ -67,6 +68,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
       // Undefined optional fields are omitted on HTTP; never send an unbounded trace.
       if (new TextEncoder().encode(JSON.stringify(command)).byteLength > BEFORE_ADMISSION_MAX_BYTES) throw new TypeError("BEFORE_ADMISSION_SIZE");
     } catch (error) {
+      localAdmissionRefusal.current = true;
       blocked.current = true; clearTimer(); setStatus("ERROR");
       setMessage(beforeAdmissionMessage(error instanceof Error ? error.message : "BEFORE_ADMISSION_REFUSED")); return;
     }
@@ -111,7 +113,16 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
 
   useEffect(() => {
     currentState.current = state;
-    if (!transport || suspended || blocked.current) return;
+    if (!transport || suspended) return;
+    if (blocked.current) {
+      const saved = currentSnapshot.current;
+      // Redo can return to the confirmed Draft after a local refusal sent nothing.
+      if (!localAdmissionRefusal.current || inFlight.current || pendingRequest.current || saved?.baseStale
+        || saved?.active?.digest !== confirmed.current || stateDigest !== confirmed.current) return;
+      localAdmissionRefusal.current = false;
+      blocked.current = false;
+      setMessage("Brouillon sauvegardé.");
+    }
     if (stateDigest === confirmed.current) {
       clearTimer(); firstDirtyAt.current = null;
       if (!inFlight.current) setStatus(currentSnapshot.current?.active ? "SAVED" : "CLEAN");
@@ -132,13 +143,14 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
     return () => { window.removeEventListener("online", wentOnline); window.removeEventListener("offline", wentOffline); clearTimer(); };
   }, [flush]);
 
-  const retry = () => { blocked.current = false; void flush(); };
+  const retry = () => { localAdmissionRefusal.current = false; blocked.current = false; void flush(); };
   const refresh = async () => {
     if (!transport || suspension.current) return;
     try {
       const latest = await transport.read(targetMonth);
       updateSnapshot(latest);
       if (latest.baseStale || latest.active?.digest !== confirmed.current) {
+        localAdmissionRefusal.current = false;
         blocked.current = true; setStatus("CONFLICT"); setMessage("Une autre version existe. Vos modifications locales sont préservées.");
       } else retry();
     } catch (error) { setStatus("ERROR"); setMessage(error instanceof Error && error.message === "DRAFT_CONTRACT_INCOMPATIBLE"
@@ -147,6 +159,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
   };
   const lifecycle = async (kind: "ARCHIVE" | "RESTORE", draft: StoredComposerDraft, discardLocal = false): Promise<boolean> => {
     if (!transport || suspension.current || !navigator.onLine || inFlight.current || !discardLocal && (status === "DIRTY" || status === "ERROR" || status === "OFFLINE")) return false;
+    localAdmissionRefusal.current = false;
     clearTimer(); blocked.current = true; inFlight.current = true;
     const command = { targetMonth, draftId: draft.draftId, expectedDraftVersion: draft.version, requestId: crypto.randomUUID() };
     try {

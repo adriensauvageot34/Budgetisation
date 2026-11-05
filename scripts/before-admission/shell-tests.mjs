@@ -22,5 +22,30 @@ try{
  await check('U05_INTEGRATED_LOST_TRANSPORT_RETRY',async()=>{loseTransport=true;await operate('Réponse perdue');await waitFor(()=>nodes(n=>n.props['data-save-retry']!==undefined).length>0);const count=database.writes.length;await act(async()=>nodes(n=>n.props['data-save-retry']!==undefined)[0].props.onClick());await waitSaves(8);assert.equal(database.writes.length,count);assert.equal(commands.at(-1).requestId,commands.at(-2).requestId);assert.equal(plannerDigest(commands.at(-1)),plannerDigest(commands.at(-2)));});
  await check('U06_REAL_SHELL_FIRST_BAR_BEFORE_ONE_AUTOSAVE',async()=>{await act(async()=>renderer.unmount());renderer=null;const windows={window:globalThis.window,document:globalThis.document};delete globalThis.window;delete globalThis.document;let fresh;try{fresh=await createDatabase();}finally{Object.assign(globalThis,windows);}try{const scope=fresh.scope(world),saves=[],transport={read:()=>readComposerDrafts(scope,'2026-11'),async save(c){const r=await saveComposerDraft(scope,c);saves.push(r);return r;},archive(){throw Error('FORBIDDEN');},restore(){throw Error('FORBIDDEN');}},empty=require('@/domain/phase2/planner/semantic-state').emptyPlanSemanticState('2026-11');await act(async()=>{renderer=create(React.createElement(ComposerShell,{initialModel:await model(empty),initialDrafts:await readComposerDrafts(scope,'2026-11'),draftTransport:transport,transport:request=>handleComposerRequest(makeDeps(world),householdId,request)}),{createNodeMock:n=>new NodeMock(n.props)});});await act(async()=>board.request({kind:'DROP',assetKey:'template:night-out',target:{kind:'BOARD_ZONE'},values:{label:'Bar / Apéro'},identity:parentId,selectionId:crypto.randomUUID(),presetKey:'bar-apero'}));await act(async()=>board.request(noneOperation(board.model.semanticState,{placeRef:{kind:'TEXT',label:'Premier Before'},participantRefs:['A','B','C'].map(label=>({kind:'TEXT',label}))})));await waitFor(()=>saves.length>0);assert.equal(saves.length,1);assert.equal(saves[0].ok,true,JSON.stringify(saves[0]));assert.equal((await fresh.read()).version,1);assert.equal(child((await fresh.read()).semanticState).fields.participantRefs.length,3);assert.equal(fresh.writes.length,1);}finally{if(renderer)await act(async()=>renderer.unmount());renderer=null;await fresh.close();}});
  await check('U07_MISMATCHED_RECEIPT_NEVER_SAVED',async()=>{const old=(await readComposerDrafts(scope,'2026-11')).active,sql=await database.snapshot();const transport={...draftTransport,async save(){return{ok:true,draft:old,replayed:true};}};await act(async()=>{renderer=create(React.createElement(ComposerShell,{initialModel:await model(old.semanticState),initialDrafts:await readComposerDrafts(scope,'2026-11'),draftTransport:transport,transport:request=>handleComposerRequest(makeDeps(world),householdId,request)}),{createNodeMock:n=>new NodeMock(n.props)});});await operate('Cadre local sans reçu valide');await waitFor(()=>nodes(n=>n.props['data-save-state']==='ERROR').length>0);assert.equal(child(board.model.semanticState).fields.placeRef.label,'Cadre local sans reçu valide');assert.equal(await database.snapshot(),sql);assert.equal(nodes(n=>n.props['data-save-state']==='SAVED').length,0);});
+ await check('U08_REDO_TO_CONFIRMED_DRAFT_CLEARS_LOCAL_ADMISSION_REFUSAL',async()=>{
+  await act(async()=>renderer.unmount());
+  const initial=await readComposerDrafts(scope,'2026-11');
+  await act(async()=>{renderer=create(React.createElement(ComposerShell,{
+   initialModel:await model(initial.active.semanticState),initialDrafts:initial,draftTransport,
+   transport:request=>handleComposerRequest(makeDeps(world),householdId,request),
+  }),{createNodeMock:n=>new NodeMock(n.props)});});
+  const before=board.model.semanticState;
+  assert.ok(!Object.hasOwn(before.preferences.flexibility,parentId));
+  const expectedSaves=saves.length+1;
+  await act(async()=>board.request({kind:'PRESERVE',targetRef:parentId,preserve:true}));
+  await waitSaves(expectedSaves);
+  const committed=await database.snapshot(), sent=commands.length;
+  await select('undo');
+  assert.equal(plannerDigest(board.model.semanticState),plannerDigest(before));
+  await waitFor(()=>nodes(n=>n.props['data-save-state']==='ERROR').length>0);
+  assert.match(String(nodes(n=>n.props['data-save-message']!==undefined)[0]?.props.children),/ancien choix ne peut pas encore être enregistré/);
+  assert.equal(nodes(n=>n.props['data-save-state']==='SAVED').length,0);
+  assert.equal(commands.length,sent);
+  await select('redo');
+  await waitFor(()=>nodes(n=>n.props['data-save-state']==='SAVED').length>0);
+  assert.equal(board.model.semanticState.preferences.flexibility[parentId],'PRESERVE');
+  assert.equal(commands.length,sent);
+  assert.equal(await database.snapshot(),committed);
+ });
 }finally{if(renderer)await act(async()=>renderer.unmount());Module._load=originalLoad;await database.close();fs.writeFileSync(path.join(here,'shell-proof.json'),JSON.stringify({checks,saves:saves.map(s=>({ok:s.ok,version:s.draft?.version,replayed:s.replayed})),commands:commands.map(c=>({requestId:c.requestId,steps:c.beforeAdmission?.steps.length,digest:c.digest})),databaseClosed:true,level:'ACTUAL_INTEGRATED_SHELL_JOURNAL_DURABLE_SERVICE_AND_SQL',leafBoard:'PROP_OBSERVER',browserFocus:'NOT_RUN',auth:'SYNTHETIC'},null,2));}
 console.log(JSON.stringify({result:'PASS',groups:checks.length}));
