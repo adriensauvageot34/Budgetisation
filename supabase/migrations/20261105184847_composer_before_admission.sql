@@ -1,5 +1,5 @@
 -- Before admission: server-only writer; no LOGIN, password, client flag or remote provisioning.
--- Requires migration role CREATEROLE and ownership of existing private functions/table.
+-- Requires migration role CREATEROLE and ownership of the existing private schema/functions/table.
 -- Compatibility promotion is monotone; legacy rollback must keep this SQL fence installed.
 begin;
 lock table public.phase2_composer_drafts in access exclusive mode;
@@ -34,7 +34,7 @@ lock table public.phase2_composer_drafts in access exclusive mode;
  end if;return new;end;$b$;
  revoke all on function private.composer_before_fence() from public,anon,authenticated,service_role;grant execute on function private.composer_before_fence() to composer_before_owner;
  create trigger composer_before_fence before insert or update or delete on public.phase2_composer_drafts for each row execute function private.composer_before_fence();
- grant usage on schema public,private,auth to composer_before_owner,composer_before_executor;
+ grant usage on schema public,private to composer_before_owner,composer_before_executor;
  grant select,insert,update on public.phase2_composer_drafts to composer_before_owner;grant select on public.phase2_month_plans to composer_before_owner;grant update(active_revision_number) on public.phase2_month_plans to composer_before_owner;grant select,insert,update on private.composer_before_scopes to composer_before_owner;
  grant execute on function auth.uid(),private.phase2_composer_draft_access_allowed_v2(),private.user_has_household_access(uuid),private.phase2_month_plan_state_valid_v1(jsonb,date) to composer_before_owner;
  create policy composer_before_owner_read on public.phase2_composer_drafts for select to composer_before_owner using(owner_user_id=auth.uid() and private.phase2_composer_draft_access_allowed_v2() and private.user_has_household_access(household_id));
@@ -50,7 +50,7 @@ lock table public.phase2_composer_drafts in access exclusive mode;
  SET search_path TO ''
 AS $function$
 declare
-  v_user_id uuid := auth.uid();
+  v_user_id uuid := p_verified_actor;
   v_draft public.phase2_composer_drafts;
   v_plan public.phase2_month_plans;
   v_now timestamptz := pg_catalog.clock_timestamp();
@@ -58,7 +58,7 @@ begin
 if p_expected_state_digest is null
  or p_expected_state_digest!~'^[a-f0-9]{64}$' or p_admission_fingerprint is null or p_admission_fingerprint!~'^[a-f0-9]{64}$'
  then raise exception using errcode='22023',message='BEFORE_ADMISSION_BASE_OR_FINGERPRINT_INVALID';end if;
-v_user_id:=p_verified_actor; perform set_config('request.jwt.claim.sub',p_verified_actor::text,true);
+perform set_config('request.jwt.claim.sub',v_user_id::text,true);
   if v_user_id is null
     or not coalesce(private.phase2_composer_draft_access_allowed_v2(), false)
     or not coalesce(private.user_has_household_access(p_household_id), false) then
@@ -183,8 +183,13 @@ if p_target_month is null or p_target_month <> date_trunc('month', p_target_mont
   return jsonb_build_object('draft', to_jsonb(v_draft), 'replayed', false);
 end;
 $function$;
- alter function private.save_composer_before_draft_v1(uuid,date,uuid,integer,uuid,uuid,uuid,integer,jsonb,text,uuid,text,text) owner to composer_before_owner;
  revoke all on function private.save_composer_before_draft_v1(uuid,date,uuid,integer,uuid,uuid,uuid,integer,jsonb,text,uuid,text,text) from public,anon,authenticated,service_role;grant execute on function private.save_composer_before_draft_v1(uuid,date,uuid,integer,uuid,uuid,uuid,integer,jsonb,text,uuid,text,text) to composer_before_executor;
+ -- PostgreSQL 16+ CREATEROLE alone permits neither SET ROLE nor ownership transfer.
+ grant composer_before_owner to current_user with inherit false, set true;
+ grant create on schema private to composer_before_owner;
+ alter function private.save_composer_before_draft_v1(uuid,date,uuid,integer,uuid,uuid,uuid,integer,jsonb,text,uuid,text,text) owner to composer_before_owner;
+ revoke create on schema private from composer_before_owner;
+ revoke set option for composer_before_owner from current_user;
 
 CREATE OR REPLACE FUNCTION private.save_phase2_composer_draft_v1(p_household_id uuid, p_target_month date, p_expected_draft_id uuid, p_expected_draft_version integer, p_save_request_id uuid, p_base_plan_id uuid, p_base_plan_revision_id uuid, p_base_plan_revision_number integer, p_semantic_state jsonb, p_semantic_state_digest text)
  RETURNS jsonb
