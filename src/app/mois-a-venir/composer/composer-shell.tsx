@@ -30,7 +30,7 @@ import { PlannerIcon } from "./planner-icons/planner-icon";
 import { money } from "./display";
 import { finishComparison, type ComparisonSnapshot } from "./comparison";
 import { AtomicPopover } from "./atomic-popover";
-import { stageLocalDecision, visualDraftModel, restaurantLocalRefusalMessage } from "./local-draft";
+import { stageLocalDecision, visualDraftModel, restaurantLocalRefusalMessage, beforeLocalRefusalMessage } from "./local-draft";
 import { ComposerPreviewScheduler, composerInteractionReuseEnabled, type PreviewStatus } from "./preview-scheduler";
 import { composerPreviewHttp } from "./preview-http";
 import { editorChunks, type EditorChunkKind, type LoadedEditorChunks } from "./editor-chunks";
@@ -294,7 +294,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     } catch (error) {
       // The Restaurant editor owns its own form errors. Generic actions need a
       // visible refusal here, without entering the server fallback or history.
-      const refusal = operation.kind === "EDIT_RESTAURANT" ? null : restaurantLocalRefusalMessage(error);
+      const refusal = operation.kind === "EDIT_RESTAURANT" ? null : restaurantLocalRefusalMessage(error) ?? beforeLocalRefusalMessage(error);
       if (refusal === null) throw error;
       setMessage(refusal); setErrorMessage(refusal);
       return false;

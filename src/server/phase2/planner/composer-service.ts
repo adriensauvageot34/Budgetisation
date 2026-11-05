@@ -3,6 +3,7 @@ import { validateControlValue } from "@/domain/phase2/planner/control-input";
 import { ControlDecisionAdmissionError } from "./control-fields";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { validateRestaurantDetailsTransition } from "@/domain/phase2/planner/restaurant-included-details";
+import { validateBeforeTransition } from "@/domain/phase2/planner/before-moment";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
 import { snapshotWork } from "./snapshot-observation";
@@ -411,6 +412,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       state = accepted.semanticState; suggestions = accepted.suggestions;
     } else if (request.kind !== "READ") throw new TypeError("COMPOSER_REQUEST_INVALID");
     validateRestaurantDetailsTransition(model.semanticState, state, request.kind === "EDIT_RESTAURANT" ? request.edit : undefined);
+    validateBeforeTransition(model.semanticState, state, request.kind === "EDIT_NIGHT_OUT" ? request.edit : undefined);
     const next = state === model.semanticState ? model : await readMonthComposer(readDeps, household, month, state);
     const before = model.board.cockpit.plan.economicMonthEndRemainder, after = next.board.cockpit.plan.economicMonthEndRemainder;
     // Difference of two real Compiler projections, just as for an assistant candidate.

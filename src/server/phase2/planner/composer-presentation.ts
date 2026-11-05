@@ -1,4 +1,5 @@
 import "server-only";
+import { beforeMoment, beforeMomentRemoval, removeBeforeMomentItem } from "@/domain/phase2/planner/before-moment";
 import {globalConsumptionCovers} from '@/domain/phase2/planner/night-out-consumption';
 import Big from "big.js";
 import type { MonthComposerReadModel, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
@@ -141,10 +142,13 @@ export function composerPresentation(model: MonthComposerReadModel): ComposerPre
   }
   for (const card of model.board.contexts.filter(c => !c.readOnly)) {
     const key = `context-occurrence:${card.contextOccurrenceId}`;
+    const semantic = model.semanticState.contexts.find(c => c.contextOccurrenceId === card.contextOccurrenceId);
+    const markedBefore = semantic && beforeMoment(semantic);
     const removable = model.dropCapabilities.some(d => d.sourceAssetKey === key && d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
     dragSources[key] = { sourceKey: key, assetKey: key, label: card.label, iconKey: objects[card.contextOccurrenceId].iconKey,
       economicAmount: null, protected: !removable,
-      ...(removable ? { removeOperation: { kind: "DROP", assetKey: key, target: { kind: "TRASH" }, values: {}, identity: card.contextOccurrenceId, selectionId: card.contextOccurrenceId } as const } : {}) };
+      ...(removable ? { removeOperation: markedBefore ? { kind: "EDIT_NIGHT_OUT", edit: { contextOccurrenceId: semantic.parentContextOccurrenceId!, fields: {}, before: beforeMomentRemoval(model.semanticState, card.contextOccurrenceId) } } as const
+        : { kind: "DROP", assetKey: key, target: { kind: "TRASH" }, values: {}, identity: card.contextOccurrenceId, selectionId: card.contextOccurrenceId } as const } : {}) };
     for (const socket of card.sockets) for (const satellite of sockets[`${card.contextOccurrenceId}:${socket.slotKey}`].satellites) {
       const item = socket.currentItems.find(i => i.selectionId === satellite.selectionId)!;
       if (item.kind === "CHILD_CONTEXT" || item.kind === "UNRESOLVED" || satellite.state === "DERIVED") continue;
@@ -153,7 +157,9 @@ export function composerPresentation(model: MonthComposerReadModel): ComposerPre
       const sourceKey = `satellite:${card.contextOccurrenceId}:${socket.slotKey}:${item.selectionId}`;
       dragSources[sourceKey] = { sourceKey, assetKey, label: satellite.label, iconKey: satellite.iconKey, economicAmount: satellite.economicAmount,
         selection: item, sourceSocket: { contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey, selectionId: item.selectionId }, protected: false,
-        ...(satellite.canRemove ? { removeOperation: { kind: "CLEAR_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey, selectionId: item.selectionId } as const } : {}) };
+        ...(satellite.canRemove ? { removeOperation: markedBefore && item.kind === "COMPONENT" && ["main", "extras"].includes(socket.slotKey)
+          ? { kind: "EDIT_NIGHT_OUT", edit: { contextOccurrenceId: semantic.parentContextOccurrenceId!, fields: {}, before: removeBeforeMomentItem(model.semanticState, card.contextOccurrenceId, item.selectionId) } } as const
+          : { kind: "CLEAR_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey, selectionId: item.selectionId } as const } : {}) };
     }
   }
   for (const card of controls) if (objects[card.targetRef].protectedSavings || model.semanticState.preferences.flexibility[card.targetRef] === "PRESERVE") {
