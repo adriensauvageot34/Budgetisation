@@ -36,6 +36,7 @@ import { composerPreviewHttp } from "./preview-http";
 import { editorChunks, type EditorChunkKind, type LoadedEditorChunks } from "./editor-chunks";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useDurableDraft, type DraftTransport } from "./durable-draft";
+import { BeforeDraftHistory } from "./before-draft-history";
 import { composerDraftHttpTransport } from "./draft-http-transport";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
@@ -191,7 +192,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [pendingApply, setPendingApply] = useState<PendingApply | null>(null);
   const [applyReceipt, setApplyReceipt] = useState<ComposerApplyReceipt | null>(null);
   const [comparison, setComparison] = useState<ComparisonSnapshot | null>(null);
-  const durable = useDurableDraft(draftTransport, recovered?.drafts ?? initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison || relationSession);
+  const [beforeHistory] = useState(() => new BeforeDraftHistory((recovered?.drafts ?? initialDrafts)?.active ?? null, draftState));
+  const durable = useDurableDraft(draftTransport, recovered?.drafts ?? initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison || relationSession, beforeHistory);
   const financialExitReady = useCommittedEvent(() => durable.status === "SAVED" && !durable.unsaved
     && durable.snapshot?.active?.digest === semanticStateDigest(localDraft.current));
   useLayoutEffect(() => {
@@ -309,6 +311,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       else if (history === "undo") { setPast(p => p.slice(0, -1)); setFuture(f => [...f, beforeFrame]); }
       else { setFuture(f => f.slice(0, -1)); setPast(p => [...p, beforeFrame]); }
     }
+    if (history === "push") beforeHistory.record(before, next, operation); else beforeHistory.select(next);
     localDraft.current = next; setDraftState(next); setSuggestions(null); setBalanceOpen(false); setHoverModel(null); setInteractionImpact(null); setErrorMessage(null);
     if (history !== "push") {
       const restoredBar = next.contexts.find(context => presetForContext(context)?.presetKey === "bar-apero"
@@ -568,6 +571,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         else if (history === "undo") { setPast(p => p.slice(0, -1)); setFuture(f => [...f, { draft: beforeDraft, relations: relationRef.current }]); }
         else if (history === "redo") { setFuture(f => f.slice(0, -1)); setPast(p => [...p, { draft: beforeDraft, relations: relationRef.current }]); }
         setMessage(response.mutationKind === "CANCEL_CONTEXT" ? "Context retiré du brouillon. Son annulation sera conservée à l’application." : changed ? "Brouillon mis à jour et prévisualisé." : "Prévisualisation à jour.");
+      }
+      if (!response.applied && changed) {
+        if (history === "undo" || history === "redo") beforeHistory.select(response.model.semanticState);
+        else beforeHistory.record(beforeDraft, response.model.semanticState, operation);
       }
       install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
       setEditor(current => current?.equipment ? { ...current, saved: true }

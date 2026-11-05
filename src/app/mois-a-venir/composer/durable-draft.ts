@@ -1,6 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
+import { plannerDigest } from "@/domain/phase2/planner/json";
+import { beforeAdmissionMessage, BEFORE_ADMISSION_MAX_BYTES } from "@/domain/phase2/planner/before-draft-contract";
+import type { BeforeDraftHistory } from "./before-draft-history";
 import type { ComposerDraftLifecycleCommand, ComposerDraftResult, ComposerDraftSaveCommand,
   ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 
@@ -20,7 +23,7 @@ const serverConnectionSnapshot = () => true;
 
 /** Owns persistence only. Finance preview remains in ComposerPreviewScheduler. */
 export function useDurableDraft(transport: DraftTransport | null, initial: ComposerDraftSnapshot | null,
-  targetMonth: string, state: PlanSemanticStateV1, suspended: boolean) {
+  targetMonth: string, state: PlanSemanticStateV1, suspended: boolean, beforeHistory?: BeforeDraftHistory) {
   const stateDigest = useMemo(() => semanticStateDigest(state), [state]);
   const [snapshot, setSnapshot] = useState(initial);
   const [status, setStatus] = useState<SaveStatus>(initial?.baseStale ? "CONFLICT" : initial?.active ? "SAVED" : "CLEAN");
@@ -50,28 +53,46 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
     const base = currentSnapshot.current;
     if (!base || base.baseStale) { blocked.current = true; setStatus("CONFLICT"); setMessage("Le Plan actif a changé. Choisissez comment reprendre."); return; }
     const active = base.active;
-    const reuse = pendingRequest.current?.digest === digest ? pendingRequest.current.command : null;
-    const command: ComposerDraftSaveCommand = reuse ?? {
+    let command: ComposerDraftSaveCommand;
+    try { const candidate: ComposerDraftSaveCommand = {
       targetMonth, semanticState: draft, digest, requestId: crypto.randomUUID(),
       expectedDraftId: active?.draftId ?? null, expectedDraftVersion: active?.version ?? 0,
       expectedBaseRevisionId: base.activePlanRevisionId,
       expectedBaseRevisionNumber: base.activePlanRevisionNumber,
+      ...(beforeHistory ? { beforeAdmission: beforeHistory.envelope(draft) } : {}),
     };
+      const pending = pendingRequest.current?.command;
+      command = pending && plannerDigest({ ...pending, beforeAdmission: pending.beforeAdmission ?? null, requestId: null })
+        === plannerDigest({ ...candidate, beforeAdmission: candidate.beforeAdmission ?? null, requestId: null }) ? pending : candidate;
+      // Undefined optional fields are omitted on HTTP; never send an unbounded trace.
+      if (new TextEncoder().encode(JSON.stringify(command)).byteLength > BEFORE_ADMISSION_MAX_BYTES) throw new TypeError("BEFORE_ADMISSION_SIZE");
+    } catch (error) {
+      blocked.current = true; clearTimer(); setStatus("ERROR");
+      setMessage(beforeAdmissionMessage(error instanceof Error ? error.message : "BEFORE_ADMISSION_REFUSED")); return;
+    }
     pendingRequest.current = { digest, command };
     inFlight.current = true; setStatus("SAVING"); setMessage("Enregistrement du brouillon…");
     try {
       const result = await transport.save(command);
       if (result.ok) {
+        const live = currentSnapshot.current;
+        if ((live?.active?.draftId ?? null) !== command.expectedDraftId || (live?.active?.version ?? 0) !== command.expectedDraftVersion
+          || result.draft.digest !== command.digest || semanticStateDigest(result.draft.semanticState) !== command.digest) {
+          blocked.current = true; setStatus("ERROR"); setMessage(beforeAdmissionMessage("ACK_SELECTED_FRAME_REQUIRES_RECONCILIATION")); return;
+        }
         const next = { ...base, active: result.draft, baseStale: false };
         updateSnapshot(next);
         confirmed.current = result.draft.digest;
         pendingRequest.current = null;
+        try { beforeHistory?.acknowledge(result.draft, command); }
+        catch { blocked.current = true; setStatus("ERROR"); setMessage(beforeAdmissionMessage("ACK_SELECTED_FRAME_REQUIRES_RECONCILIATION")); return; }
         if (semanticStateDigest(currentState.current) === result.draft.digest) {
           firstDirtyAt.current = null; setStatus("SAVED"); setMessage("Brouillon sauvegardé.");
         } else { setStatus("DIRTY"); setMessage("Nouvelles modifications à enregistrer."); }
       } else {
         if (result.latest) updateSnapshot(result.latest);
-        if (result.code === "CONFLICT" || result.code === "BASE_STALE" || result.code === "ACCESS_DENIED") {
+        if (result.code === "ADMISSION_REFUSED") { blocked.current = true; setStatus("ERROR"); }
+        else if (result.code === "CONFLICT" || result.code === "BASE_STALE" || result.code === "ACCESS_DENIED") {
           blocked.current = true; setStatus("CONFLICT");
         } else setStatus(navigator.onLine ? "ERROR" : "OFFLINE");
         setMessage(result.message);
@@ -86,7 +107,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
         clearTimer(); timer.current = setTimeout(() => void flush(), 1000);
       }
     }
-  }, [transport, suspended, targetMonth, updateSnapshot]);
+  }, [transport, suspended, targetMonth, updateSnapshot, beforeHistory]);
 
   useEffect(() => {
     currentState.current = state;

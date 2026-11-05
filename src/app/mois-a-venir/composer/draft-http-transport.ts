@@ -26,6 +26,8 @@ function draft(raw: unknown, month: string): StoredComposerDraft {
   return { draftId: plannerUuid(value.draftId), version: plannerInteger(value.version, 1),
     lifecycle: value.lifecycle, semanticState: state, digest,
     baseRevisionId: value.baseRevisionId === null ? null : plannerUuid(value.baseRevisionId),
+    beforeAdmissionRequired: value.beforeAdmissionRequired === true,
+    lastAdmissionFingerprint: typeof value.lastAdmissionFingerprint === "string" ? plannerDigestString(value.lastAdmissionFingerprint) : null,
     baseRevisionNumber: plannerInteger(value.baseRevisionNumber), lastSavedAt: value.lastSavedAt,
     archivedAt: value.archivedAt, lastMutationRequestId: plannerUuid(value.lastMutationRequestId),
     lastMutationExpectedVersion: plannerInteger(value.lastMutationExpectedVersion), lastMutationKind: value.lastMutationKind };
@@ -55,7 +57,7 @@ function result(raw: unknown, kind: "SAVE" | "ARCHIVE" | "RESTORE",
         || saved.lifecycle !== (kind === "ARCHIVE" ? "ABANDONED" : "ACTIVE")))) throw contractError();
     return { ok: true, draft: saved, replayed: value.replayed };
   }
-  const codes = ["CONFLICT", "BASE_STALE", "TOO_LARGE", "INVALID", "ACCESS_DENIED", "UNAVAILABLE"];
+  const codes = ["CONFLICT", "BASE_STALE", "TOO_LARGE", "INVALID", "ACCESS_DENIED", "UNAVAILABLE", "ADMISSION_REFUSED"];
   if (value.ok !== false || !codes.includes(String(value.code)) || typeof value.message !== "string") throw contractError();
   return { ok: false, code: value.code as Exclude<ComposerDraftResult, { ok: true }>["code"],
     message: value.message, latest: value.latest === null ? null : snapshot(value.latest, plannerMonth(command.targetMonth)) };

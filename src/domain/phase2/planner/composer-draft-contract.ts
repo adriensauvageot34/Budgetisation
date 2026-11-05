@@ -1,7 +1,8 @@
 import type { PlanSemanticStateV1 } from "./semantic-state";
+import type { BeforeDraftAdmission } from "./before-draft-contract";
 
 /** Bump only with an explicit cross-build compatibility decision. */
-export const COMPOSER_DRAFT_HTTP_CONTRACT = "composer-draft-http@1" as const;
+export const COMPOSER_DRAFT_HTTP_CONTRACT = "composer-draft-http@2" as const;
 
 export type StoredComposerDraft = Readonly<{
   draftId: string;
@@ -16,6 +17,8 @@ export type StoredComposerDraft = Readonly<{
   lastMutationRequestId: string;
   lastMutationExpectedVersion: number;
   lastMutationKind: "SAVE" | "ARCHIVE" | "RESTORE";
+  beforeAdmissionRequired?: boolean;
+  lastAdmissionFingerprint?: string | null;
 }>;
 
 export type ComposerDraftSnapshot = Readonly<{
@@ -35,6 +38,7 @@ export type ComposerDraftSaveCommand = Readonly<{
   requestId: string;
   semanticState: PlanSemanticStateV1;
   digest: string;
+  beforeAdmission?: BeforeDraftAdmission;
 }>;
 
 export type ComposerDraftLifecycleCommand = Readonly<{
@@ -46,5 +50,5 @@ export type ComposerDraftLifecycleCommand = Readonly<{
 
 export type ComposerDraftResult =
   | Readonly<{ ok: true; draft: StoredComposerDraft; replayed: boolean }>
-  | Readonly<{ ok: false; code: "CONFLICT" | "BASE_STALE" | "TOO_LARGE" | "INVALID" | "ACCESS_DENIED" | "UNAVAILABLE";
+  | Readonly<{ ok: false; code: "CONFLICT" | "BASE_STALE" | "TOO_LARGE" | "INVALID" | "ACCESS_DENIED" | "UNAVAILABLE" | "ADMISSION_REFUSED";
     message: string; latest: ComposerDraftSnapshot | null }>;
