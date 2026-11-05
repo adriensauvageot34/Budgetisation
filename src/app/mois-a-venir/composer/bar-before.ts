@@ -44,7 +44,7 @@ export function barBeforeDelete(state: PlanSemanticStateV1, parent: PlannedConte
 /** The activity's main slot is technical ownership, not a privileged bottle.
  * Promote the next real component atomically through the existing edit owner.
  * Removing the last item explicitly adopts NONE and preserves the moment. */
-export function barBeforeRemove(state: PlanSemanticStateV1, parent: PlannedContextState, selectionId: string): ComposerOperation {
+export function barBeforeRemove(state: PlanSemanticStateV1, parent: PlannedContextState, selectionId: string, allowDescriptiveBefore = true): ComposerOperation {
   const before = barBefore(state, parent);
   if (!before) throw Error("Ce Before n’est plus disponible. Relisez la carte.");
   if (beforeMoment(before.child)) return { kind: "EDIT_NIGHT_OUT", edit: { contextOccurrenceId: parent.contextOccurrenceId,
@@ -56,6 +56,7 @@ export function barBeforeRemove(state: PlanSemanticStateV1, parent: PlannedConte
   if (before.extras.some(item => item.kind !== "COMPONENT"))
     throw new Error("Résolvez ou retirez explicitement les autres choix du Before avant de retirer ce poste. Le moment reste conservé.");
   const next = before.extras.find(item => item.kind === "COMPONENT");
+  if (!next && !allowDescriptiveBefore) throw Error("Pour retirer le dernier poste, confirmez le retrait du Before entier.");
   if (!next) return barBeforeMomentPatch(state, parent, null, []);
   return barBeforePatch(state, parent, { ...next, optionKey: "activity" }, before.extras.filter(item => item.selectionId !== next.selectionId));
 }

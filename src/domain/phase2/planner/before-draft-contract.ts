@@ -2,6 +2,12 @@ import type { ComposerOperation } from "./composer-ui-contract";
 import { plannerDigestString, plannerKeys, plannerRecord, plannerUuid } from "./json";
 import type { PlanSemanticStateV1 } from "./semantic-state";
 
+export const BEFORE_N2_DISABLED = "COMPOSER_BEFORE_N2_DISABLED";
+export const BEFORE_N2_APPLY_UNAVAILABLE = "COMPOSER_BEFORE_N2_APPLY_UNAVAILABLE";
+export const beforeN2DisabledMessage = "Le Before descriptif est désactivé. Les brouillons existants restent conservés.";
+export const beforeN2ApplyMessage = "L’application d’un mois contenant un Before descriptif n’est pas disponible. Votre brouillon reste conservé.";
+export const beforeN2UndoMessage = "Cette annulation rétablirait un choix que le brouillon ne sait pas enregistrer. Le cadre actuel est conservé.";
+
 export const BEFORE_ADMISSION_VERSION = "before-admission-replay@v2" as const;
 export const BEFORE_ADMISSION_MAX_STEPS = 64;
 export const BEFORE_ADMISSION_MAX_BYTES = 1_150_000;
@@ -15,6 +21,12 @@ export type BeforeDraftAdmission = Readonly<{ version: typeof BEFORE_ADMISSION_V
 export function hasBeforeDraft(state: PlanSemanticStateV1 | undefined | null): boolean {
   return !!state?.contexts.some(c => Object.hasOwn(c.fields, "beforeMoment") || c.fields.fieldSchemaVersion === "context-fields@v7");
 }
+/** The old Before uses bottle/extras or null. Versioned Before commands are N2. */
+export function isBeforeN2Operation(operation: ComposerOperation): boolean {
+  return operation.kind === "EDIT_NIGHT_OUT" && !!operation.edit?.before
+    && Object.hasOwn(operation.edit.before, "version");
+}
+
 /** Checkpoints, financial controls, N1 and arbitrary Context writers have no admission here. */
 export function parseBeforeDraftAdmission(input: unknown): BeforeDraftAdmission {
   const value = plannerRecord(input); plannerKeys(value, ["version", "parentContextOccurrenceId", "baseDigest", "steps"]);
@@ -52,6 +64,7 @@ export function parseBeforeDraftAdmission(input: unknown): BeforeDraftAdmission 
   return value as unknown as BeforeDraftAdmission;
 }
 export function beforeAdmissionMessage(code: string): string {
+  if (code === BEFORE_N2_DISABLED) return beforeN2DisabledMessage;
   if (/LIMIT|BUDGET|SIZE/.test(code)) return "La limite de vérification du Before est atteinte. Vos choix restent dans cette page ; aucune saisie n’a été supprimée.";
   if (/BOOTSTRAP|PARENT/.test(code)) return "La base ou la création du Bar n’a pas pu être vérifiée. Vos choix locaux restent conservés dans cette page.";
   if (/CHANNEL/.test(code)) return "Le canal de sauvegarde sécurisé du Before est indisponible. Vos choix restent dans cette page.";

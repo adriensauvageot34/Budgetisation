@@ -30,6 +30,8 @@ import { PlannerIcon } from "./planner-icons/planner-icon";
 import { money } from "./display";
 import { finishComparison, type ComparisonSnapshot } from "./comparison";
 import { AtomicPopover } from "./atomic-popover";
+import { beforeN2ApplyMessage, beforeN2DisabledMessage, beforeN2UndoMessage, hasBeforeDraft,
+  isBeforeN2Operation } from "@/domain/phase2/planner/before-draft-contract";
 import { stageLocalDecision, visualDraftModel, restaurantLocalRefusalMessage, beforeLocalRefusalMessage } from "./local-draft";
 import { ComposerPreviewScheduler, composerInteractionReuseEnabled, type PreviewStatus } from "./preview-scheduler";
 import { composerPreviewHttp } from "./preview-http";
@@ -62,10 +64,10 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
-export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false, previewHttp = false, rootRelationAccess = null, rootRelationTransport = rootRelationHttp }: {
+export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false, previewHttp = false, beforeN2Access = false, rootRelationAccess = null, rootRelationTransport = rootRelationHttp }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null; durableDraftHttp?: boolean;
-  snapshotMetrics?: boolean; previewHttp?: boolean;
+  snapshotMetrics?: boolean; previewHttp?: boolean; beforeN2Access?: boolean;
   rootRelationAccess?: RootRelationAccess | null; rootRelationTransport?: RootRelationTransport;
 }) {
   const [recovered] = useState(() => rootRelationAccess ? readRootWorkspace(rootRelationAccess.scopeKey) : undefined);
@@ -192,8 +194,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [pendingApply, setPendingApply] = useState<PendingApply | null>(null);
   const [applyReceipt, setApplyReceipt] = useState<ComposerApplyReceipt | null>(null);
   const [comparison, setComparison] = useState<ComparisonSnapshot | null>(null);
+  const n2ReadOnly = !beforeN2Access && (hasBeforeDraft(draftState)
+    || !!(recovered?.drafts ?? initialDrafts)?.active?.beforeAdmissionRequired);
   const [beforeHistory] = useState(() => new BeforeDraftHistory((recovered?.drafts ?? initialDrafts)?.active ?? null, draftState));
-  const durable = useDurableDraft(draftTransport, recovered?.drafts ?? initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison || relationSession, beforeHistory);
+  const durable = useDurableDraft(draftTransport, recovered?.drafts ?? initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison || relationSession || n2ReadOnly, beforeHistory);
   const financialExitReady = useCommittedEvent(() => durable.status === "SAVED" && !durable.unsaved
     && durable.snapshot?.active?.digest === semanticStateDigest(localDraft.current));
   useLayoutEffect(() => {
@@ -243,6 +247,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const motionTimer = useRef<ReturnType<typeof setTimeout> | null>(null), nextMotionTarget = useRef<string | null>(null);
   const frameNow = (): ComposerLocalFrame => ({ draft: localDraft.current, relations: relationRef.current });
   const transitionAllowed = (next: PlanSemanticStateV1) => {
+    if (!beforeN2Access && (hasBeforeDraft(localDraft.current) || hasBeforeDraft(next))) {
+      setMessage(beforeN2DisabledMessage); setErrorMessage(beforeN2DisabledMessage); return false;
+    }
     try { if (relationSessionRef.current) {
       if (!durable.snapshot?.active) throw new Error("N1_DRAFT_ACCESS_DENIED");
       assertRootRelationDraftAuthority(durable.snapshot.active.semanticState, next);
@@ -268,7 +275,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   }
   useEffect(() => { if (recovered) schedulePreview(recovered.frame.draft); }, []);
   function stage(operation: ComposerOperation, history: "push" | "undo" | "redo" = "push", restored?: PlanSemanticStateV1 | ComposerLocalFrame) {
-    if (busyRef.current) return false;
+    if (busyRef.current || n2ReadOnly) return false;
+    if (!beforeN2Access && isBeforeN2Operation(operation)) {
+      setMessage(beforeN2DisabledMessage); setErrorMessage(beforeN2DisabledMessage); return false;
+    }
     if(operation.kind==="DROP"&&operation.target.kind==="TRASH") {
       const context=current.current.board.contexts.find(card=>operation.assetKey===`context-occurrence:${card.contextOccurrenceId}`);
       if(context&&presetForContext(context)?.presetKey==="bar-apero") {
@@ -303,6 +313,16 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }
     if (!next) { void run(operation, history); return false; }
     if (!transitionAllowed(next)) return false;
+    if (history !== "push") {
+      const nextFlexibility = next.preferences.flexibility;
+      const removesPreference = Object.keys(before.preferences.flexibility).some(key => !Object.hasOwn(nextFlexibility, key));
+      const n2Frame = hasBeforeDraft(before) || hasBeforeDraft(next) || durable.snapshot?.active?.beforeAdmissionRequired;
+      if (draftTransport && n2Frame) {
+        if ((removesPreference && durable.hasPendingSave()) || !beforeHistory.selectForSave(next)) {
+          setMessage(beforeN2UndoMessage); setErrorMessage(beforeN2UndoMessage); return false;
+        }
+      } else beforeHistory.select(next);
+    }
     const beforeDigest = semanticStateDigest(before), nextDigest = semanticStateDigest(next);
     if (history === "push" && composerInteractionReuseEnabled && beforeDigest === nextDigest && ["FRESH", "BLOCKED", "PENDING"].includes(previewStatus)) return true;
     clearHover(); gate.current.invalidate(); scheduler.current.cancel();
@@ -311,7 +331,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       else if (history === "undo") { setPast(p => p.slice(0, -1)); setFuture(f => [...f, beforeFrame]); }
       else { setFuture(f => f.slice(0, -1)); setPast(p => [...p, beforeFrame]); }
     }
-    if (history === "push") beforeHistory.record(before, next, operation); else beforeHistory.select(next);
+    if (history === "push") beforeHistory.record(before, next, operation);
     localDraft.current = next; setDraftState(next); setSuggestions(null); setBalanceOpen(false); setHoverModel(null); setInteractionImpact(null); setErrorMessage(null);
     if (history !== "push") {
       const restoredBar = next.contexts.find(context => presetForContext(context)?.presetKey === "bar-apero"
@@ -529,7 +549,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }
   }
   async function run(operation: ComposerOperation, history: "push" | "undo" | "redo" | "none" = "push", draft?: PlanSemanticStateV1) {
-    if (busyRef.current) return;
+    if (busyRef.current || n2ReadOnly) return;
+    if (!beforeN2Access && isBeforeN2Operation(operation)) {
+      setMessage(beforeN2DisabledMessage); setErrorMessage(beforeN2DisabledMessage); return;
+    }
     if (relationSessionRef.current && (operation.kind === "APPLY" || operation.kind === "CHECK_APPLY")) return;
     if (snapshotMetrics) snapshotIntent.current=performance.now();
     scheduler.current.cancel();
@@ -846,6 +869,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
   }
   function apply(confirmedDigest?: string) {
+    if (hasBeforeDraft(localDraft.current)) { setMessage(beforeN2ApplyMessage); return; }
     if (relationSessionRef.current || inlineEdits.registry.count() || pendingApply || comparison || grab.current || editor || previewStatus !== "FRESH" || model.board.cockpit.applyReadiness === "BLOCKED"
       || semanticStateDigest(localDraft.current) !== model.board.draft.semanticStateDigest
       || draftTransport && (durable.status !== "SAVED" || !navigator.onLine || durable.snapshot?.baseStale)) return;
@@ -858,7 +882,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     void run({ kind: "APPLY", command: { ...model.proof, applyRequestId: applyAttempt.current.applyRequestId } }, "none");
   }
   const stableApply = useCommittedEvent(apply);
-  const applyDisabled = relationSession || !!inlineEdits.count || busy || !!pendingApply || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
+  const applyDisabled = hasBeforeDraft(draftState) || relationSession || !!inlineEdits.count || busy || !!pendingApply || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
     || !!draftTransport && (durable.status !== "SAVED" || !durable.online || !!durable.snapshot?.baseStale);
   const openProjectionDetails = () => {
     if (editor && !inlineEdits.registry.guard(openProjectionDetails)) return;
@@ -867,7 +891,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   };
   const showUnresolved = () => { if (editor && !inlineEdits.registry.guard(showUnresolved)) return; clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
   const navigateDecision = (targetRef: string) => { setFocusedContext(targetRef); setReveal(previous => ({ targetRef, sequence: (previous?.sequence ?? 0) + 1 })); };
-  const applyReason = relationSession ? "Organisation locale non sauvegardée : abandonnez-la explicitement avant de sauvegarder ou transformer le mois en Plan."
+  const applyReason = hasBeforeDraft(draftState) ? beforeN2ApplyMessage : relationSession ? "Organisation locale non sauvegardée : abandonnez-la explicitement avant de sauvegarder ou transformer le mois en Plan."
     : inlineEdits.count ? "Une saisie n’est pas validée ou un réglage attend confirmation. Validez ou annulez la saisie avant de transformer le mois en Plan."
     : busy ? "La prévisualisation serveur est en cours." : pendingApply ? "L’issue de la demande précédente doit être vérifiée avant toute nouvelle application."
     : draftTransport && (durable.status !== "SAVED" || !durable.online || durable.snapshot?.baseStale)
@@ -931,6 +955,11 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
+  if (n2ReadOnly) return <section role="status" data-before-n2-readonly>
+    <h1>Brouillon en lecture seule</h1>
+    <p>{beforeN2DisabledMessage}</p>
+    <a href={`/mois-a-venir?month=${draftState.targetMonth}&control=center`}>Revenir au centre de contrôle</a>
+  </section>;
   return <WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
@@ -992,7 +1021,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       command={(mutation, focusId) => admitRelation(mutation, undefined, "push", focusId)} close={() => setRelationOpen(false)} abandon={discardRelations}
       undo={() => stage({ kind: "READ" }, "undo", past.at(-1))} redo={() => stage({ kind: "READ" }, "redo", future.at(-1))} canUndo={!!past.length} canRedo={!!future.length} />}
     <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} openContext={stableLibraryOpen} />
-      {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
+      {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} beforeN2Access={beforeN2Access} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
           initialBarView={barViews.current.get(`${draftState.targetMonth}:${livingBarId}`)} onViewChange={rememberCurrentBarView}
           context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}
           model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} previewPending={previewStatus==="PENDING"||previewStatus==="STALE"} saveStatus={!relationSession&&draftTransport?durable.status:"MEMORY"}

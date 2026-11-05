@@ -1,4 +1,5 @@
 import "server-only";
+import { beforeN2Enabled } from "./before-n2-cutover";
 import type { ComposerDraftResult, ComposerDraftSaveCommand } from "@/domain/phase2/planner/composer-draft-contract";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ComposerResponse } from "@/domain/phase2/planner/composer-ui-contract";
@@ -19,6 +20,7 @@ const worldDigest = (world: unknown) => plannerDigest(JSON.parse(JSON.stringify(
 
 /** Called before legacy Save/replay. Only this module can issue the writer's in-process capability. */
 export async function saveBeforeComposerDraft(scope: ComposerDraftScope, input: ComposerDraftSaveCommand): Promise<ComposerDraftResult> {
+  if (!beforeN2Enabled()) return fail("COMPOSER_BEFORE_N2_DISABLED");
   let timer: ReturnType<typeof setTimeout> | undefined;
   const deadline = performance.now() + BEFORE_ADMISSION_BUDGET_MS;
   const budget = () => { if (performance.now() >= deadline) throw new TypeError("BEFORE_ADMISSION_BUDGET"); };

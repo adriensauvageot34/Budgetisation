@@ -1,10 +1,12 @@
 import "server-only";
+import { beforeN2Enabled } from "./before-n2-cutover";
 import { Pool } from "pg";
 import { isAdmittedBeforeSave, type BeforeDraftWriter } from "./before-draft-admission";
 
 let pool: Pool | undefined;
 /** No default service-role fallback. Provisioning this dedicated LOGIN remains an external gate. */
 export const executeBeforeDraft: BeforeDraftWriter = async admission => {
+  if (!beforeN2Enabled()) throw new TypeError("COMPOSER_BEFORE_N2_DISABLED");
   if (!isAdmittedBeforeSave(admission)) throw new TypeError("BEFORE_ADMISSION_NOT_SERVER_ISSUED");
   const connectionString = process.env.COMPOSER_BEFORE_DATABASE_URL;
   if (!connectionString) throw new TypeError("BEFORE_ADMISSION_CHANNEL_UNAVAILABLE");

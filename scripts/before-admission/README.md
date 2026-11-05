@@ -6,9 +6,9 @@ Depuis la racine du dépôt :
 node scripts/check-before-admission.mjs
 ```
 
-Le runner exécute 60 groupes, dont cinq groupes spécialisés d'historique et
-un contrôle du retour par Redo au brouillon confirmé après un refus local.
-Le décompte inclut les refus attendus.
+Le runner exécute 65 groupes. Il couvre l'Undo non enregistrable, la reprise
+en lecture seule d'un Draft marqué et la fermeture N2. Les tests activent N2
+explicitement pour les cas positifs. Les refus attendus entrent dans le décompte.
 
 Utiliser les dépendances du dépôt, notamment TypeScript et PGlite. La suite Shell
 nécessite aussi React et react-test-renderer de versions identiques. Par défaut,
@@ -42,6 +42,19 @@ L'inverse PRESERVE vers une préférence réellement absente reste
 STOP_LOCAL[OWNER_CONTRACT_REQUIRED]. PRESERVE=false écrit NORMAL et ne remplace
 pas une suppression de préférence. Aucun CLEAR_PREFERENCE ni effacement/recréation
 de Context n'est introduit.
+
+## Coupure N2
+
+`COMPOSER_BEFORE_N2_ENABLED=true` est un réglage serveur destiné à une cible de
+recette autorisée. La valeur absente désactive N2. Le bouton descriptif exige aussi
+un transport Draft admis. Le Bar historique reste utilisable. Les brouillons
+marqués sont conservés en lecture seule lorsque N2 est désactivé.
+
+Le candidat reçoit N2 au niveau Draft. Apply N2 reste fermé dans le service et
+par la barrière de la migration candidate sur les nouvelles révisions Plan.
+Une ancienne révision marquée ne peut pas être remplacée par un snapshot amputé.
+Le test de l'isolation complète suppose cette migration appliquée sur la cible
+de recette, puis un canal SQL dédié reçu séparément.
 
 ## Gates ouverts
 

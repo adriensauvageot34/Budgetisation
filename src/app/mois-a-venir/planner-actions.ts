@@ -4,6 +4,7 @@ import { plannerMonth } from "@/domain/phase2/planner/json";
 import { parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
+import { assertBeforeN2InputEnabled } from "@/server/phase2/planner/before-n2-cutover";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { readMonthComposer as readComposer } from "@/server/phase2/planner/read-model";
 import { previewPlanScenario as previewScenario, applyPlanScenario as applyScenario } from "@/server/phase2/planner/apply";
@@ -11,6 +12,7 @@ import { readPlanBalanceSuggestions as readSuggestions, acceptPlanBalanceSuggest
 
 function draftForMonth(targetMonth: string, raw: PlanSemanticStateV1) {
   const month = plannerMonth(targetMonth), state = parsePlanSemanticState(raw);
+  assertBeforeN2InputEnabled(state);
   if (state.targetMonth !== month) throw new TypeError("PLANNER_DRAFT_MONTH_INVALID");
   return state;
 }

@@ -1,6 +1,6 @@
 import type { ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerDraftSaveCommand, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
-import { BEFORE_ADMISSION_MAX_STEPS, BEFORE_ADMISSION_VERSION, hasBeforeDraft, parseBeforeDraftAdmission, type BeforeAdmissionStep, type BeforeDraftAdmission, type BeforeOperation } from "@/domain/phase2/planner/before-draft-contract";
+import { BEFORE_ADMISSION_MAX_STEPS, BEFORE_ADMISSION_VERSION, hasBeforeDraft, isBeforeN2Operation, parseBeforeDraftAdmission, type BeforeAdmissionStep, type BeforeDraftAdmission, type BeforeOperation } from "@/domain/phase2/planner/before-draft-contract";
 import { plannerDigest, type PlannerJson } from "@/domain/phase2/planner/json";
 import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import { barBefore, barBeforeMomentPatch } from "./bar-before";
@@ -42,7 +42,7 @@ export class BeforeDraftHistory {
   }
   private required(state = this.current) {
     return !!this.durable?.beforeAdmissionRequired || hasBeforeDraft(this.baseState) || hasBeforeDraft(state)
-      || this.steps.some(s => s.operation.kind === "EDIT_NIGHT_OUT" && Object.hasOwn(s.operation.edit, "before"));
+      || this.steps.some(s => isBeforeN2Operation(s.operation));
   }
   record(before: PlanSemanticStateV1, next: PlanSemanticStateV1, operation: ComposerOperation) {
     if (semanticStateDigest(before) === semanticStateDigest(next)) return;
@@ -71,6 +71,24 @@ export class BeforeDraftHistory {
     }
     this.rebuild(next);
   }
+  /** Leave the selected frame and its history intact when no durable inverse exists. */
+  selectForSave(next: PlanSemanticStateV1): boolean {
+    const { current, steps, parentId, blocked, frames } = this;
+    this.frames = new Map(frames);
+    try {
+      this.select(next);
+      if (semanticStateDigest(next) !== semanticStateDigest(this.baseState)) this.envelope(next);
+      return true;
+    } catch {
+      this.current = current;
+      this.steps = steps;
+      this.parentId = parentId;
+      this.blocked = blocked;
+      this.frames = frames;
+      return false;
+    }
+  }
+
   private inverse(edge: Edge): BeforeOperation {
     const op = edge.operation, prior = edge.before, after = edge.after;
     if (op.kind === "PRESERVE") {

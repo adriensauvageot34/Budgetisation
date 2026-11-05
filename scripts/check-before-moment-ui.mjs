@@ -59,12 +59,21 @@ const input=label=>{const n=nodes(n=>n.type==='label'&&text(n).startsWith(label)
 const change=async(label,value)=>{const n=input(label);document.activeElement=new NodeMock(n.props);await act(async()=>n.props.onChange({target:{value}}));};
 function admit(operation){const s=stageLocalDecision(model,model.semanticState,operation);assert.ok(s,'Local admission');ops.push(operation);model=visualDraftModel(model,s);root.update(render());return true;}
 const props=()=>({context:parent(model.semanticState),model,card:model.board.contexts.find(c=>c.contextOccurrenceId===parentId),semanticState:model.semanticState,householdPersons:[],targetMonth:'2026-11',busy:false,fresh:false,dockHost:{},onSave:admit,onCancel(){},...overrides});
-function render(){return React.createElement(WorkshopConfirmationProvider,{requestRef},React.createElement(WorkshopChoicesProvider,null,React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(BarLivingEditor,props()))));}
+function render(){return React.createElement(WorkshopConfirmationProvider,{requestRef},React.createElement(WorkshopChoicesProvider,null,React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(BarLivingEditor,{beforeN2Access:true,...props()}))));}
 const mock=element=>new NodeMock(element.props);
 async function check(id,run){await run();checks.push({id,result:'PASS'});console.log(id+' PASS');}
 try{
   registry=new InlineEditRegistry();registry.requestConfirmation=(message,accept,save)=>requestRef.current({message,accept,save,acceptLabel:'Abandonner cette saisie'});
   await act(async()=>{root=create(render(),{createNodeMock:mock});});
+  await check('U00_OFF_BAR_HIDES_DESCRIPTIVE_BEFORE_ONLY',async()=>{
+    overrides={beforeN2Access:false};
+    await act(async()=>root.update(render()));
+    assert.equal(nodes(n=>n.type==='button'&&text(n)==='Prévoir un Before').length,0);
+    assert.equal(button('Ajouter une consommation Before').props.disabled,false);
+    assert.equal(ops.length,0);
+    overrides={};
+    await act(async()=>root.update(render()));
+  });
   await check('U01_EDITOR_RAW_DESCRIPTORS_AND_RESUME',async()=>{
     await click('Prévoir un Before');assert.equal(barBefore(model.semanticState,parent(model.semanticState)).bottle,null);
     await click('Lieu et participants du Before');await change('Lieu du Before','Chez des amis — RAW, ');
@@ -99,7 +108,7 @@ try{
   await act(async()=>root.unmount());
   await check('U02_SHELL_ATOMIC_UNDO_REDO_AND_RAW_GUARD',async()=>{
     model=await read(toGlobal(model.semanticState));const calls=[];
-    await act(async()=>{root=create(React.createElement(ComposerShell,{initialModel:model,transport:async request=>{calls.push(request.kind);assert.equal(request.kind,'READ');return handleComposerRequest(deps,householdId,request);}}),{createNodeMock:mock});});
+    await act(async()=>{root=create(React.createElement(ComposerShell,{beforeN2Access:true,initialModel:model,transport:async request=>{calls.push(request.kind);assert.equal(request.kind,'READ');return handleComposerRequest(deps,householdId,request);}}),{createNodeMock:mock});});
     const before=structuredClone(board.model.semanticState),view=barBefore(before,parent(before));
     const main=d1Fixture().contexts.find(c=>c.parentContextOccurrenceId===parentId).slotSelections.main.items[0];
     await act(async()=>board.request(barBeforeMomentPatch(before,parent(before),main,[])));

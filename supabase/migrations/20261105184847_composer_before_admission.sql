@@ -659,5 +659,26 @@ if p_target_month is null or p_target_month <> date_trunc('month', p_target_mont
   return jsonb_build_object('draft', to_jsonb(v_draft), 'replayed', false);
 end;
 $function$;
+-- N2 is Draft-only until a distinct Apply authority is received. The public
+-- C0 RPC also reaches this trigger, independently of the Composer app switch.
+create function private.composer_before_plan_fence() returns trigger
+language plpgsql security definer set search_path = '' as $fence$
+begin
+  if private.composer_before_reserved(new.semantic_state)
+    or exists (
+      select 1 from public.phase2_month_plan_revisions prior
+      where prior.plan_id = new.plan_id and prior.plan_revision_id = new.parent_revision_id
+        and private.composer_before_reserved(prior.semantic_state)
+    )
+  then
+    raise exception using errcode = '55000', message = 'COMPOSER_BEFORE_N2_APPLY_UNAVAILABLE';
+  end if;
+  return new;
+end;
+$fence$;
+revoke all on function private.composer_before_plan_fence() from public, anon, authenticated, service_role;
+create trigger composer_before_plan_fence before insert on public.phase2_month_plan_revisions
+for each row execute function private.composer_before_plan_fence();
+
 comment on table private.composer_before_scopes is 'Monotone Before admission requirement; application rollback cannot downgrade this scope.';
 commit;

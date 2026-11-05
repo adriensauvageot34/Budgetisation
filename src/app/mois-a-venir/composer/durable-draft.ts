@@ -143,6 +143,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
     return () => { window.removeEventListener("online", wentOnline); window.removeEventListener("offline", wentOffline); clearTimer(); };
   }, [flush]);
 
+  const hasPendingSave = () => inFlight.current || pendingRequest.current !== null;
   const retry = () => { localAdmissionRefusal.current = false; blocked.current = false; void flush(); };
   const refresh = async () => {
     if (!transport || suspension.current) return;
@@ -191,6 +192,6 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
     } finally { inFlight.current = false; }
   };
   const suspendNow = () => { if (inFlight.current) return false; suspension.current = true; clearTimer(); return true; };
-  return { snapshot, status, message, online, retry, refresh, lifecycle, suspendNow,
+  return { snapshot, status, message, online, retry, refresh, lifecycle, suspendNow, hasPendingSave,
     unsaved: !!transport && stateDigest !== confirmed.current, enabled: !!transport };
 }

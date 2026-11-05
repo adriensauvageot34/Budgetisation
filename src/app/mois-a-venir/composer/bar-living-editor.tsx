@@ -51,7 +51,7 @@ const catalog=[...assetsForModule("bar").filter(asset=>!/(?:parking|entry)$/u.te
   ...assetsForModule("house_party").filter(asset=>["snack","chips"].includes(asset.assetKey.split(":").at(-1)??"")),
   ...assetsForModule("club").filter(asset=>asset.assetKey==="club:food")];
 const beforeCatalog=assetsForModule("house_party");
-export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number;initialBarView?:BarViewMemory;previewPending?:boolean;onViewChange?:(view:BarViewMemory)=>void}) {
+export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number;initialBarView?:BarViewMemory;previewPending?:boolean;beforeN2Access?:boolean;onViewChange?:(view:BarViewMemory)=>void}) {
   const {context,model,card,dockHost,onSave,serverError}=props;
   const busy=props.busy||!!card?.readOnly||props.semanticState.preferences.anchors.includes(context.contextOccurrenceId)||props.semanticState.preferences.flexibility[context.contextOccurrenceId]==="PRESERVE";
   const initialRoute=props.initialTarget?.startsWith("route:")?props.initialTarget.split(":"):null;
@@ -272,11 +272,13 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   };
 
   function createBefore(){
+    if (!props.beforeN2Access) return;
     if(!guard(resumeCreateBefore)||before||busy)return;
     try{if(decide(barBeforeMomentPatch(props.semanticState,context,null,[]),"before"))setMoment("before");}
     catch(failure){setError(failure instanceof Error?failure.message:"Ce Before doit être relu dans l’éditeur détaillé.");}
   }
   function describeBefore(){
+    if (!props.beforeN2Access) return;
     if(!guard(resumeBeforeDescription)||!before||beforeLocked)return;
     const fields=before.child.fields;
     setBeforeDescription({label:typeof fields.label==="string"?fields.label:"",date:typeof fields.plannedDate==="string"?fields.plannedDate:"",
@@ -284,6 +286,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     setPersonName("");move("before-description");
   }
   function saveBeforeDescription():boolean {
+    if (!props.beforeN2Access) return false;
     if(!before||beforeLocked||personName.trim())return false;
     return decide(barBeforeMomentPatch(props.semanticState,context,before.bottle,before.extras,{label:beforeDescription.label,
       plannedDate:beforeDescription.date,placeRef:beforeDescription.place,participantRefs:beforeDescription.people}),"before");
@@ -306,7 +309,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     }catch{setError("Ce poste n’a pas de couverture substitutive certaine ou possède un financement. Aucun poste n’est supprimé ; « Ajouter en plus » reste disponible.");}
   };
   const remove=()=>{
-    const apply=()=>{try{return slot.startsWith("before-")?before&&decide(barBeforeRemove(props.semanticState,context,row.id),"before")
+    const apply=()=>{try{return slot.startsWith("before-")?before&&decide(barBeforeRemove(props.semanticState,context,row.id,props.beforeN2Access === true),"before")
       :decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).filter(item=>item.selectionId!==row.id)}}},"drinks");}
       catch(failure){setError(failure instanceof Error?failure.message:"Ce poste ne peut pas être retiré. Le Before reste conservé.");return false;}};
     if(dirty)confirm({message:"Retirer ce poste et abandonner sa saisie non validée ? Undo permet de rétablir la dernière décision conservée.",acceptLabel:"Retirer",accept:apply});else apply();
@@ -541,7 +544,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
         </AtomicPopover></header>
       {beforeLocked&&<p>Ce Before est protégé. Ses composants restent consultables.</p>}
       {!before.bottle&&<p data-before-none>Aucune consommation prévue</p>}
-      <button type="button" disabled={busy||beforeLocked} onClick={describeBefore}>Lieu et participants du Before</button>
+      {props.beforeN2Access && <button type="button" disabled={busy||beforeLocked} onClick={describeBefore}>Lieu et participants du Before</button>}
       {before.child.fields.placeRef!=null&&<p>{barPlaceLabel(before.child.fields.placeRef as ProspectivePlaceRef,model)}</p>}
       {Array.isArray(before.child.fields.participantRefs)&&<p>{(before.child.fields.participantRefs as ProspectivePersonRef[]).map(p=>barPersonLabel(p,model)).join(", ")}</p>}
       {page==="before-description"&&<fieldset disabled={busy||beforeLocked} data-before-description>
@@ -558,7 +561,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       <BarMomentRail label="Objets Before" addLabel="Ajouter un objet au Before" disabled={busy||beforeLocked} dropBlocked={dirty} add={()=>selectMoment("before")} model={model} owner={before.child.contextOccurrenceId} slot="extras">{listGroups([...(before.bottle?[before.bottle]:[]),...before.extras]).map(group=>{const item=group.items[0];return <div key={group.key} data-bar-before-item={item.selectionId} data-bar-active-tile={page==='row'&&group.items.some(i=>i.selectionId===row.id)} className={page==='row'&&group.items.some(i=>i.selectionId===row.id)?styles.barActiveTile:styles.barEconomicTile}><BarComponentGroup group={group} model={model} owner={before.child.contextOccurrenceId} slot="$before" disabled={busy||beforeLocked} choose={chosen=>chosen.kind==='COMPONENT'&&editComponent(chosen.selectionId===before.bottle?.selectionId?'before-main':'before-extras',chosen)}>{page==='row'&&group.items.some(i=>i.selectionId===row.id)&&activeRow}</BarComponentGroup></div>;})}</BarMomentRail>
 
     </section>}
-    {!before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-section="before" data-bar-empty="true"><h4>Before</h4><button type="button" className={styles.barInlineAdd} disabled={busy} onClick={createBefore}>Prévoir un Before</button><button type="button" disabled={busy} onClick={()=>selectMoment("before")}>Ajouter une consommation Before</button></section>}
+    {!before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-section="before" data-bar-empty="true"><h4>Before</h4>{props.beforeN2Access && <button type="button" className={styles.barInlineAdd} disabled={busy} onClick={createBefore}>Prévoir un Before</button>}<button type="button" disabled={busy} onClick={()=>selectMoment("before")}>Ajouter une consommation Before</button></section>}
     {(["extras","before","food","main"] as const).map(key=>{
       const items=barItems(context,key).filter(item=>(item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT")&&item.selectionId!==consumption?.directSelectionId);
       if(key==="before"&&before)return null;
