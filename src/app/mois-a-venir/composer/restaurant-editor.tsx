@@ -3,7 +3,8 @@
 import { guidedContextShape, type GuidedContextEdit } from "@/domain/phase2/planner/guided-context-edit";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import type { RestaurantEdit } from "@/domain/phase2/planner/restaurant-edit";
-import { restaurantIncludedDetails, restaurantMealTariff, type RestaurantIncludedDetail, type RestaurantDetailsDecision } from "@/domain/phase2/planner/restaurant-included-details";
+import { assertRestaurantDetailsWritable, restaurantIncludedDetails, restaurantMealTariff, RESTAURANT_INCLUDED_DETAILS_LIMIT,
+  type RestaurantIncludedDetail, type RestaurantDetailsDecision } from "@/domain/phase2/planner/restaurant-included-details";
 import { PresetIllustration } from "./preset-illustration";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -33,7 +34,9 @@ import styles from "./composer.module.css";
 
 type Component = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
 type Step = "product" | "participants" | "place" | "date" | "budget" | "binding" | "complete" | "included" | null;
-type IncludedBuffer = { id: string; label: string; amount: string; quantity: string; unitBasis: "" | "ITEM" | "PERSON" | "SHARED" };
+type IncludedBuffer = { id: string; mealSelectionId: string; label: string; amount: string; quantity: string; unitBasis: "" | "ITEM" | "PERSON" | "SHARED" };
+const includedDrink = "Bière";
+const sameDetailLabel = new Intl.Collator("fr", { sensitivity: "base" });
 const restaurantQuestions = [{ id: "participants", key: "participantRefs", title: "Qui vient au restaurant ?" },
   { id: "place", key: "placeRef", title: "Où allez-vous manger ?" },
   { id: "date", key: "plannedDate", title: "Quand est prévu ce restaurant ?" },
@@ -160,18 +163,21 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const openIncluded = (item?: RestaurantIncludedDetail, label = "") => {
     if (!leaveRaw(() => openIncluded(item, label))) return;
     if (!main) { open("budget"); setError("Précisez d’abord l’addition à laquelle rattacher ce détail."); return; }
-    setIncludedRow({ id: item?.detailId ?? crypto.randomUUID(), label: item?.label ?? label,
+    setIncludedRow({ id: item?.detailId ?? crypto.randomUUID(), mealSelectionId: main.selectionId, label: item?.label ?? label,
       amount: item?.amount.kind === "DECLARED_LINE_TOTAL" ? item.amount.value : "", quantity: item?.quantity ?? "", unitBasis: item?.unitBasis ?? "" });
     setStep("included"); setExtraRow(null); setEquipment(null); setError(""); setFormKey(key => key + 1);
   };
   const saveIncluded = () => {
-    if (!includedRow || !main) return;
+    if (!includedRow) return;
+    if (main?.selectionId !== includedRow.mealSelectionId) {
+      setError("L’addition a changé. Rouvrez le détail depuis l’addition actuelle."); return;
+    }
     const item: RestaurantIncludedDetail = { detailId: includedRow.id, label: includedRow.label.trim(), included: true,
       quantity: includedRow.quantity.trim() ? includedRow.quantity.trim().replace(",", ".") : null, unitBasis: includedRow.unitBasis || null,
       amount: includedRow.amount.trim() ? { kind: "DECLARED_LINE_TOTAL", value: includedRow.amount.trim().replace(",", ".") } : { kind: "UNKNOWN" },
       provenance: "EXPLICIT_USER_DECISION" };
     if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, includedDetails: { version: "restaurant-included-details@v1",
-      mealSelectionId: main.selectionId, items: [...(included?.items ?? []).filter(old => old.detailId !== item.detailId), item] } }))) {
+      mealSelectionId: includedRow.mealSelectionId, items: [...(included?.items ?? []).filter(old => old.detailId !== item.detailId), item] } }))) {
       setIncludedRow(null); advance("included");
     }
   };
@@ -202,6 +208,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     setAllOptions(false); setStep("complete");
   };
   const currentTransport = items(context, "transport").find(item => item.kind === "MOBILITY_INTENT");
+  const completeTitle = context.templateKey === "restaurant" ? "Détails de l’addition" : "Les petits plus";
   const transportValues: Record<string, string> = currentTransport ? {
     origin: currentTransport.origin?.kind === "TEXT" ? currentTransport.origin.label : "",
     destination: currentTransport.destination?.kind === "TEXT" ? currentTransport.destination.label : "",
@@ -217,6 +224,9 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     { id: "budget", icon: <Receipt size={16} />, label: detail ? "Postes prévus" : shape.total, caption: `${priceCaption(main)}${extras.length ? ` · ${extras.length} complément(s)` : ""}` },
     ...(context.templateKey === "purchase" ? [{ id: "product" as const, icon: <Receipt size={16} />, label: "Article et vendeur", caption: String(context.fields.productLabel ?? "À préciser") }] : []),
     ...(refs.length ? [{ id: "participants" as const, icon: <Users size={16} />, label: "Participants", caption: refs.map(personLabel).join(", ") }] : []),
+    ...(context.templateKey === "restaurant" && !creating ? [{ id: "complete" as const, icon: <Receipt size={16} />,
+      label: completeTitle, caption: included ? included.items.length === 1 ? "1 détail compris" : `${included.items.length} détails compris`
+        : "Détails compris et suppléments" }] : []),
     ...(placeLabel ? [{ id: "place" as const, icon: <MapPin size={16} />, label: "Lieu", caption: placeLabel.kind === "TEXT" ? placeLabel.label
       : model.mobilityOptions?.places.find(p => p.placeId === placeLabel.placeId)?.name ?? "Lieu lié indisponible" }] : []),
     ...(context.fields.plannedDate ? [{ id: "date" as const, icon: <CalendarDays size={16} />, label: "Date", caption: String(context.fields.plannedDate) }] : []),
@@ -230,6 +240,18 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     if (!detail && main) confirm({message:"Ce poste est-il inclus dans le coût déjà prévu ? Un supplément réel sera additionné. Pour décrire un montant inclus, utilisez le détail.",cancelLabel:"Inclus · garder le total",acceptLabel:"Supplément réel",accept:add}); else add();
   };
   const tile = (key:string,label:string,choose:()=>void,iconKey="restaurant",hint?:string,selected?:boolean) => ({key,label,choose,iconKey,hint,selected});
+  const canSuggestIncludedDrink = () => {
+    if (creating || context.templateKey !== "restaurant" || card.templateKey !== "restaurant"
+      || card.contextOccurrenceId !== context.contextOccurrenceId || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")
+      || main?.optionKey !== "restaurant" || items(context, "meal").length !== 1
+      || (included?.items.length ?? 0) >= RESTAURANT_INCLUDED_DETAILS_LIMIT) return false;
+    if ([...(included?.items ?? []), ...extras].some(item => sameDetailLabel.compare(item.label.trim(), includedDrink) === 0)) return false;
+    try { assertRestaurantDetailsWritable(model.semanticState, context); return true; }
+    catch (error) {
+      if (error instanceof TypeError && error.message === "COMPOSER_CONTEXT_LOCKED") return false;
+      throw error;
+    }
+  };
   const modes = card.sockets.find(socket=>socket.slotKey==="transport")?.choiceAssetKeys ?? [];
   const summaryChoices = [tile("amount",context.templateKey==="purchase"?"Coût direct":context.templateKey==="delivery"?"Commande complète":context.templateKey==="activity"?"Billets / coût direct":"Montant rapide",()=>open("budget"),card.templateKey,"Sans date ni participants obligatoires"),
     tile("detail",context.templateKey==="purchase"?"Articles":context.templateKey==="activity"?"Tarif et quantité":"Détailler le repas",()=>{if (!leaveRaw(() => { open("budget"); if(!detail) chooseMode(true); })) return; open("budget"); if(!detail) chooseMode(true); }),
@@ -242,7 +264,12 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     tile("all-options","Autres postes admissibles",()=>{if(leaveRaw(()=>setAllOptions(true)))setAllOptions(true);},"activity"),...modes.flatMap(key=>{const asset=model.library.searchableAssets.find(a=>a.assetKey===key);return asset?[tile(key,asset.label,()=>equip(asset,{kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:"transport"}),asset.iconKey)]:[]})];
   const extraNames = context.templateKey==="delivery"?["Livraison","Service","Autre frais"]:context.templateKey==="activity"?["Parking","Repas","Autre coût"]:context.templateKey==="purchase"?["Autre article","Livraison","Autre frais"]:["Boisson","Dessert","Autre complément"];
   const question:PaletteQuestion = activeQuestion ?? {title: step===null?"Construire · "+heading:step==="complete"?"Ajouter seulement ce qui est prévu":questions.find(q=>q.id===step)?.title??heading,
-    choices:step===null?summaryChoices:step==="complete"&&!extraRow&&!equipment?[...extras.map(item=>tile(item.selectionId,"Modifier "+item.label,()=>setExtraRow(fromSelection(item)),"purchase",priceCaption(item))),...extraNames.map(label=>tile("add:"+label,label,()=>addExtra(label),"purchase")),tile("summary","Terminer",()=>open(null),"activity")]
+    choices:step===null?summaryChoices:step==="complete"&&!extraRow&&!equipment?[
+      ...(canSuggestIncludedDrink() ? [tile("restaurant:included:beer", `${includedDrink} — Renseigner dans l’addition`,
+        () => openIncluded(undefined, includedDrink), "restaurant", "Situation Restaurant du catalogue")] : []),
+      ...extras.map(item=>tile(item.selectionId,"Modifier "+item.label,()=>setExtraRow(fromSelection(item)),"purchase",priceCaption(item))),
+      ...extraNames.map(label=>tile("add:"+label,context.templateKey === "restaurant" ? `${label} · en supplément` : label,()=>addExtra(label),"purchase")),
+      tile("summary","Terminer",()=>open(null),"activity")]
       : step==="budget"?[tile("total","Coût total",()=>chooseMode(false),"restaurant",undefined,!detail),tile("detail","Détailler",()=>chooseMode(true),"restaurant",undefined,detail),tile("unknown","Prix inconnu",()=>saveBudget({...row,costMode:"UNKNOWN",edited:true}),"activity"),
         ...(suggestion?[tile("reference","Prix observé "+money(suggestion.value),()=>{setRaw(true);setRow(r=>({...r,amount:suggestion.value!,costMode:"MANUAL",edited:true}));},"restaurant","À confirmer · "+suggestion.sourceAuthority)]:[]),tile("summary","Résumé",()=>open(null),"activity")]
       : step==="binding"?([['CONFIRMED_CONSUMPTION','Compris dans '+shape.envelope],['EXTRA_TO_SLOT','En plus de l’enveloppe']] as const).map(([mode,label])=>tile(mode,label,()=>{if(main&&send(operation({contextOccurrenceId:context.contextOccurrenceId,slots:{[mainSlot]:[{...main,binding:{mode}}]}})))advance("binding");},"purchase"))
@@ -260,7 +287,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       <span>{summaryPage + 1} / {Math.ceil(summaryEntries.length / summaryPageSize)}</span><button type="button" disabled={(summaryPage + 1) * summaryPageSize >= summaryEntries.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}</>
       : <button type="button" className={styles.nightLink} onClick={() => open(null)}>← Retour au résumé</button>}
     {step !== null && <div className={styles.restaurantQuestion} key={`${step}:${formKey}`}>
-      <h3 data-restaurant-focus tabIndex={-1}>{step === "included" ? "Déjà compris dans l’addition" : quickPurchase && step === "budget" ? "Quel montant souhaitez-vous prévoir ?" : questions.find(q => q.id === step)?.title ?? (step === "complete" ? "Les petits plus" : "Votre intention est dans le brouillon")}</h3>
+      <h3 data-restaurant-focus tabIndex={-1}>{step === "included" ? "Déjà compris dans l’addition" : quickPurchase && step === "budget" ? "Quel montant souhaitez-vous prévoir ?" : questions.find(q => q.id === step)?.title ?? (step === "complete" ? completeTitle : "Votre intention est dans le brouillon")}</h3>
       {step === "included" && includedRow && <form onSubmit={event => { event.preventDefault(); saveIncluded(); }}>
         <p>Ce détail est compris dans l’addition. Son montant décrit toute la ligne et ne s’ajoute pas au coût prévu.</p>
         <label>Nature du détail<input autoFocus value={includedRow.label} maxLength={1024} onChange={event => { setRaw(true); setIncludedRow({ ...includedRow, label: event.target.value }); }} /></label>
@@ -298,7 +325,9 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
         {!detail && <button type="button" className={styles.primary} onClick={() => saveBudget()}>Conserver ce coût</button>}
         {detail && extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button key={item.selectionId} type="button" onClick={() => { if (!leaveRaw(() => { setStep("complete"); setExtraRow(fromSelection(item)); })) return; setStep("complete"); setExtraRow(fromSelection(item)); }}>{item.label} · {priceCaption(item)}</button>)}</>}
       {step === "binding" && <p>Le Compiler vérifie l’enveloppe réellement disponible. Sans enveloppe admissible, la relation restera à préciser. Les compléments libres sont des postes distincts.</p>}
-      {step === "complete" && !extraRow && !equipment && <>{extraAdded ? <p role="status">Poste ajouté au brouillon.</p> : <p>Ajoutez uniquement les compléments qui ne sont pas déjà compris dans le montant.</p>}
+      {step === "complete" && !extraRow && !equipment && <>{extraAdded ? <p role="status">Poste ajouté au brouillon.</p> : <p>{context.templateKey === "restaurant"
+        ? "Décrivez ce qui est compris dans l’addition ou ajoutez un supplément distinct."
+        : "Ajoutez uniquement les compléments qui ne sont pas déjà compris dans le montant."}</p>}
         {context.templateKey === "restaurant" && <section aria-label="Détails compris dans l’addition">
           <h4>Déjà compris dans l’addition</h4>
           {included?.items.map(item => <div key={item.detailId}>
@@ -318,7 +347,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
         <button type="button" onClick={() => {
           const add = () => { setExtraAdded(false); setExtraRow(fresh(shape.complement)); };
           if (!detail && main) confirm({ message: "Ces frais sont-ils déjà inclus dans votre montant ? Les ajouter en supplément augmente le coût prévu.", cancelLabel: "Inclus · garder le total", acceptLabel: "Réellement en plus", accept: add }); else add();
-        }}>{extraAdded ? "Ajouter encore" : "Ajouter un complément"}</button>
+        }}>{extraAdded ? "Ajouter encore" : context.templateKey === "restaurant" ? "Ajouter un supplément distinct" : "Ajouter un complément"}</button>
         {extraAdded && <button type="button" onClick={() => open(null)}>Retour au résumé</button>}
         {currentTransport && <button type="button" onClick={() => send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { transport: [] } }))}>Retirer le trajet</button>}</>}
       {extraRow && <WorkshopComponentRow key={extraRow.id} title={shape.complement} row={extraRow} participantCount={refs.length} onChange={next => { setRaw(true); setExtraRow(next); }} onRemove={() => {

@@ -16,11 +16,12 @@ export type RestaurantDetailsDecision = "KEEP_CONFIRMED" | "REMOVE_ALL";
 export type RestaurantDetailsAdmission = Readonly<{
   contextOccurrenceId: string; includedDetailsAfterMealChange?: RestaurantDetailsDecision;
 }>;
+export const RESTAURANT_INCLUDED_DETAILS_LIMIT = 10_000;
 
 export function parseRestaurantIncludedDetails(raw: unknown): RestaurantIncludedDetailsV1 {
   const block = plannerRecord(raw); plannerKeys(block, ["version", "mealSelectionId", "items"]);
   if (block.version !== "restaurant-included-details@v1" || !Array.isArray(block.items)
-    || !block.items.length || block.items.length > 10000) throw new TypeError("RESTAURANT_INCLUDED_DETAILS_INVALID");
+    || !block.items.length || block.items.length > RESTAURANT_INCLUDED_DETAILS_LIMIT) throw new TypeError("RESTAURANT_INCLUDED_DETAILS_INVALID");
   const items = block.items.map((rawItem): RestaurantIncludedDetail => {
     const item = plannerRecord(rawItem);
     plannerKeys(item, ["detailId", "label", "included", "quantity", "unitBasis", "amount", "provenance"]);
