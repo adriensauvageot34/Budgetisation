@@ -18,7 +18,7 @@ Module._load=function(name,parent,...args){
  if(name==='react')return React;if(name==='react/jsx-runtime')return jsx;
  if(name==='react-dom')return {createPortal:children=>children};
  if(name==='./workshop-confirmation')return {useWorkshopConfirmation:()=>value=>{confirmation=value;}};
- if(name==='./context-palette'&&parent?.filename.endsWith('restaurant-editor.tsx'))return {ContextPalette:({question})=>React.createElement('nav',null,question?.choices.map(c=>React.createElement('button',{key:c.key,onClick:c.choose},c.label)))};
+ if(name==='./context-palette'&&parent?.filename.endsWith('restaurant-editor.tsx'))return {ContextPalette:({question})=>React.createElement('nav',null,question?.choices.map(c=>React.createElement('button',{key:c.key,title:c.hint,onClick:c.choose},c.label)))};
  return originalLoad.call(this,name,parent,...args);
 };
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
@@ -203,7 +203,13 @@ const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join(
 const button=label=>root.root.findAll(node=>node.type==='button').find(node=>text(node)===label);
 const click=async label=>{const node=button(label);assert(node,label);assert(!node.props.disabled,label);await act(async()=>node.props.onClick());};
 const input=label=>root.root.findAll(node=>node.type==='label').find(node=>text(node).startsWith(label)).findByType('input');
-async function mount(state=base){if(root)await act(async()=>root.unmount());model=await modelFor(state);current=model.semanticState;registry=new InlineEditRegistry();accepted=[];confirmation=null;await act(async()=>{root=create(React.createElement(Harness));});}
+async function mount(state=base, cardPatch){
+ if(root)await act(async()=>root.unmount());
+ model=await modelFor(state);
+ if(cardPatch)model.board.contexts=model.board.contexts.map(card=>card.contextOccurrenceId===id?{...card,...cardPatch}:card);
+ current=model.semanticState;registry=new InlineEditRegistry();accepted=[];confirmation=null;
+ await act(async()=>{root=create(React.createElement(Harness));});
+}
 try{
  await check('RI-10-REAL-EDITOR-ADD-EDIT-REMOVE-RAW-HISTORY',async()=>{
   await mount();await click('Déjà compris dans l’addition');
@@ -237,12 +243,70 @@ try{
  });
  await check('RI-12-REAL-EDITOR-OUTSIDE-EXTRA-AND-REFERENCE',async()=>{
   await mount();
-  const knowledge=model.cardKnowledge['template:restaurant'];if(knowledge)knowledge.dimensions=knowledge.dimensions.map(d=>({...d,value:'150.00',suggestionPolicy:'REFERENCE_ONLY'}));
+  const knowledge=model.cardKnowledge['template:restaurant'];assert(knowledge?.dimensions.length);
+  knowledge.dimensions=knowledge.dimensions.map(d=>({...d,value:'150.00',suggestionPolicy:'REFERENCE_ONLY'}));
   await click('Déjà compris dans l’addition');assert.equal(input('Montant de la ligne compris').props.value,'');
-  await click('← Retour au résumé');await click('Compléments');await click('Ajouter un complément');assert(confirmation);await act(async()=>confirmation.accept());
+  await click('← Retour au résumé');await click('Compléments');await click('Ajouter un supplément distinct');assert(confirmation);await act(async()=>confirmation.accept());
   let row=root.root.findByType(WorkshopComponentRow);await act(async()=>row.props.onChange({...row.props.row,label:'Supplément extérieur',amount:'6.00',costMode:'MANUAL',edited:true}));
   row=root.root.findByType(WorkshopComponentRow);await act(async()=>row.props.onSave());
   assert.deepEqual(amounts(current),['40.00','6.00']);assert.equal(restaurantIncludedDetails(target(current)),null);
+ });
+ const drink='Bière — Renseigner dans l’addition';
+ const openDetails=async()=>{
+  const shortcut=root.root.findAll(node=>node.type==='button').find(node=>text(node).startsWith('Détails de l’addition'));
+  assert(shortcut,'Raccourci présent dans le résumé');
+  await act(async()=>shortcut.props.onClick());
+ };
+ const submitIncluded=()=>act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+ await check('A01-01-SUGGESTION-TO-EXACT-INCLUDED-DETAIL',async()=>{
+  await mount();
+  const before=structuredClone(current), readsBefore=f.reads.length;
+  assert.equal(button(drink),undefined);
+  await openDetails();
+  assert.equal(button(drink).props.title,'Situation Restaurant du catalogue');
+  await click(drink);
+  assert.equal(input('Nature du détail').props.value,'Bière');
+  assert.equal(input('Montant de la ligne compris').props.value,'');
+  assert.deepEqual(current,before);assert.equal(accepted.length,0);assert.equal(f.reads.length,readsBefore);
+  await act(async()=>input('Montant de la ligne compris').props.onChange({target:{value:'6,00'}}));
+  await click('← Retour au résumé');
+  assert.equal(input('Montant de la ligne compris').props.value,'6,00');
+  assert.equal(registry.count(),1);assert.equal(accepted.length,0);
+  await submitIncluded();
+  assert.equal(registry.count(),0);assert.equal(accepted.length,1);
+  const patch=accepted[0].edit;
+  assert.deepEqual(Object.keys(patch),['contextOccurrenceId','includedDetails']);
+  assert.equal(patch.contextOccurrenceId,id);assert.equal(patch.includedDetails.mealSelectionId,sid);
+  assert.equal(patch.includedDetails.items[0].amount.value,'6.00');
+  assert.equal(patch.includedDetails.items[0].provenance,'EXPLICIT_USER_DECISION');
+  assert.deepEqual(current.contexts.find(c=>c.contextOccurrenceId===otherId),before.contexts.find(c=>c.contextOccurrenceId===otherId));
+  assert.deepEqual(economics(current),economics(before));assert.deepEqual(amounts(current),['40.00']);
+  const after=structuredClone(current);
+  await openDetails();assert.equal(button(drink),undefined);assert(button('Modifier le détail Bière'));
+  await act(async()=>{current=before;setCurrent(before);});assert(button(drink));
+  await act(async()=>{current=after;setCurrent(after);});assert.equal(button(drink),undefined);
+ });
+ await check('A01-02-REFUSED-PROTECTED-MISSING-OR-ALREADY-REPRESENTED',async()=>{
+  const component=componentId(id,'meal',sid);
+  const protectedMeal={...base,preferences:{...base.preferences,anchors:[component]}};
+  const protectedContext={...base,preferences:{...base.preferences,flexibility:{[id]:'PRESERVE'}}};
+  const asExtra=edit(base,{slots:{extras:[{...meal,selectionId:uuid(99609),optionKey:'extra',label:' BIERE '}]}});
+  for(const [state,cardPatch] of [[base,{readOnly:true}],[base,{capabilityRefs:[]}],
+   [protectedMeal],[protectedContext],[edit(base,{slots:{meal:[]}})],[asExtra]]){
+   await mount(state,cardPatch);await openDetails();
+   assert.equal(button(drink),undefined);assert.equal(accepted.length,0);
+  }
+ });
+ await check('A01-03-STALE-MEAL-REFUSES-WITH-RAW-INTACT',async()=>{
+  await mount();await openDetails();await click(drink);
+  await act(async()=>input('Montant de la ligne compris').props.onChange({target:{value:'6'}}));
+  const replaced=edit(base,{slots:{meal:[{...meal,selectionId:uuid(99610)}]}});
+  await act(async()=>{current=replaced;setCurrent(replaced);});
+  await submitIncluded();
+  assert.equal(accepted.length,0);assert.equal(registry.count(),1);
+  assert.equal(input('Montant de la ligne compris').props.value,'6');
+  assert(root.root.findAll(node=>node.props.role==='alert').some(node=>/addition a changé/.test(text(node))));
+  assert.equal(restaurantIncludedDetails(target(current)),null);
  });
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}
 await check('RI-13-NO-WRITES-REMOTE-OR-WORLD-CHANGE',()=>{assert.equal(remote,0);assert.deepEqual(f.writes,[]);assert.equal(canonicalPlannerJson(f.world),worldBefore);});
