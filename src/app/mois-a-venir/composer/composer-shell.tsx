@@ -35,7 +35,10 @@ import { ComposerPreviewScheduler, composerInteractionReuseEnabled, type Preview
 import { composerPreviewHttp } from "./preview-http";
 import { editorChunks, type EditorChunkKind, type LoadedEditorChunks } from "./editor-chunks";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
-import { useDurableDraft, type DraftTransport } from "./durable-draft";
+import { useDurableDraft, useRootRelationDurableDraft, type DraftTransport } from "./durable-draft";
+import type { RootRelationDurableSnapshot, RootRelationDurableTransport } from "@/domain/phase2/planner/root-relation-durable-contract";
+import { rootRelationDurableTransport } from "./root-relation-durable-transport";
+import { rootRelationBaseState, rootRelationStateDigest } from "@/domain/phase2/planner/root-relation-state";
 import { composerDraftHttpTransport } from "./draft-http-transport";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
@@ -45,7 +48,7 @@ import { EquipmentComponentEditor } from "./equipment-component-editor";
 import { WorkshopChoicesProvider } from "./workshop-choices";
 import { WorkshopConfirmationProvider } from "./workshop-confirmation";
 import { InlineEditContext, useOwnedInlineEdits } from "./inline-edit-registry";
-import { assertRootRelationDraftAuthority, composerLocalFrameDigest, guardRootMemberTransition, parseComposerLocalFrame, type ComposerLocalFrame } from "@/domain/phase2/planner/root-relation-local";
+import { assertRootRelationDraftAuthority, composerLocalFrameDigest, rootRelationDocument, guardRootMemberTransition, parseComposerLocalFrame, type ComposerLocalFrame } from "@/domain/phase2/planner/root-relation-local";
 import type { RootContextRelationV1, RootRelationCapabilities, RootRelationMutation } from "@/domain/phase2/planner/root-relation-contract";
 import type { RootRelationAccess, RootRelationBinding, RootRelationTransport, RootRelationRequest } from "@/domain/phase2/planner/root-relation-ui-contract";
 import { rootRelationHttp, rootRelationMessage } from "./root-relation-http";
@@ -61,20 +64,23 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
-export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false, previewHttp = false, rootRelationAccess = null, rootRelationTransport = rootRelationHttp }: {
+export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false, previewHttp = false, rootRelationAccess = null, rootRelationTransport = rootRelationHttp, initialRootDrafts = null, rootDraftTransport = rootRelationDurableTransport }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null; durableDraftHttp?: boolean;
   snapshotMetrics?: boolean; previewHttp?: boolean;
   rootRelationAccess?: RootRelationAccess | null; rootRelationTransport?: RootRelationTransport;
+  initialRootDrafts?: RootRelationDurableSnapshot | null; rootDraftTransport?: RootRelationDurableTransport;
 }) {
   const [recovered] = useState(() => rootRelationAccess ? readRootWorkspace(rootRelationAccess.scopeKey) : undefined);
-  const recoveredSession = !!recovered && recovered.relationSession !== false;
+  const rootInitial = recovered?.rootDrafts ?? initialRootDrafts ?? initialDrafts;
+  const persistedInitial = rootInitial?.active?.semanticState.version === "month-plan-state@v2-root-relations" ? rootInitial.active : null;
+  const recoveredSession = !!persistedInitial || !!recovered && recovered.relationSession !== false;
   const [relationSession, setRelationSession] = useState(recoveredSession), relationSessionRef = useRef(recoveredSession);
   const [rootWorkspacePending, setRootWorkspacePending] = useState(!!recovered);
   const [relationRevoked, setRelationRevoked] = useState(false);
   const rootRelationsAvailable = rootRelationAccess?.enabled === true && !relationRevoked;
-  const [relations, setRelations] = useState<readonly RootContextRelationV1[]>(recovered?.frame.relations ?? []);
-  const relationRef = useRef(relations), relationBinding = useRef<RootRelationBinding | null>(recovered?.binding ?? null);
+  const [relations, setRelations] = useState<readonly RootContextRelationV1[]>(recovered?.frame.relations ?? (persistedInitial?.semanticState.version === "month-plan-state@v2-root-relations" ? persistedInitial.semanticState.rootRelations : []));
+  const relationRef = useRef(relations), relationBinding = useRef<RootRelationBinding | null>(recovered?.binding ?? (persistedInitial ? { draftId: persistedInitial.draftId, version: persistedInitial.version } : null));
   const [relationOpen, setRelationOpen] = useState(false), [relationCaps, setRelationCaps] = useState<RootRelationCapabilities | null>(null);
   const relationToken = useRef(""), relationSequence = useRef(0);
   const inlineEdits = useOwnedInlineEdits();
@@ -192,12 +198,28 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [applyReceipt, setApplyReceipt] = useState<ComposerApplyReceipt | null>(null);
   const [comparison, setComparison] = useState<ComparisonSnapshot | null>(null);
   const durable = useDurableDraft(draftTransport, recovered?.drafts ?? initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison || relationSession);
-  const financialExitReady = useCommittedEvent(() => durable.status === "SAVED" && !durable.unsaved
-    && durable.snapshot?.active?.digest === semanticStateDigest(localDraft.current));
+  const fullDocument = useMemo(() => rootRelationDocument({ draft: draftState, relations }), [draftState, relations]);
+  const rootDurable = useRootRelationDurableDraft(rootRelationAccess?.durable ? rootDraftTransport : null,
+    relationSession ? rootInitial : durable.snapshot, fullDocument, relationSession);
+  const rootStored = rootDurable.snapshot?.active;
+  const rootStoredN1 = rootStored?.semanticState.version === "month-plan-state@v2-root-relations";
+  const rootSaveState = rootDurable.enabled || rootStoredN1 ? rootDurable.status : "MEMORY";
+  const financialExitReady = useCommittedEvent(() => !rootDurable.isInFlight() && (rootStored?.semanticState.version === "month-plan-state@v2-root-relations"
+    ? semanticStateDigest(rootRelationBaseState(rootStored.semanticState)) === semanticStateDigest(localDraft.current)
+    : durable.status === "SAVED" && !durable.unsaved && durable.snapshot?.active?.digest === semanticStateDigest(localDraft.current)));
+  useLayoutEffect(() => { if (relationSession && rootStoredN1 && rootStored)
+    relationBinding.current = { draftId: rootStored.draftId, version: rootStored.version }; }, [relationSession, rootStoredN1, rootStored]);
   useLayoutEffect(() => {
     if (rootWorkspacePending && rootRelationAccess && relationBinding.current) rememberRootWorkspace(rootRelationAccess.scopeKey,
-      { frame: { draft: draftState, relations }, model, past, future, binding: relationBinding.current, drafts: durable.snapshot, relationSession });
-  }, [rootWorkspacePending, relationSession, rootRelationAccess, draftState, relations, model, past, future, durable.snapshot]);
+      { frame: { draft: draftState, relations }, model, past, future, binding: relationBinding.current, drafts: durable.snapshot, rootDrafts: rootDurable.snapshot, relationSession });
+  }, [rootWorkspacePending, relationSession, rootRelationAccess, draftState, relations, model, past, future, durable.snapshot, rootDurable.snapshot]);
+  useEffect(() => {
+    if (relationSession && rootDurable.unsaved) setRootWorkspacePending(true);
+    else if (relationSession && rootSaveState === "SAVED" && !inlineEdits.registry.count()) {
+      if (rootRelationAccess) discardRootWorkspace(rootRelationAccess.scopeKey);
+      setRootWorkspacePending(false);
+    }
+  }, [relationSession, rootDurable.unsaved, rootSaveState, rootRelationAccess, inlineEdits.count]);
   useEffect(() => {
     if (rootWorkspacePending && !relationSession && financialExitReady()) {
       if (rootRelationAccess) discardRootWorkspace(rootRelationAccess.scopeKey);
@@ -205,13 +227,16 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }
   }, [rootWorkspacePending, relationSession, rootRelationAccess, durable.status, durable.unsaved, durable.snapshot, financialExitReady]);
   const skipUnloadWarning = useRef(false);
-  const savedReloadSafe = !relationSession && !!draftTransport && !comparison && durable.online && durable.status === "SAVED" && !durable.unsaved
-    && durable.snapshot?.active?.digest === semanticStateDigest(draftState);
+  const savedReloadSafe = !comparison && durable.online && (relationSession
+    ? rootSaveState === "SAVED" && !rootDurable.unsaved
+    : !!draftTransport && durable.status === "SAVED" && !durable.unsaved && durable.snapshot?.active?.digest === semanticStateDigest(draftState));
   const editorReloadSafe = editorLoadError !== null && savedReloadSafe;
   function reloadSavedComposer() {
     // A browser can remember a failed module import for this document. Reload
     // only a server-confirmed Draft, never an unconfirmed in-memory decision.
-    if (inlineEdits.registry.count() || !savedReloadSafe || durable.snapshot?.active?.digest !== semanticStateDigest(localDraft.current)) return;
+    if (inlineEdits.registry.count() || !savedReloadSafe) return;
+    if (relationSession) { void reloadRootDraft(); return; }
+    if (durable.snapshot?.active?.digest !== semanticStateDigest(localDraft.current)) return;
     skipUnloadWarning.current = true;
     window.location.reload();
   }
@@ -242,8 +267,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const frameNow = (): ComposerLocalFrame => ({ draft: localDraft.current, relations: relationRef.current });
   const transitionAllowed = (next: PlanSemanticStateV1) => {
     try { if (relationSessionRef.current) {
-      if (!durable.snapshot?.active) throw new Error("N1_DRAFT_ACCESS_DENIED");
-      assertRootRelationDraftAuthority(durable.snapshot.active.semanticState, next);
+      const saved = rootDurable.snapshot?.active ?? durable.snapshot?.active;
+      if (!saved) throw new Error("N1_DRAFT_ACCESS_DENIED");
+      assertRootRelationDraftAuthority(saved.semanticState.version === "month-plan-state@v1" ? saved.semanticState : rootRelationBaseState(saved.semanticState), next);
       guardRootMemberTransition(localDraft.current, next, relationRef.current);
     } return true; }
     catch (error) { const text = rootRelationMessage(error instanceof Error ? error.message : "N1_TRANSITION_REFUSED"); setMessage(text); setErrorMessage(text); return false; }
@@ -359,7 +385,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       relationRef.current = next.relations; setRelations(next.relations); relationToken.current = response.authorityToken; setRelationCaps(response.capabilities);
       localDraft.current = next.draft; setDraftState(next.draft); setSuggestions(null); setBalanceOpen(false);
       if (semanticStateDigest(before.draft) !== semanticStateDigest(next.draft)) { setPreviewStatus("STALE"); schedulePreview(next.draft); }
-      setMessage("Organisation locale non sauvegardée. Les activités et leurs coûts restent autonomes.");
+      setMessage(rootStoredN1 && rootStored?.digest === rootRelationStateDigest(rootRelationDocument(next))
+        ? "Organisation sauvegardée. Les trajets restent non évalués ; aucun Plan n’est appliqué."
+        : "Organisation locale non sauvegardée. Les activités et leurs coûts restent autonomes.");
       requestAnimationFrame(() => ((focusId ? document.getElementById(focusId) : null)
         ?? document.getElementById("root-command-title"))?.focus({ preventScroll: true }));
       return true;
@@ -367,7 +395,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     finally { busyRef.current = false; setBusy(false); }
   }
   function openRelations() {
-    if (busyRef.current || pendingApply || comparison || !rootRelationsAvailable) return;
+    if (busyRef.current || rootDurable.isInFlight() || pendingApply || comparison || !rootRelationsAvailable) return;
     if (inlineEdits.registry.flushPending()) return;
     if (!inlineEdits.registry.guard(openRelations, undefined, false)) return;
     if (!relationSessionRef.current) {
@@ -384,21 +412,41 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     prepareDialogFocus(); setRelationOpen(true); void admitRelation();
   }
   function clearRelationDecisions() {
-    relationRef.current = []; setRelations([]);
-    setPast(items => items.map(frame => ({ ...frame, relations: [] }))); setFuture(items => items.map(frame => ({ ...frame, relations: [] })));
-    relationSessionRef.current = false; setRelationSession(false); setRelationOpen(false); setRelationCaps(null); relationToken.current = "";
+    // Once N1 is durable, abandoning LOCAL links restores saved links and keeps the
+    // complete-document writer active. Never resume V1 autosave over an N1 row.
+    const saved = rootStored?.semanticState.version === "month-plan-state@v2-root-relations" ? rootStored.semanticState.rootRelations : [];
+    relationRef.current = saved; setRelations(saved);
+    setPast(items => items.map(frame => ({ ...frame, relations: saved }))); setFuture(items => items.map(frame => ({ ...frame, relations: saved })));
+    relationSessionRef.current = rootStoredN1; setRelationSession(rootStoredN1); setRelationOpen(false); setRelationCaps(null); relationToken.current = "";
   }
   function discardRelations() {
-    if (busyRef.current) return;
+    if (busyRef.current || rootDurable.isInFlight()) return;
     if (!inlineEdits.registry.guard(discardRelations, undefined, false)) return;
-    confirmationRequest.current({ message: "Abandonner l’organisation locale et son historique de liens ? Les activités financières seront conservées. La sauvegarde habituelle du brouillon reprendra.", acceptLabel: "Abandonner l’organisation", accept: () => {
-      if (busyRef.current) return;
+    confirmationRequest.current({ message: rootStoredN1
+      ? "Abandonner les changements de liens et retrouver l’organisation sauvegardée ? Les activités financières seront conservées ; le brouillon complet restera à enregistrer si elles ont changé."
+      : "Abandonner l’organisation locale et son historique de liens ? Les activités financières seront conservées. La sauvegarde habituelle du brouillon reprendra.", acceptLabel: "Abandonner l’organisation", accept: () => {
+      if (busyRef.current || rootDurable.isInFlight()) return;
       clearRelationDecisions();
       // Keep the financial frame recoverable across SPA/back until the existing writer confirms it.
-      // Ending N1 resumes V1 autosave; a scheduled Save is not a receipt.
+      // Only an unsaved V1-based session resumes V1 autosave; persisted N1 keeps its full writer.
       if (financialExitReady()) { if (rootRelationAccess) discardRootWorkspace(rootRelationAccess.scopeKey); setRootWorkspacePending(false); }
       setMessage("Organisation locale abandonnée. Les activités sont conservées dans le brouillon financier.");
     } });
+  }
+  async function saveRootDraft() {
+    if (busyRef.current || rootDurable.saving || !relationSessionRef.current) return;
+    if (inlineEdits.registry.flushPending() || !inlineEdits.registry.guard(() => void saveRootDraft(), undefined, false)) return;
+    const saved = await rootDurable.save();
+    setMessage(saved ? "Brouillon organisationnel sauvegardé. Les trajets restent non évalués ; aucun Plan n’est appliqué."
+      : "Sauvegarde non confirmée ou nouvelles modifications à enregistrer. Vos décisions restent dans cette page.");
+  }
+  async function reloadRootDraft() {
+    if (busyRef.current || rootDurable.saving || !relationSessionRef.current) return;
+    if (rootDurable.unsaved) { setMessage("Enregistrez d’abord vos modifications. Le rechargement ne remplace pas un brouillon modifié."); return; }
+    if (inlineEdits.registry.flushPending() || !inlineEdits.registry.guard(() => void reloadRootDraft(), undefined, false)) return;
+    const latest = await rootDurable.readForReload();
+    if (!latest || inlineEdits.registry.count() || rootDurable.unsaved) return;
+    skipUnloadWarning.current = true; window.location.reload();
   }
   useEffect(() => {
     if (!rootWorkspacePending) return;
@@ -443,10 +491,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     window.addEventListener("keydown", escape); return () => window.removeEventListener("keydown", escape);
   }, []);
   useEffect(() => {
-    if (!(inlineEdits.count || (draftTransport ? durable.unsaved : shown.board.draft.dirty)) || skipUnloadWarning.current) return;
+    if (!(inlineEdits.count || (relationSession ? rootDurable.unsaved : draftTransport ? durable.unsaved : shown.board.draft.dirty)) || skipUnloadWarning.current) return;
     const warn = (event: BeforeUnloadEvent) => { if (!skipUnloadWarning.current) event.preventDefault(); };
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
-  }, [durable.unsaved, shown.board.draft.dirty, draftTransport, inlineEdits.count]);
+  }, [durable.unsaved, rootDurable.unsaved, relationSession, shown.board.draft.dirty, draftTransport, inlineEdits.count]);
   function archiveDraft(returnToCenter: boolean) {
     if (relationSessionRef.current) { setMessage("Abandonnez explicitement l’organisation locale avant de remplacer ou archiver le brouillon."); return; }
     const active = durable.snapshot?.active;
@@ -860,7 +908,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   };
   const showUnresolved = () => { if (editor && !inlineEdits.registry.guard(showUnresolved)) return; clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
   const navigateDecision = (targetRef: string) => { setFocusedContext(targetRef); setReveal(previous => ({ targetRef, sequence: (previous?.sequence ?? 0) + 1 })); };
-  const applyReason = relationSession ? "Organisation locale non sauvegardée : abandonnez-la explicitement avant de sauvegarder ou transformer le mois en Plan."
+  const applyReason = relationSession ? "L’organisation peut être conservée comme brouillon. Son application au Plan n’est pas disponible ; les trajets restent à vérifier."
     : inlineEdits.count ? "Une saisie n’est pas validée ou un réglage attend confirmation. Validez ou annulez la saisie avant de transformer le mois en Plan."
     : busy ? "La prévisualisation serveur est en cours." : pendingApply ? "L’issue de la demande précédente doit être vérifiée avant toute nouvelle application."
     : draftTransport && (durable.status !== "SAVED" || !durable.online || durable.snapshot?.baseStale)
@@ -925,7 +973,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
   return <WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
-  <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
+  <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? rootSaveState : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
       if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-bar-place-suggestions],[popover],dialog'))return;
       // Capture the click across the whole Composer, including the Library.
@@ -936,7 +984,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     onKeyDown={event=>{if(event.key==='Escape'&&!event.defaultPrevented&&livingBarId&&!document.querySelector('dialog[open],[popover]:popover-open')){event.preventDefault();closeDialog();}}}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
-      <h1>Composer <span>· {monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus} data-draft-status data-state={!relationSession && draftTransport ? durable.status : "MEMORY"}>{relationSession ? "Organisation locale non sauvegardée" : draftTransport ? ({ CLEAN: "Aucun brouillon enregistré", DIRTY: "Modifications locales", SAVING: "Sauvegarde en cours…", SAVED: "Sauvegardé", ERROR: "Sauvegarde non confirmée", CONFLICT: "Conflit de version", OFFLINE: "Hors ligne · non enregistré" }[durable.status]) : "Brouillon en mémoire"}</span>
+      <h1>Composer <span>· {monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus} data-draft-status data-state={relationSession ? rootSaveState : draftTransport ? durable.status : "MEMORY"}>{relationSession ? rootSaveState === "SAVED" ? "Brouillon organisationnel sauvegardé" : rootSaveState === "SAVING" ? "Enregistrement…" : rootSaveState === "CONFLICT" ? "Conflit de version" : "Organisation non sauvegardée" : draftTransport ? ({ CLEAN: "Aucun brouillon enregistré", DIRTY: "Modifications locales", SAVING: "Sauvegarde en cours…", SAVED: "Sauvegardé", ERROR: "Sauvegarde non confirmée", CONFLICT: "Conflit de version", OFFLINE: "Hors ligne · non enregistré" }[durable.status]) : "Brouillon en mémoire"}</span>
         <span data-object-count>{shown.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-label={previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Précisions en cours de calcul" : undefined} aria-pressed={unresolvedOpen} aria-controls={unresolvedOpen ? "composer-finances-title" : undefined} disabled={!model.presentation.unresolvedCount || previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} onClick={showUnresolved}>{previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Calcul…" : `${model.presentation.unresolvedCount} à préciser`}</button></span>
         {model.activeRevisionNumber > 0 && <small data-official-revision>Plan · révision {model.activeRevisionNumber}</small>}
         {!relationSession && previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
@@ -978,17 +1026,18 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
-    {relationSession && rootRelationsAvailable && <div className={relationStyles.notice} data-root-local-notice role="status">Organisation locale non sauvegardée · {relations.length} sortie(s). Sauvegarde et Apply suspendus. <button disabled={busy} onClick={openRelations}>Organiser une sortie</button> <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}
+    {relationSession && rootRelationsAvailable && <div className={relationStyles.notice} data-root-local-notice role="status">{rootSaveState === "SAVED" ? "Organisation sauvegardée" : "Organisation non sauvegardée"} · {relations.length} sortie(s). {rootDurable.enabled ? "Trajets non évalués, aucun Plan appliqué." : "Sauvegarde et Apply suspendus."} <button disabled={busy} onClick={openRelations}>Organiser une sortie</button> <button disabled={busy || rootDurable.saving} onClick={discardRelations}>Abandonner les changements de liens</button></div>}
     {relationSession && !rootRelationsAvailable && <div className={relationStyles.notice} data-root-revoked-notice role="status">Organisation de sorties indisponible. Vos essais locaux sont conservés ; sauvegarde et Apply restent suspendus jusqu’à l’abandon explicite de cette organisation. <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}
     {rootWorkspacePending && !relationSession && <div className={relationStyles.notice} data-root-financial-pending role="status">Organisation abandonnée ; décisions financières conservées. Attendez leur sauvegarde confirmée avant de quitter. La mémoire de cet onglet reste temporaire.</div>}
-    {relationOpen && rootRelationsAvailable && <RootRelationCommands model={shown} relations={relations} capabilities={relationCaps} busy={busy} error={errorMessage}
+    {relationOpen && rootRelationsAvailable && <RootRelationCommands model={shown} relations={relations} capabilities={relationCaps} busy={busy || rootDurable.saving} error={errorMessage}
+      durable={rootDurable.enabled ? { status: rootSaveState, save: () => void saveRootDraft() } : undefined}
       command={(mutation, focusId) => admitRelation(mutation, undefined, "push", focusId)} close={() => setRelationOpen(false)} abandon={discardRelations}
       undo={() => stage({ kind: "READ" }, "undo", past.at(-1))} redo={() => stage({ kind: "READ" }, "redo", future.at(-1))} canUndo={!!past.length} canRedo={!!future.length} />}
     <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} openContext={stableLibraryOpen} />
       {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
           initialBarView={barViews.current.get(`${draftState.targetMonth}:${livingBarId}`)} onViewChange={rememberCurrentBarView}
           context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}
-          model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} previewPending={previewStatus==="PENDING"||previewStatus==="STALE"} saveStatus={!relationSession&&draftTransport?durable.status:"MEMORY"}
+          model={shown} card={shown.board.contexts.find(c=>c.contextOccurrenceId===livingBarId)} fresh={previewStatus==="FRESH"} previewPending={previewStatus==="PENDING"||previewStatus==="STALE"} saveStatus={relationSession ? rootSaveState : draftTransport ? durable.status : "MEMORY"}
           dockHost={nightDockHost} busy={busy || draftState.preferences.anchors.includes(livingBarId) || draftState.preferences.flexibility[livingBarId]==="PRESERVE"} creating={editor?.nightCreating} admission={editor?.nightAdmission??0} serverError={errorMessage}
           onSave={stage} onCancel={closeDialog} onOpenChild={id=>{const child=shown.board.contexts.find(c=>c.contextOccurrenceId===id);if(child)editContext(child);}} />
           : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>,barHost.node,livingBarId)}
@@ -1010,6 +1059,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}
     <div ref={dragImage} className={styles.dragPreview} data-drag-preview data-protected={grabbed?.protected} aria-hidden="true">{[...new Set(Object.values(shown.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{grabbed?.protected ? <><LockKeyhole size={11} /> Protégée</> : money(grabbed?.economicAmount ?? null)}</small></span></div>
     <div className={styles.statusBar} role="status" aria-live="polite">{message}
+      {relationSession && rootDurable.enabled && <><button data-root-save disabled={!rootRelationsAvailable || busy || rootDurable.saving} onClick={() => void saveRootDraft()}>Enregistrer le brouillon</button>
+        <button data-root-reload disabled={busy || rootDurable.saving || rootDurable.unsaved || rootSaveState !== "SAVED"} onClick={() => void reloadRootDraft()}>Recharger le brouillon enregistré</button>
+        <span data-root-save-note> {rootSaveState === "SAVED" ? "Organisation sauvegardée" : rootSaveState === "SAVING" ? "Enregistrement…" : rootSaveState === "CONFLICT" ? "Conflit : décisions locales conservées" : "Organisation à enregistrer"} · Trajets non évalués · Aucun Plan appliqué.</span></>}
       {applyReceipt && <span data-apply-receipt data-revision-id={applyReceipt.planRevisionId}> · Preuve de révision {applyReceipt.revisionNumber} ({applyReceipt.headStatus === "ACTIVE" ? "active" : applyReceipt.headStatus === "SUPERSEDED" ? "remplacée" : "état actif à relire"})</span>}
       {pendingApply && <button data-check-apply disabled={busy} onClick={() => void checkApply(pendingApply)}>Vérifier l’application</button>}
       {pendingApply?.checkedAbsent && semanticStateDigest(draftState) === semanticStateDigest(pendingApply.draft)
@@ -1046,7 +1098,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         ? <NightOutEditor key={editor.nightContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
           semanticState={draftState} householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           model={shown} card={shown.board.contexts.find(card => card.contextOccurrenceId === editor.nightContextId)} fresh={previewStatus === "FRESH" || previewStatus === "BLOCKED"}
-          saveStatus={!relationSession && draftTransport ? durable.status : "MEMORY"} dockHost={nightDockHost} admission={editor.nightAdmission ?? 0} serverError={errorMessage}
+          saveStatus={relationSession ? rootSaveState : draftTransport ? durable.status : "MEMORY"} dockHost={nightDockHost} admission={editor.nightAdmission ?? 0} serverError={errorMessage}
           onOpenChild={id => { const child = shown.board.contexts.find(card => card.contextOccurrenceId === id); if (child) editContext(child); }}
           creating={editor.nightCreating} busy={busy} onCancel={closeDialog} onSave={operation => { const admitted = stage(operation); if (admitted) setEditor(current => current ? { ...current, nightCreating: false } : current); return admitted; }} />
         : editor?.giftContextId && GiftEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)

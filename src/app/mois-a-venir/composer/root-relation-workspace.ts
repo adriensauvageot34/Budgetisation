@@ -3,9 +3,10 @@ import type { ComposerLocalFrame } from "@/domain/phase2/planner/root-relation-l
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerDraftSnapshot } from "@/domain/phase2/planner/composer-draft-contract";
 import type { RootRelationBinding } from "@/domain/phase2/planner/root-relation-ui-contract";
+import type { RootRelationDurableSnapshot } from "@/domain/phase2/planner/root-relation-durable-contract";
 export type RootRelationWorkspace = Readonly<{ frame: ComposerLocalFrame; model: ComposerUiModel;
   past: ComposerLocalFrame[]; future: ComposerLocalFrame[]; binding: RootRelationBinding; drafts: ComposerDraftSnapshot | null;
-  relationSession: boolean }>;
+  relationSession: boolean; rootDrafts?: RootRelationDurableSnapshot | null }>;
 // Tab memory only. Survives SPA back/remount; never crosses an authenticated scope or a hard reload.
 const pending = new Map<string, RootRelationWorkspace>();
 const warn = (event: BeforeUnloadEvent) => { if (pending.size) event.preventDefault(); };
