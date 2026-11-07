@@ -9,6 +9,7 @@ import { editShortStay } from "@/domain/phase2/planner/short-stay-edit";
 import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { validateRestaurantDetailsTransition } from "@/domain/phase2/planner/restaurant-included-details";
+import { validateBeforeTransition, beforeMomentSlot } from "@/domain/phase2/planner/before-moment";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
 import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
@@ -26,6 +27,12 @@ export function restaurantLocalRefusalMessage(error: unknown): string | null {
       return "Modifiez les détails déjà inclus depuis l’éditeur Restaurant. Votre brouillon est conservé.";
     default: return null;
   }
+}
+
+export function beforeLocalRefusalMessage(error: unknown): string | null {
+  if (!(error instanceof TypeError) || !error.message.startsWith("BEFORE_MOMENT_")) return null;
+  if (error.message === "BEFORE_MOMENT_STALE") return "Ce Before a changé. Relisez son moment avant de confirmer ; votre saisie reste conservée.";
+  return "Modifiez ce moment depuis le Before de la carte Bar. Le moment, ses identités et votre brouillon restent conservés.";
 }
 
 function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, contextId: string, slotKey: string,
@@ -54,6 +61,7 @@ function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, co
 export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStateV1, operation: ComposerOperation): PlanSemanticStateV1 | null {
   const next = stageDecision(model, raw, operation);
   if (next) validateRestaurantDetailsTransition(raw, next, operation.kind === "EDIT_RESTAURANT" ? operation.edit : undefined);
+  if (next) validateBeforeTransition(raw, next, operation.kind === "EDIT_NIGHT_OUT" ? operation.edit : undefined);
   return next;
 }
 
@@ -193,7 +201,8 @@ export function visualDraftModel(model: ComposerUiModel, draft: PlanSemanticStat
     if (JSON.stringify(latest) === JSON.stringify(previousContexts.get(c.contextOccurrenceId))) return c;
     const sockets = c.sockets.map(socket => {
       const items = latest.slotSelections[socket.slotKey]?.items;
-      return Array.isArray(items) ? { ...socket, currentItems: items as ComponentSelectionV1[] } : socket;
+      const effective = beforeMomentSlot(latest, socket);
+      return Array.isArray(items) ? { ...effective, currentItems: items as ComponentSelectionV1[] } : effective;
     });
     return { ...c, fields: latest.fields, parentContextOccurrenceId: latest.parentContextOccurrenceId ?? null,
       childContextOccurrenceIds: sockets.flatMap(socket => socket.currentItems.flatMap(item => item.kind === "CHILD_CONTEXT" ? [item.childContextOccurrenceId] : [])),

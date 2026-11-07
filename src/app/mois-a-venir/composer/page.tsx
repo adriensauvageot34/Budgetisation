@@ -9,6 +9,7 @@ import { composerUiModel } from "@/server/phase2/planner/composer-service";
 import { readComposerOpening } from "@/server/phase2/planner/composer-opening";
 import { readComposerDrafts } from "@/server/phase2/planner/composer-draft-service";
 import { plannerComposerEnabled } from "@/server/phase2/planner/cutover";
+import { beforeN2Enabled } from "@/server/phase2/planner/before-n2-cutover";
 import { ComposerShell } from "./composer-shell";
 import { composerInteraction } from "./actions";
 import { observeSnapshot } from "@/server/phase2/planner/snapshot-observation";
@@ -32,6 +33,6 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   }));
   const { model, drafts, rootRelationAccess } = observed.value;
   return <><ComposerShell key={rootRelationAccess?.scopeKey ?? month} rootRelationAccess={rootRelationAccess} initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
-    durableDraftHttp={!!drafts} />
+    beforeN2Access={beforeN2Enabled() && !!drafts} durableDraftHttp={!!drafts} />
     {observed.metrics && <span hidden data-snap-server={JSON.stringify(observed.metrics)} />}</>;
 }

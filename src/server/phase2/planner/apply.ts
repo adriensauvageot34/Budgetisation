@@ -1,4 +1,6 @@
 import "server-only";
+import { BEFORE_N2_APPLY_UNAVAILABLE, hasBeforeDraft } from "@/domain/phase2/planner/before-draft-contract";
+import { assertBeforeN2InputEnabled } from "./before-n2-cutover";
 import { emptyPlanSemanticState, parsePlanSemanticState, semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import { plannerDigest, plannerDigestString, plannerInteger, plannerMonth, plannerUuid } from "@/domain/phase2/planner/json";
 import type { PlanningWorldFacts, PlannerApplyCommand, PlanScenarioPreview } from "@/domain/phase2/planner/compiler-contract";
@@ -41,6 +43,7 @@ export async function readAppliedPlanScenario(deps: PlannerDependencies, househo
 }
 export async function previewPlanScenario(deps: PlannerDependencies, householdId: string, rawState: PlanSemanticStateV1): Promise<PlanScenarioPreview> {
   const household = plannerUuid(householdId), state = parsePlanSemanticState(rawState);
+  assertBeforeN2InputEnabled(state);
   const [world, active] = await Promise.all([deps.readWorld(household, state.targetMonth), deps.repository.readActivePlan(household, state.targetMonth)]);
   if (world.baseline.householdId !== household) throw new TypeError("PLANNER_WORLD_HOUSEHOLD_INVALID");
   const prepared = deps.prepareWorld ? await deps.prepareWorld(world, state) : world;
@@ -50,6 +53,7 @@ export async function previewPlanScenario(deps: PlannerDependencies, householdId
 export async function applyPlanScenario(deps: PlannerDependencies, householdId: string, rawState: PlanSemanticStateV1,
   command: PlannerApplyCommand): Promise<AppliedPlanScenario> {
   const household = plannerUuid(householdId), state = parsePlanSemanticState(rawState), month = plannerMonth(state.targetMonth);
+  if (hasBeforeDraft(state)) throw new TypeError(BEFORE_N2_APPLY_UNAVAILABLE);
   const requestId = plannerUuid(command.applyRequestId), baselineDigest = plannerDigestString(command.expectedBaselineDigest), previewDigest = plannerDigestString(command.expectedPreviewDigest);
   const activeId = command.expectedActiveRevisionId === null ? null : plannerUuid(command.expectedActiveRevisionId);
   const activeNumber = plannerInteger(command.expectedActiveRevisionNumber);
@@ -71,6 +75,7 @@ export async function applyPlanScenario(deps: PlannerDependencies, householdId: 
   const parent = await deps.repository.readActivePlan(household, month);
   if ((parent?.plan.activeRevisionId ?? null) !== activeId || (parent?.plan.activeRevisionNumber ?? 0) !== activeNumber)
     throw new TypeError("PLANNER_ACTIVE_REVISION_STALE");
+  if (hasBeforeDraft(parent?.activeRevision?.semanticState)) throw new TypeError(BEFORE_N2_APPLY_UNAVAILABLE);
   const changeSet = revisionChangeSet(parent?.activeRevision?.semanticState ?? emptyPlanSemanticState(month), state);
   // Re-read/recompile above, then exactly one atomic C0 RPC. No MonthInputs or PlannedExpense writer.
   const worldBaseline = jsonEnvelope(preview.baseline);

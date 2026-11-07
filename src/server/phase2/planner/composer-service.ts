@@ -1,8 +1,12 @@
 import "server-only";
+import { BEFORE_N2_APPLY_UNAVAILABLE, BEFORE_N2_DISABLED, beforeN2ApplyMessage, beforeN2DisabledMessage,
+  hasBeforeDraft, isBeforeN2Operation } from "@/domain/phase2/planner/before-draft-contract";
+import { beforeN2Enabled } from "./before-n2-cutover";
 import { validateControlValue } from "@/domain/phase2/planner/control-input";
 import { ControlDecisionAdmissionError } from "./control-fields";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { validateRestaurantDetailsTransition } from "@/domain/phase2/planner/restaurant-included-details";
+import { validateBeforeTransition } from "@/domain/phase2/planner/before-moment";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
 import { snapshotWork } from "./snapshot-observation";
@@ -259,7 +263,10 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
   try {
     if (!Number.isSafeInteger(request.sequence) || request.sequence < 0) throw new TypeError("COMPOSER_SEQUENCE_INVALID");
     const month = plannerMonth(request.targetMonth);
-    if (request.draft && parsePlanSemanticState(request.draft).targetMonth !== month) throw new TypeError("PLANNER_DRAFT_MONTH_INVALID");
+    const n2Enabled = beforeN2Enabled();
+    const draft = request.draft && parsePlanSemanticState(request.draft);
+    if (draft && draft.targetMonth !== month) throw new TypeError("PLANNER_DRAFT_MONTH_INVALID");
+    if (!n2Enabled && (hasBeforeDraft(draft) || isBeforeN2Operation(request))) throw new TypeError(BEFORE_N2_DISABLED);
     if (request.kind === "APPLY" || request.kind === "CHECK_APPLY") {
       if (!request.draft) throw new TypeError("COMPOSER_DRAFT_REQUIRED");
       const state = parsePlanSemanticState(request.draft);
@@ -290,6 +297,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       ? await readPlannerDraft(deps, household, month, request.draft) : null;
     const model = suggestionsRead ? composerFromDraftRead(suggestionsRead)
       : await readMonthComposer(readDeps, household, month, request.draft);
+    if (!n2Enabled && request.kind !== "READ" && hasBeforeDraft(model.semanticState)) throw new TypeError(BEFORE_N2_DISABLED);
     let state = model.semanticState, mutationKind: string | undefined;
     let suggestions;
     if (request.kind === "MUTATE") {
@@ -410,7 +418,9 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       const accepted = await acceptPlanBalanceSuggestion(deps, household, month, state, request.candidateSetDigest, request.candidateId);
       state = accepted.semanticState; suggestions = accepted.suggestions;
     } else if (request.kind !== "READ") throw new TypeError("COMPOSER_REQUEST_INVALID");
+    if (!n2Enabled && request.kind !== "READ" && hasBeforeDraft(state)) throw new TypeError(BEFORE_N2_DISABLED);
     validateRestaurantDetailsTransition(model.semanticState, state, request.kind === "EDIT_RESTAURANT" ? request.edit : undefined);
+    validateBeforeTransition(model.semanticState, state, request.kind === "EDIT_NIGHT_OUT" ? request.edit : undefined);
     const next = state === model.semanticState ? model : await readMonthComposer(readDeps, household, month, state);
     const before = model.board.cockpit.plan.economicMonthEndRemainder, after = next.board.cockpit.plan.economicMonthEndRemainder;
     // Difference of two real Compiler projections, just as for an assistant candidate.
@@ -418,6 +428,8 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     return { ok: true, sequence: request.sequence, model: await composerUiModel(deps, household, next), suggestions, mutationKind, interactionImpact };
   } catch (error) {
     const code = error instanceof TypeError ? error.message : "COMPOSER_UNAVAILABLE";
+    if (code === BEFORE_N2_DISABLED || code === BEFORE_N2_APPLY_UNAVAILABLE)
+      return { ok: false, sequence: request.sequence, code, message: code === BEFORE_N2_DISABLED ? beforeN2DisabledMessage : beforeN2ApplyMessage };
     if (request.kind === "APPLY" && !(error instanceof ControlDecisionAdmissionError) && ![
       "PLANNER_IDEMPOTENCY_CONFLICT", "PLANNER_ACTIVE_REVISION_STALE", "PLANNER_PREVIEW_STALE",
       "PLANNER_APPLY_BLOCKED", "PLANNER_PAST_MONTH_READ_ONLY", "PLANNER_EXPECTED_BASE_INVALID",

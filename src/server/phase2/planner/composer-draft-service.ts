@@ -1,4 +1,7 @@
 import "server-only";
+import { saveBeforeComposerDraft, type BeforeDraftWriter } from "./before-draft-admission";
+import type { PlannerDependencies } from "./apply";
+import { hasBeforeDraft, beforeAdmissionMessage } from "@/domain/phase2/planner/before-draft-contract";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { plannerDigest, plannerDigestString, plannerInteger, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
 import { parsePlanSemanticState, semanticStateDigest } from "@/domain/phase2/planner/semantic-state";
@@ -7,8 +10,10 @@ import type { ComposerDraftLifecycleCommand, ComposerDraftResult, ComposerDraftS
 
 export type DraftPhase = "READ_PLAN_BASE" | "READ_DRAFTS" | "WRITE_SAVE" | "WRITE_ARCHIVE" | "WRITE_RESTORE";
 export type DraftObservation = Readonly<{ phase: DraftPhase; durationMs: number; code: string | null }>;
-type Scope = Readonly<{ supabase: SupabaseClient; userId: string; householdId: string;
+export type ComposerDraftScope = Readonly<{ supabase: SupabaseClient; userId: string; householdId: string;
+  before?: { deps: PlannerDependencies; write: BeforeDraftWriter };
   observe?: (event: DraftObservation) => void }>;
+type Scope = ComposerDraftScope;
 /** Opt-in diagnostics contain no state, place, person, token or database message. */
 async function measured<T extends { error?: unknown }>(scope: Scope, phase: DraftPhase, read: () => PromiseLike<T>): Promise<T> {
   const started = performance.now(); let code: string | null = null;
@@ -43,10 +48,12 @@ function parseRow(value: unknown, targetMonth: string): StoredComposerDraft {
     lastSavedAt: String(row.last_saved_at), archivedAt: row.archived_at === null ? null : String(row.archived_at),
     lastMutationRequestId: plannerUuid(row.last_mutation_request_id),
     lastMutationExpectedVersion: plannerInteger(row.last_mutation_expected_version), lastMutationKind,
+    beforeAdmissionRequired: row.before_admission_required === true,
+    lastAdmissionFingerprint: typeof row.last_admission_fingerprint === "string" ? plannerDigestString(row.last_admission_fingerprint) : null,
   };
 }
 
-async function readBase(scope: Scope, targetMonth: string): Promise<PlanBase> {
+export async function readDraftPlanBase(scope: Scope, targetMonth: string): Promise<PlanBase> {
   const { data, error } = await measured(scope, "READ_PLAN_BASE", () => scope.supabase.from("phase2_month_plans")
     .select("plan_id,active_revision_id,active_revision_number")
     .eq("household_id", scope.householdId).eq("target_month", monthDate(targetMonth)).abortSignal(AbortSignal.timeout(15000)).maybeSingle());
@@ -55,6 +62,7 @@ async function readBase(scope: Scope, targetMonth: string): Promise<PlanBase> {
     revisionId: data?.active_revision_id ? plannerUuid(data.active_revision_id) : null,
     revisionNumber: data ? plannerInteger(data.active_revision_number) : 0 };
 }
+const readBase = readDraftPlanBase;
 
 async function readRows(scope: Scope, targetMonth: string): Promise<StoredComposerDraft[]> {
   const { data, error } = await measured(scope, "READ_DRAFTS", () => scope.supabase.from(table).select("*")
@@ -83,6 +91,7 @@ function failed(code: Exclude<ComposerDraftResult, { ok: true }>["code"], latest
     INVALID: "Le brouillon contient une donnée invalide. La dernière version enregistrée reste intacte.",
     ACCESS_DENIED: "Vous n'avez pas accès à ce brouillon.",
     UNAVAILABLE: "La sauvegarde n'a pas pu être confirmée. Vos modifications restent dans cette page ; réessayez.",
+    ADMISSION_REFUSED: beforeAdmissionMessage("BEFORE_ADMISSION_REQUIRED"),
   };
   return { ok: false, code, message: messages[code], latest };
 }
@@ -91,13 +100,15 @@ async function latestOrNull(scope: Scope, targetMonth: string) {
   try { return await readComposerDrafts(scope, targetMonth); } catch { return null; }
 }
 
-function responseDraft(value: unknown, targetMonth: string): { draft: StoredComposerDraft; replayed: boolean } {
+export function responseComposerDraft(value: unknown, targetMonth: string): { draft: StoredComposerDraft; replayed: boolean } {
   const result = plannerRecord(value);
   if (typeof result.replayed !== "boolean") throw new TypeError("COMPOSER_DRAFT_RPC_RESPONSE_INVALID");
   return { draft: parseRow(result.draft, targetMonth), replayed: result.replayed };
 }
+const responseDraft = responseComposerDraft;
 
 export async function saveComposerDraft(scope: Scope, command: ComposerDraftSaveCommand): Promise<ComposerDraftResult> {
+  if (command.beforeAdmission !== undefined) return saveBeforeComposerDraft(scope, command);
   let targetMonth: string;
   try {
     targetMonth = plannerMonth(command.targetMonth);
@@ -117,6 +128,7 @@ export async function saveComposerDraft(scope: Scope, command: ComposerDraftSave
     // Read first: a prior RPC may have committed even if its response was lost.
     const [before, base] = await Promise.all([readComposerDrafts(scope, targetMonth), readBase(scope, targetMonth)]);
     const active = before.active;
+    if (active?.beforeAdmissionRequired || hasBeforeDraft(active?.semanticState) || hasBeforeDraft(state)) return failed("ADMISSION_REFUSED", before);
     if (active?.lastMutationRequestId === requestId && active.lastMutationKind === "SAVE"
       && active.lastMutationExpectedVersion === expectedVersion && active.digest === digest
       && plannerDigest(active.semanticState) === plannerDigest(state)) return { ok: true, draft: active, replayed: true };
@@ -163,6 +175,7 @@ export async function changeComposerDraftLifecycle(scope: Scope, kind: "ARCHIVE"
     const expectedVersion = plannerInteger(command.expectedDraftVersion, 1);
     const before = await readComposerDrafts(scope, month);
     const row = [before.active, ...before.archives].find(draft => draft?.draftId === id);
+    if (row?.beforeAdmissionRequired || hasBeforeDraft(row?.semanticState)) return failed("ADMISSION_REFUSED", before);
     if (row?.lastMutationRequestId === requestId && row.lastMutationKind === kind
       && row.lastMutationExpectedVersion === expectedVersion
       && row.lifecycle === (kind === "ARCHIVE" ? "ABANDONED" : "ACTIVE"))

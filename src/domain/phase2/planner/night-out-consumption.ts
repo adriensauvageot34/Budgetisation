@@ -1,6 +1,7 @@
 import type { ComponentSelectionV1 } from "./component-contract";
 import type { PlannedContextState, PlanSemanticStateV1 } from "./semantic-state";
 import { presetForContext } from "./composer-presets";
+import { beforeMoment, validateBeforeMoments, assertMarkedBeforeConsumptionWritable } from "./before-moment";
 import { parsePlannerJsonObject, plannerKeys, plannerRecord, plannerString, plannerDigest, type PlannerJsonObject } from "./json";
 import { parseComponentEconomicScope } from "./component-economic-scope";
 import { decisionAmount } from "../month-decision-contract";
@@ -154,6 +155,7 @@ const socketItems = (context: PlannedContextState, key: string): readonly Compon
 /** Only the explicitly linked Before and the Bar extras are consumption sockets.
  * Meals, entry/contributions and all mobility keep their independent authority. */
 export function globalConsumptionCoverage(contexts: readonly PlannedContextState[], parent: PlannedContextState): ConsumptionReference[] {
+  validateBeforeMoments(contexts);
   if (parent.templateKey !== "night-out" || presetForContext(parent)?.presetKey !== "bar-apero")
     throw new TypeError("NIGHT_OUT_GLOBAL_OWNER_INVALID");
   if (socketItems(parent, "main").some(item => item.kind === "COMPONENT" && item.economicScope?.kind !== "ADDITIVE_CONTRIBUTION"))
@@ -165,8 +167,10 @@ export function globalConsumptionCoverage(contexts: readonly PlannedContextState
     if (before.length !== 1 || link.kind !== "CHILD_CONTEXT" || link.provenance !== "EXPLICIT_USER_DECISION"
       || !child || child.templateKey !== "activity" || child.parentContextOccurrenceId !== parent.contextOccurrenceId)
       throw new TypeError("NIGHT_OUT_GLOBAL_BEFORE_AMBIGUOUS");
-    if (socketItems(child,"main").length !== 1) throw new TypeError("NIGHT_OUT_GLOBAL_BEFORE_AMBIGUOUS");
-    slots.push({context: child, slotKey: "main"}, {context: child, slotKey: "extras"});
+    if (beforeMoment(child)?.consumption !== "NONE") {
+      if (socketItems(child,"main").length !== 1) throw new TypeError("NIGHT_OUT_GLOBAL_BEFORE_AMBIGUOUS");
+      slots.push({context: child, slotKey: "main"}, {context: child, slotKey: "extras"});
+    }
   }
   return slots.flatMap(({context, slotKey}) => socketItems(context, slotKey).flatMap(item => {
     if (item.provenance === "PERSONAL_SUGGESTION") return [];
@@ -222,6 +226,7 @@ export function transitionNightOutGlobal(state: PlanSemanticStateV1, parent: Pla
     throw new TypeError("NIGHT_OUT_GLOBAL_INVALID");
   if (parent.templateKey !== "night-out" || presetForContext(parent)?.presetKey !== "bar-apero") throw new TypeError("NIGHT_OUT_GLOBAL_OWNER_INVALID");
   const childIds = socketItems(parent, "before").flatMap(i => i.kind === "CHILD_CONTEXT" ? [i.childContextOccurrenceId] : []);
+  assertMarkedBeforeConsumptionWritable(state, parent);
   if ([parent.contextOccurrenceId, ...childIds].some(id => state.preferences.anchors.includes(id) || state.preferences.flexibility[id] === "PRESERVE"))
     throw new TypeError("COMPOSER_CONTEXT_LOCKED");
   const prior = nightOutConsumption(parent);
