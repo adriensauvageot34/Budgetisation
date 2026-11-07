@@ -13,7 +13,7 @@ export function barClosedWidth(card: ComposerContextCardView, model: ComposerUiM
   const before = semantic && barBefore(model.semanticState, semantic);
   const direct = semantic && nightOutDirectSelectionId(semantic);
   const counts = [
-    ...(before ? [componentPresentationGroups([before.bottle, ...before.extras]).length] : []),
+    ...(before ? [Math.max(1,componentPresentationGroups([...(before.bottle?[before.bottle]:[]), ...before.extras]).length)] : []),
     ...["extras", "food", "main", "before"].flatMap(slot => {
       if (slot === "before" && before) return [];
       const items = card.sockets.find(s => s.slotKey === slot)?.currentItems.filter(i =>

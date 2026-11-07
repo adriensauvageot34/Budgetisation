@@ -15,7 +15,7 @@ import { planningBaselineDigest } from "./baseline";
 import { externalDiningDomain } from "./simple-mappings";
 import { publishSimpleCapabilities } from "./simple-capabilities";
 import { forecastTemporalPolicy } from "../forecast-temporal-policy";
-import { expandComposableContexts, CONTEXT_COMPILER_VERSION } from "./context-compiler";
+import { expandComposableContexts, contextCompilerVersion } from "./context-compiler";
 import { manifestContextRegistry } from "./context-registry";
 import { compileMobility } from "./mobility-compiler";
 import { JOURNEY_RESOLVER_VERSION } from "./journey-resolver";
@@ -135,7 +135,7 @@ export function compileSemanticPlan(input: CompilePlanInputV1, historical?: Hist
   const manifest = jsonEnvelope({ version: "planner-manifest@v1", compilerVersion: input.compilerVersion,
     modelVersions: { ...baseline.modelVersions, ...world.modelVersions, ...input.modelVersions,
       financialAdapter: FINANCIAL_ADAPTER_VERSION, constraints: KERNEL_CONSTRAINT_POLICY,
-      contextCompiler: CONTEXT_COMPILER_VERSION, contextRegistry: contextRegistry.version,
+      contextCompiler: contextCompilerVersion(state), contextRegistry: contextRegistry.version,
       journeyResolver: JOURNEY_RESOLVER_VERSION, mobilityPricing: PROSPECTIVE_MOBILITY_PRICING_VERSION }, baselineDigest: baseline.digest,
     authorityEvidence: financeAuthorityEvidence(input), effectiveForecast: { ...effectiveForecast, meta: effectiveMeta },
     semanticState: state, semanticStateDigest: semanticStateDigest(state), planSlots: slots, contexts, components,

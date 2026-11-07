@@ -1,4 +1,5 @@
 import "server-only";
+import { beforeMomentSlot } from "@/domain/phase2/planner/before-moment";
 import { componentId, mobilityIntentId } from "@/domain/phase2/planner/identity";
 import type { ComponentSelectionV1, CompiledComponentSlot, ComponentOptionDefinition } from "@/domain/phase2/planner/component-contract";
 import type { ComponentRequest, CompiledContext, CompiledPlanSlot, PlanningWorldFacts, SlotBinding } from "@/domain/phase2/planner/compiler-contract";
@@ -12,6 +13,8 @@ import { resolveRenewalComponentBinding } from "./renewal-compiler";
 import { nightOutConsumption, consumptionReferenceKey } from "@/domain/phase2/planner/night-out-consumption";
 
 export const CONTEXT_COMPILER_VERSION = "planner-context-compiler@v3-renewals";
+export const contextCompilerVersion = (state: PlanSemanticStateV1): string => state.contexts.some(c => Object.hasOwn(c.fields, "beforeMoment"))
+  ? "planner-context-compiler@v4-before-moment" : CONTEXT_COMPILER_VERSION;
 function resolveBinding(option: ComponentOptionDefinition, domain: string | null, item: Extract<ComponentSelectionV1, { kind: "COMPONENT" }>,
   request: ComponentRequest, slots: readonly CompiledPlanSlot[], world: PlanningWorldFacts): SlotBinding {
   const mode = item.binding?.mode ?? "AUTO";
@@ -43,7 +46,7 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
     return mode?.version === "night-out-consumption@v2" && mode.mode === "GLOBAL" ? mode.covered.map(consumptionReferenceKey) : [];
   }));
   const add = (code: string, targetRef: string, severity: "WARN" | "INFO" = "WARN") => constraints.push({ code, targetRef, severity,
-    scope: "CONTEXT", candidate: null, reference: null, evidenceRefs: [], confidence: "HIGH", remediation: null, policyVersion: CONTEXT_COMPILER_VERSION });
+    scope: "CONTEXT", candidate: null, reference: null, evidenceRefs: [], confidence: "HIGH", remediation: null, policyVersion: contextCompilerVersion(state) });
   const active = (id: string): boolean => {
     const link = graph.links.get(id);
     return !link || link.selection.provenance !== "PERSONAL_SUGGESTION" && active(link.parentId);
@@ -51,7 +54,8 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
   for (const context of state.contexts.filter(c => c.templateKey !== "kernel.generic")) {
     const template = resolveContextTemplate(context.templateKey), contributes = active(context.contextOccurrenceId);
     const plannedDate = contextDate(context.fields.plannedDate, state.targetMonth), compiledSlots: CompiledComponentSlot[] = [];
-    for (const slot of template.componentSlots) {
+    for (const definition of template.componentSlots) {
+      const slot = beforeMomentSlot(context, definition);
       const items = graph.selections.get(context.contextOccurrenceId)!.get(slot.slotKey)!;
       const componentIds: string[] = [], childContextIds: string[] = [], mobilityIntentIds: string[] = [];
       const accepted = contributes ? items.filter(item => item.provenance !== "PERSONAL_SUGGESTION") : [];

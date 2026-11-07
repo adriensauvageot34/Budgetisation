@@ -49,7 +49,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
   const semantic=model.semanticState.contexts.find(c=>c.contextOccurrenceId===card.contextOccurrenceId);
   const directSelectionId=semantic?nightOutDirectSelectionId(semantic):null;
   const before=semantic&&barBefore(model.semanticState,semantic);
-  const beforeGroups=before?componentPresentationGroups([before.bottle,...before.extras]):[];
+  const beforeGroups=before?componentPresentationGroups([...(before.bottle?[before.bottle]:[]),...before.extras]):[];
   const components=card.sockets.flatMap(socket=>socket.currentItems.filter(item=>(item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT")&&item.selectionId!==directSelectionId).map(item=>({slot:socket.slotKey,item,amount:socket.evaluations?.find(e=>e.selectionId===item.selectionId)?.economicAmount})));
   // The summary may also be incomplete because context information is missing.
   // Do not claim missing prices unless the published line evaluations say so.
@@ -63,7 +63,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
   // Presentation groups retain their owner and slot. Before remains a child.
   const moments=[
     ...(before?[{key:'$before',label:'Before',owner:before.child.contextOccurrenceId,slot:'$before',groups:beforeGroups,
-      target:(selectionId:string):BarTarget=>selectionId===before.bottle.selectionId?`component:before-main:${selectionId}`:`component:before-extras:${selectionId}`}]:[]),
+      target:(selectionId:string):BarTarget=>selectionId===before.bottle?.selectionId?`component:before-main:${selectionId}`:`component:before-extras:${selectionId}`}]:[]),
     ...(["extras","food","main","before"] as const).flatMap(slot=>{
       const items=components.filter(c=>c.slot===slot&&(slot!=="before"||!before));if(!items.length)return [];
       const label=slot==="extras"?"Au bar":slot==="food"?"Repas":slot==="before"?"Avant de sortir":items.some(c=>c.item.kind==="COMPONENT"&&c.item.label==="Consommations regroupées")?"Consommations regroupées":"Entrées / contribution";
@@ -115,7 +115,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
         event.preventDefault();event.stopPropagation();const rail=event.currentTarget;
         rail.scrollTo({left:event.key==='Home'?0:event.key==='End'?rail.scrollWidth:rail.scrollLeft+(event.key==='ArrowRight'?140:-140),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
       }}>{moments.map(moment=><section key={moment.key} className={styles.barClosedMoment} aria-label={moment.label} data-bar-moment={moment.key}>
-        <h4>{moment.label}</h4><div className={styles.barLivingTiles}>
+        <h4>{moment.label}</h4>{moment.key==='$before'&&before&&!before.bottle&&<button type="button" disabled={locked} onClick={()=>open('before')}>Aucune consommation prévue</button>}<div className={styles.barLivingTiles}>
           {(moments.length>1?moment.groups.slice(0,2):moment.groups).map(group=><BarComponentGroup closed key={group.key} group={group} model={model} owner={moment.owner} slot={moment.slot} disabled={locked} choose={item=>open(moment.target(item.selectionId))}/>)}
           {moments.length>1&&moment.groups.length>2&&<span className={styles.barMoreCount} data-bar-hidden-groups aria-label={`${moment.groups.length-2} autres groupes dans ${moment.label}`}>+{moment.groups.length-2}</span>}
         </div>
