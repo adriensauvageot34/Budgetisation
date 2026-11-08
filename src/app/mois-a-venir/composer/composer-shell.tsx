@@ -42,6 +42,7 @@ import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contr
 import type { ComposerApplyReceipt } from "@/domain/phase2/planner/composer-ui-contract";
 import { useCommittedEvent } from "./use-committed-event";
 import { EquipmentComponentEditor } from "./equipment-component-editor";
+import { isMascaraContext, mascaraEquipment } from "./mascara-edit";
 import { WorkshopChoicesProvider } from "./workshop-choices";
 import { WorkshopConfirmationProvider } from "./workshop-confirmation";
 import { InlineEditContext, useOwnedInlineEdits } from "./inline-edit-registry";
@@ -54,9 +55,9 @@ import { readRootWorkspace, rememberRootWorkspace, discardRootWorkspace } from "
 import relationStyles from "./root-relation-commands.module.css";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
-  equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean; selection?: ComponentSelectionV1 }; page?: number; saved?: boolean; raw?: boolean;
+  equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean; selection?: ComponentSelectionV1; mascara?: boolean }; page?: number; saved?: boolean; raw?: boolean;
   restaurantContextId?: string; restaurantCreating?: boolean;
-  giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
+  giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; catalogSelectionId?: string; familyMode?: string;
   barTarget?:BarTarget; barTargetRequest?:number; cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
@@ -750,6 +751,15 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       if (card?.capability?.actions.length && card.capability.flexibility !== "LOCKED") edit(card);
       return;
     }
+    const mascara = asset.assetKey === "option:beauty-restock:products:product" && target.kind === "CONTEXT_SOCKET"
+      && target.slotKey === "products" && !!target.contextOccurrenceId
+      && isMascaraContext(shown.board.contexts.find(card => card.contextOccurrenceId === target.contextOccurrenceId));
+    if (mascara) {
+      if (!mascaraEquipment(shown, localDraft.current, target.contextOccurrenceId!, selection)) {
+        setErrorMessage("Ce produit a changé ou est protégé. Retrouvez la ligne depuis sa carte.");
+        return;
+      }
+    }
     const capability = shown.dropCapabilities.find(d => d.sourceAssetKey === asset.assetKey && d.target.kind === target.kind && d.target.contextOccurrenceId === target.contextOccurrenceId && d.target.slotKey === target.slotKey);
     if (!capability || capability.resolution === "BLOCKED") { setSelected(asset.assetKey); setMessage(`Carte ${asset.label} sélectionnée. Choisissez un emplacement compatible sur le mois.`); return; }
     const values: Record<string, string> = {};
@@ -791,8 +801,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     // Preserve an existing Renewal link via values; a raw UUID is not a product picker.
     const equipmentFields = (model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? []).filter(field => field.key !== "needOccurrenceId");
     const equipmentSocket = shown.board.contexts.find(card => card.contextOccurrenceId === target.contextOccurrenceId)?.sockets.find(socket => socket.slotKey === target.slotKey);
-    setEditor({ title: selection ? `Modifier ${asset.label}` : `Composer ${asset.label}`, side: asset.kind === "SLOT_OPTION_ASSET",
-      ...(asset.kind === "SLOT_OPTION_ASSET" ? { equipment: { asset, target, selection, repeating: equipmentSocket?.cardinality === "REPEATING" }, page: 0 } : {}),
+    const productTitle = mascara && selection?.kind === "COMPONENT" ? selection.label : asset.label;
+    setEditor({ title: selection ? `Modifier ${productTitle}` : `Composer ${asset.label}`, side: asset.kind === "SLOT_OPTION_ASSET",
+      ...(asset.kind === "SLOT_OPTION_ASSET" ? { equipment: { asset, target, selection, mascara, repeating: equipmentSocket?.cardinality === "REPEATING" }, page: 0 } : {}),
       cardKey: asset.kind === "SLOT_OPTION_ASSET" && knowledgeTemplate ? `template:${knowledgeTemplate}` : asset.assetKey,
       fields: equipmentFields, values: { ...Object.fromEntries(equipmentFields.map(field => [field.key, field.initial ?? field.choices?.[0]?.value ?? ""])), ...values },
       operation: values => ({ kind: "DROP", assetKey: asset.assetKey, target, values, identity, selectionId }) });
@@ -818,20 +829,23 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const closeDialog = () => { if (!busyRef.current) {
     if (editor && !inlineEdits.registry.guard(closeDialog)) return;
     const guided = editor?.restaurantContextId && draftState.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId);
-    const returnContext = livingBarId ?? (guided && presetForContext(guided)?.presetKey === "cinema" ? guided.contextOccurrenceId : null);
+    const catalog = editor?.catalogContextId ? draftState.contexts.find(c => c.contextOccurrenceId === editor.catalogContextId) : undefined;
+    const mascaraId = editor?.equipment?.mascara ? editor.equipment.target.contextOccurrenceId
+      : catalog && isMascaraContext(catalog) ? catalog.contextOccurrenceId : undefined;
+    const returnContext = livingBarId ?? mascaraId ?? (guided && presetForContext(guided)?.presetKey === "cinema" ? guided.contextOccurrenceId : null);
     setEditor(null); setProjectionOpen(false); setErrorMessage(null);
     if (returnContext) {
       // The Board can remount the intention inside a group or on another page.
       setReveal(previous=>({targetRef:returnContext,sequence:(previous?.sequence??0)+1}));
     }
   } };
-  function editContext(card: ComposerContextCardView, barTarget?:BarTarget) {
-    if (editor && !inlineEdits.registry.guard(() => editContext(card,barTarget))) return;
+  function editContext(card: ComposerContextCardView, barTarget?:BarTarget, catalogSelectionId?: string) {
+    if (editor && !inlineEdits.registry.guard(() => editContext(card,barTarget,catalogSelectionId))) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
     setFocusedContext(card.contextOccurrenceId);
     prepareDialogFocus();
-     setEditor({ title: `Modifier ${card.label}`, side: true, barTarget, barTargetRequest:(editor?.barTargetRequest??0)+1,
+     setEditor({ title: `Modifier ${card.label}`, side: true, barTarget, barTargetRequest:(editor?.barTargetRequest??0)+1, catalogSelectionId,
       cardKey: `template:${card.templateKey}`,
       ...(card.templateKey === "gift" ? { giftContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "night-out" ? { nightContextId: card.contextOccurrenceId } : {}),
@@ -842,6 +856,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
+  }
+  function returnEquipmentSummary() {
+    const equipment = editor?.equipment;
+    const owner = shown.board.contexts.find(card => card.contextOccurrenceId === equipment?.target.contextOccurrenceId);
+    if (owner) editContext(owner, undefined, equipment?.mascara ? equipment.selection?.selectionId : undefined);
+    else closeDialog();
   }
   function apply(confirmedDigest?: string) {
     if (relationSessionRef.current || inlineEdits.registry.count() || pendingApply || comparison || grab.current || editor || previewStatus !== "FRESH" || model.board.cockpit.applyReadiness === "BLOCKED"
@@ -1064,24 +1084,36 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         ? <CatalogContextEditor key={workshopKey(editor.catalogContextId)} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)!}
           editor={{ assetKey: editor.cardKey ?? "", fields: editor.fields }} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons}
           options={model.mobilityOptions} knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} model={shown} dockHost={nightDockHost} choose={stableChoose} placeDeclines={placeDeclines} declinePlace={declinePlace} onCancel={closeDialog}
-           onSave={stage} />
-        : editor?.equipment?.asset.optionKind === "COMPONENT" && !editor.saved ? <EquipmentComponentEditor key={editor.cardKey??editor.equipment.asset.assetKey}
+           onSave={stage} focusSelectionId={editor.catalogSelectionId} />
+        : editor?.equipment?.asset.optionKind === "COMPONENT" && !editor.saved ? <EquipmentComponentEditor key={editor.equipment.mascara
+          ? `${editor.equipment.target.contextOccurrenceId}:${editor.equipment.selection?.selectionId ?? "new"}` : editor.cardKey??editor.equipment.asset.assetKey}
           asset={editor.equipment.asset} target={editor.equipment.target} model={shown} knowledge={model.cardKnowledge[editor.cardKey??""]} values={editor.values} host={nightDockHost} busy={busy}
-          selection={editor.equipment.selection?.kind==="COMPONENT"?editor.equipment.selection:undefined}
+          selection={editor.equipment.selection?.kind==="COMPONENT"?editor.equipment.selection:undefined} mascara={editor.equipment.mascara}
           onValues={values=>setEditor(current=>current?{...current,values,raw:true}:current)}
-          onSave={(values,component)=>{const target=editor.equipment!.target;const existing=editor.equipment!.selection;
+          onSave={(values,component)=>{const {target, selection: existing, mascara} = editor.equipment!;
+            if (mascara) {
+              const writable = mascaraEquipment(shown, localDraft.current, target.contextOccurrenceId!, existing);
+              if (!writable)
+                throw Error("Ce produit a changé ou est protégé. Votre saisie est conservée.");
+              const operation: ComposerOperation = existing ? { kind: "MUTATE", mutation: { kind: "PATCH_CONTEXT",
+                contextOccurrenceId: target.contextOccurrenceId!, slotKey: "products",
+                items: writable.items.map(item => item.selectionId === existing.selectionId ? component : item) } } : editor.operation(values);
+              if (component === existing || stage(operation)) setEditor(current => current ? {...current,values,saved:true,raw:false} : current);
+              return;
+            }
             const previous=(draftState.contexts.find(c=>c.contextOccurrenceId===target.contextOccurrenceId)?.slotSelections[target.slotKey??""]?.items??[]) as readonly ComponentSelectionV1[];
             const operation:ComposerOperation=existing?.kind==="COMPONENT"?{kind:"MUTATE",mutation:{kind:"PATCH_CONTEXT",contextOccurrenceId:target.contextOccurrenceId!,slotKey:target.slotKey!,items:previous.map(item=>item.selectionId===existing.selectionId?component:item)}}:editor.operation(values);
             if(stage(operation))setEditor(current=>current?{...current,values,saved:true,raw:false}:current);}}
-          onSummary={()=>{const owner=shown.board.contexts.find(c=>c.contextOccurrenceId===editor.equipment?.target.contextOccurrenceId);if(owner)editContext(owner);else closeDialog();}}/>
+          onSummary={returnEquipmentSummary}/>
         : editor ? <form data-equipment-workshop={!!editor.equipment || undefined} onSubmit={e => { e.preventDefault();
           const values = editor.equipment ? editor.values : Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
           if (stage(editor.operation(values))) setEditor(current => current?.equipment ? { ...current, saved: true, raw: false } : null);
         }}>
         {editor.saved ? <section className={styles.nightSection} role="status"><h3>Choix conservé dans le brouillon</h3>
           <p>La sauvegarde et la simulation suivent leurs propres états dans le bandeau.</p>
-          {editor.equipment?.repeating && <button type="button" className={styles.primary} onClick={() => choose(editor.equipment!.asset, editor.equipment!.target)}>Ajouter encore</button>}
-          <button type="button" onClick={() => { const owner = shown.board.contexts.find(card => card.contextOccurrenceId === editor.equipment?.target.contextOccurrenceId); if (owner) editContext(owner); else closeDialog(); }}>Retour au résumé</button>
+          {editor.equipment?.repeating && <button type="button" className={styles.primary} onClick={() => choose(editor.equipment!.asset, editor.equipment!.target)}>
+            {editor.equipment.mascara ? "Ajouter un autre produit" : "Ajouter encore"}</button>}
+          <button type="button" onClick={returnEquipmentSummary}>Retour au résumé</button>
         </section> : <>
         {editor.equipment ? <details><summary>Repères et provenance</summary>{editorKnowledge}</details> : editorKnowledge}
         {editor.cardKey?.startsWith("control:savings:") ? <p className={styles.helper} data-savings-editor-origin>

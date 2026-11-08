@@ -15,6 +15,8 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette, PaletteQuestion } from "./context-palette";
+import { isMascaraContext, mascaraEquipment } from "./mascara-edit";
+import { money } from "./display";
 import styles from "./composer.module.css";
 
 type Values = Record<string, PlannerJson>;
@@ -26,12 +28,13 @@ const participants = (value: PlannerJson | undefined): ProspectivePersonRef[] =>
   ? value.flatMap(item => person(item) ? [person(item)!] : []) : [];
 
 /** Edits only published context fields. Equipment remains attached through its R6 sockets. */
-export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel }: {
+export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, focusSelectionId, placeDeclines = [], declinePlace = () => {}, onSave, onCancel }: {
   context: PlannedContextState; editor: ComposerEditor; targetMonth: string;
   householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
   knowledge?: CardKnowledgeRead;
   placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
   model: ComposerUiModel; dockHost?: HTMLElement | null; choose: Parameters<typeof ContextPalette>[0]["choose"];
+  focusSelectionId?: string;
   busy: boolean; onSave: (operation: ComposerOperation) => boolean; onCancel: () => void;
 }) {
   const [values, setValues] = useState<Values>(() => Object.fromEntries(editor.fields.map(field => [field.key, context.fields[field.key] ?? null])) as Values);
@@ -45,8 +48,11 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const [summaryPage, setSummaryPage] = useState(0);
   const posts = Object.entries(context.slotSelections).flatMap(([slotKey, slot]) =>
     ((slot.items ?? []) as readonly ComponentSelectionV1[]).flatMap(item => item.kind === "COMPONENT" ? [{ slotKey, item }] : []));
+  const mascara = isMascaraContext(context);
   const [summaryTab, setSummaryTab] = useState<"fields" | "posts">(posts.length ? "posts" : "fields");
-  const [postPage, setPostPage] = useState(0), [personPage, setPersonPage] = useState(0);
+  const [postPage, setPostPage] = useState(() => focusSelectionId
+    ? Math.floor(Math.max(0, posts.findIndex(({ item }) => item.selectionId === focusSelectionId)) / 3) : 0);
+  const [personPage, setPersonPage] = useState(0);
   const update = (key: string, value: PlannerJson) => setValues(previous => ({ ...previous, [key]: value }));
   const save = () => {
     try {
@@ -77,8 +83,15 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       else setError("Ce choix n’a pas été admis. Le brouillon local reste disponible.");
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez les champs du moment."); }
   };
-  const directPost=model.dropCapabilities.find(cap=>cap.target.contextOccurrenceId===context.contextOccurrenceId&&cap.target.kind==="CONTEXT_SOCKET"&&cap.resolution!=="BLOCKED"&&model.library.searchableAssets.some(a=>a.assetKey===cap.sourceAssetKey&&a.optionKind==="COMPONENT"));
+  const directPost=!mascara && model.dropCapabilities.find(cap=>cap.target.contextOccurrenceId===context.contextOccurrenceId&&cap.target.kind==="CONTEXT_SOCKET"&&cap.resolution!=="BLOCKED"&&model.library.searchableAssets.some(a=>a.assetKey===cap.sourceAssetKey&&a.optionKind==="COMPONENT"));
   const directAsset=directPost&&model.library.searchableAssets.find(a=>a.assetKey===directPost.sourceAssetKey);
+  const mascaraShortcut = mascara && posts.length <= 1
+    ? mascaraEquipment(model, model.semanticState, context.contextOccurrenceId, posts[0]?.item) : undefined;
+  const directChoice = mascaraShortcut ? { key: "mascara-price",
+    label: mascaraShortcut.selection ? "Prix et quantité" : "Ajouter un produit", iconKey: mascaraShortcut.asset.iconKey,
+    choose: () => choose(mascaraShortcut.asset, mascaraShortcut.target, mascaraShortcut.selection) }
+    : directAsset && directPost ? { key: "direct-price", label: "Prix direct", iconKey: directAsset.iconKey,
+      choose: () => choose(directAsset, directPost.target) } : null;
   const selectedField=editor.fields.find(field=>field.key===activeKey);
   const match=(label:string)=>label.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase().includes(query.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase());
   const tile=(key:string,label:string,choose:()=>void,selected=false)=>({key,label,choose,selected,iconKey:"activity"});
@@ -93,7 +106,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     :selectedField?.kind==="PLACE_REF"?{title:selectedField.label,search:{value:query,change:setQuery,label:"Rechercher un lieu connu"},choices:[
       ...(options?.places??[]).filter(p=>match(p.name)).map(p=>tile(p.placeId,p.name,()=>update(selectedField.key,{kind:"KNOWN",placeId:p.placeId}))),
       tile("free","Autre destination",()=>update(selectedField.key,{kind:"TEXT",label:"",provenance:"USER_DECLARED_PROSPECTIVE"})),tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}:undefined;
-  return <div data-catalog-context-editor={context.templateKey} className={styles.nightEditor}>
+  return <div data-catalog-context-editor={context.templateKey} data-mascara-catalog={mascara || undefined} className={styles.nightEditor}>
     <p className={styles.helper}>Les personnes, lieux et dates restent liés à ce moment. Les produits et autres équipements se choisissent dans la palette du Board ; le parent n’ajoute aucun coût.</p>
     {activeKey === null && <section className={styles.nightSection} data-catalog-summary><h3>{String(context.fields.label ?? "Votre intention")}</h3>
       <p>Choisissez uniquement la précision utile maintenant. Les autres informations restent inconnues.</p>
@@ -101,10 +114,23 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       {summaryTab === "fields" && editor.fields.slice(summaryPage * 3, summaryPage * 3 + 3).map(field => <button key={field.key} type="button" onClick={() => setActiveKey(field.key)}>
         {field.label} · {typeof values[field.key] === "string" || typeof values[field.key] === "number" ? String(values[field.key] || "À préciser") : values[field.key] ? "Choix conservé" : "À préciser"}</button>)}
       {summaryTab === "fields" && editor.fields.length > 3 && <div className={styles.nightPage}><button type="button" disabled={summaryPage === 0} onClick={() => setSummaryPage(page => page - 1)}>Précédent</button><span>{summaryPage + 1} / {Math.ceil(editor.fields.length / 3)}</span><button type="button" disabled={(summaryPage + 1) * 3 >= editor.fields.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}
-      {summaryTab === "posts" && posts.slice(postPage * 3, postPage * 3 + 3).map(({slotKey, item}) => <button key={item.selectionId} type="button" onClick={() => {
-        const asset = model.library.searchableAssets.find(asset => asset.assetKey === `option:${context.templateKey}:${slotKey}:${item.optionKey}`);
-        if (asset) choose(asset, { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey }, item);
-      }}>Modifier {item.label} · {item.cost.kind === "MANUAL" ? `${item.quantity} × ${item.cost.unitAmount} €` : "Prix inconnu ou devis conservé"}</button>)}
+      {summaryTab === "posts" && posts.slice(postPage * 3, postPage * 3 + 3).map(({slotKey, item}, index) => {
+        if (mascara) {
+          const writable = mascaraEquipment(model, model.semanticState, context.contextOccurrenceId, item);
+          const price = item.cost.kind === "MANUAL" ? money(item.cost.unitAmount)
+            : item.cost.kind === "QUOTE" ? "Devis conservé" : "Prix inconnu";
+          return <button key={item.selectionId} type="button" data-mascara-post={item.selectionId}
+            autoFocus={focusSelectionId === item.selectionId && !!writable} disabled={busy || !writable}
+            onClick={() => { if (writable) choose(writable.asset, writable.target, writable.selection); }}>
+            {writable ? "Prix et quantité" : "Modification indisponible"} · {item.label} · {item.quantity.replace(".", ",")} × {price}
+            {posts.length > 1 && ` · Poste ${postPage * 3 + index + 1}`}
+          </button>;
+        }
+        return <button key={item.selectionId} type="button" onClick={() => {
+          const asset = model.library.searchableAssets.find(asset => asset.assetKey === `option:${context.templateKey}:${slotKey}:${item.optionKey}`);
+          if (asset) choose(asset, { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey }, item);
+        }}>Modifier {item.label} · {item.cost.kind === "MANUAL" ? `${item.quantity} × ${item.cost.unitAmount} €` : "Prix inconnu ou devis conservé"}</button>;
+      })}
       {summaryTab === "posts" && posts.length > 3 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {Math.ceil(posts.length / 3)}</span><button type="button" disabled={(postPage + 1) * 3 >= posts.length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
       <p>Choisissez les composants réels et leur prix dans le dock sous le Board.</p></section>}
     {activeKey !== null && <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
@@ -130,7 +156,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
           onChange={event => update(field.key, event.target.value)} autoComplete="off" />}</label>;
     })}</div></div>
     <WorkshopDock question={question} host={dockHost} contextId={context.contextOccurrenceId} model={model} busy={busy} choose={choose} summary={() => setActiveKey(null)}
-      choices={[...(directAsset&&directPost?[{key:"direct-price",label:"Prix direct",iconKey:directAsset.iconKey,choose:()=>choose(directAsset,directPost.target)}]:[]),{ key: "summary", label: "Résumé", iconKey: "activity", selected: activeKey === null, choose: () => setActiveKey(null) },
+      choices={[...(directChoice ? [directChoice] : []),{ key: "summary", label: "Résumé", iconKey: "activity", selected: activeKey === null, choose: () => setActiveKey(null) },
         ...editor.fields.map(field => ({ key: field.key, label: field.label, iconKey: "activity", selected: activeKey === field.key, choose: () => setActiveKey(field.key) }))]} />
     {error && <p role="alert" className={styles.formError}>{error}</p>}
     <footer><button type="button" className={styles.secondary} disabled={busy} onClick={activeKey === null ? onCancel : () => setActiveKey(null)}>{activeKey === null ? "Retour au mois" : "Retour au résumé"}</button>

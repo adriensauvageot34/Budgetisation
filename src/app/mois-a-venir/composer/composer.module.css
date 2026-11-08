@@ -957,6 +957,16 @@
 .dialog[data-night-workshop-panel=true] > header h2 { font-size:17px; }
 .dialog[data-night-workshop-panel=true] .nightEditor { flex:1; max-height:100%; }
 .dialog[data-night-workshop-panel=true] .nightEditorScroll { overflow-y:auto; }
+[data-mascara-price-editor] .formFields { grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); overflow:visible; }
+[data-mascara-price-editor] .formFields input { box-sizing:border-box; }
+@media (max-width:760px) {
+  .dialog[data-night-workshop-panel=true]:has([data-mascara-catalog],[data-mascara-reference]) {
+    position:fixed; inset:12px 12px auto; width:auto; max-height:calc(100dvh - 154px); overflow:auto;
+  }
+  body:has(.dialog[open] :is([data-mascara-catalog],[data-mascara-reference])) .board .paletteDock {
+    position:fixed; inset:auto 12px 12px; width:auto; margin:0; z-index:var(--z-popover);
+  }
+}
 [data-short-stay-editor] .nightSection { padding:8px; gap:5px; }
 .nightWorkshop { display:flex; flex-direction:column; min-height:0; flex:1; gap:10px; font-size:14px; }
 .nightQuestionTop { display:flex; justify-content:space-between; gap:8px; align-items:center; color:#8c739e; font-size:11px; }
