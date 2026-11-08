@@ -51,6 +51,16 @@
 .cinemaSuggestionSettings { margin-top:14px; }
 .cinemaSuggestionSettings summary { cursor:pointer; }
 .cinemaSuggestionSettings button { display:block; margin-top:6px; text-align:left; }
+.purchaseDelivery { display:grid; gap:10px; }
+.purchaseDelivery h4,.purchaseDelivery p { margin:0; }
+.purchaseDelivery > button { text-align:left; }
+.purchaseDelivery form { display:grid; gap:10px; }
+@media (max-width:760px) {
+  .restaurantInspector[data-purchase-editor] { inset:12px 12px 170px; width:auto; }
+  body:has(.restaurantInspector[data-purchase-editor]) .board .paletteDock {
+    position:fixed; inset:auto 12px 12px; width:auto; margin:0; z-index:21;
+  }
+}
 .restaurantReference { padding:8px; background:#f7f2e9; border-radius:10px; }
 .restaurantReference small { display:block; }
 .restaurantAnswers { display:flex; align-items:stretch; gap:7px; height:63px; overflow:auto; padding:4px 0; }

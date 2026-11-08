@@ -30,13 +30,14 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useActiveWorkshopQuestion } from "./workshop-choices";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { cinemaSuggestions, sameCinemaExtra, type CinemaSuggestion } from "./cinema-suggestions";
+import { PurchaseDelivery } from "./purchase-delivery";
 import { publishedDrop } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { money } from "./display";
 import styles from "./composer.module.css";
 
 type Component = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
-type Step = "product" | "participants" | "place" | "date" | "budget" | "binding" | "complete" | "included" | null;
+type Step = "product" | "participants" | "place" | "date" | "budget" | "binding" | "complete" | "included" | "shipping" | null;
 type IncludedBuffer = { id: string; mealSelectionId: string; label: string; amount: string; quantity: string; unitBasis: "" | "ITEM" | "PERSON" | "SHARED" };
 const includedDrink = "Bière";
 const sameDetailLabel = new Intl.Collator("fr", { sensitivity: "base" });
@@ -292,7 +293,10 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       disabled: cinema && !cinemaTicket },
     ...(cinema ? [{ id: "date" as const, icon: <CalendarDays size={16} />, label: "Séance", caption: String(context.fields.plannedDate ?? "Jour facultatif"), disabled: !cinemaWritable },
       { id: "complete" as const, icon: <MapPin size={16} />, label: completeTitle, caption: "Choix facultatifs", disabled: !cinemaComplements }] : []),
-    ...(context.templateKey === "purchase" ? [{ id: "product" as const, icon: <Receipt size={16} />, label: "Article et vendeur", caption: String(context.fields.productLabel ?? "À préciser") }] : []),
+    ...(context.templateKey === "purchase" ? [
+      { id: "product" as const, icon: <Receipt size={16} />, label: "Article et vendeur", caption: String(context.fields.productLabel ?? "À préciser") },
+      ...(!creating ? [{ id: "shipping" as const, icon: <MapPin size={16} />, label: "Vendeur, livraison et frais", caption: String(context.fields.merchantLabel ?? "Vendeur à préciser") }] : []),
+    ] : []),
     ...(refs.length ? [{ id: "participants" as const, icon: <Users size={16} />, label: "Participants", caption: refs.map(personLabel).join(", ") }] : []),
     ...(context.templateKey === "restaurant" && !creating ? [{ id: "complete" as const, icon: <Receipt size={16} />,
       label: completeTitle, caption: included ? included.items.length === 1 ? "1 détail compris" : `${included.items.length} détails compris`
@@ -355,6 +359,8 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     ...(context.templateKey === "restaurant" ? [tile("included", "Déjà compris dans l’addition", () => openIncluded(), "restaurant",
       included ? `${included.items.length} détail(s) conservé(s)` : "Décrire sans augmenter l’addition")] : []),
     ...(context.templateKey==="purchase"?[tile("product","Article / vendeur",()=>open("product"),"purchase")]:[tile("place",context.templateKey==="activity"?"Destination":"Lieu / restaurant",()=>open("place"),"family-visit")]),
+    ...(context.templateKey === "purchase" && !creating ? [tile("shipping", "Livraison — Examiner pour cet achat",
+      () => open("shipping"), "purchase", "Règle métier · aucune dépense ajoutée")] : []),
     ...(shape.participants?[tile("people","Personnes",()=>open("participants"),"family-visit")]:[]),
     ...(shape.envelope?[tile("binding","Enveloppe liée",()=>open("binding"),"purchase")]:[]),tile("date","Date facultative",()=>open("date"),"activity"),
     tile("all-options","Autres postes admissibles",showOptions,"activity"),...modes.flatMap(key=>{const asset=model.library.searchableAssets.find(a=>a.assetKey===key);return asset?[tile(key,asset.label,()=>equip(asset,{kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:"transport"}),asset.iconKey)]:[]})];
@@ -410,7 +416,8 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       : step==="binding"?([['CONFIRMED_CONSUMPTION','Compris dans '+shape.envelope],['EXTRA_TO_SLOT','En plus de l’enveloppe']] as const).map(([mode,label])=>tile(mode,label,()=>{if(main&&send(operation({contextOccurrenceId:context.contextOccurrenceId,slots:{[mainSlot]:[{...main,binding:{mode}}]}})))advance("binding");},"purchase"))
       :[tile("summary","Résumé",()=>open(null),"activity"),...summaryChoices.filter(c=>c.key!==step)]};
   const panelContent = <aside ref={panel} className={styles.restaurantInspector} role="dialog" aria-modal="false" aria-labelledby="restaurant-heading" data-restaurant-editor data-guided-template={context.templateKey} data-cinema-editor={cinema || undefined}
-    onChangeCapture={() => setRaw(true)}
+    data-purchase-editor={context.templateKey === "purchase" || undefined}
+    onChangeCapture={event => { if (!(event.target instanceof Element) || !event.target.closest("[data-purchase-delivery]")) setRaw(true); }}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); close(); } }}>
     <header>{preset ? <PresetIllustration preset={preset} className={styles.presetInspectorImage} /> : <PlannerIcon iconKey="restaurant" scale="SATELLITE" />}<div><small>Votre mois, à votre façon</small><h2 id="restaurant-heading" tabIndex={-1}>{heading}</h2></div>
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
@@ -423,7 +430,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       <span>{summaryPage + 1} / {Math.ceil(summaryEntries.length / summaryPageSize)}</span><button type="button" disabled={(summaryPage + 1) * summaryPageSize >= summaryEntries.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}</>
       : <button type="button" className={styles.nightLink} onClick={() => open(null)}>← Retour au résumé</button>}
     {step !== null && <div className={styles.restaurantQuestion} key={`${step}:${formKey}`}>
-      <h3 data-restaurant-focus tabIndex={-1}>{cinema && step === "budget" ? (row.existing ? "Modifier le poste de cette sortie" : "Préparer un billet facultatif")
+      <h3 data-restaurant-focus tabIndex={-1}>{step === "shipping" ? "Vendeur, livraison et frais" : cinema && step === "budget" ? (row.existing ? "Modifier le poste de cette sortie" : "Préparer un billet facultatif")
         : cinema && step === "date" ? "Préciser le jour de la séance"
           : step === "included" ? "Déjà compris dans l’addition" : quickPurchase && step === "budget" ? "Quel montant souhaitez-vous prévoir ?" : questions.find(q => q.id === step)?.title ?? (step === "complete" ? completeTitle : "Votre intention est dans le brouillon")}</h3>
       {step === "included" && includedRow && <form onSubmit={event => { event.preventDefault(); saveIncluded(); }}>
@@ -437,6 +444,8 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
         <p>La quantité et les participants ne multiplient pas ce montant. Un champ vide reste inconnu.</p>
         <button type="submit" disabled={busy || !includedRow.label.trim()}>Conserver ce détail inclus</button>
       </form>}
+      {step === "shipping" && context.templateKey === "purchase" && !creating && <PurchaseDelivery
+        context={context} card={card} model={model} busy={busy} decide={decide} back={() => open(null)} />}
       {step === "product" && <><label>Article ou commande<input defaultValue={String(context.fields.productLabel ?? "")} name="productLabel" /></label><label>Vendeur facultatif<input defaultValue={String(context.fields.merchantLabel ?? "")} name="merchantLabel" /></label>
         <label>Enveloppe liée à cet achat<select name="budgetDomain" defaultValue={String(context.fields.budgetDomain ?? "")}><option value="">À préciser</option>
           {model.editors.find(editor => editor.assetKey === "template:purchase")?.fields.find(field => field.key === "budgetDomain")?.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select></label>

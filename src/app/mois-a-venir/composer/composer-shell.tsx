@@ -832,7 +832,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     const catalog = editor?.catalogContextId ? draftState.contexts.find(c => c.contextOccurrenceId === editor.catalogContextId) : undefined;
     const mascaraId = editor?.equipment?.mascara ? editor.equipment.target.contextOccurrenceId
       : catalog && isMascaraContext(catalog) ? catalog.contextOccurrenceId : undefined;
-    const returnContext = livingBarId ?? mascaraId ?? (guided && presetForContext(guided)?.presetKey === "cinema" ? guided.contextOccurrenceId : null);
+    const returnContext = livingBarId ?? mascaraId ?? (guided && (presetForContext(guided)?.presetKey === "cinema"
+      || guided.templateKey === "purchase") ? guided.contextOccurrenceId : null);
     setEditor(null); setProjectionOpen(false); setErrorMessage(null);
     if (returnContext) {
       // The Board can remount the intention inside a group or on another page.
