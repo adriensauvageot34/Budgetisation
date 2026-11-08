@@ -13,6 +13,7 @@ import { AtomicPopover } from "./atomic-popover";
 import { useComposerInteractions, useDragHandle, leftSurface } from "./interactions";
 import { visibleEmptySocketKeys } from "./presentation/socket-visibility";
 import { composerRenderIndex } from "./render-index";
+import { HairdresserReference } from "./hairdresser-reference";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
 const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
@@ -81,6 +82,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
           {reparentTargets.map(d => <button key={`${d.target.contextOccurrenceId}:${d.target.slotKey}`} disabled={busy} onClick={() => { close(); drop(d.target, instance); }}>Rattacher à {model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.label} · {model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.sockets.find(s => s.slotKey === d.target.slotKey)?.label}</button>)}
           {!removable && <p>Moment protégé dans ce brouillon.</p>}</div>}</AtomicPopover></>}</div></header>
     {card.readOnly && <p className={styles.externalNote}>Intention déjà connue · comptée une fois</p>}
+    {card.templateKey === "external-intent" && <HairdresserReference model={model} id={card.contextOccurrenceId} focus={() => focus(card.contextOccurrenceId)} />}
     </div>
     {card.templateKey === "night-out" && <div className={styles.purchaseSummary} data-night-board-summary>
       <button type="button" disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} onClick={() => edit(card)}>

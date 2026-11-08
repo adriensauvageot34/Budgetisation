@@ -2,7 +2,7 @@ import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { memo, useState, useRef, useEffect, useMemo } from "react";
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
-import { composerLibraryIndex, filterLibraryIntentions, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
+import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
 import { Search, Star } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
@@ -31,6 +31,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   };
   const matches=useMemo(()=>filterLibraryIntentions(index.intentions,query),[index.intentions,query]);
   const occurrences=useMemo(()=>query.trim()?filterLibraryIntentions(index.occurrences,query):[],[index.occurrences,query]);
+  const serviceQuery=["coiffeur","coiffure","coupe de cheveux","brushing","soin capillaire"].includes(normalizeLibrarySearch(query));
   const favoriteItems=matches.filter(item=>favorites.includes(item.key));
   const categories=LIBRARY_CATEGORIES.map(([key,label])=>({key,label,items:matches.filter(item=>item.category===key)})).filter(g=>g.items.length);
   const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
@@ -66,6 +67,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
           data-library-existing-action={row.contextOccurrenceId} disabled={busy} onClick={()=>openContext(row.contextOccurrenceId)}>
           <strong>{row.action==="EDIT"?"Modifier":"Voir"} {row.label}</strong>
           <small>{occurrences.length>1?`Occurrence ${index+1} · `:""}{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.action==="EDIT"?"Éditeur de cette carte":"Lecture seule sur le Board"}</small>
+          {model.board.contexts.some(card=>card.contextOccurrenceId===row.contextOccurrenceId&&isHairdresserReference(model,card))&&<small>Prestation externe · dépense du mois · voir cette prestation sur le Board</small>}
         </button>)}
       </section>}
       {favoriteItems.length>0&&<section className={styles.assetGroup} data-library-favorites><h3>Épinglés par vous</h3><div className={styles.presetGrid}>{favoriteItems.filter(i=>i.preset).map(tile)}</div>{favoriteItems.filter(i=>!i.preset).map(tile)}</section>}
@@ -87,7 +89,9 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
           </div>}
         </div>}
       </section>;})}
-      {!matches.length&&!occurrences.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. Les compléments se trouvent dans la palette de leur carte.</p>}
+      {!matches.length&&!occurrences.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. {serviceQuery
+        ? "Aucune prestation autorisée n’est attestée pour cette recherche dans ce mois. Un concept du catalogue ne constitue pas un rendez-vous réservé."
+        : "Les compléments se trouvent dans la palette de leur carte."}</p>}
     </>:<>
       <p className={styles.libraryLocalNote}>Retrouvez la carte déjà présente dans votre mois. Aucun doublon n’est créé.</p>
       {(["Habitudes", "Enveloppes", "Réservations", "Autres références"] as const).map(group => {
@@ -101,7 +105,9 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
             <PlannerIcon iconKey={asset.iconKey} scale="LIBRARY" className={styles.assetIcon}/><span>{asset.label}</span><small>{caption}</small><small>{control?`${controlValuePresentation(control).label} · ${controlAccessLabel(control)}`:"Édition indisponible"}</small></button>;
         })}</div></section> : null;
       })}
-      {model.board.contexts.filter(c=>c.readOnly&&(!query||normalizeLibrarySearch(c.label).includes(normalizeLibrarySearch(query)))).map(c=><button type="button" className={styles.asset} key={c.contextOccurrenceId} onClick={()=>inspectContext(c.contextOccurrenceId)}>{c.label}<small>Référence externe · lecture seule</small></button>)}
+      {model.board.contexts.filter(c=>c.readOnly&&(!hairdresserReferenceLines(c).length||isHairdresserReference(model,c))
+        &&(!query||normalizeLibrarySearch(c.label).includes(normalizeLibrarySearch(query)))).map(c=><button type="button" className={styles.asset} key={c.contextOccurrenceId}
+          data-library-external-view={c.contextOccurrenceId} onClick={()=>inspectContext(c.contextOccurrenceId)}>{c.label}<small>Référence externe · lecture seule</small></button>)}
     </>}
     </div>
   </aside>;
