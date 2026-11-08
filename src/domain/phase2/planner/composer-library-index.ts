@@ -1,5 +1,6 @@
-import type { ComposerAssetView } from "./composer-contract";
+import type { ComposerAssetView, ComposerContextCardView } from "./composer-contract";
 import type { ComposerUiModel } from "./composer-ui-contract";
+import type { PlannerJsonObject } from "./json";
 import { COMPOSER_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
 
 export const LIBRARY_CATEGORIES = [
@@ -35,15 +36,29 @@ const situatedPresets = new Set(["mascara", "restaurant-for-two", "amazon-purcha
 const publishedPreset = (context:Parameters<typeof presetForContext>[0]) => {
   try{return presetForContext(context);}catch{return undefined;} // Unsupported metadata is never an exact identity.
 };
+export function hairdresserReferenceLines(card:ComposerContextCardView): readonly PlannerJsonObject[] {
+  return Array.isArray(card.fields.costItems) ? card.fields.costItems.filter((item):item is PlannerJsonObject=>item!==null
+    && typeof item==="object" && !Array.isArray(item) && item.assetKey==="beauty:hairdresser") : [];
+}
+/** A visible owner's typed reference, never a title-based service or booking. */
+export function isHairdresserReference(model:ComposerUiModel, card:ComposerContextCardView):boolean {
+  const date=card.fields.plannedDate;
+  return model.board.targetMonth===model.semanticState.targetMonth && card.readOnly && card.templateKey==="external-intent"
+    && !!card.externalIntentId && card.contextOccurrenceId===`external:${card.externalIntentId}`
+    && !model.semanticState.preferences.anchors.includes(card.contextOccurrenceId)
+    && model.semanticState.preferences.flexibility[card.contextOccurrenceId]!=="PRESERVE"
+    && (date==null || typeof date==="string" && /^\d{4}-\d{2}-\d{2}$/.test(date)
+      && date.startsWith(`${model.board.targetMonth}-`) && Number.isFinite(Date.parse(`${date}T12:00:00Z`))
+      && new Date(`${date}T12:00:00Z`).toISOString().slice(0,10)===date)
+    && hairdresserReferenceLines(card).length>0;
+}
 /** Exact presentation identities in the displayed month, never a label/template guess. */
 export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccurrence[] {
   if(model.board.targetMonth!==model.semanticState.targetMonth)return [];
   return model.board.contexts.flatMap(card=>{
     // An existing owner's reference can be found, never created or edited here.
     // The published asset and external identity qualify it; its title does not.
-    const hairdresserReference=card.readOnly&&card.templateKey==="external-intent"&&!!card.externalIntentId
-      &&card.contextOccurrenceId===`external:${card.externalIntentId}`&&Array.isArray(card.fields.costItems)
-      &&card.fields.costItems.some(item=>item!==null&&typeof item==="object"&&!Array.isArray(item)&&item.assetKey==="beauty:hairdresser");
+    const hairdresserReference=isHairdresserReference(model,card);
     const preset=publishedPreset(card);
     if(!hairdresserReference&&(!preset||!situatedPresets.has(preset.presetKey)))return [];
     const date=typeof card.fields.plannedDate==="string"?card.fields.plannedDate:null;
@@ -56,7 +71,8 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
       &&model.semanticState.preferences.flexibility[card.contextOccurrenceId]!=="PRESERVE";
     return [{contextOccurrenceId:card.contextOccurrenceId,presetKey:hairdresserReference?null:preset!.presetKey,label:card.label,
       plannedDate:date,action:editable?"EDIT" as const:"VIEW" as const,
-      search:normalizeLibrarySearch(hairdresserReference?`${card.label} Coiffeur prestation coiffure`
+      search:normalizeLibrarySearch(hairdresserReference?`${card.label} Coiffeur prestation coiffure ${card.components
+        .filter(item=>item.assetKey==="beauty:hairdresser").map(item=>item.label).join(" ")}`
         :[card.label,preset!.label,libraryPresetGroup(preset!),...preset!.searchTerms].join(" "))}];
   });
 }

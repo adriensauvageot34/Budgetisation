@@ -230,6 +230,11 @@
 .contextTools button { padding:3px; }
 .contextCard:hover .contextTools,.contextCard:focus-within .contextTools,.contextCard[data-focused=true] .contextTools { opacity:1; }
 .externalNote { margin:3px 0 0; font-size:8px; color:var(--muted); line-height:1.3; }
+.hairdresserReference > button { width:auto; max-width:100%; height:auto; min-height:36px; padding:7px 10px; gap:6px; border-radius:10px; font-size:10px; }
+.serviceFacts { display:grid; gap:10px; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+.serviceFacts p,.serviceFacts dl { margin:0; }
+.serviceFacts dt { margin-top:6px; color:var(--muted); font-size:11px; }
+.serviceFacts dd { margin:0; }
 .orbitGroup { position:relative; z-index:var(--z-satellite); display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; min-width:0; overflow:visible; pointer-events:none; }
 .orbitGroup>.socket { pointer-events:auto; }
 .orbitGroup[data-orbit=NORTH] { grid-area:north; }
