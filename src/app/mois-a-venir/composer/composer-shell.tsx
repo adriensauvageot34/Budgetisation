@@ -813,11 +813,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   }
   const closeDialog = () => { if (!busyRef.current) {
     if (editor && !inlineEdits.registry.guard(closeDialog)) return;
+    const guided = editor?.restaurantContextId && draftState.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId);
+    const returnContext = livingBarId ?? (guided && presetForContext(guided)?.presetKey === "cinema" ? guided.contextOccurrenceId : null);
     setEditor(null); setProjectionOpen(false); setErrorMessage(null);
-    if (livingBarId) {
-      setReveal(previous=>({targetRef:livingBarId,sequence:(previous?.sequence??0)+1}));
-      // Repacking can remount the card on another page: the carousel restores
-      // focus after revealing its compact title, rather than using a stale ref.
+    if (returnContext) {
+      // The Board can remount the intention inside a group or on another page.
+      setReveal(previous=>({targetRef:returnContext,sequence:(previous?.sequence??0)+1}));
     }
   } };
   function editContext(card: ComposerContextCardView, barTarget?:BarTarget) {
