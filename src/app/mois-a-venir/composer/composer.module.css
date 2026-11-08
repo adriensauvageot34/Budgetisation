@@ -42,11 +42,15 @@
 .restaurantInspector footer span { font-size:11px; }
 @media (max-width:760px) {
   .restaurantInspector[data-cinema-editor] { inset:12px 12px 142px; width:auto; }
+  body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector[data-cinema-editor] { bottom:188px; }
   body:has(.restaurantInspector[data-cinema-editor]) .board .paletteDock {
     position:fixed; inset:auto 12px 12px; width:auto; margin:0; z-index:21;
   }
 }
 .restaurantDiagnostics { margin-top:14px; font-size:11px; }
+.cinemaSuggestionSettings { margin-top:14px; }
+.cinemaSuggestionSettings summary { cursor:pointer; }
+.cinemaSuggestionSettings button { display:block; margin-top:6px; text-align:left; }
 .restaurantReference { padding:8px; background:#f7f2e9; border-radius:10px; }
 .restaurantReference small { display:block; }
 .restaurantAnswers { display:flex; align-items:stretch; gap:7px; height:63px; overflow:auto; padding:4px 0; }
@@ -1001,6 +1005,7 @@
 .questionPalette .paletteHeading h3 { font-size:13px; overflow-wrap:anywhere; }
 .questionPalette .paletteHeading > [data-planner-icon] { display:none; }
 .questionPalette .paletteOptions { display:flex; gap:9px; height:75px; padding:5px 1px; align-items:stretch; overflow-x:auto; scrollbar-width:none; }
+body:has(.restaurantInspector[data-cinema-editor]) .board .questionPalette[data-dock-nature="DECISION"] .paletteOptions { height:auto; }
 .questionAnswer { flex:0 0 auto; display:flex; align-items:center; gap:9px; min-width:150px; max-width:215px; min-height:60px; padding:7px 11px; border:1px solid #e3d4ee; border-radius:13px; background:#fff; color:#5a3a72; text-align:left; }
 .questionAnswer > span { min-width:0; }
 .questionAnswer strong,.questionAnswer small { display:block; white-space:normal; }
