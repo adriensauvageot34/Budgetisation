@@ -13,7 +13,7 @@ import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/p
 import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
 import type { SemanticMutation, PlanBalanceSuggestions } from "@/domain/phase2/planner/adjustment-contract";
 import { composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
-import { libraryOccurrences } from "@/domain/phase2/planner/composer-library-index";
+import { isClothingPurchase, libraryOccurrences } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
 import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
@@ -935,7 +935,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if(!inlineEdits.registry.guard(()=>{if(origin?.isConnected)origin.focus();stableLibraryOpen(id);}))return;
     invoker.current=origin;
     setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));
-    if(occurrence.action==="EDIT")editContext(card);
+    if(occurrence.action==="EDIT"||isClothingPurchase(card)&&draftState.contexts.some(context=>context.contextOccurrenceId===id&&isClothingPurchase(context)))editContext(card);
     else {clearHover();setEditor(null);setProjectionOpen(false);setUnresolvedOpen(false);setFocusedContext(id);}
   });
   // Accepted context changes (also Undo/Redo and child edits) replace workshop buffers.

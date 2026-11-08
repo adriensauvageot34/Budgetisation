@@ -2,7 +2,7 @@ import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { memo, useState, useRef, useEffect, useMemo } from "react";
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
-import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
+import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isClothingPurchase, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
 import { Search, Star } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
@@ -66,7 +66,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
         {occurrences.map((row,index)=><button key={row.contextOccurrenceId} type="button" className={styles.libraryExistingAction}
           data-library-existing-action={row.contextOccurrenceId} disabled={busy} onClick={()=>openContext(row.contextOccurrenceId)}>
           <strong>{row.action==="EDIT"?"Modifier":"Voir"} {row.label}</strong>
-          <small>{occurrences.length>1?`Occurrence ${index+1} · `:""}{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.action==="EDIT"?"Éditeur de cette carte":"Lecture seule sur le Board"}</small>
+          <small>{occurrences.length>1?`Occurrence ${index+1} · `:""}{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.action==="EDIT"?"Éditeur de cette carte":isClothingPurchase(model.board.contexts.find(card=>card.contextOccurrenceId===row.contextOccurrenceId))?"Fiche de cet article en lecture seule":"Lecture seule sur le Board"}</small>
           {model.board.contexts.some(card=>card.contextOccurrenceId===row.contextOccurrenceId&&isHairdresserReference(model,card))&&<small>Prestation externe · dépense du mois · voir cette prestation sur le Board</small>}
         </button>)}
       </section>}
