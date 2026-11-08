@@ -2,6 +2,10 @@ import type { ComposerAssetView, ComposerContextCardView } from "./composer-cont
 import type { ComposerUiModel } from "./composer-ui-contract";
 import type { PlannerJsonObject } from "./json";
 import { COMPOSER_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
+import { canonicalPlannerJson } from "./json";
+import { componentId } from "./identity";
+import type { PlannedContextState } from "./semantic-state";
+import type { ComponentSelectionV1 } from "./component-contract";
 
 export const LIBRARY_CATEGORIES = [
   ["SOCIAL", "Sortir & faire la fête"], ["FOOD", "Manger & commander"],
@@ -32,10 +36,37 @@ export const normalizeLibrarySearch = (text:string) => text.normalize("NFD").rep
 export type LibraryIntention = Readonly<{ key:string; category:string; asset:ComposerAssetView; preset?:ComposerPreset; label:string; search:string; group:string }>;
 export type LibraryOccurrence = Readonly<{ contextOccurrenceId:string; presetKey:string|null; label:string; search:string;
   plannedDate:string|null; action:"EDIT"|"VIEW" }>;
-const situatedPresets = new Set(["mascara", "restaurant-for-two", "amazon-purchase"]);
+const clothingPresets = new Set(["clothing-shopping", "shein-purchase", "shoes-purchase"]);
+const situatedPresets = new Set(["mascara", "restaurant-for-two", "amazon-purchase", ...clothingPresets]);
 const publishedPreset = (context:Parameters<typeof presetForContext>[0]) => {
   try{return presetForContext(context);}catch{return undefined;} // Unsupported metadata is never an exact identity.
 };
+/** Published purchase presentation, never an inference from an article or merchant name. */
+export const isClothingPurchase = (context?: Pick<PlannedContextState, "templateKey" | "fields">) => !!context
+  && context.templateKey === "purchase" && context.fields.budgetDomain === "clothing"
+  && clothingPresets.has(publishedPreset(context)?.presetKey ?? "");
+export const clothingItem = (context: Pick<PlannedContextState, "slotSelections">) => {
+  const items = (context.slotSelections.item?.items ?? []) as readonly ComponentSelectionV1[];
+  return items.length === 1 && items[0].kind === "COMPONENT" && items[0].optionKey === "item" ? items[0] : undefined;
+};
+/** Presentation admission only; EDIT_PRESET_CONTEXT and the Compiler retain authority. */
+export function clothingItemWritable(model: ComposerUiModel, context: PlannedContextState, card: ComposerContextCardView) {
+  const id = context.contextOccurrenceId, item = clothingItem(context), preset = publishedPreset(context);
+  const locked = (ref: string) => model.semanticState.preferences.anchors.includes(ref) || model.semanticState.preferences.flexibility[ref] === "PRESERVE";
+  const socket = card.sockets.find(s => s.contextOccurrenceId === id && s.slotKey === "item");
+  const assetKey = "option:purchase:item:item";
+  return !!item && isClothingPurchase(context) && isClothingPurchase(card) && publishedPreset(card)?.presetKey === preset?.presetKey
+    && card.contextOccurrenceId === id && card.parentContextOccurrenceId === (context.parentContextOccurrenceId ?? null)
+    && card.externalIntentId === null && !card.readOnly && card.capabilityRefs.includes("PATCH_CONTEXT")
+    && model.board.targetMonth === model.semanticState.targetMonth
+    && canonicalPlannerJson(model.semanticState.contexts.find(c => c.contextOccurrenceId === id) ?? null) === canonicalPlannerJson(context)
+    && !locked(id) && !locked(componentId(id, "item", item.selectionId))
+    && socket?.cardinality === "REQUIRED_ONE" && socket.capabilityRefs.includes("purchase:item:SELECT_COMPONENT")
+    && !!socket.choiceAssetKeys?.includes(assetKey)
+    && model.library.searchableAssets.some(asset => asset.assetKey === assetKey && asset.optionKind === "COMPONENT")
+    && model.dropCapabilities.some(drop => drop.sourceAssetKey === assetKey && drop.target.kind === "CONTEXT_SOCKET"
+      && drop.target.contextOccurrenceId === id && drop.target.slotKey === "item" && drop.resolution !== "BLOCKED" && drop.semanticAction === "PATCH_CONTEXT");
+}
 export function hairdresserReferenceLines(card:ComposerContextCardView): readonly PlannerJsonObject[] {
   return Array.isArray(card.fields.costItems) ? card.fields.costItems.filter((item):item is PlannerJsonObject=>item!==null
     && typeof item==="object" && !Array.isArray(item) && item.assetKey==="beauty:hairdresser") : [];
@@ -65,15 +96,20 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
     if(date&&(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!date.startsWith(`${model.board.targetMonth}-`)
       ||!Number.isFinite(new Date(`${date}T12:00:00Z`).getTime())))return [];
     const context=model.semanticState.contexts.find(c=>c.contextOccurrenceId===card.contextOccurrenceId);
+    if(preset&&clothingPresets.has(preset.presetKey)&&(!isClothingPurchase(card)||!context||!isClothingPurchase(context)
+      ||publishedPreset(context)?.presetKey!==preset.presetKey))return [];
+    const clothing=isClothingPurchase(card), article=context&&clothing?clothingItem(context):undefined;
+    const productLabel=clothing&&typeof card.fields.productLabel==="string"?card.fields.productLabel:"";
     const editable=!hairdresserReference&&!!preset&&!card.readOnly&&card.capabilityRefs.includes("PATCH_CONTEXT")&&context?.templateKey===card.templateKey
       &&publishedPreset(context)?.presetKey===preset.presetKey
       &&!model.semanticState.preferences.anchors.includes(card.contextOccurrenceId)
-      &&model.semanticState.preferences.flexibility[card.contextOccurrenceId]!=="PRESERVE";
-    return [{contextOccurrenceId:card.contextOccurrenceId,presetKey:hairdresserReference?null:preset!.presetKey,label:card.label,
+      &&model.semanticState.preferences.flexibility[card.contextOccurrenceId]!=="PRESERVE"
+      &&(!clothing||clothingItemWritable(model,context,card));
+    return [{contextOccurrenceId:card.contextOccurrenceId,presetKey:hairdresserReference?null:preset!.presetKey,label:article?`${article.label} · ${productLabel||card.label}`:card.label,
       plannedDate:date,action:editable?"EDIT" as const:"VIEW" as const,
       search:normalizeLibrarySearch(hairdresserReference?`${card.label} Coiffeur prestation coiffure ${card.components
         .filter(item=>item.assetKey==="beauty:hairdresser").map(item=>item.label).join(" ")}`
-        :[card.label,preset!.label,libraryPresetGroup(preset!),...preset!.searchTerms].join(" "))}];
+        :[card.label,preset!.label,libraryPresetGroup(preset!),...preset!.searchTerms,...(clothing?[productLabel]:[]),...(article?[article.label]:[])].join(" "))}];
   });
 }
 export type LibrarySearchAction = Readonly<{kind:"OPEN";contextOccurrenceId:string}>|Readonly<{kind:"ADD";key:string}>|Readonly<{kind:"FOCUS"}>;

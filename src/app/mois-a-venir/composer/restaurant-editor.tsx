@@ -31,6 +31,8 @@ import { useActiveWorkshopQuestion } from "./workshop-choices";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { cinemaSuggestions, sameCinemaExtra, type CinemaSuggestion } from "./cinema-suggestions";
 import { PurchaseDelivery } from "./purchase-delivery";
+import { ClothingItemEditor } from "./clothing-item-editor";
+import { isClothingPurchase } from "@/domain/phase2/planner/composer-library-index";
 import { publishedDrop } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { money } from "./display";
@@ -55,11 +57,15 @@ const priceCaption = (item?: Component) => !item ? "À préciser" : item.cost.ki
   : item.cost.kind === "QUOTE" ? "Devis conservé" : "Prix à préciser";
 
 /** Guided presentation shared with three admitted L2 recipes; one existing semantic Draft/scheduler. */
-export function RestaurantEditor({ context, card, model, creating, busy, decide, close, cinemaDeclines = [], updateCinemaDeclines }: {
+type RestaurantEditorProps = {
   context: PlannedContextState; card: ComposerContextCardView; model: ComposerUiModel; creating: boolean; busy: boolean;
   decide: (operation: ComposerOperation) => boolean; close: () => void;
   cinemaDeclines?: readonly string[]; updateCinemaDeclines?: (occurrenceId: string, key: string | null) => void;
-}) {
+};
+export function RestaurantEditor(props: RestaurantEditorProps) {
+  return !props.creating && isClothingPurchase(props.context) ? <ClothingItemEditor {...props} /> : <GuidedRestaurantEditor {...props} />;
+}
+function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, close, cinemaDeclines = [], updateCinemaDeclines }: RestaurantEditorProps) {
   const baseShape = guidedContextShape(context.templateKey), preset = presetForContext(context);
   const cinema = preset?.presetKey === "cinema";
   const confirm = useWorkshopConfirmation(), activeQuestion = useActiveWorkshopQuestion();
