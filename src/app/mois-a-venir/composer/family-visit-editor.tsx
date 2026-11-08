@@ -29,9 +29,9 @@ const availableRef = (ref?: ProspectivePlaceRef) => ref && (ref.kind === "KNOWN"
 const amount = (raw: string) => decisionAmount(raw.trim().replace(",", "."));
 const modeLabels: Record<string, string> = { car: "Voiture", train: "Train / tram", bus: "Bus", taxi: "Taxi / Uber", free: "À pied / gratuit", other: "Autre transport", unknown: "À préciser" };
 
-export function ProspectiveContextEditor({ stay = false, posts, postsQuestion, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, dockHost, model, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel }: {
+export function ProspectiveContextEditor({ stay = false, stayDetails, posts, postsQuestion, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, dockHost, model, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel }: {
   context: PlannedContextState; householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
-  targetMonth: string; stay?: boolean; posts?: ReactNode; postsQuestion?: PaletteQuestion;
+  targetMonth: string; stay?: boolean; stayDetails?: ReactNode; posts?: ReactNode; postsQuestion?: PaletteQuestion;
   summary?: ComposerMobilitySummary; fresh: boolean; knowledge?: CardKnowledgeRead; initialMode?: string; busy: boolean; dockHost?: HTMLElement | null;
   placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
   model: ComposerUiModel; choose: Parameters<typeof ContextPalette>[0]["choose"];
@@ -158,7 +158,8 @@ export function ProspectiveContextEditor({ stay = false, posts, postsQuestion, c
       <p>{stay ? "Choisissez l’hébergement ou un poste quand vous le souhaitez." : "La visite reste enregistrable même sans date ou trajet."}</p>
       {visited && <p>Proche : {visited.kind === "HOUSEHOLD_PERSON" ? householdPersons.find(person => person.personId === visited.personId)?.displayName ?? "Personne indisponible" : prospectivePersonLabel(visited) ?? "Contact indisponible"}</p>}
       {destination && <p>Destination : {physicalLabel(destination)}</p>}
-      {(date || note) && <p>Quand : {date || note}</p>}
+      {(date || note || stay && endDate) && <p>{stay ? "Période du projet" : "Quand"} : {date || note || "Départ à préciser"}{stay && endDate ? ` → ${endDate}` : ""}</p>}
+      {stay && <><p className={styles.helper}>Le départ prévu positionne la carte du mois. Ces dates ne prouvent ni ne déplacent une réservation d’hôtel.</p>{stayDetails}</>}
       {mode && <p>Déplacement : {modeLabels[mode] ?? mode}</p>}
       <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection(stay ? "posts" : "people")}>{stay ? "Composer le séjour" : "Préciser la visite"}</button>
         <button type="button" onClick={() => setSection("route")}>Prévoir le déplacement</button></div>

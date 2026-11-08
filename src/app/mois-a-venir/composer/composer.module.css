@@ -983,6 +983,16 @@
   }
 }
 [data-short-stay-editor] .nightSection { padding:8px; gap:5px; }
+.dialog[data-night-workshop-panel=true]:has([data-short-stay-editor]) { overflow:auto; }
+.dialog[data-night-workshop-panel=true] [data-short-stay-editor] { flex:none; max-height:none; }
+@media (max-width:760px) {
+  .dialog[data-night-workshop-panel=true]:has([data-short-stay-editor]) {
+    position:fixed; inset:12px 12px auto; width:auto; max-height:calc(100dvh - 170px);
+  }
+  body:has(.dialog[open] [data-short-stay-editor]) .board .paletteDock {
+    position:fixed; inset:auto 12px 12px; width:auto; margin:0; z-index:var(--z-popover);
+  }
+}
 .nightWorkshop { display:flex; flex-direction:column; min-height:0; flex:1; gap:10px; font-size:14px; }
 .nightQuestionTop { display:flex; justify-content:space-between; gap:8px; align-items:center; color:#8c739e; font-size:11px; }
 .nightQuestionTop > span { display:flex; align-items:center; gap:7px; }

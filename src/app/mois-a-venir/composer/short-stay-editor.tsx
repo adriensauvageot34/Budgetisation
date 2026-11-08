@@ -4,6 +4,10 @@ import { useWorkshopRaw } from "./inline-edit-registry";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ShortStayEdit } from "@/domain/phase2/planner/short-stay-edit";
+import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
+import { componentId } from "@/domain/phase2/planner/identity";
+import { publishedDrop } from "./interactions";
+import { money } from "./display";
 import { ProspectiveContextEditor } from "./family-visit-editor";
 import { fresh, fromSelection, buildComponentRow, type Row } from "./night-out-components";
 import { WorkshopComponentRow } from "./workshop-component-row";
@@ -18,6 +22,11 @@ const mainSlot = (key: string) => key === "activity" ? "main" : ["restaurant", "
 const mainOption = (key: string) => key === "purchase" ? "item" : key === "beauty-restock" ? "product" : key;
 const items = (context: PlannedContextState, slot: string) => (context.slotSelections[slot]?.items ?? []) as readonly ComponentSelectionV1[];
 const firstComponent = (context: PlannedContextState, slot: string) => items(context, slot).find((item): item is Component => item.kind === "COMPONENT");
+const extraTopics = [
+  { key: "breakfast", label: "Petit-déjeuner", reason: "À vérifier auprès de l’hébergement : compris ou facturé séparément.", names: ["petit dejeuner", "petit dejeuner d hebergement"] },
+  { key: "tax", label: "Taxe de séjour", reason: "Selon votre séjour : ne présume ni obligation, ni inclusion, ni montant.", names: ["taxe de sejour"] },
+] as const;
+const normalizeLabel = (label: string) => label.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("fr").replace(/[^a-z0-9]+/g, " ").trim();
 
 /** Calendar consistency only; pricing and quantity valuation remain in the Compiler. */
 export function validateStayCalendar(fields: PlannedContextState["fields"]) {
@@ -28,7 +37,7 @@ export function validateStayCalendar(fields: PlannedContextState["fields"]) {
     throw Error(`Les dates indiquent ${calendarNights} nuit(s), mais vous en avez déclaré ${nights}. Corrigez les dates ou la durée ; aucun tarif n’a été recalculé.`);
 }
 
-export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "posts" | "postsQuestion"> & { semanticState: PlanSemanticStateV1 }) {
+export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion"> & { semanticState: PlanSemanticStateV1 }) {
   const context = props.context, oldLodging = firstComponent(context, "lodging"), oldGroceries = firstComponent(context, "groceries");
   const [nights, setNights] = useState(context.fields.nightCount?.toString() ?? "");
   const [lodgingKind, setLodgingKind] = useState(String(context.fields.lodgingKind ?? "LATER"));
@@ -49,6 +58,23 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
   const [postSection, setPostSection] = useState<"lodging" | "groceries" | Group>("lodging");
   const [lodgingPage, setLodgingPage] = useState<"terms" | "price" | "kind">("terms");
   const [postPage, setPostPage] = useState(0);
+  const [extraTopic, setExtraTopic] = useState<typeof extraTopics[number] | null>(null);
+  const source = canonicalPlannerJson([context, semanticState.contexts.filter(child => child.parentContextOccurrenceId === context.contextOccurrenceId)]);
+  const expectedSource = useRef(source);
+  const card = props.model.board.contexts.find(card => card.contextOccurrenceId === context.contextOccurrenceId);
+  const locked = (id: string) => semanticState.preferences.anchors.includes(id) || semanticState.preferences.flexibility[id] === "PRESERVE"
+    || props.model.semanticState.preferences.anchors.includes(id) || props.model.semanticState.preferences.flexibility[id] === "PRESERVE";
+  const writable = context.templateKey === "short-stay" && source === expectedSource.current && !locked(context.contextOccurrenceId)
+    && canonicalPlannerJson(semanticState.contexts.find(current => current.contextOccurrenceId === context.contextOccurrenceId) ?? null) === canonicalPlannerJson(context)
+    && card?.templateKey === "short-stay" && card.externalIntentId === null && card.parentContextOccurrenceId === context.parentContextOccurrenceId
+    && !card.readOnly && card.capabilityRefs.includes("PATCH_CONTEXT");
+  const slotAllowed = (slot: string, option: string) => {
+    const socket = card?.sockets.find(socket => socket.slotKey === slot);
+    return writable && socket?.cardinality === (slot === "lodging" ? "REQUIRED_ONE" : "REPEATING")
+      && socket.capabilityRefs.includes(`short-stay:${slot}:SELECT_COMPONENT`)
+      && socket.choiceAssetKeys?.includes(`option:short-stay:${slot}:${option}`)
+      && publishedDrop(props.model, `option:short-stay:${slot}:${option}`, { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: slot })?.semanticAction === "PATCH_CONTEXT";
+  };
   const buffer = { nights, lodgingKind, basis, lodging, groceries, posts };
   const acceptedBuffer = useRef(buffer), initial = acceptedBuffer.current;
   useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(buffer) !== JSON.stringify(initial), () => {
@@ -94,16 +120,34 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
     return { fields, slots, children };
   };
   const tile=(key:string,label:string,choose:()=>void,selected=false,hint?:string)=>({key,label,choose,selected,hint,iconKey:"short-stay"});
-  const openPost=(key:typeof postSection)=>{setPostSection(key);setPostPage(0);};
+  const openPost=(key:typeof postSection)=>{setExtraTopic(null);setPostSection(key);setPostPage(0);};
+  const suggestedTopics = lodging && ["HOTEL", "HOSTEL", "RENTAL"].includes(lodgingKind) && slotAllowed("extras", "extra") ? extraTopics : [];
+  const suggestions = suggestedTopics.map(topic => tile(topic.key, `${topic.label} · Examiner pour ce séjour`, () => {
+    setExtraTopic(topic); setPostSection("extras");
+  }, extraTopic?.key === topic.key, topic.reason));
   const postChoices=[tile("lodging","Hébergement",()=>{openPost("lodging");setLodgingPage("terms");}),tile("groceries","Courses",()=>openPost("groceries")),...groups.map(([key,label])=>tile(key,label,()=>openPost(key)))];
   const postsQuestion={title:postSection==="lodging"?"Quel prix pour l’hébergement ?":"Les postes du séjour",choices:postSection==="lodging"&&lodgingPage==="terms"?[
-    tile("total","Prix total",()=>{setBasis("TOTAL");setLodgingDirty(true);if(!lodging)setLodging(fresh("Hébergement"));setLodgingPage("price");},basis==="TOTAL","240 € reste 240 €"),
+    tile("total","Prix total",()=>{setBasis("TOTAL");setLodgingDirty(true);if(!lodging)setLodging(fresh("Hébergement"));setLodgingPage("price");},basis==="TOTAL","Le forfait n’est pas multiplié par les nuits"),
     tile("night","Prix par nuit",()=>{setBasis("PER_NIGHT");setLodgingDirty(true);if(!lodging)setLodging(fresh("Hébergement"));setLodgingPage("price");},basis==="PER_NIGHT"),
-    tile("kind","Type d’hébergement",()=>setLodgingPage("kind")),...postChoices.filter(c=>c.key!=="lodging")]
+    tile("kind","Type d’hébergement",()=>setLodgingPage("kind")),...suggestions,...postChoices.filter(c=>c.key!=="lodging")]
     :postSection==="lodging"&&lodgingPage==="kind"?[["RELATIVE","Chez un proche"],["HOTEL","Hôtel"],["HOSTEL","Auberge"],["RENTAL","Location"],["OTHER","Autre"],["LATER","À préciser"]].map(([key,label])=>tile(key,label,()=>{setLodgingKind(key);setLodgingPage("terms");},lodgingKind===key))
-    :postChoices};
+    :[...suggestions,...postChoices]};
+  const matchingExtras = extraTopic ? posts.extras.filter(post => (extraTopic.names as readonly string[]).includes(normalizeLabel(post.row.label))) : [];
+  const currentLodging = card?.sockets.find(socket => socket.slotKey === "lodging");
+  const evaluated = props.fresh && canonicalPlannerJson(currentLodging?.currentItems ?? []) === canonicalPlannerJson(items(context, "lodging"))
+    ? currentLodging?.evaluations?.find(evaluation => evaluation.selectionId === oldLodging?.selectionId)?.economicAmount : null;
+  const stayDetails = <div data-stay-details>
+    <h4>Hébergement · {oldLodging?.label || "À préciser"}</h4>
+    <p>{context.fields.nightCount == null ? "Durée inconnue" : `${context.fields.nightCount} nuit(s) déclarée(s)`} · {oldLodging?.lodgingPricing?.basis === "PER_NIGHT" ? "Tarif par nuit" : oldLodging?.lodgingPricing?.basis === "TOTAL" ? "Forfait total" : "Base existante conservée"}</p>
+    <p>{oldLodging?.cost.kind === "MANUAL" ? `Prix déclaré : ${money(oldLodging.cost.unitAmount)}${oldLodging.lodgingPricing?.basis === "PER_NIGHT" ? " / nuit" : ""}`
+      : oldLodging?.cost.kind === "QUOTE" ? "Devis de référence conservé, sans preuve de réservation" : "Prix encore inconnu"}.
+      {evaluated != null ? ` Estimation du brouillon : ${money(evaluated)}.` : " Total non confirmé ; prévisualisez pour l’actualiser."}</p>
+    {JSON.stringify(buffer) !== JSON.stringify(initial) && <p role="status">Saisie non conservée : ce résumé décrit encore l’hébergement du brouillon.</p>}
+    <p className={styles.helper}>Réservation et acompte : aucune attestation disponible ici. Un acompte déjà compris ne doit pas être ajouté aux extras ; seul un frais distinct explicitement décidé s’ajoute au total.</p>
+  </div>;
   const content = <>
     <p className={styles.helper}>Le séjour regroupe ses postes, sans coût parent ajouté. Les autres postes restent accessibles dans le dock.</p>
+    {!writable && <p role="status">Ce séjour est en consultation ou sa cible a changé. La saisie reste conservée ; aucune modification ne peut être validée ici.</p>}
     {postSection === "lodging" && <>
     {lodgingPage === "terms" && <p>Choisis le prix total ou le tarif par nuit dans le dock. La date reste facultative.</p>}
     {lodgingPage === "kind" && <p>Type actuel : {({RELATIVE:"chez un proche",HOTEL:"hôtel",HOSTEL:"auberge",RENTAL:"location",OTHER:"autre",LATER:"à préciser"} as Record<string,string>)[lodgingKind]??"référence conservée"}. Ce choix ne prouve aucun prix.</p>}
@@ -118,7 +162,18 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
     {groceries ? <WorkshopComponentRow title="Courses du séjour" row={groceries} back={{label:"Autres postes du séjour",action:()=>{setPostSection("lodging");setLodgingPage("terms");}}} participantCount={0} bindingChoices
       onChange={row => { setGroceries(row); setGroceriesDirty(true); }} onRemove={() => { setGroceries(null); setGroceriesDirty(true); }} />
       : <button type="button" onClick={() => { setGroceries(fresh("Courses du séjour")); setGroceriesDirty(true); }}>Ajouter des courses</button>}</>}
-    {groups.filter(([slot]) => slot === postSection).map(([slot, caption, key]) => <div key={slot}><h3>{caption}</h3>
+    {postSection === "extras" && extraTopic && <section data-stay-topic={extraTopic.key} aria-label={extraTopic.label}>
+      <h3>{extraTopic.label} · À examiner</h3><p>{extraTopic.reason}</p>
+      <p>Déjà compris dans le prix ? Gardez le forfait actuel. Inconnu ? Aucun montant n’est ajouté par cette consultation.</p>
+      {posts.extras.length > 0 && <p>Extras déjà présents : {posts.extras.map(post => post.row.label).join(" · ")}. Vérifiez-les avant tout ajout.</p>}
+      {matchingExtras.map(post => <button type="button" key={post.row.id} data-stay-extra={post.row.id} disabled={props.busy || locked(componentId(context.contextOccurrenceId, "extras", post.row.id))} onClick={() => { setPostPage(posts.extras.indexOf(post)); setExtraTopic(null); }}>Ouvrir {post.row.label} · ligne {posts.extras.indexOf(post) + 1}</button>)}
+      {!matchingExtras.length && <button type="button" disabled={props.busy || !slotAllowed("extras", "extra")} onClick={() => {
+        if (!slotAllowed("extras", "extra")) return;
+        setPostPage(posts.extras.length); update("extras", [...posts.extras, { row: fresh(extraTopic.label), templateKey: "extra" }]); setExtraTopic(null);
+      }}>Préparer un supplément distinct · {extraTopic.label}</button>}
+      <button type="button" onClick={() => setExtraTopic(null)}>Voir les extras existants</button>
+    </section>}
+    {groups.filter(([slot]) => slot === postSection && !extraTopic).map(([slot, caption, key]) => <div key={slot}><h3>{caption}</h3>
       {posts[slot].slice(postPage, postPage + 1).map(post => { const index = postPage; return <div key={post.row.id}>
         {slot === "restaurants" && !post.link && <label>Type de repas<select value={post.templateKey} onChange={e => update(slot, posts[slot].map((p, i) => i === index ? { ...p, templateKey: e.target.value } : p))}>
           <option value="restaurant">Restaurant</option><option value="fast-food">Restauration rapide</option><option value="delivery">Livraison</option></select></label>}
@@ -132,9 +187,17 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
     </div>)}
     <details><summary>À savoir sur les postes</summary><p className={styles.helper}>Un jacuzzi peut être une activité ou un extra explicitement ajouté. Les transports des enfants liés doivent déclarer leur relation au trajet du séjour ; aucune fusion n’est déduite d’un libellé.</p></details>
   </>;
-  return <ProspectiveContextEditor {...props} stay posts={content} postsQuestion={postsQuestion} onSave={operation => {
+  return <ProspectiveContextEditor {...props} stay stayDetails={stayDetails} posts={content} postsQuestion={postsQuestion} onSave={operation => {
     if (operation.kind !== "EDIT_SHORT_STAY") return false;
+    if (!writable || operation.edit.contextOccurrenceId !== context.contextOccurrenceId)
+      throw Error("Ce séjour ou ses droits ont changé. Votre saisie est conservée ; rouvrez la bonne occurrence.");
     const prepared = prepare();
+    for (const slot of ["lodging", "extras"] as const) if (prepared.slots?.[slot]) {
+      if (!slotAllowed(slot, slot === "lodging" ? "lodging" : "extra")) throw Error("Ce poste n’est plus modifiable. Votre saisie est conservée.");
+      for (const item of items(context, slot)) if (locked(componentId(context.contextOccurrenceId, slot, item.selectionId))
+        && canonicalPlannerJson(prepared.slots[slot]?.find(next => next.selectionId === item.selectionId) ?? null) !== canonicalPlannerJson(item))
+        throw Error("Ce poste est protégé. Votre saisie est conservée.");
+    }
     validateStayCalendar({ ...context.fields, ...operation.edit.fields, ...prepared.fields });
     const admitted = props.onSave({ ...operation, edit: { ...operation.edit, ...prepared, fields: { ...operation.edit.fields, ...prepared.fields } } });
     if (admitted) acceptedBuffer.current = buffer;
