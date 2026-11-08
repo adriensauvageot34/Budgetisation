@@ -157,6 +157,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [editor, setEditor] = useState<Editor | null>(null), [balanceOpen, setBalanceOpen] = useState(false), [suggestions, setSuggestions] = useState<PlanBalanceSuggestions | null>(null);
   const [placeDeclines, setPlaceDeclines] = useState<readonly string[]>([]);
   const declinePlace = (key: string) => setPlaceDeclines(current => current.includes(key) ? current : [...current, key]);
+  const [cinemaDeclines, setCinemaDeclines] = useState<Record<string, readonly string[]>>({});
+  const updateCinemaDeclines = (occurrenceId: string, key: string | null) => setCinemaDeclines(current => ({
+    ...current, [occurrenceId]: key === null ? [] : [...new Set([...(current[occurrenceId] ?? []), key])],
+  }));
   const [nightDockHost,setNightDockHost] = useState<HTMLDivElement | null>(null);
   const [loadedEditors, setLoadedEditors] = useState<LoadedEditorChunks>({});
   const [editorLoadError, setEditorLoadError] = useState<EditorChunkKind | null>(null);
@@ -1000,7 +1004,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           && shown.board.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)
           ? <RestaurantEditor key={editor.restaurantContextId} context={draftState.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId)!}
             card={shown.board.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId)!} model={shown}
-            creating={!!editor.restaurantCreating} busy={busy} decide={stage} close={closeDialog} />
+            creating={!!editor.restaurantCreating} busy={busy} decide={stage} close={closeDialog}
+            cinemaDeclines={cinemaDeclines[editor.restaurantContextId]}
+            updateCinemaDeclines={updateCinemaDeclines} />
            : editor?.restaurantContextId ? <section className={styles.contextPalette} role="status"><p>{editorLoadError ? "L’éditeur Restaurant n’a pas pu être chargé. Le brouillon est conservé." : "Ouverture de Restaurant…"}</p>
             {editorLoadError && <button type="button" onClick={() => setEditorLoadRetry(n => n + 1)}>Réessayer l’éditeur</button>}<button type="button" onClick={closeDialog}>Retour au Board</button></section>
           : undefined} />

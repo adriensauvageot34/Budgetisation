@@ -29,6 +29,7 @@ import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useActiveWorkshopQuestion } from "./workshop-choices";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
+import { cinemaSuggestions, sameCinemaExtra, type CinemaSuggestion } from "./cinema-suggestions";
 import { publishedDrop } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { money } from "./display";
@@ -53,9 +54,10 @@ const priceCaption = (item?: Component) => !item ? "À préciser" : item.cost.ki
   : item.cost.kind === "QUOTE" ? "Devis conservé" : "Prix à préciser";
 
 /** Guided presentation shared with three admitted L2 recipes; one existing semantic Draft/scheduler. */
-export function RestaurantEditor({ context, card, model, creating, busy, decide, close }: {
+export function RestaurantEditor({ context, card, model, creating, busy, decide, close, cinemaDeclines = [], updateCinemaDeclines }: {
   context: PlannedContextState; card: ComposerContextCardView; model: ComposerUiModel; creating: boolean; busy: boolean;
   decide: (operation: ComposerOperation) => boolean; close: () => void;
+  cinemaDeclines?: readonly string[]; updateCinemaDeclines?: (occurrenceId: string, key: string | null) => void;
 }) {
   const baseShape = guidedContextShape(context.templateKey), preset = presetForContext(context);
   const cinema = preset?.presetKey === "cinema";
@@ -82,12 +84,12 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       `activity:${slotKey}:${slotKey === "transport" ? "SELECT_MOBILITY_INTENT" : "SELECT_COMPONENT"}`));
   const cinemaTicketSocket = cinemaSlot("main"), cinemaExtrasSocket = cinemaSlot("extras");
   const cinemaTicket = !!cinemaTicketSocket && cinemaTicketSocket.cardinality === "REQUIRED_ONE"
-    && cinemaTicketSocket.choiceAssetKeys?.includes("option:activity:main:activity") && items(context, mainSlot).length <= 1
+    && !!cinemaTicketSocket.choiceAssetKeys?.includes("option:activity:main:activity") && items(context, mainSlot).length <= 1
     && (main ? main.optionKey === shape.option && !cinemaSelectionLocked("main", main.selectionId)
-      : !!publishedDrop(model, "option:activity:main:activity", socketTarget("main")));
+      : publishedDrop(model, "option:activity:main:activity", socketTarget("main"))?.semanticAction === "PATCH_CONTEXT");
   const cinemaExtras = !!cinemaExtrasSocket && cinemaExtrasSocket.cardinality === "REPEATING"
-    && cinemaExtrasSocket.choiceAssetKeys?.includes("option:activity:extras:extra")
-    && !!publishedDrop(model, "option:activity:extras:extra", socketTarget("extras"));
+    && !!cinemaExtrasSocket.choiceAssetKeys?.includes("option:activity:extras:extra")
+    && publishedDrop(model, "option:activity:extras:extra", socketTarget("extras"))?.semanticAction === "PATCH_CONTEXT";
   const included = restaurantIncludedDetails(context);
   const [includedRow, setIncludedRow] = useState<IncludedBuffer | null>(null);
   const [step, setStep] = useState<Step>(null);
@@ -113,16 +115,19 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     setStep(previous => previous === "included" ? "complete" : previous);
   }, [includedSignature]);
   const panel = useRef<HTMLElement>(null);
+  const suggestionSettings = useRef<HTMLElement>(null);
   const mealSignature = canonicalPlannerJson(main??null), priorMeal = useRef(mealSignature), admittedMode = useRef<{signature:string;detail:boolean}|null>(null);
   const ticketSignature = useRef<string | null>(null);
+  const cinemaExtraEdit = useRef<{ signature: string } | { suggestedLabel: string } | null>(null);
+  const cinemaTransportSignature = useRef<string | null>(null);
   // A confirmed semantic change (including Undo/Redo) supersedes the input buffer.
   // An ordinary Preview of the same decision must not erase text being entered.
   useEffect(() => {
-    if (priorMeal.current === mealSignature || cinema && step === "budget") return;
+    if (priorMeal.current === mealSignature || cinema && (step === "budget" || raw)) return;
     priorMeal.current = mealSignature;
     setRow(main ? fromSelection(main) : { ...fresh(mainLabel), unitBasis: cinema ? "ITEM" : "SHARED" });
     setDetail(admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context)); setExtraRow(null);
-  }, [mealSignature, main, context, mainLabel, cinema, step]);
+  }, [mealSignature, main, context, mainLabel, cinema, step, raw]);
   const refs = Array.isArray(context.fields.participantRefs) ? context.fields.participantRefs as ProspectivePersonRef[] : [];
   const personLabel = (ref: ProspectivePersonRef) => ref.kind === "HOUSEHOLD_PERSON"
     ? model.householdPersons.find(p => p.personId === ref.personId)?.displayName ?? "Personne indisponible" : ref.kind === "TEXT" ? ref.label : ref.contactKey;
@@ -235,7 +240,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   const equip = (asset: ComposerAssetView, target: DropTarget, outsideConfirmed = false) => {
     if (!leaveRaw(() => equip(asset, target, outsideConfirmed))) return;
     if (cinema && (target.contextOccurrenceId !== contextId || !target.slotKey
-      || !cinemaSlot(target.slotKey) || !publishedDrop(model, asset.assetKey, target))) return;
+      || !cinemaSlot(target.slotKey) || publishedDrop(model, asset.assetKey, target)?.semanticAction !== "PATCH_CONTEXT")) return;
     setError("");
     if (asset.optionKind === "COMPONENT") {
       if (target.slotKey === mainSlot) { open("budget"); return; }
@@ -244,8 +249,12 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
         confirm({ message: "Ce poste est-il réellement en plus du montant déjà prévu ? S’il est inclus, gardez le total ou remplacez-le par le détail.",
           cancelLabel: "Déjà inclus · garder le total", acceptLabel: "Supplément réel", accept: () => equip(asset, target, true) }); return;
       }
+      cinemaExtraEdit.current = cinema && existing ? { signature: canonicalPlannerJson(existing) } : null;
       setExtraRow(existing ? fromSelection(existing) : fresh(shape.complement));
-    } else { setExtraRow(null); setEquipment({ asset, target }); setEquipmentPage(0);
+    } else {
+      if (cinema && !cinemaModes.some(mode => mode.assetKey === asset.assetKey)) return;
+      if (cinema) cinemaTransportSignature.current = canonicalPlannerJson(currentTransport ?? null);
+      setExtraRow(null); setEquipment({ asset, target }); setEquipmentPage(0);
       const previous = asset.optionKey === currentTransport?.optionKey ? transportValues : {
         origin: transportValues.origin ?? "", destination: transportValues.destination ?? "",
         returnRequired: transportValues.returnRequired ?? "false" };
@@ -295,11 +304,35 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     ...(!cinema && shape.transport && currentTransport ? [{ id: "complete" as const, icon: <MapPin size={16} />, label: "Transport", caption: currentTransport.optionKey }] : []),
   ];
   const summaryPageSize = 3;
-  const addExtra = (label: string = shape.complement) => {
+  const addExtra = (label: string = shape.complement, suggested = false) => {
     if (cinema && !cinemaExtras) return;
-    const add = () => { setExtraAdded(false); setExtraRow(fresh(label)); setStep("complete"); };
-    if (!leaveRaw(() => addExtra(label))) return;
+    const add = () => {
+      cinemaExtraEdit.current = suggested ? { suggestedLabel: label } : null;
+      setExtraAdded(false); setExtraRow(fresh(label)); setStep("complete");
+      if (cinema) setFormKey(key => key + 1);
+    };
+    if (!leaveRaw(() => addExtra(label, suggested))) return;
     if (!detail && main) confirm({message:"Ce poste est-il inclus dans le coût déjà prévu ? Un supplément réel sera additionné. Pour décrire un montant inclus, utilisez le détail.",cancelLabel:"Inclus · garder le total",acceptLabel:"Supplément réel",accept:add}); else add();
+  };
+  const editExtra = (item: Component) => {
+    if (cinema) {
+      if (!cinemaExtrasSocket || cinemaSelectionLocked("extras", item.selectionId) || !leaveRaw(() => editExtra(item))) return;
+      cinemaExtraEdit.current = { signature: canonicalPlannerJson(item) };
+      setEquipment(null); setStep("complete"); setFormKey(key => key + 1);
+    }
+    setExtraRow(fromSelection(item));
+  };
+  const cinemaExtraIsCurrent = (rowId: string, label: string) => {
+    const expected = cinemaExtraEdit.current;
+    if (!cinema || !expected) return true;
+    if ("signature" in expected) {
+      if (canonicalPlannerJson(extras.find(item => item.selectionId === rowId) ?? null) === expected.signature) return true;
+      setError("Ce complément a changé. Rouvrez-le depuis les choix de cette sortie.");
+    } else {
+      if (cinemaExtras && !extras.some(item => sameCinemaExtra(item.label, expected.suggestedLabel) || sameCinemaExtra(item.label, label))) return true;
+      setError("Ce complément est déjà présent ou indisponible. Votre saisie est conservée.");
+    }
+    return false;
   };
   const tile = (key:string,label:string,choose:()=>void,iconKey="restaurant",hint?:string,selected?:boolean) => ({key,label,choose,iconKey,hint,selected});
   const showOptions = () => { if (leaveRaw(() => setAllOptions(true))) setAllOptions(true); };
@@ -327,20 +360,40 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
     tile("all-options","Autres postes admissibles",showOptions,"activity"),...modes.flatMap(key=>{const asset=model.library.searchableAssets.find(a=>a.assetKey===key);return asset?[tile(key,asset.label,()=>equip(asset,{kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:"transport"}),asset.iconKey)]:[]})];
   const extraNames = context.templateKey==="delivery"?["Livraison","Service","Autre frais"]:context.templateKey==="activity"?["Parking","Repas","Autre coût"]:context.templateKey==="purchase"?["Autre article","Livraison","Autre frais"]:["Boisson","Dessert","Autre complément"];
   const backToSummary = tile("summary", "Retour au résumé", () => open(null), "activity");
+  const showCinemaSuggestions = cinema && (step === null || step === "complete" && !extraRow && !equipment);
+  const rankedCinema = showCinemaSuggestions ? cinemaSuggestions({
+    contextOccurrenceId: contextId, writable: cinemaWritable, ticketAllowed: cinemaTicket, ticket: main,
+    dayChosen: !!context.fields.plannedDate,
+    placeChosen: placeLabel?.kind === "TEXT" ? !!placeLabel.label.trim()
+      : placeLabel?.kind === "KNOWN" && !!model.mobilityOptions?.places.some(place => place.placeId === placeLabel.placeId),
+    extrasAllowed: cinemaExtras,
+    extras: extras.map(({ label, selectionId }) => ({ label, selectionId, locked: cinemaSelectionLocked("extras", selectionId) })),
+    transport: cinemaMode && { label: cinemaMode.label, iconKey: cinemaMode.iconKey, selectionId: currentTransport?.selectionId },
+    complementsOnly: step === "complete", dismissed: cinemaDeclines,
+  }) : [];
+  const chooseCinemaSuggestion = (suggestion: CinemaSuggestion) => {
+    if (suggestion.contextOccurrenceId !== contextId) return;
+    if (suggestion.category === "ticket") {
+      if (cinemaTicket && main?.selectionId === suggestion.selectionId) open("budget");
+    } else if (suggestion.category === "session") {
+      if (cinemaWritable) open(suggestion.conceptKey === "jour-seance" ? "date" : "place");
+    } else if (suggestion.category === "transport") {
+      if (cinemaMode && currentTransport?.selectionId === suggestion.selectionId) equip(cinemaMode, socketTarget("transport"));
+    } else if (suggestion.action === "EDIT") {
+      const item = extras.find(item => item.selectionId === suggestion.selectionId);
+      if (item) editExtra(item);
+    } else if (suggestion.extraLabel) addExtra(suggestion.extraLabel, true);
+  };
   const cinemaQuestion: PaletteQuestion | undefined = cinema ? {
-    title: step === "complete" ? completeTitle : `Préparer · ${heading}`,
-    choices: step === null ? [
-      ...(cinemaTicket ? [tile(main?.selectionId ?? "cinema-ticket", main ? `Modifier · ${main.label}` : "Billet de cinéma — Préparer",
-        () => open("budget"), "activity", main ? "Poste de cette sortie" : "Catalogue · situation Sortie")] : []),
-      ...(cinemaWritable ? [tile("date", "Séance — Préciser le jour", () => open("date"), "activity", "Jour facultatif")] : []),
-      ...(cinemaComplements ? [tile("extras", "Compléments et trajet", () => open("complete"), "activity")] : []),
-    ] : step === "complete" && !extraRow && !equipment ? [
-      ...(cinemaExtras ? ["Popcorn", "Boisson"].flatMap(label => extras.some(item => sameDetailLabel.compare(item.label.trim(), label) === 0)
-        ? [] : [tile(`cinema-extra:${label}`, `${label} — Préparer un supplément`, () => addExtra(label), "purchase", "Règle métier additionnelle")]) : []),
-      ...(cinemaMode ? [tile(cinemaMode.assetKey, currentTransport ? `${cinemaMode.label} — Modifier le trajet` : "Taxi — Configurer le trajet",
-        () => equip(cinemaMode, socketTarget("transport")), cinemaMode.iconKey, currentTransport ? "Trajet de cette sortie" : "Catalogue · situation Sortie")] : []),
-      ...(cinemaModes.length && !cinemaMode ? [tile("all-options", "Trajet — Choisir le mode", showOptions, "activity")] : []),
-    ] : step === "date" && cinemaWritable ? [
+    title: showCinemaSuggestions ? "Suggestions pour cette sortie" : `Préparer · ${heading}`,
+    nature: showCinemaSuggestions ? "DECISION" : undefined,
+    emptyLabel: "Aucune suggestion pour cette sortie. Les choix de la carte restent accessibles.",
+    choices: showCinemaSuggestions ? rankedCinema.map(suggestion => {
+      const source = suggestion.sourceRow ? `Catalogue · Sortie · ligne ${suggestion.sourceRow}`
+        : suggestion.category === "extra" ? "Règle métier additionnelle" : null;
+      return tile(suggestion.key, suggestion.label, () => chooseCinemaSuggestion(suggestion), suggestion.iconKey,
+        source ? `${suggestion.reason} · ${source}` : suggestion.reason, suggestion.action === "EDIT" || undefined);
+    }) : step === "date" && cinemaWritable ? [
       tile("place", "Cinéma — Préciser le lieu", () => open("place"), "family-visit"),
       tile("people", "Participants — Préciser", () => open("participants"), "family-visit"), backToSummary,
     ] : [backToSummary],
@@ -429,7 +482,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
           <button type="button" disabled={busy || !main} onClick={() => openIncluded()}>Ajouter un détail déjà inclus</button>
           <h4>Réellement en plus</h4>
         </section>}
-        {extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button type="button" key={item.selectionId} disabled={cinema && (!cinemaExtrasSocket || cinemaSelectionLocked("extras", item.selectionId))} onClick={() => setExtraRow(fromSelection(item))}>{item.label} · {priceCaption(item)}</button>)}
+        {extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button type="button" key={item.selectionId} disabled={cinema && (!cinemaExtrasSocket || cinemaSelectionLocked("extras", item.selectionId))} onClick={() => editExtra(item)}>{item.label} · {priceCaption(item)}</button>)}
         {extras.length > 3 && <div className={styles.nightPage}><button type="button" disabled={extraPage === 0} onClick={() => setExtraPage(page => page - 1)}>Précédent</button><span>{extraPage + 1} / {Math.ceil(extras.length / 3)}</span><button type="button" disabled={(extraPage + 1) * 3 >= extras.length} onClick={() => setExtraPage(page => page + 1)}>Suivant</button></div>}
         {cinema && cinemaModes.length > 0 && <button type="button" onClick={showOptions}>Autres postes et modes de trajet</button>}
         {(!cinema || cinemaExtras) && <button type="button" onClick={() => {
@@ -440,12 +493,25 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
         {extraAdded && <button type="button" onClick={() => open(null)}>Retour au résumé</button>}
         {currentTransport && (!cinema || transportSocket && !cinemaSelectionLocked("transport", currentTransport.selectionId)) && <button type="button" onClick={() => send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { transport: [] } }))}>Retirer le trajet</button>}</>}
       {extraRow && <WorkshopComponentRow key={extraRow.id} title={shape.complement} row={extraRow} participantCount={refs.length} onChange={next => { setRaw(true); setExtraRow(next); }} onRemove={() => {
-        if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { extras: extras.filter(item => item.selectionId !== extraRow.id) } }))) setExtraRow(null);
+        if (!cinemaExtraIsCurrent(extraRow.id, extraRow.label)) return;
+        if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { extras: extras.filter(item => item.selectionId !== extraRow.id) } }))) {
+          setExtraRow(null);
+          if (cinema) setFormKey(key => key + 1);
+        }
       }} onSave={() => { try { const item = buildComponentRow(extraRow, "extra");
-          if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { extras: [...extras.filter(old => old.selectionId !== item.selectionId), item] } }))) { setExtraRow(null); setExtraAdded(!extraRow.existing); }
+          if (!cinemaExtraIsCurrent(item.selectionId, item.label)) return;
+          if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { extras: [...extras.filter(old => old.selectionId !== item.selectionId), item] } }))) {
+            setExtraRow(null); setExtraAdded(!extraRow.existing);
+            if (cinema) setFormKey(key => key + 1);
+          }
         } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez ce complément."); } }} busy={busy} />}
       {equipment && <form onSubmit={event => {
         event.preventDefault(); const values = equipmentValues;
+        if (cinema && (!cinemaModes.some(mode => mode.assetKey === equipment.asset.assetKey)
+          || cinemaTransportSignature.current !== canonicalPlannerJson(currentTransport ?? null))) {
+          setError("Ce trajet a changé ou est indisponible. Votre saisie est conservée.");
+          return;
+        }
         try {
           const sameMode = currentTransport?.optionKey === equipment.asset.optionKey;
           const placeValue = (raw: string, old: ProspectivePlaceRef | null | undefined): ProspectivePlaceRef | null => raw.trim()
@@ -486,6 +552,19 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       {error && <p role="alert" className={styles.formError}>{error}</p>}
     </div>}
     {known && <details className={styles.restaurantDiagnostics}><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={known} /></details>}
+    {showCinemaSuggestions && updateCinemaDeclines && (rankedCinema.length > 0 || cinemaDeclines.length > 0) &&
+      <details className={styles.cinemaSuggestionSettings}>
+        <summary ref={suggestionSettings}>Gérer les suggestions de cette sortie</summary>
+        <p>Le masquage concerne cette carte et dure jusqu’au rechargement de Composer.</p>
+        {rankedCinema.map(suggestion => <button key={suggestion.key} type="button" disabled={busy} onClick={() => {
+          suggestionSettings.current?.focus();
+          updateCinemaDeclines(contextId, suggestion.key);
+        }}>Masquer · {suggestion.label}</button>)}
+        {cinemaDeclines.length > 0 && <button type="button" disabled={busy} onClick={() => {
+          suggestionSettings.current?.focus();
+          updateCinemaDeclines(contextId, null);
+        }}>Réafficher les suggestions masquées</button>}
+      </details>}
     <footer><button type="button" onClick={close}>Retour au Board</button><span>Les choix validés sont conservés dans le brouillon.</span></footer>
   </aside>;
   return <>{typeof document !== "undefined" && createPortal(panelContent, document.body)}
