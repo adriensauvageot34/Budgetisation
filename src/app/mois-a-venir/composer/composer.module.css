@@ -233,6 +233,8 @@
 .hairdresserReference > button { width:auto; max-width:100%; height:auto; min-height:36px; padding:7px 10px; gap:6px; border-radius:10px; font-size:10px; }
 .serviceFacts { display:grid; gap:10px; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
 .serviceFacts p,.serviceFacts dl { margin:0; }
+.hairdresserFactsIntro { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.hairdresserFactsIntro > .hairdresserFactsArtwork { position:relative; inset:auto; flex:0 0 72px; height:36px; border-radius:8px; background:none; }
 .serviceFacts dt { margin-top:6px; color:var(--muted); font-size:11px; }
 .serviceFacts dd { margin:0; }
 .orbitGroup { position:relative; z-index:var(--z-satellite); display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; min-width:0; overflow:visible; pointer-events:none; }
