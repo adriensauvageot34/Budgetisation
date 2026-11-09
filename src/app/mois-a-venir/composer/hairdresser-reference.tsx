@@ -3,6 +3,7 @@ import { useLayoutEffect, useRef, type ReactNode } from "react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { PlannerJson, PlannerJsonObject } from "@/domain/phase2/planner/json";
 import { hairdresserReferenceLines, isHairdresserReference } from "@/domain/phase2/planner/composer-library-index";
+import { BuilderIllustration } from "../builder-illustrations";
 import { AtomicPopover, placeAtomicPopover } from "./atomic-popover";
 import { money } from "./display";
 import styles from "./composer.module.css";
@@ -36,7 +37,10 @@ export function HairdresserReference({ model, id, focus }: { model: ComposerUiMo
     <AtomicPopover label={`Voir cette prestation · ${card.label}`} state="DERIVED" focus={focus}
       icon={<><Eye size={14} /><span>Voir cette prestation</span></>}>
       {() => <HairdresserFacts id={card.externalIntentId!}>
-        <p>Lecture seule · dépense déjà référencée dans ce mois.</p>
+        <div className={styles.hairdresserFactsIntro}>
+          <p>Lecture seule · dépense déjà référencée dans ce mois.</p>
+          <BuilderIllustration semanticKey="asset:beauty:hairdresser" className={styles.hairdresserFactsArtwork} />
+        </div>
         <dl>
           <dt>Prestation référencée</dt><dd>{card.label}</dd>
           <dt>Prestataire indiqué</dt><dd>{text(context.seller) ?? "Non renseigné"}</dd>
