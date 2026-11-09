@@ -70,7 +70,10 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
   const match = (label:string) => label.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase().includes(query.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase());
   const tile=(key:string,label:string,choose:()=>void,selected=false,hint?:string)=>({key,label,choose,selected,hint,iconKey:"gift"});
   useWorkshopQuestion(section==="object"?{title:"Quel cadeau as-tu en tête ?",search:{value:query,change:setQuery,label:"Rechercher un objet cadeau"},choices:[
-    ...giftAssets.filter(asset=>match(asset.label)).map(asset=>tile(asset.assetKey,asset.label,()=>{setAssetKey(asset.assetKey);if(!objectLabel.trim())setObjectLabel(asset.label);},assetKey===asset.assetKey)),
+    ...giftAssets.filter(asset=>match(asset.label)).map(asset=>({
+      ...tile(asset.assetKey,asset.label,()=>{setAssetKey(asset.assetKey);if(!objectLabel.trim())setObjectLabel(asset.label);},assetKey===asset.assetKey),
+      catalogAssetKey:asset.assetKey,
+    })),
     tile("free","Objet libre",()=>setAssetKey(""),!assetKey,"Le nom reste indépendant de la catégorie"),tile("price","Passer au prix",()=>setSection("budget"))]}
     :section==="occasion"?{title:"Quelle occasion ?",choices:[...occasionChoices.map(label=>tile(label,label,()=>setOccasion(label),occasion===label)),tile("other","Autre occasion",()=>setOccasion("")),tile("summary","Résumé",()=>setSection("summary"))]}
     :section==="recipient"?{title:"Pour qui ?",search:{value:query,change:setQuery,label:"Rechercher un destinataire"},choices:[

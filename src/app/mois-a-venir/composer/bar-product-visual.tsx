@@ -1,6 +1,7 @@
 "use client";
 import {useState} from "react";
 import {Beer,Wine,Martini,GlassWater,Utensils,Cookie,Package,Amphora,Ticket,CarTaxiFront,MapPin,Car,Train,Bus,Footprints} from "lucide-react";
+import { compactCatalogImage } from "./compact-catalog-visual";
 import styles from "./composer.module.css";
 
 /** Existing artwork plus code-native icons. Decoration never invents a product or a price. */
@@ -12,11 +13,13 @@ export function BarProductVisual({assetKey,label="",child=false,closed=false,doc
   const compactImage=compact&&key?({beer:'drinks/beer-closed',wine:'r7/wine',cocktail:'drinks/cocktail-closed',soft:'drinks/soft-closed',tapas:'food/tapas-closed'} as Record<string,string>)[key]:undefined;
   // Dedicated transparent objects, shared by closed tiles, editor and Bar dock.
   // Other assets keep their original resources unchanged.
-  const objectKey=(key&&({beer:'beer',vodka:'vodka',rum:'rum',wine:'wine',cocktail:'cocktail',soft:'soft',mixer:'soft',water:'water',shot:'shot',crazy_tiger:'energy',shared:'shared',snack:'snack',chips:'chips',tapas:'tapas'} as Record<string,string>)[key])
+  const objectKey=assetKey==="club:food"?"tapas":(key&&({beer:'beer',vodka:'vodka',rum:'rum',wine:'wine',cocktail:'cocktail',soft:'soft',mixer:'soft',water:'water',shot:'shot',crazy_tiger:'energy',shared:'shared',snack:'snack',chips:'chips',tapas:'tapas'} as Record<string,string>)[key])
     ??(!key&&/bouteille/iu.test(label)?'shared':undefined);
   const transport=!closed&&key?({car:'car',train:'train',bus:'bus',free:'walking',taxi:'taxi'} as Record<string,string>)[key]:undefined;
   const source=objectKey?`bar-compact/${objectKey}`:transport?`transport/${transport}-compact`:key==='taxi'?'transport/taxi-r8':key==='home'?'home/house-r8':!closed&&key==='food'?'bar-compact/tapas':dockImage??compactImage??image;
-  const Icon=child?Ticket:key==="car"?Car:key==="train"?Train:key==="bus"?Bus:key==="free"?Footprints:key==="taxi"?CarTaxiFront:key==="place"?MapPin:key==="cocktail"?Martini:key==="tapas"||key==="food"?Utensils:key==="snack"||key==="chips"?Cookie:key==="beer"||key==="drinks"?Beer:key==="wine"?Wine:key==="soft"||key==="water"?GlassWater:/bouteille/iu.test(label)?Amphora:Package;
-  const showImage=source&&failedImage!==source;
-  return <span className={styles.barProductSymbol} data-bar-visual={showImage?"clay":"functional-icon"} data-object-art={!!objectKey||undefined} aria-hidden="true">{showImage?<img src={`/planned-visuals/builder/clay/${source}.${source?.endsWith('-r8')||source?.endsWith('-compact')?'png':'webp'}`} alt="" width={48} height={40} draggable={false} onError={()=>setFailedImage(source)}/>:<Icon size={30} strokeWidth={1.7}/>}</span>;
+  const merchandise=assetKey==="club:merch"?compactCatalogImage(assetKey):undefined;
+  const src=merchandise??(source&&`/planned-visuals/builder/clay/${source}.${source.endsWith('-r8')||source.endsWith('-compact')?'png':'webp'}`);
+  const Icon=child?Ticket:key==="car"?Car:key==="train"?Train:key==="bus"?Bus:key==="free"?Footprints:key==="taxi"?CarTaxiFront:key==="place"?MapPin:key==="cocktail"?Martini:key==="tapas"||key==="food"?Utensils:key==="snack"||key==="chips"?Cookie:key==="beer"||key==="drinks"?Beer:key==="wine"?Wine:key==="soft"||key==="water"||assetKey==="club:alcohol"?GlassWater:/bouteille/iu.test(label)?Amphora:Package;
+  const showImage=src&&failedImage!==src;
+  return <span className={styles.barProductSymbol} data-bar-visual={showImage?"clay":"functional-icon"} data-object-art={!!(objectKey||merchandise)||undefined} aria-hidden="true">{showImage?<img src={src} alt="" width={48} height={40} draggable={false} onError={()=>setFailedImage(src)}/>:<Icon size={30} strokeWidth={1.7}/>}</span>;
 }
