@@ -1,4 +1,5 @@
 import "server-only";
+import { parseBeforeMoment, beforeMomentSlot, validateBeforeMoments } from "@/domain/phase2/planner/before-moment";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import {parseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
 import { plannerDigest, plannerInteger, plannerKeys, plannerRecord, plannerString, plannerUuid } from "@/domain/phase2/planner/json";
@@ -71,6 +72,7 @@ function nightProductAssetRef(raw: unknown): PlannedAssetRef {
   return { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection, provenance: "EXPLICIT_USER_DECISION" };
 }
 export function parseContextField(raw: unknown, field: ContextFieldDefinition, targetMonth: string): unknown {
+  if (field.semanticContract === "BEFORE_MOMENT") return parseBeforeMoment(raw);
   if (field.semanticContract === "RESTAURANT_INCLUDED_DETAILS") return parseRestaurantIncludedDetails(raw);
   if (raw == null) return null;
   if(field.semanticContract==="NIGHT_OUT_CONSUMPTION")return parseNightOutConsumption(raw);
@@ -172,7 +174,7 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
     if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
       || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
-      && !["context-fields@v2", "context-fields@v3", ...(context.templateKey === "night-out" ? ["context-fields@v6"] : context.templateKey === "family-visit" ? ["context-fields@v4"] : context.templateKey === "short-stay" ? ["context-fields@v5"] : [])].includes(String(context.fields.fieldSchemaVersion)))
+      && !["context-fields@v2", "context-fields@v3", ...(context.templateKey === "activity" ? ["context-fields@v7"] : context.templateKey === "night-out" ? ["context-fields@v6"] : context.templateKey === "family-visit" ? ["context-fields@v4"] : context.templateKey === "short-stay" ? ["context-fields@v5"] : [])].includes(String(context.fields.fieldSchemaVersion)))
       throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     parseContextField(context.fields[field.fieldKey], field, targetMonth);
   }
@@ -180,7 +182,8 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
   if(context.fields.venueDecision!=null&&(context.fields.fieldSchemaVersion!=="context-fields@v6"||!sameVenuePlace(parseNightOutVenue(context.fields.venueDecision).place,place(context.fields.placeRef))))throw new TypeError("NIGHT_OUT_VENUE_CONTEXT_INVALID");
   if (start && end && end < start) throw new TypeError("CONTEXT_DATE_RANGE_INVALID");
   plannerKeys(plannerRecord(context.slotSelections), template.componentSlots.map(s => s.slotKey), []);
-  return new Map(template.componentSlots.map(slot => {
+  return new Map(template.componentSlots.map(definition => {
+    const slot = beforeMomentSlot(context, definition);
     const raw = context.slotSelections[slot.slotKey];
     let items: readonly ComponentSelectionV1[];
     if (raw === undefined) items = template.structuralDefaults[slot.slotKey]?.items ?? [];
@@ -229,6 +232,7 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
 }
 /** A child has exactly one owning socket. Parent links alone never grant a capability. */
 export function validateContextGraph(state: PlanSemanticStateV1) {
+  validateBeforeMoments(state.contexts);
   const selections = new Map(state.contexts.filter(c => c.templateKey !== "kernel.generic")
     .map(c => [c.contextOccurrenceId, readContextSelections(c, state.targetMonth)]));
   for(const context of state.contexts){

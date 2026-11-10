@@ -33,6 +33,7 @@ export function patchContextEditorFields(raw: PlanSemanticStateV1, contextId: st
   const state = finish(raw), context = state.contexts.find(item => item.contextOccurrenceId === contextId);
   if (!context) throw new TypeError("CONTEXT_EDIT_TARGET_UNKNOWN");
   const template = resolveContextTemplate(context.templateKey), patch = plannerRecord(rawPatch);
+  if (Object.hasOwn(patch, "beforeMoment") || Object.hasOwn(context.fields, "beforeMoment")) throw new TypeError("BEFORE_MOMENT_OWNER_REQUIRED");
   plannerKeys(patch, template.fields.filter(field => field.fieldKey !== "fieldSchemaVersion").map(field => field.fieldKey), []);
   const fields = { ...context.fields };
   if(context.templateKey==="night-out"&&Object.hasOwn(patch,"placeRef")&&!Object.hasOwn(patch,"venueDecision"))delete fields.venueDecision;

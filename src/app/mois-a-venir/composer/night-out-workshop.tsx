@@ -23,6 +23,8 @@ import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useInlineEditRegistry } from "./inline-edit-registry";
 import { money } from "./display";
 import styles from "./composer.module.css";
+import { beforeMoment } from "@/domain/phase2/planner/before-moment";
+import { barBeforeDelete } from "./bar-before";
 
 type Component = Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;
 type View = "date"|"calendar"|"people"|"people-pick"|"person-text"|"place"|"place-pick"|"place-text"|"menu"|"summary"|"added"|"main"|"extras"|"shared"|"before"|"before-components"|"food"|"quantity"|"price"|"funding"|"travel"|"transport"|"other"|"details"|"essentials";
@@ -70,13 +72,15 @@ export function NightOutEditor({context,semanticState,householdPersons,creating=
   const choice=(label:string,icon:string,action:()=>void,hint?:string)=> <button type="button" className={styles.nightChoice} disabled={busy} onClick={action}><PlannerIcon iconKey={icon} scale="LIBRARY"/><strong>{label}</strong>{hint&&<small>{hint}</small>}</button>;
   const updateRow=(patch:Partial<Row>)=>{setRow(current=>({...current,...patch,edited:true}));setDirty(true);};
   const beginRow=(target:string,selection?:Component,newShared=false,asset?:PlannedAsset,extraBefore=false,optionKey?:string)=>{
+    if(target==="before"&&beforeChild&&beforeMoment(beforeChild)){setError("Ce Before utilise le contrat descriptif. Modifiez ses consommations et son lieu dans le moment Before de la carte Bar.");return;}
     setSlot(target);setBeforeExtra(extraBefore);setComponentOption(optionKey??selection?.optionKey??(target==="main"?"main":target==="food"?"restaurant":"extra"));setRow(selection?fromSelection(selection):{...fresh(target==="before"?"Avant la soirée":target==="main"?"Entrées et événement":target==="food"?"Repas":newShared?"Bouteille commune":"Consommation"),unitBasis:newShared||target==="main"||target==="before"?"SHARED":"ITEM",costMode:"MANUAL",
       ...(asset?{label:asset.label,assetRef:{catalogVersion:PLANNED_ASSET_CATALOG_VERSION,assetKey:asset.assetKey,labelAtSelection:asset.label,provenance:"EXPLICIT_USER_DECISION" as const}}:{})});
     setDirty(false);move("price");
   };
   const startMain=(global:boolean,confirmed=false)=>{const selected=items(context,"main")[0];if(selected?.kind==="CHILD_CONTEXT"&&!confirmed){confirm({message:"Remplacer cet événement lié par un coût d’entrée ? Ses composants seront retirés seulement lors de la validation. Les autres choix restent conservés.",acceptLabel:"Préparer le remplacement",accept:()=>startMain(global,true)});return;}beginRow("main",selected?.kind==="COMPONENT"?selected:undefined);setRow(r=>({...r,unitBasis:global?"SHARED":r.unitBasis==="SHARED"?"ITEM":r.unitBasis,quantity:global?"1":r.quantity,...(global&&r.unitBasis!=="SHARED"||!global&&r.unitBasis==="SHARED"?{costMode:"UNKNOWN",amount:""}: {})}));};
-  const removeBefore=()=>confirm({message:"Retirer le before et ses composants ? Les autres choix restent conservés. Undo permet de revenir en arrière.",acceptLabel:"Retirer le before",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},before:null}})});
+  const removeBefore=()=>{const removal=barBeforeDelete(semanticState,context);confirm({message:"Retirer le before et ses composants ? Les autres choix restent conservés. Undo permet de revenir en arrière.",acceptLabel:"Retirer le before",accept:()=>decide(removal)});};
   const removeRow=()=>{
+    if(slot==="before"&&beforeChild&&beforeMoment(beforeChild)){setError("Retirez ce poste depuis le moment Before de la carte Bar pour conserver son lieu et ses participants.");return;}
     if(slot==="before"){
       if(!beforeExtra||bottle?.kind!=="COMPONENT"){setError("Pour retirer le before, utilise son choix de retrait. Les autres composants restent conservés.");return;}
       decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},before:{childContextOccurrenceId:beforeChild?.contextOccurrenceId??beforeIdentity.child,selectionId:before?.selectionId??beforeIdentity.link,bottle,extras:(beforeChild?items(beforeChild,"extras"):[]).filter(s=>s.selectionId!==row.id)}}});return;
@@ -84,6 +88,7 @@ export function NightOutEditor({context,semanticState,householdPersons,creating=
     decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:items(context,slot).filter(s=>s.selectionId!==row.id)}}});
   };
   const saveRow=()=>{try{
+    if(slot==="before"&&beforeChild&&beforeMoment(beforeChild))throw Error("Utilisez le moment Before de la carte Bar. Aucun champ du nouveau contrat ne sera effacé.");
     const option=slot==="before"?beforeExtra?"extra":"activity":componentOption;
     const value=buildComponentRow({...row,edited:true},option);
     const repeat:View|null=slot==="extras"?"extras":slot==="before"?"before-components":null;
