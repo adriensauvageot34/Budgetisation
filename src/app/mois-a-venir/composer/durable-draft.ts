@@ -1,6 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
+import { plannerDigest } from "@/domain/phase2/planner/json";
+import { beforeAdmissionMessage, BEFORE_ADMISSION_MAX_BYTES } from "@/domain/phase2/planner/before-draft-contract";
+import type { BeforeDraftHistory } from "./before-draft-history";
 import type { ComposerDraftLifecycleCommand, ComposerDraftResult, ComposerDraftSaveCommand,
   ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 
@@ -20,7 +23,7 @@ const serverConnectionSnapshot = () => true;
 
 /** Owns persistence only. Finance preview remains in ComposerPreviewScheduler. */
 export function useDurableDraft(transport: DraftTransport | null, initial: ComposerDraftSnapshot | null,
-  targetMonth: string, state: PlanSemanticStateV1, suspended: boolean) {
+  targetMonth: string, state: PlanSemanticStateV1, suspended: boolean, beforeHistory?: BeforeDraftHistory) {
   const stateDigest = useMemo(() => semanticStateDigest(state), [state]);
   const [snapshot, setSnapshot] = useState(initial);
   const [status, setStatus] = useState<SaveStatus>(initial?.baseStale ? "CONFLICT" : initial?.active ? "SAVED" : "CLEAN");
@@ -34,6 +37,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
   const inFlight = useRef(false);
   const pendingRequest = useRef<{ digest: string; command: ComposerDraftSaveCommand } | null>(null);
   const blocked = useRef(!!initial?.baseStale);
+  const localAdmissionRefusal = useRef(false);
   const suspension = useRef(suspended);
   suspension.current = suspended;
 
@@ -50,28 +54,47 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
     const base = currentSnapshot.current;
     if (!base || base.baseStale) { blocked.current = true; setStatus("CONFLICT"); setMessage("Le Plan actif a changé. Choisissez comment reprendre."); return; }
     const active = base.active;
-    const reuse = pendingRequest.current?.digest === digest ? pendingRequest.current.command : null;
-    const command: ComposerDraftSaveCommand = reuse ?? {
+    let command: ComposerDraftSaveCommand;
+    try { const candidate: ComposerDraftSaveCommand = {
       targetMonth, semanticState: draft, digest, requestId: crypto.randomUUID(),
       expectedDraftId: active?.draftId ?? null, expectedDraftVersion: active?.version ?? 0,
       expectedBaseRevisionId: base.activePlanRevisionId,
       expectedBaseRevisionNumber: base.activePlanRevisionNumber,
+      ...(beforeHistory ? { beforeAdmission: beforeHistory.envelope(draft) } : {}),
     };
+      const pending = pendingRequest.current?.command;
+      command = pending && plannerDigest({ ...pending, beforeAdmission: pending.beforeAdmission ?? null, requestId: null })
+        === plannerDigest({ ...candidate, beforeAdmission: candidate.beforeAdmission ?? null, requestId: null }) ? pending : candidate;
+      // Undefined optional fields are omitted on HTTP; never send an unbounded trace.
+      if (new TextEncoder().encode(JSON.stringify(command)).byteLength > BEFORE_ADMISSION_MAX_BYTES) throw new TypeError("BEFORE_ADMISSION_SIZE");
+    } catch (error) {
+      localAdmissionRefusal.current = true;
+      blocked.current = true; clearTimer(); setStatus("ERROR");
+      setMessage(beforeAdmissionMessage(error instanceof Error ? error.message : "BEFORE_ADMISSION_REFUSED")); return;
+    }
     pendingRequest.current = { digest, command };
     inFlight.current = true; setStatus("SAVING"); setMessage("Enregistrement du brouillon…");
     try {
       const result = await transport.save(command);
       if (result.ok) {
+        const live = currentSnapshot.current;
+        if ((live?.active?.draftId ?? null) !== command.expectedDraftId || (live?.active?.version ?? 0) !== command.expectedDraftVersion
+          || result.draft.digest !== command.digest || semanticStateDigest(result.draft.semanticState) !== command.digest) {
+          blocked.current = true; setStatus("ERROR"); setMessage(beforeAdmissionMessage("ACK_SELECTED_FRAME_REQUIRES_RECONCILIATION")); return;
+        }
         const next = { ...base, active: result.draft, baseStale: false };
         updateSnapshot(next);
         confirmed.current = result.draft.digest;
         pendingRequest.current = null;
+        try { beforeHistory?.acknowledge(result.draft, command); }
+        catch { blocked.current = true; setStatus("ERROR"); setMessage(beforeAdmissionMessage("ACK_SELECTED_FRAME_REQUIRES_RECONCILIATION")); return; }
         if (semanticStateDigest(currentState.current) === result.draft.digest) {
           firstDirtyAt.current = null; setStatus("SAVED"); setMessage("Brouillon sauvegardé.");
         } else { setStatus("DIRTY"); setMessage("Nouvelles modifications à enregistrer."); }
       } else {
         if (result.latest) updateSnapshot(result.latest);
-        if (result.code === "CONFLICT" || result.code === "BASE_STALE" || result.code === "ACCESS_DENIED") {
+        if (result.code === "ADMISSION_REFUSED") { blocked.current = true; setStatus("ERROR"); }
+        else if (result.code === "CONFLICT" || result.code === "BASE_STALE" || result.code === "ACCESS_DENIED") {
           blocked.current = true; setStatus("CONFLICT");
         } else setStatus(navigator.onLine ? "ERROR" : "OFFLINE");
         setMessage(result.message);
@@ -86,11 +109,20 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
         clearTimer(); timer.current = setTimeout(() => void flush(), 1000);
       }
     }
-  }, [transport, suspended, targetMonth, updateSnapshot]);
+  }, [transport, suspended, targetMonth, updateSnapshot, beforeHistory]);
 
   useEffect(() => {
     currentState.current = state;
-    if (!transport || suspended || blocked.current) return;
+    if (!transport || suspended) return;
+    if (blocked.current) {
+      const saved = currentSnapshot.current;
+      // Redo can return to the confirmed Draft after a local refusal sent nothing.
+      if (!localAdmissionRefusal.current || inFlight.current || pendingRequest.current || saved?.baseStale
+        || saved?.active?.digest !== confirmed.current || stateDigest !== confirmed.current) return;
+      localAdmissionRefusal.current = false;
+      blocked.current = false;
+      setMessage("Brouillon sauvegardé.");
+    }
     if (stateDigest === confirmed.current) {
       clearTimer(); firstDirtyAt.current = null;
       if (!inFlight.current) setStatus(currentSnapshot.current?.active ? "SAVED" : "CLEAN");
@@ -111,13 +143,15 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
     return () => { window.removeEventListener("online", wentOnline); window.removeEventListener("offline", wentOffline); clearTimer(); };
   }, [flush]);
 
-  const retry = () => { blocked.current = false; void flush(); };
+  const hasPendingSave = () => inFlight.current || pendingRequest.current !== null;
+  const retry = () => { localAdmissionRefusal.current = false; blocked.current = false; void flush(); };
   const refresh = async () => {
     if (!transport || suspension.current) return;
     try {
       const latest = await transport.read(targetMonth);
       updateSnapshot(latest);
       if (latest.baseStale || latest.active?.digest !== confirmed.current) {
+        localAdmissionRefusal.current = false;
         blocked.current = true; setStatus("CONFLICT"); setMessage("Une autre version existe. Vos modifications locales sont préservées.");
       } else retry();
     } catch (error) { setStatus("ERROR"); setMessage(error instanceof Error && error.message === "DRAFT_CONTRACT_INCOMPATIBLE"
@@ -126,6 +160,7 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
   };
   const lifecycle = async (kind: "ARCHIVE" | "RESTORE", draft: StoredComposerDraft, discardLocal = false): Promise<boolean> => {
     if (!transport || suspension.current || !navigator.onLine || inFlight.current || !discardLocal && (status === "DIRTY" || status === "ERROR" || status === "OFFLINE")) return false;
+    localAdmissionRefusal.current = false;
     clearTimer(); blocked.current = true; inFlight.current = true;
     const command = { targetMonth, draftId: draft.draftId, expectedDraftVersion: draft.version, requestId: crypto.randomUUID() };
     try {
@@ -157,6 +192,6 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
     } finally { inFlight.current = false; }
   };
   const suspendNow = () => { if (inFlight.current) return false; suspension.current = true; clearTimer(); return true; };
-  return { snapshot, status, message, online, retry, refresh, lifecycle, suspendNow,
+  return { snapshot, status, message, online, retry, refresh, lifecycle, suspendNow, hasPendingSave,
     unsaved: !!transport && stateDigest !== confirmed.current, enabled: !!transport };
 }

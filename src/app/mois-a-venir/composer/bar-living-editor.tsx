@@ -24,7 +24,7 @@ import {useComposerInteractions} from "./interactions";
 import {barPlaces,barPlaceHint,barEndpointSuggestions,barHomePlaces,barEndpointLabel,barResolvablePlace} from "./bar-place-knowledge";
 import {BarPlaceSearch,type BarPlaceSearchState} from "./bar-place-search";
 import {barSearchText} from "./bar-search";
-import {barBefore,barBeforePatch,barBeforeRemove} from "./bar-before";
+import {barBefore,barBeforePatch,barBeforeRemove,barBeforeMomentPatch,barBeforeDelete} from "./bar-before";
 import {money} from "./display";
 import {BarRouteLine,BarComponentFace,barPersonLabel,type BarRouteAction} from "./bar-living-details";
 import {SOCIAL_CONTACTS_V1} from "@/domain/phase2/planned-rules";
@@ -43,7 +43,7 @@ import {plannerDigest} from '@/domain/phase2/planner/json';
 import {BarRouteEndpointSearch} from './bar-route-endpoint-search';
 import type {RouteEndpointBinding} from '@/domain/phase2/planner/route-endpoint';
 
-type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"endpoint-free"|"return-choice"|"route-time"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more"|"venue-change"|"known-routes";
+type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"endpoint-free"|"return-choice"|"route-time"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more"|"venue-change"|"known-routes"|"before-description";
 type Component=Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;
 // Reuse published compatible food definitions, under this Bar's component owner.
 // EDIT_NIGHT_OUT admits bar/club/house_party refs; Restaurant remains a separate event.
@@ -51,7 +51,7 @@ const catalog=[...assetsForModule("bar").filter(asset=>!/(?:parking|entry)$/u.te
   ...assetsForModule("house_party").filter(asset=>["snack","chips"].includes(asset.assetKey.split(":").at(-1)??"")),
   ...assetsForModule("club").filter(asset=>asset.assetKey==="club:food")];
 const beforeCatalog=assetsForModule("house_party");
-export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number;initialBarView?:BarViewMemory;previewPending?:boolean;onViewChange?:(view:BarViewMemory)=>void}) {
+export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{initialTarget?:BarTarget;targetRequest?:number;initialBarView?:BarViewMemory;previewPending?:boolean;beforeN2Access?:boolean;onViewChange?:(view:BarViewMemory)=>void}) {
   const {context,model,card,dockHost,onSave,serverError}=props;
   const busy=props.busy||!!card?.readOnly||props.semanticState.preferences.anchors.includes(context.contextOccurrenceId)||props.semanticState.preferences.flexibility[context.contextOccurrenceId]==="PRESERVE";
   const initialRoute=props.initialTarget?.startsWith("route:")?props.initialTarget.split(":"):null;
@@ -67,7 +67,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const [amountHost,setAmountHost]=useState<HTMLElement|null>(null),[routeHost,setRouteHost]=useState<HTMLElement|null>(null);
   const inlineCommitted=useRef(false);
   const composingAmount=useRef(false);
-  const initialItems=initialComponent?.[1]==="before-main"?initialBefore?[initialBefore.bottle]:[]:initialComponent?.[1]==="before-extras"?initialBefore?.extras??[]:initialComponent?barItems(context,initialComponent[1]):[];
+  const initialItems=initialComponent?.[1]==="before-main"?initialBefore?.bottle?[initialBefore.bottle]:[]:initialComponent?.[1]==="before-extras"?initialBefore?.extras??[]:initialComponent?barItems(context,initialComponent[1]):[];
   const initialSelection=initialComponent?initialItems.find(item=>item.selectionId===initialComponent[2]):undefined;
   const [page,setPage]=useState<Page>(()=>initialSelection?.kind==="COMPONENT"?"row":props.initialTarget?.startsWith("component:")?"summary":initialRoute?(initialRoute[2]==="fare"?"fare":initialRoute[2]==="vehicle"?"vehicle":"endpoint"):props.initialTarget as Page??"summary");
   const [legacy,setLegacy]=useState<"people"|"calendar"|"menu"|"main">("menu"),[legacyKey,setLegacyKey]=useState(0);
@@ -90,6 +90,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const saveDockScroll=useCallback((key:string,index:number)=>setDockScroll(previous=>({...previous,[key]:index})),[]);
   const [people,setPeople]=useState<ProspectivePersonRef[]>(()=>Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);
   const [personName,setPersonName]=useState("");
+  const [beforeDescription,setBeforeDescription]=useState<{label:string;date:string;place:ProspectivePlaceRef|null;people:ProspectivePersonRef[]}>({label:"",date:"",place:null,people:[]});
   const [quickAmount,setQuickAmount]=useState(()=>{const item=barItems(context,"main")[0];return props.initialTarget==="quick"&&item?.kind==="COMPONENT"&&item.cost.kind==="MANUAL"?item.cost.unitAmount:"";}),[pendingAsset,setPendingAsset]=useState<PlannedAsset|null>(null),[pendingShared,setPendingShared]=useState(false);
   const [routeModes,setRouteModes]=useState(props.initialTarget==="outbound"||props.initialTarget==="return");
 
@@ -108,7 +109,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   },[page,itemPage,queries,googleSearch,dockScroll,allPlaces,allBefore,family,families,activeMoment,props.onViewChange]);
   const requestConfirmation=useWorkshopConfirmation(),activeQuestion=useActiveWorkshopQuestion(),interaction=useComposerInteractions();
   const before=barBefore(props.semanticState,context);
-  const rowItems=(target:string)=>target==="before-main"?before?[before.bottle]:[]:target==="before-extras"?before?.extras??[]:barItems(context,target);
+  const rowItems=(target:string)=>target==="before-main"?before?.bottle?[before.bottle]:[]:target==="before-extras"?before?.extras??[]:barItems(context,target);
   const beforeLocked=!!before&&(props.semanticState.preferences.anchors.includes(before.child.contextOccurrenceId)||props.semanticState.preferences.flexibility[before.child.contextOccurrenceId]==="PRESERVE");
   // A confirmation must also become stale if a linked descendant or protection changes.
   const decisionSnapshot=()=>JSON.stringify(props.semanticState);
@@ -126,7 +127,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     setManual("");setPersonName("");setPeople(Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[]);
     setFare("");setRouteTime("");setQuickAmount("");setInlineEditing(false);setDirty(false);
   },"bar-living",canSaveBuffer()?{label:page==="row"&&row.costMode==="MANUAL"?`Enregistrer ${row.amount} €`:"Enregistrer cette saisie",run:()=>saveBuffer(),
-    bufferKey:JSON.stringify({page,row,slot,manual,people,personName,fare,routeTime,quickAmount,direction,slots:context.slotSelections,fields:context.fields,before:before?.child,busy})}:undefined);
+    bufferKey:JSON.stringify({page,row,slot,manual,people,personName,beforeDescription,fare,routeTime,quickAmount,direction,slots:context.slotSelections,fields:context.fields,before:before?.child,busy})}:undefined);
   const [resume,setResume]=useState<(()=>void)|null>(null);
   const resumeGo=useCommittedEvent((next:Page)=>go(next));
   const resumeOpen=useCommittedEvent((target:BarTarget)=>open(target));
@@ -144,6 +145,8 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const resumeBefore=useCommittedEvent((asset:PlannedAsset)=>addBefore(asset));
   const resumeShared=useCommittedEvent((included?:boolean)=>addShared(included));
   const resumeRemoveBefore=useCommittedEvent(()=>removeBefore());
+  const resumeBeforeDescription=useCommittedEvent(()=>describeBefore());
+  const resumeCreateBefore=useCommittedEvent(()=>createBefore());
   const resumeInline=useCommittedEvent(()=>beginInline());
   const resumeDetails=useCommittedEvent(()=>revealDetails());
   const resumeDirect=useCommittedEvent(()=>returnDirect());
@@ -175,6 +178,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     if(page==="row"){if(/[.,]$/u.test(row.quantity)||row.costMode==="MANUAL"&&/[.,]$/u.test(row.amount))return false;buildComponentRow(row,row.existing?.optionKey??"extra");return true;}
     if(page==="manual-place"||page==="endpoint-free")return !!manual.trim();
     if(page==="people")return !personName.trim();
+    if(page==="before-description")return !beforeLocked&&!personName.trim();
     if(page==="fare"){decisionAmount(fare.trim().replace(",","."));return !!fare.trim();}
     if(page==="route-time")return !routeTime||/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(routeTime);
 
@@ -267,13 +271,33 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     }catch(failure){setError("Ce poste ancien n’a pas de portée de remplacement certaine, ou possède un financement. Conservez-le, choisissez « Ajouter en plus » ou rééditez explicitement son coût. Aucun poste n’est supprimé.");}
   };
 
+  function createBefore(){
+    if (!props.beforeN2Access) return;
+    if(!guard(resumeCreateBefore)||before||busy)return;
+    try{if(decide(barBeforeMomentPatch(props.semanticState,context,null,[]),"before"))setMoment("before");}
+    catch(failure){setError(failure instanceof Error?failure.message:"Ce Before doit être relu dans l’éditeur détaillé.");}
+  }
+  function describeBefore(){
+    if (!props.beforeN2Access) return;
+    if(!guard(resumeBeforeDescription)||!before||beforeLocked)return;
+    const fields=before.child.fields;
+    setBeforeDescription({label:typeof fields.label==="string"?fields.label:"",date:typeof fields.plannedDate==="string"?fields.plannedDate:"",
+      place:fields.placeRef as ProspectivePlaceRef|null??null,people:Array.isArray(fields.participantRefs)?fields.participantRefs as ProspectivePersonRef[]:[]});
+    setPersonName("");move("before-description");
+  }
+  function saveBeforeDescription():boolean {
+    if (!props.beforeN2Access) return false;
+    if(!before||beforeLocked||personName.trim())return false;
+    return decide(barBeforeMomentPatch(props.semanticState,context,before.bottle,before.extras,{label:beforeDescription.label,
+      plannedDate:beforeDescription.date,placeRef:beforeDescription.place,participantRefs:beforeDescription.people}),"before");
+  }
   const addBefore=(asset:PlannedAsset)=>{
     if(!guard(()=>resumeBefore(asset))||busy||beforeLocked)return;
-    try{const value=buildComponentRow({...fresh(asset.label),unitBasis:asset.quantityStrategy==="SHARED"?"SHARED":"ITEM",assetRef:{catalogVersion:PLANNED_ASSET_CATALOG_VERSION,assetKey:asset.assetKey,labelAtSelection:asset.label,provenance:"EXPLICIT_USER_DECISION"}},before?"extra":"activity");
-      if(decide(barBeforePatch(props.semanticState,context,before?.bottle??value,before?[...before.extras,value]:[]),"row")){setSlot(before?"before-extras":"before-main");setAdvancedRow(false);setRow(fromSelection(value));}
+    try{const value=buildComponentRow({...fresh(asset.label),unitBasis:asset.quantityStrategy==="SHARED"?"SHARED":"ITEM",assetRef:{catalogVersion:PLANNED_ASSET_CATALOG_VERSION,assetKey:asset.assetKey,labelAtSelection:asset.label,provenance:"EXPLICIT_USER_DECISION"}},before?.bottle?"extra":"activity");
+      if(decide(barBeforePatch(props.semanticState,context,before?.bottle??value,before?.bottle?[...before.extras,value]:[]),"row")){setSlot(before?.bottle?"before-extras":"before-main");setAdvancedRow(false);setRow(fromSelection(value));}
     }catch(failure){setError((failure as Error).message);}
   };
-  const removeBefore=()=>{if(!guard(resumeRemoveBefore)||!before)return;confirm({message:`Retirer le Before et ses ${1+before.extras.length} éléments, ainsi que ses éventuels trajets liés ? Les choix du bar restent conservés. Undo restitue le groupe et ses identités.`,acceptLabel:"Retirer le Before",accept:()=>decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},before:null}})});};
+  const removeBefore=()=>{if(!guard(resumeRemoveBefore)||!before)return;const removal=barBeforeDelete(props.semanticState,context);confirm({message:`Retirer le moment Before entier, ses consommations et ses éventuels trajets liés ? Les choix du bar restent conservés. Undo restitue le groupe et ses identités.`,acceptLabel:"Retirer le Before",accept:()=>decide(removal)});};
   const beforeSource=before&&model.presentation.dragSources[`context-occurrence:${before.child.contextOccurrenceId}`];
   const beforeDraggable=!!(!busy&&!beforeLocked&&!dirty&&beforeSource&&!beforeSource.protected&&beforeSource.removeOperation);
   const addShared=(included?:boolean)=>{
@@ -285,9 +309,9 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     }catch{setError("Ce poste n’a pas de couverture substitutive certaine ou possède un financement. Aucun poste n’est supprimé ; « Ajouter en plus » reste disponible.");}
   };
   const remove=()=>{
-    if(slot==="before-main"&&before&&!before.extras.some(item=>item.kind==="COMPONENT")){removeBefore();return;}
-    const apply=()=>slot.startsWith("before-")?before&&decide(barBeforeRemove(props.semanticState,context,row.id),"before")
-      :decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).filter(item=>item.selectionId!==row.id)}}},"drinks");
+    const apply=()=>{try{return slot.startsWith("before-")?before&&decide(barBeforeRemove(props.semanticState,context,row.id,props.beforeN2Access === true),"before")
+      :decide({kind:"EDIT_NIGHT_OUT",edit:{contextOccurrenceId:context.contextOccurrenceId,fields:{},slots:{[slot]:barItems(context,slot).filter(item=>item.selectionId!==row.id)}}},"drinks");}
+      catch(failure){setError(failure instanceof Error?failure.message:"Ce poste ne peut pas être retiré. Le Before reste conservé.");return false;}};
     if(dirty)confirm({message:"Retirer ce poste et abandonner sa saisie non validée ? Undo permet de rétablir la dernière décision conservée.",acceptLabel:"Retirer",accept:apply});else apply();
   };
   const saveRow=(candidate:Row=row,next:Page="drinks")=>{try{
@@ -327,6 +351,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   };
   const saveFare=()=>{if(!leg)return false;try{return patchLeg({...leg,pricing:{fare:{kind:"MANUAL",unitAmount:decisionAmount(fare.trim().replace(",","."))},parking:leg.pricing?.parking??{kind:"UNKNOWN"},fundingAllocations:leg.pricing?.fundingAllocations??[],preference:leg.pricing?.preference??"FASTEST"}},direction);}catch(failure){setError(failure instanceof Error?failure.message:"Vérifiez le prix.");return false;}};
   function saveBuffer():boolean {
+    if(page==="before-description")return saveBeforeDescription();
     if(inlineEditing)return saveInline();
     if(page==="row")return !!saveRow();
     if(page==="endpoint-free")return !!chooseEndpoint({kind:"TEXT",label:manual.trim(),provenance:"USER_DECLARED_PROSPECTIVE"},true);
@@ -443,6 +468,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     ]};
   }
   if(page==="date")question={title:"Date de la sortie",choices:[]};
+  if(page==="before-description")question={title:"Lieu et participants du Before",choices:[]};
   const candidates:ProspectivePersonRef[]=[...props.householdPersons.map(p=>({kind:"HOUSEHOLD_PERSON" as const,personId:p.personId})),...SOCIAL_CONTACTS_V1.map(p=>({kind:"CONTACT" as const,contactKey:p.key}))];
   const matchingPeople=candidates.filter(p=>barSearchText(barPersonLabel(p,model)).includes(barSearchText(query)));
   if(page==="people"){
@@ -485,7 +511,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   const listGroups=(items:readonly ComponentSelectionV1[])=>componentPresentationGroups(items);
 
   const beforeScene=page==="summary"&&activeMoment==='before'||page==="before"||page==="row"&&slot.startsWith("before-");
-  const momentItems=beforeScene?before?[before.bottle,...before.extras]:[]:barItems(context,'extras').filter(item=>item.selectionId!==consumption?.directSelectionId);
+  const momentItems=beforeScene?before?[...(before.bottle?[before.bottle]:[]),...before.extras]:[]:barItems(context,'extras').filter(item=>item.selectionId!==consumption?.directSelectionId);
   const displayedGroups=page==='row'?1:beforeScene||page==='drinks'||page==='summary'?componentPresentationGroups(momentItems).length:0;
   const sceneDensity=displayedGroups>2?'dense':displayedGroups?'partial':'empty';
   const admittedPeople=Array.isArray(context.fields.participantRefs)?context.fields.participantRefs as ProspectivePersonRef[]:[];
@@ -493,7 +519,7 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   // Structural admission is a valid packing checkpoint (also on Undo/Redo).
   // Prices, quantities, RAW and provider replies never change this identity key.
   const geometryItems=[...Object.keys(context.slotSelections).flatMap(key=>barItems(context,key).map(item=>`${key}:${item.selectionId}`)),
-    ...(before?[before.bottle,...before.extras].map(item=>`before:${item.selectionId}`):[])].sort().join("|");
+    ...(before?[...(before.bottle?[before.bottle]:[]),...before.extras].map(item=>`before:${item.selectionId}`):[])].sort().join("|");
   return <div ref={editorRoot} className={styles.barLivingEditor} tabIndex={-1} aria-label="Configuration de Bar / Apéro" data-bar-living-editor data-bar-step={page} data-inline-dirty={dirty}
     data-bar-task={!['summary','before','drinks'].includes(page)||undefined}
     data-bar-progressive data-bar-geometry-key={`${showMoments}:${openMoments.before}:${openMoments.bar}:${page}:${activeMoment}:${advancedRow}:${itemPage}:${geometryItems}`} data-bar-advanced={advancedRow} data-bar-scene-density={sceneDensity}
@@ -510,17 +536,32 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
       {barLeg(context,'return')&&!barLeg(context,'outbound')&&<button type="button" data-bar-add-route="outbound" disabled={busy} onClick={()=>open('outbound')}>+ Aller</button>}
     </>,routeHost)}
     <div className={styles.barLivingSections} data-scene={page}>
-    {before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-before data-bar-section="before" aria-label="Avant de sortir">
+    {before&&["summary","before","drinks","row","before-description"].includes(page)&&<section className={styles.barItemSection} data-bar-before data-bar-section="before" aria-label="Avant de sortir">
       <header><h4 draggable={beforeDraggable} data-bar-before-drag={beforeDraggable?beforeSource?.sourceKey:undefined}
         aria-label="Before · moment entier, déplaçable vers la corbeille" onDragStart={event=>{event.stopPropagation();if(!beforeDraggable||!beforeSource){event.preventDefault();return;}interaction?.start(beforeSource.sourceKey,event);}} onDragEnd={()=>interaction?.end()}>Before</h4>
         <AtomicPopover utility label="Actions du Before" state="MOMENT" focus={()=>{}} icon={<MoreHorizontal size={14}/>}>
           {close=><button type="button" disabled={busy||beforeLocked} onClick={()=>{close();removeBefore();}}>Retirer le Before</button>}
         </AtomicPopover></header>
       {beforeLocked&&<p>Ce Before est protégé. Ses composants restent consultables.</p>}
-      <BarMomentRail label="Objets Before" addLabel="Ajouter un objet au Before" disabled={busy||beforeLocked} dropBlocked={dirty} add={()=>selectMoment("before")} model={model} owner={before.child.contextOccurrenceId} slot="extras">{listGroups([before.bottle,...before.extras]).map(group=>{const item=group.items[0];return <div key={group.key} data-bar-before-item={item.selectionId} data-bar-active-tile={page==='row'&&group.items.some(i=>i.selectionId===row.id)} className={page==='row'&&group.items.some(i=>i.selectionId===row.id)?styles.barActiveTile:styles.barEconomicTile}><BarComponentGroup group={group} model={model} owner={before.child.contextOccurrenceId} slot="$before" disabled={busy||beforeLocked} choose={chosen=>chosen.kind==='COMPONENT'&&editComponent(chosen.selectionId===before.bottle.selectionId?'before-main':'before-extras',chosen)}>{page==='row'&&group.items.some(i=>i.selectionId===row.id)&&activeRow}</BarComponentGroup></div>;})}</BarMomentRail>
+      {!before.bottle&&<p data-before-none>Aucune consommation prévue</p>}
+      {props.beforeN2Access && <button type="button" disabled={busy||beforeLocked} onClick={describeBefore}>Lieu et participants du Before</button>}
+      {before.child.fields.placeRef!=null&&<p>{barPlaceLabel(before.child.fields.placeRef as ProspectivePlaceRef,model)}</p>}
+      {Array.isArray(before.child.fields.participantRefs)&&<p>{(before.child.fields.participantRefs as ProspectivePersonRef[]).map(p=>barPersonLabel(p,model)).join(", ")}</p>}
+      {page==="before-description"&&<fieldset disabled={busy||beforeLocked} data-before-description>
+        <legend>Moment Before</legend>
+        <label>Libellé du Before<input autoFocus maxLength={120} value={beforeDescription.label} onChange={e=>{setBeforeDescription(v=>({...v,label:e.target.value}));setDirty(true);}}/></label>
+        <label>Date du Before<input type="date" min={props.semanticState.targetMonth+"-01"} value={beforeDescription.date} onChange={e=>{setBeforeDescription(v=>({...v,date:e.target.value}));setDirty(true);}}/></label>
+        <label>Lieu du Before<input maxLength={120} value={beforeDescription.place?barPlaceLabel(beforeDescription.place,model):""} onChange={e=>{const label=e.target.value;setBeforeDescription(v=>({...v,place:label?{kind:"TEXT",label,provenance:"USER_DECLARED_PROSPECTIVE"}:null}));setDirty(true);}}/></label>
+        <div aria-label="Participants du Before">{beforeDescription.people.map(p=><button type="button" key={prospectivePersonIdentity(p)} aria-label={`Retirer du Before ${barPersonLabel(p,model)}`} onClick={()=>{setBeforeDescription(v=>({...v,people:v.people.filter(other=>prospectivePersonIdentity(other)!==prospectivePersonIdentity(p))}));setDirty(true);}}>{barPersonLabel(p,model)} ×</button>)}</div>
+        <label>Personne du Before<input maxLength={120} value={personName} onChange={e=>{setPersonName(e.target.value);setDirty(true);}}/></label>
+        <button type="button" disabled={!personName.trim()} onClick={()=>{const person:ProspectivePersonRef={kind:"TEXT",label:personName.trim()};setBeforeDescription(v=>({...v,people:v.people.some(p=>prospectivePersonIdentity(p)===prospectivePersonIdentity(person))?v.people:[...v.people,person]}));setPersonName("");setDirty(true);}}>Ajouter cette personne au Before</button>
+        {candidates.map(p=><button type="button" key={prospectivePersonIdentity(p)} disabled={beforeDescription.people.some(other=>prospectivePersonIdentity(other)===prospectivePersonIdentity(p))} onClick={()=>{setBeforeDescription(v=>({...v,people:[...v.people,p]}));setDirty(true);}}>{barPersonLabel(p,model)}</button>)}
+        <button type="button" disabled={!canSaveBuffer()} onClick={saveBeforeDescription}>Retenir le moment Before</button>
+      </fieldset>}
+      <BarMomentRail label="Objets Before" addLabel="Ajouter un objet au Before" disabled={busy||beforeLocked} dropBlocked={dirty} add={()=>selectMoment("before")} model={model} owner={before.child.contextOccurrenceId} slot="extras">{listGroups([...(before.bottle?[before.bottle]:[]),...before.extras]).map(group=>{const item=group.items[0];return <div key={group.key} data-bar-before-item={item.selectionId} data-bar-active-tile={page==='row'&&group.items.some(i=>i.selectionId===row.id)} className={page==='row'&&group.items.some(i=>i.selectionId===row.id)?styles.barActiveTile:styles.barEconomicTile}><BarComponentGroup group={group} model={model} owner={before.child.contextOccurrenceId} slot="$before" disabled={busy||beforeLocked} choose={chosen=>chosen.kind==='COMPONENT'&&editComponent(chosen.selectionId===before.bottle?.selectionId?'before-main':'before-extras',chosen)}>{page==='row'&&group.items.some(i=>i.selectionId===row.id)&&activeRow}</BarComponentGroup></div>;})}</BarMomentRail>
 
     </section>}
-    {!before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-section="before" data-bar-empty="true"><h4>Before</h4><button type="button" className={styles.barInlineAdd} disabled={busy} onClick={()=>selectMoment("before")}>+ Before</button></section>}
+    {!before&&["summary","before","drinks","row"].includes(page)&&<section className={styles.barItemSection} data-bar-section="before" data-bar-empty="true"><h4>Before</h4>{props.beforeN2Access && <button type="button" className={styles.barInlineAdd} disabled={busy} onClick={createBefore}>Prévoir un Before</button>}<button type="button" disabled={busy} onClick={()=>selectMoment("before")}>Ajouter une consommation Before</button></section>}
     {(["extras","before","food","main"] as const).map(key=>{
       const items=barItems(context,key).filter(item=>(item.kind==="COMPONENT"||item.kind==="CHILD_CONTEXT")&&item.selectionId!==consumption?.directSelectionId);
       if(key==="before"&&before)return null;

@@ -3,6 +3,7 @@ import { parsePlannerJsonObject, plannerDigest, plannerKeys, plannerMonth, plann
 import { presetForContext } from "./composer-presets";
 import { restaurantIncludedDetails } from "./restaurant-included-details";
 import { validateNightOutConsumption, validateGlobalConsumption } from "./night-out-consumption";
+import { validateBeforeMoments } from "./before-moment";
 
 export const PLAN_SEMANTIC_STATE_VERSION = "month-plan-state@v1" as const;
 /** C3/C6 validate each value through its target capability; the core has no category taxonomy. */
@@ -59,6 +60,7 @@ export function parsePlanSemanticState(raw: unknown): PlanSemanticStateV1 {
   const contexts = array(value.contexts).map(parsePlannedContextState).sort((a, b) => a.contextOccurrenceId < b.contextOccurrenceId ? -1 : a.contextOccurrenceId > b.contextOccurrenceId ? 1 : 0);
   for (const context of contexts) validateNightOutConsumption(context);
   for (const context of contexts) restaurantIncludedDetails(context);
+  validateBeforeMoments(contexts, String(value.targetMonth));
   validateGlobalConsumption(contexts);
   const byContext = new Map(contexts.map(item => [item.contextOccurrenceId, item]));
   if (byContext.size !== contexts.length) throw new TypeError("PLANNER_CONTEXT_ID_DUPLICATE");

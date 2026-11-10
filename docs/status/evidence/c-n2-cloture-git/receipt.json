@@ -1,0 +1,353 @@
+{
+  "mission": "C-N2-CLOTURE-GIT",
+  "checkedAt": "2026-11-05T21:01:04.842Z",
+  "ancestor": "8bdbcaf8e88d03555e91c81e944a13fdbd18d4c2",
+  "referencePr": 101,
+  "referencePrHead": "8bdbcaf8e88d03555e91c81e944a13fdbd18d4c2",
+  "main": "c53f1fe2abdf6ced0a7aa8756818fefd2ddf7b7b",
+  "branch": "codex/c-n2-before-cloture-git",
+  "initialSnapshot": {
+    "files": 30,
+    "allHashesPreserved": true
+  },
+  "sourceInputs": [
+    {
+      "file": "scripts/before-admission/README.md",
+      "sha256": "b7cf2862d9eb2ae0a092e1f02153cfc9626ac8b14f049f78b10c68dfe65158cd",
+      "gitBlob": "cc434c926e39ffbdbac8447a88edf61401d119d1",
+      "changedSinceInitial": true
+    },
+    {
+      "file": "scripts/before-admission/active-plan-fixture.mjs",
+      "sha256": "5c81b962b591ec3becc80c860bc8d5539dea56e348cb87815a66b99f3d018acc",
+      "gitBlob": "104b96f03ff842ed0cb6ccf98a2e05ceb931276b",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "scripts/before-admission/counter-tests.mjs",
+      "sha256": "5fb35e0efbbbc6ac7d5bec9aa0310b0a7825f59bc18d8ad94d71ff92359110aa",
+      "gitBlob": "3b4542fe221231ace6da3606ac49aea8022b3997",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "scripts/before-admission/database.mjs",
+      "sha256": "4c6430eaecfa8f1328c94992d025157c51e6a94d6e8914eee8f0f09778e04a95",
+      "gitBlob": "b3cad5293b779b6a6df3a82352b532cbee4f5df9",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "scripts/before-admission/finalisation-tests.mjs",
+      "sha256": "4402b5c547a32206c73e62ace6dd200d1155d7d033617c2e82e606ac1de7734a",
+      "gitBlob": "e1abb5cb3bc5e6e5e4390394c0801b397823ccf4",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "scripts/before-admission/frames.mjs",
+      "sha256": "5255fe8a0b1ce22ae02e9af9cb9e4aeb948aa7ed5381c4cbf7f16a8f944fc140",
+      "gitBlob": "a72c4b22fa303b6ae253b7517cc68e6d6d7381c6",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "scripts/before-admission/history-window-tests.mjs",
+      "sha256": "c6d73430c3284d5e777b782a3f684a50b512101fff197167da30eb90c6e0d753",
+      "gitBlob": "aab9b8a0ad182f592f931bbea2bba6739930d57e",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "scripts/before-admission/http-tests.mjs",
+      "sha256": "11320c545d0f66009920916c229c710153ef2117a2d54ef2443d6838adc2986e",
+      "gitBlob": "c1ce0ee7a436b21d37a7a64decd0da2f9db83c3c",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "scripts/before-admission/runtime.mjs",
+      "sha256": "60e10c9ed2b9afc9a5baa104c3a8fcdf7721f2e6e3708f779d7b4ea5f66f44db",
+      "gitBlob": "2f6b8044184c8b947f992710e204969e940bf5b7",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "scripts/before-admission/shell-tests.mjs",
+      "sha256": "471c34fa70cbb4b65f26cba98f80b79016aac6007e1c0e58e17b23ed7e68f1ac",
+      "gitBlob": "d55c16860e28381021c2be8e0ea04f8c264a57f8",
+      "changedSinceInitial": true
+    },
+    {
+      "file": "scripts/before-admission/specialised-history-tests.mjs",
+      "sha256": "0433a438864f0656982bd3740ec912ab70c9579c8954357147c985f2e527001d",
+      "gitBlob": "84b6312bc04efedecb062ff091e1db943305ed7e",
+      "changedSinceInitial": true
+    },
+    {
+      "file": "scripts/before-admission/tests.mjs",
+      "sha256": "28f95093aa2c4182f6e83bb6820cf149a52b63384f3704a66c2e36bd74538126",
+      "gitBlob": "7e32ddb7d5900a82e9c8550e5afa6a93fb6c3c85",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "scripts/check-before-admission.mjs",
+      "sha256": "7c4c84e8910e86c09458598ff059c51737961df1218597dc8971974fc9b72907",
+      "gitBlob": "335823e77669658a092ea673c49c0e892f983d42",
+      "changedSinceInitial": true
+    },
+    {
+      "file": "src/app/api/composer/drafts/route.ts",
+      "sha256": "b98195213f3b14048df97bf2cf0c972b907aa6ae3ff3da89dfa034759f12b817",
+      "gitBlob": "4163fb909353158abbed5dc49c32dc157f936822",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/before-draft-history.ts",
+      "sha256": "367e5a643968ef000f2aca092214496c870f325541638c66832de54bafc8523f",
+      "gitBlob": "b2bb39d25ab58998947fde710db5bdf7c6d7e005",
+      "changedSinceInitial": true
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "sha256": "dc542bd59b52c2636584aae53ca6badd61df92019955d8a986c06e4367b57e74",
+      "gitBlob": "e3c22887fe8a76e2c2b83fcfe8f977772c16814e",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/draft-http-transport.ts",
+      "sha256": "e6b4f180af943893ce9873febeb4d3c063dd4b17cf579fe41b89f148c22beb69",
+      "gitBlob": "72dd8cbe47ae0343c8c7e20b3bee7c4182ddea69",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "src/app/mois-a-venir/composer/durable-draft.ts",
+      "sha256": "a3218c9c1c67053d6499ab611ccd94880aa59f92db193794e864fa2a740a91ca",
+      "gitBlob": "d94b9d3cdfaeb726eedb87b074bdf84c6b9044b5",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "src/domain/phase2/planner/before-draft-contract.ts",
+      "sha256": "f247919f6e58ed5d9d1812d92b91828db963720b7b0fa1648a27bad83a963e97",
+      "gitBlob": "24403cf6cb26272d557b2d589db320f6ae5adfff",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "src/domain/phase2/planner/composer-draft-contract.ts",
+      "sha256": "ec2f9533bee6d19b7ef6f3986358b2a7d46808c25e9e3343ae9d33069c97724f",
+      "gitBlob": "9d69f4bb2e9a539538c6355d969f924a391a49f1",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "src/server/phase2/planner/before-draft-admission.ts",
+      "sha256": "cd6f64de7b78cbf7d3f28e4314704e5d097bf1d3dc4b1d0818d2c191a2ad650e",
+      "gitBlob": "57c97686f2b749ebfa9e27e1598d89f36f763f69",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "src/server/phase2/planner/before-draft-executor.ts",
+      "sha256": "9121ad9568249ae890700b6c9b7766e731a05f1d31491e159fe9bb129166b8d8",
+      "gitBlob": "71db79ae06484b3b708f8bc9ebb975cc0355b8d5",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "src/server/phase2/planner/composer-draft-service.ts",
+      "sha256": "624b91f65e13ae1b3cd0c1cfce96062e5ce60082bea273c56401eed3ad2694df",
+      "gitBlob": "a2dc2948962a6952b848f7852c67b4221600133b",
+      "changedSinceInitial": false
+    },
+    {
+      "file": "supabase/migrations/20261105184847_composer_before_admission.sql",
+      "sha256": "0a74b17ca56102fa0e21ae81de127411cc2f40b9ca103cd5b292c45fe7343e18",
+      "gitBlob": "aefd12d3e40521f400b5a27c5053e55ab088a7c7",
+      "changedSinceInitial": true
+    }
+  ],
+  "tests": {
+    "proofs": [
+      {
+        "file": "outputs/before-admission/proof.json",
+        "sha256": "5b2aa941cdca4227c42a80a950d5b53a642af523b904ee7a16b6ddaaf2ab8961",
+        "groups": 18,
+        "allPass": true,
+        "closure": {
+          "databaseClosed": true
+        }
+      },
+      {
+        "file": "outputs/before-admission/shell-proof.json",
+        "sha256": "b7ecef2d68b38b900600ecf3fff9dab3b6ea655afd318e14585eeedb65074845",
+        "groups": 7,
+        "allPass": true,
+        "closure": {
+          "databaseClosed": true
+        }
+      },
+      {
+        "file": "outputs/before-admission/http-proof.json",
+        "sha256": "41885db95a46ad888af478eb2c81f936e639d085829fac01ae3a47a759faab67",
+        "groups": 6,
+        "allPass": true,
+        "closure": {
+          "databaseClosed": true,
+          "serverClosed": true
+        }
+      },
+      {
+        "file": "outputs/before-admission/counter-proof.json",
+        "sha256": "38c13ab5a0690ff4d26634fe267af40de8b74e88f416b3c532db67811382aaba",
+        "groups": 5,
+        "allPass": true,
+        "closure": {
+          "databaseClosed": true
+        }
+      },
+      {
+        "file": "outputs/before-admission/finalisation-proof.json",
+        "sha256": "b9511b37617bdbdf790860f80d6120db27c480b6fc8b7effb8c554041c09a975",
+        "groups": 17,
+        "allPass": true,
+        "closure": {
+          "allDatabasesClosed": true
+        }
+      },
+      {
+        "file": "outputs/before-admission/history-window-proof.json",
+        "sha256": "435da3fc0c5ffb481f358a3e0d88ad6265711850c408899131e43c5ba16cbe15",
+        "groups": 1,
+        "allPass": true,
+        "closure": {
+          "databaseClosed": true
+        }
+      },
+      {
+        "file": "outputs/before-admission/specialised-history-proof.json",
+        "sha256": "426c18aadb0cac1e486bf01cb9bd2885549f1f933791acf5e2c71eb6aa79ae2b",
+        "groups": 5,
+        "allPass": true,
+        "closure": {
+          "allDatabasesClosed": true
+        }
+      }
+    ],
+    "integratedGroups": 59,
+    "integratedPass": true,
+    "beforeMoment": {
+      "groups": 24,
+      "allPass": true,
+      "goldens": [
+        {
+          "semantic": "6e820aa7d32d28e7a10a8d1a013826939a1bda33ecb29a49fda7d63409172b75",
+          "registry": "8b83824f1a47f6509a4f7876fa8416dd1fa7698f55bf1826d4137697d35d8a79",
+          "manifest": "1fe932e2b046311551aed0613a52c513413106720e3ded56ea7601e537184973",
+          "compiled": "93837f2ec1fdcce9939ae5bff758da36c67e992736ca5b85add4af733d8dc692",
+          "projection": "845f0fea1716cd9edfbf63a1cb4a73a289ec4802390ea61061323dfa8b5da244",
+          "total": "51.00"
+        },
+        {
+          "semantic": "444e9a251a720cf58b9d1a28dd44846993313b3d693528505a898877a9aea772",
+          "registry": "279865a2e4d7faba99dd9685c6496303809f064d552854806a063680a6c47adb",
+          "manifest": "fef153041a05ad9397bb42519463571f01791b30d14ec60560161c770d9ffadd",
+          "compiled": "da77f713bca24df4bdd46f7b6470902f158b428bba17ef42af2a965d188ca976",
+          "projection": "1dc6b2819f1993be9e51922782528fcf3615d1dfb5134529e2dac8edb098c5bc",
+          "total": "51.00"
+        },
+        {
+          "semantic": "4041d0c38b052c96aca1564e6391623b8e756f18915227d99b21c6f6c1e081f5",
+          "registry": "bd4be26971dc8dd6cbebb622c5eb7e3652b7c1bfc8003fb7498ccdaad15e37b3",
+          "manifest": "0e595d588b020ac0683fc34f7ffc152808a2c02c852a6995d38e7eb2634bfdd4",
+          "compiled": "dcffec111c3abbbd190e7b3d441a704753eb323c51b8ea57ecde02f715abcd82",
+          "projection": "5330fa46c566d307b606141d11477812f98d7ea9ec732428080c9281b1d98aec",
+          "total": "71.00"
+        },
+        {
+          "semantic": "96a66c9214249c65a217e500ffe51f988781321db9138ea9cb944eab5a2c8c2c",
+          "registry": "bd4be26971dc8dd6cbebb622c5eb7e3652b7c1bfc8003fb7498ccdaad15e37b3",
+          "manifest": "0863b8f3d9d397fedfb7dfa4c64298b34761676489e78959b47d5cb114c4bed4",
+          "compiled": "989ae9c64b8179c4cbee66fa562574a2fd9d277420a943cb79b7e99b61d18b97",
+          "projection": "b5096c10ce7d0abce6e12109e1796659d5cfa4aca3173eafedfc9f83ad6d46fe",
+          "total": "51.00"
+        }
+      ]
+    },
+    "d1": {
+      "groups": 12,
+      "allPass": true
+    },
+    "fixes": {
+      "groups": 15,
+      "allPass": true
+    },
+    "typescript": "PASS",
+    "diffCheck": "PASS"
+  },
+  "build": {
+    "classification": "BASELINE_BUILD_FAILURE",
+    "node": "v22.18.0",
+    "versions": {
+      "next": "16.2.6",
+      "typescript": "5.9.3",
+      "react": "19.2.6"
+    },
+    "sameVersions": true,
+    "samePhysicalDependencies": true,
+    "sameChainSources": true,
+    "logs": [
+      {
+        "file": "baseline-build.log",
+        "sha256": "40437a50c4d0271262f944e05e4f030b333e626c00f4107ba11ad7ae8cf5b676",
+        "exit": 1,
+        "nodeCrypto": true,
+        "chain": [
+          "src/analytics/history-v2/facts-hash.ts",
+          "src/analytics/history-v2/index.ts",
+          "src/query-api/history-v2/builders.ts",
+          "src/query-api/history-v2/index.ts",
+          "src/query-api/index.ts",
+          "src/components/runtime/exploration-runtime-host.tsx"
+        ]
+      },
+      {
+        "file": "candidate-build.log",
+        "sha256": "40437a50c4d0271262f944e05e4f030b333e626c00f4107ba11ad7ae8cf5b676",
+        "exit": 1,
+        "nodeCrypto": true,
+        "chain": [
+          "src/analytics/history-v2/facts-hash.ts",
+          "src/analytics/history-v2/index.ts",
+          "src/query-api/history-v2/builders.ts",
+          "src/query-api/history-v2/index.ts",
+          "src/query-api/index.ts",
+          "src/components/runtime/exploration-runtime-host.tsx"
+        ]
+      }
+    ],
+    "clientBundle": {
+      "result": "PASS",
+      "platform": "browser",
+      "inputs": 32,
+      "serverImports": 0,
+      "entries": [
+        {
+          "file": "src/app/mois-a-venir/composer/before-draft-history.ts",
+          "sha256": "367e5a643968ef000f2aca092214496c870f325541638c66832de54bafc8523f"
+        },
+        {
+          "file": "src/app/mois-a-venir/composer/durable-draft.ts",
+          "sha256": "a3218c9c1c67053d6499ab611ccd94880aa59f92db193794e864fa2a740a91ca"
+        }
+      ]
+    }
+  },
+  "historicalClean": true,
+  "baselineClean": true,
+  "preferenceInverse": "STOP_LOCAL[OWNER_CONTRACT_REQUIRED]",
+  "specialisedInverses": "EXACT_EXISTING_OWNER_SUBSET_RECEIVED",
+  "gates": {
+    "SAVED_ISOLATED": "PASS",
+    "BROWSER_UI": "NOT_RUN",
+    "BROWSER_FOCUS": "NOT_RUN",
+    "NATIVE_CONCURRENCY": "NOT_RUN",
+    "AUTH_RLS": "NOT_RUN",
+    "SAVED_AUTH": "NOT_RUN",
+    "FRESH": "NOT_RUN",
+    "APPLIED": "NOT_RUN",
+    "PRODUCTION": "NOT_RUN",
+    "SQL_CHANNEL": "NOT_PROVISIONED"
+  },
+  "migrationWhitespaceOnlySinceInitial": true,
+  "migrationReceiptNote": "One whitespace-only blank line removed after test receipt for staged diff check; executable SQL unchanged."
+}

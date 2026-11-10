@@ -2,6 +2,8 @@ import { parsePlanSemanticState, type PlanSemanticStateV1, type PlannedContextSt
 import type { ComponentSelectionV1 } from "./component-contract";
 import type { PlannerJson } from "./json";
 import { plannerDigest } from "./json";
+import { plannerKeys, plannerRecord, plannerUuid } from "./json";
+import { beforeMoment, assertBeforeOwnerWritable, assertBeforeWritable, validateBeforeTransition, validateBeforeMomentRemoval, type BeforeMomentEdit, type BeforeMomentRemoval } from "./before-moment";
 import { plannedAsset, PLANNED_ASSET_CATALOG_VERSION } from "../planned-assets";
 import {parseNightOutVenue,sameVenuePlace,parseVenueEndpoints} from "./night-out-venue";
 import {parseRouteEndpointBindings} from "./route-endpoint";
@@ -17,7 +19,7 @@ export type NightOutEdit = Readonly<{
   fields: Readonly<Record<string, PlannerJson>>;
   /** Omitted sockets retain their entire prior structure, including child contexts. */
   slots?: Readonly<Partial<Record<"main" | "food" | "extras" | "outbound" | "return", readonly ComponentSelectionV1[]>>>;
-  before?: NightOutBeforeEdit | null;
+  before?: NightOutBeforeEdit | BeforeMomentEdit | BeforeMomentRemoval | null;
   consumption?: NightOutConsumptionCommand;
   globalConsumption?: NightOutGlobalCommand;
   coverageReplacement?:Readonly<{version:"night-out-coverage-replacement@v1";selectionId:string;expectedComponentDigest:string}>;
@@ -93,18 +95,51 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
   if (edit.before !== undefined && formerChildId && protectedContext(formerChildId)) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
   let newChild: PlannedContextState | null = null;
   if (edit.before !== undefined) {
-    if (edit.before === null) slots.before = { items: [] };
+    assertBeforeOwnerWritable(state, parent);
+    if (edit.before === null) {
+      const prior = state.contexts.find(c => c.contextOccurrenceId === formerChildId);
+      if (prior && beforeMoment(prior)) throw new TypeError("BEFORE_MOMENT_OWNER_REQUIRED");
+      slots.before = { items: [] };
+    }
+    else if ("version" in edit.before && edit.before.version === "before-moment-remove@v1") {
+      validateBeforeMomentRemoval(state, parent, edit.before);
+      slots.before = { items: [] };
+    }
     else {
       const before = edit.before;
       const prior = state.contexts.find(c => c.contextOccurrenceId === before.childContextOccurrenceId);
+      const versioned = "version" in before;
+      if (versioned) {
+        plannerKeys(plannerRecord(before), ["version", "expectedStateDigest", "childContextOccurrenceId", "selectionId", "fields", "consumption"]);
+        if (before.version !== "before-moment-edit@v1") throw new TypeError("BEFORE_MOMENT_COMMAND_INVALID");
+        if (before.expectedStateDigest !== plannerDigest(state)) throw new TypeError("BEFORE_MOMENT_STALE");
+        plannerUuid(before.childContextOccurrenceId); plannerUuid(before.selectionId);
+        plannerKeys(plannerRecord(before.fields), ["label", "plannedDate", "placeRef", "participantRefs"], []);
+        plannerKeys(plannerRecord(before.consumption), before.consumption.kind === "NONE" ? ["kind"] : ["kind", "main", "extras"]);
+        if (!["NONE", "ITEMS"].includes(before.consumption.kind)) throw new TypeError("BEFORE_MOMENT_COMMAND_INVALID");
+        if (formerBefore && (!formerChildId || formerChildId !== before.childContextOccurrenceId
+          || typeof formerBefore !== "object" || Array.isArray(formerBefore) || formerBefore.selectionId !== before.selectionId)
+          || prior && prior.contextOccurrenceId !== formerChildId) throw new TypeError("BEFORE_MOMENT_IDENTITY_CHANGED");
+      } else if (prior && beforeMoment(prior)) throw new TypeError("BEFORE_MOMENT_OWNER_REQUIRED");
       if (prior && (prior.templateKey !== "activity" || prior.parentContextOccurrenceId !== parent.contextOccurrenceId))
         throw new TypeError("COMPOSER_NIGHT_OUT_CHILD_INVALID");
       if (!prior && state.contexts.some(c => c.contextOccurrenceId === before.childContextOccurrenceId))
         throw new TypeError("COMPOSER_NIGHT_OUT_CHILD_ID_REUSED");
-      newChild = { contextOccurrenceId: before.childContextOccurrenceId, templateKey: "activity", status: "ACTIVE",
+      const childFields = { ...(prior?.fields ?? { fieldSchemaVersion: "context-fields@v2", label: "Before" }) };
+      if (versioned) {
+        for (const [key, value] of Object.entries(before.fields)) {
+          if (value === "") delete childFields[key]; else childFields[key] = value;
+        }
+        childFields.fieldSchemaVersion = "context-fields@v7";
+        childFields.beforeMoment = { version: "before-moment@v1", consumption: before.consumption.kind };
+      }
+      const mainItems = versioned ? before.consumption.kind === "NONE" ? [] : [before.consumption.main] : [before.bottle];
+      const extraItems = versioned ? before.consumption.kind === "NONE" ? [] : before.consumption.extras : before.extras;
+      newChild = { ...prior, contextOccurrenceId: before.childContextOccurrenceId, templateKey: "activity", status: "ACTIVE",
         parentContextOccurrenceId: parent.contextOccurrenceId, provenance: "EXPLICIT_USER_DECISION",
-        fields: prior?.fields ?? { fieldSchemaVersion: "context-fields@v2", label: "Before" },
-        slotSelections: { ...prior?.slotSelections, main: { items: [before.bottle] }, extras: { items: before.extras } } };
+        fields: childFields,
+        slotSelections: { ...prior?.slotSelections, main: { items: mainItems }, extras: { items: extraItems } } };
+      if (prior) assertBeforeWritable(state, prior, newChild);
       slots.before = { items: [{ selectionId: before.selectionId, optionKey: "activity", kind: "CHILD_CONTEXT",
         childContextOccurrenceId: before.childContextOccurrenceId, provenance: "EXPLICIT_USER_DECISION" }] };
     }
@@ -120,6 +155,11 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
     c.contextOccurrenceId === parent.contextOccurrenceId ? { ...c, fields, slotSelections: slots }
       : newChild && c.contextOccurrenceId === newChild.contextOccurrenceId ? newChild : c);
   if (newChild && !state.contexts.some(c => c.contextOccurrenceId === newChild.contextOccurrenceId)) contexts.push(newChild);
+  if (edit.before !== undefined) {
+    assertBeforeWritable(state, parent, contexts.find(c => c.contextOccurrenceId === parent.contextOccurrenceId));
+    const priorChild = state.contexts.find(c => c.contextOccurrenceId === formerChildId);
+    if (priorChild) assertBeforeWritable(state, priorChild, newChild ?? undefined);
+  }
   for (const context of contexts.filter(c => c.contextOccurrenceId === parent.contextOccurrenceId || c.contextOccurrenceId === newChild?.contextOccurrenceId)) {
     const prior = state.contexts.find(c => c.contextOccurrenceId === context.contextOccurrenceId);
     for (const [slot, selection] of Object.entries(context.slotSelections)) if (Array.isArray(selection.items)) for (const item of selection.items) {
@@ -137,5 +177,7 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
         || ref.provenance !== "EXPLICIT_USER_DECISION" || ref.labelAtSelection !== asset.label) throw new TypeError("CONTEXT_PRODUCT_ASSET_UNKNOWN");
     }
   }
-  return parsePlanSemanticState(refreshGlobalConsumption({ ...state, contexts }));
+  const next = parsePlanSemanticState(refreshGlobalConsumption({ ...state, contexts }));
+  validateBeforeTransition(state, next, edit);
+  return next;
 }

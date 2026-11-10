@@ -3,6 +3,7 @@ import { plannerMonth, plannerRecord } from "@/domain/phase2/planner/json";
 import type { ComposerDraftLifecycleCommand, ComposerDraftSaveCommand } from "@/domain/phase2/planner/composer-draft-contract";
 import { COMPOSER_DRAFT_HTTP_CONTRACT } from "@/domain/phase2/planner/composer-draft-contract";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
+import { executeBeforeDraft } from "@/server/phase2/planner/before-draft-executor";
 import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
 import { changeComposerDraftLifecycle, readComposerDrafts, saveComposerDraft, type DraftObservation } from "@/server/phase2/planner/composer-draft-service";
 
@@ -16,10 +17,10 @@ function reply(value: unknown, status = 200) {
 }
 
 async function scope() {
-  const { supabase, userId, householdId } = await authorizedPlanner();
+  const { supabase, userId, householdId, deps } = await authorizedPlanner();
   if (!composerDraftAutosaveEnabledFor(userId)) throw new TypeError("COMPOSER_DRAFT_DISABLED");
   const correlation = crypto.randomUUID();
-  return { supabase, userId, householdId, ...(process.env.COMPOSER_DRAFT_DIAGNOSTICS === "1" ? {
+  return { supabase, userId, householdId, before: { deps, write: executeBeforeDraft }, ...(process.env.COMPOSER_DRAFT_DIAGNOSTICS === "1" ? {
     observe: (event: DraftObservation) => console.info("composer_draft_phase", { correlation, ...event }),
   } : {}) };
 }
