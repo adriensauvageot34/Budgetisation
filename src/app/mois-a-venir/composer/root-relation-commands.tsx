@@ -5,10 +5,11 @@ import type { RootContextRelationV1, RootRelationCapabilities, RootRelationMutat
 import { useWorkshopRaw } from "./inline-edit-registry";
 import styles from "./root-relation-commands.module.css";
 export const ROOT_COMMAND_BUFFER = "root-relation-command";
-export function RootRelationCommands({ model, relations, capabilities, busy, error, command, close, abandon, undo, redo, canUndo, canRedo }: {
+export function RootRelationCommands({ model, relations, capabilities, busy, error, command, close, abandon, undo, redo, canUndo, canRedo, durable }: {
   model: ComposerUiModel; relations: readonly RootContextRelationV1[]; capabilities: RootRelationCapabilities | null;
   busy: boolean; error: string | null; command(mutation: RootRelationMutation, focusId?: string): Promise<boolean>;
   close(): void; abandon(): void; undo(): void; redo(): void; canUndo: boolean; canRedo: boolean;
+  durable?: { status: string; save(): void };
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [first, setFirst] = useState(""), [second, setSecond] = useState(""), [additional, setAdditional] = useState<Record<string, string>>({});
@@ -28,7 +29,9 @@ export function RootRelationCommands({ model, relations, capabilities, busy, err
   return <dialog ref={dialog} className={styles.dialog} data-root-commands aria-labelledby="root-command-title"
     onCancel={event => { event.preventDefault(); guarded(close); }}>
     <h2 id="root-command-title" tabIndex={-1}>Organiser une sortie</h2>
-    <p className={styles.notice}>Organisation locale non sauvegardée. Sauvegarde et transformation en Plan suspendues jusqu’à l’abandon explicite. Un rechargement complet perd cette organisation après avertissement.</p>
+    <p className={styles.notice}>{durable ? durable.status === "SAVED" ? "Brouillon organisationnel sauvegardé. Trajets non évalués ; aucun Plan appliqué."
+      : "Organisation à enregistrer comme brouillon. Les trajets inconnus restent inconnus ; aucun Plan n’est appliqué."
+      : "Organisation locale non sauvegardée. Sauvegarde et transformation en Plan suspendues jusqu’à l’abandon explicite. Un rechargement complet perd cette organisation après avertissement."}</p>
     <p>Seules les activités déjà sauvegardées peuvent être reliées. Les activités sauvegardées doivent garder leur identité, mois, rattachement et protections ; enregistrez d’abord leurs suppressions ou changements de protection hors organisation. Les montants financiers locaux restent conservés.</p>
     {error && <p role="alert">{error}</p>}
     <section aria-label="Nouvelle sortie">
@@ -53,6 +56,7 @@ export function RootRelationCommands({ model, relations, capabilities, busy, err
       <button disabled={busy || !allowed("REMOVE_ROOT_RELATION", relation.relationId)} onClick={() => void command({ kind: "REMOVE_ROOT_RELATION", relationId: relation.relationId })}>Dissoudre le groupe</button>
     </section>)}
     <footer><button disabled={busy || !canUndo} onClick={() => guarded(undo)}>Annuler</button><button disabled={busy || !canRedo} onClick={() => guarded(redo)}>Rétablir</button>
+      {durable && <button data-root-dialog-save disabled={busy} onClick={() => guarded(durable.save)}>Enregistrer le brouillon</button>}
       <button disabled={busy} onClick={() => guarded(close)}>Fermer</button><button disabled={busy} onClick={() => guarded(abandon)}>Abandonner l’organisation locale</button></footer>
   </dialog>;
 }

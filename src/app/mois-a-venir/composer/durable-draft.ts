@@ -3,6 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ComposerDraftLifecycleCommand, ComposerDraftResult, ComposerDraftSaveCommand,
   ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
+import type { RootRelationPlanState } from "@/domain/phase2/planner/root-relation-contract";
+import type { CompatibleStoredRootRelationDraft, RootRelationDraftSavePacket } from "@/domain/phase2/planner/root-relation-draft-contract";
+import type { RootRelationDurableSnapshot, RootRelationDurableTransport } from "@/domain/phase2/planner/root-relation-durable-contract";
+import { rootRelationStateDigest } from "@/domain/phase2/planner/root-relation-state";
+import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
+import { validateRootRelationDraftReload, validateRootRelationDraftSaveReceipt } from "@/domain/phase2/planner/root-relation-draft-boundary";
 
 export type DraftTransport = {
   read: (month: string) => Promise<ComposerDraftSnapshot>;
@@ -159,4 +165,93 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
   const suspendNow = () => { if (inFlight.current) return false; suspension.current = true; clearTimer(); return true; };
   return { snapshot, status, message, online, retry, refresh, lifecycle, suspendNow,
     unsaved: !!transport && stateDigest !== confirmed.current, enabled: !!transport };
+}
+
+const durableIdentity = (record: CompatibleStoredRootRelationDraft) => {
+  const { lastSavedAt: _saved, archivedAt: _archived, ...identity } = record;
+  return canonicalPlannerJson(identity);
+};
+
+/** N1 owns the COMPLETE document while its session is active. It has one explicit Save,
+ * never a second timer competing with the suspended V1 autosave. A receipt advances CAS,
+ * not the local decision/history; a late receipt therefore cannot overwrite newer work. */
+export function useRootRelationDurableDraft(transport: RootRelationDurableTransport | null,
+  initial: RootRelationDurableSnapshot | null, document: RootRelationPlanState, active: boolean) {
+  const [snapshot, setSnapshot] = useState(initial), known = useRef(initial?.active ?? null);
+  const [saving, setSaving] = useState(false), inFlight = useRef(false);
+  const [failure, setFailure] = useState<string | null>(null);
+  const current = useRef(document); current.current = document;
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => { if (!active && !inFlight.current) { known.current = initial?.active ?? null; setSnapshot(initial); } }, [initial, active]);
+  const pending = useRef<{ packet: RootRelationDraftSavePacket; source: CompatibleStoredRootRelationDraft } | null>(null);
+  const digest = rootRelationStateDigest(document);
+  const unsaved = active && digest !== known.current?.digest;
+  const acceptRecord = (record: CompatibleStoredRootRelationDraft) => {
+    known.current = record;
+    setSnapshot(previous => previous ? { ...previous, active: record, baseStale: false } : previous);
+  };
+  const save = async () => {
+    if (!transport || !active || inFlight.current || !navigator.onLine) return false;
+    inFlight.current = true; setSaving(true); setFailure(null);
+    try {
+      // After an uncertain response, a DIFFERENT local proposal first reconciles the
+      // exact prior command. Never replace it blindly with a new requestId/version.
+      if (pending.current && pending.current.packet.command.digest !== rootRelationStateDigest(current.current)) {
+        const previous = pending.current, latest = await transport.read(document.targetMonth);
+        if (!mounted.current) return false;
+        if (!latest.active || latest.baseStale) throw new TypeError("N1_DRAFT_CONFLICT");
+        if (latest.active.lastMutationRequestId === previous.packet.command.requestId) {
+          validateRootRelationDraftSaveReceipt(previous.packet, { contract: previous.packet.contract, kind: "SAVE_RECEIPT",
+            draft: latest.active, replayed: true }, previous.source, previous.packet.command.semanticState);
+          acceptRecord(latest.active);
+        } else if (durableIdentity(latest.active) !== durableIdentity(previous.source)) throw new TypeError("N1_DRAFT_CONFLICT");
+        pending.current = null;
+      }
+      const source = known.current;
+      if (!source || snapshot?.baseStale) throw new TypeError("N1_DRAFT_BINDING_INVALID");
+      if (!pending.current) {
+        const semanticState = current.current;
+        pending.current = { source, packet: { contract: "composer-draft-http@2-root-relations", kind: "SAVE", command: {
+          targetMonth: semanticState.targetMonth, expectedDraftId: source.draftId, expectedDraftVersion: source.version,
+          expectedDocumentVersion: source.semanticState.version, expectedDraftDigest: source.digest,
+          expectedBaseRevisionId: source.baseRevisionId, expectedBaseRevisionNumber: source.baseRevisionNumber,
+          requestId: crypto.randomUUID(), semanticState, digest: rootRelationStateDigest(semanticState),
+        } } };
+      }
+      const request = pending.current, receipt = await transport.save(request.packet);
+      if (!mounted.current) return false;
+      // Validate the committed command first, then leave any newer local document DIRTY.
+      validateRootRelationDraftSaveReceipt(request.packet, receipt, known.current, request.packet.command.semanticState);
+      acceptRecord(receipt.draft); pending.current = null;
+      return rootRelationStateDigest(current.current) === receipt.draft.digest;
+    } catch (error) {
+      if (mounted.current) setFailure(error instanceof Error && /^(N1_|AUTHENTICATION_)[A-Z0-9_]+$/u.test(error.message)
+        ? error.message : "N1_DURABLE_UNAVAILABLE");
+      return false;
+    } finally {
+      inFlight.current = false; if (mounted.current) setSaving(false);
+    }
+  };
+  const readForReload = async () => {
+    if (!transport || !active || inFlight.current || !known.current || rootRelationStateDigest(current.current) !== known.current.digest)
+      return null;
+    inFlight.current = true; setSaving(true); setFailure(null);
+    const start = rootRelationStateDigest(current.current), source = known.current;
+    try {
+      const latest = await transport.read(document.targetMonth);
+      if (!mounted.current) return null;
+      if (!latest.active || latest.baseStale || rootRelationStateDigest(current.current) !== start) throw new TypeError("N1_DRAFT_DIRTY_RELOAD");
+      validateRootRelationDraftReload(current.current, source, latest.active);
+      if (source.version === latest.active.version && durableIdentity(source) !== durableIdentity(latest.active))
+        throw new TypeError("N1_DRAFT_CONFLICT");
+      return latest;
+    } catch (error) {
+      if (mounted.current) setFailure(error instanceof Error ? error.message : "N1_DURABLE_UNAVAILABLE");
+      return null;
+    } finally { inFlight.current = false; if (mounted.current) setSaving(false); }
+  };
+  const status = saving ? "SAVING" : failure ? /CONFLICT|STALE|REUSED/.test(failure) ? "CONFLICT" : "ERROR"
+    : unsaved ? "DIRTY" : known.current?.semanticState.version === "month-plan-state@v2-root-relations" ? "SAVED" : "MEMORY";
+  return { snapshot, save, readForReload, status, failure, unsaved, saving, isInFlight: () => inFlight.current, enabled: !!transport };
 }
