@@ -13,6 +13,7 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { WorkshopComponentRow } from "./workshop-component-row";
+import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { fresh, fromSelection, buildComponentRow } from "./night-out-components";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { builderInput } from "../planned-builder-primitives";
@@ -82,6 +83,7 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
       tile("text","Autre personne",()=>setRecipient({kind:"TEXT",label:""})),tile("later","Plus tard",()=>setRecipient(undefined))]}:null);
   return <form data-gift-editor className={styles.nightEditor} onSubmit={event => { event.preventDefault(); save(); }}>
     {section === "summary" && <section className={styles.nightSection} data-gift-summary><h3>{objectLabel || "Cadeau à préciser"}</h3>
+      {assetKey && <ComposerAssetVisual assetKey={assetKey} iconKey="gift" />}
       <p>Le cadeau reste dans votre brouillon, même si sa date ou son prix sont inconnus.</p>
       {recipient && <p>Destinataire : {recipient.kind === "HOUSEHOLD_PERSON" ? householdPersons.find(person => person.personId === recipient.personId)?.displayName ?? "Personne indisponible" : prospectivePersonLabel(recipient) ?? "Contact indisponible"}</p>}
       {occasion && <p>Occasion : {occasion}</p>}

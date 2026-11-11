@@ -403,8 +403,11 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     choices: showCinemaSuggestions ? rankedCinema.map(suggestion => {
       const source = suggestion.sourceRow ? `Catalogue · Sortie · ligne ${suggestion.sourceRow}`
         : suggestion.category === "extra" ? "Règle métier additionnelle" : null;
-      return tile(suggestion.key, suggestion.label, () => chooseCinemaSuggestion(suggestion), suggestion.iconKey,
-        source ? `${suggestion.reason} · ${source}` : suggestion.reason, suggestion.action === "EDIT" || undefined);
+      const artwork: Readonly<Record<string, string>> = { 'billet-cinema': 'v22-art:excel:329', taxi: 'v22-art:excel:499',
+        popcorn: 'v22-art:extra:popcorn', boisson: 'v22-art:extra:boisson-generale' };
+      return { ...tile(suggestion.key, suggestion.label, () => chooseCinemaSuggestion(suggestion), suggestion.iconKey,
+        source ? `${suggestion.reason} · ${source}` : suggestion.reason, suggestion.action === "EDIT" || undefined),
+        visualConceptId: artwork[suggestion.conceptKey] };
     }) : step === "date" && cinemaWritable ? [
       tile("place", "Cinéma — Préciser le lieu", () => open("place"), "family-visit"),
       tile("people", "Participants — Préciser", () => open("participants"), "family-visit"), backToSummary,

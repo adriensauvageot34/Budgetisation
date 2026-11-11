@@ -88,6 +88,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const mascaraShortcut = mascara && posts.length <= 1
     ? mascaraEquipment(model, model.semanticState, context.contextOccurrenceId, posts[0]?.item) : undefined;
   const directChoice = mascaraShortcut ? { key: "mascara-price",
+    catalogAssetKey: 'beauty:mascara',
     label: mascaraShortcut.selection ? "Prix et quantité" : "Ajouter un produit", iconKey: mascaraShortcut.asset.iconKey,
     choose: () => choose(mascaraShortcut.asset, mascaraShortcut.target, mascaraShortcut.selection) }
     : directAsset && directPost ? { key: "direct-price", label: "Prix direct", iconKey: directAsset.iconKey,

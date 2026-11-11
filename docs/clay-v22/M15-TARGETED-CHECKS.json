@@ -1,0 +1,30 @@
+{
+  "status": "TARGETED_CHECKS_COMPLETED",
+  "counts": {
+    "P0": {
+      "connected": 43,
+      "preparedOnly": 0
+    },
+    "P1": {
+      "connected": 160,
+      "preparedOnly": 0
+    },
+    "P2": {
+      "connected": 0,
+      "preparedOnly": 429
+    }
+  },
+  "assets": 201,
+  "builderKeys": 345,
+  "applicationMediaFiles": 865,
+  "applicationMediaBytes": 16611390,
+  "sha256CheckedApplicationFiles": 865,
+  "sourcePNGCampaignsRerun": false,
+  "protectedCatalogKeysKept": 9,
+  "globalTypeScript": "COMPLETED_WITH_NO_ERRORS",
+  "presentationSmoke": "49 images par viewport desktop/mobile ; fallback historique puis icône vérifiés",
+  "financialOrServerFilesModified": false,
+  "legacyImagesOverwritten": false,
+  "production": "NOT_DEPLOYED",
+  "deferred": "M15-TESTS-A-EXECUTER-APRES-SESSION.md"
+}

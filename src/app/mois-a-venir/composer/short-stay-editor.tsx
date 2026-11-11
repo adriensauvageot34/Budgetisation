@@ -122,15 +122,17 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
   const tile=(key:string,label:string,choose:()=>void,selected=false,hint?:string)=>({key,label,choose,selected,hint,iconKey:"short-stay"});
   const openPost=(key:typeof postSection)=>{setExtraTopic(null);setPostSection(key);setPostPage(0);};
   const suggestedTopics = lodging && ["HOTEL", "HOSTEL", "RENTAL"].includes(lodgingKind) && slotAllowed("extras", "extra") ? extraTopics : [];
-  const suggestions = suggestedTopics.map(topic => tile(topic.key, `${topic.label} · Examiner pour ce séjour`, () => {
+  const suggestions = suggestedTopics.map(topic => ({...tile(topic.key, `${topic.label} · Examiner pour ce séjour`, () => {
     setExtraTopic(topic); setPostSection("extras");
-  }, extraTopic?.key === topic.key, topic.reason));
+  }, extraTopic?.key === topic.key, topic.reason), visualConceptId: topic.key === 'breakfast' ? 'v22-art:excel:479' : 'v22-art:excel:483'}));
   const postChoices=[tile("lodging","Hébergement",()=>{openPost("lodging");setLodgingPage("terms");}),tile("groceries","Courses",()=>openPost("groceries")),...groups.map(([key,label])=>tile(key,label,()=>openPost(key)))];
   const postsQuestion={title:postSection==="lodging"?"Quel prix pour l’hébergement ?":"Les postes du séjour",choices:postSection==="lodging"&&lodgingPage==="terms"?[
     tile("total","Prix total",()=>{setBasis("TOTAL");setLodgingDirty(true);if(!lodging)setLodging(fresh("Hébergement"));setLodgingPage("price");},basis==="TOTAL","Le forfait n’est pas multiplié par les nuits"),
     tile("night","Prix par nuit",()=>{setBasis("PER_NIGHT");setLodgingDirty(true);if(!lodging)setLodging(fresh("Hébergement"));setLodgingPage("price");},basis==="PER_NIGHT"),
     tile("kind","Type d’hébergement",()=>setLodgingPage("kind")),...suggestions,...postChoices.filter(c=>c.key!=="lodging")]
-    :postSection==="lodging"&&lodgingPage==="kind"?[["RELATIVE","Chez un proche"],["HOTEL","Hôtel"],["HOSTEL","Auberge"],["RENTAL","Location"],["OTHER","Autre"],["LATER","À préciser"]].map(([key,label])=>tile(key,label,()=>{setLodgingKind(key);setLodgingPage("terms");},lodgingKind===key))
+    :postSection==="lodging"&&lodgingPage==="kind"?[["RELATIVE","Chez un proche"],["HOTEL","Hôtel"],["HOSTEL","Auberge"],["RENTAL","Location"],["OTHER","Autre"],["LATER","À préciser"]].map(([key,label])=>({
+      ...tile(key,label,()=>{setLodgingKind(key);setLodgingPage("terms");},lodgingKind===key),
+      visualConceptId: ({RELATIVE:'v22-art:extra:family-visit',HOTEL:'v22-art:extra:hotel-stay-general',HOSTEL:'v22-art:extra:hostel-category',RENTAL:'v22-art:extra:rental-platform'} as Readonly<Record<string,string>>)[key]}))
     :[...suggestions,...postChoices]};
   const matchingExtras = extraTopic ? posts.extras.filter(post => (extraTopic.names as readonly string[]).includes(normalizeLabel(post.row.label))) : [];
   const currentLodging = card?.sockets.find(socket => socket.slotKey === "lodging");

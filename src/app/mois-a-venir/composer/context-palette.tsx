@@ -10,7 +10,8 @@ import { publishedDrop,useComposerInteractions } from "./interactions";
 import type {BarDockDrag} from './bar-dock-drag';
 import { barDockCatalog } from "./bar-dock-catalog";
 import { BarProductVisual } from "./bar-product-visual";
-import { CompactCatalogVisual, compactCatalogImage } from "./compact-catalog-visual";
+import { CompactCatalogVisual, compactCatalogImage, historicalCatalogImage, ComposerAssetVisual } from "./compact-catalog-visual";
+import { clayAssetArtwork, clayV22Artwork } from "../clay-v22-media";
 
 function routeCaption(groupKey: string, slotKey: string, assetKey: string, socketLabel: string | null | undefined): string {
   if (groupKey === "meal") return assetKey.startsWith("template:") ? "Objet autonome" : "Composant du repas";
@@ -58,7 +59,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
       data-drag-source={!multiple && !configure ? first.sourceKey : undefined} data-grabbed={!multiple && interaction?.grabbed?.sourceKey === first.sourceKey}
       onDragStart={event => { if (!multiple) interaction?.start(first.sourceKey, event); }} onDragEnd={() => interaction?.end()}
       onClick={() => multiple ? openChoices() : equip(first)}>
-      <PlannerIcon iconKey={first.asset.iconKey} scale="PALETTE" /><span>{first.asset.label}</span>
+      <ComposerAssetVisual assetKey={first.asset.assetKey} iconKey={first.asset.iconKey} scale="PALETTE" /><span>{first.asset.label}</span>
       {multiple ? <ChevronDown size={15} /> : state === "EQUIPPED" ? <Check size={14} /> : state === "SUGGESTED" ? <Sparkle size={14} />
         : state === "ALTERNATIVE" ? <ArrowLeftRight size={14} /> : <Plus size={14} />}
     </button>
@@ -71,14 +72,14 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
         aria-label={`${route.asset.label} · ${route.caption}`} disabled={busy} draggable={!busy && !configure}
         onDragStart={event => interaction?.start(route.sourceKey, event)} onDragEnd={() => { interaction?.end(); menu.current?.hidePopover(); }}
         onClick={() => { menu.current?.hidePopover(); equip(route); }}>
-        <PlannerIcon iconKey={route.asset.iconKey} scale="SATELLITE" /><span>{route.caption}</span>
+        <ComposerAssetVisual assetKey={route.asset.assetKey} iconKey={route.asset.iconKey} scale="SATELLITE" /><span>{route.caption}</span>
         {route.state === "EQUIPPED" ? <Check size={13} /> : <Plus size={13} />}
       </button>)}
     </div>}
   </>;
 }
 
-export type PaletteQuestion = { title: string; identity?:string; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; visualKey?:string; catalogAssetKey?: string; drag?:BarDockDrag; choose: () => void }[];
+export type PaletteQuestion = { title: string; identity?:string; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; visualKey?:string; catalogAssetKey?: string; visualConceptId?: string; drag?:BarDockDrag; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; filterChoices?:boolean; emptyLabel?:string; backToFamilies?:()=>void };
 export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionScroll, onQuestionScrollChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
   questionScroll?:Readonly<Record<string,number>>; onQuestionScrollChange?:(key:string,index:number)=>void;
@@ -170,11 +171,13 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
       onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}
       onKeyDown={event => {if(event.target===event.currentTarget && ["ArrowLeft","ArrowRight"].includes(event.key)){event.preventDefault();scrollRail(event.key==="ArrowRight"?180:-180);}}}>
       {(appearance==="bar"?catalogue.visible:question.choices).map(choice => {const fullLabel=choice.label+(choice.showHint&&choice.hint?" · "+choice.hint:"");const key=answerKey+":"+choice.key;const reveal=()=>{if(appearance==="bar")setCaption(fullLabel.length>36?{key,label:fullLabel}:null);}; const source=choice.drag&&model.presentation.dragSources[choice.drag.sourceKey]; const drag=appearance==="bar"&&question.nature==="OBJECTS"&&!busy&&source&&!source.protected&&!source.selection&&!source.sourceSocket&&publishedDrop(model,source.assetKey,choice.drag!.target)?choice.drag:undefined;
-        const catalogImage = choice.catalogAssetKey && compactCatalogImage(choice.catalogAssetKey);
+        const catalogKey = choice.catalogAssetKey ?? choice.key;
+        const artwork = clayV22Artwork(choice.visualConceptId) ?? clayAssetArtwork(catalogKey);
+        const catalogImage = artwork?.src ?? compactCatalogImage(catalogKey);
         return <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} aria-label={appearance==="bar"?fullLabel:undefined} aria-describedby={caption?.key===key?optionsId+"-full-label":undefined} disabled={busy} title={appearance==="bar"?fullLabel:choice.hint} onMouseEnter={reveal} onMouseLeave={event=>{if(!event.currentTarget.contains(document.activeElement))setCaption(null);}} onBlur={()=>setCaption(null)} onFocus={event => {event.currentTarget.scrollIntoView?.({block:"nearest",inline:"nearest"});reveal();}} draggable={!!drag} data-drag-source={drag?.sourceKey} onDragStart={event=>{event.stopPropagation();if(drag)interaction?.start(drag.sourceKey,event,undefined,drag.values);else event.preventDefault();}} onDragEnd={()=>interaction?.end()} onClick={choice.choose}>
           {appearance==="bar"&&(!!choice.visualKey||/^(bar|house_party|club|option:night-out):/u.test(choice.key)||["shared","drinks","food"].includes(choice.key))
             ? <BarProductVisual dock={productScene} assetKey={choice.visualKey??choice.key} label={choice.label}/>
-            : catalogImage ? <CompactCatalogVisual src={catalogImage} iconKey={choice.iconKey} />
+            : catalogImage ? <CompactCatalogVisual src={catalogImage} fallbackSrc={historicalCatalogImage(catalogKey)} visualConceptId={artwork?.visualConceptId} iconKey={choice.iconKey} />
             : choice.symbol ? <span className={styles.barChoiceSymbol} aria-hidden="true">{choice.symbol}</span>
             : <PlannerIcon iconKey={choice.iconKey} scale="PALETTE" />}
           <span><strong>{choice.label}</strong>{choice.hint && (appearance!=="bar"||choice.showHint) && <small>{choice.hint}</small>}</span>{choice.selected && <Check size={16} />}</button>;})}

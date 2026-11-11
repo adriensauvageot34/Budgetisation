@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import { PresetIllustration } from "./preset-illustration";
+import { ComposerAssetVisual } from "./compact-catalog-visual";
 import type { AtomicNode, VisualClusterNode } from "./presentation/node-types";
 import styles from "./composer.module.css";
 
@@ -13,7 +14,9 @@ export function VisualClusterCard({ node, open }: { node: VisualClusterNode; ope
     <div className={styles.clusterInfo}><h3>{node.title}</h3><strong>{node.children.length} éléments</strong><span>Ouvrir les objets</span></div>
     <div className={styles.clusterMiniatures} aria-hidden="true">{node.children.slice(0, 4).map(child => {
       const preset = child.context && presetForContext(child.context);
-      return <span key={child.id}>{preset ? <PresetIllustration preset={preset} /> : <PlannerIcon iconKey={child.iconKey} identityRef={child.id} scale="SATELLITE" />}</span>;
+      return <span key={child.id}>{preset ? <PresetIllustration preset={preset} /> : child.context && !child.context.readOnly
+        ? <ComposerAssetVisual assetKey={child.id} templateKey={child.context.templateKey} iconKey={child.iconKey} identityRef={child.id} scale="SATELLITE" size={35} />
+        : <PlannerIcon iconKey={child.iconKey} identityRef={child.id} scale="SATELLITE" />}</span>;
     })}{node.children.length > 4 && <small>+{node.children.length - 4}</small>}</div>
   </button>;
 }

@@ -6,6 +6,7 @@ import { AtomicPopover } from "./atomic-popover";
 import { money } from "./display";
 import { useComposerInteractions } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
+import { ComposerAssetVisual } from "./compact-catalog-visual";
 import styles from "./composer.module.css";
 
 export function ContextSatellite({ satellite, item, target, editAsset, busy, focus, choose, remove, accept, child, moveTargets, slotLabel }: {
@@ -17,6 +18,7 @@ export function ContextSatellite({ satellite, item, target, editAsset, busy, foc
   moveTargets: readonly Readonly<{ target: DropTarget; label: string }>[];
 }) {
   const interaction = useComposerInteractions();
+  const productAssetKey = item.kind === 'COMPONENT' ? item.productAssetRef?.assetKey : undefined;
   const title = satellite.label.startsWith("Synthetic ") && slotLabel ? slotLabel : satellite.label;
   const sourceKey = satellite.state === "DERIVED" ? undefined : satellite.childContextOccurrenceId
     ? `context-occurrence:${satellite.childContextOccurrenceId}` : satellite.editableAssetKey
@@ -24,7 +26,8 @@ export function ContextSatellite({ satellite, item, target, editAsset, busy, foc
   const stateText = satellite.state === "SUGGESTED" ? "Suggestion à confirmer" : satellite.state === "DERIVED" ? "Lié à un autre objet"
     : satellite.state === "UNRESOLVED" ? "À préciser" : "Équipé pour ce moment";
   return <AtomicPopover label={title} state={satellite.state} selectionId={item.selectionId} focus={focus} dragSourceKey={sourceKey}
-    icon={<><PlannerIcon iconKey={satellite.iconKey} scale="SATELLITE" /><span className={styles.equipmentName}>{title}</span><span className={styles.satelliteMarker} aria-hidden="true">
+    icon={<>{productAssetKey ? <ComposerAssetVisual assetKey={productAssetKey} iconKey={satellite.iconKey} scale="SATELLITE" />
+      : <PlannerIcon iconKey={satellite.iconKey} scale="SATELLITE" />}<span className={styles.equipmentName}>{title}</span><span className={styles.satelliteMarker} aria-hidden="true">
       {satellite.state === "SUGGESTED" ? <Sparkle size={10} /> : satellite.state === "DERIVED" ? <Link2 size={10} /> : satellite.state === "UNRESOLVED" ? <i /> : <Check size={9} />}</span></>}>
     {close => <div className={styles.objectSheet} data-object-sheet>
       <p className={styles.objectSheetState}>{stateText}</p>

@@ -8,6 +8,7 @@ import { money, knowledgeLabel } from "./display";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import { PresetIllustration } from "./preset-illustration";
+import { ComposerAssetVisual } from "./compact-catalog-visual";
 import styles from "./composer.module.css";
 import { AtomicPopover } from "./atomic-popover";
 import { useComposerInteractions, useDragHandle, leftSurface } from "./interactions";
@@ -66,7 +67,9 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     {magnetic && interaction?.grabbed && <span className={styles.magneticLabel}>Rattacher à {card.label}</span>}
     <div className={styles.contextComposition}>
     <div className={styles.contextHero}>
-    {preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />}
+    {preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : card.readOnly
+      ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
+      : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
     <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => (card.templateKey === "restaurant" || !!preset) && !card.readOnly && !preserved ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${card.fields.plannedDate}T12:00:00Z`))}</p>}
       <span className={styles.contextState} title={knowledgeLabel(card.knowledge)} aria-label={knowledgeLabel(card.knowledge)}>{preserved ? <LockKeyhole size={12} /> : card.readOnly ? <Link2 size={12} /> : card.knowledge === "UNKNOWN" ? <i /> : null}</span></div>
       <div className={styles.contextTools}>{!card.readOnly && <><button className={styles.iconButton} disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={() => request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved })}><Pin size={15} /></button>

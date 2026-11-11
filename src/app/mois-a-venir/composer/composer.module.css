@@ -1052,7 +1052,8 @@ body:has(.restaurantInspector[data-cinema-editor]) .board .questionPalette[data-
 .questionAnswer { flex:0 0 auto; display:flex; align-items:center; gap:9px; min-width:150px; max-width:215px; min-height:60px; padding:7px 11px; border:1px solid #e3d4ee; border-radius:13px; background:#fff; color:#5a3a72; text-align:left; }
 .questionAnswer > span { min-width:0; }
 .compactCatalogVisual { display:grid; place-items:center; width:40px; height:40px; flex:0 0 40px; }
-.compactCatalogVisual img { display:block; width:40px; height:40px; object-fit:contain; }
+.compactCatalogVisual img { display:block; width:100%; height:100%; object-fit:contain; }
+.compactCatalogVisual [data-planner-icon],.compactCatalogVisual svg { max-width:100%; max-height:100%; }
 .questionAnswer strong,.questionAnswer small { display:block; white-space:normal; }
 .questionAnswer strong { font-size:13px; font-weight:600; }
 .questionAnswer small { font-size:10px; margin-top:3px; color:#927a9d; }
@@ -1255,7 +1256,7 @@ body:has(.restaurantInspector[data-cinema-editor]) .board .questionPalette[data-
 /* One continuous cream surface at every height; the decorative image never grows
  * with content. It is not a screenshot or a second layer of interactive UI. */
 .barLivingCard { position:relative; isolation:isolate; background:linear-gradient(155deg,#fff7e9,#fcf5ec 420px,#fffaf2); border-color:#e4cdb0; }
-.barLivingCard::before { content:""; position:absolute; z-index:-1; inset:0 0 auto; height:min(190px,100%); pointer-events:none; background:url('/planned-visuals/builder/clay/scenes/bar-apero-warm-header.webp') right top / auto 190px no-repeat; mask-image:linear-gradient(#000 60%,transparent); }
+.barLivingCard::before { content:""; position:absolute; z-index:-1; inset:0 0 auto; height:min(190px,100%); pointer-events:none; background:url('/planned-visuals/builder/clay/v22/specialized/v22-art-extra-bar-interior.webp') right top / auto 190px no-repeat; mask-image:linear-gradient(#000 60%,transparent); }
 .barLivingHeader { background:transparent; padding:12px 14px 8px; gap:8px; align-items:flex-start; }
 .barLivingIdentity { flex:0 1 auto; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:8px 10px; border-radius:13px; background:rgb(255 253 247 / .9); box-shadow:0 2px 8px #69471908; }
 .barLivingIdentity h3 { flex:initial; margin:0; font-size:15px; line-height:1.3; }

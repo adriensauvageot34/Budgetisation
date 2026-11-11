@@ -1,0 +1,1003 @@
+{
+  "derivatives": [
+    {
+      "visualConceptId": "v22-art:extra:activity-cinema",
+      "sourceSHA256": "9a686b49ebc34d5c41a2c8abb57a92bf9368cf445dfb8bce25b1b26b5cc1a585",
+      "sourcePath": "masters/extra/v22-art-extra-activity-cinema.png",
+      "export": {
+        "path": "compact/v22-art-extra-activity-cinema.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 16328,
+        "sha256": "2beb3a5f7803df6dc94f567b754b65cac958630a923418097a7e4962516e9053",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 541,
+          "top": 59,
+          "width": 1045,
+          "height": 782
+        },
+        "placed": {
+          "x": 19,
+          "y": 47,
+          "width": 218,
+          "height": 163
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:activity-intent",
+      "sourceSHA256": "ee52c0eb93894dcc947bf4949f5bef80347634385904781bf042f481452438e1",
+      "sourcePath": "masters/extra/v22-art-extra-activity-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-activity-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 17198,
+        "sha256": "580075c58ea1bbec3eee9e838dc1c8698d04526ea10989321abe8ac1766933f0",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 688,
+          "top": 94,
+          "width": 957,
+          "height": 725
+        },
+        "placed": {
+          "x": 19,
+          "y": 46,
+          "width": 218,
+          "height": 165
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:bar-interior",
+      "sourceSHA256": "51d6a4e9378eca434f9b356ba069764f2339439bcddf2f74e6233bfb96d745f9",
+      "sourcePath": "masters/extra/v22-art-extra-bar-interior.png",
+      "export": {
+        "path": "compact/v22-art-extra-bar-interior.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 15134,
+        "sha256": "8d6fa56bf490a6927117dab2a6286030a5fe8bd73c524d1b44bcdb456239d2d2",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 534,
+          "top": 24,
+          "width": 954,
+          "height": 850
+        },
+        "placed": {
+          "x": 19,
+          "y": 31,
+          "width": 218,
+          "height": 194
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:bike-mode",
+      "sourceSHA256": "a91cdc840ce9eb231a61756ca9e45285696b592369792742772b1ac6bde75457",
+      "sourcePath": "masters/extra/v22-art-extra-bike-mode.png",
+      "export": {
+        "path": "compact/v22-art-extra-bike-mode.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 23492,
+        "sha256": "fa009a34cb2a559633e5f421887c36ff089b99f67f4f549fc766d3a37d6bacd6",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 531,
+          "top": 63,
+          "width": 1098,
+          "height": 791
+        },
+        "placed": {
+          "x": 19,
+          "y": 50,
+          "width": 218,
+          "height": 157
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:birthday-occasion",
+      "sourceSHA256": "4ef83e327162a855950181d0e70470210d6b9e3be02b1f0fee48e23c914e3eff",
+      "sourcePath": "masters/extra/v22-art-extra-birthday-occasion.png",
+      "export": {
+        "path": "compact/v22-art-extra-birthday-occasion.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 16536,
+        "sha256": "e4526c457db6be1e4faa54b1853983ed2bdb308e0d50d39d25c97ff17c53513a",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 680,
+          "top": 85,
+          "width": 868,
+          "height": 755
+        },
+        "placed": {
+          "x": 19,
+          "y": 33,
+          "width": 218,
+          "height": 190
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:celebration-occasion",
+      "sourceSHA256": "d4250861fe696c97c82ede0114bacabd24725e778f2f3ac482afa5b6115d1c3a",
+      "sourcePath": "masters/extra/v22-art-extra-celebration-occasion.png",
+      "export": {
+        "path": "compact/v22-art-extra-celebration-occasion.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 20346,
+        "sha256": "1b7d27a400cac225c39ea5fb5b3dfa7bdf2a20a241647769ddb85a6d0d2b0df7",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 677,
+          "top": 104,
+          "width": 965,
+          "height": 703
+        },
+        "placed": {
+          "x": 19,
+          "y": 49,
+          "width": 218,
+          "height": 159
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:club-festival-intent",
+      "sourceSHA256": "25b8ddba15f051c3027751399d10c5f022e180a4ac84b15f9d9d9cc87a42ace2",
+      "sourcePath": "masters/extra/v22-art-extra-club-festival-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-club-festival-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 17706,
+        "sha256": "778f84315a365dd80ff87e3f55161f2be2092c8a7b4d81842e47ad8d0667ebfb",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 625,
+          "top": 99,
+          "width": 1026,
+          "height": 737
+        },
+        "placed": {
+          "x": 19,
+          "y": 50,
+          "width": 218,
+          "height": 157
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:festival-intent",
+      "sourceSHA256": "5f4d7e061a7ed0c4d7de73ea306ad8fa30a42a1de400ac3b6be2fcebe9a86b66",
+      "sourcePath": "masters/extra/v22-art-extra-festival-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-festival-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 14226,
+        "sha256": "f26f2d418b45dbd134945b6555803d3a6d5b634c380531db05777ee38721608f",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 583,
+          "top": 46,
+          "width": 1028,
+          "height": 800
+        },
+        "placed": {
+          "x": 19,
+          "y": 43,
+          "width": 218,
+          "height": 170
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:fishing-activity",
+      "sourceSHA256": "2dacca9294a7cc37d94f4e8e83bc2bb247c4f4281090fa93a0e2388293be0d67",
+      "sourcePath": "masters/extra/v22-art-extra-fishing-activity.png",
+      "export": {
+        "path": "compact/v22-art-extra-fishing-activity.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 19368,
+        "sha256": "54b473c504309e226c2181ed0d732add3ff0abb19998f591eb9cf69f94ed85b0",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 751,
+          "top": 94,
+          "width": 791,
+          "height": 707
+        },
+        "placed": {
+          "x": 19,
+          "y": 31,
+          "width": 218,
+          "height": 195
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:gift-intent",
+      "sourceSHA256": "02637a2c525150d77d6629a1e759b42c8c279f79a0f9d42b8a89b89a72506594",
+      "sourcePath": "masters/extra/v22-art-extra-gift-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-gift-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 17624,
+        "sha256": "ba1da3fbf4c975a8546e669aa7075ad6eb92115bb376b454080d9f1140d26128",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 648,
+          "top": 146,
+          "width": 931,
+          "height": 693
+        },
+        "placed": {
+          "x": 19,
+          "y": 47,
+          "width": 218,
+          "height": 162
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:group-scene",
+      "sourceSHA256": "3719a842696061a193b7d24fc66ca10456139c56976c4f3e3ebe0e043b645e65",
+      "sourcePath": "masters/extra/v22-art-extra-group-scene.png",
+      "export": {
+        "path": "compact/v22-art-extra-group-scene.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 17778,
+        "sha256": "ba931689d384e62020b7031b6f07b1e713447d9534d7c8217e7f529ba5c6a850",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 560,
+          "top": 116,
+          "width": 1073,
+          "height": 705
+        },
+        "placed": {
+          "x": 19,
+          "y": 57,
+          "width": 218,
+          "height": 143
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:kayak-activity",
+      "sourceSHA256": "c4ac0b239188e865945671669584b526a2cc4fa34915180171f43d9ffb905a1f",
+      "sourcePath": "masters/extra/v22-art-extra-kayak-activity.png",
+      "export": {
+        "path": "compact/v22-art-extra-kayak-activity.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 17390,
+        "sha256": "f80e763afda251335378c1c565a7a4569fe2e03d926ccbbe82649e89a0b21d61",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 546,
+          "top": 96,
+          "width": 999,
+          "height": 730
+        },
+        "placed": {
+          "x": 19,
+          "y": 49,
+          "width": 218,
+          "height": 159
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:lodging-room",
+      "sourceSHA256": "8013d46464a6faa775264e6609feb60136b71846ef4191e7a34d9ef13aaa5065",
+      "sourcePath": "masters/extra/v22-art-extra-lodging-room.png",
+      "export": {
+        "path": "compact/v22-art-extra-lodging-room.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 14860,
+        "sha256": "86ac826e2b5bb13c89630fcd742f44026e336a22a5db2a7937d1c37155f7ee02",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 639,
+          "top": 56,
+          "width": 881,
+          "height": 786
+        },
+        "placed": {
+          "x": 19,
+          "y": 31,
+          "width": 218,
+          "height": 194
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:match-activity",
+      "sourceSHA256": "265db5eef6f14b0eda77a5361d7a7c1e2e3141ded30cc1737e0913324befbb6e",
+      "sourcePath": "masters/extra/v22-art-extra-match-activity.png",
+      "export": {
+        "path": "compact/v22-art-extra-match-activity.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 17938,
+        "sha256": "5881454b8794e6497b036f015e75947d2a15a513ea69d8f9f25ad2eddb5940ae",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 563,
+          "top": 79,
+          "width": 951,
+          "height": 786
+        },
+        "placed": {
+          "x": 19,
+          "y": 38,
+          "width": 218,
+          "height": 180
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:party-intent",
+      "sourceSHA256": "3120969c7424f644ceb48dda26e49ca49a0f3b143aabfb5907d5b0984a64411c",
+      "sourcePath": "masters/extra/v22-art-extra-party-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-party-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 15156,
+        "sha256": "c30a412ccf1489d2fce95d3cb8a509de28d6baf595fc5e220629e0cb54b8491a",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 644,
+          "top": 118,
+          "width": 856,
+          "height": 680
+        },
+        "placed": {
+          "x": 19,
+          "y": 42,
+          "width": 218,
+          "height": 173
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:photo-activity",
+      "sourceSHA256": "204a9ef798abc2da908597dcc5b8e5160c0a48ff4239148db16cebd4189d07f1",
+      "sourcePath": "masters/extra/v22-art-extra-photo-activity.png",
+      "export": {
+        "path": "compact/v22-art-extra-photo-activity.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 14992,
+        "sha256": "23897a0777c88c6d31dff0e01249614c763bc2f7e656cf222eb83bddac78653d",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 574,
+          "top": 84,
+          "width": 1033,
+          "height": 759
+        },
+        "placed": {
+          "x": 19,
+          "y": 48,
+          "width": 218,
+          "height": 160
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:private-party-intent",
+      "sourceSHA256": "de56209752581d40a88ba3990ae436073fd26fb224f911aad73d7fd160f506ba",
+      "sourcePath": "masters/extra/v22-art-extra-private-party-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-private-party-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 13592,
+        "sha256": "1215f4303335e9ee02132ba8852e6cb9d55efb5f2df8e5bab665ffa0854e5f1f",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 559,
+          "top": 80,
+          "width": 1084,
+          "height": 777
+        },
+        "placed": {
+          "x": 19,
+          "y": 50,
+          "width": 218,
+          "height": 156
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:purchase-intent",
+      "sourceSHA256": "7f63a5bc8159b5f90b673bf9506131223d890fdf05dc390dc572e3843eae2215",
+      "sourcePath": "masters/extra/v22-art-extra-purchase-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-purchase-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 15468,
+        "sha256": "15f849f0429bcdb9f6765ef4842612ac703c9eef210f97c157ee392576f8ca63",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 682,
+          "top": 44,
+          "width": 885,
+          "height": 809
+        },
+        "placed": {
+          "x": 19,
+          "y": 29,
+          "width": 218,
+          "height": 199
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:show-activity",
+      "sourceSHA256": "a5091c8e182460e1deb520e820a1579ef5fad1bea2ab249873cfb33ce2de6ee0",
+      "sourcePath": "masters/extra/v22-art-extra-show-activity.png",
+      "export": {
+        "path": "compact/v22-art-extra-show-activity.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 15600,
+        "sha256": "5a75a1a352a414317491a79db2b8a3fe86def605e5e91d5b968308e678d0d256",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 610,
+          "top": 49,
+          "width": 910,
+          "height": 803
+        },
+        "placed": {
+          "x": 19,
+          "y": 32,
+          "width": 218,
+          "height": 192
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:solo-scene",
+      "sourceSHA256": "3301ab28395a8f7171a4ab8a4d4e191a2f036ec4dcc3b717ec1143fcf4994c1a",
+      "sourcePath": "masters/extra/v22-art-extra-solo-scene.png",
+      "export": {
+        "path": "compact/v22-art-extra-solo-scene.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 17448,
+        "sha256": "2e04b6b2703c1229ecf8b7a8ac30b04d81560af24470009bc6bde74fa52dadee",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 644,
+          "top": 62,
+          "width": 826,
+          "height": 786
+        },
+        "placed": {
+          "x": 19,
+          "y": 25,
+          "width": 218,
+          "height": 207
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:sport-activity",
+      "sourceSHA256": "75c1fc56d4eafb3cfe80e4519acc06c77cdf9b29bbfa6ad810a60bb9506a1300",
+      "sourcePath": "masters/extra/v22-art-extra-sport-activity.png",
+      "export": {
+        "path": "compact/v22-art-extra-sport-activity.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 12018,
+        "sha256": "d3e952f1d8f4d35425e43e53e981dbfb51fbad3060a7fc69e0692720497b343e",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 514,
+          "top": 134,
+          "width": 1143,
+          "height": 713
+        },
+        "placed": {
+          "x": 19,
+          "y": 60,
+          "width": 218,
+          "height": 136
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:themepark-activity",
+      "sourceSHA256": "bfed7e009643abdcba371af6ec2134c141b22639363313737e29b84ac4937514",
+      "sourcePath": "masters/extra/v22-art-extra-themepark-activity.png",
+      "export": {
+        "path": "compact/v22-art-extra-themepark-activity.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 25522,
+        "sha256": "cad3e134517c8ca7e8f00e61eb960c18f6a2095e6e1b0a06428a5a604cf997a2",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 764,
+          "top": 56,
+          "width": 623,
+          "height": 791
+        },
+        "placed": {
+          "x": 42,
+          "y": 19,
+          "width": 172,
+          "height": 218
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:tram-mode",
+      "sourceSHA256": "966b20ab588e0823f82f269adf358e4dc9050fec068ad45cb8ab3f2912b6fbee",
+      "sourcePath": "masters/extra/v22-art-extra-tram-mode.png",
+      "export": {
+        "path": "compact/v22-art-extra-tram-mode.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 19228,
+        "sha256": "3aa7165e2ceac1babfede57f1edf8fd38118d108166feabdd06d18ad75cb0758",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 581,
+          "top": 84,
+          "width": 1016,
+          "height": 727
+        },
+        "placed": {
+          "x": 19,
+          "y": 50,
+          "width": 218,
+          "height": 156
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:travel-intent",
+      "sourceSHA256": "183b408f4c1651e9cb613f81f2261180a1a81669718bf22811070c094f638ac8",
+      "sourcePath": "masters/extra/v22-art-extra-travel-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-travel-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 14950,
+        "sha256": "6373e030f53ca7f5949d5b2d49e5c65e8494fa7db34304b7fb94af7b6e7abe02",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 711,
+          "top": 108,
+          "width": 882,
+          "height": 717
+        },
+        "placed": {
+          "x": 19,
+          "y": 40,
+          "width": 218,
+          "height": 177
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:valentine-occasion",
+      "sourceSHA256": "eafd41b7b469be5754f1e92f5cb2f867148b7f21f090bf5e3c6b67b1cad7132a",
+      "sourcePath": "masters/extra/v22-art-extra-valentine-occasion.png",
+      "export": {
+        "path": "compact/v22-art-extra-valentine-occasion.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 13876,
+        "sha256": "4875d8b6712b00331ff1ff4f16450526e4f48405db16fa39efcfa8bb7c5ea220",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 646,
+          "top": 97,
+          "width": 880,
+          "height": 742
+        },
+        "placed": {
+          "x": 19,
+          "y": 36,
+          "width": 218,
+          "height": 184
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:visit-intent",
+      "sourceSHA256": "8d77a697aeeee9a949c9fcb9c1135561deca594a1f977290f764afb04b45f2f7",
+      "sourcePath": "masters/extra/v22-art-extra-visit-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-visit-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 15474,
+        "sha256": "8b87889428c93c0dc15a17df71b2cb498d59688e4291b86f960a9ef2bc3033ce",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 819,
+          "top": 107,
+          "width": 707,
+          "height": 742
+        },
+        "placed": {
+          "x": 24,
+          "y": 19,
+          "width": 208,
+          "height": 218
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    },
+    {
+      "visualConceptId": "v22-art:extra:workmeal-intent",
+      "sourceSHA256": "19bc4dfc8b27d919bfa038ab7f18d8f2647e5e9098b7bd6f23c72d46e9b0240b",
+      "sourcePath": "masters/extra/v22-art-extra-workmeal-intent.png",
+      "export": {
+        "path": "compact/v22-art-extra-workmeal-intent.webp",
+        "dimensions": [
+          256,
+          256
+        ],
+        "bytes": 14902,
+        "sha256": "2d7babda171b80dd87b22ecd6d086d6feb584d3597d9b9b9caaaf48ef7a619e7",
+        "source": "M15_TECHNICAL_DERIVATIVE"
+      },
+      "reason": "Groupe complet recentré selon la géométrie M12, avec la bonne source finale M13. Réduit les marges vides dans les petites palettes.",
+      "settings": {
+        "fit": "contain",
+        "quality": 95,
+        "alphaQuality": 100,
+        "effort": 5
+      },
+      "geometry": {
+        "sourceBoundsAlpha5": {
+          "left": 507,
+          "top": 91,
+          "width": 1184,
+          "height": 766
+        },
+        "placed": {
+          "x": 19,
+          "y": 58,
+          "width": 218,
+          "height": 141
+        },
+        "fit": "UNIFORM_SUBJECT_WITH_TRANSPARENT_PADDING"
+      }
+    }
+  ]
+}
