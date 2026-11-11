@@ -1757,6 +1757,16 @@ body:has(.restaurantInspector[data-cinema-editor]) .board .questionPalette[data-
 .barLivingCard[data-expanded=true] .barActiveTile .barOpenTileVisual .barProductSymbol img { max-height:100%; }
 .barLivingCard[data-expanded=true] .barLivingEditor[data-bar-step=legacy] { overflow-y:auto; }
 
+/* Short rails can be only 40px tall: keep Clay objects beside the label
+   instead of allocating an illustration row whose computed height is zero. */
+@container bar-workspace (max-height:640px) {
+  .barLivingCard[data-expanded=true] .barEconomicTile:not(.barActiveTile) .barCompactFace:has([data-visual-concept-id]) { grid-template-columns:24px minmax(0,1fr); grid-template-rows:minmax(0,1fr); align-items:center; gap:4px; }
+  .barLivingCard[data-expanded=true] .barEconomicTile:not(.barActiveTile) .barCompactFace:has([data-visual-concept-id]) .barOpenTileHeading { grid-column:2; grid-row:1; }
+  .barLivingCard[data-expanded=true] .barEconomicTile:not(.barActiveTile) .barCompactFace:has([data-visual-concept-id]) .barOpenTileVisual { grid-column:1; grid-row:1; }
+  .barLivingCard[data-expanded=true] .barEconomicTile:not(.barActiveTile) .barCompactFace:has([data-visual-concept-id]) .barProductSymbol,
+  .barLivingCard[data-expanded=true] .barEconomicTile:not(.barActiveTile) .barCompactFace:has([data-visual-concept-id]) .barProductSymbol img { width:24px; height:24px; }
+}
+
 /* Flash polish: compact header, icon-only back, route tools belong to the card. */
 .barCompositionDock .barFamiliesBack { display:grid; place-items:center; width:25px; height:22px; padding:0; border:0; background:transparent; border-radius:7px; }
 .barLivingCard[data-expanded=true] .barLivingIdentity { flex:0 1 auto; max-width:64%; }
