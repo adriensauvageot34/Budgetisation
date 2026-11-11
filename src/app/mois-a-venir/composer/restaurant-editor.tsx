@@ -31,6 +31,7 @@ import { useActiveWorkshopQuestion } from "./workshop-choices";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { cinemaSuggestions, sameCinemaExtra, type CinemaSuggestion } from "./cinema-suggestions";
 import { CompactCatalogVisual } from './compact-catalog-visual';
+import { CatalogOpenButton } from './catalog-discovery-provider';
 import { clayV22Artwork } from '../clay-v22-media';
 import { PurchaseDelivery } from "./purchase-delivery";
 import { ClothingItemEditor } from "./clothing-item-editor";
@@ -434,6 +435,10 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
     <p className={styles.restaurantIntro}>{cinema ? "Le billet, le jour de la séance, les compléments et le trajet se préparent séparément."
       : step === null ? "Choisissez seulement ce que vous voulez prévoir. Les autres précisions restent facultatives." : "Budget = coût économique prévu, pas un plafond. Les choix validés restent conservés."}</p>
+    <CatalogOpenButton target={{contextId,commands:cinemaTicket?[{
+      visualConceptId:'v22-art:excel:329',label:main?'Modifier le billet':'Préparer le billet',
+      editsExisting:!!main,run:()=>open('budget'),
+    }]:undefined}}>Parcourir le catalogue de {heading}</CatalogOpenButton>
     {step === null ? <><nav aria-label={`Choix de ${heading}`} className={styles.restaurantSummary} data-quick-purchase={quickPurchase || undefined}>
       {summaryEntries.slice(summaryPage * summaryPageSize, (summaryPage + 1) * summaryPageSize).map(entry => <button key={entry.id} type="button" disabled={entry.disabled} onClick={() => open(entry.id)}>
         {entry.icon}<span><small>{entry.label}</small><strong>{entry.caption}</strong></span><ChevronRight size={14} /></button>)}

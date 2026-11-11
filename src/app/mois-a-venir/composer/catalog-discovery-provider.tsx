@@ -9,7 +9,7 @@ import { clayCatalogArtwork, loadClayV22Collection, type ClayCatalogEntry } from
 import { CATALOG_SCOPES, catalogResults, discoveryActions, scopeForCard, selectedCatalogIdentities, type DiscoveryTarget } from './catalog-discovery';
 import styles from './catalog-discovery.module.css';
 
-type Command=Readonly<{visualConceptId:string;label:string;run:()=>void}>;
+type Command=Readonly<{visualConceptId:string;label:string;run:()=>void;editsExisting?:boolean}>;
 type Request=DiscoveryTarget&Readonly<{query?:string;commands?:readonly Command[]}>;
 const DiscoveryContext=createContext<((target:Request)=>void)|null>(null);
 export function CatalogOpenButton({children='Tous les éléments',target={},className}:{children?:ReactNode;target?:Request;className?:string}){
@@ -33,9 +33,9 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  const results=useMemo(()=>catalogResults(entries,{query,scope,family,nature,selectedIds:frozenSelections.current}),[entries,query,scope,family,nature,request]);
  const chosen=entries.find(e=>e.visualConceptId===selected),context=model.board.contexts.find(c=>c.contextOccurrenceId===request?.contextId);
  const currentRequest=request&&(!request.contextId||!!context)&&requestDigest.current===model.board.draft.semanticStateDigest;
- const actions=chosen&&request?discoveryActions(chosen,model,request):[];
  const alreadyChosen=chosen&&context?.sockets.some(s=>s.currentItems.some(i=>i.kind==='COMPONENT'&&i.productAssetRef&&chosen.assetKeys.includes(i.productAssetRef.assetKey)));
- const commands=chosen&&currentRequest&&!alreadyChosen?request?.commands?.filter(c=>c.visualConceptId===chosen.visualConceptId)??[]:[];
+ const commands=chosen&&currentRequest?request?.commands?.filter(c=>c.visualConceptId===chosen.visualConceptId&&(!alreadyChosen||c.editsExisting))??[]:[];
+ const actions=chosen&&request?discoveryActions(chosen,model,request).filter(action=>action.kind!=='CHOOSE'||!commands.length):[];
  const change=()=>{setPage(0);setSelected(null);};
  const execute=(fn:()=>void)=>{close();fn();};
  return <DiscoveryContext.Provider value={open}>{children}{request&&createPortal(<dialog ref={dialog} className={styles.dialog} aria-labelledby="clay-catalog-title" data-composer-catalog

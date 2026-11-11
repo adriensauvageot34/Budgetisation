@@ -15,7 +15,9 @@
 .restaurantSummary { display:grid; gap:4px; }
 .restaurantSummary > button { display:flex; align-items:center; gap:10px; text-align:left; border-color:transparent; padding:8px; }
 .restaurantSummary > button[aria-current=step] { background:#f5edf9; border-color:#e8d9ef; }
-.restaurantSummary span { flex:1; min-width:0; overflow-wrap:anywhere; }
+.restaurantSummary > button > span:not(.compactCatalogVisual) { flex:1; min-width:0; overflow-wrap:anywhere; }
+.restaurantSummary > button > .compactCatalogVisual { flex:0 0 40px; }
+.restaurantSummary > button > .compactCatalogVisual img { width:100%; height:100%; object-fit:contain; }
 .restaurantSummary strong,.restaurantSummary small { display:block; }
 .restaurantSummary strong { font-weight:600; font-size:12px; }
 .restaurantSummaryActions { display:grid; gap:6px; margin:12px 0; }
