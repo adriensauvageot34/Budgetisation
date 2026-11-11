@@ -3,6 +3,7 @@ import type { ComponentOptionDefinition, ComponentSlotDefinition } from "@/domai
 import type { ContextCapability, ContextFieldDefinition, ContextRegistryV1, ContextTemplateV1 } from "@/domain/phase2/planner/context-contract";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import { nightOutConsumption } from "@/domain/phase2/planner/night-out-consumption";
+import { DELIVERY_COVERAGES, DELIVERY_MODES, isPurchaseBasket, PURCHASE_BASKET_FIELDS } from "@/domain/phase2/planner/purchase-basket";
 
 export const CONTEXT_REGISTRY_VERSION = "planner-context-registry@v3-renewals";
 export const GIFT_ASSET_CONTEXT_REGISTRY_VERSION = "planner-context-registry@v4-gift-asset";
@@ -109,6 +110,26 @@ function withRestaurantDetails(source: ContextRegistryV1): ContextRegistryV1 {
 }
 const restaurantDetailsRegistry = withRestaurantDetails(registry);
 const restaurantDetailsManifestRegistry = withRestaurantDetails(globalConsumptionRegistry);
+const legacyPurchase = restaurantDetailsRegistry.templates.find(t => t.templateKey === "purchase")!;
+const basketPurchase: ContextTemplateV1 = freeze({
+  ...legacyPurchase, version: "purchase@v2",
+  fields: [...legacyPurchase.fields.map(field => field.fieldKey === "fieldSchemaVersion" ? { ...field, choices: [PURCHASE_BASKET_FIELDS] }
+    : field.fieldKey === "budgetDomain" ? { ...field, choices: [...field.choices!, "groceries"] } : field),
+    { fieldKey: "deliveryMode", kind: "CHOICE", required: false, choices: DELIVERY_MODES },
+    { fieldKey: "deliveryCoverage", kind: "CHOICE", required: false, choices: DELIVERY_COVERAGES },
+    { fieldKey: "basketCoverage", kind: "CHOICE", required: false, choices: ["AUTO", "CONFIRMED_CONSUMPTION", "EXTRA_TO_SLOT"] }],
+  structuralDefaults: {},
+  componentSlots: [...legacyPurchase.componentSlots.map(s => s.slotKey === "item"
+    ? { ...s, cardinality: "REPEATING" as const, acceptsBasketArticle: true } : s),
+    slot("shipping", "OPTIONAL_ONE", [component("shipping", "Frais de livraison")])],
+  capabilities: [...legacyPurchase.capabilities.map(c => c.slotKey === "item"
+    ? { ...c, cardinality: "REPEATING" as const, selectionMode: "MANY" as const } : c),
+    { slotKey: "shipping", cardinality: "OPTIONAL_ONE", selectionMode: "ONE_OF", action: "SELECT_COMPONENT", optionKeys: ["shipping"], childTemplateKeys: [] }],
+});
+const basketRegistry = freeze<ContextRegistryV1>({
+  version: "planner-context-registry@v12-purchase-basket",
+  templates: restaurantDetailsManifestRegistry.templates.map(t => t.templateKey === "purchase" ? basketPurchase : t),
+});
 /** Preserve the exact registry manifest previously emitted for v2 revisions. */
 const v2Registry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION,
   templates: giftRegistry.templates.map(template => ({ ...template,
@@ -125,6 +146,7 @@ const legacyRegistry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VER
   templates: v2Registry.templates.map(template => ({ ...template,
     fields: template.fields.filter(field => isLegacyContextField(template.templateKey, field.fieldKey)) })) });
 export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
+  if (state.contexts.some(isPurchaseBasket)) return basketRegistry;
   if (state.contexts.some(context => Object.hasOwn(context.fields, "restaurantIncludedDetails"))) return restaurantDetailsManifestRegistry;
   if (state.contexts.some(context => nightOutConsumption(context)?.version === "night-out-consumption@v2")) return globalConsumptionRegistry;
   if (state.contexts.some(context=>context.fields.nightOutConsumption!==undefined))return registry;
@@ -135,7 +157,8 @@ export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegi
   if (state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v3")) return giftRegistry;
   return state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v2") ? v2Registry : legacyRegistry;
 }
-export function resolveContextTemplate(key: string): ContextTemplateV1 {
+export function resolveContextTemplate(key: string, fields?: PlanSemanticStateV1["contexts"][number]["fields"]): ContextTemplateV1 {
+  if (fields && isPurchaseBasket({ templateKey: key, fields })) return basketPurchase;
   const found = restaurantDetailsRegistry.templates.find(t => t.templateKey === key);
   if (!found) throw new TypeError(`PLANNER_CONTEXT_TEMPLATE_UNSUPPORTED:${key}`);
   return found;

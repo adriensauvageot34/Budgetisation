@@ -30,9 +30,17 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useActiveWorkshopQuestion } from "./workshop-choices";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { cinemaSuggestions, sameCinemaExtra, type CinemaSuggestion } from "./cinema-suggestions";
+import { CompactCatalogVisual } from './compact-catalog-visual';
+import { CatalogOpenButton } from './catalog-discovery-provider';
+import { catalogSocket, purchaseCatalogProduct, type CatalogCommand, type GuidedCatalogChoice } from './catalog-discovery';
+import type { ClayCatalogEntry } from '../clay-v22-catalog';
+import { guidedAssetLabels } from "./guided-asset-labels";
+import { clayV22Artwork } from '../clay-v22-media';
 import { PurchaseDelivery } from "./purchase-delivery";
 import { ClothingItemEditor } from "./clothing-item-editor";
-import { isClothingPurchase } from "@/domain/phase2/planner/composer-library-index";
+import { EnablePurchaseBasket, PurchaseBasketEditor } from "./purchase-basket-editor";
+import { isPurchaseBasket, type BasketConcept } from "@/domain/phase2/planner/purchase-basket";
+import { clothingItem, isClothingPurchase } from "@/domain/phase2/planner/composer-library-index";
 import { publishedDrop } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { money } from "./display";
@@ -61,16 +69,22 @@ type RestaurantEditorProps = {
   context: PlannedContextState; card: ComposerContextCardView; model: ComposerUiModel; creating: boolean; busy: boolean;
   decide: (operation: ComposerOperation) => boolean; close: () => void;
   cinemaDeclines?: readonly string[]; updateCinemaDeclines?: (occurrenceId: string, key: string | null) => void;
+  catalogChoice?: GuidedCatalogChoice;
+  initialConcept?: BasketConcept;
 };
 export function RestaurantEditor(props: RestaurantEditorProps) {
-  return !props.creating && isClothingPurchase(props.context) ? <ClothingItemEditor {...props} /> : <GuidedRestaurantEditor {...props} />;
+  if (isPurchaseBasket(props.context)) return <PurchaseBasketEditor {...props} />;
+  return !props.creating && isClothingPurchase(props.context) && clothingItem(props.context)
+    ? <ClothingItemEditor {...props} /> : <GuidedRestaurantEditor {...props} />;
 }
-function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, close, cinemaDeclines = [], updateCinemaDeclines }: RestaurantEditorProps) {
+function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, close, cinemaDeclines = [], updateCinemaDeclines, catalogChoice }: RestaurantEditorProps) {
   const baseShape = guidedContextShape(context.templateKey), preset = presetForContext(context);
   const cinema = preset?.presetKey === "cinema";
+  const labels = guidedAssetLabels(context.templateKey, preset?.presetKey);
   const confirm = useWorkshopConfirmation(), activeQuestion = useActiveWorkshopQuestion();
   const purchaseEnvelope = context.fields.budgetDomain === "clothing" ? "Vêtements" : context.fields.budgetDomain === "home-small" ? "Petits achats maison" : context.fields.budgetDomain === "games-digital" ? "Jeux/Numérique" : null;
-  const shape = { ...baseShape, envelope: context.templateKey === "purchase" ? purchaseEnvelope : baseShape.envelope };
+  const purchase = context.templateKey === "purchase";
+  const shape = purchase ? { ...baseShape, envelope: purchaseEnvelope, complement: "Frais ou complément distinct" } : baseShape;
   const quickPurchase = context.templateKey === "purchase" && !!preset && !isDetailed(context);
   const mainSlot = shape.slot, heading = typeof context.fields.productLabel === "string" ? context.fields.productLabel : card.label;
   const mainLabel = cinema ? "Billet de cinéma" : context.templateKey === "purchase" && typeof context.fields.productLabel === "string" ? context.fields.productLabel : shape.total;
@@ -127,10 +141,14 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const ticketSignature = useRef<string | null>(null);
   const cinemaExtraEdit = useRef<{ signature: string } | { suggestedLabel: string } | null>(null);
   const cinemaTransportSignature = useRef<string | null>(null);
+  const catalogArticleId = useRef<string | null>(null);
+  const handledCatalogChoice = useRef<GuidedCatalogChoice | undefined>(undefined);
+  const purchaseLineDigest = useRef("");
+  purchaseLineDigest.current = mealSignature;
   // A confirmed semantic change (including Undo/Redo) supersedes the input buffer.
   // An ordinary Preview of the same decision must not erase text being entered.
   useEffect(() => {
-    if (priorMeal.current === mealSignature || cinema && (step === "budget" || raw)) return;
+    if (priorMeal.current === mealSignature || catalogArticleId.current || cinema && (step === "budget" || raw)) return;
     priorMeal.current = mealSignature;
     setRow(main ? fromSelection(main) : { ...fresh(mainLabel), unitBasis: cinema ? "ITEM" : "SHARED" });
     setDetail(admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context)); setExtraRow(null);
@@ -145,6 +163,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const known = model.cardKnowledge[`template:${context.templateKey}`];
   const suggestion = known?.dimensions.find(d => d.key === "UNIT_PRICE" && d.value !== null && d.suggestionPolicy === "OFFER_PREFILL");
   const resetBuffer = () => {
+    catalogArticleId.current = null;
     setRaw(false); setError(""); setExtraRow(null); setIncludedRow(null); setEquipment(null); setPerson(undefined);
     setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
     setRow(main ? fromSelection(main) : { ...fresh(cinema ? mainLabel : shape.total), unitBasis: cinema ? "ITEM" : "SHARED" });
@@ -153,10 +172,12 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const leaveRaw = useWorkshopRaw(context.contextOccurrenceId, raw, resetBuffer);
   const open = (next: Step) => {
     if (!leaveRaw(() => open(next))) return;
+    catalogArticleId.current = null;
     if (cinema && next === "budget") ticketSignature.current = mealSignature;
     setStep(next); setError(""); setExtraRow(null); setIncludedRow(null); setExtraAdded(false); setEquipment(null); setFormKey(k => k + 1);
     setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
-    setRow(main ? fromSelection(main) : { ...fresh(mainLabel), unitBasis: cinema ? "ITEM" : "SHARED" }); setDetail(admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context));
+    setRow(main ? fromSelection(main) : { ...fresh(mainLabel), unitBasis: cinema ? "ITEM" : "SHARED" });
+    setDetail(purchase || (admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context)));
   };
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -198,6 +219,14 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         advance("budget"); return true;
       }
       const item = buildComponentRow({ ...selectedRow, edited: true }, shape.option);
+      if(catalogArticleId.current===item.selectionId){
+        if(!purchaseArticleAvailable()){
+          setError("Cet achat a changé. Rouvrez l’article depuis sa carte."); return false;
+        }
+        if(!send(operation({contextOccurrenceId:contextId,fields:{productLabel:item.label},slots:{item:[item]}})))return false;
+        catalogArticleId.current=null;
+        advance("budget"); return true;
+      }
       if (included && !includedDecision && restaurantMealTariff(context) !== restaurantMealTariff({
         ...context, slotSelections: { ...context.slotSelections, meal: { items: [item] } } })) {
         confirm({ message: "Le montant de l’addition change. Les détails sont-ils toujours compris dans cette addition ?",
@@ -206,13 +235,13 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
           save: { label: "Retirer les détails inclus", run: () => saveBudget(selectedRow, replaceConfirmed, "REMOVE_ALL") } });
         return false;
       }
-      if (!detail && extras.length && !replaceConfirmed) {
+      if (!purchase && !detail && extras.length && !replaceConfirmed) {
         confirm({ message: "Remplacer les postes par ce coût total ? Les compléments seront retirés une seule fois. Undo restaure le détail.",
           acceptLabel: "Remplacer par ce total", accept: () => { saveBudget(selectedRow, true, includedDecision); } }); return false;
       }
       admittedMode.current={signature:canonicalPlannerJson(item),detail};
       if (send(operation({ contextOccurrenceId: context.contextOccurrenceId,
-        slots: { [mainSlot]: [item], ...(!detail ? { extras: [] } : {}) },
+        slots: { [mainSlot]: [item], ...(!purchase && !detail ? { extras: [] } : {}) },
         ...(includedDecision ? { includedDetailsAfterMealChange: includedDecision } : {}) }))) { advance("budget"); return true; }
       return false;
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez le budget."); return false; }
@@ -240,21 +269,33 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   };
   const chooseMode = (next: boolean) => {
     if(next===detail)return;
-    const prepare=()=>{setDetail(next);setStep("budget");setRaw(true);setRow(previous=>({...previous,label:next?"Élément hors compléments":shape.total,quantity:"1",unitBasis:"SHARED",personCount:"",amount:"",costMode:"UNKNOWN",edited:true,fundingMode:"UNDECIDED",fundingAmount:""}));};
+    const prepare=()=>{setDetail(next);setStep("budget");setRaw(true);setRow(previous=>({...previous,label:next?mainLabel:shape.total,quantity:"1",unitBasis:"SHARED",personCount:"",amount:"",costMode:"UNKNOWN",edited:true,fundingMode:"UNDECIDED",fundingAmount:""}));};
     if(!main&&!extras.length){prepare();return;}
     confirm({message:next?"Remplacer le total par les postes ? 45 € + 15 € font 60 €, pas 120 €. Les décisions restent inchangées tant que le nouveau coût n’est pas validé.":"Préparer un coût total à la place du détail ? Les postes seront retirés uniquement après confirmation du nouveau montant.",acceptLabel:next?"Préparer les postes":"Préparer le total",accept:prepare});
   };
-  const equip = (asset: ComposerAssetView, target: DropTarget, outsideConfirmed = false) => {
-    if (!leaveRaw(() => equip(asset, target, outsideConfirmed))) return;
-    if (cinema && (target.contextOccurrenceId !== contextId || !target.slotKey
-      || !cinemaSlot(target.slotKey) || publishedDrop(model, asset.assetKey, target)?.semanticAction !== "PATCH_CONTEXT")) return;
+  const equip = (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1, outsideConfirmed = false) => {
+    const socket = card.sockets.find(candidate => candidate.slotKey === target.slotKey);
+    if (target.kind !== "CONTEXT_SOCKET" || target.contextOccurrenceId !== contextId || card.readOnly
+      || !card.capabilityRefs.includes("PATCH_CONTEXT") || cinemaLocked(contextId)
+      || !socket?.choiceAssetKeys?.includes(asset.assetKey)
+      || publishedDrop(model, asset.assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return;
+    if (asset.optionKind === "COMPONENT" ? socket.slotKey !== mainSlot && socket.slotKey !== "extras"
+      : asset.optionKind !== "MOBILITY_INTENT" || !shape.transport || socket.slotKey !== "transport") return;
+    if (selection && (cinemaSelectionLocked(socket.slotKey, selection.selectionId)
+      || !socket.currentItems.some(item => item.selectionId === selection.selectionId && item.kind === selection.kind
+        && item.optionKey === selection.optionKey))) return;
+    if (!leaveRaw(() => equip(asset, target, selection, outsideConfirmed))) return;
+    if (cinema && !cinemaSlot(socket.slotKey)) return;
     setError("");
     if (asset.optionKind === "COMPONENT") {
       if (target.slotKey === mainSlot) { open("budget"); return; }
-      const existing = extras.find(item => item.optionKey === asset.optionKey);
+      const matching = extras.filter(item => item.optionKey === asset.optionKey);
+      if (!selection && matching.length > 1) { setAllOptions(false); open("complete"); return; }
+      const existing = selection ? matching.find(item => item.selectionId === selection.selectionId) : matching[0];
+      if (selection && !existing || existing && cinemaSelectionLocked("extras", existing.selectionId)) return;
       if (!existing && !detail && main && !outsideConfirmed) {
         confirm({ message: "Ce poste est-il réellement en plus du montant déjà prévu ? S’il est inclus, gardez le total ou remplacez-le par le détail.",
-          cancelLabel: "Déjà inclus · garder le total", acceptLabel: "Supplément réel", accept: () => equip(asset, target, true) }); return;
+          cancelLabel: "Déjà inclus · garder le total", acceptLabel: "Supplément réel", accept: () => equip(asset, target, selection, true) }); return;
       }
       cinemaExtraEdit.current = cinema && existing ? { signature: canonicalPlannerJson(existing) } : null;
       setExtraRow(existing ? fromSelection(existing) : fresh(shape.complement));
@@ -271,7 +312,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     setAllOptions(false); setStep("complete");
   };
   const currentTransport = items(context, "transport").find(item => item.kind === "MOBILITY_INTENT");
-  const completeTitle = cinema ? "Compléments et trajet" : context.templateKey === "restaurant" ? "Détails de l’addition" : "Les petits plus";
+  const completeTitle = cinema ? "Compléments et trajet" : labels.extras;
   const transportSocket = cinemaSlot("transport");
   const cinemaModes = (transportSocket && transportSocket.cardinality === "OPTIONAL_ONE"
     && (!currentTransport || !cinemaSelectionLocked("transport", currentTransport.selectionId)) ? transportSocket.choiceAssetKeys ?? [] : [])
@@ -294,8 +335,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       parkingAmount: currentTransport.pricing?.parking.kind === "MANUAL" ? currentTransport.pricing.parking.unitAmount : "",
       targetIntentId: currentTransport.journey?.targetIntentId ?? "" } } : {};
   const summaryEntries: { id: Exclude<Step, null>; icon: ReactNode; label: string; caption: string; disabled?: boolean }[] = [
-    { id: "budget", icon: <Receipt size={16} />, label: cinema ? main?.label ?? mainLabel : detail ? "Postes prévus" : shape.total,
-      caption: cinema && !main ? cinemaTicket ? "Facultatif · préparer" : "Poste indisponible" : `${priceCaption(main)}${!cinema && extras.length ? ` · ${extras.length} complément(s)` : ""}`,
+    { id: "budget", icon: cinema?<CompactCatalogVisual src={clayV22Artwork('v22-art:excel:329')!.src} visualConceptId="v22-art:excel:329" iconKey="activity" size={40}/>:<Receipt size={16} />, label: cinema ? main?.label ?? mainLabel : detail ? "Postes prévus" : shape.total,
+      caption: cinema && !main ? cinemaTicket ? "Facultatif · préparer" : !card.sockets.length?"Sélection à confirmer · catalogue consultable":"Poste indisponible" : `${priceCaption(main)}${!cinema && extras.length ? ` · ${extras.length} complément(s)` : ""}`,
       disabled: cinema && !cinemaTicket },
     ...(cinema ? [{ id: "date" as const, icon: <CalendarDays size={16} />, label: "Séance", caption: String(context.fields.plannedDate ?? "Jour facultatif"), disabled: !cinemaWritable },
       { id: "complete" as const, icon: <MapPin size={16} />, label: completeTitle, caption: "Choix facultatifs", disabled: !cinemaComplements }] : []),
@@ -325,11 +366,12 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     if (!detail && main) confirm({message:"Ce poste est-il inclus dans le coût déjà prévu ? Un supplément réel sera additionné. Pour décrire un montant inclus, utilisez le détail.",cancelLabel:"Inclus · garder le total",acceptLabel:"Supplément réel",accept:add}); else add();
   };
   const editExtra = (item: Component) => {
+    if (cinemaSelectionLocked("extras", item.selectionId) || !leaveRaw(() => editExtra(item))) return;
     if (cinema) {
-      if (!cinemaExtrasSocket || cinemaSelectionLocked("extras", item.selectionId) || !leaveRaw(() => editExtra(item))) return;
+      if (!cinemaExtrasSocket) return;
       cinemaExtraEdit.current = { signature: canonicalPlannerJson(item) };
-      setEquipment(null); setStep("complete"); setFormKey(key => key + 1);
     }
+    setEquipment(null); setStep("complete"); setFormKey(key => key + 1);
     setExtraRow(fromSelection(item));
   };
   const cinemaExtraIsCurrent = (rowId: string, label: string) => {
@@ -358,22 +400,24 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       throw error;
     }
   };
-  const modes = card.sockets.find(socket=>socket.slotKey==="transport")?.choiceAssetKeys ?? [];
-  const summaryChoices = [tile("amount",context.templateKey==="purchase"?"Coût direct":context.templateKey==="delivery"?"Commande complète":context.templateKey==="activity"?"Billets / coût direct":"Montant rapide",()=>open("budget"),card.templateKey,"Sans date ni participants obligatoires"),
-    tile("detail",context.templateKey==="purchase"?"Articles":context.templateKey==="activity"?"Tarif et quantité":"Détailler le repas",()=>{if (!leaveRaw(() => { open("budget"); if(!detail) chooseMode(true); })) return; open("budget"); if(!detail) chooseMode(true); }),
-    tile("extras",context.templateKey==="delivery"?"Frais non inclus":"Compléments",()=>open("complete"),"activity"),
+  const transportTarget = socketTarget("transport");
+  const modes = shape.transport ? (card.sockets.find(socket=>socket.slotKey==="transport")?.choiceAssetKeys ?? [])
+    .filter(key=>publishedDrop(model,key,transportTarget)?.semanticAction==="PATCH_CONTEXT") : [];
+  const summaryChoices = [tile("amount",labels.amount,()=>open("budget"),card.templateKey,"Sans date ni participants obligatoires"),
+    tile("detail",labels.detail,()=>{if(purchase){open("budget");return;}if (!leaveRaw(() => { open("budget"); if(!detail) chooseMode(true); })) return; open("budget"); if(!detail) chooseMode(true); }),
+    tile("extras",labels.extras,()=>open("complete"),"activity"),
     ...(context.templateKey === "restaurant" ? [tile("included", "Déjà compris dans l’addition", () => openIncluded(), "restaurant",
       included ? `${included.items.length} détail(s) conservé(s)` : "Décrire sans augmenter l’addition")] : []),
-    ...(context.templateKey==="purchase"?[tile("product","Article / vendeur",()=>open("product"),"purchase")]:[tile("place",context.templateKey==="activity"?"Destination":"Lieu / restaurant",()=>open("place"),"family-visit")]),
+    ...(context.templateKey==="purchase"?[tile("product","Article / vendeur",()=>open("product"),"purchase")]:[tile("place",context.templateKey==="activity"?"Destination":context.templateKey==="delivery"?"Lieu de livraison":"Lieu / restaurant",()=>open("place"),"family-visit")]),
     ...(context.templateKey === "purchase" && !creating ? [tile("shipping", "Livraison — Examiner pour cet achat",
       () => open("shipping"), "purchase", "Règle métier · aucune dépense ajoutée")] : []),
     ...(shape.participants?[tile("people","Personnes",()=>open("participants"),"family-visit")]:[]),
     ...(shape.envelope?[tile("binding","Enveloppe liée",()=>open("binding"),"purchase")]:[]),tile("date","Date facultative",()=>open("date"),"activity"),
     tile("all-options","Autres postes admissibles",showOptions,"activity"),...modes.flatMap(key=>{const asset=model.library.searchableAssets.find(a=>a.assetKey===key);return asset?[tile(key,asset.label,()=>equip(asset,{kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:"transport"}),asset.iconKey)]:[]})];
-  const extraNames = context.templateKey==="delivery"?["Livraison","Service","Autre frais"]:context.templateKey==="activity"?["Parking","Repas","Autre coût"]:context.templateKey==="purchase"?["Autre article","Livraison","Autre frais"]:["Boisson","Dessert","Autre complément"];
+  const extraNames = labels.examples;
   const backToSummary = tile("summary", "Retour au résumé", () => open(null), "activity");
   const showCinemaSuggestions = cinema && (step === null || step === "complete" && !extraRow && !equipment);
-  const rankedCinema = showCinemaSuggestions ? cinemaSuggestions({
+  const cinemaCatalogSuggestions = cinema ? cinemaSuggestions({
     contextOccurrenceId: contextId, writable: cinemaWritable, ticketAllowed: cinemaTicket, ticket: main,
     dayChosen: !!context.fields.plannedDate,
     placeChosen: placeLabel?.kind === "TEXT" ? !!placeLabel.label.trim()
@@ -381,8 +425,13 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     extrasAllowed: cinemaExtras,
     extras: extras.map(({ label, selectionId }) => ({ label, selectionId, locked: cinemaSelectionLocked("extras", selectionId) })),
     transport: cinemaMode && { label: cinemaMode.label, iconKey: cinemaMode.iconKey, selectionId: currentTransport?.selectionId },
-    complementsOnly: step === "complete", dismissed: cinemaDeclines,
-  }) : [];
+    complementsOnly: false, dismissed: cinemaDeclines,
+  }, Infinity) : [];
+  const rankedCinema = showCinemaSuggestions
+    ? cinemaCatalogSuggestions.filter(suggestion => step !== "complete" || suggestion.category === "extra" || suggestion.category === "transport").slice(0, 4)
+    : [];
+  const cinemaArtwork: Readonly<Record<string, string>> = { 'billet-cinema': 'v22-art:excel:329', taxi: 'v22-art:excel:499',
+    popcorn: 'v22-art:extra:popcorn', boisson: 'v22-art:extra:boisson-generale' };
   const chooseCinemaSuggestion = (suggestion: CinemaSuggestion) => {
     if (suggestion.contextOccurrenceId !== contextId) return;
     if (suggestion.category === "ticket") {
@@ -390,7 +439,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     } else if (suggestion.category === "session") {
       if (cinemaWritable) open(suggestion.conceptKey === "jour-seance" ? "date" : "place");
     } else if (suggestion.category === "transport") {
-      if (cinemaMode && currentTransport?.selectionId === suggestion.selectionId) equip(cinemaMode, socketTarget("transport"));
+      if (cinemaMode && currentTransport?.selectionId === suggestion.selectionId) equip(cinemaMode, socketTarget("transport"), currentTransport);
     } else if (suggestion.action === "EDIT") {
       const item = extras.find(item => item.selectionId === suggestion.selectionId);
       if (item) editExtra(item);
@@ -403,8 +452,9 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     choices: showCinemaSuggestions ? rankedCinema.map(suggestion => {
       const source = suggestion.sourceRow ? `Catalogue · Sortie · ligne ${suggestion.sourceRow}`
         : suggestion.category === "extra" ? "Règle métier additionnelle" : null;
-      return tile(suggestion.key, suggestion.label, () => chooseCinemaSuggestion(suggestion), suggestion.iconKey,
-        source ? `${suggestion.reason} · ${source}` : suggestion.reason, suggestion.action === "EDIT" || undefined);
+      return { ...tile(suggestion.key, suggestion.label, () => chooseCinemaSuggestion(suggestion), suggestion.iconKey,
+        source ? `${suggestion.reason} · ${source}` : suggestion.reason, suggestion.action === "EDIT" || undefined),
+        visualConceptId: cinemaArtwork[suggestion.conceptKey] };
     }) : step === "date" && cinemaWritable ? [
       tile("place", "Cinéma — Préciser le lieu", () => open("place"), "family-visit"),
       tile("people", "Participants — Préciser", () => open("participants"), "family-visit"), backToSummary,
@@ -417,10 +467,68 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       ...extras.map(item=>tile(item.selectionId,"Modifier "+item.label,()=>setExtraRow(fromSelection(item)),"purchase",priceCaption(item))),
       ...extraNames.map(label=>tile("add:"+label,context.templateKey === "restaurant" ? `${label} · en supplément` : label,()=>addExtra(label),"purchase")),
       tile("summary","Terminer",()=>open(null),"activity")]
-      : step==="budget"?[tile("total","Coût total",()=>chooseMode(false),"restaurant",undefined,!detail),tile("detail","Détailler",()=>chooseMode(true),"restaurant",undefined,detail),tile("unknown","Prix inconnu",()=>saveBudget({...row,costMode:"UNKNOWN",edited:true}),"activity"),
+      : step==="budget"?[...(!purchase?[tile("total","Coût total",()=>chooseMode(false),"restaurant",undefined,!detail),tile("detail","Détailler",()=>chooseMode(true),"restaurant",undefined,detail)]:[]),tile("unknown","Prix inconnu",()=>saveBudget({...row,costMode:"UNKNOWN",edited:true}),"activity"),
         ...(suggestion?[tile("reference","Prix observé "+money(suggestion.value),()=>{setRaw(true);setRow(r=>({...r,amount:suggestion.value!,costMode:"MANUAL",edited:true}));},"restaurant","À confirmer · "+suggestion.sourceAuthority)]:[]),tile("summary","Résumé",()=>open(null),"activity")]
       : step==="binding"?([['CONFIRMED_CONSUMPTION','Compris dans '+shape.envelope],['EXTRA_TO_SLOT','En plus de l’enveloppe']] as const).map(([mode,label])=>tile(mode,label,()=>{if(main&&send(operation({contextOccurrenceId:context.contextOccurrenceId,slots:{[mainSlot]:[{...main,binding:{mode}}]}})))advance("binding");},"purchase"))
       :[tile("summary","Résumé",()=>open(null),"activity"),...summaryChoices.filter(c=>c.key!==step)]};
+  function purchaseArticleAvailable() {
+    return context.templateKey === "purchase" && !!preset && !main
+      && !String(context.fields.productLabel ?? "").trim()
+      && !!catalogSocket(model, contextId, "item", "option:purchase:item:item");
+  }
+  const beginCatalogArticle = (label: string) => {
+    if (!purchaseArticleAvailable() || !leaveRaw(() => beginCatalogArticle(label))) return;
+    const article = { ...fresh(label), unitBasis: "ITEM" as const };
+    catalogArticleId.current = article.id;
+    setRow(article); setDetail(true); setStep("budget"); setRaw(true); setError("");
+    setExtraRow(null); setEquipment(null); setFormKey(key => key + 1);
+  };
+  const removePurchaseArticle = () => {
+    if (!purchase || !main || !catalogSocket(model,contextId,"item","option:purchase:item:item")
+      || cinemaSelectionLocked("item",main.selectionId)) return;
+    const ask = () => confirm({message:`Retirer « ${main.label} » ? Le vendeur, les frais et la carte d’achat sont conservés.`,
+      acceptLabel:"Retirer cet article",accept:()=>{
+        if(purchaseLineDigest.current!==mealSignature){setError("Cet article a changé. Rouvrez-le pour le retirer.");return;}
+        if(send(operation({contextOccurrenceId:contextId,fields:{productLabel:""},slots:{item:[]}})))advance("budget");
+      }});
+    if(leaveRaw(ask))ask();
+  };
+  useEffect(() => {
+    if (!catalogChoice || handledCatalogChoice.current === catalogChoice) return;
+    handledCatalogChoice.current = catalogChoice;
+    if (catalogChoice.kind === "article") beginCatalogArticle(catalogChoice.label);
+    else equip(catalogChoice.asset, catalogChoice.target, catalogChoice.selection);
+  });
+  const cinemaCommands: CatalogCommand[] = cinemaCatalogSuggestions.flatMap(suggestion => {
+    const visualConceptId = cinemaArtwork[suggestion.conceptKey];
+    return visualConceptId ? [{ key: suggestion.key, visualConceptId, label: suggestion.category === "ticket"
+      ? main ? "Modifier le billet" : "Préparer le billet" : suggestion.label,
+      editsExisting: suggestion.action === "EDIT", run: () => chooseCinemaSuggestion(suggestion) }] : [];
+  });
+  const resolveCatalogCommands = (entry: ClayCatalogEntry): CatalogCommand[] => {
+    if (purchaseArticleAvailable() && purchaseCatalogProduct(entry,context.fields.budgetDomain))
+      return [{visualConceptId:entry.visualConceptId,label:`Configurer ${entry.label} dans cet achat`,run:()=>beginCatalogArticle(entry.label)}];
+    if (context.templateKey !== "restaurant" || !entry.assetKeys.includes("restaurant:beer")) return [];
+    const commands: CatalogCommand[] = [];
+    const existingIncluded = included?.items.filter(item => sameDetailLabel.compare(item.label.trim(), includedDrink) === 0) ?? [];
+    const existingExtras = extras.filter(item => sameDetailLabel.compare(item.label.trim(), includedDrink) === 0);
+    if (main && catalogSocket(model, contextId, "meal", "option:restaurant:meal:restaurant")
+      && !cinemaSelectionLocked("meal", main.selectionId)) {
+      if (canSuggestIncludedDrink())
+        commands.push({visualConceptId:entry.visualConceptId,label:"Renseigner la bière comprise dans l’addition",run:()=>openIncluded(undefined,includedDrink)});
+      existingIncluded.forEach((item,index) => commands.push({key:item.detailId,visualConceptId:entry.visualConceptId,editsExisting:true,
+        label:`Modifier la bière comprise · détail ${index+1}`,run:()=>openIncluded(item)}));
+    }
+    if (catalogSocket(model,contextId,"extras","option:restaurant:extras:extra")) {
+      if (!existingExtras.length && !existingIncluded.length)
+        commands.push({visualConceptId:entry.visualConceptId,label:"Préparer une bière en supplément",run:()=>addExtra(includedDrink)});
+      existingExtras.forEach((item,index) => {
+        if (!cinemaSelectionLocked("extras",item.selectionId))commands.push({key:item.selectionId,visualConceptId:entry.visualConceptId,
+          editsExisting:true,label:`Modifier la bière en supplément · ligne ${index+1}`,run:()=>editExtra(item)});
+      });
+    }
+    return commands;
+  };
   const panelContent = <aside ref={panel} className={styles.restaurantInspector} role="dialog" aria-modal="false" aria-labelledby="restaurant-heading" data-restaurant-editor data-guided-template={context.templateKey} data-cinema-editor={cinema || undefined}
     data-purchase-editor={context.templateKey === "purchase" || undefined}
     onChangeCapture={event => { if (!(event.target instanceof Element) || !event.target.closest("[data-purchase-delivery]")) setRaw(true); }}
@@ -429,6 +537,9 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
     <p className={styles.restaurantIntro}>{cinema ? "Le billet, le jour de la séance, les compléments et le trajet se préparent séparément."
       : step === null ? "Choisissez seulement ce que vous voulez prévoir. Les autres précisions restent facultatives." : "Budget = coût économique prévu, pas un plafond. Les choix validés restent conservés."}</p>
+    {purchase && <EnablePurchaseBasket context={context} card={card} model={model} busy={busy} decide={decide} />}
+    <CatalogOpenButton target={{contextId,moment:cinema?"cinema":context.templateKey==="purchase"?"article":context.templateKey==="restaurant"?"included":undefined,
+      commands:cinemaCommands,resolveCommands:resolveCatalogCommands}}>Parcourir le catalogue de {heading}</CatalogOpenButton>
     {step === null ? <><nav aria-label={`Choix de ${heading}`} className={styles.restaurantSummary} data-quick-purchase={quickPurchase || undefined}>
       {summaryEntries.slice(summaryPage * summaryPageSize, (summaryPage + 1) * summaryPageSize).map(entry => <button key={entry.id} type="button" disabled={entry.disabled} onClick={() => open(entry.id)}>
         {entry.icon}<span><small>{entry.label}</small><strong>{entry.caption}</strong></span><ChevronRight size={14} /></button>)}
@@ -456,7 +567,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         <label>Enveloppe liée à cet achat<select name="budgetDomain" defaultValue={String(context.fields.budgetDomain ?? "")}><option value="">À préciser</option>
           {model.editors.find(editor => editor.assetKey === "template:purchase")?.fields.find(field => field.key === "budgetDomain")?.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select></label>
         <button type="button" onClick={() => { const product = panel.current?.querySelector<HTMLInputElement>('input[name="productLabel"]')?.value ?? ""; const merchant = panel.current?.querySelector<HTMLInputElement>('input[name="merchantLabel"]')?.value ?? ""; const domain = panel.current?.querySelector<HTMLSelectElement>('select[name="budgetDomain"]')?.value ?? ""; fields({productLabel:product || null,merchantLabel:merchant || null,budgetDomain:domain || null},"product"); }}>Conserver ces précisions</button></>}
-      {step === "participants" && <>{context.templateKey === "restaurant" && refs.length > 0 && <ul className={styles.restaurantParticipants} aria-label="Participants prévus">
+      {step === "participants" && <>{shape.participants && refs.length > 0 && <ul className={styles.restaurantParticipants} aria-label="Participants prévus">
         {refs.map((ref, index) => <li key={`${prospectivePersonIdentity(ref)}:${index}`}><span>{personLabel(ref)}</span>
           <button type="button" disabled={busy} aria-label={`Retirer ${personLabel(ref)} des participants`} onClick={() => {
             const remove = () => fields({ participantRefs: refs.filter((_, position) => position !== index) }, "participants");
@@ -473,11 +584,13 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       {step === "budget" && cinema && <WorkshopComponentRow title="Billet de cinéma" row={row} participantCount={refs.length}
         onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy || !cinemaTicket} />}
       {step === "budget" && !cinema && <>
-        {detail ? <WorkshopComponentRow title="Élément hors compléments" row={row} participantCount={refs.length} onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy} bindingChoices={!!shape.envelope} />
+        {detail ? <WorkshopComponentRow title={context.templateKey==="purchase"?"Article de cet achat":"Élément hors compléments"} row={row} participantCount={refs.length} onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy} bindingChoices={!!shape.envelope} />
           : <><label>Coût prévu à notre charge (€)<input autoFocus inputMode="decimal" placeholder="Encore inconnu" value={row.costMode==="MANUAL"?row.amount:""} onChange={event=>setRow(r=>({...r,amount:event.target.value,costMode:event.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}))}/></label>
             <details><summary>Financement · facultatif</summary><label>Source<select value={row.fundingMode} onChange={e=>setRow(r=>({...r,fundingMode:e.target.value as Row['fundingMode'],edited:true}))}><option value="UNDECIDED">À préciser</option><option value="BANK">Banque déclarée</option>{row.fundingMode==="EXISTING"&&<option value="EXISTING">Conserver le financement antérieur</option>}</select></label>{row.fundingMode==="BANK"&&<label>Montant Banque (€)<input inputMode="decimal" value={row.fundingAmount} onChange={e=>setRow(r=>({...r,fundingAmount:e.target.value,edited:true}))}/></label>}</details></>}
         <p>{detail ? "Les éléments et les compléments constituent le budget. Aucun total parent ne s’y ajoute." : "Un seul montant à notre charge, quel que soit le nombre de participants."}</p>
         {!detail && <button type="button" className={styles.primary} onClick={() => saveBudget()}>Conserver ce coût</button>}
+        {purchase && main && catalogSocket(model,contextId,"item","option:purchase:item:item")
+          && !cinemaSelectionLocked("item",main.selectionId) && <button type="button" disabled={busy} onClick={removePurchaseArticle}>Retirer cet article de l’achat</button>}
         {detail && extras.slice(extraPage * 3, extraPage * 3 + 3).map(item => <button key={item.selectionId} type="button" onClick={() => { if (!leaveRaw(() => { setStep("complete"); setExtraRow(fromSelection(item)); })) return; setStep("complete"); setExtraRow(fromSelection(item)); }}>{item.label} · {priceCaption(item)}</button>)}</>}
       {step === "binding" && <p>Le Compiler vérifie l’enveloppe réellement disponible. Sans enveloppe admissible, la relation restera à préciser. Les compléments libres sont des postes distincts.</p>}
       {step === "complete" && !extraRow && !equipment && <>{extraAdded ? <p role="status">Poste ajouté au brouillon.</p> : <p>{context.templateKey === "restaurant"
@@ -583,6 +696,6 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     <footer><button type="button" onClick={close}>Retour au Board</button><span>Les choix validés sont conservés dans le brouillon.</span></footer>
   </aside>;
   return <>{typeof document !== "undefined" && createPortal(panelContent, document.body)}
-    {allOptions ? <ContextPalette card={card} model={model} busy={busy} configure choose={(asset,target)=>equip(asset,target)} close={()=>setAllOptions(false)} />
-      : <ContextPalette card={card} model={model} busy={busy} configure choose={(asset,target)=>equip(asset,target)} close={close} question={question} />}</>;
+    {allOptions ? <ContextPalette card={card} model={model} busy={busy} configure choose={equip} close={()=>setAllOptions(false)} />
+      : <ContextPalette card={card} model={model} busy={busy} configure choose={equip} close={close} question={question} />}</>;
 }

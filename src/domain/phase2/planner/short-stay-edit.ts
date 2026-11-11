@@ -1,6 +1,7 @@
 import { parsePlanSemanticState, type PlanSemanticStateV1, type PlannedContextState } from "./semantic-state";
 import { plannerDigest, type PlannerJson } from "./json";
 import type { ComponentSelectionV1 } from "./component-contract";
+import { isPurchaseBasket } from "./purchase-basket";
 
 export type ShortStayEdit = Readonly<{ contextOccurrenceId: string; fields: Readonly<Record<string, PlannerJson>>;
   slots?: Readonly<Partial<Record<"lodging" | "groceries" | "restaurants" | "activities" | "purchases" | "extras", readonly ComponentSelectionV1[]>>>;
@@ -44,6 +45,8 @@ export function editShortStay(raw: PlanSemanticStateV1, edit: ShortStayEdit): Pl
       || old && (old.parentContextOccurrenceId !== parent.contextOccurrenceId || old.templateKey !== child.templateKey))
       throw new TypeError("COMPOSER_SHORT_STAY_CHILD_INVALID");
     if (old && protectedContext(old.contextOccurrenceId) && plannerDigest(child) !== plannerDigest(old)) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+    if ((isPurchaseBasket(child) || old && isPurchaseBasket(old))
+      && (!old || plannerDigest(child) !== plannerDigest(old))) throw new TypeError("PURCHASE_BASKET_OWNER_REQUIRED");
   }
   const contexts = state.contexts.filter(c => !removed.has(c.contextOccurrenceId)).map(c => c.contextOccurrenceId === parent.contextOccurrenceId
     ? { ...c, fields, slotSelections: slots } : children.find(child => child.contextOccurrenceId === c.contextOccurrenceId) ?? c);

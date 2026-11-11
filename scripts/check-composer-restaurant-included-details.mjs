@@ -219,7 +219,7 @@ try{
   await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
   assert.equal(registry.count(),0);assert.equal(accepted[0].kind,'EDIT_RESTAURANT');assert.deepEqual(amounts(current),['40.00']);
   const saved=structuredClone(current),savedId=restaurantIncludedDetails(target(saved)).items[0].detailId;
-  await click('Compléments');await click('Modifier le détail Boisson');
+  await click('Détails de l’addition');await click('Modifier le détail Boisson');
   await act(async()=>input('Montant de la ligne compris').props.onChange({target:{value:'8.00'}}));
   await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
   assert.equal(restaurantIncludedDetails(target(current)).items[0].detailId,savedId);assert.deepEqual(amounts(current),['40.00']);
@@ -227,7 +227,7 @@ try{
   // Restore admitted snapshots through the same state input used by Undo/Redo; browser receives actual shell controls separately.
   await act(async()=>{current=saved;setCurrent(saved);});assert.equal(restaurantIncludedDetails(target(current)).items[0].amount.value,'6.00');
   await act(async()=>{current=edited;setCurrent(edited);});assert.equal(restaurantIncludedDetails(target(current)).items[0].amount.value,'8.00');
-  await click('Compléments');await click('Retirer le détail');assert.equal(restaurantIncludedDetails(target(current)),null);assert.deepEqual(amounts(current),['40.00']);
+  await click('Détails de l’addition');await click('Retirer le détail');assert.equal(restaurantIncludedDetails(target(current)),null);assert.deepEqual(amounts(current),['40.00']);
  });
  await check('RI-11-REAL-EDITOR-TOTAL-CONFIRM-CANCEL-KEEP-REMOVE',async()=>{
   for(const policy of ['KEEP_CONFIRMED','REMOVE_ALL']){
@@ -246,7 +246,7 @@ try{
   const knowledge=model.cardKnowledge['template:restaurant'];assert(knowledge?.dimensions.length);
   knowledge.dimensions=knowledge.dimensions.map(d=>({...d,value:'150.00',suggestionPolicy:'REFERENCE_ONLY'}));
   await click('Déjà compris dans l’addition');assert.equal(input('Montant de la ligne compris').props.value,'');
-  await click('← Retour au résumé');await click('Compléments');await click('Ajouter un supplément distinct');assert(confirmation);await act(async()=>confirmation.accept());
+  await click('← Retour au résumé');await click('Détails de l’addition');await click('Ajouter un supplément distinct');assert(confirmation);await act(async()=>confirmation.accept());
   let row=root.root.findByType(WorkshopComponentRow);await act(async()=>row.props.onChange({...row.props.row,label:'Supplément extérieur',amount:'6.00',costMode:'MANUAL',edited:true}));
   row=root.root.findByType(WorkshopComponentRow);await act(async()=>row.props.onSave());
   assert.deepEqual(amounts(current),['40.00','6.00']);assert.equal(restaurantIncludedDetails(target(current)),null);

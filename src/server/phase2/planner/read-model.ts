@@ -1,4 +1,5 @@
 import "server-only";
+import Big from "big.js";
 import { plannerDigest } from "@/domain/phase2/planner/json";
 import { componentId } from "@/domain/phase2/planner/identity";
 import { emptyPlanSemanticState, semanticStateDigest } from "@/domain/phase2/planner/semantic-state";
@@ -9,6 +10,7 @@ import type { PlannerDependencies } from "./apply";
 import { readPlannerDraft } from "./draft-reader";
 import { publishAdjustmentCapabilities } from "./balance-assistant";
 import { publishContextRegistry, resolveContextTemplate } from "./context-registry";
+import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
 import { jsonEnvelope } from "./compiler";
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { projectCardKnowledge } from "./card-knowledge";
@@ -69,23 +71,34 @@ export function composerFromDraftRead(read: Awaited<ReturnType<typeof readPlanne
   }
   const contexts: ComposerContextCardView[] = preview.compiled.contexts.map(compiled => {
     const raw = state.contexts.find(c => c.contextOccurrenceId === compiled.contextOccurrenceId);
+    const definition = resolveContextTemplate(compiled.templateKey, raw?.fields);
+    const components = preview.compiled.components.filter(c => c.contextOccurrenceId === compiled.contextOccurrenceId);
+    const basket = raw && isPurchaseBasket(raw);
+    const basketAmounts = basket ? components.filter(c => ["item", "extras", "shipping"].includes(c.role)).map(c => c.evaluation.economicAmount) : [];
+    const known = basketAmounts.filter((amount): amount is string => amount !== null);
     return { contextOccurrenceId: compiled.contextOccurrenceId, templateKey: compiled.templateKey,
       label: typeof raw?.fields.label === "string" ? raw.fields.label : assetLabels[compiled.templateKey] ?? resolveContextTemplate(compiled.templateKey).label,
       parentContextOccurrenceId: compiled.parentContextOccurrenceId ?? null, childContextOccurrenceIds: compiled.childContextIds ?? [],
       externalIntentId: compiled.externalIntentId, readOnly: compiled.externalIntentId !== null,
-      fields: raw?.fields ?? {}, components: preview.compiled.components.filter(c => c.contextOccurrenceId === compiled.contextOccurrenceId).map(jsonEnvelope),
+      fields: raw?.fields ?? {}, components: components.map(jsonEnvelope),
+      ...(basket ? { purchaseSummary: {
+        articleCount: compiled.componentSlots?.find(s => s.slotKey === "item")?.selections.length ?? 0,
+        knownAmount: known.length ? known.reduce((total, amount) => total.plus(amount), new Big(0)).toFixed(2) : null,
+        complete: known.length > 0 && known.length === basketAmounts.length && !compiled.componentSlots?.some(
+          s => ["item", "shipping", "extras"].includes(s.slotKey) && s.state === "UNRESOLVED"),
+      } } : {}),
       knowledge: preview.compiled.components.some(c => c.contextOccurrenceId === compiled.contextOccurrenceId && c.evaluation.economicAmount === null)
         || compiled.componentSlots?.some(s => s.state === "UNRESOLVED" || s.cardinality === "REQUIRED_ONE" && s.state !== "RESOLVED") ? "UNKNOWN" : "KNOWN",
       capabilityRefs: capabilities.find(c => c.targetRef === compiled.contextOccurrenceId)?.actions ?? [],
       sockets: (compiled.componentSlots ?? []).map(s => ({ contextOccurrenceId: compiled.contextOccurrenceId, slotKey: s.slotKey, cardinality: s.cardinality,
-        label: socketLabels[s.slotKey] ?? s.slotKey,
-        choiceAssetKeys: resolveContextTemplate(compiled.templateKey).componentSlots.filter(slot => slot.slotKey === s.slotKey)
+        label: raw && isPurchaseBasket(raw) && s.slotKey === "item" ? "Articles" : s.slotKey === "shipping" ? "Livraison" : socketLabels[s.slotKey] ?? s.slotKey,
+        choiceAssetKeys: definition.componentSlots.filter(slot => slot.slotKey === s.slotKey)
           .flatMap(slot => [...slot.options.map(option => optionAssetKey(compiled.templateKey, slot.slotKey, option.optionKey)), ...slot.allowedChildTemplates.map(contextAssetKey)]),
         evaluations: s.selections.filter(i => i.kind === "COMPONENT").map(i => ({ selectionId: i.selectionId,
           economicAmount: preview.compiled.components.find(c => c.componentId === componentId(compiled.contextOccurrenceId, s.slotKey, i.selectionId))?.evaluation.economicAmount ?? null })),
         visualState: s.state === "SUGGESTED" || s.selections.length > 0 && s.selections.every(i => i.provenance === "PERSONAL_SUGGESTION") ? "SUGGESTED" : s.state === "UNRESOLVED" || s.state === "EMPTY" ? "UNRESOLVED"
           : s.selections.every(i => i.provenance === "STRUCTURAL_DEFAULT") ? "HABITUAL" : "CHOSEN",
-        currentItems: s.selections, capabilityRefs: resolveContextTemplate(compiled.templateKey).capabilities
+        currentItems: s.selections, capabilityRefs: definition.capabilities
           .filter(c => c.slotKey === s.slotKey).map(c => `${compiled.templateKey}:${c.slotKey}:${c.action}`) })) };
   });
   for (const external of prepared.baseline.structuralFacts.externalKnownContexts) {
@@ -103,7 +116,8 @@ export function composerFromDraftRead(read: Awaited<ReturnType<typeof readPlanne
     drops.push({ sourceAssetKey: instanceAssetKey(card.contextOccurrenceId), target: { kind: "TRASH" }, resolution: locked ? "BLOCKED" : "ACCEPTED",
       semanticAction: locked ? null : "REMOVE_CONTEXT", previewSupported: !locked, constraint: locked ? "ANCHOR_OR_PRESERVE" : null, choices: [] });
     for (const socket of card.sockets) {
-      const slot = resolveContextTemplate(card.templateKey).componentSlots.find(s => s.slotKey === socket.slotKey)!;
+      const slot = resolveContextTemplate(card.templateKey, card.fields).componentSlots.find(s => s.slotKey === socket.slotKey)!;
+      if (isPurchaseBasket(card) && ["item", "shipping"].includes(slot.slotKey)) continue;
       const target: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey };
       for (const asset of assets.filter(a => a.kind === "CONTEXT_ASSET" || a.kind === "SLOT_OPTION_ASSET")) {
         const allowed = asset.kind === "CONTEXT_ASSET" ? slot.allowedChildTemplates.includes(asset.templateKey!)

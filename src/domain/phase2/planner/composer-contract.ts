@@ -23,7 +23,8 @@ export type ContextSocketView = Readonly<{ contextOccurrenceId: string; slotKey:
 export type ComposerContextCardView = Readonly<{ contextOccurrenceId: string; templateKey: string; label: string;
   parentContextOccurrenceId: string | null; childContextOccurrenceIds: readonly string[]; externalIntentId: string | null;
   readOnly: boolean; fields: PlannerJsonObject; components: readonly PlannerJsonObject[];
-  knowledge: PlannerKnowledge; capabilityRefs: readonly string[]; sockets: readonly ContextSocketView[] }>;
+  knowledge: PlannerKnowledge; capabilityRefs: readonly string[]; sockets: readonly ContextSocketView[];
+  purchaseSummary?: Readonly<{ articleCount: number; knownAmount: string | null; complete: boolean }> }>;
 export type ComposerCockpitView = PlanProjectionV1;
 export type ComposerBoardView = Readonly<{ targetMonth: string; baselineControls: readonly ComposerCardView[];
   structuralObligations?: readonly BaselineStructuralFact[];

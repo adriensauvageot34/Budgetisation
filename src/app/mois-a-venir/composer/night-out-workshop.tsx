@@ -29,6 +29,7 @@ type View = "date"|"calendar"|"people"|"people-pick"|"person-text"|"place"|"plac
 const items = (c:PlannedContextState, slot:string) => (c.slotSelections[slot]?.items ?? []) as readonly ComponentSelectionV1[];
 const extrasCatalog = [...assetsForModule("bar"),...assetsForModule("club")].filter(a=>!/(?:parking|uber_out|uber_back|entry|ticket)$/u.test(a.assetKey));
 const beforeCatalog = assetsForModule("house_party");
+const atHomeCatalog = beforeCatalog.filter(asset => !/(?:parking|uber_out|uber_back|entry|ticket)$/u.test(asset.assetKey));
 const normalize = (text:string) => text.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLocaleLowerCase("fr");
 const caption = (s:ComponentSelectionV1) => s.kind==="COMPONENT" ? `${s.label} · ${s.quantityPerPerson ? `${s.quantityPerPerson}/personne (${s.pricedParticipantCount})` : `${s.quantity} ${s.unitBasis==="SHARED"?"lot partagé":"unité(s)"}`} · ${s.cost.kind==="MANUAL"?money(s.cost.unitAmount):s.cost.kind==="QUOTE"?"devis conservé":"prix inconnu"}${s.provenance==="PERSONAL_SUGGESTION"?" · suggestion non retenue":""}`
   : s.kind==="MOBILITY_INTENT" ? `${({car:"Voiture",train:"Train / tram",bus:"Bus",taxi:"Taxi",free:"Gratuité déclarée",other:"Autre transport",unknown:"Mode à préciser"} as Record<string,string>)[s.optionKey]??"Trajet"} · ${s.journey?.relation==="SHARES_JOURNEY"?"coût du trajet lié":s.pricing?.fare.kind==="MANUAL"?money(s.pricing.fare.unitAmount):"prix à préciser"}` : s.kind==="CHILD_CONTEXT"?"Moment lié":"À préciser";
@@ -124,7 +125,8 @@ export function NightOutEditor({context,semanticState,householdPersons,creating=
     question={title:"Qui vient avec toi ?",search:{value:query,change:setQuery,label:"Rechercher une personne"},choices:[...candidates.filter(p=>normalize(personLabel(p)).includes(normalize(query))).map(p=>dockChoice(prospectivePersonIdentity(p),personLabel(p),()=>{const id=prospectivePersonIdentity(p);setPeople(old=>old.some(v=>prospectivePersonIdentity(v)===id)?old.filter(v=>prospectivePersonIdentity(v)!==id):[...old,p]);setDirty(true);},"family-visit",people.some(v=>prospectivePersonIdentity(v)===prospectivePersonIdentity(p)))),dockChoice("manual","Saisir un autre nom",()=>{setManual("");move("person-text");},"family-visit")]};
   }else if(view==="place-pick")question={title:"Un lieu pour cette soirée",search:{value:query,change:setQuery,label:"Rechercher un lieu enregistré"},choices:[...(model?.mobilityOptions?.places??[]).filter(p=>normalize(`${p.name} ${p.commune??""}`).includes(normalize(query))).map(p=>dockChoice(p.placeId,p.name,()=>editFields({placeRef:{kind:"KNOWN",placeId:p.placeId}},nextFoundation("menu")),"activity",false,p.commune??undefined)),dockChoice("manual","Saisir un lieu",()=>{setManual("");move("place-text");},"activity")]};
   else if(["extras","shared","before-components"].includes(view)){
-    const catalog=view==="before-components"?beforeCatalog:extrasCatalog;
+    const atHome = presetKey === "home-evening" || presetKey === "friends-evening";
+    const catalog = view === "before-components" ? beforeCatalog : atHome ? atHomeCatalog : extrasCatalog;
     question={title:view==="shared"?"Une bouteille commune":view==="before-components"?"Compléter le before":"Choisir une consommation",choices:[...catalog.map(a=>({
       ...dockChoice(a.assetKey,a.label,()=>beginRow(view==="before-components"?"before":"extras",undefined,view==="shared",a,view==="before-components"),"night-out"),
       catalogAssetKey:a.assetKey,

@@ -4,6 +4,7 @@ import { memo, useState, useRef, useEffect, useMemo } from "react";
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isClothingPurchase, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
+import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { Search, Star } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
@@ -11,7 +12,9 @@ import styles from "./composer.module.css";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { useComposerInteractions,publishedDrop } from "./interactions";
 import { composerRenderIndex } from "./render-index";
-import { preloadEditorForAsset, preloadEditorForPreset } from "./editor-chunks";
+import { preloadEditorForAsset } from "./editor-chunks";
+import { CatalogOpenButton } from "./catalog-discovery-provider";
+import { MONTHLY_GROCERIES_REF } from "./catalog-discovery";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
 export const ComposerLibrary=memo(ComposerLibraryView);
@@ -42,11 +45,11 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     return <div className={item.preset?styles.libraryTile:styles.libraryGenericTile} key={item.key}>
       <button type="button" className={item.preset?styles.presetTile:styles.libraryGenericChoice} data-preset={item.preset?.presetKey} data-asset={item.preset?undefined:asset.assetKey}
         data-selected={selected===asset.assetKey} data-library-add-action={query.trim()?item.key:undefined} disabled={busy}
-        onFocus={()=>item.preset?preloadEditorForPreset(asset):preloadEditorForAsset(asset)}
+        onFocus={()=>preloadEditorForAsset(asset,item.preset?.presetKey)}
         onClick={()=>activate(item)} draggable={!busy&&draggable} data-drag-source={draggable?asset.assetKey:undefined}
         onDragStart={event=>{event.stopPropagation();if(busy||!draggable){event.preventDefault();return;}if(interaction)interaction.start(asset.assetKey,event,item.preset?.presetKey);else if(item.preset){event.preventDefault();}else{event.dataTransfer.setData("application/x-planner-asset",asset.assetKey);drag(asset.assetKey);}}}
         onDragEnd={()=>{interaction?.end();drag(null);}}>
-        {item.preset?<PresetIllustration preset={item.preset}/>:<PlannerIcon iconKey={asset.iconKey} identityRef={asset.capabilityRef} scale="LIBRARY" className={styles.assetIcon}/>}
+        {item.preset?<PresetIllustration preset={item.preset}/>:<ComposerAssetVisual assetKey={asset.assetKey} templateKey={asset.templateKey} iconKey={asset.iconKey} identityRef={asset.capabilityRef} className={styles.assetIcon}/>}
         <span>{query.trim()?`${index.occurrences.some(row=>row.presetKey===item.preset?.presetKey)?"Ajouter un autre":"Ajouter"} ${item.label}`:item.label}</span>
       </button>
       <button type="button" className={styles.libraryFavorite} aria-label={`${favorites.includes(item.key)?"Retirer":"Épingler"} ${item.label}`} aria-pressed={favorites.includes(item.key)} onClick={()=>toggleFavorite(item.key)}><Star size={13} fill={favorites.includes(item.key)?"currentColor":"none"}/></button>
@@ -55,6 +58,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   return <aside className={styles.library} data-library aria-label="Bibliothèque d’intentions">
     <header className={styles.panelHeader}><h2><button className={styles.libraryOpen} data-library-open onClick={()=>search.current?.focus()}>Que veux-tu prévoir ?</button></h2></header>
     <nav className={styles.libraryTabs} aria-label="Espaces de la bibliothèque"><button type="button" aria-pressed={space==="add"} onClick={()=>setSpace("add")}>À ajouter</button><button type="button" aria-pressed={space==="manage"} onClick={()=>setSpace("manage")}>À piloter</button></nav>
+    <div className={styles.catalogLibraryAccess}><CatalogOpenButton target={{query,scope:'all'}}>Tous les éléments{query.trim()?` · ${query}`:''}</CatalogOpenButton><CatalogOpenButton target={{scope:'courses',controlRef:index.controls.find(a=>a.capabilityRef===MONTHLY_GROCERIES_REF)?.capabilityRef}}>Produits pour Courses</CatalogOpenButton></div>
     <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="add"?"Soirée, repas, achat…":"Budget ou cagnotte…"} value={query} onChange={e=>setQuery(e.target.value)}
       onKeyDown={e=>{if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
         if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}else focusActions();

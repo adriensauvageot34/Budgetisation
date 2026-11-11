@@ -1,0 +1,3314 @@
+{
+  "schema": "clay-v22-bindings@1",
+  "assets": {
+    "bar:beer": "v22-art:excel:2",
+    "house_party:beer": "v22-art:excel:2",
+    "restaurant:beer": "v22-art:excel:2",
+    "bar:wine": "v22-art:excel:6",
+    "restaurant:wine_glass": "v22-art:excel:6",
+    "restaurant:wine_bottle": "v22-art:excel:7",
+    "bar:shot": "v22-art:excel:13",
+    "club:shot": "v22-art:excel:13",
+    "house_party:mixer": "v22-art:excel:23",
+    "restaurant:coffee": "v22-art:excel:24",
+    "visit_friend:coffee": "v22-art:excel:24",
+    "work_meal:coffee": "v22-art:excel:24",
+    "restaurant:starter": "v22-art:excel:30",
+    "house_party:chips": "v22-art:excel:40",
+    "fast_food:sandwich": "v22-art:excel:44",
+    "fast_food:kebab": "v22-art:excel:49",
+    "fast_food:pizza": "v22-art:excel:51",
+    "fast_food:fries": "v22-art:excel:68",
+    "restaurant:menu": "v22-art:excel:69",
+    "fast_food:menu": "v22-art:excel:69",
+    "work_meal:meal": "v22-art:excel:69",
+    "visit_family:breakfast": "v22-art:excel:71",
+    "trip:breakfast": "v22-art:excel:71",
+    "groceries:snacks": "v22-art:excel:73",
+    "groceries:dessert": "v22-art:excel:74",
+    "restaurant:dessert": "v22-art:excel:74",
+    "fast_food:dessert": "v22-art:excel:74",
+    "work_meal:dessert": "v22-art:excel:74",
+    "groceries:fish": "v22-art:excel:93",
+    "clothing:tshirt": "v22-art:excel:130",
+    "clothing:shirt": "v22-art:excel:134",
+    "clothing:jacket": "v22-art:excel:140",
+    "clothing:coat": "v22-art:excel:142",
+    "clothing:pants": "v22-art:excel:145",
+    "clothing:shorts": "v22-art:excel:149",
+    "clothing:dress": "v22-art:excel:151",
+    "clothing:costume": "v22-art:excel:155",
+    "clothing:underwear": "v22-art:excel:160",
+    "clothing:socks": "v22-art:excel:162",
+    "clothing:sandals": "v22-art:excel:169",
+    "clothing:cap": "v22-art:excel:173",
+    "clothing:glasses": "v22-art:excel:183",
+    "beauty:mascara": "v22-art:excel:190",
+    "beauty:eyeliner": "v22-art:excel:191",
+    "beauty:eyebrow_pencil": "v22-art:excel:192",
+    "beauty:foundation": "v22-art:excel:195",
+    "beauty:setting_spray": "v22-art:excel:202",
+    "beauty:lipstick": "v22-art:excel:203",
+    "beauty:gloss": "v22-art:excel:204",
+    "beauty:makeup_remover": "v22-art:excel:206",
+    "beauty:face_cleanser": "v22-art:excel:208",
+    "beauty:face_mask": "v22-art:excel:210",
+    "beauty:face_cream": "v22-art:excel:212",
+    "beauty:body_cream": "v22-art:excel:215",
+    "beauty:shower_gel": "v22-art:excel:219",
+    "beauty:deodorant": "v22-art:excel:221",
+    "beauty:perfume": "v22-art:excel:222",
+    "beauty:shampoo": "v22-art:excel:223",
+    "beauty:conditioner": "v22-art:excel:224",
+    "beauty:hair_wax": "v22-art:excel:227",
+    "beauty:razor_blades": "v22-art:excel:235",
+    "beauty:toothpaste": "v22-art:excel:238",
+    "beauty:cotton_swabs": "v22-art:excel:242",
+    "beauty:nail_polish": "v22-art:excel:245",
+    "household:laundry": "v22-art:excel:249",
+    "household:dish_soap": "v22-art:excel:252",
+    "household:dishwasher": "v22-art:excel:253",
+    "household:sponge": "v22-art:excel:256",
+    "household:floor": "v22-art:excel:261",
+    "household:windows": "v22-art:excel:262",
+    "household:toilet": "v22-art:excel:269",
+    "household:toilet_paper": "v22-art:excel:272",
+    "household:paper_towels": "v22-art:excel:273",
+    "household:trash_bags": "v22-art:excel:274",
+    "household:air_freshener": "v22-art:excel:279",
+    "home:plant": "v22-art:excel:289",
+    "tech:video_game": "v22-art:excel:305",
+    "tech:charger": "v22-art:excel:310",
+    "automotive:tires": "v22-art:excel:317",
+    "automotive:battery": "v22-art:excel:321",
+    "automotive:motor_oil": "v22-art:excel:322",
+    "automotive:coolant": "v22-art:excel:323",
+    "automotive:washer_fluid": "v22-art:excel:324",
+    "gift:personalized": "v22-art:excel:390",
+    "gift:money": "v22-art:excel:397",
+    "automotive:wash": "v22-art:excel:456",
+    "trip:rental_car": "v22-art:excel:484",
+    "transport:flight": "v22-art:excel:497",
+    "transport:carpool": "v22-art:excel:501",
+    "fast_food:delivery_fee": "v22-art:excel:503",
+    "clothing:delivery_fee": "v22-art:excel:503",
+    "work_meal:delivery_fee": "v22-art:excel:503",
+    "groceries:delivery_fee": "v22-art:excel:503",
+    "beauty:delivery_fee": "v22-art:excel:503",
+    "home:delivery_fee": "v22-art:excel:503",
+    "tech:delivery_fee": "v22-art:excel:503",
+    "automotive:delivery_fee": "v22-art:excel:503",
+    "gift:delivery_fee": "v22-art:excel:503",
+    "fast_food:service_fee": "v22-art:excel:504",
+    "clothing:service_fee": "v22-art:excel:504",
+    "work_meal:service_fee": "v22-art:excel:504",
+    "groceries:service_fee": "v22-art:excel:504",
+    "beauty:service_fee": "v22-art:excel:504",
+    "home:service_fee": "v22-art:excel:504",
+    "tech:service_fee": "v22-art:excel:504",
+    "automotive:service_fee": "v22-art:excel:504",
+    "gift:service_fee": "v22-art:excel:504",
+    "club:cloakroom": "v22-art:excel:512",
+    "bar:parking": "v22-art:excel:520",
+    "club:parking": "v22-art:excel:520",
+    "restaurant:parking": "v22-art:excel:520",
+    "transport:parking": "v22-art:excel:520",
+    "transport:toll": "v22-art:excel:521",
+    "trip:fees": "v22-art:excel:530",
+    "other:fee": "v22-art:excel:530",
+    "activity:entry": "v22-art:extra:activity-entry",
+    "activity:ticket": "v22-art:extra:activity-entry",
+    "activity:food": "v22-art:extra:activity-snack",
+    "other:administrative": "v22-art:extra:administrative",
+    "restaurant:alcohol_total": "v22-art:extra:alcohol-group",
+    "club:alcohol": "v22-art:extra:alcool-verre",
+    "clothing:bag": "v22-art:extra:bag-general",
+    "trip:baggage": "v22-art:extra:baggage",
+    "work_meal:bakery": "v22-art:extra:bakery-workmeal",
+    "home:bedding": "v22-art:extra:bedding",
+    "work_meal:drink": "v22-art:extra:boisson-generale",
+    "club:soft": "v22-art:extra:boisson-non-alcool",
+    "groceries:drinks": "v22-art:extra:boisson-non-alcool",
+    "restaurant:soft": "v22-art:extra:boisson-non-alcool",
+    "fast_food:drink": "v22-art:extra:boisson-non-alcool",
+    "visit_friend:brought_drink": "v22-art:extra:boisson-non-alcool",
+    "activity:drink": "v22-art:extra:boisson-non-alcool",
+    "bar:soft": "v22-art:extra:boisson-non-alcool",
+    "gift:bottle": "v22-art:extra:bottle-general",
+    "groceries:bread": "v22-art:extra:bread-bakery",
+    "transport:bus": "v22-art:extra:bus-mode",
+    "tech:cable": "v22-art:extra:cable",
+    "automotive:bulbs": "v22-art:extra:car-bulb",
+    "automotive:part": "v22-art:extra:car-part-general",
+    "work_meal:mcdo": "v22-art:extra:chain-fastfood",
+    "fast_food:chicken": "v22-art:extra:chicken-other",
+    "groceries:cleaning": "v22-art:extra:cleaning-group",
+    "club:ticket": "v22-art:extra:club-entry",
+    "bar:cocktail": "v22-art:extra:cocktail-general",
+    "restaurant:cocktail": "v22-art:extra:cocktail-general",
+    "other:contribution": "v22-art:extra:contribution-general",
+    "bar:entry": "v22-art:extra:cover-bar",
+    "home:decor": "v22-art:extra:decor-general",
+    "restaurant:digestif": "v22-art:extra:digestif",
+    "home:dishes": "v22-art:extra:dishes",
+    "home:diy": "v22-art:extra:diy-general",
+    "club:water": "v22-art:extra:eau-generale",
+    "restaurant:water": "v22-art:extra:eau-generale",
+    "fast_food:water": "v22-art:extra:eau-generale",
+    "bar:water": "v22-art:extra:eau-generale",
+    "home:electric": "v22-art:extra:electric-general",
+    "house_party:crazy_tiger": "v22-art:extra:energy-drink",
+    "fishing:bait": "v22-art:extra:fishing-bait",
+    "trip:flight": "v22-art:extra:flight-mode",
+    "visit_friend:brought_food": "v22-art:extra:food-brought",
+    "club:food": "v22-art:extra:food-club",
+    "groceries:fresh": "v22-art:extra:fresh-group",
+    "work_meal:grand_frais": "v22-art:extra:fresh-store-meal",
+    "transport:fuel_usage": "v22-art:extra:fuel-estimate",
+    "home:furniture": "v22-art:extra:furniture-general",
+    "gift:clothes": "v22-art:extra:gift-clothes",
+    "gift:ticket": "v22-art:extra:gift-ticket-general",
+    "groceries:food": "v22-art:extra:groceries-general",
+    "visit_family:brought_groceries": "v22-art:extra:groceries-general",
+    "groceries:special_meal": "v22-art:extra:groceries-special",
+    "trip:hotel": "v22-art:extra:hotel-stay-general",
+    "groceries:hygiene": "v22-art:extra:hygiene-group",
+    "home:kitchen": "v22-art:extra:kitchen-general",
+    "home:lamp": "v22-art:extra:lamp",
+    "tech:lighting": "v22-art:extra:lighting-general",
+    "restaurant:main": "v22-art:extra:main-dish-general",
+    "restaurant:meal_total": "v22-art:extra:meal-subtotal",
+    "fast_food:meal_total": "v22-art:extra:meal-subtotal",
+    "club:merch": "v22-art:extra:merch-mixte",
+    "transport:other": "v22-art:extra:other-paid-travel",
+    "groceries:pantry": "v22-art:extra:pantry-group",
+    "bar:tapas": "v22-art:extra:plateau-apero",
+    "groceries:produce": "v22-art:extra:produce-group",
+    "trip:airbnb": "v22-art:extra:rental-platform",
+    "house_party:rum": "v22-art:extra:rhum",
+    "fast_food:burger": "v22-art:extra:sandwich-burger",
+    "trip:rental_scooter": "v22-art:extra:scooter-rental",
+    "clothing:shoes": "v22-art:extra:shoes-general",
+    "house_party:snack": "v22-art:extra:snack-general",
+    "home:storage": "v22-art:extra:storage",
+    "fast_food:tacos": "v22-art:extra:tacos-kebab",
+    "transport:uber": "v22-art:extra:taxi-vtc-mode",
+    "fast_food:thai": "v22-art:extra:thai-food",
+    "transport:train": "v22-art:extra:train-mode",
+    "groceries:meat": "v22-art:extra:viande-generale",
+    "house_party:wine": "v22-art:extra:vin-general",
+    "trip:visits": "v22-art:extra:visits-general",
+    "house_party:vodka": "v22-art:extra:vodka",
+    "club:uber_out": "v22-art:extra:vtc-course",
+    "club:uber_back": "v22-art:extra:vtc-course",
+    "restaurant:uber": "v22-art:extra:vtc-course"
+  },
+  "builders": {
+    "scene:bar-beer-closed": "v22-art:excel:2",
+    "scene:bar-before": "v22-art:extra:before-moment",
+    "scene:bar-shared-closed": "v22-art:extra:bottle-general",
+    "scene:bar-closed": "v22-art:extra:bar-interior",
+    "intent:restaurant": "v22-art:extra:restaurant-intent",
+    "module:restaurant": "v22-art:extra:restaurant-intent",
+    "scene:restaurant": "v22-art:extra:restaurant-intent",
+    "scene:spontaneous": "v22-art:extra:restaurant-intent",
+    "scene:restaurantExterior": "v22-art:extra:restaurant-intent",
+    "intent:fast_food": "v22-art:extra:fastfood-intent",
+    "asset:club:food": "v22-art:extra:food-club",
+    "asset:fast_food:burger": "v22-art:extra:sandwich-burger",
+    "asset:work_meal:mcdo": "v22-art:extra:chain-fastfood",
+    "asset:fast_food:menu": "v22-art:excel:69",
+    "choice:fastFoodChannel:STORE": "v22-art:extra:fastfood-intent",
+    "choice:fastFoodChannel:IN_STORE": "v22-art:extra:fastfood-intent",
+    "module:fast_food": "v22-art:extra:fastfood-intent",
+    "scene:fast_food": "v22-art:extra:fastfood-intent",
+    "intent:work_meal": "v22-art:extra:workmeal-intent",
+    "asset:work_meal:meal": "v22-art:excel:69",
+    "choice:workMode:FROM_HOME": "v22-art:extra:workmeal-intent",
+    "module:work_meal": "v22-art:extra:workmeal-intent",
+    "scene:work_meal": "v22-art:extra:workmeal-intent",
+    "intent:groceries": "v22-art:extra:groceries-intent",
+    "asset:groceries:food": "v22-art:extra:groceries-general",
+    "asset:work_meal:grand_frais": "v22-art:extra:fresh-store-meal",
+    "asset:visit_family:brought_groceries": "v22-art:extra:groceries-general",
+    "choice:groceriesNature:USUAL": "v22-art:extra:groceries-intent",
+    "choice:groceryFocus:FOOD": "v22-art:extra:groceries-intent",
+    "choice:groceriesChannel:STORE": "v22-art:extra:groceries-intent",
+    "module:groceries": "v22-art:extra:groceries-intent",
+    "module:BRING_ITEMS": "v22-art:extra:groceries-intent",
+    "scene:groceries": "v22-art:extra:groceries-intent",
+    "intent:party": "v22-art:extra:party-intent",
+    "asset:bar:cocktail": "v22-art:extra:cocktail-general",
+    "asset:restaurant:cocktail": "v22-art:extra:cocktail-general",
+    "choice:partyKind:bar": "v22-art:extra:party-intent",
+    "choice:format:APERO_PARTY": "v22-art:extra:party-intent",
+    "module:bar": "v22-art:extra:party-intent",
+    "scene:party": "v22-art:extra:party-intent",
+    "scene:cocktail": "v22-art:extra:party-intent",
+    "intent:visit": "v22-art:extra:visit-intent",
+    "choice:participants:BOTH": "v22-art:extra:visit-intent",
+    "choice:format:SIMPLE": "v22-art:extra:visit-intent",
+    "choice:occasion:REUNION": "v22-art:extra:visit-intent",
+    "choice:visitSubtype:visit_friend": "v22-art:extra:visit-intent",
+    "choice:companions:COUPLE": "v22-art:extra:visit-intent",
+    "module:visit_friend": "v22-art:extra:visit-intent",
+    "scene:visit": "v22-art:extra:visit-intent",
+    "scene:couple": "v22-art:extra:visit-intent",
+    "scene:reunion": "v22-art:extra:visit-intent",
+    "scene:sharing": "v22-art:extra:visit-intent",
+    "intent:activity": "v22-art:extra:activity-intent",
+    "asset:bar:entry": "v22-art:extra:cover-bar",
+    "asset:club:ticket": "v22-art:extra:club-entry",
+    "asset:activity:entry": "v22-art:extra:activity-entry",
+    "asset:activity:ticket": "v22-art:extra:activity-entry",
+    "asset:gift:ticket": "v22-art:extra:gift-ticket-general",
+    "choice:activityCategory:other_activity": "v22-art:extra:activity-intent",
+    "module:activity": "v22-art:extra:activity-intent",
+    "scene:activity": "v22-art:extra:activity-intent",
+    "intent:purchase": "v22-art:extra:purchase-intent",
+    "choice:purchaseCategory:other_purchase": "v22-art:extra:purchase-intent",
+    "choice:channel:STORE": "v22-art:extra:purchase-intent",
+    "choice:channel:SECOND_HAND": "v22-art:extra:purchase-intent",
+    "choice:channel:IN_STORE": "v22-art:extra:purchase-intent",
+    "module:other": "v22-art:extra:purchase-intent",
+    "scene:purchase": "v22-art:extra:purchase-intent",
+    "intent:trip": "v22-art:extra:travel-intent",
+    "asset:trip:baggage": "v22-art:extra:baggage",
+    "choice:tripKind:STAY": "v22-art:extra:travel-intent",
+    "choice:tripKind:trip_stay": "v22-art:extra:travel-intent",
+    "module:trip": "v22-art:extra:travel-intent",
+    "scene:trip": "v22-art:extra:travel-intent",
+    "choice:companions:SOLO": "v22-art:extra:solo-scene",
+    "scene:solo": "v22-art:extra:solo-scene",
+    "choice:participants:GROUP": "v22-art:extra:group-scene",
+    "choice:groceriesFormat:STAY": "v22-art:extra:group-scene",
+    "choice:companions:GROUP": "v22-art:extra:group-scene",
+    "scene:group": "v22-art:extra:group-scene",
+    "choice:occasion:BIRTHDAY": "v22-art:extra:birthday-occasion",
+    "scene:birthday": "v22-art:extra:birthday-occasion",
+    "choice:occasion:VALENTINE": "v22-art:extra:valentine-occasion",
+    "scene:valentine": "v22-art:extra:valentine-occasion",
+    "choice:occasion:CELEBRATION": "v22-art:extra:celebration-occasion",
+    "scene:partyOccasion": "v22-art:extra:celebration-occasion",
+    "scene:celebration": "v22-art:extra:celebration-occasion",
+    "scene:occasion": "v22-art:extra:celebration-occasion",
+    "choice:lodging:RELATIVE": "v22-art:extra:family-visit",
+    "choice:visitSubtype:visit_family": "v22-art:extra:family-visit",
+    "module:visit_family": "v22-art:extra:family-visit",
+    "choice:partyKind:club_festival": "v22-art:extra:club-festival-intent",
+    "module:club": "v22-art:extra:club-festival-intent",
+    "choice:partyKind:house_party": "v22-art:extra:private-party-intent",
+    "module:house_party": "v22-art:extra:private-party-intent",
+    "choice:partyKind:EVENT": "v22-art:extra:festival-intent",
+    "asset:restaurant:starter": "v22-art:excel:30",
+    "scene:starter": "v22-art:excel:30",
+    "asset:groceries:special_meal": "v22-art:extra:groceries-special",
+    "asset:restaurant:main": "v22-art:extra:main-dish-general",
+    "asset:restaurant:meal_total": "v22-art:extra:meal-subtotal",
+    "asset:restaurant:menu": "v22-art:excel:69",
+    "asset:fast_food:meal_total": "v22-art:extra:meal-subtotal",
+    "choice:groceriesNature:OCCASION": "v22-art:extra:main-dish-general",
+    "choice:format:MEAL": "v22-art:extra:main-dish-general",
+    "scene:main": "v22-art:extra:main-dish-general",
+    "scene:menu": "v22-art:excel:69",
+    "asset:groceries:dessert": "v22-art:excel:74",
+    "asset:restaurant:dessert": "v22-art:excel:74",
+    "asset:fast_food:dessert": "v22-art:excel:74",
+    "asset:work_meal:dessert": "v22-art:excel:74",
+    "scene:dessert": "v22-art:excel:74",
+    "asset:fast_food:fries": "v22-art:excel:68",
+    "asset:fast_food:thai": "v22-art:extra:thai-food",
+    "asset:fast_food:tacos": "v22-art:extra:tacos-kebab",
+    "asset:fast_food:kebab": "v22-art:excel:49",
+    "asset:fast_food:pizza": "v22-art:excel:51",
+    "asset:fast_food:chicken": "v22-art:extra:chicken-other",
+    "asset:fast_food:sandwich": "v22-art:excel:44",
+    "asset:bar:tapas": "v22-art:extra:plateau-apero",
+    "asset:house_party:snack": "v22-art:extra:snack-general",
+    "asset:groceries:snacks": "v22-art:excel:73",
+    "asset:visit_friend:brought_food": "v22-art:extra:food-brought",
+    "asset:activity:food": "v22-art:extra:activity-snack",
+    "asset:house_party:chips": "v22-art:excel:40",
+    "asset:groceries:meat": "v22-art:extra:viande-generale",
+    "asset:groceries:fish": "v22-art:excel:93",
+    "asset:groceries:produce": "v22-art:extra:produce-group",
+    "asset:groceries:fresh": "v22-art:extra:fresh-group",
+    "asset:groceries:pantry": "v22-art:extra:pantry-group",
+    "asset:work_meal:bakery": "v22-art:extra:bakery-workmeal",
+    "asset:visit_family:breakfast": "v22-art:excel:71",
+    "asset:trip:breakfast": "v22-art:excel:71",
+    "asset:groceries:bread": "v22-art:extra:bread-bakery",
+    "asset:bar:beer": "v22-art:excel:2",
+    "asset:house_party:beer": "v22-art:excel:2",
+    "asset:restaurant:beer": "v22-art:excel:2",
+    "asset:bar:wine": "v22-art:excel:6",
+    "asset:restaurant:wine_glass": "v22-art:excel:6",
+    "asset:restaurant:alcohol_total": "v22-art:extra:alcohol-group",
+    "scene:wine_glass": "v22-art:excel:6",
+    "asset:house_party:wine": "v22-art:extra:vin-general",
+    "asset:restaurant:wine_bottle": "v22-art:excel:7",
+    "asset:gift:bottle": "v22-art:extra:bottle-general",
+    "scene:wine_bottle": "v22-art:excel:7",
+    "asset:bar:shot": "v22-art:excel:13",
+    "asset:club:alcohol": "v22-art:extra:alcool-verre",
+    "asset:club:shot": "v22-art:excel:13",
+    "asset:restaurant:digestif": "v22-art:extra:digestif",
+    "scene:digestif": "v22-art:extra:digestif",
+    "asset:club:soft": "v22-art:extra:boisson-non-alcool",
+    "asset:house_party:mixer": "v22-art:excel:23",
+    "asset:groceries:drinks": "v22-art:extra:boisson-non-alcool",
+    "asset:restaurant:soft": "v22-art:extra:boisson-non-alcool",
+    "asset:fast_food:drink": "v22-art:extra:boisson-non-alcool",
+    "asset:visit_friend:brought_drink": "v22-art:extra:boisson-non-alcool",
+    "asset:activity:drink": "v22-art:extra:boisson-non-alcool",
+    "asset:work_meal:drink": "v22-art:extra:boisson-generale",
+    "asset:bar:soft": "v22-art:extra:boisson-non-alcool",
+    "choice:groceryFocus:DRINKS": "v22-art:extra:boisson-non-alcool",
+    "scene:soft": "v22-art:extra:boisson-non-alcool",
+    "asset:club:water": "v22-art:extra:eau-generale",
+    "asset:restaurant:water": "v22-art:extra:eau-generale",
+    "asset:fast_food:water": "v22-art:extra:eau-generale",
+    "asset:bar:water": "v22-art:extra:eau-generale",
+    "scene:water": "v22-art:extra:eau-generale",
+    "asset:restaurant:coffee": "v22-art:excel:24",
+    "asset:visit_friend:coffee": "v22-art:excel:24",
+    "asset:work_meal:coffee": "v22-art:excel:24",
+    "scene:coffee": "v22-art:excel:24",
+    "asset:house_party:crazy_tiger": "v22-art:extra:energy-drink",
+    "asset:house_party:vodka": "v22-art:extra:vodka",
+    "asset:house_party:rum": "v22-art:extra:rhum",
+    "asset:club:uber_out": "v22-art:extra:vtc-course",
+    "asset:club:uber_back": "v22-art:extra:vtc-course",
+    "asset:restaurant:uber": "v22-art:extra:vtc-course",
+    "asset:transport:uber": "v22-art:extra:taxi-vtc-mode",
+    "asset:transport:carpool": "v22-art:excel:501",
+    "asset:trip:rental_car": "v22-art:excel:484",
+    "choice:purchaseCategory:automotive": "v22-art:extra:car-mode",
+    "choice:tripKind:PUNCTUAL": "v22-art:extra:car-mode",
+    "choice:transport:CAR": "v22-art:extra:car-mode",
+    "choice:transport:TAXI": "v22-art:extra:taxi-vtc-mode",
+    "choice:tripKind:other_trip": "v22-art:extra:car-mode",
+    "module:transport": "v22-art:extra:car-mode",
+    "module:automotive": "v22-art:extra:car-mode",
+    "scene:car": "v22-art:extra:car-mode",
+    "scene:taxi": "v22-art:extra:taxi-vtc-mode",
+    "asset:transport:train": "v22-art:extra:train-mode",
+    "choice:transport:TRAIN": "v22-art:extra:train-mode",
+    "scene:train": "v22-art:extra:train-mode",
+    "scene:tram": "v22-art:extra:tram-mode",
+    "asset:transport:bus": "v22-art:extra:bus-mode",
+    "choice:transport:BUS": "v22-art:extra:bus-mode",
+    "scene:bus": "v22-art:extra:bus-mode",
+    "asset:trip:flight": "v22-art:extra:flight-mode",
+    "asset:transport:flight": "v22-art:excel:497",
+    "choice:transport:PLANE": "v22-art:extra:flight-mode",
+    "scene:bike": "v22-art:extra:bike-mode",
+    "choice:transport:FREE": "v22-art:extra:walking-mode",
+    "scene:walk": "v22-art:extra:walking-mode",
+    "asset:trip:rental_scooter": "v22-art:extra:scooter-rental",
+    "asset:transport:fuel_usage": "v22-art:extra:fuel-estimate",
+    "asset:transport:toll": "v22-art:excel:521",
+    "asset:bar:parking": "v22-art:excel:520",
+    "asset:club:parking": "v22-art:excel:520",
+    "asset:restaurant:parking": "v22-art:excel:520",
+    "asset:transport:parking": "v22-art:excel:520",
+    "asset:transport:other": "v22-art:extra:other-paid-travel",
+    "scene:elsewhere": "v22-art:extra:other-paid-travel",
+    "scene:transport": "v22-art:extra:other-paid-travel",
+    "scene:road": "v22-art:extra:other-paid-travel",
+    "asset:trip:hotel": "v22-art:extra:hotel-stay-general",
+    "choice:lodging:HOTEL": "v22-art:extra:hotel-stay-general",
+    "asset:trip:airbnb": "v22-art:extra:rental-platform",
+    "choice:lodging:RENTAL": "v22-art:extra:rental-platform",
+    "choice:lodging:HOSTEL": "v22-art:extra:hostel-category",
+    "choice:format:STAY": "v22-art:extra:lodging-room",
+    "scene:room": "v22-art:extra:lodging-room",
+    "asset:fast_food:delivery_fee": "v22-art:excel:503",
+    "asset:clothing:delivery_fee": "v22-art:excel:503",
+    "asset:work_meal:delivery_fee": "v22-art:excel:503",
+    "asset:groceries:delivery_fee": "v22-art:excel:503",
+    "asset:beauty:delivery_fee": "v22-art:excel:503",
+    "asset:home:delivery_fee": "v22-art:excel:503",
+    "asset:tech:delivery_fee": "v22-art:excel:503",
+    "asset:automotive:delivery_fee": "v22-art:excel:503",
+    "asset:gift:delivery_fee": "v22-art:excel:503",
+    "choice:workMode:DELIVERED": "v22-art:extra:delivery-meal-intent",
+    "choice:fastFoodChannel:DELIVERY": "v22-art:extra:delivery-meal-intent",
+    "asset:fast_food:service_fee": "v22-art:excel:504",
+    "asset:trip:fees": "v22-art:excel:530",
+    "asset:clothing:service_fee": "v22-art:excel:504",
+    "asset:other:fee": "v22-art:excel:530",
+    "asset:work_meal:service_fee": "v22-art:excel:504",
+    "asset:groceries:service_fee": "v22-art:excel:504",
+    "asset:beauty:service_fee": "v22-art:excel:504",
+    "asset:home:service_fee": "v22-art:excel:504",
+    "asset:tech:service_fee": "v22-art:excel:504",
+    "asset:automotive:service_fee": "v22-art:excel:504",
+    "asset:gift:service_fee": "v22-art:excel:504",
+    "asset:other:administrative": "v22-art:extra:administrative",
+    "asset:other:contribution": "v22-art:extra:contribution-general",
+    "asset:club:cloakroom": "v22-art:excel:512",
+    "asset:tech:video_game": "v22-art:excel:305",
+    "asset:gift:personalized": "v22-art:excel:390",
+    "asset:gift:money": "v22-art:excel:397",
+    "choice:purchaseCategory:gift": "v22-art:extra:gift-intent",
+    "choice:occasion:CHRISTMAS": "v22-art:extra:gift-intent",
+    "module:gift": "v22-art:extra:gift-intent",
+    "choice:activityCategory:cinema": "v22-art:extra:activity-cinema",
+    "choice:activityCategory:bowling": "v22-art:excel:342",
+    "choice:activityCategory:karting": "v22-art:excel:345",
+    "choice:activityCategory:mini_golf": "v22-art:excel:348",
+    "choice:activityCategory:billiards": "v22-art:excel:349",
+    "choice:activityCategory:escape_game": "v22-art:excel:343",
+    "choice:activityCategory:canoe_kayak": "v22-art:extra:kayak-activity",
+    "choice:activityCategory:pool": "v22-art:excel:354",
+    "choice:activityCategory:spa": "v22-art:excel:355",
+    "choice:activityCategory:theme_park": "v22-art:extra:themepark-activity",
+    "choice:activityCategory:show": "v22-art:extra:show-activity",
+    "choice:activityCategory:match": "v22-art:extra:match-activity",
+    "choice:activityCategory:sport": "v22-art:extra:sport-activity",
+    "asset:fishing:bait": "v22-art:extra:fishing-bait",
+    "choice:activityCategory:fishing": "v22-art:extra:fishing-activity",
+    "module:fishing": "v22-art:extra:fishing-activity",
+    "choice:activityCategory:creative_workshop": "v22-art:excel:362",
+    "choice:activityCategory:photo_outing": "v22-art:extra:photo-activity",
+    "asset:trip:visits": "v22-art:extra:visits-general",
+    "asset:beauty:setting_spray": "v22-art:excel:202",
+    "asset:beauty:face_mask": "v22-art:excel:210",
+    "asset:beauty:mascara": "v22-art:excel:190",
+    "asset:beauty:eyebrow_pencil": "v22-art:excel:192",
+    "asset:beauty:eyeliner": "v22-art:excel:191",
+    "asset:beauty:lipstick": "v22-art:excel:203",
+    "asset:beauty:gloss": "v22-art:excel:204",
+    "asset:beauty:foundation": "v22-art:excel:195",
+    "asset:beauty:face_cream": "v22-art:excel:212",
+    "asset:beauty:body_cream": "v22-art:excel:215",
+    "asset:beauty:toothpaste": "v22-art:excel:238",
+    "asset:beauty:face_cleanser": "v22-art:excel:208",
+    "asset:beauty:makeup_remover": "v22-art:excel:206",
+    "asset:beauty:nail_polish": "v22-art:excel:245",
+    "asset:beauty:shampoo": "v22-art:excel:223",
+    "asset:beauty:conditioner": "v22-art:excel:224",
+    "asset:beauty:shower_gel": "v22-art:excel:219",
+    "asset:beauty:cotton_swabs": "v22-art:excel:242",
+    "asset:beauty:razor_blades": "v22-art:excel:235",
+    "asset:beauty:hair_wax": "v22-art:excel:227",
+    "asset:beauty:perfume": "v22-art:excel:222",
+    "asset:beauty:deodorant": "v22-art:excel:221",
+    "asset:clothing:tshirt": "v22-art:excel:130",
+    "asset:gift:clothes": "v22-art:extra:gift-clothes",
+    "asset:club:merch": "v22-art:extra:merch-mixte",
+    "asset:clothing:shirt": "v22-art:excel:134",
+    "asset:clothing:pants": "v22-art:excel:145",
+    "asset:clothing:shorts": "v22-art:excel:149",
+    "asset:clothing:dress": "v22-art:excel:151",
+    "asset:clothing:jacket": "v22-art:excel:140",
+    "asset:clothing:coat": "v22-art:excel:142",
+    "asset:clothing:shoes": "v22-art:extra:shoes-general",
+    "asset:clothing:sandals": "v22-art:excel:169",
+    "asset:clothing:socks": "v22-art:excel:162",
+    "asset:clothing:underwear": "v22-art:excel:160",
+    "asset:clothing:cap": "v22-art:excel:173",
+    "asset:clothing:bag": "v22-art:extra:bag-general",
+    "asset:clothing:glasses": "v22-art:excel:183",
+    "asset:clothing:costume": "v22-art:excel:155",
+    "asset:household:laundry": "v22-art:excel:249",
+    "asset:household:dish_soap": "v22-art:excel:252",
+    "asset:household:dishwasher": "v22-art:excel:253",
+    "asset:household:sponge": "v22-art:excel:256",
+    "asset:groceries:cleaning": "v22-art:extra:cleaning-group",
+    "asset:household:floor": "v22-art:excel:261",
+    "asset:household:toilet": "v22-art:excel:269",
+    "asset:household:windows": "v22-art:excel:262",
+    "asset:household:trash_bags": "v22-art:excel:274",
+    "asset:groceries:hygiene": "v22-art:extra:hygiene-group",
+    "asset:household:toilet_paper": "v22-art:excel:272",
+    "asset:household:paper_towels": "v22-art:excel:273",
+    "asset:household:air_freshener": "v22-art:excel:279",
+    "asset:home:lamp": "v22-art:extra:lamp",
+    "asset:tech:lighting": "v22-art:extra:lighting-general",
+    "asset:home:furniture": "v22-art:extra:furniture-general",
+    "asset:home:bedding": "v22-art:extra:bedding",
+    "asset:home:storage": "v22-art:extra:storage",
+    "asset:home:decor": "v22-art:extra:decor-general",
+    "asset:home:plant": "v22-art:excel:289",
+    "asset:home:kitchen": "v22-art:extra:kitchen-general",
+    "asset:home:dishes": "v22-art:extra:dishes",
+    "asset:home:diy": "v22-art:extra:diy-general",
+    "asset:home:electric": "v22-art:extra:electric-general",
+    "asset:tech:charger": "v22-art:excel:310",
+    "asset:tech:cable": "v22-art:extra:cable",
+    "asset:automotive:tires": "v22-art:excel:317",
+    "asset:automotive:motor_oil": "v22-art:excel:322",
+    "asset:automotive:coolant": "v22-art:excel:323",
+    "asset:automotive:washer_fluid": "v22-art:excel:324",
+    "asset:automotive:bulbs": "v22-art:extra:car-bulb",
+    "asset:automotive:battery": "v22-art:excel:321",
+    "asset:automotive:wash": "v22-art:excel:456",
+    "asset:automotive:part": "v22-art:extra:car-part-general",
+    "scene:bar-cocktail-closed": "v22-art:extra:cocktail-general",
+    "scene:bar-soft-closed": "v22-art:extra:boisson-non-alcool",
+    "scene:bar-tapas-closed": "v22-art:extra:plateau-apero"
+  },
+  "artworks": {
+    "v22-art:excel:2": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:6": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:7": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:13": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:23": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:24": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:30": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:40": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:44": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:49": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:51": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:68": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:69": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:71": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:73": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:74": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:93": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:130": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:134": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:140": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:142": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:145": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:149": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:151": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:155": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:160": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:162": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:169": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:173": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:183": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:190": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:191": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:192": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:195": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:202": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:203": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:204": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:206": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:208": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:210": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:212": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:215": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:219": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:221": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:222": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:223": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:224": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:227": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:235": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:238": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:242": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:245": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:249": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:252": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:253": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:256": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:261": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:262": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:269": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:272": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:273": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:274": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:279": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:289": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:305": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:310": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:317": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:321": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:322": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:323": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:324": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:329": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:excel:342": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:343": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:345": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:348": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:349": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:354": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:355": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:362": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:390": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:397": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:456": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:479": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:excel:483": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:excel:484": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:497": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:499": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:excel:501": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:503": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:504": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:512": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:520": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:521": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:excel:530": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:activity-cinema": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:activity-entry": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:activity-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:activity-snack": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:administrative": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:alcohol-group": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:alcool-verre": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:bag-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:baggage": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:bakery-workmeal": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:bar-interior": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "specialized": [
+          768,
+          512
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:bedding": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:before-moment": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:bike-mode": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:birthday-occasion": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:boisson-generale": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:boisson-non-alcool": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:bottle-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:bread-bakery": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:bus-mode": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:cable": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:car-bulb": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:car-mode": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:car-part-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:celebration-occasion": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:chain-fastfood": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:chicken-other": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:cleaning-group": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:club-entry": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:club-festival-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:cocktail-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:contribution-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:cover-bar": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:decor-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:delivery-meal-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          720,
+          360
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:digestif": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:dishes": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:diy-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:eau-generale": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:electric-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:energy-drink": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:family-visit": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:fastfood-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:festival-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:fishing-activity": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:fishing-bait": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:flight-mode": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:food-brought": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:food-club": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:fresh-group": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:fresh-store-meal": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:fuel-estimate": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:furniture-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:gift-clothes": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:gift-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:gift-ticket-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:groceries-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:groceries-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:groceries-special": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:group-scene": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:hostel-category": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:hotel-stay-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:hygiene-group": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:kayak-activity": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:kitchen-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:lamp": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:lighting-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:lodging-room": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:main-dish-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:match-activity": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:meal-subtotal": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:merch-mixte": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:other-paid-travel": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:pantry-group": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:party-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:photo-activity": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:plateau-apero": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:popcorn": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:private-party-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:produce-group": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:purchase-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:rental-platform": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:restaurant-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:rhum": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:sandwich-burger": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:scooter-rental": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:shoes-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:show-activity": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:snack-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:solo-scene": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:sport-activity": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:storage": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:tacos-kebab": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:taxi-vtc-mode": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:thai-food": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:themepark-activity": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:train-mode": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:tram-mode": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:travel-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:valentine-occasion": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:viande-generale": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:vin-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:visit-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:visits-general": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:vodka": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:vtc-course": {
+      "ratio": "1:1",
+      "roles": {
+        "primary": [
+          256,
+          256
+        ],
+        "wide": [
+          1200,
+          600
+        ]
+      }
+    },
+    "v22-art:extra:walking-mode": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    },
+    "v22-art:extra:workmeal-intent": {
+      "ratio": "2:1",
+      "roles": {
+        "primary": [
+          1200,
+          600
+        ],
+        "wide": [
+          1200,
+          600
+        ],
+        "compact": [
+          256,
+          256
+        ]
+      }
+    }
+  }
+}

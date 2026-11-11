@@ -12,6 +12,8 @@ import { PLANNED_ASSET_CATALOG_VERSION, type PlannedAssetRef } from "@/domain/ph
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { parseKernelCost, parseKernelFunding } from "./cost-resolver";
 import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
+import { isPurchaseBasket, legacyDeliveryFee, purchaseComponents, PURCHASE_BASKET_FIELDS, readBasketArticle } from "@/domain/phase2/planner/purchase-basket";
+import { assertPurchaseConcept } from "./purchase-catalog";
 import { parseJourneyDeclaration, parseMobilityPricing, parseProspectiveRoute, mobilityTime } from "./mobility-selections";
 import { validateComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 import {parseNightOutVenue,parseVenueEndpoints,sameVenuePlace} from "@/domain/phase2/planner/night-out-venue";
@@ -128,7 +130,7 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
       ...(value.route === undefined ? {} : { route: parseProspectiveRoute(value.route) }),
       plannedTime: mobilityTime(value.plannedTime), returnTime: mobilityTime(value.returnTime) };
   }
-  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", "lodgingPricing", "economicScope", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
+  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", "lodgingPricing", "economicScope", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : []), ...(slot.acceptsBasketArticle ? ["basketArticle"] : [])], [...common, "label", "quantity", "cost"]);
   const quantity = decisionAmount(value.quantity);
   if (value.unitBasis !== undefined && !["ITEM", "PERSON", "SHARED"].includes(String(value.unitBasis))) throw new TypeError("CONTEXT_UNIT_BASIS_INVALID");
   validateComponentQuantity(quantity, value.unitBasis, value.quantityEvidenceVersion, value.quantityPerPerson, value.pricedParticipantCount);
@@ -156,11 +158,17 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
     ...(lodgingPricing ? { lodgingPricing } : {}),
     ...(value.economicScope===undefined?{}:{economicScope:parseComponentEconomicScope(value.economicScope,selectionId)}),
     ...(value.productAssetRef === undefined ? {} : { productAssetRef: nightProductAssetRef(value.productAssetRef) }),
+    ...(value.basketArticle === undefined ? {} : { basketArticle: readBasketArticle(value.basketArticle, quantity) }),
     ...(value.needOccurrenceId === undefined ? {} : { needOccurrenceId: plannerString(value.needOccurrenceId) }) };
 }
 export function readContextSelections(context: PlannedContextState, targetMonth: string): ReadonlyMap<string, readonly ComponentSelectionV1[]> {
   restaurantIncludedDetails(context);
-  const template = resolveContextTemplate(context.templateKey);
+  const template = resolveContextTemplate(context.templateKey, context.fields);
+  const basket = isPurchaseBasket(context);
+  if (basket && context.fields.basketCoverage != null && context.fields.budgetDomain !== "groceries")
+    throw new TypeError("PURCHASE_BASKET_COVERAGE_INVALID");
+  if (basket && context.fields.deliveryCoverage && context.fields.deliveryCoverage !== "UNKNOWN"
+    && purchaseComponents(context, "extras").some(legacyDeliveryFee)) throw new TypeError("PURCHASE_BASKET_LEGACY_DELIVERY");
   plannerKeys(plannerRecord(context.fields), [...template.fields.map(f => f.fieldKey), "composerPresentation"], template.fields.filter(f => f.required).map(f => f.fieldKey));
   const consumption = nightOutConsumption(context);
   if (consumption) {
@@ -172,7 +180,7 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
     if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
       || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
-      && !["context-fields@v2", "context-fields@v3", ...(context.templateKey === "night-out" ? ["context-fields@v6"] : context.templateKey === "family-visit" ? ["context-fields@v4"] : context.templateKey === "short-stay" ? ["context-fields@v5"] : [])].includes(String(context.fields.fieldSchemaVersion)))
+      && !["context-fields@v2", "context-fields@v3", ...(basket ? [PURCHASE_BASKET_FIELDS] : context.templateKey === "night-out" ? ["context-fields@v6"] : context.templateKey === "family-visit" ? ["context-fields@v4"] : context.templateKey === "short-stay" ? ["context-fields@v5"] : [])].includes(String(context.fields.fieldSchemaVersion)))
       throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     parseContextField(context.fields[field.fieldKey], field, targetMonth);
   }
@@ -199,6 +207,22 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
       if (!items.length && slot.cardinality === "REQUIRED_ONE") items = template.structuralDefaults[slot.slotKey].items;
     }
     if (new Set(items.map(item => item.selectionId)).size !== items.length) throw new TypeError("CONTEXT_SELECTION_ID_DUPLICATE");
+    if (basket && slot.slotKey === "item") for (const [index, item] of items.entries()) {
+      if (item.kind !== "COMPONENT" || item.provenance !== "EXPLICIT_USER_DECISION") throw new TypeError("PURCHASE_BASKET_ITEM_INVALID");
+      if (!item.basketArticle && index !== 0) throw new TypeError("PURCHASE_BASKET_ITEM_INVALID");
+      if (item.basketArticle) {
+        if (Number(item.quantity) <= 0 || item.unitBasis !== (item.basketArticle.unit === "PACK" ? "SHARED" : "ITEM")
+          || item.quantityPerPerson !== undefined || item.economicScope || item.productAssetRef)
+          throw new TypeError("PURCHASE_BASKET_ITEM_INVALID");
+        if (item.basketArticle.concept) assertPurchaseConcept(item.basketArticle.concept, context.fields.budgetDomain);
+      }
+    }
+    if (basket && slot.slotKey === "shipping") {
+      if ((context.fields.deliveryCoverage === "ADDITIONAL") !== (items.length === 1)
+        || items.some(item => item.kind !== "COMPONENT" || Number(item.quantity) !== 1 || item.unitBasis !== "ITEM"
+          || item.provenance !== "EXPLICIT_USER_DECISION" || item.binding?.mode !== "AUTO" || item.productAssetRef || item.economicScope))
+        throw new TypeError("PURCHASE_BASKET_DELIVERY_INVALID");
+    }
     for (const item of items) if (item.kind === "COMPONENT" && item.lodgingPricing) {
       if (context.fields.fieldSchemaVersion !== "context-fields@v5" || item.lodgingPricing.nightCount !== (context.fields.nightCount ?? null))
         throw new TypeError("CONTEXT_LODGING_NIGHTS_MISMATCH");
@@ -258,7 +282,7 @@ export function knownContextReferences(state: PlanSemanticStateV1): { personIds:
   const personIds = new Set<string>(), placeIds = new Set<string>();
   for (const context of state.contexts) {
     if (context.templateKey === "kernel.generic") continue;
-    const template = resolveContextTemplate(context.templateKey);
+    const template = resolveContextTemplate(context.templateKey, context.fields);
     for (const field of template.fields) {
       const raw = context.fields[field.fieldKey];
       if (raw == null) continue;

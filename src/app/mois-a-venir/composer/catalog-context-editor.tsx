@@ -8,6 +8,7 @@ import { prospectivePersonIdentity } from "@/domain/phase2/planned-product";
 import type { PlannerJson } from "@/domain/phase2/planner/json";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
+import { componentId } from "@/domain/phase2/planner/identity";
 import type { ComposerEditor, ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { PlannedContactField } from "../planned-people-fields";
 import { ContactPlaceReference } from "./workshop-place-reference";
@@ -16,6 +17,7 @@ import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-c
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette, PaletteQuestion } from "./context-palette";
 import { isMascaraContext, mascaraEquipment } from "./mascara-edit";
+import { publishedDrop } from "./interactions";
 import { money } from "./display";
 import styles from "./composer.module.css";
 
@@ -48,6 +50,20 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const [summaryPage, setSummaryPage] = useState(0);
   const posts = Object.entries(context.slotSelections).flatMap(([slotKey, slot]) =>
     ((slot.items ?? []) as readonly ComponentSelectionV1[]).flatMap(item => item.kind === "COMPONENT" ? [{ slotKey, item }] : []));
+  const card = model.board.contexts.find(item => item.contextOccurrenceId === context.contextOccurrenceId);
+  const protectedRef = (ref: string) => model.semanticState.preferences.anchors.includes(ref)
+    || model.semanticState.preferences.flexibility[ref] === "PRESERVE";
+  const componentRoute = (slotKey: string, optionKey: string, selection?: ComponentSelectionV1) => {
+    if (!card || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT") || protectedRef(card.contextOccurrenceId)) return null;
+    const target = { kind: "CONTEXT_SOCKET" as const, contextOccurrenceId: card.contextOccurrenceId, slotKey };
+    const assetKey = `option:${context.templateKey}:${slotKey}:${optionKey}`;
+    const socket = card.sockets.find(candidate => candidate.slotKey === slotKey && candidate.contextOccurrenceId === card.contextOccurrenceId);
+    const asset = model.library.searchableAssets.find(candidate => candidate.assetKey === assetKey && candidate.optionKind === "COMPONENT");
+    if (!asset || !socket?.choiceAssetKeys?.includes(assetKey) || publishedDrop(model, assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return null;
+    if (selection && (!socket.currentItems.some(item => item.selectionId === selection.selectionId && item.kind === selection.kind && item.optionKey === optionKey)
+      || protectedRef(componentId(card.contextOccurrenceId, slotKey, selection.selectionId)))) return null;
+    return { asset, target, selection };
+  };
   const mascara = isMascaraContext(context);
   const [summaryTab, setSummaryTab] = useState<"fields" | "posts">(posts.length ? "posts" : "fields");
   const [postPage, setPostPage] = useState(() => focusSelectionId
@@ -83,15 +99,26 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       else setError("Ce choix n’a pas été admis. Le brouillon local reste disponible.");
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez les champs du moment."); }
   };
-  const directPost=!mascara && model.dropCapabilities.find(cap=>cap.target.contextOccurrenceId===context.contextOccurrenceId&&cap.target.kind==="CONTEXT_SOCKET"&&cap.resolution!=="BLOCKED"&&model.library.searchableAssets.some(a=>a.assetKey===cap.sourceAssetKey&&a.optionKind==="COMPONENT"));
-  const directAsset=directPost&&model.library.searchableAssets.find(a=>a.assetKey===directPost.sourceAssetKey);
+  const directOptions = mascara ? [] : (card?.sockets ?? []).flatMap(socket => {
+    if (socket.currentItems.length > 1) return [];
+    const selection = socket.currentItems[0];
+    if (selection && selection.kind !== "COMPONENT") return [];
+    return model.library.searchableAssets.flatMap(asset => {
+      if (asset.optionKind !== "COMPONENT" || !asset.optionKey || !socket.choiceAssetKeys?.includes(asset.assetKey)
+        || selection && selection.optionKey !== asset.optionKey) return [];
+      const route = componentRoute(socket.slotKey, asset.optionKey, selection);
+      return route ? [route] : [];
+    });
+  });
+  const directPost = directOptions.length === 1 && posts.length <= 1 ? directOptions[0] : null;
   const mascaraShortcut = mascara && posts.length <= 1
     ? mascaraEquipment(model, model.semanticState, context.contextOccurrenceId, posts[0]?.item) : undefined;
   const directChoice = mascaraShortcut ? { key: "mascara-price",
+    catalogAssetKey: 'beauty:mascara',
     label: mascaraShortcut.selection ? "Prix et quantité" : "Ajouter un produit", iconKey: mascaraShortcut.asset.iconKey,
     choose: () => choose(mascaraShortcut.asset, mascaraShortcut.target, mascaraShortcut.selection) }
-    : directAsset && directPost ? { key: "direct-price", label: "Prix direct", iconKey: directAsset.iconKey,
-      choose: () => choose(directAsset, directPost.target) } : null;
+    : directPost ? { key: "direct-price", label: "Prix direct", iconKey: directPost.asset.iconKey,
+      choose: () => choose(directPost.asset, directPost.target, directPost.selection) } : null;
   const selectedField=editor.fields.find(field=>field.key===activeKey);
   const match=(label:string)=>label.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase().includes(query.normalize("NFD").replace(/\p{Diacritic}/gu,"").toLowerCase());
   const tile=(key:string,label:string,choose:()=>void,selected=false)=>({key,label,choose,selected,iconKey:"activity"});
@@ -107,7 +134,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       ...(options?.places??[]).filter(p=>match(p.name)).map(p=>tile(p.placeId,p.name,()=>update(selectedField.key,{kind:"KNOWN",placeId:p.placeId}))),
       tile("free","Autre destination",()=>update(selectedField.key,{kind:"TEXT",label:"",provenance:"USER_DECLARED_PROSPECTIVE"})),tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}:undefined;
   return <div data-catalog-context-editor={context.templateKey} data-mascara-catalog={mascara || undefined} className={styles.nightEditor}>
-    <p className={styles.helper}>Les personnes, lieux et dates restent liés à ce moment. Les produits et autres équipements se choisissent dans la palette du Board ; le parent n’ajoute aucun coût.</p>
+    <p className={styles.helper}>Les informations restent liées à ce moment. La palette propose les postes compatibles ; seuls ces postes peuvent porter un coût.</p>
     {activeKey === null && <section className={styles.nightSection} data-catalog-summary><h3>{String(context.fields.label ?? "Votre intention")}</h3>
       <p>Choisissez uniquement la précision utile maintenant. Les autres informations restent inconnues.</p>
       {!!posts.length && <nav className={styles.nightNav} aria-label="Résumé de l’intention"><button type="button" aria-pressed={summaryTab === "fields"} onClick={() => setSummaryTab("fields")}>Informations</button><button type="button" aria-pressed={summaryTab === "posts"} onClick={() => setSummaryTab("posts")}>Postes ({posts.length})</button></nav>}
@@ -126,10 +153,10 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
             {posts.length > 1 && ` · Poste ${postPage * 3 + index + 1}`}
           </button>;
         }
-        return <button key={item.selectionId} type="button" onClick={() => {
-          const asset = model.library.searchableAssets.find(asset => asset.assetKey === `option:${context.templateKey}:${slotKey}:${item.optionKey}`);
-          if (asset) choose(asset, { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey }, item);
-        }}>Modifier {item.label} · {item.cost.kind === "MANUAL" ? `${item.quantity} × ${item.cost.unitAmount} €` : "Prix inconnu ou devis conservé"}</button>;
+        const route = componentRoute(slotKey, item.optionKey, item);
+        return <button key={item.selectionId} type="button" disabled={busy || !route}
+          onClick={() => { if (route) choose(route.asset, route.target, route.selection); }}>
+          {route ? "Modifier" : "Consulter"} {item.label} · {item.cost.kind === "MANUAL" ? `${item.quantity} × ${item.cost.unitAmount} €` : "Prix inconnu ou devis conservé"}</button>;
       })}
       {summaryTab === "posts" && posts.length > 3 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {Math.ceil(posts.length / 3)}</span><button type="button" disabled={(postPage + 1) * 3 >= posts.length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
       <p>Choisissez les composants réels et leur prix dans le dock sous le Board.</p></section>}

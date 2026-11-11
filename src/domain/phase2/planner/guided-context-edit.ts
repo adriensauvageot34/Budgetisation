@@ -2,6 +2,7 @@ import type { ComponentSelectionV1 } from "./component-contract";
 import type { PlannerJson } from "./json";
 import { parsePlanSemanticState, type PlanSemanticStateV1 } from "./semantic-state";
 import { presetForContext } from "./composer-presets";
+import { isPurchaseBasket } from "./purchase-basket";
 
 export type GuidedContextEdit = Readonly<{ contextOccurrenceId: string; fields?: Readonly<Record<string, PlannerJson>>;
   slots?: Readonly<Partial<Record<"meal" | "main" | "item" | "extras" | "transport", readonly ComponentSelectionV1[]>>> }>;
@@ -16,8 +17,9 @@ export const guidedContextShape = (templateKey: string) => ({
 /** Replaces published sockets atomically. Never adds a financial parent total. */
 export function editGuidedContext(raw: PlanSemanticStateV1, edit: GuidedContextEdit): PlanSemanticStateV1 {
   const state = parsePlanSemanticState(raw), context = state.contexts.find(c => c.contextOccurrenceId === edit.contextOccurrenceId);
-  if (!context || !presetForContext(context) || !["fast-food", "delivery", "activity", "purchase"].includes(context.templateKey))
+  if (!context || (context.templateKey !== "purchase" && !presetForContext(context)) || !["fast-food", "delivery", "activity", "purchase"].includes(context.templateKey))
     throw new TypeError("COMPOSER_PRESET_CONTEXT_INVALID");
+  if (isPurchaseBasket(context)) throw new TypeError("PURCHASE_BASKET_OWNER_REQUIRED");
   if (state.preferences.anchors.includes(context.contextOccurrenceId) || state.preferences.flexibility[context.contextOccurrenceId] === "PRESERVE")
     throw new TypeError("COMPOSER_CONTEXT_LOCKED");
   const shape = guidedContextShape(context.templateKey), fields = { ...context.fields }, slots = { ...context.slotSelections };
