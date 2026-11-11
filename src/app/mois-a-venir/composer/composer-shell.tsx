@@ -578,7 +578,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         setMessage(response.mutationKind === "CANCEL_CONTEXT" ? "Context retiré du brouillon. Son annulation sera conservée à l’application." : changed ? "Brouillon mis à jour et prévisualisé." : "Prévisualisation à jour.");
       }
       install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
-      setEditor(current => current?.equipment ? { ...current, saved: true }
+      setEditor(current => current?.equipment ? { ...current, saved: true, raw: false }
         : current?.nightContextId && response.model.semanticState.contexts.some(context => context.contextOccurrenceId === current.nightContextId)
           ? { ...current, nightCreating: false, nightAdmission: (current.nightAdmission ?? 0) + 1 } : null); setSelected(null);
       if (changed) animate(history === "undo" ? "undo" : history === "redo" ? "redo" : "snap", nextMotionTarget.current);
