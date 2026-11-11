@@ -316,7 +316,12 @@ const server = http.createServer(async (request, response) => {
       response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture ${key}</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
       return;
     }
-    if (/^\/planned-visuals\/(?:composer\/presets|builder\/clay\/(?:drinks|food|transport|r7|bar-compact|scenes))\/[a-z-]+\.webp$/.test(url.pathname)) {
+    if (url.pathname === '/planned-visuals/builder/clay/v22/collection.json') {
+      response.setHeader('Content-Type','application/json');
+      response.end(fs.readFileSync(path.join('public',url.pathname))); return;
+    }
+    if (/^\/planned-visuals\/(?:composer\/presets|builder\/clay\/(?:drinks|food|transport|r7|bar-compact|scenes|beauty|catalog-compact))\/[a-z0-9-]+\.webp$/.test(url.pathname)
+      || /^\/planned-visuals\/builder\/clay\/v22\/(?:primary|compact|wide|specialized)\/v22-art-(?:excel-\d+|extra-[a-z0-9-]+)\.webp$/.test(url.pathname)) {
       response.setHeader('Content-Type','image/webp'); response.setHeader('Cache-Control','public,max-age=3600');
       response.end(fs.readFileSync(path.join('public',url.pathname))); return;
     }

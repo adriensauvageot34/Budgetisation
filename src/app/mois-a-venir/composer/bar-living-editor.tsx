@@ -456,7 +456,17 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
   if(page==="quick")question={title:"Coût prévu",choices:[]};
   // Bar/Before products have one navigation control in the dock. The RAW
   // guard must run before changing families, including during row editing.
-  if(question.nature==="OBJECTS")question={...question,search:undefined,backToFamilies:()=>{if(guard(()=>setFamily(null)))setFamily(null);}};
+  if(question.nature==="OBJECTS")question={...question,search:undefined,catalogMoment:activeMoment==="before"?"before":"at-bar",
+    choices:question.choices.map(item=>{
+      const asset=(activeMoment==="before"?beforeCatalog:catalog).find(candidate=>candidate.assetKey===item.key);
+      if(!asset)return item;
+      if(busy||activeMoment==="before"&&beforeLocked)return {...item,catalogUnavailable:true};
+      const selected=activeMoment==="before"?[...(before?[before.bottle,...before.extras]:[])]:barItems(context,"extras");
+      const repeat=selected.some(row=>row.kind==="COMPONENT"&&row.productAssetRef?.assetKey===asset.assetKey);
+      const destination=activeMoment==="before"?"Before":"Au bar";
+      return {...item,catalogRepeat:repeat,catalogActionLabel:repeat?`Ajouter une autre ligne ${asset.label} · ${destination}`
+        :`Choisir ${asset.label} · ${destination}`};
+    }),backToFamilies:()=>{if(guard(()=>setFamily(null)))setFamily(null);}};
   if(question.nature==='OBJECTS'&&!busy&&!dirty){
     const owner=activeMoment==='before'?!beforeLocked&&before?.child.contextOccurrenceId
       :consumption?.mode!=='DIRECT'&&!coveredMain&&context.contextOccurrenceId;

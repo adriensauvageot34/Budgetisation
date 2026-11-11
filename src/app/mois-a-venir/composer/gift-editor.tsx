@@ -19,6 +19,9 @@ import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-c
 import { builderInput } from "../planned-builder-primitives";
 import styles from "./composer.module.css";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
+import { CatalogOpenButton } from "./catalog-discovery-provider";
+import { catalogRefLocked, catalogSocket } from "./catalog-discovery";
+import { componentId } from "@/domain/phase2/planner/identity";
 
 const occasionChoices = ["Sans occasion particulière", "Anniversaire", "Noël", "Fête ou célébration"];
 const giftAssets = assetsForModule("gift").filter(asset => !/(?:delivery_fee|service_fee)$/u.test(asset.assetKey));
@@ -96,6 +99,14 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
       {section === "recipient" && <label>Destinataire{recipient?.kind==="TEXT"?<input value={recipient.label} onChange={event=>setRecipient({kind:"TEXT",label:event.target.value})} placeholder="Nom libre"/>:<p>{recipient?prospectivePersonLabel(recipient)??householdPersons.find(p=>p.personId===(recipient.kind==="HOUSEHOLD_PERSON"?recipient.personId:""))?.displayName:"Choisis une personne dans le dock, ou laisse inconnu."}</p>}</label>}
       {section === "occasion" && <label>Occasion choisie<input className={builderInput} value={occasion} onChange={event=>setOccasion(event.target.value)} maxLength={120} placeholder="Choisir dans le dock ou saisir" /></label>}
       {section === "object" && <>
+      <CatalogOpenButton target={{contextId:context.contextOccurrenceId,resolveCommands:entry=>{
+        const gift=giftAssets.find(asset=>entry.assetKeys.includes(asset.assetKey));
+        if(!gift || !catalogSocket(model,context.contextOccurrenceId,"item","option:gift:item:gift")
+          || existing&&catalogRefLocked(model,componentId(context.contextOccurrenceId,"item",existing.selectionId))
+          || objectLabel.trim()&&assetKey!==gift.assetKey)return [];
+        return [{visualConceptId:entry.visualConceptId,editsExisting:!!existing,label:`Choisir ${entry.label} pour ce cadeau`,
+          run:()=>{setAssetKey(gift.assetKey);if(!objectLabel.trim())setObjectLabel(entry.label);}}];
+      }}}>Parcourir les idées de cadeaux</CatalogOpenButton>
       <p>{selectedAsset?"Type choisi : "+selectedAsset.label:"Aucune classification imposée · choisis une tuile ou un nom libre."}</p>
       {assetKey && !selectedAsset && <p role="status" className={styles.helper}>Cette référence de catalogue n’est plus disponible. Elle reste conservée tant que vous ne choisissez pas un autre type.</p>}
       <label>Quel objet ou produit ?<input value={objectLabel} onChange={event => setObjectLabel(event.target.value)} maxLength={120} /></label></>}

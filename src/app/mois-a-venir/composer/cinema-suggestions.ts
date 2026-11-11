@@ -38,7 +38,7 @@ type CinemaSuggestionInput = {
   dismissed: readonly string[];
 };
 
-export function cinemaSuggestions(input: CinemaSuggestionInput) {
+export function cinemaSuggestions(input: CinemaSuggestionInput, limit = 4) {
   const { ticket, transport, dayChosen, placeChosen } = input;
   const candidates: Candidate[] = [
     { conceptKey: "billet-cinema", category: "ticket", sourceRow: 329,
@@ -74,7 +74,7 @@ export function cinemaSuggestions(input: CinemaSuggestionInput) {
       key: [candidate.conceptKey, candidate.action, input.contextOccurrenceId, candidate.selectionId].join(":") }))
     .filter(candidate => !input.dismissed.includes(candidate.key))
     .map(candidate=>({...candidate,tiers:[candidate.priority]})))
-    .slice(0, 4);
+    .slice(0, limit);
 }
 
 export type CinemaSuggestion = ReturnType<typeof cinemaSuggestions>[number];

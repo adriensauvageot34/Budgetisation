@@ -18,6 +18,7 @@ import { PresetIllustration } from "./preset-illustration";
 import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
 import { CatalogDiscoveryProvider } from "./catalog-discovery-provider";
+import type { GuidedCatalogChoice } from "./catalog-discovery";
 import { assetEditorTarget } from "./asset-editor-routing";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
@@ -58,7 +59,7 @@ import relationStyles from "./root-relation-commands.module.css";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean; selection?: ComponentSelectionV1; mascara?: boolean }; page?: number; saved?: boolean; raw?: boolean;
-  restaurantContextId?: string; restaurantCreating?: boolean;
+  restaurantContextId?: string; restaurantCreating?: boolean; guidedCatalogChoice?: GuidedCatalogChoice;
   giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; catalogSelectionId?: string; familyMode?: string;
   barTarget?:BarTarget; barTargetRequest?:number; cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
@@ -726,8 +727,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(node => { if (node.matches(":popover-open")) node.hidePopover(); });
     origin?.focus();
   }
-  function choose(asset: ComposerAssetView, target: DropTarget = { kind: "BOARD_ZONE" }, selection?: ComponentSelectionV1, stableId?: string, presetKey?: ComposerPresetKey) {
-    if (editor && !inlineEdits.registry.guard(() => choose(asset, target, selection, stableId, presetKey))) return;
+  function choose(asset: ComposerAssetView, target: DropTarget = { kind: "BOARD_ZONE" }, selection?: ComponentSelectionV1, stableId?: string, presetKey?: ComposerPresetKey, componentLabel?: string) {
+    if (editor && !inlineEdits.registry.guard(() => choose(asset, target, selection, stableId, presetKey, componentLabel))) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
     if (asset.kind === "SLOT_OPTION_ASSET" && asset.optionKind === "MOBILITY_INTENT") {
@@ -764,7 +765,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }
     const capability = shown.dropCapabilities.find(d => d.sourceAssetKey === asset.assetKey && d.target.kind === target.kind && d.target.contextOccurrenceId === target.contextOccurrenceId && d.target.slotKey === target.slotKey);
     if (!capability || capability.resolution === "BLOCKED") { setSelected(asset.assetKey); setMessage(`Carte ${asset.label} sélectionnée. Choisissez un emplacement compatible sur le mois.`); return; }
-    const values: Record<string, string> = {};
+    const values: Record<string, string> = componentLabel && !selection && asset.optionKind==="COMPONENT" ? {label:componentLabel} : {};
     if (selection?.kind === "COMPONENT" && selection.optionKey === asset.optionKey) Object.assign(values, { label: selection.label, quantity: selection.quantityPerPerson ?? selection.quantity,
       personCount: selection.pricedParticipantCount?.toString() ?? "", amount: selection.cost.kind === "MANUAL" ? selection.cost.unitAmount : "",
       unitBasis: selection.unitBasis ?? "", funding: selection.fundingAllocations?.some(part => part.source !== "BANK") ? "EXISTING"
@@ -837,13 +838,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       setReveal(previous=>({targetRef:returnContext,sequence:(previous?.sequence??0)+1}));
     }
   } };
-  function editContext(card: ComposerContextCardView, barTarget?:BarTarget, catalogSelectionId?: string) {
-    if (editor && !inlineEdits.registry.guard(() => editContext(card,barTarget,catalogSelectionId))) return;
+  function editContext(card: ComposerContextCardView, barTarget?:BarTarget, catalogSelectionId?: string, guidedCatalogChoice?: GuidedCatalogChoice) {
+    if (editor && !inlineEdits.registry.guard(() => editContext(card,barTarget,catalogSelectionId,guidedCatalogChoice))) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
     setFocusedContext(card.contextOccurrenceId);
     prepareDialogFocus();
-     setEditor({ title: `Modifier ${card.label}`, side: true, barTarget, barTargetRequest:(editor?.barTargetRequest??0)+1, catalogSelectionId,
+     setEditor({ title: `Modifier ${card.label}`, side: true, barTarget, barTargetRequest:(editor?.barTargetRequest??0)+1, catalogSelectionId, guidedCatalogChoice,
       cardKey: `template:${card.templateKey}`,
       ...assetEditorTarget(card.templateKey, card.contextOccurrenceId, presetForContext(card)?.presetKey),
       fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
@@ -912,6 +913,22 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stableDetails=useCommittedEvent(openProjectionDetails);
   const stableFocus=useCommittedEvent((id:string|null)=>{if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId)&&!inlineEdits.registry.guard(()=>stableFocus(id)))return;setFocusedContext(id);if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId))setEditor(null);});
   const stableRevealFocus=useCommittedEvent((id:string|null)=>{stableFocus(id);if(id)setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));});
+  const openCatalogContext=useCommittedEvent((id:string,focus?:string,articleLabel?:string)=>{
+    if (busyRef.current) return;
+    const card=shown.board.contexts.find(item=>item.contextOccurrenceId===id);
+    if (card&&!card.readOnly&&focus?.startsWith("component:")&&presetForContext(card)?.presetKey==="bar-apero")
+      editContext(card,focus as BarTarget);
+    else if(card&&!card.readOnly&&articleLabel&&card.templateKey==="purchase")
+      editContext(card,undefined,undefined,{kind:"article",label:articleLabel});
+    else stableLibraryOpen(id);
+  });
+  const chooseCatalogSocket=useCommittedEvent((asset:ComposerAssetView,target:DropTarget,selection?:ComponentSelectionV1,componentLabel?:string)=>{
+    if (busyRef.current) return;
+    const card=shown.board.contexts.find(item=>item.contextOccurrenceId===target.contextOccurrenceId);
+    if(card&&(presetForContext(card)?.presetKey==="cinema"||card.templateKey==="purchase"&&target.slotKey==="item"))
+      editContext(card,undefined,undefined,{kind:"socket",asset,target,selection});
+    else choose(asset,target,selection,undefined,undefined,componentLabel);
+  });
   const stableLibraryOpen=useCommittedEvent((id:string)=>{
     if(busyRef.current)return;
     const occurrence=libraryOccurrences(shown).find(row=>row.contextOccurrenceId===id);
@@ -943,7 +960,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
   return <WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
-  <CatalogDiscoveryProvider model={shown} busy={busy} openContext={stableLibraryOpen} revealControl={stableRevealFocus} choose={stableChoose} choosePreset={stablePresetChoose}>
+  <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
       if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-bar-place-suggestions],[data-catalog-open],[popover],dialog'))return;
@@ -1019,6 +1036,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           ? <RestaurantEditor key={editor.restaurantContextId} context={draftState.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId)!}
             card={shown.board.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId)!} model={shown}
             creating={!!editor.restaurantCreating} busy={busy} decide={stage} close={closeDialog}
+            catalogChoice={editor.guidedCatalogChoice}
             cinemaDeclines={cinemaDeclines[editor.restaurantContextId]}
             updateCinemaDeclines={updateCinemaDeclines} />
            : editor?.restaurantContextId ? <section className={styles.contextPalette} role="status"><p>{editorLoadError ? "L’éditeur n’a pas pu être chargé. Le brouillon est conservé." : "Ouverture de la carte…"}</p>

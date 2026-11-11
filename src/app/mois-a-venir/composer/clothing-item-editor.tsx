@@ -13,12 +13,14 @@ import { useActiveWorkshopQuestion } from "./workshop-choices";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import { PurchaseDelivery } from "./purchase-delivery";
 import { money } from "./display";
+import type { GuidedCatalogChoice } from "./catalog-discovery";
 import styles from "./composer.module.css";
 
 /** One existing purchase item. No cart, product catalogue or new writer. */
-export function ClothingItemEditor({ context, card, model, busy, decide, close }: {
+export function ClothingItemEditor({ context, card, model, busy, decide, close, catalogChoice }: {
   context: PlannedContextState; card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
   decide: (operation: ComposerOperation) => boolean; close: () => void;
+  catalogChoice?: GuidedCatalogChoice;
 }) {
   const item = clothingItem(context), writable = clothingItemWritable(model, context, card);
   const [row, setRow] = useState<Row | null>(null), [shipping, setShipping] = useState(false), [error, setError] = useState("");
@@ -35,6 +37,13 @@ export function ClothingItemEditor({ context, card, model, busy, decide, close }
     const next = { ...initial, amount: initial.amount.replace(".", ","), quantity: initial.quantity.replace(".", ",") };
     expected.current = signature; opened.current = JSON.stringify(next); setRow(next); setShipping(false); setError("");
   };
+  const handledCatalogChoice = useRef<GuidedCatalogChoice | undefined>(undefined);
+  useEffect(() => {
+    if (catalogChoice?.kind !== "socket" || handledCatalogChoice.current === catalogChoice) return;
+    handledCatalogChoice.current = catalogChoice;
+    if (catalogChoice.target.contextOccurrenceId === context.contextOccurrenceId && catalogChoice.target.slotKey === "item"
+      && catalogChoice.selection?.selectionId === item?.selectionId) edit();
+  });
   const fees = () => { if (!leaveRaw(fees)) return; setRow(null); setShipping(true); setError(""); };
   const save = () => {
     if (!row || busy) return;

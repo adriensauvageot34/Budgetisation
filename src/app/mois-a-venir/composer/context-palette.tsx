@@ -13,6 +13,7 @@ import { BarProductVisual } from "./bar-product-visual";
 import { CompactCatalogVisual, compactCatalogImage, historicalCatalogImage, ComposerAssetVisual } from "./compact-catalog-visual";
 import { clayAssetArtwork, clayV22Artwork } from "../clay-v22-media";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
+import type { CatalogMoment } from "./catalog-discovery";
 import { clayBarArtwork } from "../clay-v22-media";
 
 function routeCaption(groupKey: string, slotKey: string, assetKey: string, socketLabel: string | null | undefined): string {
@@ -86,7 +87,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
   </>;
 }
 
-export type PaletteQuestion = { title: string; identity?:string; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; visualKey?:string; catalogAssetKey?: string; visualConceptId?: string; drag?:BarDockDrag; choose: () => void }[];
+export type PaletteQuestion = { title: string; identity?:string; catalogMoment?:CatalogMoment; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; visualKey?:string; catalogAssetKey?: string; visualConceptId?: string; catalogActionLabel?:string; catalogRepeat?:boolean; catalogUnavailable?:boolean; drag?:BarDockDrag; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; filterChoices?:boolean; emptyLabel?:string; backToFamilies?:()=>void };
 export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionScroll, onQuestionScrollChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
   questionScroll?:Readonly<Record<string,number>>; onQuestionScrollChange?:(key:string,index:number)=>void;
@@ -168,9 +169,10 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     <header>{appearance==="bar"?(question.nature==="OBJECTS"&&question.backToFamilies&&<button type="button" className={styles.barFamiliesBack} aria-label="Revenir aux catégories" title="Revenir aux catégories" disabled={busy} onClick={question.backToFamilies}><ArrowLeft size={15}/></button>):<div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>}
       {search && <><input ref={searchInput} disabled={appearance==="bar"&&busy} aria-label={search.label} placeholder={search.label} value={search.value} onChange={event => search.change(event.target.value)} />
         {appearance==="bar"&&search.value&&<button type="button" className={styles.iconButton} disabled={busy} aria-label="Effacer la recherche des choix" onClick={()=>{search.change("");searchInput.current?.focus({preventScroll:true});}}><X size={16}/></button>}</>}
-      <CatalogOpenButton target={{contextId:card.contextOccurrenceId,commands:question.choices.flatMap(c=>{
+      <CatalogOpenButton target={{contextId:card.contextOccurrenceId,moment:question.catalogMoment,commands:question.choices.flatMap(c=>{
+        if(c.catalogUnavailable)return [];
         const art=clayV22Artwork(c.visualConceptId)??clayBarArtwork(c.catalogAssetKey??c.visualKey??c.key);
-        return art?[{visualConceptId:art.visualConceptId,label:`Configurer ${c.label} · ${question.title}`,run:c.choose}]:[];
+        return art?[{key:c.key,visualConceptId:art.visualConceptId,label:c.catalogActionLabel??`Configurer ${c.label} · ${question.title}`,allowRepeat:c.catalogRepeat,run:c.choose}]:[];
       })}}>Parcourir les éléments</CatalogOpenButton>
       {appearance!=="bar"&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
         <button type="button" aria-label="Réponses précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => scrollRail(-300)}><ChevronLeft size={18} /></button>

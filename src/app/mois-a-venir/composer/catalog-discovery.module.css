@@ -26,5 +26,6 @@
 @media(max-width:760px){
  .dialog { inset:0; margin:auto; width:calc(100vw - 16px); height:calc(100dvh - 16px); border-radius:14px; }
  .panel { padding:12px; gap:10px; }.filters { grid-template-columns:1fr 1fr; }.search { grid-column:1 / -1; }.filters label:last-child { grid-column:1 / -1; }
- .content { position:relative; }.results { grid-template-columns:repeat(2,minmax(0,1fr)); }.detail { position:absolute; inset:0; width:100%; z-index:1; }.count span { display:none; }
+ .content { position:relative; }.results { grid-template-columns:repeat(2,minmax(0,1fr)); }.detail { position:absolute; inset:0; width:100%; z-index:1; }
+ .detail>img { height:110px; }.detail { gap:9px; }
 }

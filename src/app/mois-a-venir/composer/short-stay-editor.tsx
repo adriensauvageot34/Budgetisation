@@ -11,6 +11,10 @@ import { money } from "./display";
 import { ProspectiveContextEditor } from "./family-visit-editor";
 import { fresh, fromSelection, buildComponentRow, type Row } from "./night-out-components";
 import { WorkshopComponentRow } from "./workshop-component-row";
+import { CatalogOpenButton } from "./catalog-discovery-provider";
+import { useWorkshopConfirmation } from "./workshop-confirmation";
+import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
+import type { CatalogCommand } from "./catalog-discovery";
 import styles from "./composer.module.css";
 
 type Component = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
@@ -77,7 +81,8 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
   };
   const buffer = { nights, lodgingKind, basis, lodging, groceries, posts };
   const acceptedBuffer = useRef(buffer), initial = acceptedBuffer.current;
-  useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(buffer) !== JSON.stringify(initial), () => {
+  const confirm = useWorkshopConfirmation();
+  const leaveRaw = useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(buffer) !== JSON.stringify(initial), () => {
     setNights(initial.nights); setLodgingKind(initial.lodgingKind); setBasis(initial.basis); setLodging(initial.lodging);
     setGroceries(initial.groceries); setPosts(initial.posts); setLodgingDirty(false); setGroceriesDirty(false); setDirty({});
   }, "stay-posts-workshop");
@@ -135,6 +140,25 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
       visualConceptId: ({RELATIVE:'v22-art:extra:family-visit',HOTEL:'v22-art:extra:hotel-stay-general',HOSTEL:'v22-art:extra:hostel-category',RENTAL:'v22-art:extra:rental-platform'} as Readonly<Record<string,string>>)[key]}))
     :[...suggestions,...postChoices]};
   const matchingExtras = extraTopic ? posts.extras.filter(post => (extraTopic.names as readonly string[]).includes(normalizeLabel(post.row.label))) : [];
+  const lodgingCommands: CatalogCommand[] = [];
+  if (slotAllowed("lodging", "lodging") && (!oldLodging || !locked(componentId(context.contextOccurrenceId, "lodging", oldLodging.selectionId)))) {
+    for (const visualConceptId of ["v22-art:excel:470", "v22-art:extra:hotel-stay-general"]) {
+      lodgingCommands.push({visualConceptId,label:oldLodging?"Ouvrir l’hébergement de ce séjour":"Configurer l’hébergement de ce séjour",
+        editsExisting:!!oldLodging,run:()=>{const open=()=>{openPost("lodging");setLodgingPage(oldLodging?"price":"kind");};if(leaveRaw(open))open();}});
+    }
+  }
+  for (const suggestion of suggestions) lodgingCommands.push({visualConceptId:suggestion.visualConceptId,label:suggestion.label,
+    run:()=>{if(leaveRaw(suggestion.choose))suggestion.choose();}});
+  const compatibleRoots = (slot: Group) => {
+    const target: DropTarget = {kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:slot};
+    if(!writable || slot==="extras")return [];
+    return props.model.board.contexts.flatMap(child=>{
+      if(child.readOnly || child.parentContextOccurrenceId || child.contextOccurrenceId===context.contextOccurrenceId || locked(child.contextOccurrenceId))return [];
+      const assetKey=`context-occurrence:${child.contextOccurrenceId}`;
+      const drop=publishedDrop(props.model,assetKey,target);
+      return drop?.semanticAction==="PATCH_CONTEXT"&&drop.choices.includes("REPARENT_PRESERVE_ID")?[{child,assetKey,target}]:[];
+    });
+  };
   const currentLodging = card?.sockets.find(socket => socket.slotKey === "lodging");
   const evaluated = props.fresh && canonicalPlannerJson(currentLodging?.currentItems ?? []) === canonicalPlannerJson(items(context, "lodging"))
     ? currentLodging?.evaluations?.find(evaluation => evaluation.selectionId === oldLodging?.selectionId)?.economicAmount : null;
@@ -148,6 +172,7 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
     <p className={styles.helper}>Réservation et acompte : aucune attestation disponible ici. Un acompte déjà compris ne doit pas être ajouté aux extras ; seul un frais distinct explicitement décidé s’ajoute au total.</p>
   </div>;
   const content = <>
+    <CatalogOpenButton target={{contextId:context.contextOccurrenceId,moment:"lodging",commands:lodgingCommands}}>Parcourir les éléments du séjour</CatalogOpenButton>
     <p className={styles.helper}>Le séjour regroupe ses postes, sans coût parent ajouté. Les autres postes restent accessibles dans le dock.</p>
     {!writable && <p role="status">Ce séjour est en consultation ou sa cible a changé. La saisie reste conservée ; aucune modification ne peut être validée ici.</p>}
     {postSection === "lodging" && <>
@@ -186,6 +211,11 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
       </div>; })}
       {posts[slot].length > 1 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {posts[slot].length}</span><button type="button" disabled={postPage + 1 >= posts[slot].length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
       <button type="button" onClick={() => { setPostPage(posts[slot].length); update(slot, [...posts[slot], { row: fresh(slot === "activities" ? "Activité" : slot === "purchases" ? "Achat" : slot === "extras" ? "Extra" : "Restaurant"), templateKey: key }]); }}>Ajouter · {caption}</button>
+      {compatibleRoots(slot).map(({child,assetKey,target})=><button type="button" key={child.contextOccurrenceId} disabled={props.busy} onClick={()=>{
+        const ask=()=>confirm({message:`Rattacher « ${child.label} » à ce séjour ? L’intention et ses postes sont conservés.`,
+          acceptLabel:"Rattacher cette intention",accept:()=>props.onSave({kind:"DROP",assetKey,target,values:{},identity:child.contextOccurrenceId,selectionId:crypto.randomUUID()})});
+        if(leaveRaw(ask))ask();
+      }}>Rattacher {child.label}</button>)}
     </div>)}
     <details><summary>À savoir sur les postes</summary><p className={styles.helper}>Un jacuzzi peut être une activité ou un extra explicitement ajouté. Les transports des enfants liés doivent déclarer leur relation au trajet du séjour ; aucune fusion n’est déduite d’un libellé.</p></details>
   </>;

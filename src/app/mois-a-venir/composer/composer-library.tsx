@@ -14,6 +14,7 @@ import { useComposerInteractions,publishedDrop } from "./interactions";
 import { composerRenderIndex } from "./render-index";
 import { preloadEditorForAsset } from "./editor-chunks";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
+import { MONTHLY_GROCERIES_REF } from "./catalog-discovery";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
 export const ComposerLibrary=memo(ComposerLibraryView);
@@ -57,7 +58,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   return <aside className={styles.library} data-library aria-label="Bibliothèque d’intentions">
     <header className={styles.panelHeader}><h2><button className={styles.libraryOpen} data-library-open onClick={()=>search.current?.focus()}>Que veux-tu prévoir ?</button></h2></header>
     <nav className={styles.libraryTabs} aria-label="Espaces de la bibliothèque"><button type="button" aria-pressed={space==="add"} onClick={()=>setSpace("add")}>À ajouter</button><button type="button" aria-pressed={space==="manage"} onClick={()=>setSpace("manage")}>À piloter</button></nav>
-    <div className={styles.catalogLibraryAccess}><CatalogOpenButton target={{query,scope:'all'}}>Tous les éléments{query.trim()?` · ${query}`:''}</CatalogOpenButton><CatalogOpenButton target={{scope:'courses',controlRef:index.controls.find(a=>normalizeLibrarySearch(a.label)==='courses')?.capabilityRef}}>Produits pour Courses</CatalogOpenButton></div>
+    <div className={styles.catalogLibraryAccess}><CatalogOpenButton target={{query,scope:'all'}}>Tous les éléments{query.trim()?` · ${query}`:''}</CatalogOpenButton><CatalogOpenButton target={{scope:'courses',controlRef:index.controls.find(a=>a.capabilityRef===MONTHLY_GROCERIES_REF)?.capabilityRef}}>Produits pour Courses</CatalogOpenButton></div>
     <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="add"?"Soirée, repas, achat…":"Budget ou cagnotte…"} value={query} onChange={e=>setQuery(e.target.value)}
       onKeyDown={e=>{if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
         if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}else focusActions();
