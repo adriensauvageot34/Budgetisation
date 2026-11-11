@@ -12,6 +12,8 @@ import { barDockCatalog } from "./bar-dock-catalog";
 import { BarProductVisual } from "./bar-product-visual";
 import { CompactCatalogVisual, compactCatalogImage, historicalCatalogImage, ComposerAssetVisual } from "./compact-catalog-visual";
 import { clayAssetArtwork, clayV22Artwork } from "../clay-v22-media";
+import { CatalogOpenButton } from "./catalog-discovery-provider";
+import { clayBarArtwork } from "../clay-v22-media";
 
 function routeCaption(groupKey: string, slotKey: string, assetKey: string, socketLabel: string | null | undefined): string {
   if (groupKey === "meal") return assetKey.startsWith("template:") ? "Objet autonome" : "Composant du repas";
@@ -161,6 +163,10 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     <header>{appearance==="bar"?(question.nature==="OBJECTS"&&question.backToFamilies&&<button type="button" className={styles.barFamiliesBack} aria-label="Revenir aux catégories" title="Revenir aux catégories" disabled={busy} onClick={question.backToFamilies}><ArrowLeft size={15}/></button>):<div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>}
       {search && <><input ref={searchInput} disabled={appearance==="bar"&&busy} aria-label={search.label} placeholder={search.label} value={search.value} onChange={event => search.change(event.target.value)} />
         {appearance==="bar"&&search.value&&<button type="button" className={styles.iconButton} disabled={busy} aria-label="Effacer la recherche des choix" onClick={()=>{search.change("");searchInput.current?.focus({preventScroll:true});}}><X size={16}/></button>}</>}
+      <CatalogOpenButton target={{contextId:card.contextOccurrenceId,commands:question.choices.flatMap(c=>{
+        const art=clayV22Artwork(c.visualConceptId)??clayBarArtwork(c.catalogAssetKey??c.visualKey??c.key);
+        return art?[{visualConceptId:art.visualConceptId,label:`Configurer ${c.label} · ${question.title}`,run:c.choose}]:[];
+      })}}>Parcourir les éléments</CatalogOpenButton>
       {appearance!=="bar"&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
         <button type="button" aria-label="Réponses précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => scrollRail(-300)}><ChevronLeft size={18} /></button>
         <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => scrollRail(300)}><ChevronRight size={18} /></button>
@@ -193,6 +199,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
         <button type="button" aria-label="Options précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => options.current?.scrollBy({ left: -320, behavior: "smooth" })}><ChevronLeft size={16} /></button>
         <button type="button" aria-label="Options suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => options.current?.scrollBy({ left: 320, behavior: "smooth" })}><ChevronRight size={16} /></button>
       </div>}
+      <CatalogOpenButton target={{contextId:card.contextOccurrenceId}}>Parcourir les éléments</CatalogOpenButton>
       <button className={styles.iconButton} aria-label="Quitter la sélection du moment" onClick={close}><X size={16} /></button></header>
     {mode === "all" && <label className={styles.paletteSearch}>Rechercher un complément<input aria-label="Rechercher un complément" value={query} onChange={event => setQuery(event.target.value)} /></label>}
     {groups.length ? <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options onScroll={measureScroll} tabIndex={0} aria-label={`Options pour ${card.label}`}
