@@ -16,7 +16,9 @@ export function scopeForCard(model:ComposerUiModel,id?:string){
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===id);if(!card)return 'all';
  if(presetForContext(card)?.presetKey==='cinema')return 'cinema';
  const scopes:Readonly<Record<string,string>>={'night-out':'bar','short-stay':'stay','family-visit':'stay','friend-visit':'stay','fast-food':'restaurant',delivery:'restaurant','beauty-restock':'beauty','home-project':'home'};
- return scopes[card.templateKey]??card.templateKey;
+ if(card.templateKey==='purchase'&&card.fields.budgetDomain==='home-small')return 'home';
+ const scope=scopes[card.templateKey]??card.templateKey;
+ return CATALOG_SCOPES.some(([key])=>key===scope)?scope:'all';
 }
 /** Shared ordinal comparator used by discovery and the existing cinema Dock.
  * Lower tiers first; no probabilities, private affinity or financial computation. */

@@ -17,6 +17,28 @@ Les 15 briques du Master : B01 Calendrier ; B02 Rythme/renouvellement ; B03 Lieu
 
 B06/B09/B13 restent des compétences conditionnelles : une illustration d’équipement, de réservation ou de financement ne les active pas. B13 n’est pas ajouté aux scènes de produits. La recherche de Taxi ou d’une scène de voiture ne crée aucun trajet ; Mobility reste l’autorité.
 
+## Couverture des 13 types du Composer
+
+La création, la réouverture et le préchargement partagent le même routage. Les variantes guidées changent les questions et les raccourcis selon le préréglage ; la carte ne propose un équipement que dans un emplacement que son propriétaire publie. Les contrôles mensuels (courses, charges, enveloppes et épargne) conservent leurs capacités propres, distinctes de ces 13 types.
+
+| Type | Briques situées et emplacements publiés |
+| --- | --- |
+| Restaurant | Addition et détails compris ; repas unique, compléments et trajet. |
+| Restauration rapide | Repas unique, compléments et trajet ; quantité, participants et date selon le besoin. |
+| Livraison | Repas unique, lieu de livraison et frais réellement non inclus ; aucun emplacement de trajet. |
+| Activité | Poste principal, frais facultatifs et trajet ; billet pour le cinéma, budget de sortie pour randonnée, plage et pêche. |
+| Visite familiale | Personne visitée et dates ; contribution, activités liées et trajet, via l’éditeur familial. |
+| Visite amicale | Personne et lieu de la visite ; contribution, activités liées et trajet, via les champs publiés de la visite amicale. |
+| Achat | Un article, vendeur, quantité et prix ; frais ou compléments distincts et trajet si admis. Les vêtements ont leur éditeur de produit. |
+| Soirée | Poste principal, Before, repas, aller, retour et extras selon le parcours ; Bar / Apéro a son éditeur et une soirée à domicile propose des consommations adaptées. |
+| Séjour court | Hébergement, nuits, courses du séjour, restaurants, activités, achats, trajet et extras. |
+| Beauté / réassort | Produits et trajet ; un prix s’applique au produit choisi. |
+| Cadeau | Un cadeau, son destinataire et les compléments admis. |
+| Projet maison | Équipements, services, achats liés et trajet ; le prix dépend du poste choisi. |
+| Autre intention | Contributions, intentions compatibles et trajet ; aucun poste imposé par le visuel. |
+
+Le contrôle de régression ouvre les 47 préréglages et les 13 types sans préréglage, compare leurs emplacements au registre et exerce les interactions de coût, de participant et de composition avec des données synthétiques. Les 687 visuels restent consultables ; une référence illustrée ne crée aucune capacité.
+
 ## Découverte et classement
 
 Un seul catalogue média existant est étendu (`collection.json@2`). La Library, les cartes et ContextPalette ouvrent la même découverte. Un seul comparateur ordinal est partagé avec le Dock Cinéma : recherche explicite, cœur du contexte, pertinence de contexte, état choisi, complément métier explicite, ID stable. Les choix initiaux sont gelés à l’ouverture du catalogue ; aucune modification de prix ou quantité ne réordonne la liste. Le Dock Bar conserve son rail et ses commandes existantes.

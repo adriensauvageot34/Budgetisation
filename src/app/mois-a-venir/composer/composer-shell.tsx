@@ -18,6 +18,7 @@ import { PresetIllustration } from "./preset-illustration";
 import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
 import { CatalogDiscoveryProvider } from "./catalog-discovery-provider";
+import { assetEditorTarget } from "./asset-editor-routing";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
 import { ComposerCockpit } from "./composer-cockpit";
@@ -785,12 +786,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         setFocusedContext(identity); setSelected(null); prepareDialogFocus();
          setEditor({ title: `Configurer ${presetKey ? composerPreset(presetKey)!.label : asset.label}`, side: true,
           cardKey: asset.assetKey,
-          ...(asset.templateKey === "gift" ? { giftContextId: identity } : {}),
-          ...(asset.templateKey === "night-out" ? { nightContextId: identity, nightCreating: true } : {}),
-          ...(asset.templateKey === "short-stay" ? { stayContextId: identity } : {}),
-          ...(asset.templateKey === "family-visit" ? { familyContextId: identity } : {}),
-          ...((["restaurant", "fast-food", "delivery", "activity", "purchase"].includes(asset.templateKey ?? "") && (asset.templateKey === "restaurant" || presetKey)) ? { restaurantContextId: identity, restaurantCreating: true } : {}),
-          ...(!["restaurant", "gift", "night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? "") && (!["fast-food", "delivery", "activity", "purchase"].includes(asset.templateKey ?? "") || !presetKey) ? { catalogContextId: identity } : {}),
+          ...assetEditorTarget(asset.templateKey, identity, presetKey, true),
           fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values: {},
           operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: identity, values }) });
         return;
@@ -849,12 +845,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     prepareDialogFocus();
      setEditor({ title: `Modifier ${card.label}`, side: true, barTarget, barTargetRequest:(editor?.barTargetRequest??0)+1, catalogSelectionId,
       cardKey: `template:${card.templateKey}`,
-      ...(card.templateKey === "gift" ? { giftContextId: card.contextOccurrenceId } : {}),
-      ...(card.templateKey === "night-out" ? { nightContextId: card.contextOccurrenceId } : {}),
-      ...(card.templateKey === "short-stay" ? { stayContextId: card.contextOccurrenceId } : {}),
-      ...(card.templateKey === "family-visit" ? { familyContextId: card.contextOccurrenceId } : {}),
-      ...((card.templateKey === "restaurant" || !!presetForContext(card) && ["fast-food", "delivery", "activity", "purchase"].includes(card.templateKey)) ? { restaurantContextId: card.contextOccurrenceId } : {}),
-      ...(!["restaurant", "gift", "night-out", "short-stay", "family-visit"].includes(card.templateKey) && (!["fast-food", "delivery", "activity", "purchase"].includes(card.templateKey) || !presetForContext(card)) ? { catalogContextId: card.contextOccurrenceId } : {}),
+      ...assetEditorTarget(card.templateKey, card.contextOccurrenceId, presetForContext(card)?.presetKey),
       fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
@@ -1030,7 +1021,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
             creating={!!editor.restaurantCreating} busy={busy} decide={stage} close={closeDialog}
             cinemaDeclines={cinemaDeclines[editor.restaurantContextId]}
             updateCinemaDeclines={updateCinemaDeclines} />
-           : editor?.restaurantContextId ? <section className={styles.contextPalette} role="status"><p>{editorLoadError ? "L’éditeur Restaurant n’a pas pu être chargé. Le brouillon est conservé." : "Ouverture de Restaurant…"}</p>
+           : editor?.restaurantContextId ? <section className={styles.contextPalette} role="status"><p>{editorLoadError ? "L’éditeur n’a pas pu être chargé. Le brouillon est conservé." : "Ouverture de la carte…"}</p>
             {editorLoadError && <button type="button" onClick={() => setEditorLoadRetry(n => n + 1)}>Réessayer l’éditeur</button>}<button type="button" onClick={closeDialog}>Retour au Board</button></section>
           : undefined} />
       {(projectionOpen || unresolvedOpen) && <ComposerFinancialInspector model={shown} mode={unresolvedOpen ? "UNRESOLVED" : "FINANCE"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} focused={focusedContext}

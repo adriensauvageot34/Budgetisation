@@ -32,6 +32,7 @@ import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { cinemaSuggestions, sameCinemaExtra, type CinemaSuggestion } from "./cinema-suggestions";
 import { CompactCatalogVisual } from './compact-catalog-visual';
 import { CatalogOpenButton } from './catalog-discovery-provider';
+import { guidedAssetLabels } from "./guided-asset-labels";
 import { clayV22Artwork } from '../clay-v22-media';
 import { PurchaseDelivery } from "./purchase-delivery";
 import { ClothingItemEditor } from "./clothing-item-editor";
@@ -71,6 +72,7 @@ export function RestaurantEditor(props: RestaurantEditorProps) {
 function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, close, cinemaDeclines = [], updateCinemaDeclines }: RestaurantEditorProps) {
   const baseShape = guidedContextShape(context.templateKey), preset = presetForContext(context);
   const cinema = preset?.presetKey === "cinema";
+  const labels = guidedAssetLabels(context.templateKey, preset?.presetKey);
   const confirm = useWorkshopConfirmation(), activeQuestion = useActiveWorkshopQuestion();
   const purchaseEnvelope = context.fields.budgetDomain === "clothing" ? "Vêtements" : context.fields.budgetDomain === "home-small" ? "Petits achats maison" : context.fields.budgetDomain === "games-digital" ? "Jeux/Numérique" : null;
   const shape = { ...baseShape, envelope: context.templateKey === "purchase" ? purchaseEnvelope : baseShape.envelope };
@@ -243,21 +245,33 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   };
   const chooseMode = (next: boolean) => {
     if(next===detail)return;
-    const prepare=()=>{setDetail(next);setStep("budget");setRaw(true);setRow(previous=>({...previous,label:next?"Élément hors compléments":shape.total,quantity:"1",unitBasis:"SHARED",personCount:"",amount:"",costMode:"UNKNOWN",edited:true,fundingMode:"UNDECIDED",fundingAmount:""}));};
+    const prepare=()=>{setDetail(next);setStep("budget");setRaw(true);setRow(previous=>({...previous,label:next?mainLabel:shape.total,quantity:"1",unitBasis:"SHARED",personCount:"",amount:"",costMode:"UNKNOWN",edited:true,fundingMode:"UNDECIDED",fundingAmount:""}));};
     if(!main&&!extras.length){prepare();return;}
     confirm({message:next?"Remplacer le total par les postes ? 45 € + 15 € font 60 €, pas 120 €. Les décisions restent inchangées tant que le nouveau coût n’est pas validé.":"Préparer un coût total à la place du détail ? Les postes seront retirés uniquement après confirmation du nouveau montant.",acceptLabel:next?"Préparer les postes":"Préparer le total",accept:prepare});
   };
-  const equip = (asset: ComposerAssetView, target: DropTarget, outsideConfirmed = false) => {
-    if (!leaveRaw(() => equip(asset, target, outsideConfirmed))) return;
-    if (cinema && (target.contextOccurrenceId !== contextId || !target.slotKey
-      || !cinemaSlot(target.slotKey) || publishedDrop(model, asset.assetKey, target)?.semanticAction !== "PATCH_CONTEXT")) return;
+  const equip = (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1, outsideConfirmed = false) => {
+    const socket = card.sockets.find(candidate => candidate.slotKey === target.slotKey);
+    if (target.kind !== "CONTEXT_SOCKET" || target.contextOccurrenceId !== contextId || card.readOnly
+      || !card.capabilityRefs.includes("PATCH_CONTEXT") || cinemaLocked(contextId)
+      || !socket?.choiceAssetKeys?.includes(asset.assetKey)
+      || publishedDrop(model, asset.assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return;
+    if (asset.optionKind === "COMPONENT" ? socket.slotKey !== mainSlot && socket.slotKey !== "extras"
+      : asset.optionKind !== "MOBILITY_INTENT" || !shape.transport || socket.slotKey !== "transport") return;
+    if (selection && (cinemaSelectionLocked(socket.slotKey, selection.selectionId)
+      || !socket.currentItems.some(item => item.selectionId === selection.selectionId && item.kind === selection.kind
+        && item.optionKey === selection.optionKey))) return;
+    if (!leaveRaw(() => equip(asset, target, selection, outsideConfirmed))) return;
+    if (cinema && !cinemaSlot(socket.slotKey)) return;
     setError("");
     if (asset.optionKind === "COMPONENT") {
       if (target.slotKey === mainSlot) { open("budget"); return; }
-      const existing = extras.find(item => item.optionKey === asset.optionKey);
+      const matching = extras.filter(item => item.optionKey === asset.optionKey);
+      if (!selection && matching.length > 1) { setAllOptions(false); open("complete"); return; }
+      const existing = selection ? matching.find(item => item.selectionId === selection.selectionId) : matching[0];
+      if (selection && !existing || existing && cinemaSelectionLocked("extras", existing.selectionId)) return;
       if (!existing && !detail && main && !outsideConfirmed) {
         confirm({ message: "Ce poste est-il réellement en plus du montant déjà prévu ? S’il est inclus, gardez le total ou remplacez-le par le détail.",
-          cancelLabel: "Déjà inclus · garder le total", acceptLabel: "Supplément réel", accept: () => equip(asset, target, true) }); return;
+          cancelLabel: "Déjà inclus · garder le total", acceptLabel: "Supplément réel", accept: () => equip(asset, target, selection, true) }); return;
       }
       cinemaExtraEdit.current = cinema && existing ? { signature: canonicalPlannerJson(existing) } : null;
       setExtraRow(existing ? fromSelection(existing) : fresh(shape.complement));
@@ -274,7 +288,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     setAllOptions(false); setStep("complete");
   };
   const currentTransport = items(context, "transport").find(item => item.kind === "MOBILITY_INTENT");
-  const completeTitle = cinema ? "Compléments et trajet" : context.templateKey === "restaurant" ? "Détails de l’addition" : "Les petits plus";
+  const completeTitle = cinema ? "Compléments et trajet" : labels.extras;
   const transportSocket = cinemaSlot("transport");
   const cinemaModes = (transportSocket && transportSocket.cardinality === "OPTIONAL_ONE"
     && (!currentTransport || !cinemaSelectionLocked("transport", currentTransport.selectionId)) ? transportSocket.choiceAssetKeys ?? [] : [])
@@ -361,19 +375,21 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       throw error;
     }
   };
-  const modes = card.sockets.find(socket=>socket.slotKey==="transport")?.choiceAssetKeys ?? [];
-  const summaryChoices = [tile("amount",context.templateKey==="purchase"?"Coût direct":context.templateKey==="delivery"?"Commande complète":context.templateKey==="activity"?"Billets / coût direct":"Montant rapide",()=>open("budget"),card.templateKey,"Sans date ni participants obligatoires"),
-    tile("detail",context.templateKey==="purchase"?"Articles":context.templateKey==="activity"?"Tarif et quantité":"Détailler le repas",()=>{if (!leaveRaw(() => { open("budget"); if(!detail) chooseMode(true); })) return; open("budget"); if(!detail) chooseMode(true); }),
-    tile("extras",context.templateKey==="delivery"?"Frais non inclus":"Compléments",()=>open("complete"),"activity"),
+  const transportTarget = socketTarget("transport");
+  const modes = shape.transport ? (card.sockets.find(socket=>socket.slotKey==="transport")?.choiceAssetKeys ?? [])
+    .filter(key=>publishedDrop(model,key,transportTarget)?.semanticAction==="PATCH_CONTEXT") : [];
+  const summaryChoices = [tile("amount",labels.amount,()=>open("budget"),card.templateKey,"Sans date ni participants obligatoires"),
+    tile("detail",labels.detail,()=>{if (!leaveRaw(() => { open("budget"); if(!detail) chooseMode(true); })) return; open("budget"); if(!detail) chooseMode(true); }),
+    tile("extras",labels.extras,()=>open("complete"),"activity"),
     ...(context.templateKey === "restaurant" ? [tile("included", "Déjà compris dans l’addition", () => openIncluded(), "restaurant",
       included ? `${included.items.length} détail(s) conservé(s)` : "Décrire sans augmenter l’addition")] : []),
-    ...(context.templateKey==="purchase"?[tile("product","Article / vendeur",()=>open("product"),"purchase")]:[tile("place",context.templateKey==="activity"?"Destination":"Lieu / restaurant",()=>open("place"),"family-visit")]),
+    ...(context.templateKey==="purchase"?[tile("product","Article / vendeur",()=>open("product"),"purchase")]:[tile("place",context.templateKey==="activity"?"Destination":context.templateKey==="delivery"?"Lieu de livraison":"Lieu / restaurant",()=>open("place"),"family-visit")]),
     ...(context.templateKey === "purchase" && !creating ? [tile("shipping", "Livraison — Examiner pour cet achat",
       () => open("shipping"), "purchase", "Règle métier · aucune dépense ajoutée")] : []),
     ...(shape.participants?[tile("people","Personnes",()=>open("participants"),"family-visit")]:[]),
     ...(shape.envelope?[tile("binding","Enveloppe liée",()=>open("binding"),"purchase")]:[]),tile("date","Date facultative",()=>open("date"),"activity"),
     tile("all-options","Autres postes admissibles",showOptions,"activity"),...modes.flatMap(key=>{const asset=model.library.searchableAssets.find(a=>a.assetKey===key);return asset?[tile(key,asset.label,()=>equip(asset,{kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:"transport"}),asset.iconKey)]:[]})];
-  const extraNames = context.templateKey==="delivery"?["Livraison","Service","Autre frais"]:context.templateKey==="activity"?["Parking","Repas","Autre coût"]:context.templateKey==="purchase"?["Autre article","Livraison","Autre frais"]:["Boisson","Dessert","Autre complément"];
+  const extraNames = labels.examples;
   const backToSummary = tile("summary", "Retour au résumé", () => open(null), "activity");
   const showCinemaSuggestions = cinema && (step === null || step === "complete" && !extraRow && !equipment);
   const rankedCinema = showCinemaSuggestions ? cinemaSuggestions({
@@ -466,7 +482,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         <label>Enveloppe liée à cet achat<select name="budgetDomain" defaultValue={String(context.fields.budgetDomain ?? "")}><option value="">À préciser</option>
           {model.editors.find(editor => editor.assetKey === "template:purchase")?.fields.find(field => field.key === "budgetDomain")?.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}</select></label>
         <button type="button" onClick={() => { const product = panel.current?.querySelector<HTMLInputElement>('input[name="productLabel"]')?.value ?? ""; const merchant = panel.current?.querySelector<HTMLInputElement>('input[name="merchantLabel"]')?.value ?? ""; const domain = panel.current?.querySelector<HTMLSelectElement>('select[name="budgetDomain"]')?.value ?? ""; fields({productLabel:product || null,merchantLabel:merchant || null,budgetDomain:domain || null},"product"); }}>Conserver ces précisions</button></>}
-      {step === "participants" && <>{context.templateKey === "restaurant" && refs.length > 0 && <ul className={styles.restaurantParticipants} aria-label="Participants prévus">
+      {step === "participants" && <>{shape.participants && refs.length > 0 && <ul className={styles.restaurantParticipants} aria-label="Participants prévus">
         {refs.map((ref, index) => <li key={`${prospectivePersonIdentity(ref)}:${index}`}><span>{personLabel(ref)}</span>
           <button type="button" disabled={busy} aria-label={`Retirer ${personLabel(ref)} des participants`} onClick={() => {
             const remove = () => fields({ participantRefs: refs.filter((_, position) => position !== index) }, "participants");
@@ -593,6 +609,6 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     <footer><button type="button" onClick={close}>Retour au Board</button><span>Les choix validés sont conservés dans le brouillon.</span></footer>
   </aside>;
   return <>{typeof document !== "undefined" && createPortal(panelContent, document.body)}
-    {allOptions ? <ContextPalette card={card} model={model} busy={busy} configure choose={(asset,target)=>equip(asset,target)} close={()=>setAllOptions(false)} />
-      : <ContextPalette card={card} model={model} busy={busy} configure choose={(asset,target)=>equip(asset,target)} close={close} question={question} />}</>;
+    {allOptions ? <ContextPalette card={card} model={model} busy={busy} configure choose={equip} close={()=>setAllOptions(false)} />
+      : <ContextPalette card={card} model={model} busy={busy} configure choose={equip} close={close} question={question} />}</>;
 }

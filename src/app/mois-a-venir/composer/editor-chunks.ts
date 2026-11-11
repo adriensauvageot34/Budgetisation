@@ -1,4 +1,6 @@
 import type { ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
+import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import { assetEditorKind } from "./asset-editor-routing";
 
 // A fulfilled promise is reused across focus, click and reopening. A rejected
 // import is cleared so the open panel can explicitly retry without losing Draft.
@@ -20,25 +22,7 @@ export const editorChunks = {
 export type EditorChunkKind = keyof typeof editorChunks;
 export type LoadedEditorChunks = { [K in EditorChunkKind]?: Awaited<ReturnType<(typeof editorChunks)[K]>> };
 
-export function editorChunkForAsset(asset: ComposerAssetView): EditorChunkKind | null {
-  if (asset.kind !== "CONTEXT_ASSET") return null;
-  switch (asset.templateKey) {
-    case "restaurant": return "restaurant";
-    case "night-out": return "night";
-    case "family-visit": return "family";
-    case "short-stay": return "stay";
-    case "gift": return "gift";
-    default: return "catalog";
-  }
-}
-
-export function preloadEditorForAsset(asset: ComposerAssetView) {
-  const kind = editorChunkForAsset(asset);
-  if (kind) void editorChunks[kind]().catch(() => { /* Open-panel retry owns the visible error. */ });
-}
-
-export function preloadEditorForPreset(asset: ComposerAssetView) {
-  if (asset.kind === "CONTEXT_ASSET" && ["fast-food", "delivery", "activity", "purchase"].includes(asset.templateKey ?? ""))
-    void editorChunks.restaurant().catch(() => { /* The normal open-panel retry remains available. */ });
-  else preloadEditorForAsset(asset);
+export function preloadEditorForAsset(asset: ComposerAssetView, presetKey?: ComposerPresetKey) {
+  if (asset.kind !== "CONTEXT_ASSET") return;
+  void editorChunks[assetEditorKind(asset.templateKey, presetKey)]().catch(() => { /* Open-panel retry owns the visible error. */ });
 }

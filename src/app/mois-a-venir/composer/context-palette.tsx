@@ -17,7 +17,8 @@ import { clayBarArtwork } from "../clay-v22-media";
 
 function routeCaption(groupKey: string, slotKey: string, assetKey: string, socketLabel: string | null | undefined): string {
   if (groupKey === "meal") return assetKey.startsWith("template:") ? "Objet autonome" : "Composant du repas";
-  if (groupKey === "travel") return slotKey === "outbound" ? "Aller" : "Retour";
+  if (groupKey === "travel" && slotKey === "outbound") return "Aller";
+  if (groupKey === "travel" && slotKey === "return") return "Retour";
   return socketLabel ?? slotKey;
 }
 
@@ -31,11 +32,15 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
     const asset = assets.get(option.assetKey);
     if (!asset) return [];
     const target: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey };
-    const item = socket.currentItems.find(current => current.optionKey === asset.optionKey && current.kind === asset.optionKind);
-    const satelliteKey = `satellite:${card.contextOccurrenceId}:${socket.slotKey}:${item?.selectionId}`;
-    const sourceKey = item && model.presentation.dragSources[satelliteKey] ? satelliteKey : asset.assetKey;
-    return [{ asset, target, sourceKey, selection: item, state: option.state,
-      caption: routeCaption(groupKey, socket.slotKey, asset.assetKey, socket.label) }];
+    const matches = socket.currentItems.filter(current => current.optionKey === asset.optionKey && current.kind === asset.optionKind);
+    return (matches.length ? matches : [undefined]).map((item, index) => {
+      const satelliteKey = `satellite:${card.contextOccurrenceId}:${socket.slotKey}:${item?.selectionId}`;
+      const sourceKey = item && model.presentation.dragSources[satelliteKey] ? satelliteKey : asset.assetKey;
+      const caption = routeCaption(groupKey, socket.slotKey, asset.assetKey, socket.label);
+      const selectionLabel = item?.kind === "COMPONENT" ? item.label : asset.label;
+      return { asset, target, sourceKey, selection: item, state: option.state, caption: matches.length > 1
+        ? `${caption} · ${selectionLabel} (${index + 1})` : caption };
+    });
   });
   if (!routes.length) return null;
   const first = routes[0], multiple = routes.length > 1;
@@ -69,7 +74,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
       onToggle={event => { if ((event.nativeEvent as ToggleEvent).newState === "closed" &&
         (menu.current?.contains(document.activeElement) || document.activeElement === document.body)) trigger.current?.focus(); }}>
       <strong>{first.asset.label}</strong><p>Choisissez l'utilisation avant d'équiper ou de glisser.</p>
-      {routes.map(route => <button key={`${route.target.slotKey}:${route.asset.assetKey}`} type="button"
+      {routes.map(route => <button key={`${route.target.slotKey}:${route.asset.assetKey}:${route.selection?.selectionId ?? ""}`} type="button"
         data-palette-route={route.asset.assetKey} data-palette-slot={route.target.slotKey} data-drag-source={route.sourceKey}
         aria-label={`${route.asset.label} · ${route.caption}`} disabled={busy} draggable={!busy && !configure}
         onDragStart={event => interaction?.start(route.sourceKey, event)} onDragEnd={() => { interaction?.end(); menu.current?.hidePopover(); }}

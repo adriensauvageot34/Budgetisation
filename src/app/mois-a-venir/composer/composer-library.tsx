@@ -12,7 +12,7 @@ import styles from "./composer.module.css";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { useComposerInteractions,publishedDrop } from "./interactions";
 import { composerRenderIndex } from "./render-index";
-import { preloadEditorForAsset, preloadEditorForPreset } from "./editor-chunks";
+import { preloadEditorForAsset } from "./editor-chunks";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
@@ -44,7 +44,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     return <div className={item.preset?styles.libraryTile:styles.libraryGenericTile} key={item.key}>
       <button type="button" className={item.preset?styles.presetTile:styles.libraryGenericChoice} data-preset={item.preset?.presetKey} data-asset={item.preset?undefined:asset.assetKey}
         data-selected={selected===asset.assetKey} data-library-add-action={query.trim()?item.key:undefined} disabled={busy}
-        onFocus={()=>item.preset?preloadEditorForPreset(asset):preloadEditorForAsset(asset)}
+        onFocus={()=>preloadEditorForAsset(asset,item.preset?.presetKey)}
         onClick={()=>activate(item)} draggable={!busy&&draggable} data-drag-source={draggable?asset.assetKey:undefined}
         onDragStart={event=>{event.stopPropagation();if(busy||!draggable){event.preventDefault();return;}if(interaction)interaction.start(asset.assetKey,event,item.preset?.presetKey);else if(item.preset){event.preventDefault();}else{event.dataTransfer.setData("application/x-planner-asset",asset.assetKey);drag(asset.assetKey);}}}
         onDragEnd={()=>{interaction?.end();drag(null);}}>
