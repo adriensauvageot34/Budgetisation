@@ -7,6 +7,8 @@ import type { ComposerAssetView, DropTarget } from '@/domain/phase2/planner/comp
 import type { ComponentSelectionV1 } from '@/domain/phase2/planner/component-contract';
 import { clayCatalogArtwork, loadClayV22Collection, type ClayCatalogEntry } from '../clay-v22-catalog';
 import { CATALOG_SCOPES, catalogRefLocked, catalogResults, discoveryActions, scopeForCard, selectedCatalogIdentities, type CatalogCommand, type DiscoveryTarget } from './catalog-discovery';
+import { isPurchaseBasket, type BasketConcept } from '@/domain/phase2/planner/purchase-basket';
+import { publishedDrop } from './interactions';
 import styles from './catalog-discovery.module.css';
 
 type Request=DiscoveryTarget&Readonly<{query?:string;entryId?:string;commands?:readonly CatalogCommand[];
@@ -18,7 +20,7 @@ export function CatalogOpenButton({children='Tous les éléments',target={},clas
 }
 export function CatalogDiscoveryProvider({model,busy,children,openContext,choose,choosePreset,revealControl}:{model:ComposerUiModel;busy:boolean;children:ReactNode;
  openContext:(id:string,focus?:string,articleLabel?:string)=>void;revealControl:(id:string)=>void;choose:(asset:ComposerAssetView,target:DropTarget,selection?:ComponentSelectionV1,componentLabel?:string)=>void;
- choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void}){
+ choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey,concept?:BasketConcept)=>void}){
  const [request,setRequest]=useState<Request|null>(null),[entries,setEntries]=useState<readonly ClayCatalogEntry[]>([]),[error,setError]=useState('');
  const [query,setQuery]=useState(''),[scope,setScope]=useState('all'),[family,setFamily]=useState(''),[nature,setNature]=useState(''),[page,setPage]=useState(0),[selected,setSelected]=useState<string|null>(null);
  const dialog=useRef<HTMLDialogElement>(null), trigger=useRef<HTMLElement|null>(null), requestDigest=useRef('');
@@ -34,14 +36,19 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  const results=useMemo(()=>catalogResults(entries,{query,scope,family,nature,selectedIds:frozenSelections.current,
    moment:request?.moment,commandIds}),[entries,query,scope,family,nature,request?.moment,commandIds]);
  const chosen=entries.find(e=>e.visualConceptId===selected),context=model.board.contexts.find(c=>c.contextOccurrenceId===request?.contextId);
+ const basket=context&&isPurchaseBasket(context);
+ const coursesAsset=!context&&scope==='courses'?model.library.searchableAssets.find(a=>a.assetKey==='template:purchase'):undefined;
+ const canPrepareCourses=!!coursesAsset&&publishedDrop(model,coursesAsset.assetKey,{kind:'BOARD_ZONE'})?.semanticAction==='ADD_CONTEXT';
  const currentRequest=request&&(!request.contextId||!!context)&&requestDigest.current===model.board.draft.semanticStateDigest;
- const alreadyChosen=chosen&&context?.sockets.some(s=>s.currentItems.some(i=>i.kind==='COMPONENT'&&i.productAssetRef&&chosen.assetKeys.includes(i.productAssetRef.assetKey)));
+ const alreadyChosen=chosen&&context?.sockets.some(s=>s.currentItems.some(i=>i.kind==='COMPONENT'
+   &&(i.basketArticle?.concept?.id===chosen.visualConceptId||i.productAssetRef&&chosen.assetKeys.includes(i.productAssetRef.assetKey))));
  const commands=chosen&&currentRequest&&context&&!context.readOnly&&!catalogRefLocked(model,context.contextOccurrenceId)
    ?[...(request?.resolveCommands?.(chosen)??[]),...(request?.commands??[])].filter(c=>c.visualConceptId===chosen.visualConceptId
      &&(!alreadyChosen||c.editsExisting||c.allowRepeat)):[];
  const actions=chosen&&request?discoveryActions(chosen,model,request).filter(action=>!commands.length||action.kind==='OPEN'&&action.focus):[];
- const unavailable=request?.controlRef?'Le budget mensuel permet de consulter ou d’ajuster sa cible. La composition d’un panier de courses n’est pas disponible ici.'
+ const unavailable=request?.controlRef?'Le budget mensuel permet de consulter ou d’ajuster sa cible. Préparez un achat de courses pour choisir vos produits.'
    :context?.readOnly||context&&catalogRefLocked(model,context.contextOccurrenceId)?'Cette décision est protégée.'
+     :basket?'Cet élément est consultable dans le catalogue. Choisissez un produit adapté à ce panier.'
      :context?.templateKey==='purchase'?'Cet achat contient une seule ligne article. Consultez la fiche de l’achat pour modifier cette ligne.'
        :context&&!context.sockets.length?'Les choix de cette carte seront disponibles après la prévisualisation.'
          :'Cet élément est disponible en consultation dans ce contexte.';
@@ -57,7 +64,8 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
      <label>Famille<select aria-label="Famille du catalogue" value={family} onChange={e=>{setFamily(e.target.value);change();}}><option value="">Toutes les familles</option>{[...new Set(entries.filter(e=>scope==='all'||e.discovery.contexts.includes(scope)).map(e=>e.discovery.family))].sort().map(f=><option key={f}>{f}</option>)}</select></label>
      <label>Nature<select aria-label="Nature du visuel" value={nature} onChange={e=>{setNature(e.target.value);change();}}><option value="">Toutes les natures</option>{[['ELEMENT','Éléments'],['INTENT','Intentions'],['SCENE','Scènes'],['MODE','Modes de trajet'],['GROUP','Groupes de produits'],['CONFIGURATION','Configurations']].map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label>
     </div>
-    {scope==='courses'&&<p className={styles.notice}>Les produits sont des références à explorer. Le budget Courses du mois reste un contrôle séparé ; consulter un produit ne crée aucun achat.</p>}
+    {scope==='courses'&&!basket&&<div className={styles.notice}><p>Le budget Courses du mois et le panier de produits sont deux décisions distinctes.</p>
+      {canPrepareCourses&&<button type="button" disabled={busy} onClick={()=>execute(()=>choosePreset(coursesAsset!,'groceries-purchase'))}>Préparer mes courses</button>}</div>}
     {error?<p role="alert">{error}</p>:!entries.length?<p role="status">Chargement du catalogue…</p>:<>
     <div className={styles.count} role="status">{results.length} résultat(s){query?' pour votre recherche':' · classés selon ce contexte'}</div>
     <div className={styles.content}>
@@ -71,10 +79,10 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
       <h3>{chosen.label}</h3><p>{chosen.discovery.family}</p>
       <p>{chosen.discovery.sourceRow?`Concept Excel V22 · ligne ${chosen.discovery.sourceRow}`:chosen.protected?'Illustration historique protégée':'Visuel complémentaire M10 · hors Excel'}</p>
       {!!alreadyChosen&&<p>Déjà présent dans cette composition.</p>}
-      {context?.templateKey==='purchase'&&actions.some(action=>action.target?.slotKey==='item'&&action.selection)&&<p>Cet achat contient une seule ligne article.</p>}
+      {context?.templateKey==='purchase'&&!basket&&actions.some(action=>action.target?.slotKey==='item'&&action.selection)&&<p>Cet achat contient une seule ligne article.</p>}
       {(!actions.length&&!commands.length)&&<p>{unavailable}</p>}
       {!currentRequest&&<p>La composition a changé. Rouvrez le catalogue depuis l’objet concerné pour configurer un élément.</p>}
-      <div className={styles.actions}>{actions.map(a=><button type="button" key={a.key} disabled={busy||!currentRequest} onClick={()=>execute(()=>{if(a.kind==='OPEN')openContext(a.contextId!,a.focus,a.articleLabel);else if(a.kind==='PRESET')choosePreset(a.asset!,a.presetKey as ComposerPresetKey);else choose(a.asset!,a.target!,a.selection,a.componentLabel);})}>{a.label}</button>)}
+      <div className={styles.actions}>{actions.map(a=><button type="button" key={a.key} disabled={busy||!currentRequest} onClick={()=>execute(()=>{if(a.kind==='OPEN')openContext(a.contextId!,a.focus,a.articleLabel);else if(a.kind==='PRESET')choosePreset(a.asset!,a.presetKey as ComposerPresetKey,a.concept);else choose(a.asset!,a.target!,a.selection,a.componentLabel);})}>{a.label}</button>)}
         {commands.map(c=><button type="button" key={c.key??c.label} disabled={busy} onClick={()=>execute(c.run)}>{c.label}</button>)}
         {request.controlRef&&<button type="button" onClick={()=>execute(()=>revealControl(request.controlRef!))}>Voir le budget Courses du mois</button>}
         {!request.contextId&&model.board.contexts.filter(c=>chosen.discovery.contexts.includes(scopeForCard(model,c.contextOccurrenceId))).map(c=><button type="button" key={c.contextOccurrenceId} onClick={()=>open({contextId:c.contextOccurrenceId,query:chosen.label,entryId:chosen.visualConceptId})}>Explorer pour {c.label}</button>)}

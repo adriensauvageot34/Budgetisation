@@ -10,6 +10,7 @@ import { contextDate, validateContextGraph } from "./context-selections";
 import { resolveComponentCost } from "./cost-resolver";
 import { resolveRenewalComponentBinding } from "./renewal-compiler";
 import { nightOutConsumption, consumptionReferenceKey } from "@/domain/phase2/planner/night-out-consumption";
+import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
 
 export const CONTEXT_COMPILER_VERSION = "planner-context-compiler@v3-renewals";
 function resolveBinding(option: ComponentOptionDefinition, domain: string | null, item: Extract<ComponentSelectionV1, { kind: "COMPONENT" }>,
@@ -49,13 +50,16 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
     return !link || link.selection.provenance !== "PERSONAL_SUGGESTION" && active(link.parentId);
   };
   for (const context of state.contexts.filter(c => c.templateKey !== "kernel.generic")) {
-    const template = resolveContextTemplate(context.templateKey), contributes = active(context.contextOccurrenceId);
+    const template = resolveContextTemplate(context.templateKey, context.fields), contributes = active(context.contextOccurrenceId);
+    const basket = isPurchaseBasket(context);
     const plannedDate = contextDate(context.fields.plannedDate, state.targetMonth), compiledSlots: CompiledComponentSlot[] = [];
     for (const slot of template.componentSlots) {
       const items = graph.selections.get(context.contextOccurrenceId)!.get(slot.slotKey)!;
       const componentIds: string[] = [], childContextIds: string[] = [], mobilityIntentIds: string[] = [];
       const accepted = contributes ? items.filter(item => item.provenance !== "PERSONAL_SUGGESTION") : [];
-      const unresolved = contributes && (slot.cardinality === "REQUIRED_ONE" && !accepted.length || accepted.some(item => item.kind === "UNRESOLVED"));
+      const basketPending = basket && (slot.slotKey === "item" && !accepted.length
+        || slot.slotKey === "shipping" && !["INCLUDED", "FREE", "ADDITIONAL"].includes(String(context.fields.deliveryCoverage)));
+      const unresolved = contributes && (basketPending || slot.cardinality === "REQUIRED_ONE" && !accepted.length || accepted.some(item => item.kind === "UNRESOLVED"));
       if (unresolved) add("CONTEXT_COMPONENT_SLOT_UNRESOLVED", `${context.contextOccurrenceId}:${slot.slotKey}`);
       if (items.some(item => item.provenance === "PERSONAL_SUGGESTION")) add("CONTEXT_SUGGESTION_EXCLUDED", `${context.contextOccurrenceId}:${slot.slotKey}`, "INFO");
       for (const item of accepted) {
@@ -91,11 +95,17 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
           fundingAllocations: durationUnknown ? [] : item.fundingAllocations ?? [], plannedDate, selectionProvenance: item.provenance,
           bindingEvidenceRefs: [`capability:${CONTEXT_REGISTRY_VERSION}:${template.templateKey}:${slot.slotKey}:${item.optionKey}`,
             `decision:${context.contextOccurrenceId}:${slot.slotKey}:${item.selectionId}`] };
-        const purchaseDomain = template.templateKey === "purchase" && slot.slotKey === "item" && context.fields.budgetDomain !== "other"
+        const purchaseDomain = template.templateKey === "purchase"
+          && (slot.slotKey === "item" || basket && slot.slotKey === "shipping" && context.fields.budgetDomain === "groceries")
+          && context.fields.budgetDomain !== "other"
           ? context.fields.budgetDomain as string | undefined : undefined;
+        const groceries = basket && purchaseDomain === "groceries";
+        const bindingItem = groceries ? { ...item, binding: { mode: context.fields.basketCoverage === "CONFIRMED_CONSUMPTION"
+          ? "CONFIRMED_CONSUMPTION" as const : context.fields.basketCoverage === "EXTRA_TO_SLOT" ? "EXTRA_TO_SLOT" as const : "AUTO" as const } } : item;
+        const eligibleSlots = basket && purchaseDomain ? planSlots.filter(s => s.baseline.kind === "AMOUNT") : planSlots;
         const binding = item.needOccurrenceId ? resolveRenewalComponentBinding(item, planSlots, world)
-          : resolveBinding(purchaseDomain ? { ...option, bindingPolicy: "CERTAIN_DOMAIN" } : option,
-            option.baselineDomain ?? purchaseDomain ?? null, item, request, planSlots, world);
+          : resolveBinding(purchaseDomain ? { ...option, bindingPolicy: groceries ? "REQUIRES_CONFIRMATION" : "CERTAIN_DOMAIN" } : option,
+            option.baselineDomain ?? purchaseDomain ?? null, bindingItem, request, eligibleSlots, world);
         if (binding.relation === "UNRESOLVED") add("CONTEXT_SLOT_BINDING_UNRESOLVED", id);
         requests.push({ ...request, binding, ...(item.needOccurrenceId ? { needOccurrenceId: item.needOccurrenceId,
           bindingEvidenceRefs: [...request.bindingEvidenceRefs!, ...world.baseline.renewals!.needOccurrences.find(n => n.needOccurrenceId === item.needOccurrenceId)!.evidenceRefs] } : {}) });

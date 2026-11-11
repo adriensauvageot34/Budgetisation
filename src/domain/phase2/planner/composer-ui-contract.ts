@@ -112,11 +112,12 @@ export type ComposerApplyReceipt = Readonly<{
 export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; draft?: PlanSemanticStateV1 }> & (
   | Readonly<{ kind: "READ" }>
   | Readonly<{ kind: "MUTATE"; mutation: SemanticMutation }>
-  | Readonly<{ kind: "DROP"; assetKey: string; target: DropTarget; values: Readonly<Record<string, string>>; identity: string; selectionId: string; presetKey?: string; sourceSocket?: Readonly<{ contextOccurrenceId: string; slotKey: string; selectionId: string }> }>
+  | Readonly<{ kind: "DROP"; assetKey: string; target: DropTarget; values: Readonly<Record<string, string>>; identity: string; selectionId: string; presetKey?: string; purchaseBasket?: true; sourceSocket?: Readonly<{ contextOccurrenceId: string; slotKey: string; selectionId: string }> }>
   | Readonly<{ kind: "CLEAR_SOCKET"; contextOccurrenceId: string; slotKey: string; selectionId: string }>
   | Readonly<{ kind: "EDIT_CONTEXT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>> }>
   | Readonly<{ kind: "EDIT_RESTAURANT"; edit: RestaurantEdit }>
   | Readonly<{ kind: "EDIT_PRESET_CONTEXT"; edit: GuidedContextEdit }>
+  | Readonly<{ kind: "EDIT_PURCHASE_BASKET"; edit: import("./purchase-basket").PurchaseBasketEdit }>
   | Readonly<{ kind: "EDIT_GIFT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>>; item: ComponentSelectionV1 }>
   | Readonly<{ kind: "EDIT_NIGHT_OUT"; edit: NightOutEdit }>
   | Readonly<{ kind: "EDIT_FAMILY_VISIT"; edit: FamilyVisitEdit }>

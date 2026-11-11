@@ -19,6 +19,7 @@ import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
 import { CatalogDiscoveryProvider } from "./catalog-discovery-provider";
 import type { GuidedCatalogChoice } from "./catalog-discovery";
+import type { BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { assetEditorTarget } from "./asset-editor-routing";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
@@ -59,7 +60,7 @@ import relationStyles from "./root-relation-commands.module.css";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   equipment?: { asset: ComposerAssetView; target: DropTarget; repeating: boolean; selection?: ComponentSelectionV1; mascara?: boolean }; page?: number; saved?: boolean; raw?: boolean;
-  restaurantContextId?: string; restaurantCreating?: boolean; guidedCatalogChoice?: GuidedCatalogChoice;
+  restaurantContextId?: string; restaurantCreating?: boolean; guidedCatalogChoice?: GuidedCatalogChoice; basketConcept?: BasketConcept;
   giftContextId?: string; nightContextId?: string; nightCreating?: boolean; nightAdmission?: number; familyContextId?: string; stayContextId?: string; catalogContextId?: string; catalogSelectionId?: string; familyMode?: string;
   barTarget?:BarTarget; barTargetRequest?:number; cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
@@ -727,8 +728,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(node => { if (node.matches(":popover-open")) node.hidePopover(); });
     origin?.focus();
   }
-  function choose(asset: ComposerAssetView, target: DropTarget = { kind: "BOARD_ZONE" }, selection?: ComponentSelectionV1, stableId?: string, presetKey?: ComposerPresetKey, componentLabel?: string) {
-    if (editor && !inlineEdits.registry.guard(() => choose(asset, target, selection, stableId, presetKey, componentLabel))) return;
+  function choose(asset: ComposerAssetView, target: DropTarget = { kind: "BOARD_ZONE" }, selection?: ComponentSelectionV1, stableId?: string, presetKey?: ComposerPresetKey, componentLabel?: string, basketConcept?: BasketConcept) {
+    if (editor && !inlineEdits.registry.guard(() => choose(asset, target, selection, stableId, presetKey, componentLabel, basketConcept))) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
     if (asset.kind === "SLOT_OPTION_ASSET" && asset.optionKind === "MOBILITY_INTENT") {
@@ -782,11 +783,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       parkingAmount: selection.optionKey === asset.optionKey && selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount : "" });
     const identity = stableId ?? crypto.randomUUID(), selectionId = selection?.selectionId ?? crypto.randomUUID();
     if (asset.kind === "CONTEXT_ASSET" && target.kind === "BOARD_ZONE" && !selection) {
-      const admitted = stage({ kind: "DROP", assetKey: asset.assetKey, target, values: {}, identity, selectionId, ...(presetKey ? { presetKey } : {}) });
+      const admitted = stage({ kind: "DROP", assetKey: asset.assetKey, target, values: {}, identity, selectionId,
+        ...(presetKey ? { presetKey } : {}), ...(asset.templateKey === "purchase" ? { purchaseBasket: true } : {}) });
       if (admitted) {
         setFocusedContext(identity); setSelected(null); prepareDialogFocus();
          setEditor({ title: `Configurer ${presetKey ? composerPreset(presetKey)!.label : asset.label}`, side: true,
           cardKey: asset.assetKey,
+          basketConcept,
           ...assetEditorTarget(asset.templateKey, identity, presetKey, true),
           fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values: {},
           operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: identity, values }) });
@@ -904,7 +907,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     [grabbed,overTarget,motion,motionTarget,completenessFocus,model.presentation.unresolvedRefs,stableStart,stableEnd,stableOver,stablePlace,stableEquip,stableCanTarget,stableReject,stableOverAssistant,stablePlaceAssistant]);
   const stableChoose=useCommittedEvent(choose),stableEdit=useCommittedEvent(edit),stableEditContext=useCommittedEvent(editContext),stableDrop=useCommittedEvent(drop),stableHover=useCommittedEvent(hover);
   const stableRequest=useCommittedEvent((operation:ComposerOperation)=>stage(operation));
-  const stablePresetChoose=useCommittedEvent((asset:ComposerAssetView,key:ComposerPresetKey)=>choose(asset,{kind:"BOARD_ZONE"},undefined,undefined,key));
+  const stablePresetChoose=useCommittedEvent((asset:ComposerAssetView,key:ComposerPresetKey,concept?:BasketConcept)=>choose(asset,{kind:"BOARD_ZONE"},undefined,undefined,key,undefined,concept));
   const stableLibraryChoose=useCommittedEvent((asset:ComposerAssetView)=>choose(asset));
   const stableLibraryDrag=useCommittedEvent((key:string|null)=>{clearHover();setSelected(key);});
   const stableAdd=useCommittedEvent(()=>{clearHover();setLibraryOpenToken(n=>n+1);});
@@ -1037,6 +1040,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
             card={shown.board.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId)!} model={shown}
             creating={!!editor.restaurantCreating} busy={busy} decide={stage} close={closeDialog}
             catalogChoice={editor.guidedCatalogChoice}
+            initialConcept={editor.basketConcept}
             cinemaDeclines={cinemaDeclines[editor.restaurantContextId]}
             updateCinemaDeclines={updateCinemaDeclines} />
            : editor?.restaurantContextId ? <section className={styles.contextPalette} role="status"><p>{editorLoadError ? "L’éditeur n’a pas pu être chargé. Le brouillon est conservé." : "Ouverture de la carte…"}</p>
@@ -1073,6 +1077,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         </section>
         : editor?.stayContextId && ShortStayEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)
         ? <ShortStayEditor key={`${workshopKey(editor.stayContextId)}:${editor.familyMode ?? "edit"}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)!}
+          onOpenPurchase={stableLibraryOpen}
           semanticState={draftState} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons} options={model.mobilityOptions} initialMode={editor.familyMode}
           summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.stayContextId)} fresh={previewStatus === "FRESH"}
            knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} dockHost={nightDockHost} model={shown} choose={stableChoose} placeDeclines={placeDeclines} declinePlace={declinePlace} onCancel={closeDialog} onSave={stageWorkshop} />

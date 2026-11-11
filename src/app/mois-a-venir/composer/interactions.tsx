@@ -33,6 +33,7 @@ export function selectionValues(selection?: ComponentSelectionV1): Record<string
 export function preparedDrop(source: ComposerDragSession, target: DropTarget, identity: string, selectionId: string): ComposerOperation {
   return { kind: "DROP", assetKey: source.assetKey, target, values: {...selectionValues(source.selection),...source.initialValues}, identity,
     ...(source.presetKey&&target.kind==='BOARD_ZONE'?{presetKey:source.presetKey}:{}),
+    ...(source.assetKey === "template:purchase" && target.kind !== "TRASH" ? { purchaseBasket: true } : {}),
     selectionId: source.selection?.selectionId ?? selectionId, ...(source.sourceSocket ? { sourceSocket: source.sourceSocket } : {}) };
 }
 export function publishedDrop(model: ComposerUiModel, assetKey: string, target: DropTarget) {

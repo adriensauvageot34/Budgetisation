@@ -14,6 +14,7 @@ import { useWorkshopRaw } from "./inline-edit-registry";
 import { PurchaseDelivery } from "./purchase-delivery";
 import { money } from "./display";
 import type { GuidedCatalogChoice } from "./catalog-discovery";
+import { EnablePurchaseBasket } from "./purchase-basket-editor";
 import styles from "./composer.module.css";
 
 /** One existing purchase item. No cart, product catalogue or new writer. */
@@ -74,6 +75,7 @@ export function ClothingItemEditor({ context, card, model, busy, decide, close, 
       <button type="button" onClick={close} aria-label="Fermer la fiche du vêtement">×</button></header>
     {shipping ? <PurchaseDelivery context={context} card={card} model={model} busy={busy} decide={decide} back={summary} /> : <>
       {!row && <section className={styles.nightSection} data-clothing-summary>
+        <EnablePurchaseBasket context={context} card={card} model={model} busy={busy} decide={decide} />
         <p>Projet : {card.label}. Une ligne existante de cet achat, sans nouvelle commande.</p>
         {typeof context.fields.productLabel === "string" && context.fields.productLabel.trim() && context.fields.productLabel !== item?.label && <p>Article indiqué dans le projet : {context.fields.productLabel}.</p>}
         <p>Quantité déclarée : {item?.quantity ?? "Non renseignée"}{item?.unitBasis === "SHARED" ? " lot(s) partagé(s)" : item?.unitBasis === "PERSON" ? " · base par personne conservée" : " unité(s)"}.</p>

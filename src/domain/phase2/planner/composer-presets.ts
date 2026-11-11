@@ -192,12 +192,26 @@ export const COMPOSER_PRESETS = [
     defaults: {"label":"Essuie-tout","productLabel":"Essuie-tout","budgetDomain":"home-small"}, questions: ["Produit","Date","Budget","Enveloppe"],
     guidance: "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement." },
 ] as const;
-export type ComposerPreset = (typeof COMPOSER_PRESETS)[number];
+/** Additional basket entry points reuse artwork already approved for M18. */
+export const PURCHASE_BASKET_PRESETS = [
+  { presetKey: "groceries-purchase", label: "Préparer mes courses", templateKey: "purchase", categoryKey: "HOME",
+    illustrationKey: "groceries", searchTerms: ["courses", "panier alimentaire", "liste de courses"],
+    defaults: { label: "Courses alimentaires", budgetDomain: "groceries" }, questions: ["Produits", "Quantités", "Prix", "Enveloppe"],
+    guidance: "Un panier alimentaire distinct du contrôle mensuel Courses." },
+  { presetKey: "beauty-purchase", label: "Acheter un produit de beauté", templateKey: "purchase", categoryKey: "BEAUTY",
+    illustrationKey: "mascara", searchTerms: ["mascara", "shampoing", "commande beauté"],
+    defaults: { label: "Achat beauté" }, questions: ["Articles", "Vendeur", "Livraison"],
+    guidance: "Commencez par un article, puis complétez le même achat." },
+] as const;
+export type ComposerPreset = (typeof COMPOSER_PRESETS | typeof PURCHASE_BASKET_PRESETS)[number];
 export type ComposerPresetKey = ComposerPreset["presetKey"];
 export const COMPOSER_PRESENTATION_VERSION = "composer-context-presentation@v1" as const;
-export const composerPreset = (key: string) => COMPOSER_PRESETS.find(p => p.presetKey === key);
+export const composerPreset = (key: string): ComposerPreset | undefined =>
+  COMPOSER_PRESETS.find(p => p.presetKey === key) ?? PURCHASE_BASKET_PRESETS.find(p => p.presetKey === key);
 /** Single terminal visual registry: no title matching, no remote URL or legacy Builder image. */
-export const presetIllustrationPath = (preset: ComposerPreset) => `/planned-visuals/composer/presets/${preset.illustrationKey}.webp`;
+export const presetIllustrationPath = (preset: ComposerPreset) => preset.presetKey === "groceries-purchase"
+  ? "/planned-visuals/builder/clay/v22/wide/v22-art-extra-groceries-intent.webp"
+  : `/planned-visuals/composer/presets/${preset.illustrationKey}.webp`;
 export function presetForContext(context: { templateKey: string; fields: PlannerJsonObject }): ComposerPreset | undefined {
   const metadata = context.fields.composerPresentation;
   if (metadata === undefined) return undefined; // Historical revisions keep their original presentation.

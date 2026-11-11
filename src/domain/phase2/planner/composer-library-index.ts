@@ -1,7 +1,7 @@
 import type { ComposerAssetView, ComposerContextCardView } from "./composer-contract";
 import type { ComposerUiModel } from "./composer-ui-contract";
 import type { PlannerJsonObject } from "./json";
-import { COMPOSER_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
+import { COMPOSER_PRESETS, PURCHASE_BASKET_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
 import { canonicalPlannerJson } from "./json";
 import { componentId } from "./identity";
 import type { PlannedContextState } from "./semantic-state";
@@ -126,7 +126,7 @@ export function composerLibraryIndex(model:ComposerUiModel) {
   const generic = templates.map(asset=>({key:asset.assetKey, category:templateCategory[asset.templateKey??""]??"OTHER", asset,
     label:genericLabels[asset.templateKey??""]??asset.label, group:"Intentions libres",
     search:normalizeLibrarySearch([asset.label,genericLabels[asset.templateKey??""]??"","libre personnaliser générique"].join(" "))}));
-  const presets:LibraryIntention[] = COMPOSER_PRESETS.flatMap(preset=>{
+  const presets:LibraryIntention[] = [...COMPOSER_PRESETS, ...PURCHASE_BASKET_PRESETS].flatMap(preset=>{
     const asset=templates.find(a=>a.templateKey===preset.templateKey);
     if(!asset || !model.dropCapabilities.some(d=>d.sourceAssetKey===asset.assetKey && d.target.kind==="BOARD_ZONE" && d.resolution!=="BLOCKED")) return [];
     const group=libraryPresetGroup(preset);

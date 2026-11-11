@@ -1,0 +1,17 @@
+.panel { gap: .7rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .35rem; }
+.lines { display: grid; gap: .4rem; padding: 0; margin: .4rem 0; list-style: none; }
+.lines li { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; padding: .55rem; border-radius: .7rem; background: #fffaf3; }
+.lines img { object-fit: contain; }
+.lines li > div:first-of-type { flex: 1; min-width: 8rem; }
+.lines small { display: block; }
+.form { display: grid; gap: .5rem; padding: .65rem; border-radius: .7rem; background: #f7eee4; }
+.form h3, .footer p { margin: 0; }
+.form label { display: grid; gap: .25rem; min-width: 0; }
+.form input, .form select { width: 100%; min-width: 0; }
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.footer { display: grid; gap: .35rem; }
+@media (max-width: 640px) {
+  .panel { inset: .5rem .5rem 1rem; width: auto; max-width: none; }
+  .lines li .actions { flex-basis: 100%; }
+}

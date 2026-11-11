@@ -7,6 +7,7 @@ import type { PlannedAssetRef } from "../planned-assets";
 import type {VenueEndpoints} from "./night-out-venue";
 import type {RouteEndpointBindings} from "./route-endpoint";
 import type {ComponentEconomicScope} from "./component-economic-scope";
+import type { BasketArticle } from "./purchase-basket";
 
 export type ComponentDefaultProvenance = "STRUCTURAL_DEFAULT" | "PERSONAL_SUGGESTION" | "EXPLICIT_USER_DECISION";
 export type ContextBindingDecision = Readonly<{ mode: "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" | "NO_RELATED_SLOT" }>;
@@ -18,6 +19,7 @@ export type ComponentSelectionV1 = SelectionIdentity & (
       /** Optional P09 quantity evidence. `quantity` remains the exact economic total used by the Compiler. */
       quantityEvidenceVersion?: "component-quantity@v1"; quantityPerPerson?: string; pricedParticipantCount?: number;
       productAssetRef?: PlannedAssetRef;
+      basketArticle?: BasketArticle;
       economicScope?:ComponentEconomicScope;
       lodgingPricing?: Readonly<{ version: "lodging-pricing@v1"; basis: "TOTAL" | "PER_NIGHT"; nightCount: number | null }> }>
   | Readonly<{ kind: "CHILD_CONTEXT"; childContextOccurrenceId: string }>
@@ -34,7 +36,7 @@ export type ComponentSlotDefinition = Readonly<{ slotKey: string; role: string;
   cardinality: "REQUIRED_ONE" | "OPTIONAL_ONE" | "REPEATING";
   optionSource: "STATIC" | "CAPABILITY_PROVIDER" | "CHILD_CONTEXT";
   options: readonly ComponentOptionDefinition[]; allowedChildTemplates: readonly string[];
-  mobilityRole?: "PRIMARY" | "ACCESS" | "LOCAL_STOP" | "RETURN"; acceptsNeedOccurrence?: boolean }>;
+  mobilityRole?: "PRIMARY" | "ACCESS" | "LOCAL_STOP" | "RETURN"; acceptsNeedOccurrence?: boolean; acceptsBasketArticle?: boolean }>;
 export type { ContextTemplateV1 } from "./context-contract";
 export type CompiledComponentSlot = Readonly<{ contextOccurrenceId: string; slotKey: string; role: string;
   cardinality: ComponentSlotDefinition["cardinality"]; state: "EMPTY" | "UNRESOLVED" | "SUGGESTED" | "RESOLVED";

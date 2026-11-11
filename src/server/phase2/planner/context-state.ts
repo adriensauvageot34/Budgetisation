@@ -7,6 +7,7 @@ import { plannedAsset, type PlannedAssetRef } from "@/domain/phase2/planned-asse
 import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
 import { parseContextField, validateContextGraph } from "./context-selections";
 import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
+import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
 
 const children = (items: readonly ComponentSelectionV1[]): string[] => items.flatMap(item => item.kind === "CHILD_CONTEXT" ? [item.childContextOccurrenceId] : []);
 function prune(contexts: readonly PlannedContextState[], removedIds: readonly string[]): PlannedContextState[] {
@@ -53,7 +54,9 @@ export function patchContextEditorFields(raw: PlanSemanticStateV1, contextId: st
     }
   }
   const rich = Object.keys(fields).some(key => !isLegacyContextField(context.templateKey, key));
-  if(context.templateKey==="night-out"&&(fields.venueDecision!=null||context.fields.fieldSchemaVersion==="context-fields@v6"))fields.fieldSchemaVersion="context-fields@v6";
+  if (isPurchaseBasket(context)) {
+    if (Object.hasOwn(patch, "budgetDomain") || Object.hasOwn(patch, "productLabel")) throw new TypeError("PURCHASE_BASKET_OWNER_REQUIRED");
+  } else if(context.templateKey==="night-out"&&(fields.venueDecision!=null||context.fields.fieldSchemaVersion==="context-fields@v6"))fields.fieldSchemaVersion="context-fields@v6";
   else if (context.fields.fieldSchemaVersion === "context-fields@v5") fields.fieldSchemaVersion = "context-fields@v5";
   else if (context.fields.fieldSchemaVersion === "context-fields@v4") fields.fieldSchemaVersion = "context-fields@v4";
   else if (context.fields.fieldSchemaVersion === "context-fields@v3" || Object.hasOwn(fields, "objectAssetRef"))
@@ -70,6 +73,7 @@ export function setContextSlotSelections(raw: PlanSemanticStateV1, contextId: st
   items: readonly ComponentSelectionV1[]): PlanSemanticStateV1 {
   const state = parsePlanSemanticState(raw), graph = validateContextGraph(state);
   const context = state.contexts.find(c => c.contextOccurrenceId === contextId);
+  if (context && isPurchaseBasket(context) && ["item", "shipping"].includes(slotKey)) throw new TypeError("PURCHASE_BASKET_OWNER_REQUIRED");
   if (!context || !resolveContextTemplate(context.templateKey).componentSlots.some(s => s.slotKey === slotKey)) throw new TypeError("CONTEXT_SLOT_UNKNOWN");
   const before = graph.selections.get(contextId)!.get(slotKey)!;
   const keep = new Set(children(items)), removed = children(before).filter(id => !keep.has(id));

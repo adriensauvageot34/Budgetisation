@@ -7,6 +7,7 @@ import { publishedDrop } from './interactions';
 import { componentId } from '@/domain/phase2/planner/identity';
 import { clayAssetArtwork } from '../clay-v22-media';
 import { plannedAsset } from '@/domain/phase2/planned-assets';
+import { isPurchaseBasket, type BasketConcept } from '@/domain/phase2/planner/purchase-basket';
 
 export const CATALOG_SCOPES = [['all','Tous les éléments'],['courses','Courses'],['cinema','Cinéma'],['bar','Bar / Apéro'],
   ['restaurant','Restaurant et repas'],['purchase','Achats / Amazon'],['beauty','Beauté'],['stay','Week-end et visites'],
@@ -19,6 +20,7 @@ export const normalizeCatalog=(s:string)=>s.normalize('NFD').replace(/\p{Diacrit
 export function scopeForCard(model:ComposerUiModel,id?:string){
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===id);if(!card)return 'all';
  if(presetForContext(card)?.presetKey==='cinema')return 'cinema';
+ if(isPurchaseBasket(card)&&card.fields.budgetDomain==='groceries')return 'courses';
  const scopes:Readonly<Record<string,string>>={'night-out':'bar','short-stay':'stay','family-visit':'stay','friend-visit':'stay','fast-food':'restaurant',delivery:'restaurant','beauty-restock':'beauty','home-project':'home'};
  if(card.templateKey==='purchase'&&card.fields.budgetDomain==='home-small')return 'home';
  const scope=scopes[card.templateKey]??card.templateKey;
@@ -33,6 +35,7 @@ export function selectedCatalogIdentities(model:ComposerUiModel,contextId?:strin
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===contextId),ids=new Set<string>();
  for(const socket of card?.sockets??[])for(const item of socket.currentItems){
    if(item.kind!=='COMPONENT')continue;
+   if(item.basketArticle?.concept)ids.add(item.basketArticle.concept.id);
    const id=clayAssetArtwork(item.productAssetRef?.assetKey)?.visualConceptId;if(id)ids.add(id);
    if(scopeForCard(model,contextId)==='cinema'&&socket.slotKey==='main'&&item.optionKey==='activity')ids.add('v22-art:excel:329');
  }return ids;
@@ -73,7 +76,7 @@ export function purchaseCatalogProduct(entry:ClayCatalogEntry,domain?:unknown){
    &&asset.assetKey!=='beauty:hairdresser'&&asset.assetKey!=='automotive:wash'&&!/_fee$/u.test(asset.assetKey));
 }
 export type GuidedCatalogChoice = { kind:'article';label:string } | { kind:'socket';asset:ComposerAssetView;target:DropTarget;selection?:ComponentSelectionV1 };
-export type DiscoveryAction = Readonly<{key:string;label:string;kind:'OPEN'|'PRESET'|'CHOOSE';contextId?:string;presetKey?:string;focus?:string;articleLabel?:string;componentLabel?:string;
+export type DiscoveryAction = Readonly<{key:string;label:string;kind:'OPEN'|'PRESET'|'CHOOSE';contextId?:string;presetKey?:string;focus?:string;articleLabel?:string;componentLabel?:string;concept?:BasketConcept;
  asset?:ComposerAssetView;target?:DropTarget;selection?:ComponentSelectionV1}>;
 export function catalogRefLocked(model:ComposerUiModel,id:string){
  return model.semanticState.preferences.anchors.includes(id)||model.semanticState.preferences.flexibility[id]==='PRESERVE';
@@ -92,6 +95,12 @@ export function catalogSocket(model:ComposerUiModel,contextId:string,slotKey:str
 export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,target:DiscoveryTarget):DiscoveryAction[]{
  const actions:DiscoveryAction[]=[];
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===target.contextId);
+ if(!target.contextId&&entry.discovery.sourceRow&&entry.discovery.nature==="ELEMENT"&&purchaseCatalogProduct(entry)?.module==="beauty"){
+   const asset=model.library.searchableAssets.find(candidate=>candidate.assetKey==="template:purchase");
+   if(asset&&publishedDrop(model,asset.assetKey,{kind:"BOARD_ZONE"})?.semanticAction==="ADD_CONTEXT")
+     actions.push({key:"beauty-basket:"+entry.visualConceptId,kind:"PRESET",presetKey:"beauty-purchase",asset,
+       concept:{id:entry.visualConceptId,label:entry.label},label:`Préparer un achat de ${entry.label}`});
+ }
  if(entry.presetKey){
    const preset=composerPreset(entry.presetKey);
    const existing=model.board.contexts.filter(c=>presetForContext(c)?.presetKey===entry.presetKey);
@@ -124,7 +133,7 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
    }
    return actions;
  }
- if(card.templateKey==='purchase'&&preset&&purchaseCatalogProduct(entry,card.fields.budgetDomain)){
+ if(card.templateKey==='purchase'&&!isPurchaseBasket(card)&&preset&&purchaseCatalogProduct(entry,card.fields.budgetDomain)){
    const route=catalogSocket(model,id,'item','option:purchase:item:item');
    const item=route?.socket.currentItems.find(item=>item.kind==='COMPONENT');
    if(route&&!item&&!String(card.fields.productLabel??'').trim())

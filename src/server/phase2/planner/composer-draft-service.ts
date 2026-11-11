@@ -2,6 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { plannerDigest, plannerDigestString, plannerInteger, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
 import { parsePlanSemanticState, semanticStateDigest } from "@/domain/phase2/planner/semantic-state";
+import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
+import { validateContextGraph } from "./context-selections";
 import type { ComposerDraftLifecycleCommand, ComposerDraftResult, ComposerDraftSaveCommand,
   ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 
@@ -102,6 +104,7 @@ export async function saveComposerDraft(scope: Scope, command: ComposerDraftSave
   try {
     targetMonth = plannerMonth(command.targetMonth);
     const state = parsePlanSemanticState(command.semanticState);
+    if (state.contexts.some(isPurchaseBasket)) validateContextGraph(state);
     const digest = plannerDigestString(command.digest);
     const requestId = plannerUuid(command.requestId);
     const expectedId = command.expectedDraftId === null ? null : plannerUuid(command.expectedDraftId);

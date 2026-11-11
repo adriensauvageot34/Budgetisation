@@ -38,6 +38,8 @@ import { guidedAssetLabels } from "./guided-asset-labels";
 import { clayV22Artwork } from '../clay-v22-media';
 import { PurchaseDelivery } from "./purchase-delivery";
 import { ClothingItemEditor } from "./clothing-item-editor";
+import { EnablePurchaseBasket, PurchaseBasketEditor } from "./purchase-basket-editor";
+import { isPurchaseBasket, type BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { clothingItem, isClothingPurchase } from "@/domain/phase2/planner/composer-library-index";
 import { publishedDrop } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
@@ -68,8 +70,10 @@ type RestaurantEditorProps = {
   decide: (operation: ComposerOperation) => boolean; close: () => void;
   cinemaDeclines?: readonly string[]; updateCinemaDeclines?: (occurrenceId: string, key: string | null) => void;
   catalogChoice?: GuidedCatalogChoice;
+  initialConcept?: BasketConcept;
 };
 export function RestaurantEditor(props: RestaurantEditorProps) {
+  if (isPurchaseBasket(props.context)) return <PurchaseBasketEditor {...props} />;
   return !props.creating && isClothingPurchase(props.context) && clothingItem(props.context)
     ? <ClothingItemEditor {...props} /> : <GuidedRestaurantEditor {...props} />;
 }
@@ -533,6 +537,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
     <p className={styles.restaurantIntro}>{cinema ? "Le billet, le jour de la séance, les compléments et le trajet se préparent séparément."
       : step === null ? "Choisissez seulement ce que vous voulez prévoir. Les autres précisions restent facultatives." : "Budget = coût économique prévu, pas un plafond. Les choix validés restent conservés."}</p>
+    {purchase && <EnablePurchaseBasket context={context} card={card} model={model} busy={busy} decide={decide} />}
     <CatalogOpenButton target={{contextId,moment:cinema?"cinema":context.templateKey==="purchase"?"article":context.templateKey==="restaurant"?"included":undefined,
       commands:cinemaCommands,resolveCommands:resolveCatalogCommands}}>Parcourir le catalogue de {heading}</CatalogOpenButton>
     {step === null ? <><nav aria-label={`Choix de ${heading}`} className={styles.restaurantSummary} data-quick-purchase={quickPurchase || undefined}>

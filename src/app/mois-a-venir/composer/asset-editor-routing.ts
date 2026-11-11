@@ -7,11 +7,11 @@ export function assetEditorKind(templateKey: string | undefined, presetKey?: Com
     case "family-visit": return "family";
     case "short-stay": return "stay";
     case "gift": return "gift";
+    case "purchase":
     case "restaurant": return "restaurant";
     case "fast-food":
     case "delivery":
     case "activity":
-    case "purchase":
       return presetKey ? "restaurant" : "catalog";
     default: return "catalog";
   }

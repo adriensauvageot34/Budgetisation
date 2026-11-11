@@ -37,6 +37,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const preset = presetForContext(card);
   const purchase = card.templateKey === "purchase", main = card.sockets.find(s => s.slotKey === "item");
+  const basket = purchase && card.fields.fieldSchemaVersion === "context-fields@v7";
   const mainAmount = main?.evaluations?.length === 1 ? main.evaluations[0].economicAmount : null;
   const mainSelection = main?.currentItems.find(i => i.kind === "COMPONENT");
   const coverage = mainSelection?.kind === "COMPONENT" ? mainSelection.binding?.mode : null;
@@ -71,7 +72,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     {preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : card.readOnly
       ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
-    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => (card.templateKey === "restaurant" || !!preset) && !card.readOnly && !preserved ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${card.fields.plannedDate}T12:00:00Z`))}</p>}
+    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => (card.templateKey === "restaurant" || purchase || !!preset) && !card.readOnly && !preserved ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${card.fields.plannedDate}T12:00:00Z`))}</p>}
       <span className={styles.contextState} title={knowledgeLabel(card.knowledge)} aria-label={knowledgeLabel(card.knowledge)}>{preserved ? <LockKeyhole size={12} /> : card.readOnly ? <Link2 size={12} /> : card.knowledge === "UNKNOWN" ? <i /> : null}</span></div>
       <div className={styles.contextTools}>{!card.readOnly && <><button className={styles.iconButton} disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={() => request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved })}><Pin size={15} /></button>
         <button className={styles.iconButton} disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>
@@ -95,12 +96,18 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       </button>
       <small>{model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.incomplete ? "Coût connu · à compléter" : "Coût connu · modifier ma soirée"}</small>
     </div>}
-    {purchase && <div className={styles.purchaseSummary} data-purchase-summary>
+    {basket ? <div className={styles.purchaseSummary} data-purchase-summary>
+      <button type="button" onClick={() => edit(card)} disabled={busy || card.readOnly}>Ouvrir le panier</button>
+      <small>{card.purchaseSummary?.articleCount ?? main?.currentItems.length ?? 0} article(s)
+        {card.purchaseSummary?.knownAmount != null && ` · ${money(card.purchaseSummary.knownAmount)}`}
+        {!card.purchaseSummary?.complete && " · Total à préciser"}</small>
+    </div> : purchase && <div className={styles.purchaseSummary} data-purchase-summary>
       <button type="button" data-budget-unknown={mainAmount===null||undefined} disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} onClick={() => edit(card)}>{mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
     </div>}
     <div className={styles.contextEquipmentRow} data-context-equipment-row aria-label={`Équipements de ${card.label}`}>
     {sockets.map(socket => {
+      if (basket && ["item", "shipping"].includes(socket.slotKey)) return null;
       const socketPresentation = model.presentation.sockets[`${card.contextOccurrenceId}:${socket.slotKey}`];
       const assets = socketPresentation.options.map(o => index.assets.get(o.assetKey)!);
       const compatible = !!selected && (index.drops.get(selected) ?? []).some(d => d.target.kind === "CONTEXT_SOCKET"

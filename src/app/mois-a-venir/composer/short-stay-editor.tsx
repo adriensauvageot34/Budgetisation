@@ -6,6 +6,7 @@ import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/p
 import type { ShortStayEdit } from "@/domain/phase2/planner/short-stay-edit";
 import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
 import { componentId } from "@/domain/phase2/planner/identity";
+import { isPurchaseBasket, purchaseComponents } from "@/domain/phase2/planner/purchase-basket";
 import { publishedDrop } from "./interactions";
 import { money } from "./display";
 import { ProspectiveContextEditor } from "./family-visit-editor";
@@ -41,7 +42,9 @@ export function validateStayCalendar(fields: PlannedContextState["fields"]) {
     throw Error(`Les dates indiquent ${calendarNights} nuit(s), mais vous en avez déclaré ${nights}. Corrigez les dates ou la durée ; aucun tarif n’a été recalculé.`);
 }
 
-export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion"> & { semanticState: PlanSemanticStateV1 }) {
+export function ShortStayEditor({ semanticState, onOpenPurchase, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion"> & {
+  semanticState: PlanSemanticStateV1; onOpenPurchase?: (id: string) => void;
+}) {
   const context = props.context, oldLodging = firstComponent(context, "lodging"), oldGroceries = firstComponent(context, "groceries");
   const [nights, setNights] = useState(context.fields.nightCount?.toString() ?? "");
   const [lodgingKind, setLodgingKind] = useState(String(context.fields.lodgingKind ?? "LATER"));
@@ -106,6 +109,7 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
     if (groceriesDirty) mutable.groceries = groceries ? [buildComponentRow(groceries, "groceries")] : [];
     const children: PlannedContextState[] = [];
     for (const [slot] of groups) if (dirty[slot]) mutable[slot] = posts[slot].map(post => {
+      if (post.link && post.child && isPurchaseBasket(post.child)) return post.link;
       const useChild = !!post.link || slot === "activities" || slot === "purchases";
       if (!useChild) return buildComponentRow(post.row, post.templateKey);
       const childId = post.child?.contextOccurrenceId ?? crypto.randomUUID(), key = post.templateKey;
@@ -204,9 +208,13 @@ export function ShortStayEditor({ semanticState, ...props }: Omit<ComponentProps
       {posts[slot].slice(postPage, postPage + 1).map(post => { const index = postPage; return <div key={post.row.id}>
         {slot === "restaurants" && !post.link && <label>Type de repas<select value={post.templateKey} onChange={e => update(slot, posts[slot].map((p, i) => i === index ? { ...p, templateKey: e.target.value } : p))}>
           <option value="restaurant">Restaurant</option><option value="fast-food">Restauration rapide</option><option value="delivery">Livraison</option></select></label>}
-        <WorkshopComponentRow title={caption} row={post.row} back={{label:"Autres postes du séjour",action:()=>{setPostSection("lodging");setLodgingPage("terms");}}} participantCount={0} bindingChoices={slot === "restaurants"}
+        {post.child && isPurchaseBasket(post.child)
+          ? <button type="button" disabled={props.busy || !onOpenPurchase} onClick={() => onOpenPurchase?.(post.child!.contextOccurrenceId)}>
+            Ouvrir {String(post.child.fields.label ?? "le panier")} · {purchaseComponents(post.child, "item").length} article(s)
+          </button>
+          : <WorkshopComponentRow title={caption} row={post.row} back={{label:"Autres postes du séjour",action:()=>{setPostSection("lodging");setLodgingPage("terms");}}} participantCount={0} bindingChoices={slot === "restaurants"}
           onChange={row => update(slot, posts[slot].map((p, i) => i === index ? { ...p, row } : p))}
-          onRemove={() => { update(slot, posts[slot].filter((_, i) => i !== index)); setPostPage(page => Math.max(0, page - 1)); }} />
+          onRemove={() => { update(slot, posts[slot].filter((_, i) => i !== index)); setPostPage(page => Math.max(0, page - 1)); }} />}
         {post.child && <p className={styles.helper}>Moment enfant lié : ses autres informations et équipements sont conservés. Ils restent accessibles depuis la carte R6.</p>}
       </div>; })}
       {posts[slot].length > 1 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {posts[slot].length}</span><button type="button" disabled={postPage + 1 >= posts[slot].length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}

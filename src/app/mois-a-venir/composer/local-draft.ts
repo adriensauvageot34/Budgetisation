@@ -10,6 +10,7 @@ import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { validateRestaurantDetailsTransition } from "@/domain/phase2/planner/restaurant-included-details";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
+import { editPurchaseBasket, isPurchaseBasket, PURCHASE_BASKET_FIELDS } from "@/domain/phase2/planner/purchase-basket";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
 import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -33,6 +34,7 @@ function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, co
   const card = model.board.contexts.find(c => c.contextOccurrenceId === contextId);
   const context = state.contexts.find(c => c.contextOccurrenceId === contextId);
   const socket = card?.sockets.find(s => s.slotKey === slotKey);
+  if (context && isPurchaseBasket(context) && ["item", "shipping"].includes(slotKey)) return null;
   if (!context || !socket || !card?.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly
     || state.preferences.anchors.includes(contextId) || state.preferences.flexibility[contextId] === "PRESERVE"
     || socket.cardinality !== "REPEATING" && items.length > 1) return null;
@@ -65,7 +67,8 @@ function stageDecision(model: ComposerUiModel, raw: PlanSemanticStateV1, operati
     if (!capability || !asset?.templateKey) return null;
     const allowed = new Set(model.editors.find(e => e.assetKey === asset.assetKey)?.fields.map(f => f.key) ?? []);
     if (Object.keys(operation.values).some(key => !allowed.has(key))) return null;
-    const fields = { fieldSchemaVersion: asset.templateKey === "short-stay" ? "context-fields@v5"
+    const basket = asset.templateKey === "purchase" && (operation.purchaseBasket || operation.presetKey === "groceries-purchase" || operation.presetKey === "beauty-purchase");
+    const fields = { fieldSchemaVersion: basket ? PURCHASE_BASKET_FIELDS : asset.templateKey === "short-stay" ? "context-fields@v5"
       : asset.templateKey === "family-visit" ? "context-fields@v4" : "context-fields@v2",
       ...presetCreationFields(asset.templateKey, operation.presetKey),
       ...Object.fromEntries(Object.entries(operation.values).filter(([, value]) => value.trim()).map(([key, value]) => [key, value.trim()])) };
@@ -75,6 +78,8 @@ function stageDecision(model: ComposerUiModel, raw: PlanSemanticStateV1, operati
   if (operation.kind === "EDIT_CONTEXT") {
     const context = state.contexts.find(c => c.contextOccurrenceId === operation.contextOccurrenceId);
     if (!context) return null;
+    if (isPurchaseBasket(context) && ("budgetDomain" in operation.values || "productLabel" in operation.values))
+      throw new TypeError("PURCHASE_BASKET_OWNER_REQUIRED");
     if (Object.hasOwn(operation.values, "restaurantIncludedDetails")) throw new TypeError("RESTAURANT_INCLUDED_DETAILS_OWNER_REQUIRED");
     const allowed = new Set(model.editors.find(e => e.assetKey === `template:${context.templateKey}`)?.fields.map(f => f.key) ?? []);
     if (Object.keys(operation.values).some(key => !allowed.has(key))) return null;
@@ -115,6 +120,14 @@ function stageDecision(model: ComposerUiModel, raw: PlanSemanticStateV1, operati
     if (!context || (card ? !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly
       : !model.dropCapabilities.some(d => d.sourceAssetKey === `template:${context.templateKey}` && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED"))) return null;
     return editGuidedContext(state, operation.edit);
+  }
+  if (operation.kind === "EDIT_PURCHASE_BASKET") {
+    const card = model.board.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
+    const context = state.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
+    if (context?.templateKey !== "purchase" || (card ? card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")
+      : !isPurchaseBasket(context) || !model.dropCapabilities.some(drop =>
+        drop.sourceAssetKey === "template:purchase" && drop.target.kind === "BOARD_ZONE" && drop.semanticAction === "ADD_CONTEXT"))) return null;
+    return parsePlanSemanticState(editPurchaseBasket(state, operation.edit));
   }
   if (operation.kind === "EDIT_SHORT_STAY") {
     const card = model.board.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
@@ -195,7 +208,7 @@ export function visualDraftModel(model: ComposerUiModel, draft: PlanSemanticStat
       const items = latest.slotSelections[socket.slotKey]?.items;
       return Array.isArray(items) ? { ...socket, currentItems: items as ComponentSelectionV1[] } : socket;
     });
-    return { ...c, fields: latest.fields, parentContextOccurrenceId: latest.parentContextOccurrenceId ?? null,
+    return { ...c, purchaseSummary: undefined, fields: latest.fields, parentContextOccurrenceId: latest.parentContextOccurrenceId ?? null,
       childContextOccurrenceIds: sockets.flatMap(socket => socket.currentItems.flatMap(item => item.kind === "CHILD_CONTEXT" ? [item.childContextOccurrenceId] : [])),
       sockets, label: typeof latest.fields.label === "string" && latest.fields.label ? latest.fields.label : c.label };
   }), ...additions.map(c => ({ contextOccurrenceId: c.contextOccurrenceId, templateKey: c.templateKey,

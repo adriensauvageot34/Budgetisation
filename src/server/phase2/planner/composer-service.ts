@@ -27,6 +27,7 @@ import type { PlannerDependencies } from "./apply";
 import { applyPlanScenario, readAppliedPlanScenario, type AppliedPlanScenario } from "./apply";
 import { composerNeedLabel, composerFromDraftRead, readMonthComposer, resolveComposerDrop } from "./read-model";
 import { publishContextRegistry, resolveContextTemplate } from "./context-registry";
+import { editPurchaseBasket, PURCHASE_BASKET_FIELDS } from "@/domain/phase2/planner/purchase-basket";
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { acceptPlanBalanceSuggestion, balanceSuggestionsFromDraftRead } from "./balance-assistant";
 import { readPlannerDraft } from "./draft-reader";
@@ -148,11 +149,14 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
     parentContextOccurrenceId: plannerUuid(target.contextOccurrenceId), slotKey: target.slotKey!, selectionId: request.selectionId };
   if (!asset) throw new TypeError("COMPOSER_ASSET_MISSING");
   if (asset.kind === "CONTEXT_ASSET") {
-    const definition = resolveContextTemplate(asset.templateKey!);
+    if (request.purchaseBasket !== undefined && (request.purchaseBasket !== true || asset.templateKey !== "purchase"))
+      throw new TypeError("PURCHASE_BASKET_TARGET_INVALID");
+    const basket = asset.templateKey === "purchase" && (request.purchaseBasket || request.presetKey === "groceries-purchase" || request.presetKey === "beauty-purchase");
+    const definition = resolveContextTemplate(asset.templateKey!, basket ? { fieldSchemaVersion: PURCHASE_BASKET_FIELDS } : undefined);
     plannerKeys(plannerRecord(values), definition.fields.filter(f => f.fieldKey !== "fieldSchemaVersion" && ["TEXT", "DATE", "CHOICE"].includes(f.kind)).map(f => f.fieldKey), []);
     const context = { contextOccurrenceId: plannerUuid(request.identity), templateKey: definition.templateKey, status: "ACTIVE" as const,
       parentContextOccurrenceId: null,
-      fields: { fieldSchemaVersion: asset.templateKey === "short-stay" ? "context-fields@v5"
+      fields: { fieldSchemaVersion: basket ? PURCHASE_BASKET_FIELDS : asset.templateKey === "short-stay" ? "context-fields@v5"
         : asset.templateKey === "family-visit" ? "context-fields@v4" : "context-fields@v2",
       ...presetCreationFields(definition.templateKey, request.presetKey),
       ...Object.fromEntries(definition.fields.filter(f => values[f.fieldKey]?.trim()).map(f => [f.fieldKey, values[f.fieldKey].trim()])) },
@@ -161,7 +165,7 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
       parentContextOccurrenceId: target.contextOccurrenceId!, slotKey: target.slotKey!, selectionId: request.selectionId };
   }
   const card = model.board.contexts.find(c => c.contextOccurrenceId === target.contextOccurrenceId);
-  const slot = resolveContextTemplate(card!.templateKey).componentSlots.find(s => s.slotKey === target.slotKey)!;
+  const slot = resolveContextTemplate(card!.templateKey, card!.fields).componentSlots.find(s => s.slotKey === target.slotKey)!;
   const option = slot.options.find(o => o.optionKey === asset.optionKey && o.kind === asset.optionKind)!;
   // Product choices reuse the normal published DROP capability. The catalogue
   // supplies identity only: no default price or historical decision is adopted.
@@ -281,7 +285,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     }
     // The opt-in historical reader is never passed into Apply or its post-commit reload.
     if (deps.readComposerWorld) deps = { ...deps, readWorld: deps.readComposerWorld };
-    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_RESTAURANT", "EDIT_PRESET_CONTEXT", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
+    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_RESTAURANT", "EDIT_PRESET_CONTEXT", "EDIT_PURCHASE_BASKET", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
     const readDeps = mutationRead && process.env.COMPOSER_P14_P2_SINGLE_WORLD !== "0"
       ? composerMutationDependencies(deps, household, month) : deps;
     // Suggestions and Board describe the same admitted state in this request.
@@ -370,6 +374,12 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
         const options = await deps.readMobilityOptions?.(household);
         if (vehicleRef.vehicleId !== priorId && vehicleRef.vehicleId !== options?.vehicle?.vehicleId) throw new TypeError("COMPOSER_VEHICLE_NOT_ADMITTED");
       }
+      mutationKind = "PATCH_CONTEXT";
+    } else if (request.kind === "EDIT_PURCHASE_BASKET") {
+      const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);
+      if (card?.templateKey !== "purchase" || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT"))
+        throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+      state = editPurchaseBasket(state, request.edit);
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_RESTAURANT" || request.kind === "EDIT_PRESET_CONTEXT") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);
