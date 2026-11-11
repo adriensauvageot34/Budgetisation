@@ -12,7 +12,7 @@ const sections = [["resources-title", "Ressources"], ["outflows-title", "Charges
 const appliedSections = [["final-projection", "Mon mois"], ["my-plan-title", "Décisions"], ["plan-understand", "Comprendre"],
   ["resources-title", "Ressources"], ["plan-external", "Dépenses externes"], ["timeline-title", "Calendrier"]] as const;
 
-export function MonthSectionNav({ hasProjects, actionableCount, composerHref, appliedPlan = false }: { hasProjects: boolean; actionableCount?: number; composerHref?: string; appliedPlan?: boolean }) {
+export function MonthSectionNav({ hasProjects, actionableCount, composerHref, appliedPlan = false, builderAvailable = true }: { hasProjects: boolean; actionableCount?: number; composerHref?: string; appliedPlan?: boolean; builderAvailable?: boolean }) {
   const interactions = usePlannedExpenseInteractions();
   const available = useMemo(() => (appliedPlan ? appliedSections : sections).filter(([id]) => hasProjects || !["planned-expense-title", "plan-external"].includes(id)), [hasProjects, appliedPlan]);
   const ids = useMemo(() => available.map(([id]) => id), [available]);
@@ -31,7 +31,8 @@ export function MonthSectionNav({ hasProjects, actionableCount, composerHref, ap
       <div data-month-actions className="relative z-10 ml-auto flex shrink-0 items-center gap-2.5">
       {composerHref && <a href={composerHref} className={`${material.clayPrimary} shrink-0 px-4 py-3 text-sm font-bold`}>Composer mon mois</a>}
       <MonthControlLink section="choices" actionableCount={actionableCount} className={`${material.clayButton} shrink-0 px-3 py-3 text-xs font-bold`} />
-      <button type="button" onClick={() => interactions?.request({ action: "CREATE" })} className={`${material.clayPrimary} ${scene.cta} shrink-0 px-4 py-3 text-sm font-bold`}>+ Ajouter une dépense</button>
+      {builderAvailable&&interactions?<button type="button" onClick={() => interactions.request({ action: "CREATE" })} className={`${material.clayPrimary} ${scene.cta} shrink-0 px-4 py-3 text-sm font-bold`}>+ Ajouter une dépense</button>
+        :composerHref?<a href={composerHref} className={`${material.clayPrimary} ${scene.cta} shrink-0 px-4 py-3 text-sm font-bold`}>Explorer les intentions</a>:null}
       </div>
     </nav>
   </>;

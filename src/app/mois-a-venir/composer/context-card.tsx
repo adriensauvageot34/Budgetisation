@@ -1,4 +1,5 @@
 import {BarLivingCard,type LivingBar} from "./bar-living-card";
+import { CatalogOpenButton } from './catalog-discovery-provider';
 import { GripVertical, MoreHorizontal, Pin, Link2, Pencil, LockKeyhole } from "lucide-react";
 import type { ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -81,6 +82,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
           drag(selected === instance ? null : instance);
         }}><GripVertical size={17} /></button>
         <AtomicPopover utility label={`Actions de ${card.label}`} state="ACTIONS" focus={() => focus(card.contextOccurrenceId)} icon={<MoreHorizontal size={15} />}>{close => <div className={styles.popoverActions}>
+          <CatalogOpenButton target={{contextId:card.contextOccurrenceId}}>Parcourir les éléments de {card.label}</CatalogOpenButton>
           {removable && <button disabled={busy} aria-label={`Retirer ${card.label}`} onClick={() => { close(); drop({ kind: "TRASH" }, instance); }}>Retirer ce moment</button>}
           {reparentTargets.map(d => <button key={`${d.target.contextOccurrenceId}:${d.target.slotKey}`} disabled={busy} onClick={() => { close(); drop(d.target, instance); }}>Rattacher à {model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.label} · {model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.sockets.find(s => s.slotKey === d.target.slotKey)?.label}</button>)}
           {!removable && <p>Moment protégé dans ce brouillon.</p>}</div>}</AtomicPopover></>}</div></header>

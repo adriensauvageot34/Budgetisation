@@ -1,3 +1,4 @@
+import { rankDiscoveryCandidates } from './catalog-discovery';
 type Choice = { selectionId: string; label: string };
 type CinemaExtra = Choice & { locked: boolean };
 type CinemaTransport = { label: string; iconKey: string; selectionId?: string };
@@ -44,7 +45,7 @@ export function cinemaSuggestions(input: CinemaSuggestionInput) {
       action: ticket ? "EDIT" : "ADD", selectionId: ticket?.selectionId,
       label: ticket ? `Modifier · ${ticket.label}` : "Billet de cinéma — Préparer",
       reason: ticket ? "Billet déjà choisi pour cette sortie" : "Billet facultatif pour cette sortie",
-      iconKey: "activity", priority: ticket ? 2 : 0, allowed: input.ticketAllowed },
+      iconKey: "activity", priority: 0, allowed: input.ticketAllowed },
     { conceptKey: "jour-seance", category: "session", action: "CONFIGURE",
       label: "Séance — Préciser le jour", reason: "Le jour de cette séance reste à choisir",
       iconKey: "activity", priority: 1, allowed: input.writable && !dayChosen },
@@ -67,12 +68,12 @@ export function cinemaSuggestions(input: CinemaSuggestionInput) {
       iconKey: transport?.iconKey ?? "activity", priority: placeChosen || transport?.selectionId ? 2 : 5, allowed: !!transport },
   ];
 
-  return candidates
+  return rankDiscoveryCandidates(candidates
     .filter(candidate => candidate.allowed && (!input.complementsOnly || candidate.category === "extra" || candidate.category === "transport"))
     .map(candidate => ({ ...candidate, contextOccurrenceId: input.contextOccurrenceId,
       key: [candidate.conceptKey, candidate.action, input.contextOccurrenceId, candidate.selectionId].join(":") }))
     .filter(candidate => !input.dismissed.includes(candidate.key))
-    .sort((left, right) => left.priority - right.priority || left.key.localeCompare(right.key, "en"))
+    .map(candidate=>({...candidate,tiers:[candidate.priority]})))
     .slice(0, 4);
 }
 

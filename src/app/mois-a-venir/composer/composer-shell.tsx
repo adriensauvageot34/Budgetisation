@@ -17,6 +17,7 @@ import { isClothingPurchase, libraryOccurrences } from "@/domain/phase2/planner/
 import { PresetIllustration } from "./preset-illustration";
 import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
+import { CatalogDiscoveryProvider } from "./catalog-discovery-provider";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
 import { ComposerCockpit } from "./composer-cockpit";
@@ -951,9 +952,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
   return <WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
+  <CatalogDiscoveryProvider model={shown} busy={busy} openContext={stableLibraryOpen} revealControl={stableRevealFocus} choose={stableChoose} choosePreset={stablePresetChoose}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
-      if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-bar-place-suggestions],[popover],dialog'))return;
+      if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-bar-place-suggestions],[data-catalog-open],[popover],dialog'))return;
       // Capture the click across the whole Composer, including the Library.
       // A RAW refusal also stops the clicked control's action, not only closing.
       if(!inlineEdits.registry.guard(closeDialog)){event.preventDefault();event.stopPropagation();return;}
@@ -1146,5 +1148,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider>;
+  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider>;
 }

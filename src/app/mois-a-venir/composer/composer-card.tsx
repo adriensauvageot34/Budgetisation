@@ -8,6 +8,7 @@ import { money, quantityLabel } from "./display";
 import styles from "./composer.module.css";
 import { useComposerInteractions, useDragHandle, leftSurface } from "./interactions";
 import { InlineControlValue } from "./inline-control-value";
+import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { presentationLabel } from "./presentation-label";
 import { controlMainDimension, controlValuePresentation, controlValueSummary } from "./control-value-presentation";
@@ -50,6 +51,7 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
       </div></div>
     <div className={styles.objectIdentity}><PlannerIcon iconKey={presentation.iconKey} identityRef={card.targetRef} className={styles.objectIcon} />
       <div><h3 title={card.label}>{label.title}</h3>{label.person && <span className={styles.personChip}>{label.person}</span>}</div></div>
+    {card.label.trim().toLocaleLowerCase('fr')==='courses'&&<CatalogOpenButton target={{scope:'courses',controlRef:card.targetRef}}>Parcourir les produits</CatalogOpenButton>}
     <InlineControlValue card={card} dimension={controlMainDimension(card)} busy={busy} focus={focus} mutate={mutate} />
     {card.capability?.fields?.count?.status === "EDITABLE" && <><InlineControlValue card={card} dimension="unitAmount" busy={busy} focus={focus} mutate={mutate} />
       <small className={styles.officialSlotCost}>{card.value.remainingCount !== card.value.count && !card.value.projectionPending ? "Coût restant du poste" : "Coût du mois"} : {card.value.projectionPending ? "simulation en cours" : money(card.value.economicAmount)}</small></>}

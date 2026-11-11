@@ -30,6 +30,8 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useActiveWorkshopQuestion } from "./workshop-choices";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { cinemaSuggestions, sameCinemaExtra, type CinemaSuggestion } from "./cinema-suggestions";
+import { CompactCatalogVisual } from './compact-catalog-visual';
+import { clayV22Artwork } from '../clay-v22-media';
 import { PurchaseDelivery } from "./purchase-delivery";
 import { ClothingItemEditor } from "./clothing-item-editor";
 import { isClothingPurchase } from "@/domain/phase2/planner/composer-library-index";
@@ -294,8 +296,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       parkingAmount: currentTransport.pricing?.parking.kind === "MANUAL" ? currentTransport.pricing.parking.unitAmount : "",
       targetIntentId: currentTransport.journey?.targetIntentId ?? "" } } : {};
   const summaryEntries: { id: Exclude<Step, null>; icon: ReactNode; label: string; caption: string; disabled?: boolean }[] = [
-    { id: "budget", icon: <Receipt size={16} />, label: cinema ? main?.label ?? mainLabel : detail ? "Postes prévus" : shape.total,
-      caption: cinema && !main ? cinemaTicket ? "Facultatif · préparer" : "Poste indisponible" : `${priceCaption(main)}${!cinema && extras.length ? ` · ${extras.length} complément(s)` : ""}`,
+    { id: "budget", icon: cinema?<CompactCatalogVisual src={clayV22Artwork('v22-art:excel:329')!.src} visualConceptId="v22-art:excel:329" iconKey="activity" size={40}/>:<Receipt size={16} />, label: cinema ? main?.label ?? mainLabel : detail ? "Postes prévus" : shape.total,
+      caption: cinema && !main ? cinemaTicket ? "Facultatif · préparer" : !card.sockets.length?"Sélection à confirmer · catalogue consultable":"Poste indisponible" : `${priceCaption(main)}${!cinema && extras.length ? ` · ${extras.length} complément(s)` : ""}`,
       disabled: cinema && !cinemaTicket },
     ...(cinema ? [{ id: "date" as const, icon: <CalendarDays size={16} />, label: "Séance", caption: String(context.fields.plannedDate ?? "Jour facultatif"), disabled: !cinemaWritable },
       { id: "complete" as const, icon: <MapPin size={16} />, label: completeTitle, caption: "Choix facultatifs", disabled: !cinemaComplements }] : []),
