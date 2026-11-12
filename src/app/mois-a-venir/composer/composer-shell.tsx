@@ -162,8 +162,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [editor, setEditor] = useState<Editor | null>(null), [balanceOpen, setBalanceOpen] = useState(false), [suggestions, setSuggestions] = useState<PlanBalanceSuggestions | null>(null);
   const [placeDeclines, setPlaceDeclines] = useState<readonly string[]>([]);
   const declinePlace = (key: string) => setPlaceDeclines(current => current.includes(key) ? current : [...current, key]);
-  const [cinemaDeclines, setCinemaDeclines] = useState<Record<string, readonly string[]>>({});
-  const updateCinemaDeclines = (occurrenceId: string, key: string | null) => setCinemaDeclines(current => ({
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Record<string, readonly string[]>>({});
+  const updateSuggestionDismissal = (occurrenceId: string, key: string | null) => setDismissedSuggestions(current => ({
     ...current, [occurrenceId]: key === null ? [] : [...new Set([...(current[occurrenceId] ?? []), key])],
   }));
   const [nightDockHost,setNightDockHost] = useState<HTMLDivElement | null>(null);
@@ -1041,8 +1041,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
             creating={!!editor.restaurantCreating} busy={busy} decide={stage} close={closeDialog}
             catalogChoice={editor.guidedCatalogChoice}
             initialConcept={editor.basketConcept}
-            cinemaDeclines={cinemaDeclines[editor.restaurantContextId]}
-            updateCinemaDeclines={updateCinemaDeclines} />
+            dismissedSuggestions={dismissedSuggestions[editor.restaurantContextId]}
+            updateSuggestionDismissal={updateSuggestionDismissal} />
            : editor?.restaurantContextId ? <section className={styles.contextPalette} role="status"><p>{editorLoadError ? "L’éditeur n’a pas pu être chargé. Le brouillon est conservé." : "Ouverture de la carte…"}</p>
             {editorLoadError && <button type="button" onClick={() => setEditorLoadRetry(n => n + 1)}>Réessayer l’éditeur</button>}<button type="button" onClick={closeDialog}>Retour au Board</button></section>
           : undefined} />
