@@ -38,11 +38,17 @@ Une contribution supplémentaire n’atteste pas une source de paiement. Une sou
 | Consultation sans mutation, résultats périmés masqués, preuve Compiler conservée | PASS |
 | Réessai de lecture avec le même digest, ordre des réponses et Undo | PASS |
 | Non-régressions Restaurant/Cinéma, Week-end, Vêtements, Mascara, Clay et lecture mensuelle B1 | PASS |
-| Courses sur navigateur local à 1 280 × 720 | PASS partiel, 8 € / 5 € / 3 € et Dock observés, largeur document 1 280 |
-| Autres interactions navigateur et 390 × 844 sur le code final | NOT_RUN |
+| Les sept résumés sur navigateur local à 1 280 × 720 et 390 × 844 | PASS, 14 cas, valeurs attendues, document sans débordement, panneaux et Docks séparés |
+| Champs RAW et consultation aux deux tailles | PASS, saisie 9, conservée après refus de l’abandon, digest stable, zéro POST |
+| Réessai dans le navigateur avec une saisie RAW | PASS, deux READ, même digest, saisie conservée, anciens montants masqués |
+| États financiers dans le navigateur | PASS, FRESH avec complétude UNKNOWN et READY_WITH_WARNINGS distincts, BLOCKED avec déclarations manquantes Swile/Edenred |
 | Recette authentifiée des nouveaux résumés sur Preview | NOT_RUN |
 
-Le contrôle visuel a été interrompu par le message « Local browser use is disabled in Work settings ». La capture locale est conservée dans `outputs/p21-budget-impact-browser/courses-partiel-desktop.jpg`, hors commit. Elle précède le dernier ajustement de compacité et de positionnement du résumé. Les preuves synthétiques restent distinctes d’une certification authentifiée.
+Le navigateur intégré continue d’indiquer « Local browser use is disabled in Work settings ». La recette finale utilise Playwright-core 1.64.0 déjà disponible dans le workspace et Chrome 157.0.8103.40 déjà installé, avec un profil temporaire isolé. Les réglages Work gardent leur configuration. Les quatorze captures finales sont conservées dans `outputs/p21-budget-impact-final/`, hors commit.
+
+La mesure a détecté un chevauchement entre le panneau Cinéma et son Dock en desktop et mobile, ainsi qu’un léger chevauchement Mascara sur mobile. La correction CSS réserve l’espace nécessaire et limite la hauteur des libellés Cinéma, tout en conservant leur texte accessible. Après correction, les quatorze cas passent. Les reçus synthétiques sont conservés dans [browser.json](evidence/p21-budget-impact-final/browser.json).
+
+La Preview a redirigé le profil neuf vers « Log in to Vercel ». Ce profil ne dispose d’aucune session Vercel, et les credentials de développement OIDC ne sont pas disponibles. Les tests authentifiés de ces résumés restent NOT_RUN. Un accès Vercel accepté par le navigateur de recette reste nécessaire. Aucune donnée distante de recette n’a été créée.
 
 Commandes exécutées avec les outils React déjà présents dans `outputs/p21-react-tools` pour les suites React concernées.
 
@@ -66,4 +72,4 @@ Le réessai ajouté concerne la simulation en page. Le chargement initial serveu
 
 ## Livraison
 
-L’autorisation couvre le commit, la branche distante, la PR et sa Preview. La disponibilité du navigateur intégré empêche de terminer la recette visuelle finale et authentifiée. Verdict produit `PARTIAL_READY`, sous réserve de ces contrôles visuels avant fusion.
+La PR #120 porte le produit et la correction CSS issue de la recette. Les contrôles locaux et visuels finaux sont PASS. La recette authentifiée Preview reste NOT_RUN, avec un blocage d’accès Vercel identifié. Verdict `PARTIAL_READY` dans l’attente de ce seul contrôle.

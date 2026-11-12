@@ -2,6 +2,7 @@
    < palette < popover < trash < modal. Native popovers/dialogs use the top layer. */
 .restaurantInspector { position:fixed; z-index:20; top:155px; right:20px; bottom:190px; width:min(350px,calc(100vw - 24px)); min-height:180px; overflow:auto; box-sizing:border-box; padding:18px; border:1px solid #e6d9ec; border-radius:22px; background:#fffdfb; color:#252d48; box-shadow:0 16px 50px #3422412b; font:13px var(--font-sans,Arial,sans-serif); }
 .restaurantInspector[data-restaurant-suggestions] { bottom:214px; }
+.restaurantInspector[data-cinema-editor] { bottom:214px; }
 .restaurantInspector * { box-sizing:border-box; }
 .restaurantInspector header { position:sticky; top:-18px; z-index:2; display:flex; gap:10px; align-items:center; margin:-18px -18px 0; padding:14px 18px; background:#fffdfb; border-bottom:1px solid #ebe3ee; }
 .restaurantInspector header > div { flex:1; }
@@ -45,7 +46,7 @@
 .restaurantInspector footer span { font-size:11px; }
 @media (max-width:760px) {
   .restaurantInspector:is([data-cinema-editor],[data-guided-template="restaurant"]) { inset:12px 12px 142px; width:auto; }
-  body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector:is([data-cinema-editor],[data-restaurant-suggestions]) { bottom:188px; }
+  body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector:is([data-cinema-editor],[data-restaurant-suggestions]) { bottom:200px; }
   body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector[data-restaurant-suggestions] { bottom:212px; }
   body:has(.restaurantInspector:is([data-cinema-editor],[data-guided-template="restaurant"])) .board .paletteDock {
     position:fixed; inset:auto 12px 12px; width:auto; margin:0; z-index:21;
@@ -1001,7 +1002,7 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 }
 @media (max-width:760px) {
   .dialog[data-night-workshop-panel=true]:has([data-mascara-catalog],[data-mascara-reference]) {
-    position:fixed; inset:12px 12px auto; width:auto; max-height:calc(100dvh - 154px); overflow:auto;
+    position:fixed; inset:12px 12px auto; width:auto; max-height:calc(100dvh - 180px); overflow:auto;
   }
   body:has(.dialog[open] :is([data-mascara-catalog],[data-mascara-reference])) .board .paletteDock {
     position:fixed; inset:auto 12px 12px; width:auto; margin:0; z-index:var(--z-popover);
@@ -1082,6 +1083,11 @@ body:has(.restaurantInspector:is([data-cinema-editor],[data-restaurant-suggestio
 .questionAnswer strong,.questionAnswer small { display:block; white-space:normal; }
 .questionAnswer strong { font-size:13px; font-weight:600; }
 .questionAnswer small { font-size:10px; margin-top:3px; color:#927a9d; }
+body:has(.restaurantInspector[data-cinema-editor]) .questionPalette[data-dock-nature="DECISION"] .questionAnswer :is(strong,small) {
+  display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;
+}
+body:has(.restaurantInspector[data-cinema-editor]) .questionPalette[data-dock-nature="DECISION"] .questionAnswer strong { -webkit-line-clamp:3; }
+body:has(.restaurantInspector[data-cinema-editor]) .questionPalette[data-dock-nature="DECISION"] .questionAnswer small { -webkit-line-clamp:2; }
 .questionAnswer[aria-pressed=true] { background:#f1e6fb; border-color:#a77bc8; }
 .nightTravelFields { display:grid; gap:15px; }
 .columns[data-night-workshop-open=true] .paletteDock { height:130px; flex-basis:130px; }
