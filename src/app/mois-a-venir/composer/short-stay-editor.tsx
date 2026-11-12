@@ -9,11 +9,13 @@ import { componentId } from "@/domain/phase2/planner/identity";
 import { isPurchaseBasket, purchaseComponents } from "@/domain/phase2/planner/purchase-basket";
 import { publishedDrop } from "./interactions";
 import { money } from "./display";
-import { ProspectiveContextEditor } from "./family-visit-editor";
+import { ProspectiveContextEditor, type StaySummaryTarget } from "./family-visit-editor";
 import { fresh, fromSelection, buildComponentRow, type Row } from "./night-out-components";
 import { WorkshopComponentRow } from "./workshop-component-row";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
+import { useCommittedEvent } from "./use-committed-event";
+import { matchesStayExtra, shortStaySuggestions, shortStayTransportModes, type ShortStaySuggestion } from "./short-stay-suggestions";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { CatalogCommand } from "./catalog-discovery";
 import styles from "./composer.module.css";
@@ -27,11 +29,7 @@ const mainSlot = (key: string) => key === "activity" ? "main" : ["restaurant", "
 const mainOption = (key: string) => key === "purchase" ? "item" : key === "beauty-restock" ? "product" : key;
 const items = (context: PlannedContextState, slot: string) => (context.slotSelections[slot]?.items ?? []) as readonly ComponentSelectionV1[];
 const firstComponent = (context: PlannedContextState, slot: string) => items(context, slot).find((item): item is Component => item.kind === "COMPONENT");
-const extraTopics = [
-  { key: "breakfast", label: "Petit-déjeuner", reason: "À vérifier auprès de l’hébergement : compris ou facturé séparément.", names: ["petit dejeuner", "petit dejeuner d hebergement"] },
-  { key: "tax", label: "Taxe de séjour", reason: "Selon votre séjour : ne présume ni obligation, ni inclusion, ni montant.", names: ["taxe de sejour"] },
-] as const;
-const normalizeLabel = (label: string) => label.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("fr").replace(/[^a-z0-9]+/g, " ").trim();
+const noDismissals: readonly string[] = [];
 
 /** Calendar consistency only; pricing and quantity valuation remain in the Compiler. */
 export function validateStayCalendar(fields: PlannedContextState["fields"]) {
@@ -42,8 +40,9 @@ export function validateStayCalendar(fields: PlannedContextState["fields"]) {
     throw Error(`Les dates indiquent ${calendarNights} nuit(s), mais vous en avez déclaré ${nights}. Corrigez les dates ou la durée ; aucun tarif n’a été recalculé.`);
 }
 
-export function ShortStayEditor({ semanticState, onOpenPurchase, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion"> & {
+export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSuggestions = noDismissals, updateSuggestionDismissal, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion" | "staySummary" | "stayTransportModes"> & {
   semanticState: PlanSemanticStateV1; onOpenPurchase?: (id: string) => void;
+  dismissedSuggestions?: readonly string[]; updateSuggestionDismissal?: (id: string, key: string | null) => void;
 }) {
   const context = props.context, oldLodging = firstComponent(context, "lodging"), oldGroceries = firstComponent(context, "groceries");
   const [nights, setNights] = useState(context.fields.nightCount?.toString() ?? "");
@@ -63,15 +62,16 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, ...props }: Omi
   })])) as Record<Group, Post[]>);
   const [dirty, setDirty] = useState<Partial<Record<Group, boolean>>>({});
   const [postSection, setPostSection] = useState<"lodging" | "groceries" | Group>("lodging");
-  const [lodgingPage, setLodgingPage] = useState<"terms" | "price" | "kind">("terms");
+  const [lodgingPage, setLodgingPage] = useState<"terms" | "price" | "kind" | "duration">("terms");
   const [postPage, setPostPage] = useState(0);
-  const [extraTopic, setExtraTopic] = useState<typeof extraTopics[number] | null>(null);
+  const [extraSuggestionKey, setExtraSuggestionKey] = useState<string | null>(null);
+  const [showAllChoices, setShowAllChoices] = useState(false);
   const source = canonicalPlannerJson([context, semanticState.contexts.filter(child => child.parentContextOccurrenceId === context.contextOccurrenceId)]);
   const expectedSource = useRef(source);
   const card = props.model.board.contexts.find(card => card.contextOccurrenceId === context.contextOccurrenceId);
   const locked = (id: string) => semanticState.preferences.anchors.includes(id) || semanticState.preferences.flexibility[id] === "PRESERVE"
     || props.model.semanticState.preferences.anchors.includes(id) || props.model.semanticState.preferences.flexibility[id] === "PRESERVE";
-  const writable = context.templateKey === "short-stay" && source === expectedSource.current && !locked(context.contextOccurrenceId)
+  const writable = context.templateKey === "short-stay" && context.status === "ACTIVE" && source === expectedSource.current && !locked(context.contextOccurrenceId)
     && canonicalPlannerJson(semanticState.contexts.find(current => current.contextOccurrenceId === context.contextOccurrenceId) ?? null) === canonicalPlannerJson(context)
     && card?.templateKey === "short-stay" && card.externalIntentId === null && card.parentContextOccurrenceId === context.parentContextOccurrenceId
     && !card.readOnly && card.capabilityRefs.includes("PATCH_CONTEXT");
@@ -129,30 +129,78 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, ...props }: Omi
     return { fields, slots, children };
   };
   const tile=(key:string,label:string,choose:()=>void,selected=false,hint?:string)=>({key,label,choose,selected,hint,iconKey:"short-stay"});
-  const openPost=(key:typeof postSection)=>{setExtraTopic(null);setPostSection(key);setPostPage(0);};
-  const suggestedTopics = lodging && ["HOTEL", "HOSTEL", "RENTAL"].includes(lodgingKind) && slotAllowed("extras", "extra") ? extraTopics : [];
-  const suggestions = suggestedTopics.map(topic => ({...tile(topic.key, `${topic.label} · Examiner pour ce séjour`, () => {
-    setExtraTopic(topic); setPostSection("extras");
-  }, extraTopic?.key === topic.key, topic.reason), visualConceptId: topic.key === 'breakfast' ? 'v22-art:excel:479' : 'v22-art:excel:483'}));
+  const openPost=(key:typeof postSection)=>{setExtraSuggestionKey(null);setPostSection(key);setPostPage(0);};
+  const transportModes = writable ? shortStayTransportModes(context, props.model) : [];
+  const candidates = writable ? shortStaySuggestions(context, props.model, transportModes) : [];
+  const ranked = candidates.filter(candidate => !dismissedSuggestions.includes(candidate.key)).slice(0, 4);
+  const extraSuggestion = candidates.find(candidate => candidate.key === extraSuggestionKey);
+  const extraTopic = extraSuggestion && "topic" in extraSuggestion ? extraSuggestion.topic : null;
+  const extraLocked = (id: string) => locked(componentId(context.contextOccurrenceId, "extras", id));
+  const openExtra = (selectionId: string) => {
+    const index = posts.extras.findIndex(post => post.row.id === selectionId && !post.link);
+    if (index < 0 || extraLocked(selectionId) || !slotAllowed("extras", "extra")) return;
+    openPost("extras"); setPostPage(index);
+  };
+  const openSuggestion = useCommittedEvent((key: string, open?: (target: StaySummaryTarget) => void) => {
+    const suggestion = candidates.find(candidate => candidate.key === key);
+    if (!suggestion || props.busy) return;
+    switch (suggestion.kind) {
+      case "LODGING":
+        openPost("lodging"); setLodgingPage(suggestion.selectionId ? "price" : open ? "terms" : "kind"); open?.("posts"); break;
+      case "NIGHTS":
+        openPost("lodging"); setLodgingPage("duration"); open?.("posts"); break;
+      case "EDIT_EXTRA":
+        openExtra(suggestion.selectionIds[0]); open?.("posts"); break;
+      case "REVIEW_EXTRA":
+      case "CHOOSE_EXTRA":
+        openPost("extras"); setExtraSuggestionKey(key); open?.("posts"); break;
+      case "DEPARTURE": open?.("departure"); break;
+      case "RETURN": open?.("return"); break;
+      case "TRANSPORT": open?.("route"); break;
+    }
+  });
+  const guardedSuggestion = (suggestion: ShortStaySuggestion, open?: (target: StaySummaryTarget) => void) => {
+    const activate = () => openSuggestion(suggestion.key, open);
+    if (leaveRaw(activate)) activate();
+  };
+  const staySummary = {
+    question: (open: (target: StaySummaryTarget) => void) => !showAllChoices && ranked.length ? {
+      title: "Suggestions pour ce séjour", identity: "stay-suggestions", nature: "DECISION" as const, catalogMoment: "lodging" as const,
+      choices: ranked.map(suggestion => ({ ...suggestion, showHint: true, choose: () => guardedSuggestion(suggestion, open) })),
+    } : undefined,
+    controls: candidates.length > 0 && <div className={styles.staySuggestions}>
+      {ranked.length > 0 && <button type="button" className={styles.secondary} aria-pressed={showAllChoices} onClick={() => setShowAllChoices(value => !value)}>
+        {showAllChoices ? "Revenir aux suggestions" : "Tous les choix du séjour"}
+      </button>}
+      {updateSuggestionDismissal && <details><summary>Gérer les suggestions de ce séjour</summary>
+        {ranked.map(suggestion => <button type="button" key={suggestion.key}
+          onClick={() => updateSuggestionDismissal(context.contextOccurrenceId, suggestion.key)}>Masquer · {suggestion.label}</button>)}
+        {dismissedSuggestions.length > 0 && <button type="button" onClick={() => updateSuggestionDismissal(context.contextOccurrenceId, null)}>
+          Réafficher les suggestions masquées
+        </button>}
+      </details>}
+    </div>,
+  };
   const postChoices=[tile("lodging","Hébergement",()=>{openPost("lodging");setLodgingPage("terms");}),tile("groceries","Courses",()=>openPost("groceries")),...groups.map(([key,label])=>tile(key,label,()=>openPost(key)))];
   const postsQuestion={title:postSection==="lodging"?"Quel prix pour l’hébergement ?":"Les postes du séjour",choices:postSection==="lodging"&&lodgingPage==="terms"?[
     tile("total","Prix total",()=>{setBasis("TOTAL");setLodgingDirty(true);if(!lodging)setLodging(fresh("Hébergement"));setLodgingPage("price");},basis==="TOTAL","Le forfait n’est pas multiplié par les nuits"),
     tile("night","Prix par nuit",()=>{setBasis("PER_NIGHT");setLodgingDirty(true);if(!lodging)setLodging(fresh("Hébergement"));setLodgingPage("price");},basis==="PER_NIGHT"),
-    tile("kind","Type d’hébergement",()=>setLodgingPage("kind")),...suggestions,...postChoices.filter(c=>c.key!=="lodging")]
+    tile("kind","Type d’hébergement",()=>setLodgingPage("kind")),...postChoices.filter(c=>c.key!=="lodging")]
     :postSection==="lodging"&&lodgingPage==="kind"?[["RELATIVE","Chez un proche"],["HOTEL","Hôtel"],["HOSTEL","Auberge"],["RENTAL","Location"],["OTHER","Autre"],["LATER","À préciser"]].map(([key,label])=>({
       ...tile(key,label,()=>{setLodgingKind(key);setLodgingPage("terms");},lodgingKind===key),
       visualConceptId: ({RELATIVE:'v22-art:extra:family-visit',HOTEL:'v22-art:extra:hotel-stay-general',HOSTEL:'v22-art:extra:hostel-category',RENTAL:'v22-art:extra:rental-platform'} as Readonly<Record<string,string>>)[key]}))
-    :[...suggestions,...postChoices]};
-  const matchingExtras = extraTopic ? posts.extras.filter(post => (extraTopic.names as readonly string[]).includes(normalizeLabel(post.row.label))) : [];
+    :postChoices};
+  const matchingExtras = extraTopic ? posts.extras.filter(post => !post.link && matchesStayExtra(extraTopic, post.row.label)) : [];
   const lodgingCommands: CatalogCommand[] = [];
-  if (slotAllowed("lodging", "lodging") && (!oldLodging || !locked(componentId(context.contextOccurrenceId, "lodging", oldLodging.selectionId)))) {
+  const lodgingSuggestion = candidates.find(suggestion => suggestion.kind === "LODGING");
+  if (lodgingSuggestion) {
     for (const visualConceptId of ["v22-art:excel:470", "v22-art:extra:hotel-stay-general"]) {
       lodgingCommands.push({visualConceptId,label:oldLodging?"Ouvrir l’hébergement de ce séjour":"Configurer l’hébergement de ce séjour",
-        editsExisting:!!oldLodging,run:()=>{const open=()=>{openPost("lodging");setLodgingPage(oldLodging?"price":"kind");};if(leaveRaw(open))open();}});
+        editsExisting:!!oldLodging,run:()=>guardedSuggestion(lodgingSuggestion)});
     }
   }
-  for (const suggestion of suggestions) lodgingCommands.push({visualConceptId:suggestion.visualConceptId,label:suggestion.label,
-    run:()=>{if(leaveRaw(suggestion.choose))suggestion.choose();}});
+  for (const suggestion of candidates) if ("topic" in suggestion) lodgingCommands.push({visualConceptId:suggestion.topic.visualConceptId,label:suggestion.label,
+    editsExisting:suggestion.kind === "EDIT_EXTRA",run:()=>guardedSuggestion(suggestion)});
   const compatibleRoots = (slot: Group) => {
     const target: DropTarget = {kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:slot};
     if(!writable || slot==="extras")return [];
@@ -167,7 +215,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, ...props }: Omi
   const evaluated = props.fresh && canonicalPlannerJson(currentLodging?.currentItems ?? []) === canonicalPlannerJson(items(context, "lodging"))
     ? currentLodging?.evaluations?.find(evaluation => evaluation.selectionId === oldLodging?.selectionId)?.economicAmount : null;
   const stayDetails = <div data-stay-details>
-    <h4>Hébergement · {oldLodging?.label || "À préciser"}</h4>
+    <h4>{oldLodging?.label === "Hébergement" ? oldLodging.label : "Hébergement · " + (oldLodging?.label || "À préciser")}</h4>
     <p>{context.fields.nightCount == null ? "Durée inconnue" : `${context.fields.nightCount} nuit(s) déclarée(s)`} · {oldLodging?.lodgingPricing?.basis === "PER_NIGHT" ? "Tarif par nuit" : oldLodging?.lodgingPricing?.basis === "TOTAL" ? "Forfait total" : "Base existante conservée"}</p>
     <p>{oldLodging?.cost.kind === "MANUAL" ? `Prix déclaré : ${money(oldLodging.cost.unitAmount)}${oldLodging.lodgingPricing?.basis === "PER_NIGHT" ? " / nuit" : ""}`
       : oldLodging?.cost.kind === "QUOTE" ? "Devis de référence conservé, sans preuve de réservation" : "Prix encore inconnu"}.
@@ -182,7 +230,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, ...props }: Omi
     {postSection === "lodging" && <>
     {lodgingPage === "terms" && <p>Choisis le prix total ou le tarif par nuit dans le dock. La date reste facultative.</p>}
     {lodgingPage === "kind" && <p>Type actuel : {({RELATIVE:"chez un proche",HOTEL:"hôtel",HOSTEL:"auberge",RENTAL:"location",OTHER:"autre",LATER:"à préciser"} as Record<string,string>)[lodgingKind]??"référence conservée"}. Ce choix ne prouve aucun prix.</p>}
-    {lodgingPage === "price" && basis === "PER_NIGHT" && <label>Nombre de nuits (facultatif)<input type="number" min="1" max="366" value={nights} onChange={event=>setNights(event.target.value)} placeholder="Inconnu"/></label>}
+    {(lodgingPage === "duration" || lodgingPage === "price" && basis === "PER_NIGHT") && <label>Nombre de nuits (facultatif)<input type="number" min="1" max="366" value={nights} onChange={event=>setNights(event.target.value)} placeholder="Inconnu"/></label>}
     {lodgingPage === "price" && (lodging ? <WorkshopComponentRow title="Hébergement" row={lodging} back={{label:"Hébergement et autres postes",action:()=>setLodgingPage("terms")}} participantCount={0} fixedQuantity={basis !== "LEGACY"}
       priceLabel={basis === "PER_NIGHT" ? "Tarif par nuit (€)" : "Coût total prévu (€)"}
       onChange={row => { setLodging(row); setLodgingDirty(true); }} onRemove={() => { setLodging(null); setLodgingDirty(true); }} />
@@ -194,21 +242,28 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, ...props }: Omi
       onChange={row => { setGroceries(row); setGroceriesDirty(true); }} onRemove={() => { setGroceries(null); setGroceriesDirty(true); }} />
       : <button type="button" onClick={() => { setGroceries(fresh("Courses du séjour")); setGroceriesDirty(true); }}>Ajouter des courses</button>}</>}
     {postSection === "extras" && extraTopic && <section data-stay-topic={extraTopic.key} aria-label={extraTopic.label}>
-      <h3>{extraTopic.label} · À examiner</h3><p>{extraTopic.reason}</p>
-      <p>Déjà compris dans le prix ? Gardez le forfait actuel. Inconnu ? Aucun montant n’est ajouté par cette consultation.</p>
-      {posts.extras.length > 0 && <p>Extras déjà présents : {posts.extras.map(post => post.row.label).join(" · ")}. Vérifiez-les avant tout ajout.</p>}
-      {matchingExtras.map(post => <button type="button" key={post.row.id} data-stay-extra={post.row.id} disabled={props.busy || locked(componentId(context.contextOccurrenceId, "extras", post.row.id))} onClick={() => { setPostPage(posts.extras.indexOf(post)); setExtraTopic(null); }}>Ouvrir {post.row.label} · ligne {posts.extras.indexOf(post) + 1}</button>)}
-      {!matchingExtras.length && <button type="button" disabled={props.busy || !slotAllowed("extras", "extra")} onClick={() => {
-        if (!slotAllowed("extras", "extra")) return;
-        setPostPage(posts.extras.length); update("extras", [...posts.extras, { row: fresh(extraTopic.label), templateKey: "extra" }]); setExtraTopic(null);
-      }}>Préparer un supplément distinct · {extraTopic.label}</button>}
-      <button type="button" onClick={() => setExtraTopic(null)}>Voir les extras existants</button>
+      <h3>{extraSuggestion?.label}</h3>
+      {matchingExtras.map(post => <button type="button" key={post.row.id} data-stay-extra={post.row.id}
+        disabled={props.busy || extraLocked(post.row.id)} onClick={() => openExtra(post.row.id)}>
+        Ouvrir {post.row.label} · ligne {posts.extras.indexOf(post) + 1} · {post.row.amount ? money(post.row.amount) : "Prix à préciser"}
+      </button>)}
+      {extraSuggestion?.kind === "REVIEW_EXTRA" && !matchingExtras.length && <>
+        <p>{extraTopic.hint}. Si le forfait couvre ce poste, gardez le prix actuel.</p>
+        {posts.extras.length > 0 && <p>Extras déjà présents : {posts.extras.map(post => post.row.label).join(" · ")}</p>}
+        <button type="button" disabled={props.busy || !slotAllowed("extras", "extra")} onClick={() => {
+          if (!slotAllowed("extras", "extra")) return;
+          setPostPage(posts.extras.length); update("extras", [...posts.extras, { row: fresh(extraTopic.label), templateKey: "extra" }]); setExtraSuggestionKey(null);
+        }}>Préparer un supplément distinct · {extraTopic.label}</button>
+      </>}
+      <button type="button" onClick={() => setExtraSuggestionKey(null)}>Voir les extras existants</button>
     </section>}
     {groups.filter(([slot]) => slot === postSection && !extraTopic).map(([slot, caption, key]) => <div key={slot}><h3>{caption}</h3>
       {posts[slot].slice(postPage, postPage + 1).map(post => { const index = postPage; return <div key={post.row.id}>
         {slot === "restaurants" && !post.link && <label>Type de repas<select value={post.templateKey} onChange={e => update(slot, posts[slot].map((p, i) => i === index ? { ...p, templateKey: e.target.value } : p))}>
           <option value="restaurant">Restaurant</option><option value="fast-food">Restauration rapide</option><option value="delivery">Livraison</option></select></label>}
-        {post.child && isPurchaseBasket(post.child)
+        {slot === "extras" && (!slotAllowed("extras", "extra") || extraLocked(post.row.id))
+          ? <p>{post.row.label} · Poste en consultation</p>
+          : post.child && isPurchaseBasket(post.child)
           ? <button type="button" disabled={props.busy || !onOpenPurchase} onClick={() => onOpenPurchase?.(post.child!.contextOccurrenceId)}>
             Ouvrir {String(post.child.fields.label ?? "le panier")} · {purchaseComponents(post.child, "item").length} article(s)
           </button>
@@ -218,7 +273,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, ...props }: Omi
         {post.child && <p className={styles.helper}>Moment enfant lié : ses autres informations et équipements sont conservés. Ils restent accessibles depuis la carte R6.</p>}
       </div>; })}
       {posts[slot].length > 1 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {posts[slot].length}</span><button type="button" disabled={postPage + 1 >= posts[slot].length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
-      <button type="button" onClick={() => { setPostPage(posts[slot].length); update(slot, [...posts[slot], { row: fresh(slot === "activities" ? "Activité" : slot === "purchases" ? "Achat" : slot === "extras" ? "Extra" : "Restaurant"), templateKey: key }]); }}>Ajouter · {caption}</button>
+      <button type="button" disabled={slot === "extras" && !slotAllowed("extras", "extra")} onClick={() => { setPostPage(posts[slot].length); update(slot, [...posts[slot], { row: fresh(slot === "activities" ? "Activité" : slot === "purchases" ? "Achat" : slot === "extras" ? "Extra" : "Restaurant"), templateKey: key }]); }}>Ajouter · {caption}</button>
       {compatibleRoots(slot).map(({child,assetKey,target})=><button type="button" key={child.contextOccurrenceId} disabled={props.busy} onClick={()=>{
         const ask=()=>confirm({message:`Rattacher « ${child.label} » à ce séjour ? L’intention et ses postes sont conservés.`,
           acceptLabel:"Rattacher cette intention",accept:()=>props.onSave({kind:"DROP",assetKey,target,values:{},identity:child.contextOccurrenceId,selectionId:crypto.randomUUID()})});
@@ -227,10 +282,16 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, ...props }: Omi
     </div>)}
     <details><summary>À savoir sur les postes</summary><p className={styles.helper}>Un jacuzzi peut être une activité ou un extra explicitement ajouté. Les transports des enfants liés doivent déclarer leur relation au trajet du séjour ; aucune fusion n’est déduite d’un libellé.</p></details>
   </>;
-  return <ProspectiveContextEditor {...props} stay stayDetails={stayDetails} posts={content} postsQuestion={postsQuestion} onSave={operation => {
+  return <ProspectiveContextEditor {...props} stay stayDetails={stayDetails} posts={content} postsQuestion={postsQuestion} staySummary={staySummary} stayTransportModes={transportModes} onSave={operation => {
     if (operation.kind !== "EDIT_SHORT_STAY") return false;
     if (!writable || operation.edit.contextOccurrenceId !== context.contextOccurrenceId)
       throw Error("Ce séjour ou ses droits ont changé. Votre saisie est conservée ; rouvrez la bonne occurrence.");
+    const priorTransport = items(context, "transport")[0];
+    const transport = operation.edit.transport;
+    if (transport !== undefined && canonicalPlannerJson(transport) !== canonicalPlannerJson(priorTransport ?? null)
+      && (!transport || !transportModes.includes(transport.optionKey)
+        || priorTransport && locked(componentId(context.contextOccurrenceId, "transport", priorTransport.selectionId))))
+      throw Error("Ce trajet n’est plus modifiable ici. Votre saisie est conservée.");
     const prepared = prepare();
     for (const slot of ["lodging", "extras"] as const) if (prepared.slots?.[slot]) {
       if (!slotAllowed(slot, slot === "lodging" ? "lodging" : "extra")) throw Error("Ce poste n’est plus modifiable. Votre saisie est conservée.");

@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette, PaletteQuestion } from "./context-palette";
@@ -29,9 +29,13 @@ const availableRef = (ref?: ProspectivePlaceRef) => ref && (ref.kind === "KNOWN"
 const amount = (raw: string) => decisionAmount(raw.trim().replace(",", "."));
 const modeLabels: Record<string, string> = { car: "Voiture", train: "Train / tram", bus: "Bus", taxi: "Taxi / Uber", free: "À pied / gratuit", other: "Autre transport", unknown: "À préciser" };
 
-export function ProspectiveContextEditor({ stay = false, stayDetails, posts, postsQuestion, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, dockHost, model, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel }: {
+export type StaySummaryTarget = "posts" | "departure" | "return" | "route";
+
+export function ProspectiveContextEditor({ stay = false, stayDetails, posts, postsQuestion, staySummary, stayTransportModes, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, dockHost, model, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel }: {
   context: PlannedContextState; householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
   targetMonth: string; stay?: boolean; stayDetails?: ReactNode; posts?: ReactNode; postsQuestion?: PaletteQuestion;
+  staySummary?: { controls: ReactNode; question: (open: (target: StaySummaryTarget) => void) => PaletteQuestion | undefined };
+  stayTransportModes?: readonly string[];
   summary?: ComposerMobilitySummary; fresh: boolean; knowledge?: CardKnowledgeRead; initialMode?: string; busy: boolean; dockHost?: HTMLElement | null;
   placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
   model: ComposerUiModel; choose: Parameters<typeof ContextPalette>[0]["choose"];
@@ -67,6 +71,12 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
   const [timingPage, setTimingPage] = useState<"out" | "back" | "note">("out");
   const [costPage, setCostPage] = useState("estimate");
   const [stopTab, setStopTab] = useState<"vehicle" | "out" | "back">("vehicle"), [stopPage, setStopPage] = useState(0);
+  useEffect(() => {
+    if (!stay) return;
+    scroll.current?.closest("dialog")?.scrollTo({ top: 0 });
+    const target = section === "summary" ? "[data-visit-summary]" : "[data-visit-section]";
+    scroll.current?.parentElement?.querySelector<HTMLElement>(target)?.focus({ preventScroll: true });
+  }, [section, stay]);
   const transportInputs = [origin, destination, mode, returnRequired, outTime, returnTime, vehicleId, preference, fareMode, fare,
     parkingMode, parking, tollMode, toll, fuelPrice, funding, fundingAmount, ownJourney, outStops, backStops];
   const initialInputs = useRef(JSON.stringify(transportInputs));
@@ -132,8 +142,18 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
   };
   const tile=(key:string,label:string,choose:()=>void,selected=false,hint?:string)=>({key,label,choose,selected,hint,iconKey:"car"});
   const returnTile=tile("summary","Résumé",()=>setSection("summary"));
+  const openStaySuggestion = (target: StaySummaryTarget) => {
+    if (target === "departure" || target === "return") {
+      setTimingPage(target === "departure" ? "out" : "back");
+      setSection("timing");
+    } else {
+      if (target === "route") setRoutePage("journey");
+      setSection(target);
+    }
+  };
   const routeQuestion:PaletteQuestion = {title:"Quel déplacement veux-tu prévoir ?",choices:routePage==="journey"?[
-    ...Object.entries(modeLabels).map(([key,label])=>tile(key,label,()=>setTransportMode(key),mode===key)),tile("origin","Préciser le trajet",()=>setRoutePage("origin")),returnTile]
+    ...Object.entries(modeLabels).filter(([key])=>!stayTransportModes || stayTransportModes.includes(key))
+      .map(([key,label])=>tile(key,label,()=>setTransportMode(key),mode===key)),tile("origin","Préciser le trajet",()=>setRoutePage("origin")),returnTile]
     :routePage==="cost"?[
       ...(mode==="car"?[["fuel","Carburant"],["toll","Péages"],["parking","Parking"]]:[["fare","Billet / course"]]).map(([key,label])=>tile(key,label,()=>setCostPage(key),costPage===key)),
       tile("funding","Financement",()=>setCostPage("funding"),costPage==="funding"),tile("estimate","Estimation",()=>setCostPage("estimate"),costPage==="estimate"),tile("mode","Changer de mode",()=>setRoutePage("journey")),returnTile]
@@ -149,11 +169,11 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       ...SOCIAL_CONTACTS_V1.filter(p=>match(p.label)).map(p=>tile(p.key,p.label,()=>selectPerson({kind:"CONTACT",contactKey:p.key}),selectedPerson?.kind==="CONTACT"&&selectedPerson.contactKey===p.key)),
       tile("free","Autre personne",()=>selectPerson({kind:"TEXT",label:""})),returnTile]}:undefined;
   const currentQuestion:PaletteQuestion|undefined = referenceQuestion??(section==="posts"?postsQuestion:section==="route"?routeQuestion:section==="timing"?{title:"Le calendrier peut rester souple",choices:[
-    tile("out","Départ",()=>setTimingPage("out"),timingPage==="out"),tile("back","Retour",()=>setTimingPage("back"),timingPage==="back"),tile("note","Un dimanche, plus tard…",()=>setTimingPage("note"),timingPage==="note"),returnTile]}:undefined);
+    tile("out","Départ",()=>setTimingPage("out"),timingPage==="out"),tile("back","Retour",()=>setTimingPage("back"),timingPage==="back"),tile("note","Un dimanche, plus tard…",()=>setTimingPage("note"),timingPage==="note"),returnTile]}:section==="summary"?staySummary?.question(openStaySuggestion):undefined);
   return <div data-short-stay-editor={stay || undefined} data-family-visit-editor={!stay || undefined} className={styles.nightEditor}>
     {section !== "summary" && <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
     {section === "summary" && <p className={styles.helper}>{stay ? "Le séjour regroupe ses postes sans coût supplémentaire. Aucun prix, participant ou date n’est décidé automatiquement. Les séjours intermois sont hors périmètre." : "Une visite est votre intention. Un trajet historique ou un véhicule disponible ne décide ni la visite ni ses participants."}</p>}
-    {section === "summary" && <section className={styles.nightSection} data-visit-summary>
+    {section === "summary" && <section className={styles.nightSection} data-visit-summary tabIndex={stay ? -1 : undefined}>
       <h3>{label || (stay ? "Votre séjour" : "Votre visite")}</h3>
       <p>{stay ? "Choisissez l’hébergement ou un poste quand vous le souhaitez." : "La visite reste enregistrable même sans date ou trajet."}</p>
       {visited && <p>Proche : {visited.kind === "HOUSEHOLD_PERSON" ? householdPersons.find(person => person.personId === visited.personId)?.displayName ?? "Personne indisponible" : prospectivePersonLabel(visited) ?? "Contact indisponible"}</p>}
@@ -162,7 +182,8 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       {stay && <><p className={styles.helper}>Le départ prévu positionne la carte du mois. Ces dates ne prouvent ni ne déplacent une réservation d’hôtel.</p>{stayDetails}</>}
       {mode && <p>Déplacement : {modeLabels[mode] ?? mode}</p>}
       <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection(stay ? "posts" : "people")}>{stay ? "Composer le séjour" : "Préciser la visite"}</button>
-        <button type="button" onClick={() => setSection("route")}>Prévoir le déplacement</button></div>
+        {(!stayTransportModes || stayTransportModes.length > 0) && <button type="button" onClick={() => setSection("route")}>Prévoir le déplacement</button>}</div>
+      {staySummary?.controls}
     </section>}
     <div ref={scroll} className={styles.nightEditorScroll}>
       {section === "people" && <section className={styles.nightSection} data-visit-section="people" tabIndex={-1}><h3>{stay ? "Votre séjour et ses participants" : "Qui allez-vous voir ?"}</h3>
@@ -242,7 +263,8 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
     {error && <p role="alert" className={styles.formError}>{error}</p>}
     <footer><button type="button" className={styles.secondary} disabled={busy} onClick={section === "summary" ? onCancel : () => setSection("summary")}>{section === "summary" ? "Retour au mois" : "Retour au résumé"}</button><button type="button" className={styles.primary} disabled={busy} onClick={save}>Conserver et prévisualiser</button></footer>
     <WorkshopDock question={currentQuestion} host={dockHost} contextId={context.contextOccurrenceId} model={model} busy={busy} choose={choose} summary={() => setSection("summary")}
-      choices={([["summary", "Résumé"], ["people", "Personnes"], ["place", "Destination"], ["timing", "Dates"], ...(stay ? [["posts", "Hébergement et postes"]] : []), ["route", "Déplacement"]] as const).map(([key, label]) =>
+      choices={([["summary", "Résumé"], ["people", "Personnes"], ["place", "Destination"], ["timing", "Dates"], ...(stay ? [["posts", "Hébergement et postes"]] : []),
+        ...(!stayTransportModes || stayTransportModes.length > 0 ? [["route", "Déplacement"]] : [])] as const).map(([key, label]) =>
         ({ key, label, iconKey: key === "route" ? "car" : "activity", selected: section === key, choose: () => setSection(key as typeof section) }))} />
   </div>;
 }

@@ -995,6 +995,8 @@
   }
 }
 [data-short-stay-editor] .nightSection { padding:8px; gap:5px; }
+.staySuggestions { display:grid; gap:6px; justify-items:start; }
+.staySuggestions details[open] > button { display:block; margin-top:6px; }
 .dialog[data-night-workshop-panel=true]:has([data-short-stay-editor]) { overflow:auto; }
 .dialog[data-night-workshop-panel=true] [data-short-stay-editor] { flex:none; max-height:none; }
 @media (max-width:760px) {
@@ -1002,7 +1004,13 @@
     position:fixed; inset:12px 12px auto; width:auto; max-height:calc(100dvh - 170px);
   }
   body:has(.dialog[open] [data-short-stay-editor]) .board .paletteDock {
-    position:fixed; inset:auto 12px 12px; width:auto; margin:0; z-index:var(--z-popover);
+    position:fixed; inset:auto 12px 12px; width:auto; height:auto; margin:0; z-index:var(--z-popover);
+  }
+  body:has(.dialog[open] [data-short-stay-editor]) .board .questionPalette[data-dock-nature="DECISION"] .paletteOptions {
+    height:auto;
+  }
+  body:has(.board .questionPalette[data-dock-nature="DECISION"]) .dialog[data-night-workshop-panel=true]:has([data-short-stay-editor]) {
+    max-height:calc(100dvh - 212px);
   }
 }
 .nightWorkshop { display:flex; flex-direction:column; min-height:0; flex:1; gap:10px; font-size:14px; }

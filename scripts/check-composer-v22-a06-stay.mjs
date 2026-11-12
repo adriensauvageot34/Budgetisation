@@ -8,6 +8,8 @@ const {presetCreationFields}=require('@/domain/phase2/planner/composer-presets')
 const {editShortStay}=require('@/domain/phase2/planner/short-stay-edit');
 const {validateStayCalendar}=require('@/app/mois-a-venir/composer/short-stay-editor');
 const {componentId}=require('@/domain/phase2/planner/identity');
+const {shortStaySuggestions,shortStayTransportModes}=require('@/app/mois-a-venir/composer/short-stay-suggestions');
+const {stageLocalDecision}=require('@/app/mois-a-venir/composer/local-draft');
 globalThis.fetch=async()=>{throw Error('A06_REMOTE_FORBIDDEN');};
 const f=await readMonthFixture(),before=structuredClone(f.world),checks=[];
 const lodging={selectionId:uuid(96011),optionKey:'lodging',kind:'COMPONENT',provenance:'EXPLICIT_USER_DECISION',label:'Hôtel synthétique',
@@ -89,6 +91,82 @@ await check('A06-C08-LEGACY-AND-MOBILITY-UNCHANGED-BY-STAY-FIELDS',async()=>{
   assert.deepEqual(model.semanticState.contexts[0].slotSelections,draft.contexts[0].slotSelections);
   assert.deepEqual(compile(model.semanticState).financialAdapterInput,before);
   assert.equal(compile(model.semanticState).components.find(c=>c.contextOccurrenceId===first.contextOccurrenceId&&c.label===lodging.label).evaluation.economicAmount,'60.00');
+});
+const target=(model,id=first.contextOccurrenceId)=>model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
+const suggestions=(model,id)=>{
+  const context=target(model,id);
+  return shortStaySuggestions(context,model,shortStayTransportModes(context,model));
+};
+const withStay=changes=>({...seeded,contexts:[{...first,...changes},sibling]});
+const extra=(id,label,unitAmount)=>({selectionId:uuid(id),optionKey:'extra',kind:'COMPONENT',provenance:'EXPLICIT_USER_DECISION',
+  label,quantity:'1',unitBasis:'ITEM',cost:{kind:'MANUAL',unitAmount}});
+await check('A06-S01-SUGGESTIONS-FOLLOW-LODGING-AND-CALENDAR',async()=>{
+  const missing=await request(withStay({fields:{...first.fields,plannedDate:null,endDate:null},slotSelections:{}}));
+  assert.deepEqual(suggestions(missing).map(({kind})=>kind),['LODGING','DEPARTURE']);
+  assert.equal(suggestions(missing)[0].selectionId,undefined);
+  const m=await request(seeded), candidates=suggestions(m);
+  assert.equal(candidates[0].selectionId,lodging.selectionId);
+  assert.deepEqual(candidates.filter(c=>c.kind==='REVIEW_EXTRA').map(c=>c.visualConceptId),['v22-art:excel:479','v22-art:excel:483']);
+  assert.deepEqual(compile(m.semanticState).financialAdapterInput,financial);
+  const nightly={...lodging,lodgingPricing:{version:'lodging-pricing@v1',basis:'PER_NIGHT',nightCount:null}};
+  const incomplete=await request(withStay({fields:{...first.fields,nightCount:null,endDate:null},slotSelections:{lodging:{items:[nightly]}}}));
+  assert.deepEqual(suggestions(incomplete).slice(0,3).map(({kind})=>kind),['LODGING','NIGHTS','RETURN']);
+  assert.equal(compile(incomplete.semanticState).components.find(c=>c.contextOccurrenceId===first.contextOccurrenceId).evaluation.economicAmount,null);
+  assert.notEqual(suggestions(m,sibling.contextOccurrenceId)[0].key,candidates[0].key);
+});
+await check('A06-S02-HOMONYMS-EDIT-EXACT-LINE-WITHOUT-DOUBLING-LODGING',async()=>{
+  const breakfast=extra(96041,'Petit-déjeuner','6.00'), second=extra(96042,'  PETIT DÉJEUNER  ','9.00');
+  const tax=extra(96043,'Taxe de séjour','4.00');
+  const onlyOne=await request(withStay({slotSelections:{...first.slotSelections,extras:{items:[breakfast,tax]}}}));
+  assert.deepEqual(suggestions(onlyOne).find(c=>c.topic?.key==='breakfast')?.selectionIds,[breakfast.selectionId]);
+  const m=await request(withStay({slotSelections:{...first.slotSelections,extras:{items:[breakfast,second,tax]}}}));
+  const candidate=suggestions(m).find(c=>c.topic?.key==='breakfast');
+  assert.equal(candidate.kind,'CHOOSE_EXTRA');
+  assert.deepEqual(candidate.selectionIds,[breakfast.selectionId,second.selectionId]);
+  assert.equal(suggestions(m).find(c=>c.topic?.key==='tax').kind,'EDIT_EXTRA');
+  const edit={contextOccurrenceId:first.contextOccurrenceId,fields:{},slots:{extras:[breakfast,{...second,cost:{kind:'MANUAL',unitAmount:'10.00'}},tax]}};
+  const operation={kind:'EDIT_SHORT_STAY',edit};
+  const local=stageLocalDecision(m,m.semanticState,operation);
+  const after=await request(m.semanticState,operation);
+  assert.deepEqual(local,after.semanticState);
+  assert.deepEqual(after.semanticState.contexts[1],sibling);
+  assert.deepEqual(target(after).slotSelections.lodging.items,[lodging]);
+  assert.deepEqual(target(after).slotSelections.extras.items.map(item=>[item.selectionId,item.cost.unitAmount]),
+    [[breakfast.selectionId,'6.00'],[second.selectionId,'10.00'],[tax.selectionId,'4.00']]);
+  assert.deepEqual(compile(after.semanticState).components.filter(c=>c.contextOccurrenceId===first.contextOccurrenceId)
+    .map(c=>c.evaluation.economicAmount).sort(),['10.00','200.00','4.00','6.00']);
+});
+await check('A06-S03-PUBLISHED-CAPABILITIES-LOCKS-AND-STALE-TARGETS',async()=>{
+  const breakfast=extra(96041,'Petit-déjeuner','6.00');
+  const model=await request(withStay({slotSelections:{...first.slotSelections,extras:{items:[breakfast]}}}));
+  const anchored=structuredClone(model);
+  anchored.semanticState.preferences.anchors.push(first.contextOccurrenceId);
+  assert.deepEqual(suggestions(anchored),[]);
+  const readonly=structuredClone(model);
+  readonly.board.contexts[0].readOnly=true;
+  assert.deepEqual(suggestions(readonly),[]);
+  const locked=structuredClone(model);
+  locked.semanticState.preferences.anchors.push(componentId(first.contextOccurrenceId,'extras',breakfast.selectionId));
+  assert(!suggestions(locked).some(c=>c.topic?.key==='breakfast'));
+  const stale=structuredClone(model);
+  stale.board.contexts[0].sockets.find(s=>s.slotKey==='extras').currentItems[0].selectionId=uuid(96999);
+  assert(!suggestions(stale).some(c=>c.topic));
+  const noLodging=structuredClone(model);
+  noLodging.dropCapabilities=noLodging.dropCapabilities.filter(d=>d.target.slotKey!=='lodging');
+  assert(!suggestions(noLodging).some(c=>c.kind==='LODGING'));
+});
+await check('A06-S04-MOBILITY-REQUIRES-A-PUBLISHED-EXACT-ROUTE',async()=>{
+  const transport={selectionId:uuid(96031),kind:'MOBILITY_INTENT',optionKey:'free',provenance:'EXPLICIT_USER_DECISION',
+    origin:null,destination:null,returnRequired:true};
+  const m=await request(withStay({slotSelections:{...first.slotSelections,transport:{items:[transport]}}}));
+  assert.equal(suggestions(m).find(c=>c.kind==='TRANSPORT')?.selectionId,transport.selectionId);
+  const withoutRoute=structuredClone(m);
+  withoutRoute.editors=withoutRoute.editors.filter(e=>e.assetKey!=='option:short-stay:transport:free');
+  assert(!suggestions(withoutRoute).some(c=>c.kind==='TRANSPORT'));
+  const locked=structuredClone(m);
+  locked.semanticState.preferences.anchors.push(componentId(first.contextOccurrenceId,'transport',transport.selectionId));
+  assert(!suggestions(locked).some(c=>c.kind==='TRANSPORT'));
+  assert(!suggestions(await request(seeded)).some(c=>c.kind==='TRANSPORT'));
 });
 assert.deepEqual(f.world,before);assert.equal(f.writes.length,0);
 console.log(JSON.stringify({status:'PASS',cases:checks.length,checks,writers:f.writes.length,worldUnchanged:true}));
