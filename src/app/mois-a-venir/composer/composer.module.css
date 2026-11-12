@@ -1,6 +1,7 @@
 /* Presentation only. Layer tokens: board < card < selected < satellites < ghost
    < palette < popover < trash < modal. Native popovers/dialogs use the top layer. */
 .restaurantInspector { position:fixed; z-index:20; top:155px; right:20px; bottom:190px; width:min(350px,calc(100vw - 24px)); min-height:180px; overflow:auto; box-sizing:border-box; padding:18px; border:1px solid #e6d9ec; border-radius:22px; background:#fffdfb; color:#252d48; box-shadow:0 16px 50px #3422412b; font:13px var(--font-sans,Arial,sans-serif); }
+.restaurantInspector[data-restaurant-suggestions] { bottom:214px; }
 .restaurantInspector * { box-sizing:border-box; }
 .restaurantInspector header { position:sticky; top:-18px; z-index:2; display:flex; gap:10px; align-items:center; margin:-18px -18px 0; padding:14px 18px; background:#fffdfb; border-bottom:1px solid #ebe3ee; }
 .restaurantInspector header > div { flex:1; }
@@ -43,9 +44,10 @@
 .restaurantInspector footer { margin-top:14px; padding-top:12px; border-top:1px solid #ebe3ee; display:grid; gap:8px; }
 .restaurantInspector footer span { font-size:11px; }
 @media (max-width:760px) {
-  .restaurantInspector[data-cinema-editor] { inset:12px 12px 142px; width:auto; }
-  body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector[data-cinema-editor] { bottom:188px; }
-  body:has(.restaurantInspector[data-cinema-editor]) .board .paletteDock {
+  .restaurantInspector:is([data-cinema-editor],[data-guided-template="restaurant"]) { inset:12px 12px 142px; width:auto; }
+  body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector:is([data-cinema-editor],[data-restaurant-suggestions]) { bottom:188px; }
+  body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector[data-restaurant-suggestions] { bottom:212px; }
+  body:has(.restaurantInspector:is([data-cinema-editor],[data-guided-template="restaurant"])) .board .paletteDock {
     position:fixed; inset:auto 12px 12px; width:auto; margin:0; z-index:21;
   }
 }
@@ -1050,7 +1052,7 @@
 .questionPalette .paletteHeading h3 { font-size:13px; overflow-wrap:anywhere; }
 .questionPalette .paletteHeading > [data-planner-icon] { display:none; }
 .questionPalette .paletteOptions { display:flex; gap:9px; height:75px; padding:5px 1px; align-items:stretch; overflow-x:auto; scrollbar-width:none; }
-body:has(.restaurantInspector[data-cinema-editor]) .board .questionPalette[data-dock-nature="DECISION"] .paletteOptions { height:auto; }
+body:has(.restaurantInspector:is([data-cinema-editor],[data-restaurant-suggestions])) .board .questionPalette[data-dock-nature="DECISION"] .paletteOptions { height:auto; }
 .questionAnswer { flex:0 0 auto; display:flex; align-items:center; gap:9px; min-width:150px; max-width:215px; min-height:60px; padding:7px 11px; border:1px solid #e3d4ee; border-radius:13px; background:#fff; color:#5a3a72; text-align:left; }
 .questionAnswer > span { min-width:0; }
 .compactCatalogVisual { display:grid; place-items:center; width:40px; height:40px; flex:0 0 40px; }

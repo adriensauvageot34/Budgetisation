@@ -40,7 +40,8 @@ const buttons=()=>root.root.findAll(n=>n.type==='button');
 const button=label=>buttons().find(n=>text(n)===label);
 const removals=()=>buttons().filter(n=>n.props['aria-label']?.startsWith('Retirer '));
 const click=async n=>{assert(n,'Expected visible action');assert(!n.props.disabled,'Action must be enabled');await act(async()=>n.props.onClick());};
-async function mount(next=base,isBusy=false){if(root)await act(async()=>root.unmount());model=structuredClone(next);current=model.semanticState;accepted=[];pending=null;busy=isBusy;registry=new InlineEditRegistry();registry.requestConfirmation=(_message,accept)=>{pending=accept;};await act(async()=>{root=create(React.createElement(Harness));});await click(button('Personnes'));}
+const choose=async label=>{if(!button(label)&&button('Tous les choix du restaurant'))await click(button('Tous les choix du restaurant'));await click(button(label));};
+async function mount(next=base,isBusy=false){if(root)await act(async()=>root.unmount());model=structuredClone(next);current=model.semanticState;accepted=[];pending=null;busy=isBusy;registry=new InlineEditRegistry();registry.requestConfirmation=(_message,accept)=>{pending=accept;};await act(async()=>{root=create(React.createElement(Harness));});if(button('Tous les choix du restaurant'))await click(button('Tous les choix du restaurant'));await click(button('Personnes'));}
 const compiled=state=>evaluatePlanScenario(fixture.world,state,{expectedActiveRevisionId:null,expectedActiveRevisionNumber:0}).compiled.components;
 const checks=[];const check=async(name,fn)=>{await fn();checks.push(name);console.log(name+' PASS');};
 try{
@@ -53,7 +54,7 @@ try{
   assert.deepEqual(current.contexts[1],before.contexts[1]);assert.deepEqual(compiled(current),beforeCompiled);
   assert.deepEqual(beforeCompiled.filter(c=>c.contextOccurrenceId===id).map(c=>c.evaluation.economicAmount).sort(),['40.00','5.00']);
   assert.equal(accepted.length,1);assert.deepEqual(Object.keys(accepted[0].edit),['contextOccurrenceId','fields']);
-  await click(button('Personnes'));assert.equal(removals().length,1);
+  await choose('Personnes');assert.equal(removals().length,1);
  });
  await check('A3-02-RAW-IS-KEPT-UNTIL-EXPLICIT-DISCARD',async()=>{
   await mount();await act(async()=>root.root.findByType(PlannedContactField).props.onChange({kind:'TEXT',label:'Saisie non validée'}));
@@ -76,7 +77,7 @@ try{
    const next=await modelFor(s=>{s.contexts[0].slotSelections.meal.items[0].cost=cost;});
    const knowledge=next.cardKnowledge['template:restaurant'];if(knowledge)knowledge.dimensions=knowledge.dimensions.map(d=>({...d,value:'150.00',suggestionPolicy:'REFERENCE_ONLY'}));
    await mount(next);await click(removals()[1]);assert.deepEqual(current.contexts[0].slotSelections.meal.items[0].cost,cost);
-   await click(button('Montant rapide'));assert(!buttons().some(n=>/^Prix observé /.test(text(n))));
+   await choose('Montant rapide');assert(!buttons().some(n=>/^Prix observé /.test(text(n))));
    assert(!root.root.findAll(n=>n.type==='input').some(n=>n.props.value==='150.00'));
   }
  });

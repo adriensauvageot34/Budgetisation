@@ -201,7 +201,10 @@ let root,current,model,registry,accepted,setCurrent;
 function Harness(){const [state,setState]=React.useState(current);setCurrent=setState;return React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(RestaurantEditor,{context:target(state),card:model.board.contexts.find(c=>c.contextOccurrenceId===id),model,creating:false,busy:false,close(){},decide(operation){const next=stageLocalDecision(model,current,operation);if(!next)return false;accepted.push(operation);current=next;setState(next);return true;}}));}
 const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join('');
 const button=label=>root.root.findAll(node=>node.type==='button').find(node=>text(node)===label);
-const click=async label=>{const node=button(label);assert(node,label);assert(!node.props.disabled,label);await act(async()=>node.props.onClick());};
+const click=async label=>{
+ if(!button(label)&&button('Tous les choix du restaurant'))await act(async()=>button('Tous les choix du restaurant').props.onClick());
+ const node=button(label);assert(node,label);assert(!node.props.disabled,label);await act(async()=>node.props.onClick());
+};
 const input=label=>root.root.findAll(node=>node.type==='label').find(node=>text(node).startsWith(label)).findByType('input');
 async function mount(state=base, cardPatch){
  if(root)await act(async()=>root.unmount());
@@ -209,6 +212,7 @@ async function mount(state=base, cardPatch){
  if(cardPatch)model.board.contexts=model.board.contexts.map(card=>card.contextOccurrenceId===id?{...card,...cardPatch}:card);
  current=model.semanticState;registry=new InlineEditRegistry();accepted=[];confirmation=null;
  await act(async()=>{root=create(React.createElement(Harness));});
+ if(button('Tous les choix du restaurant'))await click('Tous les choix du restaurant');
 }
 try{
  await check('RI-10-REAL-EDITOR-ADD-EDIT-REMOVE-RAW-HISTORY',async()=>{
