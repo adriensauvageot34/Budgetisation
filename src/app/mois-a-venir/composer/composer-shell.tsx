@@ -20,7 +20,9 @@ import { ComposerLibrary } from "./composer-library";
 import { CatalogDiscoveryProvider } from "./catalog-discovery-provider";
 import type { GuidedCatalogChoice } from "./catalog-discovery";
 import type { BasketConcept } from "@/domain/phase2/planner/purchase-basket";
-import { assetEditorTarget } from "./asset-editor-routing";
+import { assetEditorTarget, editorOccurrenceId } from "./asset-editor-routing";
+import { ComposerSaveStatus } from "./composer-save-status";
+import { WorkshopNavigationContext, IntentionSwitcher, intentionNavigationEntries } from "./workshop-navigation";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
 import { ComposerCockpit } from "./composer-cockpit";
@@ -187,10 +189,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   }, [editorKind, editorLoadRetry, loadedEditors]);
   const FamilyVisitEditor = loadedEditors.family;
   const RestaurantEditor = loadedEditors.restaurant;
-  useEffect(() => { if (editor?.restaurantContextId && !draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)) setEditor(null); }, [draftState.contexts, editor?.restaurantContextId]);
+  const currentEditorId = editorOccurrenceId(editor);
+  useEffect(() => { if (currentEditorId && !draftState.contexts.some(c => c.contextOccurrenceId === currentEditorId)) setEditor(null); }, [draftState.contexts, currentEditorId]);
   const ShortStayEditor = loadedEditors.stay, GiftEditor = loadedEditors.gift, CatalogContextEditor = loadedEditors.catalog;
   const NightOutEditor = loadedEditors.night, BarLivingEditor = loadedEditors.bar;
-  useEffect(()=>{if(editor?.nightContextId&&!draftState.contexts.some(c=>c.contextOccurrenceId===editor.nightContextId))setEditor(null);},[draftState.contexts,editor?.nightContextId]);
   const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
   const [unresolvedOpen, setUnresolvedOpen] = useState(false);
   const [reveal, setReveal] = useState<{ targetRef: string; sequence: number } | null>(null);
@@ -321,13 +323,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }
     localDraft.current = next; setDraftState(next); setSuggestions(null); setBalanceOpen(false); setHoverModel(null); setInteractionImpact(null); setErrorMessage(null);
     if (history !== "push") {
-      const restoredBar = next.contexts.find(context => presetForContext(context)?.presetKey === "bar-apero"
-        && !before.contexts.some(previous => previous.contextOccurrenceId === context.contextOccurrenceId));
+      const restoredContext = next.contexts.find(context =>
+        !before.contexts.some(previous => previous.contextOccurrenceId === context.contextOccurrenceId));
       // Explicit history restoration also restores a keyboard destination. The
       // Board follows its page and waits for the real card, including repacking.
-      if (restoredBar) {
-        setFocusedContext(restoredBar.contextOccurrenceId);
-        setReveal(previous => ({targetRef:restoredBar.contextOccurrenceId,sequence:(previous?.sequence??0)+1}));
+      if (restoredContext) {
+        setFocusedContext(restoredContext.contextOccurrenceId);
+        setReveal(previous => ({targetRef:restoredContext.contextOccurrenceId,sequence:(previous?.sequence??0)+1}));
       }
     }
     setPreviewStatus("STALE"); setMessage("Choix conservé dans le brouillon ; simulation en attente.");
@@ -788,6 +790,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         ...(presetKey ? { presetKey } : {}), ...(asset.templateKey === "purchase" ? { purchaseBasket: true } : {}) });
       if (admitted) {
         setFocusedContext(identity); setSelected(null); prepareDialogFocus();
+        setReveal(previous => ({ targetRef: identity, sequence: (previous?.sequence ?? 0) + 1 }));
+        setMessage(`« ${presetKey ? composerPreset(presetKey)!.label : asset.label} » ajouté. Vous pouvez le compléter à votre rythme.`);
          setEditor({ title: `Configurer ${presetKey ? composerPreset(presetKey)!.label : asset.label}`, side: true,
           cardKey: asset.assetKey,
           basketConcept,
@@ -830,12 +834,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   }
   const closeDialog = () => { if (!busyRef.current) {
     if (editor && !inlineEdits.registry.guard(closeDialog)) return;
-    const guided = editor?.restaurantContextId && draftState.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId);
     const catalog = editor?.catalogContextId ? draftState.contexts.find(c => c.contextOccurrenceId === editor.catalogContextId) : undefined;
     const mascaraId = editor?.equipment?.mascara ? editor.equipment.target.contextOccurrenceId
       : catalog && isMascaraContext(catalog) ? catalog.contextOccurrenceId : undefined;
-    const returnContext = livingBarId ?? mascaraId ?? (guided && (presetForContext(guided)?.presetKey === "cinema"
-      || guided.templateKey === "purchase") ? guided.contextOccurrenceId : null);
+    const returnContext = livingBarId ?? mascaraId ?? editorOccurrenceId(editor);
     setEditor(null); setProjectionOpen(false); setErrorMessage(null);
     if (returnContext) {
       // The Board can remount the intention inside a group or on another page.
@@ -843,6 +845,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }
   } };
   function editContext(card: ComposerContextCardView, barTarget?:BarTarget, catalogSelectionId?: string, guidedCatalogChoice?: GuidedCatalogChoice) {
+    if (!editor?.equipment && editorOccurrenceId(editor) === card.contextOccurrenceId && !barTarget && !catalogSelectionId && !guidedCatalogChoice) return;
     if (editor && !inlineEdits.registry.guard(() => editContext(card,barTarget,catalogSelectionId,guidedCatalogChoice))) return;
     clearHover();
     setProjectionOpen(false); setUnresolvedOpen(false);
@@ -941,7 +944,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     const occurrence=libraryOccurrences(shown).find(row=>row.contextOccurrenceId===id);
     const card=shown.board.contexts.find(card=>card.contextOccurrenceId===id);
     if(!occurrence||!card)return;
-    const editingId=editor?.catalogContextId??editor?.restaurantContextId??editor?.equipment?.target.contextOccurrenceId;
+    const editingId=editorOccurrenceId(editor);
     if(occurrence.action==="EDIT"&&editingId===id){
       const panel=editor?.restaurantContextId?document.querySelector<HTMLElement>("[data-restaurant-editor]"):dialog.current;
       (panel?.querySelector<HTMLElement>("input,select,textarea")??panel?.querySelector<HTMLElement>("button"))?.focus();
@@ -954,6 +957,18 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if(occurrence.action==="EDIT"||isClothingPurchase(card)&&draftState.contexts.some(context=>context.contextOccurrenceId===id&&isClothingPurchase(context)))editContext(card);
     else {clearHover();setEditor(null);setProjectionOpen(false);setUnresolvedOpen(false);setFocusedContext(id);}
   });
+  const stableBackToBoard = useCommittedEvent((id: string) => {
+    if (!shown.board.contexts.some(card => card.contextOccurrenceId === id)) return;
+    if (!inlineEdits.registry.guard(() => stableBackToBoard(id))) return;
+    closeDialog();
+    setFocusedContext(id);
+    setReveal(previous => ({ targetRef: id, sequence: (previous?.sequence ?? 0) + 1 }));
+  });
+  const intentionNavigation = useMemo(() => {
+    const available = new Set(libraryOccurrences(shown).map(row => row.contextOccurrenceId));
+    return { entries: intentionNavigationEntries(shown.board.contexts.filter(card => available.has(card.contextOccurrenceId))),
+      open: stableLibraryOpen, back: stableBackToBoard, busy };
+  }, [shown, stableLibraryOpen, stableBackToBoard, busy]);
   // Accepted context changes (also Undo/Redo and child edits) replace workshop buffers.
   // Preview responses with the same semantic content leave RAW inputs untouched.
   const workshopKey = (id: string) => canonicalPlannerJson(draftState.contexts.filter(context => context.contextOccurrenceId === id || context.parentContextOccurrenceId === id));
@@ -966,7 +981,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
-  return <BudgetPreviewStatus.Provider value={previewStatus}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
+  return <BudgetPreviewStatus.Provider value={previewStatus}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
@@ -979,7 +994,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     onKeyDown={event=>{if(event.key==='Escape'&&!event.defaultPrevented&&livingBarId&&!document.querySelector('dialog[open],[popover]:popover-open')){event.preventDefault();closeDialog();}}}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
-      <h1>Composer <span>· {monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus} data-draft-status data-state={!relationSession && draftTransport ? durable.status : "MEMORY"}>{relationSession ? "Organisation locale non sauvegardée" : draftTransport ? ({ CLEAN: "Aucun brouillon enregistré", DIRTY: "Modifications locales", SAVING: "Sauvegarde en cours…", SAVED: "Sauvegardé", ERROR: "Sauvegarde non confirmée", CONFLICT: "Conflit de version", OFFLINE: "Hors ligne · non enregistré" }[durable.status]) : "Brouillon en mémoire"}</span>
+      <h1>Composer <span>· {monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<ComposerSaveStatus status={durable.status} durable={!!draftTransport} suspended={relationSession} raw={!!inlineEdits.count} />
         <span data-object-count>{shown.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-label={previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Précisions en cours de calcul" : undefined} aria-pressed={unresolvedOpen} aria-controls={unresolvedOpen ? "composer-finances-title" : undefined} disabled={!model.presentation.unresolvedCount || previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} onClick={showUnresolved}>{previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Calcul…" : `${model.presentation.unresolvedCount} à préciser`}</button></span>
         {model.activeRevisionNumber > 0 && <small data-official-revision>Plan · révision {model.activeRevisionNumber}</small>}
         {!relationSession && previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
@@ -987,13 +1002,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails}
         retry={previewStatus === "FAILED" && !busy ? retryPreview : undefined} /></div>
-      <div className={styles.toolbar}><div ref={historyTools} className={styles.historyTools}>
+      <div className={styles.toolbar}><IntentionSwitcher contextId={focusedContext} compact /><div ref={historyTools} className={styles.historyTools}>
         <button data-history-action="undo" className={styles.historyButton} title="Annuler (Ctrl/Cmd+Z)" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => stage({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
         <button data-history-action="redo" className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => stage({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
         {comparison ? <div className={styles.compareActions}><button data-compare-keep className={styles.secondary} disabled={busy} onClick={() => compare(true)}>Garder cette variante</button><button data-compare-exit className={styles.textButton} disabled={busy} onClick={() => compare(false)}>Quitter la comparaison</button></div>
           : <><div className={styles.applyControl} tabIndex={applyDisabled ? 0 : undefined} aria-label={applyDisabled ? applyReason : undefined} data-apply-control data-unavailable={applyDisabled}>
               <button className={styles.primary} data-apply disabled={applyDisabled} aria-describedby={applyDisabled ? "apply-disabled-reason" : undefined} onClick={() => apply()}>{busy ? "Validation…" : "Transformer en Plan"}</button>
-              {!!inlineEdits.count && <span className={styles.inlineEditNotice} data-inline-unvalidated role="status">Saisie non validée</span>}
               {applyDisabled && <div className={styles.applyReason} role="group" aria-label="Application indisponible" data-apply-reason><p id="apply-disabled-reason">{applyReason}</p>
                 {!!model.presentation.unresolvedCount && <button data-show-unresolved onClick={showUnresolved}>Afficher les éléments</button>}</div>}
             </div></>}
@@ -1169,5 +1183,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></BudgetPreviewStatus.Provider>;
+  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></BudgetPreviewStatus.Provider>;
 }

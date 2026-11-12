@@ -1,0 +1,31 @@
+.navigation {
+  display: grid;
+  gap: .45rem;
+  margin: .5rem 0;
+  min-width: 0;
+}
+
+.navigation > button {
+  justify-self: start;
+}
+
+.switcher {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+  max-width: 100%;
+  font-size: .8rem;
+}
+
+.switcher select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: .45rem;
+  min-height: 40px;
+  border: 1px solid #dcd5e4;
+  border-radius: .6rem;
+  background: #fffdfb;
+  color: #42324d;
+  font: inherit;
+}

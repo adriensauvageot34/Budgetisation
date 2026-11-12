@@ -137,7 +137,7 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .textButton { border:0; background:transparent; padding:5px; color:#78688f; font-size:10px!important; }
 .textButton:hover:not(:disabled) { text-decoration:underline; text-underline-offset:3px; }
 .applyControl { position:relative; border-radius:10px; }
-.inlineEditNotice { position:absolute; top:calc(100% + 2px); right:0; white-space:nowrap; font-size:10px; color:#805125; }
+.inlineEditNotice { padding:3px 7px; border-radius:10px; background:#fff2df; white-space:normal; font-size:10px; color:#805125; }
 .applyControl[data-unavailable="true"] .primary { background:#e5e0eb; color:#625c69; box-shadow:none; opacity:1; }
 .coursesReference { margin:0 0 16px; padding:14px; border:1px solid #dfd6e8; border-radius:12px; background:#f7f3fb; color:#342d3d; font-size:13px; line-height:1.5; }
 .coursesReference p { margin:6px 0 0; }
@@ -994,6 +994,8 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .dialog[data-night-workshop-panel=true] .nightEditorScroll { overflow-y:auto; }
 [data-mascara-price-editor] .formFields { grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); overflow:visible; }
 [data-mascara-price-editor] .formFields input { box-sizing:border-box; }
+.dialog[data-night-workshop-panel=true]:has([data-mascara-catalog],[data-mascara-reference]) { overflow:auto; }
+.dialog[data-night-workshop-panel=true] :is([data-mascara-price-editor],[data-mascara-catalog]) { flex:none; max-height:none; }
 @media (max-width:760px) {
   .restaurantInspector[data-clothing-editor] { inset:12px 12px 154px; width:auto; }
   body:has(.restaurantInspector[data-clothing-editor]) .board .paletteDock {
@@ -1083,11 +1085,11 @@ body:has(.restaurantInspector:is([data-cinema-editor],[data-restaurant-suggestio
 .questionAnswer strong,.questionAnswer small { display:block; white-space:normal; }
 .questionAnswer strong { font-size:13px; font-weight:600; }
 .questionAnswer small { font-size:10px; margin-top:3px; color:#927a9d; }
-body:has(.restaurantInspector[data-cinema-editor]) .questionPalette[data-dock-nature="DECISION"] .questionAnswer :is(strong,small) {
+body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION"] .questionAnswer :is(strong,small) {
   display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;
 }
-body:has(.restaurantInspector[data-cinema-editor]) .questionPalette[data-dock-nature="DECISION"] .questionAnswer strong { -webkit-line-clamp:3; }
-body:has(.restaurantInspector[data-cinema-editor]) .questionPalette[data-dock-nature="DECISION"] .questionAnswer small { -webkit-line-clamp:2; }
+body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION"] .questionAnswer strong { -webkit-line-clamp:3; }
+body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION"] .questionAnswer small { -webkit-line-clamp:2; }
 .questionAnswer[aria-pressed=true] { background:#f1e6fb; border-color:#a77bc8; }
 .nightTravelFields { display:grid; gap:15px; }
 .columns[data-night-workshop-open=true] .paletteDock { height:130px; flex-basis:130px; }
@@ -1824,11 +1826,15 @@ body:has(.restaurantInspector[data-cinema-editor]) .questionPalette[data-dock-na
 
 .catalogLibraryAccess { display:flex; flex-wrap:wrap; gap:6px; padding:0 12px 10px; }
 .catalogLibraryAccess button { flex:1 1 100px; font-size:11px; }
+.toolbar { max-width:100%; min-width:0; flex-wrap:wrap; }
+.toolbar > label { flex:1 1 190px; max-width:280px; }
 /* On phones the library is a short, scrollable entry surface above the Board.
    Keep the existing horizontal Board and its measured card layout. */
 @media (max-width:760px) {
   .workspace { overflow-y:auto; overflow-x:hidden; display:block; padding-bottom:20px; }
   .workspaceHeader { padding:8px 0 14px; }
+  .toolbar { width:100%; }
+  .toolbar > label { flex-basis:100%; max-width:none; }
   .columns,.columns[data-inspector-open=true],.columns[data-night-workshop-open=true] { display:flex; flex-direction:column; gap:14px; padding-right:0; height:auto; }
   .library { flex:none; height:260px; width:100%; }
   .panelHeader { padding:12px 14px 8px; }
@@ -1840,4 +1846,11 @@ body:has(.restaurantInspector[data-cinema-editor]) .questionPalette[data-dock-na
   .contextPalette header>input { min-width:0; flex:1 1 150px; }
   .contextPalette header [data-catalog-open] { font-size:11px; }
   .columns[data-inspector-open=true]>:last-child:not(.board) { width:100%; max-width:100%; }
+}
+
+/* A narrow phone wraps the Dock heading onto a third line. Reserve that
+   space without shrinking the labels or covering editor confirmations. */
+@media (max-width:380px) {
+  body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector:is([data-cinema-editor],[data-restaurant-suggestions],[data-basket-suggestions]) { bottom:224px; }
+  body:has(.board .questionPalette[data-dock-nature="DECISION"]) .dialog[data-night-workshop-panel=true]:has([data-short-stay-editor],[data-mascara-catalog],[data-mascara-reference]) { max-height:calc(100dvh - 236px); }
 }

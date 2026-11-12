@@ -49,3 +49,21 @@
 .impact summary {
   cursor: pointer;
 }
+
+@media (max-width: 380px) {
+  .impact dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .impact dl > div:first-child {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .5rem;
+  }
+
+  .impact dd {
+    font-size: 1rem;
+  }
+}

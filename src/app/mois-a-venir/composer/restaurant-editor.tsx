@@ -29,6 +29,9 @@ import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useActiveWorkshopQuestion } from "./workshop-choices";
 import { IntentBudgetImpact } from "./intent-budget-impact";
+import { WorkshopNavigation } from "./workshop-navigation";
+import { workshopErrorMessage } from "./workshop-error";
+import { SuggestionControls } from "./suggestion-controls";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { cinemaSuggestions, sameCinemaExtra, type CinemaSuggestion } from "./cinema-suggestions";
 import { isRestaurantBeer, restaurantBeer, restaurantSuggestions, type RestaurantSuggestion } from "./restaurant-suggestions";
@@ -139,7 +142,6 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     setStep(previous => previous === "included" ? "complete" : previous);
   }, [includedSignature]);
   const panel = useRef<HTMLElement>(null);
-  const suggestionSettings = useRef<HTMLElement>(null);
   const mealSignature = canonicalPlannerJson(main??null), priorMeal = useRef(mealSignature), admittedMode = useRef<{signature:string;detail:boolean}|null>(null);
   const ticketSignature = useRef<string | null>(null);
   const extraEdit = useRef<{ signature: string } | { suggestedLabel: string | null } | null>(null);
@@ -205,7 +207,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       }
     }
     try { if (!decide(operation)) { setError("Ce choix ne peut pas être admis. Votre brouillon est conservé."); return false; } setRaw(false); return true; }
-    catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez ce choix."); return false; }
+    catch (failure) { setError(workshopErrorMessage(failure)); return false; }
   };
   const advance = (_answeredStep: Step) => { setStep(null); setSummaryPage(0); };
   const fields = (patch: Record<string, PlannerJson>, id: Step) => {
@@ -247,7 +249,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         slots: { [mainSlot]: [item], ...(!purchase && !detail ? { extras: [] } : {}) },
         ...(includedDecision ? { includedDetailsAfterMealChange: includedDecision } : {}) }))) { advance("budget"); return true; }
       return false;
-    } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez le budget."); return false; }
+    } catch (failure) { setError(workshopErrorMessage(failure)); return false; }
   };
   const openIncluded = (item?: RestaurantIncludedDetail, label = "") => {
     if (!leaveRaw(() => openIncluded(item, label))) return;
@@ -459,10 +461,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     nature: showCinemaSuggestions ? "DECISION" : undefined,
     emptyLabel: "Aucune suggestion pour cette sortie. Les choix de la carte restent accessibles.",
     choices: showCinemaSuggestions ? rankedCinema.map(suggestion => {
-      const source = suggestion.sourceRow ? `Catalogue · Sortie · ligne ${suggestion.sourceRow}`
-        : suggestion.category === "extra" ? "Règle métier additionnelle" : null;
       return { ...tile(suggestion.key, suggestion.label, () => chooseCinemaSuggestion(suggestion), suggestion.iconKey,
-        source ? `${suggestion.reason} · ${source}` : suggestion.reason, suggestion.action === "EDIT" || undefined),
+        suggestion.reason, suggestion.action === "EDIT" || undefined),
         visualConceptId: cinemaArtwork[suggestion.conceptKey] };
     }) : step === "date" && cinemaWritable ? [
       tile("place", "Cinéma — Préciser le lieu", () => open("place"), "family-visit"),
@@ -578,10 +578,11 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const panelContent = <aside ref={panel} className={styles.restaurantInspector} role="dialog" aria-modal="false" aria-labelledby="restaurant-heading" data-restaurant-editor data-guided-template={context.templateKey} data-cinema-editor={cinema || undefined}
     data-restaurant-suggestions={!!restaurantQuestion || undefined}
     data-purchase-editor={context.templateKey === "purchase" || undefined}
-    onChangeCapture={event => { if (!(event.target instanceof Element) || !event.target.closest("[data-purchase-delivery]")) setRaw(true); }}
+    onChangeCapture={event => { if (!(event.target instanceof Element) || !event.target.closest("[data-purchase-delivery],[data-workshop-navigation]")) setRaw(true); }}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); close(); } }}>
     <header>{preset ? <PresetIllustration preset={preset} className={styles.presetInspectorImage} /> : <PlannerIcon iconKey="restaurant" scale="SATELLITE" />}<div><small>Votre mois, à votre façon</small><h2 id="restaurant-heading" tabIndex={-1}>{heading}</h2></div>
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
+    <WorkshopNavigation contextId={contextId} />
     <p className={styles.restaurantIntro}>{cinema ? "Le billet, le jour de la séance, les compléments et le trajet se préparent séparément."
       : step === null ? "Choisissez seulement ce que vous voulez prévoir. Les autres précisions restent facultatives." : "Budget = coût économique prévu, pas un plafond. Les choix validés restent conservés."}</p>
     {purchase && <EnablePurchaseBasket context={context} card={card} model={model} busy={busy} decide={decide} />}
@@ -666,7 +667,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         {extras.slice(extraPage * 3, extraPage * 3 + 3).map((item, index) => <button type="button" key={item.selectionId}
           disabled={cinema && (!cinemaExtrasSocket || cinemaSelectionLocked("extras", item.selectionId))
             || restaurant && (busy || !catalogSocket(model, contextId, "extras", "option:restaurant:extras:extra") || cinemaSelectionLocked("extras", item.selectionId))}
-          onClick={() => editExtra(item, restaurant)}>{item.label} · {priceCaption(item)}
+          onClick={() => editExtra(item, restaurant)}>{item.label} · {priceCaption(item)}{restaurant ? " · supplément distinct" : ""}
           {restaurant && extras.some(other => other !== item && normalizeCatalog(other.label) === normalizeCatalog(item.label)) ? ` · supplément ${extraPage * 3 + index + 1}` : ""}
         </button>)}
         {extras.length > 3 && <div className={styles.nightPage}><button type="button" disabled={extraPage === 0} onClick={() => setExtraPage(page => page - 1)}>Précédent</button><span>{extraPage + 1} / {Math.ceil(extras.length / 3)}</span><button type="button" disabled={(extraPage + 1) * 3 >= extras.length} onClick={() => setExtraPage(page => page + 1)}>Suivant</button></div>}
@@ -692,7 +693,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
             setExtraRow(null); setExtraAdded(!extraRow.existing);
             if (cinema) setFormKey(key => key + 1);
           }
-        } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez ce complément."); } }} busy={busy} />}
+        } catch (failure) { setError(workshopErrorMessage(failure)); } }} busy={busy} />}
       {equipment && <form onSubmit={event => {
         event.preventDefault(); const values = equipmentValues;
         const transportAvailable = cinema ? cinemaModes.some(mode => mode.assetKey === equipment.asset.assetKey)
@@ -731,7 +732,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
             ...(sameRoute && currentTransport?.journey?.relation === "OWNS_JOURNEY" && !values.targetIntentId ? { journey: currentTransport.journey } : {}),
             ...(sameRoute && equipment.asset.optionKey === "car" && currentTransport?.route && !values.targetIntentId ? { route: currentTransport.route } : {}) };
           if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { transport: [selection] } }))) setEquipment(null);
-        } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez le trajet."); }
+        } catch (failure) { setError(workshopErrorMessage(failure)); }
       }}><h4>{equipment.asset.label}</h4><p>Un coût d’usage n’est pas un plein bancaire. Les données absentes restent inconnues.</p>
          {model.editors.find(e => e.assetKey === equipment.asset.assetKey)?.fields.slice(equipmentPage * 3, equipmentPage * 3 + 3).map(field => <label key={field.key}>{field.label}{field.kind === "CHOICE"
            ? <select name={field.key} value={equipmentValues[field.key] ?? field.choices?.[0]?.value ?? ""} onChange={event => setEquipmentValues(values => ({ ...values, [field.key]: event.target.value }))}>{field.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
@@ -745,18 +746,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     {known && <details className={styles.restaurantDiagnostics}><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={known} /></details>}
     {updateSuggestionDismissal && (showCinemaSuggestions || restaurant && step === null && !restaurantChoices)
       && (rankedCinema.length > 0 || rankedRestaurant.length > 0 || dismissedSuggestions.length > 0) &&
-      <details className={styles.cinemaSuggestionSettings}>
-        <summary ref={suggestionSettings}>{restaurant ? "Gérer les suggestions de ce restaurant" : "Gérer les suggestions de cette sortie"}</summary>
-        <p>Le masquage concerne cette carte et dure jusqu’au rechargement de Composer.</p>
-        {[...rankedCinema, ...rankedRestaurant].map(suggestion => <button key={suggestion.key} type="button" disabled={busy} onClick={() => {
-          suggestionSettings.current?.focus();
-          updateSuggestionDismissal(contextId, suggestion.key);
-        }}>Masquer · {suggestion.label}</button>)}
-        {dismissedSuggestions.length > 0 && <button type="button" disabled={busy} onClick={() => {
-          suggestionSettings.current?.focus();
-          updateSuggestionDismissal(contextId, null);
-        }}>Réafficher les suggestions masquées</button>}
-      </details>}
+      <SuggestionControls occurrenceId={contextId} choices={[...rankedCinema, ...rankedRestaurant]} busy={busy}
+        dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
     <footer><button type="button" onClick={close}>Retour au Board</button><span>Les choix validés sont conservés dans le brouillon.</span></footer>
   </aside>;
   return <>{typeof document !== "undefined" && createPortal(panelContent, document.body)}

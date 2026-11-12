@@ -19,6 +19,7 @@ import type { ContextPalette, PaletteQuestion } from "./context-palette";
 import { isMascaraContext, mascaraEquipment, mascaraSuggestions } from "./mascara-edit";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
 import { IntentBudgetImpact } from "./intent-budget-impact";
+import { WorkshopNavigation } from "./workshop-navigation";
 import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
 import { money } from "./display";
@@ -156,6 +157,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     } : undefined;
   return <div data-catalog-context-editor={context.templateKey} data-mascara-catalog={mascara || undefined}
     data-mascara-suggestions={question?.identity === "mascara-suggestions" || undefined} className={styles.nightEditor}>
+    <WorkshopNavigation contextId={context.contextOccurrenceId} />
     <p className={styles.helper}>Les informations restent liées à ce moment. La palette propose les postes compatibles ; seuls ces postes peuvent porter un coût.</p>
     {activeKey === null && <section className={styles.nightSection} data-catalog-summary><h3>{String(context.fields.label ?? "Votre intention")}</h3>
       <p>Choisissez uniquement la précision utile maintenant. Les autres informations restent inconnues.</p>
