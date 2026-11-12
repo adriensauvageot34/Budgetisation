@@ -15,16 +15,18 @@ import { PurchaseDelivery } from "./purchase-delivery";
 import { money } from "./display";
 import type { GuidedCatalogChoice } from "./catalog-discovery";
 import { EnablePurchaseBasket } from "./purchase-basket-editor";
+import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
 import styles from "./composer.module.css";
 
 /** One existing purchase item. No cart, product catalogue or new writer. */
-export function ClothingItemEditor({ context, card, model, busy, decide, close, catalogChoice }: {
+export function ClothingItemEditor({ context, card, model, busy, decide, close, catalogChoice, dismissedSuggestions, updateSuggestionDismissal }: {
   context: PlannedContextState; card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
   decide: (operation: ComposerOperation) => boolean; close: () => void;
   catalogChoice?: GuidedCatalogChoice;
-}) {
+} & SuggestionDismissal) {
   const item = clothingItem(context), writable = clothingItemWritable(model, context, card);
   const [row, setRow] = useState<Row | null>(null), [shipping, setShipping] = useState(false), [error, setError] = useState("");
+  const [showChoices, setShowChoices] = useState(false);
   const expected = useRef(""), opened = useRef(""), heading = useRef<HTMLHeadingElement>(null);
   const activeQuestion = useActiveWorkshopQuestion();
   const signature = canonicalPlannerJson([context, model.semanticState.targetMonth]);
@@ -63,13 +65,21 @@ export function ClothingItemEditor({ context, card, model, busy, decide, close, 
     setRow({ ...row, [key]: value, ...(key === "amount" ? { costMode: value.trim() ? "MANUAL" as const : "UNKNOWN" as const } : {}), edited: true });
   };
   const choice = (key: string, label: string, choose: () => void) => ({ key, label, choose, iconKey: "purchase" });
-  const question = { title: row ? "Cet article uniquement" : "Préparer cet achat de vêtement", choices: row ? [
+  const suggestions = writable && item ? [{
+    ...choice(`${context.contextOccurrenceId}:clothing:${item.selectionId}`,
+      item.cost.kind === "UNKNOWN" ? "Préciser le prix du vêtement" : "Modifier ce vêtement", edit),
+    hint: item.label + " · ligne existante", showHint: true,
+  }].filter(candidate => !dismissedSuggestions?.includes(candidate.key)) : [];
+  const useSuggestions = !row && !shipping && !showChoices && suggestions.length > 0;
+  const question = useSuggestions ? { title: "Suggestions pour ce vêtement", nature: "DECISION" as const, choices: suggestions }
+    : { title: row ? "Cet article uniquement" : "Préparer cet achat de vêtement", choices: row ? [
     choice("unknown", "Prix inconnu · Laisser à préciser", () => { if (row) setRow({ ...row, amount: "", costMode: "UNKNOWN", edited: true }); }),
     choice("summary", "Retour à la fiche", summary),
   ] : [ ...(writable ? [choice("edit", "Article · Modifier pour cet achat", edit)] : []),
     choice("fees", "Vendeur et livraison · Consulter cet achat", fees),
   ] };
   const panel = <aside className={styles.restaurantInspector} data-restaurant-editor data-purchase-editor data-clothing-editor
+    data-basket-suggestions={useSuggestions || undefined}
     role="dialog" aria-modal="false" aria-labelledby="clothing-heading" onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); close(); } }}>
     <header><h2 id="clothing-heading" ref={heading} tabIndex={-1}>{item?.label || "Article non renseigné"}</h2>
       <button type="button" onClick={close} aria-label="Fermer la fiche du vêtement">×</button></header>
@@ -87,6 +97,10 @@ export function ClothingItemEditor({ context, card, model, busy, decide, close, 
         {!writable && <p role="status">Lecture seule : la ligne ou ses capacités d’édition ne sont pas disponibles.</p>}
         {writable && <button type="button" disabled={busy} onClick={edit}>Modifier cet article</button>}
         <button type="button" disabled={busy} onClick={fees}>Vendeur, livraison et frais de cet achat</button>
+        {suggestions.length > 0 && <button type="button" aria-pressed={showChoices}
+          onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : "Tous les choix du vêtement"}</button>}
+        <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={suggestions} busy={busy}
+          dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />
       </section>}
       {row && (short ? <form className={styles.nightSection} data-clothing-item={row.id} onSubmit={event => { event.preventDefault(); save(); }}>
         <div className={styles.formFields}>

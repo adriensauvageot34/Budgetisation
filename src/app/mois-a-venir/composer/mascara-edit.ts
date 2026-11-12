@@ -8,6 +8,7 @@ import { componentId } from "@/domain/phase2/planner/identity";
 import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
 import type { PlanSemanticStateV1, PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import { publishedDrop } from "./interactions";
+import { rankDiscoveryCandidates } from "./catalog-discovery";
 
 export type MascaraProduct = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
 export const isMascaraContext = (context?: Pick<PlannedContextState, "templateKey" | "fields">) =>
@@ -18,7 +19,7 @@ export function mascaraEquipment(model: ComposerUiModel, state: PlanSemanticStat
   const context = state.contexts.find(item => item.contextOccurrenceId === contextOccurrenceId);
   const card = model.board.contexts.find(item => item.contextOccurrenceId === contextOccurrenceId);
   const locked = (id: string) => state.preferences.anchors.includes(id) || state.preferences.flexibility[id] === "PRESERVE";
-  if (!context || !isMascaraContext(context) || !card || !isMascaraContext(card) || card.readOnly
+  if (!context || context.status !== "ACTIVE" || !isMascaraContext(context) || !card || !isMascaraContext(card) || card.readOnly
     || !card.capabilityRefs.includes("PATCH_CONTEXT") || locked(contextOccurrenceId)) return undefined;
   const socket = card.sockets.find(item => item.slotKey === "products" && item.contextOccurrenceId === contextOccurrenceId);
   const assetKey = "option:beauty-restock:products:product";
@@ -29,9 +30,43 @@ export function mascaraEquipment(model: ComposerUiModel, state: PlanSemanticStat
   const items = (context.slotSelections.products?.items ?? []) as readonly ComponentSelectionV1[];
   const selection = items.find((item): item is MascaraProduct =>
     item.kind === "COMPONENT" && item.optionKey === "product" && item.selectionId === expected?.selectionId);
-  if (expected && (!selection || locked(componentId(contextOccurrenceId, "products", expected.selectionId))
+  if (expected && (!selection || !socket.currentItems.some(item => item.kind === "COMPONENT" && item.selectionId === expected.selectionId)
+    || locked(componentId(contextOccurrenceId, "products", expected.selectionId))
     || canonicalPlannerJson(selection) !== canonicalPlannerJson(expected))) return undefined;
   return { asset, target, items, selection };
+}
+
+export function mascaraSuggestions(context: PlannedContextState, model: ComposerUiModel) {
+  const id = context.contextOccurrenceId;
+  const owner = mascaraEquipment(model, model.semanticState, id);
+  if (!owner) return [];
+  const products = owner.items.filter((item): item is MascaraProduct => item.kind === "COMPONENT" && item.optionKey === "product");
+  const editable = products.flatMap(product => {
+    const route = mascaraEquipment(model, model.semanticState, id, product);
+    return route ? [{ product, route }] : [];
+  });
+  const candidates = editable.map(({ product, route }) => ({
+    key: id + ":mascara:product:" + product.selectionId, label: product.cost.kind === "UNKNOWN" ? "Préciser le prix du produit" : "Modifier prix et quantité",
+    hint: product.label + (products.length > 1 ? " · Poste " + (products.indexOf(product) + 1) : ""),
+    tiers: [product.cost.kind === "UNKNOWN" ? 0 : 1], route,
+  }));
+  const actions = candidates.map(candidate => ({ ...candidate, kind: "PRODUCT" as const }));
+  const add = !products.length ? [{
+    key: id + ":mascara:add", label: "Préciser le produit", hint: "Produit et quantité à renseigner · éditeur",
+    tiers: [0], route: owner, kind: "PRODUCT" as const,
+  }] : [];
+  const needs = model.editors.find(editor => editor.assetKey === owner.asset.assetKey)?.fields.find(field => field.key === "needOccurrenceId")?.choices ?? [];
+  const renewals = products.flatMap(product => {
+    if (!product.needOccurrenceId) return [];
+    const need = needs.find(choice => choice.value === product.needOccurrenceId);
+    return need ? [{
+      key: id + ":mascara:need:" + product.selectionId + ":" + need.value, label: "Consulter le besoin lié",
+      hint: product.label + " · besoin publié", tiers: [2], kind: "NEED" as const, caption: need.label,
+    }] : [];
+  });
+  return rankDiscoveryCandidates([...add, ...actions, ...renewals]).map(candidate => ({
+    ...candidate, iconKey: "mascara", catalogAssetKey: "beauty:mascara",
+  }));
 }
 
 export function editMascaraPriceAndQuantity(selection: MascaraProduct, quantityInput: string, priceInput: string, priceMode: MascaraProduct["cost"]["kind"]) {

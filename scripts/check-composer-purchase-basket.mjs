@@ -13,6 +13,8 @@ const { manifestContextRegistry } = require("@/server/phase2/planner/context-reg
 const { semanticStateDigest } = require("@/domain/phase2/planner/semantic-state");
 const { plannerDigest } = require("@/domain/phase2/planner/json");
 const { stageLocalDecision } = require("@/app/mois-a-venir/composer/local-draft");
+const { purchaseSuggestions } = require("@/app/mois-a-venir/composer/purchase-suggestions");
+const { componentId } = require("@/domain/phase2/planner/identity");
 const collection = JSON.parse(fs.readFileSync("public/planned-visuals/builder/clay/v22/collection.json", "utf8"));
 const concept = label => {
   const entry = collection.entries.find(item => item.label === label && item.discovery.sourceRow);
@@ -42,12 +44,15 @@ const article = (id, selectionId, label, quantity, price, unit = "UNIT", ref = c
   edit(id, { kind: "SAVE_ITEM", selectionId, label, quantity, price, unit, concept: ref });
 const ids = id => context(id).slotSelections.item.items.map(item => item.selectionId);
 const summary = id => card(id).purchaseSummary;
+const suggestions = id => purchaseSuggestions(context(id), card(id), model);
 
 try {
   const amazon = uuid(21001), mascara = uuid(21002), shampoo = uuid(21003), shirt = uuid(21004), fee = uuid(21005);
   await apply({ kind: "READ" });
   const initial = model;
   await create(amazon, "amazon-purchase", true);
+  assert(suggestions(amazon).some(candidate => candidate.kind === "ADD"));
+  assert(!suggestions(amazon).some(candidate => candidate.kind === "ITEM"));
   const first = operation(amazon, { kind: "SAVE_ITEM", selectionId: mascara, label: "Mascara", quantity: "1", price: "12", unit: "UNIT", concept: concept("Mascara") });
   assert.ok(stageLocalDecision(initial, draft, first), "Un premier article peut être conservé avant le retour de la projection");
   await article(amazon, mascara, "Mascara", "1", "12");
@@ -57,11 +62,16 @@ try {
   assert.deepEqual(summary(amazon), { articleCount: 3, knownAmount: "48.00", complete: false });
   await edit(amazon, { kind: "SET_DELIVERY", mode: "DELIVERY", coverage: "INCLUDED" });
   assert.deepEqual(summary(amazon), { articleCount: 3, knownAmount: "48.00", complete: true });
+  assert.equal(suggestions(amazon).find(candidate => candidate.kind === "DELIVERY").hint, "Livraison comprise");
+  assert.equal(context(amazon).slotSelections.shipping.items.length, 0);
   await edit(amazon, { kind: "SET_DELIVERY", mode: "DELIVERY", coverage: "ADDITIONAL", selectionId: fee, price: "5" });
   assert.equal(summary(amazon).knownAmount, "53.00");
+  assert.deepEqual(suggestions(amazon).find(candidate => candidate.kind === "DELIVERY").selectionIds, [fee]);
   const stale = operation(amazon, { kind: "REMOVE_ITEM", selectionId: shirt });
   await article(amazon, shampoo, "Shampoing", "2", "9");
   assert.deepEqual(ids(amazon), [mascara, shampoo, shirt]);
+  assert.equal(summary(amazon).knownAmount, "55.00");
+  assert.equal(context(amazon).slotSelections.item.items[1].quantity, "2");
   const refused = await call(stale);
   assert.equal(refused.ok, false);
   assert.equal(refused.code, "PURCHASE_BASKET_CHANGED");
@@ -70,6 +80,13 @@ try {
   assert.equal(context(amazon).slotSelections.shipping.items[0].selectionId, fee);
   assert.equal(context(amazon).fields.merchantLabel, "Amazon");
   await article(amazon, uuid(21006), "Shampoing", "1", "");
+  const homonyms = suggestions(amazon).find(candidate => candidate.kind === "CHOOSE_ITEM");
+  assert.deepEqual(homonyms.selectionIds, [shampoo, uuid(21006)]);
+  const protectedModel = { ...model, semanticState: { ...draft,
+    preferences: { ...draft.preferences, anchors: [componentId(amazon, "item", shampoo), componentId(amazon, "item", uuid(21006))] } } };
+  assert(!purchaseSuggestions(context(amazon), card(amazon), protectedModel).some(candidate => candidate.kind === "CHOOSE_ITEM"));
+  const withoutShipping = { ...card(amazon), sockets: card(amazon).sockets.filter(socket => socket.slotKey !== "shipping") };
+  assert(!purchaseSuggestions(context(amazon), withoutShipping, model).some(candidate => candidate.kind === "DELIVERY"));
   assert.equal(summary(amazon).knownAmount, "43.00");
   assert.equal(summary(amazon).complete, false);
   await edit(amazon, { kind: "SAVE_ITEM", selectionId: uuid(21007), label: "Pack de six bouteilles", quantity: "1", price: "10", unit: "PACK" });
@@ -97,11 +114,28 @@ try {
   assert.equal(card(historical).sockets.find(socket => socket.slotKey === "item").cardinality, "REPEATING");
   console.log("Compatibilité historique et passage explicite : PASS");
 
+  const clothing = uuid(21101), tee1 = uuid(21102), jeans = uuid(21103), tee2 = uuid(21104);
+  await create(clothing, "clothing-shopping", true);
+  assert.match(suggestions(clothing).find(candidate => candidate.kind === "ADD").label, /vêtement/);
+  await article(clothing, tee1, "T-shirt noir", "2", "8", "UNIT", concept("T-shirt"));
+  await edit(clothing, { kind: "SAVE_ITEM", selectionId: jeans, label: "Jean", quantity: "1", price: "20", unit: "UNIT" });
+  await article(clothing, tee2, "T-shirt noir", "1", "", "UNIT", concept("T-shirt"));
+  assert.deepEqual(suggestions(clothing).find(candidate => candidate.kind === "CHOOSE_ITEM").selectionIds, [tee1, tee2]);
+  const beforeClothing = structuredClone(context(clothing).slotSelections.item.items);
+  await article(clothing, tee2, "T-shirt noir", "1", "5", "UNIT", concept("T-shirt"));
+  assert.deepEqual(context(clothing).slotSelections.item.items.slice(0, 2), beforeClothing.slice(0, 2));
+  assert.equal(summary(clothing).knownAmount, "41.00");
+  await edit(clothing, { kind: "REMOVE_ITEM", selectionId: tee2 });
+  assert.deepEqual(context(clothing).slotSelections.item.items, beforeClothing.slice(0, 2));
+  assert.equal(summary(clothing).knownAmount, "36.00");
+  console.log("Vêtements, prix inconnu et édition/retrait ciblés : PASS");
+
   const groceries = uuid(21012), pastas = uuid(21013), milk = uuid(21014), bread = uuid(21015);
   const groceriesSlot = world.baseline.slots.find(slot => slot.semanticKey === "groceries");
   assert.ok(groceriesSlot);
   const budgetBefore = draft.controls;
   await create(groceries, "groceries-purchase");
+  assert.equal(suggestions(groceries).find(candidate => candidate.kind === "ADD").label, "Ajouter le premier produit");
   await article(groceries, pastas, "Pâtes alimentaires", "2", "1,50");
   await article(groceries, milk, "Lait", "3", "1,20");
   await article(groceries, bread, "Pain", "1", "1,40");
@@ -116,6 +150,16 @@ try {
   const covered = await effects();
   assert.ok(covered.length === 3 && covered.every(effect => effect.slotRelation === "CONSUMES_SLOT" && Number(effect.incrementalAmount) === 0));
   assert.deepEqual(draft.controls, budgetBefore);
+  await edit(groceries, { kind: "SET_DETAILS", merchant: "Épicerie de recette", date: "", coverage: "EXTRA_TO_SLOT" });
+  const independent = await effects();
+  assert.ok(independent.length === 3 && independent.every(effect => effect.slotRelation === "EXTRA_TO_SLOT"));
+  assert.equal(summary(groceries).knownAmount, "8.00");
+  const secondMilk = uuid(21018);
+  await article(groceries, secondMilk, "Lait", "1", "");
+  assert.deepEqual(suggestions(groceries).find(candidate => candidate.kind === "CHOOSE_ITEM").selectionIds, [milk, secondMilk]);
+  assert.equal(summary(groceries).knownAmount, "8.00");
+  await edit(groceries, { kind: "REMOVE_ITEM", selectionId: secondMilk });
+  assert.deepEqual(ids(groceries), [pastas, milk, bread]);
   const rejected = await call(operation(groceries, { kind: "SAVE_ITEM", selectionId: uuid(21016), label: "Verre de vin",
     quantity: "1", price: "5", unit: "UNIT", concept: concept("Verre de vin") }));
   assert.equal(rejected.ok, false);

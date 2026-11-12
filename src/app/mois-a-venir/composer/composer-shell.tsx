@@ -1102,7 +1102,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         ? <CatalogContextEditor key={workshopKey(editor.catalogContextId)} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)!}
           editor={{ assetKey: editor.cardKey ?? "", fields: editor.fields }} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons}
           options={model.mobilityOptions} knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} model={shown} dockHost={nightDockHost} choose={stableChoose} placeDeclines={placeDeclines} declinePlace={declinePlace} onCancel={closeDialog}
-           onSave={stage} focusSelectionId={editor.catalogSelectionId} />
+           onSave={stage} focusSelectionId={editor.catalogSelectionId}
+           dismissedSuggestions={dismissedSuggestions[editor.catalogContextId]} updateSuggestionDismissal={updateSuggestionDismissal} />
         : editor?.equipment?.asset.optionKind === "COMPONENT" && !editor.saved ? <EquipmentComponentEditor key={editor.equipment.mascara
           ? `${editor.equipment.target.contextOccurrenceId}:${editor.equipment.selection?.selectionId ?? "new"}` : editor.cardKey??editor.equipment.asset.assetKey}
           asset={editor.equipment.asset} target={editor.equipment.target} model={shown} knowledge={model.cardKnowledge[editor.cardKey??""]} values={editor.values} host={nightDockHost} busy={busy}

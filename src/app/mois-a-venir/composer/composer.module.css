@@ -55,6 +55,11 @@
 .cinemaSuggestionSettings { margin-top:14px; }
 .cinemaSuggestionSettings summary { cursor:pointer; }
 .cinemaSuggestionSettings button { display:block; margin-top:6px; text-align:left; }
+.suggestionControls { margin-block:8px; }
+.suggestionControls summary { cursor:pointer; }
+.suggestionControls button { display:block; margin-top:6px; text-align:left; overflow-wrap:anywhere; }
+.restaurantInspector[data-basket-suggestions] { bottom:214px; }
+body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestions]) .board .questionPalette[data-dock-nature="DECISION"] .paletteOptions { height:auto; }
 .purchaseDelivery { display:grid; gap:10px; }
 .purchaseDelivery h4,.purchaseDelivery p { margin:0; }
 .purchaseDelivery > button { text-align:left; }
@@ -64,6 +69,14 @@
   body:has(.restaurantInspector[data-purchase-editor]) .board .paletteDock {
     position:fixed; inset:auto 12px 12px; width:auto; margin:0; z-index:21;
   }
+}
+@media (max-width:760px) {
+  body:has(.restaurantInspector[data-purchase-basket], .restaurantInspector[data-basket-suggestions], .dialog[open] [data-mascara-suggestions]) .board .paletteDock {
+    position:fixed; inset:auto 12px 12px; width:auto; height:auto; margin:0; z-index:21;
+  }
+  body:has(.restaurantInspector[data-purchase-basket]) .restaurantInspector[data-purchase-basket] { inset:12px 12px 170px; width:auto; }
+  body:has(.restaurantInspector[data-basket-suggestions]) .restaurantInspector[data-basket-suggestions] { bottom:212px; }
+  .dialog[data-night-workshop-panel=true]:has([data-mascara-suggestions]) { max-height:calc(100dvh - 212px); }
 }
 .restaurantReference { padding:8px; background:#f7f2e9; border-radius:10px; }
 .restaurantReference small { display:block; }
