@@ -13,6 +13,7 @@ const {parsePlanSemanticState}=require('@/domain/phase2/planner/semantic-state')
 const {evaluatePlanScenario}=require('@/server/phase2/planner/preview');
 const {EquipmentComponentEditor,componentEditorValues}=require('@/app/mois-a-venir/composer/equipment-component-editor');
 const {fresh,buildComponentRow}=require('@/app/mois-a-venir/composer/night-out-components');
+const {mascaraSuggestions,editMascaraPriceAndQuantity}=require('@/app/mois-a-venir/composer/mascara-edit');
 const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
 let remote=0;globalThis.fetch=async()=>{remote++;throw Error('A1_REMOTE_FORBIDDEN');};
 const f=await readMonthFixture(),worldBefore=JSON.stringify(f.world),checks=[];let sequence=0;
@@ -23,7 +24,7 @@ const id=uuid(92001),otherId=uuid(92002),selectionId=uuid(92003);
 const drop={kind:'DROP',assetKey:'template:beauty-restock',presetKey:'mascara',target:{kind:'BOARD_ZONE'},values:{},identity:id,selectionId:uuid(92004)};
 let model=f.model;
 await run('A1-01-SEARCH-ONE-EXPLICIT-MASCARA-PRESET',()=>{
- const matches=filterLibraryIntentions(composerLibraryIndex(model).intentions,'mascara');
+ const matches=filterLibraryIntentions(composerLibraryIndex(model).intentions,'mascara').filter(match=>match.asset.templateKey==='beauty-restock');
  assert.equal(matches.length,1);assert.equal(matches[0].preset.presetKey,'mascara');assert.equal(matches[0].asset.templateKey,'beauty-restock');
 });
 await run('A1-02-ONE-CONTEXT-LOCAL-SERVER-PARITY-NO-ADOPTED-PRICE',async()=>{
@@ -31,6 +32,7 @@ await run('A1-02-ONE-CONTEXT-LOCAL-SERVER-PARITY-NO-ADOPTED-PRICE',async()=>{
  assert.equal(model.semanticState.contexts.length,1);const c=model.semanticState.contexts[0];assert.equal(c.contextOccurrenceId,id);
  assert.equal(presetForContext(c).presetKey,'mascara');assert.deepEqual(c.slotSelections,{});assert.equal(c.fields.productLabel,undefined);
  assert.equal(c.fields.participantRefs,undefined);assert.equal(model.cardKnowledge['template:beauty-restock'].dimensions[0].value,null);
+ const suggestions=mascaraSuggestions(c,model);assert.equal(suggestions.length,1);assert.equal(suggestions[0].label,'Préciser le produit');
 });
 await run('A1-03-REPLAY-NEVER-DUPLICATES-IDENTITY',async()=>{
  const replay=await request(model,drop);if(replay.ok)assert.equal(replay.model.semanticState.contexts.filter(c=>c.contextOccurrenceId===id).length,1);
@@ -57,6 +59,12 @@ await run('A1-07-PRODUCT-UNKNOWN-ONE-SELECTION',async()=>{
  values:{label:'Synthetic mascara',quantity:'1',unitBasis:'ITEM',costMode:'UNKNOWN',amount:'',funding:'',fundingAmount:'',binding:'AUTO'}}));
  const items=model.semanticState.contexts.find(c=>c.contextOccurrenceId===id).slotSelections.products.items;
  assert.equal(items.length,1);assert.equal(items[0].selectionId,selectionId);assert.equal(items[0].cost.kind,'UNKNOWN');
+ const c=model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
+ const suggestions=mascaraSuggestions(c,model);
+ assert.equal(suggestions.length,1);assert.equal(suggestions[0].route.selection.selectionId,selectionId);
+ assert.equal(suggestions[0].label,'Préciser le prix du produit');
+ const missingRoute={...model,dropCapabilities:model.dropCapabilities.filter(drop=>drop.target.contextOccurrenceId!==id)};
+ assert.deepEqual(mascaraSuggestions(c,missingRoute),[]);
  const preview=evaluatePlanScenario(f.world,model.semanticState,{expectedActiveRevisionId:null,expectedActiveRevisionNumber:0});
  assert.equal(preview.compiled.components.find(c=>c.contextOccurrenceId===id).evaluation.economicAmount,null);
 });
@@ -70,9 +78,12 @@ await run('A1-08-EXPLICIT-ZERO-IS-NOT-UNKNOWN-IDENTITY-PRESERVED',async()=>{
 });
 await run('A1-09-PRODUCT-NAME-QUANTITY-PRICE-EDITS-ONLY-OWN-SELECTION',async()=>{
  const c=model.semanticState.contexts.find(c=>c.contextOccurrenceId===id),item=c.slotSelections.products.items[0],other=structuredClone(model.semanticState.contexts.find(c=>c.contextOccurrenceId===otherId));
- model=ok(await request(model,{kind:'MUTATE',mutation:{kind:'PATCH_CONTEXT',contextOccurrenceId:id,slotKey:'products',items:[{...item,label:'Synthetic named product',quantity:'2',cost:{kind:'MANUAL',unitAmount:'12.50'}}]}}));
+ const priced=editMascaraPriceAndQuantity(item,'2','12,50','MANUAL');
+ model=ok(await request(model,{kind:'MUTATE',mutation:{kind:'PATCH_CONTEXT',contextOccurrenceId:id,slotKey:'products',items:[{...priced,label:'Synthetic named product'}]}}));
  const updated=model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);assert.equal(updated.slotSelections.products.items.length,1);
  assert.equal(updated.slotSelections.products.items[0].selectionId,selectionId);assert.deepEqual(updated.fields,c.fields);
+ assert.equal(updated.slotSelections.products.items[0].needOccurrenceId,undefined);
+ assert.equal(mascaraSuggestions(updated,model)[0].label,'Modifier prix et quantité');
  assert.deepEqual(model.semanticState.contexts.find(c=>c.contextOccurrenceId===otherId),other);
  const preview=evaluatePlanScenario(f.world,model.semanticState,{expectedActiveRevisionId:null,expectedActiveRevisionNumber:0});
  assert.equal(preview.compiled.components.find(c=>c.contextOccurrenceId===id).evaluation.economicAmount,'25.00');
@@ -82,6 +93,19 @@ await run('A1-10-INVALID-PRICE-AND-QUANTITY-REFUSED',async()=>{
  for(const changed of [{...item,quantity:'0'},{...item,cost:{kind:'MANUAL',unitAmount:'-1'}}]){
   const bad=await request(model,{kind:'MUTATE',mutation:{kind:'PATCH_CONTEXT',contextOccurrenceId:id,slotKey:'products',items:[changed]}});assert.equal(bad.ok,false);
  }
+});
+await run('A1-S01-CONSULT-ONLY-AN-EXISTING-PUBLISHED-NEED',()=>{
+ const linked=structuredClone(model),context=linked.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
+ const needId=uuid(92901);
+ context.slotSelections.products.items[0].needOccurrenceId=needId;
+ assert(!mascaraSuggestions(context,linked).some(candidate=>candidate.kind==='NEED'));
+ const editor=linked.editors.find(e=>e.assetKey==='option:beauty-restock:products:product');
+ const needs=editor.fields.find(field=>field.key==='needOccurrenceId');
+ assert(needs);
+ needs.choices.push({value:needId,label:'Besoin synthétique publié'});
+ const before=JSON.stringify(linked);
+ assert.equal(mascaraSuggestions(context,linked).find(candidate=>candidate.kind==='NEED')?.caption,'Besoin synthétique publié');
+ assert.equal(JSON.stringify(linked),before);
 });
 await run('A1-11-REFERENCE-PRICE-DOES-NOT-PREFILL-OR-ADOPT-ITSELF',()=>{
  const dim=model.cardKnowledge['template:beauty-restock'].dimensions[0];

@@ -16,7 +16,9 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette, PaletteQuestion } from "./context-palette";
-import { isMascaraContext, mascaraEquipment } from "./mascara-edit";
+import { isMascaraContext, mascaraEquipment, mascaraSuggestions } from "./mascara-edit";
+import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
+import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
 import { money } from "./display";
 import styles from "./composer.module.css";
@@ -30,7 +32,7 @@ const participants = (value: PlannerJson | undefined): ProspectivePersonRef[] =>
   ? value.flatMap(item => person(item) ? [person(item)!] : []) : [];
 
 /** Edits only published context fields. Equipment remains attached through its R6 sockets. */
-export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, focusSelectionId, placeDeclines = [], declinePlace = () => {}, onSave, onCancel }: {
+export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, focusSelectionId, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, dismissedSuggestions, updateSuggestionDismissal }: {
   context: PlannedContextState; editor: ComposerEditor; targetMonth: string;
   householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
   knowledge?: CardKnowledgeRead;
@@ -38,12 +40,12 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   model: ComposerUiModel; dockHost?: HTMLElement | null; choose: Parameters<typeof ContextPalette>[0]["choose"];
   focusSelectionId?: string;
   busy: boolean; onSave: (operation: ComposerOperation) => boolean; onCancel: () => void;
-}) {
+} & SuggestionDismissal) {
   const [values, setValues] = useState<Values>(() => Object.fromEntries(editor.fields.map(field => [field.key, context.fields[field.key] ?? null])) as Values);
   const [query,setQuery]=useState("");
   const [error, setError] = useState("");
   const acceptedValues = useRef(values), initialValues = acceptedValues.current;
-  useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(values) !== JSON.stringify(initialValues), () => {
+  const leaveRaw = useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(values) !== JSON.stringify(initialValues), () => {
     setValues(initialValues); setError("");
   });
   const [activeKey, setActiveKey] = useState<string | null>(null);
@@ -65,6 +67,17 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     return { asset, target, selection };
   };
   const mascara = isMascaraContext(context);
+  const [showChoices, setShowChoices] = useState(false);
+  const [needKey, setNeedKey] = useState<string | null>(null);
+  const suggestions = mascara ? mascaraSuggestions(context, model) : [];
+  const ranked = suggestions.filter(candidate => !dismissedSuggestions?.includes(candidate.key)).slice(0, 4);
+  const activeNeed = suggestions.find(candidate => candidate.kind === "NEED" && candidate.key === needKey);
+  const openMascaraSuggestion = useCommittedEvent((key: string) => {
+    if (busy) return;
+    const suggestion = suggestions.find(candidate => candidate.key === key);
+    if (suggestion?.kind === "NEED") setNeedKey(key);
+    if (suggestion?.kind === "PRODUCT") choose(suggestion.route.asset, suggestion.route.target, suggestion.route.selection);
+  });
   const [summaryTab, setSummaryTab] = useState<"fields" | "posts">(posts.length ? "posts" : "fields");
   const [postPage, setPostPage] = useState(() => focusSelectionId
     ? Math.floor(Math.max(0, posts.findIndex(({ item }) => item.selectionId === focusSelectionId)) / 3) : 0);
@@ -132,11 +145,27 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       tile("free","Autre personne",()=>update(selectedField.key,{kind:"TEXT",label:""})),tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}
     :selectedField?.kind==="PLACE_REF"?{title:selectedField.label,search:{value:query,change:setQuery,label:"Rechercher un lieu connu"},choices:[
       ...(options?.places??[]).filter(p=>match(p.name)).map(p=>tile(p.placeId,p.name,()=>update(selectedField.key,{kind:"KNOWN",placeId:p.placeId}))),
-      tile("free","Autre destination",()=>update(selectedField.key,{kind:"TEXT",label:"",provenance:"USER_DECLARED_PROSPECTIVE"})),tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}:undefined;
-  return <div data-catalog-context-editor={context.templateKey} data-mascara-catalog={mascara || undefined} className={styles.nightEditor}>
+      tile("free","Autre destination",()=>update(selectedField.key,{kind:"TEXT",label:"",provenance:"USER_DECLARED_PROSPECTIVE"})),tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}
+    : activeKey === null && mascara && !showChoices && !activeNeed && ranked.length ? {
+      title: "Suggestions pour ce mascara", nature: "DECISION", identity: "mascara-suggestions",
+      choices: ranked.map(candidate => ({ ...candidate, showHint: true, choose: () => {
+        const open = () => openMascaraSuggestion(candidate.key);
+        if (leaveRaw(open)) open();
+      } })),
+    } : undefined;
+  return <div data-catalog-context-editor={context.templateKey} data-mascara-catalog={mascara || undefined}
+    data-mascara-suggestions={question?.identity === "mascara-suggestions" || undefined} className={styles.nightEditor}>
     <p className={styles.helper}>Les informations restent liées à ce moment. La palette propose les postes compatibles ; seuls ces postes peuvent porter un coût.</p>
     {activeKey === null && <section className={styles.nightSection} data-catalog-summary><h3>{String(context.fields.label ?? "Votre intention")}</h3>
       <p>Choisissez uniquement la précision utile maintenant. Les autres informations restent inconnues.</p>
+      {activeNeed?.kind === "NEED" && <section aria-label="Besoin de renouvellement lié">
+        <p>{activeNeed.caption}</p>
+        <button type="button" onClick={() => setNeedKey(null)}>Retour aux suggestions</button>
+      </section>}
+      {mascara && !activeNeed && ranked.length > 0 && <button type="button" aria-pressed={showChoices}
+        onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : "Tous les choix du mascara"}</button>}
+      {mascara && !activeNeed && <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={busy}
+        dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
       {!!posts.length && <nav className={styles.nightNav} aria-label="Résumé de l’intention"><button type="button" aria-pressed={summaryTab === "fields"} onClick={() => setSummaryTab("fields")}>Informations</button><button type="button" aria-pressed={summaryTab === "posts"} onClick={() => setSummaryTab("posts")}>Postes ({posts.length})</button></nav>}
       {summaryTab === "fields" && editor.fields.slice(summaryPage * 3, summaryPage * 3 + 3).map(field => <button key={field.key} type="button" onClick={() => setActiveKey(field.key)}>
         {field.label} · {typeof values[field.key] === "string" || typeof values[field.key] === "number" ? String(values[field.key] || "À préciser") : values[field.key] ? "Choix conservé" : "À préciser"}</button>)}
