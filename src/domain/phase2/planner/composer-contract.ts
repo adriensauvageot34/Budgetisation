@@ -7,6 +7,7 @@ import type { PlanScenarioPreview } from "./compiler-contract";
 import type { ComponentSelectionV1, ComponentSlotDefinition } from "./component-contract";
 import type { SemanticMutation, AdjustmentCapability } from "./adjustment-contract";
 import type { BaselineStructuralFact } from "./baseline-contract";
+import type { FundingSource } from "../planned-contract";
 export type ComposerAssetView = Readonly<{ assetKey: string; kind: "CONTEXT_ASSET" | "SLOT_OPTION_ASSET" | "PLAN_CONTROL" | "RESERVATION_CONTROL";
   label: string; iconKey: string; capabilityRef: string; provenance: "STRUCTURAL_DEFAULT" | "PERSONAL_SUGGESTION" | "EXPLICIT_USER_DECISION" | "DERIVED_CONSEQUENCE";
   templateKey?: string; optionKey?: string; optionKind?: "COMPONENT" | "MOBILITY_INTENT" }>;
@@ -35,7 +36,25 @@ export type DropTarget = Readonly<{ kind: "BOARD_ZONE" | "CONTEXT_SOCKET" | "TRA
 export type DropCapability = Readonly<{ sourceAssetKey: string; target: DropTarget; resolution: "ACCEPTED" | "NEEDS_CHOICE" | "BLOCKED";
   semanticAction: "ADD_CONTEXT" | "PATCH_CONTEXT" | "REMOVE_CONTEXT" | null; previewSupported: boolean; constraint: string | null; choices: readonly string[] }>;
 export type DropResolution = Readonly<{ capability: DropCapability; semanticMutation: SemanticMutation | null }>;
+/** Read-only presentation of the Compiler's evaluated components, scoped to one intention. */
+export type ComposerIntentImpact = Readonly<{
+  gross: string | null;
+  knownSubtotal: string | null;
+  displaced: string | null;
+  incremental: string | null;
+  groceriesCoverage: "ABSENT" | "UNRESOLVED" | "CONFIRM" | "COVERED" | "PARTIAL" | "EXHAUSTED" | "EXTRA" | null;
+  plannedPosts: readonly string[];
+  declaredFundingSources: readonly FundingSource[];
+  hasChildren: boolean;
+}>;
+export type ComposerBudgetReading = Readonly<{
+  semanticStateDigest: string;
+  byContext: Readonly<Record<string, ComposerIntentImpact>>;
+  missingMonthlyDeclarations: readonly ("Swile" | "Edenred")[];
+  missingSalaryForecasts: readonly string[];
+}>;
 export type MonthComposerReadModel = Readonly<{ version: string; semanticState: PlanSemanticStateV1;
   library: ComposerLibraryView; board: ComposerBoardView; dropCapabilities: readonly DropCapability[];
   cardKnowledge: Readonly<Record<string, CardKnowledgeRead>>;
+  budgetReading?: ComposerBudgetReading;
   preview: PlanScenarioPreview; activeRevisionId: string | null; activeRevisionNumber: number }>;

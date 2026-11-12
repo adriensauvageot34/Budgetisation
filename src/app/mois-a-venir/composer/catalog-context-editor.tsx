@@ -18,6 +18,7 @@ import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette, PaletteQuestion } from "./context-palette";
 import { isMascaraContext, mascaraEquipment, mascaraSuggestions } from "./mascara-edit";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
+import { IntentBudgetImpact } from "./intent-budget-impact";
 import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
 import { money } from "./display";
@@ -166,6 +167,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : "Tous les choix du mascara"}</button>}
       {mascara && !activeNeed && <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={busy}
         dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
+      {mascara && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {!!posts.length && <nav className={styles.nightNav} aria-label="Résumé de l’intention"><button type="button" aria-pressed={summaryTab === "fields"} onClick={() => setSummaryTab("fields")}>Informations</button><button type="button" aria-pressed={summaryTab === "posts"} onClick={() => setSummaryTab("posts")}>Postes ({posts.length})</button></nav>}
       {summaryTab === "fields" && editor.fields.slice(summaryPage * 3, summaryPage * 3 + 3).map(field => <button key={field.key} type="button" onClick={() => setActiveKey(field.key)}>
         {field.label} · {typeof values[field.key] === "string" || typeof values[field.key] === "number" ? String(values[field.key] || "À préciser") : values[field.key] ? "Choix conservé" : "À préciser"}</button>)}

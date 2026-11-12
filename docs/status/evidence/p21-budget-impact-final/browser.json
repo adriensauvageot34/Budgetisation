@@ -1,0 +1,304 @@
+{
+  "sourceBase": "1b4503e88db63dbd7132dca1cc07ed625e52379e",
+  "cssSha256": "7b9bb5f0693b7399f7fa75b3c84b2e9f141ed34bb3ed257cb6de1d0da2989937",
+  "browser": "Chrome 157.0.8103.40",
+  "driver": "playwright-core 1.64.0",
+  "scope": "SYNTHETIC_LOCAL_BROWSER",
+  "temporaryProfile": true,
+  "cases": [
+    {
+      "asset": "courses",
+      "viewport": [
+        1280,
+        720
+      ],
+      "status": "PASS",
+      "amounts": [
+        "8,00 €",
+        "5,00 €",
+        "3,00 €"
+      ],
+      "documentWidth": 1280,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 24,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "amazon",
+      "viewport": [
+        1280,
+        720
+      ],
+      "status": "PASS",
+      "amounts": [
+        "48,00 €",
+        "0,00 €",
+        "48,00 €"
+      ],
+      "documentWidth": 1280,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 24,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "restaurant",
+      "viewport": [
+        1280,
+        720
+      ],
+      "status": "PASS",
+      "amounts": [
+        "40,00 €",
+        "0,00 €",
+        "40,00 €"
+      ],
+      "documentWidth": 1280,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 9,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "cinema",
+      "viewport": [
+        1280,
+        720
+      ],
+      "status": "PASS",
+      "amounts": [
+        "16,00 €",
+        "0,00 €",
+        "16,00 €"
+      ],
+      "documentWidth": 1280,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 4.5,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "weekend",
+      "viewport": [
+        1280,
+        720
+      ],
+      "status": "PASS",
+      "amounts": [
+        "208,00 €",
+        "0,00 €",
+        "208,00 €"
+      ],
+      "documentWidth": 1280,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 37,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "vetements",
+      "viewport": [
+        1280,
+        720
+      ],
+      "status": "PASS",
+      "amounts": [
+        "À préciser",
+        "À préciser",
+        "À préciser"
+      ],
+      "documentWidth": 1280,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 4.5,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "mascara",
+      "viewport": [
+        1280,
+        720
+      ],
+      "status": "PASS",
+      "amounts": [
+        "12,50 €",
+        "0,00 €",
+        "12,50 €"
+      ],
+      "documentWidth": 1280,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 37,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "courses",
+      "viewport": [
+        390,
+        844
+      ],
+      "status": "PASS",
+      "amounts": [
+        "8,00 €",
+        "5,00 €",
+        "3,00 €"
+      ],
+      "documentWidth": 390,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 41,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "amazon",
+      "viewport": [
+        390,
+        844
+      ],
+      "status": "PASS",
+      "amounts": [
+        "48,00 €",
+        "0,00 €",
+        "48,00 €"
+      ],
+      "documentWidth": 390,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 41,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "restaurant",
+      "viewport": [
+        390,
+        844
+      ],
+      "status": "PASS",
+      "amounts": [
+        "40,00 €",
+        "0,00 €",
+        "40,00 €"
+      ],
+      "documentWidth": 390,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 26,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "cinema",
+      "viewport": [
+        390,
+        844
+      ],
+      "status": "PASS",
+      "amounts": [
+        "16,00 €",
+        "0,00 €",
+        "16,00 €"
+      ],
+      "documentWidth": 390,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 9.5,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "weekend",
+      "viewport": [
+        390,
+        844
+      ],
+      "status": "PASS",
+      "amounts": [
+        "208,00 €",
+        "0,00 €",
+        "208,00 €"
+      ],
+      "documentWidth": 390,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 14,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "vetements",
+      "viewport": [
+        390,
+        844
+      ],
+      "status": "PASS",
+      "amounts": [
+        "À préciser",
+        "À préciser",
+        "À préciser"
+      ],
+      "documentWidth": 390,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 21.5,
+      "labelsSeparated": true,
+      "digestStable": true
+    },
+    {
+      "asset": "mascara",
+      "viewport": [
+        390,
+        844
+      ],
+      "status": "PASS",
+      "amounts": [
+        "12,50 €",
+        "0,00 €",
+        "12,50 €"
+      ],
+      "documentWidth": 390,
+      "panelHorizontalOverflow": 0,
+      "dockGapPx": 12,
+      "labelsSeparated": true,
+      "digestStable": true
+    }
+  ],
+  "controls": [
+    {
+      "width": 1280,
+      "raw": "PASS",
+      "consultationPosts": 0,
+      "browserErrors": 0
+    },
+    {
+      "width": 390,
+      "raw": "PASS",
+      "consultationPosts": 0,
+      "browserErrors": 0
+    }
+  ],
+  "recovery": {
+    "retry": {
+      "readRequests": [
+        "READ",
+        "READ"
+      ],
+      "unchangedDigest": true,
+      "rawPreserved": true,
+      "staleAmountsHidden": true,
+      "simulation": "FRESH",
+      "completeness": "UNKNOWN",
+      "applyPreflight": "READY_WITH_WARNINGS"
+    },
+    "blocked": {
+      "simulation": "BLOCKED",
+      "missingDeclarations": [
+        "Swile",
+        "Edenred"
+      ],
+      "amountsInvented": false
+    }
+  },
+  "previewAuthentication": {
+    "status": "NOT_RUN",
+    "reason": "VERCEL_AUTHENTICATION_REQUIRED",
+    "existingSession": false,
+    "developmentOidcAvailable": false
+  }
+}

@@ -56,7 +56,7 @@ export function ComposerFinancialInspector({ model, mode, stale, focused, focus,
     <div className={styles.inspectorScroll}>
       {mode === "FINANCE" ? <><ComposerMonthRead model={model} stale={stale} focused={focused} focus={focus} busy={busy} decide={decide} />
         <details className={styles.cockpitDetails}><summary>Projection et financement du mois</summary>
-          <ComposerProjectionDetails projection={model.board.cockpit} stale={stale} /></details></> : <p className={styles.financeExplanation}>Une information à préciser peut rester dans un brouillon sauvegardé. Elle n’est pas forcément bloquante. Le contrôle de transformation en Plan vérifie les contraintes réelles.</p>}
+          <ComposerProjectionDetails projection={model.board.cockpit} stale={stale} budgetReading={model.budgetReading} /></details></> : <p className={styles.financeExplanation}>Une information à préciser peut rester dans un brouillon sauvegardé. Elle n’est pas forcément bloquante. Le contrôle de transformation en Plan vérifie les contraintes réelles.</p>}
       {focused && model.cardKnowledge[`control:${focused}`] && <details className={styles.cockpitDetails} data-card-inspector>
         <summary>{controls.find(c => c.targetRef === focused)?.label} · repères et provenance</summary>
         <CardKnowledgePanel knowledge={model.cardKnowledge[`control:${focused}`]} />

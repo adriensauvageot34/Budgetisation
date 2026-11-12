@@ -1,0 +1,51 @@
+.impact {
+  padding: .65rem .75rem;
+  min-width: 0;
+  color: inherit;
+  background: rgba(115, 95, 153, .06);
+  border: 1px solid rgba(115, 95, 153, .23);
+  border-radius: .8rem;
+}
+
+.impact h3:first-child, .impact p {
+  margin: 0;
+}
+
+.impact h3:first-child {
+  font-size: .88rem;
+  font-weight: 650;
+}
+
+.impact dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .45rem;
+  margin: .4rem 0;
+}
+
+.impact dt, .impact p, .impact summary {
+  font-size: .76rem;
+  line-height: 1.35;
+}
+
+.impact dd {
+  margin: .12rem 0 0;
+  font-size: .88rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.impact dd small {
+  display: block;
+  font-size: .68rem;
+  font-weight: normal;
+}
+
+.impact p, .impact details {
+  margin-top: .35rem;
+}
+
+.impact summary {
+  cursor: pointer;
+}

@@ -24,6 +24,7 @@ import { assetEditorTarget } from "./asset-editor-routing";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
 import { ComposerCockpit } from "./composer-cockpit";
+import { BudgetPreviewStatus } from "./intent-budget-impact";
 import { ComposerFinancialInspector } from "./composer-financial-inspector";
 import { BalanceLayer } from "./balance-layer";
 import { ComposerResponseGate } from "./draft-controller";
@@ -266,7 +267,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   function schedulePreview(draft: PlanSemanticStateV1) {
     scheduler.current.schedule(draft, currentAuthority().worldVersion, transport, currentAuthority, status => {
       setPreviewStatus(status);
-      if (status === "FAILED") { const failure = "Simulation indisponible. Votre brouillon est conservé ; réessayez une modification pour relancer la prévisualisation."; setMessage(failure); setErrorMessage(failure); }
+      if (status === "FAILED") { const failure = "Simulation indisponible. Votre brouillon est conservé ; vous pouvez relancer la simulation depuis le bandeau."; setMessage(failure); setErrorMessage(failure); }
       if (status === "STALE") setMessage("Projection obsolète. Votre brouillon est conservé ; relancez la prévisualisation avant d’appliquer le mois.");
     }, response => {
       if (!response.ok) { setMessage(response.message); setErrorMessage(response.message); return; }
@@ -912,6 +913,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stableLibraryDrag=useCommittedEvent((key:string|null)=>{clearHover();setSelected(key);});
   const stableAdd=useCommittedEvent(()=>{clearHover();setLibraryOpenToken(n=>n+1);});
   const stablePreview=useCommittedEvent(()=>void run({kind:"READ"},"none"));
+  const retryPreview=useCommittedEvent(() => {
+    if (!busyRef.current && !scheduler.current.pending()) schedulePreview(localDraft.current);
+  });
   const stableBalance=useCommittedEvent(()=>{clearHover();setBalanceOpen(v=>!v);if(!balanceOpen)void run({kind:"SUGGESTIONS"},"none");});
   const stableDetails=useCommittedEvent(openProjectionDetails);
   const stableFocus=useCommittedEvent((id:string|null)=>{if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId)&&!inlineEdits.registry.guard(()=>stableFocus(id)))return;setFocusedContext(id);if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId))setEditor(null);});
@@ -962,7 +966,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
-  return <WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
+  return <BudgetPreviewStatus.Provider value={previewStatus}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
@@ -981,7 +985,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {!relationSession && previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
       <div className={styles.hudContainer} data-compare-header>{comparison && <div className={styles.compareCurrent}><span>Actuel</span><strong>{money(comparison.model.board.cockpit.plan.economicMonthEndRemainder)}</strong></div>}
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
-        canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails} /></div>
+        canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails}
+        retry={previewStatus === "FAILED" && !busy ? retryPreview : undefined} /></div>
       <div className={styles.toolbar}><div ref={historyTools} className={styles.historyTools}>
         <button data-history-action="undo" className={styles.historyButton} title="Annuler (Ctrl/Cmd+Z)" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => stage({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
         <button data-history-action="redo" className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => stage({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
@@ -1164,5 +1169,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider>;
+  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></BudgetPreviewStatus.Provider>;
 }
