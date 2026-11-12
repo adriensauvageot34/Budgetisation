@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import styles from "./composer.module.css";
 
 export type SuggestionDismissal = {
@@ -10,12 +11,14 @@ export function SuggestionControls({ occurrenceId, choices, dismissedSuggestions
   choices: readonly { key: string; label: string }[];
   busy: boolean;
 }) {
+  const summary = useRef<HTMLElement>(null);
   if (!updateSuggestionDismissal || !choices.length && !dismissedSuggestions.length) return null;
   return <details className={styles.suggestionControls}>
-    <summary>Gérer les suggestions</summary>
+    <summary ref={summary}>Gérer les suggestions</summary>
+    <p>Masquées pour cette intention jusqu’au rechargement.</p>
     {choices.map(choice => <button key={choice.key} type="button" disabled={busy}
-      onClick={() => updateSuggestionDismissal(occurrenceId, choice.key)}>Masquer · {choice.label}</button>)}
+      onClick={() => { summary.current?.focus(); updateSuggestionDismissal(occurrenceId, choice.key); }}>Masquer · {choice.label}</button>)}
     {dismissedSuggestions.length > 0 && <button type="button" disabled={busy}
-      onClick={() => updateSuggestionDismissal(occurrenceId, null)}>Réafficher les suggestions masquées</button>}
+      onClick={() => { summary.current?.focus(); updateSuggestionDismissal(occurrenceId, null); }}>Réafficher les suggestions masquées</button>}
   </details>;
 }

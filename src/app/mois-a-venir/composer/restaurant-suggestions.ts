@@ -61,7 +61,7 @@ export function restaurantSuggestions(context: PlannedContextState, card: Compos
   const candidates: Candidate[] = [];
 
   if (canEditMeal && (!meal || meal.kind === "COMPONENT" && meal.cost.kind === "UNKNOWN")) {
-    candidates.push({ kind: "BUDGET", label: "Préciser l’addition", hint: "Total du restaurant · configuration",
+    candidates.push({ kind: "BUDGET", label: "Préciser l’addition", hint: "Le total, y compris les consommations déjà comprises",
       iconKey: "restaurant", priority: 0 });
   }
   if (beerCount > 1 && (canEditIncluded && beersIncluded.length || editableBeer)) {
@@ -74,7 +74,7 @@ export function restaurantSuggestions(context: PlannedContextState, card: Compos
     candidates.push({ kind: "EDIT_EXTRA", selectionId: editableBeer.selectionId, label: "Modifier la bière en supplément",
       hint: "Supplément déjà choisi pour ce restaurant", iconKey: "restaurant", visualConceptId: restaurantBeer.artwork, priority: 0 });
   } else if (!beerCount && canEditIncluded && included.length < RESTAURANT_INCLUDED_DETAILS_LIMIT) {
-    candidates.push({ kind: "ADD_INCLUDED", label: "Renseigner une bière comprise", hint: "Détail de l’addition · catalogue Excel, ligne 2",
+    candidates.push({ kind: "ADD_INCLUDED", label: "Renseigner une bière comprise", hint: "Décrire une consommation sans augmenter l’addition",
       iconKey: "restaurant", visualConceptId: restaurantBeer.artwork, priority: 1 });
   }
   const otherExtra = extras.find(item => !isRestaurantBeer(item.label) && canEditExtra(item));
@@ -88,18 +88,18 @@ export function restaurantSuggestions(context: PlannedContextState, card: Compos
       hint: "Supplément déjà choisi pour ce restaurant", iconKey: "purchase", priority: 1 });
   }
   if (extrasAllowed) {
-    candidates.push({ kind: "ADD_EXTRA", label: "Préparer un supplément distinct", hint: "Seulement si le poste est en plus de l’addition · règle Restaurant",
+    candidates.push({ kind: "ADD_EXTRA", label: "Préparer un supplément distinct", hint: "Seulement si ce montant s’ajoute à l’addition",
       iconKey: "purchase", priority: meal ? 2 : 5 });
   }
-  if (!hasParticipants) candidates.push({ kind: "PARTICIPANTS", label: "Préciser les participants", hint: "Qui vient à ce restaurant ? · configuration",
+  if (!hasParticipants) candidates.push({ kind: "PARTICIPANTS", label: "Préciser les participants", hint: "Qui vient à ce restaurant ?",
     iconKey: "family-visit", priority: 3 });
-  if (!hasPlace) candidates.push({ kind: "PLACE", label: "Préciser le lieu", hint: "Lieu de ce restaurant · configuration",
+  if (!hasPlace) candidates.push({ kind: "PLACE", label: "Préciser le lieu", hint: "Où se trouve ce restaurant ?",
     iconKey: "family-visit", priority: 4 });
-  if (!context.fields.plannedDate) candidates.push({ kind: "DATE", label: "Choisir une date", hint: "Date de ce restaurant · configuration",
+  if (!context.fields.plannedDate) candidates.push({ kind: "DATE", label: "Choisir une date", hint: "Quand souhaitez-vous y aller ?",
     iconKey: "activity", priority: 5 });
   if (canConfigureRoute) candidates.push({ kind: "TRANSPORT", assetKey: transportAsset, selectionId: transport?.selectionId,
     label: transport ? `Modifier le trajet · ${route.asset.label}` : "Configurer le trajet en taxi",
-    hint: transport ? "Trajet déjà choisi pour ce restaurant · Mobility" : "Lieu connu · configuration Mobility",
+    hint: transport ? "Modifier le trajet déjà choisi pour ce restaurant" : "Préparer un trajet vers ce lieu connu",
     iconKey: route.asset.iconKey, visualConceptId: transportAsset === taxiAsset ? "v22-art:excel:499" : undefined, priority: 2 });
 
   return rankDiscoveryCandidates(candidates.map(candidate => {

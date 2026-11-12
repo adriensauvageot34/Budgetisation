@@ -1,5 +1,14 @@
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 
+export function editorOccurrenceId(editor: {
+  restaurantContextId?: string; stayContextId?: string; familyContextId?: string;
+  nightContextId?: string; giftContextId?: string; catalogContextId?: string;
+  equipment?: { target: { contextOccurrenceId?: string } };
+} | null) {
+  return editor?.restaurantContextId ?? editor?.stayContextId ?? editor?.familyContextId
+    ?? editor?.nightContextId ?? editor?.giftContextId ?? editor?.catalogContextId ?? editor?.equipment?.target.contextOccurrenceId ?? null;
+}
+
 /** Shared by creation, reopening and preloading. Specializations use preset identity, not display names. */
 export function assetEditorKind(templateKey: string | undefined, presetKey?: ComposerPresetKey) {
   switch (templateKey) {

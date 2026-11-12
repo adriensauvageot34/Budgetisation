@@ -17,6 +17,8 @@ import type { GuidedCatalogChoice } from "./catalog-discovery";
 import { EnablePurchaseBasket } from "./purchase-basket-editor";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
 import { IntentBudgetImpact } from "./intent-budget-impact";
+import { WorkshopNavigation } from "./workshop-navigation";
+import { workshopErrorMessage } from "./workshop-error";
 import styles from "./composer.module.css";
 
 /** One existing purchase item. No cart, product catalogue or new writer. */
@@ -58,7 +60,7 @@ export function ClothingItemEditor({ context, card, model, busy, decide, close, 
       if (!decide({ kind: "EDIT_PRESET_CONTEXT", edit: { contextOccurrenceId: context.contextOccurrenceId, slots: { item: [next] } } }))
         throw Error("Cet article n’est plus modifiable. Votre saisie est conservée.");
       setRow(null); setError("");
-    } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez l’article. Votre saisie est conservée."); }
+    } catch (failure) { setError(workshopErrorMessage(failure)); }
   };
   const short = row && (!row.existing?.unitBasis || row.existing.unitBasis === "ITEM");
   const change = (key: "label" | "quantity" | "amount", value: string) => {
@@ -84,6 +86,7 @@ export function ClothingItemEditor({ context, card, model, busy, decide, close, 
     role="dialog" aria-modal="false" aria-labelledby="clothing-heading" onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); close(); } }}>
     <header><h2 id="clothing-heading" ref={heading} tabIndex={-1}>{item?.label || "Article non renseigné"}</h2>
       <button type="button" onClick={close} aria-label="Fermer la fiche du vêtement">×</button></header>
+    <WorkshopNavigation contextId={context.contextOccurrenceId} />
     {shipping ? <PurchaseDelivery context={context} card={card} model={model} busy={busy} decide={decide} back={summary} /> : <>
       {!row && <section className={styles.nightSection} data-clothing-summary>
         <EnablePurchaseBasket context={context} card={card} model={model} busy={busy} decide={decide} />

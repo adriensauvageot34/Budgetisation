@@ -17,6 +17,7 @@ import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { matchesStayExtra, shortStaySuggestions, shortStayTransportModes, type ShortStaySuggestion } from "./short-stay-suggestions";
 import { IntentBudgetImpact } from "./intent-budget-impact";
+import { SuggestionControls } from "./suggestion-controls";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { CatalogCommand } from "./catalog-discovery";
 import styles from "./composer.module.css";
@@ -173,13 +174,8 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
       {ranked.length > 0 && <button type="button" className={styles.secondary} aria-pressed={showAllChoices} onClick={() => setShowAllChoices(value => !value)}>
         {showAllChoices ? "Revenir aux suggestions" : "Tous les choix du séjour"}
       </button>}
-      {updateSuggestionDismissal && <details><summary>Gérer les suggestions de ce séjour</summary>
-        {ranked.map(suggestion => <button type="button" key={suggestion.key}
-          onClick={() => updateSuggestionDismissal(context.contextOccurrenceId, suggestion.key)}>Masquer · {suggestion.label}</button>)}
-        {dismissedSuggestions.length > 0 && <button type="button" onClick={() => updateSuggestionDismissal(context.contextOccurrenceId, null)}>
-          Réafficher les suggestions masquées
-        </button>}
-      </details>}
+      <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={props.busy}
+        dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />
     </div>}
       {props.model && <IntentBudgetImpact model={props.model} contextId={context.contextOccurrenceId} />}
     </>,
@@ -248,7 +244,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
       <h3>{extraSuggestion?.label}</h3>
       {matchingExtras.map(post => <button type="button" key={post.row.id} data-stay-extra={post.row.id}
         disabled={props.busy || extraLocked(post.row.id)} onClick={() => openExtra(post.row.id)}>
-        Ouvrir {post.row.label} · ligne {posts.extras.indexOf(post) + 1} · {post.row.amount ? money(post.row.amount) : "Prix à préciser"}
+        Ouvrir {post.row.label} · ligne {posts.extras.indexOf(post) + 1} · {post.row.quantity.replace(".", ",")} × {post.row.amount ? money(post.row.amount) : "Prix à préciser"}
       </button>)}
       {extraSuggestion?.kind === "REVIEW_EXTRA" && !matchingExtras.length && <>
         <p>{extraTopic.hint}. Si le forfait couvre ce poste, gardez le prix actuel.</p>

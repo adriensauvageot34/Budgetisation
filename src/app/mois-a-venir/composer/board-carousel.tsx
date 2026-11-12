@@ -289,7 +289,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   useEffect(() => {
     if (!focused || !revealSequence || dragging || active !== focusPage) return;
     const frame = requestAnimationFrame(() => {
-      if (document.querySelector("dialog[open]")) return;
+      if (document.querySelector("dialog[open],[data-restaurant-editor]")) return;
       const root = inventoryRootRef(focused, model), item = pages[active]?.find(item => item.id === root || item.kind === "CLUSTER" && item.children.some(child => child.id === root));
       const cell = viewport.current?.querySelector<HTMLElement>(`[data-board-page="${active}"] [data-inventory-id="${CSS.escape(item?.id ?? root)}"]`);
       const barTitle = cell?.querySelector<HTMLElement>('[data-bar-living-card][data-expanded="false"] h3 button');
@@ -298,13 +298,14 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
       // a lost body focus after that second layout, never a user's new focus.
       const lostBarFocus = barFocusTarget && document.activeElement === document.body;
       if (focusedRequest.current === revealSequence && !lostBarFocus) return;
-      const target = barFocusTarget ?? cell;
+      const target = barFocusTarget ?? cell?.querySelector<HTMLElement>("[data-context-focus]") ?? cell;
       if (!target || target.closest('[inert]')) return;
       if(cell&&viewport.current&&!cell.querySelector('[data-bar-living-card][data-expanded="true"]')){const bounds=viewport.current.getBoundingClientRect(),card=target.getBoundingClientRect();
         if(card.left<bounds.left+24)viewport.current.scrollBy({left:card.left-bounds.left-24,behavior:boardScrollBehavior()});
         else if(card.right>bounds.right-24)viewport.current.scrollBy({left:card.right-bounds.right+24,behavior:boardScrollBehavior()});
       }
       target.focus({ preventScroll: true });
+      if (matchMedia("(max-width:760px)").matches) target.scrollIntoView({ block: "nearest", inline: "nearest", behavior: boardScrollBehavior() });
       if (document.activeElement === target) focusedRequest.current = revealSequence;
     });
     return () => cancelAnimationFrame(frame);

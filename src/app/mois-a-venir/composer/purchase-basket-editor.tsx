@@ -20,6 +20,7 @@ import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { purchaseSuggestions } from "./purchase-suggestions";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
 import { IntentBudgetImpact } from "./intent-budget-impact";
+import { WorkshopNavigation } from "./workshop-navigation";
 import { useCommittedEvent } from "./use-committed-event";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
@@ -189,6 +190,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     <header><div><small>{groceries ? "Panier de courses" : clothing ? "Panier vêtements et chaussures" : "Panier d’achat"}</small>
       <h2 id="basket-heading" tabIndex={-1}>{card.label}</h2></div>
       <button type="button" aria-label="Fermer le panier" onClick={close}>Fermer</button></header>
+    <WorkshopNavigation contextId={id} />
     {!form && !selectionPrompt && <IntentBudgetImpact model={model} contextId={id} />}
     <div className={styles.actions}>
       {writable && <CatalogOpenButton target={{ contextId: id, scope: groceries ? "courses" : undefined, moment: "article",

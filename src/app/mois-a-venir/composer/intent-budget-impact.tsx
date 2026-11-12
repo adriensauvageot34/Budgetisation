@@ -41,6 +41,7 @@ export function IntentBudgetImpact({ model, contextId }: { model: ComposerUiMode
           {impact.plannedPosts.length > 0 && <p>Poste prévu mobilisé · {impact.plannedPosts.join(", ")}</p>}
           <p>Source déclarée · {impact.declaredFundingSources.length
             ? impact.declaredFundingSources.map(source => fundingLabels[source]).join(", ") : "À préciser"}</p>
+          {impact.declaredFundingSources.length > 0 && <p>La capacité de cette source reste à vérifier dans les finances du mois.</p>}
           <p>Reste à financer · non ventilé par intention dans la projection actuelle.</p>
         </details>
       </>}

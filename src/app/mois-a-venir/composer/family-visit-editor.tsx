@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import { WorkshopDock } from "./workshop-dock";
+import { WorkshopNavigation } from "./workshop-navigation";
+import { workshopErrorMessage } from "./workshop-error";
 import type { ContextPalette, PaletteQuestion } from "./context-palette";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -137,8 +139,7 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       if (!transportChanged && original) transport = original;
       if (onSave({ kind: stay ? "EDIT_SHORT_STAY" : "EDIT_FAMILY_VISIT", edit: { contextOccurrenceId: context.contextOccurrenceId, fields,
         ...(transportChanged ? { transport } : {}) } })) { acceptedBuffer.current = buffer; setError(""); setSection("summary"); }
-    } catch (failure) { setError(failure instanceof Error && failure.message === "MONTH_DECISION_AMOUNT_INVALID"
-      ? "Précisez un montant positif ou nul avec deux décimales au maximum." : failure instanceof Error ? failure.message : "Vérifiez les champs."); }
+    } catch (failure) { setError(workshopErrorMessage(failure)); }
   };
   const tile=(key:string,label:string,choose:()=>void,selected=false,hint?:string)=>({key,label,choose,selected,hint,iconKey:"car"});
   const returnTile=tile("summary","Résumé",()=>setSection("summary"));
@@ -171,6 +172,7 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
   const currentQuestion:PaletteQuestion|undefined = referenceQuestion??(section==="posts"?postsQuestion:section==="route"?routeQuestion:section==="timing"?{title:"Le calendrier peut rester souple",choices:[
     tile("out","Départ",()=>setTimingPage("out"),timingPage==="out"),tile("back","Retour",()=>setTimingPage("back"),timingPage==="back"),tile("note","Un dimanche, plus tard…",()=>setTimingPage("note"),timingPage==="note"),returnTile]}:section==="summary"?staySummary?.question(openStaySuggestion):undefined);
   return <div data-short-stay-editor={stay || undefined} data-family-visit-editor={!stay || undefined} className={styles.nightEditor}>
+    <WorkshopNavigation contextId={context.contextOccurrenceId} />
     {section !== "summary" && <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
     {section === "summary" && <p className={styles.helper}>{stay ? "Le séjour regroupe ses postes sans coût supplémentaire. Aucun prix, participant ou date n’est décidé automatiquement. Les séjours intermois sont hors périmètre." : "Une visite est votre intention. Un trajet historique ou un véhicule disponible ne décide ni la visite ni ses participants."}</p>}
     {section === "summary" && <section className={styles.nightSection} data-visit-summary tabIndex={stay ? -1 : undefined}>

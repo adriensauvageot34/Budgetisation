@@ -94,8 +94,8 @@ try {
     const m = await modelFor(base), suggestions = candidates(m);
     assert.equal(suggestions[0].kind, "ADD_INCLUDED");
     assert.equal(suggestions[0].visualConceptId, "v22-art:excel:2");
-    assert(suggestions[0].hint.includes("Excel"));
-    assert(suggestions.find(item => item.kind === "ADD_EXTRA").hint.includes("règle Restaurant"));
+    assert(suggestions[0].hint.includes("sans augmenter l’addition"));
+    assert(suggestions.find(item => item.kind === "ADD_EXTRA").hint.includes("s’ajoute à l’addition"));
     await mount();
     const dock = root.root.findAllByType("nav").find(node => node.props["aria-label"] === "Suggestions pour ce restaurant");
     assert(dock); assert.equal(dock.findAllByType("button").length, 4);

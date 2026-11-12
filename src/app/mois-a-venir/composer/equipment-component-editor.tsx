@@ -9,6 +9,8 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { WorkshopDock } from "./workshop-dock";
 import { editMascaraPriceAndQuantity } from "./mascara-edit";
+import { WorkshopNavigation } from "./workshop-navigation";
+import { workshopErrorMessage } from "./workshop-error";
 import styles from "./composer.module.css";
 
 /** Presentation adapter only: the existing DROP operation validates/adopts these values. */
@@ -41,9 +43,10 @@ export function EquipmentComponentEditor({asset,target,model,values,selection,kn
       const component = shortSelection ? editMascaraPriceAndQuantity(shortSelection, row.quantity, row.amount, row.costMode)
         : buildComponentRow({...row,edited:mascara?row.edited:true},asset.optionKey!);
       onSave(componentEditorValues(row,values),component);
-    } catch(failure) {setError(failure instanceof Error?failure.message:"Vérifiez ce poste. Votre saisie est conservée.");}
+    } catch(failure) {setError(workshopErrorMessage(failure));}
   };
   return <>
+    {target.contextOccurrenceId && <WorkshopNavigation contextId={target.contextOccurrenceId} />}
     {mascara ? <section className={styles.nightSection} data-mascara-reference aria-label="Prix historique">
       <strong>Prix historique · repère uniquement</strong><p>Aucun prix historique daté et rattaché à ce produit n’est publié.</p>
     </section> : <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge}/></details>}
