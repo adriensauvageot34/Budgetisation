@@ -19,6 +19,7 @@ import { catalogRefLocked, normalizeCatalog } from "./catalog-discovery";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { purchaseSuggestions } from "./purchase-suggestions";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
+import { IntentBudgetImpact } from "./intent-budget-impact";
 import { useCommittedEvent } from "./use-committed-event";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
@@ -188,6 +189,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     <header><div><small>{groceries ? "Panier de courses" : clothing ? "Panier vêtements et chaussures" : "Panier d’achat"}</small>
       <h2 id="basket-heading" tabIndex={-1}>{card.label}</h2></div>
       <button type="button" aria-label="Fermer le panier" onClick={close}>Fermer</button></header>
+    {!form && !selectionPrompt && <IntentBudgetImpact model={model} contextId={id} />}
     <div className={styles.actions}>
       {writable && <CatalogOpenButton target={{ contextId: id, scope: groceries ? "courses" : undefined, moment: "article",
         resolveCommands: entry => {
@@ -281,7 +283,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     </section>
     <footer className={styles.footer}>
       {typeof context.fields.merchantLabel === "string" && <p>Vendeur · {context.fields.merchantLabel}</p>}
-      <p>{visibleTotal == null ? "Total à préciser" : summary?.complete ? `Total brut · ${money(visibleTotal)}` : `Montant connu · ${money(visibleTotal)} · total à préciser`}</p>
+      {!model.budgetReading && <p>{visibleTotal == null ? "Total à préciser" : summary?.complete ? `Total brut · ${money(visibleTotal)}` : `Montant connu · ${money(visibleTotal)} · total à préciser`}</p>}
       <p>{coverageLabels[(context.fields.deliveryCoverage as BasketDeliveryCoverage | undefined) ?? "UNKNOWN"]}{delivery?.cost.kind === "MANUAL" ? ` · ${money(delivery.cost.unitAmount)}` : ""}</p>
       {extras.length > 0 && <ul className={styles.lines} aria-label="Suppléments distincts">{extras.map(item => <li key={item.selectionId}>
         <div><strong>{item.label}</strong><small>{item.cost.kind === "MANUAL" ? `${item.quantity} × ${money(item.cost.unitAmount)}` : "Prix à préciser"}</small></div>

@@ -14,6 +14,7 @@ import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
 import { jsonEnvelope } from "./compiler";
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { projectCardKnowledge } from "./card-knowledge";
+import { composerBudgetReading } from "./composer-budget-reading";
 export const COMPOSER_READ_MODEL = "planner-composer@v1-headless";
 const contextAssetKey = (key: string) => `template:${key}`;
 const optionAssetKey = (template: string, slot: string, option: string) => `option:${template}:${slot}:${option}`;
@@ -137,14 +138,15 @@ export function composerFromDraftRead(read: Awaited<ReturnType<typeof readPlanne
     }
   }
   const original = read.active?.activeRevision?.semanticState ?? emptyPlanSemanticState(targetMonth);
+  const board: MonthComposerReadModel["board"] = { targetMonth, baselineControls, discretionaryControls, contexts, savings,
+    structuralObligations: prepared.baseline.structuralFacts.obligations, cockpit: preview.projection, diagnostics: preview.projection.diagnostics,
+    draft: { dirty: semanticStateDigest(original) !== preview.semanticStateDigest, semanticStateDigest: preview.semanticStateDigest, undoCount: 0, redoCount: 0 } };
   return { version: COMPOSER_READ_MODEL, semanticState: state, cardKnowledge: projectCardKnowledge(prepared, assets),
     library: { sections: [{ sectionKey: "contexts", assetKeys: assets.filter(a => a.kind === "CONTEXT_ASSET").map(a => a.assetKey) },
       { sectionKey: "options", assetKeys: assets.filter(a => a.kind === "SLOT_OPTION_ASSET").map(a => a.assetKey) },
       { sectionKey: "controls", assetKeys: assets.filter(a => a.kind === "PLAN_CONTROL" || a.kind === "RESERVATION_CONTROL").map(a => a.assetKey) }],
       searchableAssets: assets },
-    board: { targetMonth, baselineControls, discretionaryControls, contexts, savings,
-      structuralObligations: prepared.baseline.structuralFacts.obligations, cockpit: preview.projection, diagnostics: preview.projection.diagnostics,
-      draft: { dirty: semanticStateDigest(original) !== preview.semanticStateDigest, semanticStateDigest: preview.semanticStateDigest, undoCount: 0, redoCount: 0 } },
+    board, budgetReading: composerBudgetReading({ board, preview }, prepared.forecast.income),
     dropCapabilities: drops, preview, activeRevisionId: read.base.expectedActiveRevisionId, activeRevisionNumber: read.base.expectedActiveRevisionNumber };
 }
 /** Resolves a declared gesture into a semantic mutation. The caller previews that

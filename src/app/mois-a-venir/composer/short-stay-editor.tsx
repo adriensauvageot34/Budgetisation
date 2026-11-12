@@ -16,6 +16,7 @@ import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { matchesStayExtra, shortStaySuggestions, shortStayTransportModes, type ShortStaySuggestion } from "./short-stay-suggestions";
+import { IntentBudgetImpact } from "./intent-budget-impact";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { CatalogCommand } from "./catalog-discovery";
 import styles from "./composer.module.css";
@@ -168,7 +169,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
       title: "Suggestions pour ce séjour", identity: "stay-suggestions", nature: "DECISION" as const, catalogMoment: "lodging" as const,
       choices: ranked.map(suggestion => ({ ...suggestion, showHint: true, choose: () => guardedSuggestion(suggestion, open) })),
     } : undefined,
-    controls: candidates.length > 0 && <div className={styles.staySuggestions}>
+    controls: <>{candidates.length > 0 && <div className={styles.staySuggestions}>
       {ranked.length > 0 && <button type="button" className={styles.secondary} aria-pressed={showAllChoices} onClick={() => setShowAllChoices(value => !value)}>
         {showAllChoices ? "Revenir aux suggestions" : "Tous les choix du séjour"}
       </button>}
@@ -179,7 +180,9 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
           Réafficher les suggestions masquées
         </button>}
       </details>}
-    </div>,
+    </div>}
+      {props.model && <IntentBudgetImpact model={props.model} contextId={context.contextOccurrenceId} />}
+    </>,
   };
   const postChoices=[tile("lodging","Hébergement",()=>{openPost("lodging");setLodgingPage("terms");}),tile("groceries","Courses",()=>openPost("groceries")),...groups.map(([key,label])=>tile(key,label,()=>openPost(key)))];
   const postsQuestion={title:postSection==="lodging"?"Quel prix pour l’hébergement ?":"Les postes du séjour",choices:postSection==="lodging"&&lodgingPage==="terms"?[

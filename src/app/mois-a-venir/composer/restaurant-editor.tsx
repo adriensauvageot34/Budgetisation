@@ -28,6 +28,7 @@ import { useWorkshopRaw } from "./inline-edit-registry";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useActiveWorkshopQuestion } from "./workshop-choices";
+import { IntentBudgetImpact } from "./intent-budget-impact";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { cinemaSuggestions, sameCinemaExtra, type CinemaSuggestion } from "./cinema-suggestions";
 import { isRestaurantBeer, restaurantBeer, restaurantSuggestions, type RestaurantSuggestion } from "./restaurant-suggestions";
@@ -594,6 +595,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     </nav>{summaryEntries.length > summaryPageSize && <div className={styles.nightPage}><button type="button" disabled={summaryPage === 0} onClick={() => setSummaryPage(page => page - 1)}>Précédent</button>
       <span>{summaryPage + 1} / {Math.ceil(summaryEntries.length / summaryPageSize)}</span><button type="button" disabled={(summaryPage + 1) * summaryPageSize >= summaryEntries.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}</>
       : <button type="button" className={styles.nightLink} onClick={() => open(null)}>← Retour au résumé</button>}
+    {step === null && (restaurant || cinema || purchase) && <IntentBudgetImpact model={model} contextId={contextId} />}
     {step !== null && <div className={styles.restaurantQuestion} key={`${step}:${formKey}`}>
       <h3 data-restaurant-focus tabIndex={-1}>{step === "shipping" ? "Vendeur, livraison et frais" : cinema && step === "budget" ? (row.existing ? "Modifier le poste de cette sortie" : "Préparer un billet facultatif")
         : cinema && step === "date" ? "Préciser le jour de la séance"

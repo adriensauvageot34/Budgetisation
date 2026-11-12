@@ -16,6 +16,7 @@ import { money } from "./display";
 import type { GuidedCatalogChoice } from "./catalog-discovery";
 import { EnablePurchaseBasket } from "./purchase-basket-editor";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
+import { IntentBudgetImpact } from "./intent-budget-impact";
 import styles from "./composer.module.css";
 
 /** One existing purchase item. No cart, product catalogue or new writer. */
@@ -91,6 +92,7 @@ export function ClothingItemEditor({ context, card, model, busy, decide, close, 
         <p>Quantité déclarée : {item?.quantity ?? "Non renseignée"}{item?.unitBasis === "SHARED" ? " lot(s) partagé(s)" : item?.unitBasis === "PERSON" ? " · base par personne conservée" : " unité(s)"}.</p>
         <p>{item?.cost.kind === "MANUAL" ? `Prix déclaré${item.unitBasis === "SHARED" ? " par lot" : " par unité"} : ${money(item.cost.unitAmount)}`
           : item?.cost.kind === "QUOTE" ? "Devis conservé · aucune preuve d’achat" : "Prix non renseigné · encore inconnu"}.</p>
+        <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />
         <p>Taille : non renseignée · modification indisponible dans ce parcours.</p>
         <p>Marque : non renseignée. Vendeur déclaré : {typeof context.fields.merchantLabel === "string" && context.fields.merchantLabel.trim() ? context.fields.merchantLabel : "Non renseigné"}.</p>
         <p className={styles.helper}>Prix de référence daté pour cet article : non renseigné dans ce parcours. Aucun prix historique n’est adopté. SKU, stock et disponibilité ne sont pas publiés.</p>
