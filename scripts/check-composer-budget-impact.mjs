@@ -7,6 +7,7 @@ const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const { IntentBudgetImpact, BudgetPreviewStatus } = require('@/app/mois-a-venir/composer/intent-budget-impact');
 const { ComposerProjectionDetails } = require('@/app/mois-a-venir/composer/composer-cockpit');
+const { ComposerMonthRead } = require('@/app/mois-a-venir/composer/month-read');
 const { readMonthComposer } = require('@/server/phase2/planner/read-model');
 const { composerBudgetReading } = require('@/server/phase2/planner/composer-budget-reading');
 const { visualDraftModel } = require('@/app/mois-a-venir/composer/local-draft');
@@ -18,6 +19,8 @@ const impact = (model, name) => model.budgetReading.byContext[impactIds[name]];
 const amounts = ({ gross, displaced, incremental }) => [gross, displaced, incremental];
 const summary = (model, name, status = 'FRESH') => renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider, { value: status },
   React.createElement(IntentBudgetImpact, { model, contextId: impactIds[name] })));
+const monthReading = (model, stale = false) => renderToStaticMarkup(React.createElement(ComposerMonthRead,
+  { model, stale, focused: null, focus: () => {}, decide: () => assert.fail('Unexpected mutation') }));
 
 const fixture = await budgetImpactFixture();
 const model = fixture.model;
@@ -34,8 +37,14 @@ for (const [options, expected, coverage] of [
   const scenario = await budgetImpactFixture(options);
   assert.deepEqual(amounts(impact(scenario.model, 'groceries')), expected, JSON.stringify(options));
   assert.match(summary(scenario.model, 'groceries'), new RegExp(`data-groceries-coverage="${coverage}"`));
+  assert.match(monthReading(scenario.model), new RegExp(`data-month-grocery-impact="${coverage}"`));
+  assert.match(monthReading(scenario.model, true), /data-month-grocery-impact="PENDING"/);
   assert.deepEqual(scenario.writes, []);
 }
+const unknownPrice = await budgetImpactFixture();
+const unpriced = await unknownPrice.line(impactIds.groceries, 27101, 'Pâtes', '2', '');
+assert.equal(impact(unpriced, 'groceries').gross, null);
+assert(monthReading(unpriced).includes('Coût du panier</dt><dd>À préciser</dd>'));
 console.log('Courses 8 €, couverture totale, partielle, épuisée, en plus, à confirmer et absente : PASS');
 
 assert.deepEqual(amounts(impact(model, 'amazon')), ['48.00', '0.00', '48.00']);
@@ -76,6 +85,13 @@ const blocked = await budgetImpactFixture({ monthlyDeclarations: false });
 assert.equal(blocked.model.board.cockpit.projectionCompleteness, 'UNKNOWN');
 assert.equal(blocked.model.board.cockpit.applyReadiness, 'BLOCKED');
 assert.deepEqual(blocked.model.budgetReading.missingMonthlyDeclarations, ['Swile', 'Edenred']);
+const absentView = monthReading(blocked.model);
+for (const provider of ['SWILE', 'EDENRED']) {
+  assert.match(absentView, new RegExp(`data-loading="${provider}" data-knowledge="ABSENT"`));
+  assert.match(absentView, new RegExp(`month=2026-11&amp;control=center&amp;focus=update%3Aitem%3A${provider}%3Aloading`));
+}
+assert.match(monthReading(model), /data-loading="SWILE" data-knowledge="ZERO"/);
+assert.match(monthReading(model), /data-loading="EDENRED" data-knowledge="ZERO"/);
 assert.deepEqual(amounts(impact(blocked.model, 'groceries')), ['8.00', '8.00', '0.00']);
 const finance = renderToStaticMarkup(React.createElement(ComposerProjectionDetails, { projection: blocked.model.board.cockpit,
   budgetReading: blocked.model.budgetReading }));
@@ -91,13 +107,29 @@ console.log('Simulation indisponible, complétude et avertissements distincts : 
 
 const read = await readMonthComposer(fixture.deps, householdId, '2026-11', model.semanticState);
 const before = JSON.stringify(read.preview);
-assert.deepEqual(composerBudgetReading(read, fixture.world.forecast.income), model.budgetReading);
+assert.deepEqual(composerBudgetReading(read, fixture.world.forecast), model.budgetReading);
 const missingIncome = structuredClone(fixture.world.forecast.income);
 missingIncome.components[0].central = null;
-assert.deepEqual(composerBudgetReading(read, missingIncome).missingSalaryForecasts, [missingIncome.components[0].label]);
+const missingSalary = composerBudgetReading(read, { ...fixture.world.forecast, income: missingIncome });
+assert.deepEqual(missingSalary.missingSalaryForecasts, [missingIncome.components[0].label]);
+const salaryView = monthReading({ ...model, budgetReading: missingSalary });
+assert.match(salaryView, /Montant inconnu/);
+assert.match(salaryView, /focus=info/);
+assert.doesNotMatch(salaryView, /focus=update%3Aitem%3Aresource-income%3ADigital-Learning-Contest/);
+const unpublished = composerBudgetReading(read, { ...fixture.world.forecast,
+  income: { ...missingIncome, components: missingIncome.components.slice(1) } });
+assert.match(monthReading({ ...model, budgetReading: unpublished }), /Source non publiée/);
 const explicitZero = structuredClone(read);
 explicitZero.preview.scenario.inputs.declaredResources = { 'benefit:swile': '0.00', 'benefit:edenred': '0.00' };
-assert.deepEqual(composerBudgetReading(explicitZero, fixture.world.forecast.income).missingMonthlyDeclarations, []);
+assert.deepEqual(composerBudgetReading(explicitZero, fixture.world.forecast).missingMonthlyDeclarations, []);
+const positive = structuredClone(read);
+positive.preview.scenario.inputs.declaredResources = { 'benefit:swile': '25.00', 'benefit:edenred': '15.00' };
+const published = composerBudgetReading(positive, fixture.world.forecast);
+assert.deepEqual(published.monthlyLoadings.map(row => row.amount), ['25.00', '15.00']);
+assert.deepEqual(published.missingMonthlyDeclarations, []);
+assert.match(monthReading({ ...model, budgetReading: published }), /data-loading="EDENRED" data-knowledge="DECLARED"/);
+const noReference = composerBudgetReading(read, { ...fixture.world.forecast, referencePlan: null });
+assert.match(monthReading({ ...model, budgetReading: noReference }), /Référence budgétaire non publiée/);
 assert.equal(JSON.stringify(read.preview), before);
 assert.equal(model.proof.expectedPreviewDigest, read.preview.previewDigest);
 const visibleBefore = JSON.stringify(model);

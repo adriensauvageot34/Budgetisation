@@ -6,6 +6,7 @@ import type { ContextualEffect } from "@/domain/phase2/planner/component-contrac
 import type { CompiledComponent, CompiledPlanSlot } from "@/domain/phase2/planner/compiler-contract";
 import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
 import type { MonthForecastSnapshot } from "../month-forecast-snapshot";
+import { publishedMonthObligations } from "../month-update-presentation";
 
 const sum = (values: readonly string[]) => values.reduce((total, value) => total.plus(value), new Big(0)).toFixed(2);
 const completeSum = (values: readonly (string | null)[]) =>
@@ -30,7 +31,7 @@ function groceriesCoverage(slots: readonly CompiledPlanSlot[], effects: readonly
 }
 
 /** Totals of already evaluated rows for display. This view never changes a Preview or its proof. */
-export function composerBudgetReading({ preview, board }: Pick<MonthComposerReadModel, "preview" | "board">, income: MonthForecastSnapshot["income"]): ComposerBudgetReading {
+export function composerBudgetReading({ preview, board }: Pick<MonthComposerReadModel, "preview" | "board">, forecast: Pick<MonthForecastSnapshot, "income" | "components" | "referencePlan">): ComposerBudgetReading {
   const { compiled } = preview;
   const effectsById = new Map(compiled.contextualEffects.map(effect => [effect.componentId, effect]));
   const cardsById = new Map(board.contexts.map(card => [card.contextOccurrenceId, card]));
@@ -84,15 +85,21 @@ export function composerBudgetReading({ preview, board }: Pick<MonthComposerRead
     };
   }
 
-  const declared = preview.scenario.inputs.declaredResources;
-  const missingMonthlyDeclarations = ([
-    ["benefit:swile", "Swile"], ["benefit:edenred", "Edenred"],
-  ] as const).flatMap(([key, label]) => declared[key] === undefined ? [label] : []);
-  const missingSalaryForecasts = ([
+  const inputs = preview.scenario.inputs;
+  const monthlyLoadings = ([
+    ["SWILE", "benefit:swile"], ["EDENRED", "benefit:edenred"],
+  ] as const).map(([provider, key]) => ({ provider, amount: inputs.declaredResources[key] ?? null,
+    date: inputs.benefitWallets?.[provider].expectedLoading?.expectedDate ?? null }));
+  const missingMonthlyDeclarations = monthlyLoadings.flatMap(({ provider, amount }) =>
+    amount === null ? [provider === "SWILE" ? "Swile" as const : "Edenred" as const] : []);
+  const salarySources = ([
     ["income:Digital Learning Contest", "Salaire Adrien"], ["income:Promotrans", "Salaire Manon"],
-  ] as const).flatMap(([key, label]) => {
-    const source = income.components.find(part => part.key === key);
-    return source?.central == null ? [source?.label ?? label] : [];
+  ] as const).map(([key, label]) => {
+    const source = forecast.income.components.find(part => part.key === key);
+    const state = !source ? "UNPUBLISHED" : source.central === null ? "UNKNOWN" : "KNOWN";
+    return { key, label: source?.label ?? label, state } as const;
   });
-  return { semanticStateDigest: preview.semanticStateDigest, byContext, missingMonthlyDeclarations, missingSalaryForecasts };
+  const missingSalaryForecasts = salarySources.filter(source => source.state !== "KNOWN").map(source => source.label);
+  return { semanticStateDigest: preview.semanticStateDigest, byContext, missingMonthlyDeclarations, missingSalaryForecasts, monthlyLoadings, salarySources,
+    monthUpdate: { referencePublished: !!forecast.referencePlan, obligationKeys: publishedMonthObligations(forecast.components).map(row => row.key) } };
 }

@@ -3,6 +3,7 @@ import { isDecisionCategoryKey, parseMonthChoice, type MonthChoiceOperation, typ
 export const MONTH_CONTROL_SECTIONS = ["choices", "update", "understand"] as const;
 export type MonthControlSection = typeof MONTH_CONTROL_SECTIONS[number];
 export type MonthControlSectionInput = MonthControlSection | "center" | "overview" | "settings" | "resources" | "reliability";
+export const resourceFocusKey = (key: string) => `resource-${key.replace(/[^a-zA-Z0-9:-]/gu, "-")}`;
 /** Header composition is navigation policy, independent of financial doctrine. */
 export function monthControlHeaderPolicy(focus: string | null) {
   const global = focus === null || focus === "pilot" || focus === "global-goal";

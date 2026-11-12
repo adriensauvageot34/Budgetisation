@@ -52,6 +52,9 @@ export type ComposerBudgetReading = Readonly<{
   byContext: Readonly<Record<string, ComposerIntentImpact>>;
   missingMonthlyDeclarations: readonly ("Swile" | "Edenred")[];
   missingSalaryForecasts: readonly string[];
+  monthlyLoadings?: readonly Readonly<{ provider: "SWILE" | "EDENRED"; amount: string | null; date: string | null }>[];
+  salarySources?: readonly Readonly<{ key: string; label: string; state: "KNOWN" | "UNKNOWN" | "UNPUBLISHED" }>[];
+  monthUpdate?: Readonly<{ referencePublished: boolean; obligationKeys: readonly string[] }>;
 }>;
 export type MonthComposerReadModel = Readonly<{ version: string; semanticState: PlanSemanticStateV1;
   library: ComposerLibraryView; board: ComposerBoardView; dropCapabilities: readonly DropCapability[];

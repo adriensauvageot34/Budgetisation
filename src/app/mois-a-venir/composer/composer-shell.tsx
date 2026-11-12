@@ -26,7 +26,7 @@ import { WorkshopNavigationContext, IntentionSwitcher, intentionNavigationEntrie
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
 import { ComposerCockpit } from "./composer-cockpit";
-import { BudgetPreviewStatus } from "./intent-budget-impact";
+import { BudgetPreviewStatus, OpenMonthlyFinances } from "./intent-budget-impact";
 import { ComposerFinancialInspector } from "./composer-financial-inspector";
 import { BalanceLayer } from "./balance-layer";
 import { ComposerResponseGate } from "./draft-controller";
@@ -880,11 +880,11 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const applyDisabled = relationSession || !!inlineEdits.count || busy || !!pendingApply || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
     || !!draftTransport && (durable.status !== "SAVED" || !durable.online || !!durable.snapshot?.baseStale);
   const openProjectionDetails = () => {
-    if (editor && !inlineEdits.registry.guard(openProjectionDetails)) return;
+    if (!inlineEdits.registry.guard(openProjectionDetails)) return;
     clearHover();
     setEditor(null); setUnresolvedOpen(false); setCompletenessFocus(false); setProjectionOpen(true);
   };
-  const showUnresolved = () => { if (editor && !inlineEdits.registry.guard(showUnresolved)) return; clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
+  const showUnresolved = () => { if (!inlineEdits.registry.guard(showUnresolved)) return; clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
   const navigateDecision = (targetRef: string) => { setFocusedContext(targetRef); setReveal(previous => ({ targetRef, sequence: (previous?.sequence ?? 0) + 1 })); };
   const applyReason = relationSession ? "Organisation locale non sauvegardée : abandonnez-la explicitement avant de sauvegarder ou transformer le mois en Plan."
     : inlineEdits.count ? "Une saisie n’est pas validée ou un réglage attend confirmation. Validez ou annulez la saisie avant de transformer le mois en Plan."
@@ -981,7 +981,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
-  return <BudgetPreviewStatus.Provider value={previewStatus}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
+  return <BudgetPreviewStatus.Provider value={previewStatus}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
@@ -1066,7 +1066,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
             {editorLoadError && <button type="button" onClick={() => setEditorLoadRetry(n => n + 1)}>Réessayer l’éditeur</button>}<button type="button" onClick={closeDialog}>Retour au Board</button></section>
           : undefined} />
       {(projectionOpen || unresolvedOpen) && <ComposerFinancialInspector model={shown} mode={unresolvedOpen ? "UNRESOLVED" : "FINANCE"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} focused={focusedContext}
-        busy={busy} decide={stage}
+        busy={busy || !!comparison || !!relationSession || durable.status === "CONFLICT"} decide={stage}
+        retry={!busy && previewStatus !== "PENDING" && !comparison && !relationSession ? retryPreview : undefined}
         focus={navigateDecision} close={() => { setProjectionOpen(false); setUnresolvedOpen(false); setCompletenessFocus(false); }} />}</div>
     {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}
@@ -1183,5 +1184,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></BudgetPreviewStatus.Provider>;
+  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></OpenMonthlyFinances.Provider></BudgetPreviewStatus.Provider>;
 }

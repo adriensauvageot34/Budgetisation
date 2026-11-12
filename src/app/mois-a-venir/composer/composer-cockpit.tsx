@@ -10,6 +10,20 @@ const tone = (value: string | null) => value === null ? "unknown" : value.starts
 const hudMoney = (value: string | null) => value === null ? "Montant à préciser" : money(value);
 const completenessLabel = { COMPLETE: "Complète", PARTIAL: "Partielle", UNKNOWN: "Indéterminée" };
 const applyLabel = { READY: "Prête", READY_WITH_WARNINGS: "Prête avec avertissements", BLOCKED: "Bloquée" };
+const simulationLabels = { FRESH: "Actualisée", BLOCKED: "Calcul bloqué", PENDING: "En cours", STALE: "À recalculer", FAILED: "Échec de lecture" };
+
+export function MonthlySimulationStatus({ projection, stale = false }: { projection: PlanProjectionV1; stale?: boolean }) {
+  const preview = useContext(BudgetPreviewStatus);
+  const status = preview ?? (stale ? "STALE" : projection.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH");
+  const current = !stale && (status === "FRESH" || status === "BLOCKED");
+  return <dl className={styles.breakdown} aria-label="État des finances">
+    <div><dt>Simulation</dt><dd data-financial-preview={status}>{simulationLabels[status]}</dd></div>
+    <div><dt>Complétude financière</dt><dd data-financial-completeness={current ? projection.projectionCompleteness : undefined}>
+      {current ? completenessLabel[projection.projectionCompleteness] : "À vérifier"}</dd></div>
+    <div><dt>Vérification avant de créer un Plan</dt><dd data-financial-apply-readiness={current ? projection.applyReadiness : undefined}>
+      {current ? applyLabel[projection.applyReadiness] : "À vérifier"}</dd></div>
+  </dl>;
+}
 const monthProjectionLabel = (projection: PlanProjectionV1) => projection.projectionCompleteness === "UNKNOWN"
   ? "Projection du mois indisponible" : "Projection du mois actualisée";
 /** Only official C7 values. Separate indicators are never summed in React. */
@@ -31,12 +45,9 @@ export function ComposerCockpit({ projection, goalMargin, temporary, pending, st
   </div>;
 }
 /** Complete published breakdown; UNKNOWN is never replaced by zero. */
-export function ComposerProjectionDetails({ projection, stale = false, budgetReading }: {
-  projection: PlanProjectionV1; stale?: boolean; budgetReading?: ComposerBudgetReading;
+export function ComposerProjectionDetails({ projection, stale = false, budgetReading, showStatus = true }: {
+  projection: PlanProjectionV1; stale?: boolean; budgetReading?: ComposerBudgetReading; showStatus?: boolean;
 }) {
-  const previewStatus = useContext(BudgetPreviewStatus);
-  const simulationLabel = previewStatus === "BLOCKED" || previewStatus === null && projection.applyReadiness === "BLOCKED"
-    ? "Calcul bloqué" : "Actualisée";
   const rows = [["Engagements certains", projection.economic.certainCommitments],
     ["Besoins & habitudes", projection.economic.needsAndHabits], ["Budgets discrétionnaires", projection.economic.discretionaryLife], ["Intentions ponctuelles", projection.economic.explicitContexts],
     ["Coût d’usage mobilité", projection.economic.mobilityUsageEconomicCost]];
@@ -46,11 +57,8 @@ export function ComposerProjectionDetails({ projection, stale = false, budgetRea
   return <div className={styles.projectionDetails}>
     <section className={styles.financeSummary} aria-label="Projection du mois">
       <span>Reste prévisionnel du mois</span><strong data-finance-summary>{stale ? "En attente de simulation" : projection.plan.economicMonthEndRemainder === null ? "Projection incomplète" : money(projection.plan.economicMonthEndRemainder)}</strong>
-      {stale ? <p>Les résultats attendent une nouvelle simulation.</p> : <dl className={styles.breakdown}>
-        <div><dt>Simulation</dt><dd data-financial-preview={previewStatus ?? undefined}>{simulationLabel}</dd></div>
-        <div><dt>Complétude financière</dt><dd data-financial-completeness={projection.projectionCompleteness}>{completenessLabel[projection.projectionCompleteness]}</dd></div>
-        <div><dt>Vérification avant de créer un Plan</dt><dd data-financial-apply-readiness={projection.applyReadiness}>{applyLabel[projection.applyReadiness]}</dd></div>
-      </dl>}
+      {stale && <p>Les résultats attendent une nouvelle simulation.</p>}
+      {showStatus && <MonthlySimulationStatus projection={projection} stale={stale} />}
       {!stale && projection.projectionCompleteness === "UNKNOWN" && <p>Projection du mois indisponible. Les montants évalués par intention gardent leur portée.</p>}
       {!stale && projection.diagnostics.some(diagnostic => diagnostic.code === "FINANCIAL_SCENARIO_UNRESOLVED") && <>
         {missingDeclarations.length > 0 && <p>Chargements mensuels à renseigner dans le Centre de contrôle : {missingDeclarations.join(" et ")}. Ces déclarations établissent les ressources de titres-restaurant du mois.</p>}

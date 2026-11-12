@@ -146,7 +146,7 @@ export function composerFromDraftRead(read: Awaited<ReturnType<typeof readPlanne
       { sectionKey: "options", assetKeys: assets.filter(a => a.kind === "SLOT_OPTION_ASSET").map(a => a.assetKey) },
       { sectionKey: "controls", assetKeys: assets.filter(a => a.kind === "PLAN_CONTROL" || a.kind === "RESERVATION_CONTROL").map(a => a.assetKey) }],
       searchableAssets: assets },
-    board, budgetReading: composerBudgetReading({ board, preview }, prepared.forecast.income),
+    board, budgetReading: composerBudgetReading({ board, preview }, prepared.forecast),
     dropCapabilities: drops, preview, activeRevisionId: read.base.expectedActiveRevisionId, activeRevisionNumber: read.base.expectedActiveRevisionNumber };
 }
 /** Resolves a declared gesture into a semantic mutation. The caller previews that

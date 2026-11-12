@@ -1,0 +1,15 @@
+.missing, .loadings { min-width: 0; margin: 12px 0; padding: 12px; border: 1px solid #e8d9bf; border-radius: 12px; background: #fffbf3; color: #513b25; font-size: 13px; line-height: 1.45; }
+.missing summary { cursor: pointer; font-weight: 700; }
+.missing ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.missing li + li, .loadings > div + div { border-top: 1px solid #ebdfd2; margin-top: 10px; padding-top: 10px; }
+.missing p, .loadings p { margin: 4px 0 8px; }
+.loadings { border-color: #e6ddec; background: #faf7fc; color: #443452; }
+.loadings > div > div { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; }
+.sourceLink { display: inline-block; max-width: 100%; color: #653d88; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; font-weight: 600; }
+.sourceLink:focus-visible, .missing summary:focus-visible { outline: 2px solid #8054aa; outline-offset: 3px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.basket { margin-block: 12px; border-top: 1px solid #e6ddec; padding-block: 8px; }
+.basket h4 { margin: 0; font-size: 13px; }
+.basket dl { margin: 4px 0; }
+.basket button, .retry { padding: 7px 10px; color: #593977; background: white; border: 1px solid #d6c7e2; border-radius: 7px; cursor: pointer; }
+.retry { margin-top: 6px; }

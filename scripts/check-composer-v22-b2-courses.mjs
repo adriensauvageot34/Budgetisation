@@ -14,13 +14,13 @@ let remote=0;globalThis.fetch=async()=>{remote++;throw Error('B2_REMOTE_FORBIDDE
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {stageLocalDecision,visualDraftModel}=require('@/app/mois-a-venir/composer/local-draft');
 const {evaluatePlanScenario}=require('@/server/phase2/planner/preview');
-const {CoursesMonthTarget}=require('@/app/mois-a-venir/composer/courses-month-target');
+const {MonthlyDraftControl}=require('@/app/mois-a-venir/composer/monthly-draft-control');
 const {InlineEditContext,InlineEditRegistry}=require('@/app/mois-a-venir/composer/inline-edit-registry');
 const f=coursesFixture(),worldBefore=JSON.stringify(f.world);
 async function read(fixture=f,draft=fixture.semantic){const r=await handleComposerRequest(fixture.deps,householdId,{kind:'READ',sequence:0,targetMonth:fixture.semantic.targetMonth,draft});assert(r.ok,`${r.code}: ${r.message}`);return r.model;}
 const base=await read(),card=m=>m.board.baselineControls.find(c=>c.targetRef===f.targetRef);
 let root,model,current,registry,accepted;
-function Harness(){const [s,setS]=React.useState(current);return React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(CoursesMonthTarget,{model:visualDraftModel(model,s),card:card(visualDraftModel(model,s)),busy:false,decide(op){const next=stageLocalDecision(model,current,op);if(!next)return false;current=next;accepted.push(op);setS(next);return true;}}));}
+function Harness(){const [s,setS]=React.useState(current);const shown=visualDraftModel(model,s);return React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(MonthlyDraftControl,{model:shown,card:card(shown),groceries:true,busy:false,decide(op){const next=stageLocalDecision(model,current,op);if(!next)return false;current=next;accepted.push(op);setS(next);return true;}}));}
 const text=n=>typeof n==='string'?n:(n.children??[]).map(text).join('');
 const button=label=>root.root.findAll(n=>n.type==='button').find(n=>text(n)===label);
 const click=async label=>{const n=button(label);assert(n);assert(!n.props.disabled);await act(async()=>n.props.onClick());};

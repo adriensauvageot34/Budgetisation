@@ -5,6 +5,7 @@ import { money } from "./display";
 import styles from "./intent-budget-impact.module.css";
 
 export const BudgetPreviewStatus = createContext<PreviewStatus | null>(null);
+export const OpenMonthlyFinances = createContext<(() => void) | null>(null);
 
 const coverageText = {
   ABSENT: "Aucune enveloppe Courses chiffrée n’est disponible pour ce mois.",
@@ -19,6 +20,7 @@ const fundingLabels = { BANK: "Banque", SWILE: "Swile", EDENRED: "Edenred" };
 
 export function IntentBudgetImpact({ model, contextId }: { model: ComposerUiModel; contextId: string }) {
   const status = useContext(BudgetPreviewStatus);
+  const openFinances = useContext(OpenMonthlyFinances);
   const reading = model.budgetReading;
   if (!reading) return null;
   const current = reading.semanticStateDigest === model.board.draft.semanticStateDigest
@@ -37,6 +39,7 @@ export function IntentBudgetImpact({ model, contextId }: { model: ComposerUiMode
         </dl>
         {impact.groceriesCoverage && <p data-groceries-coverage={impact.groceriesCoverage}>{coverageText[impact.groceriesCoverage]}</p>}
         {impact.hasChildren && <p>Les intentions rattachées gardent leur propre impact.</p>}
+        {openFinances && status === "BLOCKED" && <p><button type="button" onClick={openFinances}>Voir les informations du mois à compléter</button></p>}
         <details><summary>Financement</summary>
           {impact.plannedPosts.length > 0 && <p>Poste prévu mobilisé · {impact.plannedPosts.join(", ")}</p>}
           <p>Source déclarée · {impact.declaredFundingSources.length
