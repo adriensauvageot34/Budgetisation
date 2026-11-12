@@ -902,7 +902,7 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .financialInspector .breakdown { font-size:12px; line-height:1.45; }
 .financialInspector dl>div { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:8px 0; }
 .financialInspector dt { min-width:0; }
-.financialInspector dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.financialInspector dd { margin:0; min-width:0; text-align:right; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
 .financeComparison { font-size:12px; margin:8px 0; }
 .financialInspector .cockpitDetails { padding:12px 0; border-top:1px solid #eee6f3; font-size:12px; line-height:1.5; color:#675570; }
 .financialInspector .cockpitDetails summary { cursor:pointer; font-weight:600; }

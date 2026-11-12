@@ -4,6 +4,7 @@ import type { MonthControlModel } from "./month-control-center";
 import type { MonthUpdateData } from "./month-control-update-contract";
 export type { MonthUpdateData } from "./month-control-update-contract";
 import { controlMoney as money, controlDate, controlMonth } from "@/domain/phase2/month-control-display";
+import { resourceFocusKey } from "@/domain/phase2/month-control-contract";
 import { useMonthLocalFocus } from "./month-control-focus";
 import { CurrencyStepper, ControlFormFields, HumanDateField } from "./currency-stepper";
 import { BenefitWalletFundingDetails } from "./benefit-wallet-editor";
@@ -11,7 +12,6 @@ import { updateMonthInputs } from "./actions";
 import material from "./month-material.module.css";
 import styles from "./month-control-center.module.css";
 
-export function resourceFocusKey(key: string) { return `resource-${key.replace(/[^a-zA-Z0-9:-]/gu, "-")}`; }
 const field = `${material.field} mt-2 block w-64 px-3 py-3`;
 const save = `${material.clayPrimary} mt-6 px-5 py-3 font-bold`;
 const UpdateTriageContext = createContext(false);
@@ -25,11 +25,13 @@ export function MonthUpdateControls({ model, data, focus, back, triage = false, 
   const local = useMonthLocalFocus(), entity = focus ?? local.entity;
   const resource = data.resources.find(row => resourceFocusKey(row.key) === entity || entity === row.key || entity === `income:${row.key}`);
   const obligation = data.obligations.find(row => row.key === entity);
-  const provider = entity === "SWILE" || entity === "EDENRED" ? entity : null;
+  const directLoading = entity === "SWILE:loading" || entity === "EDENRED:loading";
+  const provider = entity === "SWILE" || entity === "SWILE:loading" ? "SWILE"
+    : entity === "EDENRED" || entity === "EDENRED:loading" ? "EDENRED" : null;
   return <UpdateTriageContext.Provider value={triage}><div className={`${styles.focusPane} ${styles.factFocus}`} data-local-focus={entity}>
     {!embedded && <button type="button" className={styles.localBack} onClick={back ?? (() => local.openEntity("update"))}>← Mettre à jour</button>}
     {triage && !embedded && <p className={styles.triageCount}>{model.update.needsUpdateCount} information{model.update.needsUpdateCount > 1 ? "s" : ""} à actualiser</p>}
-    {provider ? <WalletFocus key={provider} model={model} provider={provider} data={data} /> : entity === "BANK" ? <BankFocus model={model} data={data} /> : resource ? <IncomeFocus key={`${resource.key}:${resource.amount}`} model={model} resource={resource} /> : obligation ? <ObligationFocus key={`${obligation.key}:${JSON.stringify(obligationState(obligation, data.inputs))}`} model={model} row={obligation} inputs={data.inputs} /> : <p>Cette information n’est plus disponible.</p>}
+    {provider ? <WalletFocus key={entity} model={model} provider={provider} data={data} directLoading={directLoading} /> : entity === "BANK" ? <BankFocus model={model} data={data} /> : resource ? <IncomeFocus key={`${resource.key}:${resource.amount}`} model={model} resource={resource} /> : obligation ? <ObligationFocus key={`${obligation.key}:${JSON.stringify(obligationState(obligation, data.inputs))}`} model={model} row={obligation} inputs={data.inputs} /> : <p>Cette information n’est plus disponible.</p>}
   </div></UpdateTriageContext.Provider>;
 }
 function IncomeFocus({ model, resource }: { model: MonthControlModel; resource: MonthUpdateData["resources"][number] }) {
@@ -50,8 +52,9 @@ function BankDetails({ bank }: { bank: MonthUpdateData["bank"] }) {
   if (!bank) return <p className="mt-5">Les ressources du mois ne sont pas encore complètes.</p>;
   return <dl className="mt-6 space-y-4">{([ ["Disponible après cagnottes", bank.afterSavings.amount], ["Charges restant à débiter", bank.remainingCertainBankOutflows.amount], ["Paiements des projets", bank.plannedBankCashRemaining.amount], ["Fin de mois bancaire", bank.endOfMonth.central] ] as const).map(([label, amount]) => <div key={label} className="flex justify-between gap-4"><dt>{label}</dt><dd className="font-bold">{money(amount, true)}</dd></div>)}<p className="text-sm text-slate-600">Le disponible bancaire, le coût économique et les titres-restaurants restent distincts.</p></dl>;
 }
-function WalletFocus({ model, provider, data }: { model: MonthControlModel; provider: "SWILE" | "EDENRED"; data: MonthUpdateData }) {
-  const [editor, setEditor] = useState<"NONE" | "BALANCE" | "LOADING" | "FUNDING" | "OBSERVATIONS">(model.update.groups.NEEDS_UPDATE.some(row => row.id === provider) && model.resourceInputs.projections[provider].currentBalanceKnowledge.amount !== null ? "LOADING" : "BALANCE");
+function WalletFocus({ model, provider, data, directLoading }: { model: MonthControlModel; provider: "SWILE" | "EDENRED"; data: MonthUpdateData; directLoading: boolean }) {
+  const [editor, setEditor] = useState<"NONE" | "BALANCE" | "LOADING" | "FUNDING" | "OBSERVATIONS">(
+    directLoading || model.update.groups.NEEDS_UPDATE.some(row => row.id === provider) && model.resourceInputs.projections[provider].currentBalanceKnowledge.amount !== null ? "LOADING" : "BALANCE");
   const wallet = model.resourceInputs.wallets[provider], projection = model.resourceInputs.projections[provider], label = provider === "SWILE" ? "Swile" : "Edenred";
   return <section data-wallet-focus={provider}><header className={styles.walletHeader}><h2 className="text-2xl font-black">{label}</h2>
     <div className="mt-6 flex flex-wrap gap-3">{([["BALANCE", "Solde"], ["LOADING", "Chargement"], ["FUNDING", "Financement"]] as const).map(([key, title]) => <button type="button" key={key} aria-pressed={editor === key} className={`${material.clayChip} px-4 py-3 font-bold`} onClick={() => setEditor(key)}>{title}</button>)}</div></header>
@@ -70,8 +73,11 @@ export function WalletBalanceForm({ model, provider }: { model: MonthControlMode
 }
 export function WalletLoadingForm({ model, provider }: { model: MonthControlModel; provider: "SWILE" | "EDENRED" }) {
   const label = provider === "SWILE" ? "Swile" : "Edenred", loading = model.resourceInputs.projections[provider].expectedLoading;
-  const [amount, setAmount] = useState(loading?.amount ?? "0.00");
-  return <div className="mt-7" data-wallet-editor="LOADING"><h3 className="text-lg font-bold">Chargement {label} de {controlMonth(model.targetMonth)}</h3><form action={updateMonthInputs} className="mt-5"><ControlFormFields month={model.targetMonth} intent="save-wallet-expected-loading" values={{ provider }} /><CurrencyStepper value={amount} onChange={setAmount} step={10} label={`le chargement ${label}`} name="walletLoadingAmount" /><HumanDateField optional name="walletLoadingDate" label="Date prévue" initial={loading?.expectedDate} today={model.asOf} min={`${model.targetMonth}-01`} max={new Date(Date.UTC(Number(model.targetMonth.slice(0, 4)), Number(model.targetMonth.slice(5)), 0)).toISOString().slice(0, 10)} /><UpdateSaveButton>Enregistrer le chargement</UpdateSaveButton></form>
+  const [amount, setAmount] = useState(loading?.amount ?? "");
+  return <div className="mt-7" data-wallet-editor="LOADING"><h3 className="text-lg font-bold">Chargement {label} de {controlMonth(model.targetMonth)}</h3><form action={updateMonthInputs} className="mt-5"><ControlFormFields month={model.targetMonth} intent="save-wallet-expected-loading" values={{ provider }} />
+    {loading ? <CurrencyStepper value={amount} onChange={setAmount} step={10} label={`le chargement ${label}`} name="walletLoadingAmount" />
+      : <label className="block font-semibold">Chargement prévu (€)<input className={`${field} max-w-full`} name="walletLoadingAmount" type="number" min="0" max="999999999.99" step="0.01" required /></label>}
+    <HumanDateField optional name="walletLoadingDate" label="Date prévue" initial={loading?.expectedDate} today={model.asOf} min={`${model.targetMonth}-01`} max={new Date(Date.UTC(Number(model.targetMonth.slice(0, 4)), Number(model.targetMonth.slice(5)), 0)).toISOString().slice(0, 10)} /><UpdateSaveButton>Enregistrer le chargement</UpdateSaveButton></form>
     {loading && <form action={updateMonthInputs} className="mt-7"><ControlFormFields month={model.targetMonth} intent="clear-wallet-expected-loading" values={{ provider }} /><button className={styles.textAction}>Retirer ce chargement prévu</button></form>}</div>;
 }
 function ObligationFocus({ model, row, inputs }: { model: MonthControlModel; row: MonthUpdateData["obligations"][number]; inputs: MonthUpdateData["inputs"] }) {

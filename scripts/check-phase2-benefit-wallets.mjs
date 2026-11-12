@@ -286,6 +286,29 @@ await test("WALLET-032-UI", () => {
   for (const text of ["Swile", "Edenred", "Capacité utilisable", "projets", "Usage déclaré", "Réservé aux projets prévus", "à confirmer", "pas transformé en Banque certaine"]) assert(funding.includes(text), text);
 });
 
+await test("WALLET-COMPOSER-LOADING-FOCUS", () => {
+  const { MonthLocalFocusProvider } = require("@/app/mois-a-venir/month-control-focus.tsx");
+  const { MonthUpdateSpatial } = require("@/app/mois-a-venir/month-update-spatial.tsx");
+  const { projectMonthUpdatePresentation } = require("@/server/phase2/month-update-presentation.ts");
+  const scenario = derive(live, { ...inputs, declaredResources: {}, benefit: { currentBalance: null, expectedLoading: null },
+    benefitWallets: wallets() }, null, "2026-10-18");
+  const model = { targetMonth: "2026-10", asOf: "2026-10-18", update: projectMonthUpdatePresentation(live, scenario),
+    resourceInputs: { projections: scenario.benefitWallets, wallets: scenario.inputs.benefitWallets } };
+  for (const provider of ["SWILE", "EDENRED"]) {
+    const html = renderToStaticMarkup(React.createElement(MonthLocalFocusProvider,
+      { value: { section: "update", entity: `update:item:${provider}:loading`, openEntity() {} } },
+      React.createElement(MonthUpdateSpatial, { model, refreshing: false })));
+    assert.match(html, /data-wallet-editor="LOADING"/);
+    assert.doesNotMatch(html, /data-wallet-editor="BALANCE"|clear-wallet-expected-loading/);
+    assert(html.includes(`name="provider" value="${provider}"`));
+    assert.match(html, /name="targetMonth" value="2026-10"/);
+    assert.match(html, /name="intent" value="save-wallet-expected-loading"/);
+    const amount = html.match(/<input[^>]+name="walletLoadingAmount"[^>]*>/)?.[0];
+    assert.match(amount, /required/);
+    assert.doesNotMatch(amount, /value=/);
+  }
+});
+
 // Production canonical adapter against a SELECT-only fixture. FULL source+instance
 // proof is required for reconstruction; no provider-wide coverage borrowing.
 await test("WALLET-033-READ-ONLY-ADAPTER", async () => {
