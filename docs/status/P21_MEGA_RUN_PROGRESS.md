@@ -301,3 +301,9 @@ TypeScript, diff, recherche/rendu de la bibliothèque et les dix groupes du banc
 Une sortie contenant l’une des six nouvelles activités peut proposer un repas en nommant l’activité liée. Plusieurs activités ne produisent qu’une proposition. Un restaurant, un repas rapide ou une livraison déjà liés la retirent. Un restaurant accompagné d’une activité ne reçoit pas de suggestion Cinéma par défaut.
 
 TypeScript, diff et cinq contrôles S3 PASS. Le banc couvre la priorité locale, la confirmation explicite, le refus d’une proposition devenue obsolète, les capacités et l’absence de doublon. Aucun writer distant ni Apply. Suite · navigation de la bibliothèque.
+
+### Recherche clavier des modèles
+
+Lorsqu’un seul modèle correspond à la recherche et qu’aucune intention ne correspond, Entrée ouvre son aperçu. Les résultats de modèles participent à la navigation clavier et le message de recherche vide disparaît s’il existe un modèle correspondant. Les actions masquées par une section repliée ne captent pas le focus.
+
+TypeScript, diff et les quatre contrôles de la bibliothèque PASS. « quilles dîner » ouvre l’aperçu du modèle Bowling et restaurant en conservant le digest. Aucun writer distant ni Apply. Navigation navigateur et recette authentifiée NOT_RUN. Suite · état des paniers sur le Board.

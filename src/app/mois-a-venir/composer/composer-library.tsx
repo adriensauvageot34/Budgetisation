@@ -67,7 +67,15 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     </button>;
   };
   const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
-  const focusActions=()=>search.current?.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-existing-action]:not(:disabled),[data-library-add-action]:not(:disabled)")?.focus();
+  const focusActions=()=>{
+    const panel=search.current?.closest("aside");
+    const actions=Array.from(panel?.querySelectorAll<HTMLButtonElement>(
+      "[data-library-existing-action]:not(:disabled),[data-library-add-action]:not(:disabled),[data-library-project-action]:not(:disabled)")??[]);
+    const button=actions.find(action=>action.getClientRects().length>0);
+    if(!button)return false;
+    button.focus();
+    return true;
+  };
   const tile=(item:LibraryIntention)=>{
     const asset=item.asset, source=model.presentation.dragSources[asset.assetKey];
     const alreadyPresent=!!item.preset&&index.occurrences.some(row=>row.presetKey===item.preset!.presetKey);
@@ -96,8 +104,13 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       onKeyDown={e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setQuery("");search.current?.focus();}
       else if(e.key==="Enter"&&space==="intentions"&&!busy){e.preventDefault();if(monthIntentions.length===1)openContext(monthIntentions[0].contextOccurrenceId);else focusActions();}
       else if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
-        if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}else focusActions();
-      }else if(e.key==="ArrowDown"){e.preventDefault();e.currentTarget.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-scroll] button:not(:disabled)")?.focus();}}}/></label>
+        if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}
+        else if(!matches.length&&!occurrences.length&&projects.length===1)prepareProject?.(projects[0]);else focusActions();
+      }else if(e.key==="ArrowDown"){
+        e.preventDefault();
+        if(!focusActions())Array.from(e.currentTarget.closest("aside")?.querySelectorAll<HTMLButtonElement>("[data-library-scroll] button:not(:disabled)")??[])
+          .find(button=>button.getClientRects().length>0)?.focus();
+      }}}/></label>
     <div className={styles.libraryScroll} data-library-scroll onKeyDown={e=>{
       if(e.defaultPrevented)return;
       if(e.key==="Escape"){e.preventDefault();e.stopPropagation();search.current?.focus();return;}
@@ -113,7 +126,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
         <summary>Modèles de projets</summary>
         {projectGroups.map(group => <section key={group} aria-label={`Modèles · ${group}`}><h3>{group}</h3>
           <div className={styles.libraryProjects}>{projects.filter(project => projectStarterCategory(project) === group).map(project =>
-            <button key={project.key} className={styles.libraryProject} type="button" disabled={busy}
+            <button key={project.key} className={styles.libraryProject} type="button" disabled={busy} data-library-project-action={project.key}
               aria-label={`Prévisualiser ${project.label}`} onClick={() => prepareProject?.(project)}>
               <PresetIllustration preset={composerPreset(project.parent)!} />
               <span><strong>{project.label}</strong><small>{projectStarterContents(project)}</small><small>Voir et personnaliser le modèle</small></span>
@@ -143,7 +156,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
           </div>}
         </div>}
       </section>;})}
-      {!matches.length&&!occurrences.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. {serviceQuery
+      {!matches.length&&!occurrences.length&&!projects.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. {serviceQuery
         ? "Aucune prestation autorisée n’est attestée pour cette recherche dans ce mois. Un concept du catalogue ne constitue pas un rendez-vous réservé."
         : "Les compléments se trouvent dans la palette de leur carte."}</p>}
     </>:space==="intentions"?<section aria-label="Mes intentions du mois" data-library-month-intentions>

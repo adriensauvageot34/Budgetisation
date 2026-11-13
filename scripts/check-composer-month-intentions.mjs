@@ -36,13 +36,14 @@ for(const operation of [
 }
 const gifts=libraryOccurrences(model).filter(row=>row.presetKey==='gift-present');
 assert.deepEqual(gifts.map(row=>row.occurrence),[1,2]);
-const digest=semanticStateDigest(model.semanticState);let root,setStatus,opened=[],searchFocus=0,focusedButton=null;
+const digest=semanticStateDigest(model.semanticState);let root,setStatus,opened=[],prepared=[],searchFocus=0,focusedButton=null;
 class Button{constructor(label,visible=true){this.label=label;this.visible=visible;}getClientRects(){return this.visible?[{}]:[];}focus(){focusedButton=this.label;}}
 globalThis.HTMLButtonElement=Button;
 function Harness(){
  const [status,update]=React.useState('FRESH');setStatus=update;
  return React.createElement(BudgetPreviewStatus.Provider,{value:status},React.createElement(ComposerLibrary,{model,openToken:0,busy:false,selected:null,
-  choose(){assert.fail('Reading must not add');},choosePreset(){assert.fail('Reading must not add');},drag(){},inspectContext(){},openContext:id=>opened.push(id)}));
+  choose(){assert.fail('Reading must not add');},choosePreset(){assert.fail('Reading must not add');},drag(){},inspectContext(){},openContext:id=>opened.push(id),
+  prepareProject:starter=>prepared.push(starter.key)}));
 }
 const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join('');
 const rows=()=>root.root.findAll(node=>node.type==='button'&&node.props['data-library-existing-action']);
@@ -70,9 +71,17 @@ try{
  assert.equal(rows().length,expected);
  await act(async()=>setStatus('STALE'));assert.equal(rows().length,0);
  assert(root.root.findAllByProps({role:'status'}).some(node=>text(node).includes('Actualisez la projection')));
+ const addTab=root.root.findAllByType('button').find(node=>text(node)==='À ajouter');
+ await act(async()=>addTab.props.onClick());
+ await act(async()=>search.props.onChange({target:{value:'quilles dîner'}}));
+ assert(root.root.findByProps({'data-library-project-action':'bowling-and-dinner'}));
+ assert.doesNotMatch(text(root.root),/Aucune intention correspondante/);
+ await act(async()=>search.props.onKeyDown({key:'Enter',preventDefault(){}}));
+ assert.deepEqual(prepared,['bowling-and-dinner']);
  assert.equal(semanticStateDigest(model.semanticState),digest);assert.deepEqual(f.writes,[]);
  console.log('MI-01 Published evenings, meals and gifts reopen with exact identities: PASS');
  console.log('MI-02 Month list, official incompleteness and stale protection are read-only: PASS');
  console.log('MI-03 Keyboard skips hidden controls, returns to search and only opens the exact existing intention: PASS');
- console.log(JSON.stringify({status:'PASS',checks:3,remoteWrites:0,apply:false,level:'LOCAL_LIBRARY_AND_OWNER'}));
+ console.log('MI-04 A unique project search result opens its preview without adding a decision: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:4,remoteWrites:0,apply:false,level:'LOCAL_LIBRARY_AND_OWNER'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}
