@@ -2,12 +2,14 @@ import type { ClayCatalogEntry } from '../clay-v22-catalog';
 import type { ComposerUiModel } from '@/domain/phase2/planner/composer-ui-contract';
 import type { ComposerAssetView, DropTarget } from '@/domain/phase2/planner/composer-contract';
 import type { ComponentSelectionV1 } from '@/domain/phase2/planner/component-contract';
-import { composerPreset, presetForContext } from '@/domain/phase2/planner/composer-presets';
+import { composerPreset, presetForContext, type ComposerPresetKey } from '@/domain/phase2/planner/composer-presets';
 import { publishedDrop } from './interactions';
 import { componentId } from '@/domain/phase2/planner/identity';
 import { clayAssetArtwork } from '../clay-v22-media';
 import { plannedAsset } from '@/domain/phase2/planned-assets';
 import { isPurchaseBasket, type BasketConcept } from '@/domain/phase2/planner/purchase-basket';
+import { libraryOccurrences } from '@/domain/phase2/planner/composer-library-index';
+import { isBasketCatalogProduct } from '@/domain/phase2/planner/purchase-catalog';
 
 export const CATALOG_SCOPES = [['all','Tous les éléments'],['courses','Courses'],['cinema','Cinéma'],['bar','Bar / Apéro'],
   ['restaurant','Restaurant et repas'],['purchase','Achats / Amazon'],['beauty','Beauté'],['stay','Week-end et visites'],
@@ -68,6 +70,11 @@ export function catalogResults(entries:readonly ClayCatalogEntry[],{query='',sco
  }));
 }
 const purchaseModules = new Set(['beauty','clothing','household','home','tech','automotive']);
+const purchaseStarterPresets: Readonly<Partial<Record<string,ComposerPresetKey>>> = {
+ 'tech:video_game':'video-game-purchase','household:laundry':'laundry-detergent','household:dish_soap':'dishwashing-liquid',
+ 'household:dishwasher':'dishwasher-tablets','household:sponge':'sponges','household:floor':'floor-cleaner',
+ 'household:trash_bags':'trash-bags','household:toilet_paper':'toilet-paper','household:paper_towels':'paper-towels',
+};
 export function purchaseCatalogProduct(entry:ClayCatalogEntry,domain?:unknown){
  if(entry.discovery.nature!=='ELEMENT')return undefined;
  const expectedModule=domain==='clothing'?'clothing':domain==='home-small'?'household':domain==='games-digital'?'tech':undefined;
@@ -95,11 +102,25 @@ export function catalogSocket(model:ComposerUiModel,contextId:string,slotKey:str
 export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,target:DiscoveryTarget):DiscoveryAction[]{
  const actions:DiscoveryAction[]=[];
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===target.contextId);
- if(!target.contextId&&entry.discovery.sourceRow&&entry.discovery.nature==="ELEMENT"&&purchaseCatalogProduct(entry)?.module==="beauty"){
+ if(!target.contextId&&!target.controlRef&&entry.discovery.sourceRow&&entry.discovery.nature==="ELEMENT"&&purchaseCatalogProduct(entry)){
+   const product=purchaseCatalogProduct(entry)!;
+   const labels=new Map(libraryOccurrences(model).filter(row=>row.surface==='BASKET').map(row=>[row.contextOccurrenceId,
+     row.label+(row.occurrence?` · Achat ${row.occurrence}`:'')+(row.plannedDate?` · ${row.plannedDate}`:'')]));
+   for(const basket of model.board.contexts.filter(card=>isPurchaseBasket(card)&&labels.has(card.contextOccurrenceId))){
+     if(basket.sockets.some(socket=>socket.slotKey==='item'&&socket.currentItems.some(item=>item.kind==='COMPONENT'&&item.basketArticle?.concept?.id===entry.visualConceptId)))
+       actions.push({key:'basket-existing:'+basket.contextOccurrenceId,kind:'OPEN',contextId:basket.contextOccurrenceId,label:`Retrouver ${entry.label} dans ${labels.get(basket.contextOccurrenceId)}`});
+   }
    const asset=model.library.searchableAssets.find(candidate=>candidate.assetKey==="template:purchase");
-   if(asset&&publishedDrop(model,asset.assetKey,{kind:"BOARD_ZONE"})?.semanticAction==="ADD_CONTEXT")
-     actions.push({key:"beauty-basket:"+entry.visualConceptId,kind:"PRESET",presetKey:"beauty-purchase",asset,
-       concept:{id:entry.visualConceptId,label:entry.label},label:`Préparer un achat de ${entry.label}`});
+   if(asset&&publishedDrop(model,asset.assetKey,{kind:"BOARD_ZONE"})?.semanticAction==="ADD_CONTEXT"){
+     const presetKey=product.module==='beauty'?'beauty-purchase':product.module==='clothing'?'clothing-shopping'
+       :purchaseStarterPresets[product.assetKey];
+     const defaults=presetKey?composerPreset(presetKey)?.defaults:undefined;
+     const domain=defaults&&'budgetDomain' in defaults?defaults.budgetDomain:'other';
+     const concept={id:entry.visualConceptId,label:entry.label};
+     if(isBasketCatalogProduct(entry,domain))actions.push(presetKey?{key:(product.module==='beauty'?'beauty-basket:':'catalog-basket:')+entry.visualConceptId,kind:'PRESET',presetKey,asset,concept,
+       label:`Préparer un achat de ${entry.label}`}
+       :{key:'catalog-basket:'+entry.visualConceptId,kind:'CHOOSE',asset,target:{kind:'BOARD_ZONE'},concept,label:`Préparer un panier pour ${entry.label}`});
+   }
  }
  if(entry.presetKey){
    const preset=composerPreset(entry.presetKey);

@@ -19,7 +19,7 @@ export function CatalogOpenButton({children='Tous les éléments',target={},clas
  return open?<button type="button" className={className??styles.open} data-catalog-open onClick={()=>open(target)}>{children}</button>:null;
 }
 export function CatalogDiscoveryProvider({model,busy,children,openContext,choose,choosePreset,revealControl}:{model:ComposerUiModel;busy:boolean;children:ReactNode;
- openContext:(id:string,focus?:string,articleLabel?:string)=>void;revealControl:(id:string)=>void;choose:(asset:ComposerAssetView,target:DropTarget,selection?:ComponentSelectionV1,componentLabel?:string)=>void;
+ openContext:(id:string,focus?:string,articleLabel?:string)=>void;revealControl:(id:string)=>void;choose:(asset:ComposerAssetView,target:DropTarget,selection?:ComponentSelectionV1,componentLabel?:string,concept?:BasketConcept)=>void;
  choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey,concept?:BasketConcept)=>void}){
  const [request,setRequest]=useState<Request|null>(null),[entries,setEntries]=useState<readonly ClayCatalogEntry[]>([]),[error,setError]=useState('');
  const [query,setQuery]=useState(''),[scope,setScope]=useState('all'),[family,setFamily]=useState(''),[nature,setNature]=useState(''),[page,setPage]=useState(0),[selected,setSelected]=useState<string|null>(null);
@@ -82,7 +82,7 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
       {context?.templateKey==='purchase'&&!basket&&actions.some(action=>action.target?.slotKey==='item'&&action.selection)&&<p>Cet achat contient une seule ligne article.</p>}
       {(!actions.length&&!commands.length)&&<p>{unavailable}</p>}
       {!currentRequest&&<p>La composition a changé. Rouvrez le catalogue depuis l’objet concerné pour configurer un élément.</p>}
-      <div className={styles.actions}>{actions.map(a=><button type="button" key={a.key} disabled={busy||!currentRequest} onClick={()=>execute(()=>{if(a.kind==='OPEN')openContext(a.contextId!,a.focus,a.articleLabel);else if(a.kind==='PRESET')choosePreset(a.asset!,a.presetKey as ComposerPresetKey,a.concept);else choose(a.asset!,a.target!,a.selection,a.componentLabel);})}>{a.label}</button>)}
+      <div className={styles.actions}>{actions.map(a=><button type="button" key={a.key} disabled={busy||!currentRequest} onClick={()=>execute(()=>{if(a.kind==='OPEN')openContext(a.contextId!,a.focus,a.articleLabel);else if(a.kind==='PRESET')choosePreset(a.asset!,a.presetKey as ComposerPresetKey,a.concept);else choose(a.asset!,a.target!,a.selection,a.componentLabel,a.concept);})}>{a.label}</button>)}
         {commands.map(c=><button type="button" key={c.key??c.label} disabled={busy} onClick={()=>execute(c.run)}>{c.label}</button>)}
         {request.controlRef&&<button type="button" onClick={()=>execute(()=>revealControl(request.controlRef!))}>Voir le budget Courses du mois</button>}
         {!request.contextId&&model.board.contexts.filter(c=>chosen.discovery.contexts.includes(scopeForCard(model,c.contextOccurrenceId))).map(c=><button type="button" key={c.contextOccurrenceId} onClick={()=>open({contextId:c.contextOccurrenceId,query:chosen.label,entryId:chosen.visualConceptId})}>Explorer pour {c.label}</button>)}

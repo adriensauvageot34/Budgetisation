@@ -100,6 +100,9 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Accessibilité de la bibliothèque | Entrée ouvre l’existant, Échap et flèche haute reviennent à la recherche |
 | DONE | Sélection du mois | Mois explicite dans la liste et l’aperçu des modèles |
 | READY | Lecture des montants | Hiérarchiser coûts inconnus et sous-totaux officiels dans les projets |
+| DONE | Produits du catalogue vers les paniers | Choix canoniques compatibles vers les recettes existantes ou le panier générique |
+| READY | Ouvrir une ligne depuis le catalogue | Cibler un article exact plutôt que seulement son panier |
+| READY | Panier générique | Reprise par son contenu et lecture de sa complétude |
 | DONE | Synthèse des projets | Compteurs officiels et filtres pour les projets contenant plusieurs enfants |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
@@ -247,4 +250,12 @@ TypeScript, diff et trois contrôles React/propriétaire PASS, incluant les év�
 
 ### Rejouer les contrôles ciblés
 
-Les sept pilotes React additionnels acceptent `PLANNER_REACT_TEST_TOOLS`, chemin du répertoire contenant le `package.json` du renderer déjà disponible. Sans cette variable, ils réutilisent `outputs/p21-react-tools`. Aucun paquet de test ou fichier de ce répertoire n’est inclus dans le commit. Les scripts du propriétaire et les fixtures de calcul restent ceux du dépôt.
+Les pilotes React additionnels acceptent `PLANNER_REACT_TEST_TOOLS`, chemin du répertoire contenant le `package.json` du renderer déjà disponible. Sans cette variable, ils réutilisent `outputs/p21-react-tools`. Aucun paquet de test ou fichier de ce répertoire n’est inclus dans le commit. Les scripts du propriétaire et les fixtures de calcul restent ceux du dépôt.
+
+### Préparer un panier depuis un produit du catalogue
+
+Des produits canoniques compatibles ouvrent une préparation de panier. Beauté, Vêtements, Jeu vidéo et les consommables disposant d’une recette publiée réutilisent cette recette. Les autres équipements admis utilisent le panier générique. La même fonction d’admission que le propriétaire `purchase@v2` vérifie le domaine ; les concepts incompatibles restent sans action de création. Le produit n’adopte ni prix ni vendeur à la consultation.
+
+Le catalogue propose aussi de retrouver les paniers contenant déjà le concept exact. Les paniers génériques sans preset deviennent retrouvables et éditables selon leurs droits. Une présentation de version future inconnue ne reçoit aucun droit supplémentaire.
+
+TypeScript et le contrôle ciblé du catalogue PASS : sept produits réels du catalogue public, dans six modules, passent la création et l’adoption d’un article UNKNOWN via le propriétaire existant. Les droits de création, le budget Courses comme cible distincte, les métadonnées futures et l’ouverture de l’existant sont vérifiés. Le test React confirme le passage du concept exact par l’action du catalogue. Aucun writer distant ni Apply.

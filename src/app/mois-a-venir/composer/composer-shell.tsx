@@ -986,12 +986,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       editContext(card,undefined,undefined,{kind:"article",label:articleLabel});
     else stableLibraryOpen(id);
   });
-  const chooseCatalogSocket=useCommittedEvent((asset:ComposerAssetView,target:DropTarget,selection?:ComponentSelectionV1,componentLabel?:string)=>{
+  const chooseCatalogSocket=useCommittedEvent((asset:ComposerAssetView,target:DropTarget,selection?:ComponentSelectionV1,componentLabel?:string,concept?:BasketConcept)=>{
     if (busyRef.current) return;
     const card=shown.board.contexts.find(item=>item.contextOccurrenceId===target.contextOccurrenceId);
     if(card&&(presetForContext(card)?.presetKey==="cinema"||card.templateKey==="purchase"&&target.slotKey==="item"))
       editContext(card,undefined,undefined,{kind:"socket",asset,target,selection});
-    else choose(asset,target,selection,undefined,undefined,componentLabel);
+    else choose(asset,target,selection,undefined,undefined,componentLabel,concept);
   });
   const stableLibraryOpen=useCommittedEvent((id:string)=>{
     if(busyRef.current)return;
