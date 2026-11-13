@@ -585,3 +585,7 @@ Sous 760 px, la fiche utilise aussi l’espace occupé par les filtres et la pag
 ### Impact budgétaire d’une activité libre
 
 Le résumé de l’éditeur Activité libre montre la lecture officielle de cette occurrence. Le banc familles de projets vérifie un tarif déclaré de 17,25 € et le masquage du montant calculé lors d’un état périmé. TypeScript et quatre contrôles sur fixture PASS.
+
+### Droits des commandes dans une fiche catalogue ouverte
+
+Les commandes contextuelles disparaissent si le droit de modification de la carte est retiré pendant la consultation, même quand le digest reste identique. La fiche reste consultable et indique la protection. TypeScript et banc catalogue/panier PASS avec retrait de la capacité en cours de consultation.

@@ -175,6 +175,17 @@ try{
  await act(async()=>prepareExisting().props.onClick());
  assert.deepEqual(prepared,[[contextId,basketStart.concept]]);
  await act(async()=>root.unmount());root=null;
+ const commandsForBasket=model=>React.createElement(CatalogDiscoveryProvider,{model,busy:false,
+  openContext(){assert.fail();},revealControl(){assert.fail();},choose(){assert.fail();},choosePreset(){assert.fail();}},
+  React.createElement(CatalogOpenButton,{target:{contextId,entryId:charger.visualConceptId,query:charger.label,
+   commands:[{visualConceptId:charger.visualConceptId,label:'Commande de fixture',run(){assert.fail();}}]}},'Ouvrir le catalogue'));
+ await act(async()=>{root=create(commandsForBasket(emptyBasket),{createNodeMock:()=>({open:false,showModal(){this.open=true;},close(){this.open=false;},focus(){}})});});
+ await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());
+ assert(root.root.findAllByType('button').some(button=>text(button)==='Commande de fixture'));
+ await act(async()=>root.update(commandsForBasket(lockedBasket)));
+ assert(!root.root.findAllByType('button').some(button=>text(button)==='Commande de fixture'));
+ assert.match(text(root.root),/Cette décision est protégée/);
+ await act(async()=>root.unmount());root=null;
  const openActions=discoveryActions(charger,basket,{}).filter(action=>action.kind==='OPEN');assert.equal(openActions.length,2);
  assert.deepEqual(openActions.map(action=>action.focus),['basket-item:'+firstId,'basket-item:'+secondId]);
  const catalogChoice={kind:'socket',asset:basket.library.searchableAssets.find(asset=>asset.assetKey==='option:purchase:item:item'),

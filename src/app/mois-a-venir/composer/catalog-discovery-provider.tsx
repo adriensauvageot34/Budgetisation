@@ -52,15 +52,17 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  const coursesAsset=!context&&scope==='courses'?model.library.searchableAssets.find(a=>a.assetKey==='template:purchase'):undefined;
  const canPrepareCourses=!!coursesAsset&&publishedDrop(model,coursesAsset.assetKey,{kind:'BOARD_ZONE'})?.semanticAction==='ADD_CONTEXT';
  const currentRequest=request&&(!request.contextId||!!context)&&requestDigest.current===model.board.draft.semanticStateDigest;
+ const contextWritable=context&&!context.readOnly&&context.capabilityRefs.includes('PATCH_CONTEXT')
+   &&!catalogRefLocked(model,context.contextOccurrenceId);
  const alreadyChosen=chosen&&context?.sockets.some(s=>s.currentItems.some(i=>i.kind==='COMPONENT'
    &&(i.basketArticle?.concept?.id===chosen.visualConceptId||i.productAssetRef&&chosen.assetKeys.includes(i.productAssetRef.assetKey))));
- const commands=chosen&&currentRequest&&context&&!context.readOnly&&!catalogRefLocked(model,context.contextOccurrenceId)
+ const commands=chosen&&currentRequest&&contextWritable
    ?[...(request?.resolveCommands?.(chosen)??[]),...(request?.commands??[])].filter(c=>c.visualConceptId===chosen.visualConceptId
      &&(!alreadyChosen||c.editsExisting||c.allowRepeat)):[];
  const actions=chosen&&request?discoveryActions(chosen,model,{...request,scope}).filter(action=>
    (action.kind!=='BASKET_ARTICLE'||prepareBasketArticle)&&(!commands.length||action.kind==='OPEN'&&action.focus)):[];
  const unavailable=request?.controlRef?'Le budget mensuel permet de consulter ou d’ajuster sa cible. Préparez un achat de courses pour choisir vos produits.'
-   :context?.readOnly||context&&catalogRefLocked(model,context.contextOccurrenceId)?'Cette décision est protégée.'
+   :context&&!contextWritable?'Cette décision est protégée.'
      :basket?'Cet élément est consultable dans le catalogue. Choisissez un produit adapté à ce panier.'
      :context?.templateKey==='purchase'?'Cet achat contient une seule ligne article. Consultez la fiche de l’achat pour modifier cette ligne.'
        :context&&!context.sockets.length?'Les choix de cette carte seront disponibles après la prévisualisation.'
