@@ -24,6 +24,7 @@ import { assetEditorTarget, editorOccurrenceId } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
 import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
 import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter } from "./project-starters";
+import { ProjectCompletionPreference } from "./project-completion";
 import { WorkshopNavigationContext, IntentionSwitcher, intentionNavigationEntries } from "./workshop-navigation";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
@@ -168,6 +169,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [placeDeclines, setPlaceDeclines] = useState<readonly string[]>([]);
   const declinePlace = (key: string) => setPlaceDeclines(current => current.includes(key) ? current : [...current, key]);
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Record<string, readonly string[]>>({});
+  const [projectSuggestionsEnabled, setProjectSuggestionsEnabled] = useState(true);
+  const [dismissedProjectSuggestions, setDismissedProjectSuggestions] = useState<Record<string, readonly string[]>>({});
+  const projectSuggestionPreference = useMemo(() => ({ enabled: projectSuggestionsEnabled,
+    toggle: () => setProjectSuggestionsEnabled(enabled => !enabled), dismissed: dismissedProjectSuggestions,
+    dismiss: (id: string, key: string | null) => setDismissedProjectSuggestions(previous => ({
+      ...previous, [id]: key === null ? [] : [...new Set([...(previous[id] ?? []), key])],
+    })) }), [projectSuggestionsEnabled, dismissedProjectSuggestions]);
   const updateSuggestionDismissal = (occurrenceId: string, key: string | null) => setDismissedSuggestions(current => ({
     ...current, [occurrenceId]: key === null ? [] : [...new Set([...(current[occurrenceId] ?? []), key])],
   }));
@@ -585,7 +593,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       }
       install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
       setEditor(current => operation.kind === "DROP" && operation.target.kind === "CONTEXT_SOCKET"
-        && operation.target.contextOccurrenceId === current?.catalogContextId ? current
+        && (operation.target.contextOccurrenceId === current?.catalogContextId || operation.target.contextOccurrenceId === current?.stayContextId) ? current
         : current?.equipment ? { ...current, saved: true, raw: false }
         : current?.nightContextId && response.model.semanticState.contexts.some(context => context.contextOccurrenceId === current.nightContextId)
           ? { ...current, nightCreating: false, nightAdmission: (current.nightAdmission ?? 0) + 1 } : null); setSelected(null);
@@ -1071,7 +1079,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
-  return <BudgetPreviewStatus.Provider value={previewStatus}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
+  return <ProjectCompletionPreference.Provider value={projectSuggestionPreference}><BudgetPreviewStatus.Provider value={previewStatus}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
@@ -1280,5 +1288,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></OpenMonthlyFinances.Provider></BudgetPreviewStatus.Provider>;
+  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></OpenMonthlyFinances.Provider></BudgetPreviewStatus.Provider></ProjectCompletionPreference.Provider>;
 }

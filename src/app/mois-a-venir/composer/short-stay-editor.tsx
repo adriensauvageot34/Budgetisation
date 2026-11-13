@@ -18,6 +18,7 @@ import { useCommittedEvent } from "./use-committed-event";
 import { matchesStayExtra, shortStaySuggestions, shortStayTransportModes, type ShortStaySuggestion } from "./short-stay-suggestions";
 import { IntentBudgetImpact } from "./intent-budget-impact";
 import { LinkedIntentions } from "./linked-intentions";
+import { ProjectCompletion } from "./project-completion";
 import { SuggestionControls } from "./suggestion-controls";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { CatalogCommand } from "./catalog-discovery";
@@ -225,7 +226,6 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
   </div>;
   const content = <>
     <CatalogOpenButton target={{contextId:context.contextOccurrenceId,moment:"lodging",commands:lodgingCommands}}>Parcourir les éléments du séjour</CatalogOpenButton>
-    <LinkedIntentions model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} open={onOpenChild} />
     <p className={styles.helper}>Le séjour regroupe ses postes, sans coût parent ajouté. Les autres postes restent accessibles dans le dock.</p>
     {!writable && <p role="status">Ce séjour est en consultation ou sa cible a changé. La saisie reste conservée ; aucune modification ne peut être validée ici.</p>}
     {postSection === "lodging" && <>
@@ -283,7 +283,9 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     </div>)}
     <details><summary>À savoir sur les postes</summary><p className={styles.helper}>Un jacuzzi peut être une activité ou un extra explicitement ajouté. Les transports des enfants liés doivent déclarer leur relation au trajet du séjour ; aucune fusion n’est déduite d’un libellé.</p></details>
   </>;
-  return <ProspectiveContextEditor {...props} stay stayDetails={stayDetails} posts={content} postsQuestion={postsQuestion} staySummary={staySummary} stayTransportModes={transportModes} onSave={operation => {
+  const project = <><LinkedIntentions model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} open={onOpenChild} />
+    <ProjectCompletion model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} decide={props.onSave} /></>;
+  return <ProspectiveContextEditor {...props} stay stayDetails={<>{stayDetails}{project}</>} posts={content} postsQuestion={postsQuestion} staySummary={staySummary} stayTransportModes={transportModes} onSave={operation => {
     if (operation.kind !== "EDIT_SHORT_STAY") return false;
     if (!writable || operation.edit.contextOccurrenceId !== context.contextOccurrenceId)
       throw Error("Ce séjour ou ses droits ont changé. Votre saisie est conservée ; rouvrez la bonne occurrence.");

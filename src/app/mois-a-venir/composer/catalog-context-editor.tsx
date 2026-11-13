@@ -23,6 +23,7 @@ import { SuggestionControls, type SuggestionDismissal } from "./suggestion-contr
 import { IntentBudgetImpact } from "./intent-budget-impact";
 import { intentionNavigationEntries, WorkshopNavigation } from "./workshop-navigation";
 import { LinkedIntentions } from "./linked-intentions";
+import { ProjectCompletion } from "./project-completion";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
@@ -197,6 +198,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       {beautyProduct && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {composed && <>
         <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} />
+        <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
         {(candidates.length > 0 || addOptions.length > 0) && <details>
           <summary>Associer une intention</summary>
           {candidates.map(child => <button key={child.id} type="button" onClick={() => confirmAttachment(child.label, () => ({

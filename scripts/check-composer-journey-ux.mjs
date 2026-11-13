@@ -16,6 +16,7 @@ const {fresh,buildComponentRow}=require('@/app/mois-a-venir/composer/night-out-c
 const {LinkedIntentions}=require('@/app/mois-a-venir/composer/linked-intentions');
 const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
 const {availableProjectStarters,evaluateProjectStarter}=require('@/app/mois-a-venir/composer/project-starters');
+const {projectCompletionSuggestions,ProjectCompletion,ProjectCompletionPreference}=require('@/app/mois-a-venir/composer/project-completion');
 
 globalThis.fetch=async()=>{throw Error('JOURNEY_UX_REMOTE_FORBIDDEN');};
 const fixture=await budgetImpactFixture(), model=fixture.model;
@@ -106,6 +107,18 @@ for(const [index,id] of [impactIds.cinema,impactIds.restaurant].entries()){
  assert.equal(linked.parentContextOccurrenceId,projectId);
  assert.deepEqual(linked.slotSelections,before.slotSelections);
  assert.equal(composed.budgetReading.byContext[id].gross,expected);
+ const suggestions=projectCompletionSuggestions(composed,projectId);
+ if(index===0){
+  assert.equal(suggestions[0]?.preset.presetKey,'restaurant-for-two');
+  assert.match(suggestions[0].reason,/contient un cinéma/);
+  const blocked={...composed,dropCapabilities:composed.dropCapabilities.filter(drop=>drop.target.contextOccurrenceId!==projectId)};
+  assert.deepEqual(projectCompletionSuggestions(blocked,projectId),[]);
+  const disabled=renderToStaticMarkup(React.createElement(ProjectCompletionPreference.Provider,
+   {value:{enabled:false,toggle(){},dismissed:{},dismiss(){}}},
+   React.createElement(ProjectCompletion,{model:composed,parentId:projectId,busy:false,decide(){assert.fail('render must not write');}})));
+  assert.match(disabled,/Réactiver les suggestions de projet/);
+  assert.doesNotMatch(disabled,/Préparer Restaurant/);
+ }else assert.deepEqual(suggestions,[]);
 }
 const linkedMarkup=renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider,{value:'FRESH'},
  React.createElement(LinkedIntentions,{model:composed,parentId:projectId,busy:false,open(){assert.fail('render must not open a child');}})));
@@ -137,7 +150,11 @@ await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
 assert.equal(attempted,2);
 assert.equal(semanticStateDigest(model.semanticState),original);
 console.log('UX-08 Project starters build unpriced intentions and abort cleanly if a step is refused: PASS');
+assert.equal(projectCompletionSuggestions(model,impactIds.weekend)[0]?.preset.presetKey,'museum-exhibition');
+const protectedProject={...model,semanticState:{...model.semanticState,preferences:{...model.semanticState.preferences,anchors:[impactIds.weekend]}}};
+assert.deepEqual(projectCompletionSuggestions(protectedProject,impactIds.weekend),[]);
+console.log('UX-09 S3 is contextual, capability-bound, reversible and suppresses adopted complements: PASS');
 assert.equal(semanticStateDigest(model.semanticState),original);
 assert.equal(JSON.stringify(fixture.world),world);
 assert.deepEqual(fixture.writes,[]);
-console.log(JSON.stringify({status:'PASS',checks:8,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));
+console.log(JSON.stringify({status:'PASS',checks:9,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));
