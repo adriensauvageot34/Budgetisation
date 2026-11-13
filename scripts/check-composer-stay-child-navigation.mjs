@@ -46,6 +46,7 @@ try{
  const denied={...model,dropCapabilities:model.dropCapabilities.filter(drop=>drop.sourceAssetKey!==`context-occurrence:${rootActivity}`)};
  await act(async()=>root.update(render(denied)));
  await act(async()=>confirmation.accept());assert.equal(operations.length,0);
+ assert.match(text(root.root.findByProps({role:'alert'})),/droits de rattachement ont changé/);
  await act(async()=>root.update(render(model)));
  console.log('SC-01 Homonymous child activities open their exact identities without mutation: PASS');
  const remove=root.root.findAllByType('button').find(node=>text(node)==='Retirer ce poste');assert(remove);

@@ -71,6 +71,7 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
   const [postPage, setPostPage] = useState(0);
   const [extraSuggestionKey, setExtraSuggestionKey] = useState<string | null>(null);
   const [showAllChoices, setShowAllChoices] = useState(false);
+  const [attachmentError, setAttachmentError] = useState("");
   const source = canonicalPlannerJson([context, semanticState.contexts.filter(child => child.parentContextOccurrenceId === context.contextOccurrenceId)]);
   const expectedSource = useRef(source);
   const card = props.model.board.contexts.find(card => card.contextOccurrenceId === context.contextOccurrenceId);
@@ -215,10 +216,13 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
   };
   const attachExisting = useCommittedEvent((slot: Group, childId: string, expectedSource: string) => {
     const match = compatibleRoots(slot).find(({ child }) => child.contextOccurrenceId === childId);
-    if (!props.busy && source === expectedSource && match) {
-      props.onSave({ kind: "DROP", assetKey: match.assetKey, target: match.target, values: {},
-        identity: childId, selectionId: crypto.randomUUID() });
+    if (props.busy || source !== expectedSource || !match) {
+      setAttachmentError("Le séjour ou les droits de rattachement ont changé. Sélectionnez à nouveau l’intention.");
+      return;
     }
+    setAttachmentError("");
+    props.onSave({ kind: "DROP", assetKey: match.assetKey, target: match.target, values: {},
+      identity: childId, selectionId: crypto.randomUUID() });
   });
   const currentLodging = card?.sockets.find(socket => socket.slotKey === "lodging");
   const evaluated = props.fresh && canonicalPlannerJson(currentLodging?.currentItems ?? []) === canonicalPlannerJson(items(context, "lodging"))
@@ -236,6 +240,7 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     <CatalogOpenButton target={{contextId:context.contextOccurrenceId,moment:"lodging",commands:lodgingCommands}}>Parcourir les éléments du séjour</CatalogOpenButton>
     <p className={styles.helper}>Le séjour regroupe ses postes, sans coût parent ajouté. Les autres postes restent accessibles dans le dock.</p>
     {!writable && <p role="status">Ce séjour est en consultation ou sa cible a changé. La saisie reste conservée ; aucune modification ne peut être validée ici.</p>}
+    {attachmentError && <p role="alert">{attachmentError}</p>}
     {postSection === "lodging" && <>
     {lodgingPage === "terms" && <p>Choisis le prix total ou le tarif par nuit dans le dock. La date reste facultative.</p>}
     {lodgingPage === "kind" && <p>Type actuel : {({RELATIVE:"chez un proche",HOTEL:"hôtel",HOSTEL:"auberge",RENTAL:"location",OTHER:"autre",LATER:"à préciser"} as Record<string,string>)[lodgingKind]??"référence conservée"}. Ce choix ne prouve aucun prix.</p>}

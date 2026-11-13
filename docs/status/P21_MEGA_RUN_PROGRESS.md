@@ -433,3 +433,9 @@ TypeScript, diff et quatre contrôles de bibliothèque PASS. Une activité libre
 Le masquage et la réactivation des suggestions rendent le focus au titre du panneau avant de retirer le bouton activé.
 
 TypeScript, diff et cinq contrôles S3 PASS. Les deux retours de focus sont vérifiés sur DOM simulé, avec le digest conservé et sans nouvelle décision.
+
+### Expliquer un rattachement devenu indisponible
+
+Le séjour indique quand l’état ou les droits ont changé pendant la confirmation de rattachement. L’utilisateur peut rechercher à nouveau la destination admissible.
+
+TypeScript, diff et banc séjour/enfants PASS. Une capacité retirée produit le message et ne transmet aucune opération.
