@@ -51,6 +51,7 @@ Base `2e6febec5c9e56aaca76174c62d421157b4d44ef`, branche `codex/p21-mega-run-com
 - Les erreurs de sauvegarde présentent leurs actions sous le bandeau. Le préflight distingue un conflit de référence, une sauvegarde non confirmée et des sources financières à compléter.
 - Les actions de récupération sont regroupées sous le bandeau. Le contrôle ciblé du Shell et de la reprise d’une organisation locale a réussi. Le script navigateur a été adapté à ce nouvel emplacement et reste NOT_RUN pour cette tranche.
 - Le retrait d’un projet avec des enfants vérifie leurs droits et confirme la portée exacte. Un changement du brouillon invalide la confirmation. Les rattachements proposés sont revérifiés avant adoption.
+- Le récapitulatif suit l’ordre publié des intentions et garde un accès à chaque occurrence si une ancienne date est invalide. TypeScript et les dix contrôles de parcours ont réussi.
 - Commit associé, `feat(composer): clarify project and draft status`. Douze contrôles Week-end ont validé les droits, les identités et les montants du Compiler.
 
 ## G · Recette à reprendre

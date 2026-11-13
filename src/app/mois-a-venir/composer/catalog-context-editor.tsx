@@ -69,7 +69,8 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const childTarget: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: childSlot ?? undefined };
   const childSocket = childSlot && card?.sockets.find(socket => socket.slotKey === childSlot
     && socket.capabilityRefs.includes(`${context.templateKey}:${childSlot}:ATTACH_CHILD_CONTEXT`));
-  const canAttach = !!childSocket && !busy && !card?.readOnly && !protectedRef(context.contextOccurrenceId);
+  const canAttach = !!childSocket && !busy && !card?.readOnly && !!card?.capabilityRefs.includes("PATCH_CONTEXT")
+    && !protectedRef(context.contextOccurrenceId);
   const candidates = canAttach ? intentionNavigationEntries(model.board.contexts.filter(child =>
     child.contextOccurrenceId !== context.contextOccurrenceId && !child.parentContextOccurrenceId && !child.readOnly && !protectedRef(child.contextOccurrenceId)
     && publishedDrop(model, `context-occurrence:${child.contextOccurrenceId}`, childTarget)?.choices.includes("REPARENT_PRESERVE_ID"))) : [];

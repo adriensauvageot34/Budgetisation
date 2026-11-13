@@ -10,9 +10,10 @@ export function intentionNavigationEntries(cards: readonly ComposerContextCardVi
   return cards.map(card => {
     const number = (seen.get(card.label) ?? 0) + 1;
     seen.set(card.label, number);
-    const date = typeof card.fields.plannedDate === "string" ? card.fields.plannedDate : null;
-    const caption = date ? new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" })
-      .format(new Date(date + "T12:00:00Z")) : "Date à préciser";
+    const day = card.fields.plannedDate;
+    const date = typeof day === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(day) ? new Date(`${day}T12:00:00Z`) : null;
+    const caption = date && Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === day
+      ? new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(date) : "Date à préciser";
     return { id: card.contextOccurrenceId, label: card.label + (totals.get(card.label)! > 1 ? " · " + number : "") + " · " + caption };
   });
 }

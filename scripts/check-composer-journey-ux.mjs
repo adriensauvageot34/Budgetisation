@@ -43,6 +43,8 @@ assert(result.ok,result.code);
 const entries=intentionNavigationEntries(result.model.board.contexts.filter(row=>row.label===cinema.fields.label));
 assert.equal(entries.length,2);assert.notEqual(entries[0].label,entries[1].label);
 assert.deepEqual(new Set(entries.map(row=>row.id)),new Set([impactIds.cinema,sibling.contextOccurrenceId]));
+const badDate=result.model.board.contexts.find(row=>row.contextOccurrenceId===sibling.contextOccurrenceId);
+assert.match(intentionNavigationEntries([{...badDate,fields:{...badDate.fields,plannedDate:'2026-11-31'}}])[0].label,/Date à préciser/);
 const html=renderToStaticMarkup(React.createElement(WorkshopNavigationContext.Provider,{value:{entries,busy:false,open(){throw Error('RENDER_MUTATED');},back(){throw Error('RENDER_MUTATED');}}},
  React.createElement(WorkshopNavigation,{contextId:sibling.contextOccurrenceId})));
 assert.match(html,/Changer d’intention/);assert(html.includes('value="'+sibling.contextOccurrenceId+'" selected=""'));
@@ -127,6 +129,12 @@ const linkedMarkup=renderToStaticMarkup(React.createElement(BudgetPreviewStatus.
 assert.match(linkedMarkup,/Cinéma/);
 assert.match(linkedMarkup,/Restaurant/);
 assert.match(linkedMarkup,/total consolidé du projet n’est pas publié/);
+const parentCard=composed.board.contexts.find(card=>card.contextOccurrenceId===projectId);
+const reordered={...composed,board:{...composed.board,contexts:composed.board.contexts.map(card=>card===parentCard
+ ? {...card,childContextOccurrenceIds:[impactIds.restaurant,impactIds.cinema,impactIds.restaurant]} : card)}};
+const orderedMarkup=renderToStaticMarkup(React.createElement(LinkedIntentions,{model:reordered,parentId:projectId,busy:false}));
+assert(orderedMarkup.indexOf('Restaurant')<orderedMarkup.indexOf('Cinéma'));
+assert.equal((orderedMarkup.match(/Restaurant à deux/gu)??[]).length,1);
 const newId=uuid(29104);
 await compose({kind:'DROP',assetKey:'template:activity',presetKey:'cinema',target,identity:newId,selectionId:uuid(29105),values:{}});
 const newCinema=composed.semanticState.contexts.find(row=>row.contextOccurrenceId===newId);

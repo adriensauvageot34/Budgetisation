@@ -12,9 +12,11 @@ export function LinkedIntentions({ model, parentId, busy, open }: {
 }) {
   const preview = useContext(BudgetPreviewStatus);
   const parent = model.board.contexts.find(card => card.contextOccurrenceId === parentId);
-  const ids = new Set(parent?.childContextOccurrenceIds ?? []);
-  const children = intentionNavigationEntries(model.board.contexts.filter(card =>
-    ids.has(card.contextOccurrenceId) && card.parentContextOccurrenceId === parentId));
+  const byId = new Map(model.board.contexts.map(card => [card.contextOccurrenceId, card]));
+  const children = intentionNavigationEntries([...new Set(parent?.childContextOccurrenceIds ?? [])].flatMap(id => {
+    const child = byId.get(id);
+    return child?.parentContextOccurrenceId === parentId ? [child] : [];
+  }));
   if (!children.length) return null;
   const reading = model.budgetReading;
   const current = reading?.semanticStateDigest === model.board.draft.semanticStateDigest
