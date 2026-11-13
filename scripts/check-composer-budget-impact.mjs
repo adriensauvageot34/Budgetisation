@@ -12,6 +12,7 @@ const { readMonthComposer } = require('@/server/phase2/planner/read-model');
 const { composerBudgetReading } = require('@/server/phase2/planner/composer-budget-reading');
 const { visualDraftModel } = require('@/app/mois-a-venir/composer/local-draft');
 const { ComposerPreviewScheduler } = require('@/app/mois-a-venir/composer/preview-scheduler');
+const { ContextCard } = require('@/app/mois-a-venir/composer/context-card');
 const { semanticStateDigest } = require('@/domain/phase2/planner/semantic-state');
 globalThis.fetch = async () => { throw Error('BUDGET_IMPACT_REMOTE_FORBIDDEN'); };
 
@@ -24,6 +25,12 @@ const monthReading = (model, stale = false) => renderToStaticMarkup(React.create
 
 const fixture = await budgetImpactFixture();
 const model = fixture.model;
+const basketCard = (model, name, status = 'FRESH') => renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider, { value: status },
+  React.createElement(ContextCard, { model, card: model.board.contexts.find(card => card.contextOccurrenceId === impactIds[name]),
+    busy: false, selected: null, focused: null, focus() {}, drag() {}, drop() {}, choose() {}, request() {}, edit() {} })));
+assert.match(basketCard(model, 'amazon'), /Total brut 48,00\s*€/);
+assert.match(basketCard(model, 'amazon', 'STALE'), /Calcul à actualiser/);
+assert.doesNotMatch(basketCard(model, 'amazon', 'STALE'), /48,00/);
 assert.deepEqual(amounts(impact(model, 'groceries')), ['8.00', '8.00', '0.00']);
 assert.match(summary(model, 'groceries'), /entièrement couvertes/);
 assert.deepEqual(impact(model, 'groceries').plannedPosts, ['Enveloppe Courses']);
@@ -45,11 +52,14 @@ const unknownPrice = await budgetImpactFixture();
 const unpriced = await unknownPrice.line(impactIds.groceries, 27101, 'Pâtes', '2', '');
 assert.equal(impact(unpriced, 'groceries').gross, null);
 assert(monthReading(unpriced).includes('Coût du panier</dt><dd>À préciser</dd>'));
+const partialBasket = await unknownPrice.line(impactIds.amazon, 27201, 'Mascara', '1', '');
+assert.match(basketCard(partialBasket, 'amazon'), /Sous-total connu [\d,]+\s*€ · Total à préciser/);
 console.log('Courses 8 €, couverture totale, partielle, épuisée, en plus, à confirmer et absente : PASS');
 
 assert.deepEqual(amounts(impact(model, 'amazon')), ['48.00', '0.00', '48.00']);
 const withShipping = await fixture.basketEdit(impactIds.amazon, { kind: 'SET_DELIVERY', mode: 'DELIVERY', coverage: 'ADDITIONAL', selectionId: uuid(27204), price: '5' });
 assert.deepEqual(amounts(impact(withShipping, 'amazon')), ['53.00', '0.00', '53.00']);
+assert.match(basketCard(withShipping, 'amazon'), /Total brut 53,00\s*€/);
 const withUpdatedLine = await fixture.line(impactIds.amazon, 27202, 'Shampoing', '2', '9');
 assert.deepEqual(amounts(impact(withUpdatedLine, 'amazon')), ['55.00', '0.00', '55.00']);
 assert.deepEqual(amounts(impact(model, 'restaurant')), ['40.00', '0.00', '40.00']);

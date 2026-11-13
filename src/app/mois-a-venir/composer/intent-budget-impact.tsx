@@ -9,6 +9,11 @@ import styles from "./intent-budget-impact.module.css";
 export const BudgetPreviewStatus = createContext<PreviewStatus | null>(null);
 export const OpenMonthlyFinances = createContext<(() => void) | null>(null);
 
+export function budgetAmountsCurrent(model: ComposerUiModel, status: PreviewStatus | null) {
+  return status !== "PENDING" && status !== "STALE" && status !== "FAILED"
+    && (!model.budgetReading || model.budgetReading.semanticStateDigest === model.board.draft.semanticStateDigest);
+}
+
 const coverageText = {
   ABSENT: "Aucune enveloppe Courses chiffrée n’est disponible pour ce mois.",
   UNRESOLVED: "La part couverte par l’enveloppe Courses reste à établir.",
@@ -25,8 +30,7 @@ export function IntentBudgetImpact({ model, contextId }: { model: ComposerUiMode
   const openFinances = useContext(OpenMonthlyFinances);
   const reading = model.budgetReading;
   if (!reading) return null;
-  const current = reading.semanticStateDigest === model.board.draft.semanticStateDigest
-    && status !== "PENDING" && status !== "STALE" && status !== "FAILED";
+  const current = budgetAmountsCurrent(model, status);
   const impact = current ? reading.byContext[contextId] : undefined;
   const parentId = model.board.contexts.find(context => context.contextOccurrenceId === contextId)?.parentContextOccurrenceId;
   const parent = parentId ? intentionNavigationEntries(model.board.contexts).find(entry => entry.id === parentId) : undefined;

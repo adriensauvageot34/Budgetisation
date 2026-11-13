@@ -19,7 +19,7 @@ import { catalogRefLocked, normalizeCatalog, type GuidedCatalogChoice } from "./
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { purchaseSuggestions } from "./purchase-suggestions";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
-import { BudgetPreviewStatus, IntentBudgetImpact } from "./intent-budget-impact";
+import { budgetAmountsCurrent, BudgetPreviewStatus, IntentBudgetImpact } from "./intent-budget-impact";
 import { WorkshopNavigation } from "./workshop-navigation";
 import { useCommittedEvent } from "./use-committed-event";
 import { useWorkshopRaw } from "./inline-edit-registry";
@@ -63,8 +63,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const extras = purchaseComponents(context, "extras");
   const historicalDelivery = extras.some(legacyDeliveryFee);
   const preview = useContext(BudgetPreviewStatus);
-  const amountsCurrent = preview !== "PENDING" && preview !== "STALE" && preview !== "FAILED"
-    && (!model.budgetReading || model.budgetReading.semanticStateDigest === model.board.draft.semanticStateDigest);
+  const amountsCurrent = budgetAmountsCurrent(model, preview);
   const summary = amountsCurrent ? card.purchaseSummary : undefined;
   const [articleQuery, setArticleQuery] = useState("");
   const [missingPricesOnly, setMissingPricesOnly] = useState(false);

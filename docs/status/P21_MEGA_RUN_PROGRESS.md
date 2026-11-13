@@ -99,10 +99,10 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Mobilité explicite | Tarif du trajet complet, retour et frais du propriétaire partagé distingués |
 | DONE | Accessibilité de la bibliothèque | Entrée ouvre l’existant, Échap et flèche haute reviennent à la recherche |
 | DONE | Sélection du mois | Mois explicite dans la liste et l’aperçu des modèles |
-| READY | Lecture des montants | Hiérarchiser coûts inconnus et sous-totaux officiels dans les projets |
+| DONE | Lecture des montants | Coûts inconnus, sous-totaux officiels et montants à actualiser dans les projets |
 | DONE | Produits du catalogue vers les paniers | Choix canoniques compatibles vers les recettes existantes ou le panier générique |
 | DONE | Ouvrir une ligne depuis le catalogue | Sélection exacte transmise à l’éditeur et refus des captures obsolètes |
-| READY | Panier générique | Reprise par son contenu et lecture de sa complétude |
+| DONE | Panier générique | Reprise par son contenu et filtre des articles dont le prix reste à préciser |
 | DONE | Synthèse des projets | Compteurs officiels et filtres pour les projets contenant plusieurs enfants |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
@@ -307,3 +307,9 @@ TypeScript, diff et cinq contrôles S3 PASS. Le banc couvre la priorité locale,
 Lorsqu’un seul modèle correspond à la recherche et qu’aucune intention ne correspond, Entrée ouvre son aperçu. Les résultats de modèles participent à la navigation clavier et le message de recherche vide disparaît s’il existe un modèle correspondant. Les actions masquées par une section repliée ne captent pas le focus.
 
 TypeScript, diff et les quatre contrôles de la bibliothèque PASS. « quilles dîner » ouvre l’aperçu du modèle Bowling et restaurant en conservant le digest. Aucun writer distant ni Apply. Navigation navigateur et recette authentifiée NOT_RUN. Suite · état des paniers sur le Board.
+
+### Montant du panier sur le Board
+
+Le Board et l’éditeur utilisent la même règle de fraîcheur. La carte affiche un total brut ou un sous-total connu selon le reçu du Compiler, avec le nombre d’articles. En attente d’une projection ou en cas de digest périmé, les montants évalués sont masqués.
+
+TypeScript, diff et banc d’impact PASS. Amazon est vérifié à 48 € puis à 53 € avec livraison. Une ligne inconnue produit un sous-total distinct ; STALE masque les 48 €. Les sept éditeurs et les couvertures Courses gardent leurs résultats de fixture. Aucun writer distant ni Apply.
