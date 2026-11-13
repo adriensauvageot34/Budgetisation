@@ -9,7 +9,7 @@ import type { PlannerJson } from "@/domain/phase2/planner/json";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import { componentId } from "@/domain/phase2/planner/identity";
-import { presetForContext, composerPreset } from "@/domain/phase2/planner/composer-presets";
+import { ACTIVITY_PRESETS, presetForContext, composerPreset } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerEditor, ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import { PlannedContactField } from "../planned-people-fields";
@@ -28,6 +28,7 @@ import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
 import { money } from "./display";
+import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
 import styles from "./composer.module.css";
 
 type Values = Record<string, PlannerJson>;
@@ -51,6 +52,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
 } & SuggestionDismissal) {
   const [values, setValues] = useState<Values>(() => Object.fromEntries(editor.fields.map(field => [field.key, context.fields[field.key] ?? null])) as Values);
   const [query,setQuery]=useState("");
+  const [attachmentQuery, setAttachmentQuery] = useState("");
   const [error, setError] = useState("");
   const acceptedValues = useRef(values), initialValues = acceptedValues.current;
   const leaveRaw = useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(values) !== JSON.stringify(initialValues), () => {
@@ -74,11 +76,19 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const candidates = canAttach ? intentionNavigationEntries(model.board.contexts.filter(child =>
     child.contextOccurrenceId !== context.contextOccurrenceId && !child.parentContextOccurrenceId && !child.readOnly && !protectedRef(child.contextOccurrenceId)
     && publishedDrop(model, `context-occurrence:${child.contextOccurrenceId}`, childTarget)?.choices.includes("REPARENT_PRESERVE_ID"))) : [];
-  const additions = project === "visit-friends" ? ["museum-exhibition", "restaurant-for-two"] : ["cinema", "restaurant-for-two"];
+  const additions = [
+    project === "visit-friends" ? "museum-exhibition" : "cinema",
+    "restaurant-for-two",
+    ...ACTIVITY_PRESETS.map(preset => preset.presetKey),
+  ];
   const addOptions = canAttach ? additions.map(composerPreset).flatMap(preset => {
     const assetKey = `template:${preset?.templateKey}`;
     return preset && publishedDrop(model, assetKey, childTarget)?.semanticAction === "PATCH_CONTEXT" ? [{ preset, assetKey }] : [];
   }) : [];
+  const attachmentTerms = normalizeLibrarySearch(attachmentQuery).split(" ").filter(Boolean);
+  const matchesAttachment = (text: string) => attachmentTerms.every(term => normalizeLibrarySearch(text).includes(term));
+  const visibleCandidates = candidates.filter(child => matchesAttachment(child.label));
+  const visibleAdditions = addOptions.filter(({ preset }) => matchesAttachment([preset.label, ...preset.searchTerms].join(" ")));
   const attach = useCommittedEvent((operation: ComposerOperation) => {
     if (!canAttach || operation.kind !== "DROP") return;
     const candidate = operation.presetKey ? addOptions.some(option => option.preset.presetKey === operation.presetKey)
@@ -211,12 +221,15 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
         {(candidates.length > 0 || addOptions.length > 0) && <details>
           <summary>Associer une intention</summary>
-          {candidates.map(child => <button key={child.id} type="button" onClick={() => confirmAttachment(child.label, () => ({
+          <label className={styles.projectAttachmentSearch}>Rechercher une intention à associer<input type="search" value={attachmentQuery}
+            onChange={event => setAttachmentQuery(event.target.value)} /></label>
+          {visibleCandidates.map(child => <button key={child.id} type="button" onClick={() => confirmAttachment(child.label, () => ({
             kind: "DROP", assetKey: `context-occurrence:${child.id}`, target: childTarget, identity: child.id, selectionId: crypto.randomUUID(), values: {},
           }))}>Rattacher {child.label}</button>)}
-          {addOptions.map(({ preset, assetKey }) => <button key={preset.presetKey} type="button" onClick={() => confirmAttachment(preset.label, () => ({
+          {visibleAdditions.map(({ preset, assetKey }) => <button key={preset.presetKey} type="button" onClick={() => confirmAttachment(preset.label, () => ({
             kind: "DROP", assetKey, presetKey: preset.presetKey, target: childTarget, identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {},
           }))}>Ajouter {preset.label}</button>)}
+          {!visibleCandidates.length && !visibleAdditions.length && <p role="status">Aucune intention admissible ne correspond à cette recherche.</p>}
         </details>}
       </>}
       {!!posts.length && <nav className={styles.nightNav} aria-label="Résumé de l’intention"><button type="button" aria-pressed={summaryTab === "fields"} onClick={() => setSummaryTab("fields")}>Informations</button><button type="button" aria-pressed={summaryTab === "posts"} onClick={() => setSummaryTab("posts")}>Postes ({posts.length})</button></nav>}

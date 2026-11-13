@@ -20,6 +20,7 @@ const {availableProjectStarters,evaluateProjectStarter}=require('@/app/mois-a-ve
 const {ProjectStarterPreview}=require('@/app/mois-a-venir/composer/project-starter-preview');
 const {projectCompletionSuggestions,ProjectCompletion,ProjectCompletionPreference}=require('@/app/mois-a-venir/composer/project-completion');
 const {RestaurantEditor}=require('@/app/mois-a-venir/composer/restaurant-editor');
+const {CatalogContextEditor}=require('@/app/mois-a-venir/composer/catalog-context-editor');
 const {isPurchaseBasket}=require('@/domain/phase2/planner/purchase-basket');
 const {ACTIVITY_PRESETS,presetIllustrationPath}=require('@/domain/phase2/planner/composer-presets');
 
@@ -106,6 +107,13 @@ const projectId=uuid(29100);
 await compose({kind:'DROP',assetKey:'template:other-context',presetKey:'composed-outing',
  target:{kind:'BOARD_ZONE'},identity:projectId,selectionId:uuid(29101),values:{}});
 const target={kind:'CONTEXT_SOCKET',contextOccurrenceId:projectId,slotKey:'children'};
+const projectMarkup=projection=>renderToStaticMarkup(React.createElement(CatalogContextEditor,{
+ context:projection.semanticState.contexts.find(context=>context.contextOccurrenceId===projectId),
+ editor:projection.editors.find(editor=>editor.assetKey==='template:other-context'),targetMonth:'2026-11',householdPersons:[],
+ busy:false,model:projection,choose(){assert.fail('Render must not choose');},onSave(){assert.fail('Render must not attach');},onCancel(){},
+}));
+assert.match(projectMarkup(composed),/Ajouter Bowling/);
+assert.doesNotMatch(projectMarkup({...composed,dropCapabilities:composed.dropCapabilities.filter(drop=>drop.target.contextOccurrenceId!==projectId)}),/Ajouter Bowling/);
 for(const [index,id] of [impactIds.cinema,impactIds.restaurant].entries()){
  const before=composed.semanticState.contexts.find(row=>row.contextOccurrenceId===id);
  const expected=composed.budgetReading.byContext[id].gross;

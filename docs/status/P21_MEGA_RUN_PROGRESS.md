@@ -325,3 +325,9 @@ TypeScript, diff et onze contrôles Restaurant, Cinéma et Activité PASS. Deux 
 « Mes intentions » retrouve le panier par son vendeur déclaré et par le concept Clay d’un article, y compris après renommage de la ligne. La navigation annonce l’édition seulement lorsque l’occurrence est active et que le rattachement affiché correspond au Draft.
 
 TypeScript, diff et banc catalogue/panier PASS. La recherche combinant vendeur et concept retrouve un seul panier, préserve son digest et ne déclenche aucun writer distant. Les protections de lignes et le filtre des prix inconnus restent vérifiés.
+
+### Associer une activité à un projet existant
+
+Sortie composée et Visite amicale proposent les six nouvelles activités dans le panneau d’association. Un champ filtre les intentions existantes et les créations admissibles. Les actions restent liées aux identités publiées et passent par la confirmation du projet.
+
+TypeScript, diff et dix groupes du banc de parcours PASS. Le rendu propose Bowling lorsque le socket l’admet et le masque quand le dépôt est retiré. Aucun changement à la consultation ni writer distant. Recette de saisie et d’affichage en navigateur réel NOT_RUN.
