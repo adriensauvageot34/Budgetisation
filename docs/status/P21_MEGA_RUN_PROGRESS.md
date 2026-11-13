@@ -415,3 +415,9 @@ TypeScript, diff et banc catalogue/panier PASS. Deux articles identiques sépar�
 Les projets de plus de quatre enfants proposent une recherche combinable avec les filtres de complétude et de consultation. Les repères d’homonymes restent ceux de la liste complète.
 
 TypeScript, diff et banc intentions liées PASS. La recherche « cinema 2 » retrouve le deuxième Cinéma dans un projet de cinq homonymes et l’ouvre par son identité. Aucun changement de digest ni writer distant.
+
+### Catalogue sur écran étroit
+
+Quand la fiche recouvre les résultats, les commandes recouvertes sortent de la navigation au clavier. Les actions de la fiche et de pagination ont une cible de 44 px en écran étroit, et les libellés longs se replient dans la fiche.
+
+TypeScript, diff et banc catalogue PASS pour la présence de l’état fiche ouverte et son retour aux résultats. Le rendu aux largeurs réelles reste NOT_RUN.

@@ -79,7 +79,7 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
       {canPrepareCourses&&<button type="button" disabled={busy||!currentRequest} onClick={()=>execute(()=>choosePreset(coursesAsset!,'groceries-purchase'))}>Préparer mes courses</button>}</div>}
     {error?<p role="alert">{error}</p>:!entries.length?<p role="status">Chargement du catalogue…</p>:<>
     <div className={styles.count} role="status">{results.length} résultat(s){query?' pour votre recherche':' · classés selon ce contexte'}</div>
-    <div className={styles.content}>
+    <div className={styles.content} data-catalog-detail-open={!!chosen}>
      <div ref={resultsRegion} tabIndex={-1} className={styles.results} aria-label="Éléments du catalogue">{results.slice(page*24,page*24+24).map(({entry,reason})=>{const art=clayCatalogArtwork(entry);return <button type="button" key={entry.visualConceptId} data-catalog-entry={entry.visualConceptId} aria-pressed={selected===entry.visualConceptId} onClick={event=>{resultTrigger.current=event.currentTarget;setSelected(entry.visualConceptId);}}>
        {art&&<img src={art.src} width={art.width} height={art.height} alt="" loading="lazy" decoding="async"/>}<strong>{entry.label}</strong><small>{entry.discovery.nature==='ELEMENT'?'Élément':entry.discovery.nature==='INTENT'?'Intention':'Repère visuel'} · {reason}</small><span>Consulter</span></button>;})}
       {!results.length&&<p>Aucun résultat. Changez de famille ou choisissez « Tous les éléments » pour élargir la recherche.</p>}

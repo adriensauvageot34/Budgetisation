@@ -70,8 +70,10 @@ try{
   {createNodeMock:element=>({open:false,showModal(){this.open=true;},close(){this.open=false;},focus(){focus.push(element.type);}})});});
  await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());assert.equal(chosen.length,0);
  assert.equal(focus.at(-1),'h3');
+ assert(root.root.findByProps({'data-catalog-detail-open':true}));
  const back=()=>root.root.findAllByType('button').find(button=>text(button)==='Retour aux résultats');
  await act(async()=>back().props.onClick());assert.equal(focus.at(-1),'div');
+ assert(root.root.findByProps({'data-catalog-detail-open':false}));
  const result=root.root.findByProps({'data-catalog-entry':charger.visualConceptId});
  await act(async()=>result.props.onClick({currentTarget:{isConnected:true,focus(){focus.push('result');}}}));
  assert.equal(focus.at(-1),'h3');
