@@ -379,3 +379,9 @@ TypeScript, diff et dix groupes du banc de parcours PASS. Le contrôle simule un
 L’aperçu garde visibles les compléments sélectionnés qui deviennent indisponibles. Il suspend la confirmation jusqu’à ce que l’utilisateur décoche explicitement le choix concerné ou rouvre le modèle.
 
 TypeScript, diff et quatre contrôles d’aperçu PASS. Retirer la capacité Restaurant pendant l’aperçu bloque la création. Décocher le repas transmet ensuite seulement le musée. Aucun writer distant.
+
+### Préparer Courses depuis un catalogue ouvert
+
+Le raccourci « Préparer mes courses » suit le même contrôle de digest que les autres créations du catalogue. Un changement de composition pendant la consultation suspend ce raccourci.
+
+TypeScript, diff et banc catalogue/panier PASS. Le raccourci est disponible sur le digest initial puis désactivé après changement, sans nouvelle décision ni writer distant.

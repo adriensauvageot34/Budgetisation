@@ -73,6 +73,17 @@ try{
  assert.deepEqual(chosen[0][4],{id:charger.visualConceptId,label:charger.label});
  assert.equal(semanticStateDigest(f.model.semanticState),initial);assert.deepEqual(f.writes,[]);
  await act(async()=>root.unmount());root=null;
+ const coursesCatalog=model=>React.createElement(CatalogDiscoveryProvider,{model,busy:false,openContext(){assert.fail();},
+  revealControl(){assert.fail();},choose(){assert.fail();},choosePreset(...args){chosen.push(args);}},
+  React.createElement(CatalogOpenButton,{target:{scope:'courses'}},'Produits pour Courses'));
+ await act(async()=>{root=create(coursesCatalog(f.model),{createNodeMock:()=>({open:false,showModal(){this.open=true;},close(){this.open=false;}})});});
+ await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());
+ const prepareCourses=()=>root.root.findAllByType('button').find(button=>text(button)==='Préparer mes courses');
+ assert.equal(prepareCourses().props.disabled,false);
+ const newer={...f.model,board:{...f.model.board,draft:{...f.model.board.draft,semanticStateDigest:'newer-digest'}}};
+ await act(async()=>root.update(coursesCatalog(newer)));
+ assert.equal(prepareCourses().props.disabled,true);assert.equal(chosen.length,1);
+ await act(async()=>root.unmount());root=null;
  const {PurchaseBasketEditor}=require('@/app/mois-a-venir/composer/purchase-basket-editor');
  const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
  const {InlineEditContext,InlineEditRegistry}=require('@/app/mois-a-venir/composer/inline-edit-registry');
@@ -135,4 +146,4 @@ try{
  assert.doesNotMatch(text(lines()[0]),/Total/);assert.equal(semanticStateDigest(mixed.semanticState),mixedDigest);assert.equal(operations.length,0);
  assert.deepEqual(f.writes,[]);
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;globalThis.fetch=originalFetch;}
-console.log(JSON.stringify({status:'PASS',products:7,families:6,uiDispatch:true,exactLineEdit:true,staleRefused:true,articleFilters:true,remoteWrites:0,apply:false,level:'EXISTING_CATALOG_AND_PURCHASE_OWNER'}));
+console.log(JSON.stringify({status:'PASS',products:7,families:6,uiDispatch:true,exactLineEdit:true,staleRefused:true,staleCoursesDisabled:true,articleFilters:true,remoteWrites:0,apply:false,level:'EXISTING_CATALOG_AND_PURCHASE_OWNER'}));

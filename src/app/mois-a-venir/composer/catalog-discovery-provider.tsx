@@ -65,7 +65,7 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
      <label>Nature<select aria-label="Nature du visuel" value={nature} onChange={e=>{setNature(e.target.value);change();}}><option value="">Toutes les natures</option>{[['ELEMENT','Éléments'],['INTENT','Intentions'],['SCENE','Scènes'],['MODE','Modes de trajet'],['GROUP','Groupes de produits'],['CONFIGURATION','Configurations']].map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label>
     </div>
     {scope==='courses'&&!basket&&<div className={styles.notice}><p>Le budget Courses du mois et le panier de produits sont deux décisions distinctes.</p>
-      {canPrepareCourses&&<button type="button" disabled={busy} onClick={()=>execute(()=>choosePreset(coursesAsset!,'groceries-purchase'))}>Préparer mes courses</button>}</div>}
+      {canPrepareCourses&&<button type="button" disabled={busy||!currentRequest} onClick={()=>execute(()=>choosePreset(coursesAsset!,'groceries-purchase'))}>Préparer mes courses</button>}</div>}
     {error?<p role="alert">{error}</p>:!entries.length?<p role="status">Chargement du catalogue…</p>:<>
     <div className={styles.count} role="status">{results.length} résultat(s){query?' pour votre recherche':' · classés selon ce contexte'}</div>
     <div className={styles.content}>
