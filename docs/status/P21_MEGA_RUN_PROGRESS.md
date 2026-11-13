@@ -87,10 +87,10 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Catalogue contextualisé | Type d’éditeur annoncé et recherche des paniers par leurs articles |
 | DONE | Accessibilité des formulaires | Annulation de l’aperçu rend le focus, réussite laisse la navigation du projet disponible |
 | DONE | Compléments des séjours | Ouverture exacte des enfants et confirmation explicite de leur retrait |
-| READY | Autres intentions déjà éditables | Retrouver soirées, repas livrés et cadeaux avec leurs propriétaires actuels |
+| DONE | Autres intentions déjà éditables | Tous les presets publiés retrouvables sous leurs droits actuels |
 | READY | Relations sur le Board | Afficher le parent d’un enfant et faciliter son accès sans mutation |
 | READY | Synthèse des informations manquantes | Accès aux diagnostics officiels de l’intention sélectionnée |
-| READY | Préférences de lecture | Simplifier le repérage des intentions à compléter dans le mois |
+| DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
 | BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
 
@@ -173,3 +173,9 @@ TypeScript, diff et deux contrôles React PASS. Nom et choix facultatifs restent
 Les postes Activités et Repas offrent un accès direct à l’intention enfant, comme le faisait déjà le panier lié. La confirmation de retrait indique que l’intention, ses postes et ses éventuels enfants seront retirés lors de la validation du séjour. Le déplacement vers un autre projet reste disponible depuis le résumé.
 
 TypeScript, diff et deux contrôles React/propriétaire PASS. Deux Cinéma homonymes ouvrent leurs identifiants respectifs. Le retrait attend sa confirmation puis la validation du séjour, conserve le parent et l’autre enfant et passe par le propriétaire existant. Aucun writer distant ni Apply.
+
+### Mes intentions du mois
+
+Un espace dédié liste les intentions déjà présentes sans imposer de recherche préalable. Les filtres montrent tous les projets ou les intentions à compléter selon la connaissance publiée par le Compiler. Les indications périmées sont masquées. La reprise inclut désormais les soirées, repas livrés, restauration rapide et cadeaux déjà admis par les presets existants ; elle ne crée aucune capacité depuis un nom de catalogue.
+
+TypeScript et deux contrôles React/propriétaire PASS. Six familles de presets sont créées sur fixture puis retrouvées avec leur identité. L’ouverture, les filtres et le passage en état STALE ne modifient pas le Draft et n’exécutent aucun writer distant.

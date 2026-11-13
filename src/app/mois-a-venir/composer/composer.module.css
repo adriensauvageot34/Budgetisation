@@ -179,6 +179,8 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .libraryExistingAction:focus-visible { outline:2px solid #8054aa; outline-offset:2px; }
 .libraryExistingAction:disabled { opacity:.5; cursor:default; }
 .libraryActionCaption { display:block; margin-top:5px; font-size:10px; font-weight:400; line-height:1.4; color:var(--muted); }
+.libraryTabs { flex-wrap:wrap; }
+.libraryTabs button { min-height:40px; }
 .editorLoading { padding:20px; min-height:110px; }
 .board { position:relative; z-index:var(--z-board); min-height:0; min-width:0; display:flex; flex-direction:column; background:transparent; border:0; border-radius:0; }
 .board[data-bar-workspace=true] { container-type:size; container-name:bar-workspace; }

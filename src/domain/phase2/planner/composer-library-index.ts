@@ -38,12 +38,7 @@ export type LibraryIntention = Readonly<{ key:string; category:string; asset:Com
 export type LibraryOccurrence = Readonly<{ contextOccurrenceId:string; presetKey:string|null; label:string; search:string;
   plannedDate:string|null; action:"EDIT"|"VIEW"; surface:"BASKET"|"ARTICLE"|"CONTEXT"|"EXTERNAL" }>;
 const clothingPresets = new Set(["clothing-shopping", "shein-purchase", "shoes-purchase"]);
-const situatedPresets = new Set(["mascara", "eyeliner", "eyebrow-pencil", "hair-wax", "face-cleanser", "makeup-remover",
-  "restaurant-for-two", "cinema", "weekend-gite", "amazon-purchase", "groceries-purchase", "composed-outing",
-  "concert", "ropes-course", "museum-exhibition", "hiking-nature", "video-game-purchase", "aliexpress-purchase",
-  "beauty-purchase", "laundry-detergent", "dishwashing-liquid", "visit-friends", "fontes-family-visit", "servian-family-visit",
-  ...COMPOSER_PRESETS.filter(preset => ["activity", "purchase", "beauty-restock", "short-stay"].includes(preset.templateKey)).map(preset => preset.presetKey),
-  ...clothingPresets]);
+const situatedPresets = new Set([...COMPOSER_PRESETS, ...PURCHASE_BASKET_PRESETS].map(preset => preset.presetKey));
 const publishedPreset = (context:Parameters<typeof presetForContext>[0]) => {
   try{return presetForContext(context);}catch{return undefined;} // Unsupported metadata is never an exact identity.
 };
