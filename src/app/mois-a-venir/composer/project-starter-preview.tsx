@@ -42,6 +42,7 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
       if (!busy && !blockedReason && admitted && label.trim()) { restoreFocus.current = false; create({ label: label.trim(), children: chosen, ...(date ? { plannedDate: date } : {}) }); }
     }}>
       <h2 id="project-starter-title">Préparer {starter.label}</h2>
+      <p>Mois du projet · {new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${model.semanticState.targetMonth}-01T12:00:00Z`))}</p>
       {parent && <PresetIllustration preset={parent} className={styles.projectPreviewVisual} />}
       <p id="project-starter-description">Choisissez les intentions à préparer. Les prix et participants resteront à préciser. Chaque intention pourra être complétée après la création.</p>
       {existing.length > 0 && <section aria-label="Intentions du même type déjà présentes" className={styles.projectExisting}>

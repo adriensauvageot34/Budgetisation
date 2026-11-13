@@ -36,7 +36,9 @@ for(const operation of [
 }
 const gifts=libraryOccurrences(model).filter(row=>row.presetKey==='gift-present');
 assert.deepEqual(gifts.map(row=>row.occurrence),[1,2]);
-const digest=semanticStateDigest(model.semanticState);let root,setStatus,opened=[];
+const digest=semanticStateDigest(model.semanticState);let root,setStatus,opened=[],searchFocus=0,focusedButton=null;
+class Button{constructor(label,visible=true){this.label=label;this.visible=visible;}getClientRects(){return this.visible?[{}]:[];}focus(){focusedButton=this.label;}}
+globalThis.HTMLButtonElement=Button;
 function Harness(){
  const [status,update]=React.useState('FRESH');setStatus=update;
  return React.createElement(BudgetPreviewStatus.Provider,{value:status},React.createElement(ComposerLibrary,{model,openToken:0,busy:false,selected:null,
@@ -45,11 +47,19 @@ function Harness(){
 const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join('');
 const rows=()=>root.root.findAll(node=>node.type==='button'&&node.props['data-library-existing-action']);
 try{
- await act(async()=>{root=create(React.createElement(Harness));});
+ await act(async()=>{root=create(React.createElement(Harness),{createNodeMock:element=>element.props['data-library-search']?{focus(){searchFocus++;},closest(){return null;}}:null});});
  const tab=root.root.findAllByType('button').find(node=>text(node)==='Mes intentions');assert(tab);
  await act(async()=>tab.props.onClick());assert.equal(rows().length,keys.length+2);
  await act(async()=>rows()[0].props.onClick());assert.deepEqual(opened,[rows()[0].props['data-library-existing-action']]);
  const search=root.root.findByProps({'data-library-search':true});
+ await act(async()=>search.props.onChange({target:{value:'Uber Eats'}}));
+ await act(async()=>search.props.onKeyDown({key:'Enter',preventDefault(){}}));assert.equal(opened.at(-1),uuid(30602));
+ await act(async()=>search.props.onKeyDown({key:'Escape',preventDefault(){},stopPropagation(){}}));assert.equal(search.props.value,'');assert(searchFocus>0);
+ const hidden=new Button('hidden',false),first=new Button('first'),last=new Button('last');
+ const scroll=root.root.findByProps({'data-library-scroll':true}),event=key=>({key,target:first,currentTarget:{querySelectorAll:()=>[hidden,first,last]},preventDefault(){},stopPropagation(){}});
+ await act(async()=>scroll.props.onKeyDown(event('Home')));assert.equal(focusedButton,'first');
+ await act(async()=>scroll.props.onKeyDown(event('End')));assert.equal(focusedButton,'last');
+ const beforeFocus=searchFocus;await act(async()=>scroll.props.onKeyDown(event('ArrowUp')));assert.equal(searchFocus,beforeFocus+1);
  await act(async()=>search.props.onChange({target:{value:'culturel'}}));
  assert.equal(rows().length,2);
  const gift=root.root.findByProps({'data-library-existing-action':uuid(30604)});assert.match(text(gift),/Intention 1/);
@@ -63,5 +73,6 @@ try{
  assert.equal(semanticStateDigest(model.semanticState),digest);assert.deepEqual(f.writes,[]);
  console.log('MI-01 Published evenings, meals and gifts reopen with exact identities: PASS');
  console.log('MI-02 Month list, official incompleteness and stale protection are read-only: PASS');
- console.log(JSON.stringify({status:'PASS',checks:2,remoteWrites:0,apply:false,level:'LOCAL_LIBRARY_AND_OWNER'}));
+ console.log('MI-03 Keyboard skips hidden controls, returns to search and only opens the exact existing intention: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:3,remoteWrites:0,apply:false,level:'LOCAL_LIBRARY_AND_OWNER'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

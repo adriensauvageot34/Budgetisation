@@ -93,10 +93,21 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     <nav className={styles.libraryTabs} aria-label="Espaces de la bibliothèque"><button type="button" aria-pressed={space==="add"} onClick={()=>setSpace("add")}>À ajouter</button><button type="button" aria-pressed={space==="intentions"} onClick={()=>setSpace("intentions")}>Mes intentions</button><button type="button" aria-pressed={space==="manage"} onClick={()=>setSpace("manage")}>À piloter</button></nav>
     <div className={styles.catalogLibraryAccess}><CatalogOpenButton target={{query,scope:'all'}}>Tous les éléments{query.trim()?` · ${query}`:''}</CatalogOpenButton><CatalogOpenButton target={{scope:'courses',controlRef:index.controls.find(a=>a.capabilityRef===MONTHLY_GROCERIES_REF)?.capabilityRef}}>Produits pour Courses</CatalogOpenButton></div>
     <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="manage"?"Budget ou cagnotte…":"Soirée, repas, achat…"} value={query} onChange={e=>setQuery(e.target.value)}
-      onKeyDown={e=>{if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
+      onKeyDown={e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setQuery("");search.current?.focus();}
+      else if(e.key==="Enter"&&space==="intentions"&&!busy){e.preventDefault();if(monthIntentions.length===1)openContext(monthIntentions[0].contextOccurrenceId);else focusActions();}
+      else if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
         if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}else focusActions();
       }else if(e.key==="ArrowDown"){e.preventDefault();e.currentTarget.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-scroll] button:not(:disabled)")?.focus();}}}/></label>
-    <div className={styles.libraryScroll} data-library-scroll onKeyDown={e=>{if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key)||!(e.target instanceof HTMLButtonElement))return;e.preventDefault();const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));const at=buttons.indexOf(e.target);buttons[e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowUp"?-1:1)))]?.focus();}}>
+    <div className={styles.libraryScroll} data-library-scroll onKeyDown={e=>{
+      if(e.defaultPrevented)return;
+      if(e.key==="Escape"){e.preventDefault();e.stopPropagation();search.current?.focus();return;}
+      if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key)||!(e.target instanceof HTMLButtonElement))return;
+      e.preventDefault();
+      const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")).filter(button=>button.getClientRects().length>0);
+      const at=buttons.indexOf(e.target);
+      if(e.key==="ArrowUp"&&at===0){search.current?.focus();return;}
+      buttons[e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowUp"?-1:1)))]?.focus();
+    }}>
     {space==="add"?<>
       {projects.length > 0 && <details className={styles.assetGroup} open={!!query || undefined}>
         <summary>Modèles de projets</summary>
@@ -136,7 +147,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
         ? "Aucune prestation autorisée n’est attestée pour cette recherche dans ce mois. Un concept du catalogue ne constitue pas un rendez-vous réservé."
         : "Les compléments se trouvent dans la palette de leur carte."}</p>}
     </>:space==="intentions"?<section aria-label="Mes intentions du mois" data-library-month-intentions>
-      <h3>Mes intentions · {model.board.targetMonth}</h3>
+      <h3>Mes intentions · {new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(`${model.board.targetMonth}-01T12:00:00Z`))}</h3>
       <label>Afficher<select aria-label="Filtrer les intentions du mois" value={intentionFilter}
         onChange={event=>{const value=event.target.value;if(value==="ALL"||value==="INCOMPLETE"||value==="PROJECTS")setIntentionFilter(value);}}>
         <option value="ALL">Toutes mes intentions</option><option value="INCOMPLETE">À compléter</option><option value="PROJECTS">Mes projets</option>

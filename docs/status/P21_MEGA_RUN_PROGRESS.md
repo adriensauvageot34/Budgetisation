@@ -97,8 +97,8 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Modèles et disponibilité | Structures existantes proposées à l’ouverture, compléments filtrés selon les droits |
 | DONE | Date du modèle | Date facultative du parent, sans propagation aux compléments |
 | DONE | Mobilité explicite | Tarif du trajet complet, retour et frais du propriétaire partagé distingués |
-| READY | Accessibilité de la bibliothèque | Retour clavier depuis les résultats vers la recherche |
-| READY | Sélection du mois | Indication du mois dans les reprises et modèles |
+| DONE | Accessibilité de la bibliothèque | Entrée ouvre l’existant, Échap et flèche haute reviennent à la recherche |
+| DONE | Sélection du mois | Mois explicite dans la liste et l’aperçu des modèles |
 | READY | Lecture des montants | Hiérarchiser coûts inconnus et sous-totaux officiels dans les projets |
 | DONE | Synthèse des projets | Compteurs officiels et filtres pour les projets contenant plusieurs enfants |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
@@ -238,3 +238,9 @@ TypeScript, diff et trois contrôles React d’aperçu PASS. L’ouverture d’u
 Le montant de billet/course est présenté comme celui du trajet complet. L’aller-retour ne déclenche aucun multiplicateur d’interface. Les frais et le financement du trajet propriétaire ne sont pas saisissables sur son participant partagé ; les buffers restent disponibles si l’utilisateur revient à un trajet propre. Le mode explicitement gratuit ne présente pas de billet payant à adopter.
 
 TypeScript et trois contrôles React/propriétaire PASS. Le préparateur Mobility officiel, raccordé aux providers de fixture existants, évalue un billet de train de 10 € à 10 € en aller simple comme en aller-retour. Sans direction déclarée, son montant évalué reste inconnu. Aucun appel route, carburant ou péage n’est réalisé par le train ; aucun writer distant, SQL ou Apply.
+
+### Clavier et repérage du mois
+
+Dans Mes intentions, Entrée ouvre uniquement un résultat existant unique. Échap et la flèche haute depuis le premier résultat rendent la recherche accessible. Home/End et les flèches ignorent les boutons cachés dans les sections repliées. Le mois est affiché en toutes lettres dans la liste et l’aperçu des modèles.
+
+TypeScript, diff et trois contrôles React/propriétaire PASS, incluant les événements clavier sur DOM simulé. Aucun ajout d’intention ni writer distant. La recette clavier en navigateur réel reste NOT_RUN. Au checkpoint `9bc18c1`, le contrôle Vercel automatique était PENDING ; aucune certification de Preview n’est déduite de ces contrôles locaux.
