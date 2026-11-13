@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {existsSync} from 'node:fs';
 const repo=path.resolve(import.meta.dirname,'..');process.chdir(repo);
 const {readMonthFixture}=await import(pathToFileURL(path.join(repo,'scripts/fixtures/composer-v22-b1.mjs')));
 const {householdId,uuid}=await import(pathToFileURL(path.join(repo,'scripts/fixtures/planner-headless.mjs')));
 const {require}=await import(pathToFileURL(path.join(repo,'scripts/lib/phase2-ts-loader.mjs')));
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {composerLibraryIndex,filterLibraryIntentions}=require('@/domain/phase2/planner/composer-library-index');
-const {presetForContext}=require('@/domain/phase2/planner/composer-presets');
+const {presetForContext,composerPreset,presetIllustrationPath}=require('@/domain/phase2/planner/composer-presets');
 const {stageLocalDecision}=require('@/app/mois-a-venir/composer/local-draft');
 const {parsePlanSemanticState}=require('@/domain/phase2/planner/semantic-state');
 const {evaluatePlanScenario}=require('@/server/phase2/planner/preview');
@@ -153,7 +154,7 @@ await run('A1-14-BAR-AND-RESTAURANT-PRESETS-LOCAL-SERVER-PARITY',async()=>{
  assert.equal(JSON.stringify(f.world),worldBefore);assert.deepEqual(f.writes,[]);assert.equal(remote,0);
 });
 await run('P21-BEAUTY-REUSE-EXACT-OWNER-AND-CLAY',async()=>{
- const presets=['eyeliner','eyebrow-pencil','hair-wax','face-cleanser','makeup-remover'];
+ const presets=['eyeliner','eyebrow-pencil','hair-wax','face-cleanser','makeup-remover','facial-toner','face-serum','face-moisturizer','care-lotion'];
  for(const [index,presetKey] of presets.entries()){
   const owner=uuid(93000+index*10), sid=uuid(93001+index*10);
   const next=ok(await request(f.model,{...drop,presetKey,identity:owner,selectionId:uuid(93002+index*10)}));
@@ -161,7 +162,7 @@ await run('P21-BEAUTY-REUSE-EXACT-OWNER-AND-CLAY',async()=>{
   const suggestions=beautyProductSuggestions(context,next);
   assert.equal(suggestions.length,1);
   assert.equal(suggestions[0].route.target.contextOccurrenceId,owner);
-  assert(clayBarArtwork(suggestions[0].catalogAssetKey));
+  assert(clayBarArtwork(suggestions[0].catalogAssetKey) || existsSync(path.join(repo,'public',presetIllustrationPath(composerPreset(suggestions[0].presetArtwork)))));
   const chosen=ok(await request(next,{kind:'DROP',assetKey:suggestions[0].route.asset.assetKey,target:suggestions[0].route.target,
    identity:uuid(93003+index*10),selectionId:sid,values:{label:'Produit de recette',quantity:'1',costMode:'UNKNOWN'}}));
   const adopted=chosen.semanticState.contexts.find(row=>row.contextOccurrenceId===owner);

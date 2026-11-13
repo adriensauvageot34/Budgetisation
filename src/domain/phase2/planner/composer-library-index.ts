@@ -41,7 +41,7 @@ const situatedPresets = new Set(["mascara", "eyeliner", "eyebrow-pencil", "hair-
   "restaurant-for-two", "cinema", "weekend-gite", "amazon-purchase", "groceries-purchase", "composed-outing",
   "concert", "ropes-course", "museum-exhibition", "hiking-nature", "video-game-purchase", "aliexpress-purchase",
   "beauty-purchase", "laundry-detergent", "dishwashing-liquid", "visit-friends", "fontes-family-visit", "servian-family-visit",
-  ...COMPOSER_PRESETS.filter(preset => preset.templateKey === "activity" || preset.templateKey === "purchase").map(preset => preset.presetKey),
+  ...COMPOSER_PRESETS.filter(preset => preset.templateKey === "activity" || preset.templateKey === "purchase" || preset.templateKey === "beauty-restock").map(preset => preset.presetKey),
   ...clothingPresets]);
 const publishedPreset = (context:Parameters<typeof presetForContext>[0]) => {
   try{return presetForContext(context);}catch{return undefined;} // Unsupported metadata is never an exact identity.

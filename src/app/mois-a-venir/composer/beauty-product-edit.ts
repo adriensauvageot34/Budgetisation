@@ -11,19 +11,24 @@ import { publishedDrop } from "./interactions";
 import { rankDiscoveryCandidates } from "./catalog-discovery";
 
 export type BeautyProduct = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
-const productArtwork: Partial<Record<ComposerPresetKey, string>> = {
+const productArtwork: Partial<Record<ComposerPresetKey, string | null>> = {
   mascara: "beauty:mascara",
   eyeliner: "beauty:eyeliner",
   "eyebrow-pencil": "beauty:eyebrow_pencil",
   "hair-wax": "beauty:hair_wax",
   "face-cleanser": "beauty:face_cleanser",
   "makeup-remover": "beauty:makeup_remover",
+  "facial-toner": null,
+  "face-serum": null,
+  "face-moisturizer": null,
+  "care-lotion": null,
 };
 
 export function beautyProductPresentation(context?: Pick<PlannedContextState, "templateKey" | "fields">) {
   const preset = context?.templateKey === "beauty-restock" ? presetForContext(context) : undefined;
   const catalogAssetKey = preset && productArtwork[preset.presetKey];
-  return preset && catalogAssetKey ? { key: preset.presetKey, label: preset.label, catalogAssetKey } : undefined;
+  return preset && Object.hasOwn(productArtwork, preset.presetKey)
+    ? { key: preset.presetKey, label: preset.label, catalogAssetKey: catalogAssetKey ?? undefined, presetArtwork: preset.presetKey } : undefined;
 }
 export const isBeautyProductContext = (context?: Pick<PlannedContextState, "templateKey" | "fields">) => !!beautyProductPresentation(context);
 
@@ -80,7 +85,7 @@ export function beautyProductSuggestions(context: PlannedContextState, model: Co
     }] : [];
   });
   return rankDiscoveryCandidates([...add, ...actions, ...renewals]).map(candidate => ({
-    ...candidate, iconKey: owner.asset.iconKey, catalogAssetKey: presentation.catalogAssetKey,
+    ...candidate, iconKey: owner.asset.iconKey, catalogAssetKey: presentation.catalogAssetKey, presetArtwork: presentation.presetArtwork,
   }));
 }
 

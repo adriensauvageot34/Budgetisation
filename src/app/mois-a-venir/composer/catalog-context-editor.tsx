@@ -164,6 +164,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     ? beautyProductEquipment(model, model.semanticState, context.contextOccurrenceId, posts[0]?.item) : undefined;
   const directChoice = productShortcut && beautyProduct ? { key: "beauty-product-price",
     catalogAssetKey: beautyProduct.catalogAssetKey,
+    presetArtwork: beautyProduct.presetArtwork,
     label: productShortcut.selection ? "Prix et quantité" : "Ajouter un produit", iconKey: productShortcut.asset.iconKey,
     choose: () => choose(productShortcut.asset, productShortcut.target, productShortcut.selection) }
     : directPost ? { key: "direct-price", label: "Prix direct", iconKey: directPost.asset.iconKey,
