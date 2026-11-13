@@ -124,7 +124,11 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const editExtra = (item?: PurchaseComponent) => open({ kind: "extra", selectionId: item?.selectionId ?? crypto.randomUUID(),
     label: item?.label ?? "", price: item?.cost.kind === "MANUAL" ? item.cost.unitAmount : "" });
   const send = (change: PurchaseBasketChange, expectedContextDigest: string) => {
-    if (!writable || busy) return;
+    if (busy) return;
+    if (!writable || expectedContextDigest !== digest) {
+      setError("Le panier ou ses droits ont changé. Votre saisie est conservée.");
+      return;
+    }
     try {
       if (decide({ kind: "EDIT_PURCHASE_BASKET", edit: { contextOccurrenceId: id, expectedContextDigest, change } })) discard();
       else setError("Ce choix n’a pas été conservé. Vérifiez l’état du panier et réessayez.");
@@ -149,9 +153,12 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const remove = (item: PurchaseComponent, extra = false) => {
     const ask = () => confirm({ message: `Retirer « ${item.label} » de ce panier ?`,
       acceptLabel: extra ? "Retirer le supplément" : "Retirer l’article",
-      accept: () => send({ kind: extra ? "REMOVE_EXTRA" : "REMOVE_ITEM", selectionId: item.selectionId }, digest) });
+      accept: () => removeCurrent(extra, item.selectionId, digest) });
     if (guard(ask)) ask();
   };
+  const removeCurrent = useCommittedEvent((extra: boolean, selectionId: string, expected: string) => {
+    send({ kind: extra ? "REMOVE_EXTRA" : "REMOVE_ITEM", selectionId }, expected);
+  });
   const update = (next: Form) => { setForm(next); setDirty(true); };
   const evaluations = card.sockets.find(socket => socket.slotKey === "item")?.evaluations;
   const visibleTotal = summary?.knownAmount;

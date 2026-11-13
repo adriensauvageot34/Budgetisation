@@ -385,3 +385,9 @@ TypeScript, diff et quatre contrôles d’aperçu PASS. Retirer la capacité Res
 Le raccourci « Préparer mes courses » suit le même contrôle de digest que les autres créations du catalogue. Un changement de composition pendant la consultation suspend ce raccourci.
 
 TypeScript, diff et banc catalogue/panier PASS. Le raccourci est disponible sur le digest initial puis désactivé après changement, sans nouvelle décision ni writer distant.
+
+### Confirmer le retrait d’une ligne de panier
+
+La confirmation vérifie le digest et les droits courants avant de transmettre le retrait. Le formulaire suit le même contrôle et conserve la saisie si le panier a changé.
+
+TypeScript, diff et banc catalogue/panier PASS. Un changement de vendeur entre l’ouverture et l’acceptation du retrait invalide l’action. Aucun retrait ni writer distant ne part depuis cette confirmation.

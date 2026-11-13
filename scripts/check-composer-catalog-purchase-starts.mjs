@@ -50,12 +50,13 @@ for(const [assetKey,presetKey] of [['beauty:mascara','beauty-purchase'],['clothi
 assert.equal(semanticStateDigest(f.model.semanticState),initial);assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
 const testRequire=createRequire(path.resolve(process.env.PLANNER_REACT_TEST_TOOLS||'outputs/p21-react-tools','package.json'));
 const React=testRequire('react'),jsx=testRequire('react/jsx-runtime'),{create,act}=testRequire('react-test-renderer');
-const originalLoad=Module._load,originalFetch=globalThis.fetch;let root,chosen=[];
+const originalLoad=Module._load,originalFetch=globalThis.fetch;let root,chosen=[],confirmation;
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 class Element{focus(){}}
 globalThis.HTMLElement=Element;globalThis.document={body:{},activeElement:new Element()};
 globalThis.fetch=async url=>{assert.equal(url,'/planned-visuals/builder/clay/v22/collection.json','Only local collection fixture may load');return {ok:true,json:async()=>({schema:'clay-v22-collection@2',entries})};};
 Module._load=function(name,parent,...args){if(name==='react')return React;if(name==='react/jsx-runtime')return jsx;if(name==='react-dom')return {createPortal:children=>children};
+ if(name==='./workshop-confirmation')return {useWorkshopConfirmation:()=>value=>{confirmation=value;}};
  if(name==='./context-palette'&&parent?.filename.endsWith('purchase-basket-editor.tsx'))return {ContextPalette:()=>null};
  return originalLoad.call(this,name,parent,...args);};
 const {CatalogDiscoveryProvider,CatalogOpenButton}=require('@/app/mois-a-venir/composer/catalog-discovery-provider');
@@ -144,6 +145,15 @@ try{
  await act(async()=>root.root.findByProps({type:'checkbox'}).props.onChange({target:{checked:false}}));
  await act(async()=>root.update(render(mixed,undefined,'STALE')));
  assert.doesNotMatch(text(lines()[0]),/Total/);assert.equal(semanticStateDigest(mixed.semanticState),mixedDigest);assert.equal(operations.length,0);
+ await act(async()=>lines()[0].findAllByType('button').find(button=>text(button)==='Retirer').props.onClick());
+ assert(confirmation);assert.equal(operations.length,0);
+ const current=mixed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ const changed=await request(mixed,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(current),
+  change:{kind:'SET_DETAILS',merchant:'Vendeur modifié',date:'',coverage:'AUTO'}}});
+ await act(async()=>root.update(render(changed)));
+ await act(async()=>confirmation.accept());
+ assert.equal(operations.length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('Le panier ou ses droits ont changé')));
  assert.deepEqual(f.writes,[]);
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;globalThis.fetch=originalFetch;}
 console.log(JSON.stringify({status:'PASS',products:7,families:6,uiDispatch:true,exactLineEdit:true,staleRefused:true,staleCoursesDisabled:true,articleFilters:true,remoteWrites:0,apply:false,level:'EXISTING_CATALOG_AND_PURCHASE_OWNER'}));
