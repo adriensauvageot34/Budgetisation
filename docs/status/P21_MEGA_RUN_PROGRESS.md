@@ -373,3 +373,9 @@ TypeScript, diff, catalogue et dix groupes du banc de parcours PASS. Le banc vé
 Le reçu doit confirmer l’identité de l’enfant et celle de sa sélection dans le socket demandé avant que le Shell installe la composition. Un reçu sans le rattachement attendu interrompt le modèle.
 
 TypeScript, diff et dix groupes du banc de parcours PASS. Le contrôle simule un reçu dépourvu de la sélection Restaurants après création de l’enfant. Le modèle est refusé et le digest initial est préservé. Aucun writer distant ni Apply.
+
+### Conserver les choix d’un modèle lorsque les droits changent
+
+L’aperçu garde visibles les compléments sélectionnés qui deviennent indisponibles. Il suspend la confirmation jusqu’à ce que l’utilisateur décoche explicitement le choix concerné ou rouvre le modèle.
+
+TypeScript, diff et quatre contrôles d’aperçu PASS. Retirer la capacité Restaurant pendant l’aperçu bloque la création. Décocher le repas transmet ensuite seulement le musée. Aucun writer distant.

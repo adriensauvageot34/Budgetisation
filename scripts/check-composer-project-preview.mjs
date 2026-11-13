@@ -49,6 +49,20 @@ try{
  assert.deepEqual(opened,[existingId]);assert.equal(created.length,2);
  assert.equal(semanticStateDigest(result.model.semanticState),existingDigest);
  console.log('PP-03 Existing structures open by exact identity without creating another project: PASS');
+ await act(async()=>root.unmount());root=null;
+ const hotel=projectStarters.find(starter=>starter.key==='hotel-and-dinner');
+ await mount({starter:hotel});
+ const blocked={...f.model,dropCapabilities:f.model.dropCapabilities.filter(drop=>drop.sourceAssetKey!=='template:restaurant')};
+ await act(async()=>root.update(React.createElement(ProjectStarterPreview,{starter:hotel,model:blocked,busy:false,
+  create:choices=>created.push(choices),close(){}})));
+ const meal=root.root.findAllByProps({type:'checkbox'})[1];
+ assert.equal(meal.props.checked,true);assert.equal(meal.props.disabled,false);
+ assert.equal(root.root.findByProps({'data-confirm-workshop':true}).props.disabled,true);
+ await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.equal(created.length,2);
+ await act(async()=>meal.props.onChange({target:{checked:false}}));
+ await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+ assert.deepEqual(created.at(-1),{label:hotel.label,children:['museum-exhibition']});
+ console.log('PP-04 A selected complement that loses admission requires an explicit decision: PASS');
  assert.deepEqual(f.writes,[]);
- console.log(JSON.stringify({status:'PASS',checks:3,remoteWrites:0,level:'LOCAL_REACT_PREVIEW'}));
+ console.log(JSON.stringify({status:'PASS',checks:4,remoteWrites:0,level:'LOCAL_REACT_PREVIEW'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

@@ -26,7 +26,9 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
   const parent = composerPreset(starter.parent);
   const admitted = projectPresetAvailable(model, starter.parent);
   const existing = openExisting ? libraryOccurrences(model).filter(row => row.presetKey === starter.parent) : [];
-  const chosen = childKeys.filter(key => selected.includes(key) && projectPresetAvailable(model, key));
+  const chosen = childKeys.filter(key => selected.includes(key));
+  const unavailableChoices = chosen.filter(key => !projectPresetAvailable(model, key));
+  const canCreate = !busy && !blockedReason && admitted && !!label.trim() && !unavailableChoices.length;
   const lastDay = new Date(`${model.semanticState.targetMonth}-01T12:00:00Z`);
   lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
   useEffect(() => {
@@ -40,7 +42,7 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
     onCancel={event => { event.preventDefault(); cancel(); }}>
     <form onSubmit={event => {
       event.preventDefault();
-      if (!busy && !blockedReason && admitted && label.trim()) { restoreFocus.current = false; create({ label: label.trim(), children: chosen, ...(date ? { plannedDate: date } : {}) }); }
+      if (canCreate) { restoreFocus.current = false; create({ label: label.trim(), children: chosen, ...(date ? { plannedDate: date } : {}) }); }
     }}>
       <h2 id="project-starter-title">Préparer {starter.label}</h2>
       <p>Mois du projet · {new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${model.semanticState.targetMonth}-01T12:00:00Z`))}</p>
@@ -63,7 +65,8 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
       {starter.children.length > 0 && <fieldset disabled={busy}><legend>Compléments facultatifs</legend>
         {childKeys.map(key => {
           const available = projectPresetAvailable(model, key);
-          return <label className={styles.projectChoice} key={key}><input type="checkbox" checked={available && selected.includes(key)} disabled={!available}
+          const checked = selected.includes(key);
+          return <label className={styles.projectChoice} key={key}><input type="checkbox" checked={checked} disabled={!available && !checked}
             onChange={event => setSelected(previous => event.target.checked ? [...previous.filter(item => item !== key), key] : previous.filter(item => item !== key))} />
             <span>{composerPreset(key)?.label}<small>{available ? "Prix inconnu · à compléter" : "Indisponible avec les droits actuels"}</small></span></label>;
         })}
@@ -72,8 +75,9 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
       <p>{chosen.length + 1} intention{chosen.length ? "s" : ""} à créer. Chaque rattachement sera vérifié avant l’ajout au brouillon.</p>
       {error && <p role="alert">{error}</p>}
       {blockedReason && <p role="alert">{blockedReason}</p>}
+      {unavailableChoices.length > 0 && <p role="alert">Un complément sélectionné est devenu indisponible. Décochez-le pour poursuivre ou rouvrez le modèle.</p>}
       <footer><button type="button" disabled={busy} onClick={cancel}>Annuler</button>
-        <button data-confirm-workshop disabled={busy || !!blockedReason || !admitted || !label.trim()}>{busy ? "Préparation…" : "Créer ce projet dans le brouillon"}</button></footer>
+        <button data-confirm-workshop disabled={!canCreate}>{busy ? "Préparation…" : "Créer ce projet dans le brouillon"}</button></footer>
     </form>
   </dialog>;
 }
