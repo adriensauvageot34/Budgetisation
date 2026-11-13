@@ -4,7 +4,7 @@ import Module,{createRequire} from 'node:module';
 import {require} from './lib/phase2-ts-loader.mjs';
 import {readMonthFixture} from './fixtures/composer-v22-b1.mjs';
 import {uuid,householdId} from './fixtures/planner-headless.mjs';
-const testRequire=createRequire(path.resolve('outputs/p21-react-tools/package.json'));
+const testRequire=createRequire(path.resolve(process.env.PLANNER_REACT_TEST_TOOLS||'outputs/p21-react-tools','package.json'));
 const React=testRequire('react'),jsx=testRequire('react/jsx-runtime'),{create,act}=testRequire('react-test-renderer');
 const originalLoad=Module._load;let prospective,confirmation;
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;

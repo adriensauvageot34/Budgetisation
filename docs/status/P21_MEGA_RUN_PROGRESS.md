@@ -244,3 +244,7 @@ TypeScript et trois contrôles React/propriétaire PASS. Le préparateur Mobilit
 Dans Mes intentions, Entrée ouvre uniquement un résultat existant unique. Échap et la flèche haute depuis le premier résultat rendent la recherche accessible. Home/End et les flèches ignorent les boutons cachés dans les sections repliées. Le mois est affiché en toutes lettres dans la liste et l’aperçu des modèles.
 
 TypeScript, diff et trois contrôles React/propriétaire PASS, incluant les événements clavier sur DOM simulé. Aucun ajout d’intention ni writer distant. La recette clavier en navigateur réel reste NOT_RUN. Au checkpoint `9bc18c1`, le contrôle Vercel automatique était PENDING ; aucune certification de Preview n’est déduite de ces contrôles locaux.
+
+### Rejouer les contrôles ciblés
+
+Les sept pilotes React additionnels acceptent `PLANNER_REACT_TEST_TOOLS`, chemin du répertoire contenant le `package.json` du renderer déjà disponible. Sans cette variable, ils réutilisent `outputs/p21-react-tools`. Aucun paquet de test ou fichier de ce répertoire n’est inclus dans le commit. Les scripts du propriétaire et les fixtures de calcul restent ceux du dépôt.
