@@ -30,6 +30,10 @@ export const projectStarters = [
     children: [{ key: "groceries-purchase", slot: "purchases" }, { key: "hiking-nature", slot: "activities" }] },
   { key: "home-furnishing-and-basket", label: "Aménager une pièce et préparer ses achats", parent: "furnish-room",
     children: [{ key: "home-equipment-basket", slot: "purchases" }] },
+  { key: "friends-and-laser-game", label: "Visite amicale et laser game", parent: "visit-friends",
+    children: [{ key: "laser-game", slot: "activities" }] },
+  { key: "hotel-and-zoo", label: "Hôtel et visite au zoo", parent: "hotel-night",
+    children: [{ key: "zoo-visit", slot: "activities" }] },
 ] as const satisfies readonly {
   key: string; label: string; parent: ComposerPresetKey; children: readonly { key: ComposerPresetKey; slot: string }[];
 }[];

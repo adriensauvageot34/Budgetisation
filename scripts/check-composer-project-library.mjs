@@ -15,6 +15,8 @@ assert(projectStarterMatches(byKey('bowling-and-dinner'),'quilles dîner'));
 assert(projectStarterMatches(byKey('friends-and-escape'),'amis énigme'));
 assert(projectStarterMatches(byKey('hotel-and-dinner'),'hôtel musée dîner'));
 assert(projectStarterMatches(byKey('weekend-groceries-and-walk'),'courses randonnée'));
+assert(projectStarterMatches(byKey('friends-and-laser-game'),'amis laser tag'));
+assert(projectStarterMatches(byKey('hotel-and-zoo'),'hôtel parc animalier'));
 assert(!projectStarterMatches(byKey('visit-and-activity'),'randonnée'));
 assert.equal(projectStarterCategory(byKey('weekend-culture')),'Séjours');
 const f=await readMonthFixture();

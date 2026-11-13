@@ -158,7 +158,7 @@ assert.equal(newCinema.parentContextOccurrenceId,projectId);
 assert.deepEqual(newCinema.slotSelections,{});
 console.log('UX-07 Composed outing attaches exact occurrences and preserves official child costs: PASS');
 const starters=availableProjectStarters(model);
-assert.equal(starters.length,13);
+assert.equal(starters.length,15);
 let starterId=29200, starterSequence=20;
 const transport=command=>handleComposerRequest(fixture.deps,householdId,command);
 for(const starter of starters){

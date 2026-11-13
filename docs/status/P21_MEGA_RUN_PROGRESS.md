@@ -557,3 +557,7 @@ Une fiche produit propose les paniers existants qui admettent l’article, avec 
 ### Laser game, trampolines, parc aquatique et zoo
 
 Quatre activités s’ouvrent depuis la bibliothèque et leur concept exact du catalogue. Elles utilisent les exports Clay carrés existants et l’éditeur Activité pour la date, le lieu, le tarif, les frais distincts et le transport lorsqu’il est admis. TypeScript, catalogue et les dix groupes du banc de parcours PASS. Le banc couvre désormais 23 activités, avec maintien des identités et coûts officiels. Contrôle navigateur reporté.
+
+### Modèles de visite avec laser game et de séjour avec zoo
+
+La bibliothèque propose 15 modèles. Ces deux nouveaux modèles passent par le socket Activités du projet. Le choix d’activité reste facultatif. Les prix, dates, trajets et participants restent à préciser. TypeScript, recherche et banc familles de projets PASS, avec reçu de rattachement exact et montant de l’enfant inconnu.

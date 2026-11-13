@@ -16,7 +16,7 @@ const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 globalThis.fetch=async()=>{throw Error('PROJECT_FAMILIES_REMOTE_FORBIDDEN');};
 const f=await readMonthFixture(),world=JSON.stringify(f.world),original=semanticStateDigest(f.model.semanticState);let id=30200;
 const transport=operation=>handleComposerRequest(f.deps,householdId,operation);
-for(const [key,lodgingKind] of [['hotel-and-culture','HOTEL'],['relatives-and-nature','RELATIVE']]){
+for(const [key,lodgingKind] of [['hotel-and-culture','HOTEL'],['relatives-and-nature','RELATIVE'],['hotel-and-zoo','HOTEL'],['friends-and-laser-game',undefined]]){
  const starter=projectStarters.find(starter=>starter.key===key);
  const result=await evaluateProjectStarter(starter,f.model,transport,()=>uuid(++id),()=>++id);
  const parent=result.model.semanticState.contexts.find(context=>context.contextOccurrenceId===result.parentId);
@@ -26,12 +26,14 @@ for(const [key,lodgingKind] of [['hotel-and-culture','HOTEL'],['relatives-and-na
  assert.equal(libraryOccurrences(result.model).find(row=>row.contextOccurrenceId===parent.contextOccurrenceId)?.action,'EDIT');
  const children=result.model.semanticState.contexts.filter(context=>context.parentContextOccurrenceId===result.parentId);
  assert.equal(children.length,1);assert.equal(result.model.budgetReading.byContext[children[0].contextOccurrenceId].gross,null);
+ assert.equal(parent.slotSelections.activities.items[0].childContextOccurrenceId,children[0].contextOccurrenceId);
+ assert.equal(children[0].fields.composerPresentation.presetKey,starter.children[0].key);
  const markup=renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider,{value:'FRESH'},
   React.createElement(IntentBudgetImpact,{model:result.model,contextId:children[0].contextOccurrenceId})));
  assert(markup.includes(`data-budget-parent="${parent.contextOccurrenceId}"`));
  assert.match(markup,/Les montants ci-dessous concernent cette intention/);
 }
-console.log('PF-01 Hotel and relatives models preserve unknown lodging, dates and child costs: PASS');
+console.log('PF-01 Stay and visit models preserve exact linked activities, dates and unknown child costs: PASS');
 let model=f.model;
 const request=async operation=>{
  const response=await transport({sequence:++id,targetMonth:'2026-11',draft:model.semanticState,...operation});
