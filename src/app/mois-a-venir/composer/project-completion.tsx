@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import { ACTIVITY_PRESETS, composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { publishedDrop } from "./interactions";
 import { useInlineEditRegistry } from "./inline-edit-registry";
@@ -13,6 +13,10 @@ type CompletionRule = Readonly<{ trigger: ComposerPresetKey; add: ComposerPreset
 const outingRules: readonly CompletionRule[] = [
   { trigger: "cinema", add: "restaurant-for-two", reason: "Votre sortie contient un cinéma. Vous pouvez prévoir un repas dans le même projet." },
   { trigger: "restaurant-for-two", add: "cinema", reason: "Votre sortie contient un restaurant. Vous pouvez prévoir une séance dans le même projet." },
+  ...ACTIVITY_PRESETS.map(preset => ({
+    trigger: preset.presetKey, add: "restaurant-for-two" as const,
+    reason: `« ${preset.label} » est déjà lié à la sortie. Vous pouvez préparer un repas dans le même projet.`,
+  })),
 ];
 export type ProjectCompletionPriority = "BALANCED" | "ACTIVITIES" | "MEALS";
 
@@ -30,9 +34,11 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
     && parent.childContextOccurrenceIds.includes(card.contextOccurrenceId));
   const chosen = new Set(children.map(card => presetForContext(card)?.presetKey));
   const activityChosen = children.some(card => card.templateKey === "activity");
+  const mealChosen = children.some(card => ["restaurant", "fast-food", "delivery"].includes(card.templateKey));
   const stayLabel = preset === "weekend-gite" ? "week-end" : "séjour";
   const candidates: readonly Pick<CompletionRule, "add" | "reason">[] = preset === "composed-outing"
-    ? children.length ? outingRules.filter(rule => chosen.has(rule.trigger) && !chosen.has(rule.add)) : [
+    ? children.length ? outingRules.filter(rule => chosen.has(rule.trigger)
+      && (rule.add === "cinema" ? !activityChosen : !mealChosen)).slice(0, 1) : [
       { add: "cinema", reason: "Votre projet ne contient aucune intention. Vous pouvez commencer par une séance, puis compléter la sortie." },
       { add: "restaurant-for-two", reason: "Votre projet ne contient aucun repas. Vous pouvez préparer un restaurant si vous le souhaitez." },
     ]
@@ -48,8 +54,7 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
   return candidates.flatMap(candidate => {
     const child = composerPreset(candidate.add);
     const assetKey = `template:${child?.templateKey}`;
-    if (!child || chosen.has(child.presetKey)
-      || child.templateKey === "restaurant" && children.some(card => card.templateKey === "restaurant")
+    if (!child || chosen.has(child.presetKey) || child.templateKey === "restaurant" && mealChosen
       || publishedDrop(model, assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return [];
     return [{ key: `${parentId}:${child.presetKey}`, preset: child, target, assetKey, reason: candidate.reason,
       category: child.templateKey === "restaurant" ? "MEALS" as const : "ACTIVITIES" as const }];

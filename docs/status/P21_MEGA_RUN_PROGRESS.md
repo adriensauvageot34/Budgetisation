@@ -295,3 +295,9 @@ Le banc Clay PASS sur les 687 visuels, les six correspondances exactes, la repri
 Deux modèles préparent des compléments facultatifs via les sockets existants, ce qui porte la bibliothèque à dix modèles. Le modèle de visite ne déduit ni personne ni lieu. Les deux modèles laissent les tarifs, dates des enfants et trajets à renseigner.
 
 TypeScript, diff, recherche/rendu de la bibliothèque et les dix groupes du banc de parcours PASS. L’évaluateur confirme les rattachements par identité de preset, leur ordre et l’absence de poste prérempli. Aucun writer distant ni Apply. Suite · suggestions S3 fondées sur les activités effectivement liées.
+
+### Suggestions S3 pour les sorties de loisirs
+
+Une sortie contenant l’une des six nouvelles activités peut proposer un repas en nommant l’activité liée. Plusieurs activités ne produisent qu’une proposition. Un restaurant, un repas rapide ou une livraison déjà liés la retirent. Un restaurant accompagné d’une activité ne reçoit pas de suggestion Cinéma par défaut.
+
+TypeScript, diff et cinq contrôles S3 PASS. Le banc couvre la priorité locale, la confirmation explicite, le refus d’une proposition devenue obsolète, les capacités et l’absence de doublon. Aucun writer distant ni Apply. Suite · navigation de la bibliothèque.

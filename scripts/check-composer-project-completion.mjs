@@ -22,7 +22,8 @@ const request=async(draft,operation)=>{
  const response=await handleComposerRequest(f.deps,householdId,{sequence:++counter,targetMonth:'2026-11',draft,...operation});
  assert(response.ok,response.code+': '+response.message);return response.model;
 };
-const add=async(model,key,parent=null,slot='children')=>request(model.semanticState,{kind:'DROP',assetKey:`template:${key==='composed-outing'?'other-context':key==='weekend-gite'?'short-stay':key==='restaurant-for-two'?'restaurant':'activity'}`,
+const {composerPreset}=require('@/domain/phase2/planner/composer-presets');
+const add=async(model,key,parent=null,slot='children')=>request(model.semanticState,{kind:'DROP',assetKey:`template:${composerPreset(key).templateKey}`,
  presetKey:key,target:parent?{kind:'CONTEXT_SOCKET',contextOccurrenceId:parent,slotKey:slot}:{kind:'BOARD_ZONE'},identity:uuid(++counter),selectionId:uuid(++counter),values:{}});
 let model=await request(f.semantic,{kind:'DROP',assetKey:'template:other-context',presetKey:'composed-outing',target:{kind:'BOARD_ZONE'},identity:parentId,selectionId:uuid(++counter),values:{}});
 const start=semanticStateDigest(model.semanticState);
@@ -67,7 +68,21 @@ try{
  assert.deepEqual(projectCompletionSuggestions(culture,stayId).map(candidate=>candidate.preset.presetKey),['hiking-nature']);
  const complete=await add(culture,'hiking-nature',stayId,'activities');
  assert.deepEqual(projectCompletionSuggestions(complete,stayId),[]);
+ const outing=await add(complete,'composed-outing');
+ const leisureId=outing.semanticState.contexts.filter(context=>context.templateKey==='other-context').at(-1).contextOccurrenceId;
+ const bowling=await add(outing,'bowling',leisureId);
+ const leisure=await add(bowling,'escape-game',leisureId);
+ const leisureDigest=semanticStateDigest(leisure.semanticState);
+ const offers=projectCompletionSuggestions(leisure,leisureId);
+ assert.deepEqual(offers.map(offer=>offer.preset.presetKey),['restaurant-for-two']);
+ assert.match(offers[0].reason,/Bowling|Escape game/);
+ assert.equal(semanticStateDigest(leisure.semanticState),leisureDigest);
+ const takeaway=await add(leisure,'chicken-snack',leisureId);
+ assert.deepEqual(projectCompletionSuggestions(takeaway,leisureId),[]);
+ const dining=await add(leisure,'restaurant-for-two',leisureId);
+ assert.deepEqual(projectCompletionSuggestions(dining,leisureId),[]);
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
  console.log('S3-04 Weekend complements follow the actual children without repeating an existing activity: PASS');
- console.log(JSON.stringify({status:'PASS',checks:4,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ console.log('S3-05 Two leisure activities offer one meal, suppressed when any meal is already linked: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:5,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}
