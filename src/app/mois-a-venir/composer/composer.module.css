@@ -1119,6 +1119,12 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .mobilitySections { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
 .mobilitySections button { min-height:44px; }
 .mobilitySections button[aria-current=step] { border-color:#775299; background:#efe4f6; }
+.libraryProjects { display:grid; gap:10px; margin-bottom:16px; }
+.libraryProject { display:grid; grid-template-columns:64px minmax(0,1fr); align-items:center; gap:10px; width:100%; min-height:76px; padding:10px; text-align:left; border:1px solid #decceb; border-radius:14px; background:#fffaff; color:#533e65; cursor:pointer; }
+.libraryProject img { width:64px; height:48px; object-fit:contain; }
+.libraryProject small { display:block; margin-top:5px; overflow-wrap:anywhere; line-height:1.4; }
+.libraryProject:focus-visible { outline:3px solid #a77bc8; outline-offset:2px; }
+.projectPreviewVisual { display:block; width:100%; height:100px; object-fit:contain; }
 .workshopStepper { display:flex; align-items:center; gap:10px; max-width:290px; }
 .workshopStepper input { min-width:0; text-align:center; }
 .workshopStepper button { flex:0 0 40px; min-height:40px; border:1px solid #d9c5e8; border-radius:12px; color:#633f7f; background:#faf6ff; font-size:20px; }

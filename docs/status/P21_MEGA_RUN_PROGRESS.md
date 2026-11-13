@@ -76,7 +76,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Lecture des intentions liées | Impact officiel par enfant, diagnostics ciblés et consultation seule visibles |
 | DONE | Déplacements | Rubriques de saisie et accès au parking du trajet déjà choisi |
 | DONE | Activités et achats | Reprise exacte des presets Activity/Purchase existants, labels adaptés et coût nul explicite |
-| READY | Découverte des modèles | Catégories, contenu et recherche dans la bibliothèque |
+| DONE | Découverte des modèles | Catégories, illustrations Clay, contenu et recherche par intentions |
 | READY | Suggestions S3 | Classement explicable et priorités de session |
 | READY | Navigation et accessibilité | Retour au projet et édition ciblée sans mutation de consultation |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
@@ -107,3 +107,9 @@ TypeScript et diff PASS. Deux contrôles React et propriétaire ont validé la c
 Les activités et achats déclarés par les presets publiés se retrouvent dans la bibliothèque du mois, sous les mêmes contrôles d’identité et de droits. Pêche, Plage, Randonnée et Spa utilisent des libellés de coût adaptés dans l’éditeur partagé. L’utilisateur peut préparer explicitement un coût nul, puis le valider ; cela ne renseigne pas les frais annexes.
 
 TypeScript, diff et dix groupes de parcours PASS. Sept activités ont été créées, rendues et chiffrées par leur propriétaire sur fixture. Plage a confirmé la distinction entre zéro déclaré et UNKNOWN. Les fixtures et le World restent inchangés, aucun writer distant exécuté.
+
+### Bibliothèque de modèles
+
+Les six modèles sont classés en sorties, séjours, visites et achats. Leur contenu et une illustration Clay existante sont visibles avant l’aperçu. La recherche associe les termes du parent et des compléments, avec normalisation des accents et plusieurs mots.
+
+TypeScript, diff et trois contrôles recherche/rendu PASS. La consultation des six modèles conserve le Draft. Les contrôles vérifient notamment « musée randonnée », « film dîner » et « achats manette ».

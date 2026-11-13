@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {require} from './lib/phase2-ts-loader.mjs';
+import {readMonthFixture} from './fixtures/composer-v22-b1.mjs';
+import {householdId} from './fixtures/planner-headless.mjs';
+const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
+const {projectStarters,projectStarterMatches,projectStarterCategory}=require('@/app/mois-a-venir/composer/project-starters');
+const {ComposerLibrary}=require('@/app/mois-a-venir/composer/composer-library');
+const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
+globalThis.fetch=async()=>{throw Error('PROJECT_LIBRARY_REMOTE_FORBIDDEN');};
+const byKey=key=>projectStarters.find(project=>project.key===key);
+assert(projectStarterMatches(byKey('weekend-discovery'),'musée randonnée'));
+assert(projectStarterMatches(byKey('cinema-dinner'),'film dîner'));
+assert(projectStarterMatches(byKey('games-basket'),'achats manette'));
+assert(!projectStarterMatches(byKey('visit-and-activity'),'randonnée'));
+assert.equal(projectStarterCategory(byKey('weekend-culture')),'Séjours');
+const f=await readMonthFixture();
+const response=await handleComposerRequest(f.deps,householdId,{kind:'READ',sequence:0,targetMonth:'2026-11',draft:f.semantic});
+assert(response.ok,response.code);const before=JSON.stringify(response.model.semanticState);
+const markup=renderToStaticMarkup(React.createElement(ComposerLibrary,{model:response.model,openToken:0,busy:false,selected:null,
+ choose(){assert.fail();},choosePreset(){assert.fail();},drag(){assert.fail();},inspectContext(){assert.fail();},openContext(){assert.fail();},prepareProject(){assert.fail('Render must not create');}}));
+for(const project of projectStarters)assert(markup.includes(`Prévisualiser ${project.label}`));
+assert.match(markup,/Voir et personnaliser le modèle/);assert.match(markup,/Modèles · Séjours/);
+assert.equal(JSON.stringify(response.model.semanticState),before);assert.deepEqual(f.writes,[]);
+console.log(JSON.stringify({status:'PASS',checks:3,remoteWrites:0,level:'LOCAL_SEARCH_AND_RENDER'}));

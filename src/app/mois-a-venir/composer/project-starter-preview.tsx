@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { composerPreset, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { projectPresetAvailable, type ProjectStarter, type ProjectStarterChoices } from "./project-starters";
+import { PresetIllustration } from "./preset-illustration";
 import styles from "./composer.module.css";
 
 /** Only the confirmed proposal reaches the Shell's atomic evaluator. */
@@ -28,6 +29,7 @@ export function ProjectStarterPreview({ starter, model, busy, error, create, clo
     onCancel={event => { event.preventDefault(); if (!busy) close(); }}>
     <form onSubmit={event => { event.preventDefault(); if (!busy && admitted && label.trim()) create({ label: label.trim(), children: chosen }); }}>
       <h2 id="project-starter-title">Préparer {starter.label}</h2>
+      {parent && <PresetIllustration preset={parent} className={styles.projectPreviewVisual} />}
       <p id="project-starter-description">Choisissez les intentions à préparer. Les prix, dates et participants resteront à préciser après la création.</p>
       <label className={styles.projectName}>Nom du projet<input autoFocus value={label} maxLength={120} required disabled={busy}
         onChange={event => setLabel(event.target.value)} /></label>

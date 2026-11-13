@@ -1,7 +1,7 @@
 import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { memo, useState, useRef, useEffect, useMemo } from "react";
-import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import { composerPreset, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isClothingPurchase, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
@@ -15,7 +15,7 @@ import { composerRenderIndex } from "./render-index";
 import { preloadEditorForAsset } from "./editor-chunks";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { MONTHLY_GROCERIES_REF } from "./catalog-discovery";
-import { availableProjectStarters, type ProjectStarter } from "./project-starters";
+import { availableProjectStarters, projectStarterCategory, projectStarterContents, projectStarterMatches, type ProjectStarter } from "./project-starters";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
 export const ComposerLibrary=memo(ComposerLibraryView);
@@ -39,8 +39,8 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   const serviceQuery=["coiffeur","coiffure","coupe de cheveux","brushing","soin capillaire"].includes(normalizeLibrarySearch(query));
   const favoriteItems=matches.filter(item=>favorites.includes(item.key));
   const categories=LIBRARY_CATEGORIES.map(([key,label])=>({key,label,items:matches.filter(item=>item.category===key)})).filter(g=>g.items.length);
-  const projects = prepareProject ? availableProjectStarters(model).filter(project =>
-    normalizeLibrarySearch(project.label).includes(normalizeLibrarySearch(query))) : [];
+  const projects = prepareProject ? availableProjectStarters(model).filter(project => projectStarterMatches(project, query)) : [];
+  const projectGroups = [...new Set(projects.map(projectStarterCategory))];
   const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
   const focusActions=()=>search.current?.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-existing-action]:not(:disabled),[data-library-add-action]:not(:disabled)")?.focus();
   const tile=(item:LibraryIntention)=>{
@@ -72,8 +72,14 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     {space==="add"?<>
       {projects.length > 0 && <details className={styles.assetGroup} open={!!query || undefined}>
         <summary>Modèles de projets</summary>
-        <div className={styles.presetGrid}>{projects.map(project => <button key={project.key} className={styles.libraryGenericChoice}
-          type="button" disabled={busy} onClick={() => prepareProject?.(project)}>{project.label}</button>)}</div>
+        {projectGroups.map(group => <section key={group} aria-label={`Modèles · ${group}`}><h3>{group}</h3>
+          <div className={styles.libraryProjects}>{projects.filter(project => projectStarterCategory(project) === group).map(project =>
+            <button key={project.key} className={styles.libraryProject} type="button" disabled={busy}
+              aria-label={`Prévisualiser ${project.label}`} onClick={() => prepareProject?.(project)}>
+              <PresetIllustration preset={composerPreset(project.parent)!} />
+              <span><strong>{project.label}</strong><small>{projectStarterContents(project)}</small><small>Voir et personnaliser le modèle</small></span>
+            </button>)}</div>
+        </section>)}
       </details>}
       {!!query.trim()&&occurrences.length>0&&<section className={styles.libraryExisting} aria-label="Intentions du mois" data-library-existing>
         <h3>Dans ce mois</h3><p>{occurrences.length===1?"Retrouvez cette intention, ou ajoutez-en une autre explicitement.":"Choisissez l’intention à ouvrir ; aucun ajout automatique."}</p>

@@ -1,6 +1,7 @@
 import { composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerRequest, ComposerTransport, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { semanticStateDigest } from "@/domain/phase2/planner/semantic-state";
+import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
 
 export const projectStarters = [
   { key: "cinema-dinner", label: "Cinéma et restaurant", parent: "composed-outing", slot: "children",
@@ -18,6 +19,23 @@ export const projectStarters = [
 ] as const satisfies readonly { key: string; label: string; parent: ComposerPresetKey; slot: string | null; children: readonly ComposerPresetKey[] }[];
 export type ProjectStarter = typeof projectStarters[number];
 export type ProjectStarterChoices = { label: string; children: readonly ComposerPresetKey[] };
+
+export function projectStarterCategory(starter: ProjectStarter) {
+  switch (composerPreset(starter.parent)?.templateKey) {
+    case "short-stay": return "Séjours";
+    case "friend-visit": return "Visites";
+    case "purchase": return "Achats";
+    default: return "Sorties";
+  }
+}
+export function projectStarterContents(starter: ProjectStarter) {
+  return [starter.parent, ...starter.children].map(key => composerPreset(key)?.label).join(" · ");
+}
+export function projectStarterMatches(starter: ProjectStarter, query: string) {
+  const text = normalizeLibrarySearch([starter.label, projectStarterCategory(starter), ...[starter.parent, ...starter.children]
+    .flatMap(key => { const preset = composerPreset(key); return preset ? [preset.label, ...preset.searchTerms] : []; })].join(" "));
+  return normalizeLibrarySearch(query).split(" ").filter(Boolean).every(word => text.includes(word));
+}
 
 const boardDrop = { kind: "BOARD_ZONE" } as const;
 export function projectPresetAvailable(model: ComposerUiModel, key: ComposerPresetKey) {
