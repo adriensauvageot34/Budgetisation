@@ -47,12 +47,16 @@ function result(raw: unknown, kind: "SAVE" | "ARCHIVE" | "RESTORE",
   const value = plannerRecord(raw);
   if (value.ok === true) {
     const saved = draft(value.draft, plannerMonth(command.targetMonth));
+    const write = kind === "SAVE" ? command as ComposerDraftSaveCommand : null;
     if (typeof value.replayed !== "boolean" || saved.lastMutationKind !== kind
       || saved.lastMutationRequestId !== command.requestId
       || saved.lastMutationExpectedVersion !== command.expectedDraftVersion
-      || (kind === "SAVE" && (saved.lifecycle !== "ACTIVE" || saved.digest !== (command as ComposerDraftSaveCommand).digest))
-      || (kind !== "SAVE" && (saved.draftId !== (command as ComposerDraftLifecycleCommand).draftId
-        || saved.lifecycle !== (kind === "ARCHIVE" ? "ABANDONED" : "ACTIVE")))) throw contractError();
+      || saved.version !== command.expectedDraftVersion + 1
+      || (write ? saved.lifecycle !== "ACTIVE" || saved.digest !== write.digest
+        || write.expectedDraftId !== null && saved.draftId !== write.expectedDraftId
+        || saved.baseRevisionId !== write.expectedBaseRevisionId || saved.baseRevisionNumber !== write.expectedBaseRevisionNumber
+        : saved.draftId !== (command as ComposerDraftLifecycleCommand).draftId
+          || saved.lifecycle !== (kind === "ARCHIVE" ? "ABANDONED" : "ACTIVE"))) throw contractError();
     return { ok: true, draft: saved, replayed: value.replayed };
   }
   const codes = ["CONFLICT", "BASE_STALE", "TOO_LARGE", "INVALID", "ACCESS_DENIED", "UNAVAILABLE"];

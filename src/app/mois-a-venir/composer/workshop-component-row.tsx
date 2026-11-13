@@ -8,10 +8,11 @@ import styles from "./composer.module.css";
 type Page = "quantity" | "price" | "funding" | "binding" | "name";
 /** A short value editor; choices live in the existing horizontal workshop dock. */
 export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, participantCount = 0,
-  reference, back, bindingChoices = false, fixedQuantity = false, initialPage = "price", priceLabel, busy = false }: {
+  reference, back, bindingChoices = false, fixedQuantity = false, initialPage = "price", priceLabel, busy = false, removePrompt }: {
   title: string; row: Row; onChange: (row: Row) => void; onSave?: () => void; onRemove?: () => void;
   reference?: {value:string;caption:string;period:string}; back?: {label:string; action:()=>void}; participantCount?: number; bindingChoices?: boolean; fixedQuantity?: boolean;
   initialPage?: Page; priceLabel?: string; busy?: boolean;
+  removePrompt?: { message: string; acceptLabel: string };
 }) {
   const confirm = useWorkshopConfirmation();
   const [page, setPage] = useState<Page>(initialPage);
@@ -60,6 +61,8 @@ export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, p
     {page === "funding" && <>{row.fundingMode === "BANK" && <label>Montant Banque (€)<input inputMode="decimal" value={row.fundingAmount} onChange={event=>update("fundingAmount",event.target.value)} /></label>}<p>Le financement ne change pas le coût économique. L’impact officiel vient de Finance V2.</p></>}
     {page === "binding" && <p>Seuls les coûts déjà compris dans cette enveloppe sont remplacés. Ce choix ne crée pas de plafond.</p>}
     <footer>{onSave && <button type="button" className={styles.nightAction} disabled={busy} onClick={onSave}>Conserver ce poste</button>}
-      {onRemove && <button type="button" className={styles.nightLink} disabled={busy} onClick={() => confirm({message:"Retirer ce poste ? Les autres décisions sont conservées. Undo permet de revenir en arrière.", acceptLabel:"Retirer ce poste", accept:onRemove})}>Retirer ce poste</button>}</footer>
+      {onRemove && <button type="button" className={styles.nightLink} disabled={busy} onClick={() => confirm({
+        message:removePrompt?.message ?? "Retirer ce poste ? Les autres décisions sont conservées. Undo permet de revenir en arrière.",
+        acceptLabel:removePrompt?.acceptLabel ?? "Retirer ce poste", accept:onRemove})}>Retirer ce poste</button>}</footer>
   </section>;
 }

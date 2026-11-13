@@ -2,7 +2,7 @@ import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import { declareComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
-import { presetForContext } from "@/domain/phase2/planner/composer-presets";
+import { presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { componentId } from "@/domain/phase2/planner/identity";
 import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
@@ -10,16 +10,34 @@ import type { PlanSemanticStateV1, PlannedContextState } from "@/domain/phase2/p
 import { publishedDrop } from "./interactions";
 import { rankDiscoveryCandidates } from "./catalog-discovery";
 
-export type MascaraProduct = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
-export const isMascaraContext = (context?: Pick<PlannedContextState, "templateKey" | "fields">) =>
-  context?.templateKey === "beauty-restock" && presetForContext(context)?.presetKey === "mascara";
+export type BeautyProduct = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
+const productArtwork: Partial<Record<ComposerPresetKey, string | null>> = {
+  mascara: "beauty:mascara",
+  eyeliner: "beauty:eyeliner",
+  "eyebrow-pencil": "beauty:eyebrow_pencil",
+  "hair-wax": "beauty:hair_wax",
+  "face-cleanser": "beauty:face_cleanser",
+  "makeup-remover": "beauty:makeup_remover",
+  "facial-toner": null,
+  "face-serum": null,
+  "face-moisturizer": null,
+  "care-lotion": null,
+};
+
+export function beautyProductPresentation(context?: Pick<PlannedContextState, "templateKey" | "fields">) {
+  const preset = context?.templateKey === "beauty-restock" ? presetForContext(context) : undefined;
+  const catalogAssetKey = preset && productArtwork[preset.presetKey];
+  return preset && Object.hasOwn(productArtwork, preset.presetKey)
+    ? { key: preset.presetKey, label: preset.label, catalogAssetKey: catalogAssetKey ?? undefined, presetArtwork: preset.presetKey } : undefined;
+}
+export const isBeautyProductContext = (context?: Pick<PlannedContextState, "templateKey" | "fields">) => !!beautyProductPresentation(context);
 
 /** Resolves the existing Beauty owner and its published products socket, never a name match. */
-export function mascaraEquipment(model: ComposerUiModel, state: PlanSemanticStateV1, contextOccurrenceId: string, expected?: ComponentSelectionV1) {
+export function beautyProductEquipment(model: ComposerUiModel, state: PlanSemanticStateV1, contextOccurrenceId: string, expected?: ComponentSelectionV1) {
   const context = state.contexts.find(item => item.contextOccurrenceId === contextOccurrenceId);
   const card = model.board.contexts.find(item => item.contextOccurrenceId === contextOccurrenceId);
   const locked = (id: string) => state.preferences.anchors.includes(id) || state.preferences.flexibility[id] === "PRESERVE";
-  if (!context || context.status !== "ACTIVE" || !isMascaraContext(context) || !card || !isMascaraContext(card) || card.readOnly
+  if (!context || context.status !== "ACTIVE" || !isBeautyProductContext(context) || !card || !isBeautyProductContext(card) || card.readOnly
     || !card.capabilityRefs.includes("PATCH_CONTEXT") || locked(contextOccurrenceId)) return undefined;
   const socket = card.sockets.find(item => item.slotKey === "products" && item.contextOccurrenceId === contextOccurrenceId);
   const assetKey = "option:beauty-restock:products:product";
@@ -28,7 +46,7 @@ export function mascaraEquipment(model: ComposerUiModel, state: PlanSemanticStat
   if (!socket || socket.cardinality !== "REPEATING" || !socket.capabilityRefs.includes("beauty-restock:products:SELECT_COMPONENT")
     || !socket.choiceAssetKeys?.includes(assetKey) || !asset || publishedDrop(model, assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return undefined;
   const items = (context.slotSelections.products?.items ?? []) as readonly ComponentSelectionV1[];
-  const selection = items.find((item): item is MascaraProduct =>
+  const selection = items.find((item): item is BeautyProduct =>
     item.kind === "COMPONENT" && item.optionKey === "product" && item.selectionId === expected?.selectionId);
   if (expected && (!selection || !socket.currentItems.some(item => item.kind === "COMPONENT" && item.selectionId === expected.selectionId)
     || locked(componentId(contextOccurrenceId, "products", expected.selectionId))
@@ -36,23 +54,25 @@ export function mascaraEquipment(model: ComposerUiModel, state: PlanSemanticStat
   return { asset, target, items, selection };
 }
 
-export function mascaraSuggestions(context: PlannedContextState, model: ComposerUiModel) {
+export function beautyProductSuggestions(context: PlannedContextState, model: ComposerUiModel) {
   const id = context.contextOccurrenceId;
-  const owner = mascaraEquipment(model, model.semanticState, id);
-  if (!owner) return [];
-  const products = owner.items.filter((item): item is MascaraProduct => item.kind === "COMPONENT" && item.optionKey === "product");
+  const presentation = beautyProductPresentation(context);
+  const owner = beautyProductEquipment(model, model.semanticState, id);
+  if (!presentation || !owner) return [];
+  const prefix = `${id}:${presentation.key}`;
+  const products = owner.items.filter((item): item is BeautyProduct => item.kind === "COMPONENT" && item.optionKey === "product");
   const editable = products.flatMap(product => {
-    const route = mascaraEquipment(model, model.semanticState, id, product);
+    const route = beautyProductEquipment(model, model.semanticState, id, product);
     return route ? [{ product, route }] : [];
   });
   const candidates = editable.map(({ product, route }) => ({
-    key: id + ":mascara:product:" + product.selectionId, label: product.cost.kind === "UNKNOWN" ? "Préciser le prix du produit" : "Modifier prix et quantité",
+    key: prefix + ":product:" + product.selectionId, label: product.cost.kind === "UNKNOWN" ? "Préciser le prix du produit" : "Modifier prix et quantité",
     hint: product.label + (products.length > 1 ? " · Poste " + (products.indexOf(product) + 1) : ""),
     tiers: [product.cost.kind === "UNKNOWN" ? 0 : 1], route,
   }));
   const actions = candidates.map(candidate => ({ ...candidate, kind: "PRODUCT" as const }));
   const add = !products.length ? [{
-    key: id + ":mascara:add", label: "Préciser le produit", hint: "Produit et quantité à renseigner · éditeur",
+    key: prefix + ":add", label: "Préciser le produit", hint: "Produit et quantité à renseigner · éditeur",
     tiers: [0], route: owner, kind: "PRODUCT" as const,
   }] : [];
   const needs = model.editors.find(editor => editor.assetKey === owner.asset.assetKey)?.fields.find(field => field.key === "needOccurrenceId")?.choices ?? [];
@@ -60,19 +80,19 @@ export function mascaraSuggestions(context: PlannedContextState, model: Composer
     if (!product.needOccurrenceId) return [];
     const need = needs.find(choice => choice.value === product.needOccurrenceId);
     return need ? [{
-      key: id + ":mascara:need:" + product.selectionId + ":" + need.value, label: "Consulter le besoin lié",
+      key: prefix + ":need:" + product.selectionId + ":" + need.value, label: "Consulter le besoin lié",
       hint: product.label + " · besoin publié", tiers: [2], kind: "NEED" as const, caption: need.label,
     }] : [];
   });
   return rankDiscoveryCandidates([...add, ...actions, ...renewals]).map(candidate => ({
-    ...candidate, iconKey: "mascara", catalogAssetKey: "beauty:mascara",
+    ...candidate, iconKey: owner.asset.iconKey, catalogAssetKey: presentation.catalogAssetKey, presetArtwork: presentation.presetArtwork,
   }));
 }
 
-export function editMascaraPriceAndQuantity(selection: MascaraProduct, quantityInput: string, priceInput: string, priceMode: MascaraProduct["cost"]["kind"]) {
+export function editBeautyProductPriceAndQuantity(selection: BeautyProduct, quantityInput: string, priceInput: string, priceMode: BeautyProduct["cost"]["kind"]) {
   const units = quantityInput.trim().replace(",", ".");
   const price = priceInput.trim().replace(",", ".");
-  let quantity: string, cost: MascaraProduct["cost"];
+  let quantity: string, cost: BeautyProduct["cost"];
   try { quantity = declareComponentQuantity("TOTAL_UNITS", units).quantity; }
   catch { throw Error("Indiquez une quantité supérieure à zéro, avec deux décimales au plus."); }
   try {

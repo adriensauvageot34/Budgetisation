@@ -8,13 +8,14 @@ import {householdId,uuid} from './fixtures/planner-headless.mjs';
 const rr=process.env.PLANNER_REACT_TEST_TOOLS?createRequire(path.resolve(process.env.PLANNER_REACT_TEST_TOOLS,'package.json')):require;
 const React=rr('react'),{create,act}=rr('react-test-renderer'),load=Module._load;
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
-let root,board,registry,fieldNode,focusCount=0,transportCalls=[];
+let root,board,registry,fieldNode,focusCount=0,transportCalls=[],hiddenExistingId=null;
 const listeners=new Map();
 class NodeMock {
   constructor(props={}){this.props=props;this.open=false;this.isConnected=true;}
   focus(){focusCount++;document.activeElement=this;for(const fn of listeners.get('focusin')??[])fn({target:this});}
   closest(selector){return selector==='aside'?this:null;}
   contains(node){return node===this;}
+  hasAttribute(name){return this.props[name]!==undefined&&this.props[name]!==null;}
   matches(selector){return this.props['data-probe-input']?selector.includes('input'):false;}
   show(){this.open=true;}showModal(){this.open=true;}close(){this.open=false;}
   querySelector(selector){
@@ -24,6 +25,13 @@ class NodeMock {
     }
     return fieldNode??new NodeMock();
   }
+  querySelectorAll(selector){
+    if(!selector.includes('data-library-existing-action'))return [];
+    return root.root.findAll(n=>n.type==='button'&&!n.props.disabled&&
+      (n.props['data-library-existing-action']||n.props['data-library-add-action']||n.props['data-library-project-action']))
+      .map(node=>new NodeMock(node.props));
+  }
+  getClientRects(){return this.props['data-library-existing-action']===hiddenExistingId?[]:[{}];}
 }
 globalThis.HTMLElement=NodeMock;globalThis.Element=NodeMock;
 globalThis.document={body:new NodeMock(),activeElement:new NodeMock(),querySelector:selector=>selector==='[data-restaurant-editor]'?new NodeMock():null,querySelectorAll:()=>[],
@@ -61,6 +69,7 @@ const {ComposerShell}=require('@/app/mois-a-venir/composer/composer-shell');
 const {composerLibraryIndex,filterLibraryIntentions,libraryOccurrences,librarySearchAction}=require('@/domain/phase2/planner/composer-library-index');
 const {presetCreationFields,composerPreset}=require('@/domain/phase2/planner/composer-presets');
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
+const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const f=await readMonthFixture(),beforeWorld=JSON.stringify(f.world);
 const context=(id,key,date)=>{const preset=composerPreset(key);return {contextOccurrenceId:uuid(id),templateKey:preset.templateKey,status:'ACTIVE',parentContextOccurrenceId:null,
  fields:{fieldSchemaVersion:'context-fields@v2',...presetCreationFields(preset.templateKey,key),...(date?{plannedDate:date}:{})},slotSelections:{},provenance:'EXPLICIT_USER_DECISION'};};
@@ -71,11 +80,12 @@ const checks=[];const check=async(name,fn)=>{await fn();checks.push(name);consol
 const buttons=()=>root.root.findAll(n=>n.type==='button');
 const existing=()=>buttons().filter(n=>n.props['data-library-existing-action']);
 const additions=()=>buttons().filter(n=>n.props['data-library-add-action']);
+const addMascara=()=>additions().find(n=>n.props['data-library-add-action']==='preset:mascara');
 const textOf=node=>typeof node==='string'?node:(node.children??[]).map(textOf).join('');
 const search=()=>root.root.find(n=>n.type==='input'&&n.props['data-library-search']!==undefined);
 const invoke=async(node,event={})=>{document.activeElement=new NodeMock(node.props);await act(async()=>node.props.onClick(event));};
 const query=async value=>act(async()=>search().props.onChange({target:{value}}));
-const enter=async()=>act(async()=>search().props.onKeyDown({key:'Enter',preventDefault(){},currentTarget:new NodeMock()}));
+const enter=async()=>act(async()=>search().props.onKeyDown({key:'Enter',nativeEvent:{isComposing:false},preventDefault(){},currentTarget:new NodeMock()}));
 const mountedEditor=()=>root.root.findAll(n=>n.props['data-probe-editor']&&n.type==='section');
 async function mount(model){if(root)await act(async()=>root.unmount());fieldNode=null;transportCalls=[];await act(async()=>{
  root=create(React.createElement(ComposerShell,{initialModel:model,transport:async request=>{transportCalls.push(request.kind);return handleComposerRequest(f.deps,householdId,request);}}),
@@ -83,27 +93,33 @@ async function mount(model){if(root)await act(async()=>root.unmount());fieldNode
  });}
 try{
  await check('A2-01-ABSENT-ADDS-ONE-EXPLICIT-MASCARA',async()=>{
-  await mount(f.model);await query('mascara');assert.equal(existing().length,0);assert.equal(additions().length,1);
-  assert.equal(additions()[0].props.children.at(-1).props.children,'Ajouter Mascara');await enter();
+  await mount(f.model);await query('mascara');assert.equal(existing().length,0);
+  assert(addMascara());assert.match(textOf(addMascara()),/Ajouter Mascara/);await enter();
   assert.equal(board.model.semanticState.contexts.length,1);assert.equal(mountedEditor()[0].props['data-probe-template'],'beauty-restock');
  });
  await check('A2-02-UNIQUE-ENTER-OPENS-EXACT-EDITOR-NO-TRANSPORT',async()=>{
   await mount(one);await query('mascara');assert.equal(existing().length,1);assert.equal(existing()[0].props['data-library-existing-action'],uuid(93001));
   const saveBefore=root.root.find(n=>n.props['data-composer']!==undefined).props['data-save-state'];
-  assert.match(textOf(additions()[0]),/Ajouter un autre Mascara/);await enter();
+  assert.match(textOf(addMascara()),/Ajouter un autre Mascara/);await enter();
   assert.equal(mountedEditor()[0].props['data-probe-editor'],uuid(93001));assert.equal(board.model.semanticState.contexts.length,1);assert.deepEqual(transportCalls,[]);
   assert.equal(mountedEditor()[0].props['data-probe-kind'],'catalog');
   assert.equal(root.root.find(n=>n.props['data-composer']!==undefined).props['data-save-state'],saveBefore);
   assert.notEqual(saveBefore,'SAVED');assert.match(textOf(root.root),/Brouillon en mémoire/);
  });
  await check('A2-03-TWO-HOMONYMS-ENTER-FOCUSES-WITHOUT-CHOOSING',async()=>{
-  await mount(many);await query('mascara');assert.equal(existing().length,2);const focusBefore=focusCount;await enter();
+  await mount(many);await query('mascara');assert.equal(existing().length,2);
+  assert(buttons().some(node=>node.props['data-library-project-action']==='clothing-and-beauty-shopping'));
+  const before=semanticStateDigest(board.model.semanticState),focusBefore=focusCount;await enter();
   assert.equal(mountedEditor().length,0);assert(focusCount>focusBefore);assert.equal(document.activeElement.props['data-library-existing-action'],uuid(93001));
+  assert.equal(semanticStateDigest(board.model.semanticState),before);assert.deepEqual(transportCalls,[]);
+  hiddenExistingId=uuid(93001);await enter();assert.equal(document.activeElement.props['data-library-existing-action'],uuid(93002));hiddenExistingId=null;
+  assert.equal(mountedEditor().length,0);assert.equal(semanticStateDigest(board.model.semanticState),before);
   assert.match(existing().map(textOf).join(' '),/10 nov/);assert.match(existing().map(textOf).join(' '),/20 nov/);
   await invoke(existing()[1]);assert.equal(mountedEditor()[0].props['data-probe-editor'],uuid(93002));assert.equal(board.model.semanticState.contexts.length,4);assert.deepEqual(transportCalls,[]);
+  assert.equal(semanticStateDigest(board.model.semanticState),before);
  });
  await check('A2-04-ADD-ANOTHER-IS-SEPARATE-AND-CREATES-ONCE',async()=>{
-  await mount(one);await query('mascara');await invoke(additions()[0]);assert.equal(board.model.semanticState.contexts.length,2);
+  await mount(one);await query('mascara');await invoke(addMascara());assert.equal(board.model.semanticState.contexts.length,2);
   assert(board.model.semanticState.contexts.some(c=>c.contextOccurrenceId===uuid(93001)));assert.notEqual(mountedEditor()[0].props['data-probe-editor'],uuid(93001));
  });
  await check('A2-05-RESTAURANT-AND-AMAZON-OPEN-THEIR-OWN-CONTEXT',async()=>{
@@ -132,7 +148,7 @@ try{
  });
  await check('A2-08-EXISTING-IS-SEARCHABLE-WHEN-CREATION-IS-BLOCKED',async()=>{
   const model=structuredClone(one);model.dropCapabilities=model.dropCapabilities.filter(c=>c.sourceAssetKey!=='template:beauty-restock'||c.target.kind!=='BOARD_ZONE');
-  await mount(model);await query('mascara');assert.equal(existing().length,1);assert.equal(additions().length,0);await enter();assert.equal(mountedEditor()[0].props['data-probe-editor'],uuid(93001));
+  await mount(model);await query('mascara');assert.equal(existing().length,1);assert.equal(addMascara(),undefined);await enter();assert.equal(mountedEditor()[0].props['data-probe-editor'],uuid(93001));
  });
  await check('A2-09-ACCENTS-ALIASES-AND-AMBIGUOUS-QUERY',()=>{
   const index=composerLibraryIndex(many);assert.equal(filterLibraryIntentions(index.occurrences,'CÍLS').length,2);

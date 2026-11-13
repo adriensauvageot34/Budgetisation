@@ -90,13 +90,27 @@ await check('old client on a new compatible build recovers a lost response',asyn
     }
     return get(init?.headers[header]);
   };
-  const command={targetMonth:month,expectedDraftVersion:1,requestId:'33333333-3333-4333-8333-333333333333',digest,semanticState:state};
+  const command={targetMonth:month,expectedDraftId:draftId,expectedDraftVersion:active.version,
+    expectedBaseRevisionId:null,expectedBaseRevisionNumber:0,requestId:'33333333-3333-4333-8333-333333333333',digest,semanticState:state};
   await assert.rejects(composerDraftHttpTransport.save(command),/RESPONSE_LOST_AFTER_COMMIT/);
   const recovered=await composerDraftHttpTransport.save(command);
   assert.equal(recovered.ok,true);assert.equal(recovered.replayed,true);
   assert.equal(recovered.draft.lastMutationRequestId,command.requestId);
   assert.deepEqual(await composerDraftHttpTransport.read(month),snapshot);
   assert.equal(saveCalls,3);
+});
+await check('a matching request and digest cannot confirm a different identity, revision or version',async()=>{
+  const command={targetMonth:month,expectedDraftId:draftId,expectedDraftVersion:active.version,
+    expectedBaseRevisionId:null,expectedBaseRevisionNumber:0,requestId:'55555555-5555-4555-8555-555555555555',digest,semanticState:state};
+  const receipt={...active,version:active.version+1,lastMutationRequestId:command.requestId,lastMutationExpectedVersion:command.expectedDraftVersion};
+  for(const patch of [{draftId:firstRequest},{version:receipt.version+1},{baseRevisionId:firstRequest,baseRevisionNumber:1}]){
+    globalThis.fetch=async()=>new Response(JSON.stringify({ok:true,draft:{...receipt,...patch},replayed:false}),
+      {headers:{[header]:COMPOSER_DRAFT_HTTP_CONTRACT}});
+    assert.equal((await composerDraftHttpTransport.save(command)).ok,false);
+  }
+  globalThis.fetch=async()=>new Response(JSON.stringify({ok:true,draft:receipt,replayed:false}),
+    {headers:{[header]:COMPOSER_DRAFT_HTTP_CONTRACT}});
+  assert.equal((await composerDraftHttpTransport.save(command)).ok,true);
 });
 await check('incompatible and malformed responses never confirm a save',async()=>{
   const command={targetMonth:month,expectedDraftVersion:active.version,requestId:'44444444-4444-4444-8444-444444444444',digest,semanticState:state};

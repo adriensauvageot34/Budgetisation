@@ -1,11 +1,12 @@
 import type { ComposerAssetView, ComposerContextCardView } from "./composer-contract";
 import type { ComposerUiModel } from "./composer-ui-contract";
 import type { PlannerJsonObject } from "./json";
-import { COMPOSER_PRESETS, PURCHASE_BASKET_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
+import { COMPOSER_LIBRARY_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
 import { canonicalPlannerJson } from "./json";
 import { componentId } from "./identity";
 import type { PlannedContextState } from "./semantic-state";
 import type { ComponentSelectionV1 } from "./component-contract";
+import { isPurchaseBasket, purchaseComponents } from "./purchase-basket";
 
 export const LIBRARY_CATEGORIES = [
   ["SOCIAL", "Sortir & faire la fête"], ["FOOD", "Manger & commander"],
@@ -29,15 +30,15 @@ const beautyGroups: Readonly<Record<string,string>> = { mascara:"Maquillage", ey
 export function libraryPresetGroup(preset:ComposerPreset):string {
   if(preset.categoryKey==="PURCHASE") return "merchantLabel" in preset.defaults ? "Acheter chez…" : "Choisir un achat";
   if(preset.categoryKey==="BEAUTY") return beautyGroups[preset.presetKey]??"Visage";
-  if(preset.categoryKey==="HOME") return "Consommables";
+  if(preset.categoryKey==="HOME") return preset.templateKey==="home-project" ? "Projets maison"
+    : preset.presetKey==="home-equipment-basket" ? "Équipement" : "Consommables";
   return "";
 }
 export const normalizeLibrarySearch = (text:string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr").replace(/[\p{P}\p{S}]+/gu," ").replace(/\s+/gu," ").trim();
 export type LibraryIntention = Readonly<{ key:string; category:string; asset:ComposerAssetView; preset?:ComposerPreset; label:string; search:string; group:string }>;
 export type LibraryOccurrence = Readonly<{ contextOccurrenceId:string; presetKey:string|null; label:string; search:string;
-  plannedDate:string|null; action:"EDIT"|"VIEW" }>;
+  plannedDate:string|null; action:"EDIT"|"VIEW"; surface:"BASKET"|"ARTICLE"|"CONTEXT"|"EXTERNAL"; occurrence?:number }>;
 const clothingPresets = new Set(["clothing-shopping", "shein-purchase", "shoes-purchase"]);
-const situatedPresets = new Set(["mascara", "restaurant-for-two", "cinema", "weekend-gite", "amazon-purchase", "groceries-purchase", ...clothingPresets]);
 const publishedPreset = (context:Parameters<typeof presetForContext>[0]) => {
   try{return presetForContext(context);}catch{return undefined;} // Unsupported metadata is never an exact identity.
 };
@@ -86,30 +87,61 @@ export function isHairdresserReference(model:ComposerUiModel, card:ComposerConte
 /** Exact presentation identities in the displayed month, never a label/template guess. */
 export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccurrence[] {
   if(model.board.targetMonth!==model.semanticState.targetMonth)return [];
-  return model.board.contexts.flatMap(card=>{
+  const byId=new Map(model.board.contexts.map(card=>[card.contextOccurrenceId,card]));
+  const rows:LibraryOccurrence[]=model.board.contexts.flatMap(card=>{
     // An existing owner's reference can be found, never created or edited here.
     // The published asset and external identity qualify it; its title does not.
     const hairdresserReference=isHairdresserReference(model,card);
     const preset=publishedPreset(card);
-    if(!hairdresserReference&&(!preset||!situatedPresets.has(preset.presetKey)))return [];
-    const date=typeof card.fields.plannedDate==="string"?card.fields.plannedDate:null;
-    if(date&&(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!date.startsWith(`${model.board.targetMonth}-`)
-      ||!Number.isFinite(new Date(`${date}T12:00:00Z`).getTime())))return [];
+    const bareBasket=isPurchaseBasket(card)&&card.fields.composerPresentation===undefined;
+    const bareActivity=card.templateKey==="activity"&&card.fields.composerPresentation===undefined;
+    const bareProject=["home-project","friend-visit","family-visit","short-stay","other-context"].includes(card.templateKey)
+      &&card.fields.composerPresentation===undefined;
+    const bare=bareBasket||bareActivity||bareProject;
+    if(!hairdresserReference&&!bare&&!preset)return [];
+    const day=typeof card.fields.plannedDate==="string"?card.fields.plannedDate:null;
+    const parsed=day&&/^\d{4}-\d{2}-\d{2}$/.test(day)?new Date(`${day}T12:00:00Z`):null;
+    const date=parsed&&Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===day?day:null;
+    if(date&&!date.startsWith(`${model.board.targetMonth}-`))return [];
     const context=model.semanticState.contexts.find(c=>c.contextOccurrenceId===card.contextOccurrenceId);
+    const basket=isPurchaseBasket(card);
+    if(basket!==(context?isPurchaseBasket(context):false))return [];
+    if(bare&&context?.fields.composerPresentation!==undefined)return [];
     if(preset&&clothingPresets.has(preset.presetKey)&&(!isClothingPurchase(card)||!context||!isClothingPurchase(context)
       ||publishedPreset(context)?.presetKey!==preset.presetKey))return [];
-    const clothing=isClothingPurchase(card), article=context&&clothing?clothingItem(context):undefined;
+    const clothing=isClothingPurchase(card)&&!basket, article=context&&clothing?clothingItem(context):undefined;
+    const basketLabels=basket&&context?purchaseComponents(context,"item").flatMap(item=>[
+      item.label, item.basketArticle?.concept?.label ?? "",
+    ]):[];
+    const merchant=basket&&typeof context?.fields.merchantLabel==="string"?context.fields.merchantLabel:"";
+    const parentLabels:string[]=[],seenParents=new Set([card.contextOccurrenceId]);
+    let parent=card.parentContextOccurrenceId?byId.get(card.parentContextOccurrenceId):undefined;
+    while(parent&&!seenParents.has(parent.contextOccurrenceId)){
+      seenParents.add(parent.contextOccurrenceId);parentLabels.push(parent.label);
+      parent=parent.parentContextOccurrenceId?byId.get(parent.parentContextOccurrenceId):undefined;
+    }
     const productLabel=clothing&&typeof card.fields.productLabel==="string"?card.fields.productLabel:"";
-    const editable=!hairdresserReference&&!!preset&&!card.readOnly&&card.capabilityRefs.includes("PATCH_CONTEXT")&&context?.templateKey===card.templateKey
-      &&publishedPreset(context)?.presetKey===preset.presetKey
+    const editable=!hairdresserReference&&!card.readOnly&&card.capabilityRefs.includes("PATCH_CONTEXT")&&context?.templateKey===card.templateKey
+      &&(preset ? publishedPreset(context)?.presetKey===preset.presetKey
+        : bare&&context.fields.composerPresentation===undefined)
+      &&context.status==="ACTIVE"&&card.externalIntentId===null&&(context.parentContextOccurrenceId??null)===card.parentContextOccurrenceId
       &&!model.semanticState.preferences.anchors.includes(card.contextOccurrenceId)
       &&model.semanticState.preferences.flexibility[card.contextOccurrenceId]!=="PRESERVE"
       &&(!clothing||clothingItemWritable(model,context,card));
-    return [{contextOccurrenceId:card.contextOccurrenceId,presetKey:hairdresserReference?null:preset!.presetKey,label:article?`${article.label} · ${productLabel||card.label}`:card.label,
+    return [{contextOccurrenceId:card.contextOccurrenceId,presetKey:preset?.presetKey??null,label:article?`${article.label} · ${productLabel||card.label}`:card.label,
       plannedDate:date,action:editable?"EDIT" as const:"VIEW" as const,
+      surface:hairdresserReference?"EXTERNAL" as const:basket?"BASKET" as const:clothing&&article?"ARTICLE" as const:"CONTEXT" as const,
       search:normalizeLibrarySearch(hairdresserReference?`${card.label} Coiffeur prestation coiffure ${card.components
         .filter(item=>item.assetKey==="beauty:hairdresser").map(item=>item.label).join(" ")}`
-        :[card.label,preset!.label,libraryPresetGroup(preset!),...preset!.searchTerms,...(clothing?[productLabel]:[]),...(article?[article.label]:[])].join(" "))}];
+        :[card.label,preset?.label??genericLabels[card.templateKey]??card.templateKey,
+          preset?libraryPresetGroup(preset):bareActivity?"sortie activité libre":bareProject?"projet libre personnalisé":"panier articles achat libre",
+          ...(preset?.searchTerms??[]),...(clothing?[productLabel]:[]),...(article?[article.label]:[]),merchant,...basketLabels,...parentLabels].join(" "))}];
+  });
+  const counts=new Map<string,number>(),seen=new Map<string,number>();
+  for(const row of rows)counts.set(row.label,(counts.get(row.label)??0)+1);
+  return rows.map(row=>{
+    const occurrence=(seen.get(row.label)??0)+1;seen.set(row.label,occurrence);
+    return counts.get(row.label)!>1?{...row,occurrence}:row;
   });
 }
 export type LibrarySearchAction = Readonly<{kind:"OPEN";contextOccurrenceId:string}>|Readonly<{kind:"ADD";key:string}>|Readonly<{kind:"FOCUS"}>;
@@ -126,7 +158,7 @@ export function composerLibraryIndex(model:ComposerUiModel) {
   const generic = templates.map(asset=>({key:asset.assetKey, category:templateCategory[asset.templateKey??""]??"OTHER", asset,
     label:genericLabels[asset.templateKey??""]??asset.label, group:"Intentions libres",
     search:normalizeLibrarySearch([asset.label,genericLabels[asset.templateKey??""]??"","libre personnaliser générique"].join(" "))}));
-  const presets:LibraryIntention[] = [...COMPOSER_PRESETS, ...PURCHASE_BASKET_PRESETS].flatMap(preset=>{
+  const presets:LibraryIntention[] = COMPOSER_LIBRARY_PRESETS.flatMap(preset=>{
     const asset=templates.find(a=>a.templateKey===preset.templateKey);
     if(!asset || !model.dropCapabilities.some(d=>d.sourceAssetKey===asset.assetKey && d.target.kind==="BOARD_ZONE" && d.resolution!=="BLOCKED")) return [];
     const group=libraryPresetGroup(preset);

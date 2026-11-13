@@ -9,20 +9,27 @@ import type { PlannerJson } from "@/domain/phase2/planner/json";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import { componentId } from "@/domain/phase2/planner/identity";
+import { COMPOSER_LIBRARY_PRESETS, presetForContext, composerPreset } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerEditor, ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
+import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import { PlannedContactField } from "../planned-people-fields";
 import { ContactPlaceReference } from "./workshop-place-reference";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette, PaletteQuestion } from "./context-palette";
-import { isMascaraContext, mascaraEquipment, mascaraSuggestions } from "./mascara-edit";
+import { beautyProductPresentation, beautyProductEquipment, beautyProductSuggestions } from "./beauty-product-edit";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
 import { IntentBudgetImpact } from "./intent-budget-impact";
-import { WorkshopNavigation } from "./workshop-navigation";
+import { intentionNavigationEntries, WorkshopNavigation } from "./workshop-navigation";
+import { LinkedIntentions } from "./linked-intentions";
+import { ProjectCompletion } from "./project-completion";
+import { ProjectActivityCatalog } from "./project-activity-catalog";
+import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
 import { money } from "./display";
+import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
 import styles from "./composer.module.css";
 
 type Values = Record<string, PlannerJson>;
@@ -34,17 +41,19 @@ const participants = (value: PlannerJson | undefined): ProspectivePersonRef[] =>
   ? value.flatMap(item => person(item) ? [person(item)!] : []) : [];
 
 /** Edits only published context fields. Equipment remains attached through its R6 sockets. */
-export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, focusSelectionId, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, dismissedSuggestions, updateSuggestionDismissal }: {
+export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, focusSelectionId, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, onOpenChild, dismissedSuggestions, updateSuggestionDismissal }: {
   context: PlannedContextState; editor: ComposerEditor; targetMonth: string;
   householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
   knowledge?: CardKnowledgeRead;
   placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
   model: ComposerUiModel; dockHost?: HTMLElement | null; choose: Parameters<typeof ContextPalette>[0]["choose"];
   focusSelectionId?: string;
+  onOpenChild?: (id: string) => void;
   busy: boolean; onSave: (operation: ComposerOperation) => boolean; onCancel: () => void;
 } & SuggestionDismissal) {
   const [values, setValues] = useState<Values>(() => Object.fromEntries(editor.fields.map(field => [field.key, context.fields[field.key] ?? null])) as Values);
   const [query,setQuery]=useState("");
+  const [attachmentQuery, setAttachmentQuery] = useState("");
   const [error, setError] = useState("");
   const acceptedValues = useRef(values), initialValues = acceptedValues.current;
   const leaveRaw = useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(values) !== JSON.stringify(initialValues), () => {
@@ -57,6 +66,51 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const card = model.board.contexts.find(item => item.contextOccurrenceId === context.contextOccurrenceId);
   const protectedRef = (ref: string) => model.semanticState.preferences.anchors.includes(ref)
     || model.semanticState.preferences.flexibility[ref] === "PRESERVE";
+  const confirm = useWorkshopConfirmation();
+  const project = presetForContext(context)?.presetKey;
+  const bareProject = context.fields.composerPresentation === undefined;
+  const homeProject = project === "furnish-room" || bareProject && context.templateKey === "home-project";
+  const visitProject = project === "visit-friends" || bareProject && context.templateKey === "friend-visit";
+  const outingProject = project === "composed-outing" || bareProject && context.templateKey === "other-context";
+  const childSlot = outingProject ? "children" : visitProject ? "activities" : homeProject ? "purchases" : null;
+  const childTarget: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: childSlot ?? undefined };
+  const childSocket = childSlot && card?.sockets.find(socket => socket.slotKey === childSlot
+    && socket.capabilityRefs.includes(`${context.templateKey}:${childSlot}:ATTACH_CHILD_CONTEXT`));
+  const canAttach = !!childSocket && !busy && !card?.readOnly && !!card?.capabilityRefs.includes("PATCH_CONTEXT")
+    && !protectedRef(context.contextOccurrenceId);
+  const candidates = canAttach ? intentionNavigationEntries(model.board.contexts.filter(child =>
+    child.contextOccurrenceId !== context.contextOccurrenceId && !child.parentContextOccurrenceId && !child.readOnly && !protectedRef(child.contextOccurrenceId)
+    && publishedDrop(model, `context-occurrence:${child.contextOccurrenceId}`, childTarget)?.choices.includes("REPARENT_PRESERVE_ID"))) : [];
+  const additions = homeProject ? ["home-equipment-basket"] : [
+    visitProject ? "museum-exhibition" : "cinema",
+    "restaurant-for-two",
+    ...COMPOSER_LIBRARY_PRESETS.filter(preset => preset.templateKey === "activity"
+      && preset.presetKey !== (visitProject ? "museum-exhibition" : "cinema")).map(preset => preset.presetKey),
+  ];
+  const addOptions = canAttach ? additions.map(composerPreset).flatMap(preset => {
+    const assetKey = `template:${preset?.templateKey}`;
+    return preset && publishedDrop(model, assetKey, childTarget)?.semanticAction === "PATCH_CONTEXT" ? [{ preset, assetKey }] : [];
+  }) : [];
+  const attachmentTerms = normalizeLibrarySearch(attachmentQuery).split(" ").filter(Boolean);
+  const matchesAttachment = (text: string) => attachmentTerms.every(term => normalizeLibrarySearch(text).includes(term));
+  const visibleCandidates = candidates.filter(child => matchesAttachment(child.label));
+  const visibleAdditions = addOptions.filter(({ preset }) => matchesAttachment([preset.label, ...preset.searchTerms].join(" ")));
+  const attach = useCommittedEvent((operation: Extract<ComposerOperation, { kind: "DROP" }>, expectedDigest: string) => {
+    const candidate = operation.presetKey ? addOptions.some(option => option.preset.presetKey === operation.presetKey)
+      : candidates.some(item => item.id === operation.identity);
+    if (!canAttach || !candidate || expectedDigest !== model.board.draft.semanticStateDigest) {
+      setError("Le projet ou les droits de rattachement ont changé. Sélectionnez à nouveau l’intention.");
+      return;
+    }
+    setError("");
+    if (!onSave(operation)) setError("Cette intention n’a pas été associée. Consultez le message du brouillon, puis réessayez.");
+  });
+  const confirmAttachment = (label: string, operation: () => Extract<ComposerOperation, { kind: "DROP" }>) => {
+    const expectedDigest = model.board.draft.semanticStateDigest;
+    const open = () => confirm({ message: `Associer « ${label} » à cette intention ?`, acceptLabel: "Associer cette intention",
+      accept: () => attach(operation(), expectedDigest) });
+    if (leaveRaw(open)) open();
+  };
   const componentRoute = (slotKey: string, optionKey: string, selection?: ComponentSelectionV1) => {
     if (!card || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT") || protectedRef(card.contextOccurrenceId)) return null;
     const target = { kind: "CONTEXT_SOCKET" as const, contextOccurrenceId: card.contextOccurrenceId, slotKey };
@@ -68,13 +122,21 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       || protectedRef(componentId(card.contextOccurrenceId, slotKey, selection.selectionId)))) return null;
     return { asset, target, selection };
   };
-  const mascara = isMascaraContext(context);
+  const homePosts = homeProject ? [
+    { slotKey: "items", optionKey: "item", label: "Préparer un équipement" },
+    { slotKey: "services", optionKey: "service", label: "Préparer une prestation" },
+  ].flatMap(post => {
+    const route = componentRoute(post.slotKey, post.optionKey);
+    return route ? [{ ...post, route }] : [];
+  }) : [];
+  const beautyProduct = beautyProductPresentation(context);
+  const mascaraPreset = beautyProduct?.key === "mascara";
   const [showChoices, setShowChoices] = useState(false);
   const [needKey, setNeedKey] = useState<string | null>(null);
-  const suggestions = mascara ? mascaraSuggestions(context, model) : [];
+  const suggestions = beautyProduct ? beautyProductSuggestions(context, model) : [];
   const ranked = suggestions.filter(candidate => !dismissedSuggestions?.includes(candidate.key)).slice(0, 4);
   const activeNeed = suggestions.find(candidate => candidate.kind === "NEED" && candidate.key === needKey);
-  const openMascaraSuggestion = useCommittedEvent((key: string) => {
+  const openProductSuggestion = useCommittedEvent((key: string) => {
     if (busy) return;
     const suggestion = suggestions.find(candidate => candidate.key === key);
     if (suggestion?.kind === "NEED") setNeedKey(key);
@@ -114,7 +176,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       else setError("Ce choix n’a pas été admis. Le brouillon local reste disponible.");
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez les champs du moment."); }
   };
-  const directOptions = mascara ? [] : (card?.sockets ?? []).flatMap(socket => {
+  const directOptions = beautyProduct ? [] : (card?.sockets ?? []).flatMap(socket => {
     if (socket.currentItems.length > 1) return [];
     const selection = socket.currentItems[0];
     if (selection && selection.kind !== "COMPONENT") return [];
@@ -126,12 +188,13 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     });
   });
   const directPost = directOptions.length === 1 && posts.length <= 1 ? directOptions[0] : null;
-  const mascaraShortcut = mascara && posts.length <= 1
-    ? mascaraEquipment(model, model.semanticState, context.contextOccurrenceId, posts[0]?.item) : undefined;
-  const directChoice = mascaraShortcut ? { key: "mascara-price",
-    catalogAssetKey: 'beauty:mascara',
-    label: mascaraShortcut.selection ? "Prix et quantité" : "Ajouter un produit", iconKey: mascaraShortcut.asset.iconKey,
-    choose: () => choose(mascaraShortcut.asset, mascaraShortcut.target, mascaraShortcut.selection) }
+  const productShortcut = beautyProduct && posts.length <= 1
+    ? beautyProductEquipment(model, model.semanticState, context.contextOccurrenceId, posts[0]?.item) : undefined;
+  const directChoice = productShortcut && beautyProduct ? { key: "beauty-product-price",
+    catalogAssetKey: beautyProduct.catalogAssetKey,
+    presetArtwork: beautyProduct.presetArtwork,
+    label: productShortcut.selection ? "Prix et quantité" : "Ajouter un produit", iconKey: productShortcut.asset.iconKey,
+    choose: () => choose(productShortcut.asset, productShortcut.target, productShortcut.selection) }
     : directPost ? { key: "direct-price", label: "Prix direct", iconKey: directPost.asset.iconKey,
       choose: () => choose(directPost.asset, directPost.target, directPost.selection) } : null;
   const selectedField=editor.fields.find(field=>field.key===activeKey);
@@ -148,15 +211,16 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     :selectedField?.kind==="PLACE_REF"?{title:selectedField.label,search:{value:query,change:setQuery,label:"Rechercher un lieu connu"},choices:[
       ...(options?.places??[]).filter(p=>match(p.name)).map(p=>tile(p.placeId,p.name,()=>update(selectedField.key,{kind:"KNOWN",placeId:p.placeId}))),
       tile("free","Autre destination",()=>update(selectedField.key,{kind:"TEXT",label:"",provenance:"USER_DECLARED_PROSPECTIVE"})),tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}
-    : activeKey === null && mascara && !showChoices && !activeNeed && ranked.length ? {
-      title: "Suggestions pour ce mascara", nature: "DECISION", identity: "mascara-suggestions",
+    : activeKey === null && beautyProduct && !showChoices && !activeNeed && ranked.length ? {
+      title: mascaraPreset ? "Suggestions pour ce mascara" : `Suggestions · ${beautyProduct.label}`,
+      nature: "DECISION", identity: "beauty-product-suggestions",
       choices: ranked.map(candidate => ({ ...candidate, showHint: true, choose: () => {
-        const open = () => openMascaraSuggestion(candidate.key);
+        const open = () => openProductSuggestion(candidate.key);
         if (leaveRaw(open)) open();
       } })),
     } : undefined;
-  return <div data-catalog-context-editor={context.templateKey} data-mascara-catalog={mascara || undefined}
-    data-mascara-suggestions={question?.identity === "mascara-suggestions" || undefined} className={styles.nightEditor}>
+  return <div data-catalog-context-editor={context.templateKey} data-beauty-product={beautyProduct?.key} data-mascara-catalog={mascaraPreset || undefined}
+    data-mascara-suggestions={mascaraPreset && question?.identity === "beauty-product-suggestions" || undefined} className={styles.nightEditor}>
     <WorkshopNavigation contextId={context.contextOccurrenceId} />
     <p className={styles.helper}>Les informations restent liées à ce moment. La palette propose les postes compatibles ; seuls ces postes peuvent porter un coût.</p>
     {activeKey === null && <section className={styles.nightSection} data-catalog-summary><h3>{String(context.fields.label ?? "Votre intention")}</h3>
@@ -165,18 +229,45 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         <p>{activeNeed.caption}</p>
         <button type="button" onClick={() => setNeedKey(null)}>Retour aux suggestions</button>
       </section>}
-      {mascara && !activeNeed && ranked.length > 0 && <button type="button" aria-pressed={showChoices}
-        onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : "Tous les choix du mascara"}</button>}
-      {mascara && !activeNeed && <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={busy}
+      {beautyProduct && !activeNeed && ranked.length > 0 && <button type="button" aria-pressed={showChoices}
+        onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : mascaraPreset ? "Tous les choix du mascara" : "Tous les choix du produit"}</button>}
+      {beautyProduct && !activeNeed && <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={busy}
         dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
-      {mascara && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
+      {(beautyProduct || context.templateKey === "activity" || homeProject) && !activeNeed &&
+        <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
+      {childSlot && <>
+        {homePosts.length > 0 && <div className={styles.linkedFilters}>
+          {homePosts.map(({ slotKey, label, route }) => <button type="button" key={slotKey} disabled={busy}
+            onClick={() => {
+              const open = () => choose(route.asset, route.target);
+              if (leaveRaw(open)) open();
+            }}>{label}</button>)}
+        </div>}
+        <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} decide={onSave} />
+        <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
+        {(candidates.length > 0 || addOptions.length > 0) && <details>
+          <summary>Associer une intention</summary>
+          {!homeProject && <ProjectActivityCatalog model={model} parentId={context.contextOccurrenceId}
+            busy={busy} decide={onSave} open={onOpenChild} />}
+          <label className={styles.projectAttachmentSearch}>Rechercher une intention à associer<input type="search" value={attachmentQuery}
+            onChange={event => setAttachmentQuery(event.target.value)} /></label>
+          {visibleCandidates.map(child => <button key={child.id} type="button" onClick={() => confirmAttachment(child.label, () => ({
+            kind: "DROP", assetKey: `context-occurrence:${child.id}`, target: childTarget, identity: child.id, selectionId: crypto.randomUUID(), values: {},
+          }))}>Rattacher {child.label}</button>)}
+          {visibleAdditions.map(({ preset, assetKey }) => <button key={preset.presetKey} type="button" onClick={() => confirmAttachment(preset.label, () => ({
+            kind: "DROP", assetKey, presetKey: preset.presetKey, target: childTarget, identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {},
+            ...(preset.templateKey === "purchase" ? { purchaseBasket: true } : {}),
+          }))}>Ajouter {preset.label}</button>)}
+          {!visibleCandidates.length && !visibleAdditions.length && <p role="status">Aucune intention admissible ne correspond à cette recherche.</p>}
+        </details>}
+      </>}
       {!!posts.length && <nav className={styles.nightNav} aria-label="Résumé de l’intention"><button type="button" aria-pressed={summaryTab === "fields"} onClick={() => setSummaryTab("fields")}>Informations</button><button type="button" aria-pressed={summaryTab === "posts"} onClick={() => setSummaryTab("posts")}>Postes ({posts.length})</button></nav>}
       {summaryTab === "fields" && editor.fields.slice(summaryPage * 3, summaryPage * 3 + 3).map(field => <button key={field.key} type="button" onClick={() => setActiveKey(field.key)}>
         {field.label} · {typeof values[field.key] === "string" || typeof values[field.key] === "number" ? String(values[field.key] || "À préciser") : values[field.key] ? "Choix conservé" : "À préciser"}</button>)}
       {summaryTab === "fields" && editor.fields.length > 3 && <div className={styles.nightPage}><button type="button" disabled={summaryPage === 0} onClick={() => setSummaryPage(page => page - 1)}>Précédent</button><span>{summaryPage + 1} / {Math.ceil(editor.fields.length / 3)}</span><button type="button" disabled={(summaryPage + 1) * 3 >= editor.fields.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}
       {summaryTab === "posts" && posts.slice(postPage * 3, postPage * 3 + 3).map(({slotKey, item}, index) => {
-        if (mascara) {
-          const writable = mascaraEquipment(model, model.semanticState, context.contextOccurrenceId, item);
+        if (beautyProduct) {
+          const writable = beautyProductEquipment(model, model.semanticState, context.contextOccurrenceId, item);
           const price = item.cost.kind === "MANUAL" ? money(item.cost.unitAmount)
             : item.cost.kind === "QUOTE" ? "Devis conservé" : "Prix inconnu";
           return <button key={item.selectionId} type="button" data-mascara-post={item.selectionId}

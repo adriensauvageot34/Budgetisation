@@ -9,9 +9,11 @@ const { IntentBudgetImpact, BudgetPreviewStatus } = require('@/app/mois-a-venir/
 const { ComposerProjectionDetails } = require('@/app/mois-a-venir/composer/composer-cockpit');
 const { ComposerMonthRead } = require('@/app/mois-a-venir/composer/month-read');
 const { readMonthComposer } = require('@/server/phase2/planner/read-model');
+const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { composerBudgetReading } = require('@/server/phase2/planner/composer-budget-reading');
 const { visualDraftModel } = require('@/app/mois-a-venir/composer/local-draft');
 const { ComposerPreviewScheduler } = require('@/app/mois-a-venir/composer/preview-scheduler');
+const { ContextCard } = require('@/app/mois-a-venir/composer/context-card');
 const { semanticStateDigest } = require('@/domain/phase2/planner/semantic-state');
 globalThis.fetch = async () => { throw Error('BUDGET_IMPACT_REMOTE_FORBIDDEN'); };
 
@@ -24,6 +26,30 @@ const monthReading = (model, stale = false) => renderToStaticMarkup(React.create
 
 const fixture = await budgetImpactFixture();
 const model = fixture.model;
+const renderCard = (model, id, status = 'FRESH') => renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider, { value: status },
+  React.createElement(ContextCard, { model, card: model.board.contexts.find(card => card.contextOccurrenceId === id),
+    busy: false, selected: null, focused: null, focus() {}, drag() {}, drop() {}, choose() {}, request() {}, edit() {} })));
+const basketCard = (model, name, status) => renderCard(model, impactIds[name], status);
+assert.match(basketCard(model, 'amazon'), /Total brut 48,00\s*€/);
+const brokenDate = { ...model, board: { ...model.board, contexts: model.board.contexts.map(card =>
+  card.contextOccurrenceId === impactIds.amazon ? { ...card, fields: { ...card.fields, plannedDate: 'date invalide' } } : card) } };
+assert.match(basketCard(brokenDate, 'amazon'), /Date à préciser/);
+const noPatch = { ...model, board: { ...model.board, contexts: model.board.contexts.map(card =>
+  card.contextOccurrenceId === impactIds.amazon ? { ...card, capabilityRefs: [] } : card) } };
+assert.match(basketCard(noPatch, 'amazon'), /disabled="" aria-label="Modifier les informations/);
+assert.match(basketCard(noPatch, 'amazon'), /disabled="">Consulter le panier/);
+assert.match(basketCard(model, 'amazon', 'STALE'), /Calcul à actualiser/);
+assert.doesNotMatch(basketCard(model, 'amazon', 'STALE'), /48,00/);
+const nightId = uuid(27801);
+const night = await handleComposerRequest(fixture.deps, householdId, { kind: 'DROP', sequence: 0, targetMonth: model.board.targetMonth,
+  draft: model.semanticState, assetKey: 'template:night-out', target: { kind: 'BOARD_ZONE' }, identity: nightId,
+  selectionId: uuid(27802), values: {}, presetKey: 'techno-night' });
+assert(night.ok, night.code);
+const nightCard = { ...night.model, nightOutSummaries: [{ contextOccurrenceId: nightId, semanticStateDigest: night.model.board.draft.semanticStateDigest,
+  knownAmount: '79.00', costIncomplete: true }] };
+assert.match(renderCard(nightCard, nightId), /79,00\s*€/);
+assert.match(renderCard(nightCard, nightId, 'STALE'), /Projection à actualiser/);
+assert.doesNotMatch(renderCard(nightCard, nightId, 'STALE'), /79,00|Coût connu/);
 assert.deepEqual(amounts(impact(model, 'groceries')), ['8.00', '8.00', '0.00']);
 assert.match(summary(model, 'groceries'), /entièrement couvertes/);
 assert.deepEqual(impact(model, 'groceries').plannedPosts, ['Enveloppe Courses']);
@@ -45,11 +71,14 @@ const unknownPrice = await budgetImpactFixture();
 const unpriced = await unknownPrice.line(impactIds.groceries, 27101, 'Pâtes', '2', '');
 assert.equal(impact(unpriced, 'groceries').gross, null);
 assert(monthReading(unpriced).includes('Coût du panier</dt><dd>À préciser</dd>'));
+const partialBasket = await unknownPrice.line(impactIds.amazon, 27201, 'Mascara', '1', '');
+assert.match(basketCard(partialBasket, 'amazon'), /Sous-total connu [\d,]+\s*€ · Total à préciser/);
 console.log('Courses 8 €, couverture totale, partielle, épuisée, en plus, à confirmer et absente : PASS');
 
 assert.deepEqual(amounts(impact(model, 'amazon')), ['48.00', '0.00', '48.00']);
 const withShipping = await fixture.basketEdit(impactIds.amazon, { kind: 'SET_DELIVERY', mode: 'DELIVERY', coverage: 'ADDITIONAL', selectionId: uuid(27204), price: '5' });
 assert.deepEqual(amounts(impact(withShipping, 'amazon')), ['53.00', '0.00', '53.00']);
+assert.match(basketCard(withShipping, 'amazon'), /Total brut 53,00\s*€/);
 const withUpdatedLine = await fixture.line(impactIds.amazon, 27202, 'Shampoing', '2', '9');
 assert.deepEqual(amounts(impact(withUpdatedLine, 'amazon')), ['55.00', '0.00', '55.00']);
 assert.deepEqual(amounts(impact(model, 'restaurant')), ['40.00', '0.00', '40.00']);
@@ -138,6 +167,11 @@ assert.equal(JSON.stringify(model), visibleBefore);
 const localOnly = visualDraftModel(model, withUpdatedLine.semanticState);
 assert.notEqual(localOnly.board.draft.semanticStateDigest, model.board.draft.semanticStateDigest);
 assert.doesNotMatch(summary(localOnly, 'amazon'), /48,00|55,00/);
+const pendingRemoval = structuredClone(model.semanticState);
+delete pendingRemoval.contexts.find(context => context.contextOccurrenceId === impactIds.amazon).slotSelections.item;
+const beforeRecalculation = visualDraftModel(model, pendingRemoval);
+assert.match(basketCard(beforeRecalculation, 'amazon', 'PENDING'), /0 article · Calcul à actualiser/);
+assert.doesNotMatch(basketCard(beforeRecalculation, 'amazon', 'PENDING'), /48,00/);
 assert.deepEqual(fixture.writes, []);
 console.log('Digest inchangé en consultation, montants périmés masqués, aucune écriture : PASS');
 

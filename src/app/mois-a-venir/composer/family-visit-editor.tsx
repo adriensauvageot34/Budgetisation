@@ -22,6 +22,9 @@ import { PlannedRouteCoordinatesField } from "../planned-route-coordinates-field
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { MobilityEstimateSummary } from "./mobility-estimate-summary";
+import { LinkedIntentions } from "./linked-intentions";
+import { ProjectCompletion } from "./project-completion";
+import { ProjectActivityCatalog } from "./project-activity-catalog";
 import styles from "./composer.module.css";
 
 type Transport = Extract<ComponentSelectionV1, { kind: "MOBILITY_INTENT" }>;
@@ -33,7 +36,7 @@ const modeLabels: Record<string, string> = { car: "Voiture", train: "Train / tra
 
 export type StaySummaryTarget = "posts" | "departure" | "return" | "route";
 
-export function ProspectiveContextEditor({ stay = false, stayDetails, posts, postsQuestion, staySummary, stayTransportModes, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, dockHost, model, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel }: {
+export function ProspectiveContextEditor({ stay = false, stayDetails, posts, postsQuestion, staySummary, stayTransportModes, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, dockHost, model, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, onOpenChild }: {
   context: PlannedContextState; householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
   targetMonth: string; stay?: boolean; stayDetails?: ReactNode; posts?: ReactNode; postsQuestion?: PaletteQuestion;
   staySummary?: { controls: ReactNode; question: (open: (target: StaySummaryTarget) => void) => PaletteQuestion | undefined };
@@ -42,6 +45,7 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
   placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
   model: ComposerUiModel; choose: Parameters<typeof ContextPalette>[0]["choose"];
   onSave: (operation: ComposerOperation) => boolean; onCancel: () => void;
+  onOpenChild?: (id: string) => void;
 }) {
   const prior = context.slotSelections.transport?.items;
   const original = Array.isArray(prior) && prior[0]?.kind === "MOBILITY_INTENT" ? prior[0] as Transport : undefined;
@@ -186,6 +190,9 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection(stay ? "posts" : "people")}>{stay ? "Composer le séjour" : "Préciser la visite"}</button>
         {(!stayTransportModes || stayTransportModes.length > 0) && <button type="button" onClick={() => setSection("route")}>Prévoir le déplacement</button>}</div>
       {staySummary?.controls}
+      {!stay && <><ProjectActivityCatalog model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} open={onOpenChild} />
+        <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} decide={onSave} />
+        <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} /></>}
     </section>}
     <div ref={scroll} className={styles.nightEditorScroll}>
       {section === "people" && <section className={styles.nightSection} data-visit-section="people" tabIndex={-1}><h3>{stay ? "Votre séjour et ses participants" : "Qui allez-vous voir ?"}</h3>
