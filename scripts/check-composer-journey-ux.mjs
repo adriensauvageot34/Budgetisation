@@ -17,6 +17,7 @@ const {LinkedIntentions}=require('@/app/mois-a-venir/composer/linked-intentions'
 const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
 const {availableProjectStarters,evaluateProjectStarter}=require('@/app/mois-a-venir/composer/project-starters');
 const {projectCompletionSuggestions,ProjectCompletion,ProjectCompletionPreference}=require('@/app/mois-a-venir/composer/project-completion');
+const {RestaurantEditor}=require('@/app/mois-a-venir/composer/restaurant-editor');
 
 globalThis.fetch=async()=>{throw Error('JOURNEY_UX_REMOTE_FORBIDDEN');};
 const fixture=await budgetImpactFixture(), model=fixture.model;
@@ -154,7 +155,22 @@ assert.equal(projectCompletionSuggestions(model,impactIds.weekend)[0]?.preset.pr
 const protectedProject={...model,semanticState:{...model.semanticState,preferences:{...model.semanticState.preferences,anchors:[impactIds.weekend]}}};
 assert.deepEqual(projectCompletionSuggestions(protectedProject,impactIds.weekend),[]);
 console.log('UX-09 S3 is contextual, capability-bound, reversible and suppresses adopted complements: PASS');
+for(const [index,[presetKey,label]] of [['concert','Billet de concert'],['museum-exhibition','Entrée du musée'],['ropes-course','Entrée ou parcours']].entries()){
+ const id=uuid(29300+index*10);
+ await compose({kind:'DROP',assetKey:'template:activity',presetKey,target:{kind:'BOARD_ZONE'},identity:id,selectionId:uuid(29301+index*10),values:{}});
+ const context=composed.semanticState.contexts.find(row=>row.contextOccurrenceId===id);
+ const card=composed.board.contexts.find(row=>row.contextOccurrenceId===id);
+ const markup=renderToStaticMarkup(React.createElement(RestaurantEditor,{context,card,model:composed,creating:false,busy:false,
+  decide(){assert.fail('render must not adopt an activity');},close(){}}));
+ assert(markup.includes(label));
+ assert.deepEqual(context.slotSelections,{});
+ const component=buildComponentRow({...fresh(label),costMode:'MANUAL',amount:'12,50'},'activity');
+ await compose({kind:'EDIT_PRESET_CONTEXT',edit:{contextOccurrenceId:id,slots:{main:[component]}}});
+ assert.equal(composed.budgetReading.byContext[id].gross,'12.50');
+ assert.equal(composed.semanticState.contexts.find(row=>row.contextOccurrenceId===id).slotSelections.main.items[0].selectionId,component.selectionId);
+}
+console.log('UX-10 Concert, museum and ropes course use admitted activity slots and the official cost: PASS');
 assert.equal(semanticStateDigest(model.semanticState),original);
 assert.equal(JSON.stringify(fixture.world),world);
 assert.deepEqual(fixture.writes,[]);
-console.log(JSON.stringify({status:'PASS',checks:9,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));
+console.log(JSON.stringify({status:'PASS',checks:10,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));
