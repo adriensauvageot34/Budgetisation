@@ -104,7 +104,8 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===target.contextId);
  const groceryProduct=target.scope==="courses"&&isBasketCatalogProduct(entry,"groceries");
  const product=purchaseCatalogProduct(entry);
- if(!target.contextId&&!target.controlRef&&entry.discovery.sourceRow&&entry.discovery.nature==="ELEMENT"&&(groceryProduct||product)){
+ const unboundPurchase=entry.assetKeys.length===0&&entry.discovery.contexts.includes("purchase")&&isBasketCatalogProduct(entry,"other");
+ if(!target.contextId&&!target.controlRef&&entry.discovery.sourceRow&&entry.discovery.nature==="ELEMENT"&&(groceryProduct||product||unboundPurchase)){
    const labels=new Map(libraryOccurrences(model).filter(row=>row.surface==='BASKET').map(row=>[row.contextOccurrenceId,
      {action:row.action,label:row.label+(row.occurrence?` · Achat ${row.occurrence}`:'')+(row.plannedDate?` · ${row.plannedDate}`:'')}]));
    for(const basket of model.board.contexts.filter(card=>isPurchaseBasket(card)&&labels.has(card.contextOccurrenceId))){

@@ -493,3 +493,9 @@ Le raccourci du panier dans les postes du séjour vérifie la relation courante 
 ### Conserver l’accès aux intentions avec une ancienne date invalide
 
 Une date invalide s’affiche comme « Date à préciser » dans la bibliothèque. Une date valide d’un autre mois reste hors des résultats. TypeScript, diff et banc bibliothèque PASS sur ces deux cas, sans correction automatique du Draft.
+
+### Produits Clay sans asset spécialisé
+
+Un produit public associé au contexte Achats peut préparer un panier générique lorsque le propriétaire `purchase@v2` admet son concept et que la création est publiée. Les visuels de Cadeaux qui n’ont pas cette destination restent hors de ce raccourci.
+
+TypeScript, diff et banc catalogue PASS. Clous crée un panier vide, puis la ligne est conservée à prix inconnu et retrouvée par son concept. Le visuel Plante à offrir ne propose pas ce départ de panier.

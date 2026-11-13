@@ -35,6 +35,18 @@ const groceries=await request(emptyGroceries,{kind:'EDIT_PURCHASE_BASKET',edit:{
  quantity:'1',unit:'UNIT',price:'',concept:groceryStart.concept}}});
 assert.equal(purchaseComponents(groceries.semanticState.contexts.find(context=>context.contextOccurrenceId===groceryId),'item')[0].cost.kind,'UNKNOWN');
 assert(discoveryActions(grocery,groceries,{scope:'courses'}).some(action=>action.kind==='OPEN'&&action.contextId===groceryId));
+const nails=entries.find(entry=>entry.label==='Clous'&&entry.assetKeys.length===0);
+const nailStart=discoveryActions(nails,f.model,{}).find(action=>action.kind==='CHOOSE');
+assert(nailStart);assert.equal(nailStart.presetKey,undefined);assert.equal(nailStart.concept.id,nails.visualConceptId);
+assert(!discoveryActions(entries.find(entry=>entry.label==='Plante à offrir'),f.model,{}).some(action=>action.concept));
+const nailId=uuid(++identity);
+const emptyNails=await request(f.model,{kind:'DROP',assetKey:nailStart.asset.assetKey,target:nailStart.target,
+ identity:nailId,selectionId:uuid(++identity),values:{},purchaseBasket:true});
+const nailContext=emptyNails.semanticState.contexts.find(context=>context.contextOccurrenceId===nailId);
+const nailsBasket=await request(emptyNails,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:nailId,
+ expectedContextDigest:plannerDigest(nailContext),change:{kind:'SAVE_ITEM',selectionId:uuid(++identity),label:nails.label,
+ quantity:'1',unit:'UNIT',price:'',concept:nailStart.concept}}});
+assert(discoveryActions(nails,nailsBasket,{}).some(action=>action.kind==='OPEN'&&action.contextId===nailId));
 for(const [assetKey,presetKey] of [['beauty:mascara','beauty-purchase'],['clothing:tshirt','clothing-shopping'],['household:laundry','laundry-detergent'],
  ['tech:charger',undefined],['home:plant',undefined],['automotive:tires',undefined],['tech:video_game','video-game-purchase']]){
  const entry=entries.find(entry=>entry.discovery.sourceRow&&entry.assetKeys.includes(assetKey));assert(entry,'Existing catalog binding '+assetKey);
