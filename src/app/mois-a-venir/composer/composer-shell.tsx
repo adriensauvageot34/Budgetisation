@@ -1031,7 +1031,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if (busyRef.current || relationSessionRef.current || comparison || pendingApply) return;
     if (!inlineEdits.registry.guard(() => prepareProject(starter))) return;
     const children = starter.children.map(key => composerPreset(key)?.label).join(", ");
-    confirmationRequest.current({ message: `Le modèle « ${starter.label} » ajoute ${children} dans un projet. Les prix et les dates resteront à préciser.`,
+    const contents = children ? `${children} dans un projet` : "un panier dans lequel vous pourrez choisir les articles";
+    confirmationRequest.current({ message: `Le modèle « ${starter.label} » ajoute ${contents}. Les prix et les dates resteront à préciser.`,
       acceptLabel: "Créer ce projet dans le brouillon", accept: () => void installStarter(starter) });
   });
   const intentionNavigation = useMemo(() => {
@@ -1072,8 +1073,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       ? { draftId: activeDraft.draftId, digest: activeDraft.digest, contextId: draftNavigationId } : null);
   }, [navigationScope, navigationRestored, relationSession, comparison, durable.snapshot?.baseStale, durable.status,
     durable.unsaved, activeDraft, shown.board.draft.semanticStateDigest, draftNavigationId, draftNavigationAdmitted]);
-  const resumableContext = resumeContext === focusedContext && !currentEditorId && savedReloadSafe
+  const resumableContext = resumeContext === focusedContext && !currentEditorId && !relationSession && !comparison
     ? intentionNavigation.entries.find(entry => entry.id === resumeContext) : undefined;
+  const resumedCard = shown.board.contexts.find(card => card.contextOccurrenceId === resumableContext?.id);
+  const resumedPreset = resumedCard && presetForContext(resumedCard)?.presetKey;
   // Accepted context changes (also Undo/Redo and child edits) replace workshop buffers.
   // Preview responses with the same semantic content leave RAW inputs untouched.
   const workshopKey = (id: string) => canonicalPlannerJson(draftState.contexts.filter(context => context.contextOccurrenceId === id || context.parentContextOccurrenceId === id));
@@ -1108,9 +1111,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails}
         retry={previewStatus === "FAILED" && !busy ? retryPreview : undefined} /></div>
       <div className={styles.toolbar}><IntentionSwitcher contextId={focusedContext} compact />
-        {resumableContext && <button className={styles.financialLink} disabled={busy} onClick={() => {
+        {resumableContext && <button type="button" className={styles.financialLink} disabled={busy} onClick={() => {
           setResumeContext(null); stableLibraryOpen(resumableContext.id);
-        }}>Reprendre l’intention</button>}
+        }}>{resumedPreset === "composed-outing" || resumedPreset === "weekend-gite" ? "Ouvrir le projet" : "Reprendre l’intention"}</button>}
         <div ref={historyTools} className={styles.historyTools}>
         <button data-history-action="undo" className={styles.historyButton} title="Annuler (Ctrl/Cmd+Z)" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => stage({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
         <button data-history-action="redo" className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => stage({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>

@@ -18,6 +18,7 @@ const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-i
 const {availableProjectStarters,evaluateProjectStarter}=require('@/app/mois-a-venir/composer/project-starters');
 const {projectCompletionSuggestions,ProjectCompletion,ProjectCompletionPreference}=require('@/app/mois-a-venir/composer/project-completion');
 const {RestaurantEditor}=require('@/app/mois-a-venir/composer/restaurant-editor');
+const {isPurchaseBasket}=require('@/domain/phase2/planner/purchase-basket');
 
 globalThis.fetch=async()=>{throw Error('JOURNEY_UX_REMOTE_FORBIDDEN');};
 const fixture=await budgetImpactFixture(), model=fixture.model;
@@ -133,7 +134,7 @@ assert.equal(newCinema.parentContextOccurrenceId,projectId);
 assert.deepEqual(newCinema.slotSelections,{});
 console.log('UX-07 Composed outing attaches exact occurrences and preserves official child costs: PASS');
 const starters=availableProjectStarters(model);
-assert.equal(starters.length,3);
+assert.equal(starters.length,4);
 let starterId=29200, starterSequence=20;
 const transport=command=>handleComposerRequest(fixture.deps,householdId,command);
 for(const starter of starters){
@@ -141,6 +142,13 @@ for(const starter of starters){
  const children=added.model.semanticState.contexts.filter(context=>context.parentContextOccurrenceId===added.parentId);
  assert.equal(children.length,starter.children.length);
  assert(children.every(child=>Object.keys(child.slotSelections).length===0&&!child.fields.plannedDate));
+ if(starter.key==='games-basket'){
+  const basket=added.model.semanticState.contexts.find(context=>context.contextOccurrenceId===added.parentId);
+  assert(isPurchaseBasket(basket));
+  assert.equal(basket.fields.budgetDomain,'games-digital');
+  assert.deepEqual(basket.slotSelections,{});
+  assert.equal(libraryOccurrences(added.model).find(row=>row.contextOccurrenceId===added.parentId)?.action,'EDIT');
+ }
  assert.equal(semanticStateDigest(model.semanticState),original);
 }
 let attempted=0;
