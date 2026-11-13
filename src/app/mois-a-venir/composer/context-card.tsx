@@ -46,11 +46,13 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const purchase = card.templateKey === "purchase", main = card.sockets.find(s => s.slotKey === "item");
   const basket = isPurchaseBasket(card);
   const preview = useContext(BudgetPreviewStatus);
-  const basketAmountsCurrent = budgetAmountsCurrent(model, preview);
-  const basketSummary = basketAmountsCurrent ? card.purchaseSummary : undefined;
+  const amountsCurrent = budgetAmountsCurrent(model, preview);
+  const basketSummary = amountsCurrent ? card.purchaseSummary : undefined;
   const basketContext = basket ? model.semanticState.contexts.find(context => context.contextOccurrenceId === card.contextOccurrenceId) : undefined;
   const articleCount = basketContext ? purchaseComponents(basketContext, "item").length : basketSummary?.articleCount ?? 0;
-  const mainAmount = main?.evaluations?.length === 1 ? main.evaluations[0].economicAmount : null;
+  const mainAmount = amountsCurrent && main?.evaluations?.length === 1 ? main.evaluations[0].economicAmount : null;
+  const nightSummary = model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId);
+  const currentNightSummary = amountsCurrent && nightSummary?.semanticStateDigest === model.board.draft.semanticStateDigest ? nightSummary : undefined;
   const mainSelection = main?.currentItems.find(i => i.kind === "COMPONENT");
   const coverage = mainSelection?.kind === "COMPONENT" ? mainSelection.binding?.mode : null;
   const interaction = useComposerInteractions(), handle = useDragHandle(instance);
@@ -110,18 +112,20 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     </div>
     {card.templateKey === "night-out" && <div className={styles.purchaseSummary} data-night-board-summary>
       <button type="button" disabled={busy || !editable} onClick={() => edit(card)}>
-        {model.board.draft.semanticStateDigest === model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.semanticStateDigest ? money(model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.knownAmount ?? null) : "Projection à actualiser"}
+        {currentNightSummary ? money(currentNightSummary.knownAmount) : "Projection à actualiser"}
       </button>
-      <small>{model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.incomplete ? "Coût connu · à compléter" : "Coût connu · modifier ma soirée"}</small>
+      {currentNightSummary?.knownAmount != null && <small>{currentNightSummary.costIncomplete
+        ? "Coût connu · à compléter" : "Coût connu · modifier ma soirée"}</small>}
     </div>}
     {basket ? <div className={styles.purchaseSummary} data-purchase-summary>
       <button type="button" onClick={() => edit(card)} disabled={busy || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")}>{editable ? "Ouvrir le panier" : "Consulter le panier"}</button>
-      <small>{articleCount} article{articleCount > 1 ? "s" : ""} · {!basketAmountsCurrent ? "Calcul à actualiser"
+      <small>{articleCount} article{articleCount > 1 ? "s" : ""} · {!amountsCurrent ? "Calcul à actualiser"
         : basketSummary?.knownAmount == null ? "Total à préciser"
           : basketSummary.complete ? `Total brut ${money(basketSummary.knownAmount)}`
             : `Sous-total connu ${money(basketSummary.knownAmount)} · Total à préciser`}</small>
     </div> : purchase && <div className={styles.purchaseSummary} data-purchase-summary>
-      <button type="button" data-budget-unknown={mainAmount===null||undefined} disabled={busy || !editable} onClick={() => edit(card)}>{mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
+      <button type="button" data-budget-unknown={mainAmount===null||undefined} disabled={busy || !editable} onClick={() => edit(card)}>
+        {!amountsCurrent ? "Calcul à actualiser" : mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
     </div>}
     <div className={styles.contextEquipmentRow} data-context-equipment-row aria-label={`Équipements de ${card.label}`}>

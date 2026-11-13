@@ -593,3 +593,7 @@ Les commandes contextuelles disparaissent si le droit de modification de la cart
 ### Vérifier la conservation des occurrences lors de la création d’un modèle
 
 Chaque réponse doit conserver les identifiants du Draft de départ et ajouter uniquement l’intention attendue à cette étape. Un identifiant déjà utilisé est refusé avant l’appel. TypeScript et les dix groupes du banc de parcours PASS. La fixture refuse aussi un reçu à digest cohérent qui omet une décision déjà présente.
+
+### Actualité des coûts affichés sur le Board
+
+Les résumés de soirée hors carte Bar et les achats à une ligne reprennent la garde commune des montants calculés. Un coût périmé cède la place à une invitation à actualiser. Le rendu local vérifie que l’estimation de soirée et son qualificatif disparaissent en état STALE. TypeScript et banc budget PASS.

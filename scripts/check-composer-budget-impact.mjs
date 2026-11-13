@@ -9,6 +9,7 @@ const { IntentBudgetImpact, BudgetPreviewStatus } = require('@/app/mois-a-venir/
 const { ComposerProjectionDetails } = require('@/app/mois-a-venir/composer/composer-cockpit');
 const { ComposerMonthRead } = require('@/app/mois-a-venir/composer/month-read');
 const { readMonthComposer } = require('@/server/phase2/planner/read-model');
+const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { composerBudgetReading } = require('@/server/phase2/planner/composer-budget-reading');
 const { visualDraftModel } = require('@/app/mois-a-venir/composer/local-draft');
 const { ComposerPreviewScheduler } = require('@/app/mois-a-venir/composer/preview-scheduler');
@@ -25,9 +26,10 @@ const monthReading = (model, stale = false) => renderToStaticMarkup(React.create
 
 const fixture = await budgetImpactFixture();
 const model = fixture.model;
-const basketCard = (model, name, status = 'FRESH') => renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider, { value: status },
-  React.createElement(ContextCard, { model, card: model.board.contexts.find(card => card.contextOccurrenceId === impactIds[name]),
+const renderCard = (model, id, status = 'FRESH') => renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider, { value: status },
+  React.createElement(ContextCard, { model, card: model.board.contexts.find(card => card.contextOccurrenceId === id),
     busy: false, selected: null, focused: null, focus() {}, drag() {}, drop() {}, choose() {}, request() {}, edit() {} })));
+const basketCard = (model, name, status) => renderCard(model, impactIds[name], status);
 assert.match(basketCard(model, 'amazon'), /Total brut 48,00\s*€/);
 const brokenDate = { ...model, board: { ...model.board, contexts: model.board.contexts.map(card =>
   card.contextOccurrenceId === impactIds.amazon ? { ...card, fields: { ...card.fields, plannedDate: 'date invalide' } } : card) } };
@@ -38,6 +40,16 @@ assert.match(basketCard(noPatch, 'amazon'), /disabled="" aria-label="Modifier le
 assert.match(basketCard(noPatch, 'amazon'), /disabled="">Consulter le panier/);
 assert.match(basketCard(model, 'amazon', 'STALE'), /Calcul à actualiser/);
 assert.doesNotMatch(basketCard(model, 'amazon', 'STALE'), /48,00/);
+const nightId = uuid(27801);
+const night = await handleComposerRequest(fixture.deps, householdId, { kind: 'DROP', sequence: 0, targetMonth: model.board.targetMonth,
+  draft: model.semanticState, assetKey: 'template:night-out', target: { kind: 'BOARD_ZONE' }, identity: nightId,
+  selectionId: uuid(27802), values: {}, presetKey: 'techno-night' });
+assert(night.ok, night.code);
+const nightCard = { ...night.model, nightOutSummaries: [{ contextOccurrenceId: nightId, semanticStateDigest: night.model.board.draft.semanticStateDigest,
+  knownAmount: '79.00', costIncomplete: true }] };
+assert.match(renderCard(nightCard, nightId), /79,00\s*€/);
+assert.match(renderCard(nightCard, nightId, 'STALE'), /Projection à actualiser/);
+assert.doesNotMatch(renderCard(nightCard, nightId, 'STALE'), /79,00|Coût connu/);
 assert.deepEqual(amounts(impact(model, 'groceries')), ['8.00', '8.00', '0.00']);
 assert.match(summary(model, 'groceries'), /entièrement couvertes/);
 assert.deepEqual(impact(model, 'groceries').plannedPosts, ['Enveloppe Courses']);
