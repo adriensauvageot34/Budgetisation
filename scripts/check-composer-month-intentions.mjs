@@ -46,6 +46,8 @@ const withDate=day=>({...model,board:{...model.board,contexts:model.board.contex
  ? {...card,fields:{...card.fields,plannedDate:day}}:card)}});
 assert.equal(libraryOccurrences(withDate('2026-11-31')).find(row=>row.contextOccurrenceId===uuid(30622))?.plannedDate,null);
 assert.equal(libraryOccurrences(withDate('2026-12-01')).some(row=>row.contextOccurrenceId===uuid(30622)),false);
+model={...model,board:{...model.board,contexts:model.board.contexts.map(card=>card.contextOccurrenceId===uuid(30622)
+ ? {...card,readOnly:true} : card)}};
 const digest=semanticStateDigest(model.semanticState);let root,setStatus,opened=[],prepared=[],searchFocus=0,focusedButton=null;
 class Button{constructor(label,visible=true){this.label=label;this.visible=visible;}getClientRects(){return this.visible?[{}]:[];}focus(){focusedButton=this.label;}}
 globalThis.HTMLButtonElement=Button;
@@ -63,9 +65,12 @@ try{
  await act(async()=>tab.props.onClick());assert.equal(rows().length,keys.length+4);
  await act(async()=>rows()[0].props.onClick());assert.deepEqual(opened,[rows()[0].props['data-library-existing-action']]);
  const search=root.root.findByProps({'data-library-search':true});
+ const keyDown=(key,isComposing=false)=>search.props.onKeyDown({key,nativeEvent:{isComposing},preventDefault(){},stopPropagation(){}});
  await act(async()=>search.props.onChange({target:{value:'Uber Eats'}}));
- await act(async()=>search.props.onKeyDown({key:'Enter',preventDefault(){}}));assert.equal(opened.at(-1),uuid(30602));
- await act(async()=>search.props.onKeyDown({key:'Escape',preventDefault(){},stopPropagation(){}}));assert.equal(search.props.value,'');assert(searchFocus>0);
+ await act(async()=>keyDown('Enter',true));assert.equal(opened.length,1);
+ await act(async()=>keyDown('Escape',true));assert.equal(search.props.value,'Uber Eats');
+ await act(async()=>keyDown('Enter'));assert.equal(opened.at(-1),uuid(30602));
+ await act(async()=>keyDown('Escape'));assert.equal(search.props.value,'');assert(searchFocus>0);
  const hidden=new Button('hidden',false),first=new Button('first'),last=new Button('last');
  const scroll=root.root.findByProps({'data-library-scroll':true}),event=key=>({key,target:first,currentTarget:{querySelectorAll:()=>[hidden,first,last]},preventDefault(){},stopPropagation(){}});
  await act(async()=>scroll.props.onKeyDown(event('Home')));assert.equal(focusedButton,'first');
@@ -78,7 +83,12 @@ try{
  const filter=root.root.findByProps({'aria-label':'Filtrer les intentions du mois'});
  await act(async()=>filter.props.onChange({target:{value:'BASKETS'}}));
  assert.deepEqual(rows().map(row=>row.props['data-library-existing-action']),[uuid(30624)]);
- await act(async()=>search.props.onKeyDown({key:'Enter',preventDefault(){}}));assert.equal(opened.at(-1),uuid(30624));
+ await act(async()=>keyDown('Enter'));assert.equal(opened.at(-1),uuid(30624));
+ await act(async()=>filter.props.onChange({target:{value:'VIEW'}}));
+ assert.deepEqual(rows().map(row=>row.props['data-library-existing-action']),[uuid(30622)]);
+ assert.match(text(rows()[0]),/Lecture seule sur le Board/);
+ await act(async()=>setStatus('STALE'));assert.equal(rows().length,1);
+ await act(async()=>setStatus('FRESH'));
  await act(async()=>filter.props.onChange({target:{value:'INCOMPLETE'}}));
  const expected=model.board.contexts.filter(card=>card.knowledge==='UNKNOWN'||card.knowledge==='PARTIAL').length;
  assert.equal(rows().length,expected);
@@ -89,7 +99,7 @@ try{
  await act(async()=>search.props.onChange({target:{value:'quilles dîner'}}));
  assert(root.root.findByProps({'data-library-project-action':'bowling-and-dinner'}));
  assert.doesNotMatch(text(root.root),/Aucune intention correspondante/);
- await act(async()=>search.props.onKeyDown({key:'Enter',preventDefault(){}}));
+ await act(async()=>keyDown('Enter'));
  assert.deepEqual(prepared,['bowling-and-dinner']);
  assert.equal(semanticStateDigest(model.semanticState),digest);assert.deepEqual(f.writes,[]);
  console.log('MI-01 Published evenings, meals and gifts reopen with exact identities: PASS');

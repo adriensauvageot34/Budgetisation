@@ -539,3 +539,7 @@ Le Board et la navigation affichent « Date à préciser » quand une ancienne d
 ### Ouvrir un résultat unique du catalogue au clavier
 
 Entrée ouvre la fiche du seul résultat de recherche quand la saisie est terminée. Le retour à la liste replace le focus dans la recherche. TypeScript et banc catalogue PASS, avec recherche vide, résultat absent, saisie en cours de composition et ouverture de la fiche sans commande ni changement de digest.
+
+### Intentions en consultation
+
+« Mes intentions » permet de filtrer les cartes que l’on peut consulter sur le Board. Le filtre se combine avec la recherche et reste disponible lorsque le calcul des montants est périmé. La recherche conserve la saisie en cours de composition au clavier. TypeScript et banc des intentions du mois PASS.

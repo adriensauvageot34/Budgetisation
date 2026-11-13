@@ -67,7 +67,7 @@ const search=()=>root.root.find(n=>n.type==='input'&&n.props['data-library-searc
 const textOf=node=>Array.isArray(node)?node.map(textOf).join(''):typeof node==='string'?node:(node?.children??[]).map(textOf).join('');
 const invoke=async node=>{document.activeElement=new NodeMock(node.props);await act(async()=>node.props.onClick());};
 const query=async value=>act(async()=>search().props.onChange({target:{value}}));
-const enter=async()=>act(async()=>search().props.onKeyDown({key:'Enter',preventDefault(){},currentTarget:new NodeMock()}));
+const enter=async()=>act(async()=>search().props.onKeyDown({key:'Enter',nativeEvent:{isComposing:false},preventDefault(){},currentTarget:new NodeMock()}));
 async function mount(model){
   if(root)await act(async()=>root.unmount());transportCalls=[];
   await act(async()=>{root=create(React.createElement(ComposerShell,{initialModel:model,transport:async()=>{transportCalls.push('FORBIDDEN');throw Error('A_LIB_ONE_TRANSPORT_FORBIDDEN');}}),

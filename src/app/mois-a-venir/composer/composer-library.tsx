@@ -19,12 +19,16 @@ import { BudgetPreviewStatus } from "./intent-budget-impact";
 import { availableProjectStarters, projectStarterCategory, projectStarterContents, projectStarterMatches, type ProjectStarter } from "./project-starters";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
+const intentionFilters=[
+  ["ALL","Toutes mes intentions"],["INCOMPLETE","À compléter"],["PROJECTS","Mes projets"],
+  ["BASKETS","Mes paniers"],["VIEW","En consultation"],
+] as const;
 export const ComposerLibrary=memo(ComposerLibraryView);
 function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,drag,inspectContext,openContext,prepareProject}:{model:ComposerUiModel;openToken:number;busy:boolean;selected:string|null;
   choose:(asset:ComposerAssetView)=>void;choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void;drag:(key:string|null)=>void;inspectContext:(id:string)=>void;openContext:(id:string)=>void;
   prepareProject?:(starter:ProjectStarter)=>void}) {
   const [space,setSpace]=useState<"add"|"intentions"|"manage">("add"),[query,setQuery]=useState(""),[opened,setOpened]=useState<string|null>("SOCIAL");
-  const [intentionFilter,setIntentionFilter]=useState<"ALL"|"INCOMPLETE"|"PROJECTS"|"BASKETS">("ALL");
+  const [intentionFilter,setIntentionFilter]=useState<typeof intentionFilters[number][0]>("ALL");
   const [expanded,setExpanded]=useState<ReadonlySet<string>>(()=>new Set()),[favorites,setFavorites]=useState<readonly string[]>([]);
   const [favoriteNotice,setFavoriteNotice]=useState("");
   const search=useRef<HTMLInputElement>(null), interaction=useComposerInteractions();
@@ -52,6 +56,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     if(intentionFilter==="BASKETS")return row.surface==="BASKET";
     if(intentionFilter==="PROJECTS")return card.childContextOccurrenceIds.length>0||row.presetKey==="composed-outing"||card.templateKey==="home-project";
     if(intentionFilter==="INCOMPLETE")return readingCurrent&&(card.knowledge==="UNKNOWN"||card.knowledge==="PARTIAL");
+    if(intentionFilter==="VIEW")return row.action==="VIEW";
     return true;
   });
   const occurrenceButton=(row:typeof index.occurrences[number])=>{
@@ -102,7 +107,8 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     <nav className={styles.libraryTabs} aria-label="Espaces de la bibliothèque"><button type="button" aria-pressed={space==="add"} onClick={()=>setSpace("add")}>À ajouter</button><button type="button" aria-pressed={space==="intentions"} onClick={()=>setSpace("intentions")}>Mes intentions</button><button type="button" aria-pressed={space==="manage"} onClick={()=>setSpace("manage")}>À piloter</button></nav>
     <div className={styles.catalogLibraryAccess}><CatalogOpenButton target={{query,scope:'all'}}>Tous les éléments{query.trim()?` · ${query}`:''}</CatalogOpenButton><CatalogOpenButton target={{scope:'courses',controlRef:index.controls.find(a=>a.capabilityRef===MONTHLY_GROCERIES_REF)?.capabilityRef}}>Produits pour Courses</CatalogOpenButton></div>
     <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="manage"?"Budget ou cagnotte…":"Soirée, repas, achat…"} value={query} onChange={e=>setQuery(e.target.value)}
-      onKeyDown={e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setQuery("");search.current?.focus();}
+      onKeyDown={e=>{if(e.nativeEvent.isComposing)return;
+      if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setQuery("");search.current?.focus();}
       else if(e.key==="Enter"&&space==="intentions"&&!busy){e.preventDefault();if(monthIntentions.length===1)openContext(monthIntentions[0].contextOccurrenceId);else focusActions();}
       else if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
         if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}
@@ -163,9 +169,8 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     </>:space==="intentions"?<section aria-label="Mes intentions du mois" data-library-month-intentions>
       <h3>Mes intentions · {new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(`${model.board.targetMonth}-01T12:00:00Z`))}</h3>
       <label>Afficher<select aria-label="Filtrer les intentions du mois" value={intentionFilter}
-        onChange={event=>{const value=event.target.value;if(value==="ALL"||value==="INCOMPLETE"||value==="PROJECTS"||value==="BASKETS")setIntentionFilter(value);}}>
-        <option value="ALL">Toutes mes intentions</option><option value="INCOMPLETE">À compléter</option><option value="PROJECTS">Mes projets</option>
-        <option value="BASKETS">Mes paniers</option>
+        onChange={event=>{const option=intentionFilters.find(([key])=>key===event.target.value);if(option)setIntentionFilter(option[0]);}}>
+        {intentionFilters.map(([key,label])=><option key={key} value={key}>{label}</option>)}
       </select></label>
       {!readingCurrent&&intentionFilter==="INCOMPLETE"&&<p role="status">Actualisez la projection pour connaître les intentions à compléter.</p>}
       {monthIntentions.map(row=>occurrenceButton(row))}
