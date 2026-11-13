@@ -361,3 +361,9 @@ TypeScript, diff et cinq groupes S3 PASS. Le contrôle retire la proposition san
 Retirer ou modifier un poste lié ne crée plus un composant UNKNOWN dans un enfant voisin encore vide. La ligne d’aperçu de cet enfant reste locale jusqu’à une modification volontaire. Le brouillon ne reçoit que les enfants effectivement édités.
 
 TypeScript, diff et bancs séjour/enfants et familles de projets PASS. Retirer le deuxième Cinéma homonyme après confirmation préserve le premier et ses slots vides. Aucun writer distant ni Apply.
+
+### Deuxième série d’activités Clay
+
+Canoë / Kayak, Parc d’attractions, Spectacle, Assister à un match, Atelier créatif et Sortie photo utilisent leurs visuels exacts et l’éditeur Activité. Ils sont retrouvables dans le catalogue, la bibliothèque et les destinations de projet déjà admises. Les prix, lieux, participants et trajets restent à choisir.
+
+TypeScript, diff, catalogue et dix groupes du banc de parcours PASS. Le banc vérifie douze routes visuelles et dix-neuf activités, leurs identités exactes et leurs coûts officiels sur fixture. Aucun writer distant ni Apply.

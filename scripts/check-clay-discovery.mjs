@@ -55,5 +55,6 @@ const suggestions=cinemaSuggestions({contextOccurrenceId:cid,writable:true,ticke
 assert.equal(suggestions[0].sourceRow,329);assert(!suggestions.find(s=>s.conceptKey==='popcorn')?.sourceRow);
 const output={status:'PASS',identities:687,newIllustrations:632,excelConcepts:529,protected:55,reachableBySearch:687,reachableInContext:687,
  orders:{cinema:cinema.slice(0,4).map(r=>({id:r.key,label:r.entry.label})),courses:courses.slice(0,4).map(r=>({id:r.key,label:r.entry.label}))},
- checks:['paths','label search','context destinations','private allowlist','determinism','cinema core','exact edit identity','readOnly gate','popcorn provenance','six activity routes']};
+ activityRoutes:ACTIVITY_PRESETS.length,
+ checks:['paths','label search','context destinations','private allowlist','determinism','cinema core','exact edit identity','readOnly gate','popcorn provenance','activity routes']};
 console.log(JSON.stringify(output,null,2));

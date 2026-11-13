@@ -257,7 +257,7 @@ for(const [index,[presetKey,label]] of [['concert','Billet de concert'],['museum
   assert.equal(composed.budgetReading.byContext[id].gross,null);
  }
 }
-console.log('UX-10 Thirteen activities use admitted slots, exact reopening and explicit zero distinct from unknown: PASS');
+console.log(`UX-10 ${7+ACTIVITY_PRESETS.length} activities use admitted slots, exact reopening and explicit zero distinct from unknown: PASS`);
 assert.equal(semanticStateDigest(model.semanticState),original);
 assert.equal(JSON.stringify(fixture.world),world);
 assert.deepEqual(fixture.writes,[]);
