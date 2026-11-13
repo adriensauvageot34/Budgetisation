@@ -251,7 +251,10 @@ try{
  assert.equal(operations.length,0);assert.equal(root.root.findAllByType('form').length,1);
  assert.equal(root.root.findAllByType('label').find(label=>text(label).startsWith('Prix par')).findByType('input').props.value,'');
  await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Retour au panier').props.onClick());
- await act(async()=>root.root.findByProps({type:'checkbox'}).props.onChange({target:{checked:false}}));
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Réinitialiser les filtres').props.onClick());
+ assert.equal(root.root.findByProps({type:'search'}).props.value,'');
+ assert.equal(root.root.findByProps({type:'checkbox'}).props.checked,false);
+ assert.deepEqual(lines().map(line=>line.props['data-basket-line']),[firstId,secondId]);
  await act(async()=>root.update(render(mixed,undefined,'STALE')));
  assert.doesNotMatch(text(lines()[0]),/Total/);assert.equal(semanticStateDigest(mixed.semanticState),mixedDigest);assert.equal(operations.length,0);
  await act(async()=>lines()[0].findAllByType('button').find(button=>text(button)==='Retirer').props.onClick());

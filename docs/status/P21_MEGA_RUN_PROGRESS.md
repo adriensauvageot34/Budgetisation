@@ -597,3 +597,7 @@ Chaque réponse doit conserver les identifiants du Draft de départ et ajouter u
 ### Actualité des coûts affichés sur le Board
 
 Les résumés de soirée hors carte Bar et les achats à une ligne reprennent la garde commune des montants calculés. Un coût périmé cède la place à une invitation à actualiser. Le rendu local vérifie que l’estimation de soirée et son qualificatif disparaissent en état STALE. TypeScript et banc budget PASS.
+
+### Réinitialiser les filtres d’un panier
+
+Le bouton réinitialise la recherche et le filtre des prix manquants, puis replace le focus dans le champ. Le banc catalogue/panier vérifie le retour des deux lignes et leurs identités exactes. TypeScript et banc panier PASS.

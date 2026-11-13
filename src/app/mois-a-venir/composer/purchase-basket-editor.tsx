@@ -67,6 +67,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const summary = amountsCurrent ? card.purchaseSummary : undefined;
   const [articleQuery, setArticleQuery] = useState("");
   const [missingPricesOnly, setMissingPricesOnly] = useState(false);
+  const articleSearch = useRef<HTMLInputElement>(null);
   const [entries, setEntries] = useState<readonly ClayCatalogEntry[]>([]);
   const seed = initialConcept?.label ?? (!articles.length ? text(context.fields.productLabel) : "");
   const [form, setForm] = useState<Form | null>(() => seed ? { kind: "article", id: crypto.randomUUID(),
@@ -313,7 +314,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       {articles.length > 0 && <p>{articles.length} article{articles.length > 1 ? "s" : ""} · {missingPrices
         ? `${missingPrices} prix à préciser` : "Aucun prix manquant"}</p>}
       {filterArticles && <div className={styles.lineFilters}>
-        <label>Rechercher dans ce panier<input type="search" value={articleQuery} onChange={event => setArticleQuery(event.target.value)}
+        <label>Rechercher dans ce panier<input ref={articleSearch} type="search" value={articleQuery} onChange={event => setArticleQuery(event.target.value)}
           onKeyDown={event => {
             if (event.key !== "Enter" || event.nativeEvent.isComposing || !terms.length || matchingArticles.length !== 1) return;
             const { item } = matchingArticles[0];
@@ -322,6 +323,9 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
             edit(item);
           }} /></label>
         <label><input type="checkbox" checked={missingPricesOnly} onChange={event => setMissingPricesOnly(event.target.checked)} /> Prix à préciser</label>
+        {(articleQuery || missingPricesOnly) && <button type="button" onClick={() => {
+          setArticleQuery(""); setMissingPricesOnly(false); articleSearch.current?.focus();
+        }}>Réinitialiser les filtres</button>}
       </div>}
       {filterArticles && !matchingArticles.length && <p role="status">Aucun article ne correspond aux filtres.</p>}
       <ul className={styles.lines}>{matchingArticles.map(({ item, index }) => {
