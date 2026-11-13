@@ -620,7 +620,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       }
       install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
       setEditor(current => operation.kind === "DROP" && operation.target.kind === "CONTEXT_SOCKET"
-        && (operation.target.contextOccurrenceId === current?.catalogContextId || operation.target.contextOccurrenceId === current?.stayContextId) ? current
+        && (operation.target.contextOccurrenceId === current?.catalogContextId || operation.target.contextOccurrenceId === current?.stayContextId
+          || operation.target.contextOccurrenceId === current?.familyContextId) ? current
         : current?.equipment ? { ...current, saved: true, raw: false }
         : current?.nightContextId && response.model.semanticState.contexts.some(context => context.contextOccurrenceId === current.nightContextId)
           ? { ...current, nightCreating: false, nightAdmission: (current.nightAdmission ?? 0) + 1 } : null); setSelected(null);
@@ -1247,6 +1248,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
            knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} dockHost={nightDockHost} model={shown} choose={stableChoose} placeDeclines={placeDeclines} declinePlace={declinePlace} onCancel={closeDialog} onSave={stageWorkshop} />
         : editor?.familyContextId && FamilyVisitEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)
         ? <FamilyVisitEditor key={`${workshopKey(editor.familyContextId)}:${editor.familyMode ?? "edit"}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)!}
+          onOpenChild={stableOpenChild}
           targetMonth={draftState.targetMonth} householdPersons={model.householdPersons} options={model.mobilityOptions} initialMode={editor.familyMode}
           summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.familyContextId)} fresh={previewStatus === "FRESH"}
            knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} dockHost={nightDockHost} model={shown} choose={stableChoose} placeDeclines={placeDeclines} declinePlace={declinePlace} onCancel={closeDialog} onSave={stageWorkshop} />

@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { PreviewStatus } from "./preview-scheduler";
 import { money } from "./display";
+import { intentionNavigationEntries } from "./workshop-navigation";
 import styles from "./intent-budget-impact.module.css";
 
 export const BudgetPreviewStatus = createContext<PreviewStatus | null>(null);
@@ -26,8 +27,11 @@ export function IntentBudgetImpact({ model, contextId }: { model: ComposerUiMode
   const current = reading.semanticStateDigest === model.board.draft.semanticStateDigest
     && status !== "PENDING" && status !== "STALE" && status !== "FAILED";
   const impact = current ? reading.byContext[contextId] : undefined;
+  const parentId = model.board.contexts.find(context => context.contextOccurrenceId === contextId)?.parentContextOccurrenceId;
+  const parent = parentId ? intentionNavigationEntries(model.board.contexts).find(entry => entry.id === parentId) : undefined;
   return <section className={styles.impact} aria-label="Impact sur le budget" data-intent-budget-impact>
     <h3>Impact sur le budget</h3>
+    {parent && <p data-budget-parent={parent.id}>Rattachée à {parent.label}. Les montants ci-dessous concernent cette intention ; le projet présente séparément ses intentions liées.</p>}
     {!impact ? <p>{status === "FAILED" ? "Calcul indisponible. Réessayez la simulation depuis le bandeau."
       : current ? "Aucun impact évalué pour cette intention." : "Les montants se mettent à jour avec vos choix."}</p>
       : <>

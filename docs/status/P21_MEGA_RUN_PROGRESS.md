@@ -81,8 +81,12 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Produits Beauté complémentaires | Tonique, sérum, crème hydratante et lotion dans l’éditeur prix/quantité existant |
 | DONE | Navigation et accessibilité | Groupes par projet, filtre et retour au parent consultable |
 | DONE | Déplacement d’une intention liée | Reparentage explicite, identité et postes conservés, droits et digest revérifiés |
-| READY | Lecture financière des relations | Contexte parent et absence de total consolidé compréhensibles |
-| READY | Reprise des séjours | Hôtel et séjour chez des proches dans la navigation exacte |
+| DONE | Lecture financière des relations | Contexte parent distingué du coût individuel de chaque intention |
+| DONE | Reprise des séjours | Hôtel et séjour chez des proches retrouvables, deux modèles supplémentaires |
+| READY | Aperçu des projets | Améliorer les erreurs et la reprise lorsque les droits changent pendant un aperçu |
+| READY | Catalogue contextualisé | Clarifier la différence entre un panier et une fiche d’achat spécialisée |
+| READY | Accessibilité des formulaires | Retour du focus, labels et navigation progressive sans perte de RAW |
+| READY | Compléments des séjours | Parcours d’ouverture ciblée des activités enfants depuis les postes |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
 | BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
 
@@ -141,3 +145,9 @@ TypeScript, diff et trois contrôles d’identité/rendu PASS, incluant homonyme
 Une intention liée peut être déplacée vers un autre projet quand le serveur publie `REPARENT_PRESERVE_ID`. Les destinations proposées utilisent uniquement des sockets répétables pour éviter de remplacer un autre enfant. Une confirmation explique le retrait de l’ancien projet et conserve les postes de l’enfant. Les protections du parent, de l’enfant, de la relation et de la destination sont respectées. Les descendants ne sont jamais proposés comme destination.
 
 TypeScript, diff et deux contrôles React/propriétaire PASS. Deux projets homonymes restent distincts ; un billet à 12 € conserve son identité, ses composants et son coût officiel. Un changement du Draft invalide la confirmation. Aucune suppression de projet ni écriture distante, aucun Apply.
+
+### Séjours et visites familiales
+
+Hôtel et Séjour chez des proches se retrouvent dans les intentions du mois. Deux modèles ajoutent respectivement une visite culturelle et une balade, portant la bibliothèque à huit modèles. Les visites familiales exposent les enfants, leur ouverture, leur déplacement admissible et les suggestions S3. La lecture d’un enfant précise son projet parent et le périmètre individuel des montants.
+
+TypeScript PASS. Deux contrôles propriétaire/rendu et les trois contrôles de bibliothèque PASS. Les nouveaux séjours conservent hébergement, nuits, dates et coûts inconnus ; aucune gratuité n’est déduite du séjour chez des proches. La visite familiale reste sans personne, lieu ni prix inventés. Le maintien de l’éditeur familial après rattachement utilise le chemin du Shell déjà employé pour les séjours. Recette navigateur approfondie NOT_RUN.

@@ -21,7 +21,8 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
   if (!parent || parent.readOnly || !parent.capabilityRefs.includes("PATCH_CONTEXT") || model.semanticState.preferences.anchors.includes(parentId)
     || model.semanticState.preferences.flexibility[parentId] === "PRESERVE") return [];
   const preset = presetForContext(parent)?.presetKey;
-  const slotKey = preset === "composed-outing" ? "children" : preset === "weekend-gite" || preset === "visit-friends" ? "activities" : null;
+  const visit = parent.templateKey === "friend-visit" || parent.templateKey === "family-visit";
+  const slotKey = preset === "composed-outing" ? "children" : preset && (parent.templateKey === "short-stay" || visit) ? "activities" : null;
   if (!slotKey || !parent.sockets.some(socket => socket.slotKey === slotKey && socket.contextOccurrenceId === parentId
     && socket.capabilityRefs.includes(`${parent.templateKey}:${slotKey}:ATTACH_CHILD_CONTEXT`))) return [];
   const target = { kind: "CONTEXT_SOCKET" as const, contextOccurrenceId: parentId, slotKey };
@@ -29,16 +30,17 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
     && parent.childContextOccurrenceIds.includes(card.contextOccurrenceId));
   const chosen = new Set(children.map(card => presetForContext(card)?.presetKey));
   const activityChosen = children.some(card => card.templateKey === "activity");
+  const stayLabel = preset === "weekend-gite" ? "week-end" : "séjour";
   const candidates: readonly Pick<CompletionRule, "add" | "reason">[] = preset === "composed-outing"
     ? children.length ? outingRules.filter(rule => chosen.has(rule.trigger) && !chosen.has(rule.add)) : [
       { add: "cinema", reason: "Votre projet ne contient aucune intention. Vous pouvez commencer par une séance, puis compléter la sortie." },
       { add: "restaurant-for-two", reason: "Votre projet ne contient aucun repas. Vous pouvez préparer un restaurant si vous le souhaitez." },
     ]
-    : preset === "visit-friends" ? activityChosen ? [] : [{ add: "museum-exhibition",
+    : visit ? activityChosen ? [] : [{ add: "museum-exhibition",
       reason: "Votre visite n’a pas encore d’activité liée. Vous pouvez préparer une sortie culturelle." }]
     : !activityChosen ? [
-      { add: "museum-exhibition", reason: "Votre week-end n’a pas encore d’activité liée. Vous pouvez préparer une visite culturelle." },
-      { add: "hiking-nature", reason: "Votre week-end n’a pas encore d’activité liée. Vous pouvez préparer une sortie dans la nature." },
+      { add: "museum-exhibition", reason: `Votre ${stayLabel} n’a pas encore d’activité liée. Vous pouvez préparer une visite culturelle.` },
+      { add: "hiking-nature", reason: `Votre ${stayLabel} n’a pas encore d’activité liée. Vous pouvez préparer une sortie dans la nature.` },
     ] : chosen.has("museum-exhibition") && !chosen.has("hiking-nature") ? [{ add: "hiking-nature",
       reason: "Une visite culturelle est déjà liée au séjour. Une randonnée peut la compléter, si vous souhaitez une activité nature." }]
       : chosen.has("hiking-nature") && !chosen.has("museum-exhibition") ? [{ add: "museum-exhibition",

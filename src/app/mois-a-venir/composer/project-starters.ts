@@ -16,6 +16,10 @@ export const projectStarters = [
     children: ["museum-exhibition"] },
   { key: "weekend-discovery", label: "Week-end culture et nature", parent: "weekend-gite", slot: "activities",
     children: ["museum-exhibition", "hiking-nature"] },
+  { key: "hotel-and-culture", label: "Hôtel et sortie culturelle", parent: "hotel-night", slot: "activities",
+    children: ["museum-exhibition"] },
+  { key: "relatives-and-nature", label: "Séjour chez des proches et balade", parent: "stay-with-relatives", slot: "activities",
+    children: ["hiking-nature"] },
 ] as const satisfies readonly { key: string; label: string; parent: ComposerPresetKey; slot: string | null; children: readonly ComposerPresetKey[] }[];
 export type ProjectStarter = typeof projectStarters[number];
 export type ProjectStarterChoices = { label: string; children: readonly ComposerPresetKey[] };
