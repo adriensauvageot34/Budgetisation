@@ -1113,6 +1113,9 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .projectChoice input { flex:0 0 20px; width:20px; height:20px; }
 .projectChoice span { min-width:0; overflow-wrap:anywhere; }
 .projectChoice small { display:block; margin-top:4px; }
+.linkedIntention { padding:10px 0; overflow-wrap:anywhere; }
+.linkedIntention details { margin-top:8px; }
+.linkedIntention summary { cursor:pointer; min-height:32px; }
 .workshopStepper { display:flex; align-items:center; gap:10px; max-width:290px; }
 .workshopStepper input { min-width:0; text-align:center; }
 .workshopStepper button { flex:0 0 40px; min-height:40px; border:1px solid #d9c5e8; border-radius:12px; color:#633f7f; background:#faf6ff; font-size:20px; }

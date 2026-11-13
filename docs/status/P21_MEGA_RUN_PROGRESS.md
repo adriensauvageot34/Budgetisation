@@ -73,7 +73,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | État | Chantier | Prochain résultat |
 | --- | --- | --- |
 | DONE | Aperçu personnalisable des modèles | Nom du projet, compléments facultatifs, six modèles dont Week-end multi-enfants |
-| READY | Lecture des intentions liées | Identités, prix inconnus et informations manquantes visibles |
+| DONE | Lecture des intentions liées | Impact officiel par enfant, diagnostics ciblés et consultation seule visibles |
 | READY | Déplacements | Raccourcis vers les postes Mobility réellement admis |
 | READY | Activités et achats | Étendre les éditeurs communs aux presets compatibles |
 | READY | Découverte des modèles | Catégories, contenu et recherche dans la bibliothèque |
@@ -89,3 +89,9 @@ Les recettes navigateur exhaustives et authentifiées restent NOT_RUN pour ce ru
 Le nouvel aperçu présente la structure requise, les compléments facultatifs et leurs disponibilités. Il accepte un nom explicite et ne modifie le Draft qu’après confirmation. Un sixième modèle prépare un Week-end avec musée et randonnée. Les choix sont revérifiés par l’évaluateur existant, puis admis ensemble dans l’historique Undo/Redo. Les erreurs restent visibles dans l’aperçu.
 
 TypeScript, `git diff --check` et les dix groupes du banc de parcours ont réussi. Le banc a exercé les six modèles, un nom personnalisé, le retrait d’un complément, le refus des doublons et d’un choix étranger au modèle, l’échec intermédiaire et le changement de référence. Zéro écriture distante, aucun Apply.
+
+### Intentions liées
+
+Chaque enfant offre la même lecture financière officielle que son éditeur, avec les diagnostics ciblés déjà publiés et la restriction de consultation. Les détails financiers disparaissent lorsque la projection est périmée. Aucun total de projet n’est recalculé par React.
+
+TypeScript, diff et les dix groupes du banc de parcours PASS. Le contrôle de rendu distingue la lecture FRESH de l’état STALE et conserve l’ordre et les identités des enfants.

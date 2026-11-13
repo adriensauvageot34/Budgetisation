@@ -130,6 +130,11 @@ const linkedMarkup=renderToStaticMarkup(React.createElement(BudgetPreviewStatus.
 assert.match(linkedMarkup,/Cinéma/);
 assert.match(linkedMarkup,/Restaurant/);
 assert.match(linkedMarkup,/total consolidé du projet n’est pas publié/);
+assert.match(linkedMarkup,/En plus du budget/);
+const staleLinked=renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider,{value:'STALE'},
+ React.createElement(LinkedIntentions,{model:composed,parentId:projectId,busy:false})));
+assert.doesNotMatch(staleLinked,/En plus du budget/);
+assert.match(staleLinked,/Coût à actualiser/);
 const parentCard=composed.board.contexts.find(card=>card.contextOccurrenceId===projectId);
 const reordered={...composed,board:{...composed.board,contexts:composed.board.contexts.map(card=>card===parentCard
  ? {...card,childContextOccurrenceIds:[impactIds.restaurant,impactIds.cinema,impactIds.restaurant]} : card)}};

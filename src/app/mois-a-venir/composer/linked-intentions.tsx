@@ -2,7 +2,7 @@
 
 import { useContext } from "react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
-import { BudgetPreviewStatus } from "./intent-budget-impact";
+import { BudgetPreviewStatus, IntentBudgetImpact } from "./intent-budget-impact";
 import { money } from "./display";
 import { intentionNavigationEntries } from "./workshop-navigation";
 import styles from "./composer.module.css";
@@ -25,11 +25,19 @@ export function LinkedIntentions({ model, parentId, busy, open }: {
     <h3>Intentions liées</h3>
     <ul>{children.map(child => {
       const impact = current ? reading?.byContext[child.id] : undefined;
-      return <li key={child.id}>
+      const card = byId.get(child.id)!;
+      const missing = current ? model.board.diagnostics.filter(diagnostic => diagnostic.targetRef === child.id
+        && diagnostic.severity !== "INFO") : [];
+      return <li key={child.id} className={styles.linkedIntention} data-linked-intention={child.id}>
         {open ? <button type="button" disabled={busy} onClick={() => open(child.id)}>{child.label}</button> : <span>{child.label}</span>}
         <small> · {impact ? impact.gross === null && impact.knownSubtotal !== null
           ? `${money(impact.knownSubtotal)} connus, total à préciser` : money(impact.gross)
           : current ? "Coût à préciser" : "Coût à actualiser"}</small>
+        {(card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")) && <small> · Consultation seule</small>}
+        {current && <details><summary>Budget et informations à compléter</summary>
+          <IntentBudgetImpact model={model} contextId={child.id} />
+          {missing.length > 0 && <ul>{missing.map((diagnostic, index) => <li key={`${diagnostic.code}:${index}`}>{diagnostic.message}</li>)}</ul>}
+        </details>}
       </li>;
     })}</ul>
     <p>Le total consolidé du projet n’est pas publié. Chaque poste conserve son évaluation.</p>
