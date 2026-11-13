@@ -86,7 +86,12 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
     return card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT") || model.semanticState.preferences.anchors.includes(id)
       || model.semanticState.preferences.flexibility[id] === "PRESERVE";
   };
-  const incomplete = (id: string) => { const knowledge = byId.get(id)!.knowledge; return current && (knowledge === "UNKNOWN" || knowledge === "PARTIAL"); };
+  const incomplete = (id: string) => {
+    if (!current) return false;
+    const impact = reading?.byContext[id];
+    const knowledge = byId.get(id)!.knowledge;
+    return impact ? impact.gross === null : knowledge === "UNKNOWN" || knowledge === "PARTIAL";
+  };
   const activeFilter = children.length > 4 ? filter : "ALL";
   const visible = children.filter(child => activeFilter === "ALL" || (activeFilter === "READ_ONLY" ? readOnly(child.id) : incomplete(child.id)));
   const consultationCount = children.filter(child => readOnly(child.id)).length;
@@ -107,10 +112,12 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
       const destinations = decide ? linkedIntentionMoveTargets(model, parentId, child.id) : [];
       return <li key={child.id} className={styles.linkedIntention} data-linked-intention={child.id}>
         {open ? <button type="button" disabled={busy} onClick={() => open(child.id)}>{child.label}</button> : <span>{child.label}</span>}
-        <small> · {impact ? impact.gross === null && impact.knownSubtotal !== null
-          ? `${money(impact.knownSubtotal)} connus, total à préciser` : money(impact.gross)
-          : current ? "Coût à préciser" : "Coût à actualiser"}</small>
-        {readOnly(child.id) && <small> · Consultation seule</small>}
+        <p className={styles.linkedCost}>
+          {!current ? "Coût à actualiser" : impact?.gross != null ? <>Coût total · <strong>{money(impact.gross)}</strong></>
+            : impact?.knownSubtotal != null ? <>Sous-total connu · <strong>{money(impact.knownSubtotal)}</strong> · Total à préciser</>
+              : "Coût à préciser"}
+          {readOnly(child.id) && <small> · Consultation seule</small>}
+        </p>
         {current && <details><summary>Budget et informations à compléter</summary>
           <IntentBudgetImpact model={model} contextId={child.id} />
         </details>}

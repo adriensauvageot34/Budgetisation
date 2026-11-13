@@ -277,3 +277,9 @@ TypeScript, diff et les dix groupes du banc de parcours PASS. Treize activités 
 La liste des articles filtre les libellés déclarés et les noms canoniques, avec un filtre pour les prix à préciser. Les homonymes gardent leur numéro d’origine et l’ouverture cible la sélection exacte. Le prix nul explicite reste renseigné. Les montants évalués de ligne sont masqués lorsque la projection est périmée ; les prix saisis restent lisibles.
 
 TypeScript, diff et le banc catalogue/panier PASS. Le filtre isole une ligne UNKNOWN sans renuméroter l’homonyme à 0 €, et le passage à STALE masque son total calculé sans mutation ni changement de digest. Aucun writer distant ni Apply. Suite · lecture des coûts des intentions liées.
+
+### Coûts individuels des intentions liées
+
+Chaque ligne distingue coût total, sous-total connu, coût inconnu et calcul à actualiser. Le filtre « À compléter » suit le coût officiel lorsqu’il est publié. L’identité, la consultation et les actions de rattachement restent visibles indépendamment du calcul.
+
+Le banc des intentions liées vérifie 0 € explicite, un sous-total officiel de 12 € avec supplément inconnu, un coût inconnu, le masquage en STALE et l’ouverture de l’homonyme exact. Digest préservé, aucun writer distant ni Apply. Suite · accès depuis le catalogue Clay.

@@ -20,6 +20,11 @@ const request=async operation=>{
 await request({kind:'DROP',assetKey:'template:other-context',presetKey:'composed-outing',target:{kind:'BOARD_ZONE'},identity:parentId,selectionId:uuid(31210),values:{}});
 for(const [index,id] of ids.entries())await request({kind:'DROP',assetKey:'template:activity',presetKey:'cinema',target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:parentId,slotKey:'children'},identity:id,selectionId:uuid(31211+index),values:{}});
 await request({kind:'EDIT_PRESET_CONTEXT',edit:{contextOccurrenceId:ids[0],slots:{main:[{selectionId:uuid(31220),kind:'COMPONENT',optionKey:'activity',label:'Gratuit explicitement déclaré',provenance:'EXPLICIT_USER_DECISION',quantity:'1',unitBasis:'ITEM',cost:{kind:'MANUAL',unitAmount:'0.00'},fundingAllocations:[],binding:{mode:'NO_RELATED_SLOT'}}]}}});
+const component=(selectionId,optionKey,label,cost)=>({selectionId,kind:'COMPONENT',optionKey,label,provenance:'EXPLICIT_USER_DECISION',quantity:'1',unitBasis:'ITEM',cost,fundingAllocations:[],binding:{mode:'NO_RELATED_SLOT'}});
+await request({kind:'EDIT_PRESET_CONTEXT',edit:{contextOccurrenceId:ids[1],slots:{
+ main:[component(uuid(31221),'activity','Billet',{kind:'MANUAL',unitAmount:'12.00'})],
+ extras:[component(uuid(31222),'extra','Supplément à préciser',{kind:'UNKNOWN'})],
+}}});
 model={...model,semanticState:{...model.semanticState,preferences:{...model.semanticState.preferences,anchors:[ids[1]]}}};
 await request({kind:'READ'});const digest=semanticStateDigest(model.semanticState);let root,setStatus,opened=[];
 function Harness(){const [status,update]=React.useState('FRESH');setStatus=update;return React.createElement(BudgetPreviewStatus.Provider,{value:status},React.createElement(LinkedIntentions,{model,parentId,busy:false,open:id=>opened.push(id),decide(){assert.fail('Filtering must not adopt');}}));}
@@ -29,12 +34,17 @@ const filter=async key=>act(async()=>root.root.findByProps({'data-linked-filter'
 try{
  await act(async()=>{root=create(React.createElement(Harness));});assert.equal(rows().length,5);
  assert.match(text(root.root),/4 à compléter · 5 en consultation/);
+ assert.match(text(rows()[0]),/Coût total · 0,00\s*€/);
+ assert.match(text(rows()[1]),/Sous-total connu · 12,00\s*€ · Total à préciser/);
+ assert.match(text(rows()[2]),/Coût à préciser/);
  await filter('INCOMPLETE');assert.equal(rows().length,4);assert(!rows().some(row=>row.props['data-linked-intention']===ids[0]));assert.match(text(rows()[0]),/Cinéma · 2/);
  await filter('READ_ONLY');assert.equal(rows().length,5,'The owner protects the composition containing an anchored child');
  const selected=rows().find(row=>row.props['data-linked-intention']===ids[1]);
  await act(async()=>selected.findAllByType('button')[0].props.onClick());assert.deepEqual(opened,[ids[1]]);
  await filter('INCOMPLETE');await act(async()=>setStatus('STALE'));assert.equal(rows().length,0);
  assert.match(text(root.root),/Attendez la nouvelle projection/);
+ await filter('ALL');assert(rows().every(row=>text(row).includes('Coût à actualiser')));
+ assert.doesNotMatch(text(root.root),/12,00|0,00/);
  assert.equal(semanticStateDigest(model.semanticState),digest);assert.deepEqual(f.writes,[]);
  console.log(JSON.stringify({status:'PASS',checks:2,remoteWrites:0,apply:false,level:'LOCAL_LINKED_SUMMARY_AND_OWNER'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

@@ -1118,6 +1118,8 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .projectChoice span { min-width:0; overflow-wrap:anywhere; }
 .projectChoice small { display:block; margin-top:4px; }
 .linkedIntention { padding:10px 0; overflow-wrap:anywhere; }
+.linkedIntention .linkedCost { margin:4px 0 0; }
+.linkedCost strong { font-variant-numeric:tabular-nums; }
 .linkedIntention details { margin-top:8px; }
 .linkedIntention summary { cursor:pointer; min-height:32px; }
 .linkedFilters { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
