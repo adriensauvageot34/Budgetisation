@@ -77,6 +77,18 @@ try{
  const directMeal={...complete,board:{...complete.board,contexts:complete.board.contexts.map(card=>card.contextOccurrenceId===stayId
   ? {...card,sockets:card.sockets.map(socket=>socket.slotKey==='restaurants'?{...socket,currentItems:[{kind:'COMPONENT'}]}:socket)}:card)}};
  assert.deepEqual(projectCompletionSuggestions(directMeal,stayId),[]);
+ const rental=await request(stayedWithMeal.semanticState,{kind:'EDIT_SHORT_STAY',edit:{contextOccurrenceId:stayId,fields:{lodgingKind:'RENTAL'}}});
+ const grocerySuggestion=projectCompletionSuggestions(rental,stayId).find(candidate=>candidate.preset.presetKey==='groceries-purchase');
+ assert(grocerySuggestion);assert.equal(grocerySuggestion.target.slotKey,'purchases');
+ assert.match(grocerySuggestion.reason,/choisi une location/);
+ const withBasket=await add(rental,'groceries-purchase',stayId,'purchases');
+ const basket=withBasket.semanticState.contexts.find(context=>context.fields.composerPresentation?.presetKey==='groceries-purchase');
+ assert.equal(basket.fields.budgetDomain,'groceries');assert.deepEqual(basket.slotSelections,{});
+ assert.equal(basket.fields.basketCoverage,undefined);
+ assert.deepEqual(projectCompletionSuggestions(withBasket,stayId),[]);
+ const directGroceries={...rental,board:{...rental.board,contexts:rental.board.contexts.map(card=>card.contextOccurrenceId===stayId
+  ? {...card,sockets:card.sockets.map(socket=>socket.slotKey==='groceries'?{...socket,currentItems:[{kind:'COMPONENT'}]}:socket)}:card)}};
+ assert.deepEqual(projectCompletionSuggestions(directGroceries,stayId),[]);
  const outing=await add(complete,'composed-outing');
  const leisureId=outing.semanticState.contexts.filter(context=>context.templateKey==='other-context').at(-1).contextOccurrenceId;
  const bowling=await add(outing,'bowling',leisureId);
@@ -93,5 +105,6 @@ try{
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
  console.log('S3-04 Weekend complements follow the actual children without repeating an existing activity: PASS');
  console.log('S3-05 Two leisure activities offer one meal, suppressed when any meal is already linked: PASS');
- console.log(JSON.stringify({status:'PASS',checks:5,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ console.log('S3-06 A rental can suggest an empty groceries basket and suppresses an existing groceries decision: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:6,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

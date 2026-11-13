@@ -3,6 +3,7 @@
 import { createContext, useContext, useRef } from "react";
 import { ACTIVITY_PRESETS, composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
+import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
 import { publishedDrop } from "./interactions";
 import { useInlineEditRegistry } from "./inline-edit-registry";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
@@ -54,17 +55,22 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
   const stayMeal = stay && activityChosen && !mealChosen ? [{
     add: "restaurant-for-two" as const, reason: "Une activité est déjà liée au séjour. Vous pouvez prévoir un repas pendant le séjour.",
   }] : [];
-  return [...candidates, ...stayMeal].flatMap(candidate => {
+  const stayGroceries = stay && parent.fields.lodgingKind === "RENTAL"
+    && !children.some(card => isPurchaseBasket(card) && card.fields.budgetDomain === "groceries")
+    && !parent.sockets.find(socket => socket.slotKey === "groceries")?.currentItems.some(item => item.kind === "COMPONENT")
+    ? [{ add: "groceries-purchase" as const,
+      reason: "Vous avez choisi une location. Vous pouvez préparer un panier pour les repas pris sur place." }] : [];
+  return [...candidates, ...stayMeal, ...stayGroceries].flatMap(candidate => {
     const child = composerPreset(candidate.add);
     const assetKey = `template:${child?.templateKey}`;
-    const destination = stay && child?.templateKey === "restaurant" ? "restaurants" : slotKey;
+    const destination = candidate.add === "groceries-purchase" ? "purchases" : stay && child?.templateKey === "restaurant" ? "restaurants" : slotKey;
     const target = { kind: "CONTEXT_SOCKET" as const, contextOccurrenceId: parentId, slotKey: destination };
     if (!child || chosen.has(child.presetKey) || child.templateKey === "restaurant" && mealChosen
       || !parent.sockets.some(socket => socket.slotKey === destination && socket.contextOccurrenceId === parentId
         && socket.capabilityRefs.includes(`${parent.templateKey}:${destination}:ATTACH_CHILD_CONTEXT`))
       || publishedDrop(model, assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return [];
     return [{ key: `${parentId}:${child.presetKey}`, preset: child, target, assetKey, reason: candidate.reason,
-      category: child.templateKey === "restaurant" ? "MEALS" as const : "ACTIVITIES" as const }];
+      category: child.templateKey === "restaurant" || candidate.add === "groceries-purchase" ? "MEALS" as const : "ACTIVITIES" as const }];
   }).sort((left, right) => Number(right.category === priority) - Number(left.category === priority));
 }
 

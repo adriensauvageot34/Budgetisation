@@ -449,3 +449,9 @@ TypeScript, diff, recherche, aperçu, douze contrôles Séjour et dix groupes du
 ### Nombre d’articles pendant le recalcul
 
 La carte panier lit le nombre d’articles dans le Draft courant pendant le recalcul. Le total reste issu du reçu du Compiler. TypeScript, diff et banc d’impact PASS, y compris une suppression locale de la liste qui affiche zéro article sans reprendre l’ancien total Amazon.
+
+### Courses proposées pour une location
+
+Un séjour dont le type Location est déclaré peut proposer un panier vide dans le socket Achats. Un panier Courses déjà lié ou un poste Courses direct masque la suggestion. Le prix et la couverture restent à renseigner.
+
+TypeScript, diff et six groupes S3 PASS. La proposition explique le type d’hébergement. L’admission vérifie le panier vide et les deux formes de Courses déjà présentes. Aucun writer distant ni Apply.
