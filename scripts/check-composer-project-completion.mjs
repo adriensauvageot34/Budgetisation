@@ -33,13 +33,14 @@ assert.deepEqual(projectCompletionSuggestions(model,parentId,'MEALS').map(candid
 const protectedModel={...model,semanticState:{...model.semanticState,preferences:{...model.semanticState.preferences,anchors:[parentId]}}};
 assert.deepEqual(projectCompletionSuggestions(protectedModel,parentId),[]);
 assert.deepEqual(projectCompletionSuggestions({...model,dropCapabilities:[]},parentId),[]);
-let root,setModel,accepted=[],summaryFocus=0;
+let root,setModel,accepted=[],summaryFocus=0,rejectNext=false;
 function Harness(){
  const [shown,update]=React.useState(model);setModel=update;
  const [enabled,toggle]=React.useState(true),[priority,prioritize]=React.useState('BALANCED'),[dismissed,setDismissed]=React.useState({});
  return React.createElement(ProjectCompletionPreference.Provider,{value:{enabled,toggle:()=>toggle(value=>!value),priority,prioritize,dismissed,
   dismiss:(id,key)=>setDismissed(previous=>({...previous,[id]:key===null?[]:[...(previous[id]??[]),key]}))}},
-  React.createElement(ProjectCompletion,{model:shown,parentId,busy:false,decide(operation){accepted.push(operation);return true;}}));
+  React.createElement(ProjectCompletion,{model:shown,parentId,busy:false,decide(operation){
+   if(rejectNext){rejectNext=false;return false;}accepted.push(operation);return true;}}));
 }
 const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join('');
 const buttons=()=>root.root.findAllByType('button');
@@ -59,6 +60,9 @@ try{
  await act(async()=>setModel(model));await act(async()=>confirmation.accept());assert.equal(accepted.length,0);
  assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('Le projet a changé')));
  console.log('S3-02 A previously adopted complement invalidates an open confirmation: PASS');
+ rejectNext=true;
+ await click('Préparer Cinéma');await act(async()=>confirmation.accept());assert.equal(accepted.length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('n’a pas été ajoutée')));
  await click('Préparer Cinéma');await act(async()=>confirmation.accept());assert.equal(accepted.length,1);
  assert.equal(root.root.findAllByProps({role:'alert'}).length,0);
  assert.equal(accepted[0].target.contextOccurrenceId,parentId);
@@ -145,7 +149,7 @@ try{
   context:current.semanticState.contexts.find(context=>context.contextOccurrenceId===furnishingId),
   editor:current.editors.find(editor=>editor.assetKey==='template:home-project'),targetMonth:'2026-11',
   householdPersons:[],busy:false,model:current,choose(){assert.fail();},onCancel(){},
-  onSave(operation){accepted.push(operation);return true;},
+  onSave(operation){if(rejectNext){rejectNext=false;return false;}accepted.push(operation);return true;},
  });
  await act(async()=>{root=create(editorModel(furnishing));});
  await click('Ajouter Acheter pour la maison');
@@ -154,6 +158,10 @@ try{
  await act(async()=>confirmation.accept());assert.equal(accepted.length,0);
  assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('droits de rattachement ont changé')));
  await act(async()=>root.update(editorModel(furnishing)));
+ rejectNext=true;
+ await click('Ajouter Acheter pour la maison');
+ await act(async()=>confirmation.accept());assert.equal(accepted.length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('n’a pas été associée')));
  await click('Ajouter Acheter pour la maison');
  await act(async()=>confirmation.accept());assert.equal(accepted[0].purchaseBasket,true);
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);

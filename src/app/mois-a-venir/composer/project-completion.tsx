@@ -101,9 +101,10 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
       return;
     }
     setAdoptionError("");
-    decide({ kind: "DROP", assetKey: candidate.assetKey, presetKey: candidate.preset.presetKey, target: candidate.target,
+    const added = decide({ kind: "DROP", assetKey: candidate.assetKey, presetKey: candidate.preset.presetKey, target: candidate.target,
       ...(candidate.preset.templateKey === "purchase" ? { purchaseBasket: true } : {}),
       identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {} });
+    if (!added) setAdoptionError("Cette intention n’a pas été ajoutée. Consultez le message du brouillon, puis réessayez.");
   });
   const ask = useCommittedEvent((key: string) => {
     const candidate = candidates.find(item => item.key === key);

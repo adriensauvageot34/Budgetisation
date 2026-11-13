@@ -101,7 +101,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       return;
     }
     setError("");
-    onSave(operation);
+    if (!onSave(operation)) setError("Cette intention n’a pas été associée. Consultez le message du brouillon, puis réessayez.");
   });
   const confirmAttachment = (label: string, operation: () => Extract<ComposerOperation, { kind: "DROP" }>) => {
     const expectedDigest = model.board.draft.semanticStateDigest;

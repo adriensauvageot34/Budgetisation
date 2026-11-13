@@ -629,3 +629,7 @@ Entrée dans la recherche du sélecteur ouvre l’occurrence unique du filtre co
 ### Modèle Shopping vêtements et beauté
 
 Le seizième modèle utilise la structure de projet composée et deux paniers facultatifs. Chaque panier conserve son identité et son éditeur. Les articles, prix et dates restent à choisir. TypeScript, recherche de modèles et les dix groupes du banc de parcours PASS sur fixture. Les deux coûts restent inconnus et les rattachements sont vérifiés par le reçu officiel.
+
+### Retour après refus d’une association
+
+L’éditeur du projet et les suggestions S3 indiquent quand une confirmation n’a pas été admise par le brouillon. L’utilisateur peut consulter le message du brouillon et recommencer. TypeScript et neuf groupes S3 PASS, avec refus local simulé, absence d’ajout et réussite du nouvel essai explicite.
