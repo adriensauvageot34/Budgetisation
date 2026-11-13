@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useRef, useState } from "react";
-import { ACTIVITY_PRESETS, composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import { composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
 import { publishedDrop } from "./interactions";
@@ -10,15 +10,7 @@ import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import styles from "./composer.module.css";
 
-type CompletionRule = Readonly<{ trigger: ComposerPresetKey; add: ComposerPresetKey; reason: string }>;
-const outingRules: readonly CompletionRule[] = [
-  { trigger: "cinema", add: "restaurant-for-two", reason: "Votre sortie contient un cinéma. Vous pouvez prévoir un repas dans le même projet." },
-  { trigger: "restaurant-for-two", add: "cinema", reason: "Votre sortie contient un restaurant. Vous pouvez prévoir une séance dans le même projet." },
-  ...ACTIVITY_PRESETS.map(preset => ({
-    trigger: preset.presetKey, add: "restaurant-for-two" as const,
-    reason: `« ${preset.label} » est déjà lié à la sortie. Vous pouvez préparer un repas dans le même projet.`,
-  })),
-];
+type CompletionCandidate = Readonly<{ add: ComposerPresetKey; reason: string }>;
 export type ProjectCompletionPriority = "BALANCED" | "ACTIVITIES" | "MEALS";
 
 export function projectCompletionSuggestions(model: ComposerUiModel, parentId: string, priority: ProjectCompletionPriority = "BALANCED") {
@@ -34,16 +26,20 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
   const children = model.board.contexts.filter(card => card.parentContextOccurrenceId === parentId
     && parent.childContextOccurrenceIds.includes(card.contextOccurrenceId));
   const chosen = new Set(children.map(card => presetForContext(card)?.presetKey));
-  const activityChosen = children.some(card => card.templateKey === "activity");
+  const activity = children.find(card => card.templateKey === "activity");
+  const activityChosen = !!activity;
   const mealChosen = children.some(card => ["restaurant", "fast-food", "delivery"].includes(card.templateKey))
     || stay && !!parent.sockets.find(socket => socket.slotKey === "restaurants")?.currentItems.some(item => item.kind === "COMPONENT");
   const stayLabel = preset === "weekend-gite" ? "week-end" : "séjour";
-  const candidates: readonly Pick<CompletionRule, "add" | "reason">[] = preset === "composed-outing"
-    ? children.length ? outingRules.filter(rule => chosen.has(rule.trigger)
-      && (rule.add === "cinema" ? !activityChosen : !mealChosen)).slice(0, 1) : [
-      { add: "cinema", reason: "Votre projet ne contient aucune intention. Vous pouvez commencer par une séance, puis compléter la sortie." },
-      { add: "restaurant-for-two", reason: "Votre projet ne contient aucun repas. Vous pouvez préparer un restaurant si vous le souhaitez." },
-    ]
+  const outingCandidates: CompletionCandidate[] = [];
+  if (!activity && (mealChosen || !children.length)) outingCandidates.push({ add: "cinema", reason: mealChosen
+    ? "Un repas est déjà lié à la sortie. Vous pouvez préparer une séance dans le même projet."
+    : "Votre projet ne contient aucune intention. Vous pouvez commencer par une séance, puis compléter la sortie." });
+  if (!mealChosen && (activity || !children.length)) outingCandidates.push({ add: "restaurant-for-two", reason: activity
+    ? `« ${activity.label} » est déjà lié à la sortie. Vous pouvez préparer un repas dans le même projet.`
+    : "Votre projet ne contient aucun repas. Vous pouvez préparer un restaurant si vous le souhaitez." });
+  const candidates: readonly CompletionCandidate[] = preset === "composed-outing"
+    ? outingCandidates
     : home ? children.some(card => card.templateKey === "purchase")
       || parent.sockets.find(socket => socket.slotKey === "items")?.currentItems.some(item => item.kind === "COMPONENT") ? [] : [
         { add: "home-equipment-basket", reason: "Aucun équipement ni achat n’est encore prévu pour cette pièce. Vous pouvez préparer un panier." },

@@ -105,6 +105,16 @@ try{
  assert.deepEqual(projectCompletionSuggestions(takeaway,leisureId),[]);
  const dining=await add(leisure,'restaurant-for-two',leisureId);
  assert.deepEqual(projectCompletionSuggestions(dining,leisureId),[]);
+ const freeActivity=await request(outing.semanticState,{kind:'DROP',assetKey:'template:activity',
+  target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:leisureId,slotKey:'children'},
+  identity:uuid(++counter),selectionId:uuid(++counter),values:{label:'Découverte libre'}});
+ const freeOffers=projectCompletionSuggestions(freeActivity,leisureId);
+ assert.deepEqual(freeOffers.map(offer=>offer.preset.presetKey),['restaurant-for-two']);
+ assert.match(freeOffers[0].reason,/Découverte libre/);
+ const snackOnly=await add(outing,'chicken-snack',leisureId);
+ assert.deepEqual(projectCompletionSuggestions(snackOnly,leisureId).map(offer=>offer.preset.presetKey),['cinema']);
+ assert.deepEqual(projectCompletionSuggestions({...freeActivity,dropCapabilities:freeActivity.dropCapabilities.filter(
+  drop=>drop.sourceAssetKey!=='template:restaurant')},leisureId),[]);
  const furnishing=await add(dining,'furnish-room');
  const furnishingId=furnishing.semanticState.contexts.find(context=>context.templateKey==='home-project').contextOccurrenceId;
  const furnishingOffer=projectCompletionSuggestions(furnishing,furnishingId)[0];
@@ -136,6 +146,7 @@ try{
  console.log('S3-05 Two leisure activities offer one meal, suppressed when any meal is already linked: PASS');
  console.log('S3-06 A rental can suggest an empty groceries basket and suppresses an existing groceries decision: PASS');
  console.log('S3-07 A home furnishing project suggests one empty equipment basket until a purchase or item is present: PASS');
+ console.log('S3-08 A generic activity or a snack provides a truthful, capability-gated reason for its complement: PASS');
  console.log('The home project attachment editor refuses stale confirmation: PASS');
- console.log(JSON.stringify({status:'PASS',checks:7,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ console.log(JSON.stringify({status:'PASS',checks:8,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}
