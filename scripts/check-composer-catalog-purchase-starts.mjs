@@ -79,10 +79,13 @@ assert.equal(semanticStateDigest(f.model.semanticState),initial);assert.equal(JS
 const testRequire=createRequire(path.resolve(process.env.PLANNER_REACT_TEST_TOOLS||'outputs/p21-react-tools','package.json'));
 const React=testRequire('react'),jsx=testRequire('react/jsx-runtime'),{create,act}=testRequire('react-test-renderer');
 const originalLoad=Module._load,originalFetch=globalThis.fetch;let root,chosen=[],confirmation;
+let catalogLoadFailures=1;
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 class Element{focus(){}}
 globalThis.HTMLElement=Element;globalThis.document={body:{},activeElement:new Element()};
-globalThis.fetch=async url=>{assert.equal(url,'/planned-visuals/builder/clay/v22/collection.json','Only local collection fixture may load');return {ok:true,json:async()=>({schema:'clay-v22-collection@2',entries})};};
+globalThis.fetch=async url=>{assert.equal(url,'/planned-visuals/builder/clay/v22/collection.json','Only local collection fixture may load');
+ if(catalogLoadFailures-- > 0)throw Error('SYNTHETIC_CATALOG_LOAD_FAILURE');
+ return {ok:true,json:async()=>({schema:'clay-v22-collection@2',entries})};};
 Module._load=function(name,parent,...args){if(name==='react')return React;if(name==='react/jsx-runtime')return jsx;if(name==='react-dom')return {createPortal:children=>children};
  if(name==='./workshop-confirmation')return {useWorkshopConfirmation:()=>value=>{confirmation=value;}};
  if(name==='./context-palette'&&parent?.filename.endsWith('purchase-basket-editor.tsx'))return {ContextPalette:()=>null};
@@ -97,6 +100,10 @@ try{
   React.createElement(CatalogOpenButton,{target:{entryId:charger.visualConceptId,query:charger.label,scope:'purchase'}},'Ouvrir le catalogue')),
   {createNodeMock:element=>({open:false,showModal(){this.open=true;},close(){this.open=false;},focus(){focus.push(element.type);}})});});
  await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());assert.equal(chosen.length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('Votre recherche est conservée')));
+ assert.equal(root.root.findByProps({'aria-label':'Rechercher dans tous les éléments'}).props.value,charger.label);
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Réessayer le chargement').props.onClick());
+ assert.equal(chosen.length,0);
  assert.equal(focus.at(-1),'h3');
  assert(root.root.findByProps({'data-catalog-detail-open':true}));
  assert(root.root.findByProps({'data-catalog-panel-detail':true}));

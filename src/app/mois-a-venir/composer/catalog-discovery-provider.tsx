@@ -23,6 +23,7 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey,concept?:BasketConcept)=>void;
  prepareBasketArticle?:(id:string,concept:BasketConcept)=>void}){
  const [request,setRequest]=useState<Request|null>(null),[entries,setEntries]=useState<readonly ClayCatalogEntry[]>([]),[error,setError]=useState('');
+ const [loadAttempt,setLoadAttempt]=useState(0);
  const [query,setQuery]=useState(''),[scope,setScope]=useState('all'),[family,setFamily]=useState(''),[nature,setNature]=useState(''),[page,setPage]=useState(0),[selected,setSelected]=useState<string|null>(null);
  const dialog=useRef<HTMLDialogElement>(null), trigger=useRef<HTMLElement|null>(null), requestDigest=useRef('');
  const resultsRegion=useRef<HTMLDivElement>(null), detailHeading=useRef<HTMLHeadingElement>(null), resultTrigger=useRef<HTMLElement|null>(null);
@@ -34,8 +35,8 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
    setRequest(target);setScope(target.scope??scopeForCard(model,target.contextId));setQuery(target.query??'');setFamily('');setNature('');setPage(0);setSelected(target.entryId??null);};
  const close=()=>{dialog.current?.close();setRequest(null);trigger.current?.focus({preventScroll:true});};
  useEffect(()=>{if(!request)return;let current=true;if(!dialog.current?.open)dialog.current?.showModal();setError('');
-   void loadClayV22Collection().then(c=>{if(current)setEntries(c.entries);}).catch(()=>{if(current)setError('Le catalogue n’a pas pu être chargé. Fermez puis réessayez.');});
-   return()=>{current=false;};},[request]);
+   void loadClayV22Collection().then(c=>{if(current)setEntries(c.entries);}).catch(()=>{if(current)setError('Le catalogue n’a pas pu être chargé. Votre recherche est conservée.');});
+   return()=>{current=false;};},[request,loadAttempt]);
  const commandIds=useMemo(()=>new Set(request?.commands?.map(command=>command.visualConceptId)),[request]);
  const results=useMemo(()=>catalogResults(entries,{query,scope,family,nature,selectedIds:frozenSelections.current,
    moment:request?.moment,commandIds}),[entries,query,scope,family,nature,request?.moment,commandIds]);
@@ -87,7 +88,8 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
     </div>
     {scope==='courses'&&!basket&&<div className={styles.notice}><p>Le budget Courses du mois et le panier de produits sont deux décisions distinctes.</p>
       {canPrepareCourses&&<button type="button" disabled={busy||!currentRequest} onClick={()=>execute(()=>choosePreset(coursesAsset!,'groceries-purchase'))}>Préparer mes courses</button>}</div>}
-    {error?<p role="alert">{error}</p>:!entries.length?<p role="status">Chargement du catalogue…</p>:<>
+    {error?<div><p role="alert">{error}</p><button type="button" onClick={()=>setLoadAttempt(attempt=>attempt+1)}>Réessayer le chargement</button></div>
+      :!entries.length?<p role="status">Chargement du catalogue…</p>:<>
     <div className={styles.count} role="status">{results.length} résultat(s){query?' pour votre recherche':' · classés selon ce contexte'}</div>
     <div className={styles.content} data-catalog-detail-open={!!chosen}>
      <div ref={resultsRegion} tabIndex={-1} className={styles.results} aria-label="Éléments du catalogue">{results.slice(page*24,page*24+24).map(({entry,reason})=>{const art=clayCatalogArtwork(entry);return <button type="button" key={entry.visualConceptId} data-catalog-entry={entry.visualConceptId} aria-pressed={selected===entry.visualConceptId} onClick={event=>{resultTrigger.current=event.currentTarget;setSelected(entry.visualConceptId);}}>

@@ -617,3 +617,7 @@ Les séjours et visites familiales sans preset sont indexés par leur identité 
 ### Date du panier dans le mois préparé
 
 Le formulaire indique le mois et borne le calendrier. Une date impossible ou extérieure au mois bloque la validation en conservant la saisie. Le prix et les articles restent intacts. TypeScript et banc panier PASS sur fixture, dont deux dates refusées puis un enregistrement admis au 20 novembre.
+
+### Réessayer un catalogue indisponible
+
+La fenêtre conserve la recherche et la fiche choisie après un échec de chargement. Le bouton de réessai relance le lecteur du catalogue public. TypeScript et banc catalogue/panier PASS, dont une panne simulée suivie d’un chargement réussi sans commande ni mutation du Draft.
