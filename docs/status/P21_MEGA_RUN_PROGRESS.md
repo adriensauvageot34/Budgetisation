@@ -355,3 +355,9 @@ TypeScript, diff, banc d’aperçu, recherche et dix groupes de parcours PASS. L
 Un séjour contenant une activité peut proposer un repas dans son socket Restaurants. Le motif indique l’activité déjà liée. Un repas autonome ou directement renseigné dans le séjour suffit à retirer la proposition.
 
 TypeScript, diff et cinq groupes S3 PASS. Le contrôle retire la proposition sans capacité du socket et après rattachement d’un repas. Les suggestions culture et nature restent indépendantes. Aucun ajout automatique, writer distant ni Apply.
+
+### Préserver les enfants intacts lors d’une édition du séjour
+
+Retirer ou modifier un poste lié ne crée plus un composant UNKNOWN dans un enfant voisin encore vide. La ligne d’aperçu de cet enfant reste locale jusqu’à une modification volontaire. Le brouillon ne reçoit que les enfants effectivement édités.
+
+TypeScript, diff et bancs séjour/enfants et familles de projets PASS. Retirer le deuxième Cinéma homonyme après confirmation préserve le premier et ses slots vides. Aucun writer distant ni Apply.

@@ -62,7 +62,8 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     const child = semanticState.contexts.find(c => c.contextOccurrenceId === item.childContextOccurrenceId);
     if (!child) return [];
     const main = firstComponent(child, mainSlot(child.templateKey));
-    return [{ row: main ? fromSelection(main) : fresh(typeof child.fields.label === "string" ? child.fields.label : ""), templateKey: child.templateKey, child, link: item }];
+    return [{ row: main ? fromSelection(main) : { ...fresh(typeof child.fields.label === "string" ? child.fields.label : ""), edited: false },
+      templateKey: child.templateKey, child, link: item }];
   })])) as Record<Group, Post[]>);
   const [dirty, setDirty] = useState<Partial<Record<Group, boolean>>>({});
   const [postSection, setPostSection] = useState<"lodging" | "groceries" | Group>("lodging");
@@ -113,7 +114,7 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     if (groceriesDirty) mutable.groceries = groceries ? [buildComponentRow(groceries, "groceries")] : [];
     const children: PlannedContextState[] = [];
     for (const [slot] of groups) if (dirty[slot]) mutable[slot] = posts[slot].map(post => {
-      if (post.link && post.child && isPurchaseBasket(post.child)) return post.link;
+      if (post.link && post.child && (isPurchaseBasket(post.child) || !post.row.edited)) return post.link;
       const useChild = !!post.link || slot === "activities" || slot === "purchases";
       if (!useChild) return buildComponentRow(post.row, post.templateKey);
       const childId = post.child?.contextOccurrenceId ?? crypto.randomUUID(), key = post.templateKey;

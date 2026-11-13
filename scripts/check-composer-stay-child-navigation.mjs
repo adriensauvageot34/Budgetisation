@@ -46,6 +46,8 @@ try{
  await act(async()=>{assert(prospective.onSave({kind:'EDIT_SHORT_STAY',edit:{contextOccurrenceId:parentId,fields:{}}}));});
  assert.equal(operations.length,1);await request(operations[0]);
  assert(model.semanticState.contexts.some(context=>context.contextOccurrenceId===children[0]));
+ assert.deepEqual(model.semanticState.contexts.find(context=>context.contextOccurrenceId===children[0]).slotSelections,{});
+ assert.deepEqual(operations[0].edit.children,[]);
  assert(!model.semanticState.contexts.some(context=>context.contextOccurrenceId===children[1]));
  assert(model.semanticState.contexts.some(context=>context.contextOccurrenceId===parentId));
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
