@@ -6,6 +6,7 @@ import { canonicalPlannerJson } from "./json";
 import { componentId } from "./identity";
 import type { PlannedContextState } from "./semantic-state";
 import type { ComponentSelectionV1 } from "./component-contract";
+import { isPurchaseBasket, purchaseComponents } from "./purchase-basket";
 
 export const LIBRARY_CATEGORIES = [
   ["SOCIAL", "Sortir & faire la fête"], ["FOOD", "Manger & commander"],
@@ -35,7 +36,7 @@ export function libraryPresetGroup(preset:ComposerPreset):string {
 export const normalizeLibrarySearch = (text:string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr").replace(/[\p{P}\p{S}]+/gu," ").replace(/\s+/gu," ").trim();
 export type LibraryIntention = Readonly<{ key:string; category:string; asset:ComposerAssetView; preset?:ComposerPreset; label:string; search:string; group:string }>;
 export type LibraryOccurrence = Readonly<{ contextOccurrenceId:string; presetKey:string|null; label:string; search:string;
-  plannedDate:string|null; action:"EDIT"|"VIEW" }>;
+  plannedDate:string|null; action:"EDIT"|"VIEW"; surface:"BASKET"|"ARTICLE"|"CONTEXT"|"EXTERNAL" }>;
 const clothingPresets = new Set(["clothing-shopping", "shein-purchase", "shoes-purchase"]);
 const situatedPresets = new Set(["mascara", "eyeliner", "eyebrow-pencil", "hair-wax", "face-cleanser", "makeup-remover",
   "restaurant-for-two", "cinema", "weekend-gite", "amazon-purchase", "groceries-purchase", "composed-outing",
@@ -101,9 +102,12 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
     if(date&&(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!date.startsWith(`${model.board.targetMonth}-`)
       ||!Number.isFinite(new Date(`${date}T12:00:00Z`).getTime())))return [];
     const context=model.semanticState.contexts.find(c=>c.contextOccurrenceId===card.contextOccurrenceId);
+    const basket=isPurchaseBasket(card);
+    if(basket!==(context?isPurchaseBasket(context):false))return [];
     if(preset&&clothingPresets.has(preset.presetKey)&&(!isClothingPurchase(card)||!context||!isClothingPurchase(context)
       ||publishedPreset(context)?.presetKey!==preset.presetKey))return [];
-    const clothing=isClothingPurchase(card), article=context&&clothing?clothingItem(context):undefined;
+    const clothing=isClothingPurchase(card)&&!basket, article=context&&clothing?clothingItem(context):undefined;
+    const basketLabels=basket&&context?purchaseComponents(context,"item").map(item=>item.label):[];
     const productLabel=clothing&&typeof card.fields.productLabel==="string"?card.fields.productLabel:"";
     const editable=!hairdresserReference&&!!preset&&!card.readOnly&&card.capabilityRefs.includes("PATCH_CONTEXT")&&context?.templateKey===card.templateKey
       &&publishedPreset(context)?.presetKey===preset.presetKey
@@ -112,9 +116,10 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
       &&(!clothing||clothingItemWritable(model,context,card));
     return [{contextOccurrenceId:card.contextOccurrenceId,presetKey:hairdresserReference?null:preset!.presetKey,label:article?`${article.label} · ${productLabel||card.label}`:card.label,
       plannedDate:date,action:editable?"EDIT" as const:"VIEW" as const,
+      surface:hairdresserReference?"EXTERNAL" as const:basket?"BASKET" as const:clothing&&article?"ARTICLE" as const:"CONTEXT" as const,
       search:normalizeLibrarySearch(hairdresserReference?`${card.label} Coiffeur prestation coiffure ${card.components
         .filter(item=>item.assetKey==="beauty:hairdresser").map(item=>item.label).join(" ")}`
-        :[card.label,preset!.label,libraryPresetGroup(preset!),...preset!.searchTerms,...(clothing?[productLabel]:[]),...(article?[article.label]:[])].join(" "))}];
+        :[card.label,preset!.label,libraryPresetGroup(preset!),...preset!.searchTerms,...(clothing?[productLabel]:[]),...(article?[article.label]:[]),...basketLabels].join(" "))}];
   });
 }
 export type LibrarySearchAction = Readonly<{kind:"OPEN";contextOccurrenceId:string}>|Readonly<{kind:"ADD";key:string}>|Readonly<{kind:"FOCUS"}>;

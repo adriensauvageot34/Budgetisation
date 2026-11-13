@@ -84,7 +84,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Lecture financière des relations | Contexte parent distingué du coût individuel de chaque intention |
 | DONE | Reprise des séjours | Hôtel et séjour chez des proches retrouvables, deux modèles supplémentaires |
 | READY | Aperçu des projets | Améliorer les erreurs et la reprise lorsque les droits changent pendant un aperçu |
-| READY | Catalogue contextualisé | Clarifier la différence entre un panier et une fiche d’achat spécialisée |
+| DONE | Catalogue contextualisé | Type d’éditeur annoncé et recherche des paniers par leurs articles |
 | READY | Accessibilité des formulaires | Retour du focus, labels et navigation progressive sans perte de RAW |
 | READY | Compléments des séjours | Parcours d’ouverture ciblée des activités enfants depuis les postes |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
@@ -151,3 +151,9 @@ TypeScript, diff et deux contrôles React/propriétaire PASS. Deux projets homon
 Hôtel et Séjour chez des proches se retrouvent dans les intentions du mois. Deux modèles ajoutent respectivement une visite culturelle et une balade, portant la bibliothèque à huit modèles. Les visites familiales exposent les enfants, leur ouverture, leur déplacement admissible et les suggestions S3. La lecture d’un enfant précise son projet parent et le périmètre individuel des montants.
 
 TypeScript PASS. Deux contrôles propriétaire/rendu et les trois contrôles de bibliothèque PASS. Les nouveaux séjours conservent hébergement, nuits, dates et coûts inconnus ; aucune gratuité n’est déduite du séjour chez des proches. La visite familiale reste sans personne, lieu ni prix inventés. Le maintien de l’éditeur familial après rattachement utilise le chemin du Shell déjà employé pour les séjours. Recette navigateur approfondie NOT_RUN.
+
+### Paniers et fiches spécialisées
+
+La bibliothèque distingue panier multi-articles, fiche d’article, activité et intention à compléter. Une recherche peut retrouver un panier par le nom d’un article. Correction ciblée : un panier Vêtements `purchase@v2` ne passe plus dans le contrôle mono-article historique qui le classait à tort en consultation seule. Les versions panier de la carte et du Draft doivent correspondre avant toute proposition de reprise.
+
+TypeScript et diff PASS. Le banc panier valide Amazon, Vêtements, Courses, compatibilité historique et Save/Reload sur stockage SQL isolé. Les nouveaux contrôles couvrent le panier Vêtements vide, son ouverture, la recherche de Jean et l’ancrage qui impose la consultation. Aucun accès à une base distante ni Apply.

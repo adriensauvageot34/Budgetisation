@@ -2,7 +2,7 @@ import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { memo, useState, useRef, useEffect, useMemo } from "react";
 import { composerPreset, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
-import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isClothingPurchase, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
+import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { Search, Star } from "lucide-react";
@@ -46,6 +46,9 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   const tile=(item:LibraryIntention)=>{
     const asset=item.asset, source=model.presentation.dragSources[asset.assetKey];
     const alreadyPresent=!!item.preset&&index.occurrences.some(row=>row.presetKey===item.preset!.presetKey);
+    const caption=asset.kind!=="CONTEXT_ASSET"?"Complément à configurer":asset.templateKey==="purchase"?"Panier multi-articles"
+      :asset.templateKey==="beauty-restock"?"Produits · prix et quantités":asset.templateKey==="activity"?"Activité · tarif et frais"
+      :asset.templateKey==="short-stay"?"Séjour · hébergement et postes":"Intention à compléter";
     const draggable=!!source&&(item.preset?!!publishedDrop(model,asset.assetKey,{kind:'BOARD_ZONE'}):!!source.editorDropTarget||(composerRenderIndex(model).drops.get(asset.assetKey)??[]).some(d=>d.resolution!=="BLOCKED"))&&asset.provenance!=="DERIVED_CONSEQUENCE";
     return <div className={item.preset?styles.libraryTile:styles.libraryGenericTile} key={item.key}>
       <button type="button" className={item.preset?styles.presetTile:styles.libraryGenericChoice} data-preset={item.preset?.presetKey} data-asset={item.preset?undefined:asset.assetKey}
@@ -55,7 +58,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
         onDragStart={event=>{event.stopPropagation();if(busy||!draggable){event.preventDefault();return;}if(interaction)interaction.start(asset.assetKey,event,item.preset?.presetKey);else if(item.preset){event.preventDefault();}else{event.dataTransfer.setData("application/x-planner-asset",asset.assetKey);drag(asset.assetKey);}}}
         onDragEnd={()=>{interaction?.end();drag(null);}}>
         {item.preset?<PresetIllustration preset={item.preset}/>:<ComposerAssetVisual assetKey={asset.assetKey} templateKey={asset.templateKey} iconKey={asset.iconKey} identityRef={asset.capabilityRef} className={styles.assetIcon}/>}
-        <span>{alreadyPresent?`Ajouter un autre ${item.label}`:query.trim()?`Ajouter ${item.label}`:item.label}</span>
+        <span>{alreadyPresent?`Ajouter un autre ${item.label}`:query.trim()?`Ajouter ${item.label}`:item.label}<small className={styles.libraryActionCaption}>{caption}</small></span>
       </button>
       <button type="button" className={styles.libraryFavorite} aria-label={`${favorites.includes(item.key)?"Retirer":"Épingler"} ${item.label}`} aria-pressed={favorites.includes(item.key)} onClick={()=>toggleFavorite(item.key)}><Star size={13} fill={favorites.includes(item.key)?"currentColor":"none"}/></button>
     </div>;
@@ -86,7 +89,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
         {occurrences.map((row,index)=><button key={row.contextOccurrenceId} type="button" className={styles.libraryExistingAction}
           data-library-existing-action={row.contextOccurrenceId} disabled={busy} onClick={()=>openContext(row.contextOccurrenceId)}>
           <strong>{row.action==="EDIT"?"Modifier":"Voir"} {row.label}</strong>
-          <small>{occurrences.length>1?`Occurrence ${index+1} · `:""}{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.action==="EDIT"?"Éditeur de cette carte":isClothingPurchase(model.board.contexts.find(card=>card.contextOccurrenceId===row.contextOccurrenceId))?"Fiche de cet article en lecture seule":"Lecture seule sur le Board"}</small>
+          <small>{occurrences.length>1?`Occurrence ${index+1} · `:""}{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.surface==="BASKET"?"Panier multi-articles":row.surface==="ARTICLE"?"Fiche de cet article":row.surface==="EXTERNAL"?"Prestation externe":"Éditeur de cette carte"}{row.action==="VIEW"?" · Lecture seule sur le Board":""}</small>
           {model.board.contexts.some(card=>card.contextOccurrenceId===row.contextOccurrenceId&&isHairdresserReference(model,card))&&<small>Prestation externe · dépense du mois · voir cette prestation sur le Board</small>}
         </button>)}
       </section>}

@@ -15,6 +15,7 @@ const { plannerDigest } = require("@/domain/phase2/planner/json");
 const { stageLocalDecision } = require("@/app/mois-a-venir/composer/local-draft");
 const { purchaseSuggestions } = require("@/app/mois-a-venir/composer/purchase-suggestions");
 const { componentId } = require("@/domain/phase2/planner/identity");
+const {libraryOccurrences,filterLibraryIntentions}=require("@/domain/phase2/planner/composer-library-index");
 const collection = JSON.parse(fs.readFileSync("public/planned-visuals/builder/clay/v22/collection.json", "utf8"));
 const concept = label => {
   const entry = collection.entries.find(item => item.label === label && item.discovery.sourceRow);
@@ -116,6 +117,8 @@ try {
 
   const clothing = uuid(21101), tee1 = uuid(21102), jeans = uuid(21103), tee2 = uuid(21104);
   await create(clothing, "clothing-shopping", true);
+  assert.equal(libraryOccurrences(model).find(row=>row.contextOccurrenceId===clothing)?.action,"EDIT");
+  assert.equal(libraryOccurrences(model).find(row=>row.contextOccurrenceId===clothing)?.surface,"BASKET");
   assert.match(suggestions(clothing).find(candidate => candidate.kind === "ADD").label, /vêtement/);
   await article(clothing, tee1, "T-shirt noir", "2", "8", "UNIT", concept("T-shirt"));
   await edit(clothing, { kind: "SAVE_ITEM", selectionId: jeans, label: "Jean", quantity: "1", price: "20", unit: "UNIT" });
@@ -128,6 +131,9 @@ try {
   await edit(clothing, { kind: "REMOVE_ITEM", selectionId: tee2 });
   assert.deepEqual(context(clothing).slotSelections.item.items, beforeClothing.slice(0, 2));
   assert.equal(summary(clothing).knownAmount, "36.00");
+  assert(filterLibraryIntentions(libraryOccurrences(model),"Jean").some(row=>row.contextOccurrenceId===clothing));
+  const lockedBasket={...model,semanticState:{...draft,preferences:{...draft.preferences,anchors:[clothing]}}};
+  assert.equal(libraryOccurrences(lockedBasket).find(row=>row.contextOccurrenceId===clothing)?.action,"VIEW");
   console.log("Vêtements, prix inconnu et édition/retrait ciblés : PASS");
 
   const groceries = uuid(21012), pastas = uuid(21013), milk = uuid(21014), bread = uuid(21015);
