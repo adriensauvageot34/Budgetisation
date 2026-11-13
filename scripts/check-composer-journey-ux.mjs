@@ -134,7 +134,7 @@ assert.equal(newCinema.parentContextOccurrenceId,projectId);
 assert.deepEqual(newCinema.slotSelections,{});
 console.log('UX-07 Composed outing attaches exact occurrences and preserves official child costs: PASS');
 const starters=availableProjectStarters(model);
-assert.equal(starters.length,4);
+assert.equal(starters.length,5);
 let starterId=29200, starterSequence=20;
 const transport=command=>handleComposerRequest(fixture.deps,householdId,command);
 for(const starter of starters){
@@ -147,6 +147,13 @@ for(const starter of starters){
   assert(isPurchaseBasket(basket));
   assert.equal(basket.fields.budgetDomain,'games-digital');
   assert.deepEqual(basket.slotSelections,{});
+  assert.equal(libraryOccurrences(added.model).find(row=>row.contextOccurrenceId===added.parentId)?.action,'EDIT');
+ }
+ if(starter.key==='visit-and-activity'){
+  const visit=added.model.semanticState.contexts.find(context=>context.contextOccurrenceId===added.parentId);
+  assert.equal(visit.templateKey,'friend-visit');
+  assert.equal(visit.fields.personVisitedRef,undefined);
+  assert.equal(visit.slotSelections.transport,undefined);
   assert.equal(libraryOccurrences(added.model).find(row=>row.contextOccurrenceId===added.parentId)?.action,'EDIT');
  }
  assert.equal(semanticStateDigest(model.semanticState),original);

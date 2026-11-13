@@ -21,7 +21,7 @@ Base `2e6febec5c9e56aaca76174c62d421157b4d44ef`, branche `codex/p21-mega-run-com
 
 - « Sortie composée » associe un Cinéma et un Restaurant dans le contrat parent/enfant du Draft existant. L’éditeur propose des rattachements admis par le serveur et une confirmation explicite.
 - Navigation entre le projet et ses intentions, avec accès direct depuis Week-end. Les coûts individuels affichés viennent de la lecture officielle du digest courant. Le total consolidé du projet reste indisponible.
-- Les groupes entre cartes racines N1 restent soumis à leur gate et leur chemin durable demeure fermé. Aucun changement de ce contrat ni de Before.
+- Les groupes entre cartes racines N1 restent soumis à leur gate et leur chemin durable demeure fermé. La PR #98 conserve une preuve locale avec runtime partagé fermé. La PR #102 reste une Draft historique de Before. Les deux restent indépendantes de cette livraison.
 - Commit associé, `feat(composer): add composed outings`. TypeScript et contrôle de sept parcours, dont le rattachement avec identité et coût conservés, exécutés avec succès.
 - Suite · modèles de départ et suggestions explicables.
 
@@ -32,6 +32,7 @@ Base `2e6febec5c9e56aaca76174c62d421157b4d44ef`, branche `codex/p21-mega-run-com
 - Commit associé, `feat(composer): add project starters`. TypeScript et 8 contrôles du parcours, dont les trois compositions et un refus intermédiaire, exécutés avec succès.
 - Suite · suggestions explicables, fondées sur la composition courante.
 - Un quatrième modèle ouvre un panier Jeux et accessoires vide dans l’enveloppe publiée Jeux/Numérique. Les achats beauté et les paniers spécialisés existants deviennent retrouvables depuis « Mes intentions ». Commit `feat(composer): start and reopen specialized baskets`.
+- Un cinquième modèle associe une activité à une visite amicale, avec navigation aller-retour et éditeurs indépendants. Aucun proche ni trajet n’est déduit. Commit `feat(composer): compose a visit with an activity`. TypeScript et les contrôles ciblés de composition ont réussi.
 
 ## E · Suggestions pour compléter un projet
 

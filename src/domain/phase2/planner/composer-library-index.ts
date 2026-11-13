@@ -40,7 +40,8 @@ const clothingPresets = new Set(["clothing-shopping", "shein-purchase", "shoes-p
 const situatedPresets = new Set(["mascara", "eyeliner", "eyebrow-pencil", "hair-wax", "face-cleanser", "makeup-remover",
   "restaurant-for-two", "cinema", "weekend-gite", "amazon-purchase", "groceries-purchase", "composed-outing",
   "concert", "ropes-course", "museum-exhibition", "hiking-nature", "video-game-purchase", "aliexpress-purchase",
-  "beauty-purchase", "laundry-detergent", "dishwashing-liquid", ...clothingPresets]);
+  "beauty-purchase", "laundry-detergent", "dishwashing-liquid", "visit-friends", "fontes-family-visit", "servian-family-visit",
+  ...clothingPresets]);
 const publishedPreset = (context:Parameters<typeof presetForContext>[0]) => {
   try{return presetForContext(context);}catch{return undefined;} // Unsupported metadata is never an exact identity.
 };

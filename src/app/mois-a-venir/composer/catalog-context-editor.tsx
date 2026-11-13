@@ -64,15 +64,17 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const protectedRef = (ref: string) => model.semanticState.preferences.anchors.includes(ref)
     || model.semanticState.preferences.flexibility[ref] === "PRESERVE";
   const confirm = useWorkshopConfirmation();
-  const composed = presetForContext(context)?.presetKey === "composed-outing";
-  const childTarget: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: "children" };
-  const childSocket = composed && card?.sockets.find(socket => socket.slotKey === "children"
-    && socket.capabilityRefs.includes("other-context:children:ATTACH_CHILD_CONTEXT"));
+  const project = presetForContext(context)?.presetKey;
+  const childSlot = project === "composed-outing" ? "children" : project === "visit-friends" ? "activities" : null;
+  const childTarget: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: childSlot ?? undefined };
+  const childSocket = childSlot && card?.sockets.find(socket => socket.slotKey === childSlot
+    && socket.capabilityRefs.includes(`${context.templateKey}:${childSlot}:ATTACH_CHILD_CONTEXT`));
   const canAttach = !!childSocket && !busy && !card?.readOnly && !protectedRef(context.contextOccurrenceId);
   const candidates = canAttach ? intentionNavigationEntries(model.board.contexts.filter(child =>
     child.contextOccurrenceId !== context.contextOccurrenceId && !child.parentContextOccurrenceId && !child.readOnly && !protectedRef(child.contextOccurrenceId)
     && publishedDrop(model, `context-occurrence:${child.contextOccurrenceId}`, childTarget)?.choices.includes("REPARENT_PRESERVE_ID"))) : [];
-  const addOptions = canAttach ? [composerPreset("cinema"), composerPreset("restaurant-for-two")].flatMap(preset => {
+  const additions = project === "visit-friends" ? ["museum-exhibition", "restaurant-for-two"] : ["cinema", "restaurant-for-two"];
+  const addOptions = canAttach ? additions.map(composerPreset).flatMap(preset => {
     const assetKey = `template:${preset?.templateKey}`;
     return preset && publishedDrop(model, assetKey, childTarget)?.semanticAction === "PATCH_CONTEXT" ? [{ preset, assetKey }] : [];
   }) : [];
@@ -83,7 +85,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     if (candidate) onSave(operation);
   });
   const confirmAttachment = (label: string, operation: () => ComposerOperation) => {
-    const open = () => confirm({ message: `Associer « ${label} » à cette sortie ?`, acceptLabel: "Associer à cette sortie",
+    const open = () => confirm({ message: `Associer « ${label} » à cette intention ?`, acceptLabel: "Associer cette intention",
       accept: () => attach(operation()) });
     if (leaveRaw(open)) open();
   };
@@ -202,9 +204,9 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       {beautyProduct && !activeNeed && <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={busy}
         dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
       {beautyProduct && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
-      {composed && <>
+      {childSlot && <>
         <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} />
-        <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
+        {project === "composed-outing" && <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />}
         {(candidates.length > 0 || addOptions.length > 0) && <details>
           <summary>Associer une intention</summary>
           {candidates.map(child => <button key={child.id} type="button" onClick={() => confirmAttachment(child.label, () => ({

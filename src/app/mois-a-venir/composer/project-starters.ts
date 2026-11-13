@@ -11,6 +11,8 @@ export const projectStarters = [
     children: ["hiking-nature"] },
   { key: "games-basket", label: "Achat de jeux et accessoires", parent: "video-game-purchase", slot: null,
     children: [] },
+  { key: "visit-and-activity", label: "Visite et activité", parent: "visit-friends", slot: "activities",
+    children: ["museum-exhibition"] },
 ] as const satisfies readonly { key: string; label: string; parent: ComposerPresetKey; slot: string | null; children: readonly ComposerPresetKey[] }[];
 export type ProjectStarter = typeof projectStarters[number];
 
