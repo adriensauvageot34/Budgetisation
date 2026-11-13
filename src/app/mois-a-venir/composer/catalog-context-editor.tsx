@@ -24,7 +24,7 @@ import { IntentBudgetImpact } from "./intent-budget-impact";
 import { intentionNavigationEntries, WorkshopNavigation } from "./workshop-navigation";
 import { LinkedIntentions } from "./linked-intentions";
 import { ProjectCompletion } from "./project-completion";
-import { CatalogOpenButton } from "./catalog-discovery-provider";
+import { ProjectActivityCatalog } from "./project-activity-catalog";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
@@ -247,24 +247,8 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
         {(candidates.length > 0 || addOptions.length > 0) && <details>
           <summary>Associer une intention</summary>
-          {!homeProject && <CatalogOpenButton target={{ contextId: context.contextOccurrenceId, scope: "activity",
-            resolveCommands: entry => {
-              const option = addOptions.find(({ preset }) => preset.templateKey === "activity"
-                && (entry.presetKey === preset.presetKey || "visualConceptId" in preset && preset.visualConceptId === entry.visualConceptId));
-              if (!option) return [];
-              const existing = intentionNavigationEntries(model.board.contexts.filter(child => child.parentContextOccurrenceId === context.contextOccurrenceId
-                && card?.childContextOccurrenceIds.includes(child.contextOccurrenceId) && presetForContext(child)?.presetKey === option.preset.presetKey));
-              if (existing.length) return onOpenChild ? existing.map(child => ({
-                key: child.id, visualConceptId: entry.visualConceptId, editsExisting: true,
-                label: `Ouvrir ${child.label}`, run: () => onOpenChild(child.id),
-              })) : [];
-              return [{ key: option.preset.presetKey, visualConceptId: entry.visualConceptId,
-                label: `Associer ${option.preset.label} à ce projet`,
-                run: () => confirmAttachment(option.preset.label, () => ({
-                  kind: "DROP", assetKey: option.assetKey, presetKey: option.preset.presetKey, target: childTarget,
-                  identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {},
-                })) }];
-            } }}>Choisir une activité dans le catalogue</CatalogOpenButton>}
+          {!homeProject && <ProjectActivityCatalog model={model} parentId={context.contextOccurrenceId}
+            busy={busy} decide={onSave} open={onOpenChild} />}
           <label className={styles.projectAttachmentSearch}>Rechercher une intention à associer<input type="search" value={attachmentQuery}
             onChange={event => setAttachmentQuery(event.target.value)} /></label>
           {visibleCandidates.map(child => <button key={child.id} type="button" onClick={() => confirmAttachment(child.label, () => ({

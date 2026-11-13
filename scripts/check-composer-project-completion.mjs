@@ -18,6 +18,8 @@ const {handleComposerRequest}=require('@/server/phase2/planner/composer-service'
 const {projectCompletionSuggestions,ProjectCompletion,ProjectCompletionPreference}=require('@/app/mois-a-venir/composer/project-completion');
 const {CatalogContextEditor}=require('@/app/mois-a-venir/composer/catalog-context-editor');
 const {CatalogOpenButton}=require('@/app/mois-a-venir/composer/catalog-discovery-provider');
+const {ShortStayEditor}=require('@/app/mois-a-venir/composer/short-stay-editor');
+const {ProspectiveContextEditor}=require('@/app/mois-a-venir/composer/family-visit-editor');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const f=await readMonthFixture(),world=JSON.stringify(f.world),parentId=uuid(29900);let counter=29900;
 const request=async(draft,operation)=>{
@@ -181,6 +183,30 @@ try{
  assert.equal(accepted[0].presetKey,'laser-game');assert.equal(accepted[0].target.contextOccurrenceId,leisureId);
  const withLaser=await request(leisure.semanticState,accepted[0]);
  assert.equal(withLaser.semanticState.contexts.find(child=>child.contextOccurrenceId===accepted[0].identity).parentContextOccurrenceId,leisureId);
+ const familyId=uuid(++counter);
+ const family=await request(f.semantic,{kind:'DROP',assetKey:'template:family-visit',target:{kind:'BOARD_ZONE'},
+  identity:familyId,selectionId:uuid(++counter),values:{label:'Visite familiale'}});
+ for(const [Editor,source,owner] of [[ShortStayEditor,rental,stayId],[ProspectiveContextEditor,family,familyId]]){
+  await act(async()=>root.unmount());root=null;accepted=[];
+  const renderProject=current=>React.createElement(Editor,{context:current.semanticState.contexts.find(context=>context.contextOccurrenceId===owner),
+   model:current,semanticState:current.semanticState,targetMonth:'2026-11',householdPersons:[],fresh:true,busy:false,
+   choose(){assert.fail();},onCancel(){},onOpenChild:id=>openedChildren.push(id),
+   onSave:operation=>{accepted.push(operation);return true;}});
+  await act(async()=>{root=create(renderProject(source));});
+  const activityCatalog=()=>root.root.findAllByType(CatalogOpenButton).find(button=>button.props.target?.scope==='activity');
+  const laserCommand=()=>activityCatalog().props.target.resolveCommands({visualConceptId:composerPreset('laser-game').visualConceptId});
+  assert.equal(laserCommand().length,1);
+  await act(async()=>laserCommand()[0].run());assert.equal(accepted.length,0);
+  const denied={...source,dropCapabilities:source.dropCapabilities.filter(drop=>drop.sourceAssetKey!=='template:activity')};
+  await act(async()=>root.update(renderProject(denied)));
+  await act(async()=>confirmation.accept());assert.equal(accepted.length,0);
+  assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('droits ont changé')));
+  await act(async()=>root.update(renderProject(source)));
+  await act(async()=>laserCommand()[0].run());await act(async()=>confirmation.accept());
+  assert.equal(accepted.length,1);assert.equal(accepted[0].target.slotKey,'activities');
+  const updated=await request(source.semanticState,accepted[0]);
+  assert.equal(updated.semanticState.contexts.find(child=>child.contextOccurrenceId===accepted[0].identity).parentContextOccurrenceId,owner);
+ }
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
  console.log('S3-04 Weekend complements follow the actual children without repeating an existing activity: PASS');
  console.log('S3-05 Two leisure activities offer one meal, suppressed when any meal is already linked: PASS');
@@ -190,5 +216,6 @@ try{
  console.log('The home project attachment editor refuses stale confirmation: PASS');
  console.log('S3-09 Generic stays, visits and home projects reuse admitted complements without mutation: PASS');
  console.log('S3-10 The project catalog reopens an exact linked activity or confirms a new child through the existing owner: PASS');
- console.log(JSON.stringify({status:'PASS',checks:10,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ console.log('S3-11 Stay and family visit editors confirm catalog activities and reject lost capability before adoption: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:11,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

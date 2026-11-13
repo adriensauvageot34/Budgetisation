@@ -24,6 +24,7 @@ import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-c
 import { MobilityEstimateSummary } from "./mobility-estimate-summary";
 import { LinkedIntentions } from "./linked-intentions";
 import { ProjectCompletion } from "./project-completion";
+import { ProjectActivityCatalog } from "./project-activity-catalog";
 import styles from "./composer.module.css";
 
 type Transport = Extract<ComponentSelectionV1, { kind: "MOBILITY_INTENT" }>;
@@ -189,7 +190,8 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection(stay ? "posts" : "people")}>{stay ? "Composer le séjour" : "Préciser la visite"}</button>
         {(!stayTransportModes || stayTransportModes.length > 0) && <button type="button" onClick={() => setSection("route")}>Prévoir le déplacement</button>}</div>
       {staySummary?.controls}
-      {!stay && <><LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} decide={onSave} />
+      {!stay && <><ProjectActivityCatalog model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} open={onOpenChild} />
+        <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} decide={onSave} />
         <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} /></>}
     </section>}
     <div ref={scroll} className={styles.nightEditorScroll}>

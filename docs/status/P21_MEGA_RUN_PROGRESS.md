@@ -637,3 +637,7 @@ L’éditeur du projet et les suggestions S3 indiquent quand une confirmation n�
 ### Choisir l’activité d’un projet dans le catalogue
 
 Les projets composés et visites amicales ouvrent le catalogue Activités depuis leur rubrique d’association. Les activités publiées réutilisent leurs illustrations et éditeurs. Une occurrence déjà liée est ouverte par son identité. Une nouvelle activité demande confirmation avant son rattachement. TypeScript et dix groupes S3 PASS, dont ouverture du Bowling exact et ajout confirmé d’un Laser game via le propriétaire existant.
+
+### Catalogue Activités partagé avec les séjours et visites familiales
+
+Le même sélecteur dessert les projets composés, séjours et visites. Les droits sont revérifiés à la confirmation, les saisies RAW restent gardées et une activité déjà liée ouvre son occurrence. TypeScript et onze groupes de contrôles PASS, dont les éditeurs Séjour et Visite familiale, le retrait d’une capacité pendant la confirmation et le rattachement admis après un nouvel essai.

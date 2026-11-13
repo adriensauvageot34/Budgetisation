@@ -19,6 +19,7 @@ import { matchesStayExtra, shortStaySuggestions, shortStayTransportModes, type S
 import { IntentBudgetImpact } from "./intent-budget-impact";
 import { LinkedIntentions } from "./linked-intentions";
 import { ProjectCompletion } from "./project-completion";
+import { ProjectActivityCatalog } from "./project-activity-catalog";
 import { SuggestionControls } from "./suggestion-controls";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { CatalogCommand } from "./catalog-discovery";
@@ -303,7 +304,8 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     </div>)}
     <details><summary>À savoir sur les postes</summary><p className={styles.helper}>Un jacuzzi peut être une activité ou un extra explicitement ajouté. Les transports des enfants liés doivent déclarer leur relation au trajet du séjour ; aucune fusion n’est déduite d’un libellé.</p></details>
   </>;
-  const project = <><LinkedIntentions model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} open={onOpenChild} decide={props.onSave} />
+  const project = <><ProjectActivityCatalog model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} decide={props.onSave} open={onOpenChild} />
+    <LinkedIntentions model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} open={onOpenChild} decide={props.onSave} />
     <ProjectCompletion model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} decide={props.onSave} /></>;
   return <ProspectiveContextEditor {...props} stay stayDetails={<>{stayDetails}{project}</>} posts={content} postsQuestion={postsQuestion} staySummary={staySummary} stayTransportModes={transportModes} onSave={operation => {
     if (operation.kind !== "EDIT_SHORT_STAY") return false;
