@@ -434,6 +434,13 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     tile("all-options","Autres postes admissibles",showOptions,"activity"),...modes.flatMap(key=>{const asset=model.library.searchableAssets.find(a=>a.assetKey===key);return asset?[tile(key,asset.label,()=>equip(asset,{kind:"CONTEXT_SOCKET",contextOccurrenceId:context.contextOccurrenceId,slotKey:"transport"}),asset.iconKey)]:[]})];
   const extraNames = labels.examples;
   const backToSummary = tile("summary", "Retour au résumé", () => open(null), "activity");
+  const activitySummaryChoices = activityWritable ? [
+    ...(activityTicket ? [tile("amount", main ? `Modifier · ${main.label}` : activityMainLabel, () => open("budget"), "activity")] : []),
+    tile("place", "Lieu", () => open("place"), "family-visit"),
+    tile("people", "Participants", () => open("participants"), "family-visit"),
+    tile("date", "Date facultative", () => open("date"), "activity"),
+    ...(activityComplements ? [tile("extras", completeTitle, () => open("complete"), "activity")] : []),
+  ] : [];
   const showCinemaSuggestions = cinema && (step === null || step === "complete" && !extraRow && !equipment);
   const cinemaCatalogSuggestions = cinema ? cinemaSuggestions({
     contextOccurrenceId: contextId, writable: activityWritable, ticketAllowed: activityTicket, ticket: main,
@@ -535,14 +542,14 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     })),
   } : undefined;
   const question:PaletteQuestion = activeQuestion ?? cinemaQuestion ?? activityQuestion ?? restaurantQuestion ?? {title: step===null?"Construire · "+heading:step==="complete"?"Ajouter seulement ce qui est prévu":questions.find(q=>q.id===step)?.title??heading,
-    choices:step===null?summaryChoices:step==="complete"&&!extraRow&&!equipment?[
+    choices:step===null?(activity&&!cinema?activitySummaryChoices:summaryChoices):step==="complete"&&!extraRow&&!equipment?[
       ...(canSuggestIncludedDrink() ? [tile("restaurant:included:beer", `${includedDrink} — Renseigner dans l’addition`,
         () => openIncluded(undefined, includedDrink), "restaurant", "Situation Restaurant du catalogue")] : []),
       ...extras.filter(item => !activity || activityExtras && !cinemaSelectionLocked("extras", item.selectionId))
         .map(item=>tile(item.selectionId,"Modifier "+item.label,()=>activity ? editExtra(item) : setExtraRow(fromSelection(item)),"purchase",priceCaption(item))),
       ...(!activity || activityExtras ? extraNames : []).map(label=>tile("add:"+label,context.templateKey === "restaurant" ? `${label} · en supplément` : label,()=>addExtra(label),"purchase")),
       tile("summary","Terminer",()=>open(null),"activity")]
-      : step==="budget"?[...(!purchase?[tile("total","Coût total",()=>chooseMode(false),"restaurant",undefined,!detail),tile("detail","Détailler",()=>chooseMode(true),"restaurant",undefined,detail)]:[]),tile("unknown","Prix inconnu",()=>saveBudget({...row,costMode:"UNKNOWN",edited:true}),"activity"),
+      : step==="budget"?[...(!purchase&&!activity?[tile("total","Coût total",()=>chooseMode(false),"restaurant",undefined,!detail),tile("detail","Détailler",()=>chooseMode(true),"restaurant",undefined,detail)]:[]),tile("unknown","Prix inconnu",()=>saveBudget({...row,costMode:"UNKNOWN",edited:true}),"activity"),
         ...(suggestion?[tile("reference","Prix observé "+money(suggestion.value),()=>{setRaw(true);setRow(r=>({...r,amount:suggestion.value!,costMode:"MANUAL",edited:true}));},"restaurant","À confirmer · "+suggestion.sourceAuthority)]:[]),tile("summary","Résumé",()=>open(null),"activity")]
       : step==="binding"?([['CONFIRMED_CONSUMPTION','Compris dans '+shape.envelope],['EXTRA_TO_SLOT','En plus de l’enveloppe']] as const).map(([mode,label])=>tile(mode,label,()=>{if(main&&send(operation({contextOccurrenceId:context.contextOccurrenceId,slots:{[mainSlot]:[{...main,binding:{mode}}]}})))advance("binding");},"purchase"))
       :[tile("summary","Résumé",()=>open(null),"activity"),...summaryChoices.filter(c=>c.key!==step)]};

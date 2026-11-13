@@ -227,6 +227,11 @@ try {
       composerPresentation: { version: "composer-context-presentation@v1", presetKey: "bowling" },
     }, slotSelections: { main: { items: [{ ...meal, optionKey: "activity", label: "Partie" }] }, extras: { items: [first, second] } } };
     await mount({ ...base, contexts: [bowling] });
+    await click("Modifier · Partie");
+    const budgetDock = root.root.findAllByType("nav").find(node => node.props["aria-label"] === "Quel budget souhaitez-vous prévoir ?");
+    assert(budgetDock);assert(!budgetDock.findAllByType("button").some(node => ["Coût total", "Détailler"].includes(text(node))));
+    assert.equal(accepted.length, 0);
+    await click("← Retour au résumé");
     const menu = root.root.findAllByType("button").find(node => text(node).includes("Compléments et trajet"));
     assert(menu); await act(async () => menu.props.onClick());
     const firstLine = root.root.findAllByType("button").find(node => text(node).endsWith("complément 1"));

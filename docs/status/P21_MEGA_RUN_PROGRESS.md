@@ -337,3 +337,9 @@ TypeScript, diff et dix groupes du banc de parcours PASS. Le rendu propose Bowli
 Le sélecteur d’éditeur recherche dans tous les parents visibles, comme la bibliothèque. Une recherche peut retrouver un enfant par le nom du parent intermédiaire. Échap efface un filtre actif sans fermer l’éditeur.
 
 TypeScript, diff et contrôle de navigation PASS sur les résultats imbriqués, les homonymes, les références invalides et le rendu de la sélection exacte. Le geste Échap en navigateur réel reste NOT_RUN.
+
+### Choix du Dock pour les activités
+
+Les activités de loisirs gardent l’accès aux informations et aux compléments admis lorsque les suggestions sont masquées. L’étape de prix utilise son poste unique avec quantité et frais distincts. Les boutons de conversion propres aux repas ont été retirés de cette étape.
+
+TypeScript, diff et onze contrôles du banc Restaurant/Cinéma/Activité PASS. Ouvrir le prix d’une partie ne crée aucune décision ; les commandes de conversion sont absentes et le coût officiel des compléments reste vérifié. Aucun writer distant ni Apply.
