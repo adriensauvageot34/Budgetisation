@@ -64,6 +64,13 @@ const renderHome=()=>renderToStaticMarkup(React.createElement(CatalogContextEdit
  choose(){assert.fail();},onSave(){assert.fail();},onCancel(){},onOpenChild(){assert.fail();}}));
 assert.match(renderHome(),/Rattacher Panier pour la pièce/);
 assert.match(renderHome(),/Ajouter Acheter pour la maison/);
+assert.match(renderHome(),/Préparer un équipement/);
+assert.match(renderHome(),/Préparer une prestation/);
+const readyHome=model;
+model={...model,dropCapabilities:model.dropCapabilities.filter(drop=>drop.target.contextOccurrenceId!==homeId||drop.target.slotKey!=='services')};
+assert.doesNotMatch(renderHome(),/Préparer une prestation/);
+assert.match(renderHome(),/Préparer un équipement/);
+model=readyHome;
 await request({kind:'DROP',assetKey:'context-occurrence:'+purchaseId,target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:homeId,slotKey:'purchases'},
  identity:purchaseId,selectionId:uuid(++id),values:{}});
 assert.match(renderHome(),/Intentions liées/);

@@ -117,6 +117,13 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       || protectedRef(componentId(card.contextOccurrenceId, slotKey, selection.selectionId)))) return null;
     return { asset, target, selection };
   };
+  const homePosts = homeProject ? [
+    { slotKey: "items", optionKey: "item", label: "Préparer un équipement" },
+    { slotKey: "services", optionKey: "service", label: "Préparer une prestation" },
+  ].flatMap(post => {
+    const route = componentRoute(post.slotKey, post.optionKey);
+    return route ? [{ ...post, route }] : [];
+  }) : [];
   const beautyProduct = beautyProductPresentation(context);
   const mascaraPreset = beautyProduct?.key === "mascara";
   const [showChoices, setShowChoices] = useState(false);
@@ -224,6 +231,13 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       {beautyProduct && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {childSlot && <>
         {homeProject && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
+        {homePosts.length > 0 && <div className={styles.linkedFilters}>
+          {homePosts.map(({ slotKey, label, route }) => <button type="button" key={slotKey} disabled={busy}
+            onClick={() => {
+              const open = () => choose(route.asset, route.target);
+              if (leaveRaw(open)) open();
+            }}>{label}</button>)}
+        </div>}
         <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} decide={onSave} />
         <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
         {(candidates.length > 0 || addOptions.length > 0) && <details>

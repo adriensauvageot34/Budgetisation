@@ -527,3 +527,7 @@ TypeScript, diff et banc S3/éditeur PASS. Le modèle Maison refuse le panier lo
 ### Catalogue depuis le contrôle budgétaire
 
 Une fiche de preset ne propose pas de créer ou rouvrir une intention lorsqu’on la consulte depuis le contrôle Courses. TypeScript, diff et banc Clay PASS, dont le preset protégé Cinéma dans ce contexte.
+
+### Raccourcis d’équipement et de prestation Maison
+
+Le projet Maison ouvre les postes Équipement et Prestation depuis son résumé si le socket et le dépôt sont publiés. Les formulaires existants gardent la saisie locale jusqu’à la validation. TypeScript, diff et banc familles de projets PASS. Le retrait de la capacité Services masque le raccourci correspondant.
