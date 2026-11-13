@@ -83,13 +83,18 @@ export function IntentionSwitcher({ contextId, compact = false }: { contextId?: 
     <label htmlFor={id}>{compact ? "Mes intentions" : "Intention en cours"}</label>
     {filtering && <input aria-label="Filtrer mes intentions" placeholder="Rechercher une intention ou un projet" value={query}
       onChange={event => setQuery(event.target.value)} type="search" onKeyDown={event => {
+        if (event.nativeEvent.isComposing) return;
+        if (event.key === "Enter" && query.trim() && !navigation.busy) {
+          const matches = groups.flatMap(group => group.entries);
+          if (matches.length === 1) { event.preventDefault(); navigation.open(matches[0].id); }
+        }
         if (event.key === "Escape" && query) {
           event.preventDefault(); event.stopPropagation(); setQuery("");
         }
       }} />}
     <select id={id} aria-label={compact ? "Retrouver une intention du mois" : "Changer d’intention"}
       disabled={navigation.busy} value={contextId && navigation.entries.some(entry => entry.id === contextId) ? contextId : ""}
-      onChange={event => { if (event.target.value) navigation.open(event.target.value); }}>
+      onChange={event => { if (!navigation.busy && event.target.value) navigation.open(event.target.value); }}>
       <option value="" disabled>Choisir une intention</option>
       {selectedMissing && <optgroup label="Intention en cours"><option value={selected.id}>{selected.label}</option></optgroup>}
       {groups.map(group => <optgroup key={group.key} label={group.label}>

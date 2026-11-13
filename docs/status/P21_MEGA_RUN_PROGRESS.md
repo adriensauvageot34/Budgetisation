@@ -621,3 +621,7 @@ Le formulaire indique le mois et borne le calendrier. Une date impossible ou ext
 ### Réessayer un catalogue indisponible
 
 La fenêtre conserve la recherche et la fiche choisie après un échec de chargement. Le bouton de réessai relance le lecteur du catalogue public. TypeScript et banc catalogue/panier PASS, dont une panne simulée suivie d’un chargement réussi sans commande ni mutation du Draft.
+
+### Ouvrir le résultat unique du sélecteur d’intentions
+
+Entrée dans la recherche du sélecteur ouvre l’occurrence unique du filtre courant. Les saisies en cours de composition et l’état occupé suspendent l’action. TypeScript et cinq contrôles de navigation du mois PASS, dont l’identité de destination, la saisie composée et le refus pendant une opération.

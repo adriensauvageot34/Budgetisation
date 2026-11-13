@@ -14,6 +14,7 @@ globalThis.fetch=async()=>{throw Error('MONTH_INTENTIONS_REMOTE_FORBIDDEN');};
 Module._load=function(name,parent,...args){if(name==='react')return React;if(name==='react/jsx-runtime')return jsx;return originalLoad.call(this,name,parent,...args);};
 const {ComposerLibrary}=require('@/app/mois-a-venir/composer/composer-library');
 const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
+const {IntentionSwitcher,WorkshopNavigationContext,intentionNavigationEntries}=require('@/app/mois-a-venir/composer/workshop-navigation');
 const {composerPreset}=require('@/domain/phase2/planner/composer-presets');
 const {libraryOccurrences}=require('@/domain/phase2/planner/composer-library-index');
 const {assetEditorKind}=require('@/app/mois-a-venir/composer/asset-editor-routing');
@@ -106,9 +107,24 @@ try{
  await act(async()=>keyDown('Enter'));
  assert.deepEqual(prepared,['bowling-and-dinner']);
  assert.equal(semanticStateDigest(model.semanticState),digest);assert.deepEqual(f.writes,[]);
+ await act(async()=>root.unmount());root=null;
+ const switchOpened=[],navigation={entries:intentionNavigationEntries(model.board.contexts),busy:false,
+  open:id=>switchOpened.push(id),back(){assert.fail();}};
+ const switcher=nav=>React.createElement(WorkshopNavigationContext.Provider,{value:nav},React.createElement(IntentionSwitcher,{contextId:uuid(30642)}));
+ await act(async()=>{root=create(switcher(navigation));});
+ const switchSearch=()=>root.root.findByProps({'aria-label':'Filtrer mes intentions'});
+ const switchKey=isComposing=>switchSearch().props.onKeyDown({key:'Enter',nativeEvent:{isComposing},preventDefault(){}});
+ await act(async()=>switchSearch().props.onChange({target:{value:'séjour libre'}}));
+ await act(async()=>switchKey(true));assert.deepEqual(switchOpened,[]);
+ await act(async()=>switchKey(false));assert.deepEqual(switchOpened,[uuid(30640)]);
+ await act(async()=>root.update(switcher({...navigation,busy:true})));
+ await act(async()=>switchKey(false));assert.equal(switchOpened.length,1);
+ await act(async()=>switchSearch().props.onKeyDown({key:'Escape',nativeEvent:{isComposing:true}}));
+ assert.equal(switchSearch().props.value,'séjour libre');
  console.log('MI-01 Published evenings, meals and gifts reopen with exact identities: PASS');
  console.log('MI-02 Month list, official incompleteness and stale protection are read-only: PASS');
  console.log('MI-03 Keyboard skips hidden controls, returns to search and only opens the exact existing intention: PASS');
  console.log('MI-04 A unique project search result opens its preview without adding a decision: PASS');
- console.log(JSON.stringify({status:'PASS',checks:4,remoteWrites:0,apply:false,level:'LOCAL_LIBRARY_AND_OWNER'}));
+ console.log('MI-05 The intention switcher opens the unique matching occurrence and respects composition and busy state: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:5,remoteWrites:0,apply:false,level:'LOCAL_LIBRARY_AND_OWNER'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}
