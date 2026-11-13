@@ -28,6 +28,9 @@ await request({kind:'DROP',assetKey:'template:short-stay',presetKey:'weekend-git
 for(const [index,id] of children.entries())await request({kind:'DROP',assetKey:'template:activity',presetKey:'cinema',target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:parentId,slotKey:'activities'},identity:id,selectionId:uuid(30410+index),values:{}});
 const rootActivity=uuid(30420);
 await request({kind:'DROP',assetKey:'template:activity',presetKey:'bowling',target:{kind:'BOARD_ZONE'},identity:rootActivity,selectionId:uuid(30421),values:{}});
+const basketId=uuid(30422);
+await request({kind:'DROP',assetKey:'template:purchase',presetKey:'groceries-purchase',target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:parentId,slotKey:'purchases'},
+ identity:basketId,selectionId:uuid(30423),values:{},purchaseBasket:true});
 const before=semanticStateDigest(model.semanticState);let root,opened=[],operations=[];
 const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join('');
 const render=model=>React.createElement(ShortStayEditor,{context:model.semanticState.contexts.find(context=>context.contextOccurrenceId===parentId),
@@ -35,6 +38,16 @@ const render=model=>React.createElement(ShortStayEditor,{context:model.semanticS
  choose(){assert.fail();},onSave:operation=>{operations.push(operation);return true;},onCancel(){},onOpenChild:id=>opened.push(id)});
 try{
  await act(async()=>{root=create(render(model));});
+ await act(async()=>prospective.postsQuestion.choices.find(choice=>choice.key==='purchases').choose());
+ const basketButton=root.root.findByProps({'data-open-stay-child':basketId});
+ assert.match(text(basketButton),/Ouvrir le panier/);
+ const mismatchedBoard={...model,board:{...model.board,contexts:model.board.contexts.map(card=>card.contextOccurrenceId===basketId
+  ? {...card,parentContextOccurrenceId:null}:card)}};
+ await act(async()=>root.update(render(mismatchedBoard)));
+ await act(async()=>root.root.findByProps({'data-open-stay-child':basketId}).props.onClick());assert.deepEqual(opened,[]);
+ await act(async()=>root.update(render(model)));
+ await act(async()=>root.root.findByProps({'data-open-stay-child':basketId}).props.onClick());assert.deepEqual(opened,[basketId]);
+ opened=[];
  await act(async()=>prospective.postsQuestion.choices.find(choice=>choice.key==='activities').choose());
  await act(async()=>root.root.findByProps({'data-open-stay-child':children[0]}).props.onClick());
  const next=root.root.findAllByType('button').find(node=>text(node)==='Suivant');assert(next);

@@ -278,20 +278,19 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
         {slot === "extras" && (!slotAllowed("extras", "extra") || extraLocked(post.row.id))
           ? <p>{post.row.label} · Poste en consultation</p>
           : post.child && isPurchaseBasket(post.child)
-          ? <button type="button" disabled={props.busy || !onOpenChild} onClick={() => onOpenChild?.(post.child!.contextOccurrenceId)}>
-            Ouvrir {String(post.child.fields.label ?? "le panier")} · {purchaseComponents(post.child, "item").length} article(s)
-          </button>
+          ? null
           : <WorkshopComponentRow title={caption} row={post.row} back={{label:"Autres postes du séjour",action:()=>{setPostSection("lodging");setLodgingPage("terms");}}} participantCount={0} bindingChoices={slot === "restaurants"}
           removePrompt={post.child ? { message: `Préparer le retrait de « ${String(post.child.fields.label ?? post.row.label)} » ? Après « Conserver et prévisualiser », cette intention enfant, ses postes et ses éventuelles intentions liées seront retirés du brouillon. Vous pouvez aussi la déplacer depuis les intentions liées du résumé.`,
             acceptLabel: "Préparer le retrait de l’intention" } : undefined}
           onChange={row => update(slot, posts[slot].map((p, i) => i === index ? { ...p, row } : p))}
           onRemove={() => { update(slot, posts[slot].filter((_, i) => i !== index)); setPostPage(page => Math.max(0, page - 1)); }} />}
-        {post.child && !isPurchaseBasket(post.child) && onOpenChild && <button type="button" disabled={props.busy}
+        {post.child && onOpenChild && <button type="button" disabled={props.busy}
           data-open-stay-child={post.child.contextOccurrenceId} onClick={() => {
             const child = props.model.board.contexts.find(card => card.contextOccurrenceId === post.child!.contextOccurrenceId
               && card.parentContextOccurrenceId === context.contextOccurrenceId);
             if (child) onOpenChild(child.contextOccurrenceId);
-          }}>Ouvrir l’intention · {String(post.child.fields.label ?? post.row.label)}</button>}
+          }}>{isPurchaseBasket(post.child) ? "Ouvrir le panier" : "Ouvrir l’intention"} · {String(post.child.fields.label ?? post.row.label)}
+          {isPurchaseBasket(post.child) && ` · ${purchaseComponents(post.child, "item").length} article(s)`}</button>}
         {post.child && <p className={styles.helper}>Cette intention conserve ses participants, son lieu et ses autres postes. Ouvrez-la pour les consulter ou les modifier.</p>}
       </div>; })}
       {posts[slot].length > 1 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {posts[slot].length}</span><button type="button" disabled={postPage + 1 >= posts[slot].length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}

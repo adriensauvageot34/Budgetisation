@@ -485,3 +485,7 @@ Le formulaire de détails permet de nommer un panier via sa commande existante. 
 TypeScript, diff, banc catalogue et cinq groupes panier PASS. Le banc réexécute Amazon, Vêtements, Courses, la compatibilité historique et le Save/Reload sur PGlite isolé. Le sélecteur du script navigateur a été adapté au nouveau libellé. Ce script reste NOT_RUN.
 
 Le catalogue nomme explicitement l’action « Préparer un panier Courses » et confirme qu’elle cible l’asset de création de panier publié. TypeScript, diff et banc catalogue PASS.
+
+### Ouvrir un panier lié depuis un séjour
+
+Le raccourci du panier dans les postes du séjour vérifie la relation courante avant d’ouvrir l’éditeur. TypeScript, diff et banc séjour/enfants PASS. Un panier dont la carte a changé de parent n’est pas ouvert. Le même panier encore lié s’ouvre par son identité, sans mutation.
