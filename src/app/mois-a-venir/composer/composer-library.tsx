@@ -53,14 +53,15 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     if(intentionFilter==="INCOMPLETE")return readingCurrent&&(card.knowledge==="UNKNOWN"||card.knowledge==="PARTIAL");
     return true;
   });
-  const occurrenceButton=(row:typeof index.occurrences[number],number?:number)=>{
+  const occurrenceButton=(row:typeof index.occurrences[number])=>{
     const card=composerRenderIndex(model).contexts.get(row.contextOccurrenceId);
     const parent=card?.parentContextOccurrenceId?composerRenderIndex(model).contexts.get(card.parentContextOccurrenceId):undefined;
+    const parentOccurrence=parent?index.occurrences.find(row=>row.contextOccurrenceId===parent.contextOccurrenceId)?.occurrence:undefined;
     return <button key={row.contextOccurrenceId} type="button" className={styles.libraryExistingAction}
       data-library-existing-action={row.contextOccurrenceId} disabled={busy} onClick={()=>openContext(row.contextOccurrenceId)}>
-      <strong>{row.action==="EDIT"?"Modifier":"Voir"} {row.label}</strong>
-      <small>{number!==undefined?`Occurrence ${number} · `:""}{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.surface==="BASKET"?"Panier multi-articles":row.surface==="ARTICLE"?"Fiche de cet article":row.surface==="EXTERNAL"?"Prestation externe":"Éditeur de cette carte"}{row.action==="VIEW"?" · Lecture seule sur le Board":""}</small>
-      {parent&&<small>Projet · {parent.label}</small>}
+      <strong>{row.action==="EDIT"?"Modifier":"Voir"} {row.label}{row.occurrence?` · Intention ${row.occurrence}`:""}</strong>
+      <small>{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.surface==="BASKET"?"Panier multi-articles":row.surface==="ARTICLE"?"Fiche de cet article":row.surface==="EXTERNAL"?"Prestation externe":"Éditeur de cette carte"}{row.action==="VIEW"?" · Lecture seule sur le Board":""}</small>
+      {parent&&<small>Projet · {parent.label}{parentOccurrence?` · Intention ${parentOccurrence}`:""}</small>}
       {readingCurrent&&card&&(card.knowledge==="UNKNOWN"||card.knowledge==="PARTIAL")&&<small>Coûts ou informations à préciser</small>}
       {card&&isHairdresserReference(model,card)&&<small>Prestation externe · dépense du mois · voir cette prestation sur le Board</small>}
     </button>;
@@ -110,7 +111,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       </details>}
       {!!query.trim()&&occurrences.length>0&&<section className={styles.libraryExisting} aria-label="Intentions du mois" data-library-existing>
         <h3>Dans ce mois</h3><p>{occurrences.length===1?"Retrouvez cette intention, ou ajoutez-en une autre explicitement.":"Choisissez l’intention à ouvrir ; aucun ajout automatique."}</p>
-        {occurrences.map((row,index)=>occurrenceButton(row,occurrences.length>1?index+1:undefined))}
+        {occurrences.map(row=>occurrenceButton(row))}
       </section>}
       {favoriteItems.length>0&&<section className={styles.assetGroup} data-library-favorites><h3>Épinglés par vous</h3><div className={styles.presetGrid}>{favoriteItems.filter(i=>i.preset).map(tile)}</div>{favoriteItems.filter(i=>!i.preset).map(tile)}</section>}
       <p className={styles.libraryLocalNote}>Favoris locaux à ce navigateur · aucun budget engagé.{favoriteNotice&&` ${favoriteNotice}`}</p>
@@ -141,7 +142,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
         <option value="ALL">Toutes mes intentions</option><option value="INCOMPLETE">À compléter</option><option value="PROJECTS">Mes projets</option>
       </select></label>
       {!readingCurrent&&intentionFilter==="INCOMPLETE"&&<p role="status">Actualisez la projection pour connaître les intentions à compléter.</p>}
-      {monthIntentions.map((row,index)=>occurrenceButton(row,monthIntentions.length>1?index+1:undefined))}
+      {monthIntentions.map(row=>occurrenceButton(row))}
       {!monthIntentions.length&&!(intentionFilter==="INCOMPLETE"&&!readingCurrent)&&<p>Aucune intention ne correspond à ce filtre. Retrouvez les autres intentions ou préparez-en une depuis « À ajouter ».</p>}
     </section>:<>
       <p className={styles.libraryLocalNote}>Retrouvez la carte déjà présente dans votre mois. Aucun doublon n’est créé.</p>

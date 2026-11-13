@@ -26,6 +26,16 @@ for(const [index,key] of keys.entries()){
  assert(response.ok,response.code);model=response.model;
  assert.equal(libraryOccurrences(model).find(row=>row.contextOccurrenceId===uuid(30600+index))?.action,'EDIT');
 }
+for(const operation of [
+ {assetKey:'template:gift',presetKey:'gift-present',target:{kind:'BOARD_ZONE'},identity:uuid(30620),selectionId:uuid(30621),values:{}},
+ {assetKey:'template:other-context',presetKey:'composed-outing',target:{kind:'BOARD_ZONE'},identity:uuid(30630),selectionId:uuid(30631),values:{label:'Projet culturel'}},
+ {assetKey:'context-occurrence:'+uuid(30604),target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:uuid(30630),slotKey:'children'},identity:uuid(30604),selectionId:uuid(30632),values:{}},
+]){
+ const response=await handleComposerRequest(f.deps,householdId,{kind:'DROP',sequence:0,targetMonth:'2026-11',draft:model.semanticState,...operation});
+ assert(response.ok,response.code);model=response.model;
+}
+const gifts=libraryOccurrences(model).filter(row=>row.presetKey==='gift-present');
+assert.deepEqual(gifts.map(row=>row.occurrence),[1,2]);
 const digest=semanticStateDigest(model.semanticState);let root,setStatus,opened=[];
 function Harness(){
  const [status,update]=React.useState('FRESH');setStatus=update;
@@ -37,8 +47,13 @@ const rows=()=>root.root.findAll(node=>node.type==='button'&&node.props['data-li
 try{
  await act(async()=>{root=create(React.createElement(Harness));});
  const tab=root.root.findAllByType('button').find(node=>text(node)==='Mes intentions');assert(tab);
- await act(async()=>tab.props.onClick());assert.equal(rows().length,keys.length);
+ await act(async()=>tab.props.onClick());assert.equal(rows().length,keys.length+2);
  await act(async()=>rows()[0].props.onClick());assert.deepEqual(opened,[rows()[0].props['data-library-existing-action']]);
+ const search=root.root.findByProps({'data-library-search':true});
+ await act(async()=>search.props.onChange({target:{value:'culturel'}}));
+ assert.equal(rows().length,2);
+ const gift=root.root.findByProps({'data-library-existing-action':uuid(30604)});assert.match(text(gift),/Intention 1/);
+ await act(async()=>search.props.onChange({target:{value:''}}));
  const filter=root.root.findByProps({'aria-label':'Filtrer les intentions du mois'});
  await act(async()=>filter.props.onChange({target:{value:'INCOMPLETE'}}));
  const expected=model.board.contexts.filter(card=>card.knowledge==='UNKNOWN'||card.knowledge==='PARTIAL').length;

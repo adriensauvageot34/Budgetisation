@@ -93,7 +93,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Navigation du Board | Navigation commune, nom complet accessible et occurrence exacte |
 | DONE | Retour après déplacement | Destination révélée uniquement après réponse admise de l’évaluateur |
 | DONE | Informations de financement | Accès en lecture aux sources du mois depuis le détail de financement |
-| READY | Liste des intentions | Recherche dans le nom du projet et repérage des homonymes |
+| DONE | Liste des intentions | Recherche dans les parents et numéros d’homonymes stables sous filtrage |
 | READY | Modèles et disponibilité | Préférer les compléments effectivement disponibles sans masquer la structure |
 | DONE | Date du modèle | Date facultative du parent, sans propagation aux compléments |
 | READY | Mobilité explicite | Clarifier le prix de trajet complet et le statut du retour |
@@ -211,3 +211,9 @@ TypeScript et diff PASS. Les huit contrôles du Shell ont réussi, avec un ratta
 L’aperçu peut recueillir une date facultative pour le parent, dans le mois Composer. Les activités et compléments conservent leurs dates indépendantes. L’ordre du modèle est stable lorsqu’un complément est décoché puis réactivé.
 
 TypeScript et les deux contrôles React d’aperçu PASS. Les dix groupes du banc de parcours PASS, incluant une date valide, la non-propagation aux enfants et le refus d’un jour invalide ou d’un autre mois avant toute évaluation. Prix et participants restent à préciser ; aucun writer distant.
+
+### Recherche par projet et homonymes
+
+La liste du mois retrouve une intention par le nom de son projet ou d’un parent. Deux intentions homonymes conservent leur numéro de repérage quand un filtre en masque une. Le parent reste indiqué dans les résultats avec sa propre distinction d’occurrence.
+
+TypeScript, diff et deux contrôles React/propriétaire PASS. Un cadeau lié à un projet culturel est retrouvé par ce projet ; l’autre cadeau homonyme reste distinct et le numéro ne dépend pas des résultats visibles. Aucune mutation à la recherche.
