@@ -15,11 +15,13 @@ import { composerRenderIndex } from "./render-index";
 import { preloadEditorForAsset } from "./editor-chunks";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { MONTHLY_GROCERIES_REF } from "./catalog-discovery";
+import { availableProjectStarters, type ProjectStarter } from "./project-starters";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
 export const ComposerLibrary=memo(ComposerLibraryView);
-function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,drag,inspectContext,openContext}:{model:ComposerUiModel;openToken:number;busy:boolean;selected:string|null;
-  choose:(asset:ComposerAssetView)=>void;choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void;drag:(key:string|null)=>void;inspectContext:(id:string)=>void;openContext:(id:string)=>void}) {
+function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,drag,inspectContext,openContext,prepareProject}:{model:ComposerUiModel;openToken:number;busy:boolean;selected:string|null;
+  choose:(asset:ComposerAssetView)=>void;choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void;drag:(key:string|null)=>void;inspectContext:(id:string)=>void;openContext:(id:string)=>void;
+  prepareProject?:(starter:ProjectStarter)=>void}) {
   const [space,setSpace]=useState<"add"|"manage">("add"),[query,setQuery]=useState(""),[opened,setOpened]=useState<string|null>("SOCIAL");
   const [expanded,setExpanded]=useState<ReadonlySet<string>>(()=>new Set()),[favorites,setFavorites]=useState<readonly string[]>([]);
   const [favoriteNotice,setFavoriteNotice]=useState("");
@@ -37,6 +39,8 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   const serviceQuery=["coiffeur","coiffure","coupe de cheveux","brushing","soin capillaire"].includes(normalizeLibrarySearch(query));
   const favoriteItems=matches.filter(item=>favorites.includes(item.key));
   const categories=LIBRARY_CATEGORIES.map(([key,label])=>({key,label,items:matches.filter(item=>item.category===key)})).filter(g=>g.items.length);
+  const projects = prepareProject ? availableProjectStarters(model).filter(project =>
+    normalizeLibrarySearch(project.label).includes(normalizeLibrarySearch(query))) : [];
   const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
   const focusActions=()=>search.current?.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-existing-action]:not(:disabled),[data-library-add-action]:not(:disabled)")?.focus();
   const tile=(item:LibraryIntention)=>{
@@ -66,6 +70,11 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       }else if(e.key==="ArrowDown"){e.preventDefault();e.currentTarget.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-scroll] button:not(:disabled)")?.focus();}}}/></label>
     <div className={styles.libraryScroll} data-library-scroll onKeyDown={e=>{if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key)||!(e.target instanceof HTMLButtonElement))return;e.preventDefault();const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));const at=buttons.indexOf(e.target);buttons[e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowUp"?-1:1)))]?.focus();}}>
     {space==="add"?<>
+      {projects.length > 0 && <details className={styles.assetGroup} open={!!query || undefined}>
+        <summary>Modèles de projets</summary>
+        <div className={styles.presetGrid}>{projects.map(project => <button key={project.key} className={styles.libraryGenericChoice}
+          type="button" disabled={busy} onClick={() => prepareProject?.(project)}>{project.label}</button>)}</div>
+      </details>}
       {!!query.trim()&&occurrences.length>0&&<section className={styles.libraryExisting} aria-label="Intentions du mois" data-library-existing>
         <h3>Dans ce mois</h3><p>{occurrences.length===1?"Retrouvez cette intention, ou ajoutez-en une autre explicitement.":"Choisissez l’intention à ouvrir ; aucun ajout automatique."}</p>
         {occurrences.map((row,index)=><button key={row.contextOccurrenceId} type="button" className={styles.libraryExistingAction}

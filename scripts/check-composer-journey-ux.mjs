@@ -15,6 +15,7 @@ const {workshopErrorMessage}=require('@/app/mois-a-venir/composer/workshop-error
 const {fresh,buildComponentRow}=require('@/app/mois-a-venir/composer/night-out-components');
 const {LinkedIntentions}=require('@/app/mois-a-venir/composer/linked-intentions');
 const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
+const {availableProjectStarters,evaluateProjectStarter}=require('@/app/mois-a-venir/composer/project-starters');
 
 globalThis.fetch=async()=>{throw Error('JOURNEY_UX_REMOTE_FORBIDDEN');};
 const fixture=await budgetImpactFixture(), model=fixture.model;
@@ -117,7 +118,26 @@ const newCinema=composed.semanticState.contexts.find(row=>row.contextOccurrenceI
 assert.equal(newCinema.parentContextOccurrenceId,projectId);
 assert.deepEqual(newCinema.slotSelections,{});
 console.log('UX-07 Composed outing attaches exact occurrences and preserves official child costs: PASS');
+const starters=availableProjectStarters(model);
+assert.equal(starters.length,3);
+let starterId=29200, starterSequence=20;
+const transport=command=>handleComposerRequest(fixture.deps,householdId,command);
+for(const starter of starters){
+ const added=await evaluateProjectStarter(starter,model,transport,()=>uuid(++starterId),()=>++starterSequence);
+ const children=added.model.semanticState.contexts.filter(context=>context.parentContextOccurrenceId===added.parentId);
+ assert.equal(children.length,starter.children.length);
+ assert(children.every(child=>Object.keys(child.slotSelections).length===0&&!child.fields.plannedDate));
+ assert.equal(semanticStateDigest(model.semanticState),original);
+}
+let attempted=0;
+await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
+ if(++attempted===2)return {ok:false,sequence:command.sequence,code:'REFUSED',message:'Second step refused'};
+ return transport(command);
+},()=>uuid(++starterId),()=>++starterSequence),/Second step refused/);
+assert.equal(attempted,2);
+assert.equal(semanticStateDigest(model.semanticState),original);
+console.log('UX-08 Project starters build unpriced intentions and abort cleanly if a step is refused: PASS');
 assert.equal(semanticStateDigest(model.semanticState),original);
 assert.equal(JSON.stringify(fixture.world),world);
 assert.deepEqual(fixture.writes,[]);
-console.log(JSON.stringify({status:'PASS',checks:7,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));
+console.log(JSON.stringify({status:'PASS',checks:8,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));

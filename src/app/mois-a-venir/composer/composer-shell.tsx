@@ -23,6 +23,7 @@ import type { BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { assetEditorTarget, editorOccurrenceId } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
 import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
+import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter } from "./project-starters";
 import { WorkshopNavigationContext, IntentionSwitcher, intentionNavigationEntries } from "./workshop-navigation";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
@@ -979,6 +980,45 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     setFocusedContext(id);
     setReveal(previous => ({ targetRef: id, sequence: (previous?.sequence ?? 0) + 1 }));
   });
+  const installStarter = useCommittedEvent(async (starter: ProjectStarter) => {
+    if (busyRef.current || relationSessionRef.current || comparison || pendingApply
+      || !availableProjectStarters(shown).includes(starter)) return;
+    if (inlineEdits.registry.flushPending() || !inlineEdits.registry.guard(() => void installStarter(starter))) return;
+    const before = localDraft.current;
+    const source = semanticStateDigest(before);
+    const frame = frameNow();
+    clearHover(); scheduler.current.cancel(); gate.current.invalidate();
+    busyRef.current = true; setBusy(true);
+    setErrorMessage(null); setMessage("Préparation des intentions du projet…"); setPreviewStatus("PENDING");
+    try {
+      const next = await evaluateProjectStarter(starter, visualDraftModel(current.current, before), transport,
+        () => crypto.randomUUID(), () => gate.current.next(source).sequence);
+      if (source !== semanticStateDigest(localDraft.current) || !install(next.model)) {
+        setPreviewStatus("STALE");
+        setMessage("Le brouillon a changé. Rouvrez le modèle pour reprendre.");
+        return;
+      }
+      setPast(previous => [...previous, frame]); setFuture([]);
+      setEditor(null); setProjectionOpen(false); setUnresolvedOpen(false); setSuggestions(null); setBalanceOpen(false);
+      setFocusedContext(next.parentId);
+      setReveal(previous => ({ targetRef: next.parentId, sequence: (previous?.sequence ?? 0) + 1 }));
+      setResumeContext(next.parentId);
+      setPreviewStatus(next.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH");
+      setMessage("Projet ajouté au brouillon. Vous pouvez préciser chaque intention.");
+    } catch (error) {
+      setPreviewStatus("STALE");
+      const message = error instanceof Error ? error.message : "Modèle momentanément indisponible.";
+      setMessage(`Le projet n’a pas été ajouté. ${message}`);
+      setErrorMessage(message);
+    } finally { busyRef.current = false; setBusy(false); }
+  });
+  const prepareProject = useCommittedEvent((starter: ProjectStarter) => {
+    if (busyRef.current || relationSessionRef.current || comparison || pendingApply) return;
+    if (!inlineEdits.registry.guard(() => prepareProject(starter))) return;
+    const children = starter.children.map(key => composerPreset(key)?.label).join(", ");
+    confirmationRequest.current({ message: `Le modèle « ${starter.label} » ajoute ${children} dans un projet. Les prix et les dates resteront à préciser.`,
+      acceptLabel: "Créer ce projet dans le brouillon", accept: () => void installStarter(starter) });
+  });
   const intentionNavigation = useMemo(() => {
     const occurrences = libraryOccurrences(shown);
     const available = new Set(occurrences.map(row => row.contextOccurrenceId));
@@ -1096,7 +1136,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     {relationOpen && rootRelationsAvailable && <RootRelationCommands model={shown} relations={relations} capabilities={relationCaps} busy={busy} error={errorMessage}
       command={(mutation, focusId) => admitRelation(mutation, undefined, "push", focusId)} close={() => setRelationOpen(false)} abandon={discardRelations}
       undo={() => stage({ kind: "READ" }, "undo", past.at(-1))} redo={() => stage({ kind: "READ" }, "redo", future.at(-1))} canUndo={!!past.length} canRedo={!!future.length} />}
-    <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} openContext={stableLibraryOpen} />
+    <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} openContext={stableLibraryOpen}
+      prepareProject={!relationSession && !comparison && !pendingApply ? prepareProject : undefined} />
       {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
           initialBarView={barViews.current.get(`${draftState.targetMonth}:${livingBarId}`)} onViewChange={rememberCurrentBarView}
           context={draftState.contexts.find(c=>c.contextOccurrenceId===livingBarId)!} semanticState={draftState} householdPersons={model.householdPersons}

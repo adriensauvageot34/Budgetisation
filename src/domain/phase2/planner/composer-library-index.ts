@@ -39,7 +39,7 @@ export type LibraryOccurrence = Readonly<{ contextOccurrenceId:string; presetKey
 const clothingPresets = new Set(["clothing-shopping", "shein-purchase", "shoes-purchase"]);
 const situatedPresets = new Set(["mascara", "eyeliner", "eyebrow-pencil", "hair-wax", "face-cleanser", "makeup-remover",
   "restaurant-for-two", "cinema", "weekend-gite", "amazon-purchase", "groceries-purchase", "composed-outing",
-  "concert", "ropes-course", "museum-exhibition", ...clothingPresets]);
+  "concert", "ropes-course", "museum-exhibition", "hiking-nature", ...clothingPresets]);
 const publishedPreset = (context:Parameters<typeof presetForContext>[0]) => {
   try{return presetForContext(context);}catch{return undefined;} // Unsupported metadata is never an exact identity.
 };
