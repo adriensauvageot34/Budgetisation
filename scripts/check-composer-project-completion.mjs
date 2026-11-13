@@ -65,9 +65,17 @@ try{
  const stayId=weekend.semanticState.contexts.find(context=>context.templateKey==='short-stay').contextOccurrenceId;
  assert.equal(projectCompletionSuggestions(weekend,stayId).length,2);
  const culture=await add(weekend,'museum-exhibition',stayId,'activities');
- assert.deepEqual(projectCompletionSuggestions(culture,stayId).map(candidate=>candidate.preset.presetKey),['hiking-nature']);
+ assert.deepEqual(projectCompletionSuggestions(culture,stayId).map(candidate=>candidate.preset.presetKey),['hiking-nature','restaurant-for-two']);
  const complete=await add(culture,'hiking-nature',stayId,'activities');
- assert.deepEqual(projectCompletionSuggestions(complete,stayId),[]);
+ const stayMeal=projectCompletionSuggestions(complete,stayId);
+ assert.deepEqual(stayMeal.map(candidate=>[candidate.preset.presetKey,candidate.target.slotKey]),[['restaurant-for-two','restaurants']]);
+ const noMealDrop={...complete,dropCapabilities:complete.dropCapabilities.filter(drop=>drop.target.slotKey!=='restaurants')};
+ assert.deepEqual(projectCompletionSuggestions(noMealDrop,stayId),[]);
+ const stayedWithMeal=await add(complete,'restaurant-for-two',stayId,'restaurants');
+ assert.deepEqual(projectCompletionSuggestions(stayedWithMeal,stayId),[]);
+ const directMeal={...complete,board:{...complete.board,contexts:complete.board.contexts.map(card=>card.contextOccurrenceId===stayId
+  ? {...card,sockets:card.sockets.map(socket=>socket.slotKey==='restaurants'?{...socket,currentItems:[{kind:'COMPONENT'}]}:socket)}:card)}};
+ assert.deepEqual(projectCompletionSuggestions(directMeal,stayId),[]);
  const outing=await add(complete,'composed-outing');
  const leisureId=outing.semanticState.contexts.filter(context=>context.templateKey==='other-context').at(-1).contextOccurrenceId;
  const bowling=await add(outing,'bowling',leisureId);

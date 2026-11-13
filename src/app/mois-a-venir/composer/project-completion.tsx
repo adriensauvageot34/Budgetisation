@@ -26,15 +26,15 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
     || model.semanticState.preferences.flexibility[parentId] === "PRESERVE") return [];
   const preset = presetForContext(parent)?.presetKey;
   const visit = parent.templateKey === "friend-visit" || parent.templateKey === "family-visit";
-  const slotKey = preset === "composed-outing" ? "children" : preset && (parent.templateKey === "short-stay" || visit) ? "activities" : null;
-  if (!slotKey || !parent.sockets.some(socket => socket.slotKey === slotKey && socket.contextOccurrenceId === parentId
-    && socket.capabilityRefs.includes(`${parent.templateKey}:${slotKey}:ATTACH_CHILD_CONTEXT`))) return [];
-  const target = { kind: "CONTEXT_SOCKET" as const, contextOccurrenceId: parentId, slotKey };
+  const stay = parent.templateKey === "short-stay";
+  const slotKey = preset === "composed-outing" ? "children" : preset && (stay || visit) ? "activities" : null;
+  if (!slotKey) return [];
   const children = model.board.contexts.filter(card => card.parentContextOccurrenceId === parentId
     && parent.childContextOccurrenceIds.includes(card.contextOccurrenceId));
   const chosen = new Set(children.map(card => presetForContext(card)?.presetKey));
   const activityChosen = children.some(card => card.templateKey === "activity");
-  const mealChosen = children.some(card => ["restaurant", "fast-food", "delivery"].includes(card.templateKey));
+  const mealChosen = children.some(card => ["restaurant", "fast-food", "delivery"].includes(card.templateKey))
+    || stay && !!parent.sockets.find(socket => socket.slotKey === "restaurants")?.currentItems.some(item => item.kind === "COMPONENT");
   const stayLabel = preset === "weekend-gite" ? "week-end" : "séjour";
   const candidates: readonly Pick<CompletionRule, "add" | "reason">[] = preset === "composed-outing"
     ? children.length ? outingRules.filter(rule => chosen.has(rule.trigger)
@@ -51,10 +51,17 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
       reason: "Une visite culturelle est déjà liée au séjour. Une randonnée peut la compléter, si vous souhaitez une activité nature." }]
       : chosen.has("hiking-nature") && !chosen.has("museum-exhibition") ? [{ add: "museum-exhibition",
         reason: "Une randonnée est déjà liée au séjour. Vous pouvez examiner une visite culturelle en complément." }] : [];
-  return candidates.flatMap(candidate => {
+  const stayMeal = stay && activityChosen && !mealChosen ? [{
+    add: "restaurant-for-two" as const, reason: "Une activité est déjà liée au séjour. Vous pouvez prévoir un repas pendant le séjour.",
+  }] : [];
+  return [...candidates, ...stayMeal].flatMap(candidate => {
     const child = composerPreset(candidate.add);
     const assetKey = `template:${child?.templateKey}`;
+    const destination = stay && child?.templateKey === "restaurant" ? "restaurants" : slotKey;
+    const target = { kind: "CONTEXT_SOCKET" as const, contextOccurrenceId: parentId, slotKey: destination };
     if (!child || chosen.has(child.presetKey) || child.templateKey === "restaurant" && mealChosen
+      || !parent.sockets.some(socket => socket.slotKey === destination && socket.contextOccurrenceId === parentId
+        && socket.capabilityRefs.includes(`${parent.templateKey}:${destination}:ATTACH_CHILD_CONTEXT`))
       || publishedDrop(model, assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return [];
     return [{ key: `${parentId}:${child.presetKey}`, preset: child, target, assetKey, reason: candidate.reason,
       category: child.templateKey === "restaurant" ? "MEALS" as const : "ACTIVITIES" as const }];

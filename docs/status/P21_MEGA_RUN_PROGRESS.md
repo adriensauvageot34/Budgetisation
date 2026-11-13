@@ -349,3 +349,9 @@ TypeScript, diff et onze contrôles du banc Restaurant/Cinéma/Activité PASS. O
 Le onzième modèle utilise deux sockets déjà publiés par Séjour, Activités pour le musée et Restaurants pour le repas. Chaque complément reste facultatif dans l’aperçu. L’évaluateur existant contrôle chaque rattachement et le Shell installe la composition après admission de l’ensemble.
 
 TypeScript, diff, banc d’aperçu, recherche et dix groupes de parcours PASS. Les deux identités sont vérifiées dans leur socket exact. Aucun poste ni tarif n’est prérempli. Aucun writer distant ni Apply.
+
+### Suggestion de repas pendant un séjour
+
+Un séjour contenant une activité peut proposer un repas dans son socket Restaurants. Le motif indique l’activité déjà liée. Un repas autonome ou directement renseigné dans le séjour suffit à retirer la proposition.
+
+TypeScript, diff et cinq groupes S3 PASS. Le contrôle retire la proposition sans capacité du socket et après rattachement d’un repas. Les suggestions culture et nature restent indépendantes. Aucun ajout automatique, writer distant ni Apply.
