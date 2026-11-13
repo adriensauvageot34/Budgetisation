@@ -94,14 +94,15 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
     const hairdresserReference=isHairdresserReference(model,card);
     const preset=publishedPreset(card);
     const bareBasket=isPurchaseBasket(card)&&card.fields.composerPresentation===undefined;
-    if(!hairdresserReference&&!bareBasket&&!preset)return [];
+    const bareActivity=card.templateKey==="activity"&&card.fields.composerPresentation===undefined;
+    if(!hairdresserReference&&!bareBasket&&!bareActivity&&!preset)return [];
     const date=typeof card.fields.plannedDate==="string"?card.fields.plannedDate:null;
     if(date&&(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!date.startsWith(`${model.board.targetMonth}-`)
       ||!Number.isFinite(new Date(`${date}T12:00:00Z`).getTime())))return [];
     const context=model.semanticState.contexts.find(c=>c.contextOccurrenceId===card.contextOccurrenceId);
     const basket=isPurchaseBasket(card);
     if(basket!==(context?isPurchaseBasket(context):false))return [];
-    if(bareBasket&&context?.fields.composerPresentation!==undefined)return [];
+    if((bareBasket||bareActivity)&&context?.fields.composerPresentation!==undefined)return [];
     if(preset&&clothingPresets.has(preset.presetKey)&&(!isClothingPurchase(card)||!context||!isClothingPurchase(context)
       ||publishedPreset(context)?.presetKey!==preset.presetKey))return [];
     const clothing=isClothingPurchase(card)&&!basket, article=context&&clothing?clothingItem(context):undefined;
@@ -116,9 +117,10 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
       parent=parent.parentContextOccurrenceId?byId.get(parent.parentContextOccurrenceId):undefined;
     }
     const productLabel=clothing&&typeof card.fields.productLabel==="string"?card.fields.productLabel:"";
-    const editable=!hairdresserReference&&(!!preset||bareBasket)&&!card.readOnly&&card.capabilityRefs.includes("PATCH_CONTEXT")&&context?.templateKey===card.templateKey
-      &&(!basket||context.status==="ACTIVE"&&card.externalIntentId===null&&(context.parentContextOccurrenceId??null)===card.parentContextOccurrenceId)
-      &&(bareBasket||publishedPreset(context)?.presetKey===preset!.presetKey)
+    const editable=!hairdresserReference&&!card.readOnly&&card.capabilityRefs.includes("PATCH_CONTEXT")&&context?.templateKey===card.templateKey
+      &&(preset ? publishedPreset(context)?.presetKey===preset.presetKey
+        : (bareBasket||bareActivity)&&context.fields.composerPresentation===undefined)
+      &&context.status==="ACTIVE"&&card.externalIntentId===null&&(context.parentContextOccurrenceId??null)===card.parentContextOccurrenceId
       &&!model.semanticState.preferences.anchors.includes(card.contextOccurrenceId)
       &&model.semanticState.preferences.flexibility[card.contextOccurrenceId]!=="PRESERVE"
       &&(!clothing||clothingItemWritable(model,context,card));
@@ -127,7 +129,8 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
       surface:hairdresserReference?"EXTERNAL" as const:basket?"BASKET" as const:clothing&&article?"ARTICLE" as const:"CONTEXT" as const,
       search:normalizeLibrarySearch(hairdresserReference?`${card.label} Coiffeur prestation coiffure ${card.components
         .filter(item=>item.assetKey==="beauty:hairdresser").map(item=>item.label).join(" ")}`
-        :[card.label,preset?.label??"Achat",preset?libraryPresetGroup(preset):"panier articles achat libre",...(preset?.searchTerms??[]),...(clothing?[productLabel]:[]),...(article?[article.label]:[]),merchant,...basketLabels,...parentLabels].join(" "))}];
+        :[card.label,preset?.label??(bareActivity?"Activité":"Achat"),preset?libraryPresetGroup(preset):bareActivity?"sortie activité libre":"panier articles achat libre",
+          ...(preset?.searchTerms??[]),...(clothing?[productLabel]:[]),...(article?[article.label]:[]),merchant,...basketLabels,...parentLabels].join(" "))}];
   });
   const counts=new Map<string,number>(),seen=new Map<string,number>();
   for(const row of rows)counts.set(row.label,(counts.get(row.label)??0)+1);

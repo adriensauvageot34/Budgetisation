@@ -421,3 +421,9 @@ TypeScript, diff et banc intentions liées PASS. La recherche « cinema 2 » ret
 Quand la fiche recouvre les résultats, les commandes recouvertes sortent de la navigation au clavier. Les actions de la fiche et de pagination ont une cible de 44 px en écran étroit, et les libellés longs se replient dans la fiche.
 
 TypeScript, diff et banc catalogue PASS pour la présence de l’état fiche ouverte et son retour aux résultats. Le rendu aux largeurs réelles reste NOT_RUN.
+
+### Retrouver les activités libres
+
+Les activités libres sans présentation de preset rejoignent « Mes intentions ». Elles rouvrent leur éditeur générique. L’annonce d’édition des intentions vérifie l’état actif, l’occurrence et son parent, avec les droits publiés.
+
+TypeScript, diff et quatre contrôles de bibliothèque PASS. Une activité libre est retrouvée sans lui attribuer de preset. Les homonymes, les filtres et la recherche de modèles restent couverts.

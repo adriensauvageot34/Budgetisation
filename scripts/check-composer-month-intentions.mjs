@@ -16,6 +16,7 @@ const {ComposerLibrary}=require('@/app/mois-a-venir/composer/composer-library');
 const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
 const {composerPreset}=require('@/domain/phase2/planner/composer-presets');
 const {libraryOccurrences}=require('@/domain/phase2/planner/composer-library-index');
+const {assetEditorKind}=require('@/app/mois-a-venir/composer/asset-editor-routing');
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const f=await readMonthFixture();let model=f.model;
@@ -28,6 +29,7 @@ for(const [index,key] of keys.entries()){
 }
 for(const operation of [
  {assetKey:'template:gift',presetKey:'gift-present',target:{kind:'BOARD_ZONE'},identity:uuid(30620),selectionId:uuid(30621),values:{}},
+ {assetKey:'template:activity',target:{kind:'BOARD_ZONE'},identity:uuid(30622),selectionId:uuid(30623),values:{label:'Initiation libre'}},
  {assetKey:'template:other-context',presetKey:'composed-outing',target:{kind:'BOARD_ZONE'},identity:uuid(30630),selectionId:uuid(30631),values:{label:'Projet culturel'}},
  {assetKey:'context-occurrence:'+uuid(30604),target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:uuid(30630),slotKey:'children'},identity:uuid(30604),selectionId:uuid(30632),values:{}},
 ]){
@@ -36,6 +38,9 @@ for(const operation of [
 }
 const gifts=libraryOccurrences(model).filter(row=>row.presetKey==='gift-present');
 assert.deepEqual(gifts.map(row=>row.occurrence),[1,2]);
+const freeActivity=libraryOccurrences(model).find(row=>row.contextOccurrenceId===uuid(30622));
+assert(freeActivity);assert.equal(freeActivity.presetKey,null);assert.equal(freeActivity.action,'EDIT');
+assert.equal(assetEditorKind('activity',undefined),'catalog');
 const digest=semanticStateDigest(model.semanticState);let root,setStatus,opened=[],prepared=[],searchFocus=0,focusedButton=null;
 class Button{constructor(label,visible=true){this.label=label;this.visible=visible;}getClientRects(){return this.visible?[{}]:[];}focus(){focusedButton=this.label;}}
 globalThis.HTMLButtonElement=Button;
@@ -50,7 +55,7 @@ const rows=()=>root.root.findAll(node=>node.type==='button'&&node.props['data-li
 try{
  await act(async()=>{root=create(React.createElement(Harness),{createNodeMock:element=>element.props['data-library-search']?{focus(){searchFocus++;},closest(){return null;}}:null});});
  const tab=root.root.findAllByType('button').find(node=>text(node)==='Mes intentions');assert(tab);
- await act(async()=>tab.props.onClick());assert.equal(rows().length,keys.length+2);
+ await act(async()=>tab.props.onClick());assert.equal(rows().length,keys.length+3);
  await act(async()=>rows()[0].props.onClick());assert.deepEqual(opened,[rows()[0].props['data-library-existing-action']]);
  const search=root.root.findByProps({'data-library-search':true});
  await act(async()=>search.props.onChange({target:{value:'Uber Eats'}}));
