@@ -8,7 +8,7 @@ import {uuid,householdId} from './fixtures/planner-headless.mjs';
 const {discoveryActions}=require('@/app/mois-a-venir/composer/catalog-discovery');
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {isPurchaseBasket,purchaseComponents}=require('@/domain/phase2/planner/purchase-basket');
-const {libraryOccurrences}=require('@/domain/phase2/planner/composer-library-index');
+const {filterLibraryIntentions,libraryOccurrences}=require('@/domain/phase2/planner/composer-library-index');
 const {plannerDigest}=require('@/domain/phase2/planner/json');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const {componentId}=require('@/domain/phase2/planner/identity');
@@ -111,13 +111,16 @@ try{
  await act(async()=>{root=create(render(updated,{...catalogChoice}));});assert.equal(root.root.findAllByType('form').length,0);
  assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('article ou ses droits ont changé')));assert.equal(operations.length,0);
  await act(async()=>root.unmount());root=null;
- let mixed=updated;
+ let mixed=await request(updated,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(updatedContext),
+  change:{kind:'SET_DETAILS',merchant:'Boutique de recette',date:'',coverage:'AUTO'}}});
  for(const [selectionId,price] of [[firstId,'0'],[secondId,'']]){
   const current=mixed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
   mixed=await request(mixed,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(current),
-   change:{kind:'SAVE_ITEM',selectionId,label:charger.label,quantity:'1',unit:'UNIT',price,concept:{id:charger.visualConceptId,label:charger.label}}}});
+   change:{kind:'SAVE_ITEM',selectionId,label:'Accessoire de voyage',quantity:'1',unit:'UNIT',price,concept:{id:charger.visualConceptId,label:charger.label}}}});
  }
  const mixedDigest=semanticStateDigest(mixed.semanticState);
+ const found=filterLibraryIntentions(libraryOccurrences(mixed),'boutique '+charger.label);
+ assert.deepEqual(found.map(row=>row.contextOccurrenceId),[contextId]);assert.equal(found[0].action,'EDIT');
  await act(async()=>{root=create(render(mixed));});
  const lines=()=>root.root.findAllByType('li').filter(line=>line.props['data-basket-line']);
  assert.deepEqual(lines().map(line=>line.props['data-basket-line']),[firstId,secondId]);

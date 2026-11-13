@@ -319,3 +319,9 @@ TypeScript, diff et banc d’impact PASS. Amazon est vérifié à 48 € puis à
 Les compléments homonymes sont numérotés dans le panneau d’activité. La modification garde la ligne à sa place et n’affecte pas les autres compléments.
 
 TypeScript, diff et onze contrôles Restaurant, Cinéma et Activité PASS. Deux locations de chaussures de Bowling à 6 € gardent leur identité et leur ordre après modification ciblée de la première à 7 €. Le Compiler confirme les trois montants de la sortie. Aucun writer distant ni Apply.
+
+### Retrouver un panier par son vendeur ou son concept
+
+« Mes intentions » retrouve le panier par son vendeur déclaré et par le concept Clay d’un article, y compris après renommage de la ligne. La navigation annonce l’édition seulement lorsque l’occurrence est active et que le rattachement affiché correspond au Draft.
+
+TypeScript, diff et banc catalogue/panier PASS. La recherche combinant vendeur et concept retrouve un seul panier, préserve son digest et ne déclenche aucun writer distant. Les protections de lignes et le filtre des prix inconnus restent vérifiés.

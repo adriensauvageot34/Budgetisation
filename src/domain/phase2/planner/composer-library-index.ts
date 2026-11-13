@@ -105,7 +105,10 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
     if(preset&&clothingPresets.has(preset.presetKey)&&(!isClothingPurchase(card)||!context||!isClothingPurchase(context)
       ||publishedPreset(context)?.presetKey!==preset.presetKey))return [];
     const clothing=isClothingPurchase(card)&&!basket, article=context&&clothing?clothingItem(context):undefined;
-    const basketLabels=basket&&context?purchaseComponents(context,"item").map(item=>item.label):[];
+    const basketLabels=basket&&context?purchaseComponents(context,"item").flatMap(item=>[
+      item.label, item.basketArticle?.concept?.label ?? "",
+    ]):[];
+    const merchant=basket&&typeof context?.fields.merchantLabel==="string"?context.fields.merchantLabel:"";
     const parentLabels:string[]=[],seenParents=new Set([card.contextOccurrenceId]);
     let parent=card.parentContextOccurrenceId?byId.get(card.parentContextOccurrenceId):undefined;
     while(parent&&!seenParents.has(parent.contextOccurrenceId)){
@@ -114,6 +117,7 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
     }
     const productLabel=clothing&&typeof card.fields.productLabel==="string"?card.fields.productLabel:"";
     const editable=!hairdresserReference&&(!!preset||bareBasket)&&!card.readOnly&&card.capabilityRefs.includes("PATCH_CONTEXT")&&context?.templateKey===card.templateKey
+      &&(!basket||context.status==="ACTIVE"&&card.externalIntentId===null&&(context.parentContextOccurrenceId??null)===card.parentContextOccurrenceId)
       &&(bareBasket||publishedPreset(context)?.presetKey===preset!.presetKey)
       &&!model.semanticState.preferences.anchors.includes(card.contextOccurrenceId)
       &&model.semanticState.preferences.flexibility[card.contextOccurrenceId]!=="PRESERVE"
@@ -123,7 +127,7 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
       surface:hairdresserReference?"EXTERNAL" as const:basket?"BASKET" as const:clothing&&article?"ARTICLE" as const:"CONTEXT" as const,
       search:normalizeLibrarySearch(hairdresserReference?`${card.label} Coiffeur prestation coiffure ${card.components
         .filter(item=>item.assetKey==="beauty:hairdresser").map(item=>item.label).join(" ")}`
-        :[card.label,preset?.label??"Achat",preset?libraryPresetGroup(preset):"panier articles achat libre",...(preset?.searchTerms??[]),...(clothing?[productLabel]:[]),...(article?[article.label]:[]),...basketLabels,...parentLabels].join(" "))}];
+        :[card.label,preset?.label??"Achat",preset?libraryPresetGroup(preset):"panier articles achat libre",...(preset?.searchTerms??[]),...(clothing?[productLabel]:[]),...(article?[article.label]:[]),merchant,...basketLabels,...parentLabels].join(" "))}];
   });
   const counts=new Map<string,number>(),seen=new Map<string,number>();
   for(const row of rows)counts.set(row.label,(counts.get(row.label)??0)+1);
