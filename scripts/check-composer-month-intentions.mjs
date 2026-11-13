@@ -42,6 +42,10 @@ assert.deepEqual(gifts.map(row=>row.occurrence),[1,2]);
 const freeActivity=libraryOccurrences(model).find(row=>row.contextOccurrenceId===uuid(30622));
 assert(freeActivity);assert.equal(freeActivity.presetKey,null);assert.equal(freeActivity.action,'EDIT');
 assert.equal(assetEditorKind('activity',undefined),'catalog');
+const withDate=day=>({...model,board:{...model.board,contexts:model.board.contexts.map(card=>card.contextOccurrenceId===uuid(30622)
+ ? {...card,fields:{...card.fields,plannedDate:day}}:card)}});
+assert.equal(libraryOccurrences(withDate('2026-11-31')).find(row=>row.contextOccurrenceId===uuid(30622))?.plannedDate,null);
+assert.equal(libraryOccurrences(withDate('2026-12-01')).some(row=>row.contextOccurrenceId===uuid(30622)),false);
 const digest=semanticStateDigest(model.semanticState);let root,setStatus,opened=[],prepared=[],searchFocus=0,focusedButton=null;
 class Button{constructor(label,visible=true){this.label=label;this.visible=visible;}getClientRects(){return this.visible?[{}]:[];}focus(){focusedButton=this.label;}}
 globalThis.HTMLButtonElement=Button;

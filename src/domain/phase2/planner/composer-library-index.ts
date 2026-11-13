@@ -96,9 +96,10 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
     const bareBasket=isPurchaseBasket(card)&&card.fields.composerPresentation===undefined;
     const bareActivity=card.templateKey==="activity"&&card.fields.composerPresentation===undefined;
     if(!hairdresserReference&&!bareBasket&&!bareActivity&&!preset)return [];
-    const date=typeof card.fields.plannedDate==="string"?card.fields.plannedDate:null;
-    if(date&&(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!date.startsWith(`${model.board.targetMonth}-`)
-      ||!Number.isFinite(new Date(`${date}T12:00:00Z`).getTime())))return [];
+    const day=typeof card.fields.plannedDate==="string"?card.fields.plannedDate:null;
+    const parsed=day&&/^\d{4}-\d{2}-\d{2}$/.test(day)?new Date(`${day}T12:00:00Z`):null;
+    const date=parsed&&Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===day?day:null;
+    if(date&&!date.startsWith(`${model.board.targetMonth}-`))return [];
     const context=model.semanticState.contexts.find(c=>c.contextOccurrenceId===card.contextOccurrenceId);
     const basket=isPurchaseBasket(card);
     if(basket!==(context?isPurchaseBasket(context):false))return [];

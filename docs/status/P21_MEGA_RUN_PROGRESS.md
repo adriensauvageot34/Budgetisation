@@ -489,3 +489,7 @@ Le catalogue nomme explicitement l’action « Préparer un panier Courses » et
 ### Ouvrir un panier lié depuis un séjour
 
 Le raccourci du panier dans les postes du séjour vérifie la relation courante avant d’ouvrir l’éditeur. TypeScript, diff et banc séjour/enfants PASS. Un panier dont la carte a changé de parent n’est pas ouvert. Le même panier encore lié s’ouvre par son identité, sans mutation.
+
+### Conserver l’accès aux intentions avec une ancienne date invalide
+
+Une date invalide s’affiche comme « Date à préciser » dans la bibliothèque. Une date valide d’un autre mois reste hors des résultats. TypeScript, diff et banc bibliothèque PASS sur ces deux cas, sans correction automatique du Draft.
