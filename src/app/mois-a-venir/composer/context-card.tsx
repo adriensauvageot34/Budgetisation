@@ -6,7 +6,7 @@ import type { ComposerContextCardView, DropTarget, ComposerAssetView } from "@/d
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { ContextSocket } from "./context-socket";
-import { money, knowledgeLabel } from "./display";
+import { money, knowledgeLabel, plannedDayLabel } from "./display";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import { PresetIllustration } from "./preset-illustration";
@@ -40,6 +40,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const preset = presetForContext(card);
+  const plannedDay = plannedDayLabel(card.fields.plannedDate);
   const purchase = card.templateKey === "purchase", main = card.sockets.find(s => s.slotKey === "item");
   const basket = isPurchaseBasket(card);
   const preview = useContext(BudgetPreviewStatus);
@@ -81,7 +82,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     {preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : card.readOnly
       ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
-    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => (card.templateKey === "restaurant" || purchase || !!preset) && !card.readOnly && !preserved ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${card.fields.plannedDate}T12:00:00Z`))}</p>}
+    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => (card.templateKey === "restaurant" || purchase || !!preset) && !card.readOnly && !preserved ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{plannedDay ?? "Date à préciser"}</p>}
       {card.childContextOccurrenceIds.length > 0 && <p data-linked-intentions-count={card.childContextOccurrenceIds.length}>
         {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
       </p>}

@@ -29,6 +29,9 @@ const basketCard = (model, name, status = 'FRESH') => renderToStaticMarkup(React
   React.createElement(ContextCard, { model, card: model.board.contexts.find(card => card.contextOccurrenceId === impactIds[name]),
     busy: false, selected: null, focused: null, focus() {}, drag() {}, drop() {}, choose() {}, request() {}, edit() {} })));
 assert.match(basketCard(model, 'amazon'), /Total brut 48,00\s*€/);
+const brokenDate = { ...model, board: { ...model.board, contexts: model.board.contexts.map(card =>
+  card.contextOccurrenceId === impactIds.amazon ? { ...card, fields: { ...card.fields, plannedDate: 'date invalide' } } : card) } };
+assert.match(basketCard(brokenDate, 'amazon'), /Date à préciser/);
 assert.match(basketCard(model, 'amazon', 'STALE'), /Calcul à actualiser/);
 assert.doesNotMatch(basketCard(model, 'amazon', 'STALE'), /48,00/);
 assert.deepEqual(amounts(impact(model, 'groceries')), ['8.00', '8.00', '0.00']);

@@ -3,6 +3,7 @@
 import { createContext, useContext, useId, useState } from "react";
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
+import { plannedDayLabel } from "./display";
 import styles from "./workshop-navigation.module.css";
 
 export function intentionNavigationEntries(cards: readonly ComposerContextCardView[]) {
@@ -11,10 +12,7 @@ export function intentionNavigationEntries(cards: readonly ComposerContextCardVi
   return cards.map(card => {
     const number = (seen.get(card.label) ?? 0) + 1;
     seen.set(card.label, number);
-    const day = card.fields.plannedDate;
-    const date = typeof day === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(day) ? new Date(`${day}T12:00:00Z`) : null;
-    const caption = date && Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === day
-      ? new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(date) : "Date à préciser";
+    const caption = plannedDayLabel(card.fields.plannedDate) ?? "Date à préciser";
     return { id: card.contextOccurrenceId, label: card.label + (totals.get(card.label)! > 1 ? " · " + number : "") + " · " + caption };
   });
 }

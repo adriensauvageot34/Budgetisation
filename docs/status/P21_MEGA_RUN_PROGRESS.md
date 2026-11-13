@@ -531,3 +531,7 @@ Une fiche de preset ne propose pas de créer ou rouvrir une intention lorsqu’o
 ### Raccourcis d’équipement et de prestation Maison
 
 Le projet Maison ouvre les postes Équipement et Prestation depuis son résumé si le socket et le dépôt sont publiés. Les formulaires existants gardent la saisie locale jusqu’à la validation. TypeScript, diff et banc familles de projets PASS. Le retrait de la capacité Services masque le raccourci correspondant.
+
+### Ancienne date invalide sur le Board
+
+Le Board et la navigation affichent « Date à préciser » quand une ancienne date ne peut pas être lue, en conservant l’accès à la carte et sa valeur dans le Draft. Les tests locaux couvrent le rendu d’un achat avec une date invalide et la navigation par occurrence.
