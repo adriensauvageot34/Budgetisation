@@ -609,3 +609,7 @@ Les projets Maison, visites amicales et autres projets sans preset sont retrouva
 ### Compléments pour les séjours, visites et projets Maison libres
 
 Les intentions libres réutilisent les propositions de leur type métier lorsqu’un socket et un dépôt les admettent. Le motif d’un projet Maison libre parle du projet préparé. Les présentations inconnues restent sans suggestion. TypeScript et neuf groupes S3 PASS avec absence de mutation en consultation et capacités retirées.
+
+### Retrouver les séjours et visites libres avant leur premier enfant
+
+Les séjours et visites familiales sans preset sont indexés par leur identité et restent accessibles dans « Mes intentions ». Le filtre « Mes projets » retrouve les projets encore vides de ces familles. TypeScript et les quatre contrôles de navigation du mois PASS, dont la liste exacte des projets et l’ouverture des occurrences.

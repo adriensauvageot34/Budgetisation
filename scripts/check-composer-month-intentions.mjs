@@ -33,6 +33,8 @@ for(const operation of [
  {assetKey:'template:purchase',target:{kind:'BOARD_ZONE'},identity:uuid(30624),selectionId:uuid(30625),values:{label:'Panier générique'},purchaseBasket:true},
  {assetKey:'template:other-context',presetKey:'composed-outing',target:{kind:'BOARD_ZONE'},identity:uuid(30630),selectionId:uuid(30631),values:{label:'Projet culturel'}},
  {assetKey:'context-occurrence:'+uuid(30604),target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:uuid(30630),slotKey:'children'},identity:uuid(30604),selectionId:uuid(30632),values:{}},
+ {assetKey:'template:short-stay',target:{kind:'BOARD_ZONE'},identity:uuid(30640),selectionId:uuid(30641),values:{label:'Mon séjour libre'}},
+ {assetKey:'template:family-visit',target:{kind:'BOARD_ZONE'},identity:uuid(30642),selectionId:uuid(30643),values:{label:'Ma visite libre'}},
 ]){
  const response=await handleComposerRequest(f.deps,householdId,{kind:'DROP',sequence:0,targetMonth:'2026-11',draft:model.semanticState,...operation});
  assert(response.ok,response.code);model=response.model;
@@ -62,7 +64,7 @@ const rows=()=>root.root.findAll(node=>node.type==='button'&&node.props['data-li
 try{
  await act(async()=>{root=create(React.createElement(Harness),{createNodeMock:element=>element.props['data-library-search']?{focus(){searchFocus++;},closest(){return null;}}:null});});
  const tab=root.root.findAllByType('button').find(node=>text(node)==='Mes intentions');assert(tab);
- await act(async()=>tab.props.onClick());assert.equal(rows().length,keys.length+4);
+ await act(async()=>tab.props.onClick());assert.equal(rows().length,keys.length+6);
  await act(async()=>rows()[0].props.onClick());assert.deepEqual(opened,[rows()[0].props['data-library-existing-action']]);
  const search=root.root.findByProps({'data-library-search':true});
  const keyDown=(key,isComposing=false)=>search.props.onKeyDown({key,nativeEvent:{isComposing},preventDefault(){},stopPropagation(){}});
@@ -81,6 +83,8 @@ try{
  const gift=root.root.findByProps({'data-library-existing-action':uuid(30604)});assert.match(text(gift),/Intention 1/);
  await act(async()=>search.props.onChange({target:{value:''}}));
  const filter=root.root.findByProps({'aria-label':'Filtrer les intentions du mois'});
+ await act(async()=>filter.props.onChange({target:{value:'PROJECTS'}}));
+ assert.deepEqual(rows().map(row=>row.props['data-library-existing-action']),[uuid(30630),uuid(30640),uuid(30642)]);
  await act(async()=>filter.props.onChange({target:{value:'BASKETS'}}));
  assert.deepEqual(rows().map(row=>row.props['data-library-existing-action']),[uuid(30624)]);
  await act(async()=>keyDown('Enter'));assert.equal(opened.at(-1),uuid(30624));

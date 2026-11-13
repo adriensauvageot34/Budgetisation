@@ -54,7 +54,8 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     const card=composerRenderIndex(model).contexts.get(row.contextOccurrenceId);
     if(!card)return false;
     if(intentionFilter==="BASKETS")return row.surface==="BASKET";
-    if(intentionFilter==="PROJECTS")return card.childContextOccurrenceIds.length>0||row.presetKey==="composed-outing"||card.templateKey==="home-project";
+    if(intentionFilter==="PROJECTS")return card.childContextOccurrenceIds.length>0||row.presetKey==="composed-outing"
+      ||["home-project","friend-visit","family-visit","short-stay","other-context"].includes(card.templateKey);
     if(intentionFilter==="INCOMPLETE")return readingCurrent&&(card.knowledge==="UNKNOWN"||card.knowledge==="PARTIAL");
     if(intentionFilter==="VIEW")return row.action==="VIEW";
     return true;

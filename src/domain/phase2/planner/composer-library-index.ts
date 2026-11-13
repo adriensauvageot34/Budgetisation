@@ -95,7 +95,8 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
     const preset=publishedPreset(card);
     const bareBasket=isPurchaseBasket(card)&&card.fields.composerPresentation===undefined;
     const bareActivity=card.templateKey==="activity"&&card.fields.composerPresentation===undefined;
-    const bareProject=["home-project","friend-visit","other-context"].includes(card.templateKey)&&card.fields.composerPresentation===undefined;
+    const bareProject=["home-project","friend-visit","family-visit","short-stay","other-context"].includes(card.templateKey)
+      &&card.fields.composerPresentation===undefined;
     const bare=bareBasket||bareActivity||bareProject;
     if(!hairdresserReference&&!bare&&!preset)return [];
     const day=typeof card.fields.plannedDate==="string"?card.fields.plannedDate:null;
