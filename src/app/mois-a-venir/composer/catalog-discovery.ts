@@ -133,7 +133,7 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
  }
  const activityPreset=ACTIVITY_PRESETS.find(preset=>preset.visualConceptId===entry.visualConceptId);
  const presetKey=entry.presetKey??(!target.contextId&&!target.controlRef?activityPreset?.presetKey:undefined);
- if(presetKey){
+ if(presetKey&&!target.controlRef){
    const preset=composerPreset(presetKey);
    const existing=model.board.contexts.filter(c=>presetForContext(c)?.presetKey===presetKey);
    for(const [i,c] of existing.entries())actions.push({key:'open:'+c.contextOccurrenceId,kind:'OPEN',contextId:c.contextOccurrenceId,label:`Ouvrir ${c.label}${existing.length>1?` · occurrence ${i+1}`:''}`});

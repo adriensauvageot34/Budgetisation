@@ -523,3 +523,7 @@ TypeScript, diff et sept groupes S3 PASS. La fixture vérifie l’admission expl
 L’éditeur des projets revalide la composition et les droits lorsque l’utilisateur confirme une association. Le refus explique comment reprendre.
 
 TypeScript, diff et banc S3/éditeur PASS. Le modèle Maison refuse le panier lorsque la capacité disparaît pendant la confirmation, puis transmet la commande panier après réouverture et confirmation explicite.
+
+### Catalogue depuis le contrôle budgétaire
+
+Une fiche de preset ne propose pas de créer ou rouvrir une intention lorsqu’on la consulte depuis le contrôle Courses. TypeScript, diff et banc Clay PASS, dont le preset protégé Cinéma dans ce contexte.

@@ -31,6 +31,9 @@ const {COMPOSER_PRESETS,ACTIVITY_PRESETS,presetCreationFields,presetIllustration
 const preset=COMPOSER_PRESETS.find(p=>p.presetKey==='cinema');card.fields={...preset.defaults,composerPresentation:{version:'composer-context-presentation@v1',presetKey:'cinema'}};
 const model={board:{contexts:[card]},semanticState:{preferences:{anchors:[],flexibility:{}}},library:{searchableAssets:[{assetKey,kind:'SLOT_OPTION_ASSET',optionKey:'activity',optionKind:'COMPONENT'}]},dropCapabilities:[{sourceAssetKey:assetKey,target,resolution:'NEEDS_CHOICE',semanticAction:'PATCH_CONTEXT'}]};
 const ticket=entries.find(e=>e.discovery.sourceRow===329);
+const protectedCinema=entries.find(e=>e.presetKey==='cinema');
+assert(protectedCinema);
+assert.deepEqual(discoveryActions(protectedCinema,model,{controlRef:'HOUSEHOLD:household:groceries'}),[]);
 let actions=discoveryActions(ticket,model,{contextId:cid});assert(actions.some(a=>a.kind==='CHOOSE'&&!a.selection));
 card.sockets[0].currentItems=[{selectionId:'ticket-1',kind:'COMPONENT',optionKey:'activity',label:'Billet'}];
 actions=discoveryActions(ticket,model,{contextId:cid});assert.equal(actions.filter(a=>a.kind==='CHOOSE').length,1);assert.equal(actions.find(a=>a.kind==='CHOOSE').selection.selectionId,'ticket-1');
