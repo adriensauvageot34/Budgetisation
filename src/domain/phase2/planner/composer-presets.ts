@@ -59,6 +59,10 @@ export const COMPOSER_PRESETS = [
     illustrationKey: "cinema", searchTerms: ["cinéma","cinema","film","billet"],
     defaults: {"label":"Cinéma"}, questions: ["Participants","Lieu","Date","Budget"],
     guidance: "Accessible même pour une sortie rare. Aucun billet ni fréquence n’est prérempli." },
+  { presetKey: "composed-outing", label: "Sortie composée", templateKey: "other-context", categoryKey: "SOCIAL",
+    illustrationKey: "friends-evening", searchTerms: ["projet", "sortie", "cinéma restaurant", "regrouper"],
+    defaults: { label: "Sortie composée" }, questions: ["Intentions liées", "Date facultative"],
+    guidance: "Reliez des intentions existantes ou ajoutez celles que vous souhaitez préparer." },
   { presetKey: "spa-relax", label: "Spa / Détente", templateKey: "activity", categoryKey: "ACTIVITY",
     illustrationKey: "spa-relax", searchTerms: ["spa","détente","massage","relax"],
     defaults: {"label":"Spa / Détente"}, questions: ["Participants","Lieu","Date","Budget"],
@@ -192,8 +196,73 @@ export const COMPOSER_PRESETS = [
     defaults: {"label":"Essuie-tout","productLabel":"Essuie-tout","budgetDomain":"home-small"}, questions: ["Produit","Date","Budget","Enveloppe"],
     guidance: "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement." },
 ] as const;
+/** Activity recipes using the existing exports from the V22 collection. */
+export const ACTIVITY_PRESETS = ([
+  { presetKey: "bowling", label: "Bowling", visualConceptId: "v22-art:excel:342",
+    searchTerms: ["bowling", "quilles", "partie", "piste"], activityCostLabel: "Coût de la partie",
+    guidance: "Précisez le prix de la partie et les frais distincts, comme la location de chaussures." },
+  { presetKey: "karting", label: "Karting", visualConceptId: "v22-art:excel:345",
+    searchTerms: ["karting", "kart", "circuit", "session"], activityCostLabel: "Tarif de la session",
+    guidance: "Renseignez les sessions prévues et les éventuels frais distincts." },
+  { presetKey: "escape-game", label: "Escape game", visualConceptId: "v22-art:excel:343",
+    searchTerms: ["escape game", "énigme", "jeu d’évasion"], activityCostLabel: "Coût de la séance",
+    guidance: "Indiquez le montant prévu pour la séance. Le nombre de participants ne fixe pas son prix." },
+  { presetKey: "mini-golf", label: "Mini-golf", visualConceptId: "v22-art:excel:348",
+    searchTerms: ["mini-golf", "minigolf", "golf miniature", "parcours"], activityCostLabel: "Entrée ou parcours",
+    guidance: "Précisez le coût du parcours et les éventuels frais distincts." },
+  { presetKey: "billiards", label: "Billard", visualConceptId: "v22-art:excel:349",
+    searchTerms: ["billard", "table de billard", "partie"], activityCostLabel: "Coût de la table ou de la partie",
+    guidance: "Renseignez le tarif de la table ou des parties selon ce qui vous sera facturé." },
+  { presetKey: "pool", label: "Piscine", visualConceptId: "v22-art:excel:354",
+    searchTerms: ["piscine", "natation", "baignade", "bassin"], activityCostLabel: "Entrée à la piscine",
+    guidance: "Précisez le prix des entrées et ajoutez séparément les frais éventuels." },
+  { presetKey: "canoe-kayak", label: "Canoë / Kayak", visualConceptId: "v22-art:extra:kayak-activity",
+    searchTerms: ["canoë", "kayak", "rivière", "pagaie"], activityCostLabel: "Location ou sortie encadrée",
+    guidance: "Précisez le tarif de la sortie ou de la location et les frais qui restent à votre charge." },
+  { presetKey: "theme-park", label: "Parc d’attractions", visualConceptId: "v22-art:extra:themepark-activity",
+    searchTerms: ["parc d’attractions", "manège", "billet", "entrée"], activityCostLabel: "Entrée au parc",
+    guidance: "Précisez les entrées prévues et les frais distincts du séjour au parc." },
+  { presetKey: "live-show", label: "Spectacle", visualConceptId: "v22-art:extra:show-activity",
+    searchTerms: ["spectacle", "théâtre", "scène", "représentation"], activityCostLabel: "Billet du spectacle",
+    guidance: "Choisissez le coût des billets selon la représentation envisagée." },
+  { presetKey: "sport-match", label: "Assister à un match", visualConceptId: "v22-art:extra:match-activity",
+    searchTerms: ["match", "stade", "billet", "sport"], activityCostLabel: "Billet du match",
+    guidance: "Précisez les billets et les frais distincts de cette sortie." },
+  { presetKey: "creative-workshop", label: "Atelier créatif", visualConceptId: "v22-art:excel:362",
+    searchTerms: ["atelier", "créatif", "loisir", "matériel"], activityCostLabel: "Prix de l’atelier",
+    guidance: "Indiquez le coût de l’atelier et les fournitures facturées séparément." },
+  { presetKey: "photo-outing", label: "Sortie photo", visualConceptId: "v22-art:extra:photo-activity",
+    searchTerms: ["photo", "photographie", "balade", "appareil"], activityCostLabel: "Budget de la sortie photo",
+    guidance: "Précisez le coût éventuel de la sortie. Un prix nul peut être déclaré si vous le confirmez." },
+  { presetKey: "laser-game", label: "Laser game", visualConceptId: "v22-art:excel:344", squareArtwork: true,
+    searchTerms: ["laser game", "laser tag", "partie", "session"], activityCostLabel: "Tarif de la partie",
+    guidance: "Renseignez le tarif des parties prévues et les éventuels frais distincts." },
+  { presetKey: "trampoline-park", label: "Parc de trampolines", visualConceptId: "v22-art:excel:347", squareArtwork: true,
+    searchTerms: ["trampoline", "trampoline park", "saut", "session"], activityCostLabel: "Entrée ou tarif de la session",
+    guidance: "Précisez le tarif de la session et les accessoires uniquement s’ils sont facturés à part." },
+  { presetKey: "water-park", label: "Parc aquatique", visualConceptId: "v22-art:excel:337", squareArtwork: true,
+    searchTerms: ["parc aquatique", "toboggan", "baignade", "billet"], activityCostLabel: "Billet du parc aquatique",
+    guidance: "Précisez le prix des entrées et les frais facturés séparément." },
+  { presetKey: "zoo-visit", label: "Visite au zoo", visualConceptId: "v22-art:excel:338", squareArtwork: true,
+    searchTerms: ["zoo", "parc animalier", "animaux", "billet"], activityCostLabel: "Billet du zoo",
+    guidance: "Indiquez le prix des billets et les éventuels frais distincts." },
+] as const).map(preset => {
+  const illustrationKey = preset.visualConceptId.replaceAll(":", "-");
+  const artworkRole = "squareArtwork" in preset ? "primary" : "wide";
+  return {
+    ...preset, templateKey: "activity", categoryKey: "ACTIVITY", defaults: { label: preset.label },
+    questions: ["Participants", "Lieu", "Date", "Budget", "Transport facultatif"],
+    illustrationKey, artworkPath: `/planned-visuals/builder/clay/v22/${artworkRole}/${illustrationKey}.webp`,
+  } as const;
+});
+
 /** Additional basket entry points reuse artwork already approved for M18. */
 export const PURCHASE_BASKET_PRESETS = [
+  { presetKey: "home-equipment-basket", label: "Acheter pour la maison", templateKey: "purchase", categoryKey: "HOME",
+    illustrationKey: "v22-art-extra-decor-general", artworkPath: "/planned-visuals/builder/clay/v22/wide/v22-art-extra-decor-general.webp",
+    searchTerms: ["maison", "mobilier", "meuble", "décoration", "équipement", "panier"],
+    defaults: { label: "Achats pour la maison", budgetDomain: "other" }, questions: ["Articles", "Quantités", "Prix", "Livraison"],
+    guidance: "Choisissez les articles du panier et leurs frais distincts." },
   { presetKey: "groceries-purchase", label: "Préparer mes courses", templateKey: "purchase", categoryKey: "HOME",
     illustrationKey: "groceries", searchTerms: ["courses", "panier alimentaire", "liste de courses"],
     defaults: { label: "Courses alimentaires", budgetDomain: "groceries" }, questions: ["Produits", "Quantités", "Prix", "Enveloppe"],
@@ -203,13 +272,21 @@ export const PURCHASE_BASKET_PRESETS = [
     defaults: { label: "Achat beauté" }, questions: ["Articles", "Vendeur", "Livraison"],
     guidance: "Commencez par un article, puis complétez le même achat." },
 ] as const;
-export type ComposerPreset = (typeof COMPOSER_PRESETS | typeof PURCHASE_BASKET_PRESETS)[number];
+export const HOME_PROJECT_PRESET = {
+  presetKey: "furnish-room", label: "Aménager une pièce", templateKey: "home-project", categoryKey: "HOME",
+  illustrationKey: "v22-art-extra-furniture-general", artworkPath: "/planned-visuals/builder/clay/v22/wide/v22-art-extra-furniture-general.webp",
+  searchTerms: ["aménagement", "pièce", "meuble", "rangement", "équipement"],
+  defaults: { label: "Aménager une pièce" }, questions: ["Équipement", "Achats", "Services"],
+  guidance: "Préparez les équipements, prestations et achats prévus. Vous pourrez préciser leurs montants séparément.",
+} as const;
+export const COMPOSER_LIBRARY_PRESETS = [...COMPOSER_PRESETS, ...ACTIVITY_PRESETS, ...PURCHASE_BASKET_PRESETS, HOME_PROJECT_PRESET];
+export type ComposerPreset = typeof COMPOSER_LIBRARY_PRESETS[number];
 export type ComposerPresetKey = ComposerPreset["presetKey"];
 export const COMPOSER_PRESENTATION_VERSION = "composer-context-presentation@v1" as const;
 export const composerPreset = (key: string): ComposerPreset | undefined =>
-  COMPOSER_PRESETS.find(p => p.presetKey === key) ?? PURCHASE_BASKET_PRESETS.find(p => p.presetKey === key);
+  COMPOSER_LIBRARY_PRESETS.find(p => p.presetKey === key);
 /** Single terminal visual registry: no title matching, no remote URL or legacy Builder image. */
-export const presetIllustrationPath = (preset: ComposerPreset) => preset.presetKey === "groceries-purchase"
+export const presetIllustrationPath = (preset: ComposerPreset) => "artworkPath" in preset ? preset.artworkPath : preset.presetKey === "groceries-purchase"
   ? "/planned-visuals/builder/clay/v22/wide/v22-art-extra-groceries-intent.webp"
   : `/planned-visuals/composer/presets/${preset.illustrationKey}.webp`;
 export function presetForContext(context: { templateKey: string; fields: PlannerJsonObject }): ComposerPreset | undefined {

@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import {BarLivingCard,type LivingBar} from "./bar-living-card";
 import { CatalogOpenButton } from './catalog-discovery-provider';
 import { GripVertical, MoreHorizontal, Pin, Link2, Pencil, LockKeyhole } from "lucide-react";
@@ -5,10 +6,11 @@ import type { ComposerContextCardView, DropTarget, ComposerAssetView } from "@/d
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { ContextSocket } from "./context-socket";
-import { money, knowledgeLabel } from "./display";
+import { money, knowledgeLabel, plannedDayLabel } from "./display";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import { PresetIllustration } from "./preset-illustration";
+import { ParentProjectLink } from "./workshop-navigation";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
 import styles from "./composer.module.css";
 import { AtomicPopover } from "./atomic-popover";
@@ -16,6 +18,8 @@ import { useComposerInteractions, useDragHandle, leftSurface } from "./interacti
 import { visibleEmptySocketKeys } from "./presentation/socket-visibility";
 import { composerRenderIndex } from "./render-index";
 import { HairdresserReference } from "./hairdresser-reference";
+import { isPurchaseBasket, purchaseComponents } from "@/domain/phase2/planner/purchase-basket";
+import { budgetAmountsCurrent, BudgetPreviewStatus } from "./intent-budget-impact";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
 const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
@@ -33,12 +37,22 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const index=composerRenderIndex(model), ownDrops=index.drops.get(instance) ?? [];
   const removable = ownDrops.some(d => d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
   const preserved = model.semanticState.preferences.flexibility[card.contextOccurrenceId] === "PRESERVE";
+  const editable = !card.readOnly && !preserved && card.capabilityRefs.includes("PATCH_CONTEXT")
+    && !model.semanticState.preferences.anchors.includes(card.contextOccurrenceId);
   const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const preset = presetForContext(card);
+  const plannedDay = plannedDayLabel(card.fields.plannedDate);
   const purchase = card.templateKey === "purchase", main = card.sockets.find(s => s.slotKey === "item");
-  const basket = purchase && card.fields.fieldSchemaVersion === "context-fields@v7";
-  const mainAmount = main?.evaluations?.length === 1 ? main.evaluations[0].economicAmount : null;
+  const basket = isPurchaseBasket(card);
+  const preview = useContext(BudgetPreviewStatus);
+  const amountsCurrent = budgetAmountsCurrent(model, preview);
+  const basketSummary = amountsCurrent ? card.purchaseSummary : undefined;
+  const basketContext = basket ? model.semanticState.contexts.find(context => context.contextOccurrenceId === card.contextOccurrenceId) : undefined;
+  const articleCount = basketContext ? purchaseComponents(basketContext, "item").length : basketSummary?.articleCount ?? 0;
+  const mainAmount = amountsCurrent && main?.evaluations?.length === 1 ? main.evaluations[0].economicAmount : null;
+  const nightSummary = model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId);
+  const currentNightSummary = amountsCurrent && nightSummary?.semanticStateDigest === model.board.draft.semanticStateDigest ? nightSummary : undefined;
   const mainSelection = main?.currentItems.find(i => i.kind === "COMPONENT");
   const coverage = mainSelection?.kind === "COMPONENT" ? mainSelection.binding?.mode : null;
   const interaction = useComposerInteractions(), handle = useDragHandle(instance);
@@ -72,10 +86,16 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     {preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : card.readOnly
       ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
-    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => (card.templateKey === "restaurant" || purchase || !!preset) && !card.readOnly && !preserved ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${card.fields.plannedDate}T12:00:00Z`))}</p>}
+    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} disabled={busy}
+      onClick={() => editable && (card.templateKey === "restaurant" || card.templateKey === "activity" || purchase || !!preset)
+        ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{plannedDay ?? "Date à préciser"}</p>}
+      {card.childContextOccurrenceIds.length > 0 && <p data-linked-intentions-count={card.childContextOccurrenceIds.length}>
+        {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
+      </p>}
+      <ParentProjectLink contextId={card.contextOccurrenceId} />
       <span className={styles.contextState} title={knowledgeLabel(card.knowledge)} aria-label={knowledgeLabel(card.knowledge)}>{preserved ? <LockKeyhole size={12} /> : card.readOnly ? <Link2 size={12} /> : card.knowledge === "UNKNOWN" ? <i /> : null}</span></div>
       <div className={styles.contextTools}>{!card.readOnly && <><button className={styles.iconButton} disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={() => request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved })}><Pin size={15} /></button>
-        <button className={styles.iconButton} disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>
+        <button className={styles.iconButton} disabled={busy || !editable} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>
         <button className={styles.dragHandle} disabled={busy} {...handle} aria-label={`Déplacer ${card.label}`} onClick={e => {
           // A child can be chosen from its satellite popover. Free the Board so
           // the next click can reach a destination without losing that choice.
@@ -91,18 +111,21 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     {card.templateKey === "external-intent" && <HairdresserReference model={model} id={card.contextOccurrenceId} focus={() => focus(card.contextOccurrenceId)} />}
     </div>
     {card.templateKey === "night-out" && <div className={styles.purchaseSummary} data-night-board-summary>
-      <button type="button" disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} onClick={() => edit(card)}>
-        {model.board.draft.semanticStateDigest === model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.semanticStateDigest ? money(model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.knownAmount ?? null) : "Projection à actualiser"}
+      <button type="button" disabled={busy || !editable} onClick={() => edit(card)}>
+        {currentNightSummary ? money(currentNightSummary.knownAmount) : "Projection à actualiser"}
       </button>
-      <small>{model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.incomplete ? "Coût connu · à compléter" : "Coût connu · modifier ma soirée"}</small>
+      {currentNightSummary?.knownAmount != null && <small>{currentNightSummary.costIncomplete
+        ? "Coût connu · à compléter" : "Coût connu · modifier ma soirée"}</small>}
     </div>}
     {basket ? <div className={styles.purchaseSummary} data-purchase-summary>
-      <button type="button" onClick={() => edit(card)} disabled={busy || card.readOnly}>Ouvrir le panier</button>
-      <small>{card.purchaseSummary?.articleCount ?? main?.currentItems.length ?? 0} article(s)
-        {card.purchaseSummary?.knownAmount != null && ` · ${money(card.purchaseSummary.knownAmount)}`}
-        {!card.purchaseSummary?.complete && " · Total à préciser"}</small>
+      <button type="button" onClick={() => edit(card)} disabled={busy || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")}>{editable ? "Ouvrir le panier" : "Consulter le panier"}</button>
+      <small>{articleCount} article{articleCount > 1 ? "s" : ""} · {!amountsCurrent ? "Calcul à actualiser"
+        : basketSummary?.knownAmount == null ? "Total à préciser"
+          : basketSummary.complete ? `Total brut ${money(basketSummary.knownAmount)}`
+            : `Sous-total connu ${money(basketSummary.knownAmount)} · Total à préciser`}</small>
     </div> : purchase && <div className={styles.purchaseSummary} data-purchase-summary>
-      <button type="button" data-budget-unknown={mainAmount===null||undefined} disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} onClick={() => edit(card)}>{mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
+      <button type="button" data-budget-unknown={mainAmount===null||undefined} disabled={busy || !editable} onClick={() => edit(card)}>
+        {!amountsCurrent ? "Calcul à actualiser" : mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
     </div>}
     <div className={styles.contextEquipmentRow} data-context-equipment-row aria-label={`Équipements de ${card.label}`}>

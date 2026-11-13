@@ -8,7 +8,7 @@ import { WorkshopComponentRow } from "./workshop-component-row";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { WorkshopDock } from "./workshop-dock";
-import { editMascaraPriceAndQuantity } from "./mascara-edit";
+import { editBeautyProductPriceAndQuantity } from "./beauty-product-edit";
 import { WorkshopNavigation } from "./workshop-navigation";
 import { workshopErrorMessage } from "./workshop-error";
 import styles from "./composer.module.css";
@@ -19,9 +19,9 @@ export function componentEditorValues(row: Row, original: Record<string,string>)
     personCount:row.personCount,costMode:row.costMode==="UNKNOWN"?"UNKNOWN":"AUTO",amount:row.amount.trim().replace(",","."),
     funding:row.fundingMode==="UNDECIDED"?"":row.fundingMode,fundingAmount:row.fundingAmount,binding:row.binding};
 }
-export function EquipmentComponentEditor({asset,target,model,values,selection,knowledge,busy,host,mascara=false,onValues,onSave,onSummary}:{
+export function EquipmentComponentEditor({asset,target,model,values,selection,knowledge,busy,host,beautyProduct=false,onValues,onSave,onSummary}:{
   asset:ComposerAssetView;target:DropTarget;model:ComposerUiModel;values:Record<string,string>;
-  selection?:Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;knowledge?:CardKnowledgeRead;busy:boolean;host?:HTMLElement|null;mascara?:boolean;
+  selection?:Extract<ComponentSelectionV1,{kind:"COMPONENT"}>;knowledge?:CardKnowledgeRead;busy:boolean;host?:HTMLElement|null;beautyProduct?:boolean;
   onValues:(values:Record<string,string>)=>void;onSave:(values:Record<string,string>,component:Extract<ComponentSelectionV1,{kind:"COMPONENT"}>)=>void;onSummary:()=>void;
 }) {
   const [error,setError]=useState("");
@@ -29,25 +29,25 @@ export function EquipmentComponentEditor({asset,target,model,values,selection,kn
   const [row,setRow]=useState<Row>(()=>{
     if (selection) {
       const selected = fromSelection(selection);
-      return mascara ? { ...selected, amount: selected.amount.replace(".", ","), quantity: selected.quantity.replace(".", ",") } : selected;
+      return beautyProduct ? { ...selected, amount: selected.amount.replace(".", ","), quantity: selected.quantity.replace(".", ",") } : selected;
     }
     return {...fresh(values.label||String(model.semanticState.contexts.find(c=>c.contextOccurrenceId===target.contextOccurrenceId)?.fields.label||asset.label)),
       amount:values.amount??"",costMode:values.amount?.trim()?"MANUAL":"UNKNOWN",quantity:values.quantity||"1"};
   });
-  const shortSelection = mascara && selection && !advanced && (!selection.unitBasis || selection.unitBasis === "ITEM") ? selection : undefined;
-  const reference=mascara?undefined:knowledge?.dimensions.find(d=>d.key==="UNIT_PRICE"&&d.suggestionPolicy==="OFFER_PREFILL"&&d.value!==null);
+  const shortSelection = beautyProduct && selection && !advanced && (!selection.unitBasis || selection.unitBasis === "ITEM") ? selection : undefined;
+  const reference=beautyProduct?undefined:knowledge?.dimensions.find(d=>d.key==="UNIT_PRICE"&&d.suggestionPolicy==="OFFER_PREFILL"&&d.value!==null);
   const update = (next: Row) => {setRow(next);onValues(componentEditorValues(next,values));};
   const save = () => {
     try {
       setError("");
-      const component = shortSelection ? editMascaraPriceAndQuantity(shortSelection, row.quantity, row.amount, row.costMode)
-        : buildComponentRow({...row,edited:mascara?row.edited:true},asset.optionKey!);
+      const component = shortSelection ? editBeautyProductPriceAndQuantity(shortSelection, row.quantity, row.amount, row.costMode)
+        : buildComponentRow({...row,edited:beautyProduct?row.edited:true},asset.optionKey!);
       onSave(componentEditorValues(row,values),component);
     } catch(failure) {setError(workshopErrorMessage(failure));}
   };
   return <>
     {target.contextOccurrenceId && <WorkshopNavigation contextId={target.contextOccurrenceId} />}
-    {mascara ? <section className={styles.nightSection} data-mascara-reference aria-label="Prix historique">
+    {beautyProduct ? <section className={styles.nightSection} data-mascara-reference aria-label="Prix historique">
       <strong>Prix historique · repère uniquement</strong><p>Aucun prix historique daté et rattaché à ce produit n’est publié.</p>
     </section> : <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge}/></details>}
     {shortSelection ? <form className={styles.nightSection} data-mascara-price-editor={shortSelection.selectionId} onSubmit={event => {event.preventDefault(); if (!busy) save();}}>

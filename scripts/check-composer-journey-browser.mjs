@@ -177,7 +177,7 @@ try{
 
   step='Courses '+width;
   ids.groceries=await add('courses','groceries-purchase');await line('Panier fictif','1','8');
-  await button('Vendeur, date et budget',panel()).click();await page.getByRole('combobox',{name:'Enveloppe Courses',exact:true}).selectOption('CONFIRMED_CONSUMPTION');
+  await button('Nom, vendeur et date',panel()).click();await page.getByRole('combobox',{name:'Enveloppe Courses',exact:true}).selectOption('CONFIRMED_CONSUMPTION');
   await button('Conserver les détails').click();await ready();await saved();await cost('8,00');
   const groceryLine=page.locator('[data-basket-line]'),groceryId=await groceryLine.getAttribute('data-basket-line');
   await button(/^Modifier/,groceryLine).click();await page.getByRole('textbox',{name:'Prix par unité (€)',exact:true}).fill('9');
@@ -228,7 +228,7 @@ try{
  await page.locator('[data-library] [data-preset="cinema"]').click();
  await page.locator('[data-draft-status][data-state="ERROR"]').waitFor({timeout:30000});
  assert.equal((await snapshot(scenario)).active,null);const pending=await digest();
- await back();await button('Options du mois').click();await page.locator('[data-save-retry]').click();
+ await back();await page.locator('[data-save-retry]').click();
  await page.locator('[data-draft-status][data-state="SAVING"]').waitFor();assert.doesNotMatch(await page.locator('[data-draft-status]').innerText(),/Sauvegardé/);
  await saved();assert.equal(await digest(),pending);assert.equal((await snapshot(scenario)).active.version,1);
  const evidence=await(await page.request.get(new URL('/evidence?scenario='+scenario,origin).href)).json();

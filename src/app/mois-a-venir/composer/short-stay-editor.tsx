@@ -17,6 +17,9 @@ import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { matchesStayExtra, shortStaySuggestions, shortStayTransportModes, type ShortStaySuggestion } from "./short-stay-suggestions";
 import { IntentBudgetImpact } from "./intent-budget-impact";
+import { LinkedIntentions } from "./linked-intentions";
+import { ProjectCompletion } from "./project-completion";
+import { ProjectActivityCatalog } from "./project-activity-catalog";
 import { SuggestionControls } from "./suggestion-controls";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { CatalogCommand } from "./catalog-discovery";
@@ -42,8 +45,8 @@ export function validateStayCalendar(fields: PlannedContextState["fields"]) {
     throw Error(`Les dates indiquent ${calendarNights} nuit(s), mais vous en avez déclaré ${nights}. Corrigez les dates ou la durée ; aucun tarif n’a été recalculé.`);
 }
 
-export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSuggestions = noDismissals, updateSuggestionDismissal, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion" | "staySummary" | "stayTransportModes"> & {
-  semanticState: PlanSemanticStateV1; onOpenPurchase?: (id: string) => void;
+export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestions = noDismissals, updateSuggestionDismissal, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion" | "staySummary" | "stayTransportModes"> & {
+  semanticState: PlanSemanticStateV1; onOpenChild?: (id: string) => void;
   dismissedSuggestions?: readonly string[]; updateSuggestionDismissal?: (id: string, key: string | null) => void;
 }) {
   const context = props.context, oldLodging = firstComponent(context, "lodging"), oldGroceries = firstComponent(context, "groceries");
@@ -60,7 +63,8 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
     const child = semanticState.contexts.find(c => c.contextOccurrenceId === item.childContextOccurrenceId);
     if (!child) return [];
     const main = firstComponent(child, mainSlot(child.templateKey));
-    return [{ row: main ? fromSelection(main) : fresh(typeof child.fields.label === "string" ? child.fields.label : ""), templateKey: child.templateKey, child, link: item }];
+    return [{ row: main ? fromSelection(main) : { ...fresh(typeof child.fields.label === "string" ? child.fields.label : ""), edited: false },
+      templateKey: child.templateKey, child, link: item }];
   })])) as Record<Group, Post[]>);
   const [dirty, setDirty] = useState<Partial<Record<Group, boolean>>>({});
   const [postSection, setPostSection] = useState<"lodging" | "groceries" | Group>("lodging");
@@ -68,6 +72,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
   const [postPage, setPostPage] = useState(0);
   const [extraSuggestionKey, setExtraSuggestionKey] = useState<string | null>(null);
   const [showAllChoices, setShowAllChoices] = useState(false);
+  const [attachmentError, setAttachmentError] = useState("");
   const source = canonicalPlannerJson([context, semanticState.contexts.filter(child => child.parentContextOccurrenceId === context.contextOccurrenceId)]);
   const expectedSource = useRef(source);
   const card = props.model.board.contexts.find(card => card.contextOccurrenceId === context.contextOccurrenceId);
@@ -111,7 +116,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
     if (groceriesDirty) mutable.groceries = groceries ? [buildComponentRow(groceries, "groceries")] : [];
     const children: PlannedContextState[] = [];
     for (const [slot] of groups) if (dirty[slot]) mutable[slot] = posts[slot].map(post => {
-      if (post.link && post.child && isPurchaseBasket(post.child)) return post.link;
+      if (post.link && post.child && (isPurchaseBasket(post.child) || !post.row.edited)) return post.link;
       const useChild = !!post.link || slot === "activities" || slot === "purchases";
       if (!useChild) return buildComponentRow(post.row, post.templateKey);
       const childId = post.child?.contextOccurrenceId ?? crypto.randomUUID(), key = post.templateKey;
@@ -210,6 +215,16 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
       return drop?.semanticAction==="PATCH_CONTEXT"&&drop.choices.includes("REPARENT_PRESERVE_ID")?[{child,assetKey,target}]:[];
     });
   };
+  const attachExisting = useCommittedEvent((slot: Group, childId: string, expectedSource: string) => {
+    const match = compatibleRoots(slot).find(({ child }) => child.contextOccurrenceId === childId);
+    if (props.busy || source !== expectedSource || !match) {
+      setAttachmentError("Le séjour ou les droits de rattachement ont changé. Sélectionnez à nouveau l’intention.");
+      return;
+    }
+    setAttachmentError("");
+    props.onSave({ kind: "DROP", assetKey: match.assetKey, target: match.target, values: {},
+      identity: childId, selectionId: crypto.randomUUID() });
+  });
   const currentLodging = card?.sockets.find(socket => socket.slotKey === "lodging");
   const evaluated = props.fresh && canonicalPlannerJson(currentLodging?.currentItems ?? []) === canonicalPlannerJson(items(context, "lodging"))
     ? currentLodging?.evaluations?.find(evaluation => evaluation.selectionId === oldLodging?.selectionId)?.economicAmount : null;
@@ -226,6 +241,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
     <CatalogOpenButton target={{contextId:context.contextOccurrenceId,moment:"lodging",commands:lodgingCommands}}>Parcourir les éléments du séjour</CatalogOpenButton>
     <p className={styles.helper}>Le séjour regroupe ses postes, sans coût parent ajouté. Les autres postes restent accessibles dans le dock.</p>
     {!writable && <p role="status">Ce séjour est en consultation ou sa cible a changé. La saisie reste conservée ; aucune modification ne peut être validée ici.</p>}
+    {attachmentError && <p role="alert">{attachmentError}</p>}
     {postSection === "lodging" && <>
     {lodgingPage === "terms" && <p>Choisis le prix total ou le tarif par nuit dans le dock. La date reste facultative.</p>}
     {lodgingPage === "kind" && <p>Type actuel : {({RELATIVE:"chez un proche",HOTEL:"hôtel",HOSTEL:"auberge",RENTAL:"location",OTHER:"autre",LATER:"à préciser"} as Record<string,string>)[lodgingKind]??"référence conservée"}. Ce choix ne prouve aucun prix.</p>}
@@ -263,25 +279,35 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
         {slot === "extras" && (!slotAllowed("extras", "extra") || extraLocked(post.row.id))
           ? <p>{post.row.label} · Poste en consultation</p>
           : post.child && isPurchaseBasket(post.child)
-          ? <button type="button" disabled={props.busy || !onOpenPurchase} onClick={() => onOpenPurchase?.(post.child!.contextOccurrenceId)}>
-            Ouvrir {String(post.child.fields.label ?? "le panier")} · {purchaseComponents(post.child, "item").length} article(s)
-          </button>
+          ? null
           : <WorkshopComponentRow title={caption} row={post.row} back={{label:"Autres postes du séjour",action:()=>{setPostSection("lodging");setLodgingPage("terms");}}} participantCount={0} bindingChoices={slot === "restaurants"}
+          removePrompt={post.child ? { message: `Préparer le retrait de « ${String(post.child.fields.label ?? post.row.label)} » ? Après « Conserver et prévisualiser », cette intention enfant, ses postes et ses éventuelles intentions liées seront retirés du brouillon. Vous pouvez aussi la déplacer depuis les intentions liées du résumé.`,
+            acceptLabel: "Préparer le retrait de l’intention" } : undefined}
           onChange={row => update(slot, posts[slot].map((p, i) => i === index ? { ...p, row } : p))}
           onRemove={() => { update(slot, posts[slot].filter((_, i) => i !== index)); setPostPage(page => Math.max(0, page - 1)); }} />}
-        {post.child && <p className={styles.helper}>Moment enfant lié : ses autres informations et équipements sont conservés. Ils restent accessibles depuis la carte R6.</p>}
+        {post.child && onOpenChild && <button type="button" disabled={props.busy}
+          data-open-stay-child={post.child.contextOccurrenceId} onClick={() => {
+            const child = props.model.board.contexts.find(card => card.contextOccurrenceId === post.child!.contextOccurrenceId
+              && card.parentContextOccurrenceId === context.contextOccurrenceId);
+            if (child) onOpenChild(child.contextOccurrenceId);
+          }}>{isPurchaseBasket(post.child) ? "Ouvrir le panier" : "Ouvrir l’intention"} · {String(post.child.fields.label ?? post.row.label)}
+          {isPurchaseBasket(post.child) && ` · ${purchaseComponents(post.child, "item").length} article(s)`}</button>}
+        {post.child && <p className={styles.helper}>Cette intention conserve ses participants, son lieu et ses autres postes. Ouvrez-la pour les consulter ou les modifier.</p>}
       </div>; })}
       {posts[slot].length > 1 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {posts[slot].length}</span><button type="button" disabled={postPage + 1 >= posts[slot].length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
       <button type="button" disabled={slot === "extras" && !slotAllowed("extras", "extra")} onClick={() => { setPostPage(posts[slot].length); update(slot, [...posts[slot], { row: fresh(slot === "activities" ? "Activité" : slot === "purchases" ? "Achat" : slot === "extras" ? "Extra" : "Restaurant"), templateKey: key }]); }}>Ajouter · {caption}</button>
-      {compatibleRoots(slot).map(({child,assetKey,target})=><button type="button" key={child.contextOccurrenceId} disabled={props.busy} onClick={()=>{
+      {compatibleRoots(slot).map(({child})=><button type="button" key={child.contextOccurrenceId} disabled={props.busy} onClick={()=>{
         const ask=()=>confirm({message:`Rattacher « ${child.label} » à ce séjour ? L’intention et ses postes sont conservés.`,
-          acceptLabel:"Rattacher cette intention",accept:()=>props.onSave({kind:"DROP",assetKey,target,values:{},identity:child.contextOccurrenceId,selectionId:crypto.randomUUID()})});
+          acceptLabel:"Rattacher cette intention",accept:()=>attachExisting(slot,child.contextOccurrenceId,source)});
         if(leaveRaw(ask))ask();
       }}>Rattacher {child.label}</button>)}
     </div>)}
     <details><summary>À savoir sur les postes</summary><p className={styles.helper}>Un jacuzzi peut être une activité ou un extra explicitement ajouté. Les transports des enfants liés doivent déclarer leur relation au trajet du séjour ; aucune fusion n’est déduite d’un libellé.</p></details>
   </>;
-  return <ProspectiveContextEditor {...props} stay stayDetails={stayDetails} posts={content} postsQuestion={postsQuestion} staySummary={staySummary} stayTransportModes={transportModes} onSave={operation => {
+  const project = <><ProjectActivityCatalog model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} decide={props.onSave} open={onOpenChild} />
+    <LinkedIntentions model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} open={onOpenChild} decide={props.onSave} />
+    <ProjectCompletion model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} decide={props.onSave} /></>;
+  return <ProspectiveContextEditor {...props} stay stayDetails={<>{stayDetails}{project}</>} posts={content} postsQuestion={postsQuestion} staySummary={staySummary} stayTransportModes={transportModes} onSave={operation => {
     if (operation.kind !== "EDIT_SHORT_STAY") return false;
     if (!writable || operation.edit.contextOccurrenceId !== context.contextOccurrenceId)
       throw Error("Ce séjour ou ses droits ont changé. Votre saisie est conservée ; rouvrez la bonne occurrence.");

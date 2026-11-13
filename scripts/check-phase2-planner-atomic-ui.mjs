@@ -65,7 +65,9 @@ try {
     assert.equal(bad.ok, false); assert.equal(bad.code, 'PLANNER_FIELDS_INVALID'); assert.equal(pg.rpcCalls, 0);
   });
   await check('R2-MANIFEST-CONSUMPTION', async () => { fixture = weekendMonth(); const m = await read();
-    const card = m.board.discretionaryControls.find(c => c.label === 'Restaurants'), stack = m.presentation.objects[card.targetRef].occurrenceStack;
+    const card = m.board.discretionaryControls.find(c => c.targetRef === 'HOUSEHOLD:household:restaurants');
+    assert(card, 'The published Restaurants control must be present');
+    const stack = m.presentation.objects[card.targetRef].occurrenceStack;
     assert.ok(stack.links.length > 0); assert.ok(stack.bubbles.includes('LINKED'));
     const source = await readMonthComposer(deps, householdId, '2026-11', fixture.semantic);
     assert.deepEqual(stack.links.map(({componentId,count})=>({componentId,count})), source.preview.compiled.financialAdapterInput.adapterManifest.baselineConsumptions.filter(c => c.planSlotId === card.cardId && c.count !== null).map(c => ({ componentId:c.componentId,count:c.count })));

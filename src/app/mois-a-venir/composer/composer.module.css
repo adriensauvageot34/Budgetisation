@@ -178,6 +178,9 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .libraryExistingAction small { font-size:10px; line-height:1.4; color:var(--muted); }
 .libraryExistingAction:focus-visible { outline:2px solid #8054aa; outline-offset:2px; }
 .libraryExistingAction:disabled { opacity:.5; cursor:default; }
+.libraryActionCaption { display:block; margin-top:5px; font-size:10px; font-weight:400; line-height:1.4; color:var(--muted); }
+.libraryTabs { flex-wrap:wrap; }
+.libraryTabs button { min-height:40px; }
 .editorLoading { padding:20px; min-height:110px; }
 .board { position:relative; z-index:var(--z-board); min-height:0; min-width:0; display:flex; flex-direction:column; background:transparent; border:0; border-radius:0; }
 .board[data-bar-workspace=true] { container-type:size; container-name:bar-workspace; }
@@ -773,7 +776,6 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .durableActions details[open] { background:#fff; padding:7px; border:1px solid #d9d2e5; border-radius:9px; }
 .durableActions details>div { display:flex; align-items:center; gap:8px; margin-top:6px; }
 .workspace[data-save-state=ERROR] .draftStatus,.workspace[data-save-state=CONFLICT] .draftStatus,.workspace[data-save-state=OFFLINE] .draftStatus { color:#9a442c; }
-.saveMessage { max-width:320px; font-size:11px; color:#9a442c; line-height:1.3; }
 
 /* Original L2 artwork stays static and lazy; this is presentation, not Board geometry. */
 .presetGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
@@ -846,7 +848,9 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .durableActions details { font-size:11px; }
 .durableActions details>div { display:flex; align-items:center; gap:10px; margin:6px 0; }
 .durableActions details>div span { flex:1; }
-.saveMessage { max-width:280px; font-size:10px; line-height:1.4; }
+.draftRecovery { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding:8px 12px; border:1px solid #e7c9bb; border-radius:12px; background:#fff9f4; }
+.draftRecovery p { margin:0; color:#713c29; font-size:12px; overflow-wrap:anywhere; }
+.draftRecovery button { padding:4px 0; }
 .columns { grid-template-columns:268px minmax(0,1fr); gap:18px; }
 .columns[data-inspector-open=true] { grid-template-columns:268px minmax(0,1fr) 340px; gap:14px; }
 .boardHeading { flex:0 0 auto; min-height:35px; padding:2px 16px 10px; display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 14px; }
@@ -1103,6 +1107,38 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .workshopConfirmation button { padding: 12px 16px; border-radius: 14px; border: 1px solid #c8cabe; background: white; cursor: pointer; }
 .workshopConfirmation button[data-confirm-workshop] { background: #324e3d; color: white; }
 .workshopConfirmation button:focus-visible { outline: 3px solid #c79046; outline-offset: 3px; }
+.projectPreview { max-height:calc(100dvh - 32px); overflow:auto; }
+.projectPreview form { min-width:0; }
+.projectName { display:grid; gap:8px; }
+.projectName input { width:100%; min-width:0; box-sizing:border-box; padding:12px; border:1px solid #c8cabe; border-radius:10px; font:inherit; }
+.projectName + .projectName { margin-top:12px; }
+.projectPreview fieldset { min-width:0; margin:16px 0; border:1px solid #decceb; border-radius:12px; }
+.projectChoice { display:flex; gap:12px; align-items:center; min-height:48px; padding:8px 0; }
+.projectChoice input { flex:0 0 20px; width:20px; height:20px; }
+.projectChoice span { min-width:0; overflow-wrap:anywhere; }
+.projectChoice small { display:block; margin-top:4px; }
+.linkedIntention { padding:10px 0; overflow-wrap:anywhere; }
+.linkedIntention .linkedCost { margin:4px 0 0; }
+.linkedCost strong { font-variant-numeric:tabular-nums; }
+.linkedIntention details { margin-top:8px; }
+.linkedIntention summary { cursor:pointer; min-height:32px; }
+.linkedFilters { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.linkedFilters button { min-height:40px; }
+.linkedFilters button[aria-pressed=true] { background:#efe4f6; border-color:#775299; }
+.projectAttachmentSearch { margin:8px 0; }
+.projectAttachmentSearch input { box-sizing:border-box; }
+.mobilitySections { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+.mobilitySections button { min-height:44px; }
+.mobilitySections button[aria-current=step] { border-color:#775299; background:#efe4f6; }
+.libraryProjects { display:grid; gap:10px; margin-bottom:16px; }
+.libraryProject { display:grid; grid-template-columns:64px minmax(0,1fr); align-items:center; gap:10px; width:100%; min-height:76px; padding:10px; text-align:left; border:1px solid #decceb; border-radius:14px; background:#fffaff; color:#533e65; cursor:pointer; }
+.libraryProject img { width:64px; height:48px; object-fit:contain; }
+.libraryProject small { display:block; margin-top:5px; overflow-wrap:anywhere; line-height:1.4; }
+.libraryProject:focus-visible { outline:3px solid #a77bc8; outline-offset:2px; }
+.projectPreviewVisual { display:block; width:100%; height:100px; object-fit:contain; }
+.projectExisting { padding:12px; margin:12px 0; border:1px solid #decceb; border-radius:12px; }
+.projectExisting h3 { margin:0; font-size:15px; }
+.projectExisting button { display:block; width:100%; margin-top:8px; text-align:left; overflow-wrap:anywhere; }
 .workshopStepper { display:flex; align-items:center; gap:10px; max-width:290px; }
 .workshopStepper input { min-width:0; text-align:center; }
 .workshopStepper button { flex:0 0 40px; min-height:40px; border:1px solid #d9c5e8; border-radius:12px; color:#633f7f; background:#faf6ff; font-size:20px; }

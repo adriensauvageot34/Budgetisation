@@ -1,0 +1,647 @@
+# Composer V22 · Méga-run P21
+
+Base `2e6febec5c9e56aaca76174c62d421157b4d44ef`, branche `codex/p21-mega-run-composer-v22`.
+
+## A · Continuité du brouillon
+
+- Reprise par occurrence exacte depuis le brouillon confirmé du même foyer et du même mois. L’onglet mémorise l’identité, l’identifiant du Draft et le digest. Le bouton de reprise utilise la navigation existante.
+- En cas de conflit, la relecture du serveur conserve les saisies locales. Le chargement de la version serveur demande une confirmation séparée.
+- Commit associé dans l’historique de la branche, `feat(composer): recover confirmed draft navigation`.
+- TypeScript, diff, 8 contrôles Draft et 6 contrôles de parcours exécutés avec succès. Recette navigateur et authentifiée reportée.
+- Le banc du Shell valide aussi le remontage avec l’occurrence exacte, le refus d’un digest périmé et l’absence d’autosave déclenchée par la reprise.
+- Le reçu HTTP est accepté après vérification de l’identité du Draft, de la version CAS et de la révision de référence attendues. Le banc HTTP a couvert les reçus incohérents et la reprise idempotente après perte de réponse.
+- Suite immédiate · B, enrichissement des capacités métier existantes.
+
+## B · Produits de beauté
+
+- Eyeliner, crayon à sourcils, cire coiffante, nettoyant visage et démaquillant réutilisent les suggestions, l’édition de prix et de quantité et le résumé officiel de Mascara. Chaque produit garde son illustration et ses sélections.
+- Commit associé, `feat(composer): extend beauty product editing`. TypeScript, diff et 16 contrôles du banc Beauté exécutés avec succès. Navigateur et recette authentifiée reportés.
+- Suite · projets composés via les rattachements déjà admis.
+- Tranche complémentaire · Concert, Musée et Accrobranche réutilisent l’éditeur d’activité avec prix, quantité, date, lieu et mobilité selon les capacités publiées. Le Dock propose le poste existant lorsqu’il est déjà choisi. Résumé de coût officiel. Commit `feat(composer): guide activity expenses and transport`. TypeScript, 10 contrôles de parcours et 10 contrôles Restaurant/Cinéma exécutés avec succès.
+
+## C · Projets composés
+
+- « Sortie composée » associe un Cinéma et un Restaurant dans le contrat parent/enfant du Draft existant. L’éditeur propose des rattachements admis par le serveur et une confirmation explicite.
+- Navigation entre le projet et ses intentions, avec accès direct depuis Week-end. Les coûts individuels affichés viennent de la lecture officielle du digest courant. Le total consolidé du projet reste indisponible.
+- Les groupes entre cartes racines N1 restent soumis à leur gate et leur chemin durable demeure fermé. La PR #98 conserve une preuve locale avec runtime partagé fermé. La PR #102 reste une Draft historique de Before. Les deux restent indépendantes de cette livraison.
+- Commit associé, `feat(composer): add composed outings`. TypeScript et contrôle de sept parcours, dont le rattachement avec identité et coût conservés, exécutés avec succès.
+- Suite · modèles de départ et suggestions explicables.
+
+## D · Modèles de projets
+
+- Trois structures dans la bibliothèque · Cinéma et restaurant, Week-end et musée, Week-end et randonnée. La confirmation décrit les intentions qui seront ajoutées. Les prix et dates restent inconnus.
+- Les opérations passent par l’évaluateur Composer existant. Le brouillon visible ne reçoit la composition qu’après admission de toutes les étapes, dans une seule entrée Undo/Redo.
+- Un changement de référence mensuelle ou de révision du Plan pendant l’évaluation interrompt la composition. L’utilisateur peut actualiser les finances, puis relancer le modèle. Le Draft initial reste disponible.
+- Commit associé, `feat(composer): add project starters`. TypeScript et 8 contrôles du parcours, dont les trois compositions et un refus intermédiaire, exécutés avec succès.
+- Suite · suggestions explicables, fondées sur la composition courante.
+- Un quatrième modèle ouvre un panier Jeux et accessoires vide dans l’enveloppe publiée Jeux/Numérique. Les achats beauté et les paniers spécialisés existants deviennent retrouvables depuis « Mes intentions ». Commit `feat(composer): start and reopen specialized baskets`.
+- Un cinquième modèle associe une activité à une visite amicale, avec navigation aller-retour et éditeurs indépendants. Aucun proche ni trajet n’est déduit. Commit `feat(composer): compose a visit with an activity`. TypeScript et les contrôles ciblés de composition ont réussi.
+
+## E · Suggestions pour compléter un projet
+
+- Une sortie déjà liée à un cinéma ou un restaurant peut proposer le complément manquant. Un Week-end sans activité peut proposer une visite. Chaque proposition explique son déclencheur et vérifie la capacité publiée de rattachement.
+- Consultation et masquage en mémoire de la session. Une adoption demande confirmation et vérifie de nouveau la cible. Les suggestions S1/S2 restent accessibles indépendamment.
+- Une visite amicale sans activité peut également proposer une sortie culturelle si le rattachement est admis. Le complément disparaît dès qu’une activité est liée.
+- Commit associé, `feat(composer): suggest explainable project complements`. TypeScript et 9 contrôles ciblés exécutés avec succès. Scénarios authentifiés et responsive reportés.
+- Suite · finitions et préparation de la recette ciblée.
+
+## F · Lisibilité du Board et récupération
+
+- Les projets indiquent le nombre d’intentions rattachées sur le Board. Le détail différencie le total connu, le sous-total évalué et le montant en attente de recalcul.
+- Les erreurs de sauvegarde présentent leurs actions sous le bandeau. Le préflight distingue un conflit de référence, une sauvegarde non confirmée et des sources financières à compléter.
+- Les actions de récupération sont regroupées sous le bandeau. Le contrôle ciblé du Shell et de la reprise d’une organisation locale a réussi. Le script navigateur a été adapté à ce nouvel emplacement et reste NOT_RUN pour cette tranche.
+- Le retrait d’un projet avec des enfants vérifie leurs droits et confirme la portée exacte. Un changement du brouillon invalide la confirmation. Les rattachements proposés sont revérifiés avant adoption.
+- Le récapitulatif suit l’ordre publié des intentions et garde un accès à chaque occurrence si une ancienne date est invalide. TypeScript et les dix contrôles de parcours ont réussi.
+- Commit associé, `feat(composer): clarify project and draft status`. Douze contrôles Week-end ont validé les droits, les identités et les montants du Compiler.
+
+## G · Recette à reprendre
+
+- Recharger un Draft confirmé avec deux intentions homonymes. Confirmer que l’identité choisie est restaurée et que la saisie RAW n’est pas persistée.
+- Provoquer un conflit sur fixture, relire la version serveur et vérifier que la lecture seule laisse les choix locaux disponibles.
+- Vérifier chaque modèle, y compris un refus intermédiaire, Undo/Redo et la reprise du bon projet après Reload.
+- Ouvrir un enfant, modifier un seul poste et revenir au parent. Vérifier coûts, rattachements, droits et absence de double comptage.
+- Masquer, réactiver puis adopter une suggestion S3. Vérifier une lecture sans mutation, puis l’action explicite et l’absence de doublon.
+- Contrôler le responsive, la sauvegarde authentifiée sur périmètre autorisé et une Preview FRESH lorsque les sources sont réellement disponibles. Ces recettes sont reportées.
+- Réserver Apply et PlanRevision à un mandat distinct.
+
+Les contrôles ciblés exécutés couvrent aussi le panier multi-articles, le Save/Reload sur stockage isolé et le refus des révisions obsolètes. Le journal est suivi par la Draft PR #123.
+
+## Ultra-run · 13 novembre 2026
+
+Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limites effectives. Reprise de `f601439` et de la Draft PR #123. `main` reste sur `2e6febe` au démarrage.
+
+| État | Chantier | Prochain résultat |
+| --- | --- | --- |
+| DONE | Aperçu personnalisable des modèles | Nom du projet, compléments facultatifs, six modèles dont Week-end multi-enfants |
+| DONE | Lecture des intentions liées | Impact officiel par enfant, diagnostics ciblés et consultation seule visibles |
+| DONE | Déplacements | Rubriques de saisie et accès au parking du trajet déjà choisi |
+| DONE | Activités et achats | Reprise exacte des presets Activity/Purchase existants, labels adaptés et coût nul explicite |
+| DONE | Découverte des modèles | Catégories, illustrations Clay, contenu et recherche par intentions |
+| DONE | Suggestions S3 | Compléments selon les enfants réels, priorité repas/activités en mémoire de session |
+| DONE | Produits Beauté complémentaires | Tonique, sérum, crème hydratante et lotion dans l’éditeur prix/quantité existant |
+| DONE | Navigation et accessibilité | Groupes par projet, filtre et retour au parent consultable |
+| DONE | Déplacement d’une intention liée | Reparentage explicite, identité et postes conservés, droits et digest revérifiés |
+| DONE | Lecture financière des relations | Contexte parent distingué du coût individuel de chaque intention |
+| DONE | Reprise des séjours | Hôtel et séjour chez des proches retrouvables, deux modèles supplémentaires |
+| DONE | Aperçu des projets | Blocages visibles et confirmation inactive pendant une comparaison ou organisation |
+| DONE | Catalogue contextualisé | Type d’éditeur annoncé et recherche des paniers par leurs articles |
+| DONE | Accessibilité des formulaires | Annulation de l’aperçu rend le focus, réussite laisse la navigation du projet disponible |
+| DONE | Compléments des séjours | Ouverture exacte des enfants et confirmation explicite de leur retrait |
+| DONE | Autres intentions déjà éditables | Tous les presets publiés retrouvables sous leurs droits actuels |
+| DONE | Relations sur le Board | Lien compact vers le parent exact dans les cartes enfants |
+| DONE | Synthèse des informations manquantes | Diagnostics officiels de l’intention et de ses postes, masqués si périmés |
+| DONE | Navigation du Board | Navigation commune, nom complet accessible et occurrence exacte |
+| DONE | Retour après déplacement | Destination révélée uniquement après réponse admise de l’évaluateur |
+| DONE | Informations de financement | Accès en lecture aux sources du mois depuis le détail de financement |
+| DONE | Liste des intentions | Recherche dans les parents et numéros d’homonymes stables sous filtrage |
+| DONE | Modèles et disponibilité | Structures existantes proposées à l’ouverture, compléments filtrés selon les droits |
+| DONE | Date du modèle | Date facultative du parent, sans propagation aux compléments |
+| DONE | Mobilité explicite | Tarif du trajet complet, retour et frais du propriétaire partagé distingués |
+| DONE | Accessibilité de la bibliothèque | Entrée ouvre l’existant, Échap et flèche haute reviennent à la recherche |
+| DONE | Sélection du mois | Mois explicite dans la liste et l’aperçu des modèles |
+| DONE | Lecture des montants | Coûts inconnus, sous-totaux officiels et montants à actualiser dans les projets |
+| DONE | Produits du catalogue vers les paniers | Choix canoniques compatibles vers les recettes existantes ou le panier générique |
+| DONE | Ouvrir une ligne depuis le catalogue | Sélection exacte transmise à l’éditeur et refus des captures obsolètes |
+| DONE | Panier générique | Reprise par son contenu et filtre des articles dont le prix reste à préciser |
+| DONE | Synthèse des projets | Compteurs officiels et filtres pour les projets contenant plusieurs enfants |
+| DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
+| BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
+| BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
+
+Les recettes navigateur exhaustives et authentifiées restent NOT_RUN pour ce run. Les vérifications ciblées seront consignées à chaque commit.
+
+### Aperçu des modèles
+
+Le nouvel aperçu présente la structure requise, les compléments facultatifs et leurs disponibilités. Il accepte un nom explicite et ne modifie le Draft qu’après confirmation. Un sixième modèle prépare un Week-end avec musée et randonnée. Les choix sont revérifiés par l’évaluateur existant, puis admis ensemble dans l’historique Undo/Redo. Les erreurs restent visibles dans l’aperçu.
+
+TypeScript, `git diff --check` et les dix groupes du banc de parcours ont réussi. Le banc a exercé les six modèles, un nom personnalisé, le retrait d’un complément, le refus des doublons et d’un choix étranger au modèle, l’échec intermédiaire et le changement de référence. Zéro écriture distante, aucun Apply.
+
+### Intentions liées
+
+Chaque enfant offre la même lecture financière officielle que son éditeur, avec les diagnostics ciblés déjà publiés et la restriction de consultation. Les détails financiers disparaissent lorsque la projection est périmée. Aucun total de projet n’est recalculé par React.
+
+TypeScript, diff et les dix groupes du banc de parcours PASS. Le contrôle de rendu distingue la lecture FRESH de l’état STALE et conserve l’ordre et les identités des enfants.
+
+### Frais et déplacement
+
+L’éditeur d’activité/Restaurant regroupe les champs Mobility publiés en trajet, frais, financement, horaires et partage. Le parking d’une voiture déjà choisie possède un accès direct. Les péages et le carburant restent des résultats du propriétaire Mobility. Train, bus, taxi et les autres modes admis conservent leurs champs officiels.
+
+TypeScript et diff PASS. Deux contrôles React et propriétaire ont validé la conservation RAW entre rubriques, le parking adopté explicitement avec identité stable et le refus d’une édition obsolète. Les dix contrôles Restaurant/Cinéma ont réussi. Aucun appel distant ni writer financier exécuté.
+
+### Activités et achats retrouvables
+
+Les activités et achats déclarés par les presets publiés se retrouvent dans la bibliothèque du mois, sous les mêmes contrôles d’identité et de droits. Pêche, Plage, Randonnée et Spa utilisent des libellés de coût adaptés dans l’éditeur partagé. L’utilisateur peut préparer explicitement un coût nul, puis le valider ; cela ne renseigne pas les frais annexes.
+
+TypeScript, diff et dix groupes de parcours PASS. Sept activités ont été créées, rendues et chiffrées par leur propriétaire sur fixture. Plage a confirmé la distinction entre zéro déclaré et UNKNOWN. Les fixtures et le World restent inchangés, aucun writer distant exécuté.
+
+### Bibliothèque de modèles
+
+Les six modèles sont classés en sorties, séjours, visites et achats. Leur contenu et une illustration Clay existante sont visibles avant l’aperçu. La recherche associe les termes du parent et des compléments, avec normalisation des accents et plusieurs mots.
+
+TypeScript, diff et trois contrôles recherche/rendu PASS. La consultation des six modèles conserve le Draft. Les contrôles vérifient notamment « musée randonnée », « film dîner » et « achats manette ».
+
+### Suggestions S3 et priorités
+
+Une sortie vide peut commencer par Cinéma ou Restaurant. Un Week-end propose culture ou nature, puis uniquement le complément encore absent. La priorité explicite repas/activités change l’ordre, avec une limite de quatre suggestions visibles. Les préférences, masquages et désactivation restent dans la session du Shell. Chaque motif décrit les intentions réellement présentes.
+
+TypeScript, diff et quatre contrôles React/propriétaire PASS. Priorité, masquage, réactivation et consultation sans mutation sont couverts. Une confirmation ouverte est refusée si le complément est déjà adopté entre-temps. Le rattachement explicite conserve l’identité cible et les suggestions disparaissent après adoption. Aucun writer distant ni Apply.
+
+### Produits de soin complémentaires
+
+Tonique, Sérum visage, Crème hydratante et Lotion de soin réutilisent le propriétaire Beauté et son éditeur de prix/quantité. Les suggestions et la reprise sont liées aux presets exacts. La palette accepte leur illustration de preset existante lorsqu’aucun asset canonique ne possède le même visuel ; aucune identité produit n’est créée à partir de cette présentation.
+
+Les seize contrôles du banc Beauté PASS, incluant les neuf extensions de Mascara, les identités, UNKNOWN, zéro, quantité et références Clay. TypeScript et diff PASS. Aucun writer distant, SQL ou Apply.
+
+### Navigation par projet
+
+Le sélecteur regroupe les intentions par projet, y compris les enfants imbriqués. Au-delà de huit intentions, une recherche retrouve aussi le nom du parent. Une sélection courante reste accessible lorsqu’elle ne correspond pas au filtre. Les parents consultables restent atteignables depuis un enfant.
+
+TypeScript, diff et trois contrôles d’identité/rendu PASS, incluant homonymes, imbrication, recherche avec accents et référence cyclique défensive. Aucune mutation à la consultation.
+
+### Déplacement vers un autre projet
+
+Une intention liée peut être déplacée vers un autre projet quand le serveur publie `REPARENT_PRESERVE_ID`. Les destinations proposées utilisent uniquement des sockets répétables pour éviter de remplacer un autre enfant. Une confirmation explique le retrait de l’ancien projet et conserve les postes de l’enfant. Les protections du parent, de l’enfant, de la relation et de la destination sont respectées. Les descendants ne sont jamais proposés comme destination.
+
+TypeScript, diff et deux contrôles React/propriétaire PASS. Deux projets homonymes restent distincts ; un billet à 12 € conserve son identité, ses composants et son coût officiel. Un changement du Draft invalide la confirmation. Aucune suppression de projet ni écriture distante, aucun Apply.
+
+### Séjours et visites familiales
+
+Hôtel et Séjour chez des proches se retrouvent dans les intentions du mois. Deux modèles ajoutent respectivement une visite culturelle et une balade, portant la bibliothèque à huit modèles. Les visites familiales exposent les enfants, leur ouverture, leur déplacement admissible et les suggestions S3. La lecture d’un enfant précise son projet parent et le périmètre individuel des montants.
+
+TypeScript PASS. Deux contrôles propriétaire/rendu et les trois contrôles de bibliothèque PASS. Les nouveaux séjours conservent hébergement, nuits, dates et coûts inconnus ; aucune gratuité n’est déduite du séjour chez des proches. La visite familiale reste sans personne, lieu ni prix inventés. Le maintien de l’éditeur familial après rattachement utilise le chemin du Shell déjà employé pour les séjours. Recette navigateur approfondie NOT_RUN.
+
+### Paniers et fiches spécialisées
+
+La bibliothèque distingue panier multi-articles, fiche d’article, activité et intention à compléter. Une recherche peut retrouver un panier par le nom d’un article. Correction ciblée : un panier Vêtements `purchase@v2` ne passe plus dans le contrôle mono-article historique qui le classait à tort en consultation seule. Les versions panier de la carte et du Draft doivent correspondre avant toute proposition de reprise.
+
+TypeScript et diff PASS. Le banc panier valide Amazon, Vêtements, Courses, compatibilité historique et Save/Reload sur stockage SQL isolé. Les nouveaux contrôles couvrent le panier Vêtements vide, son ouverture, la recherche de Jean et l’ancrage qui impose la consultation. Aucun accès à une base distante ni Apply.
+
+### Aperçu et focus
+
+L’aperçu explique les blocages transitoires du Shell et empêche une confirmation sans effet pendant une comparaison ou organisation locale. Annuler rend le focus à l’origine. Une création réussie ne force plus le retour sur la bibliothèque. Les aides de sauvegarde pointent vers les actions réellement présentes sous le bandeau.
+
+TypeScript, diff et deux contrôles React PASS. Nom et choix facultatifs restent locaux jusqu’à confirmation, le motif de blocage empêche toute création, l’annulation et la réussite ont des comportements de focus distincts. Aucun writer distant.
+
+### Postes enfants d’un séjour
+
+Les postes Activités et Repas offrent un accès direct à l’intention enfant, comme le faisait déjà le panier lié. La confirmation de retrait indique que l’intention, ses postes et ses éventuels enfants seront retirés lors de la validation du séjour. Le déplacement vers un autre projet reste disponible depuis le résumé.
+
+TypeScript, diff et deux contrôles React/propriétaire PASS. Deux Cinéma homonymes ouvrent leurs identifiants respectifs. Le retrait attend sa confirmation puis la validation du séjour, conserve le parent et l’autre enfant et passe par le propriétaire existant. Aucun writer distant ni Apply.
+
+### Mes intentions du mois
+
+Un espace dédié liste les intentions déjà présentes sans imposer de recherche préalable. Les filtres montrent tous les projets ou les intentions à compléter selon la connaissance publiée par le Compiler. Les indications périmées sont masquées. La reprise inclut désormais les soirées, repas livrés, restauration rapide et cadeaux déjà admis par les presets existants ; elle ne crée aucune capacité depuis un nom de catalogue.
+
+TypeScript et deux contrôles React/propriétaire PASS. Six familles de presets sont créées sur fixture puis retrouvées avec leur identité. L’ouverture, les filtres et le passage en état STALE ne modifient pas le Draft et n’exécutent aucun writer distant.
+
+### Diagnostics d’une intention
+
+Le résumé d’impact affiche les diagnostics publiés qui ciblent exactement l’intention, ses composants, son intention Mobility ou son trajet. Les messages globaux et ceux des autres intentions restent hors de ce détail. Les doublons sont retirés et la lecture périmée est masquée. Aucun diagnostic ne déduit à lui seul une autorisation Apply ou une modification du statut FRESH.
+
+TypeScript, diff et deux contrôles de portée/rendu PASS. Les références sont celles du propriétaire ; FRESH et BLOCKED affichent les repères courants, STALE et PENDING les masquent. Zéro écriture distante. Le banc de dix parcours a également été rejoué au checkpoint `8bf7414` avec huit modèles et sept activités : PASS.
+
+### Parent visible sur le Board
+
+Les cartes enfants exposent un lien compact vers le projet parent, en réutilisant le sélecteur et le routeur d’intentions. Le libellé accessible conserve le nom complet et la distinction des homonymes ; le texte visuel peut être tronqué. Un parent absent du périmètre de navigation ne produit aucun lien actif.
+
+TypeScript, diff et quatre contrôles de navigation/rendu PASS. Les identités et le regroupement sont conservés. Le rendu interactif complet du Board reste NOT_RUN.
+
+### Suivi d’un rattachement
+
+Le Shell repère le projet de destination après admission effective du rattachement ou du déplacement. Il affiche les noms d’occurrence et propose la reprise du projet. Une réponse refusée ne déplace pas le focus et ne modifie pas le Draft. Le détail de financement peut ouvrir les sources du mois même hors état BLOCKED, via le panneau existant et sa protection RAW.
+
+TypeScript et diff PASS. Les huit contrôles du Shell ont réussi, avec un rattachement réel sur l’évaluateur de fixture et un refus serveur. Aucun Draft durable n’est écrit par ce test. Les contrôles des déplacements et de la lecture des diagnostics/sources PASS. Aucun Apply ni writer distant.
+
+### Date et ordre d’un modèle
+
+L’aperçu peut recueillir une date facultative pour le parent, dans le mois Composer. Les activités et compléments conservent leurs dates indépendantes. L’ordre du modèle est stable lorsqu’un complément est décoché puis réactivé.
+
+TypeScript et les deux contrôles React d’aperçu PASS. Les dix groupes du banc de parcours PASS, incluant une date valide, la non-propagation aux enfants et le refus d’un jour invalide ou d’un autre mois avant toute évaluation. Prix et participants restent à préciser ; aucun writer distant.
+
+### Recherche par projet et homonymes
+
+La liste du mois retrouve une intention par le nom de son projet ou d’un parent. Deux intentions homonymes conservent leur numéro de repérage quand un filtre en masque une. Le parent reste indiqué dans les résultats avec sa propre distinction d’occurrence.
+
+TypeScript, diff et deux contrôles React/propriétaire PASS. Un cadeau lié à un projet culturel est retrouvé par ce projet ; l’autre cadeau homonyme reste distinct et le numéro ne dépend pas des résultats visibles. Aucune mutation à la recherche.
+
+### Lire un projet comportant plusieurs enfants
+
+Le résumé indique combien d’intentions sont à compléter ou en consultation, à partir de la connaissance et des capacités publiées. Au-delà de quatre enfants, des filtres permettent de les repérer. Les coûts restent individuels. Les protections de composition, y compris celles propagées par un enfant ancré, sont affichées telles que le propriétaire les publie.
+
+TypeScript, diff et deux contrôles React/propriétaire PASS sur cinq Cinéma homonymes. Zéro explicite est distinct d’UNKNOWN, les numéros restent stables sous filtrage et STALE masque la classification à compléter. Le modèle financier, les intentions et leurs droits ne sont pas modifiés par les filtres.
+
+### Retrouver une structure avant de recréer
+
+L’aperçu d’un modèle montre les intentions du même type déjà présentes dans le mois. Il permet de les ouvrir ou consulter par leur identité, avec les droits courants, sans ajouter automatiquement les compléments du modèle. Le nouveau projet reste une action explicite distincte.
+
+TypeScript, diff et trois contrôles React d’aperçu PASS. L’ouverture d’un séjour existant ne crée pas une deuxième structure et conserve son digest. Aucun writer distant.
+
+### Trajet complet et frais partagés
+
+Le montant de billet/course est présenté comme celui du trajet complet. L’aller-retour ne déclenche aucun multiplicateur d’interface. Les frais et le financement du trajet propriétaire ne sont pas saisissables sur son participant partagé ; les buffers restent disponibles si l’utilisateur revient à un trajet propre. Le mode explicitement gratuit ne présente pas de billet payant à adopter.
+
+TypeScript et trois contrôles React/propriétaire PASS. Le préparateur Mobility officiel, raccordé aux providers de fixture existants, évalue un billet de train de 10 € à 10 € en aller simple comme en aller-retour. Sans direction déclarée, son montant évalué reste inconnu. Aucun appel route, carburant ou péage n’est réalisé par le train ; aucun writer distant, SQL ou Apply.
+
+### Clavier et repérage du mois
+
+Dans Mes intentions, Entrée ouvre uniquement un résultat existant unique. Échap et la flèche haute depuis le premier résultat rendent la recherche accessible. Home/End et les flèches ignorent les boutons cachés dans les sections repliées. Le mois est affiché en toutes lettres dans la liste et l’aperçu des modèles.
+
+TypeScript, diff et trois contrôles React/propriétaire PASS, incluant les événements clavier sur DOM simulé. Aucun ajout d’intention ni writer distant. La recette clavier en navigateur réel reste NOT_RUN. Au checkpoint `9bc18c1`, le contrôle Vercel automatique était PENDING ; aucune certification de Preview n’est déduite de ces contrôles locaux.
+
+### Rejouer les contrôles ciblés
+
+Les pilotes React additionnels acceptent `PLANNER_REACT_TEST_TOOLS`, chemin du répertoire contenant le `package.json` du renderer déjà disponible. Sans cette variable, ils réutilisent `outputs/p21-react-tools`. Aucun paquet de test ou fichier de ce répertoire n’est inclus dans le commit. Les scripts du propriétaire et les fixtures de calcul restent ceux du dépôt.
+
+### Préparer un panier depuis un produit du catalogue
+
+Des produits canoniques compatibles ouvrent une préparation de panier. Beauté, Vêtements, Jeu vidéo et les consommables disposant d’une recette publiée réutilisent cette recette. Les autres équipements admis utilisent le panier générique. La même fonction d’admission que le propriétaire `purchase@v2` vérifie le domaine ; les concepts incompatibles restent sans action de création. Le produit n’adopte ni prix ni vendeur à la consultation.
+
+Le catalogue propose aussi de retrouver les paniers contenant déjà le concept exact. Les paniers génériques sans preset deviennent retrouvables et éditables selon leurs droits. Une présentation de version future inconnue ne reçoit aucun droit supplémentaire.
+
+TypeScript et le contrôle ciblé du catalogue PASS : sept produits réels du catalogue public, dans six modules, passent la création et l’adoption d’un article UNKNOWN via le propriétaire existant. Les droits de création, le budget Courses comme cible distincte, les métadonnées futures et l’ouverture de l’existant sont vérifiés. Le test React confirme le passage du concept exact par l’action du catalogue. Aucun writer distant ni Apply.
+
+### Article exact depuis le catalogue
+
+Les paniers contenant le concept recherché proposent les lignes correspondantes séparément. L’éditeur rouvre la sélection exacte avec ses valeurs déclarées. Une sélection ou des droits devenus obsolètes produisent un message en conservant le panier et les saisies disponibles. Un panier protégé est proposé en consultation sans action d’édition de ligne.
+
+TypeScript et le banc catalogue/propriétaire PASS. Deux Chargeur homonymes gardent leurs identités. Modifier le deuxième de 20 € à 21 € conserve le premier à 12 € et produit le sous-total officiel de 33 €. L’ouverture seule ne déclenche pas de mutation ; la saisie RAW reste locale jusqu’à validation. La capture antérieure au changement est ensuite refusée. Aucun writer distant ni Apply.
+
+### Reprise · six nouvelles activités
+
+Bowling, Karting, Escape game, Mini-golf, Billard et Piscine utilisent chacun leur export Clay V22 et le contrat Activité existant. La bibliothèque ne propose leur création que si le dépôt sur le Board est admis. Les éditeurs rouvrent l’occurrence exacte avec un libellé de coût adapté, sans prix, frais, participants ni trajet préremplis.
+
+TypeScript, diff et les dix groupes du banc de parcours PASS. Treize activités passent par les slots existants sur fixture, avec reprise de l’identité et contrôle du coût officiel. Les six nouveaux visuels sont présents et le retrait de la capacité Board masque les six créations. Aucun writer distant ni Apply. Suite · recherche et complétude des paniers génériques.
+
+### Recherche et prix manquants dans les paniers
+
+La liste des articles filtre les libellés déclarés et les noms canoniques, avec un filtre pour les prix à préciser. Les homonymes gardent leur numéro d’origine et l’ouverture cible la sélection exacte. Le prix nul explicite reste renseigné. Les montants évalués de ligne sont masqués lorsque la projection est périmée ; les prix saisis restent lisibles.
+
+TypeScript, diff et le banc catalogue/panier PASS. Le filtre isole une ligne UNKNOWN sans renuméroter l’homonyme à 0 €, et le passage à STALE masque son total calculé sans mutation ni changement de digest. Aucun writer distant ni Apply. Suite · lecture des coûts des intentions liées.
+
+### Coûts individuels des intentions liées
+
+Chaque ligne distingue coût total, sous-total connu, coût inconnu et calcul à actualiser. Le filtre « À compléter » suit le coût officiel lorsqu’il est publié. L’identité, la consultation et les actions de rattachement restent visibles indépendamment du calcul.
+
+Le banc des intentions liées vérifie 0 € explicite, un sous-total officiel de 12 € avec supplément inconnu, un coût inconnu, le masquage en STALE et l’ouverture de l’homonyme exact. Digest préservé, aucun writer distant ni Apply. Suite · accès depuis le catalogue Clay.
+
+### Activités depuis le catalogue Clay
+
+Les six visuels exacts ouvrent leur intention existante même après renommage. Si aucune n’existe, le catalogue propose sa préparation lorsque le Board admet le dépôt. Dans une activité libre, un choix peut préparer le poste principal encore vide selon la capacité publiée. Un contexte budgétaire distinct ne propose pas cette création.
+
+Le banc Clay PASS sur les 687 visuels, les six correspondances exactes, la reprise, les capacités refusées et la non-régression Cinéma. Aucun changement du catalogue public ni nouvelle illustration. Suite · nouveaux modèles de projets.
+
+### Bowling et restaurant, visite amicale et escape game
+
+Deux modèles préparent des compléments facultatifs via les sockets existants, ce qui porte la bibliothèque à dix modèles. Le modèle de visite ne déduit ni personne ni lieu. Les deux modèles laissent les tarifs, dates des enfants et trajets à renseigner.
+
+TypeScript, diff, recherche/rendu de la bibliothèque et les dix groupes du banc de parcours PASS. L’évaluateur confirme les rattachements par identité de preset, leur ordre et l’absence de poste prérempli. Aucun writer distant ni Apply. Suite · suggestions S3 fondées sur les activités effectivement liées.
+
+### Suggestions S3 pour les sorties de loisirs
+
+Une sortie contenant l’une des six nouvelles activités peut proposer un repas en nommant l’activité liée. Plusieurs activités ne produisent qu’une proposition. Un restaurant, un repas rapide ou une livraison déjà liés la retirent. Un restaurant accompagné d’une activité ne reçoit pas de suggestion Cinéma par défaut.
+
+TypeScript, diff et cinq contrôles S3 PASS. Le banc couvre la priorité locale, la confirmation explicite, le refus d’une proposition devenue obsolète, les capacités et l’absence de doublon. Aucun writer distant ni Apply. Suite · navigation de la bibliothèque.
+
+### Recherche clavier des modèles
+
+Lorsqu’un seul modèle correspond à la recherche et qu’aucune intention ne correspond, Entrée ouvre son aperçu. Les résultats de modèles participent à la navigation clavier et le message de recherche vide disparaît s’il existe un modèle correspondant. Les actions masquées par une section repliée ne captent pas le focus.
+
+TypeScript, diff et les quatre contrôles de la bibliothèque PASS. « quilles dîner » ouvre l’aperçu du modèle Bowling et restaurant en conservant le digest. Aucun writer distant ni Apply. Navigation navigateur et recette authentifiée NOT_RUN. Suite · état des paniers sur le Board.
+
+### Montant du panier sur le Board
+
+Le Board et l’éditeur utilisent la même règle de fraîcheur. La carte affiche un total brut ou un sous-total connu selon le reçu du Compiler, avec le nombre d’articles. En attente d’une projection ou en cas de digest périmé, les montants évalués sont masqués.
+
+TypeScript, diff et banc d’impact PASS. Amazon est vérifié à 48 € puis à 53 € avec livraison. Une ligne inconnue produit un sous-total distinct ; STALE masque les 48 €. Les sept éditeurs et les couvertures Courses gardent leurs résultats de fixture. Aucun writer distant ni Apply.
+
+### Compléments homonymes dans les activités
+
+Les compléments homonymes sont numérotés dans le panneau d’activité. La modification garde la ligne à sa place et n’affecte pas les autres compléments.
+
+TypeScript, diff et onze contrôles Restaurant, Cinéma et Activité PASS. Deux locations de chaussures de Bowling à 6 € gardent leur identité et leur ordre après modification ciblée de la première à 7 €. Le Compiler confirme les trois montants de la sortie. Aucun writer distant ni Apply.
+
+### Retrouver un panier par son vendeur ou son concept
+
+« Mes intentions » retrouve le panier par son vendeur déclaré et par le concept Clay d’un article, y compris après renommage de la ligne. La navigation annonce l’édition seulement lorsque l’occurrence est active et que le rattachement affiché correspond au Draft.
+
+TypeScript, diff et banc catalogue/panier PASS. La recherche combinant vendeur et concept retrouve un seul panier, préserve son digest et ne déclenche aucun writer distant. Les protections de lignes et le filtre des prix inconnus restent vérifiés.
+
+### Associer une activité à un projet existant
+
+Sortie composée et Visite amicale proposent les six nouvelles activités dans le panneau d’association. Un champ filtre les intentions existantes et les créations admissibles. Les actions restent liées aux identités publiées et passent par la confirmation du projet.
+
+TypeScript, diff et dix groupes du banc de parcours PASS. Le rendu propose Bowling lorsque le socket l’admet et le masque quand le dépôt est retiré. Aucun changement à la consultation ni writer distant. Recette de saisie et d’affichage en navigateur réel NOT_RUN.
+
+### Recherche des intentions imbriquées
+
+Le sélecteur d’éditeur recherche dans tous les parents visibles, comme la bibliothèque. Une recherche peut retrouver un enfant par le nom du parent intermédiaire. Échap efface un filtre actif sans fermer l’éditeur.
+
+TypeScript, diff et contrôle de navigation PASS sur les résultats imbriqués, les homonymes, les références invalides et le rendu de la sélection exacte. Le geste Échap en navigateur réel reste NOT_RUN.
+
+### Choix du Dock pour les activités
+
+Les activités de loisirs gardent l’accès aux informations et aux compléments admis lorsque les suggestions sont masquées. L’étape de prix utilise son poste unique avec quantité et frais distincts. Les boutons de conversion propres aux repas ont été retirés de cette étape.
+
+TypeScript, diff et onze contrôles du banc Restaurant/Cinéma/Activité PASS. Ouvrir le prix d’une partie ne crée aucune décision ; les commandes de conversion sont absentes et le coût officiel des compléments reste vérifié. Aucun writer distant ni Apply.
+
+### Hôtel, musée et restaurant
+
+Le onzième modèle utilise deux sockets déjà publiés par Séjour, Activités pour le musée et Restaurants pour le repas. Chaque complément reste facultatif dans l’aperçu. L’évaluateur existant contrôle chaque rattachement et le Shell installe la composition après admission de l’ensemble.
+
+TypeScript, diff, banc d’aperçu, recherche et dix groupes de parcours PASS. Les deux identités sont vérifiées dans leur socket exact. Aucun poste ni tarif n’est prérempli. Aucun writer distant ni Apply.
+
+### Suggestion de repas pendant un séjour
+
+Un séjour contenant une activité peut proposer un repas dans son socket Restaurants. Le motif indique l’activité déjà liée. Un repas autonome ou directement renseigné dans le séjour suffit à retirer la proposition.
+
+TypeScript, diff et cinq groupes S3 PASS. Le contrôle retire la proposition sans capacité du socket et après rattachement d’un repas. Les suggestions culture et nature restent indépendantes. Aucun ajout automatique, writer distant ni Apply.
+
+### Préserver les enfants intacts lors d’une édition du séjour
+
+Retirer ou modifier un poste lié ne crée plus un composant UNKNOWN dans un enfant voisin encore vide. La ligne d’aperçu de cet enfant reste locale jusqu’à une modification volontaire. Le brouillon ne reçoit que les enfants effectivement édités.
+
+TypeScript, diff et bancs séjour/enfants et familles de projets PASS. Retirer le deuxième Cinéma homonyme après confirmation préserve le premier et ses slots vides. Aucun writer distant ni Apply.
+
+### Deuxième série d’activités Clay
+
+Canoë / Kayak, Parc d’attractions, Spectacle, Assister à un match, Atelier créatif et Sortie photo utilisent leurs visuels exacts et l’éditeur Activité. Ils sont retrouvables dans le catalogue, la bibliothèque et les destinations de projet déjà admises. Les prix, lieux, participants et trajets restent à choisir.
+
+TypeScript, diff, catalogue et dix groupes du banc de parcours PASS. Le banc vérifie douze routes visuelles et dix-neuf activités, leurs identités exactes et leurs coûts officiels sur fixture. Aucun writer distant ni Apply.
+
+### Vérifier le reçu des rattachements d’un modèle
+
+Le reçu doit confirmer l’identité de l’enfant et celle de sa sélection dans le socket demandé avant que le Shell installe la composition. Un reçu sans le rattachement attendu interrompt le modèle.
+
+TypeScript, diff et dix groupes du banc de parcours PASS. Le contrôle simule un reçu dépourvu de la sélection Restaurants après création de l’enfant. Le modèle est refusé et le digest initial est préservé. Aucun writer distant ni Apply.
+
+### Conserver les choix d’un modèle lorsque les droits changent
+
+L’aperçu garde visibles les compléments sélectionnés qui deviennent indisponibles. Il suspend la confirmation jusqu’à ce que l’utilisateur décoche explicitement le choix concerné ou rouvre le modèle.
+
+TypeScript, diff et quatre contrôles d’aperçu PASS. Retirer la capacité Restaurant pendant l’aperçu bloque la création. Décocher le repas transmet ensuite seulement le musée. Aucun writer distant.
+
+### Préparer Courses depuis un catalogue ouvert
+
+Le raccourci « Préparer mes courses » suit le même contrôle de digest que les autres créations du catalogue. Un changement de composition pendant la consultation suspend ce raccourci.
+
+TypeScript, diff et banc catalogue/panier PASS. Le raccourci est disponible sur le digest initial puis désactivé après changement, sans nouvelle décision ni writer distant.
+
+### Confirmer le retrait d’une ligne de panier
+
+La confirmation vérifie le digest et les droits courants avant de transmettre le retrait. Le formulaire suit le même contrôle et conserve la saisie si le panier a changé.
+
+TypeScript, diff et banc catalogue/panier PASS. Un changement de vendeur entre l’ouverture et l’acceptation du retrait invalide l’action. Aucun retrait ni writer distant ne part depuis cette confirmation.
+
+### Revérifier le rattachement au séjour à la confirmation
+
+Le séjour revérifie la destination, la capacité de rattachement et l’état courant du séjour quand l’utilisateur accepte le déplacement d’une intention existante.
+
+TypeScript, diff et banc séjour/enfants PASS. Si le dépôt Bowling disparaît pendant la confirmation, aucune opération n’est transmise. Les contrôles d’identité et de retrait des deux Cinéma restent valides.
+
+### Focus de la fiche catalogue
+
+Ouvrir une fiche place le focus sur son titre. « Retour aux résultats » rend le focus au résultat exact, ou à la liste lorsque la fiche a été ouverte directement.
+
+TypeScript, diff et banc catalogue PASS. Le test sur DOM simulé couvre l’ouverture directe, l’ouverture depuis un résultat et les deux retours. La recette au clavier en navigateur réel reste NOT_RUN.
+
+### Numéros de ligne identiques dans le panier et le catalogue
+
+Le catalogue du panier indique la position réelle d’un article homonyme. Il propose l’édition seulement si la sélection existe dans le socket publié et reste modifiable.
+
+TypeScript, diff et banc catalogue/panier PASS. Deux articles identiques séparés par une autre ligne restent repérés comme lignes 1 et 3. La ligne 3 ouvre l’éditeur exact sans mutation.
+
+### Rechercher dans les intentions d’un projet
+
+Les projets de plus de quatre enfants proposent une recherche combinable avec les filtres de complétude et de consultation. Les repères d’homonymes restent ceux de la liste complète.
+
+TypeScript, diff et banc intentions liées PASS. La recherche « cinema 2 » retrouve le deuxième Cinéma dans un projet de cinq homonymes et l’ouvre par son identité. Aucun changement de digest ni writer distant.
+
+### Catalogue sur écran étroit
+
+Quand la fiche recouvre les résultats, les commandes recouvertes sortent de la navigation au clavier. Les actions de la fiche et de pagination ont une cible de 44 px en écran étroit, et les libellés longs se replient dans la fiche.
+
+TypeScript, diff et banc catalogue PASS pour la présence de l’état fiche ouverte et son retour aux résultats. Le rendu aux largeurs réelles reste NOT_RUN.
+
+### Retrouver les activités libres
+
+Les activités libres sans présentation de preset rejoignent « Mes intentions ». Elles rouvrent leur éditeur générique. L’annonce d’édition des intentions vérifie l’état actif, l’occurrence et son parent, avec les droits publiés.
+
+TypeScript, diff et quatre contrôles de bibliothèque PASS. Une activité libre est retrouvée sans lui attribuer de preset. Les homonymes, les filtres et la recherche de modèles restent couverts.
+
+### Focus après masquage d’une suggestion S3
+
+Le masquage et la réactivation des suggestions rendent le focus au titre du panneau avant de retirer le bouton activé.
+
+TypeScript, diff et cinq contrôles S3 PASS. Les deux retours de focus sont vérifiés sur DOM simulé, avec le digest conservé et sans nouvelle décision.
+
+### Expliquer un rattachement devenu indisponible
+
+Le séjour indique quand l’état ou les droits ont changé pendant la confirmation de rattachement. L’utilisateur peut rechercher à nouveau la destination admissible.
+
+TypeScript, diff et banc séjour/enfants PASS. Une capacité retirée produit le message et ne transmet aucune opération.
+
+### Week-end, courses et balade
+
+Le douzième modèle propose un panier Courses vide dans le socket Achats et une randonnée dans le socket Activités. Chaque complément reste facultatif. Le panier conserve son domaine Courses et sa couverture reste à préciser.
+
+TypeScript, diff, recherche, aperçu, douze contrôles Séjour et dix groupes du banc de parcours PASS. L’évaluateur confirme les identités et les deux sockets. Le panier ne contient aucune ligne ni aucun prix prérempli. Aucun writer distant ni Apply.
+
+### Nombre d’articles pendant le recalcul
+
+La carte panier lit le nombre d’articles dans le Draft courant pendant le recalcul. Le total reste issu du reçu du Compiler. TypeScript, diff et banc d’impact PASS, y compris une suppression locale de la liste qui affiche zéro article sans reprendre l’ancien total Amazon.
+
+### Courses proposées pour une location
+
+Un séjour dont le type Location est déclaré peut proposer un panier vide dans le socket Achats. Un panier Courses déjà lié ou un poste Courses direct masque la suggestion. Le prix et la couverture restent à renseigner.
+
+TypeScript, diff et six groupes S3 PASS. La proposition explique le type d’hébergement. L’admission vérifie le panier vide et les deux formes de Courses déjà présentes. Aucun writer distant ni Apply.
+
+### Préparer un panier Courses à partir d’un produit
+
+Dans le catalogue Courses hors contrôle budgétaire, un produit admis peut préparer un panier vide et ouvrir la saisie de cet article. Un article déjà choisi reste retrouvable par son identité. Le contrôle de l’enveloppe mensuelle ne propose pas cette action au niveau du produit.
+
+TypeScript, diff et banc catalogue/panier PASS. La fixture ouvre un panier Courses depuis Pain, puis admet séparément l’article au prix UNKNOWN. Aucun writer distant ni Apply.
+
+### Filtrer les paniers du mois
+
+« Mes intentions » propose le filtre « Mes paniers ». Il inclut les paniers génériques et spécialisés et reste combinable avec la recherche. TypeScript, diff et quatre contrôles de bibliothèque PASS. Entrée ouvre le panier générique exact lorsque le résultat est unique, sans mutation.
+
+### Confirmation d’une suggestion S3 obsolète
+
+La confirmation vérifie le digest capturé et les capacités courantes. Un changement de composition ou de disponibilité demande de consulter à nouveau les suggestions. TypeScript, diff et six contrôles S3 PASS, dont le refus et son message lorsqu’un repas a été ajouté entre-temps.
+
+### Ouvrir un article de panier au clavier
+
+Entrée dans la recherche du panier ouvre le résultat unique lorsqu’il est modifiable et que la saisie ne se fait pas en mode composition. TypeScript, diff et banc catalogue/panier PASS. Le filtre des prix inconnus permet d’ouvrir la deuxième ligne homonyme sans mutation. Le navigateur réel reste NOT_RUN.
+
+### Visuels exacts dans le Dock Activité
+
+Le poste principal reprend le visuel Clay de l’activité choisie. TypeScript, diff et onze contrôles Restaurant/Cinéma/Activité PASS. Le Dock de Bowling publie son identité Clay exacte et ouvre le prix sans mutation.
+
+### Nommer un panier
+
+Le formulaire de détails permet de nommer un panier via sa commande existante. Un renommage conserve l’occurrence, les lignes et les montants. La bibliothèque retrouve le même panier par son nouveau nom.
+
+TypeScript, diff, banc catalogue et cinq groupes panier PASS. Le banc réexécute Amazon, Vêtements, Courses, la compatibilité historique et le Save/Reload sur PGlite isolé. Le sélecteur du script navigateur a été adapté au nouveau libellé. Ce script reste NOT_RUN.
+
+Le catalogue nomme explicitement l’action « Préparer un panier Courses » et confirme qu’elle cible l’asset de création de panier publié. TypeScript, diff et banc catalogue PASS.
+
+### Ouvrir un panier lié depuis un séjour
+
+Le raccourci du panier dans les postes du séjour vérifie la relation courante avant d’ouvrir l’éditeur. TypeScript, diff et banc séjour/enfants PASS. Un panier dont la carte a changé de parent n’est pas ouvert. Le même panier encore lié s’ouvre par son identité, sans mutation.
+
+### Conserver l’accès aux intentions avec une ancienne date invalide
+
+Une date invalide s’affiche comme « Date à préciser » dans la bibliothèque. Une date valide d’un autre mois reste hors des résultats. TypeScript, diff et banc bibliothèque PASS sur ces deux cas, sans correction automatique du Draft.
+
+### Produits Clay sans asset spécialisé
+
+Un produit public associé au contexte Achats peut préparer un panier générique lorsque le propriétaire `purchase@v2` admet son concept et que la création est publiée. Les visuels de Cadeaux qui n’ont pas cette destination restent hors de ce raccourci.
+
+TypeScript, diff et banc catalogue PASS. Clous crée un panier vide, puis la ligne est conservée à prix inconnu et retrouvée par son concept. Le visuel Plante à offrir ne propose pas ce départ de panier.
+
+### Aménager une pièce
+
+La bibliothèque propose « Aménager une pièce » avec le visuel Clay mobilier et l’éditeur Projet maison existant. L’utilisateur peut rattacher un panier déjà présent quand le socket Achats l’admet. Le projet expose ses coûts et ceux de ses enfants.
+
+TypeScript, diff et trois contrôles familles de projets PASS. La fixture vérifie le rattachement d’un panier générique sans préremplir un article ou un prix. Aucun writer distant ni Apply. Suite · modèle Maison avec panier vide.
+
+### Modèle Maison avec panier d’équipement
+
+Le treizième modèle associe le projet d’aménagement à un panier `purchase@v2` vide, dans le socket Achats. Le panier utilise le domaine générique et son visuel Clay. Le projet existant propose aussi de créer ce panier via l’association explicite.
+
+TypeScript, diff, recherche, familles de projets et dix groupes du banc de parcours PASS. Le reçu confirme l’identité de l’enfant et le coût reste inconnu. Aucun writer distant ni Apply. Suite · suggestion de panier pour un projet Maison.
+
+### Suggestion de panier pour un projet Maison
+
+Un aménagement sans équipement ni achat peut proposer un panier vide. Le motif reflète le contenu du projet et la confirmation réutilise le socket Achats. Un équipement déjà renseigné ou un achat lié retire la proposition.
+
+TypeScript, diff et sept groupes S3 PASS. La fixture vérifie l’admission explicite du panier et la disparition de la suggestion, sans writer distant ni Apply.
+
+### Confirmation d’association devenue obsolète
+
+L’éditeur des projets revalide la composition et les droits lorsque l’utilisateur confirme une association. Le refus explique comment reprendre.
+
+TypeScript, diff et banc S3/éditeur PASS. Le modèle Maison refuse le panier lorsque la capacité disparaît pendant la confirmation, puis transmet la commande panier après réouverture et confirmation explicite.
+
+### Catalogue depuis le contrôle budgétaire
+
+Une fiche de preset ne propose pas de créer ou rouvrir une intention lorsqu’on la consulte depuis le contrôle Courses. TypeScript, diff et banc Clay PASS, dont le preset protégé Cinéma dans ce contexte.
+
+### Raccourcis d’équipement et de prestation Maison
+
+Le projet Maison ouvre les postes Équipement et Prestation depuis son résumé si le socket et le dépôt sont publiés. Les formulaires existants gardent la saisie locale jusqu’à la validation. TypeScript, diff et banc familles de projets PASS. Le retrait de la capacité Services masque le raccourci correspondant.
+
+### Ancienne date invalide sur le Board
+
+Le Board et la navigation affichent « Date à préciser » quand une ancienne date ne peut pas être lue, en conservant l’accès à la carte et sa valeur dans le Draft. Les tests locaux couvrent le rendu d’un achat avec une date invalide et la navigation par occurrence.
+
+### Ouvrir un résultat unique du catalogue au clavier
+
+Entrée ouvre la fiche du seul résultat de recherche quand la saisie est terminée. Le retour à la liste replace le focus dans la recherche. TypeScript et banc catalogue PASS, avec recherche vide, résultat absent, saisie en cours de composition et ouverture de la fiche sans commande ni changement de digest.
+
+### Intentions en consultation
+
+« Mes intentions » permet de filtrer les cartes que l’on peut consulter sur le Board. Le filtre se combine avec la recherche et reste disponible lorsque le calcul des montants est périmé. La recherche conserve la saisie en cours de composition au clavier. TypeScript et banc des intentions du mois PASS.
+
+### Compléments de sortie selon les activités et repas réellement liés
+
+Une activité libre peut motiver une proposition de repas, et un snack seul peut motiver une proposition de séance. Le motif utilise le libellé de l’activité réellement liée. La proposition disparaît quand la sortie contient déjà le type de complément ou quand le droit manque. TypeScript et huit groupes S3 PASS sur fixture, avec digest stable en consultation.
+
+Les bancs historiques Bibliothèque et Coiffeur passent avec des doubles DOM qui représentent la navigation actuelle. Le test Mascara distingue sa fiche de réapprovisionnement du panier Beauté également proposé par la recherche.
+
+### Préparer un article du catalogue dans un panier existant
+
+Une fiche produit propose les paniers existants qui admettent l’article, avec le formulaire de ce panier et le concept exact. L’ouverture laisse le prix vide et le digest inchangé. La commande propriétaire du panier intervient à la validation explicite. Un panier protégé, plein, incompatible, devenu obsolète ou contenant déjà ce concept ne reçoit pas cet accès. TypeScript, catalogue et banc panier PASS sur fixture, dont sélection exacte, prix inconnu et refus après changement du Draft.
+
+### Laser game, trampolines, parc aquatique et zoo
+
+Quatre activités s’ouvrent depuis la bibliothèque et leur concept exact du catalogue. Elles utilisent les exports Clay carrés existants et l’éditeur Activité pour la date, le lieu, le tarif, les frais distincts et le transport lorsqu’il est admis. TypeScript, catalogue et les dix groupes du banc de parcours PASS. Le banc couvre désormais 23 activités, avec maintien des identités et coûts officiels. Contrôle navigateur reporté.
+
+### Modèles de visite avec laser game et de séjour avec zoo
+
+La bibliothèque propose 15 modèles. Ces deux nouveaux modèles passent par le socket Activités du projet. Le choix d’activité reste facultatif. Les prix, dates, trajets et participants restent à préciser. TypeScript, recherche et banc familles de projets PASS, avec reçu de rattachement exact et montant de l’enfant inconnu.
+
+### Navigation clavier parmi les intentions liées
+
+Dans la recherche d’un projet, Entrée ouvre l’occurrence unique qui correspond à la requête et au filtre actif. Plusieurs résultats restent à choisir, y compris lorsqu’ils ont le même titre. TypeScript et banc intentions liées PASS sur fixture, avec saisie en cours de composition et digest inchangé.
+
+### Synonymes d’activité dans le catalogue Clay
+
+Les termes déjà publiés dans la bibliothèque retrouvent désormais la même fiche Clay dans le catalogue. Le contexte continue de filtrer les résultats, et un terme exact fait remonter son concept. TypeScript, catalogue des 687 identités et banc des paniers PASS. Exemples vérifiés · quilles, laser tag et parc animalier.
+
+### Accès aux cartes selon les droits du Board
+
+Le titre d’une activité libre ouvre son éditeur quand le Board publie le droit de modification. Les cartes préservées, ancrées ou privées du droit gardent leur accès en consultation. TypeScript, budget et 14 contrôles de présentation PASS. Le banc de présentation identifie l’enveloppe Restaurants par sa référence publiée.
+
+### Date du projet vérifiée dès l’aperçu
+
+L’aperçu signale une date impossible ou extérieure au mois et garde les autres choix saisis. La confirmation redevient disponible avec une date valide ou vide. TypeScript et quatre contrôles d’aperçu PASS sur fixture. L’évaluateur conserve sa vérification avant toute opération.
+
+### Place disponible pour la fiche catalogue sur mobile
+
+Sous 760 px, la fiche utilise aussi l’espace occupé par les filtres et la pagination. Le bouton de retour restaure la recherche et la page courante. Le banc catalogue vérifie les deux états et le retour du focus. Rendu navigateur reporté.
+
+### Impact budgétaire d’une activité libre
+
+Le résumé de l’éditeur Activité libre montre la lecture officielle de cette occurrence. Le banc familles de projets vérifie un tarif déclaré de 17,25 € et le masquage du montant calculé lors d’un état périmé. TypeScript et quatre contrôles sur fixture PASS.
+
+### Droits des commandes dans une fiche catalogue ouverte
+
+Les commandes contextuelles disparaissent si le droit de modification de la carte est retiré pendant la consultation, même quand le digest reste identique. La fiche reste consultable et indique la protection. TypeScript et banc catalogue/panier PASS avec retrait de la capacité en cours de consultation.
+
+### Vérifier la conservation des occurrences lors de la création d’un modèle
+
+Chaque réponse doit conserver les identifiants du Draft de départ et ajouter uniquement l’intention attendue à cette étape. Un identifiant déjà utilisé est refusé avant l’appel. TypeScript et les dix groupes du banc de parcours PASS. La fixture refuse aussi un reçu à digest cohérent qui omet une décision déjà présente.
+
+### Actualité des coûts affichés sur le Board
+
+Les résumés de soirée hors carte Bar et les achats à une ligne reprennent la garde commune des montants calculés. Un coût périmé cède la place à une invitation à actualiser. Le rendu local vérifie que l’estimation de soirée et son qualificatif disparaissent en état STALE. TypeScript et banc budget PASS.
+
+### Réinitialiser les filtres d’un panier
+
+Le bouton réinitialise la recherche et le filtre des prix manquants, puis replace le focus dans le champ. Le banc catalogue/panier vérifie le retour des deux lignes et leurs identités exactes. TypeScript et banc panier PASS.
+
+### Reprendre les projets libres
+
+Les projets Maison, visites amicales et autres projets sans preset sont retrouvables dans le mois. Leur éditeur expose les intentions liées et les associations admises par les sockets existants. Les métadonnées de présentation inconnues gardent leur traitement protégé. TypeScript, cinq contrôles familles de projets et quatre contrôles de navigation du mois PASS sur fixture.
+
+### Compléments pour les séjours, visites et projets Maison libres
+
+Les intentions libres réutilisent les propositions de leur type métier lorsqu’un socket et un dépôt les admettent. Le motif d’un projet Maison libre parle du projet préparé. Les présentations inconnues restent sans suggestion. TypeScript et neuf groupes S3 PASS avec absence de mutation en consultation et capacités retirées.
+
+### Retrouver les séjours et visites libres avant leur premier enfant
+
+Les séjours et visites familiales sans preset sont indexés par leur identité et restent accessibles dans « Mes intentions ». Le filtre « Mes projets » retrouve les projets encore vides de ces familles. TypeScript et les quatre contrôles de navigation du mois PASS, dont la liste exacte des projets et l’ouverture des occurrences.
+
+### Date du panier dans le mois préparé
+
+Le formulaire indique le mois et borne le calendrier. Une date impossible ou extérieure au mois bloque la validation en conservant la saisie. Le prix et les articles restent intacts. TypeScript et banc panier PASS sur fixture, dont deux dates refusées puis un enregistrement admis au 20 novembre.
+
+### Réessayer un catalogue indisponible
+
+La fenêtre conserve la recherche et la fiche choisie après un échec de chargement. Le bouton de réessai relance le lecteur du catalogue public. TypeScript et banc catalogue/panier PASS, dont une panne simulée suivie d’un chargement réussi sans commande ni mutation du Draft.
+
+### Ouvrir le résultat unique du sélecteur d’intentions
+
+Entrée dans la recherche du sélecteur ouvre l’occurrence unique du filtre courant. Les saisies en cours de composition et l’état occupé suspendent l’action. TypeScript et cinq contrôles de navigation du mois PASS, dont l’identité de destination, la saisie composée et le refus pendant une opération.
+
+### Modèle Shopping vêtements et beauté
+
+Le seizième modèle utilise la structure de projet composée et deux paniers facultatifs. Chaque panier conserve son identité et son éditeur. Les articles, prix et dates restent à choisir. TypeScript, recherche de modèles et les dix groupes du banc de parcours PASS sur fixture. Les deux coûts restent inconnus et les rattachements sont vérifiés par le reçu officiel.
+
+### Retour après refus d’une association
+
+L’éditeur du projet et les suggestions S3 indiquent quand une confirmation n’a pas été admise par le brouillon. L’utilisateur peut consulter le message du brouillon et recommencer. TypeScript et neuf groupes S3 PASS, avec refus local simulé, absence d’ajout et réussite du nouvel essai explicite.
+
+### Choisir l’activité d’un projet dans le catalogue
+
+Les projets composés et visites amicales ouvrent le catalogue Activités depuis leur rubrique d’association. Les activités publiées réutilisent leurs illustrations et éditeurs. Une occurrence déjà liée est ouverte par son identité. Une nouvelle activité demande confirmation avant son rattachement. TypeScript et dix groupes S3 PASS, dont ouverture du Bowling exact et ajout confirmé d’un Laser game via le propriétaire existant.
+
+### Catalogue Activités partagé avec les séjours et visites familiales
+
+Le même sélecteur dessert les projets composés, séjours et visites. Les droits sont revérifiés à la confirmation, les saisies RAW restent gardées et une activité déjà liée ouvre son occurrence. TypeScript et onze groupes de contrôles PASS, dont les éditeurs Séjour et Visite familiale, le retrait d’une capacité pendant la confirmation et le rattachement admis après un nouvel essai.
+
+### Réutiliser une activité du Board depuis le catalogue
+
+La fiche propose de rattacher une activité compatible déjà présente sur le Board. Deux homonymes restent deux choix distincts. La confirmation conserve l’identité et les postes, et le droit de rattachement suffit lorsque la création est indisponible. TypeScript et douze groupes de contrôles PASS sur fixture, dont le choix du second homonyme et la conservation des deux activités sans création supplémentaire.

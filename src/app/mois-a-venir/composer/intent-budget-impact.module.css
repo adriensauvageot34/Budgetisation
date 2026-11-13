@@ -49,6 +49,8 @@
 .impact summary {
   cursor: pointer;
 }
+.diagnosticList { margin:.5rem 0; padding-left:1rem; font-size:.76rem; line-height:1.5; overflow-wrap:anywhere; }
+.diagnosticList li + li { margin-top:.4rem; }
 
 @media (max-width: 380px) {
   .impact dl {

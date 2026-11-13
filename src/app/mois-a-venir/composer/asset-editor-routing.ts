@@ -1,4 +1,20 @@
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
+import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
+
+/** Navigation feedback only after the evaluator admitted the exact relationship. */
+export function admittedProjectMove(operation: ComposerOperation, before: PlanSemanticStateV1, model: ComposerUiModel) {
+  if (operation.kind !== "DROP" || operation.target.kind !== "CONTEXT_SOCKET"
+    || !operation.assetKey.startsWith("context-occurrence:")) return undefined;
+  const childId = operation.assetKey.slice("context-occurrence:".length), parentId = operation.target.contextOccurrenceId;
+  const previous = before.contexts.find(context => context.contextOccurrenceId === childId);
+  const child = model.semanticState.contexts.find(context => context.contextOccurrenceId === childId);
+  const childCard = model.board.contexts.find(context => context.contextOccurrenceId === childId && context.parentContextOccurrenceId === parentId);
+  const parent = model.board.contexts.find(context => context.contextOccurrenceId === parentId);
+  if (!previous || !child || !childCard || !parent || previous.parentContextOccurrenceId === parentId
+    || child.parentContextOccurrenceId !== parentId || !parent.childContextOccurrenceIds.includes(childId)) return undefined;
+  return { childId, parentId: parent.contextOccurrenceId, moved: !!previous.parentContextOccurrenceId };
+}
 
 export function editorOccurrenceId(editor: {
   restaurantContextId?: string; stayContextId?: string; familyContextId?: string;

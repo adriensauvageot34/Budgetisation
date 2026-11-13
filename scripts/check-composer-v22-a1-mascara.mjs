@@ -1,19 +1,21 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {existsSync} from 'node:fs';
 const repo=path.resolve(import.meta.dirname,'..');process.chdir(repo);
 const {readMonthFixture}=await import(pathToFileURL(path.join(repo,'scripts/fixtures/composer-v22-b1.mjs')));
 const {householdId,uuid}=await import(pathToFileURL(path.join(repo,'scripts/fixtures/planner-headless.mjs')));
 const {require}=await import(pathToFileURL(path.join(repo,'scripts/lib/phase2-ts-loader.mjs')));
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {composerLibraryIndex,filterLibraryIntentions}=require('@/domain/phase2/planner/composer-library-index');
-const {presetForContext}=require('@/domain/phase2/planner/composer-presets');
+const {presetForContext,composerPreset,presetIllustrationPath}=require('@/domain/phase2/planner/composer-presets');
 const {stageLocalDecision}=require('@/app/mois-a-venir/composer/local-draft');
 const {parsePlanSemanticState}=require('@/domain/phase2/planner/semantic-state');
 const {evaluatePlanScenario}=require('@/server/phase2/planner/preview');
 const {EquipmentComponentEditor,componentEditorValues}=require('@/app/mois-a-venir/composer/equipment-component-editor');
 const {fresh,buildComponentRow}=require('@/app/mois-a-venir/composer/night-out-components');
-const {mascaraSuggestions,editMascaraPriceAndQuantity}=require('@/app/mois-a-venir/composer/mascara-edit');
+const {beautyProductSuggestions,editBeautyProductPriceAndQuantity}=require('@/app/mois-a-venir/composer/beauty-product-edit');
+const {clayBarArtwork}=require('@/app/mois-a-venir/clay-v22-media');
 const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
 let remote=0;globalThis.fetch=async()=>{remote++;throw Error('A1_REMOTE_FORBIDDEN');};
 const f=await readMonthFixture(),worldBefore=JSON.stringify(f.world),checks=[];let sequence=0;
@@ -32,7 +34,7 @@ await run('A1-02-ONE-CONTEXT-LOCAL-SERVER-PARITY-NO-ADOPTED-PRICE',async()=>{
  assert.equal(model.semanticState.contexts.length,1);const c=model.semanticState.contexts[0];assert.equal(c.contextOccurrenceId,id);
  assert.equal(presetForContext(c).presetKey,'mascara');assert.deepEqual(c.slotSelections,{});assert.equal(c.fields.productLabel,undefined);
  assert.equal(c.fields.participantRefs,undefined);assert.equal(model.cardKnowledge['template:beauty-restock'].dimensions[0].value,null);
- const suggestions=mascaraSuggestions(c,model);assert.equal(suggestions.length,1);assert.equal(suggestions[0].label,'Préciser le produit');
+ const suggestions=beautyProductSuggestions(c,model);assert.equal(suggestions.length,1);assert.equal(suggestions[0].label,'Préciser le produit');
 });
 await run('A1-03-REPLAY-NEVER-DUPLICATES-IDENTITY',async()=>{
  const replay=await request(model,drop);if(replay.ok)assert.equal(replay.model.semanticState.contexts.filter(c=>c.contextOccurrenceId===id).length,1);
@@ -60,11 +62,11 @@ await run('A1-07-PRODUCT-UNKNOWN-ONE-SELECTION',async()=>{
  const items=model.semanticState.contexts.find(c=>c.contextOccurrenceId===id).slotSelections.products.items;
  assert.equal(items.length,1);assert.equal(items[0].selectionId,selectionId);assert.equal(items[0].cost.kind,'UNKNOWN');
  const c=model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
- const suggestions=mascaraSuggestions(c,model);
+ const suggestions=beautyProductSuggestions(c,model);
  assert.equal(suggestions.length,1);assert.equal(suggestions[0].route.selection.selectionId,selectionId);
  assert.equal(suggestions[0].label,'Préciser le prix du produit');
  const missingRoute={...model,dropCapabilities:model.dropCapabilities.filter(drop=>drop.target.contextOccurrenceId!==id)};
- assert.deepEqual(mascaraSuggestions(c,missingRoute),[]);
+ assert.deepEqual(beautyProductSuggestions(c,missingRoute),[]);
  const preview=evaluatePlanScenario(f.world,model.semanticState,{expectedActiveRevisionId:null,expectedActiveRevisionNumber:0});
  assert.equal(preview.compiled.components.find(c=>c.contextOccurrenceId===id).evaluation.economicAmount,null);
 });
@@ -78,12 +80,12 @@ await run('A1-08-EXPLICIT-ZERO-IS-NOT-UNKNOWN-IDENTITY-PRESERVED',async()=>{
 });
 await run('A1-09-PRODUCT-NAME-QUANTITY-PRICE-EDITS-ONLY-OWN-SELECTION',async()=>{
  const c=model.semanticState.contexts.find(c=>c.contextOccurrenceId===id),item=c.slotSelections.products.items[0],other=structuredClone(model.semanticState.contexts.find(c=>c.contextOccurrenceId===otherId));
- const priced=editMascaraPriceAndQuantity(item,'2','12,50','MANUAL');
+ const priced=editBeautyProductPriceAndQuantity(item,'2','12,50','MANUAL');
  model=ok(await request(model,{kind:'MUTATE',mutation:{kind:'PATCH_CONTEXT',contextOccurrenceId:id,slotKey:'products',items:[{...priced,label:'Synthetic named product'}]}}));
  const updated=model.semanticState.contexts.find(c=>c.contextOccurrenceId===id);assert.equal(updated.slotSelections.products.items.length,1);
  assert.equal(updated.slotSelections.products.items[0].selectionId,selectionId);assert.deepEqual(updated.fields,c.fields);
  assert.equal(updated.slotSelections.products.items[0].needOccurrenceId,undefined);
- assert.equal(mascaraSuggestions(updated,model)[0].label,'Modifier prix et quantité');
+ assert.equal(beautyProductSuggestions(updated,model)[0].label,'Modifier prix et quantité');
  assert.deepEqual(model.semanticState.contexts.find(c=>c.contextOccurrenceId===otherId),other);
  const preview=evaluatePlanScenario(f.world,model.semanticState,{expectedActiveRevisionId:null,expectedActiveRevisionNumber:0});
  assert.equal(preview.compiled.components.find(c=>c.contextOccurrenceId===id).evaluation.economicAmount,'25.00');
@@ -98,13 +100,13 @@ await run('A1-S01-CONSULT-ONLY-AN-EXISTING-PUBLISHED-NEED',()=>{
  const linked=structuredClone(model),context=linked.semanticState.contexts.find(c=>c.contextOccurrenceId===id);
  const needId=uuid(92901);
  context.slotSelections.products.items[0].needOccurrenceId=needId;
- assert(!mascaraSuggestions(context,linked).some(candidate=>candidate.kind==='NEED'));
+ assert(!beautyProductSuggestions(context,linked).some(candidate=>candidate.kind==='NEED'));
  const editor=linked.editors.find(e=>e.assetKey==='option:beauty-restock:products:product');
  const needs=editor.fields.find(field=>field.key==='needOccurrenceId');
  assert(needs);
  needs.choices.push({value:needId,label:'Besoin synthétique publié'});
  const before=JSON.stringify(linked);
- assert.equal(mascaraSuggestions(context,linked).find(candidate=>candidate.kind==='NEED')?.caption,'Besoin synthétique publié');
+ assert.equal(beautyProductSuggestions(context,linked).find(candidate=>candidate.kind==='NEED')?.caption,'Besoin synthétique publié');
  assert.equal(JSON.stringify(linked),before);
 });
 await run('A1-11-REFERENCE-PRICE-DOES-NOT-PREFILL-OR-ADOPT-ITSELF',()=>{
@@ -150,6 +152,24 @@ await run('A1-14-BAR-AND-RESTAURANT-PRESETS-LOCAL-SERVER-PARITY',async()=>{
   assert.equal(withComponent.semanticState.contexts.length,1);
  }
  assert.equal(JSON.stringify(f.world),worldBefore);assert.deepEqual(f.writes,[]);assert.equal(remote,0);
+});
+await run('P21-BEAUTY-REUSE-EXACT-OWNER-AND-CLAY',async()=>{
+ const presets=['eyeliner','eyebrow-pencil','hair-wax','face-cleanser','makeup-remover','facial-toner','face-serum','face-moisturizer','care-lotion'];
+ for(const [index,presetKey] of presets.entries()){
+  const owner=uuid(93000+index*10), sid=uuid(93001+index*10);
+  const next=ok(await request(f.model,{...drop,presetKey,identity:owner,selectionId:uuid(93002+index*10)}));
+  const context=next.semanticState.contexts.find(row=>row.contextOccurrenceId===owner);
+  const suggestions=beautyProductSuggestions(context,next);
+  assert.equal(suggestions.length,1);
+  assert.equal(suggestions[0].route.target.contextOccurrenceId,owner);
+  assert(clayBarArtwork(suggestions[0].catalogAssetKey) || existsSync(path.join(repo,'public',presetIllustrationPath(composerPreset(suggestions[0].presetArtwork)))));
+  const chosen=ok(await request(next,{kind:'DROP',assetKey:suggestions[0].route.asset.assetKey,target:suggestions[0].route.target,
+   identity:uuid(93003+index*10),selectionId:sid,values:{label:'Produit de recette',quantity:'1',costMode:'UNKNOWN'}}));
+  const adopted=chosen.semanticState.contexts.find(row=>row.contextOccurrenceId===owner);
+  assert.equal(adopted.slotSelections.products.items[0].cost.kind,'UNKNOWN');
+  assert.equal(beautyProductSuggestions(adopted,chosen)[0].route.selection.selectionId,sid);
+ }
+ assert.deepEqual(f.writes,[]);
 });
 const evidence={status:'PASS',level:'SYNTHETIC_MEMORY_ACTUAL_COMPOSER_AND_COMPILER',checks,sql:0,remote,writers:f.writes.length,apply:false,persistence:false};
 console.log(JSON.stringify(evidence));

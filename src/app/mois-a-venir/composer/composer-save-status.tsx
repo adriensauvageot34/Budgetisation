@@ -8,8 +8,8 @@ export function saveStatusPresentation(status: SaveStatus, durable: boolean) {
     DIRTY: { label: "Modifications à enregistrer", detail: "Les choix validés attendent leur enregistrement." },
     SAVING: { label: "Enregistrement en cours…", detail: "Attendez la confirmation avant de recharger la page." },
     SAVED: { label: "Sauvegardé", detail: "Les choix validés ont été confirmés par le serveur." },
-    ERROR: { label: "Sauvegarde non confirmée", detail: "Gardez cette page ouverte et utilisez Réessayer la sauvegarde dans les options du mois." },
-    CONFLICT: { label: "Versions à vérifier", detail: "Le brouillon ou le Plan a changé. Consultez les options du mois pour le relire." },
+    ERROR: { label: "Sauvegarde non confirmée", detail: "Gardez cette page ouverte et utilisez Réessayer la sauvegarde sous le bandeau." },
+    CONFLICT: { label: "Versions à vérifier", detail: "Le brouillon ou le Plan a changé. Relisez la version serveur sous le bandeau ; vos choix locaux restent disponibles." },
     OFFLINE: { label: "Hors ligne · non enregistré", detail: "Les modifications restent dans cette page en attendant la connexion." },
   }[status];
 }

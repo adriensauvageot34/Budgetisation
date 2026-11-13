@@ -1,8 +1,8 @@
 import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
-import { memo, useState, useRef, useEffect, useMemo } from "react";
-import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
-import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isClothingPurchase, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
+import { memo, useState, useRef, useEffect, useMemo, useContext } from "react";
+import { composerPreset, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { Search, Star } from "lucide-react";
@@ -15,15 +15,24 @@ import { composerRenderIndex } from "./render-index";
 import { preloadEditorForAsset } from "./editor-chunks";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { MONTHLY_GROCERIES_REF } from "./catalog-discovery";
+import { BudgetPreviewStatus } from "./intent-budget-impact";
+import { availableProjectStarters, projectStarterCategory, projectStarterContents, projectStarterMatches, type ProjectStarter } from "./project-starters";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
+const intentionFilters=[
+  ["ALL","Toutes mes intentions"],["INCOMPLETE","À compléter"],["PROJECTS","Mes projets"],
+  ["BASKETS","Mes paniers"],["VIEW","En consultation"],
+] as const;
 export const ComposerLibrary=memo(ComposerLibraryView);
-function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,drag,inspectContext,openContext}:{model:ComposerUiModel;openToken:number;busy:boolean;selected:string|null;
-  choose:(asset:ComposerAssetView)=>void;choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void;drag:(key:string|null)=>void;inspectContext:(id:string)=>void;openContext:(id:string)=>void}) {
-  const [space,setSpace]=useState<"add"|"manage">("add"),[query,setQuery]=useState(""),[opened,setOpened]=useState<string|null>("SOCIAL");
+function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,drag,inspectContext,openContext,prepareProject}:{model:ComposerUiModel;openToken:number;busy:boolean;selected:string|null;
+  choose:(asset:ComposerAssetView)=>void;choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void;drag:(key:string|null)=>void;inspectContext:(id:string)=>void;openContext:(id:string)=>void;
+  prepareProject?:(starter:ProjectStarter)=>void}) {
+  const [space,setSpace]=useState<"add"|"intentions"|"manage">("add"),[query,setQuery]=useState(""),[opened,setOpened]=useState<string|null>("SOCIAL");
+  const [intentionFilter,setIntentionFilter]=useState<typeof intentionFilters[number][0]>("ALL");
   const [expanded,setExpanded]=useState<ReadonlySet<string>>(()=>new Set()),[favorites,setFavorites]=useState<readonly string[]>([]);
   const [favoriteNotice,setFavoriteNotice]=useState("");
   const search=useRef<HTMLInputElement>(null), interaction=useComposerInteractions();
+  const previewStatus=useContext(BudgetPreviewStatus);
   const index=useMemo(()=>composerLibraryIndex(model),[model]);
   useEffect(()=>{try {const stored:unknown=JSON.parse(localStorage.getItem(FAVORITES_KEY)??"[]");if(Array.isArray(stored))setFavorites(stored.filter((v):v is string=>typeof v==="string").slice(0,100));}catch{setFavoriteNotice("Favoris indisponibles dans ce navigateur.");}},[]);
   useEffect(()=>{if(openToken>0){setSpace("add");setQuery("");search.current?.focus();}},[openToken]);
@@ -37,11 +46,50 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   const serviceQuery=["coiffeur","coiffure","coupe de cheveux","brushing","soin capillaire"].includes(normalizeLibrarySearch(query));
   const favoriteItems=matches.filter(item=>favorites.includes(item.key));
   const categories=LIBRARY_CATEGORIES.map(([key,label])=>({key,label,items:matches.filter(item=>item.category===key)})).filter(g=>g.items.length);
+  const projects = prepareProject ? availableProjectStarters(model).filter(project => projectStarterMatches(project, query)) : [];
+  const projectGroups = [...new Set(projects.map(projectStarterCategory))];
+  const readingCurrent = model.budgetReading?.semanticStateDigest === model.board.draft.semanticStateDigest
+    && previewStatus!=="PENDING"&&previewStatus!=="STALE"&&previewStatus!=="FAILED";
+  const monthIntentions = filterLibraryIntentions(index.occurrences,query).filter(row=>{
+    const card=composerRenderIndex(model).contexts.get(row.contextOccurrenceId);
+    if(!card)return false;
+    if(intentionFilter==="BASKETS")return row.surface==="BASKET";
+    if(intentionFilter==="PROJECTS")return card.childContextOccurrenceIds.length>0||row.presetKey==="composed-outing"
+      ||["home-project","friend-visit","family-visit","short-stay","other-context"].includes(card.templateKey);
+    if(intentionFilter==="INCOMPLETE")return readingCurrent&&(card.knowledge==="UNKNOWN"||card.knowledge==="PARTIAL");
+    if(intentionFilter==="VIEW")return row.action==="VIEW";
+    return true;
+  });
+  const occurrenceButton=(row:typeof index.occurrences[number])=>{
+    const card=composerRenderIndex(model).contexts.get(row.contextOccurrenceId);
+    const parent=card?.parentContextOccurrenceId?composerRenderIndex(model).contexts.get(card.parentContextOccurrenceId):undefined;
+    const parentOccurrence=parent?index.occurrences.find(row=>row.contextOccurrenceId===parent.contextOccurrenceId)?.occurrence:undefined;
+    return <button key={row.contextOccurrenceId} type="button" className={styles.libraryExistingAction}
+      data-library-existing-action={row.contextOccurrenceId} disabled={busy} onClick={()=>openContext(row.contextOccurrenceId)}>
+      <strong>{row.action==="EDIT"?"Modifier":"Voir"} {row.label}{row.occurrence?` · Intention ${row.occurrence}`:""}</strong>
+      <small>{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.surface==="BASKET"?"Panier multi-articles":row.surface==="ARTICLE"?"Fiche de cet article":row.surface==="EXTERNAL"?"Prestation externe":"Éditeur de cette carte"}{row.action==="VIEW"?" · Lecture seule sur le Board":""}</small>
+      {parent&&<small>Projet · {parent.label}{parentOccurrence?` · Intention ${parentOccurrence}`:""}</small>}
+      {readingCurrent&&card&&(card.knowledge==="UNKNOWN"||card.knowledge==="PARTIAL")&&<small>Coûts ou informations à préciser</small>}
+      {card&&isHairdresserReference(model,card)&&<small>Prestation externe · dépense du mois · voir cette prestation sur le Board</small>}
+    </button>;
+  };
   const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
-  const focusActions=()=>search.current?.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-existing-action]:not(:disabled),[data-library-add-action]:not(:disabled)")?.focus();
+  const focusActions=(preferExisting=false)=>{
+    const panel=search.current?.closest("aside");
+    const actions=Array.from(panel?.querySelectorAll<HTMLButtonElement>(
+      "[data-library-existing-action]:not(:disabled),[data-library-add-action]:not(:disabled),[data-library-project-action]:not(:disabled)")??[]);
+    const visible=actions.filter(action=>action.getClientRects().length>0);
+    const button=(preferExisting ? visible.find(action=>action.hasAttribute("data-library-existing-action")) : undefined) ?? visible[0];
+    if(!button)return false;
+    button.focus();
+    return true;
+  };
   const tile=(item:LibraryIntention)=>{
     const asset=item.asset, source=model.presentation.dragSources[asset.assetKey];
     const alreadyPresent=!!item.preset&&index.occurrences.some(row=>row.presetKey===item.preset!.presetKey);
+    const caption=asset.kind!=="CONTEXT_ASSET"?"Complément à configurer":asset.templateKey==="purchase"?"Panier multi-articles"
+      :asset.templateKey==="beauty-restock"?"Produits · prix et quantités":asset.templateKey==="activity"?"Activité · tarif et frais"
+      :asset.templateKey==="short-stay"?"Séjour · hébergement et postes":"Intention à compléter";
     const draggable=!!source&&(item.preset?!!publishedDrop(model,asset.assetKey,{kind:'BOARD_ZONE'}):!!source.editorDropTarget||(composerRenderIndex(model).drops.get(asset.assetKey)??[]).some(d=>d.resolution!=="BLOCKED"))&&asset.provenance!=="DERIVED_CONSEQUENCE";
     return <div className={item.preset?styles.libraryTile:styles.libraryGenericTile} key={item.key}>
       <button type="button" className={item.preset?styles.presetTile:styles.libraryGenericChoice} data-preset={item.preset?.presetKey} data-asset={item.preset?undefined:asset.assetKey}
@@ -51,29 +99,52 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
         onDragStart={event=>{event.stopPropagation();if(busy||!draggable){event.preventDefault();return;}if(interaction)interaction.start(asset.assetKey,event,item.preset?.presetKey);else if(item.preset){event.preventDefault();}else{event.dataTransfer.setData("application/x-planner-asset",asset.assetKey);drag(asset.assetKey);}}}
         onDragEnd={()=>{interaction?.end();drag(null);}}>
         {item.preset?<PresetIllustration preset={item.preset}/>:<ComposerAssetVisual assetKey={asset.assetKey} templateKey={asset.templateKey} iconKey={asset.iconKey} identityRef={asset.capabilityRef} className={styles.assetIcon}/>}
-        <span>{alreadyPresent?`Ajouter un autre ${item.label}`:query.trim()?`Ajouter ${item.label}`:item.label}</span>
+        <span>{alreadyPresent?`Ajouter un autre ${item.label}`:query.trim()?`Ajouter ${item.label}`:item.label}<small className={styles.libraryActionCaption}>{caption}</small></span>
       </button>
       <button type="button" className={styles.libraryFavorite} aria-label={`${favorites.includes(item.key)?"Retirer":"Épingler"} ${item.label}`} aria-pressed={favorites.includes(item.key)} onClick={()=>toggleFavorite(item.key)}><Star size={13} fill={favorites.includes(item.key)?"currentColor":"none"}/></button>
     </div>;
   };
   return <aside className={styles.library} data-library aria-label="Bibliothèque d’intentions">
     <header className={styles.panelHeader}><h2><button className={styles.libraryOpen} data-library-open onClick={()=>search.current?.focus()}>Que veux-tu prévoir ?</button></h2></header>
-    <nav className={styles.libraryTabs} aria-label="Espaces de la bibliothèque"><button type="button" aria-pressed={space==="add"} onClick={()=>setSpace("add")}>À ajouter</button><button type="button" aria-pressed={space==="manage"} onClick={()=>setSpace("manage")}>À piloter</button></nav>
+    <nav className={styles.libraryTabs} aria-label="Espaces de la bibliothèque"><button type="button" aria-pressed={space==="add"} onClick={()=>setSpace("add")}>À ajouter</button><button type="button" aria-pressed={space==="intentions"} onClick={()=>setSpace("intentions")}>Mes intentions</button><button type="button" aria-pressed={space==="manage"} onClick={()=>setSpace("manage")}>À piloter</button></nav>
     <div className={styles.catalogLibraryAccess}><CatalogOpenButton target={{query,scope:'all'}}>Tous les éléments{query.trim()?` · ${query}`:''}</CatalogOpenButton><CatalogOpenButton target={{scope:'courses',controlRef:index.controls.find(a=>a.capabilityRef===MONTHLY_GROCERIES_REF)?.capabilityRef}}>Produits pour Courses</CatalogOpenButton></div>
-    <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="add"?"Soirée, repas, achat…":"Budget ou cagnotte…"} value={query} onChange={e=>setQuery(e.target.value)}
-      onKeyDown={e=>{if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
-        if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}else focusActions();
-      }else if(e.key==="ArrowDown"){e.preventDefault();e.currentTarget.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-scroll] button:not(:disabled)")?.focus();}}}/></label>
-    <div className={styles.libraryScroll} data-library-scroll onKeyDown={e=>{if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key)||!(e.target instanceof HTMLButtonElement))return;e.preventDefault();const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));const at=buttons.indexOf(e.target);buttons[e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowUp"?-1:1)))]?.focus();}}>
+    <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="manage"?"Budget ou cagnotte…":"Soirée, repas, achat…"} value={query} onChange={e=>setQuery(e.target.value)}
+      onKeyDown={e=>{if(e.nativeEvent.isComposing)return;
+      if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setQuery("");search.current?.focus();}
+      else if(e.key==="Enter"&&space==="intentions"&&!busy){e.preventDefault();if(monthIntentions.length===1)openContext(monthIntentions[0].contextOccurrenceId);else focusActions(true);}
+      else if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
+        if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}
+        else if(!matches.length&&!occurrences.length&&projects.length===1)prepareProject?.(projects[0]);else focusActions(true);
+      }else if(e.key==="ArrowDown"){
+        e.preventDefault();
+        if(!focusActions())Array.from(e.currentTarget.closest("aside")?.querySelectorAll<HTMLButtonElement>("[data-library-scroll] button:not(:disabled)")??[])
+          .find(button=>button.getClientRects().length>0)?.focus();
+      }}}/></label>
+    <div className={styles.libraryScroll} data-library-scroll onKeyDown={e=>{
+      if(e.defaultPrevented)return;
+      if(e.key==="Escape"){e.preventDefault();e.stopPropagation();search.current?.focus();return;}
+      if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key)||!(e.target instanceof HTMLButtonElement))return;
+      e.preventDefault();
+      const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")).filter(button=>button.getClientRects().length>0);
+      const at=buttons.indexOf(e.target);
+      if(e.key==="ArrowUp"&&at===0){search.current?.focus();return;}
+      buttons[e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowUp"?-1:1)))]?.focus();
+    }}>
     {space==="add"?<>
+      {projects.length > 0 && <details className={styles.assetGroup} open={!!query || undefined}>
+        <summary>Modèles de projets</summary>
+        {projectGroups.map(group => <section key={group} aria-label={`Modèles · ${group}`}><h3>{group}</h3>
+          <div className={styles.libraryProjects}>{projects.filter(project => projectStarterCategory(project) === group).map(project =>
+            <button key={project.key} className={styles.libraryProject} type="button" disabled={busy} data-library-project-action={project.key}
+              aria-label={`Prévisualiser ${project.label}`} onClick={() => prepareProject?.(project)}>
+              <PresetIllustration preset={composerPreset(project.parent)!} />
+              <span><strong>{project.label}</strong><small>{projectStarterContents(project)}</small><small>Voir et personnaliser le modèle</small></span>
+            </button>)}</div>
+        </section>)}
+      </details>}
       {!!query.trim()&&occurrences.length>0&&<section className={styles.libraryExisting} aria-label="Intentions du mois" data-library-existing>
         <h3>Dans ce mois</h3><p>{occurrences.length===1?"Retrouvez cette intention, ou ajoutez-en une autre explicitement.":"Choisissez l’intention à ouvrir ; aucun ajout automatique."}</p>
-        {occurrences.map((row,index)=><button key={row.contextOccurrenceId} type="button" className={styles.libraryExistingAction}
-          data-library-existing-action={row.contextOccurrenceId} disabled={busy} onClick={()=>openContext(row.contextOccurrenceId)}>
-          <strong>{row.action==="EDIT"?"Modifier":"Voir"} {row.label}</strong>
-          <small>{occurrences.length>1?`Occurrence ${index+1} · `:""}{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.action==="EDIT"?"Éditeur de cette carte":isClothingPurchase(model.board.contexts.find(card=>card.contextOccurrenceId===row.contextOccurrenceId))?"Fiche de cet article en lecture seule":"Lecture seule sur le Board"}</small>
-          {model.board.contexts.some(card=>card.contextOccurrenceId===row.contextOccurrenceId&&isHairdresserReference(model,card))&&<small>Prestation externe · dépense du mois · voir cette prestation sur le Board</small>}
-        </button>)}
+        {occurrences.map(row=>occurrenceButton(row))}
       </section>}
       {favoriteItems.length>0&&<section className={styles.assetGroup} data-library-favorites><h3>Épinglés par vous</h3><div className={styles.presetGrid}>{favoriteItems.filter(i=>i.preset).map(tile)}</div>{favoriteItems.filter(i=>!i.preset).map(tile)}</section>}
       <p className={styles.libraryLocalNote}>Favoris locaux à ce navigateur · aucun budget engagé.{favoriteNotice&&` ${favoriteNotice}`}</p>
@@ -94,10 +165,19 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
           </div>}
         </div>}
       </section>;})}
-      {!matches.length&&!occurrences.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. {serviceQuery
+      {!matches.length&&!occurrences.length&&!projects.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. {serviceQuery
         ? "Aucune prestation autorisée n’est attestée pour cette recherche dans ce mois. Un concept du catalogue ne constitue pas un rendez-vous réservé."
         : "Les compléments se trouvent dans la palette de leur carte."}</p>}
-    </>:<>
+    </>:space==="intentions"?<section aria-label="Mes intentions du mois" data-library-month-intentions>
+      <h3>Mes intentions · {new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(`${model.board.targetMonth}-01T12:00:00Z`))}</h3>
+      <label>Afficher<select aria-label="Filtrer les intentions du mois" value={intentionFilter}
+        onChange={event=>{const option=intentionFilters.find(([key])=>key===event.target.value);if(option)setIntentionFilter(option[0]);}}>
+        {intentionFilters.map(([key,label])=><option key={key} value={key}>{label}</option>)}
+      </select></label>
+      {!readingCurrent&&intentionFilter==="INCOMPLETE"&&<p role="status">Actualisez la projection pour connaître les intentions à compléter.</p>}
+      {monthIntentions.map(row=>occurrenceButton(row))}
+      {!monthIntentions.length&&!(intentionFilter==="INCOMPLETE"&&!readingCurrent)&&<p>Aucune intention ne correspond à ce filtre. Retrouvez les autres intentions ou préparez-en une depuis « À ajouter ».</p>}
+    </section>:<>
       <p className={styles.libraryLocalNote}>Retrouvez la carte déjà présente dans votre mois. Aucun doublon n’est créé.</p>
       {(["Habitudes", "Enveloppes", "Réservations", "Autres références"] as const).map(group => {
         const controls=index.controls.filter(asset=>{const c=composerRenderIndex(model).controls.get(asset.capabilityRef);

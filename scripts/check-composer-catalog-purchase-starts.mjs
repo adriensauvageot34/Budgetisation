@@ -1,0 +1,317 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import Module,{createRequire} from 'node:module';
+import {require} from './lib/phase2-ts-loader.mjs';
+import {readMonthFixture} from './fixtures/composer-v22-b1.mjs';
+import {uuid,householdId} from './fixtures/planner-headless.mjs';
+const {discoveryActions}=require('@/app/mois-a-venir/composer/catalog-discovery');
+const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
+const {isPurchaseBasket,purchaseComponents}=require('@/domain/phase2/planner/purchase-basket');
+const {filterLibraryIntentions,libraryOccurrences}=require('@/domain/phase2/planner/composer-library-index');
+const {plannerDigest}=require('@/domain/phase2/planner/json');
+const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
+const {componentId}=require('@/domain/phase2/planner/identity');
+const {entries}=JSON.parse(fs.readFileSync('public/planned-visuals/builder/clay/v22/collection.json','utf8'));
+globalThis.fetch=async()=>{throw Error('CATALOG_PURCHASE_START_REMOTE_FORBIDDEN');};
+const f=await readMonthFixture(),world=JSON.stringify(f.world),initial=semanticStateDigest(f.model.semanticState);let identity=31600;
+const grocery=entries.find(entry=>entry.discovery.family==='Courses et produits alimentaires'&&entry.label==='Pain');
+const groceryStart=discoveryActions(grocery,f.model,{scope:'courses'}).find(action=>action.kind==='PRESET');
+assert.equal(groceryStart?.presetKey,'groceries-purchase');
+assert.equal(groceryStart.label,'Préparer un panier Courses · Pain');
+assert.deepEqual(groceryStart.concept,{id:grocery.visualConceptId,label:grocery.label});
+assert(!discoveryActions(grocery,f.model,{scope:'courses',controlRef:'HOUSEHOLD:household:groceries'}).some(action=>action.concept));
+const request=async(model,operation)=>{
+ const response=await handleComposerRequest(f.deps,householdId,{sequence:0,targetMonth:'2026-11',draft:model.semanticState,...operation});
+ assert(response.ok,response.code+': '+response.message);return response.model;
+};
+const groceryId=uuid(++identity);
+const emptyGroceries=await request(f.model,{kind:'DROP',assetKey:groceryStart.asset.assetKey,presetKey:groceryStart.presetKey,
+ target:{kind:'BOARD_ZONE'},identity:groceryId,selectionId:uuid(++identity),values:{},purchaseBasket:true});
+const groceryContext=emptyGroceries.semanticState.contexts.find(context=>context.contextOccurrenceId===groceryId);
+assert.equal(groceryContext.fields.budgetDomain,'groceries');assert.deepEqual(groceryContext.slotSelections,{});
+const groceries=await request(emptyGroceries,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:groceryId,
+ expectedContextDigest:plannerDigest(groceryContext),change:{kind:'SAVE_ITEM',selectionId:uuid(++identity),label:grocery.label,
+ quantity:'1',unit:'UNIT',price:'',concept:groceryStart.concept}}});
+assert.equal(purchaseComponents(groceries.semanticState.contexts.find(context=>context.contextOccurrenceId===groceryId),'item')[0].cost.kind,'UNKNOWN');
+assert(discoveryActions(grocery,groceries,{scope:'courses'}).some(action=>action.kind==='OPEN'&&action.contextId===groceryId));
+const nails=entries.find(entry=>entry.label==='Clous'&&entry.assetKeys.length===0);
+const nailStart=discoveryActions(nails,f.model,{}).find(action=>action.kind==='CHOOSE');
+assert(nailStart);assert.equal(nailStart.presetKey,undefined);assert.equal(nailStart.concept.id,nails.visualConceptId);
+assert(!discoveryActions(entries.find(entry=>entry.label==='Plante à offrir'),f.model,{}).some(action=>action.concept));
+const nailId=uuid(++identity);
+const emptyNails=await request(f.model,{kind:'DROP',assetKey:nailStart.asset.assetKey,target:nailStart.target,
+ identity:nailId,selectionId:uuid(++identity),values:{},purchaseBasket:true});
+const nailContext=emptyNails.semanticState.contexts.find(context=>context.contextOccurrenceId===nailId);
+const nailsBasket=await request(emptyNails,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:nailId,
+ expectedContextDigest:plannerDigest(nailContext),change:{kind:'SAVE_ITEM',selectionId:uuid(++identity),label:nails.label,
+ quantity:'1',unit:'UNIT',price:'',concept:nailStart.concept}}});
+assert(discoveryActions(nails,nailsBasket,{}).some(action=>action.kind==='OPEN'&&action.contextId===nailId));
+for(const [assetKey,presetKey] of [['beauty:mascara','beauty-purchase'],['clothing:tshirt','clothing-shopping'],['household:laundry','laundry-detergent'],
+ ['tech:charger',undefined],['home:plant',undefined],['automotive:tires',undefined],['tech:video_game','video-game-purchase']]){
+ const entry=entries.find(entry=>entry.discovery.sourceRow&&entry.assetKeys.includes(assetKey));assert(entry,'Existing catalog binding '+assetKey);
+ const actions=discoveryActions(entry,f.model,{}),action=actions.find(action=>action.concept?.id===entry.visualConceptId);assert(action,assetKey);
+ assert.equal(action.presetKey,presetKey);assert.equal(action.asset.assetKey,'template:purchase');
+ assert.equal(action.kind,presetKey?'PRESET':'CHOOSE');if(!presetKey)assert.deepEqual(action.target,{kind:'BOARD_ZONE'});
+ assert.deepEqual(action.concept,{id:entry.visualConceptId,label:entry.label});
+ const contextId=uuid(++identity);
+ let model=await request(f.model,{kind:'DROP',assetKey:action.asset.assetKey,target:{kind:'BOARD_ZONE'},identity:contextId,selectionId:uuid(++identity),values:{},purchaseBasket:true,
+  ...(presetKey?{presetKey}: {})});
+ let context=model.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ assert(isPurchaseBasket(context));assert.deepEqual(context.slotSelections,{});
+ assert.equal(libraryOccurrences(model).find(row=>row.contextOccurrenceId===contextId)?.action,'EDIT');
+ if(!presetKey){assert.equal(context.fields.composerPresentation,undefined);assert.notEqual(context.fields.budgetDomain,'games-digital');assert.notEqual(context.fields.budgetDomain,'clothing');}
+ model=await request(model,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(context),
+  change:{kind:'SAVE_ITEM',selectionId:uuid(++identity),label:entry.label,quantity:'1',unit:'UNIT',price:'',concept:action.concept}}});
+ context=model.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ assert.equal(purchaseComponents(context,'item')[0].cost.kind,'UNKNOWN');
+ assert(discoveryActions(entry,model,{}).some(action=>action.kind==='OPEN'&&action.contextId===contextId));
+ const denied={...model,dropCapabilities:model.dropCapabilities.filter(drop=>drop.target.kind!=='BOARD_ZONE')};
+ assert(!discoveryActions(entry,denied,{}).some(action=>action.concept));
+ assert(!discoveryActions(entry,model,{controlRef:'HOUSEHOLD:household:groceries'}).some(action=>action.concept));
+ if(!presetKey){
+  const future=structuredClone(model.semanticState);future.contexts.find(context=>context.contextOccurrenceId===contextId).fields.composerPresentation={version:'composer-context-presentation@v1',presetKey:'future-unknown-purchase'};
+  const unknown=await request({...model,semanticState:future},{kind:'READ'});
+  assert(!libraryOccurrences(unknown).some(row=>row.contextOccurrenceId===contextId));
+ }
+}
+assert.equal(semanticStateDigest(f.model.semanticState),initial);assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
+const testRequire=createRequire(path.resolve(process.env.PLANNER_REACT_TEST_TOOLS||'outputs/p21-react-tools','package.json'));
+const React=testRequire('react'),jsx=testRequire('react/jsx-runtime'),{create,act}=testRequire('react-test-renderer');
+const originalLoad=Module._load,originalFetch=globalThis.fetch;let root,chosen=[],confirmation;
+let catalogLoadFailures=1;
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+class Element{focus(){}}
+globalThis.HTMLElement=Element;globalThis.document={body:{},activeElement:new Element()};
+globalThis.fetch=async url=>{assert.equal(url,'/planned-visuals/builder/clay/v22/collection.json','Only local collection fixture may load');
+ if(catalogLoadFailures-- > 0)throw Error('SYNTHETIC_CATALOG_LOAD_FAILURE');
+ return {ok:true,json:async()=>({schema:'clay-v22-collection@2',entries})};};
+Module._load=function(name,parent,...args){if(name==='react')return React;if(name==='react/jsx-runtime')return jsx;if(name==='react-dom')return {createPortal:children=>children};
+ if(name==='./workshop-confirmation')return {useWorkshopConfirmation:()=>value=>{confirmation=value;}};
+ if(name==='./context-palette'&&parent?.filename.endsWith('purchase-basket-editor.tsx'))return {ContextPalette:()=>null};
+ return originalLoad.call(this,name,parent,...args);};
+const {CatalogDiscoveryProvider,CatalogOpenButton}=require('@/app/mois-a-venir/composer/catalog-discovery-provider');
+const charger=entries.find(entry=>entry.discovery.sourceRow&&entry.assetKeys.includes('tech:charger'));
+const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join('');
+const focus=[];
+try{
+ await act(async()=>{root=create(React.createElement(CatalogDiscoveryProvider,{model:f.model,busy:false,
+  openContext(){assert.fail('An empty catalog start must not open another intention');},revealControl(){assert.fail();},choosePreset(){assert.fail('Charger uses the generic basket');},choose:(...args)=>chosen.push(args)},
+  React.createElement(CatalogOpenButton,{target:{entryId:charger.visualConceptId,query:charger.label,scope:'purchase'}},'Ouvrir le catalogue')),
+  {createNodeMock:element=>({open:false,showModal(){this.open=true;},close(){this.open=false;},focus(){focus.push(element.type);}})});});
+ await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());assert.equal(chosen.length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('Votre recherche est conservée')));
+ assert.equal(root.root.findByProps({'aria-label':'Rechercher dans tous les éléments'}).props.value,charger.label);
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Réessayer le chargement').props.onClick());
+ assert.equal(chosen.length,0);
+ assert.equal(focus.at(-1),'h3');
+ assert(root.root.findByProps({'data-catalog-detail-open':true}));
+ assert(root.root.findByProps({'data-catalog-panel-detail':true}));
+ const back=()=>root.root.findAllByType('button').find(button=>text(button)==='Retour aux résultats');
+ await act(async()=>back().props.onClick());assert.equal(focus.at(-1),'div');
+ assert(root.root.findByProps({'data-catalog-detail-open':false}));
+ assert(root.root.findByProps({'data-catalog-panel-detail':false}));
+ const search=()=>root.root.findByProps({'aria-label':'Rechercher dans tous les éléments'});
+ const enter=(isComposing=false)=>search().props.onKeyDown({key:'Enter',nativeEvent:{isComposing},
+  currentTarget:{isConnected:true,focus(){focus.push('search');}},preventDefault(){}});
+ await act(async()=>search().props.onChange({target:{value:''}}));
+ await act(async()=>enter());assert(root.root.findByProps({'data-catalog-detail-open':false}));
+ await act(async()=>search().props.onChange({target:{value:'introuvable'}}));
+ await act(async()=>enter());assert(root.root.findByProps({'data-catalog-detail-open':false}));
+ await act(async()=>search().props.onChange({target:{value:charger.label}}));
+ assert.equal(root.root.findAll(node=>node.type==='button'&&node.props['data-catalog-entry']).length,1);
+ await act(async()=>enter(true));assert(root.root.findByProps({'data-catalog-detail-open':false}));
+ await act(async()=>enter());assert.equal(focus.at(-1),'h3');
+ assert(root.root.findByProps({'data-catalog-detail':charger.visualConceptId}));
+ assert.equal(chosen.length,0);
+ await act(async()=>back().props.onClick());assert.equal(focus.at(-1),'search');
+ const result=root.root.findByProps({'data-catalog-entry':charger.visualConceptId});
+ await act(async()=>result.props.onClick({currentTarget:{isConnected:true,focus(){focus.push('result');}}}));
+ assert.equal(focus.at(-1),'h3');
+ await act(async()=>back().props.onClick());assert.equal(focus.at(-1),'result');
+ await act(async()=>result.props.onClick({currentTarget:{isConnected:true,focus(){focus.push('result');}}}));
+ const start=root.root.findAllByType('button').find(button=>text(button)===`Préparer un panier pour ${charger.label}`);assert(start);
+ await act(async()=>start.props.onClick());assert.equal(chosen.length,1);
+ assert.equal(chosen[0][0].assetKey,'template:purchase');assert.deepEqual(chosen[0][1],{kind:'BOARD_ZONE'});
+ assert.deepEqual(chosen[0][4],{id:charger.visualConceptId,label:charger.label});
+ assert.equal(semanticStateDigest(f.model.semanticState),initial);assert.deepEqual(f.writes,[]);
+ await act(async()=>root.unmount());root=null;
+ const coursesCatalog=model=>React.createElement(CatalogDiscoveryProvider,{model,busy:false,openContext(){assert.fail();},
+  revealControl(){assert.fail();},choose(){assert.fail();},choosePreset(...args){chosen.push(args);}},
+  React.createElement(CatalogOpenButton,{target:{scope:'courses'}},'Produits pour Courses'));
+ await act(async()=>{root=create(coursesCatalog(f.model),{createNodeMock:()=>({open:false,showModal(){this.open=true;},close(){this.open=false;}})});});
+ await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());
+ const prepareCourses=()=>root.root.findAllByType('button').find(button=>text(button)==='Préparer mes courses');
+ assert.equal(prepareCourses().props.disabled,false);
+ const newer={...f.model,board:{...f.model.board,draft:{...f.model.board.draft,semanticStateDigest:'newer-digest'}}};
+ await act(async()=>root.update(coursesCatalog(newer)));
+ assert.equal(prepareCourses().props.disabled,true);assert.equal(chosen.length,1);
+ await act(async()=>root.unmount());root=null;
+ const {PurchaseBasketEditor}=require('@/app/mois-a-venir/composer/purchase-basket-editor');
+ const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
+ const {InlineEditContext,InlineEditRegistry}=require('@/app/mois-a-venir/composer/inline-edit-registry');
+ const contextId=uuid(31800),firstId=uuid(31801),secondId=uuid(31802);
+ let basket=await request(f.model,{kind:'DROP',assetKey:'template:purchase',target:{kind:'BOARD_ZONE'},identity:contextId,selectionId:uuid(31803),values:{},purchaseBasket:true});
+ const emptyBasket=basket;
+ for(const [selectionId,price] of [[firstId,'12'],[secondId,'20']]){
+  const context=basket.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+  basket=await request(basket,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(context),
+   change:{kind:'SAVE_ITEM',selectionId,label:charger.label,quantity:'1',unit:'UNIT',price,concept:{id:charger.visualConceptId,label:charger.label}}}});
+ }
+ const context=basket.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId),beforeDigest=semanticStateDigest(basket.semanticState);
+ const basketStart=discoveryActions(charger,emptyBasket,{}).find(action=>action.key==='basket-add:'+contextId);
+ assert(basketStart);assert.equal(basketStart.kind,'BASKET_ARTICLE');assert.equal(basketStart.contextId,contextId);
+ assert.deepEqual(basketStart.concept,{id:charger.visualConceptId,label:charger.label});
+ const lockedBasket={...emptyBasket,board:{...emptyBasket.board,contexts:emptyBasket.board.contexts.map(card=>
+  card.contextOccurrenceId===contextId?{...card,capabilityRefs:[]}:card)}};
+ assert(!discoveryActions(charger,lockedBasket,{}).some(action=>action.key.startsWith('basket-add:')));
+ assert(!discoveryActions(charger,emptyBasket,{controlRef:'HOUSEHOLD:household:groceries'}).some(action=>action.key.startsWith('basket-add:')));
+ assert(!discoveryActions(charger,basket,{}).some(action=>action.key==='basket-add:'+contextId));
+ const prepared=[];
+ const catalogWithBasket=model=>React.createElement(CatalogDiscoveryProvider,{model,busy:false,
+  openContext(){assert.fail();},revealControl(){assert.fail();},choose(){assert.fail();},choosePreset(){assert.fail();},
+  prepareBasketArticle:(...args)=>prepared.push(args)},
+  React.createElement(CatalogOpenButton,{target:{entryId:charger.visualConceptId,query:charger.label}},'Ouvrir le catalogue'));
+ await act(async()=>{root=create(catalogWithBasket(emptyBasket),{createNodeMock:()=>({open:false,showModal(){this.open=true;},close(){this.open=false;},focus(){}})});});
+ await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());
+ const prepareExisting=()=>root.root.findAllByType('button').find(button=>text(button)===basketStart.label);
+ assert(prepareExisting());assert.equal(prepared.length,0);
+ await act(async()=>root.update(catalogWithBasket({...emptyBasket,board:{...emptyBasket.board,draft:{...emptyBasket.board.draft,semanticStateDigest:'changed'}}})));
+ assert.equal(prepareExisting().props.disabled,true);
+ await act(async()=>root.update(catalogWithBasket(emptyBasket)));
+ await act(async()=>prepareExisting().props.onClick());
+ assert.deepEqual(prepared,[[contextId,basketStart.concept]]);
+ await act(async()=>root.unmount());root=null;
+ const commandsForBasket=model=>React.createElement(CatalogDiscoveryProvider,{model,busy:false,
+  openContext(){assert.fail();},revealControl(){assert.fail();},choose(){assert.fail();},choosePreset(){assert.fail();}},
+  React.createElement(CatalogOpenButton,{target:{contextId,entryId:charger.visualConceptId,query:charger.label,
+   commands:[{visualConceptId:charger.visualConceptId,label:'Commande de fixture',run(){assert.fail();}}]}},'Ouvrir le catalogue'));
+ await act(async()=>{root=create(commandsForBasket(emptyBasket),{createNodeMock:()=>({open:false,showModal(){this.open=true;},close(){this.open=false;},focus(){}})});});
+ await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());
+ assert(root.root.findAllByType('button').some(button=>text(button)==='Commande de fixture'));
+ await act(async()=>root.update(commandsForBasket(lockedBasket)));
+ assert(!root.root.findAllByType('button').some(button=>text(button)==='Commande de fixture'));
+ assert.match(text(root.root),/Cette décision est protégée/);
+ await act(async()=>root.unmount());root=null;
+ const openActions=discoveryActions(charger,basket,{}).filter(action=>action.kind==='OPEN');assert.equal(openActions.length,2);
+ assert.deepEqual(openActions.map(action=>action.focus),['basket-item:'+firstId,'basket-item:'+secondId]);
+ const catalogChoice={kind:'socket',asset:basket.library.searchableAssets.find(asset=>asset.assetKey==='option:purchase:item:item'),
+  target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:contextId,slotKey:'item'},selection:purchaseComponents(context,'item')[1]};
+ const registry=new InlineEditRegistry(),operations=[];
+ const render=(model,choice,status='FRESH')=>React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(BudgetPreviewStatus.Provider,{value:status},React.createElement(PurchaseBasketEditor,{
+  model,context:model.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId),card:model.board.contexts.find(card=>card.contextOccurrenceId===contextId),
+  busy:false,catalogChoice:choice,close(){},decide:operation=>{operations.push(operation);return true;}})));
+ const emptyContext=emptyBasket.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ const basketArticle={kind:'basket-article',contextId,concept:basketStart.concept,expectedContextDigest:plannerDigest(emptyContext)};
+ await act(async()=>{root=create(render(emptyBasket,basketArticle));});
+ assert.equal(operations.length,0);
+ assert(root.root.findAllByType('input').some(input=>input.props.value===charger.label));
+ await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+ assert.equal(operations.length,1);assert.deepEqual(operations[0].edit.change.concept,basketStart.concept);
+ assert.equal(operations[0].edit.change.price,'');
+ const addedFromCatalog=await request(emptyBasket,operations[0]);
+ assert.equal(purchaseComponents(addedFromCatalog.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId),'item')[0].cost.kind,'UNKNOWN');
+ await act(async()=>root.unmount());root=null;operations.length=0;
+ await act(async()=>{root=create(render(basket,basketArticle));});
+ assert.equal(root.root.findAllByType('form').length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('Rouvrez le catalogue')));
+ await act(async()=>root.unmount());root=null;
+ await act(async()=>{root=create(render(basket,catalogChoice));});assert.equal(operations.length,0);
+ const price=root.root.findAllByType('label').find(label=>text(label).startsWith('Prix par')).findByType('input');assert.equal(price.props.value,purchaseComponents(context,'item')[1].cost.unitAmount);
+ await act(async()=>price.props.onChange({target:{value:'21,00'}}));assert.equal(registry.count(),1);assert.equal(operations.length,0);
+ assert.equal(semanticStateDigest(basket.semanticState),beforeDigest);
+ await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.equal(operations.length,1);
+ assert.equal(operations[0].edit.change.selectionId,secondId);
+ const updated=await request(basket,operations[0]);
+ const updatedContext=updated.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ assert.deepEqual(purchaseComponents(updatedContext,'item')[0],purchaseComponents(context,'item')[0]);
+ assert.equal(purchaseComponents(updatedContext,'item')[1].selectionId,secondId);assert.equal(purchaseComponents(updatedContext,'item')[1].cost.unitAmount,'21.00');
+ assert.equal(updated.board.contexts.find(card=>card.contextOccurrenceId===contextId).purchaseSummary.knownAmount,'33.00');
+ const protectedState=structuredClone(updated.semanticState);protectedState.preferences.anchors.push(componentId(contextId,'item',secondId));
+ const protectedModel=await request({...updated,semanticState:protectedState},{kind:'READ'});
+ const protectedActions=discoveryActions(charger,protectedModel,{}).filter(action=>action.kind==='OPEN');
+ assert(protectedActions.some(action=>action.contextId===contextId));assert(protectedActions.every(action=>!action.focus));
+ await act(async()=>root.unmount());root=null;operations.length=0;
+ await act(async()=>{root=create(render(updated,{...catalogChoice}));});assert.equal(root.root.findAllByType('form').length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('article ou ses droits ont changé')));assert.equal(operations.length,0);
+ await act(async()=>root.unmount());root=null;
+ let mixed=await request(updated,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(updatedContext),
+  change:{kind:'SET_DETAILS',merchant:'Boutique de recette',date:'',coverage:'AUTO'}}});
+ for(const [selectionId,price] of [[firstId,'0'],[secondId,'']]){
+  const current=mixed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+  mixed=await request(mixed,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(current),
+   change:{kind:'SAVE_ITEM',selectionId,label:'Accessoire de voyage',quantity:'1',unit:'UNIT',price,concept:{id:charger.visualConceptId,label:charger.label}}}});
+ }
+ const mixedDigest=semanticStateDigest(mixed.semanticState);
+ const found=filterLibraryIntentions(libraryOccurrences(mixed),'boutique '+charger.label);
+ assert.deepEqual(found.map(row=>row.contextOccurrenceId),[contextId]);assert.equal(found[0].action,'EDIT');
+ await act(async()=>{root=create(render(mixed));});
+ const lines=()=>root.root.findAllByType('li').filter(line=>line.props['data-basket-line']);
+ assert.deepEqual(lines().map(line=>line.props['data-basket-line']),[firstId,secondId]);
+ assert.match(text(lines()[0]),/Total/);assert.match(text(root.root),/2 articles · 1 prix à préciser/);
+ await act(async()=>root.root.findByProps({type:'search'}).props.onChange({target:{value:'introuvable'}}));
+ assert.equal(lines().length,0);
+ await act(async()=>root.root.findByProps({type:'search'}).props.onChange({target:{value:charger.label}}));
+ await act(async()=>root.root.findByProps({type:'checkbox'}).props.onChange({target:{checked:true}}));
+ assert.deepEqual(lines().map(line=>line.props['data-basket-line']),[secondId]);assert.match(text(lines()[0]),/Ligne 2/);
+ await act(async()=>root.root.findByProps({type:'search'}).props.onKeyDown({key:'Enter',nativeEvent:{isComposing:false},preventDefault(){}}));
+ assert.equal(operations.length,0);assert.equal(root.root.findAllByType('form').length,1);
+ assert.equal(root.root.findAllByType('label').find(label=>text(label).startsWith('Prix par')).findByType('input').props.value,'');
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Retour au panier').props.onClick());
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Réinitialiser les filtres').props.onClick());
+ assert.equal(root.root.findByProps({type:'search'}).props.value,'');
+ assert.equal(root.root.findByProps({type:'checkbox'}).props.checked,false);
+ assert.deepEqual(lines().map(line=>line.props['data-basket-line']),[firstId,secondId]);
+ await act(async()=>root.update(render(mixed,undefined,'STALE')));
+ assert.doesNotMatch(text(lines()[0]),/Total/);assert.equal(semanticStateDigest(mixed.semanticState),mixedDigest);assert.equal(operations.length,0);
+ await act(async()=>lines()[0].findAllByType('button').find(button=>text(button)==='Retirer').props.onClick());
+ assert(confirmation);assert.equal(operations.length,0);
+ const current=mixed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ const changed=await request(mixed,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(current),
+  change:{kind:'SET_DETAILS',label:'  Panier de voyage  ',merchant:'Vendeur modifié',date:'',coverage:'AUTO'}}});
+ const renamed=changed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ assert.equal(renamed.fields.label,'Panier de voyage');assert.deepEqual(renamed.slotSelections,current.slotSelections);
+ assert.deepEqual(filterLibraryIntentions(libraryOccurrences(changed),'panier voyage').map(row=>row.contextOccurrenceId),[contextId]);
+ await act(async()=>root.update(render(changed)));
+ await act(async()=>confirmation.accept());
+ assert.equal(operations.length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('Le panier ou ses droits ont changé')));
+ await act(async()=>root.unmount());root=null;
+ const unrelatedEntry=entries.find(entry=>entry.discovery.sourceRow&&entry.assetKeys.includes('tech:video_game'));
+ const middleId=uuid(31809);
+ let numbered=await request(changed,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,
+  expectedContextDigest:plannerDigest(changed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId)),
+  change:{kind:'SAVE_ITEM',selectionId:middleId,label:unrelatedEntry.label,quantity:'1',unit:'UNIT',price:'',
+   concept:{id:unrelatedEntry.visualConceptId,label:unrelatedEntry.label}}}});
+ const numberedState=structuredClone(numbered.semanticState);
+ const numberedContext=numberedState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ numberedContext.slotSelections.item.items.splice(1,0,numberedContext.slotSelections.item.items.pop());
+ numbered=await request({...numbered,semanticState:numberedState},{kind:'READ'});
+ await act(async()=>{root=create(render(numbered));});
+ const commands=root.root.findAllByType(CatalogOpenButton).find(button=>button.props.target?.contextId===contextId).props.target.resolveCommands(charger);
+ assert.deepEqual(commands.filter(command=>command.editsExisting).map(command=>[command.key,command.label.split(' · ').at(-1)]),
+  [[firstId,'ligne 1'],[secondId,'ligne 3']]);
+ await act(async()=>commands.find(command=>command.key===secondId).run());
+ assert.equal(operations.length,0);
+ assert.equal(root.root.findAllByType('label').find(label=>text(label).startsWith('Nom de l’article')).findByType('input').props.value,'Accessoire de voyage');
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Retour au panier').props.onClick());
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Nom, vendeur et date').props.onClick());
+ const date=()=>root.root.findByProps({type:'date'});
+ assert.equal(date().props.min,'2026-11-01');assert.equal(date().props.max,'2026-11-30');
+ for(const value of ['2026-12-01','2026-11-31']){
+  await act(async()=>date().props.onChange({target:{value}}));
+  assert.equal(date().props['aria-invalid'],true);
+  await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+  assert.equal(operations.length,0);
+ }
+ await act(async()=>date().props.onChange({target:{value:'2026-11-20'}}));
+ assert.equal(date().props['aria-invalid'],false);
+ await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+ assert.equal(operations.length,1);assert.equal(operations[0].edit.change.date,'2026-11-20');
+ const dated=await request(numbered,operations[0]);
+ const datedContext=dated.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ assert.equal(datedContext.fields.plannedDate,'2026-11-20');
+ assert.deepEqual(datedContext.slotSelections,numbered.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId).slotSelections);
+ assert.deepEqual(f.writes,[]);
+}finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;globalThis.fetch=originalFetch;}
+console.log(JSON.stringify({status:'PASS',products:7,families:6,uiDispatch:true,exactLineEdit:true,staleRefused:true,staleCoursesDisabled:true,articleFilters:true,remoteWrites:0,apply:false,level:'EXISTING_CATALOG_AND_PURCHASE_OWNER'}));

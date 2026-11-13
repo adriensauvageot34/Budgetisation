@@ -15,6 +15,7 @@ import { clayAssetArtwork, clayV22Artwork } from "../clay-v22-media";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
 import type { CatalogMoment } from "./catalog-discovery";
 import { clayBarArtwork } from "../clay-v22-media";
+import { composerPreset, presetIllustrationPath, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 
 function routeCaption(groupKey: string, slotKey: string, assetKey: string, socketLabel: string | null | undefined): string {
   if (groupKey === "meal") return assetKey.startsWith("template:") ? "Objet autonome" : "Composant du repas";
@@ -87,7 +88,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
   </>;
 }
 
-export type PaletteQuestion = { title: string; identity?:string; catalogMoment?:CatalogMoment; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; visualKey?:string; catalogAssetKey?: string; visualConceptId?: string; catalogActionLabel?:string; catalogRepeat?:boolean; catalogUnavailable?:boolean; drag?:BarDockDrag; choose: () => void }[];
+export type PaletteQuestion = { title: string; identity?:string; catalogMoment?:CatalogMoment; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; visualKey?:string; catalogAssetKey?: string; visualConceptId?: string; presetArtwork?: ComposerPresetKey; catalogActionLabel?:string; catalogRepeat?:boolean; catalogUnavailable?:boolean; drag?:BarDockDrag; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; filterChoices?:boolean; emptyLabel?:string; backToFamilies?:()=>void };
 export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionScroll, onQuestionScrollChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
   questionScroll?:Readonly<Record<string,number>>; onQuestionScrollChange?:(key:string,index:number)=>void;
@@ -186,7 +187,8 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
       {(appearance==="bar"?catalogue.visible:question.choices).map(choice => {const fullLabel=choice.label+(choice.showHint&&choice.hint?" · "+choice.hint:"");const key=answerKey+":"+choice.key;const reveal=()=>{if(appearance==="bar")setCaption(fullLabel.length>36?{key,label:fullLabel}:null);}; const source=choice.drag&&model.presentation.dragSources[choice.drag.sourceKey]; const drag=appearance==="bar"&&question.nature==="OBJECTS"&&!busy&&source&&!source.protected&&!source.selection&&!source.sourceSocket&&publishedDrop(model,source.assetKey,choice.drag!.target)?choice.drag:undefined;
         const catalogKey = choice.catalogAssetKey ?? choice.key;
         const artwork = clayV22Artwork(choice.visualConceptId) ?? clayAssetArtwork(catalogKey);
-        const catalogImage = artwork?.src ?? compactCatalogImage(catalogKey);
+        const preset = choice.presetArtwork ? composerPreset(choice.presetArtwork) : undefined;
+        const catalogImage = artwork?.src ?? (preset ? presetIllustrationPath(preset) : compactCatalogImage(catalogKey));
         return <button type="button" key={choice.key} className={styles.questionAnswer} data-show-hint={choice.showHint} aria-pressed={choice.selected} aria-label={appearance==="bar"?fullLabel:undefined} aria-describedby={caption?.key===key?optionsId+"-full-label":undefined} disabled={busy} title={appearance==="bar"?fullLabel:choice.hint} onMouseEnter={reveal} onMouseLeave={event=>{if(!event.currentTarget.contains(document.activeElement))setCaption(null);}} onBlur={()=>setCaption(null)} onFocus={event => {event.currentTarget.scrollIntoView?.({block:"nearest",inline:"nearest"});reveal();}} draggable={!!drag} data-drag-source={drag?.sourceKey} onDragStart={event=>{event.stopPropagation();if(drag)interaction?.start(drag.sourceKey,event,undefined,drag.values);else event.preventDefault();}} onDragEnd={()=>interaction?.end()} onClick={choice.choose}>
           {appearance==="bar"&&(!!choice.visualKey||/^(bar|house_party|club|option:night-out):/u.test(choice.key)||["shared","drinks","food"].includes(choice.key))
             ? <BarProductVisual dock={productScene} assetKey={choice.visualKey??choice.key} label={choice.label}/>

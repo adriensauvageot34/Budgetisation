@@ -59,6 +59,20 @@ await check('P2-DRAFT-SEMANTIC-DEBOUNCE-NO-SAVE-ON-STATUS-RENDER',async()=>{cons
 await check('P2-DRAFT-SLOW-SAVE-KEEPS-NEXT-DIRTY-AND-CAS',async()=>{const s=store();let resolve;const delay=new Promise(r=>{resolve=r;});s.delay(delay);const h=hook(source,s.transport);h.set(draft(350));await h.advance(1000);assert.equal(h.value.status,'SAVING');h.set(draft(360));resolve();await h.settle();assert.equal(h.value.status,'DIRTY');await h.advance(1000);assert.equal(s.calls.length,2);assert.equal(s.calls[1].expectedDraftVersion,1);assert.equal(h.value.status,'SAVED');assert.equal(s.snapshot.active.digest,semantic.semanticStateDigest(h.input));h.dispose();});
 await check('P2-DRAFT-LOST-RESPONSE-REUSES-ID-NO-DOUBLE-COMMIT',async()=>{const s=store(),h=hook(source,s.transport);s.lose();h.set(draft(350));await h.advance(1000);assert.equal(h.value.status,'ERROR');assert.equal(h.value.unsaved,true);h.value.retry();await h.settle();assert.equal(h.value.status,'SAVED');assert.equal(s.calls[0].requestId,s.calls[1].requestId);assert.equal(s.snapshot.active.version,1);h.dispose();});
 await check('P2-DRAFT-TWO-SESSIONS-CONFLICT-PRESERVES-LOCAL-STATE',async()=>{const s=store(),a=hook(source,s.transport),b=hook(source,s.transport);a.set(draft(350));await a.advance(1000);b.set(draft(360));await b.advance(1000);assert.equal(b.value.status,'CONFLICT');assert.equal(b.value.unsaved,true);assert.equal(b.input.controls[0].value.amount,'360');assert.equal(s.snapshot.active.version,1);await b.advance(5000);assert.equal(s.calls.length,2);a.dispose();b.dispose();});
+await check('P21-CONFLICT-READ-NEVER-REARMS-THE-WRITER',async()=>{
+  const s=store(), h=hook(source,s.transport);
+  s.reject();
+  h.set(draft(350)); await h.advance(1000);
+  assert.equal(h.value.status,'CONFLICT');
+  await h.value.refresh(); await h.settle();
+  assert.equal(h.value.status,'CONFLICT');
+  h.value.retry(); await h.settle();
+  await h.advance(5000);
+  assert.equal(s.calls.length,1);
+  assert.equal(h.input.controls[0].value.amount,'350');
+  assert.equal(h.value.unsaved,true);
+  h.dispose();
+});
 await check('P2-DRAFT-OFFLINE-NO-WRITE-ONLINE-SAVES-LATEST',async()=>{const s=store(),h=hook(source,s.transport);h.connection(false);h.set(draft(350));await h.advance(5000);assert.equal(h.value.status,'OFFLINE');assert.equal(s.calls.length,0);h.connection(true);await h.settle();assert.equal(s.calls.length,1);assert.equal(h.value.status,'SAVED');h.dispose();});
 await check('P2-DRAFT-ARCHIVE-RESTORE-LOST-COMMIT-READ-RECOVERY',async()=>{const s=store(),h=hook(source,s.transport);h.set(draft(350));await h.advance(1000);s.lose();assert.equal(await h.value.lifecycle('ARCHIVE',h.value.snapshot.active),true);await h.settle();assert.equal(s.snapshot.archives.length,1);const archive=s.snapshot.archives[0];s.lose();assert.equal(await h.value.lifecycle('RESTORE',archive),true);await h.settle();assert.equal(h.value.status,'SAVED');assert.equal(s.snapshot.active.version,3);assert.equal(s.snapshot.active.digest,semantic.semanticStateDigest(h.input));h.dispose();});
 await check('P2-DRAFT-DIGEST-MEMO-IDENTICAL-STATE-REFERENCE',async()=>{const old=execFileSync('git',['show','a934f60f7f796b4522cbccfbb7b01edfab96dea5:src/app/mois-a-venir/composer/durable-draft.ts'],{encoding:'utf8'});const a=hook(old,null),b=hook(source,null);for(let i=0;i<20;i++){a.render();b.render();}assert.ok(a.digestCalls>b.digestCalls);assert.equal(b.digestCalls,1);console.log(JSON.stringify({unchangedStateRenders:21,P1DigestCalls:a.digestCalls,P2DigestCalls:b.digestCalls}));a.dispose();b.dispose();});
