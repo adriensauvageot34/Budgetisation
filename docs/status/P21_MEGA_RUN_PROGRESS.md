@@ -469,3 +469,7 @@ TypeScript, diff et banc catalogue/panier PASS. La fixture ouvre un panier Cours
 ### Confirmation d’une suggestion S3 obsolète
 
 La confirmation vérifie le digest capturé et les capacités courantes. Un changement de composition ou de disponibilité demande de consulter à nouveau les suggestions. TypeScript, diff et six contrôles S3 PASS, dont le refus et son message lorsqu’un repas a été ajouté entre-temps.
+
+### Ouvrir un article de panier au clavier
+
+Entrée dans la recherche du panier ouvre le résultat unique lorsqu’il est modifiable et que la saisie ne se fait pas en mode composition. TypeScript, diff et banc catalogue/panier PASS. Le filtre des prix inconnus permet d’ouvrir la deuxième ligne homonyme sans mutation. Le navigateur réel reste NOT_RUN.

@@ -168,6 +168,10 @@ try{
  await act(async()=>root.root.findByProps({type:'search'}).props.onChange({target:{value:charger.label}}));
  await act(async()=>root.root.findByProps({type:'checkbox'}).props.onChange({target:{checked:true}}));
  assert.deepEqual(lines().map(line=>line.props['data-basket-line']),[secondId]);assert.match(text(lines()[0]),/Ligne 2/);
+ await act(async()=>root.root.findByProps({type:'search'}).props.onKeyDown({key:'Enter',nativeEvent:{isComposing:false},preventDefault(){}}));
+ assert.equal(operations.length,0);assert.equal(root.root.findAllByType('form').length,1);
+ assert.equal(root.root.findAllByType('label').find(label=>text(label).startsWith('Prix par')).findByType('input').props.value,'');
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Retour au panier').props.onClick());
  await act(async()=>root.root.findByProps({type:'checkbox'}).props.onChange({target:{checked:false}}));
  await act(async()=>root.update(render(mixed,undefined,'STALE')));
  assert.doesNotMatch(text(lines()[0]),/Total/);assert.equal(semanticStateDigest(mixed.semanticState),mixedDigest);assert.equal(operations.length,0);

@@ -303,7 +303,14 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       {articles.length > 0 && <p>{articles.length} article{articles.length > 1 ? "s" : ""} · {missingPrices
         ? `${missingPrices} prix à préciser` : "Aucun prix manquant"}</p>}
       {filterArticles && <div className={styles.lineFilters}>
-        <label>Rechercher dans ce panier<input type="search" value={articleQuery} onChange={event => setArticleQuery(event.target.value)} /></label>
+        <label>Rechercher dans ce panier<input type="search" value={articleQuery} onChange={event => setArticleQuery(event.target.value)}
+          onKeyDown={event => {
+            if (event.key !== "Enter" || event.nativeEvent.isComposing || !terms.length || matchingArticles.length !== 1) return;
+            const { item } = matchingArticles[0];
+            if (!writable || busy || !canChooseArticle(item)) return;
+            event.preventDefault();
+            edit(item);
+          }} /></label>
         <label><input type="checkbox" checked={missingPricesOnly} onChange={event => setMissingPricesOnly(event.target.checked)} /> Prix à préciser</label>
       </div>}
       {filterArticles && !matchingArticles.length && <p role="status">Aucun article ne correspond aux filtres.</p>}
