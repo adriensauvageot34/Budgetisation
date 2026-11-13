@@ -104,9 +104,20 @@ try{
  assert.deepEqual(projectCompletionSuggestions(takeaway,leisureId),[]);
  const dining=await add(leisure,'restaurant-for-two',leisureId);
  assert.deepEqual(projectCompletionSuggestions(dining,leisureId),[]);
+ const furnishing=await add(dining,'furnish-room');
+ const furnishingId=furnishing.semanticState.contexts.find(context=>context.templateKey==='home-project').contextOccurrenceId;
+ const furnishingOffer=projectCompletionSuggestions(furnishing,furnishingId)[0];
+ assert.equal(furnishingOffer.preset.presetKey,'home-equipment-basket');assert.equal(furnishingOffer.target.slotKey,'purchases');
+ const withEquipment=await request(furnishing.semanticState,{kind:'DROP',assetKey:furnishingOffer.assetKey,presetKey:furnishingOffer.preset.presetKey,
+  target:furnishingOffer.target,identity:uuid(++counter),selectionId:uuid(++counter),values:{},purchaseBasket:true});
+ assert.deepEqual(projectCompletionSuggestions(withEquipment,furnishingId),[]);
+ const directEquipment={...furnishing,board:{...furnishing.board,contexts:furnishing.board.contexts.map(card=>card.contextOccurrenceId===furnishingId
+  ? {...card,sockets:card.sockets.map(socket=>socket.slotKey==='items'?{...socket,currentItems:[{kind:'COMPONENT'}]}:socket)}:card)}};
+ assert.deepEqual(projectCompletionSuggestions(directEquipment,furnishingId),[]);
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
  console.log('S3-04 Weekend complements follow the actual children without repeating an existing activity: PASS');
  console.log('S3-05 Two leisure activities offer one meal, suppressed when any meal is already linked: PASS');
  console.log('S3-06 A rental can suggest an empty groceries basket and suppresses an existing groceries decision: PASS');
- console.log(JSON.stringify({status:'PASS',checks:6,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ console.log('S3-07 A home furnishing project suggests one empty equipment basket until a purchase or item is present: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:7,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

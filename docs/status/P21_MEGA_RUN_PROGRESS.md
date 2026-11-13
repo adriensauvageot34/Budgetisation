@@ -511,3 +511,9 @@ TypeScript, diff et trois contrôles familles de projets PASS. La fixture vérif
 Le treizième modèle associe le projet d’aménagement à un panier `purchase@v2` vide, dans le socket Achats. Le panier utilise le domaine générique et son visuel Clay. Le projet existant propose aussi de créer ce panier via l’association explicite.
 
 TypeScript, diff, recherche, familles de projets et dix groupes du banc de parcours PASS. Le reçu confirme l’identité de l’enfant et le coût reste inconnu. Aucun writer distant ni Apply. Suite · suggestion de panier pour un projet Maison.
+
+### Suggestion de panier pour un projet Maison
+
+Un aménagement sans équipement ni achat peut proposer un panier vide. Le motif reflète le contenu du projet et la confirmation réutilise le socket Achats. Un équipement déjà renseigné ou un achat lié retire la proposition.
+
+TypeScript, diff et sept groupes S3 PASS. La fixture vérifie l’admission explicite du panier et la disparition de la suggestion, sans writer distant ni Apply.
