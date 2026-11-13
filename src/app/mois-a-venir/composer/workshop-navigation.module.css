@@ -31,3 +31,7 @@
 }
 .switcher input { box-sizing:border-box; min-height:40px; }
 .switcher select:focus-visible, .switcher input:focus-visible { outline:3px solid #a77bc8; outline-offset:2px; }
+.parentLink { display:flex; align-items:center; max-width:160px; min-height:32px; padding:3px 4px; margin:auto; border:0; border-radius:6px; background:transparent; color:#755189; font:inherit; font-size:10px; cursor:pointer; }
+.parentLink span { min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.parentLink:focus-visible { outline:3px solid #a77bc8; outline-offset:2px; }
+@media (pointer:coarse) { .parentLink { min-height:44px; } }

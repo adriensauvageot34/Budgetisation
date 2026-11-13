@@ -88,9 +88,9 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Accessibilité des formulaires | Annulation de l’aperçu rend le focus, réussite laisse la navigation du projet disponible |
 | DONE | Compléments des séjours | Ouverture exacte des enfants et confirmation explicite de leur retrait |
 | DONE | Autres intentions déjà éditables | Tous les presets publiés retrouvables sous leurs droits actuels |
-| READY | Relations sur le Board | Afficher le parent d’un enfant et faciliter son accès sans mutation |
+| DONE | Relations sur le Board | Lien compact vers le parent exact dans les cartes enfants |
 | DONE | Synthèse des informations manquantes | Diagnostics officiels de l’intention et de ses postes, masqués si périmés |
-| READY | Navigation du Board | Accès direct au projet parent sans agrandir les cartes |
+| DONE | Navigation du Board | Navigation commune, nom complet accessible et occurrence exacte |
 | READY | Retour après déplacement | Repérage de la destination et maintien des identités |
 | READY | Informations de financement | Renvois lisibles vers les sources du mois sans calcul parallèle |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
@@ -188,3 +188,9 @@ TypeScript et deux contrôles React/propriétaire PASS. Six familles de presets 
 Le résumé d’impact affiche les diagnostics publiés qui ciblent exactement l’intention, ses composants, son intention Mobility ou son trajet. Les messages globaux et ceux des autres intentions restent hors de ce détail. Les doublons sont retirés et la lecture périmée est masquée. Aucun diagnostic ne déduit à lui seul une autorisation Apply ou une modification du statut FRESH.
 
 TypeScript, diff et deux contrôles de portée/rendu PASS. Les références sont celles du propriétaire ; FRESH et BLOCKED affichent les repères courants, STALE et PENDING les masquent. Zéro écriture distante. Le banc de dix parcours a également été rejoué au checkpoint `8bf7414` avec huit modèles et sept activités : PASS.
+
+### Parent visible sur le Board
+
+Les cartes enfants exposent un lien compact vers le projet parent, en réutilisant le sélecteur et le routeur d’intentions. Le libellé accessible conserve le nom complet et la distinction des homonymes ; le texte visuel peut être tronqué. Un parent absent du périmètre de navigation ne produit aucun lien actif.
+
+TypeScript, diff et quatre contrôles de navigation/rendu PASS. Les identités et le regroupement sont conservés. Le rendu interactif complet du Board reste NOT_RUN.

@@ -28,6 +28,17 @@ type Navigation = {
 };
 export const WorkshopNavigationContext = createContext<Navigation | null>(null);
 
+export function ParentProjectLink({ contextId }: { contextId: string }) {
+  const navigation = useContext(WorkshopNavigationContext);
+  const parentId = navigation?.parents?.get(contextId);
+  const parent = parentId ? navigation?.entries.find(entry => entry.id === parentId) : undefined;
+  if (!parent || !navigation) return null;
+  return <button type="button" className={styles.parentLink} disabled={navigation.busy} data-parent-project={parent.id}
+    title={parent.label} aria-label={`Voir le projet ${parent.label}`} onClick={() => navigation.open(parent.id)}>
+    <span>Projet · {parent.label}</span>
+  </button>;
+}
+
 /** Presentation grouping only; the option value remains the occurrence identity. */
 export function intentionNavigationGroups(entries: Navigation["entries"], parents: Navigation["parents"], query = "") {
   const byId = new Map(entries.map(entry => [entry.id, entry]));
