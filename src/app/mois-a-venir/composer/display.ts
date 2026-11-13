@@ -1,10 +1,14 @@
 export const money = (amount: unknown) => typeof amount === "string" ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(Number(amount)) : "À préciser";
 export const monthLabel = (month: string) => new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${month}-01T12:00:00Z`));
 const shortDateFormatter = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" });
-export function plannedDayLabel(day: unknown) {
+export function parsePlannedDay(day: unknown) {
   if (typeof day !== "string" || !/^\d{4}-\d{2}-\d{2}$/u.test(day)) return null;
   const date = new Date(`${day}T12:00:00Z`);
-  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === day ? shortDateFormatter.format(date) : null;
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === day ? date : null;
+}
+export function plannedDayLabel(day: unknown) {
+  const date = parsePlannedDay(day);
+  return date ? shortDateFormatter.format(date) : null;
 }
 export const knowledgeLabel = (knowledge: string) => ({ KNOWN: "Connu", DECLARED: "Déclaré", ESTIMATED: "Repère", PARTIAL: "À compléter", UNKNOWN: "À préciser", NOT_APPLICABLE: "Sans objet" })[knowledge] ?? "À préciser";
 export const quantityLabel = (count: unknown) => typeof count === "string" ? new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(Number(count)) : "À préciser";

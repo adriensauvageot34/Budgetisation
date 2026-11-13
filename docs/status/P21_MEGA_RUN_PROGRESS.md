@@ -573,3 +573,7 @@ Les termes déjà publiés dans la bibliothèque retrouvent désormais la même 
 ### Accès aux cartes selon les droits du Board
 
 Le titre d’une activité libre ouvre son éditeur quand le Board publie le droit de modification. Les cartes préservées, ancrées ou privées du droit gardent leur accès en consultation. TypeScript, budget et 14 contrôles de présentation PASS. Le banc de présentation identifie l’enveloppe Restaurants par sa référence publiée.
+
+### Date du projet vérifiée dès l’aperçu
+
+L’aperçu signale une date impossible ou extérieure au mois et garde les autres choix saisis. La confirmation redevient disponible avec une date valide ou vide. TypeScript et quatre contrôles d’aperçu PASS sur fixture. L’évaluateur conserve sa vérification avant toute opération.

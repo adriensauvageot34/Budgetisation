@@ -27,6 +27,15 @@ try{
  await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
  assert.deepEqual(created,[{label:'Mon séjour',children:['hiking-nature']}]);
  await act(async()=>root.root.findAllByProps({type:'checkbox'})[0].props.onChange({target:{checked:true}}));
+ const dateInput=()=>root.root.findByProps({type:'date'});
+ for(const invalid of ['2026-11-31','2026-12-01']){
+  await act(async()=>dateInput().props.onChange({target:{value:invalid}}));
+  assert.equal(dateInput().props['aria-invalid'],true);
+  assert.equal(root.root.findByProps({'data-confirm-workshop':true}).props.disabled,true);
+  assert.equal(root.root.findByProps({id:'project-starter-date-error'}).props.role,'alert');
+  await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+  assert.equal(created.length,1);
+ }
  await act(async()=>root.root.findByProps({type:'date'}).props.onChange({target:{value:'2026-11-20'}}));
  await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
  assert.deepEqual(created[1],{label:'Mon séjour',children:['museum-exhibition','hiking-nature'],plannedDate:'2026-11-20'});

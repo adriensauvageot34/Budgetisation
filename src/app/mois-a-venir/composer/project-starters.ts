@@ -2,6 +2,7 @@ import { composerPreset, presetForContext, type ComposerPresetKey } from "@/doma
 import type { ComposerRequest, ComposerTransport, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { semanticStateDigest } from "@/domain/phase2/planner/semantic-state";
 import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
+import { parsePlannedDay } from "./display";
 
 export const projectStarters = [
   { key: "cinema-dinner", label: "Cinéma et restaurant", parent: "composed-outing",
@@ -74,12 +75,8 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
   const label = choices?.label.trim();
   const children: readonly ComposerPresetKey[] = choices?.children ?? starter.children.map(child => child.key);
   const date = choices?.plannedDate?.trim() ?? "";
-  if (date) {
-    const parsed = new Date(`${date}T12:00:00Z`);
-    if (!/^\d{4}-\d{2}-\d{2}$/u.test(date) || date.slice(0, 7) !== model.semanticState.targetMonth
-      || !Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date)
-      throw new Error("Choisissez une date valide dans le mois du projet, ou laissez-la à préciser.");
-  }
+  if (date && (date.slice(0, 7) !== model.semanticState.targetMonth || !parsePlannedDay(date)))
+    throw new Error("Choisissez une date valide dans le mois du projet, ou laissez-la à préciser.");
   if ((choices && (!label || label.length > 120)) || new Set(children).size !== children.length
     || children.some(key => !starter.children.some(child => child.key === key) || !projectPresetAvailable(model, key))
     || !availableProjectStarters(model).includes(starter))

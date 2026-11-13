@@ -6,6 +6,7 @@ import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contra
 import { projectPresetAvailable, type ProjectStarter, type ProjectStarterChoices } from "./project-starters";
 import { PresetIllustration } from "./preset-illustration";
 import { libraryOccurrences } from "@/domain/phase2/planner/composer-library-index";
+import { monthLabel, parsePlannedDay } from "./display";
 import styles from "./composer.module.css";
 
 /** Only the confirmed proposal reaches the Shell's atomic evaluator. */
@@ -28,8 +29,10 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
   const existing = openExisting ? libraryOccurrences(model).filter(row => row.presetKey === starter.parent) : [];
   const chosen = childKeys.filter(key => selected.includes(key));
   const unavailableChoices = chosen.filter(key => !projectPresetAvailable(model, key));
-  const canCreate = !busy && !blockedReason && admitted && !!label.trim() && !unavailableChoices.length;
-  const lastDay = new Date(`${model.semanticState.targetMonth}-01T12:00:00Z`);
+  const month = model.semanticState.targetMonth;
+  const validDate = !date || (date.slice(0, 7) === month && !!parsePlannedDay(date));
+  const canCreate = !busy && !blockedReason && admitted && !!label.trim() && validDate && !unavailableChoices.length;
+  const lastDay = new Date(`${month}-01T12:00:00Z`);
   lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
   useEffect(() => {
     const origin = document.activeElement;
@@ -45,7 +48,7 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
       if (canCreate) { restoreFocus.current = false; create({ label: label.trim(), children: chosen, ...(date ? { plannedDate: date } : {}) }); }
     }}>
       <h2 id="project-starter-title">Préparer {starter.label}</h2>
-      <p>Mois du projet · {new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${model.semanticState.targetMonth}-01T12:00:00Z`))}</p>
+      <p>Mois du projet · {monthLabel(month)}</p>
       {parent && <PresetIllustration preset={parent} className={styles.projectPreviewVisual} />}
       <p id="project-starter-description">Choisissez les intentions à préparer. Les prix et participants resteront à préciser. Chaque intention pourra être complétée après la création.</p>
       {existing.length > 0 && <section aria-label="Intentions du même type déjà présentes" className={styles.projectExisting}>
@@ -59,7 +62,9 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
       <label className={styles.projectName}>Nom du projet<input autoFocus value={label} maxLength={120} required disabled={busy}
         onChange={event => setLabel(event.target.value)} /></label>
       <label className={styles.projectName}>Date facultative du projet<input type="date" value={date} disabled={busy}
-        min={`${model.semanticState.targetMonth}-01`} max={lastDay.toISOString().slice(0, 10)} onChange={event => setDate(event.target.value)} /></label>
+        min={`${month}-01`} max={lastDay.toISOString().slice(0, 10)} aria-invalid={!validDate}
+        aria-describedby={!validDate ? "project-starter-date-error" : undefined} onChange={event => setDate(event.target.value)} /></label>
+      {!validDate && <p id="project-starter-date-error" role="alert">Choisissez une date valide dans le mois du projet, ou laissez-la à préciser.</p>}
       <p>Cette date concerne le projet. Les dates des compléments restent à choisir séparément.</p>
       <p><strong>{parent?.label}</strong> · Structure du projet{admitted ? "" : " · Indisponible"}</p>
       {starter.children.length > 0 && <fieldset disabled={busy}><legend>Compléments facultatifs</legend>
