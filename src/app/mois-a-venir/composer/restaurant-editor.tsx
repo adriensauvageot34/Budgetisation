@@ -6,6 +6,7 @@ import type { RestaurantEdit } from "@/domain/phase2/planner/restaurant-edit";
 import { assertRestaurantDetailsWritable, restaurantIncludedDetails, restaurantMealTariff, RESTAURANT_INCLUDED_DETAILS_LIMIT,
   type RestaurantIncludedDetail, type RestaurantDetailsDecision } from "@/domain/phase2/planner/restaurant-included-details";
 import { PresetIllustration } from "./preset-illustration";
+import { MobilityFields } from "./mobility-fields";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronRight, X, Users, MapPin, CalendarDays, Receipt, Plus } from "lucide-react";
@@ -124,7 +125,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const included = restaurantIncludedDetails(context);
   const [includedRow, setIncludedRow] = useState<IncludedBuffer | null>(null);
   const [step, setStep] = useState<Step>(null);
-  const [summaryPage, setSummaryPage] = useState(0), [extraPage, setExtraPage] = useState(0), [equipmentPage, setEquipmentPage] = useState(0);
+  const [summaryPage, setSummaryPage] = useState(0), [extraPage, setExtraPage] = useState(0);
   const [formKey, setFormKey] = useState(0);
   const [person, setPerson] = useState<ProspectivePersonRef>();
   const [place, setPlace] = useState<ProspectivePlaceRef | undefined>(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
@@ -134,7 +135,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const [detail, setDetail] = useState(isDetailed(context));
   const [extraRow, setExtraRow] = useState<Row | null>(null);
   const [extraAdded, setExtraAdded] = useState(false);
-  const [equipment, setEquipment] = useState<{ asset: ComposerAssetView; target: DropTarget } | null>(null);
+  const [equipment, setEquipment] = useState<{ asset: ComposerAssetView; target: DropTarget; focusField?: string } | null>(null);
   const [equipmentValues, setEquipmentValues] = useState<Record<string, string>>({});
   const [allOptions, setAllOptions] = useState(false), [error, setError] = useState("");
   const [restaurantChoices, setRestaurantChoices] = useState(false);
@@ -283,7 +284,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     if(!main&&!extras.length){prepare();return;}
     confirm({message:next?"Remplacer le total par les postes ? 45 € + 15 € font 60 €, pas 120 €. Les décisions restent inchangées tant que le nouveau coût n’est pas validé.":"Préparer un coût total à la place du détail ? Les postes seront retirés uniquement après confirmation du nouveau montant.",acceptLabel:next?"Préparer les postes":"Préparer le total",accept:prepare});
   };
-  const equip = (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1, outsideConfirmed = false) => {
+  const equip = (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1, outsideConfirmed = false, focusField?: string) => {
     const socket = card.sockets.find(candidate => candidate.slotKey === target.slotKey);
     if (target.kind !== "CONTEXT_SOCKET" || target.contextOccurrenceId !== contextId || card.readOnly
       || !card.capabilityRefs.includes("PATCH_CONTEXT") || cinemaLocked(contextId)
@@ -294,7 +295,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     if (selection && (cinemaSelectionLocked(socket.slotKey, selection.selectionId)
       || !socket.currentItems.some(item => item.selectionId === selection.selectionId && item.kind === selection.kind
         && item.optionKey === selection.optionKey))) return;
-    if (!leaveRaw(() => equip(asset, target, selection, outsideConfirmed))) return;
+    if (!leaveRaw(() => equip(asset, target, selection, outsideConfirmed, focusField))) return;
     if (activity && !activitySlot(socket.slotKey)) return;
     setError("");
     if (asset.optionKind === "COMPONENT") {
@@ -312,7 +313,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     } else {
       if (activity && !activityModes.some(mode => mode.assetKey === asset.assetKey)) return;
       if (activity || restaurant) transportSignature.current = canonicalPlannerJson(currentTransport ?? null);
-      setExtraRow(null); setEquipment({ asset, target }); setEquipmentPage(0);
+      setExtraRow(null); setEquipment({ asset, target, focusField });
       const previous = asset.optionKey === currentTransport?.optionKey ? transportValues : {
         origin: transportValues.origin ?? "", destination: transportValues.destination ?? "",
         returnRequired: transportValues.returnRequired ?? "false" };
@@ -332,6 +333,9 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         && model.editors.some(editor => editor.assetKey === key) ? [asset] : [];
     });
   const activityMode = activityModes.find(asset => asset.optionKey === (currentTransport?.optionKey ?? "taxi"));
+  const parkingAsset = currentTransport?.optionKey === "car" && !cinemaSelectionLocked("transport", currentTransport.selectionId)
+    ? model.library.searchableAssets.find(asset => asset.optionKind === "MOBILITY_INTENT" && asset.optionKey === "car"
+      && asset.templateKey === context.templateKey && publishedDrop(model, asset.assetKey, socketTarget("transport"))?.semanticAction === "PATCH_CONTEXT") : undefined;
   const activityComplements = activityExtras || activityModes.length > 0;
   const transportValues: Record<string, string> = currentTransport ? {
     origin: currentTransport.origin?.kind === "TEXT" ? currentTransport.origin.label : "",
@@ -707,6 +711,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
           if (!detail && main) confirm({ message: "Ces frais sont-ils déjà inclus dans votre montant ? Les ajouter en supplément augmente le coût prévu.", cancelLabel: "Inclus · garder le total", acceptLabel: "Réellement en plus", accept: add }); else add();
         }}>{extraAdded ? "Ajouter encore" : context.templateKey === "restaurant" ? "Ajouter un supplément distinct" : "Ajouter un complément"}</button>}
         {extraAdded && <button type="button" onClick={() => open(null)}>Retour au résumé</button>}
+        {parkingAsset && <button type="button" disabled={busy} onClick={() => equip(parkingAsset, socketTarget("transport"), currentTransport, false, "parkingMode")}>Préciser le parking du trajet</button>}
         {currentTransport && (!activity || transportSocket && !cinemaSelectionLocked("transport", currentTransport.selectionId)) && <button type="button" onClick={() => send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { transport: [] } }))}>Retirer le trajet</button>}</>}
       {extraRow && <WorkshopComponentRow key={extraRow.id} title={shape.complement} row={extraRow} participantCount={refs.length} onChange={next => { setRaw(true); setExtraRow(next); }} onRemove={() => {
         if (!extraIsCurrent(extraRow.id, extraRow.label)) return;
@@ -763,12 +768,9 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
           if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { transport: [selection] } }))) setEquipment(null);
         } catch (failure) { setError(workshopErrorMessage(failure)); }
       }}><h4>{equipment.asset.label}</h4><p>Un coût d’usage n’est pas un plein bancaire. Les données absentes restent inconnues.</p>
-         {model.editors.find(e => e.assetKey === equipment.asset.assetKey)?.fields.slice(equipmentPage * 3, equipmentPage * 3 + 3).map(field => <label key={field.key}>{field.label}{field.kind === "CHOICE"
-           ? <select name={field.key} value={equipmentValues[field.key] ?? field.choices?.[0]?.value ?? ""} onChange={event => setEquipmentValues(values => ({ ...values, [field.key]: event.target.value }))}>{field.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
-             {field.key === "funding" && transportValues.funding === "EXISTING" && <option value="EXISTING">Conserver le financement antérieur</option>}
-             {field.key === "parkingMode" && transportValues.parkingMode === "EXISTING" && <option value="EXISTING">Conserver le devis de stationnement</option>}</select>
-           : <input name={field.key} value={equipmentValues[field.key] ?? transportValues[field.key] ?? field.initial ?? ""} onChange={event => setEquipmentValues(values => ({ ...values, [field.key]: event.target.value }))} inputMode={field.kind === "AMOUNT" ? "decimal" : undefined} />}</label>)}
-         {(model.editors.find(e => e.assetKey === equipment.asset.assetKey)?.fields.length ?? 0) > 3 && <div className={styles.nightPage}><button type="button" disabled={equipmentPage === 0} onClick={() => setEquipmentPage(page => page - 1)}>Précédent</button><span>{equipmentPage + 1} / {Math.ceil((model.editors.find(e => e.assetKey === equipment.asset.assetKey)?.fields.length ?? 0) / 3)}</span><button type="button" disabled={(equipmentPage + 1) * 3 >= (model.editors.find(e => e.assetKey === equipment.asset.assetKey)?.fields.length ?? 0)} onClick={() => setEquipmentPage(page => page + 1)}>Suivant</button></div>}
+         <MobilityFields key={`${equipment.asset.assetKey}:${equipment.focusField ?? "route"}:${formKey}`}
+           fields={model.editors.find(e => e.assetKey === equipment.asset.assetKey)?.fields ?? []} values={equipmentValues} preserved={transportValues}
+           focusField={equipment.focusField} busy={busy} change={(key, value) => { setRaw(true); setEquipmentValues(values => ({ ...values, [key]: value })); }} />
          <button type="submit" disabled={busy}>Valider ce trajet</button></form>}
       {error && <p role="alert" className={styles.formError}>{error}</p>}
     </div>}

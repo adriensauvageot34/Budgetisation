@@ -74,7 +74,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | --- | --- | --- |
 | DONE | Aperçu personnalisable des modèles | Nom du projet, compléments facultatifs, six modèles dont Week-end multi-enfants |
 | DONE | Lecture des intentions liées | Impact officiel par enfant, diagnostics ciblés et consultation seule visibles |
-| READY | Déplacements | Raccourcis vers les postes Mobility réellement admis |
+| DONE | Déplacements | Rubriques de saisie et accès au parking du trajet déjà choisi |
 | READY | Activités et achats | Étendre les éditeurs communs aux presets compatibles |
 | READY | Découverte des modèles | Catégories, contenu et recherche dans la bibliothèque |
 | READY | Suggestions S3 | Classement explicable et priorités de session |
@@ -95,3 +95,9 @@ TypeScript, `git diff --check` et les dix groupes du banc de parcours ont réuss
 Chaque enfant offre la même lecture financière officielle que son éditeur, avec les diagnostics ciblés déjà publiés et la restriction de consultation. Les détails financiers disparaissent lorsque la projection est périmée. Aucun total de projet n’est recalculé par React.
 
 TypeScript, diff et les dix groupes du banc de parcours PASS. Le contrôle de rendu distingue la lecture FRESH de l’état STALE et conserve l’ordre et les identités des enfants.
+
+### Frais et déplacement
+
+L’éditeur d’activité/Restaurant regroupe les champs Mobility publiés en trajet, frais, financement, horaires et partage. Le parking d’une voiture déjà choisie possède un accès direct. Les péages et le carburant restent des résultats du propriétaire Mobility. Train, bus, taxi et les autres modes admis conservent leurs champs officiels.
+
+TypeScript et diff PASS. Deux contrôles React et propriétaire ont validé la conservation RAW entre rubriques, le parking adopté explicitement avec identité stable et le refus d’une édition obsolète. Les dix contrôles Restaurant/Cinéma ont réussi. Aucun appel distant ni writer financier exécuté.
