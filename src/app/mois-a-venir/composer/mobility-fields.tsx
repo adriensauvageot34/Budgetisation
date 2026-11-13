@@ -21,19 +21,24 @@ export function mobilityFieldGroups(fields: readonly ComposerField[]) {
     .filter(section => section.fields.length);
 }
 
-export function MobilityFields({ fields, values, preserved, focusField, busy, change }: {
+export function MobilityFields({ fields, values, preserved, focusField, busy, change, mode }: {
   fields: readonly ComposerField[]; values: Readonly<Record<string, string>>; preserved: Readonly<Record<string, string>>;
   focusField?: string; busy: boolean; change(key: string, value: string): void;
+  mode?: string;
 }) {
   const groups = mobilityFieldGroups(fields);
   const [selected, setSelected] = useState(() => groups.find(group => group.fields.some(field => field.key === focusField))?.key ?? groups[0]?.key);
   const active = groups.find(group => group.key === selected) ?? groups[0];
+  const inherited = !!values.targetIntentId && (active?.key === "cost" || active?.key === "funding");
+  const free = mode === "free" && (active?.key === "cost" || active?.key === "funding");
   return <div data-mobility-fields>
     <nav className={styles.mobilitySections} aria-label="Précisions du déplacement">{groups.map(group =>
       <button type="button" key={group.key} disabled={busy} aria-current={active?.key === group.key ? "step" : undefined}
         onClick={() => setSelected(group.key)}>{group.label}</button>)}</nav>
-    <fieldset disabled={busy} className={styles.nightQuestion}><legend>{active?.label}</legend>
-      {active?.fields.map(field => <label key={field.key}>{field.label}{field.kind === "CHOICE"
+    {inherited && <p role="status">Les frais et le financement appartiennent au trajet propriétaire. Choisissez « Trajet propre » dans Trajet partagé pour préparer des frais distincts.</p>}
+    {free && !inherited && <p role="status">Le mode À pied / gratuit a été choisi. Aucun billet payant n’est prévu pour ce trajet. Les autres dépenses restent des postes distincts du projet.</p>}
+    <fieldset disabled={busy || inherited || free} className={styles.nightQuestion}><legend>{active?.label}</legend>
+      {!inherited && !free && active?.fields.map(field => <label key={field.key}>{field.key === "amount" ? "Montant déclaré pour le trajet complet (€)" : field.label}{field.kind === "CHOICE"
         ? <select name={field.key} value={values[field.key] ?? field.choices?.[0]?.value ?? ""} onChange={event => change(field.key, event.target.value)}>
           {field.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
           {field.key === "funding" && preserved.funding === "EXISTING" && <option value="EXISTING">Conserver le financement antérieur</option>}
@@ -42,7 +47,10 @@ export function MobilityFields({ fields, values, preserved, focusField, busy, ch
         : <input name={field.key} value={values[field.key] ?? preserved[field.key] ?? field.initial ?? ""} autoComplete="off"
           onChange={event => change(field.key, event.target.value)} inputMode={field.kind === "AMOUNT" ? "decimal" : undefined} />}</label>)}
     </fieldset>
-    {active?.key === "cost" && <p>Le parking appartient au trajet en voiture. Un billet ou une course reste un montant déclaré pour le trajet complet. Les péages et le carburant restent évalués par Mobility.</p>}
+    {active?.key === "cost" && !inherited && !free && <p>{mode === "car" ? "Le parking appartient au trajet en voiture. Les péages et le carburant restent évalués par Mobility."
+      : "Un billet ou une course reste un montant déclaré pour le trajet complet."} Précisez le départ et la destination dans Trajet pour l’évaluation.</p>}
     {active?.key === "sharing" && <p>Un trajet partagé conserve les frais sur le trajet propriétaire. Aucun second billet ni parking n’est ajouté automatiquement.</p>}
+    {active?.key === "time" && values.returnRequired === "true" && <p>Aller-retour choisi. Le retour fait partie du même trajet.
+      {mode !== "car" && mode !== "free" ? " Le prix déclaré d’un billet ou d’une course n’est pas multiplié automatiquement." : ""}</p>}
   </div>;
 }

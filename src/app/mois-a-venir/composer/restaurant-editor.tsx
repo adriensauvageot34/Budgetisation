@@ -774,6 +774,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       }}><h4>{equipment.asset.label}</h4><p>Un coût d’usage n’est pas un plein bancaire. Les données absentes restent inconnues.</p>
          <MobilityFields key={`${equipment.asset.assetKey}:${equipment.focusField ?? "route"}:${formKey}`}
            fields={model.editors.find(e => e.assetKey === equipment.asset.assetKey)?.fields ?? []} values={equipmentValues} preserved={transportValues}
+           mode={equipment.asset.optionKey}
            focusField={equipment.focusField} busy={busy} change={(key, value) => { setRaw(true); setEquipmentValues(values => ({ ...values, [key]: value })); }} />
          <button type="submit" disabled={busy}>Valider ce trajet</button></form>}
       {error && <p role="alert" className={styles.formError}>{error}</p>}

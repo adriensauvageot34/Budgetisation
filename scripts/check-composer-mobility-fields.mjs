@@ -4,6 +4,7 @@ import Module,{createRequire} from 'node:module';
 import {require} from './lib/phase2-ts-loader.mjs';
 import {readMonthFixture} from './fixtures/composer-v22-b1.mjs';
 import {uuid,householdId} from './fixtures/planner-headless.mjs';
+import {providers} from './fixtures/planner-mobility.mjs';
 
 const testRequire=createRequire(path.resolve('outputs/p21-react-tools/package.json'));
 const React=testRequire('react'),jsx=testRequire('react/jsx-runtime'),{create,act}=testRequire('react-test-renderer');
@@ -21,11 +22,13 @@ Module._load=function(name,parent,...args){
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {RestaurantEditor}=require('@/app/mois-a-venir/composer/restaurant-editor');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
-const {mobilityFieldGroups}=require('@/app/mois-a-venir/composer/mobility-fields');
+const {preparePlanningMobility}=require('@/server/phase2/planner/prospective-mobility-pricing');
+const {mobilityFieldGroups,MobilityFields}=require('@/app/mois-a-venir/composer/mobility-fields');
 const {InlineEditContext,InlineEditRegistry}=require('@/app/mois-a-venir/composer/inline-edit-registry');
 const f=await readMonthFixture(),world=JSON.stringify(f.world),contextId=uuid(29800),selectionId=uuid(29801);
-const request=async(draft,operation)=>{
- const response=await handleComposerRequest(f.deps,householdId,{sequence:0,targetMonth:'2026-11',draft,...operation});
+const mobility=providers(),pricedDeps={...f.deps,prepareWorld:(world,state)=>preparePlanningMobility(world,state,mobility.value)};
+const request=async(draft,operation,deps=f.deps)=>{
+ const response=await handleComposerRequest(deps,householdId,{sequence:0,targetMonth:'2026-11',draft,...operation});
  assert(response.ok,response.code+': '+response.message);return response.model;
 };
 let model=await request(f.semantic,{kind:'DROP',assetKey:'template:activity',presetKey:'cinema',target:{kind:'BOARD_ZONE'},identity:contextId,selectionId:uuid(29802),values:{}});
@@ -79,5 +82,27 @@ try{
  assert.equal(semanticStateDigest(initial),initialDigest);
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
  console.log('MF-02 Stale transport refuses overwrite and preserves the partial input: PASS');
- console.log(JSON.stringify({status:'PASS',checks:2,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ const incompleteTrain=await request(initial,{kind:'DROP',assetKey:'option:activity:transport:train',target,identity:uuid(29820),selectionId,
+  values:{amount:'10',returnRequired:'true'}},pricedDeps);
+ assert.equal(incompleteTrain.mobilitySummaries.find(summary=>summary.contextOccurrenceId===contextId).fare,null);
+ const train=await request(incompleteTrain.semanticState,{kind:'DROP',assetKey:'option:activity:transport:train',target,identity:uuid(29821),selectionId,
+  values:{amount:'10',returnRequired:'true',origin:'Gare synthétique A',destination:'Gare synthétique B'}},pricedDeps);
+ const summary=train.mobilitySummaries.find(summary=>summary.contextOccurrenceId===contextId);
+ assert.equal(summary.fare,'10.00');assert.equal(summary.cashTransport,'10.00');
+ const oneWay=await request(train.semanticState,{kind:'DROP',assetKey:'option:activity:transport:train',target,identity:uuid(29821),selectionId,
+  values:{amount:'10',returnRequired:'false'}},pricedDeps);
+ assert.equal(oneWay.mobilitySummaries.find(summary=>summary.contextOccurrenceId===contextId).fare,'10.00');
+ await act(async()=>root.unmount());root=null;
+ await act(async()=>{root=create(React.createElement(MobilityFields,{fields,values:{targetIntentId:'synthetic-shared-owner'},preserved:{},busy:false,
+  change(){assert.fail('Reading shared costs must not change values');}}));});
+ await click('Frais');assert.equal(root.root.findByType('fieldset').props.disabled,true);
+ await click('Financement');assert.equal(root.root.findByType('fieldset').props.disabled,true);
+ await act(async()=>root.unmount());root=null;
+ const freeFields=model.editors.find(editor=>editor.assetKey==='option:activity:transport:free').fields;
+ await act(async()=>{root=create(React.createElement(MobilityFields,{fields:freeFields,values:{},preserved:{},busy:false,mode:'free',change(){assert.fail('Free mode has no fare to adopt');}}));});
+ await click('Frais');assert.equal(root.root.findByType('fieldset').props.disabled,true);
+ assert.equal(semanticStateDigest(initial),initialDigest);assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
+ assert.deepEqual(mobility.calls,{routes:[],fuel:0,toll:0});
+ console.log('MF-03 Train return is not a doubled fare; shared-journey costs remain on their owner: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:3,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

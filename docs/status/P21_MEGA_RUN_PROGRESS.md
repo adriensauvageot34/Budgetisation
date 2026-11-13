@@ -96,7 +96,10 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Liste des intentions | Recherche dans les parents et numéros d’homonymes stables sous filtrage |
 | DONE | Modèles et disponibilité | Structures existantes proposées à l’ouverture, compléments filtrés selon les droits |
 | DONE | Date du modèle | Date facultative du parent, sans propagation aux compléments |
-| READY | Mobilité explicite | Clarifier le prix de trajet complet et le statut du retour |
+| DONE | Mobilité explicite | Tarif du trajet complet, retour et frais du propriétaire partagé distingués |
+| READY | Accessibilité de la bibliothèque | Retour clavier depuis les résultats vers la recherche |
+| READY | Sélection du mois | Indication du mois dans les reprises et modèles |
+| READY | Lecture des montants | Hiérarchiser coûts inconnus et sous-totaux officiels dans les projets |
 | DONE | Synthèse des projets | Compteurs officiels et filtres pour les projets contenant plusieurs enfants |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
@@ -229,3 +232,9 @@ TypeScript, diff et deux contrôles React/propriétaire PASS sur cinq Cinéma ho
 L’aperçu d’un modèle montre les intentions du même type déjà présentes dans le mois. Il permet de les ouvrir ou consulter par leur identité, avec les droits courants, sans ajouter automatiquement les compléments du modèle. Le nouveau projet reste une action explicite distincte.
 
 TypeScript, diff et trois contrôles React d’aperçu PASS. L’ouverture d’un séjour existant ne crée pas une deuxième structure et conserve son digest. Aucun writer distant.
+
+### Trajet complet et frais partagés
+
+Le montant de billet/course est présenté comme celui du trajet complet. L’aller-retour ne déclenche aucun multiplicateur d’interface. Les frais et le financement du trajet propriétaire ne sont pas saisissables sur son participant partagé ; les buffers restent disponibles si l’utilisateur revient à un trajet propre. Le mode explicitement gratuit ne présente pas de billet payant à adopter.
+
+TypeScript et trois contrôles React/propriétaire PASS. Le préparateur Mobility officiel, raccordé aux providers de fixture existants, évalue un billet de train de 10 € à 10 € en aller simple comme en aller-retour. Sans direction déclarée, son montant évalué reste inconnu. Aucun appel route, carburant ou péage n’est réalisé par le train ; aucun writer distant, SQL ou Apply.
