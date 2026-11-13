@@ -2,7 +2,7 @@ import type { ClayCatalogEntry } from '../clay-v22-catalog';
 import type { ComposerUiModel } from '@/domain/phase2/planner/composer-ui-contract';
 import type { ComposerAssetView, DropTarget } from '@/domain/phase2/planner/composer-contract';
 import type { ComponentSelectionV1 } from '@/domain/phase2/planner/component-contract';
-import { composerPreset, presetForContext, type ComposerPresetKey } from '@/domain/phase2/planner/composer-presets';
+import { ACTIVITY_PRESETS, composerPreset, presetForContext, type ComposerPresetKey } from '@/domain/phase2/planner/composer-presets';
 import { publishedDrop } from './interactions';
 import { componentId } from '@/domain/phase2/planner/identity';
 import { clayAssetArtwork } from '../clay-v22-media';
@@ -129,12 +129,14 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
        :{key:'catalog-basket:'+entry.visualConceptId,kind:'CHOOSE',asset,target:{kind:'BOARD_ZONE'},concept,label:`Préparer un panier pour ${entry.label}`});
    }
  }
- if(entry.presetKey){
-   const preset=composerPreset(entry.presetKey);
-   const existing=model.board.contexts.filter(c=>presetForContext(c)?.presetKey===entry.presetKey);
+ const activityPreset=ACTIVITY_PRESETS.find(preset=>preset.visualConceptId===entry.visualConceptId);
+ const presetKey=entry.presetKey??(!target.contextId&&!target.controlRef?activityPreset?.presetKey:undefined);
+ if(presetKey){
+   const preset=composerPreset(presetKey);
+   const existing=model.board.contexts.filter(c=>presetForContext(c)?.presetKey===presetKey);
    for(const [i,c] of existing.entries())actions.push({key:'open:'+c.contextOccurrenceId,kind:'OPEN',contextId:c.contextOccurrenceId,label:`Ouvrir ${c.label}${existing.length>1?` · occurrence ${i+1}`:''}`});
    const asset=preset&&model.library.searchableAssets.find(a=>a.kind==='CONTEXT_ASSET'&&a.templateKey===preset.templateKey);
-   if(!target.contextId&&!existing.length&&asset&&publishedDrop(model,asset.assetKey,{kind:'BOARD_ZONE'})?.semanticAction==='ADD_CONTEXT')actions.push({key:'preset:'+entry.presetKey,kind:'PRESET',presetKey:entry.presetKey,asset,label:`Préparer ${preset!.label}`});
+   if(!target.contextId&&!existing.length&&asset&&publishedDrop(model,asset.assetKey,{kind:'BOARD_ZONE'})?.semanticAction==='ADD_CONTEXT')actions.push({key:'preset:'+presetKey,kind:'PRESET',presetKey,asset,label:`Préparer ${preset!.label}`});
  }
  if(!card||card.readOnly||!card.capabilityRefs.includes('PATCH_CONTEXT')||catalogRefLocked(model,card.contextOccurrenceId))return actions;
  const id=card.contextOccurrenceId;
@@ -183,7 +185,7 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
        label:sameLabel?`Préparer une autre ligne ${entry.label}`:`Configurer ${entry.label} · ${route.socket.label??productSlot.slot}`});
    }
  }
- if(card.templateKey==='activity'&&!preset&&['v22-art:excel:342','v22-art:excel:343'].includes(entry.visualConceptId)){
+ if(card.templateKey==='activity'&&!preset&&activityPreset){
    const route=catalogSocket(model,id,'main','option:activity:main:activity');
    if(route&&!route.socket.currentItems.some(item=>item.kind!=='UNRESOLVED'))actions.push({key:'activity:'+id,kind:'CHOOSE',
      asset:route.asset,target:route.target,componentLabel:entry.label,label:`Configurer ${entry.label} dans cette activité`});

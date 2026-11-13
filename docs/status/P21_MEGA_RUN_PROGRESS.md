@@ -283,3 +283,9 @@ TypeScript, diff et le banc catalogue/panier PASS. Le filtre isole une ligne UNK
 Chaque ligne distingue coût total, sous-total connu, coût inconnu et calcul à actualiser. Le filtre « À compléter » suit le coût officiel lorsqu’il est publié. L’identité, la consultation et les actions de rattachement restent visibles indépendamment du calcul.
 
 Le banc des intentions liées vérifie 0 € explicite, un sous-total officiel de 12 € avec supplément inconnu, un coût inconnu, le masquage en STALE et l’ouverture de l’homonyme exact. Digest préservé, aucun writer distant ni Apply. Suite · accès depuis le catalogue Clay.
+
+### Activités depuis le catalogue Clay
+
+Les six visuels exacts ouvrent leur intention existante même après renommage. Si aucune n’existe, le catalogue propose sa préparation lorsque le Board admet le dépôt. Dans une activité libre, un choix peut préparer le poste principal encore vide selon la capacité publiée. Un contexte budgétaire distinct ne propose pas cette création.
+
+Le banc Clay PASS sur les 687 visuels, les six correspondances exactes, la reprise, les capacités refusées et la non-régression Cinéma. Aucun changement du catalogue public ni nouvelle illustration. Suite · nouveaux modèles de projets.

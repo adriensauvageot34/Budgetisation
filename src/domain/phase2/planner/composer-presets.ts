@@ -198,29 +198,32 @@ export const COMPOSER_PRESETS = [
 ] as const;
 /** Activity recipes using the existing wide exports from the V22 collection. */
 export const ACTIVITY_PRESETS = ([
-  { presetKey: "bowling", label: "Bowling", illustrationKey: "v22-art-excel-342",
+  { presetKey: "bowling", label: "Bowling", visualConceptId: "v22-art:excel:342",
     searchTerms: ["bowling", "quilles", "partie", "piste"], activityCostLabel: "Coût de la partie",
     guidance: "Précisez le prix de la partie et les frais distincts, comme la location de chaussures." },
-  { presetKey: "karting", label: "Karting", illustrationKey: "v22-art-excel-345",
+  { presetKey: "karting", label: "Karting", visualConceptId: "v22-art:excel:345",
     searchTerms: ["karting", "kart", "circuit", "session"], activityCostLabel: "Tarif de la session",
     guidance: "Renseignez les sessions prévues et les éventuels frais distincts." },
-  { presetKey: "escape-game", label: "Escape game", illustrationKey: "v22-art-excel-343",
+  { presetKey: "escape-game", label: "Escape game", visualConceptId: "v22-art:excel:343",
     searchTerms: ["escape game", "énigme", "jeu d’évasion"], activityCostLabel: "Coût de la séance",
     guidance: "Indiquez le montant prévu pour la séance. Le nombre de participants ne fixe pas son prix." },
-  { presetKey: "mini-golf", label: "Mini-golf", illustrationKey: "v22-art-excel-348",
+  { presetKey: "mini-golf", label: "Mini-golf", visualConceptId: "v22-art:excel:348",
     searchTerms: ["mini-golf", "minigolf", "golf miniature", "parcours"], activityCostLabel: "Entrée ou parcours",
     guidance: "Précisez le coût du parcours et les éventuels frais distincts." },
-  { presetKey: "billiards", label: "Billard", illustrationKey: "v22-art-excel-349",
+  { presetKey: "billiards", label: "Billard", visualConceptId: "v22-art:excel:349",
     searchTerms: ["billard", "table de billard", "partie"], activityCostLabel: "Coût de la table ou de la partie",
     guidance: "Renseignez le tarif de la table ou des parties selon ce qui vous sera facturé." },
-  { presetKey: "pool", label: "Piscine", illustrationKey: "v22-art-excel-354",
+  { presetKey: "pool", label: "Piscine", visualConceptId: "v22-art:excel:354",
     searchTerms: ["piscine", "natation", "baignade", "bassin"], activityCostLabel: "Entrée à la piscine",
     guidance: "Précisez le prix des entrées et ajoutez séparément les frais éventuels." },
-] as const).map(preset => ({
-  ...preset, templateKey: "activity", categoryKey: "ACTIVITY", defaults: { label: preset.label },
-  questions: ["Participants", "Lieu", "Date", "Budget", "Transport facultatif"],
-  artworkPath: `/planned-visuals/builder/clay/v22/wide/${preset.illustrationKey}.webp`,
-} as const));
+] as const).map(preset => {
+  const illustrationKey = preset.visualConceptId.replaceAll(":", "-");
+  return {
+    ...preset, templateKey: "activity", categoryKey: "ACTIVITY", defaults: { label: preset.label },
+    questions: ["Participants", "Lieu", "Date", "Budget", "Transport facultatif"],
+    illustrationKey, artworkPath: `/planned-visuals/builder/clay/v22/wide/${illustrationKey}.webp`,
+  } as const;
+});
 
 /** Additional basket entry points reuse artwork already approved for M18. */
 export const PURCHASE_BASKET_PRESETS = [
