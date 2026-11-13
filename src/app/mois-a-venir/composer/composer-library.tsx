@@ -74,11 +74,12 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     </button>;
   };
   const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
-  const focusActions=()=>{
+  const focusActions=(preferExisting=false)=>{
     const panel=search.current?.closest("aside");
     const actions=Array.from(panel?.querySelectorAll<HTMLButtonElement>(
       "[data-library-existing-action]:not(:disabled),[data-library-add-action]:not(:disabled),[data-library-project-action]:not(:disabled)")??[]);
-    const button=actions.find(action=>action.getClientRects().length>0);
+    const visible=actions.filter(action=>action.getClientRects().length>0);
+    const button=(preferExisting ? visible.find(action=>action.hasAttribute("data-library-existing-action")) : undefined) ?? visible[0];
     if(!button)return false;
     button.focus();
     return true;
@@ -110,10 +111,10 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="manage"?"Budget ou cagnotte…":"Soirée, repas, achat…"} value={query} onChange={e=>setQuery(e.target.value)}
       onKeyDown={e=>{if(e.nativeEvent.isComposing)return;
       if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setQuery("");search.current?.focus();}
-      else if(e.key==="Enter"&&space==="intentions"&&!busy){e.preventDefault();if(monthIntentions.length===1)openContext(monthIntentions[0].contextOccurrenceId);else focusActions();}
+      else if(e.key==="Enter"&&space==="intentions"&&!busy){e.preventDefault();if(monthIntentions.length===1)openContext(monthIntentions[0].contextOccurrenceId);else focusActions(true);}
       else if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
         if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}
-        else if(!matches.length&&!occurrences.length&&projects.length===1)prepareProject?.(projects[0]);else focusActions();
+        else if(!matches.length&&!occurrences.length&&projects.length===1)prepareProject?.(projects[0]);else focusActions(true);
       }else if(e.key==="ArrowDown"){
         e.preventDefault();
         if(!focusActions())Array.from(e.currentTarget.closest("aside")?.querySelectorAll<HTMLButtonElement>("[data-library-scroll] button:not(:disabled)")??[])

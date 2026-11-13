@@ -39,7 +39,7 @@ const initial=model.semanticState,initialDigest=semanticStateDigest(initial),reg
 let current=initial,accepted=[],root,setCurrent;
 const selected=()=>current.contexts.find(context=>context.contextOccurrenceId===contextId).slotSelections.transport.items[0];
 const asset=model.library.searchableAssets.find(asset=>asset.assetKey==='option:activity:transport:car');
-const choice={kind:'slot',asset,target,selection:selected()};
+const choice={kind:'socket',asset,target,selection:selected()};
 function Harness(){
  const [state,setState]=React.useState(current);setCurrent=setState;
  return React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(RestaurantEditor,{

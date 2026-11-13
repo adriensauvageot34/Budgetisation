@@ -8,13 +8,14 @@ import {householdId,uuid} from './fixtures/planner-headless.mjs';
 const rr=process.env.PLANNER_REACT_TEST_TOOLS?createRequire(path.resolve(process.env.PLANNER_REACT_TEST_TOOLS,'package.json')):require;
 const React=rr('react'),{create,act}=rr('react-test-renderer'),load=Module._load;
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
-let root,board,registry,fieldNode,focusCount=0,transportCalls=[];
+let root,board,registry,fieldNode,focusCount=0,transportCalls=[],hiddenExistingId=null;
 const listeners=new Map();
 class NodeMock {
   constructor(props={}){this.props=props;this.open=false;this.isConnected=true;}
   focus(){focusCount++;document.activeElement=this;for(const fn of listeners.get('focusin')??[])fn({target:this});}
   closest(selector){return selector==='aside'?this:null;}
   contains(node){return node===this;}
+  hasAttribute(name){return this.props[name]!==undefined&&this.props[name]!==null;}
   matches(selector){return this.props['data-probe-input']?selector.includes('input'):false;}
   show(){this.open=true;}showModal(){this.open=true;}close(){this.open=false;}
   querySelector(selector){
@@ -30,7 +31,7 @@ class NodeMock {
       (n.props['data-library-existing-action']||n.props['data-library-add-action']||n.props['data-library-project-action']))
       .map(node=>new NodeMock(node.props));
   }
-  getClientRects(){return [{}];}
+  getClientRects(){return this.props['data-library-existing-action']===hiddenExistingId?[]:[{}];}
 }
 globalThis.HTMLElement=NodeMock;globalThis.Element=NodeMock;
 globalThis.document={body:new NodeMock(),activeElement:new NodeMock(),querySelector:selector=>selector==='[data-restaurant-editor]'?new NodeMock():null,querySelectorAll:()=>[],
@@ -68,6 +69,7 @@ const {ComposerShell}=require('@/app/mois-a-venir/composer/composer-shell');
 const {composerLibraryIndex,filterLibraryIntentions,libraryOccurrences,librarySearchAction}=require('@/domain/phase2/planner/composer-library-index');
 const {presetCreationFields,composerPreset}=require('@/domain/phase2/planner/composer-presets');
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
+const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const f=await readMonthFixture(),beforeWorld=JSON.stringify(f.world);
 const context=(id,key,date)=>{const preset=composerPreset(key);return {contextOccurrenceId:uuid(id),templateKey:preset.templateKey,status:'ACTIVE',parentContextOccurrenceId:null,
  fields:{fieldSchemaVersion:'context-fields@v2',...presetCreationFields(preset.templateKey,key),...(date?{plannedDate:date}:{})},slotSelections:{},provenance:'EXPLICIT_USER_DECISION'};};
@@ -105,10 +107,16 @@ try{
   assert.notEqual(saveBefore,'SAVED');assert.match(textOf(root.root),/Brouillon en mémoire/);
  });
  await check('A2-03-TWO-HOMONYMS-ENTER-FOCUSES-WITHOUT-CHOOSING',async()=>{
-  await mount(many);await query('mascara');assert.equal(existing().length,2);const focusBefore=focusCount;await enter();
+  await mount(many);await query('mascara');assert.equal(existing().length,2);
+  assert(buttons().some(node=>node.props['data-library-project-action']==='clothing-and-beauty-shopping'));
+  const before=semanticStateDigest(board.model.semanticState),focusBefore=focusCount;await enter();
   assert.equal(mountedEditor().length,0);assert(focusCount>focusBefore);assert.equal(document.activeElement.props['data-library-existing-action'],uuid(93001));
+  assert.equal(semanticStateDigest(board.model.semanticState),before);assert.deepEqual(transportCalls,[]);
+  hiddenExistingId=uuid(93001);await enter();assert.equal(document.activeElement.props['data-library-existing-action'],uuid(93002));hiddenExistingId=null;
+  assert.equal(mountedEditor().length,0);assert.equal(semanticStateDigest(board.model.semanticState),before);
   assert.match(existing().map(textOf).join(' '),/10 nov/);assert.match(existing().map(textOf).join(' '),/20 nov/);
   await invoke(existing()[1]);assert.equal(mountedEditor()[0].props['data-probe-editor'],uuid(93002));assert.equal(board.model.semanticState.contexts.length,4);assert.deepEqual(transportCalls,[]);
+  assert.equal(semanticStateDigest(board.model.semanticState),before);
  });
  await check('A2-04-ADD-ANOTHER-IS-SEPARATE-AND-CREATES-ONCE',async()=>{
   await mount(one);await query('mascara');await invoke(addMascara());assert.equal(board.model.semanticState.contexts.length,2);
