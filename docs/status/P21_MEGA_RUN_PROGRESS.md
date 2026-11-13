@@ -86,7 +86,11 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Aperçu des projets | Blocages visibles et confirmation inactive pendant une comparaison ou organisation |
 | DONE | Catalogue contextualisé | Type d’éditeur annoncé et recherche des paniers par leurs articles |
 | DONE | Accessibilité des formulaires | Annulation de l’aperçu rend le focus, réussite laisse la navigation du projet disponible |
-| READY | Compléments des séjours | Parcours d’ouverture ciblée des activités enfants depuis les postes |
+| DONE | Compléments des séjours | Ouverture exacte des enfants et confirmation explicite de leur retrait |
+| READY | Autres intentions déjà éditables | Retrouver soirées, repas livrés et cadeaux avec leurs propriétaires actuels |
+| READY | Relations sur le Board | Afficher le parent d’un enfant et faciliter son accès sans mutation |
+| READY | Synthèse des informations manquantes | Accès aux diagnostics officiels de l’intention sélectionnée |
+| READY | Préférences de lecture | Simplifier le repérage des intentions à compléter dans le mois |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
 | BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
 
@@ -163,3 +167,9 @@ TypeScript et diff PASS. Le banc panier valide Amazon, Vêtements, Courses, comp
 L’aperçu explique les blocages transitoires du Shell et empêche une confirmation sans effet pendant une comparaison ou organisation locale. Annuler rend le focus à l’origine. Une création réussie ne force plus le retour sur la bibliothèque. Les aides de sauvegarde pointent vers les actions réellement présentes sous le bandeau.
 
 TypeScript, diff et deux contrôles React PASS. Nom et choix facultatifs restent locaux jusqu’à confirmation, le motif de blocage empêche toute création, l’annulation et la réussite ont des comportements de focus distincts. Aucun writer distant.
+
+### Postes enfants d’un séjour
+
+Les postes Activités et Repas offrent un accès direct à l’intention enfant, comme le faisait déjà le panier lié. La confirmation de retrait indique que l’intention, ses postes et ses éventuels enfants seront retirés lors de la validation du séjour. Le déplacement vers un autre projet reste disponible depuis le résumé.
+
+TypeScript, diff et deux contrôles React/propriétaire PASS. Deux Cinéma homonymes ouvrent leurs identifiants respectifs. Le retrait attend sa confirmation puis la validation du séjour, conserve le parent et l’autre enfant et passe par le propriétaire existant. Aucun writer distant ni Apply.
