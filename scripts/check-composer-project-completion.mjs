@@ -16,6 +16,7 @@ Module._load=function(name,parent,...args){
 };
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {projectCompletionSuggestions,ProjectCompletion,ProjectCompletionPreference}=require('@/app/mois-a-venir/composer/project-completion');
+const {CatalogContextEditor}=require('@/app/mois-a-venir/composer/catalog-context-editor');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const f=await readMonthFixture(),world=JSON.stringify(f.world),parentId=uuid(29900);let counter=29900;
 const request=async(draft,operation)=>{
@@ -114,10 +115,27 @@ try{
  const directEquipment={...furnishing,board:{...furnishing.board,contexts:furnishing.board.contexts.map(card=>card.contextOccurrenceId===furnishingId
   ? {...card,sockets:card.sockets.map(socket=>socket.slotKey==='items'?{...socket,currentItems:[{kind:'COMPONENT'}]}:socket)}:card)}};
  assert.deepEqual(projectCompletionSuggestions(directEquipment,furnishingId),[]);
+ await act(async()=>root.unmount());root=null;accepted=[];
+ const editorModel=current=>React.createElement(CatalogContextEditor,{
+  context:current.semanticState.contexts.find(context=>context.contextOccurrenceId===furnishingId),
+  editor:current.editors.find(editor=>editor.assetKey==='template:home-project'),targetMonth:'2026-11',
+  householdPersons:[],busy:false,model:current,choose(){assert.fail();},onCancel(){},
+  onSave(operation){accepted.push(operation);return true;},
+ });
+ await act(async()=>{root=create(editorModel(furnishing));});
+ await click('Ajouter Acheter pour la maison');
+ const noPurchase={...furnishing,dropCapabilities:furnishing.dropCapabilities.filter(drop=>drop.target.contextOccurrenceId!==furnishingId)};
+ await act(async()=>root.update(editorModel(noPurchase)));
+ await act(async()=>confirmation.accept());assert.equal(accepted.length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('droits de rattachement ont changé')));
+ await act(async()=>root.update(editorModel(furnishing)));
+ await click('Ajouter Acheter pour la maison');
+ await act(async()=>confirmation.accept());assert.equal(accepted[0].purchaseBasket,true);
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
  console.log('S3-04 Weekend complements follow the actual children without repeating an existing activity: PASS');
  console.log('S3-05 Two leisure activities offer one meal, suppressed when any meal is already linked: PASS');
  console.log('S3-06 A rental can suggest an empty groceries basket and suppresses an existing groceries decision: PASS');
  console.log('S3-07 A home furnishing project suggests one empty equipment basket until a purchase or item is present: PASS');
+ console.log('The home project attachment editor refuses stale confirmation: PASS');
  console.log(JSON.stringify({status:'PASS',checks:7,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

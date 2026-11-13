@@ -517,3 +517,9 @@ TypeScript, diff, recherche, familles de projets et dix groupes du banc de parco
 Un aménagement sans équipement ni achat peut proposer un panier vide. Le motif reflète le contenu du projet et la confirmation réutilise le socket Achats. Un équipement déjà renseigné ou un achat lié retire la proposition.
 
 TypeScript, diff et sept groupes S3 PASS. La fixture vérifie l’admission explicite du panier et la disparition de la suggestion, sans writer distant ni Apply.
+
+### Confirmation d’association devenue obsolète
+
+L’éditeur des projets revalide la composition et les droits lorsque l’utilisateur confirme une association. Le refus explique comment reprendre.
+
+TypeScript, diff et banc S3/éditeur PASS. Le modèle Maison refuse le panier lorsque la capacité disparaît pendant la confirmation, puis transmet la commande panier après réouverture et confirmation explicite.

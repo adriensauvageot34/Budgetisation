@@ -90,15 +90,20 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const matchesAttachment = (text: string) => attachmentTerms.every(term => normalizeLibrarySearch(text).includes(term));
   const visibleCandidates = candidates.filter(child => matchesAttachment(child.label));
   const visibleAdditions = addOptions.filter(({ preset }) => matchesAttachment([preset.label, ...preset.searchTerms].join(" ")));
-  const attach = useCommittedEvent((operation: ComposerOperation) => {
-    if (!canAttach || operation.kind !== "DROP") return;
+  const attach = useCommittedEvent((operation: Extract<ComposerOperation, { kind: "DROP" }>, expectedDigest: string) => {
     const candidate = operation.presetKey ? addOptions.some(option => option.preset.presetKey === operation.presetKey)
       : candidates.some(item => item.id === operation.identity);
-    if (candidate) onSave(operation);
+    if (!canAttach || !candidate || expectedDigest !== model.board.draft.semanticStateDigest) {
+      setError("Le projet ou les droits de rattachement ont changé. Sélectionnez à nouveau l’intention.");
+      return;
+    }
+    setError("");
+    onSave(operation);
   });
-  const confirmAttachment = (label: string, operation: () => ComposerOperation) => {
+  const confirmAttachment = (label: string, operation: () => Extract<ComposerOperation, { kind: "DROP" }>) => {
+    const expectedDigest = model.board.draft.semanticStateDigest;
     const open = () => confirm({ message: `Associer « ${label} » à cette intention ?`, acceptLabel: "Associer cette intention",
-      accept: () => attach(operation()) });
+      accept: () => attach(operation(), expectedDigest) });
     if (leaveRaw(open)) open();
   };
   const componentRoute = (slotKey: string, optionKey: string, selection?: ComponentSelectionV1) => {
