@@ -80,7 +80,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Suggestions S3 | Compléments selon les enfants réels, priorité repas/activités en mémoire de session |
 | DONE | Produits Beauté complémentaires | Tonique, sérum, crème hydratante et lotion dans l’éditeur prix/quantité existant |
 | DONE | Navigation et accessibilité | Groupes par projet, filtre et retour au parent consultable |
-| IN_PROGRESS | Déplacement d’une intention liée | Reparentage explicite vers un autre projet selon les capacités publiées |
+| DONE | Déplacement d’une intention liée | Reparentage explicite, identité et postes conservés, droits et digest revérifiés |
 | READY | Lecture financière des relations | Contexte parent et absence de total consolidé compréhensibles |
 | READY | Reprise des séjours | Hôtel et séjour chez des proches dans la navigation exacte |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
@@ -135,3 +135,9 @@ Les seize contrôles du banc Beauté PASS, incluant les neuf extensions de Masca
 Le sélecteur regroupe les intentions par projet, y compris les enfants imbriqués. Au-delà de huit intentions, une recherche retrouve aussi le nom du parent. Une sélection courante reste accessible lorsqu’elle ne correspond pas au filtre. Les parents consultables restent atteignables depuis un enfant.
 
 TypeScript, diff et trois contrôles d’identité/rendu PASS, incluant homonymes, imbrication, recherche avec accents et référence cyclique défensive. Aucune mutation à la consultation.
+
+### Déplacement vers un autre projet
+
+Une intention liée peut être déplacée vers un autre projet quand le serveur publie `REPARENT_PRESERVE_ID`. Les destinations proposées utilisent uniquement des sockets répétables pour éviter de remplacer un autre enfant. Une confirmation explique le retrait de l’ancien projet et conserve les postes de l’enfant. Les protections du parent, de l’enfant, de la relation et de la destination sont respectées. Les descendants ne sont jamais proposés comme destination.
+
+TypeScript, diff et deux contrôles React/propriétaire PASS. Deux projets homonymes restent distincts ; un billet à 12 € conserve son identité, ses composants et son coût officiel. Un changement du Draft invalide la confirmation. Aucune suppression de projet ni écriture distante, aucun Apply.

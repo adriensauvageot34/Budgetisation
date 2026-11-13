@@ -207,7 +207,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
       {beautyProduct && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {childSlot && <>
-        <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} />
+        <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} decide={onSave} />
         <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
         {(candidates.length > 0 || addOptions.length > 0) && <details>
           <summary>Associer une intention</summary>
