@@ -535,3 +535,7 @@ Le projet Maison ouvre les postes Équipement et Prestation depuis son résumé 
 ### Ancienne date invalide sur le Board
 
 Le Board et la navigation affichent « Date à préciser » quand une ancienne date ne peut pas être lue, en conservant l’accès à la carte et sa valeur dans le Draft. Les tests locaux couvrent le rendu d’un achat avec une date invalide et la navigation par occurrence.
+
+### Ouvrir un résultat unique du catalogue au clavier
+
+Entrée ouvre la fiche du seul résultat de recherche quand la saisie est terminée. Le retour à la liste replace le focus dans la recherche. TypeScript et banc catalogue PASS, avec recherche vide, résultat absent, saisie en cours de composition et ouverture de la fiche sans commande ni changement de digest.

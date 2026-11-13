@@ -24,7 +24,7 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  const [request,setRequest]=useState<Request|null>(null),[entries,setEntries]=useState<readonly ClayCatalogEntry[]>([]),[error,setError]=useState('');
  const [query,setQuery]=useState(''),[scope,setScope]=useState('all'),[family,setFamily]=useState(''),[nature,setNature]=useState(''),[page,setPage]=useState(0),[selected,setSelected]=useState<string|null>(null);
  const dialog=useRef<HTMLDialogElement>(null), trigger=useRef<HTMLElement|null>(null), requestDigest=useRef('');
- const resultsRegion=useRef<HTMLDivElement>(null), detailHeading=useRef<HTMLHeadingElement>(null), resultTrigger=useRef<HTMLButtonElement|null>(null);
+ const resultsRegion=useRef<HTMLDivElement>(null), detailHeading=useRef<HTMLHeadingElement>(null), resultTrigger=useRef<HTMLElement|null>(null);
  const returnToResults=useRef(false);
  const frozenSelections=useRef<ReadonlySet<string>>(new Set());
  const open=(target:Request)=>{if(!dialog.current?.open)trigger.current=document.activeElement instanceof HTMLElement?document.activeElement:null;requestDigest.current=model.board.draft.semanticStateDigest;
@@ -70,7 +70,13 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
    <div className={styles.panel}>
     <header><div><h2 id="clay-catalog-title">Tous les éléments</h2><p>{context?`Pour ${context.label}`:scope==='courses'?'Produits pour Courses · distincts du budget mensuel':'Concepts, intentions et repères visuels de Composer'}</p></div><button type="button" onClick={close} aria-label="Fermer le catalogue">Fermer</button></header>
     <div className={styles.filters}>
-     <label className={styles.search}>Rechercher un élément<input autoFocus aria-label="Rechercher dans tous les éléments" placeholder="Pâtes alimentaires, mascara, billet…" value={query} onChange={e=>{setQuery(e.target.value);change();}}/></label>
+     <label className={styles.search}>Rechercher un élément<input autoFocus aria-label="Rechercher dans tous les éléments" placeholder="Pâtes alimentaires, mascara, billet…" value={query} onChange={e=>{setQuery(e.target.value);change();}}
+      onKeyDown={e=>{
+        if(e.key!=='Enter'||e.nativeEvent.isComposing||!query.trim()||results.length!==1||chosenId)return;
+        e.preventDefault();
+        resultTrigger.current=e.currentTarget;
+        setSelected(results[0].entry.visualConceptId);
+      }}/></label>
      <label>Contexte<select aria-label="Contexte du catalogue" value={scope} onChange={e=>{setScope(e.target.value);setFamily('');change();}}>{CATALOG_SCOPES.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
      <label>Famille<select aria-label="Famille du catalogue" value={family} onChange={e=>{setFamily(e.target.value);change();}}><option value="">Toutes les familles</option>{[...new Set(entries.filter(e=>scope==='all'||e.discovery.contexts.includes(scope)).map(e=>e.discovery.family))].sort().map(f=><option key={f}>{f}</option>)}</select></label>
      <label>Nature<select aria-label="Nature du visuel" value={nature} onChange={e=>{setNature(e.target.value);change();}}><option value="">Toutes les natures</option>{[['ELEMENT','Éléments'],['INTENT','Intentions'],['SCENE','Scènes'],['MODE','Modes de trajet'],['GROUP','Groupes de produits'],['CONFIGURATION','Configurations']].map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label>

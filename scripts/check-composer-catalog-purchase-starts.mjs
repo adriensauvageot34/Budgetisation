@@ -102,6 +102,20 @@ try{
  const back=()=>root.root.findAllByType('button').find(button=>text(button)==='Retour aux résultats');
  await act(async()=>back().props.onClick());assert.equal(focus.at(-1),'div');
  assert(root.root.findByProps({'data-catalog-detail-open':false}));
+ const search=()=>root.root.findByProps({'aria-label':'Rechercher dans tous les éléments'});
+ const enter=(isComposing=false)=>search().props.onKeyDown({key:'Enter',nativeEvent:{isComposing},
+  currentTarget:{isConnected:true,focus(){focus.push('search');}},preventDefault(){}});
+ await act(async()=>search().props.onChange({target:{value:''}}));
+ await act(async()=>enter());assert(root.root.findByProps({'data-catalog-detail-open':false}));
+ await act(async()=>search().props.onChange({target:{value:'introuvable'}}));
+ await act(async()=>enter());assert(root.root.findByProps({'data-catalog-detail-open':false}));
+ await act(async()=>search().props.onChange({target:{value:charger.label}}));
+ assert.equal(root.root.findAll(node=>node.type==='button'&&node.props['data-catalog-entry']).length,1);
+ await act(async()=>enter(true));assert(root.root.findByProps({'data-catalog-detail-open':false}));
+ await act(async()=>enter());assert.equal(focus.at(-1),'h3');
+ assert(root.root.findByProps({'data-catalog-detail':charger.visualConceptId}));
+ assert.equal(chosen.length,0);
+ await act(async()=>back().props.onClick());assert.equal(focus.at(-1),'search');
  const result=root.root.findByProps({'data-catalog-entry':charger.visualConceptId});
  await act(async()=>result.props.onClick({currentTarget:{isConnected:true,focus(){focus.push('result');}}}));
  assert.equal(focus.at(-1),'h3');
