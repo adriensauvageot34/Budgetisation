@@ -158,7 +158,7 @@ assert.equal(newCinema.parentContextOccurrenceId,projectId);
 assert.deepEqual(newCinema.slotSelections,{});
 console.log('UX-07 Composed outing attaches exact occurrences and preserves official child costs: PASS');
 const starters=availableProjectStarters(model);
-assert.equal(starters.length,11);
+assert.equal(starters.length,12);
 let starterId=29200, starterSequence=20;
 const transport=command=>handleComposerRequest(fixture.deps,householdId,command);
 for(const starter of starters){
@@ -171,6 +171,15 @@ for(const starter of starters){
   assert.equal(hotel.slotSelections.activities.items[0].childContextOccurrenceId,children[0].contextOccurrenceId);
   assert.equal(hotel.slotSelections.restaurants.items[0].childContextOccurrenceId,children[1].contextOccurrenceId);
   assert.equal(added.model.budgetReading.byContext[children[1].contextOccurrenceId].gross,null);
+ }
+ if(starter.key==='weekend-groceries-and-walk'){
+  const stay=added.model.semanticState.contexts.find(context=>context.contextOccurrenceId===added.parentId);
+  const basket=children[0];
+  assert(isPurchaseBasket(basket));assert.equal(basket.fields.budgetDomain,'groceries');
+  assert.equal(basket.fields.basketCoverage,undefined);
+  assert.equal(stay.slotSelections.purchases.items[0].childContextOccurrenceId,basket.contextOccurrenceId);
+  assert.equal(stay.slotSelections.groceries,undefined);
+  assert.equal(added.model.budgetReading.byContext[basket.contextOccurrenceId].gross,null);
  }
  assert(children.every(child=>Object.keys(child.slotSelections).length===0&&!child.fields.plannedDate));
  if(starter.key==='games-basket'){

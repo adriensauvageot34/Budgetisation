@@ -68,7 +68,8 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
           const checked = selected.includes(key);
           return <label className={styles.projectChoice} key={key}><input type="checkbox" checked={checked} disabled={!available && !checked}
             onChange={event => setSelected(previous => event.target.checked ? [...previous.filter(item => item !== key), key] : previous.filter(item => item !== key))} />
-            <span>{composerPreset(key)?.label}<small>{available ? "Prix inconnu · à compléter" : "Indisponible avec les droits actuels"}</small></span></label>;
+            <span>{composerPreset(key)?.label}<small>{!available ? "Indisponible avec les droits actuels"
+              : composerPreset(key)?.templateKey === "purchase" ? "Panier vide · articles à choisir" : "Prix inconnu · à compléter"}</small></span></label>;
         })}
       </fieldset>}
       {!starter.children.length && <p>Le panier sera vide. Vous choisirez les articles dans son éditeur.</p>}

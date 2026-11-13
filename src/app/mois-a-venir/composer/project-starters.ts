@@ -26,6 +26,8 @@ export const projectStarters = [
     children: [{ key: "escape-game", slot: "activities" }] },
   { key: "hotel-and-dinner", label: "Hôtel, musée et restaurant", parent: "hotel-night",
     children: [{ key: "museum-exhibition", slot: "activities" }, { key: "restaurant-for-two", slot: "restaurants" }] },
+  { key: "weekend-groceries-and-walk", label: "Week-end, courses et balade", parent: "weekend-gite",
+    children: [{ key: "groceries-purchase", slot: "purchases" }, { key: "hiking-nature", slot: "activities" }] },
 ] as const satisfies readonly {
   key: string; label: string; parent: ComposerPresetKey; children: readonly { key: ComposerPresetKey; slot: string }[];
 }[];

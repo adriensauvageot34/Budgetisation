@@ -439,3 +439,9 @@ TypeScript, diff et cinq contrôles S3 PASS. Les deux retours de focus sont vér
 Le séjour indique quand l’état ou les droits ont changé pendant la confirmation de rattachement. L’utilisateur peut rechercher à nouveau la destination admissible.
 
 TypeScript, diff et banc séjour/enfants PASS. Une capacité retirée produit le message et ne transmet aucune opération.
+
+### Week-end, courses et balade
+
+Le douzième modèle propose un panier Courses vide dans le socket Achats et une randonnée dans le socket Activités. Chaque complément reste facultatif. Le panier conserve son domaine Courses et sa couverture reste à préciser.
+
+TypeScript, diff, recherche, aperçu, douze contrôles Séjour et dix groupes du banc de parcours PASS. L’évaluateur confirme les identités et les deux sockets. Le panier ne contient aucune ligne ni aucun prix prérempli. Aucun writer distant ni Apply.
