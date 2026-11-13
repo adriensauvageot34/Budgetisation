@@ -125,6 +125,21 @@ try{
  const directEquipment={...furnishing,board:{...furnishing.board,contexts:furnishing.board.contexts.map(card=>card.contextOccurrenceId===furnishingId
   ? {...card,sockets:card.sockets.map(socket=>socket.slotKey==='items'?{...socket,currentItems:[{kind:'COMPONENT'}]}:socket)}:card)}};
  assert.deepEqual(projectCompletionSuggestions(directEquipment,furnishingId),[]);
+ for(const [template,expected] of [['home-project',['home-equipment-basket']],['friend-visit',['museum-exhibition']],
+  ['short-stay',['museum-exhibition','hiking-nature']]]){
+  const genericId=uuid(++counter);
+  const generic=await request(f.semantic,{kind:'DROP',assetKey:'template:'+template,target:{kind:'BOARD_ZONE'},
+   identity:genericId,selectionId:uuid(++counter),values:{label:'Projet personnalisé'}});
+  const before=semanticStateDigest(generic.semanticState);
+  const suggestions=projectCompletionSuggestions(generic,genericId);
+  assert.deepEqual(suggestions.map(candidate=>candidate.preset.presetKey),expected);
+  assert(!suggestions.some(candidate=>candidate.reason.includes('cette pièce')));
+  assert.equal(semanticStateDigest(generic.semanticState),before);
+  assert.deepEqual(projectCompletionSuggestions({...generic,dropCapabilities:[]},genericId),[]);
+  const future=structuredClone(generic);
+  future.board.contexts.find(card=>card.contextOccurrenceId===genericId).fields.composerPresentation={version:'composer-context-presentation@v1',presetKey:'future-project'};
+  assert.deepEqual(projectCompletionSuggestions(future,genericId),[]);
+ }
  await act(async()=>root.unmount());root=null;accepted=[];
  const editorModel=current=>React.createElement(CatalogContextEditor,{
   context:current.semanticState.contexts.find(context=>context.contextOccurrenceId===furnishingId),
@@ -148,5 +163,6 @@ try{
  console.log('S3-07 A home furnishing project suggests one empty equipment basket until a purchase or item is present: PASS');
  console.log('S3-08 A generic activity or a snack provides a truthful, capability-gated reason for its complement: PASS');
  console.log('The home project attachment editor refuses stale confirmation: PASS');
- console.log(JSON.stringify({status:'PASS',checks:8,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ console.log('S3-09 Generic stays, visits and home projects reuse admitted complements without mutation: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:9,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

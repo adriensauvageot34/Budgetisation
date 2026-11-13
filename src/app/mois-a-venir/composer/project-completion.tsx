@@ -18,10 +18,11 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
   if (!parent || parent.readOnly || !parent.capabilityRefs.includes("PATCH_CONTEXT") || model.semanticState.preferences.anchors.includes(parentId)
     || model.semanticState.preferences.flexibility[parentId] === "PRESERVE") return [];
   const preset = presetForContext(parent)?.presetKey;
+  const bare = parent.fields.composerPresentation === undefined;
   const visit = parent.templateKey === "friend-visit" || parent.templateKey === "family-visit";
   const stay = parent.templateKey === "short-stay";
-  const home = preset === "furnish-room";
-  const slotKey = preset === "composed-outing" ? "children" : home ? "purchases" : preset && (stay || visit) ? "activities" : null;
+  const home = preset === "furnish-room" || bare && parent.templateKey === "home-project";
+  const slotKey = preset === "composed-outing" ? "children" : home ? "purchases" : (preset || bare) && (stay || visit) ? "activities" : null;
   if (!slotKey) return [];
   const children = model.board.contexts.filter(card => card.parentContextOccurrenceId === parentId
     && parent.childContextOccurrenceIds.includes(card.contextOccurrenceId));
@@ -42,7 +43,9 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
     ? outingCandidates
     : home ? children.some(card => card.templateKey === "purchase")
       || parent.sockets.find(socket => socket.slotKey === "items")?.currentItems.some(item => item.kind === "COMPONENT") ? [] : [
-        { add: "home-equipment-basket", reason: "Aucun équipement ni achat n’est encore prévu pour cette pièce. Vous pouvez préparer un panier." },
+        { add: "home-equipment-basket", reason: preset === "furnish-room"
+          ? "Aucun équipement ni achat n’est encore prévu pour cette pièce. Vous pouvez préparer un panier."
+          : "Aucun équipement ni achat n’est encore prévu pour ce projet. Vous pouvez préparer un panier." },
       ]
     : visit ? activityChosen ? [] : [{ add: "museum-exhibition",
       reason: "Votre visite n’a pas encore d’activité liée. Vous pouvez préparer une sortie culturelle." }]

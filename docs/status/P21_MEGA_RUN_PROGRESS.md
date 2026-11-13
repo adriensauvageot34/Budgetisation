@@ -605,3 +605,7 @@ Le bouton réinitialise la recherche et le filtre des prix manquants, puis repla
 ### Reprendre les projets libres
 
 Les projets Maison, visites amicales et autres projets sans preset sont retrouvables dans le mois. Leur éditeur expose les intentions liées et les associations admises par les sockets existants. Les métadonnées de présentation inconnues gardent leur traitement protégé. TypeScript, cinq contrôles familles de projets et quatre contrôles de navigation du mois PASS sur fixture.
+
+### Compléments pour les séjours, visites et projets Maison libres
+
+Les intentions libres réutilisent les propositions de leur type métier lorsqu’un socket et un dépôt les admettent. Le motif d’un projet Maison libre parle du projet préparé. Les présentations inconnues restent sans suggestion. TypeScript et neuf groupes S3 PASS avec absence de mutation en consultation et capacités retirées.
