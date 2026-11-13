@@ -581,3 +581,7 @@ L’aperçu signale une date impossible ou extérieure au mois et garde les autr
 ### Place disponible pour la fiche catalogue sur mobile
 
 Sous 760 px, la fiche utilise aussi l’espace occupé par les filtres et la pagination. Le bouton de retour restaure la recherche et la page courante. Le banc catalogue vérifie les deux états et le retour du focus. Rendu navigateur reporté.
+
+### Impact budgétaire d’une activité libre
+
+Le résumé de l’éditeur Activité libre montre la lecture officielle de cette occurrence. Le banc familles de projets vérifie un tarif déclaré de 17,25 € et le masquage du montant calculé lors d’un état périmé. TypeScript et quatre contrôles sur fixture PASS.

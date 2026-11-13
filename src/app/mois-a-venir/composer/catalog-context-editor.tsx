@@ -228,9 +228,9 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : mascaraPreset ? "Tous les choix du mascara" : "Tous les choix du produit"}</button>}
       {beautyProduct && !activeNeed && <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={busy}
         dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
-      {beautyProduct && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
+      {(beautyProduct || context.templateKey === "activity" || homeProject) && !activeNeed &&
+        <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {childSlot && <>
-        {homeProject && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
         {homePosts.length > 0 && <div className={styles.linkedFilters}>
           {homePosts.map(({ slotKey, label, route }) => <button type="button" key={slotKey} disabled={busy}
             onClick={() => {

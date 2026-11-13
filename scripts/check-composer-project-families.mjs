@@ -13,6 +13,7 @@ const {HOME_PROJECT_PRESET,presetIllustrationPath}=require('@/domain/phase2/plan
 const {IntentBudgetImpact,BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
 const {libraryOccurrences}=require('@/domain/phase2/planner/composer-library-index');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
+const {fresh,buildComponentRow}=require('@/app/mois-a-venir/composer/night-out-components');
 globalThis.fetch=async()=>{throw Error('PROJECT_FAMILIES_REMOTE_FORBIDDEN');};
 const f=await readMonthFixture(),world=JSON.stringify(f.world),original=semanticStateDigest(f.model.semanticState);let id=30200;
 const transport=operation=>handleComposerRequest(f.deps,householdId,operation);
@@ -81,4 +82,22 @@ assert.equal(model.semanticState.contexts.find(context=>context.contextOccurrenc
 assert.equal(model.budgetReading.byContext[purchaseId].gross,null);
 assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
 console.log('PF-03 The home project admits an existing basket without assigning costs: PASS');
-console.log(JSON.stringify({status:'PASS',checks:3,remoteWrites:0,apply:false,level:'LOCAL_OWNER_AND_RENDER'}));
+const freeActivityId=uuid(++id);
+await request({kind:'DROP',assetKey:'template:activity',target:{kind:'BOARD_ZONE'},identity:freeActivityId,selectionId:uuid(++id),
+ values:{label:'Sortie personnalisée'}});
+const renderActivity=status=>renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider,{value:status},
+ React.createElement(CatalogContextEditor,{context:model.semanticState.contexts.find(context=>context.contextOccurrenceId===freeActivityId),
+  editor:model.editors.find(editor=>editor.assetKey==='template:activity'),targetMonth:'2026-11',householdPersons:[],busy:false,model,
+  choose(){assert.fail();},onSave(){assert.fail();},onCancel(){}})));
+assert.match(renderActivity('FRESH'),/Impact sur le budget/);
+assert.match(renderActivity('FRESH'),/À préciser/);
+await request({kind:'MUTATE',mutation:{kind:'PATCH_CONTEXT',contextOccurrenceId:freeActivityId,slotKey:'main',items:[
+ buildComponentRow({...fresh('Tarif déclaré'),costMode:'MANUAL',amount:'17,25'},'activity')]}});
+assert.equal(model.budgetReading.byContext[freeActivityId].gross,'17.25');
+const impactMarkup=status=>renderActivity(status).match(/<section[^>]*data-intent-budget-impact[^>]*>[\s\S]*?<\/section>/)?.[0]??'';
+assert.match(impactMarkup('FRESH'),/17,25\s*€/);
+assert.match(impactMarkup('STALE'),/Les montants se mettent à jour avec vos choix/);
+assert.doesNotMatch(impactMarkup('STALE'),/17,25/);
+assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
+console.log('PF-04 The free activity editor displays its current official impact and hides stale amounts: PASS');
+console.log(JSON.stringify({status:'PASS',checks:4,remoteWrites:0,apply:false,level:'LOCAL_OWNER_AND_RENDER'}));
