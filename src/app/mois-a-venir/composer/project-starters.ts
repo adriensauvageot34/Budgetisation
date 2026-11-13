@@ -45,8 +45,10 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
     evaluated = response.model;
   };
   await drop(starter.parent, boardDrop, parentId);
-  if (starter.slot) for (const child of starter.children) {
-    await drop(child, { kind: "CONTEXT_SOCKET", contextOccurrenceId: parentId, slotKey: starter.slot }, nextId());
+  if (starter.slot) {
+    for (const child of starter.children) {
+      await drop(child, { kind: "CONTEXT_SOCKET", contextOccurrenceId: parentId, slotKey: starter.slot }, nextId());
+    }
   }
   return { model: evaluated, parentId };
 }

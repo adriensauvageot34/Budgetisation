@@ -287,14 +287,37 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     });
   }
   useEffect(() => { if (recovered) schedulePreview(recovered.frame.draft); }, []);
-  function stage(operation: ComposerOperation, history: "push" | "undo" | "redo" = "push", restored?: PlanSemanticStateV1 | ComposerLocalFrame) {
+  function stage(operation: ComposerOperation, history: "push" | "undo" | "redo" = "push", restored?: PlanSemanticStateV1 | ComposerLocalFrame,
+    confirmedRemoval?: string) {
     if (busyRef.current) return false;
     if(operation.kind==="DROP"&&operation.target.kind==="TRASH") {
-      const context=current.current.board.contexts.find(card=>operation.assetKey===`context-occurrence:${card.contextOccurrenceId}`);
-      if(context&&presetForContext(context)?.presetKey==="bar-apero") {
-        const targets=new Set([context.contextOccurrenceId]);
-        for(const child of localDraft.current.contexts)if(child.parentContextOccurrenceId&&targets.has(child.parentContextOccurrenceId))targets.add(child.contextOccurrenceId);
-        if(!inlineEdits.registry.guard(()=>stage(operation,history,restored),targets,false))return false;
+      const context=localDraft.current.contexts.find(item=>operation.assetKey===`context-occurrence:${item.contextOccurrenceId}`);
+      if(context) {
+        const targets = new Set([context.contextOccurrenceId]);
+        for (let size = 0; size !== targets.size;) {
+          size = targets.size;
+          for (const child of localDraft.current.contexts) {
+            if (child.parentContextOccurrenceId && targets.has(child.parentContextOccurrenceId)) targets.add(child.contextOccurrenceId);
+          }
+        }
+        if(!inlineEdits.registry.guard(()=>stage(operation,history,restored,confirmedRemoval),targets,false))return false;
+        if (targets.size > 1 && presetForContext(context)?.presetKey !== "bar-apero") {
+          const latest = visualDraftModel(current.current, localDraft.current);
+          if ([...targets].some(id => !publishedDrop(latest, `context-occurrence:${id}`, { kind: "TRASH" }))) {
+            setMessage("Une intention du projet est protégée ou son droit de retrait attend une actualisation.");
+            return false;
+          }
+          const signature = semanticStateDigest(localDraft.current);
+          if (confirmedRemoval !== signature) {
+            if (confirmedRemoval) { setMessage("Le projet a changé depuis la demande. Vérifiez de nouveau ses intentions."); return false; }
+            const children = targets.size - 1;
+            confirmationRequest.current({
+              message: `Retirer ce projet et ${children === 1 ? "son intention liée" : `ses ${children} intentions liées`} du brouillon ?`,
+              acceptLabel: "Retirer le projet et ses intentions", accept: () => { stage(operation, history, restored, signature); },
+            });
+            return false;
+          }
+        }
       }
     }
     if (history !== "push") {

@@ -76,9 +76,15 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     const assetKey = `template:${preset?.templateKey}`;
     return preset && publishedDrop(model, assetKey, childTarget)?.semanticAction === "PATCH_CONTEXT" ? [{ preset, assetKey }] : [];
   }) : [];
+  const attach = useCommittedEvent((operation: ComposerOperation) => {
+    if (!canAttach || operation.kind !== "DROP") return;
+    const candidate = operation.presetKey ? addOptions.some(option => option.preset.presetKey === operation.presetKey)
+      : candidates.some(item => item.id === operation.identity);
+    if (candidate) onSave(operation);
+  });
   const confirmAttachment = (label: string, operation: () => ComposerOperation) => {
     const open = () => confirm({ message: `Associer « ${label} » à cette sortie ?`, acceptLabel: "Associer à cette sortie",
-      accept: () => onSave(operation()) });
+      accept: () => attach(operation()) });
     if (leaveRaw(open)) open();
   };
   const componentRoute = (slotKey: string, optionKey: string, selection?: ComponentSelectionV1) => {
