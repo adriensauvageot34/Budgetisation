@@ -16,7 +16,7 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette, PaletteQuestion } from "./context-palette";
-import { isMascaraContext, mascaraEquipment, mascaraSuggestions } from "./mascara-edit";
+import { beautyProductPresentation, beautyProductEquipment, beautyProductSuggestions } from "./beauty-product-edit";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
 import { IntentBudgetImpact } from "./intent-budget-impact";
 import { WorkshopNavigation } from "./workshop-navigation";
@@ -68,13 +68,14 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       || protectedRef(componentId(card.contextOccurrenceId, slotKey, selection.selectionId)))) return null;
     return { asset, target, selection };
   };
-  const mascara = isMascaraContext(context);
+  const beautyProduct = beautyProductPresentation(context);
+  const mascaraPreset = beautyProduct?.key === "mascara";
   const [showChoices, setShowChoices] = useState(false);
   const [needKey, setNeedKey] = useState<string | null>(null);
-  const suggestions = mascara ? mascaraSuggestions(context, model) : [];
+  const suggestions = beautyProduct ? beautyProductSuggestions(context, model) : [];
   const ranked = suggestions.filter(candidate => !dismissedSuggestions?.includes(candidate.key)).slice(0, 4);
   const activeNeed = suggestions.find(candidate => candidate.kind === "NEED" && candidate.key === needKey);
-  const openMascaraSuggestion = useCommittedEvent((key: string) => {
+  const openProductSuggestion = useCommittedEvent((key: string) => {
     if (busy) return;
     const suggestion = suggestions.find(candidate => candidate.key === key);
     if (suggestion?.kind === "NEED") setNeedKey(key);
@@ -114,7 +115,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       else setError("Ce choix n’a pas été admis. Le brouillon local reste disponible.");
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Vérifiez les champs du moment."); }
   };
-  const directOptions = mascara ? [] : (card?.sockets ?? []).flatMap(socket => {
+  const directOptions = beautyProduct ? [] : (card?.sockets ?? []).flatMap(socket => {
     if (socket.currentItems.length > 1) return [];
     const selection = socket.currentItems[0];
     if (selection && selection.kind !== "COMPONENT") return [];
@@ -126,12 +127,12 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     });
   });
   const directPost = directOptions.length === 1 && posts.length <= 1 ? directOptions[0] : null;
-  const mascaraShortcut = mascara && posts.length <= 1
-    ? mascaraEquipment(model, model.semanticState, context.contextOccurrenceId, posts[0]?.item) : undefined;
-  const directChoice = mascaraShortcut ? { key: "mascara-price",
-    catalogAssetKey: 'beauty:mascara',
-    label: mascaraShortcut.selection ? "Prix et quantité" : "Ajouter un produit", iconKey: mascaraShortcut.asset.iconKey,
-    choose: () => choose(mascaraShortcut.asset, mascaraShortcut.target, mascaraShortcut.selection) }
+  const productShortcut = beautyProduct && posts.length <= 1
+    ? beautyProductEquipment(model, model.semanticState, context.contextOccurrenceId, posts[0]?.item) : undefined;
+  const directChoice = productShortcut && beautyProduct ? { key: "beauty-product-price",
+    catalogAssetKey: beautyProduct.catalogAssetKey,
+    label: productShortcut.selection ? "Prix et quantité" : "Ajouter un produit", iconKey: productShortcut.asset.iconKey,
+    choose: () => choose(productShortcut.asset, productShortcut.target, productShortcut.selection) }
     : directPost ? { key: "direct-price", label: "Prix direct", iconKey: directPost.asset.iconKey,
       choose: () => choose(directPost.asset, directPost.target, directPost.selection) } : null;
   const selectedField=editor.fields.find(field=>field.key===activeKey);
@@ -148,15 +149,16 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     :selectedField?.kind==="PLACE_REF"?{title:selectedField.label,search:{value:query,change:setQuery,label:"Rechercher un lieu connu"},choices:[
       ...(options?.places??[]).filter(p=>match(p.name)).map(p=>tile(p.placeId,p.name,()=>update(selectedField.key,{kind:"KNOWN",placeId:p.placeId}))),
       tile("free","Autre destination",()=>update(selectedField.key,{kind:"TEXT",label:"",provenance:"USER_DECLARED_PROSPECTIVE"})),tile("unknown","À préciser",()=>update(selectedField.key,null)),returnChoice]}
-    : activeKey === null && mascara && !showChoices && !activeNeed && ranked.length ? {
-      title: "Suggestions pour ce mascara", nature: "DECISION", identity: "mascara-suggestions",
+    : activeKey === null && beautyProduct && !showChoices && !activeNeed && ranked.length ? {
+      title: mascaraPreset ? "Suggestions pour ce mascara" : `Suggestions · ${beautyProduct.label}`,
+      nature: "DECISION", identity: "beauty-product-suggestions",
       choices: ranked.map(candidate => ({ ...candidate, showHint: true, choose: () => {
-        const open = () => openMascaraSuggestion(candidate.key);
+        const open = () => openProductSuggestion(candidate.key);
         if (leaveRaw(open)) open();
       } })),
     } : undefined;
-  return <div data-catalog-context-editor={context.templateKey} data-mascara-catalog={mascara || undefined}
-    data-mascara-suggestions={question?.identity === "mascara-suggestions" || undefined} className={styles.nightEditor}>
+  return <div data-catalog-context-editor={context.templateKey} data-beauty-product={beautyProduct?.key} data-mascara-catalog={mascaraPreset || undefined}
+    data-mascara-suggestions={mascaraPreset && question?.identity === "beauty-product-suggestions" || undefined} className={styles.nightEditor}>
     <WorkshopNavigation contextId={context.contextOccurrenceId} />
     <p className={styles.helper}>Les informations restent liées à ce moment. La palette propose les postes compatibles ; seuls ces postes peuvent porter un coût.</p>
     {activeKey === null && <section className={styles.nightSection} data-catalog-summary><h3>{String(context.fields.label ?? "Votre intention")}</h3>
@@ -165,18 +167,18 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         <p>{activeNeed.caption}</p>
         <button type="button" onClick={() => setNeedKey(null)}>Retour aux suggestions</button>
       </section>}
-      {mascara && !activeNeed && ranked.length > 0 && <button type="button" aria-pressed={showChoices}
-        onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : "Tous les choix du mascara"}</button>}
-      {mascara && !activeNeed && <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={busy}
+      {beautyProduct && !activeNeed && ranked.length > 0 && <button type="button" aria-pressed={showChoices}
+        onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : mascaraPreset ? "Tous les choix du mascara" : "Tous les choix du produit"}</button>}
+      {beautyProduct && !activeNeed && <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={busy}
         dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
-      {mascara && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
+      {beautyProduct && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {!!posts.length && <nav className={styles.nightNav} aria-label="Résumé de l’intention"><button type="button" aria-pressed={summaryTab === "fields"} onClick={() => setSummaryTab("fields")}>Informations</button><button type="button" aria-pressed={summaryTab === "posts"} onClick={() => setSummaryTab("posts")}>Postes ({posts.length})</button></nav>}
       {summaryTab === "fields" && editor.fields.slice(summaryPage * 3, summaryPage * 3 + 3).map(field => <button key={field.key} type="button" onClick={() => setActiveKey(field.key)}>
         {field.label} · {typeof values[field.key] === "string" || typeof values[field.key] === "number" ? String(values[field.key] || "À préciser") : values[field.key] ? "Choix conservé" : "À préciser"}</button>)}
       {summaryTab === "fields" && editor.fields.length > 3 && <div className={styles.nightPage}><button type="button" disabled={summaryPage === 0} onClick={() => setSummaryPage(page => page - 1)}>Précédent</button><span>{summaryPage + 1} / {Math.ceil(editor.fields.length / 3)}</span><button type="button" disabled={(summaryPage + 1) * 3 >= editor.fields.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}
       {summaryTab === "posts" && posts.slice(postPage * 3, postPage * 3 + 3).map(({slotKey, item}, index) => {
-        if (mascara) {
-          const writable = mascaraEquipment(model, model.semanticState, context.contextOccurrenceId, item);
+        if (beautyProduct) {
+          const writable = beautyProductEquipment(model, model.semanticState, context.contextOccurrenceId, item);
           const price = item.cost.kind === "MANUAL" ? money(item.cost.unitAmount)
             : item.cost.kind === "QUOTE" ? "Devis conservé" : "Prix inconnu";
           return <button key={item.selectionId} type="button" data-mascara-post={item.selectionId}
