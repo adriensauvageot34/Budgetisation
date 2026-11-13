@@ -25,7 +25,9 @@ export function LinkedIntentions({ model, parentId, busy, open }: {
       const impact = current ? reading?.byContext[child.id] : undefined;
       return <li key={child.id}>
         {open ? <button type="button" disabled={busy} onClick={() => open(child.id)}>{child.label}</button> : <span>{child.label}</span>}
-        <small> · {impact ? money(impact.gross) : "Coût à actualiser"}</small>
+        <small> · {impact ? impact.gross === null && impact.knownSubtotal !== null
+          ? `${money(impact.knownSubtotal)} connus, total à préciser` : money(impact.gross)
+          : current ? "Coût à préciser" : "Coût à actualiser"}</small>
       </li>;
     })}</ul>
     <p>Le total consolidé du projet n’est pas publié. Chaque poste conserve son évaluation.</p>

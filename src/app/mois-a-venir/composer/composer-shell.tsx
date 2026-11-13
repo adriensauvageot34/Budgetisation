@@ -901,7 +901,11 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const applyReason = relationSession ? "Organisation locale non sauvegardée : abandonnez-la explicitement avant de sauvegarder ou transformer le mois en Plan."
     : inlineEdits.count ? "Une saisie n’est pas validée ou un réglage attend confirmation. Validez ou annulez la saisie avant de transformer le mois en Plan."
     : busy ? "La prévisualisation serveur est en cours." : pendingApply ? "L’issue de la demande précédente doit être vérifiée avant toute nouvelle application."
-    : draftTransport && (durable.status !== "SAVED" || !durable.online || durable.snapshot?.baseStale)
+    : draftTransport && (durable.status === "CONFLICT" || durable.snapshot?.baseStale)
+    ? "Le brouillon ou son Plan de référence a changé. Vérifiez la version serveur avant de continuer."
+    : draftTransport && durable.status === "ERROR"
+    ? "L’enregistrement de vos choix reste à confirmer. Réessayez la sauvegarde."
+    : draftTransport && (durable.status !== "SAVED" || !durable.online)
     ? "Attendez la sauvegarde confirmée du brouillon et une connexion active avant d’appliquer."
     : hoverModel || grabbed ? "Terminez le geste pour appliquer le mois."
     : editor ? "Terminez ou fermez le panneau de configuration avant d’appliquer le mois."
@@ -909,10 +913,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     : previewStatus === "STALE" ? "La projection est obsolète. Relancez la prévisualisation avant d’appliquer."
     : previewStatus === "BLOCKED" ? model.board.cockpit.diagnostics.some(diagnostic => diagnostic.code === "COMPONENT_FUNDING_SUM_INVALID")
       ? "Le financement déclaré ne correspond pas au coût du composant. Ajustez-le avant d’appliquer."
-      : "La projection est calculée, mais des contraintes empêchent l’application. Consultez le détail financier."
+      : model.board.cockpit.diagnostics.some(diagnostic => diagnostic.code === "FINANCIAL_SCENARIO_UNRESOLVED")
+        ? "Des sources du mois sont à compléter. Ouvrez les finances du mois pour voir les informations disponibles."
+        : "Le contrôle du Plan signale des contraintes. Consultez le détail financier."
     : previewStatus !== "FRESH" ? "La projection du brouillon attend une simulation serveur fraîche."
     : !model.board.draft.dirty ? model.activeRevisionNumber ? "Le mois est déjà appliqué. Modifiez un élément pour créer une nouvelle révision." : `Composez un premier choix pour appliquer votre mois.${model.presentation.unresolvedCount ? ` ${model.presentation.unresolvedCount} éléments à préciser.` : ""}`
     : "La projection officielle détermine les contraintes à préciser avant l’application.";
+  const saveIssue = !!draftTransport && !relationSession && ["ERROR", "CONFLICT", "OFFLINE"].includes(durable.status);
   const stableStart=useCommittedEvent(startDrag),stableEnd=useCommittedEvent(endDrag),stableOver=useCommittedEvent(over),stablePlace=useCommittedEvent(place),stableEquip=useCommittedEvent(equip);
   const stableCanTarget=useCommittedEvent((ref:string)=>assistantGrab.current?.targetRef===ref);
   const stableReject=useCommittedEvent(()=>animate("recoil",grab.current?.sourceKey??null));
@@ -1111,6 +1118,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           : <><div className={styles.applyControl} tabIndex={applyDisabled ? 0 : undefined} aria-label={applyDisabled ? applyReason : undefined} data-apply-control data-unavailable={applyDisabled}>
               <button className={styles.primary} data-apply disabled={applyDisabled} aria-describedby={applyDisabled ? "apply-disabled-reason" : undefined} onClick={() => apply()}>{busy ? "Validation…" : "Transformer en Plan"}</button>
               {applyDisabled && <div className={styles.applyReason} role="group" aria-label="Application indisponible" data-apply-reason><p id="apply-disabled-reason">{applyReason}</p>
+                {previewStatus === "BLOCKED" && <button type="button" onClick={openProjectionDetails}>Voir les finances du mois</button>}
                 {!!model.presentation.unresolvedCount && <button data-show-unresolved onClick={showUnresolved}>Afficher les éléments</button>}</div>}
             </div></>}
         <AtomicPopover utility label="Options du mois" state="ACTIONS" focus={() => {}} icon={<><MoreHorizontal size={17} /><span>Options</span></>}>{close => <div className={styles.popoverActions} data-workshop-options>
@@ -1134,10 +1142,17 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
             {durable.snapshot.archives.map(draft => <div key={draft.draftId}><span>{new Date(draft.lastSavedAt).toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}</span>
               <button disabled={!!durable.snapshot?.active} title={durable.snapshot?.active ? "Archivez d’abord le brouillon actif ; aucune archive ne l’écrase." : undefined} onClick={() => { close(); restoreDraft(draft); }}>Restaurer</button></div>)}</details>}
         </div>}</div>}</AtomicPopover>
-        {draftTransport && ["ERROR", "CONFLICT", "OFFLINE"].includes(durable.status) && <span className={styles.saveMessage} data-save-message role="status">{durable.message}</span>}
         {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
+    {saveIssue && <section className={styles.draftRecovery} aria-label="Récupération du brouillon">
+      <p data-save-message role="status">{durable.message}</p>
+      {durable.status === "CONFLICT" ? <>
+        <button type="button" className={styles.financialLink} disabled={!durable.online} onClick={() => void durable.refresh()}>Relire la version serveur</button>
+        <button type="button" className={styles.financialLink} disabled={!durable.online}
+          onClick={() => setDraftConfirmation({ kind: "LOAD_SERVER" })}>Charger la version sauvegardée…</button>
+      </> : <button type="button" className={styles.financialLink} disabled={!durable.online} onClick={durable.retry}>Réessayer la sauvegarde</button>}
+    </section>}
     {relationSession && rootRelationsAvailable && <div className={relationStyles.notice} data-root-local-notice role="status">Organisation locale non sauvegardée · {relations.length} sortie(s). Sauvegarde et Apply suspendus. <button disabled={busy} onClick={openRelations}>Organiser une sortie</button> <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}
     {relationSession && !rootRelationsAvailable && <div className={relationStyles.notice} data-root-revoked-notice role="status">Organisation de sorties indisponible. Vos essais locaux sont conservés ; sauvegarde et Apply restent suspendus jusqu’à l’abandon explicite de cette organisation. <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}
     {rootWorkspacePending && !relationSession && <div className={relationStyles.notice} data-root-financial-pending role="status">Organisation abandonnée ; décisions financières conservées. Attendez leur sauvegarde confirmée avant de quitter. La mémoire de cet onglet reste temporaire.</div>}
