@@ -485,7 +485,9 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   } : undefined;
   const activityChoices = activity && !cinema && step === null ? [
     ...(activityTicket ? [{ ...tile("activity-main", main ? `Modifier · ${main.label}` : `Préparer · ${activityMainLabel}`,
-      () => open("budget"), "activity", main ? priceCaption(main) : "Prix et quantité à préciser") }] : []),
+      () => open("budget"), "activity", main ? priceCaption(main) : "Prix et quantité à préciser"),
+      visualConceptId: preset && "visualConceptId" in preset ? preset.visualConceptId : undefined,
+      presetArtwork: preset?.presetKey }] : []),
     ...(activityWritable && !context.fields.plannedDate ? [{
       ...tile("activity-date", "Préciser la date", () => open("date"), "activity", "Le jour reste facultatif"),
     }] : []),

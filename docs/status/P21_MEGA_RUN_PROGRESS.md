@@ -473,3 +473,7 @@ La confirmation vérifie le digest capturé et les capacités courantes. Un chan
 ### Ouvrir un article de panier au clavier
 
 Entrée dans la recherche du panier ouvre le résultat unique lorsqu’il est modifiable et que la saisie ne se fait pas en mode composition. TypeScript, diff et banc catalogue/panier PASS. Le filtre des prix inconnus permet d’ouvrir la deuxième ligne homonyme sans mutation. Le navigateur réel reste NOT_RUN.
+
+### Visuels exacts dans le Dock Activité
+
+Le poste principal reprend le visuel Clay de l’activité choisie. TypeScript, diff et onze contrôles Restaurant/Cinéma/Activité PASS. Le Dock de Bowling publie son identité Clay exacte et ouvre le prix sans mutation.

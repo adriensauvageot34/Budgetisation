@@ -23,7 +23,7 @@ Module._load = function (name, parent, ...args) {
   if (name === "./workshop-confirmation") return { useWorkshopConfirmation: () => value => { confirmation = value; } };
   if (name === "./context-palette" && parent?.filename.endsWith("restaurant-editor.tsx"))
     return { ContextPalette: ({ question }) => React.createElement("nav", { "aria-label": question?.title },
-      question?.choices.map(choice => React.createElement("button", { key: choice.key, title: choice.hint, onClick: choice.choose }, choice.label))) };
+      question?.choices.map(choice => React.createElement("button", { key: choice.key, title: choice.hint, "data-visual": choice.visualConceptId, onClick: choice.choose }, choice.label))) };
   return originalLoad.call(this, name, parent, ...args);
 };
 const { restaurantSuggestions } = require("@/app/mois-a-venir/composer/restaurant-suggestions");
@@ -227,6 +227,7 @@ try {
       composerPresentation: { version: "composer-context-presentation@v1", presetKey: "bowling" },
     }, slotSelections: { main: { items: [{ ...meal, optionKey: "activity", label: "Partie" }] }, extras: { items: [first, second] } } };
     await mount({ ...base, contexts: [bowling] });
+    assert.equal(button("Modifier · Partie").props["data-visual"], "v22-art:excel:342");
     await click("Modifier · Partie");
     const budgetDock = root.root.findAllByType("nav").find(node => node.props["aria-label"] === "Quel budget souhaitez-vous prévoir ?");
     assert(budgetDock);assert(!budgetDock.findAllByType("button").some(node => ["Coût total", "Détailler"].includes(text(node))));
