@@ -21,11 +21,14 @@ const{InlineEditContext}=require('@/app/mois-a-venir/composer/inline-edit-regist
 const winEvents=new Map(),docEvents=new Map(),add=(m,k,fn)=>{if(!m.has(k))m.set(k,new Set());m.get(k).add(fn);};
 class Element{closest(){return null;}focus(){}matches(){return false;}}globalThis.Element=Element;globalThis.HTMLElement=Element;
 const body=new Element();globalThis.document={body,activeElement:body,addEventListener:(k,fn)=>add(docEvents,k,fn),removeEventListener:(k,fn)=>docEvents.get(k)?.delete(fn),querySelector:()=>null,querySelectorAll:()=>[],getElementById:()=>null};
-let navigated=null;globalThis.window={addEventListener:(k,fn)=>add(winEvents,k,fn),removeEventListener:(k,fn)=>winEvents.get(k)?.delete(fn),location:{href:'http://fixture.test/composer',search:'',assign:url=>{navigated=url;}},history:{}};
+let navigated=null;const storage=new Map();globalThis.window={addEventListener:(k,fn)=>add(winEvents,k,fn),removeEventListener:(k,fn)=>winEvents.get(k)?.delete(fn),location:{href:'http://fixture.test/composer',search:'',assign:url=>{navigated=url;}},history:{},
+ sessionStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)}};
 Object.defineProperty(globalThis,'navigator',{configurable:true,value:{onLine:true}});globalThis.requestAnimationFrame=fn=>{fn();return 0;};globalThis.cancelAnimationFrame=()=>{};
 let remote=0;globalThis.fetch=async()=>{remote++;throw Error('F02_REMOTE_FORBIDDEN');};
 const nativeSet=setTimeout,nativeClear=clearTimeout;let counter=0;const timers=new Map();globalThis.setTimeout=fn=>{timers.set(++counter,{fn,source:new Error().stack});return counter;};globalThis.clearTimeout=id=>timers.delete(id);
 const{ComposerShell}=require('@/app/mois-a-venir/composer/composer-shell');
+const{rememberDraftNavigation}=require('@/app/mois-a-venir/composer/draft-navigation-memory');
+const{budgetImpactFixture,impactIds}=await import('./fixtures/composer-budget-impact.mjs');
 const{readRootWorkspace,discardRootWorkspace}=require('@/app/mois-a-venir/composer/root-relation-workspace');
 const{handleRootRelationRequest}=require('@/server/phase2/planner/root-relation-admission');const{semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const course=[...f.access.model.board.baselineControls,...f.access.model.board.discretionaryControls].find(x=>x.label==='Courses');
@@ -84,6 +87,24 @@ try{
   await mount();await changeFinance();await open();await link();await abandon();const digest=element().props['data-digest'];await startSave();
   await act(async()=>resolveSave({ok:false,code:'CONFLICT',message:'Synthetic CAS conflict',latest:{...f.drafts,active:{...f.drafts.active,version:2}}}));
   assert.equal(element().props['data-save-state'],'CONFLICT');assert.equal(element().props['data-digest'],digest);assert(readRootWorkspace(key));await clickLink();assert.equal(navigated,null);assert.equal(confirmation,null);assert(warns());await unmount();
+ });
+ await check('P21_CONFIRMED_NAVIGATION_RELOAD_OPENS_EXACT_DRAFT_OCCURRENCE',async()=>{
+  const saved=await budgetImpactFixture(), expected=saved.model.board.draft.semanticStateDigest;
+  await mount();await unmount();
+  const active={...f.drafts.active,semanticState:saved.model.semanticState,digest:expected};
+  props={...props,initialModel:saved.model,initialDrafts:{...f.drafts,active}};
+  rememberDraftNavigation(key,{draftId:active.draftId,digest:expected,contextId:impactIds.amazon});
+  await mount(true);
+  assert.equal(board.focused,impactIds.amazon);
+  assert.equal(element().props['data-digest'],expected);
+  assert.equal(element().props['data-save-state'],'SAVED');
+  assert.equal(saves.length,0);
+  await unmount();
+  rememberDraftNavigation(key,{draftId:active.draftId,digest:'obsolete',contextId:impactIds.amazon});
+  await mount(true);
+  assert.equal(board.focused,null);
+  assert.equal(saves.length,0);
+  await unmount();
  });
  assert.equal(remote,0);assert.equal(f.writes.length,0);console.log(JSON.stringify({status:'PASS',checks,level:'REAL_SHELL_HOOK_SYNTHETIC_PRESENTATION_AND_SAVE_RECEIPTS',realWriters:0,sql:0,remote,authRls:'NOT_RUN',savedRelation:'NOT_RUN',apply:'NOT_RUN'}));
 }finally{await act(async()=>root?.unmount());if(key)discardRootWorkspace(key);globalThis.setTimeout=nativeSet;globalThis.clearTimeout=nativeClear;}
