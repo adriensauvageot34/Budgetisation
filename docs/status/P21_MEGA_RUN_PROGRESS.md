@@ -95,6 +95,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Informations de financement | Accès en lecture aux sources du mois depuis le détail de financement |
 | READY | Liste des intentions | Recherche dans le nom du projet et repérage des homonymes |
 | READY | Modèles et disponibilité | Préférer les compléments effectivement disponibles sans masquer la structure |
+| DONE | Date du modèle | Date facultative du parent, sans propagation aux compléments |
 | READY | Mobilité explicite | Clarifier le prix de trajet complet et le statut du retour |
 | READY | Synthèse des projets | Repérer les enfants en consultation et les informations non évaluées |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
@@ -204,3 +205,9 @@ TypeScript, diff et quatre contrôles de navigation/rendu PASS. Les identités e
 Le Shell repère le projet de destination après admission effective du rattachement ou du déplacement. Il affiche les noms d’occurrence et propose la reprise du projet. Une réponse refusée ne déplace pas le focus et ne modifie pas le Draft. Le détail de financement peut ouvrir les sources du mois même hors état BLOCKED, via le panneau existant et sa protection RAW.
 
 TypeScript et diff PASS. Les huit contrôles du Shell ont réussi, avec un rattachement réel sur l’évaluateur de fixture et un refus serveur. Aucun Draft durable n’est écrit par ce test. Les contrôles des déplacements et de la lecture des diagnostics/sources PASS. Aucun Apply ni writer distant.
+
+### Date et ordre d’un modèle
+
+L’aperçu peut recueillir une date facultative pour le parent, dans le mois Composer. Les activités et compléments conservent leurs dates indépendantes. L’ordre du modèle est stable lorsqu’un complément est décoché puis réactivé.
+
+TypeScript et les deux contrôles React d’aperçu PASS. Les dix groupes du banc de parcours PASS, incluant une date valide, la non-propagation aux enfants et le refus d’un jour invalide ou d’un autre mois avant toute évaluation. Prix et participants restent à préciser ; aucun writer distant.

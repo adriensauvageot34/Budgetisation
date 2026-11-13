@@ -24,13 +24,17 @@ try{
  assert.equal(created.length,0);assert.equal(semanticStateDigest(f.model.semanticState),digest);
  await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
  assert.deepEqual(created,[{label:'Mon séjour',children:['hiking-nature']}]);
+ await act(async()=>root.root.findAllByProps({type:'checkbox'})[0].props.onChange({target:{checked:true}}));
+ await act(async()=>root.root.findByProps({type:'date'}).props.onChange({target:{value:'2026-11-20'}}));
+ await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+ assert.deepEqual(created[1],{label:'Mon séjour',children:['museum-exhibition','hiking-nature'],plannedDate:'2026-11-20'});
  await act(async()=>root.unmount());root=null;assert.equal(focused,0);
  console.log('PP-01 Naming and optional children stay local until confirmation; success does not refocus the library: PASS');
  await mount();await act(async()=>root.root.findByType('dialog').props.onCancel({preventDefault(){}}));
  assert.equal(closed,1);await act(async()=>root.unmount());root=null;assert.equal(focused,1);
  await mount({blockedReason:'Quittez la comparaison.'});
  assert.equal(root.root.findByProps({'data-confirm-workshop':true}).props.disabled,true);
- await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.equal(created.length,1);
+ await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.equal(created.length,2);
  assert.equal(root.root.findAllByProps({role:'alert'}).length,1);
  console.log('PP-02 Cancellation restores focus and blocked confirmation cannot create a project: PASS');
  assert.deepEqual(f.writes,[]);

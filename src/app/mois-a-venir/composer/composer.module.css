@@ -1111,6 +1111,7 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .projectPreview form { min-width:0; }
 .projectName { display:grid; gap:8px; }
 .projectName input { width:100%; min-width:0; box-sizing:border-box; padding:12px; border:1px solid #c8cabe; border-radius:10px; font:inherit; }
+.projectName + .projectName { margin-top:12px; }
 .projectPreview fieldset { min-width:0; margin:16px 0; border:1px solid #decceb; border-radius:12px; }
 .projectChoice { display:flex; gap:12px; align-items:center; min-height:48px; padding:8px 0; }
 .projectChoice input { flex:0 0 20px; width:20px; height:20px; }

@@ -22,7 +22,7 @@ export const projectStarters = [
     children: ["hiking-nature"] },
 ] as const satisfies readonly { key: string; label: string; parent: ComposerPresetKey; slot: string | null; children: readonly ComposerPresetKey[] }[];
 export type ProjectStarter = typeof projectStarters[number];
-export type ProjectStarterChoices = { label: string; children: readonly ComposerPresetKey[] };
+export type ProjectStarterChoices = { label: string; children: readonly ComposerPresetKey[]; plannedDate?: string };
 
 export function projectStarterCategory(starter: ProjectStarter) {
   switch (composerPreset(starter.parent)?.templateKey) {
@@ -55,7 +55,14 @@ export function availableProjectStarters(model: ComposerUiModel) {
 export async function evaluateProjectStarter(starter: ProjectStarter, model: ComposerUiModel, transport: ComposerTransport,
   nextId: () => string, nextSequence: () => number, choices?: ProjectStarterChoices) {
   const label = choices?.label.trim();
-  const children = choices?.children ?? starter.children;
+  const children: readonly ComposerPresetKey[] = choices?.children ?? starter.children;
+  const date = choices?.plannedDate?.trim() ?? "";
+  if (date) {
+    const parsed = new Date(`${date}T12:00:00Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/u.test(date) || date.slice(0, 7) !== model.semanticState.targetMonth
+      || !Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date)
+      throw new Error("Choisissez une date valide dans le mois du projet, ou laissez-la à préciser.");
+  }
   if ((choices && (!label || label.length > 120)) || new Set(children).size !== children.length
     || children.some(key => !(starter.children as readonly ComposerPresetKey[]).includes(key) || !projectPresetAvailable(model, key))
     || !availableProjectStarters(model).includes(starter))
@@ -68,7 +75,8 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
     if (!preset) throw new Error("Intention indisponible pour ce modèle.");
     const sequence = nextSequence();
     const response = await transport({ kind: "DROP", assetKey: `template:${preset.templateKey}`, presetKey: key, target, identity,
-      selectionId: nextId(), values: identity === parentId && label ? { label } : {}, sequence, targetMonth: model.semanticState.targetMonth, draft: evaluated.semanticState,
+      selectionId: nextId(), values: identity === parentId ? { ...(label ? { label } : {}), ...(date ? { plannedDate: date } : {}) } : {},
+      sequence, targetMonth: model.semanticState.targetMonth, draft: evaluated.semanticState,
       ...(preset.templateKey === "purchase" ? { purchaseBasket: true } : {}) });
     if (!response.ok) throw new Error(response.message);
     if (response.sequence !== sequence || response.applied || response.applyReceipt
@@ -85,7 +93,7 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
   };
   await drop(starter.parent, boardDrop, parentId);
   if (starter.slot) {
-    for (const child of children) {
+    for (const child of starter.children.filter(key => children.includes(key))) {
       await drop(child, { kind: "CONTEXT_SOCKET", contextOccurrenceId: parentId, slotKey: starter.slot }, nextId());
     }
   }

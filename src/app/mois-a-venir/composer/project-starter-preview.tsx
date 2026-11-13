@@ -17,10 +17,13 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
   const dialog = useRef<HTMLDialogElement>(null);
   const restoreFocus = useRef(true);
   const [label, setLabel] = useState<string>(starter.label);
+  const [date, setDate] = useState("");
   const [selected, setSelected] = useState<readonly ComposerPresetKey[]>(() => starter.children.filter(key => projectPresetAvailable(model, key)));
   const parent = composerPreset(starter.parent);
   const admitted = projectPresetAvailable(model, starter.parent);
-  const chosen = selected.filter(key => projectPresetAvailable(model, key));
+  const chosen = starter.children.filter(key => selected.includes(key) && projectPresetAvailable(model, key));
+  const lastDay = new Date(`${model.semanticState.targetMonth}-01T12:00:00Z`);
+  lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
   useEffect(() => {
     const origin = document.activeElement;
     dialog.current?.showModal();
@@ -32,13 +35,16 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
     onCancel={event => { event.preventDefault(); cancel(); }}>
     <form onSubmit={event => {
       event.preventDefault();
-      if (!busy && !blockedReason && admitted && label.trim()) { restoreFocus.current = false; create({ label: label.trim(), children: chosen }); }
+      if (!busy && !blockedReason && admitted && label.trim()) { restoreFocus.current = false; create({ label: label.trim(), children: chosen, ...(date ? { plannedDate: date } : {}) }); }
     }}>
       <h2 id="project-starter-title">Préparer {starter.label}</h2>
       {parent && <PresetIllustration preset={parent} className={styles.projectPreviewVisual} />}
-      <p id="project-starter-description">Choisissez les intentions à préparer. Les prix, dates et participants resteront à préciser après la création.</p>
+      <p id="project-starter-description">Choisissez les intentions à préparer. Les prix et participants resteront à préciser. Chaque intention pourra être complétée après la création.</p>
       <label className={styles.projectName}>Nom du projet<input autoFocus value={label} maxLength={120} required disabled={busy}
         onChange={event => setLabel(event.target.value)} /></label>
+      <label className={styles.projectName}>Date facultative du projet<input type="date" value={date} disabled={busy}
+        min={`${model.semanticState.targetMonth}-01`} max={lastDay.toISOString().slice(0, 10)} onChange={event => setDate(event.target.value)} /></label>
+      <p>Cette date concerne le projet. Les dates des compléments restent à choisir séparément.</p>
       <p><strong>{parent?.label}</strong> · Structure du projet{admitted ? "" : " · Indisponible"}</p>
       {starter.children.length > 0 && <fieldset disabled={busy}><legend>Compléments facultatifs</legend>
         {starter.children.map(key => {

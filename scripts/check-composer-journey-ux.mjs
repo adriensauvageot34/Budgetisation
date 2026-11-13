@@ -179,16 +179,20 @@ const previewMarkup=renderToStaticMarkup(React.createElement(ProjectStarterPrevi
 assert.match(previewMarkup,/Compléments facultatifs/);
 assert.match(previewMarkup,/3 intentions à créer/);
 const customized=await evaluateProjectStarter(optional,model,transport,()=>uuid(++starterId),()=>++starterSequence,
- {label:'  Mon week-end  ',children:['hiking-nature']});
+ {label:'  Mon week-end  ',children:['hiking-nature'],plannedDate:'2026-11-20'});
 const customizedParent=customized.model.semanticState.contexts.find(context=>context.contextOccurrenceId===customized.parentId);
 assert.equal(customizedParent.fields.label,'Mon week-end');
+assert.equal(customizedParent.fields.plannedDate,'2026-11-20');
 const customizedChildren=customized.model.semanticState.contexts.filter(context=>context.parentContextOccurrenceId===customized.parentId);
 assert.equal(customizedChildren.length,1);
+assert.equal(customizedChildren[0].fields.plannedDate,undefined);
 assert.equal(customizedChildren[0].fields.composerPresentation.presetKey,'hiking-nature');
 for(const choices of [{label:'',children:[]},{label:'Test',children:['cinema']},{label:'Test',children:['hiking-nature','hiking-nature']}]){
  await assert.rejects(evaluateProjectStarter(optional,model,()=>assert.fail('Invalid proposal must not evaluate'),
   ()=>uuid(++starterId),()=>++starterSequence,choices),/Rouvrez son aperçu/);
 }
+for(const plannedDate of ['2026-11-31','2026-12-01'])await assert.rejects(evaluateProjectStarter(optional,model,()=>assert.fail('Invalid date must not evaluate'),
+ ()=>uuid(++starterId),()=>++starterSequence,{label:'Test',children:[],plannedDate}),/date valide dans le mois/);
 let attempted=0;
 await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
  if(++attempted===2)return {ok:false,sequence:command.sequence,code:'REFUSED',message:'Second step refused'};
