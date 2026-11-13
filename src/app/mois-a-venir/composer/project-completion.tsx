@@ -20,7 +20,7 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
   if (!parent || parent.readOnly || !parent.capabilityRefs.includes("PATCH_CONTEXT") || model.semanticState.preferences.anchors.includes(parentId)
     || model.semanticState.preferences.flexibility[parentId] === "PRESERVE") return [];
   const preset = presetForContext(parent)?.presetKey;
-  const slotKey = preset === "composed-outing" ? "children" : preset === "weekend-gite" ? "activities" : null;
+  const slotKey = preset === "composed-outing" ? "children" : preset === "weekend-gite" || preset === "visit-friends" ? "activities" : null;
   if (!slotKey || !parent.sockets.some(socket => socket.slotKey === slotKey && socket.contextOccurrenceId === parentId
     && socket.capabilityRefs.includes(`${parent.templateKey}:${slotKey}:ATTACH_CHILD_CONTEXT`))) return [];
   const target = { kind: "CONTEXT_SOCKET" as const, contextOccurrenceId: parentId, slotKey };
@@ -30,7 +30,9 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
   const candidates = preset === "composed-outing"
     ? outingRules.filter(rule => chosen.has(rule.trigger) && !chosen.has(rule.add))
     : children.some(card => card.templateKey === "activity") ? [] : [{
-      add: "museum-exhibition" as const, reason: "Vous préparez un week-end. Vous pouvez prévoir une visite parmi les activités du séjour.",
+      add: "museum-exhibition" as const, reason: preset === "visit-friends"
+        ? "Votre visite n’a pas encore d’activité liée. Vous pouvez préparer une sortie culturelle."
+        : "Vous préparez un week-end. Vous pouvez prévoir une visite parmi les activités du séjour.",
     }];
   return candidates.flatMap(candidate => {
     const child = composerPreset(candidate.add);
@@ -58,6 +60,13 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
     decide({ kind: "DROP", assetKey: candidate.assetKey, presetKey: candidate.preset.presetKey, target: candidate.target,
       identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {} });
   });
+  const ask = useCommittedEvent((key: string) => {
+    const candidate = candidates.find(item => item.key === key);
+    if (!candidate || busy || !preference.enabled || dismissed.includes(key)) return;
+    const open = () => confirm({ message: `Ajouter « ${candidate.preset.label} » au projet ? Son prix restera à préciser.`,
+      acceptLabel: "Ajouter cette intention", accept: () => adopt(candidate.key) });
+    if (!edits || edits.guard(open)) open();
+  });
   if (preference.enabled && !candidates.length && !dismissed.length) return null;
   const visible = candidates.filter(candidate => !dismissed.includes(candidate.key));
   return <details className={styles.suggestionControls} data-project-completion>
@@ -67,11 +76,7 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
     </button>
     {preference.enabled && visible.map(candidate => <div key={candidate.key}>
       <p>{candidate.reason}</p>
-      <button type="button" disabled={busy} onClick={() => {
-        const open = () => confirm({ message: `Ajouter « ${candidate.preset.label} » au projet ? Son prix restera à préciser.`,
-          acceptLabel: "Ajouter cette intention", accept: () => adopt(candidate.key) });
-        if (!edits || edits.guard(open)) open();
-      }}>Préparer {candidate.preset.label}</button>
+      <button type="button" disabled={busy} onClick={() => ask(candidate.key)}>Préparer {candidate.preset.label}</button>
       <button type="button" disabled={busy} onClick={() => preference.dismiss(parentId, candidate.key)}>Masquer {candidate.preset.label}</button>
     </div>)}
     {preference.enabled && dismissed.length > 0 && <button type="button" onClick={() => preference.dismiss(parentId, null)}>Réafficher les suggestions masquées</button>}

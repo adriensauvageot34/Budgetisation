@@ -228,7 +228,7 @@ try{
  await page.locator('[data-library] [data-preset="cinema"]').click();
  await page.locator('[data-draft-status][data-state="ERROR"]').waitFor({timeout:30000});
  assert.equal((await snapshot(scenario)).active,null);const pending=await digest();
- await back();await button('Options du mois').click();await page.locator('[data-save-retry]').click();
+ await back();await page.locator('[data-save-retry]').click();
  await page.locator('[data-draft-status][data-state="SAVING"]').waitFor();assert.doesNotMatch(await page.locator('[data-draft-status]').innerText(),/Sauvegardé/);
  await saved();assert.equal(await digest(),pending);assert.equal((await snapshot(scenario)).active.version,1);
  const evidence=await(await page.request.get(new URL('/evidence?scenario='+scenario,origin).href)).json();

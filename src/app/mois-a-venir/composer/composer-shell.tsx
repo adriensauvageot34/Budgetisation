@@ -1159,9 +1159,6 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           }} />
           <button data-financial-menu onClick={() => { close(); openProjectionDetails(); }}>Les finances du mois</button>
         {draftTransport && !relationSession && <div className={styles.durableActions}>
-          {(durable.status === "ERROR" || durable.status === "OFFLINE") && <button data-save-retry onClick={durable.retry}>Réessayer la sauvegarde</button>}
-          {durable.status === "CONFLICT" && <><button data-save-refresh onClick={() => void durable.refresh()}>Relire la version serveur</button>
-            <button data-save-load-server onClick={() => setDraftConfirmation({ kind: "LOAD_SERVER" })}>Charger la version sauvegardée</button></>}
           {durable.snapshot?.active && <><button data-draft-abandon onClick={() => { close(); archiveDraft(true); }}>Abandonner mes essais</button>
             <button data-draft-restart onClick={() => { close(); archiveDraft(false); }}>Repartir du Plan actif</button></>}
           {!!durable.snapshot?.archives.length && <details data-draft-archives><summary>Brouillons archivés ({durable.snapshot.archives.length})</summary>
@@ -1174,10 +1171,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     {saveIssue && <section className={styles.draftRecovery} aria-label="Récupération du brouillon">
       <p data-save-message role="status">{durable.message}</p>
       {durable.status === "CONFLICT" ? <>
-        <button type="button" className={styles.financialLink} disabled={!durable.online} onClick={() => void durable.refresh()}>Relire la version serveur</button>
-        <button type="button" className={styles.financialLink} disabled={!durable.online}
+        <button type="button" data-save-refresh className={styles.financialLink} disabled={!durable.online} onClick={() => void durable.refresh()}>Relire la version serveur</button>
+        <button type="button" data-save-load-server className={styles.financialLink} disabled={!durable.online}
           onClick={() => setDraftConfirmation({ kind: "LOAD_SERVER" })}>Charger la version sauvegardée…</button>
-      </> : <button type="button" className={styles.financialLink} disabled={!durable.online} onClick={durable.retry}>Réessayer la sauvegarde</button>}
+      </> : <button type="button" data-save-retry className={styles.financialLink} disabled={!durable.online} onClick={durable.retry}>Réessayer la sauvegarde</button>}
     </section>}
     {relationSession && rootRelationsAvailable && <div className={relationStyles.notice} data-root-local-notice role="status">Organisation locale non sauvegardée · {relations.length} sortie(s). Sauvegarde et Apply suspendus. <button disabled={busy} onClick={openRelations}>Organiser une sortie</button> <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}
     {relationSession && !rootRelationsAvailable && <div className={relationStyles.notice} data-root-revoked-notice role="status">Organisation de sorties indisponible. Vos essais locaux sont conservés ; sauvegarde et Apply restent suspendus jusqu’à l’abandon explicite de cette organisation. <button disabled={busy} onClick={discardRelations}>Abandonner l’organisation locale</button></div>}

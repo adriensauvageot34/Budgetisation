@@ -154,6 +154,7 @@ for(const starter of starters){
   assert.equal(visit.templateKey,'friend-visit');
   assert.equal(visit.fields.personVisitedRef,undefined);
   assert.equal(visit.slotSelections.transport,undefined);
+  assert.deepEqual(projectCompletionSuggestions(added.model,added.parentId),[]);
   assert.equal(libraryOccurrences(added.model).find(row=>row.contextOccurrenceId===added.parentId)?.action,'EDIT');
  }
  assert.equal(semanticStateDigest(model.semanticState),original);

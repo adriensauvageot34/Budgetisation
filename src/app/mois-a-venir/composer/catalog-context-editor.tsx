@@ -206,7 +206,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       {beautyProduct && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {childSlot && <>
         <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} />
-        {project === "composed-outing" && <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />}
+        <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
         {(candidates.length > 0 || addOptions.length > 0) && <details>
           <summary>Associer une intention</summary>
           {candidates.map(child => <button key={child.id} type="button" onClick={() => confirmAttachment(child.label, () => ({
