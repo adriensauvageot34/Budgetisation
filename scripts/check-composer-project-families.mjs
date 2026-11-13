@@ -100,4 +100,26 @@ assert.match(impactMarkup('STALE'),/Les montants se mettent à jour avec vos cho
 assert.doesNotMatch(impactMarkup('STALE'),/17,25/);
 assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
 console.log('PF-04 The free activity editor displays its current official impact and hides stale amounts: PASS');
-console.log(JSON.stringify({status:'PASS',checks:4,remoteWrites:0,apply:false,level:'LOCAL_OWNER_AND_RENDER'}));
+for(const [template,label,slot] of [['home-project','Mon atelier','purchases'],['friend-visit','Rencontre libre','activities'],['other-context','Mon programme','children']]){
+ const genericId=uuid(++id);
+ await request({kind:'DROP',assetKey:'template:'+template,target:{kind:'BOARD_ZONE'},identity:genericId,selectionId:uuid(++id),values:{label}});
+ const generic=model.semanticState.contexts.find(context=>context.contextOccurrenceId===genericId);
+ assert.equal(libraryOccurrences(model).find(row=>row.contextOccurrenceId===genericId)?.action,'EDIT');
+ const editorMarkup=renderToStaticMarkup(React.createElement(CatalogContextEditor,{context:generic,
+  editor:model.editors.find(editor=>editor.assetKey==='template:'+template),targetMonth:'2026-11',householdPersons:[],busy:false,model,
+  choose(){assert.fail();},onSave(){assert.fail();},onCancel(){}}));
+ assert.match(editorMarkup,/Associer une intention/);
+ if(template==='home-project')assert.match(editorMarkup,/Préparer un équipement/);
+ const childKey=template==='home-project'?'home-equipment-basket':'laser-game';
+ const childId=uuid(++id);
+ await request({kind:'DROP',assetKey:'template:'+(template==='home-project'?'purchase':'activity'),presetKey:childKey,
+  target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:genericId,slotKey:slot},identity:childId,selectionId:uuid(++id),values:{},
+  ...(template==='home-project'?{purchaseBasket:true}:{})});
+ assert.equal(model.semanticState.contexts.find(context=>context.contextOccurrenceId===childId).parentContextOccurrenceId,genericId);
+ const newer=structuredClone(model);
+ newer.board.contexts.find(card=>card.contextOccurrenceId===genericId).fields.composerPresentation={version:'composer-context-presentation@v1',presetKey:'future-project'};
+ assert(!libraryOccurrences(newer).some(row=>row.contextOccurrenceId===genericId));
+}
+assert.deepEqual(f.writes,[]);
+console.log('PF-05 Generic home projects, visits and other projects reopen and attach through their published slots: PASS');
+console.log(JSON.stringify({status:'PASS',checks:5,remoteWrites:0,apply:false,level:'LOCAL_OWNER_AND_RENDER'}));

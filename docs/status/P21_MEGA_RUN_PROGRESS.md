@@ -601,3 +601,7 @@ Les résumés de soirée hors carte Bar et les achats à une ligne reprennent la
 ### Réinitialiser les filtres d’un panier
 
 Le bouton réinitialise la recherche et le filtre des prix manquants, puis replace le focus dans le champ. Le banc catalogue/panier vérifie le retour des deux lignes et leurs identités exactes. TypeScript et banc panier PASS.
+
+### Reprendre les projets libres
+
+Les projets Maison, visites amicales et autres projets sans preset sont retrouvables dans le mois. Leur éditeur expose les intentions liées et les associations admises par les sockets existants. Les métadonnées de présentation inconnues gardent leur traitement protégé. TypeScript, cinq contrôles familles de projets et quatre contrôles de navigation du mois PASS sur fixture.
