@@ -29,6 +29,7 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
   nextId: () => string, nextSequence: () => number) {
   let evaluated = model;
   const parentId = nextId();
+  const base = model.proof;
   const drop = async (key: ComposerPresetKey, target: Extract<ComposerRequest, { kind: "DROP" }>["target"], identity: string) => {
     const preset = composerPreset(key);
     if (!preset) throw new Error("Intention indisponible pour ce modèle.");
@@ -39,11 +40,14 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
     if (!response.ok) throw new Error(response.message);
     if (response.sequence !== sequence || response.applied || response.applyReceipt
       || response.model.semanticState.targetMonth !== model.semanticState.targetMonth
+      || response.model.proof.expectedBaselineDigest !== base.expectedBaselineDigest
+      || response.model.proof.expectedActiveRevisionId !== base.expectedActiveRevisionId
+      || response.model.proof.expectedActiveRevisionNumber !== base.expectedActiveRevisionNumber
       || response.model.board.draft.semanticStateDigest !== semanticStateDigest(response.model.semanticState)
       || !response.model.semanticState.contexts.some(context => context.contextOccurrenceId === identity
         && (context.parentContextOccurrenceId ?? null) === (target.contextOccurrenceId ?? null)
         && presetForContext(context)?.presetKey === key))
-      throw new Error("La réponse ne correspond plus à ce projet.");
+      throw new Error("La réponse ou la référence du mois a changé. Actualisez les finances avant de réessayer.");
     evaluated = response.model;
   };
   await drop(starter.parent, boardDrop, parentId);

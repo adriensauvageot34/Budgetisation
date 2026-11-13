@@ -166,6 +166,10 @@ await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
 },()=>uuid(++starterId),()=>++starterSequence),/Second step refused/);
 assert.equal(attempted,2);
 assert.equal(semanticStateDigest(model.semanticState),original);
+await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
+ const answer=await transport(command);
+ return answer.ok ? {...answer,model:{...answer.model,proof:{...answer.model.proof,expectedActiveRevisionNumber:1}}} : answer;
+},()=>uuid(++starterId),()=>++starterSequence),/référence du mois a changé/);
 console.log('UX-08 Project starters build unpriced intentions and abort cleanly if a step is refused: PASS');
 assert.equal(projectCompletionSuggestions(model,impactIds.weekend)[0]?.preset.presetKey,'museum-exhibition');
 const protectedProject={...model,semanticState:{...model.semanticState,preferences:{...model.semanticState.preferences,anchors:[impactIds.weekend]}}};
