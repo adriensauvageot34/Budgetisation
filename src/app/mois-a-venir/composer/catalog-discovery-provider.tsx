@@ -69,7 +69,7 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  const execute=(fn:()=>void)=>{close();fn();};
  return <DiscoveryContext.Provider value={open}>{children}{request&&createPortal(<dialog ref={dialog} className={styles.dialog} aria-labelledby="clay-catalog-title" data-composer-catalog
    onCancel={e=>{e.preventDefault();close();}} onClick={e=>{if(e.target===e.currentTarget)close();}}>
-   <div className={styles.panel}>
+   <div className={styles.panel} data-catalog-panel-detail={!!chosen}>
     <header><div><h2 id="clay-catalog-title">Tous les éléments</h2><p>{context?`Pour ${context.label}`:scope==='courses'?'Produits pour Courses · distincts du budget mensuel':'Concepts, intentions et repères visuels de Composer'}</p></div><button type="button" onClick={close} aria-label="Fermer le catalogue">Fermer</button></header>
     <div className={styles.filters}>
      <label className={styles.search}>Rechercher un élément<input autoFocus aria-label="Rechercher dans tous les éléments" placeholder="Pâtes alimentaires, mascara, billet…" value={query} onChange={e=>{setQuery(e.target.value);change();}}

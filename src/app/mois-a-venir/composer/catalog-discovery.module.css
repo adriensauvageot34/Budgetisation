@@ -28,6 +28,9 @@
  .panel { padding:12px; gap:10px; }.filters { grid-template-columns:1fr 1fr; }.search { grid-column:1 / -1; }.filters label:last-child { grid-column:1 / -1; }
  .content { position:relative; }.results { grid-template-columns:repeat(2,minmax(0,1fr)); }.detail { position:absolute; inset:0; width:100%; z-index:1; }
  .content[data-catalog-detail-open="true"] .results { visibility:hidden; }
+ .panel[data-catalog-panel-detail="true"] .filters,
+ .panel[data-catalog-panel-detail="true"] .notice,
+ .panel[data-catalog-panel-detail="true"] .pages { display:none; }
  .actions button,.back,.pages button { min-height:44px; }
  .detail>img { height:110px; }.detail { gap:9px; }
 }

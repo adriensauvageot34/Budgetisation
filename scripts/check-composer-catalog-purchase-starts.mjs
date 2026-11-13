@@ -99,9 +99,11 @@ try{
  await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());assert.equal(chosen.length,0);
  assert.equal(focus.at(-1),'h3');
  assert(root.root.findByProps({'data-catalog-detail-open':true}));
+ assert(root.root.findByProps({'data-catalog-panel-detail':true}));
  const back=()=>root.root.findAllByType('button').find(button=>text(button)==='Retour aux résultats');
  await act(async()=>back().props.onClick());assert.equal(focus.at(-1),'div');
  assert(root.root.findByProps({'data-catalog-detail-open':false}));
+ assert(root.root.findByProps({'data-catalog-panel-detail':false}));
  const search=()=>root.root.findByProps({'aria-label':'Rechercher dans tous les éléments'});
  const enter=(isComposing=false)=>search().props.onKeyDown({key:'Enter',nativeEvent:{isComposing},
   currentTarget:{isConnected:true,focus(){focus.push('search');}},preventDefault(){}});

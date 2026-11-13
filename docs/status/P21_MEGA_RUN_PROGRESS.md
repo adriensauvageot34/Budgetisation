@@ -577,3 +577,7 @@ Le titre d’une activité libre ouvre son éditeur quand le Board publie le dro
 ### Date du projet vérifiée dès l’aperçu
 
 L’aperçu signale une date impossible ou extérieure au mois et garde les autres choix saisis. La confirmation redevient disponible avec une date valide ou vide. TypeScript et quatre contrôles d’aperçu PASS sur fixture. L’évaluateur conserve sa vérification avant toute opération.
+
+### Place disponible pour la fiche catalogue sur mobile
+
+Sous 760 px, la fiche utilise aussi l’espace occupé par les filtres et la pagination. Le bouton de retour restaure la recherche et la page courante. Le banc catalogue vérifie les deux états et le retour du focus. Rendu navigateur reporté.
