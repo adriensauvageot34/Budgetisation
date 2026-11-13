@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {existsSync} from 'node:fs';
 import {require} from './lib/phase2-ts-loader.mjs';
 import {readMonthFixture} from './fixtures/composer-v22-b1.mjs';
 import {uuid,householdId} from './fixtures/planner-headless.mjs';
@@ -7,6 +8,8 @@ const {handleComposerRequest}=require('@/server/phase2/planner/composer-service'
 const {projectStarters,evaluateProjectStarter}=require('@/app/mois-a-venir/composer/project-starters');
 const {projectCompletionSuggestions}=require('@/app/mois-a-venir/composer/project-completion');
 const {ProspectiveContextEditor}=require('@/app/mois-a-venir/composer/family-visit-editor');
+const {CatalogContextEditor}=require('@/app/mois-a-venir/composer/catalog-context-editor');
+const {HOME_PROJECT_PRESET,presetIllustrationPath}=require('@/domain/phase2/planner/composer-presets');
 const {IntentBudgetImpact,BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
 const {libraryOccurrences}=require('@/domain/phase2/planner/composer-library-index');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
@@ -47,4 +50,25 @@ assert.match(markup,/Intentions liées/);assert.match(markup,/Musée/);
 assert.equal(semanticStateDigest(model.semanticState),before);
 assert.equal(semanticStateDigest(f.model.semanticState),original);assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
 console.log('PF-02 Family visits expose exact linked activities without assigning a relative, place or price: PASS');
-console.log(JSON.stringify({status:'PASS',checks:2,remoteWrites:0,apply:false,level:'LOCAL_OWNER_AND_RENDER'}));
+const homeId=uuid(++id),purchaseId=uuid(++id);
+assert(existsSync('public'+presetIllustrationPath(HOME_PROJECT_PRESET)));
+await request({kind:'DROP',assetKey:'template:home-project',presetKey:HOME_PROJECT_PRESET.presetKey,target:{kind:'BOARD_ZONE'},
+ identity:homeId,selectionId:uuid(++id),values:{}});
+const home=model.semanticState.contexts.find(context=>context.contextOccurrenceId===homeId);
+assert.deepEqual(home.slotSelections,{});
+assert.equal(libraryOccurrences(model).find(row=>row.contextOccurrenceId===homeId)?.action,'EDIT');
+await request({kind:'DROP',assetKey:'template:purchase',target:{kind:'BOARD_ZONE'},identity:purchaseId,selectionId:uuid(++id),
+ values:{label:'Panier pour la pièce'},purchaseBasket:true});
+const renderHome=()=>renderToStaticMarkup(React.createElement(CatalogContextEditor,{context:model.semanticState.contexts.find(context=>context.contextOccurrenceId===homeId),
+ editor:model.editors.find(editor=>editor.assetKey==='template:home-project'),targetMonth:'2026-11',householdPersons:[],busy:false,model,
+ choose(){assert.fail();},onSave(){assert.fail();},onCancel(){},onOpenChild(){assert.fail();}}));
+assert.match(renderHome(),/Rattacher Panier pour la pièce/);
+await request({kind:'DROP',assetKey:'context-occurrence:'+purchaseId,target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:homeId,slotKey:'purchases'},
+ identity:purchaseId,selectionId:uuid(++id),values:{}});
+assert.match(renderHome(),/Intentions liées/);
+assert.match(renderHome(),/Panier pour la pièce/);
+assert.equal(model.semanticState.contexts.find(context=>context.contextOccurrenceId===purchaseId).parentContextOccurrenceId,homeId);
+assert.equal(model.budgetReading.byContext[purchaseId].gross,null);
+assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
+console.log('PF-03 The home project admits an existing basket without assigning costs: PASS');
+console.log(JSON.stringify({status:'PASS',checks:3,remoteWrites:0,apply:false,level:'LOCAL_OWNER_AND_RENDER'}));

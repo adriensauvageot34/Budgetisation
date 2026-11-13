@@ -1,7 +1,7 @@
 import type { ComposerAssetView, ComposerContextCardView } from "./composer-contract";
 import type { ComposerUiModel } from "./composer-ui-contract";
 import type { PlannerJsonObject } from "./json";
-import { ACTIVITY_PRESETS, COMPOSER_PRESETS, PURCHASE_BASKET_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
+import { COMPOSER_LIBRARY_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
 import { canonicalPlannerJson } from "./json";
 import { componentId } from "./identity";
 import type { PlannedContextState } from "./semantic-state";
@@ -30,7 +30,7 @@ const beautyGroups: Readonly<Record<string,string>> = { mascara:"Maquillage", ey
 export function libraryPresetGroup(preset:ComposerPreset):string {
   if(preset.categoryKey==="PURCHASE") return "merchantLabel" in preset.defaults ? "Acheter chez…" : "Choisir un achat";
   if(preset.categoryKey==="BEAUTY") return beautyGroups[preset.presetKey]??"Visage";
-  if(preset.categoryKey==="HOME") return "Consommables";
+  if(preset.categoryKey==="HOME") return preset.templateKey==="home-project" ? "Projets maison" : "Consommables";
   return "";
 }
 export const normalizeLibrarySearch = (text:string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr").replace(/[\p{P}\p{S}]+/gu," ").replace(/\s+/gu," ").trim();
@@ -38,7 +38,6 @@ export type LibraryIntention = Readonly<{ key:string; category:string; asset:Com
 export type LibraryOccurrence = Readonly<{ contextOccurrenceId:string; presetKey:string|null; label:string; search:string;
   plannedDate:string|null; action:"EDIT"|"VIEW"; surface:"BASKET"|"ARTICLE"|"CONTEXT"|"EXTERNAL"; occurrence?:number }>;
 const clothingPresets = new Set(["clothing-shopping", "shein-purchase", "shoes-purchase"]);
-const libraryPresets = [...COMPOSER_PRESETS, ...ACTIVITY_PRESETS, ...PURCHASE_BASKET_PRESETS];
 const publishedPreset = (context:Parameters<typeof presetForContext>[0]) => {
   try{return presetForContext(context);}catch{return undefined;} // Unsupported metadata is never an exact identity.
 };
@@ -154,7 +153,7 @@ export function composerLibraryIndex(model:ComposerUiModel) {
   const generic = templates.map(asset=>({key:asset.assetKey, category:templateCategory[asset.templateKey??""]??"OTHER", asset,
     label:genericLabels[asset.templateKey??""]??asset.label, group:"Intentions libres",
     search:normalizeLibrarySearch([asset.label,genericLabels[asset.templateKey??""]??"","libre personnaliser générique"].join(" "))}));
-  const presets:LibraryIntention[] = libraryPresets.flatMap(preset=>{
+  const presets:LibraryIntention[] = COMPOSER_LIBRARY_PRESETS.flatMap(preset=>{
     const asset=templates.find(a=>a.templateKey===preset.templateKey);
     if(!asset || !model.dropCapabilities.some(d=>d.sourceAssetKey===asset.assetKey && d.target.kind==="BOARD_ZONE" && d.resolution!=="BLOCKED")) return [];
     const group=libraryPresetGroup(preset);

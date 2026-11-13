@@ -499,3 +499,9 @@ Une date invalide s’affiche comme « Date à préciser » dans la bibliothèqu
 Un produit public associé au contexte Achats peut préparer un panier générique lorsque le propriétaire `purchase@v2` admet son concept et que la création est publiée. Les visuels de Cadeaux qui n’ont pas cette destination restent hors de ce raccourci.
 
 TypeScript, diff et banc catalogue PASS. Clous crée un panier vide, puis la ligne est conservée à prix inconnu et retrouvée par son concept. Le visuel Plante à offrir ne propose pas ce départ de panier.
+
+### Aménager une pièce
+
+La bibliothèque propose « Aménager une pièce » avec le visuel Clay mobilier et l’éditeur Projet maison existant. L’utilisateur peut rattacher un panier déjà présent quand le socket Achats l’admet. Le projet expose ses coûts et ceux de ses enfants.
+
+TypeScript, diff et trois contrôles familles de projets PASS. La fixture vérifie le rattachement d’un panier générique sans préremplir un article ou un prix. Aucun writer distant ni Apply. Suite · modèle Maison avec panier vide.

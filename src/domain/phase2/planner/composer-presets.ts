@@ -254,12 +254,19 @@ export const PURCHASE_BASKET_PRESETS = [
     defaults: { label: "Achat beauté" }, questions: ["Articles", "Vendeur", "Livraison"],
     guidance: "Commencez par un article, puis complétez le même achat." },
 ] as const;
-export type ComposerPreset = (typeof COMPOSER_PRESETS | typeof ACTIVITY_PRESETS | typeof PURCHASE_BASKET_PRESETS)[number];
+export const HOME_PROJECT_PRESET = {
+  presetKey: "furnish-room", label: "Aménager une pièce", templateKey: "home-project", categoryKey: "HOME",
+  illustrationKey: "v22-art-extra-furniture-general", artworkPath: "/planned-visuals/builder/clay/v22/wide/v22-art-extra-furniture-general.webp",
+  searchTerms: ["aménagement", "pièce", "meuble", "rangement", "équipement"],
+  defaults: { label: "Aménager une pièce" }, questions: ["Équipement", "Achats", "Services"],
+  guidance: "Préparez les équipements, prestations et achats prévus. Vous pourrez préciser leurs montants séparément.",
+} as const;
+export const COMPOSER_LIBRARY_PRESETS = [...COMPOSER_PRESETS, ...ACTIVITY_PRESETS, ...PURCHASE_BASKET_PRESETS, HOME_PROJECT_PRESET];
+export type ComposerPreset = typeof COMPOSER_LIBRARY_PRESETS[number];
 export type ComposerPresetKey = ComposerPreset["presetKey"];
 export const COMPOSER_PRESENTATION_VERSION = "composer-context-presentation@v1" as const;
 export const composerPreset = (key: string): ComposerPreset | undefined =>
-  COMPOSER_PRESETS.find(p => p.presetKey === key) ?? ACTIVITY_PRESETS.find(p => p.presetKey === key)
-  ?? PURCHASE_BASKET_PRESETS.find(p => p.presetKey === key);
+  COMPOSER_LIBRARY_PRESETS.find(p => p.presetKey === key);
 /** Single terminal visual registry: no title matching, no remote URL or legacy Builder image. */
 export const presetIllustrationPath = (preset: ComposerPreset) => "artworkPath" in preset ? preset.artworkPath : preset.presetKey === "groceries-purchase"
   ? "/planned-visuals/builder/clay/v22/wide/v22-art-extra-groceries-intent.webp"

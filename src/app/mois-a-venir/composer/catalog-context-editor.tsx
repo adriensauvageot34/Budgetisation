@@ -67,7 +67,8 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     || model.semanticState.preferences.flexibility[ref] === "PRESERVE";
   const confirm = useWorkshopConfirmation();
   const project = presetForContext(context)?.presetKey;
-  const childSlot = project === "composed-outing" ? "children" : project === "visit-friends" ? "activities" : null;
+  const homeProject = project === "furnish-room";
+  const childSlot = project === "composed-outing" ? "children" : project === "visit-friends" ? "activities" : homeProject ? "purchases" : null;
   const childTarget: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: childSlot ?? undefined };
   const childSocket = childSlot && card?.sockets.find(socket => socket.slotKey === childSlot
     && socket.capabilityRefs.includes(`${context.templateKey}:${childSlot}:ATTACH_CHILD_CONTEXT`));
@@ -76,7 +77,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const candidates = canAttach ? intentionNavigationEntries(model.board.contexts.filter(child =>
     child.contextOccurrenceId !== context.contextOccurrenceId && !child.parentContextOccurrenceId && !child.readOnly && !protectedRef(child.contextOccurrenceId)
     && publishedDrop(model, `context-occurrence:${child.contextOccurrenceId}`, childTarget)?.choices.includes("REPARENT_PRESERVE_ID"))) : [];
-  const additions = [
+  const additions = homeProject ? [] : [
     project === "visit-friends" ? "museum-exhibition" : "cinema",
     "restaurant-for-two",
     ...ACTIVITY_PRESETS.map(preset => preset.presetKey),
@@ -217,6 +218,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
       {beautyProduct && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {childSlot && <>
+        {homeProject && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
         <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} decide={onSave} />
         <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
         {(candidates.length > 0 || addOptions.length > 0) && <details>
