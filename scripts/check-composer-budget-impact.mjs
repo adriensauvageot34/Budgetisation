@@ -148,6 +148,11 @@ assert.equal(JSON.stringify(model), visibleBefore);
 const localOnly = visualDraftModel(model, withUpdatedLine.semanticState);
 assert.notEqual(localOnly.board.draft.semanticStateDigest, model.board.draft.semanticStateDigest);
 assert.doesNotMatch(summary(localOnly, 'amazon'), /48,00|55,00/);
+const pendingRemoval = structuredClone(model.semanticState);
+delete pendingRemoval.contexts.find(context => context.contextOccurrenceId === impactIds.amazon).slotSelections.item;
+const beforeRecalculation = visualDraftModel(model, pendingRemoval);
+assert.match(basketCard(beforeRecalculation, 'amazon', 'PENDING'), /0 article · Calcul à actualiser/);
+assert.doesNotMatch(basketCard(beforeRecalculation, 'amazon', 'PENDING'), /48,00/);
 assert.deepEqual(fixture.writes, []);
 console.log('Digest inchangé en consultation, montants périmés masqués, aucune écriture : PASS');
 

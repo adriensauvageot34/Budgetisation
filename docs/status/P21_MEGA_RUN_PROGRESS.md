@@ -445,3 +445,7 @@ TypeScript, diff et banc séjour/enfants PASS. Une capacité retirée produit le
 Le douzième modèle propose un panier Courses vide dans le socket Achats et une randonnée dans le socket Activités. Chaque complément reste facultatif. Le panier conserve son domaine Courses et sa couverture reste à préciser.
 
 TypeScript, diff, recherche, aperçu, douze contrôles Séjour et dix groupes du banc de parcours PASS. L’évaluateur confirme les identités et les deux sockets. Le panier ne contient aucune ligne ni aucun prix prérempli. Aucun writer distant ni Apply.
+
+### Nombre d’articles pendant le recalcul
+
+La carte panier lit le nombre d’articles dans le Draft courant pendant le recalcul. Le total reste issu du reçu du Compiler. TypeScript, diff et banc d’impact PASS, y compris une suppression locale de la liste qui affiche zéro article sans reprendre l’ancien total Amazon.

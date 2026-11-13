@@ -18,7 +18,7 @@ import { useComposerInteractions, useDragHandle, leftSurface } from "./interacti
 import { visibleEmptySocketKeys } from "./presentation/socket-visibility";
 import { composerRenderIndex } from "./render-index";
 import { HairdresserReference } from "./hairdresser-reference";
-import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
+import { isPurchaseBasket, purchaseComponents } from "@/domain/phase2/planner/purchase-basket";
 import { budgetAmountsCurrent, BudgetPreviewStatus } from "./intent-budget-impact";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
@@ -45,7 +45,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const preview = useContext(BudgetPreviewStatus);
   const basketAmountsCurrent = budgetAmountsCurrent(model, preview);
   const basketSummary = basketAmountsCurrent ? card.purchaseSummary : undefined;
-  const articleCount = card.purchaseSummary?.articleCount ?? main?.currentItems.length ?? 0;
+  const basketContext = basket ? model.semanticState.contexts.find(context => context.contextOccurrenceId === card.contextOccurrenceId) : undefined;
+  const articleCount = basketContext ? purchaseComponents(basketContext, "item").length : basketSummary?.articleCount ?? 0;
   const mainAmount = main?.evaluations?.length === 1 ? main.evaluations[0].economicAmount : null;
   const mainSelection = main?.currentItems.find(i => i.kind === "COMPONENT");
   const coverage = mainSelection?.kind === "COMPONENT" ? mainSelection.binding?.mode : null;
