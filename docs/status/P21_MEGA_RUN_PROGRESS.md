@@ -77,7 +77,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Déplacements | Rubriques de saisie et accès au parking du trajet déjà choisi |
 | DONE | Activités et achats | Reprise exacte des presets Activity/Purchase existants, labels adaptés et coût nul explicite |
 | DONE | Découverte des modèles | Catégories, illustrations Clay, contenu et recherche par intentions |
-| READY | Suggestions S3 | Classement explicable et priorités de session |
+| DONE | Suggestions S3 | Compléments selon les enfants réels, priorité repas/activités en mémoire de session |
 | READY | Navigation et accessibilité | Retour au projet et édition ciblée sans mutation de consultation |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
 | BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
@@ -113,3 +113,9 @@ TypeScript, diff et dix groupes de parcours PASS. Sept activités ont été cré
 Les six modèles sont classés en sorties, séjours, visites et achats. Leur contenu et une illustration Clay existante sont visibles avant l’aperçu. La recherche associe les termes du parent et des compléments, avec normalisation des accents et plusieurs mots.
 
 TypeScript, diff et trois contrôles recherche/rendu PASS. La consultation des six modèles conserve le Draft. Les contrôles vérifient notamment « musée randonnée », « film dîner » et « achats manette ».
+
+### Suggestions S3 et priorités
+
+Une sortie vide peut commencer par Cinéma ou Restaurant. Un Week-end propose culture ou nature, puis uniquement le complément encore absent. La priorité explicite repas/activités change l’ordre, avec une limite de quatre suggestions visibles. Les préférences, masquages et désactivation restent dans la session du Shell. Chaque motif décrit les intentions réellement présentes.
+
+TypeScript, diff et quatre contrôles React/propriétaire PASS. Priorité, masquage, réactivation et consultation sans mutation sont couverts. Une confirmation ouverte est refusée si le complément est déjà adopté entre-temps. Le rattachement explicite conserve l’identité cible et les suggestions disparaissent après adoption. Aucun writer distant ni Apply.

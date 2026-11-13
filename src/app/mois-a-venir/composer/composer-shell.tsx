@@ -25,7 +25,7 @@ import { ComposerSaveStatus } from "./composer-save-status";
 import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
 import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter, type ProjectStarterChoices } from "./project-starters";
 import { ProjectStarterPreview } from "./project-starter-preview";
-import { ProjectCompletionPreference } from "./project-completion";
+import { ProjectCompletionPreference, type ProjectCompletionPriority } from "./project-completion";
 import { WorkshopNavigationContext, IntentionSwitcher, intentionNavigationEntries } from "./workshop-navigation";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
@@ -172,12 +172,14 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const declinePlace = (key: string) => setPlaceDeclines(current => current.includes(key) ? current : [...current, key]);
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Record<string, readonly string[]>>({});
   const [projectSuggestionsEnabled, setProjectSuggestionsEnabled] = useState(true);
+  const [projectSuggestionPriority, setProjectSuggestionPriority] = useState<ProjectCompletionPriority>("BALANCED");
   const [dismissedProjectSuggestions, setDismissedProjectSuggestions] = useState<Record<string, readonly string[]>>({});
   const projectSuggestionPreference = useMemo(() => ({ enabled: projectSuggestionsEnabled,
+    priority: projectSuggestionPriority, prioritize: setProjectSuggestionPriority,
     toggle: () => setProjectSuggestionsEnabled(enabled => !enabled), dismissed: dismissedProjectSuggestions,
     dismiss: (id: string, key: string | null) => setDismissedProjectSuggestions(previous => ({
       ...previous, [id]: key === null ? [] : [...new Set([...(previous[id] ?? []), key])],
-    })) }), [projectSuggestionsEnabled, dismissedProjectSuggestions]);
+    })) }), [projectSuggestionsEnabled, projectSuggestionPriority, dismissedProjectSuggestions]);
   const updateSuggestionDismissal = (occurrenceId: string, key: string | null) => setDismissedSuggestions(current => ({
     ...current, [occurrenceId]: key === null ? [] : [...new Set([...(current[occurrenceId] ?? []), key])],
   }));

@@ -14,8 +14,9 @@ const outingRules: readonly CompletionRule[] = [
   { trigger: "cinema", add: "restaurant-for-two", reason: "Votre sortie contient un cinéma. Vous pouvez prévoir un repas dans le même projet." },
   { trigger: "restaurant-for-two", add: "cinema", reason: "Votre sortie contient un restaurant. Vous pouvez prévoir une séance dans le même projet." },
 ];
+export type ProjectCompletionPriority = "BALANCED" | "ACTIVITIES" | "MEALS";
 
-export function projectCompletionSuggestions(model: ComposerUiModel, parentId: string) {
+export function projectCompletionSuggestions(model: ComposerUiModel, parentId: string, priority: ProjectCompletionPriority = "BALANCED") {
   const parent = model.board.contexts.find(card => card.contextOccurrenceId === parentId);
   if (!parent || parent.readOnly || !parent.capabilityRefs.includes("PATCH_CONTEXT") || model.semanticState.preferences.anchors.includes(parentId)
     || model.semanticState.preferences.flexibility[parentId] === "PRESERVE") return [];
@@ -27,24 +28,36 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
   const children = model.board.contexts.filter(card => card.parentContextOccurrenceId === parentId
     && parent.childContextOccurrenceIds.includes(card.contextOccurrenceId));
   const chosen = new Set(children.map(card => presetForContext(card)?.presetKey));
-  const candidates = preset === "composed-outing"
-    ? outingRules.filter(rule => chosen.has(rule.trigger) && !chosen.has(rule.add))
-    : children.some(card => card.templateKey === "activity") ? [] : [{
-      add: "museum-exhibition" as const, reason: preset === "visit-friends"
-        ? "Votre visite n’a pas encore d’activité liée. Vous pouvez préparer une sortie culturelle."
-        : "Vous préparez un week-end. Vous pouvez prévoir une visite parmi les activités du séjour.",
-    }];
+  const activityChosen = children.some(card => card.templateKey === "activity");
+  const candidates: readonly Pick<CompletionRule, "add" | "reason">[] = preset === "composed-outing"
+    ? children.length ? outingRules.filter(rule => chosen.has(rule.trigger) && !chosen.has(rule.add)) : [
+      { add: "cinema", reason: "Votre projet ne contient aucune intention. Vous pouvez commencer par une séance, puis compléter la sortie." },
+      { add: "restaurant-for-two", reason: "Votre projet ne contient aucun repas. Vous pouvez préparer un restaurant si vous le souhaitez." },
+    ]
+    : preset === "visit-friends" ? activityChosen ? [] : [{ add: "museum-exhibition",
+      reason: "Votre visite n’a pas encore d’activité liée. Vous pouvez préparer une sortie culturelle." }]
+    : !activityChosen ? [
+      { add: "museum-exhibition", reason: "Votre week-end n’a pas encore d’activité liée. Vous pouvez préparer une visite culturelle." },
+      { add: "hiking-nature", reason: "Votre week-end n’a pas encore d’activité liée. Vous pouvez préparer une sortie dans la nature." },
+    ] : chosen.has("museum-exhibition") && !chosen.has("hiking-nature") ? [{ add: "hiking-nature",
+      reason: "Une visite culturelle est déjà liée au séjour. Une randonnée peut la compléter, si vous souhaitez une activité nature." }]
+      : chosen.has("hiking-nature") && !chosen.has("museum-exhibition") ? [{ add: "museum-exhibition",
+        reason: "Une randonnée est déjà liée au séjour. Vous pouvez examiner une visite culturelle en complément." }] : [];
   return candidates.flatMap(candidate => {
     const child = composerPreset(candidate.add);
     const assetKey = `template:${child?.templateKey}`;
-    if (!child || publishedDrop(model, assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return [];
-    return [{ key: `${parentId}:${child.presetKey}`, preset: child, target, assetKey, reason: candidate.reason }];
-  });
+    if (!child || chosen.has(child.presetKey)
+      || child.templateKey === "restaurant" && children.some(card => card.templateKey === "restaurant")
+      || publishedDrop(model, assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return [];
+    return [{ key: `${parentId}:${child.presetKey}`, preset: child, target, assetKey, reason: candidate.reason,
+      category: child.templateKey === "restaurant" ? "MEALS" as const : "ACTIVITIES" as const }];
+  }).sort((left, right) => Number(right.category === priority) - Number(left.category === priority));
 }
 
 export const ProjectCompletionPreference = createContext<{
   enabled: boolean; toggle: () => void;
   dismissed: Readonly<Record<string, readonly string[]>>; dismiss: (id: string, key: string | null) => void;
+  priority?: ProjectCompletionPriority; prioritize?: (priority: ProjectCompletionPriority) => void;
 }>({ enabled: true, toggle: () => {}, dismissed: {}, dismiss: () => {} });
 
 export function ProjectCompletion({ model, parentId, busy, decide }: {
@@ -53,7 +66,7 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
   const preference = useContext(ProjectCompletionPreference);
   const confirm = useWorkshopConfirmation(), edits = useInlineEditRegistry();
   const dismissed = preference.dismissed[parentId] ?? [];
-  const candidates = projectCompletionSuggestions(model, parentId);
+  const candidates = projectCompletionSuggestions(model, parentId, preference.priority);
   const adopt = useCommittedEvent((key: string) => {
     const candidate = candidates.find(item => item.key === key);
     if (!candidate || busy || !preference.enabled || dismissed.includes(key)) return;
@@ -68,12 +81,17 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
     if (!edits || edits.guard(open)) open();
   });
   if (preference.enabled && !candidates.length && !dismissed.length) return null;
-  const visible = candidates.filter(candidate => !dismissed.includes(candidate.key));
+  const visible = candidates.filter(candidate => !dismissed.includes(candidate.key)).slice(0, 4);
   return <details className={styles.suggestionControls} data-project-completion>
     <summary>Suggestions pour compléter le projet</summary>
     <button type="button" aria-pressed={preference.enabled} onClick={preference.toggle}>
       {preference.enabled ? "Désactiver pour cette session" : "Réactiver les suggestions de projet"}
     </button>
+    {preference.enabled && preference.prioritize && <label>Priorité pour cette session<select value={preference.priority ?? "BALANCED"}
+      onChange={event => { const next = event.target.value; if (next === "BALANCED" || next === "ACTIVITIES" || next === "MEALS") preference.prioritize?.(next); }}>
+      <option value="BALANCED">Compléments directement liés</option><option value="ACTIVITIES">Activités d’abord</option><option value="MEALS">Repas d’abord</option>
+    </select></label>}
+    {preference.enabled && preference.priority && preference.priority !== "BALANCED" && <p>Votre priorité de session change l’ordre des propositions admissibles. Elle est conservée pendant cette session Composer.</p>}
     {preference.enabled && visible.map(candidate => <div key={candidate.key}>
       <p>{candidate.reason}</p>
       <button type="button" disabled={busy} onClick={() => ask(candidate.key)}>Préparer {candidate.preset.label}</button>
