@@ -62,12 +62,21 @@ Module._load=function(name,parent,...args){if(name==='react')return React;if(nam
 const {CatalogDiscoveryProvider,CatalogOpenButton}=require('@/app/mois-a-venir/composer/catalog-discovery-provider');
 const charger=entries.find(entry=>entry.discovery.sourceRow&&entry.assetKeys.includes('tech:charger'));
 const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join('');
+const focus=[];
 try{
  await act(async()=>{root=create(React.createElement(CatalogDiscoveryProvider,{model:f.model,busy:false,
   openContext(){assert.fail('An empty catalog start must not open another intention');},revealControl(){assert.fail();},choosePreset(){assert.fail('Charger uses the generic basket');},choose:(...args)=>chosen.push(args)},
   React.createElement(CatalogOpenButton,{target:{entryId:charger.visualConceptId,query:charger.label,scope:'purchase'}},'Ouvrir le catalogue')),
-  {createNodeMock:()=>({open:false,showModal(){this.open=true;},close(){this.open=false;}})});});
+  {createNodeMock:element=>({open:false,showModal(){this.open=true;},close(){this.open=false;},focus(){focus.push(element.type);}})});});
  await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());assert.equal(chosen.length,0);
+ assert.equal(focus.at(-1),'h3');
+ const back=()=>root.root.findAllByType('button').find(button=>text(button)==='Retour aux résultats');
+ await act(async()=>back().props.onClick());assert.equal(focus.at(-1),'div');
+ const result=root.root.findByProps({'data-catalog-entry':charger.visualConceptId});
+ await act(async()=>result.props.onClick({currentTarget:{isConnected:true,focus(){focus.push('result');}}}));
+ assert.equal(focus.at(-1),'h3');
+ await act(async()=>back().props.onClick());assert.equal(focus.at(-1),'result');
+ await act(async()=>result.props.onClick({currentTarget:{isConnected:true,focus(){focus.push('result');}}}));
  const start=root.root.findAllByType('button').find(button=>text(button)===`Préparer un panier pour ${charger.label}`);assert(start);
  await act(async()=>start.props.onClick());assert.equal(chosen.length,1);
  assert.equal(chosen[0][0].assetKey,'template:purchase');assert.deepEqual(chosen[0][1],{kind:'BOARD_ZONE'});

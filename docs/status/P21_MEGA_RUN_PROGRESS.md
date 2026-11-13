@@ -397,3 +397,9 @@ TypeScript, diff et banc catalogue/panier PASS. Un changement de vendeur entre l
 Le séjour revérifie la destination, la capacité de rattachement et l’état courant du séjour quand l’utilisateur accepte le déplacement d’une intention existante.
 
 TypeScript, diff et banc séjour/enfants PASS. Si le dépôt Bowling disparaît pendant la confirmation, aucune opération n’est transmise. Les contrôles d’identité et de retrait des deux Cinéma restent valides.
+
+### Focus de la fiche catalogue
+
+Ouvrir une fiche place le focus sur son titre. « Retour aux résultats » rend le focus au résultat exact, ou à la liste lorsque la fiche a été ouverte directement.
+
+TypeScript, diff et banc catalogue PASS. Le test sur DOM simulé couvre l’ouverture directe, l’ouverture depuis un résultat et les deux retours. La recette au clavier en navigateur réel reste NOT_RUN.

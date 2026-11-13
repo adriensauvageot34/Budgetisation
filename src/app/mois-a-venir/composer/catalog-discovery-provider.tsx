@@ -24,8 +24,11 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  const [request,setRequest]=useState<Request|null>(null),[entries,setEntries]=useState<readonly ClayCatalogEntry[]>([]),[error,setError]=useState('');
  const [query,setQuery]=useState(''),[scope,setScope]=useState('all'),[family,setFamily]=useState(''),[nature,setNature]=useState(''),[page,setPage]=useState(0),[selected,setSelected]=useState<string|null>(null);
  const dialog=useRef<HTMLDialogElement>(null), trigger=useRef<HTMLElement|null>(null), requestDigest=useRef('');
+ const resultsRegion=useRef<HTMLDivElement>(null), detailHeading=useRef<HTMLHeadingElement>(null), resultTrigger=useRef<HTMLButtonElement|null>(null);
+ const returnToResults=useRef(false);
  const frozenSelections=useRef<ReadonlySet<string>>(new Set());
  const open=(target:Request)=>{if(!dialog.current?.open)trigger.current=document.activeElement instanceof HTMLElement?document.activeElement:null;requestDigest.current=model.board.draft.semanticStateDigest;
+   returnToResults.current=false;resultTrigger.current=null;
    frozenSelections.current=selectedCatalogIdentities(model,target.contextId);
    setRequest(target);setScope(target.scope??scopeForCard(model,target.contextId));setQuery(target.query??'');setFamily('');setNature('');setPage(0);setSelected(target.entryId??null);};
  const close=()=>{dialog.current?.close();setRequest(null);trigger.current?.focus({preventScroll:true});};
@@ -36,6 +39,14 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  const results=useMemo(()=>catalogResults(entries,{query,scope,family,nature,selectedIds:frozenSelections.current,
    moment:request?.moment,commandIds}),[entries,query,scope,family,nature,request?.moment,commandIds]);
  const chosen=entries.find(e=>e.visualConceptId===selected),context=model.board.contexts.find(c=>c.contextOccurrenceId===request?.contextId);
+ const chosenId=chosen?.visualConceptId;
+ useEffect(()=>{
+   if(chosenId){detailHeading.current?.focus({preventScroll:true});return;}
+   if(!returnToResults.current)return;
+   returnToResults.current=false;
+   if(resultTrigger.current?.isConnected)resultTrigger.current.focus({preventScroll:true});
+   else resultsRegion.current?.focus({preventScroll:true});
+ },[chosenId]);
  const basket=context&&isPurchaseBasket(context);
  const coursesAsset=!context&&scope==='courses'?model.library.searchableAssets.find(a=>a.assetKey==='template:purchase'):undefined;
  const canPrepareCourses=!!coursesAsset&&publishedDrop(model,coursesAsset.assetKey,{kind:'BOARD_ZONE'})?.semanticAction==='ADD_CONTEXT';
@@ -69,14 +80,14 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
     {error?<p role="alert">{error}</p>:!entries.length?<p role="status">Chargement du catalogue…</p>:<>
     <div className={styles.count} role="status">{results.length} résultat(s){query?' pour votre recherche':' · classés selon ce contexte'}</div>
     <div className={styles.content}>
-     <div className={styles.results} aria-label="Éléments du catalogue">{results.slice(page*24,page*24+24).map(({entry,reason})=>{const art=clayCatalogArtwork(entry);return <button type="button" key={entry.visualConceptId} data-catalog-entry={entry.visualConceptId} aria-pressed={selected===entry.visualConceptId} onClick={()=>setSelected(entry.visualConceptId)}>
+     <div ref={resultsRegion} tabIndex={-1} className={styles.results} aria-label="Éléments du catalogue">{results.slice(page*24,page*24+24).map(({entry,reason})=>{const art=clayCatalogArtwork(entry);return <button type="button" key={entry.visualConceptId} data-catalog-entry={entry.visualConceptId} aria-pressed={selected===entry.visualConceptId} onClick={event=>{resultTrigger.current=event.currentTarget;setSelected(entry.visualConceptId);}}>
        {art&&<img src={art.src} width={art.width} height={art.height} alt="" loading="lazy" decoding="async"/>}<strong>{entry.label}</strong><small>{entry.discovery.nature==='ELEMENT'?'Élément':entry.discovery.nature==='INTENT'?'Intention':'Repère visuel'} · {reason}</small><span>Consulter</span></button>;})}
       {!results.length&&<p>Aucun résultat. Changez de famille ou choisissez « Tous les éléments » pour élargir la recherche.</p>}
      </div>
      {chosen&&<section className={styles.detail} aria-label={`Fiche ${chosen.label}`} data-catalog-detail={chosen.visualConceptId}>
-      <button type="button" className={styles.back} onClick={()=>setSelected(null)}>Retour aux résultats</button>
+      <button type="button" className={styles.back} onClick={()=>{returnToResults.current=true;setSelected(null);}}>Retour aux résultats</button>
       {(()=>{const art=clayCatalogArtwork(chosen,chosen.nativeRatio==='2:1'?'wide':'primary');return art?<img src={art.src} width={art.width} height={art.height} alt={chosen.label}/>:null;})()}
-      <h3>{chosen.label}</h3><p>{chosen.discovery.family}</p>
+      <h3 ref={detailHeading} tabIndex={-1}>{chosen.label}</h3><p>{chosen.discovery.family}</p>
       <p>{chosen.discovery.sourceRow?`Concept Excel V22 · ligne ${chosen.discovery.sourceRow}`:chosen.protected?'Illustration historique protégée':'Visuel complémentaire M10 · hors Excel'}</p>
       {!!alreadyChosen&&<p>Déjà présent dans cette composition.</p>}
       {context?.templateKey==='purchase'&&!basket&&actions.some(action=>action.target?.slotKey==='item'&&action.selection)&&<p>Cet achat contient une seule ligne article.</p>}
