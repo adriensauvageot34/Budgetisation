@@ -23,7 +23,8 @@ import type { BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { assetEditorTarget, editorOccurrenceId } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
 import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
-import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter } from "./project-starters";
+import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter, type ProjectStarterChoices } from "./project-starters";
+import { ProjectStarterPreview } from "./project-starter-preview";
 import { ProjectCompletionPreference } from "./project-completion";
 import { WorkshopNavigationContext, IntentionSwitcher, intentionNavigationEntries } from "./workshop-navigation";
 import { ComposerBoard } from "./composer-board";
@@ -163,6 +164,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   });
   const [selected, setSelected] = useState<string | null>(null), [message, setMessage] = useState("");
   const [focusedContext, setFocusedContext] = useState<string | null>(null);
+  const [projectStarter, setProjectStarter] = useState<ProjectStarter | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [past, setPast] = useState<ComposerLocalFrame[]>(recovered?.past ?? []), [future, setFuture] = useState<ComposerLocalFrame[]>(recovered?.future ?? []);
   const [editor, setEditor] = useState<Editor | null>(null), [balanceOpen, setBalanceOpen] = useState(false), [suggestions, setSuggestions] = useState<PlanBalanceSuggestions | null>(null);
@@ -1018,10 +1020,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     setFocusedContext(id);
     setReveal(previous => ({ targetRef: id, sequence: (previous?.sequence ?? 0) + 1 }));
   });
-  const installStarter = useCommittedEvent(async (starter: ProjectStarter) => {
+  const installStarter = useCommittedEvent(async (starter: ProjectStarter, choices: ProjectStarterChoices) => {
     if (busyRef.current || relationSessionRef.current || comparison || pendingApply
       || !availableProjectStarters(shown).includes(starter)) return;
-    if (inlineEdits.registry.flushPending() || !inlineEdits.registry.guard(() => void installStarter(starter))) return;
+    if (inlineEdits.registry.flushPending() || !inlineEdits.registry.guard(() => void installStarter(starter, choices))) return;
     const before = localDraft.current;
     const source = semanticStateDigest(before);
     const frame = frameNow();
@@ -1030,13 +1032,15 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     setErrorMessage(null); setMessage("Préparation des intentions du projet…"); setPreviewStatus("PENDING");
     try {
       const next = await evaluateProjectStarter(starter, visualDraftModel(current.current, before), transport,
-        () => crypto.randomUUID(), () => gate.current.next(source).sequence);
+        () => crypto.randomUUID(), () => gate.current.next(source).sequence, choices);
       if (source !== semanticStateDigest(localDraft.current) || !install(next.model)) {
         setPreviewStatus("STALE");
         setMessage("Le brouillon a changé. Rouvrez le modèle pour reprendre.");
+        setErrorMessage("Le brouillon a changé. Rouvrez le modèle pour reprendre.");
         return;
       }
       setPast(previous => [...previous, frame]); setFuture([]);
+      setProjectStarter(null);
       setEditor(null); setProjectionOpen(false); setUnresolvedOpen(false); setSuggestions(null); setBalanceOpen(false);
       setFocusedContext(next.parentId);
       setReveal(previous => ({ targetRef: next.parentId, sequence: (previous?.sequence ?? 0) + 1 }));
@@ -1053,10 +1057,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const prepareProject = useCommittedEvent((starter: ProjectStarter) => {
     if (busyRef.current || relationSessionRef.current || comparison || pendingApply) return;
     if (!inlineEdits.registry.guard(() => prepareProject(starter))) return;
-    const children = starter.children.map(key => composerPreset(key)?.label).join(", ");
-    const contents = children ? `${children} dans un projet` : "un panier dans lequel vous pourrez choisir les articles";
-    confirmationRequest.current({ message: `Le modèle « ${starter.label} » ajoute ${contents}. Les prix et les dates resteront à préciser.`,
-      acceptLabel: "Créer ce projet dans le brouillon", accept: () => void installStarter(starter) });
+    if (availableProjectStarters(shown).includes(starter)) { setErrorMessage(null); setProjectStarter(starter); }
   });
   const intentionNavigation = useMemo(() => {
     const occurrences = libraryOccurrences(shown);
@@ -1312,6 +1313,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         </>}
       </form> : null)}
     </dialog>
+    {projectStarter && <ProjectStarterPreview key={projectStarter.key} starter={projectStarter} model={shown} busy={busy} error={errorMessage}
+      create={choices => void installStarter(projectStarter, choices)} close={() => setProjectStarter(null)} />}
     <dialog ref={confirmationDialog} className={styles.dialog} data-compact-editor aria-labelledby="draft-confirmation-title"
       onCancel={e => { e.preventDefault(); if (!draftConfirmationBusy) setDraftConfirmation(null); }}>
       <header><h2 id="draft-confirmation-title">{draftConfirmation?.kind === "ABANDON" ? "Abandonner mes essais" : draftConfirmation?.kind === "RESTART" ? "Repartir du Plan actif" : draftConfirmation?.kind === "RESTORE" ? "Restaurer ce brouillon" : "Charger la version sauvegardée"}</h2></header>

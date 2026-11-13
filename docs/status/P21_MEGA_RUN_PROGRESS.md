@@ -65,3 +65,27 @@ Base `2e6febec5c9e56aaca76174c62d421157b4d44ef`, branche `codex/p21-mega-run-com
 - Réserver Apply et PlanRevision à un mandat distinct.
 
 Les contrôles ciblés exécutés couvrent aussi le panier multi-articles, le Save/Reload sur stockage isolé et le refus des révisions obsolètes. Le journal est suivi par la Draft PR #123.
+
+## Ultra-run · 13 novembre 2026
+
+Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limites effectives. Reprise de `f601439` et de la Draft PR #123. `main` reste sur `2e6febe` au démarrage.
+
+| État | Chantier | Prochain résultat |
+| --- | --- | --- |
+| DONE | Aperçu personnalisable des modèles | Nom du projet, compléments facultatifs, six modèles dont Week-end multi-enfants |
+| READY | Lecture des intentions liées | Identités, prix inconnus et informations manquantes visibles |
+| READY | Déplacements | Raccourcis vers les postes Mobility réellement admis |
+| READY | Activités et achats | Étendre les éditeurs communs aux presets compatibles |
+| READY | Découverte des modèles | Catégories, contenu et recherche dans la bibliothèque |
+| READY | Suggestions S3 | Classement explicable et priorités de session |
+| READY | Navigation et accessibilité | Retour au projet et édition ciblée sans mutation de consultation |
+| BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
+| BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
+
+Les recettes navigateur exhaustives et authentifiées restent NOT_RUN pour ce run. Les vérifications ciblées seront consignées à chaque commit.
+
+### Aperçu des modèles
+
+Le nouvel aperçu présente la structure requise, les compléments facultatifs et leurs disponibilités. Il accepte un nom explicite et ne modifie le Draft qu’après confirmation. Un sixième modèle prépare un Week-end avec musée et randonnée. Les choix sont revérifiés par l’évaluateur existant, puis admis ensemble dans l’historique Undo/Redo. Les erreurs restent visibles dans l’aperçu.
+
+TypeScript, `git diff --check` et les dix groupes du banc de parcours ont réussi. Le banc a exercé les six modèles, un nom personnalisé, le retrait d’un complément, le refus des doublons et d’un choix étranger au modèle, l’échec intermédiaire et le changement de référence. Zéro écriture distante, aucun Apply.

@@ -13,20 +13,31 @@ export const projectStarters = [
     children: [] },
   { key: "visit-and-activity", label: "Visite et activité", parent: "visit-friends", slot: "activities",
     children: ["museum-exhibition"] },
+  { key: "weekend-discovery", label: "Week-end culture et nature", parent: "weekend-gite", slot: "activities",
+    children: ["museum-exhibition", "hiking-nature"] },
 ] as const satisfies readonly { key: string; label: string; parent: ComposerPresetKey; slot: string | null; children: readonly ComposerPresetKey[] }[];
 export type ProjectStarter = typeof projectStarters[number];
+export type ProjectStarterChoices = { label: string; children: readonly ComposerPresetKey[] };
 
 const boardDrop = { kind: "BOARD_ZONE" } as const;
+export function projectPresetAvailable(model: ComposerUiModel, key: ComposerPresetKey) {
+  return model.dropCapabilities.some(cap => cap.sourceAssetKey === `template:${composerPreset(key)?.templateKey}`
+    && cap.target.kind === "BOARD_ZONE" && cap.resolution !== "BLOCKED" && cap.semanticAction === "ADD_CONTEXT");
+}
 export function availableProjectStarters(model: ComposerUiModel) {
-  return projectStarters.filter(starter => [starter.parent, ...starter.children].every(key =>
-    model.dropCapabilities.some(cap => cap.sourceAssetKey === `template:${composerPreset(key)?.templateKey}`
-      && cap.target.kind === "BOARD_ZONE" && cap.resolution !== "BLOCKED" && cap.semanticAction === "ADD_CONTEXT")));
+  return projectStarters.filter(starter => projectPresetAvailable(model, starter.parent));
 }
 
 /** Run the existing Composer evaluator against a private draft. The caller installs
  * only the final admitted state, so an incomplete template cannot reach autosave. */
 export async function evaluateProjectStarter(starter: ProjectStarter, model: ComposerUiModel, transport: ComposerTransport,
-  nextId: () => string, nextSequence: () => number) {
+  nextId: () => string, nextSequence: () => number, choices?: ProjectStarterChoices) {
+  const label = choices?.label.trim();
+  const children = choices?.children ?? starter.children;
+  if ((choices && (!label || label.length > 120)) || new Set(children).size !== children.length
+    || children.some(key => !(starter.children as readonly ComposerPresetKey[]).includes(key) || !projectPresetAvailable(model, key))
+    || !availableProjectStarters(model).includes(starter))
+    throw new Error("Ce modèle ou ses intentions ne sont plus disponibles. Rouvrez son aperçu.");
   let evaluated = model;
   const parentId = nextId();
   const base = model.proof;
@@ -35,7 +46,7 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
     if (!preset) throw new Error("Intention indisponible pour ce modèle.");
     const sequence = nextSequence();
     const response = await transport({ kind: "DROP", assetKey: `template:${preset.templateKey}`, presetKey: key, target, identity,
-      selectionId: nextId(), values: {}, sequence, targetMonth: model.semanticState.targetMonth, draft: evaluated.semanticState,
+      selectionId: nextId(), values: identity === parentId && label ? { label } : {}, sequence, targetMonth: model.semanticState.targetMonth, draft: evaluated.semanticState,
       ...(preset.templateKey === "purchase" ? { purchaseBasket: true } : {}) });
     if (!response.ok) throw new Error(response.message);
     if (response.sequence !== sequence || response.applied || response.applyReceipt
@@ -52,7 +63,7 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
   };
   await drop(starter.parent, boardDrop, parentId);
   if (starter.slot) {
-    for (const child of starter.children) {
+    for (const child of children) {
       await drop(child, { kind: "CONTEXT_SOCKET", contextOccurrenceId: parentId, slotKey: starter.slot }, nextId());
     }
   }

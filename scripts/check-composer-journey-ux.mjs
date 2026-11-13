@@ -16,6 +16,7 @@ const {fresh,buildComponentRow}=require('@/app/mois-a-venir/composer/night-out-c
 const {LinkedIntentions}=require('@/app/mois-a-venir/composer/linked-intentions');
 const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
 const {availableProjectStarters,evaluateProjectStarter}=require('@/app/mois-a-venir/composer/project-starters');
+const {ProjectStarterPreview}=require('@/app/mois-a-venir/composer/project-starter-preview');
 const {projectCompletionSuggestions,ProjectCompletion,ProjectCompletionPreference}=require('@/app/mois-a-venir/composer/project-completion');
 const {RestaurantEditor}=require('@/app/mois-a-venir/composer/restaurant-editor');
 const {isPurchaseBasket}=require('@/domain/phase2/planner/purchase-basket');
@@ -142,7 +143,7 @@ assert.equal(newCinema.parentContextOccurrenceId,projectId);
 assert.deepEqual(newCinema.slotSelections,{});
 console.log('UX-07 Composed outing attaches exact occurrences and preserves official child costs: PASS');
 const starters=availableProjectStarters(model);
-assert.equal(starters.length,5);
+assert.equal(starters.length,6);
 let starterId=29200, starterSequence=20;
 const transport=command=>handleComposerRequest(fixture.deps,householdId,command);
 for(const starter of starters){
@@ -166,6 +167,22 @@ for(const starter of starters){
   assert.equal(libraryOccurrences(added.model).find(row=>row.contextOccurrenceId===added.parentId)?.action,'EDIT');
  }
  assert.equal(semanticStateDigest(model.semanticState),original);
+}
+const optional=starters.find(starter=>starter.key==='weekend-discovery');
+const previewMarkup=renderToStaticMarkup(React.createElement(ProjectStarterPreview,{starter:optional,model,busy:false,
+ create(){assert.fail('Preview must not admit');},close(){assert.fail('Preview must not close during render');}}));
+assert.match(previewMarkup,/Compléments facultatifs/);
+assert.match(previewMarkup,/3 intentions à créer/);
+const customized=await evaluateProjectStarter(optional,model,transport,()=>uuid(++starterId),()=>++starterSequence,
+ {label:'  Mon week-end  ',children:['hiking-nature']});
+const customizedParent=customized.model.semanticState.contexts.find(context=>context.contextOccurrenceId===customized.parentId);
+assert.equal(customizedParent.fields.label,'Mon week-end');
+const customizedChildren=customized.model.semanticState.contexts.filter(context=>context.parentContextOccurrenceId===customized.parentId);
+assert.equal(customizedChildren.length,1);
+assert.equal(customizedChildren[0].fields.composerPresentation.presetKey,'hiking-nature');
+for(const choices of [{label:'',children:[]},{label:'Test',children:['cinema']},{label:'Test',children:['hiking-nature','hiking-nature']}]){
+ await assert.rejects(evaluateProjectStarter(optional,model,()=>assert.fail('Invalid proposal must not evaluate'),
+  ()=>uuid(++starterId),()=>++starterSequence,choices),/Rouvrez son aperçu/);
 }
 let attempted=0;
 await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
