@@ -109,7 +109,11 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
     <p>{children.length} intention{children.length > 1 ? "s" : ""} · {current ? `${incompleteCount} à compléter` : "Évaluation à actualiser"}
       {consultationCount > 0 ? ` · ${consultationCount} en consultation` : ""}</p>
     {filterable && <label className={styles.projectAttachmentSearch}>Rechercher dans ce projet
-      <input type="search" value={query} onChange={event => setQuery(event.target.value)} />
+      <input type="search" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => {
+        if (event.key !== "Enter" || event.nativeEvent.isComposing || !terms.length || visible.length !== 1 || busy || !open) return;
+        event.preventDefault();
+        open(visible[0].id);
+      }} />
     </label>}
     {filterable && <nav className={styles.linkedFilters} aria-label="Afficher les intentions liées">
       {([ ["ALL", "Toutes"], ["INCOMPLETE", "À compléter"], ["READ_ONLY", "En consultation"] ] as const).map(([key, label]) =>

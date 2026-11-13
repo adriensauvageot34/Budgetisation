@@ -561,3 +561,7 @@ Quatre activités s’ouvrent depuis la bibliothèque et leur concept exact du c
 ### Modèles de visite avec laser game et de séjour avec zoo
 
 La bibliothèque propose 15 modèles. Ces deux nouveaux modèles passent par le socket Activités du projet. Le choix d’activité reste facultatif. Les prix, dates, trajets et participants restent à préciser. TypeScript, recherche et banc familles de projets PASS, avec reçu de rattachement exact et montant de l’enfant inconnu.
+
+### Navigation clavier parmi les intentions liées
+
+Dans la recherche d’un projet, Entrée ouvre l’occurrence unique qui correspond à la requête et au filtre actif. Plusieurs résultats restent à choisir, y compris lorsqu’ils ont le même titre. TypeScript et banc intentions liées PASS sur fixture, avec saisie en cours de composition et digest inchangé.
