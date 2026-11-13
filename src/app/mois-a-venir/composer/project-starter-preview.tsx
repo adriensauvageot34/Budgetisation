@@ -8,12 +8,14 @@ import { PresetIllustration } from "./preset-illustration";
 import styles from "./composer.module.css";
 
 /** Only the confirmed proposal reaches the Shell's atomic evaluator. */
-export function ProjectStarterPreview({ starter, model, busy, error, create, close }: {
+export function ProjectStarterPreview({ starter, model, busy, error, blockedReason, create, close }: {
   starter: ProjectStarter; model: ComposerUiModel; busy: boolean;
   error?: string | null;
+  blockedReason?: string | null;
   create(choices: ProjectStarterChoices): void; close(): void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const restoreFocus = useRef(true);
   const [label, setLabel] = useState<string>(starter.label);
   const [selected, setSelected] = useState<readonly ComposerPresetKey[]>(() => starter.children.filter(key => projectPresetAvailable(model, key)));
   const parent = composerPreset(starter.parent);
@@ -22,12 +24,16 @@ export function ProjectStarterPreview({ starter, model, busy, error, create, clo
   useEffect(() => {
     const origin = document.activeElement;
     dialog.current?.showModal();
-    return () => { if (origin instanceof HTMLElement && origin.isConnected) origin.focus({ preventScroll: true }); };
+    return () => { if (restoreFocus.current && origin instanceof HTMLElement && origin.isConnected) origin.focus({ preventScroll: true }); };
   }, []);
+  const cancel = () => { if (!busy) { restoreFocus.current = true; close(); } };
   return <dialog ref={dialog} className={`${styles.workshopConfirmation} ${styles.projectPreview}`}
     aria-labelledby="project-starter-title" aria-describedby="project-starter-description" data-project-starter-preview
-    onCancel={event => { event.preventDefault(); if (!busy) close(); }}>
-    <form onSubmit={event => { event.preventDefault(); if (!busy && admitted && label.trim()) create({ label: label.trim(), children: chosen }); }}>
+    onCancel={event => { event.preventDefault(); cancel(); }}>
+    <form onSubmit={event => {
+      event.preventDefault();
+      if (!busy && !blockedReason && admitted && label.trim()) { restoreFocus.current = false; create({ label: label.trim(), children: chosen }); }
+    }}>
       <h2 id="project-starter-title">Préparer {starter.label}</h2>
       {parent && <PresetIllustration preset={parent} className={styles.projectPreviewVisual} />}
       <p id="project-starter-description">Choisissez les intentions à préparer. Les prix, dates et participants resteront à préciser après la création.</p>
@@ -45,8 +51,9 @@ export function ProjectStarterPreview({ starter, model, busy, error, create, clo
       {!starter.children.length && <p>Le panier sera vide. Vous choisirez les articles dans son éditeur.</p>}
       <p>{chosen.length + 1} intention{chosen.length ? "s" : ""} à créer. Chaque rattachement sera vérifié avant l’ajout au brouillon.</p>
       {error && <p role="alert">{error}</p>}
-      <footer><button type="button" disabled={busy} onClick={close}>Annuler</button>
-        <button data-confirm-workshop disabled={busy || !admitted || !label.trim()}>{busy ? "Préparation…" : "Créer ce projet dans le brouillon"}</button></footer>
+      {blockedReason && <p role="alert">{blockedReason}</p>}
+      <footer><button type="button" disabled={busy} onClick={cancel}>Annuler</button>
+        <button data-confirm-workshop disabled={busy || !!blockedReason || !admitted || !label.trim()}>{busy ? "Préparation…" : "Créer ce projet dans le brouillon"}</button></footer>
     </form>
   </dialog>;
 }

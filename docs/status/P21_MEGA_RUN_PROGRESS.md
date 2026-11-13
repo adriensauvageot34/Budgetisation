@@ -83,9 +83,9 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Déplacement d’une intention liée | Reparentage explicite, identité et postes conservés, droits et digest revérifiés |
 | DONE | Lecture financière des relations | Contexte parent distingué du coût individuel de chaque intention |
 | DONE | Reprise des séjours | Hôtel et séjour chez des proches retrouvables, deux modèles supplémentaires |
-| READY | Aperçu des projets | Améliorer les erreurs et la reprise lorsque les droits changent pendant un aperçu |
+| DONE | Aperçu des projets | Blocages visibles et confirmation inactive pendant une comparaison ou organisation |
 | DONE | Catalogue contextualisé | Type d’éditeur annoncé et recherche des paniers par leurs articles |
-| READY | Accessibilité des formulaires | Retour du focus, labels et navigation progressive sans perte de RAW |
+| DONE | Accessibilité des formulaires | Annulation de l’aperçu rend le focus, réussite laisse la navigation du projet disponible |
 | READY | Compléments des séjours | Parcours d’ouverture ciblée des activités enfants depuis les postes |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
 | BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
@@ -157,3 +157,9 @@ TypeScript PASS. Deux contrôles propriétaire/rendu et les trois contrôles de 
 La bibliothèque distingue panier multi-articles, fiche d’article, activité et intention à compléter. Une recherche peut retrouver un panier par le nom d’un article. Correction ciblée : un panier Vêtements `purchase@v2` ne passe plus dans le contrôle mono-article historique qui le classait à tort en consultation seule. Les versions panier de la carte et du Draft doivent correspondre avant toute proposition de reprise.
 
 TypeScript et diff PASS. Le banc panier valide Amazon, Vêtements, Courses, compatibilité historique et Save/Reload sur stockage SQL isolé. Les nouveaux contrôles couvrent le panier Vêtements vide, son ouverture, la recherche de Jean et l’ancrage qui impose la consultation. Aucun accès à une base distante ni Apply.
+
+### Aperçu et focus
+
+L’aperçu explique les blocages transitoires du Shell et empêche une confirmation sans effet pendant une comparaison ou organisation locale. Annuler rend le focus à l’origine. Une création réussie ne force plus le retour sur la bibliothèque. Les aides de sauvegarde pointent vers les actions réellement présentes sous le bandeau.
+
+TypeScript, diff et deux contrôles React PASS. Nom et choix facultatifs restent locaux jusqu’à confirmation, le motif de blocage empêche toute création, l’annulation et la réussite ont des comportements de focus distincts. Aucun writer distant.

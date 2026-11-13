@@ -1317,6 +1317,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       </form> : null)}
     </dialog>
     {projectStarter && <ProjectStarterPreview key={projectStarter.key} starter={projectStarter} model={shown} busy={busy} error={errorMessage}
+      blockedReason={relationSession ? "Terminez l’organisation locale avant de créer ce projet."
+        : comparison ? "Quittez la comparaison avant de créer ce projet."
+        : pendingApply ? "Vérifiez la demande en cours avant de modifier le brouillon." : null}
       create={choices => void installStarter(projectStarter, choices)} close={() => setProjectStarter(null)} />}
     <dialog ref={confirmationDialog} className={styles.dialog} data-compact-editor aria-labelledby="draft-confirmation-title"
       onCancel={e => { e.preventDefault(); if (!draftConfirmationBusy) setDraftConfirmation(null); }}>
