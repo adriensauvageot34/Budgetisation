@@ -24,7 +24,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   choose:(asset:ComposerAssetView)=>void;choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void;drag:(key:string|null)=>void;inspectContext:(id:string)=>void;openContext:(id:string)=>void;
   prepareProject?:(starter:ProjectStarter)=>void}) {
   const [space,setSpace]=useState<"add"|"intentions"|"manage">("add"),[query,setQuery]=useState(""),[opened,setOpened]=useState<string|null>("SOCIAL");
-  const [intentionFilter,setIntentionFilter]=useState<"ALL"|"INCOMPLETE"|"PROJECTS">("ALL");
+  const [intentionFilter,setIntentionFilter]=useState<"ALL"|"INCOMPLETE"|"PROJECTS"|"BASKETS">("ALL");
   const [expanded,setExpanded]=useState<ReadonlySet<string>>(()=>new Set()),[favorites,setFavorites]=useState<readonly string[]>([]);
   const [favoriteNotice,setFavoriteNotice]=useState("");
   const search=useRef<HTMLInputElement>(null), interaction=useComposerInteractions();
@@ -49,6 +49,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   const monthIntentions = filterLibraryIntentions(index.occurrences,query).filter(row=>{
     const card=composerRenderIndex(model).contexts.get(row.contextOccurrenceId);
     if(!card)return false;
+    if(intentionFilter==="BASKETS")return row.surface==="BASKET";
     if(intentionFilter==="PROJECTS")return card.childContextOccurrenceIds.length>0||row.presetKey==="composed-outing";
     if(intentionFilter==="INCOMPLETE")return readingCurrent&&(card.knowledge==="UNKNOWN"||card.knowledge==="PARTIAL");
     return true;
@@ -162,8 +163,9 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     </>:space==="intentions"?<section aria-label="Mes intentions du mois" data-library-month-intentions>
       <h3>Mes intentions · {new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(`${model.board.targetMonth}-01T12:00:00Z`))}</h3>
       <label>Afficher<select aria-label="Filtrer les intentions du mois" value={intentionFilter}
-        onChange={event=>{const value=event.target.value;if(value==="ALL"||value==="INCOMPLETE"||value==="PROJECTS")setIntentionFilter(value);}}>
+        onChange={event=>{const value=event.target.value;if(value==="ALL"||value==="INCOMPLETE"||value==="PROJECTS"||value==="BASKETS")setIntentionFilter(value);}}>
         <option value="ALL">Toutes mes intentions</option><option value="INCOMPLETE">À compléter</option><option value="PROJECTS">Mes projets</option>
+        <option value="BASKETS">Mes paniers</option>
       </select></label>
       {!readingCurrent&&intentionFilter==="INCOMPLETE"&&<p role="status">Actualisez la projection pour connaître les intentions à compléter.</p>}
       {monthIntentions.map(row=>occurrenceButton(row))}

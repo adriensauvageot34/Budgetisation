@@ -461,3 +461,7 @@ TypeScript, diff et six groupes S3 PASS. La proposition explique le type d’hé
 Dans le catalogue Courses hors contrôle budgétaire, un produit admis peut préparer un panier vide et ouvrir la saisie de cet article. Un article déjà choisi reste retrouvable par son identité. Le contrôle de l’enveloppe mensuelle ne propose pas cette action au niveau du produit.
 
 TypeScript, diff et banc catalogue/panier PASS. La fixture ouvre un panier Courses depuis Pain, puis admet séparément l’article au prix UNKNOWN. Aucun writer distant ni Apply.
+
+### Filtrer les paniers du mois
+
+« Mes intentions » propose le filtre « Mes paniers ». Il inclut les paniers génériques et spécialisés et reste combinable avec la recherche. TypeScript, diff et quatre contrôles de bibliothèque PASS. Entrée ouvre le panier générique exact lorsque le résultat est unique, sans mutation.
