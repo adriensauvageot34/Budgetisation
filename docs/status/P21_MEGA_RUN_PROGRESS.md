@@ -391,3 +391,9 @@ TypeScript, diff et banc catalogue/panier PASS. Le raccourci est disponible sur 
 La confirmation vérifie le digest et les droits courants avant de transmettre le retrait. Le formulaire suit le même contrôle et conserve la saisie si le panier a changé.
 
 TypeScript, diff et banc catalogue/panier PASS. Un changement de vendeur entre l’ouverture et l’acceptation du retrait invalide l’action. Aucun retrait ni writer distant ne part depuis cette confirmation.
+
+### Revérifier le rattachement au séjour à la confirmation
+
+Le séjour revérifie la destination, la capacité de rattachement et l’état courant du séjour quand l’utilisateur accepte le déplacement d’une intention existante.
+
+TypeScript, diff et banc séjour/enfants PASS. Si le dépôt Bowling disparaît pendant la confirmation, aucune opération n’est transmise. Les contrôles d’identité et de retrait des deux Cinéma restent valides.

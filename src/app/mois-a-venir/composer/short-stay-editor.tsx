@@ -213,6 +213,13 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
       return drop?.semanticAction==="PATCH_CONTEXT"&&drop.choices.includes("REPARENT_PRESERVE_ID")?[{child,assetKey,target}]:[];
     });
   };
+  const attachExisting = useCommittedEvent((slot: Group, childId: string, expectedSource: string) => {
+    const match = compatibleRoots(slot).find(({ child }) => child.contextOccurrenceId === childId);
+    if (!props.busy && source === expectedSource && match) {
+      props.onSave({ kind: "DROP", assetKey: match.assetKey, target: match.target, values: {},
+        identity: childId, selectionId: crypto.randomUUID() });
+    }
+  });
   const currentLodging = card?.sockets.find(socket => socket.slotKey === "lodging");
   const evaluated = props.fresh && canonicalPlannerJson(currentLodging?.currentItems ?? []) === canonicalPlannerJson(items(context, "lodging"))
     ? currentLodging?.evaluations?.find(evaluation => evaluation.selectionId === oldLodging?.selectionId)?.economicAmount : null;
@@ -284,9 +291,9 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
       </div>; })}
       {posts[slot].length > 1 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {posts[slot].length}</span><button type="button" disabled={postPage + 1 >= posts[slot].length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
       <button type="button" disabled={slot === "extras" && !slotAllowed("extras", "extra")} onClick={() => { setPostPage(posts[slot].length); update(slot, [...posts[slot], { row: fresh(slot === "activities" ? "Activité" : slot === "purchases" ? "Achat" : slot === "extras" ? "Extra" : "Restaurant"), templateKey: key }]); }}>Ajouter · {caption}</button>
-      {compatibleRoots(slot).map(({child,assetKey,target})=><button type="button" key={child.contextOccurrenceId} disabled={props.busy} onClick={()=>{
+      {compatibleRoots(slot).map(({child})=><button type="button" key={child.contextOccurrenceId} disabled={props.busy} onClick={()=>{
         const ask=()=>confirm({message:`Rattacher « ${child.label} » à ce séjour ? L’intention et ses postes sont conservés.`,
-          acceptLabel:"Rattacher cette intention",accept:()=>props.onSave({kind:"DROP",assetKey,target,values:{},identity:child.contextOccurrenceId,selectionId:crypto.randomUUID()})});
+          acceptLabel:"Rattacher cette intention",accept:()=>attachExisting(slot,child.contextOccurrenceId,source)});
         if(leaveRaw(ask))ask();
       }}>Rattacher {child.label}</button>)}
     </div>)}

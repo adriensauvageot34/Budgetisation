@@ -26,18 +26,27 @@ const request=async operation=>{
 };
 await request({kind:'DROP',assetKey:'template:short-stay',presetKey:'weekend-gite',target:{kind:'BOARD_ZONE'},identity:parentId,selectionId:uuid(30403),values:{}});
 for(const [index,id] of children.entries())await request({kind:'DROP',assetKey:'template:activity',presetKey:'cinema',target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:parentId,slotKey:'activities'},identity:id,selectionId:uuid(30410+index),values:{}});
+const rootActivity=uuid(30420);
+await request({kind:'DROP',assetKey:'template:activity',presetKey:'bowling',target:{kind:'BOARD_ZONE'},identity:rootActivity,selectionId:uuid(30421),values:{}});
 const before=semanticStateDigest(model.semanticState);let root,opened=[],operations=[];
 const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join('');
+const render=model=>React.createElement(ShortStayEditor,{context:model.semanticState.contexts.find(context=>context.contextOccurrenceId===parentId),
+ semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],fresh:false,busy:false,model,
+ choose(){assert.fail();},onSave:operation=>{operations.push(operation);return true;},onCancel(){},onOpenChild:id=>opened.push(id)});
 try{
- await act(async()=>{root=create(React.createElement(ShortStayEditor,{context:model.semanticState.contexts.find(context=>context.contextOccurrenceId===parentId),
-  semanticState:model.semanticState,targetMonth:'2026-11',householdPersons:[],fresh:false,busy:false,model,
-  choose(){assert.fail();},onSave:operation=>{operations.push(operation);return true;},onCancel(){},onOpenChild:id=>opened.push(id)}));});
+ await act(async()=>{root=create(render(model));});
  await act(async()=>prospective.postsQuestion.choices.find(choice=>choice.key==='activities').choose());
  await act(async()=>root.root.findByProps({'data-open-stay-child':children[0]}).props.onClick());
  const next=root.root.findAllByType('button').find(node=>text(node)==='Suivant');assert(next);
  await act(async()=>next.props.onClick());
  await act(async()=>root.root.findByProps({'data-open-stay-child':children[1]}).props.onClick());
  assert.deepEqual(opened,children);assert.equal(operations.length,0);
+ const attach=root.root.findAllByType('button').find(node=>text(node)==='Rattacher Bowling');assert(attach);
+ await act(async()=>attach.props.onClick());assert(confirmation);
+ const denied={...model,dropCapabilities:model.dropCapabilities.filter(drop=>drop.sourceAssetKey!==`context-occurrence:${rootActivity}`)};
+ await act(async()=>root.update(render(denied)));
+ await act(async()=>confirmation.accept());assert.equal(operations.length,0);
+ await act(async()=>root.update(render(model)));
  console.log('SC-01 Homonymous child activities open their exact identities without mutation: PASS');
  const remove=root.root.findAllByType('button').find(node=>text(node)==='Retirer ce poste');assert(remove);
  await act(async()=>remove.props.onClick());assert(confirmation);assert.match(confirmation.message,/intention enfant, ses postes/);
