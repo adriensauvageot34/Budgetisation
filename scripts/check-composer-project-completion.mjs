@@ -32,7 +32,7 @@ assert.deepEqual(projectCompletionSuggestions(model,parentId,'MEALS').map(candid
 const protectedModel={...model,semanticState:{...model.semanticState,preferences:{...model.semanticState.preferences,anchors:[parentId]}}};
 assert.deepEqual(projectCompletionSuggestions(protectedModel,parentId),[]);
 assert.deepEqual(projectCompletionSuggestions({...model,dropCapabilities:[]},parentId),[]);
-let root,setModel,accepted=[];
+let root,setModel,accepted=[],summaryFocus=0;
 function Harness(){
  const [shown,update]=React.useState(model);setModel=update;
  const [enabled,toggle]=React.useState(true),[priority,prioritize]=React.useState('BALANCED'),[dismissed,setDismissed]=React.useState({});
@@ -44,12 +44,13 @@ const text=node=>typeof node==='string'?node:(node.children??[]).map(text).join(
 const buttons=()=>root.root.findAllByType('button');
 const click=async label=>{const button=buttons().find(node=>text(node)===label);assert(button,label);await act(async()=>button.props.onClick());};
 try{
- await act(async()=>{root=create(React.createElement(Harness));});
+ await act(async()=>{root=create(React.createElement(Harness),{createNodeMock:element=>element.type==='summary'?{focus(){summaryFocus++;}}:null});});
  await act(async()=>root.root.findByType('select').props.onChange({target:{value:'MEALS'}}));
  assert.equal(text(buttons().find(node=>text(node).startsWith('Préparer '))),'Préparer Restaurant à deux');
  await click('Masquer Restaurant à deux');assert(!buttons().some(node=>text(node)==='Préparer Restaurant à deux'));
  await click('Désactiver pour cette session');assert(!buttons().some(node=>text(node).startsWith('Préparer ')));
  await click('Réactiver les suggestions de projet');await click('Réafficher les suggestions masquées');
+ assert.equal(summaryFocus,2);
  assert.equal(accepted.length,0);assert.equal(semanticStateDigest(model.semanticState),start);
  console.log('S3-01 Deterministic priority, permission filtering and reversible session controls without mutation: PASS');
  await click('Préparer Restaurant à deux');assert(confirmation);assert.equal(accepted.length,0);

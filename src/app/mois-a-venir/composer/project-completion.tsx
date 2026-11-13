@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useRef } from "react";
 import { ACTIVITY_PRESETS, composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { publishedDrop } from "./interactions";
@@ -79,6 +79,7 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
 }) {
   const preference = useContext(ProjectCompletionPreference);
   const confirm = useWorkshopConfirmation(), edits = useInlineEditRegistry();
+  const summary = useRef<HTMLElement>(null);
   const dismissed = preference.dismissed[parentId] ?? [];
   const candidates = projectCompletionSuggestions(model, parentId, preference.priority);
   const adopt = useCommittedEvent((key: string) => {
@@ -97,7 +98,7 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
   if (preference.enabled && !candidates.length && !dismissed.length) return null;
   const visible = candidates.filter(candidate => !dismissed.includes(candidate.key)).slice(0, 4);
   return <details className={styles.suggestionControls} data-project-completion>
-    <summary>Suggestions pour compléter le projet</summary>
+    <summary ref={summary}>Suggestions pour compléter le projet</summary>
     <button type="button" aria-pressed={preference.enabled} onClick={preference.toggle}>
       {preference.enabled ? "Désactiver pour cette session" : "Réactiver les suggestions de projet"}
     </button>
@@ -109,8 +110,14 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
     {preference.enabled && visible.map(candidate => <div key={candidate.key}>
       <p>{candidate.reason}</p>
       <button type="button" disabled={busy} onClick={() => ask(candidate.key)}>Préparer {candidate.preset.label}</button>
-      <button type="button" disabled={busy} onClick={() => preference.dismiss(parentId, candidate.key)}>Masquer {candidate.preset.label}</button>
+      <button type="button" disabled={busy} onClick={() => {
+        summary.current?.focus();
+        preference.dismiss(parentId, candidate.key);
+      }}>Masquer {candidate.preset.label}</button>
     </div>)}
-    {preference.enabled && dismissed.length > 0 && <button type="button" onClick={() => preference.dismiss(parentId, null)}>Réafficher les suggestions masquées</button>}
+    {preference.enabled && dismissed.length > 0 && <button type="button" onClick={() => {
+      summary.current?.focus();
+      preference.dismiss(parentId, null);
+    }}>Réafficher les suggestions masquées</button>}
   </details>;
 }

@@ -427,3 +427,9 @@ TypeScript, diff et banc catalogue PASS pour la présence de l’état fiche ouv
 Les activités libres sans présentation de preset rejoignent « Mes intentions ». Elles rouvrent leur éditeur générique. L’annonce d’édition des intentions vérifie l’état actif, l’occurrence et son parent, avec les droits publiés.
 
 TypeScript, diff et quatre contrôles de bibliothèque PASS. Une activité libre est retrouvée sans lui attribuer de preset. Les homonymes, les filtres et la recherche de modèles restent couverts.
+
+### Focus après masquage d’une suggestion S3
+
+Le masquage et la réactivation des suggestions rendent le focus au titre du panneau avant de retirer le bouton activé.
+
+TypeScript, diff et cinq contrôles S3 PASS. Les deux retours de focus sont vérifiés sur DOM simulé, avec le digest conservé et sans nouvelle décision.
