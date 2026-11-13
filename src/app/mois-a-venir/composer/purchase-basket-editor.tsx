@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
@@ -19,7 +19,7 @@ import { catalogRefLocked, normalizeCatalog, type GuidedCatalogChoice } from "./
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { purchaseSuggestions } from "./purchase-suggestions";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
-import { IntentBudgetImpact } from "./intent-budget-impact";
+import { BudgetPreviewStatus, IntentBudgetImpact } from "./intent-budget-impact";
 import { WorkshopNavigation } from "./workshop-navigation";
 import { useCommittedEvent } from "./use-committed-event";
 import { useWorkshopRaw } from "./inline-edit-registry";
@@ -62,7 +62,12 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const delivery = purchaseComponents(context, "shipping")[0];
   const extras = purchaseComponents(context, "extras");
   const historicalDelivery = extras.some(legacyDeliveryFee);
-  const summary = card.purchaseSummary;
+  const preview = useContext(BudgetPreviewStatus);
+  const amountsCurrent = preview !== "PENDING" && preview !== "STALE" && preview !== "FAILED"
+    && (!model.budgetReading || model.budgetReading.semanticStateDigest === model.board.draft.semanticStateDigest);
+  const summary = amountsCurrent ? card.purchaseSummary : undefined;
+  const [articleQuery, setArticleQuery] = useState("");
+  const [missingPricesOnly, setMissingPricesOnly] = useState(false);
   const [entries, setEntries] = useState<readonly ClayCatalogEntry[]>([]);
   const seed = initialConcept?.label ?? (!articles.length ? text(context.fields.productLabel) : "");
   const [form, setForm] = useState<Form | null>(() => seed ? { kind: "article", id: crypto.randomUUID(),
@@ -198,6 +203,14 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     const name = normalizeCatalog(item.label);
     nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
   }
+  const missingPrices = articles.filter(item => item.cost.kind === "UNKNOWN").length;
+  const terms = normalizeCatalog(articleQuery).split(/\s+/u).filter(Boolean);
+  const filterArticles = articles.length > 1;
+  const matchingArticles = articles.map((item, index) => ({ item, index })).filter(({ item }) => {
+    if (!filterArticles) return true;
+    const searchable = normalizeCatalog([item.label, item.basketArticle?.concept?.label].filter(Boolean).join(" "));
+    return (!missingPricesOnly || item.cost.kind === "UNKNOWN") && terms.every(term => searchable.includes(term));
+  });
   const panel = <aside className={`${composer.restaurantInspector} ${styles.panel}`} role="dialog" aria-modal="false"
     aria-labelledby="basket-heading" data-restaurant-editor data-purchase-basket data-basket-suggestions={showSuggestions || undefined}>
     <header><div><small>{groceries ? "Panier de courses" : clothing ? "Panier vêtements et chaussures" : "Panier d’achat"}</small>
@@ -281,7 +294,14 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     {error && <p role="alert">{error}</p>}
     <section aria-label="Articles du panier">
       {articles.length === 0 && <p>Panier vide. Ajoutez les articles à prévoir.</p>}
-      <ul className={styles.lines}>{articles.map((item, index) => {
+      {articles.length > 0 && <p>{articles.length} article{articles.length > 1 ? "s" : ""} · {missingPrices
+        ? `${missingPrices} prix à préciser` : "Aucun prix manquant"}</p>}
+      {filterArticles && <div className={styles.lineFilters}>
+        <label>Rechercher dans ce panier<input type="search" value={articleQuery} onChange={event => setArticleQuery(event.target.value)} /></label>
+        <label><input type="checkbox" checked={missingPricesOnly} onChange={event => setMissingPricesOnly(event.target.checked)} /> Prix à préciser</label>
+      </div>}
+      {filterArticles && !matchingArticles.length && <p role="status">Aucun article ne correspond aux filtres.</p>}
+      <ul className={styles.lines}>{matchingArticles.map(({ item, index }) => {
         const artwork = entries.find(entry => entry.visualConceptId === item.basketArticle?.concept?.id);
         const image = artwork && clayCatalogArtwork(artwork);
         const amount = summary && evaluations?.find(evaluation => evaluation.selectionId === item.selectionId)?.economicAmount;
@@ -298,7 +318,8 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     </section>
     <footer className={styles.footer}>
       {typeof context.fields.merchantLabel === "string" && <p>Vendeur · {context.fields.merchantLabel}</p>}
-      {!model.budgetReading && <p>{visibleTotal == null ? "Total à préciser" : summary?.complete ? `Total brut · ${money(visibleTotal)}` : `Montant connu · ${money(visibleTotal)} · total à préciser`}</p>}
+      {!model.budgetReading && <p>{!amountsCurrent ? "Total en attente de simulation" : visibleTotal == null ? "Total à préciser"
+        : summary?.complete ? `Total brut · ${money(visibleTotal)}` : `Montant connu · ${money(visibleTotal)} · total à préciser`}</p>}
       <p>{coverageLabels[(context.fields.deliveryCoverage as BasketDeliveryCoverage | undefined) ?? "UNKNOWN"]}{delivery?.cost.kind === "MANUAL" ? ` · ${money(delivery.cost.unitAmount)}` : ""}</p>
       {extras.length > 0 && <ul className={styles.lines} aria-label="Suppléments distincts">{extras.map(item => <li key={item.selectionId}>
         <div><strong>{item.label}</strong><small>{item.cost.kind === "MANUAL" ? `${item.quantity} × ${money(item.cost.unitAmount)}` : "Prix à préciser"}</small></div>

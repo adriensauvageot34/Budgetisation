@@ -271,3 +271,9 @@ TypeScript et le banc catalogue/propriétaire PASS. Deux Chargeur homonymes gard
 Bowling, Karting, Escape game, Mini-golf, Billard et Piscine utilisent chacun leur export Clay V22 et le contrat Activité existant. La bibliothèque ne propose leur création que si le dépôt sur le Board est admis. Les éditeurs rouvrent l’occurrence exacte avec un libellé de coût adapté, sans prix, frais, participants ni trajet préremplis.
 
 TypeScript, diff et les dix groupes du banc de parcours PASS. Treize activités passent par les slots existants sur fixture, avec reprise de l’identité et contrôle du coût officiel. Les six nouveaux visuels sont présents et le retrait de la capacité Board masque les six créations. Aucun writer distant ni Apply. Suite · recherche et complétude des paniers génériques.
+
+### Recherche et prix manquants dans les paniers
+
+La liste des articles filtre les libellés déclarés et les noms canoniques, avec un filtre pour les prix à préciser. Les homonymes gardent leur numéro d’origine et l’ouverture cible la sélection exacte. Le prix nul explicite reste renseigné. Les montants évalués de ligne sont masqués lorsque la projection est périmée ; les prix saisis restent lisibles.
+
+TypeScript, diff et le banc catalogue/panier PASS. Le filtre isole une ligne UNKNOWN sans renuméroter l’homonyme à 0 €, et le passage à STALE masque son total calculé sans mutation ni changement de digest. Aucun writer distant ni Apply. Suite · lecture des coûts des intentions liées.

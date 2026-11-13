@@ -74,6 +74,7 @@ try{
  assert.equal(semanticStateDigest(f.model.semanticState),initial);assert.deepEqual(f.writes,[]);
  await act(async()=>root.unmount());root=null;
  const {PurchaseBasketEditor}=require('@/app/mois-a-venir/composer/purchase-basket-editor');
+ const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
  const {InlineEditContext,InlineEditRegistry}=require('@/app/mois-a-venir/composer/inline-edit-registry');
  const contextId=uuid(31800),firstId=uuid(31801),secondId=uuid(31802);
  let basket=await request(f.model,{kind:'DROP',assetKey:'template:purchase',target:{kind:'BOARD_ZONE'},identity:contextId,selectionId:uuid(31803),values:{},purchaseBasket:true});
@@ -88,9 +89,9 @@ try{
  const catalogChoice={kind:'socket',asset:basket.library.searchableAssets.find(asset=>asset.assetKey==='option:purchase:item:item'),
   target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:contextId,slotKey:'item'},selection:purchaseComponents(context,'item')[1]};
  const registry=new InlineEditRegistry(),operations=[];
- const render=(model,choice)=>React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(PurchaseBasketEditor,{
+ const render=(model,choice,status='FRESH')=>React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(BudgetPreviewStatus.Provider,{value:status},React.createElement(PurchaseBasketEditor,{
   model,context:model.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId),card:model.board.contexts.find(card=>card.contextOccurrenceId===contextId),
-  busy:false,catalogChoice:choice,close(){},decide:operation=>{operations.push(operation);return true;}}));
+  busy:false,catalogChoice:choice,close(){},decide:operation=>{operations.push(operation);return true;}})));
  await act(async()=>{root=create(render(basket,catalogChoice));});assert.equal(operations.length,0);
  const price=root.root.findAllByType('label').find(label=>text(label).startsWith('Prix par')).findByType('input');assert.equal(price.props.value,purchaseComponents(context,'item')[1].cost.unitAmount);
  await act(async()=>price.props.onChange({target:{value:'21,00'}}));assert.equal(registry.count(),1);assert.equal(operations.length,0);
@@ -109,6 +110,26 @@ try{
  await act(async()=>root.unmount());root=null;operations.length=0;
  await act(async()=>{root=create(render(updated,{...catalogChoice}));});assert.equal(root.root.findAllByType('form').length,0);
  assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('article ou ses droits ont changé')));assert.equal(operations.length,0);
+ await act(async()=>root.unmount());root=null;
+ let mixed=updated;
+ for(const [selectionId,price] of [[firstId,'0'],[secondId,'']]){
+  const current=mixed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+  mixed=await request(mixed,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(current),
+   change:{kind:'SAVE_ITEM',selectionId,label:charger.label,quantity:'1',unit:'UNIT',price,concept:{id:charger.visualConceptId,label:charger.label}}}});
+ }
+ const mixedDigest=semanticStateDigest(mixed.semanticState);
+ await act(async()=>{root=create(render(mixed));});
+ const lines=()=>root.root.findAllByType('li').filter(line=>line.props['data-basket-line']);
+ assert.deepEqual(lines().map(line=>line.props['data-basket-line']),[firstId,secondId]);
+ assert.match(text(lines()[0]),/Total/);assert.match(text(root.root),/2 articles · 1 prix à préciser/);
+ await act(async()=>root.root.findByProps({type:'search'}).props.onChange({target:{value:'introuvable'}}));
+ assert.equal(lines().length,0);
+ await act(async()=>root.root.findByProps({type:'search'}).props.onChange({target:{value:charger.label}}));
+ await act(async()=>root.root.findByProps({type:'checkbox'}).props.onChange({target:{checked:true}}));
+ assert.deepEqual(lines().map(line=>line.props['data-basket-line']),[secondId]);assert.match(text(lines()[0]),/Ligne 2/);
+ await act(async()=>root.root.findByProps({type:'checkbox'}).props.onChange({target:{checked:false}}));
+ await act(async()=>root.update(render(mixed,undefined,'STALE')));
+ assert.doesNotMatch(text(lines()[0]),/Total/);assert.equal(semanticStateDigest(mixed.semanticState),mixedDigest);assert.equal(operations.length,0);
  assert.deepEqual(f.writes,[]);
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;globalThis.fetch=originalFetch;}
-console.log(JSON.stringify({status:'PASS',products:7,families:6,uiDispatch:true,exactLineEdit:true,staleRefused:true,remoteWrites:0,apply:false,level:'EXISTING_CATALOG_AND_PURCHASE_OWNER'}));
+console.log(JSON.stringify({status:'PASS',products:7,families:6,uiDispatch:true,exactLineEdit:true,staleRefused:true,articleFilters:true,remoteWrites:0,apply:false,level:'EXISTING_CATALOG_AND_PURCHASE_OWNER'}));
