@@ -547,3 +547,5 @@ Entrée ouvre la fiche du seul résultat de recherche quand la saisie est termin
 ### Compléments de sortie selon les activités et repas réellement liés
 
 Une activité libre peut motiver une proposition de repas, et un snack seul peut motiver une proposition de séance. Le motif utilise le libellé de l’activité réellement liée. La proposition disparaît quand la sortie contient déjà le type de complément ou quand le droit manque. TypeScript et huit groupes S3 PASS sur fixture, avec digest stable en consultation.
+
+Les bancs historiques Bibliothèque et Coiffeur passent avec des doubles DOM qui représentent la navigation actuelle. Le test Mascara distingue sa fiche de réapprovisionnement du panier Beauté également proposé par la recherche.

@@ -22,6 +22,12 @@ class NodeMock {
     const found=root?.root.findAll(n=>n.type==='button'&&!n.props.disabled&&n.props['data-library-existing-action'])[0];
     return selector.includes('data-library-existing-action')&&found?new NodeMock(found.props):null;
   }
+  querySelectorAll(selector){
+    if(!selector.includes('data-library-existing-action'))return [];
+    return (root?.root.findAll(n=>n.type==='button'&&!n.props.disabled&&n.props['data-library-existing-action'])??[])
+      .map(node=>new NodeMock(node.props));
+  }
+  getClientRects(){return [{}];}
 }
 globalThis.HTMLElement=NodeMock;globalThis.Element=NodeMock;
 globalThis.document={body:new NodeMock(),activeElement:new NodeMock(),querySelector:()=>null,querySelectorAll:()=>[],

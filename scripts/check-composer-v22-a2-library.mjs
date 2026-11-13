@@ -24,6 +24,13 @@ class NodeMock {
     }
     return fieldNode??new NodeMock();
   }
+  querySelectorAll(selector){
+    if(!selector.includes('data-library-existing-action'))return [];
+    return root.root.findAll(n=>n.type==='button'&&!n.props.disabled&&
+      (n.props['data-library-existing-action']||n.props['data-library-add-action']||n.props['data-library-project-action']))
+      .map(node=>new NodeMock(node.props));
+  }
+  getClientRects(){return [{}];}
 }
 globalThis.HTMLElement=NodeMock;globalThis.Element=NodeMock;
 globalThis.document={body:new NodeMock(),activeElement:new NodeMock(),querySelector:selector=>selector==='[data-restaurant-editor]'?new NodeMock():null,querySelectorAll:()=>[],
@@ -71,6 +78,7 @@ const checks=[];const check=async(name,fn)=>{await fn();checks.push(name);consol
 const buttons=()=>root.root.findAll(n=>n.type==='button');
 const existing=()=>buttons().filter(n=>n.props['data-library-existing-action']);
 const additions=()=>buttons().filter(n=>n.props['data-library-add-action']);
+const addMascara=()=>additions().find(n=>n.props['data-library-add-action']==='preset:mascara');
 const textOf=node=>typeof node==='string'?node:(node.children??[]).map(textOf).join('');
 const search=()=>root.root.find(n=>n.type==='input'&&n.props['data-library-search']!==undefined);
 const invoke=async(node,event={})=>{document.activeElement=new NodeMock(node.props);await act(async()=>node.props.onClick(event));};
@@ -83,14 +91,14 @@ async function mount(model){if(root)await act(async()=>root.unmount());fieldNode
  });}
 try{
  await check('A2-01-ABSENT-ADDS-ONE-EXPLICIT-MASCARA',async()=>{
-  await mount(f.model);await query('mascara');assert.equal(existing().length,0);assert.equal(additions().length,1);
-  assert.equal(additions()[0].props.children.at(-1).props.children,'Ajouter Mascara');await enter();
+  await mount(f.model);await query('mascara');assert.equal(existing().length,0);
+  assert(addMascara());assert.match(textOf(addMascara()),/Ajouter Mascara/);await enter();
   assert.equal(board.model.semanticState.contexts.length,1);assert.equal(mountedEditor()[0].props['data-probe-template'],'beauty-restock');
  });
  await check('A2-02-UNIQUE-ENTER-OPENS-EXACT-EDITOR-NO-TRANSPORT',async()=>{
   await mount(one);await query('mascara');assert.equal(existing().length,1);assert.equal(existing()[0].props['data-library-existing-action'],uuid(93001));
   const saveBefore=root.root.find(n=>n.props['data-composer']!==undefined).props['data-save-state'];
-  assert.match(textOf(additions()[0]),/Ajouter un autre Mascara/);await enter();
+  assert.match(textOf(addMascara()),/Ajouter un autre Mascara/);await enter();
   assert.equal(mountedEditor()[0].props['data-probe-editor'],uuid(93001));assert.equal(board.model.semanticState.contexts.length,1);assert.deepEqual(transportCalls,[]);
   assert.equal(mountedEditor()[0].props['data-probe-kind'],'catalog');
   assert.equal(root.root.find(n=>n.props['data-composer']!==undefined).props['data-save-state'],saveBefore);
@@ -103,7 +111,7 @@ try{
   await invoke(existing()[1]);assert.equal(mountedEditor()[0].props['data-probe-editor'],uuid(93002));assert.equal(board.model.semanticState.contexts.length,4);assert.deepEqual(transportCalls,[]);
  });
  await check('A2-04-ADD-ANOTHER-IS-SEPARATE-AND-CREATES-ONCE',async()=>{
-  await mount(one);await query('mascara');await invoke(additions()[0]);assert.equal(board.model.semanticState.contexts.length,2);
+  await mount(one);await query('mascara');await invoke(addMascara());assert.equal(board.model.semanticState.contexts.length,2);
   assert(board.model.semanticState.contexts.some(c=>c.contextOccurrenceId===uuid(93001)));assert.notEqual(mountedEditor()[0].props['data-probe-editor'],uuid(93001));
  });
  await check('A2-05-RESTAURANT-AND-AMAZON-OPEN-THEIR-OWN-CONTEXT',async()=>{
@@ -132,7 +140,7 @@ try{
  });
  await check('A2-08-EXISTING-IS-SEARCHABLE-WHEN-CREATION-IS-BLOCKED',async()=>{
   const model=structuredClone(one);model.dropCapabilities=model.dropCapabilities.filter(c=>c.sourceAssetKey!=='template:beauty-restock'||c.target.kind!=='BOARD_ZONE');
-  await mount(model);await query('mascara');assert.equal(existing().length,1);assert.equal(additions().length,0);await enter();assert.equal(mountedEditor()[0].props['data-probe-editor'],uuid(93001));
+  await mount(model);await query('mascara');assert.equal(existing().length,1);assert.equal(addMascara(),undefined);await enter();assert.equal(mountedEditor()[0].props['data-probe-editor'],uuid(93001));
  });
  await check('A2-09-ACCENTS-ALIASES-AND-AMBIGUOUS-QUERY',()=>{
   const index=composerLibraryIndex(many);assert.equal(filterLibraryIntentions(index.occurrences,'CÍLS').length,2);
