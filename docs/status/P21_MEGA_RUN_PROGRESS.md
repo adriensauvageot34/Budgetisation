@@ -565,3 +565,7 @@ La bibliothèque propose 15 modèles. Ces deux nouveaux modèles passent par le 
 ### Navigation clavier parmi les intentions liées
 
 Dans la recherche d’un projet, Entrée ouvre l’occurrence unique qui correspond à la requête et au filtre actif. Plusieurs résultats restent à choisir, y compris lorsqu’ils ont le même titre. TypeScript et banc intentions liées PASS sur fixture, avec saisie en cours de composition et digest inchangé.
+
+### Synonymes d’activité dans le catalogue Clay
+
+Les termes déjà publiés dans la bibliothèque retrouvent désormais la même fiche Clay dans le catalogue. Le contexte continue de filtrer les résultats, et un terme exact fait remonter son concept. TypeScript, catalogue des 687 identités et banc des paniers PASS. Exemples vérifiés · quilles, laser tag et parc animalier.

@@ -19,6 +19,8 @@ export type DiscoveryTarget = Readonly<{contextId?:string;controlRef?:string;sco
 export type CatalogCommand = Readonly<{key?:string;visualConceptId:string;label:string;run:()=>void;editsExisting?:boolean;allowRepeat?:boolean}>;
 export const MONTHLY_GROCERIES_REF = 'HOUSEHOLD:household:groceries';
 export const normalizeCatalog=(s:string)=>s.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLocaleLowerCase('fr').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+const activityByConcept = new Map(ACTIVITY_PRESETS.map(preset=>[preset.visualConceptId as string,
+ { preset, aliases:[preset.label,...preset.searchTerms].map(normalizeCatalog) }] as const));
 export function scopeForCard(model:ComposerUiModel,id?:string){
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===id);if(!card)return 'all';
  if(presetForContext(card)?.presetKey==='cinema')return 'cinema';
@@ -56,7 +58,9 @@ function momentRank(entry:ClayCatalogEntry,moment?:CatalogMoment){
 export function catalogResults(entries:readonly ClayCatalogEntry[],{query='',scope='all',family='',nature='',selectedIds=new Set<string>(),moment,commandIds=new Set<string>()}:{query?:string;scope?:string;family?:string;nature?:string;selectedIds?:ReadonlySet<string>;moment?:CatalogMoment;commandIds?:ReadonlySet<string>}){
  const q=normalizeCatalog(query),tokens=q.split(' ').filter(Boolean);
  return rankDiscoveryCandidates(entries.flatMap(entry=>{
-   const label=normalizeCatalog(entry.label),text=normalizeCatalog(`${entry.label} ${entry.discovery.family}`);
+   const label=normalizeCatalog(entry.label);
+   const aliases=activityByConcept.get(entry.visualConceptId)?.aliases??[];
+   const text=[label,normalizeCatalog(entry.discovery.family),...aliases].join(' ');
    const inMoment=commandIds.has(entry.visualConceptId);
    if(family&&entry.discovery.family!==family||nature&&entry.discovery.nature!==nature||scope!=='all'&&!entry.discovery.contexts.includes(scope)&&!inMoment||!tokens.every(t=>text.includes(t)))return [];
    const core=scope==='cinema'?entry.discovery.sourceRow===329?0:entry.visualConceptId==='v22-art:extra:popcorn'?1:2
@@ -65,7 +69,7 @@ export function catalogResults(entries:readonly ClayCatalogEntry[],{query='',sco
      :scope==='purchase'?purchaseCatalogProduct(entry)?0:1:entry.discovery.nature==='INTENT'?0:1;
    const chosen=selectedIds.has(entry.visualConceptId),complement=scope==='cinema'&&selectedIds.has('v22-art:excel:329')&&entry.visualConceptId==='v22-art:extra:popcorn';
    const situated=inMoment?0:momentRank(entry,moment);
-   return [{key:entry.visualConceptId,entry,tiers:[q?label===q?0:label.startsWith(q)?1:2:0,core,situated,chosen?0:1,complement?0:1],
+   return [{key:entry.visualConceptId,entry,tiers:[q?label===q||aliases.includes(q)?0:label.startsWith(q)?1:2:0,core,situated,chosen?0:1,complement?0:1],
      reason:chosen?'Déjà choisi · retrouver cet élément':complement?'Complément facultatif du billet':inMoment?'Choix disponible dans cette étape':scope==='all'?'Catalogue V22':core===0?'Au cœur de ce contexte':entry.discovery.nature==='SCENE'||entry.discovery.nature==='MODE'?'Repère visuel du contexte':'Élément pertinent dans ce contexte'}];
  }));
 }
@@ -146,7 +150,7 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
        :{key:'catalog-basket:'+entry.visualConceptId,kind:'CHOOSE',asset,target:{kind:'BOARD_ZONE'},concept,label:`Préparer un panier pour ${entry.label}`});
    }
  }
- const activityPreset=ACTIVITY_PRESETS.find(preset=>preset.visualConceptId===entry.visualConceptId);
+ const activityPreset=activityByConcept.get(entry.visualConceptId)?.preset;
  const presetKey=entry.presetKey??(!target.contextId&&!target.controlRef?activityPreset?.presetKey:undefined);
  if(presetKey&&!target.controlRef){
    const preset=composerPreset(presetKey);

@@ -20,6 +20,10 @@ const banned=new Set(['affinity','affinities','habits','situations','modes','per
 function check(value){if(!value||typeof value!=='object')return;for(const [key,v] of Object.entries(value)){assert(!banned.has(key),'Private field '+key);check(v);}}check(collection);
 const cinema=catalogResults(entries,{scope:'cinema'});assert.equal(cinema[0].entry.visualConceptId,'v22-art:excel:329');
 assert(catalogResults(entries,{query:'MASCARA'}).some(r=>r.entry.label==='Mascara'));
+assert.equal(catalogResults(entries,{query:'laser tag',scope:'activity'})[0].key,'v22-art:excel:344');
+assert.equal(catalogResults(entries,{query:'parc animalier',scope:'activity'})[0].key,'v22-art:excel:338');
+assert.equal(catalogResults(entries,{query:'quilles',scope:'activity'})[0].key,'v22-art:excel:342');
+assert.deepEqual(catalogResults(entries,{query:'laser tag',scope:'courses'}),[]);
 const courses=catalogResults(entries,{scope:'courses'});assert.equal(courses[0].entry.discovery.family,'Courses et produits alimentaires');
 assert(!courses.some(r=>r.entry.discovery.sourceRow===329));
 assert.deepEqual(cinema.map(r=>r.key),catalogResults(entries,{scope:'cinema'}).map(r=>r.key));
