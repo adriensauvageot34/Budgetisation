@@ -7,7 +7,7 @@ import { publishedDrop } from './interactions';
 import { componentId } from '@/domain/phase2/planner/identity';
 import { clayAssetArtwork } from '../clay-v22-media';
 import { plannedAsset } from '@/domain/phase2/planned-assets';
-import { isPurchaseBasket, type BasketConcept } from '@/domain/phase2/planner/purchase-basket';
+import { isPurchaseBasket, MAX_PURCHASE_ARTICLES, purchaseComponents, type BasketConcept } from '@/domain/phase2/planner/purchase-basket';
 import { libraryOccurrences } from '@/domain/phase2/planner/composer-library-index';
 import { isBasketCatalogProduct } from '@/domain/phase2/planner/purchase-catalog';
 
@@ -82,11 +82,21 @@ export function purchaseCatalogProduct(entry:ClayCatalogEntry,domain?:unknown){
    &&(!expectedModule||asset.module===expectedModule)
    &&asset.assetKey!=='beauty:hairdresser'&&asset.assetKey!=='automotive:wash'&&!/_fee$/u.test(asset.assetKey));
 }
-export type GuidedCatalogChoice = { kind:'article';label:string } | { kind:'socket';asset:ComposerAssetView;target:DropTarget;selection?:ComponentSelectionV1 };
-export type DiscoveryAction = Readonly<{key:string;label:string;kind:'OPEN'|'PRESET'|'CHOOSE';contextId?:string;presetKey?:string;focus?:string;articleLabel?:string;componentLabel?:string;concept?:BasketConcept;
+export type GuidedCatalogChoice = { kind:'article';label:string }
+ | { kind:'basket-article';contextId:string;concept:BasketConcept;expectedContextDigest:string }
+ | { kind:'socket';asset:ComposerAssetView;target:DropTarget;selection?:ComponentSelectionV1 };
+export type DiscoveryAction = Readonly<{key:string;label:string;kind:'OPEN'|'PRESET'|'CHOOSE'|'BASKET_ARTICLE';contextId?:string;presetKey?:string;focus?:string;articleLabel?:string;componentLabel?:string;concept?:BasketConcept;
  asset?:ComposerAssetView;target?:DropTarget;selection?:ComponentSelectionV1}>;
 export function catalogRefLocked(model:ComposerUiModel,id:string){
  return model.semanticState.preferences.anchors.includes(id)||model.semanticState.preferences.flexibility[id]==='PRESERVE';
+}
+export function catalogBasketArticleTarget(model:ComposerUiModel,id:string,conceptId:string){
+ const card=model.board.contexts.find(item=>item.contextOccurrenceId===id);
+ const context=model.semanticState.contexts.find(item=>item.contextOccurrenceId===id);
+ if(!card||!isPurchaseBasket(card)||!context||!isPurchaseBasket(context)||context.status!=='ACTIVE'
+   ||card.externalIntentId!==null||card.readOnly||!card.capabilityRefs.includes('PATCH_CONTEXT')||catalogRefLocked(model,id))return;
+ const articles=purchaseComponents(context,'item');
+ if(articles.length<MAX_PURCHASE_ARTICLES&&!articles.some(item=>item.basketArticle?.concept?.id===conceptId))return context;
 }
 export function catalogSocket(model:ComposerUiModel,contextId:string,slotKey:string,assetKey:string){
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===contextId);
@@ -109,15 +119,20 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
    const labels=new Map(libraryOccurrences(model).filter(row=>row.surface==='BASKET').map(row=>[row.contextOccurrenceId,
      {action:row.action,label:row.label+(row.occurrence?` · Achat ${row.occurrence}`:'')+(row.plannedDate?` · ${row.plannedDate}`:'')}]));
    for(const basket of model.board.contexts.filter(card=>isPurchaseBasket(card)&&labels.has(card.contextOccurrenceId))){
-     const matches=basket.sockets.flatMap(socket=>socket.slotKey==='item'?socket.currentItems.filter(item=>item.kind==='COMPONENT'&&item.basketArticle?.concept?.id===entry.visualConceptId):[]);
+     const itemSocket=basket.sockets.find(socket=>socket.slotKey==='item');
+     const matches=itemSocket?.currentItems.filter(item=>item.kind==='COMPONENT'&&item.basketArticle?.concept?.id===entry.visualConceptId)??[];
      const info=labels.get(basket.contextOccurrenceId)!;
      if(info.action==='VIEW'&&matches.length)actions.push({key:'basket-existing:'+basket.contextOccurrenceId,kind:'OPEN',contextId:basket.contextOccurrenceId,label:`Voir ${entry.label} dans ${info.label}`});
      else for(const item of matches){
        const editable=!catalogRefLocked(model,componentId(basket.contextOccurrenceId,'item',item.selectionId));
-       const number=basket.sockets.find(socket=>socket.slotKey==='item')!.currentItems.findIndex(candidate=>candidate.selectionId===item.selectionId)+1;
+       const number=itemSocket!.currentItems.findIndex(candidate=>candidate.selectionId===item.selectionId)+1;
        actions.push({key:'basket-existing:'+basket.contextOccurrenceId+':'+item.selectionId,kind:'OPEN',contextId:basket.contextOccurrenceId,
          ...(editable?{focus:'basket-item:'+item.selectionId}:{}),label:`${editable?'Modifier':'Voir'} ${entry.label} · ligne ${number} · ${info.label}`});
      }
+     const destination=info.action==='EDIT'&&catalogBasketArticleTarget(model,basket.contextOccurrenceId,entry.visualConceptId);
+     if(destination&&isBasketCatalogProduct(entry,destination.fields.budgetDomain))
+       actions.push({key:'basket-add:'+basket.contextOccurrenceId,kind:'BASKET_ARTICLE',contextId:basket.contextOccurrenceId,
+         concept:{id:entry.visualConceptId,label:entry.label},label:`Préparer ${entry.label} dans ${info.label}`});
    }
    const asset=model.library.searchableAssets.find(candidate=>candidate.kind==="CONTEXT_ASSET"&&candidate.assetKey==="template:purchase");
    if(asset&&publishedDrop(model,asset.assetKey,{kind:"BOARD_ZONE"})?.semanticAction==="ADD_CONTEXT"){

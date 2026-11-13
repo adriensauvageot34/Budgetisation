@@ -10,7 +10,7 @@ import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOpera
 import type { ComposerAssetView, ComposerCardView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
-import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
+import { canonicalPlannerJson, plannerDigest } from "@/domain/phase2/planner/json";
 import type { SemanticMutation, PlanBalanceSuggestions } from "@/domain/phase2/planner/adjustment-contract";
 import { composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import { isClothingPurchase, libraryOccurrences } from "@/domain/phase2/planner/composer-library-index";
@@ -18,7 +18,7 @@ import { PresetIllustration } from "./preset-illustration";
 import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
 import { CatalogDiscoveryProvider } from "./catalog-discovery-provider";
-import type { GuidedCatalogChoice } from "./catalog-discovery";
+import { catalogBasketArticleTarget, type GuidedCatalogChoice } from "./catalog-discovery";
 import { isPurchaseBasket, type BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { assetEditorTarget, editorOccurrenceId, admittedProjectMove } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
@@ -994,6 +994,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       editContext(card,undefined,undefined,{kind:"article",label:articleLabel});
     else stableLibraryOpen(id);
   });
+  const prepareCatalogBasketArticle=useCommittedEvent((id:string,concept:BasketConcept)=>{
+    if(busyRef.current)return;
+    const card=shown.board.contexts.find(item=>item.contextOccurrenceId===id);
+    const context=catalogBasketArticleTarget(shown,id,concept.id);
+    if(card&&context)editContext(card,undefined,undefined,{kind:"basket-article",contextId:id,concept,expectedContextDigest:plannerDigest(context)});
+  });
   const chooseCatalogSocket=useCommittedEvent((asset:ComposerAssetView,target:DropTarget,selection?:ComponentSelectionV1,componentLabel?:string,concept?:BasketConcept)=>{
     if (busyRef.current) return;
     const card=shown.board.contexts.find(item=>item.contextOccurrenceId===target.contextOccurrenceId);
@@ -1131,7 +1137,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
   return <ProjectCompletionPreference.Provider value={projectSuggestionPreference}><BudgetPreviewStatus.Provider value={previewStatus}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
-  <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}>
+  <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}
+    prepareBasketArticle={prepareCatalogBasketArticle}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
       if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-bar-place-suggestions],[data-catalog-open],[popover],dialog'))return;

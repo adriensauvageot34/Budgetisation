@@ -581,7 +581,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     if (!catalogChoice || handledCatalogChoice.current === catalogChoice) return;
     handledCatalogChoice.current = catalogChoice;
     if (catalogChoice.kind === "article") beginCatalogArticle(catalogChoice.label);
-    else equip(catalogChoice.asset, catalogChoice.target, catalogChoice.selection);
+    else if (catalogChoice.kind === "socket") equip(catalogChoice.asset, catalogChoice.target, catalogChoice.selection);
   });
   const cinemaCommands: CatalogCommand[] = cinemaCatalogSuggestions.flatMap(suggestion => {
     const visualConceptId = cinemaArtwork[suggestion.conceptKey];

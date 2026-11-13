@@ -143,12 +143,36 @@ try{
  const {InlineEditContext,InlineEditRegistry}=require('@/app/mois-a-venir/composer/inline-edit-registry');
  const contextId=uuid(31800),firstId=uuid(31801),secondId=uuid(31802);
  let basket=await request(f.model,{kind:'DROP',assetKey:'template:purchase',target:{kind:'BOARD_ZONE'},identity:contextId,selectionId:uuid(31803),values:{},purchaseBasket:true});
+ const emptyBasket=basket;
  for(const [selectionId,price] of [[firstId,'12'],[secondId,'20']]){
   const context=basket.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
   basket=await request(basket,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(context),
    change:{kind:'SAVE_ITEM',selectionId,label:charger.label,quantity:'1',unit:'UNIT',price,concept:{id:charger.visualConceptId,label:charger.label}}}});
  }
  const context=basket.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId),beforeDigest=semanticStateDigest(basket.semanticState);
+ const basketStart=discoveryActions(charger,emptyBasket,{}).find(action=>action.key==='basket-add:'+contextId);
+ assert(basketStart);assert.equal(basketStart.kind,'BASKET_ARTICLE');assert.equal(basketStart.contextId,contextId);
+ assert.deepEqual(basketStart.concept,{id:charger.visualConceptId,label:charger.label});
+ const lockedBasket={...emptyBasket,board:{...emptyBasket.board,contexts:emptyBasket.board.contexts.map(card=>
+  card.contextOccurrenceId===contextId?{...card,capabilityRefs:[]}:card)}};
+ assert(!discoveryActions(charger,lockedBasket,{}).some(action=>action.key.startsWith('basket-add:')));
+ assert(!discoveryActions(charger,emptyBasket,{controlRef:'HOUSEHOLD:household:groceries'}).some(action=>action.key.startsWith('basket-add:')));
+ assert(!discoveryActions(charger,basket,{}).some(action=>action.key==='basket-add:'+contextId));
+ const prepared=[];
+ const catalogWithBasket=model=>React.createElement(CatalogDiscoveryProvider,{model,busy:false,
+  openContext(){assert.fail();},revealControl(){assert.fail();},choose(){assert.fail();},choosePreset(){assert.fail();},
+  prepareBasketArticle:(...args)=>prepared.push(args)},
+  React.createElement(CatalogOpenButton,{target:{entryId:charger.visualConceptId,query:charger.label}},'Ouvrir le catalogue'));
+ await act(async()=>{root=create(catalogWithBasket(emptyBasket),{createNodeMock:()=>({open:false,showModal(){this.open=true;},close(){this.open=false;},focus(){}})});});
+ await act(async()=>root.root.findByProps({'data-catalog-open':true}).props.onClick());
+ const prepareExisting=()=>root.root.findAllByType('button').find(button=>text(button)===basketStart.label);
+ assert(prepareExisting());assert.equal(prepared.length,0);
+ await act(async()=>root.update(catalogWithBasket({...emptyBasket,board:{...emptyBasket.board,draft:{...emptyBasket.board.draft,semanticStateDigest:'changed'}}})));
+ assert.equal(prepareExisting().props.disabled,true);
+ await act(async()=>root.update(catalogWithBasket(emptyBasket)));
+ await act(async()=>prepareExisting().props.onClick());
+ assert.deepEqual(prepared,[[contextId,basketStart.concept]]);
+ await act(async()=>root.unmount());root=null;
  const openActions=discoveryActions(charger,basket,{}).filter(action=>action.kind==='OPEN');assert.equal(openActions.length,2);
  assert.deepEqual(openActions.map(action=>action.focus),['basket-item:'+firstId,'basket-item:'+secondId]);
  const catalogChoice={kind:'socket',asset:basket.library.searchableAssets.find(asset=>asset.assetKey==='option:purchase:item:item'),
@@ -157,6 +181,21 @@ try{
  const render=(model,choice,status='FRESH')=>React.createElement(InlineEditContext.Provider,{value:registry},React.createElement(BudgetPreviewStatus.Provider,{value:status},React.createElement(PurchaseBasketEditor,{
   model,context:model.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId),card:model.board.contexts.find(card=>card.contextOccurrenceId===contextId),
   busy:false,catalogChoice:choice,close(){},decide:operation=>{operations.push(operation);return true;}})));
+ const emptyContext=emptyBasket.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ const basketArticle={kind:'basket-article',contextId,concept:basketStart.concept,expectedContextDigest:plannerDigest(emptyContext)};
+ await act(async()=>{root=create(render(emptyBasket,basketArticle));});
+ assert.equal(operations.length,0);
+ assert(root.root.findAllByType('input').some(input=>input.props.value===charger.label));
+ await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+ assert.equal(operations.length,1);assert.deepEqual(operations[0].edit.change.concept,basketStart.concept);
+ assert.equal(operations[0].edit.change.price,'');
+ const addedFromCatalog=await request(emptyBasket,operations[0]);
+ assert.equal(purchaseComponents(addedFromCatalog.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId),'item')[0].cost.kind,'UNKNOWN');
+ await act(async()=>root.unmount());root=null;operations.length=0;
+ await act(async()=>{root=create(render(basket,basketArticle));});
+ assert.equal(root.root.findAllByType('form').length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('Rouvrez le catalogue')));
+ await act(async()=>root.unmount());root=null;
  await act(async()=>{root=create(render(basket,catalogChoice));});assert.equal(operations.length,0);
  const price=root.root.findAllByType('label').find(label=>text(label).startsWith('Prix par')).findByType('input');assert.equal(price.props.value,purchaseComponents(context,'item')[1].cost.unitAmount);
  await act(async()=>price.props.onChange({target:{value:'21,00'}}));assert.equal(registry.count(),1);assert.equal(operations.length,0);

@@ -15,7 +15,7 @@ import { isBasketCatalogProduct } from "@/domain/phase2/planner/purchase-catalog
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import { clayCatalogArtwork, loadClayV22Collection, type ClayCatalogEntry } from "../clay-v22-catalog";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
-import { catalogRefLocked, normalizeCatalog, type GuidedCatalogChoice } from "./catalog-discovery";
+import { catalogBasketArticleTarget, catalogRefLocked, normalizeCatalog, type GuidedCatalogChoice } from "./catalog-discovery";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { purchaseSuggestions } from "./purchase-suggestions";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
@@ -107,6 +107,14 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   useEffect(()=>{
     if(!catalogChoice||handledCatalogChoice.current===catalogChoice||busy)return;
     handledCatalogChoice.current=catalogChoice;
+    if(catalogChoice.kind==='basket-article'){
+      if(catalogChoice.contextId!==id)return;
+      if(!writable||catalogChoice.expectedContextDigest!==digest||!catalogBasketArticleTarget(model,id,catalogChoice.concept.id)){
+        setError('Le panier ou ses droits ont changé. Rouvrez le catalogue pour choisir cet article.');return;
+      }
+      edit(undefined,catalogChoice.concept);
+      return;
+    }
     if(catalogChoice.kind!=='socket'||catalogChoice.asset.assetKey!=='option:purchase:item:item'
       ||catalogChoice.target.kind!=='CONTEXT_SOCKET'||catalogChoice.target.contextOccurrenceId!==id||catalogChoice.target.slotKey!=='item')return;
     const selection=catalogChoice.selection;
