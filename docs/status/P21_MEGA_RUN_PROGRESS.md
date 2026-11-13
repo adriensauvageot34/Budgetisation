@@ -455,3 +455,9 @@ La carte panier lit le nombre d’articles dans le Draft courant pendant le reca
 Un séjour dont le type Location est déclaré peut proposer un panier vide dans le socket Achats. Un panier Courses déjà lié ou un poste Courses direct masque la suggestion. Le prix et la couverture restent à renseigner.
 
 TypeScript, diff et six groupes S3 PASS. La proposition explique le type d’hébergement. L’admission vérifie le panier vide et les deux formes de Courses déjà présentes. Aucun writer distant ni Apply.
+
+### Préparer un panier Courses à partir d’un produit
+
+Dans le catalogue Courses hors contrôle budgétaire, un produit admis peut préparer un panier vide et ouvrir la saisie de cet article. Un article déjà choisi reste retrouvable par son identité. Le contrôle de l’enveloppe mensuelle ne propose pas cette action au niveau du produit.
+
+TypeScript, diff et banc catalogue/panier PASS. La fixture ouvre un panier Courses depuis Pain, puis admet séparément l’article au prix UNKNOWN. Aucun writer distant ni Apply.

@@ -56,7 +56,7 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  const commands=chosen&&currentRequest&&context&&!context.readOnly&&!catalogRefLocked(model,context.contextOccurrenceId)
    ?[...(request?.resolveCommands?.(chosen)??[]),...(request?.commands??[])].filter(c=>c.visualConceptId===chosen.visualConceptId
      &&(!alreadyChosen||c.editsExisting||c.allowRepeat)):[];
- const actions=chosen&&request?discoveryActions(chosen,model,request).filter(action=>!commands.length||action.kind==='OPEN'&&action.focus):[];
+ const actions=chosen&&request?discoveryActions(chosen,model,{...request,scope}).filter(action=>!commands.length||action.kind==='OPEN'&&action.focus):[];
  const unavailable=request?.controlRef?'Le budget mensuel permet de consulter ou d’ajuster sa cible. Préparez un achat de courses pour choisir vos produits.'
    :context?.readOnly||context&&catalogRefLocked(model,context.contextOccurrenceId)?'Cette décision est protégée.'
      :basket?'Cet élément est consultable dans le catalogue. Choisissez un produit adapté à ce panier.'

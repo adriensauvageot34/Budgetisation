@@ -102,8 +102,9 @@ export function catalogSocket(model:ComposerUiModel,contextId:string,slotKey:str
 export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,target:DiscoveryTarget):DiscoveryAction[]{
  const actions:DiscoveryAction[]=[];
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===target.contextId);
- if(!target.contextId&&!target.controlRef&&entry.discovery.sourceRow&&entry.discovery.nature==="ELEMENT"&&purchaseCatalogProduct(entry)){
-   const product=purchaseCatalogProduct(entry)!;
+ const groceryProduct=target.scope==="courses"&&isBasketCatalogProduct(entry,"groceries");
+ const product=purchaseCatalogProduct(entry);
+ if(!target.contextId&&!target.controlRef&&entry.discovery.sourceRow&&entry.discovery.nature==="ELEMENT"&&(groceryProduct||product)){
    const labels=new Map(libraryOccurrences(model).filter(row=>row.surface==='BASKET').map(row=>[row.contextOccurrenceId,
      {action:row.action,label:row.label+(row.occurrence?` · Achat ${row.occurrence}`:'')+(row.plannedDate?` · ${row.plannedDate}`:'')}]));
    for(const basket of model.board.contexts.filter(card=>isPurchaseBasket(card)&&labels.has(card.contextOccurrenceId))){
@@ -119,12 +120,12 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
    }
    const asset=model.library.searchableAssets.find(candidate=>candidate.assetKey==="template:purchase");
    if(asset&&publishedDrop(model,asset.assetKey,{kind:"BOARD_ZONE"})?.semanticAction==="ADD_CONTEXT"){
-     const presetKey=product.module==='beauty'?'beauty-purchase':product.module==='clothing'?'clothing-shopping'
-       :purchaseStarterPresets[product.assetKey];
+     const presetKey=groceryProduct?'groceries-purchase':product?.module==='beauty'?'beauty-purchase':product?.module==='clothing'?'clothing-shopping'
+       :product&&purchaseStarterPresets[product.assetKey];
      const defaults=presetKey?composerPreset(presetKey)?.defaults:undefined;
      const domain=defaults&&'budgetDomain' in defaults?defaults.budgetDomain:'other';
      const concept={id:entry.visualConceptId,label:entry.label};
-     if(isBasketCatalogProduct(entry,domain))actions.push(presetKey?{key:(product.module==='beauty'?'beauty-basket:':'catalog-basket:')+entry.visualConceptId,kind:'PRESET',presetKey,asset,concept,
+     if(isBasketCatalogProduct(entry,domain))actions.push(presetKey?{key:(product?.module==='beauty'?'beauty-basket:':'catalog-basket:')+entry.visualConceptId,kind:'PRESET',presetKey,asset,concept,
        label:`Préparer un achat de ${entry.label}`}
        :{key:'catalog-basket:'+entry.visualConceptId,kind:'CHOOSE',asset,target:{kind:'BOARD_ZONE'},concept,label:`Préparer un panier pour ${entry.label}`});
    }
@@ -171,7 +172,6 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
    if(route&&item&&!catalogRefLocked(model,componentId(id,'item',item.selectionId)))
      actions.push({key:'purchase:'+item.selectionId,kind:'CHOOSE',asset:route.asset,target:route.target,selection:item,label:`Modifier l’article actuel · ${item.label}`});
  }
- const product=purchaseCatalogProduct(entry);
  const productSlot=card.templateKey==='beauty-restock'&&product?.module==='beauty'
    ? {slot:'products',key:'option:beauty-restock:products:product'}
    : card.templateKey==='home-project'&&product?.module==='home'

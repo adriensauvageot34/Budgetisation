@@ -15,10 +15,25 @@ const {componentId}=require('@/domain/phase2/planner/identity');
 const {entries}=JSON.parse(fs.readFileSync('public/planned-visuals/builder/clay/v22/collection.json','utf8'));
 globalThis.fetch=async()=>{throw Error('CATALOG_PURCHASE_START_REMOTE_FORBIDDEN');};
 const f=await readMonthFixture(),world=JSON.stringify(f.world),initial=semanticStateDigest(f.model.semanticState);let identity=31600;
+const grocery=entries.find(entry=>entry.discovery.family==='Courses et produits alimentaires'&&entry.label==='Pain');
+const groceryStart=discoveryActions(grocery,f.model,{scope:'courses'}).find(action=>action.kind==='PRESET');
+assert.equal(groceryStart?.presetKey,'groceries-purchase');
+assert.deepEqual(groceryStart.concept,{id:grocery.visualConceptId,label:grocery.label});
+assert(!discoveryActions(grocery,f.model,{scope:'courses',controlRef:'HOUSEHOLD:household:groceries'}).some(action=>action.concept));
 const request=async(model,operation)=>{
  const response=await handleComposerRequest(f.deps,householdId,{sequence:0,targetMonth:'2026-11',draft:model.semanticState,...operation});
  assert(response.ok,response.code+': '+response.message);return response.model;
 };
+const groceryId=uuid(++identity);
+const emptyGroceries=await request(f.model,{kind:'DROP',assetKey:groceryStart.asset.assetKey,presetKey:groceryStart.presetKey,
+ target:{kind:'BOARD_ZONE'},identity:groceryId,selectionId:uuid(++identity),values:{},purchaseBasket:true});
+const groceryContext=emptyGroceries.semanticState.contexts.find(context=>context.contextOccurrenceId===groceryId);
+assert.equal(groceryContext.fields.budgetDomain,'groceries');assert.deepEqual(groceryContext.slotSelections,{});
+const groceries=await request(emptyGroceries,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:groceryId,
+ expectedContextDigest:plannerDigest(groceryContext),change:{kind:'SAVE_ITEM',selectionId:uuid(++identity),label:grocery.label,
+ quantity:'1',unit:'UNIT',price:'',concept:groceryStart.concept}}});
+assert.equal(purchaseComponents(groceries.semanticState.contexts.find(context=>context.contextOccurrenceId===groceryId),'item')[0].cost.kind,'UNKNOWN');
+assert(discoveryActions(grocery,groceries,{scope:'courses'}).some(action=>action.kind==='OPEN'&&action.contextId===groceryId));
 for(const [assetKey,presetKey] of [['beauty:mascara','beauty-purchase'],['clothing:tshirt','clothing-shopping'],['household:laundry','laundry-detergent'],
  ['tech:charger',undefined],['home:plant',undefined],['automotive:tires',undefined],['tech:video_game','video-game-purchase']]){
  const entry=entries.find(entry=>entry.discovery.sourceRow&&entry.assetKeys.includes(assetKey));assert(entry,'Existing catalog binding '+assetKey);
