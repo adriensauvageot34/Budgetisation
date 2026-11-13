@@ -1064,8 +1064,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const intentionNavigation = useMemo(() => {
     const occurrences = libraryOccurrences(shown);
     const available = new Set(occurrences.map(row => row.contextOccurrenceId));
-    const editable = new Set(occurrences.filter(row => row.action === "EDIT").map(row => row.contextOccurrenceId));
-    const parents = new Map(shown.board.contexts.flatMap(card => card.parentContextOccurrenceId && editable.has(card.parentContextOccurrenceId)
+    const parents = new Map(shown.board.contexts.flatMap(card => card.parentContextOccurrenceId && available.has(card.parentContextOccurrenceId)
       ? [[card.contextOccurrenceId, card.parentContextOccurrenceId] as const] : []));
     return { entries: intentionNavigationEntries(shown.board.contexts.filter(card => available.has(card.contextOccurrenceId))),
       parents, open: stableLibraryOpen, back: stableBackToBoard, busy };

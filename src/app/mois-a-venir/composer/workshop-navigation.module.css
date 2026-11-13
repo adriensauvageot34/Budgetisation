@@ -17,7 +17,7 @@
   font-size: .8rem;
 }
 
-.switcher select {
+.switcher select, .switcher input {
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -29,3 +29,5 @@
   color: #42324d;
   font: inherit;
 }
+.switcher input { box-sizing:border-box; min-height:40px; }
+.switcher select:focus-visible, .switcher input:focus-visible { outline:3px solid #a77bc8; outline-offset:2px; }

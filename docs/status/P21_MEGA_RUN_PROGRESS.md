@@ -79,7 +79,10 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Découverte des modèles | Catégories, illustrations Clay, contenu et recherche par intentions |
 | DONE | Suggestions S3 | Compléments selon les enfants réels, priorité repas/activités en mémoire de session |
 | DONE | Produits Beauté complémentaires | Tonique, sérum, crème hydratante et lotion dans l’éditeur prix/quantité existant |
-| READY | Navigation et accessibilité | Retour au projet et édition ciblée sans mutation de consultation |
+| DONE | Navigation et accessibilité | Groupes par projet, filtre et retour au parent consultable |
+| IN_PROGRESS | Déplacement d’une intention liée | Reparentage explicite vers un autre projet selon les capacités publiées |
+| READY | Lecture financière des relations | Contexte parent et absence de total consolidé compréhensibles |
+| READY | Reprise des séjours | Hôtel et séjour chez des proches dans la navigation exacte |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
 | BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
 
@@ -126,3 +129,9 @@ TypeScript, diff et quatre contrôles React/propriétaire PASS. Priorité, masqu
 Tonique, Sérum visage, Crème hydratante et Lotion de soin réutilisent le propriétaire Beauté et son éditeur de prix/quantité. Les suggestions et la reprise sont liées aux presets exacts. La palette accepte leur illustration de preset existante lorsqu’aucun asset canonique ne possède le même visuel ; aucune identité produit n’est créée à partir de cette présentation.
 
 Les seize contrôles du banc Beauté PASS, incluant les neuf extensions de Mascara, les identités, UNKNOWN, zéro, quantité et références Clay. TypeScript et diff PASS. Aucun writer distant, SQL ou Apply.
+
+### Navigation par projet
+
+Le sélecteur regroupe les intentions par projet, y compris les enfants imbriqués. Au-delà de huit intentions, une recherche retrouve aussi le nom du parent. Une sélection courante reste accessible lorsqu’elle ne correspond pas au filtre. Les parents consultables restent atteignables depuis un enfant.
+
+TypeScript, diff et trois contrôles d’identité/rendu PASS, incluant homonymes, imbrication, recherche avec accents et référence cyclique défensive. Aucune mutation à la consultation.
