@@ -196,6 +196,32 @@ export const COMPOSER_PRESETS = [
     defaults: {"label":"Essuie-tout","productLabel":"Essuie-tout","budgetDomain":"home-small"}, questions: ["Produit","Date","Budget","Enveloppe"],
     guidance: "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement." },
 ] as const;
+/** Activity recipes using the existing wide exports from the V22 collection. */
+export const ACTIVITY_PRESETS = ([
+  { presetKey: "bowling", label: "Bowling", illustrationKey: "v22-art-excel-342",
+    searchTerms: ["bowling", "quilles", "partie", "piste"], activityCostLabel: "Coût de la partie",
+    guidance: "Précisez le prix de la partie et les frais distincts, comme la location de chaussures." },
+  { presetKey: "karting", label: "Karting", illustrationKey: "v22-art-excel-345",
+    searchTerms: ["karting", "kart", "circuit", "session"], activityCostLabel: "Tarif de la session",
+    guidance: "Renseignez les sessions prévues et les éventuels frais distincts." },
+  { presetKey: "escape-game", label: "Escape game", illustrationKey: "v22-art-excel-343",
+    searchTerms: ["escape game", "énigme", "jeu d’évasion"], activityCostLabel: "Coût de la séance",
+    guidance: "Indiquez le montant prévu pour la séance. Le nombre de participants ne fixe pas son prix." },
+  { presetKey: "mini-golf", label: "Mini-golf", illustrationKey: "v22-art-excel-348",
+    searchTerms: ["mini-golf", "minigolf", "golf miniature", "parcours"], activityCostLabel: "Entrée ou parcours",
+    guidance: "Précisez le coût du parcours et les éventuels frais distincts." },
+  { presetKey: "billiards", label: "Billard", illustrationKey: "v22-art-excel-349",
+    searchTerms: ["billard", "table de billard", "partie"], activityCostLabel: "Coût de la table ou de la partie",
+    guidance: "Renseignez le tarif de la table ou des parties selon ce qui vous sera facturé." },
+  { presetKey: "pool", label: "Piscine", illustrationKey: "v22-art-excel-354",
+    searchTerms: ["piscine", "natation", "baignade", "bassin"], activityCostLabel: "Entrée à la piscine",
+    guidance: "Précisez le prix des entrées et ajoutez séparément les frais éventuels." },
+] as const).map(preset => ({
+  ...preset, templateKey: "activity", categoryKey: "ACTIVITY", defaults: { label: preset.label },
+  questions: ["Participants", "Lieu", "Date", "Budget", "Transport facultatif"],
+  artworkPath: `/planned-visuals/builder/clay/v22/wide/${preset.illustrationKey}.webp`,
+} as const));
+
 /** Additional basket entry points reuse artwork already approved for M18. */
 export const PURCHASE_BASKET_PRESETS = [
   { presetKey: "groceries-purchase", label: "Préparer mes courses", templateKey: "purchase", categoryKey: "HOME",
@@ -207,13 +233,14 @@ export const PURCHASE_BASKET_PRESETS = [
     defaults: { label: "Achat beauté" }, questions: ["Articles", "Vendeur", "Livraison"],
     guidance: "Commencez par un article, puis complétez le même achat." },
 ] as const;
-export type ComposerPreset = (typeof COMPOSER_PRESETS | typeof PURCHASE_BASKET_PRESETS)[number];
+export type ComposerPreset = (typeof COMPOSER_PRESETS | typeof ACTIVITY_PRESETS | typeof PURCHASE_BASKET_PRESETS)[number];
 export type ComposerPresetKey = ComposerPreset["presetKey"];
 export const COMPOSER_PRESENTATION_VERSION = "composer-context-presentation@v1" as const;
 export const composerPreset = (key: string): ComposerPreset | undefined =>
-  COMPOSER_PRESETS.find(p => p.presetKey === key) ?? PURCHASE_BASKET_PRESETS.find(p => p.presetKey === key);
+  COMPOSER_PRESETS.find(p => p.presetKey === key) ?? ACTIVITY_PRESETS.find(p => p.presetKey === key)
+  ?? PURCHASE_BASKET_PRESETS.find(p => p.presetKey === key);
 /** Single terminal visual registry: no title matching, no remote URL or legacy Builder image. */
-export const presetIllustrationPath = (preset: ComposerPreset) => preset.presetKey === "groceries-purchase"
+export const presetIllustrationPath = (preset: ComposerPreset) => "artworkPath" in preset ? preset.artworkPath : preset.presetKey === "groceries-purchase"
   ? "/planned-visuals/builder/clay/v22/wide/v22-art-extra-groceries-intent.webp"
   : `/planned-visuals/composer/presets/${preset.illustrationKey}.webp`;
 export function presetForContext(context: { templateKey: string; fields: PlannerJsonObject }): ComposerPreset | undefined {

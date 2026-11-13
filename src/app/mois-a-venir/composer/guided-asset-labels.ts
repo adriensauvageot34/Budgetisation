@@ -1,4 +1,4 @@
-import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import { composerPreset, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 
 export function activityCostLabel(presetKey?: ComposerPresetKey) {
   switch (presetKey) {
@@ -10,7 +10,10 @@ export function activityCostLabel(presetKey?: ComposerPresetKey) {
     case "fishing-day": return "Budget de la journée pêche";
     case "beach-day": return "Budget de la journée plage";
     case "hiking-nature": return "Budget de la randonnée";
-    default: return "Coût de l’activité";
+    default: {
+      const preset = presetKey && composerPreset(presetKey);
+      return preset && "activityCostLabel" in preset ? preset.activityCostLabel : "Coût de l’activité";
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {existsSync} from 'node:fs';
 import {require} from './lib/phase2-ts-loader.mjs';
 import {budgetImpactFixture, impactIds} from './fixtures/composer-budget-impact.mjs';
 import {uuid, householdId} from './fixtures/planner-headless.mjs';
@@ -20,6 +21,7 @@ const {ProjectStarterPreview}=require('@/app/mois-a-venir/composer/project-start
 const {projectCompletionSuggestions,ProjectCompletion,ProjectCompletionPreference}=require('@/app/mois-a-venir/composer/project-completion');
 const {RestaurantEditor}=require('@/app/mois-a-venir/composer/restaurant-editor');
 const {isPurchaseBasket}=require('@/domain/phase2/planner/purchase-basket');
+const {ACTIVITY_PRESETS,presetIllustrationPath}=require('@/domain/phase2/planner/composer-presets');
 
 globalThis.fetch=async()=>{throw Error('JOURNEY_UX_REMOTE_FORBIDDEN');};
 const fixture=await budgetImpactFixture(), model=fixture.model;
@@ -209,8 +211,15 @@ assert.equal(projectCompletionSuggestions(model,impactIds.weekend)[0]?.preset.pr
 const protectedProject={...model,semanticState:{...model.semanticState,preferences:{...model.semanticState.preferences,anchors:[impactIds.weekend]}}};
 assert.deepEqual(projectCompletionSuggestions(protectedProject,impactIds.weekend),[]);
 console.log('UX-09 S3 is contextual, capability-bound, reversible and suppresses adopted complements: PASS');
+const unadmittedActivities={...composed,dropCapabilities:composed.dropCapabilities.filter(d=>d.sourceAssetKey!=='template:activity')};
+for(const preset of ACTIVITY_PRESETS){
+ assert(existsSync('public'+presetIllustrationPath(preset)));
+ assert(filterLibraryIntentions(composerLibraryIndex(composed).intentions,preset.label).some(item=>item.preset?.presetKey===preset.presetKey));
+ assert(!composerLibraryIndex(unadmittedActivities).intentions.some(item=>item.preset?.presetKey===preset.presetKey));
+}
 for(const [index,[presetKey,label]] of [['concert','Billet de concert'],['museum-exhibition','Entrée du musée'],['ropes-course','Entrée ou parcours'],
- ['spa-relax','Soin ou entrée au spa'],['fishing-day','Budget de la journée pêche'],['beach-day','Budget de la journée plage'],['hiking-nature','Budget de la randonnée']].entries()){
+ ['spa-relax','Soin ou entrée au spa'],['fishing-day','Budget de la journée pêche'],['beach-day','Budget de la journée plage'],['hiking-nature','Budget de la randonnée'],
+ ...ACTIVITY_PRESETS.map(preset=>[preset.presetKey,preset.activityCostLabel])].entries()){
  const id=uuid(29300+index*10);
  await compose({kind:'DROP',assetKey:'template:activity',presetKey,target:{kind:'BOARD_ZONE'},identity:id,selectionId:uuid(29301+index*10),values:{}});
  const context=composed.semanticState.contexts.find(row=>row.contextOccurrenceId===id);
@@ -233,7 +242,7 @@ for(const [index,[presetKey,label]] of [['concert','Billet de concert'],['museum
   assert.equal(composed.budgetReading.byContext[id].gross,null);
  }
 }
-console.log('UX-10 Seven activities use admitted slots, exact reopening and explicit zero distinct from unknown: PASS');
+console.log('UX-10 Thirteen activities use admitted slots, exact reopening and explicit zero distinct from unknown: PASS');
 assert.equal(semanticStateDigest(model.semanticState),original);
 assert.equal(JSON.stringify(fixture.world),world);
 assert.deepEqual(fixture.writes,[]);

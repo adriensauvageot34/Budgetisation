@@ -265,3 +265,9 @@ TypeScript et le contrôle ciblé du catalogue PASS : sept produits réels du ca
 Les paniers contenant le concept recherché proposent les lignes correspondantes séparément. L’éditeur rouvre la sélection exacte avec ses valeurs déclarées. Une sélection ou des droits devenus obsolètes produisent un message en conservant le panier et les saisies disponibles. Un panier protégé est proposé en consultation sans action d’édition de ligne.
 
 TypeScript et le banc catalogue/propriétaire PASS. Deux Chargeur homonymes gardent leurs identités. Modifier le deuxième de 20 € à 21 € conserve le premier à 12 € et produit le sous-total officiel de 33 €. L’ouverture seule ne déclenche pas de mutation ; la saisie RAW reste locale jusqu’à validation. La capture antérieure au changement est ensuite refusée. Aucun writer distant ni Apply.
+
+### Reprise · six nouvelles activités
+
+Bowling, Karting, Escape game, Mini-golf, Billard et Piscine utilisent chacun leur export Clay V22 et le contrat Activité existant. La bibliothèque ne propose leur création que si le dépôt sur le Board est admis. Les éditeurs rouvrent l’occurrence exacte avec un libellé de coût adapté, sans prix, frais, participants ni trajet préremplis.
+
+TypeScript, diff et les dix groupes du banc de parcours PASS. Treize activités passent par les slots existants sur fixture, avec reprise de l’identité et contrôle du coût officiel. Les six nouveaux visuels sont présents et le retrait de la capacité Board masque les six créations. Aucun writer distant ni Apply. Suite · recherche et complétude des paniers génériques.

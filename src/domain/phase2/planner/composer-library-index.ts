@@ -1,7 +1,7 @@
 import type { ComposerAssetView, ComposerContextCardView } from "./composer-contract";
 import type { ComposerUiModel } from "./composer-ui-contract";
 import type { PlannerJsonObject } from "./json";
-import { COMPOSER_PRESETS, PURCHASE_BASKET_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
+import { ACTIVITY_PRESETS, COMPOSER_PRESETS, PURCHASE_BASKET_PRESETS, presetForContext, type ComposerPreset } from "./composer-presets";
 import { canonicalPlannerJson } from "./json";
 import { componentId } from "./identity";
 import type { PlannedContextState } from "./semantic-state";
@@ -38,7 +38,7 @@ export type LibraryIntention = Readonly<{ key:string; category:string; asset:Com
 export type LibraryOccurrence = Readonly<{ contextOccurrenceId:string; presetKey:string|null; label:string; search:string;
   plannedDate:string|null; action:"EDIT"|"VIEW"; surface:"BASKET"|"ARTICLE"|"CONTEXT"|"EXTERNAL"; occurrence?:number }>;
 const clothingPresets = new Set(["clothing-shopping", "shein-purchase", "shoes-purchase"]);
-const situatedPresets = new Set([...COMPOSER_PRESETS, ...PURCHASE_BASKET_PRESETS].map(preset => preset.presetKey));
+const libraryPresets = [...COMPOSER_PRESETS, ...ACTIVITY_PRESETS, ...PURCHASE_BASKET_PRESETS];
 const publishedPreset = (context:Parameters<typeof presetForContext>[0]) => {
   try{return presetForContext(context);}catch{return undefined;} // Unsupported metadata is never an exact identity.
 };
@@ -94,7 +94,7 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
     const hairdresserReference=isHairdresserReference(model,card);
     const preset=publishedPreset(card);
     const bareBasket=isPurchaseBasket(card)&&card.fields.composerPresentation===undefined;
-    if(!hairdresserReference&&!bareBasket&&(!preset||!situatedPresets.has(preset.presetKey)))return [];
+    if(!hairdresserReference&&!bareBasket&&!preset)return [];
     const date=typeof card.fields.plannedDate==="string"?card.fields.plannedDate:null;
     if(date&&(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!date.startsWith(`${model.board.targetMonth}-`)
       ||!Number.isFinite(new Date(`${date}T12:00:00Z`).getTime())))return [];
@@ -146,7 +146,7 @@ export function composerLibraryIndex(model:ComposerUiModel) {
   const generic = templates.map(asset=>({key:asset.assetKey, category:templateCategory[asset.templateKey??""]??"OTHER", asset,
     label:genericLabels[asset.templateKey??""]??asset.label, group:"Intentions libres",
     search:normalizeLibrarySearch([asset.label,genericLabels[asset.templateKey??""]??"","libre personnaliser générique"].join(" "))}));
-  const presets:LibraryIntention[] = [...COMPOSER_PRESETS, ...PURCHASE_BASKET_PRESETS].flatMap(preset=>{
+  const presets:LibraryIntention[] = libraryPresets.flatMap(preset=>{
     const asset=templates.find(a=>a.templateKey===preset.templateKey);
     if(!asset || !model.dropCapabilities.some(d=>d.sourceAssetKey===asset.assetKey && d.target.kind==="BOARD_ZONE" && d.resolution!=="BLOCKED")) return [];
     const group=libraryPresetGroup(preset);
