@@ -343,3 +343,9 @@ TypeScript, diff et contrôle de navigation PASS sur les résultats imbriqués, 
 Les activités de loisirs gardent l’accès aux informations et aux compléments admis lorsque les suggestions sont masquées. L’étape de prix utilise son poste unique avec quantité et frais distincts. Les boutons de conversion propres aux repas ont été retirés de cette étape.
 
 TypeScript, diff et onze contrôles du banc Restaurant/Cinéma/Activité PASS. Ouvrir le prix d’une partie ne crée aucune décision ; les commandes de conversion sont absentes et le coût officiel des compléments reste vérifié. Aucun writer distant ni Apply.
+
+### Hôtel, musée et restaurant
+
+Le onzième modèle utilise deux sockets déjà publiés par Séjour, Activités pour le musée et Restaurants pour le repas. Chaque complément reste facultatif dans l’aperçu. L’évaluateur existant contrôle chaque rattachement et le Shell installe la composition après admission de l’ensemble.
+
+TypeScript, diff, banc d’aperçu, recherche et dix groupes de parcours PASS. Les deux identités sont vérifiées dans leur socket exact. Aucun poste ni tarif n’est prérempli. Aucun writer distant ni Apply.

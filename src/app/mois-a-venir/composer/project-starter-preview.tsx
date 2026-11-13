@@ -21,11 +21,12 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
   const [label, setLabel] = useState<string>(starter.label);
   const [date, setDate] = useState("");
   const [showExisting, setShowExisting] = useState(false);
-  const [selected, setSelected] = useState<readonly ComposerPresetKey[]>(() => starter.children.filter(key => projectPresetAvailable(model, key)));
+  const childKeys = starter.children.map(child => child.key);
+  const [selected, setSelected] = useState<readonly ComposerPresetKey[]>(() => childKeys.filter(key => projectPresetAvailable(model, key)));
   const parent = composerPreset(starter.parent);
   const admitted = projectPresetAvailable(model, starter.parent);
   const existing = openExisting ? libraryOccurrences(model).filter(row => row.presetKey === starter.parent) : [];
-  const chosen = starter.children.filter(key => selected.includes(key) && projectPresetAvailable(model, key));
+  const chosen = childKeys.filter(key => selected.includes(key) && projectPresetAvailable(model, key));
   const lastDay = new Date(`${model.semanticState.targetMonth}-01T12:00:00Z`);
   lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
   useEffect(() => {
@@ -60,7 +61,7 @@ export function ProjectStarterPreview({ starter, model, busy, error, blockedReas
       <p>Cette date concerne le projet. Les dates des compléments restent à choisir séparément.</p>
       <p><strong>{parent?.label}</strong> · Structure du projet{admitted ? "" : " · Indisponible"}</p>
       {starter.children.length > 0 && <fieldset disabled={busy}><legend>Compléments facultatifs</legend>
-        {starter.children.map(key => {
+        {childKeys.map(key => {
           const available = projectPresetAvailable(model, key);
           return <label className={styles.projectChoice} key={key}><input type="checkbox" checked={available && selected.includes(key)} disabled={!available}
             onChange={event => setSelected(previous => event.target.checked ? [...previous.filter(item => item !== key), key] : previous.filter(item => item !== key))} />
