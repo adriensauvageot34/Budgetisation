@@ -43,22 +43,27 @@ export function ParentProjectLink({ contextId }: { contextId: string }) {
 export function intentionNavigationGroups(entries: Navigation["entries"], parents: Navigation["parents"], query = "") {
   const byId = new Map(entries.map(entry => [entry.id, entry]));
   const roots = new Map<string, string>();
+  const searchLabels = new Map<string, string>();
   for (const entry of entries) {
     let current = entry.id;
     const seen = new Set([current]);
+    const labels = [entry.label];
     while (parents?.has(current)) {
       const parent = parents.get(current)!;
-      if (!byId.has(parent) || seen.has(parent)) break;
+      const parentEntry = byId.get(parent);
+      if (!parentEntry || seen.has(parent)) break;
+      labels.push(parentEntry.label);
       seen.add(parent); current = parent;
     }
     roots.set(entry.id, current);
+    searchLabels.set(entry.id, labels.join(" "));
   }
   const projectIds = new Set([...roots].filter(([id, root]) => id !== root).map(([, root]) => root));
   const words = normalizeLibrarySearch(query).split(" ").filter(Boolean);
   const groups = new Map<string, { key: string; label: string; entries: Navigation["entries"] }>();
   for (const entry of entries) {
     const root = roots.get(entry.id)!;
-    const search = normalizeLibrarySearch(`${entry.label} ${byId.get(root)?.label ?? ""}`);
+    const search = normalizeLibrarySearch(searchLabels.get(entry.id)!);
     if (!words.every(word => search.includes(word))) continue;
     const key = projectIds.has(root) ? root : "ungrouped";
     let group = groups.get(key);
@@ -79,7 +84,11 @@ export function IntentionSwitcher({ contextId, compact = false }: { contextId?: 
   return <div className={styles.switcher}>
     <label htmlFor={id}>{compact ? "Mes intentions" : "Intention en cours"}</label>
     {filtering && <input aria-label="Filtrer mes intentions" placeholder="Rechercher une intention ou un projet" value={query}
-      onChange={event => setQuery(event.target.value)} type="search" />}
+      onChange={event => setQuery(event.target.value)} type="search" onKeyDown={event => {
+        if (event.key === "Escape" && query) {
+          event.preventDefault(); event.stopPropagation(); setQuery("");
+        }
+      }} />}
     <select id={id} aria-label={compact ? "Retrouver une intention du mois" : "Changer d’intention"}
       disabled={navigation.busy} value={contextId && navigation.entries.some(entry => entry.id === contextId) ? contextId : ""}
       onChange={event => { if (event.target.value) navigation.open(event.target.value); }}>

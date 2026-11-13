@@ -7,7 +7,8 @@ const entries=[{id:'stay',label:'Week-end musée'},{id:'movie-a',label:'Cinéma 
 const parents=new Map([['movie-a','stay'],['movie-b','stay'],['dinner','movie-b']]);
 const before=JSON.stringify(entries),groups=intentionNavigationGroups(entries,parents);
 assert.deepEqual(groups.find(group=>group.key==='stay').entries.map(entry=>entry.id),['stay','movie-a','movie-b','dinner']);
-assert.deepEqual(intentionNavigationGroups(entries,parents,'musée cinéma').flatMap(group=>group.entries).map(entry=>entry.id),['movie-a','movie-b']);
+assert.deepEqual(intentionNavigationGroups(entries,parents,'musée cinéma').flatMap(group=>group.entries).map(entry=>entry.id),['movie-a','movie-b','dinner']);
+assert.deepEqual(intentionNavigationGroups(entries,parents,'cinéma restaurant').flatMap(group=>group.entries).map(entry=>entry.id),['dinner']);
 assert.deepEqual(intentionNavigationGroups(entries,parents,'introuvable'),[]);
 const malformed=new Map([['movie-a','movie-b'],['movie-b','movie-a'],['dinner','absent']]);
 assert.equal(intentionNavigationGroups(entries,malformed).flatMap(group=>group.entries).length,entries.length);

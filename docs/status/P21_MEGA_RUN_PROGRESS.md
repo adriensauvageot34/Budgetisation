@@ -331,3 +331,9 @@ TypeScript, diff et banc catalogue/panier PASS. La recherche combinant vendeur e
 Sortie composée et Visite amicale proposent les six nouvelles activités dans le panneau d’association. Un champ filtre les intentions existantes et les créations admissibles. Les actions restent liées aux identités publiées et passent par la confirmation du projet.
 
 TypeScript, diff et dix groupes du banc de parcours PASS. Le rendu propose Bowling lorsque le socket l’admet et le masque quand le dépôt est retiré. Aucun changement à la consultation ni writer distant. Recette de saisie et d’affichage en navigateur réel NOT_RUN.
+
+### Recherche des intentions imbriquées
+
+Le sélecteur d’éditeur recherche dans tous les parents visibles, comme la bibliothèque. Une recherche peut retrouver un enfant par le nom du parent intermédiaire. Échap efface un filtre actif sans fermer l’éditeur.
+
+TypeScript, diff et contrôle de navigation PASS sur les résultats imbriqués, les homonymes, les références invalides et le rendu de la sélection exacte. Le geste Échap en navigateur réel reste NOT_RUN.
