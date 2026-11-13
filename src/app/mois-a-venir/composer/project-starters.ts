@@ -82,11 +82,12 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
     || !availableProjectStarters(model).includes(starter))
     throw new Error("Ce modèle ou ses intentions ne sont plus disponibles. Rouvrez son aperçu.");
   let evaluated = model;
+  const existingIds = new Set(model.semanticState.contexts.map(context => context.contextOccurrenceId));
   const parentId = nextId();
   const base = model.proof;
   const drop = async (key: ComposerPresetKey, target: Extract<ComposerRequest, { kind: "DROP" }>["target"], identity: string) => {
     const preset = composerPreset(key);
-    if (!preset) throw new Error("Intention indisponible pour ce modèle.");
+    if (!preset || existingIds.has(identity)) throw new Error("Intention indisponible pour ce modèle.");
     const sequence = nextSequence();
     const selectionId = nextId();
     const response = await transport({ kind: "DROP", assetKey: `template:${preset.templateKey}`, presetKey: key, target, identity,
@@ -98,6 +99,7 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
     const attached = target.kind === "BOARD_ZONE" || !!destination && destination.childContextOccurrenceIds.includes(identity)
       && destination.sockets.some(socket => socket.slotKey === target.slotKey && socket.currentItems.some(item =>
         item.kind === "CHILD_CONTEXT" && item.selectionId === selectionId && item.childContextOccurrenceId === identity));
+    const returnedIds = new Set(response.model.semanticState.contexts.map(context => context.contextOccurrenceId));
     if (response.sequence !== sequence || response.applied || response.applyReceipt
       || !attached
       || response.model.semanticState.targetMonth !== model.semanticState.targetMonth
@@ -105,10 +107,12 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
       || response.model.proof.expectedActiveRevisionId !== base.expectedActiveRevisionId
       || response.model.proof.expectedActiveRevisionNumber !== base.expectedActiveRevisionNumber
       || response.model.board.draft.semanticStateDigest !== semanticStateDigest(response.model.semanticState)
+      || returnedIds.size !== existingIds.size + 1 || [...existingIds].some(id => !returnedIds.has(id))
       || !response.model.semanticState.contexts.some(context => context.contextOccurrenceId === identity
         && (context.parentContextOccurrenceId ?? null) === (target.contextOccurrenceId ?? null)
         && presetForContext(context)?.presetKey === key))
       throw new Error("La réponse ou la référence du mois a changé. Actualisez les finances avant de réessayer.");
+    existingIds.add(identity);
     evaluated = response.model;
   };
   await drop(starter.parent, boardDrop, parentId);

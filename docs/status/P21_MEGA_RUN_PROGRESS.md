@@ -589,3 +589,7 @@ Le résumé de l’éditeur Activité libre montre la lecture officielle de cett
 ### Droits des commandes dans une fiche catalogue ouverte
 
 Les commandes contextuelles disparaissent si le droit de modification de la carte est retiré pendant la consultation, même quand le digest reste identique. La fiche reste consultable et indique la protection. TypeScript et banc catalogue/panier PASS avec retrait de la capacité en cours de consultation.
+
+### Vérifier la conservation des occurrences lors de la création d’un modèle
+
+Chaque réponse doit conserver les identifiants du Draft de départ et ajouter uniquement l’intention attendue à cette étape. Un identifiant déjà utilisé est refusé avant l’appel. TypeScript et les dix groupes du banc de parcours PASS. La fixture refuse aussi un reçu à digest cohérent qui omet une décision déjà présente.

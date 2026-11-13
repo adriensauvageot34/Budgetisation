@@ -232,6 +232,18 @@ await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
 },()=>uuid(++starterId),()=>++starterSequence),/Second step refused/);
 assert.equal(attempted,2);
 assert.equal(semanticStateDigest(model.semanticState),original);
+await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
+ const answer=await transport(command);
+ if(!answer.ok)return answer;
+ const previousId=model.semanticState.contexts[0].contextOccurrenceId;
+ const semanticState={...answer.model.semanticState,contexts:answer.model.semanticState.contexts.filter(
+  context=>context.contextOccurrenceId!==previousId)};
+ return {...answer,model:{...answer.model,semanticState,board:{...answer.model.board,
+  draft:{...answer.model.board.draft,semanticStateDigest:semanticStateDigest(semanticState)}}}};
+},()=>uuid(++starterId),()=>++starterSequence),/référence du mois a changé/);
+await assert.rejects(evaluateProjectStarter(starters[0],model,()=>assert.fail('Identity collision must not evaluate'),
+ ()=>model.semanticState.contexts[0].contextOccurrenceId,()=>++starterSequence),/Intention indisponible/);
+assert.equal(semanticStateDigest(model.semanticState),original);
 await assert.rejects(evaluateProjectStarter(starters.find(starter=>starter.key==='hotel-and-dinner'),model,async command=>{
  const answer=await transport(command);
  if(!answer.ok||command.target.slotKey!=='restaurants')return answer;
