@@ -24,7 +24,7 @@ import { WorkshopNavigation } from "./workshop-navigation";
 import { useCommittedEvent } from "./use-committed-event";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
-import { money } from "./display";
+import { money, monthLabel, parsePlannedDay } from "./display";
 import styles from "./purchase-basket.module.css";
 import composer from "./composer.module.css";
 
@@ -78,6 +78,11 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const promptHeading = useRef<HTMLHeadingElement>(null);
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState("");
+  const month = model.semanticState.targetMonth;
+  const lastDay = new Date(`${month}-01T12:00:00Z`);
+  lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
+  const validDate = form?.kind !== "details" || !form.date
+    || form.date.slice(0, 7) === month && !!parsePlannedDay(form.date);
   const confirm = useWorkshopConfirmation();
   const discard = () => { setForm(null); setSelectionPrompt(null); setDirty(false); setError(""); };
   const guard = useWorkshopRaw(id, dirty, discard, "purchase-basket");
@@ -152,6 +157,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     }
   };
   const save = () => {
+    if (!validDate) return;
     if (form?.kind === "article") send({ kind: "SAVE_ITEM", selectionId: form.id, label: form.label, quantity: form.quantity,
       unit: form.unit, price: form.price, ...(form.concept ? { concept: form.concept } : {}) }, openedDigest);
     if (form?.kind === "details") send({ kind: "SET_DETAILS", ...(form.label !== card.label ? { label: form.label } : {}),
@@ -283,7 +289,12 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
         <h3>Détails du panier</h3>
         <label>Nom du panier<input autoFocus required maxLength={120} value={form.label} onChange={event => update({ ...form, label: event.target.value })} /></label>
         <label>Vendeur<input maxLength={1024} value={form.merchant} onChange={event => update({ ...form, merchant: event.target.value })} /></label>
-        <label>Date prévue<input type="date" value={form.date} onChange={event => update({ ...form, date: event.target.value })} /></label>
+        <label>Date prévue<input type="date" value={form.date} min={`${month}-01`} max={lastDay.toISOString().slice(0, 10)}
+          aria-invalid={!validDate} aria-describedby={`basket-date-${id}`}
+          onChange={event => update({ ...form, date: event.target.value })} /></label>
+        <p id={`basket-date-${id}`} role={!validDate ? "alert" : undefined}>{validDate
+          ? `Mois préparé · ${monthLabel(month)}. La date peut rester inconnue.`
+          : "Choisissez une date valide dans le mois préparé, ou laissez ce champ vide."}</p>
         {groceries && <label>Enveloppe Courses<select value={form.coverage} onChange={event => update({ ...form, coverage: event.target.value as Coverage })}>
           <option value="AUTO">À préciser</option><option value="CONFIRMED_CONSUMPTION">Compris dans l’enveloppe mensuelle</option>
           <option value="EXTRA_TO_SLOT">En plus de l’enveloppe mensuelle</option></select></label>}
@@ -305,7 +316,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
         {form.coverage === "ADDITIONAL" && <label>Frais distincts (€)<input inputMode="decimal" value={form.price} placeholder="Prix à préciser"
           onChange={event => update({ ...form, price: event.target.value })} /></label>}
       </>}
-      <div className={styles.actions}><button type="submit" disabled={!writable || busy}>Conserver {form.kind === "article" ? "l’article" : form.kind === "delivery" ? "la livraison" : form.kind === "extra" ? "le supplément" : "les détails"}</button>
+      <div className={styles.actions}><button type="submit" disabled={!writable || busy || !validDate}>Conserver {form.kind === "article" ? "l’article" : form.kind === "delivery" ? "la livraison" : form.kind === "extra" ? "le supplément" : "les détails"}</button>
         <button type="button" onClick={() => { if (guard(discard)) discard(); }}>Retour au panier</button></div>
     </form>}
     {error && <p role="alert">{error}</p>}

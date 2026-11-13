@@ -613,3 +613,7 @@ Les intentions libres réutilisent les propositions de leur type métier lorsqu�
 ### Retrouver les séjours et visites libres avant leur premier enfant
 
 Les séjours et visites familiales sans preset sont indexés par leur identité et restent accessibles dans « Mes intentions ». Le filtre « Mes projets » retrouve les projets encore vides de ces familles. TypeScript et les quatre contrôles de navigation du mois PASS, dont la liste exacte des projets et l’ouverture des occurrences.
+
+### Date du panier dans le mois préparé
+
+Le formulaire indique le mois et borne le calendrier. Une date impossible ou extérieure au mois bloque la validation en conservant la saisie. Le prix et les articles restent intacts. TypeScript et banc panier PASS sur fixture, dont deux dates refusées puis un enregistrement admis au 20 novembre.

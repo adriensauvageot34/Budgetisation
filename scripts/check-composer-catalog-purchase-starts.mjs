@@ -287,6 +287,24 @@ try{
  await act(async()=>commands.find(command=>command.key===secondId).run());
  assert.equal(operations.length,0);
  assert.equal(root.root.findAllByType('label').find(label=>text(label).startsWith('Nom de l’article')).findByType('input').props.value,'Accessoire de voyage');
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Retour au panier').props.onClick());
+ await act(async()=>root.root.findAllByType('button').find(button=>text(button)==='Nom, vendeur et date').props.onClick());
+ const date=()=>root.root.findByProps({type:'date'});
+ assert.equal(date().props.min,'2026-11-01');assert.equal(date().props.max,'2026-11-30');
+ for(const value of ['2026-12-01','2026-11-31']){
+  await act(async()=>date().props.onChange({target:{value}}));
+  assert.equal(date().props['aria-invalid'],true);
+  await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+  assert.equal(operations.length,0);
+ }
+ await act(async()=>date().props.onChange({target:{value:'2026-11-20'}}));
+ assert.equal(date().props['aria-invalid'],false);
+ await act(async()=>root.root.findByType('form').props.onSubmit({preventDefault(){}}));
+ assert.equal(operations.length,1);assert.equal(operations[0].edit.change.date,'2026-11-20');
+ const dated=await request(numbered,operations[0]);
+ const datedContext=dated.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ assert.equal(datedContext.fields.plannedDate,'2026-11-20');
+ assert.deepEqual(datedContext.slotSelections,numbered.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId).slotSelections);
  assert.deepEqual(f.writes,[]);
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;globalThis.fetch=originalFetch;}
 console.log(JSON.stringify({status:'PASS',products:7,families:6,uiDispatch:true,exactLineEdit:true,staleRefused:true,staleCoursesDisabled:true,articleFilters:true,remoteWrites:0,apply:false,level:'EXISTING_CATALOG_AND_PURCHASE_OWNER'}));
