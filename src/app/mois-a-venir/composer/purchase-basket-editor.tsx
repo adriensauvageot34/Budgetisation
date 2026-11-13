@@ -229,12 +229,12 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
         resolveCommands: entry => {
           if (!isBasketCatalogProduct(entry, context.fields.budgetDomain)) return [];
           const concept = { id: entry.visualConceptId, label: entry.label };
-          const matches = articles.filter(item => item.basketArticle?.concept?.id === concept.id);
+          const matches = articles.flatMap((item, index) => item.basketArticle?.concept?.id === concept.id ? [{ item, index }] : []);
           return [
-            ...matches.flatMap((item, index) => protectedLine("item", item) ? [] : [{
+            ...matches.flatMap(({ item, index }) => canChooseArticle(item) ? [{
               key: item.selectionId, visualConceptId: concept.id, label: `Modifier ${item.label}${matches.length > 1 ? ` · ligne ${index + 1}` : ""}`,
               editsExisting: true, run: () => edit(item),
-            }]),
+            }] : []),
             ...(canAdd ? [{ key: "new", visualConceptId: concept.id, label: matches.length ? `Ajouter un autre ${entry.label}` : `Préparer ${entry.label} dans ce panier`,
               allowRepeat: true, run: () => edit(undefined, concept) }] : []),
           ];

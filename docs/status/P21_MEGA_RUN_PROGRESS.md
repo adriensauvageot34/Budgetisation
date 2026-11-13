@@ -403,3 +403,9 @@ TypeScript, diff et banc séjour/enfants PASS. Si le dépôt Bowling disparaît 
 Ouvrir une fiche place le focus sur son titre. « Retour aux résultats » rend le focus au résultat exact, ou à la liste lorsque la fiche a été ouverte directement.
 
 TypeScript, diff et banc catalogue PASS. Le test sur DOM simulé couvre l’ouverture directe, l’ouverture depuis un résultat et les deux retours. La recette au clavier en navigateur réel reste NOT_RUN.
+
+### Numéros de ligne identiques dans le panier et le catalogue
+
+Le catalogue du panier indique la position réelle d’un article homonyme. Il propose l’édition seulement si la sélection existe dans le socket publié et reste modifiable.
+
+TypeScript, diff et banc catalogue/panier PASS. Deux articles identiques séparés par une autre ligne restent repérés comme lignes 1 et 3. La ligne 3 ouvre l’éditeur exact sans mutation.

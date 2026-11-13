@@ -163,6 +163,24 @@ try{
  await act(async()=>confirmation.accept());
  assert.equal(operations.length,0);
  assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('Le panier ou ses droits ont changé')));
+ await act(async()=>root.unmount());root=null;
+ const unrelatedEntry=entries.find(entry=>entry.discovery.sourceRow&&entry.assetKeys.includes('tech:video_game'));
+ const middleId=uuid(31809);
+ let numbered=await request(changed,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,
+  expectedContextDigest:plannerDigest(changed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId)),
+  change:{kind:'SAVE_ITEM',selectionId:middleId,label:unrelatedEntry.label,quantity:'1',unit:'UNIT',price:'',
+   concept:{id:unrelatedEntry.visualConceptId,label:unrelatedEntry.label}}}});
+ const numberedState=structuredClone(numbered.semanticState);
+ const numberedContext=numberedState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ numberedContext.slotSelections.item.items.splice(1,0,numberedContext.slotSelections.item.items.pop());
+ numbered=await request({...numbered,semanticState:numberedState},{kind:'READ'});
+ await act(async()=>{root=create(render(numbered));});
+ const commands=root.root.findAllByType(CatalogOpenButton).find(button=>button.props.target?.contextId===contextId).props.target.resolveCommands(charger);
+ assert.deepEqual(commands.filter(command=>command.editsExisting).map(command=>[command.key,command.label.split(' · ').at(-1)]),
+  [[firstId,'ligne 1'],[secondId,'ligne 3']]);
+ await act(async()=>commands.find(command=>command.key===secondId).run());
+ assert.equal(operations.length,0);
+ assert.equal(root.root.findAllByType('label').find(label=>text(label).startsWith('Nom de l’article')).findByType('input').props.value,'Accessoire de voyage');
  assert.deepEqual(f.writes,[]);
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;globalThis.fetch=originalFetch;}
 console.log(JSON.stringify({status:'PASS',products:7,families:6,uiDispatch:true,exactLineEdit:true,staleRefused:true,staleCoursesDisabled:true,articleFilters:true,remoteWrites:0,apply:false,level:'EXISTING_CATALOG_AND_PURCHASE_OWNER'}));
