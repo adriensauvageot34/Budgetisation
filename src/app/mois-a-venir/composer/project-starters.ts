@@ -35,6 +35,8 @@ export const projectStarters = [
     children: [{ key: "laser-game", slot: "activities" }] },
   { key: "hotel-and-zoo", label: "Hôtel et visite au zoo", parent: "hotel-night",
     children: [{ key: "zoo-visit", slot: "activities" }] },
+  { key: "clothing-and-beauty-shopping", label: "Shopping vêtements et beauté", parent: "composed-outing",
+    children: [{ key: "clothing-shopping", slot: "children" }, { key: "beauty-purchase", slot: "children" }] },
 ] as const satisfies readonly {
   key: string; label: string; parent: ComposerPresetKey; children: readonly { key: ComposerPresetKey; slot: string }[];
 }[];
@@ -47,7 +49,8 @@ export function projectStarterCategory(starter: ProjectStarter) {
     case "friend-visit": return "Visites";
     case "home-project": return "Maison";
     case "purchase": return "Achats";
-    default: return "Sorties";
+    default: return starter.children.length > 0 && starter.children.every(child => composerPreset(child.key)?.templateKey === "purchase")
+      ? "Achats" : "Sorties";
   }
 }
 export function projectStarterContents(starter: ProjectStarter) {

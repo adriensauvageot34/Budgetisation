@@ -625,3 +625,7 @@ La fenêtre conserve la recherche et la fiche choisie après un échec de charge
 ### Ouvrir le résultat unique du sélecteur d’intentions
 
 Entrée dans la recherche du sélecteur ouvre l’occurrence unique du filtre courant. Les saisies en cours de composition et l’état occupé suspendent l’action. TypeScript et cinq contrôles de navigation du mois PASS, dont l’identité de destination, la saisie composée et le refus pendant une opération.
+
+### Modèle Shopping vêtements et beauté
+
+Le seizième modèle utilise la structure de projet composée et deux paniers facultatifs. Chaque panier conserve son identité et son éditeur. Les articles, prix et dates restent à choisir. TypeScript, recherche de modèles et les dix groupes du banc de parcours PASS sur fixture. Les deux coûts restent inconnus et les rattachements sont vérifiés par le reçu officiel.
