@@ -37,6 +37,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const index=composerRenderIndex(model), ownDrops=index.drops.get(instance) ?? [];
   const removable = ownDrops.some(d => d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
   const preserved = model.semanticState.preferences.flexibility[card.contextOccurrenceId] === "PRESERVE";
+  const editable = !card.readOnly && !preserved && card.capabilityRefs.includes("PATCH_CONTEXT")
+    && !model.semanticState.preferences.anchors.includes(card.contextOccurrenceId);
   const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const preset = presetForContext(card);
@@ -82,14 +84,16 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     {preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : card.readOnly
       ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
-    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => (card.templateKey === "restaurant" || purchase || !!preset) && !card.readOnly && !preserved ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{plannedDay ?? "Date à préciser"}</p>}
+    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} disabled={busy}
+      onClick={() => editable && (card.templateKey === "restaurant" || card.templateKey === "activity" || purchase || !!preset)
+        ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{plannedDay ?? "Date à préciser"}</p>}
       {card.childContextOccurrenceIds.length > 0 && <p data-linked-intentions-count={card.childContextOccurrenceIds.length}>
         {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
       </p>}
       <ParentProjectLink contextId={card.contextOccurrenceId} />
       <span className={styles.contextState} title={knowledgeLabel(card.knowledge)} aria-label={knowledgeLabel(card.knowledge)}>{preserved ? <LockKeyhole size={12} /> : card.readOnly ? <Link2 size={12} /> : card.knowledge === "UNKNOWN" ? <i /> : null}</span></div>
       <div className={styles.contextTools}>{!card.readOnly && <><button className={styles.iconButton} disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={() => request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved })}><Pin size={15} /></button>
-        <button className={styles.iconButton} disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>
+        <button className={styles.iconButton} disabled={busy || !editable} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>
         <button className={styles.dragHandle} disabled={busy} {...handle} aria-label={`Déplacer ${card.label}`} onClick={e => {
           // A child can be chosen from its satellite popover. Free the Board so
           // the next click can reach a destination without losing that choice.
@@ -105,19 +109,19 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     {card.templateKey === "external-intent" && <HairdresserReference model={model} id={card.contextOccurrenceId} focus={() => focus(card.contextOccurrenceId)} />}
     </div>
     {card.templateKey === "night-out" && <div className={styles.purchaseSummary} data-night-board-summary>
-      <button type="button" disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} onClick={() => edit(card)}>
+      <button type="button" disabled={busy || !editable} onClick={() => edit(card)}>
         {model.board.draft.semanticStateDigest === model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.semanticStateDigest ? money(model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.knownAmount ?? null) : "Projection à actualiser"}
       </button>
       <small>{model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId)?.incomplete ? "Coût connu · à compléter" : "Coût connu · modifier ma soirée"}</small>
     </div>}
     {basket ? <div className={styles.purchaseSummary} data-purchase-summary>
-      <button type="button" onClick={() => edit(card)} disabled={busy || card.readOnly}>Ouvrir le panier</button>
+      <button type="button" onClick={() => edit(card)} disabled={busy || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")}>{editable ? "Ouvrir le panier" : "Consulter le panier"}</button>
       <small>{articleCount} article{articleCount > 1 ? "s" : ""} · {!basketAmountsCurrent ? "Calcul à actualiser"
         : basketSummary?.knownAmount == null ? "Total à préciser"
           : basketSummary.complete ? `Total brut ${money(basketSummary.knownAmount)}`
             : `Sous-total connu ${money(basketSummary.knownAmount)} · Total à préciser`}</small>
     </div> : purchase && <div className={styles.purchaseSummary} data-purchase-summary>
-      <button type="button" data-budget-unknown={mainAmount===null||undefined} disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} onClick={() => edit(card)}>{mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
+      <button type="button" data-budget-unknown={mainAmount===null||undefined} disabled={busy || !editable} onClick={() => edit(card)}>{mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
     </div>}
     <div className={styles.contextEquipmentRow} data-context-equipment-row aria-label={`Équipements de ${card.label}`}>

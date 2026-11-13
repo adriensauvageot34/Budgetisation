@@ -569,3 +569,7 @@ Dans la recherche d’un projet, Entrée ouvre l’occurrence unique qui corresp
 ### Synonymes d’activité dans le catalogue Clay
 
 Les termes déjà publiés dans la bibliothèque retrouvent désormais la même fiche Clay dans le catalogue. Le contexte continue de filtrer les résultats, et un terme exact fait remonter son concept. TypeScript, catalogue des 687 identités et banc des paniers PASS. Exemples vérifiés · quilles, laser tag et parc animalier.
+
+### Accès aux cartes selon les droits du Board
+
+Le titre d’une activité libre ouvre son éditeur quand le Board publie le droit de modification. Les cartes préservées, ancrées ou privées du droit gardent leur accès en consultation. TypeScript, budget et 14 contrôles de présentation PASS. Le banc de présentation identifie l’enveloppe Restaurants par sa référence publiée.
