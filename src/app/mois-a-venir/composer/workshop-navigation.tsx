@@ -19,6 +19,7 @@ export function intentionNavigationEntries(cards: readonly ComposerContextCardVi
 
 type Navigation = {
   entries: ReturnType<typeof intentionNavigationEntries>;
+  parents?: ReadonlyMap<string, string>;
   open(id: string): void;
   back(id: string): void;
   busy: boolean;
@@ -42,8 +43,11 @@ export function IntentionSwitcher({ contextId, compact = false }: { contextId?: 
 export function WorkshopNavigation({ contextId }: { contextId: string }) {
   const navigation = useContext(WorkshopNavigationContext);
   if (!navigation) return null;
+  const parent = navigation.parents?.get(contextId);
   return <nav className={styles.navigation} aria-label="Navigation de cette intention" data-workshop-navigation>
-    <button type="button" disabled={navigation.busy} onClick={() => navigation.back(contextId)}>← Mes intentions</button>
+    <button type="button" disabled={navigation.busy} onClick={() => parent ? navigation.open(parent) : navigation.back(contextId)}>
+      {parent ? "← Revenir au projet" : "← Mes intentions"}
+    </button>
     <IntentionSwitcher contextId={contextId} />
   </nav>;
 }

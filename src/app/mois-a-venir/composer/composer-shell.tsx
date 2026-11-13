@@ -583,7 +583,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         setMessage(response.mutationKind === "CANCEL_CONTEXT" ? "Context retiré du brouillon. Son annulation sera conservée à l’application." : changed ? "Brouillon mis à jour et prévisualisé." : "Prévisualisation à jour.");
       }
       install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
-      setEditor(current => current?.equipment ? { ...current, saved: true, raw: false }
+      setEditor(current => operation.kind === "DROP" && operation.target.kind === "CONTEXT_SOCKET"
+        && operation.target.contextOccurrenceId === current?.catalogContextId ? current
+        : current?.equipment ? { ...current, saved: true, raw: false }
         : current?.nightContextId && response.model.semanticState.contexts.some(context => context.contextOccurrenceId === current.nightContextId)
           ? { ...current, nightCreating: false, nightAdmission: (current.nightAdmission ?? 0) + 1 } : null); setSelected(null);
       if (changed) animate(history === "undo" ? "undo" : history === "redo" ? "redo" : "snap", nextMotionTarget.current);
@@ -958,6 +960,18 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if(occurrence.action==="EDIT"||isClothingPurchase(card)&&draftState.contexts.some(context=>context.contextOccurrenceId===id&&isClothingPurchase(context)))editContext(card);
     else {clearHover();setEditor(null);setProjectionOpen(false);setUnresolvedOpen(false);setFocusedContext(id);}
   });
+  const stableOpenChild = useCommittedEvent((id: string) => {
+    if (busyRef.current || !inlineEdits.registry.guard(() => stableOpenChild(id))) return;
+    const parentId = editorOccurrenceId(editor);
+    const card = shown.board.contexts.find(candidate => candidate.contextOccurrenceId === id && candidate.parentContextOccurrenceId === parentId);
+    if (!parentId || !card) return;
+    if (card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT") || draftState.preferences.anchors.includes(id)
+      || draftState.preferences.flexibility[id] === "PRESERVE") {
+      closeDialog();
+      setFocusedContext(id);
+      setReveal(previous => ({ targetRef: id, sequence: (previous?.sequence ?? 0) + 1 }));
+    } else editContext(card);
+  });
   const stableBackToBoard = useCommittedEvent((id: string) => {
     if (!shown.board.contexts.some(card => card.contextOccurrenceId === id)) return;
     if (!inlineEdits.registry.guard(() => stableBackToBoard(id))) return;
@@ -966,9 +980,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     setReveal(previous => ({ targetRef: id, sequence: (previous?.sequence ?? 0) + 1 }));
   });
   const intentionNavigation = useMemo(() => {
-    const available = new Set(libraryOccurrences(shown).map(row => row.contextOccurrenceId));
+    const occurrences = libraryOccurrences(shown);
+    const available = new Set(occurrences.map(row => row.contextOccurrenceId));
+    const editable = new Set(occurrences.filter(row => row.action === "EDIT").map(row => row.contextOccurrenceId));
+    const parents = new Map(shown.board.contexts.flatMap(card => card.parentContextOccurrenceId && editable.has(card.parentContextOccurrenceId)
+      ? [[card.contextOccurrenceId, card.parentContextOccurrenceId] as const] : []));
     return { entries: intentionNavigationEntries(shown.board.contexts.filter(card => available.has(card.contextOccurrenceId))),
-      open: stableLibraryOpen, back: stableBackToBoard, busy };
+      parents, open: stableLibraryOpen, back: stableBackToBoard, busy };
   }, [shown, stableLibraryOpen, stableBackToBoard, busy]);
   const navigationScope = rootRelationAccess?.scopeKey;
   const [navigationRestored, setNavigationRestored] = useState(false);
@@ -1133,7 +1151,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         </section>
         : editor?.stayContextId && ShortStayEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)
         ? <ShortStayEditor key={`${workshopKey(editor.stayContextId)}:${editor.familyMode ?? "edit"}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)!}
-          onOpenPurchase={stableLibraryOpen}
+          onOpenChild={stableOpenChild}
           dismissedSuggestions={dismissedSuggestions[editor.stayContextId]} updateSuggestionDismissal={updateSuggestionDismissal}
           semanticState={draftState} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons} options={model.mobilityOptions} initialMode={editor.familyMode}
           summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.stayContextId)} fresh={previewStatus === "FRESH"}
@@ -1156,6 +1174,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
            busy={busy} dockHost={nightDockHost} model={shown} choose={stableChoose} onCancel={closeDialog} onSave={stage} />
         : editor?.catalogContextId && CatalogContextEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)
         ? <CatalogContextEditor key={workshopKey(editor.catalogContextId)} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)!}
+          onOpenChild={stableOpenChild}
           editor={{ assetKey: editor.cardKey ?? "", fields: editor.fields }} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons}
           options={model.mobilityOptions} knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} model={shown} dockHost={nightDockHost} choose={stableChoose} placeDeclines={placeDeclines} declinePlace={declinePlace} onCancel={closeDialog}
            onSave={stage} focusSelectionId={editor.catalogSelectionId}

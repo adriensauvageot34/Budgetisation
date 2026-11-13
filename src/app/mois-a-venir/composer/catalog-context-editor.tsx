@@ -9,7 +9,9 @@ import type { PlannerJson } from "@/domain/phase2/planner/json";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import { componentId } from "@/domain/phase2/planner/identity";
+import { presetForContext, composerPreset } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerEditor, ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
+import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import { PlannedContactField } from "../planned-people-fields";
 import { ContactPlaceReference } from "./workshop-place-reference";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
@@ -19,7 +21,9 @@ import type { ContextPalette, PaletteQuestion } from "./context-palette";
 import { beautyProductPresentation, beautyProductEquipment, beautyProductSuggestions } from "./beauty-product-edit";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
 import { IntentBudgetImpact } from "./intent-budget-impact";
-import { WorkshopNavigation } from "./workshop-navigation";
+import { intentionNavigationEntries, WorkshopNavigation } from "./workshop-navigation";
+import { LinkedIntentions } from "./linked-intentions";
+import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
 import { money } from "./display";
@@ -34,13 +38,14 @@ const participants = (value: PlannerJson | undefined): ProspectivePersonRef[] =>
   ? value.flatMap(item => person(item) ? [person(item)!] : []) : [];
 
 /** Edits only published context fields. Equipment remains attached through its R6 sockets. */
-export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, focusSelectionId, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, dismissedSuggestions, updateSuggestionDismissal }: {
+export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, focusSelectionId, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, onOpenChild, dismissedSuggestions, updateSuggestionDismissal }: {
   context: PlannedContextState; editor: ComposerEditor; targetMonth: string;
   householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
   knowledge?: CardKnowledgeRead;
   placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
   model: ComposerUiModel; dockHost?: HTMLElement | null; choose: Parameters<typeof ContextPalette>[0]["choose"];
   focusSelectionId?: string;
+  onOpenChild?: (id: string) => void;
   busy: boolean; onSave: (operation: ComposerOperation) => boolean; onCancel: () => void;
 } & SuggestionDismissal) {
   const [values, setValues] = useState<Values>(() => Object.fromEntries(editor.fields.map(field => [field.key, context.fields[field.key] ?? null])) as Values);
@@ -57,6 +62,24 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const card = model.board.contexts.find(item => item.contextOccurrenceId === context.contextOccurrenceId);
   const protectedRef = (ref: string) => model.semanticState.preferences.anchors.includes(ref)
     || model.semanticState.preferences.flexibility[ref] === "PRESERVE";
+  const confirm = useWorkshopConfirmation();
+  const composed = presetForContext(context)?.presetKey === "composed-outing";
+  const childTarget: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: "children" };
+  const childSocket = composed && card?.sockets.find(socket => socket.slotKey === "children"
+    && socket.capabilityRefs.includes("other-context:children:ATTACH_CHILD_CONTEXT"));
+  const canAttach = !!childSocket && !busy && !card?.readOnly && !protectedRef(context.contextOccurrenceId);
+  const candidates = canAttach ? intentionNavigationEntries(model.board.contexts.filter(child =>
+    child.contextOccurrenceId !== context.contextOccurrenceId && !child.parentContextOccurrenceId && !child.readOnly && !protectedRef(child.contextOccurrenceId)
+    && publishedDrop(model, `context-occurrence:${child.contextOccurrenceId}`, childTarget)?.choices.includes("REPARENT_PRESERVE_ID"))) : [];
+  const addOptions = canAttach ? [composerPreset("cinema"), composerPreset("restaurant-for-two")].flatMap(preset => {
+    const assetKey = `template:${preset?.templateKey}`;
+    return preset && publishedDrop(model, assetKey, childTarget)?.semanticAction === "PATCH_CONTEXT" ? [{ preset, assetKey }] : [];
+  }) : [];
+  const confirmAttachment = (label: string, operation: () => ComposerOperation) => {
+    const open = () => confirm({ message: `Associer « ${label} » à cette sortie ?`, acceptLabel: "Associer à cette sortie",
+      accept: () => onSave(operation()) });
+    if (leaveRaw(open)) open();
+  };
   const componentRoute = (slotKey: string, optionKey: string, selection?: ComponentSelectionV1) => {
     if (!card || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT") || protectedRef(card.contextOccurrenceId)) return null;
     const target = { kind: "CONTEXT_SOCKET" as const, contextOccurrenceId: card.contextOccurrenceId, slotKey };
@@ -172,6 +195,18 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       {beautyProduct && !activeNeed && <SuggestionControls occurrenceId={context.contextOccurrenceId} choices={ranked} busy={busy}
         dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
       {beautyProduct && !activeNeed && <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
+      {composed && <>
+        <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} />
+        {(candidates.length > 0 || addOptions.length > 0) && <details>
+          <summary>Associer une intention</summary>
+          {candidates.map(child => <button key={child.id} type="button" onClick={() => confirmAttachment(child.label, () => ({
+            kind: "DROP", assetKey: `context-occurrence:${child.id}`, target: childTarget, identity: child.id, selectionId: crypto.randomUUID(), values: {},
+          }))}>Rattacher {child.label}</button>)}
+          {addOptions.map(({ preset, assetKey }) => <button key={preset.presetKey} type="button" onClick={() => confirmAttachment(preset.label, () => ({
+            kind: "DROP", assetKey, presetKey: preset.presetKey, target: childTarget, identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {},
+          }))}>Ajouter {preset.label}</button>)}
+        </details>}
+      </>}
       {!!posts.length && <nav className={styles.nightNav} aria-label="Résumé de l’intention"><button type="button" aria-pressed={summaryTab === "fields"} onClick={() => setSummaryTab("fields")}>Informations</button><button type="button" aria-pressed={summaryTab === "posts"} onClick={() => setSummaryTab("posts")}>Postes ({posts.length})</button></nav>}
       {summaryTab === "fields" && editor.fields.slice(summaryPage * 3, summaryPage * 3 + 3).map(field => <button key={field.key} type="button" onClick={() => setActiveKey(field.key)}>
         {field.label} · {typeof values[field.key] === "string" || typeof values[field.key] === "number" ? String(values[field.key] || "À préciser") : values[field.key] ? "Choix conservé" : "À préciser"}</button>)}

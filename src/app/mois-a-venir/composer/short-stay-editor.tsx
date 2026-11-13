@@ -17,6 +17,7 @@ import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { matchesStayExtra, shortStaySuggestions, shortStayTransportModes, type ShortStaySuggestion } from "./short-stay-suggestions";
 import { IntentBudgetImpact } from "./intent-budget-impact";
+import { LinkedIntentions } from "./linked-intentions";
 import { SuggestionControls } from "./suggestion-controls";
 import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { CatalogCommand } from "./catalog-discovery";
@@ -42,8 +43,8 @@ export function validateStayCalendar(fields: PlannedContextState["fields"]) {
     throw Error(`Les dates indiquent ${calendarNights} nuit(s), mais vous en avez déclaré ${nights}. Corrigez les dates ou la durée ; aucun tarif n’a été recalculé.`);
 }
 
-export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSuggestions = noDismissals, updateSuggestionDismissal, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion" | "staySummary" | "stayTransportModes"> & {
-  semanticState: PlanSemanticStateV1; onOpenPurchase?: (id: string) => void;
+export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestions = noDismissals, updateSuggestionDismissal, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion" | "staySummary" | "stayTransportModes"> & {
+  semanticState: PlanSemanticStateV1; onOpenChild?: (id: string) => void;
   dismissedSuggestions?: readonly string[]; updateSuggestionDismissal?: (id: string, key: string | null) => void;
 }) {
   const context = props.context, oldLodging = firstComponent(context, "lodging"), oldGroceries = firstComponent(context, "groceries");
@@ -224,6 +225,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
   </div>;
   const content = <>
     <CatalogOpenButton target={{contextId:context.contextOccurrenceId,moment:"lodging",commands:lodgingCommands}}>Parcourir les éléments du séjour</CatalogOpenButton>
+    <LinkedIntentions model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} open={onOpenChild} />
     <p className={styles.helper}>Le séjour regroupe ses postes, sans coût parent ajouté. Les autres postes restent accessibles dans le dock.</p>
     {!writable && <p role="status">Ce séjour est en consultation ou sa cible a changé. La saisie reste conservée ; aucune modification ne peut être validée ici.</p>}
     {postSection === "lodging" && <>
@@ -263,7 +265,7 @@ export function ShortStayEditor({ semanticState, onOpenPurchase, dismissedSugges
         {slot === "extras" && (!slotAllowed("extras", "extra") || extraLocked(post.row.id))
           ? <p>{post.row.label} · Poste en consultation</p>
           : post.child && isPurchaseBasket(post.child)
-          ? <button type="button" disabled={props.busy || !onOpenPurchase} onClick={() => onOpenPurchase?.(post.child!.contextOccurrenceId)}>
+          ? <button type="button" disabled={props.busy || !onOpenChild} onClick={() => onOpenChild?.(post.child!.contextOccurrenceId)}>
             Ouvrir {String(post.child.fields.label ?? "le panier")} · {purchaseComponents(post.child, "item").length} article(s)
           </button>
           : <WorkshopComponentRow title={caption} row={post.row} back={{label:"Autres postes du séjour",action:()=>{setPostSection("lodging");setLodgingPage("terms");}}} participantCount={0} bindingChoices={slot === "restaurants"}

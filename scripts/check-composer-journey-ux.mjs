@@ -13,6 +13,8 @@ const {handleComposerRequest}=require('@/server/phase2/planner/composer-service'
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const {workshopErrorMessage}=require('@/app/mois-a-venir/composer/workshop-error');
 const {fresh,buildComponentRow}=require('@/app/mois-a-venir/composer/night-out-components');
+const {LinkedIntentions}=require('@/app/mois-a-venir/composer/linked-intentions');
+const {BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
 
 globalThis.fetch=async()=>{throw Error('JOURNEY_UX_REMOTE_FORBIDDEN');};
 const fixture=await budgetImpactFixture(), model=fixture.model;
@@ -85,7 +87,37 @@ assert.equal(restoreDraftNavigation(savedEntry,{...savedNavigation,digest:'stale
 assert.equal(restoreDraftNavigation(savedEntry,savedNavigation,new Set([impactIds.cinema])),null);
 assert.equal(restoreDraftNavigation('{',savedNavigation,ids),null);
 console.log('UX-06 Reload navigation keeps the exact admitted occurrence of the confirmed Draft: PASS');
+let composed=model;
+const compose=async operation=>{
+ const response=await handleComposerRequest(fixture.deps,householdId,{sequence:10,targetMonth:'2026-11',draft:composed.semanticState,...operation});
+ assert(response.ok,response.code+': '+response.message);
+ composed=response.model;
+};
+const projectId=uuid(29100);
+await compose({kind:'DROP',assetKey:'template:other-context',presetKey:'composed-outing',
+ target:{kind:'BOARD_ZONE'},identity:projectId,selectionId:uuid(29101),values:{}});
+const target={kind:'CONTEXT_SOCKET',contextOccurrenceId:projectId,slotKey:'children'};
+for(const [index,id] of [impactIds.cinema,impactIds.restaurant].entries()){
+ const before=composed.semanticState.contexts.find(row=>row.contextOccurrenceId===id);
+ const expected=composed.budgetReading.byContext[id].gross;
+ await compose({kind:'DROP',assetKey:'context-occurrence:'+id,target,identity:id,selectionId:uuid(29102+index),values:{}});
+ const linked=composed.semanticState.contexts.find(row=>row.contextOccurrenceId===id);
+ assert.equal(linked.parentContextOccurrenceId,projectId);
+ assert.deepEqual(linked.slotSelections,before.slotSelections);
+ assert.equal(composed.budgetReading.byContext[id].gross,expected);
+}
+const linkedMarkup=renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider,{value:'FRESH'},
+ React.createElement(LinkedIntentions,{model:composed,parentId:projectId,busy:false,open(){assert.fail('render must not open a child');}})));
+assert.match(linkedMarkup,/Cinéma/);
+assert.match(linkedMarkup,/Restaurant/);
+assert.match(linkedMarkup,/total consolidé du projet n’est pas publié/);
+const newId=uuid(29104);
+await compose({kind:'DROP',assetKey:'template:activity',presetKey:'cinema',target,identity:newId,selectionId:uuid(29105),values:{}});
+const newCinema=composed.semanticState.contexts.find(row=>row.contextOccurrenceId===newId);
+assert.equal(newCinema.parentContextOccurrenceId,projectId);
+assert.deepEqual(newCinema.slotSelections,{});
+console.log('UX-07 Composed outing attaches exact occurrences and preserves official child costs: PASS');
 assert.equal(semanticStateDigest(model.semanticState),original);
 assert.equal(JSON.stringify(fixture.world),world);
 assert.deepEqual(fixture.writes,[]);
-console.log(JSON.stringify({status:'PASS',checks:6,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));
+console.log(JSON.stringify({status:'PASS',checks:7,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));
