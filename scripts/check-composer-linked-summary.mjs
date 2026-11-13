@@ -39,8 +39,12 @@ try{
  assert.match(text(rows()[2]),/Coût à préciser/);
  await filter('INCOMPLETE');assert.equal(rows().length,4);assert(!rows().some(row=>row.props['data-linked-intention']===ids[0]));assert.match(text(rows()[0]),/Cinéma · 2/);
  await filter('READ_ONLY');assert.equal(rows().length,5,'The owner protects the composition containing an anchored child');
+ const search=root.root.findByProps({type:'search'});
+ await act(async()=>search.props.onChange({target:{value:'cinema 2'}}));
+ assert.deepEqual(rows().map(row=>row.props['data-linked-intention']),[ids[1]]);
  const selected=rows().find(row=>row.props['data-linked-intention']===ids[1]);
  await act(async()=>selected.findAllByType('button')[0].props.onClick());assert.deepEqual(opened,[ids[1]]);
+ await act(async()=>search.props.onChange({target:{value:''}}));
  await filter('INCOMPLETE');await act(async()=>setStatus('STALE'));assert.equal(rows().length,0);
  assert.match(text(root.root),/Attendez la nouvelle projection/);
  await filter('ALL');assert(rows().every(row=>text(row).includes('Coût à actualiser')));

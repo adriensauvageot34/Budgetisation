@@ -409,3 +409,9 @@ TypeScript, diff et banc catalogue PASS. Le test sur DOM simulé couvre l’ouve
 Le catalogue du panier indique la position réelle d’un article homonyme. Il propose l’édition seulement si la sélection existe dans le socket publié et reste modifiable.
 
 TypeScript, diff et banc catalogue/panier PASS. Deux articles identiques séparés par une autre ligne restent repérés comme lignes 1 et 3. La ligne 3 ouvre l’éditeur exact sans mutation.
+
+### Rechercher dans les intentions d’un projet
+
+Les projets de plus de quatre enfants proposent une recherche combinable avec les filtres de complétude et de consultation. Les repères d’homonymes restent ceux de la liste complète.
+
+TypeScript, diff et banc intentions liées PASS. La recherche « cinema 2 » retrouve le deuxième Cinéma dans un projet de cinq homonymes et l’ouvre par son identité. Aucun changement de digest ni writer distant.

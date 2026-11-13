@@ -8,6 +8,7 @@ import { intentionNavigationEntries } from "./workshop-navigation";
 import { publishedDrop } from "./interactions";
 import { semanticStateDigest } from "@/domain/phase2/planner/semantic-state";
 import { componentId } from "@/domain/phase2/planner/identity";
+import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useInlineEditRegistry } from "./inline-edit-registry";
 import { useCommittedEvent } from "./use-committed-event";
@@ -56,6 +57,7 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
   const confirm = useWorkshopConfirmation(), edits = useInlineEditRegistry();
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"ALL" | "INCOMPLETE" | "READ_ONLY">("ALL");
+  const [query, setQuery] = useState("");
   const move = useCommittedEvent((childId: string, key: string, digest: string) => {
     if (busy || !decide) return;
     const target = linkedIntentionMoveTargets(model, parentId, childId).find(target => target.key === key);
@@ -92,15 +94,24 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
     const knowledge = byId.get(id)!.knowledge;
     return impact ? impact.gross === null : knowledge === "UNKNOWN" || knowledge === "PARTIAL";
   };
-  const activeFilter = children.length > 4 ? filter : "ALL";
-  const visible = children.filter(child => activeFilter === "ALL" || (activeFilter === "READ_ONLY" ? readOnly(child.id) : incomplete(child.id)));
+  const filterable = children.length > 4;
+  const activeFilter = filterable ? filter : "ALL";
+  const terms = filterable ? normalizeLibrarySearch(query).split(" ").filter(Boolean) : [];
+  const visible = children.filter(child => {
+    if (activeFilter === "READ_ONLY" && !readOnly(child.id) || activeFilter === "INCOMPLETE" && !incomplete(child.id)) return false;
+    const label = normalizeLibrarySearch(child.label);
+    return terms.every(term => label.includes(term));
+  });
   const consultationCount = children.filter(child => readOnly(child.id)).length;
   const incompleteCount = children.filter(child => incomplete(child.id)).length;
   return <section className={styles.nightSection} aria-label="Intentions liées">
     <h3>Intentions liées</h3>
     <p>{children.length} intention{children.length > 1 ? "s" : ""} · {current ? `${incompleteCount} à compléter` : "Évaluation à actualiser"}
       {consultationCount > 0 ? ` · ${consultationCount} en consultation` : ""}</p>
-    {children.length > 4 && <nav className={styles.linkedFilters} aria-label="Afficher les intentions liées">
+    {filterable && <label className={styles.projectAttachmentSearch}>Rechercher dans ce projet
+      <input type="search" value={query} onChange={event => setQuery(event.target.value)} />
+    </label>}
+    {filterable && <nav className={styles.linkedFilters} aria-label="Afficher les intentions liées">
       {([ ["ALL", "Toutes"], ["INCOMPLETE", "À compléter"], ["READ_ONLY", "En consultation"] ] as const).map(([key, label]) =>
         <button type="button" key={key} data-linked-filter={key} aria-pressed={activeFilter === key}
           disabled={key === "INCOMPLETE" && !current} onClick={() => setFilter(key)}>{label}</button>)}
