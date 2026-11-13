@@ -5,7 +5,7 @@ import {uuid,householdId} from './fixtures/planner-headless.mjs';
 const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {intentDiagnostics}=require('@/app/mois-a-venir/composer/intent-diagnostics');
-const {IntentBudgetImpact,BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
+const {IntentBudgetImpact,BudgetPreviewStatus,OpenMonthlyFinances}=require('@/app/mois-a-venir/composer/intent-budget-impact');
 const {componentId,mobilityIntentId}=require('@/domain/phase2/planner/identity');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 globalThis.fetch=async()=>{throw Error('INTENT_DIAGNOSTICS_REMOTE_FORBIDDEN');};
@@ -21,10 +21,12 @@ const model={...response.model,board:{...response.model.board,diagnostics:[...ow
 const digest=semanticStateDigest(model.semanticState);
 assert.deepEqual(intentDiagnostics(model,id),own);
 for(const status of ['FRESH','BLOCKED','STALE','PENDING']){
- const markup=renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider,{value:status},React.createElement(IntentBudgetImpact,{model,contextId:id})));
+ const markup=renderToStaticMarkup(React.createElement(BudgetPreviewStatus.Provider,{value:status},React.createElement(OpenMonthlyFinances.Provider,
+  {value:()=>assert.fail('Rendering must not open the monthly panel')},React.createElement(IntentBudgetImpact,{model,contextId:id}))));
  if(status==='FRESH'||status==='BLOCKED')for(const entry of own)assert(markup.includes(entry.message));
  else assert.doesNotMatch(markup,/Information du cinéma|Information du poste transport|Information du trajet/);
  for(const entry of foreign)assert(!markup.includes(entry.message));
+ if(status==='FRESH')assert.match(markup,/Consulter les sources de ce mois/);
 }
 assert.equal(semanticStateDigest(model.semanticState),digest);assert.deepEqual(f.writes,[]);
 console.log(JSON.stringify({status:'PASS',checks:2,remoteWrites:0,level:'LOCAL_REFERENCE_SCOPE_AND_RENDER'}));

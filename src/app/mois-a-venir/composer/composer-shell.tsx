@@ -20,7 +20,7 @@ import { ComposerLibrary } from "./composer-library";
 import { CatalogDiscoveryProvider } from "./catalog-discovery-provider";
 import type { GuidedCatalogChoice } from "./catalog-discovery";
 import type { BasketConcept } from "@/domain/phase2/planner/purchase-basket";
-import { assetEditorTarget, editorOccurrenceId } from "./asset-editor-routing";
+import { assetEditorTarget, editorOccurrenceId, admittedProjectMove } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
 import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
 import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter, type ProjectStarterChoices } from "./project-starters";
@@ -625,6 +625,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         : current?.equipment ? { ...current, saved: true, raw: false }
         : current?.nightContextId && response.model.semanticState.contexts.some(context => context.contextOccurrenceId === current.nightContextId)
           ? { ...current, nightCreating: false, nightAdmission: (current.nightAdmission ?? 0) + 1 } : null); setSelected(null);
+      const projectMove = !response.applied && admittedProjectMove(operation, beforeDraft, response.model);
+      if (projectMove) {
+        const labels = intentionNavigationEntries(response.model.board.contexts);
+        setFocusedContext(projectMove.parentId); setResumeContext(projectMove.parentId);
+        setReveal(previous => ({ targetRef: projectMove.parentId, sequence: (previous?.sequence ?? 0) + 1 }));
+        setMessage(`« ${labels.find(entry => entry.id === projectMove.childId)?.label} » ${projectMove.moved ? "déplacée vers" : "rattachée à"} « ${labels.find(entry => entry.id === projectMove.parentId)?.label} ». Vous pouvez ouvrir le projet.`);
+      }
       if (changed) animate(history === "undo" ? "undo" : history === "redo" ? "redo" : "snap", nextMotionTarget.current);
       nextMotionTarget.current = null;
       if (balanceOpen && changed && !response.suggestions && !response.applied) {

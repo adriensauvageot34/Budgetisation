@@ -91,8 +91,12 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Relations sur le Board | Lien compact vers le parent exact dans les cartes enfants |
 | DONE | Synthèse des informations manquantes | Diagnostics officiels de l’intention et de ses postes, masqués si périmés |
 | DONE | Navigation du Board | Navigation commune, nom complet accessible et occurrence exacte |
-| READY | Retour après déplacement | Repérage de la destination et maintien des identités |
-| READY | Informations de financement | Renvois lisibles vers les sources du mois sans calcul parallèle |
+| DONE | Retour après déplacement | Destination révélée uniquement après réponse admise de l’évaluateur |
+| DONE | Informations de financement | Accès en lecture aux sources du mois depuis le détail de financement |
+| READY | Liste des intentions | Recherche dans le nom du projet et repérage des homonymes |
+| READY | Modèles et disponibilité | Préférer les compléments effectivement disponibles sans masquer la structure |
+| READY | Mobilité explicite | Clarifier le prix de trajet complet et le statut du retour |
+| READY | Synthèse des projets | Repérer les enfants en consultation et les informations non évaluées |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
 | BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
@@ -194,3 +198,9 @@ TypeScript, diff et deux contrôles de portée/rendu PASS. Les références sont
 Les cartes enfants exposent un lien compact vers le projet parent, en réutilisant le sélecteur et le routeur d’intentions. Le libellé accessible conserve le nom complet et la distinction des homonymes ; le texte visuel peut être tronqué. Un parent absent du périmètre de navigation ne produit aucun lien actif.
 
 TypeScript, diff et quatre contrôles de navigation/rendu PASS. Les identités et le regroupement sont conservés. Le rendu interactif complet du Board reste NOT_RUN.
+
+### Suivi d’un rattachement
+
+Le Shell repère le projet de destination après admission effective du rattachement ou du déplacement. Il affiche les noms d’occurrence et propose la reprise du projet. Une réponse refusée ne déplace pas le focus et ne modifie pas le Draft. Le détail de financement peut ouvrir les sources du mois même hors état BLOCKED, via le panneau existant et sa protection RAW.
+
+TypeScript et diff PASS. Les huit contrôles du Shell ont réussi, avec un rattachement réel sur l’évaluateur de fixture et un refus serveur. Aucun Draft durable n’est écrit par ce test. Les contrôles des déplacements et de la lecture des diagnostics/sources PASS. Aucun Apply ni writer distant.

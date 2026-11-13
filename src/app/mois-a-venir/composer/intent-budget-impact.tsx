@@ -51,6 +51,7 @@ export function IntentBudgetImpact({ model, contextId }: { model: ComposerUiMode
           <p>Source déclarée · {impact.declaredFundingSources.length
             ? impact.declaredFundingSources.map(source => fundingLabels[source]).join(", ") : "À préciser"}</p>
           {impact.declaredFundingSources.length > 0 && <p>La capacité de cette source reste à vérifier dans les finances du mois.</p>}
+          {openFinances && status !== "BLOCKED" && <p><button type="button" onClick={openFinances}>Consulter les sources de ce mois</button></p>}
           <p>Reste à financer · non ventilé par intention dans la projection actuelle.</p>
         </details>
       </>}

@@ -18,6 +18,7 @@ const {handleComposerRequest}=require('@/server/phase2/planner/composer-service'
 const {linkedIntentionMoveTargets,LinkedIntentions}=require('@/app/mois-a-venir/composer/linked-intentions');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const {componentId}=require('@/domain/phase2/planner/identity');
+const {admittedProjectMove}=require('@/app/mois-a-venir/composer/asset-editor-routing');
 const f=await readMonthFixture(),world=JSON.stringify(f.world),parentId=uuid(30000),otherId=uuid(30001),childId=uuid(30002),relationId=uuid(30003);
 const request=async(model,operation)=>{
  const response=await handleComposerRequest(f.deps,householdId,{sequence:0,targetMonth:'2026-11',draft:model.semanticState,...operation});
@@ -45,6 +46,8 @@ try{
  await act(async()=>{root=create(React.createElement(Harness));});
  await ask();assert.equal(accepted.length,0);await act(async()=>confirmation.accept());assert.equal(accepted.length,1);
  const moved=await request(model,accepted[0]);
+ assert.deepEqual(admittedProjectMove(accepted[0],model.semanticState,moved),{childId,parentId:otherId,moved:true});
+ assert.equal(admittedProjectMove(accepted[0],model.semanticState,model),undefined);
  const after=moved.semanticState.contexts.find(context=>context.contextOccurrenceId===childId);
  assert.deepEqual(after,{...before,parentContextOccurrenceId:otherId});
  assert.equal(moved.budgetReading.byContext[childId].gross,'12.00');

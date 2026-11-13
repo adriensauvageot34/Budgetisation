@@ -1,6 +1,7 @@
 /** F02 regression: actual Shell/staging/durable hook; leaf rendering and browser APIs simulated. No real writes. */
 import assert from 'node:assert/strict';import path from 'node:path';import Module,{createRequire}from'node:module';
 import {require}from'./lib/phase2-ts-loader.mjs';import{localRelationsFixture}from'./fixtures/composer-root-relation-local.mjs';
+import {uuid,householdId} from './fixtures/planner-headless.mjs';
 const f=await localRelationsFixture();
 process.env.COMPOSER_ROOT_RELATIONS_ENABLED='true'; // Synthetic process only.
 const rr=createRequire(process.env.COMPOSER_REACT_TEST_TOOLS??new URL('../outputs/l4c-test-tools/package.json',import.meta.url));
@@ -104,6 +105,28 @@ try{
   await mount(true);
   assert.equal(board.focused,null);
   assert.equal(saves.length,0);
+  await unmount();
+ });
+ await check('P21_ADMITTED_ATTACHMENT_REVEALS_EXACT_PROJECT_WITHOUT_DURABLE_WRITE',async()=>{
+  const source=await budgetImpactFixture(),parentId=uuid(31000);
+  const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
+  const created=await handleComposerRequest(source.deps,householdId,{kind:'DROP',sequence:0,targetMonth:'2026-11',draft:source.model.semanticState,
+   assetKey:'template:other-context',presetKey:'composed-outing',target:{kind:'BOARD_ZONE'},identity:parentId,selectionId:uuid(31001),values:{}});
+  assert(created.ok,created.code);await mount();await unmount();
+  props={...props,initialModel:created.model,initialDrafts:null,draftTransport:null,rootRelationAccess:null,
+   transport:request=>handleComposerRequest(source.deps,householdId,request)};
+  await mount(true);
+  const operation={kind:'DROP',assetKey:'context-occurrence:'+impactIds.cinema,target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:parentId,slotKey:'children'},
+   identity:impactIds.cinema,selectionId:uuid(31002),values:{}};
+  await act(async()=>{assert.equal(board.request(operation),false,'Reparent is admitted asynchronously by the server evaluator');});
+  assert.equal(board.focused,parentId);
+  assert(board.model.board.contexts.find(card=>card.contextOccurrenceId===parentId).childContextOccurrenceIds.includes(impactIds.cinema));
+  assert.equal(saves.length,0);assert.equal(element().props['data-revision'],0);assert.deepEqual(source.writes,[]);
+  await unmount();
+  props={...props,transport:async request=>({ok:false,sequence:request.sequence,code:'CONTEXT_CAPABILITY_FORBIDDEN',message:'Synthetic refusal'})};
+  await mount(true);const before=element().props['data-digest'];
+  await act(async()=>{assert.equal(board.request(operation),false);});
+  assert.equal(board.focused,null);assert.equal(element().props['data-digest'],before);assert.equal(saves.length,0);
   await unmount();
  });
  assert.equal(remote,0);assert.equal(f.writes.length,0);console.log(JSON.stringify({status:'PASS',checks,level:'REAL_SHELL_HOOK_SYNTHETIC_PRESENTATION_AND_SAVE_RECEIPTS',realWriters:0,sql:0,remote,authRls:'NOT_RUN',savedRelation:'NOT_RUN',apply:'NOT_RUN'}));
