@@ -17,6 +17,7 @@ Module._load=function(name,parent,...args){
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {projectCompletionSuggestions,ProjectCompletion,ProjectCompletionPreference}=require('@/app/mois-a-venir/composer/project-completion');
 const {CatalogContextEditor}=require('@/app/mois-a-venir/composer/catalog-context-editor');
+const {CatalogOpenButton}=require('@/app/mois-a-venir/composer/catalog-discovery-provider');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const f=await readMonthFixture(),world=JSON.stringify(f.world),parentId=uuid(29900);let counter=29900;
 const request=async(draft,operation)=>{
@@ -145,10 +146,12 @@ try{
   assert.deepEqual(projectCompletionSuggestions(future,genericId),[]);
  }
  await act(async()=>root.unmount());root=null;accepted=[];
- const editorModel=current=>React.createElement(CatalogContextEditor,{
-  context:current.semanticState.contexts.find(context=>context.contextOccurrenceId===furnishingId),
-  editor:current.editors.find(editor=>editor.assetKey==='template:home-project'),targetMonth:'2026-11',
+ const openedChildren=[];
+ const editorModel=(current,owner=furnishingId)=>React.createElement(CatalogContextEditor,{
+  context:current.semanticState.contexts.find(context=>context.contextOccurrenceId===owner),
+  editor:current.editors.find(editor=>editor.assetKey==='template:'+current.semanticState.contexts.find(context=>context.contextOccurrenceId===owner).templateKey),targetMonth:'2026-11',
   householdPersons:[],busy:false,model:current,choose(){assert.fail();},onCancel(){},
+  onOpenChild:id=>openedChildren.push(id),
   onSave(operation){if(rejectNext){rejectNext=false;return false;}accepted.push(operation);return true;},
  });
  await act(async()=>{root=create(editorModel(furnishing));});
@@ -164,6 +167,20 @@ try{
  assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('n’a pas été associée')));
  await click('Ajouter Acheter pour la maison');
  await act(async()=>confirmation.accept());assert.equal(accepted[0].purchaseBasket,true);
+ await act(async()=>root.unmount());root=null;accepted=[];
+ await act(async()=>{root=create(editorModel(leisure,leisureId));});
+ const catalog=root.root.findAllByType(CatalogOpenButton).find(button=>button.props.target?.scope==='activity');
+ assert(catalog);
+ const commandsFor=key=>catalog.props.target.resolveCommands({visualConceptId:composerPreset(key).visualConceptId,presetKey:key});
+ const bowlingId=leisure.board.contexts.find(child=>child.parentContextOccurrenceId===leisureId&&child.fields.composerPresentation?.presetKey==='bowling').contextOccurrenceId;
+ const existingActivity=commandsFor('bowling');assert.equal(existingActivity.length,1);assert.equal(existingActivity[0].editsExisting,true);
+ await act(async()=>existingActivity[0].run());assert.deepEqual(openedChildren,[bowlingId]);assert.equal(accepted.length,0);
+ const laser=commandsFor('laser-game');assert.equal(laser.length,1);assert(!laser[0].editsExisting);
+ await act(async()=>laser[0].run());assert.equal(accepted.length,0);
+ await act(async()=>confirmation.accept());assert.equal(accepted.length,1);
+ assert.equal(accepted[0].presetKey,'laser-game');assert.equal(accepted[0].target.contextOccurrenceId,leisureId);
+ const withLaser=await request(leisure.semanticState,accepted[0]);
+ assert.equal(withLaser.semanticState.contexts.find(child=>child.contextOccurrenceId===accepted[0].identity).parentContextOccurrenceId,leisureId);
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
  console.log('S3-04 Weekend complements follow the actual children without repeating an existing activity: PASS');
  console.log('S3-05 Two leisure activities offer one meal, suppressed when any meal is already linked: PASS');
@@ -172,5 +189,6 @@ try{
  console.log('S3-08 A generic activity or a snack provides a truthful, capability-gated reason for its complement: PASS');
  console.log('The home project attachment editor refuses stale confirmation: PASS');
  console.log('S3-09 Generic stays, visits and home projects reuse admitted complements without mutation: PASS');
- console.log(JSON.stringify({status:'PASS',checks:9,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ console.log('S3-10 The project catalog reopens an exact linked activity or confirms a new child through the existing owner: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:10,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

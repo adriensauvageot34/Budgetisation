@@ -633,3 +633,7 @@ Le seizième modèle utilise la structure de projet composée et deux paniers fa
 ### Retour après refus d’une association
 
 L’éditeur du projet et les suggestions S3 indiquent quand une confirmation n’a pas été admise par le brouillon. L’utilisateur peut consulter le message du brouillon et recommencer. TypeScript et neuf groupes S3 PASS, avec refus local simulé, absence d’ajout et réussite du nouvel essai explicite.
+
+### Choisir l’activité d’un projet dans le catalogue
+
+Les projets composés et visites amicales ouvrent le catalogue Activités depuis leur rubrique d’association. Les activités publiées réutilisent leurs illustrations et éditeurs. Une occurrence déjà liée est ouverte par son identité. Une nouvelle activité demande confirmation avant son rattachement. TypeScript et dix groupes S3 PASS, dont ouverture du Bowling exact et ajout confirmé d’un Laser game via le propriétaire existant.
