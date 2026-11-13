@@ -19,7 +19,7 @@ import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
 import { CatalogDiscoveryProvider } from "./catalog-discovery-provider";
 import type { GuidedCatalogChoice } from "./catalog-discovery";
-import type { BasketConcept } from "@/domain/phase2/planner/purchase-basket";
+import { isPurchaseBasket, type BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { assetEditorTarget, editorOccurrenceId, admittedProjectMove } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
 import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
@@ -980,7 +980,15 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const openCatalogContext=useCommittedEvent((id:string,focus?:string,articleLabel?:string)=>{
     if (busyRef.current) return;
     const card=shown.board.contexts.find(item=>item.contextOccurrenceId===id);
-    if (card&&!card.readOnly&&focus?.startsWith("component:")&&presetForContext(card)?.presetKey==="bar-apero")
+    if (card&&!card.readOnly&&isPurchaseBasket(card)&&focus?.startsWith("basket-item:")) {
+      const selectionId=focus.slice("basket-item:".length);
+      const context=draftState.contexts.find(context=>context.contextOccurrenceId===id);
+      const selection=((context?.slotSelections.item?.items??[]) as readonly ComponentSelectionV1[]).find(item=>item.kind==="COMPONENT"&&item.selectionId===selectionId);
+      const asset=shown.library.searchableAssets.find(asset=>asset.assetKey==="option:purchase:item:item");
+      if(asset&&selection)editContext(card,undefined,undefined,{kind:"socket",asset,target:{kind:"CONTEXT_SOCKET",contextOccurrenceId:id,slotKey:"item"},selection});
+      else stableLibraryOpen(id);
+    }
+    else if (card&&!card.readOnly&&focus?.startsWith("component:")&&presetForContext(card)?.presetKey==="bar-apero")
       editContext(card,focus as BarTarget);
     else if(card&&!card.readOnly&&articleLabel&&card.templateKey==="purchase")
       editContext(card,undefined,undefined,{kind:"article",label:articleLabel});

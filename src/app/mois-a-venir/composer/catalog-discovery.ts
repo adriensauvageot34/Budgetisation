@@ -105,10 +105,17 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
  if(!target.contextId&&!target.controlRef&&entry.discovery.sourceRow&&entry.discovery.nature==="ELEMENT"&&purchaseCatalogProduct(entry)){
    const product=purchaseCatalogProduct(entry)!;
    const labels=new Map(libraryOccurrences(model).filter(row=>row.surface==='BASKET').map(row=>[row.contextOccurrenceId,
-     row.label+(row.occurrence?` · Achat ${row.occurrence}`:'')+(row.plannedDate?` · ${row.plannedDate}`:'')]));
+     {action:row.action,label:row.label+(row.occurrence?` · Achat ${row.occurrence}`:'')+(row.plannedDate?` · ${row.plannedDate}`:'')}]));
    for(const basket of model.board.contexts.filter(card=>isPurchaseBasket(card)&&labels.has(card.contextOccurrenceId))){
-     if(basket.sockets.some(socket=>socket.slotKey==='item'&&socket.currentItems.some(item=>item.kind==='COMPONENT'&&item.basketArticle?.concept?.id===entry.visualConceptId)))
-       actions.push({key:'basket-existing:'+basket.contextOccurrenceId,kind:'OPEN',contextId:basket.contextOccurrenceId,label:`Retrouver ${entry.label} dans ${labels.get(basket.contextOccurrenceId)}`});
+     const matches=basket.sockets.flatMap(socket=>socket.slotKey==='item'?socket.currentItems.filter(item=>item.kind==='COMPONENT'&&item.basketArticle?.concept?.id===entry.visualConceptId):[]);
+     const info=labels.get(basket.contextOccurrenceId)!;
+     if(info.action==='VIEW'&&matches.length)actions.push({key:'basket-existing:'+basket.contextOccurrenceId,kind:'OPEN',contextId:basket.contextOccurrenceId,label:`Voir ${entry.label} dans ${info.label}`});
+     else for(const item of matches){
+       const editable=!catalogRefLocked(model,componentId(basket.contextOccurrenceId,'item',item.selectionId));
+       const number=basket.sockets.find(socket=>socket.slotKey==='item')!.currentItems.findIndex(candidate=>candidate.selectionId===item.selectionId)+1;
+       actions.push({key:'basket-existing:'+basket.contextOccurrenceId+':'+item.selectionId,kind:'OPEN',contextId:basket.contextOccurrenceId,
+         ...(editable?{focus:'basket-item:'+item.selectionId}:{}),label:`${editable?'Modifier':'Voir'} ${entry.label} · ligne ${number} · ${info.label}`});
+     }
    }
    const asset=model.library.searchableAssets.find(candidate=>candidate.assetKey==="template:purchase");
    if(asset&&publishedDrop(model,asset.assetKey,{kind:"BOARD_ZONE"})?.semanticAction==="ADD_CONTEXT"){

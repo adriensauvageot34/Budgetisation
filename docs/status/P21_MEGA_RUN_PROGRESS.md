@@ -101,7 +101,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Sélection du mois | Mois explicite dans la liste et l’aperçu des modèles |
 | READY | Lecture des montants | Hiérarchiser coûts inconnus et sous-totaux officiels dans les projets |
 | DONE | Produits du catalogue vers les paniers | Choix canoniques compatibles vers les recettes existantes ou le panier générique |
-| READY | Ouvrir une ligne depuis le catalogue | Cibler un article exact plutôt que seulement son panier |
+| DONE | Ouvrir une ligne depuis le catalogue | Sélection exacte transmise à l’éditeur et refus des captures obsolètes |
 | READY | Panier générique | Reprise par son contenu et lecture de sa complétude |
 | DONE | Synthèse des projets | Compteurs officiels et filtres pour les projets contenant plusieurs enfants |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
@@ -259,3 +259,9 @@ Des produits canoniques compatibles ouvrent une préparation de panier. Beauté,
 Le catalogue propose aussi de retrouver les paniers contenant déjà le concept exact. Les paniers génériques sans preset deviennent retrouvables et éditables selon leurs droits. Une présentation de version future inconnue ne reçoit aucun droit supplémentaire.
 
 TypeScript et le contrôle ciblé du catalogue PASS : sept produits réels du catalogue public, dans six modules, passent la création et l’adoption d’un article UNKNOWN via le propriétaire existant. Les droits de création, le budget Courses comme cible distincte, les métadonnées futures et l’ouverture de l’existant sont vérifiés. Le test React confirme le passage du concept exact par l’action du catalogue. Aucun writer distant ni Apply.
+
+### Article exact depuis le catalogue
+
+Les paniers contenant le concept recherché proposent les lignes correspondantes séparément. L’éditeur rouvre la sélection exacte avec ses valeurs déclarées. Une sélection ou des droits devenus obsolètes produisent un message en conservant le panier et les saisies disponibles. Un panier protégé est proposé en consultation sans action d’édition de ligne.
+
+TypeScript et le banc catalogue/propriétaire PASS. Deux Chargeur homonymes gardent leurs identités. Modifier le deuxième de 20 € à 21 € conserve le premier à 12 € et produit le sous-total officiel de 33 €. L’ouverture seule ne déclenche pas de mutation ; la saisie RAW reste locale jusqu’à validation. La capture antérieure au changement est ensuite refusée. Aucun writer distant ni Apply.

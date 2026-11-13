@@ -15,7 +15,7 @@ import { isBasketCatalogProduct } from "@/domain/phase2/planner/purchase-catalog
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import { clayCatalogArtwork, loadClayV22Collection, type ClayCatalogEntry } from "../clay-v22-catalog";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
-import { catalogRefLocked, normalizeCatalog } from "./catalog-discovery";
+import { catalogRefLocked, normalizeCatalog, type GuidedCatalogChoice } from "./catalog-discovery";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { purchaseSuggestions } from "./purchase-suggestions";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
@@ -37,7 +37,7 @@ type Form = ArticleForm | { kind: "extra"; selectionId: string; label: string; p
   | { kind: "details"; merchant: string; date: string; coverage: Coverage }
   | { kind: "delivery"; mode: BasketDeliveryMode; coverage: BasketDeliveryCoverage; price: string; selectionId: string };
 type Props = { context: PlannedContextState; card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
-  decide: (operation: ComposerOperation) => boolean; close: () => void; initialConcept?: BasketConcept };
+  decide: (operation: ComposerOperation) => boolean; close: () => void; initialConcept?: BasketConcept; catalogChoice?: GuidedCatalogChoice };
 const text = (value: unknown) => typeof value === "string" ? value : "";
 const articleUnit = (item?: PurchaseComponent) => item?.basketArticle?.unit ?? (item?.unitBasis === "SHARED" ? "PACK" : "UNIT");
 
@@ -51,7 +51,7 @@ export function EnablePurchaseBasket({ context, card, model, busy, decide }: Omi
   return <button type="button" disabled={busy} onClick={() => { if (guard(upgrade)) upgrade(); }}>Passer au panier multi-articles</button>;
 }
 
-export function PurchaseBasketEditor({ context, card, model, busy, decide, close, initialConcept, dismissedSuggestions, updateSuggestionDismissal }: Props & SuggestionDismissal) {
+export function PurchaseBasketEditor({ context, card, model, busy, decide, close, initialConcept, catalogChoice, dismissedSuggestions, updateSuggestionDismissal }: Props & SuggestionDismissal) {
   const id = context.contextOccurrenceId;
   const digest = plannerDigest(context);
   const groceries = context.fields.budgetDomain === "groceries";
@@ -98,6 +98,19 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     quantity: item?.quantity ?? "1", unit: articleUnit(item),
     price: item?.cost.kind === "MANUAL" ? item.cost.unitAmount : "",
     concept: item?.basketArticle?.concept ?? concept, existing: item,
+  });
+  const handledCatalogChoice=useRef<GuidedCatalogChoice | undefined>(undefined);
+  useEffect(()=>{
+    if(!catalogChoice||handledCatalogChoice.current===catalogChoice||busy)return;
+    handledCatalogChoice.current=catalogChoice;
+    if(catalogChoice.kind!=='socket'||catalogChoice.asset.assetKey!=='option:purchase:item:item'
+      ||catalogChoice.target.kind!=='CONTEXT_SOCKET'||catalogChoice.target.contextOccurrenceId!==id||catalogChoice.target.slotKey!=='item')return;
+    const selection=catalogChoice.selection;
+    const item=selection?.kind==='COMPONENT'?articles.find(item=>item.selectionId===selection.selectionId):undefined;
+    if(!writable||!item||!canChooseArticle(item)||plannerDigest(item)!==plannerDigest(selection)){
+      setError('Cet article ou ses droits ont changé. Le panier et votre saisie restent disponibles.');return;
+    }
+    edit(item);
   });
   const details = () => open({ kind: "details", merchant: text(context.fields.merchantLabel), date: text(context.fields.plannedDate),
     coverage: (context.fields.basketCoverage as Coverage | undefined) ?? "AUTO" });
