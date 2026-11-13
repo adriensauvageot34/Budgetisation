@@ -705,7 +705,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
           disabled={activity && (!activityExtrasSocket || cinemaSelectionLocked("extras", item.selectionId))
             || restaurant && (busy || !catalogSocket(model, contextId, "extras", "option:restaurant:extras:extra") || cinemaSelectionLocked("extras", item.selectionId))}
           onClick={() => editExtra(item, restaurant)}>{item.label} · {priceCaption(item)}{restaurant ? " · supplément distinct" : ""}
-          {restaurant && extras.some(other => other !== item && normalizeCatalog(other.label) === normalizeCatalog(item.label)) ? ` · supplément ${extraPage * 3 + index + 1}` : ""}
+          {(restaurant || activity) && extras.some(other => other !== item && normalizeCatalog(other.label) === normalizeCatalog(item.label))
+            ? ` · ${restaurant ? "supplément" : "complément"} ${extraPage * 3 + index + 1}` : ""}
         </button>)}
         {extras.length > 3 && <div className={styles.nightPage}><button type="button" disabled={extraPage === 0} onClick={() => setExtraPage(page => page - 1)}>Précédent</button><span>{extraPage + 1} / {Math.ceil(extras.length / 3)}</span><button type="button" disabled={(extraPage + 1) * 3 >= extras.length} onClick={() => setExtraPage(page => page + 1)}>Suivant</button></div>}
         {activity && activityModes.length > 0 && <button type="button" onClick={showOptions}>Autres postes et modes de trajet</button>}
@@ -725,7 +726,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         }
       }} onSave={() => { try { const item = buildComponentRow(extraRow, "extra");
           if (!extraIsCurrent(item.selectionId, item.label)) return;
-          const nextExtras = restaurant && extraRow.existing ? extras.map(old => old.selectionId === item.selectionId ? item : old)
+          const nextExtras = (restaurant || activity) && extraRow.existing ? extras.map(old => old.selectionId === item.selectionId ? item : old)
             : [...extras.filter(old => old.selectionId !== item.selectionId), item];
           if (send(operation({ contextOccurrenceId: context.contextOccurrenceId, slots: { extras: nextExtras } }))) {
             setExtraRow(null); setExtraAdded(!extraRow.existing);

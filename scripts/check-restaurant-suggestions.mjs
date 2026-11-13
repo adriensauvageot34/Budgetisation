@@ -219,6 +219,30 @@ try {
       .find(item => item.conceptKey === "billet-cinema");
     assert.equal(ticket.action, "EDIT"); assert.equal(ticket.selectionId, uuid(99724));
   });
+  await check("RS-11-ACTIVITY-HOMONYMS-KEEP-EXACT-LINE-AND-ORDER", async () => {
+    const first = { ...extra, label: "Location de chaussures" };
+    const second = { ...first, selectionId: uuid(99730) };
+    const bowling = { ...target(base), templateKey: "activity", fields: {
+      fieldSchemaVersion: "context-fields@v2", label: "Bowling",
+      composerPresentation: { version: "composer-context-presentation@v1", presetKey: "bowling" },
+    }, slotSelections: { main: { items: [{ ...meal, optionKey: "activity", label: "Partie" }] }, extras: { items: [first, second] } } };
+    await mount({ ...base, contexts: [bowling] });
+    const menu = root.root.findAllByType("button").find(node => text(node).includes("Compléments et trajet"));
+    assert(menu); await act(async () => menu.props.onClick());
+    const firstLine = root.root.findAllByType("button").find(node => text(node).endsWith("complément 1"));
+    const secondLine = root.root.findAllByType("button").find(node => text(node).endsWith("complément 2"));
+    assert(firstLine && secondLine); assert.equal(accepted.length, 0);
+    await act(async () => firstLine.props.onClick());
+    const row = root.root.findByType(WorkshopComponentRow);
+    assert.equal(row.props.row.id, first.selectionId);
+    await act(async () => row.props.onChange({ ...row.props.row, amount: "7.00", costMode: "MANUAL", edited: true }));
+    await act(async () => root.root.findByType(WorkshopComponentRow).props.onSave());
+    assert.equal(accepted.length, 1);
+    const revised = target(current).slotSelections.extras.items;
+    assert.deepEqual(revised.map(item => item.selectionId), [first.selectionId, second.selectionId]);
+    assert.equal(revised[0].cost.unitAmount, "7.00"); assert.deepEqual(revised[1], second);
+    assert.deepEqual(amounts(current), ["40.00", "6.00", "7.00"]);
+  });
   console.log(JSON.stringify({ status: "PASS", checks, level: "LOCAL_REACT_AND_FINANCE_FIXTURE", remote, writers: fixture.writes.length, apply: false }));
 } finally {
   if (root) await act(async () => root.unmount());

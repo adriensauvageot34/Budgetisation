@@ -313,3 +313,9 @@ TypeScript, diff et les quatre contrôles de la bibliothèque PASS. « quilles d
 Le Board et l’éditeur utilisent la même règle de fraîcheur. La carte affiche un total brut ou un sous-total connu selon le reçu du Compiler, avec le nombre d’articles. En attente d’une projection ou en cas de digest périmé, les montants évalués sont masqués.
 
 TypeScript, diff et banc d’impact PASS. Amazon est vérifié à 48 € puis à 53 € avec livraison. Une ligne inconnue produit un sous-total distinct ; STALE masque les 48 €. Les sept éditeurs et les couvertures Courses gardent leurs résultats de fixture. Aucun writer distant ni Apply.
+
+### Compléments homonymes dans les activités
+
+Les compléments homonymes sont numérotés dans le panneau d’activité. La modification garde la ligne à sa place et n’affecte pas les autres compléments.
+
+TypeScript, diff et onze contrôles Restaurant, Cinéma et Activité PASS. Deux locations de chaussures de Bowling à 6 € gardent leur identité et leur ordre après modification ciblée de la première à 7 €. Le Compiler confirme les trois montants de la sortie. Aucun writer distant ni Apply.
