@@ -8,6 +8,7 @@ const {libraryOccurrences, librarySearchAction, composerLibraryIndex, filterLibr
 const {intentionNavigationEntries, WorkshopNavigationContext, WorkshopNavigation}=require('@/app/mois-a-venir/composer/workshop-navigation');
 const {ComposerSaveStatus}=require('@/app/mois-a-venir/composer/composer-save-status');
 const {editorOccurrenceId}=require('@/app/mois-a-venir/composer/asset-editor-routing');
+const {restoreDraftNavigation}=require('@/app/mois-a-venir/composer/draft-navigation-memory');
 const {handleComposerRequest}=require('@/server/phase2/planner/composer-service');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
 const {workshopErrorMessage}=require('@/app/mois-a-venir/composer/workshop-error');
@@ -75,7 +76,16 @@ catch(error){assert.match(workshopErrorMessage(error),/deux décimales/);assert.
 assert.match(workshopErrorMessage(new Error('La cible a changé. Rouvrez ce poste.')),/La cible a changé/);
 assert.doesNotMatch(workshopErrorMessage(new Error('UNEXPECTED_INTERNAL_CODE')),/UNEXPECTED_INTERNAL_CODE/);
 console.log('UX-05 Partial amount is still refused with an actionable message: PASS');
+const savedNavigation={draftId:uuid(29000),digest:original,contextId:sibling.contextOccurrenceId};
+const savedEntry=JSON.stringify(savedNavigation);
+const ids=new Set(entries.map(row=>row.id));
+assert.equal(restoreDraftNavigation(savedEntry,savedNavigation,ids),sibling.contextOccurrenceId);
+assert.equal(restoreDraftNavigation(savedEntry,{...savedNavigation,draftId:uuid(29001)},ids),null);
+assert.equal(restoreDraftNavigation(savedEntry,{...savedNavigation,digest:'stale'},ids),null);
+assert.equal(restoreDraftNavigation(savedEntry,savedNavigation,new Set([impactIds.cinema])),null);
+assert.equal(restoreDraftNavigation('{',savedNavigation,ids),null);
+console.log('UX-06 Reload navigation keeps the exact admitted occurrence of the confirmed Draft: PASS');
 assert.equal(semanticStateDigest(model.semanticState),original);
 assert.equal(JSON.stringify(fixture.world),world);
 assert.deepEqual(fixture.writes,[]);
-console.log(JSON.stringify({status:'PASS',checks:5,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));
+console.log(JSON.stringify({status:'PASS',checks:6,remoteWrites:0,apply:false,level:'SYNTHETIC_COMPILER_AND_RENDER'}));

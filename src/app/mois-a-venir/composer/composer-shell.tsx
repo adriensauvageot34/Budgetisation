@@ -22,6 +22,7 @@ import type { GuidedCatalogChoice } from "./catalog-discovery";
 import type { BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { assetEditorTarget, editorOccurrenceId } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
+import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
 import { WorkshopNavigationContext, IntentionSwitcher, intentionNavigationEntries } from "./workshop-navigation";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
@@ -969,6 +970,37 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     return { entries: intentionNavigationEntries(shown.board.contexts.filter(card => available.has(card.contextOccurrenceId))),
       open: stableLibraryOpen, back: stableBackToBoard, busy };
   }, [shown, stableLibraryOpen, stableBackToBoard, busy]);
+  const navigationScope = rootRelationAccess?.scopeKey;
+  const [navigationRestored, setNavigationRestored] = useState(false);
+  const [resumeContext, setResumeContext] = useState<string | null>(null);
+  useEffect(() => {
+    const active = initialDrafts?.active;
+    if (navigationScope && active && !recovered && !initialDrafts?.baseStale
+      && active.digest === initialModel.board.draft.semanticStateDigest) {
+      const available = new Set(libraryOccurrences(initialModel).map(row => row.contextOccurrenceId));
+      const id = readDraftNavigation(navigationScope, active, available);
+      if (id) {
+        setFocusedContext(id);
+        setResumeContext(id);
+        setReveal({ targetRef: id, sequence: 1 });
+      }
+    }
+    setNavigationRestored(true);
+  }, [initialDrafts, initialModel, navigationScope, recovered]);
+  const activeDraft = durable.snapshot?.active;
+  const draftNavigationId = currentEditorId ?? focusedContext;
+  const draftNavigationAdmitted = intentionNavigation.entries.some(entry => entry.id === draftNavigationId);
+  useEffect(() => {
+    if (!navigationScope || !navigationRestored || relationSession || comparison || durable.snapshot?.baseStale) return;
+    if (durable.status === "CLEAN") rememberDraftNavigation(navigationScope, null);
+    if (durable.status !== "SAVED" || durable.unsaved || !activeDraft
+      || activeDraft.digest !== shown.board.draft.semanticStateDigest) return;
+    rememberDraftNavigation(navigationScope, draftNavigationId && draftNavigationAdmitted
+      ? { draftId: activeDraft.draftId, digest: activeDraft.digest, contextId: draftNavigationId } : null);
+  }, [navigationScope, navigationRestored, relationSession, comparison, durable.snapshot?.baseStale, durable.status,
+    durable.unsaved, activeDraft, shown.board.draft.semanticStateDigest, draftNavigationId, draftNavigationAdmitted]);
+  const resumableContext = resumeContext === focusedContext && !currentEditorId && savedReloadSafe
+    ? intentionNavigation.entries.find(entry => entry.id === resumeContext) : undefined;
   // Accepted context changes (also Undo/Redo and child edits) replace workshop buffers.
   // Preview responses with the same semantic content leave RAW inputs untouched.
   const workshopKey = (id: string) => canonicalPlannerJson(draftState.contexts.filter(context => context.contextOccurrenceId === id || context.parentContextOccurrenceId === id));
@@ -1002,7 +1034,11 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails}
         retry={previewStatus === "FAILED" && !busy ? retryPreview : undefined} /></div>
-      <div className={styles.toolbar}><IntentionSwitcher contextId={focusedContext} compact /><div ref={historyTools} className={styles.historyTools}>
+      <div className={styles.toolbar}><IntentionSwitcher contextId={focusedContext} compact />
+        {resumableContext && <button className={styles.financialLink} disabled={busy} onClick={() => {
+          setResumeContext(null); stableLibraryOpen(resumableContext.id);
+        }}>Reprendre l’intention</button>}
+        <div ref={historyTools} className={styles.historyTools}>
         <button data-history-action="undo" className={styles.historyButton} title="Annuler (Ctrl/Cmd+Z)" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => stage({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
         <button data-history-action="redo" className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => stage({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
         {comparison ? <div className={styles.compareActions}><button data-compare-keep className={styles.secondary} disabled={busy} onClick={() => compare(true)}>Garder cette variante</button><button data-compare-exit className={styles.textButton} disabled={busy} onClick={() => compare(false)}>Quitter la comparaison</button></div>
@@ -1024,7 +1060,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           <button data-financial-menu onClick={() => { close(); openProjectionDetails(); }}>Les finances du mois</button>
         {draftTransport && !relationSession && <div className={styles.durableActions}>
           {(durable.status === "ERROR" || durable.status === "OFFLINE") && <button data-save-retry onClick={durable.retry}>Réessayer la sauvegarde</button>}
-          {durable.status === "CONFLICT" && <><button data-save-refresh onClick={() => void durable.refresh()}>Relire le brouillon</button>
+          {durable.status === "CONFLICT" && <><button data-save-refresh onClick={() => void durable.refresh()}>Relire la version serveur</button>
             <button data-save-load-server onClick={() => setDraftConfirmation({ kind: "LOAD_SERVER" })}>Charger la version sauvegardée</button></>}
           {durable.snapshot?.active && <><button data-draft-abandon onClick={() => { close(); archiveDraft(true); }}>Abandonner mes essais</button>
             <button data-draft-restart onClick={() => { close(); archiveDraft(false); }}>Repartir du Plan actif</button></>}

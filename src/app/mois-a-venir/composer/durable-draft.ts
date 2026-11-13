@@ -111,18 +111,23 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
     return () => { window.removeEventListener("online", wentOnline); window.removeEventListener("offline", wentOffline); clearTimer(); };
   }, [flush]);
 
-  const retry = () => { blocked.current = false; void flush(); };
+  const retry = () => { void flush(); };
   const refresh = async () => {
-    if (!transport || suspension.current) return;
+    if (!transport || suspension.current || inFlight.current) return;
+    inFlight.current = true;
     try {
       const latest = await transport.read(targetMonth);
       updateSnapshot(latest);
-      if (latest.baseStale || latest.active?.digest !== confirmed.current) {
-        blocked.current = true; setStatus("CONFLICT"); setMessage("Une autre version existe. Vos modifications locales sont préservées.");
-      } else retry();
-    } catch (error) { setStatus("ERROR"); setMessage(error instanceof Error && error.message === "DRAFT_CONTRACT_INCOMPATIBLE"
-      ? "Version du brouillon incompatible. Vos modifications locales restent dans cette page."
-      : "Impossible de relire le brouillon."); }
+      blocked.current = true;
+      setStatus("CONFLICT");
+      setMessage(latest.baseStale
+        ? "Le Plan de référence a changé. Votre travail reste dans cet onglet."
+        : "Version serveur relue. Votre travail local est conservé ; choisissez explicitement si vous souhaitez charger cette version.");
+    } catch (error) {
+      setMessage(error instanceof Error && error.message === "DRAFT_CONTRACT_INCOMPATIBLE"
+        ? "Version du brouillon incompatible. Vos modifications locales restent dans cette page."
+        : "Impossible de relire la version serveur. Votre travail reste dans cet onglet.");
+    } finally { inFlight.current = false; }
   };
   const lifecycle = async (kind: "ARCHIVE" | "RESTORE", draft: StoredComposerDraft, discardLocal = false): Promise<boolean> => {
     if (!transport || suspension.current || !navigator.onLine || inFlight.current || !discardLocal && (status === "DIRTY" || status === "ERROR" || status === "OFFLINE")) return false;
