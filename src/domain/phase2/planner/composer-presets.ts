@@ -196,7 +196,7 @@ export const COMPOSER_PRESETS = [
     defaults: {"label":"Essuie-tout","productLabel":"Essuie-tout","budgetDomain":"home-small"}, questions: ["Produit","Date","Budget","Enveloppe"],
     guidance: "Un consommable ponctuel dans le domaine Maison existant, sans stock, quantité, prix ni nouvelle enveloppe. Le Compiler gouverne le rattachement." },
 ] as const;
-/** Activity recipes using the existing wide exports from the V22 collection. */
+/** Activity recipes using the existing exports from the V22 collection. */
 export const ACTIVITY_PRESETS = ([
   { presetKey: "bowling", label: "Bowling", visualConceptId: "v22-art:excel:342",
     searchTerms: ["bowling", "quilles", "partie", "piste"], activityCostLabel: "Coût de la partie",
@@ -234,12 +234,25 @@ export const ACTIVITY_PRESETS = ([
   { presetKey: "photo-outing", label: "Sortie photo", visualConceptId: "v22-art:extra:photo-activity",
     searchTerms: ["photo", "photographie", "balade", "appareil"], activityCostLabel: "Budget de la sortie photo",
     guidance: "Précisez le coût éventuel de la sortie. Un prix nul peut être déclaré si vous le confirmez." },
+  { presetKey: "laser-game", label: "Laser game", visualConceptId: "v22-art:excel:344", squareArtwork: true,
+    searchTerms: ["laser game", "laser tag", "partie", "session"], activityCostLabel: "Tarif de la partie",
+    guidance: "Renseignez le tarif des parties prévues et les éventuels frais distincts." },
+  { presetKey: "trampoline-park", label: "Parc de trampolines", visualConceptId: "v22-art:excel:347", squareArtwork: true,
+    searchTerms: ["trampoline", "trampoline park", "saut", "session"], activityCostLabel: "Entrée ou tarif de la session",
+    guidance: "Précisez le tarif de la session et les accessoires uniquement s’ils sont facturés à part." },
+  { presetKey: "water-park", label: "Parc aquatique", visualConceptId: "v22-art:excel:337", squareArtwork: true,
+    searchTerms: ["parc aquatique", "toboggan", "baignade", "billet"], activityCostLabel: "Billet du parc aquatique",
+    guidance: "Précisez le prix des entrées et les frais facturés séparément." },
+  { presetKey: "zoo-visit", label: "Visite au zoo", visualConceptId: "v22-art:excel:338", squareArtwork: true,
+    searchTerms: ["zoo", "parc animalier", "animaux", "billet"], activityCostLabel: "Billet du zoo",
+    guidance: "Indiquez le prix des billets et les éventuels frais distincts." },
 ] as const).map(preset => {
   const illustrationKey = preset.visualConceptId.replaceAll(":", "-");
+  const artworkRole = "squareArtwork" in preset ? "primary" : "wide";
   return {
     ...preset, templateKey: "activity", categoryKey: "ACTIVITY", defaults: { label: preset.label },
     questions: ["Participants", "Lieu", "Date", "Budget", "Transport facultatif"],
-    illustrationKey, artworkPath: `/planned-visuals/builder/clay/v22/wide/${illustrationKey}.webp`,
+    illustrationKey, artworkPath: `/planned-visuals/builder/clay/v22/${artworkRole}/${illustrationKey}.webp`,
   } as const;
 });
 

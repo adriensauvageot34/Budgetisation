@@ -553,3 +553,7 @@ Les bancs historiques Bibliothèque et Coiffeur passent avec des doubles DOM qui
 ### Préparer un article du catalogue dans un panier existant
 
 Une fiche produit propose les paniers existants qui admettent l’article, avec le formulaire de ce panier et le concept exact. L’ouverture laisse le prix vide et le digest inchangé. La commande propriétaire du panier intervient à la validation explicite. Un panier protégé, plein, incompatible, devenu obsolète ou contenant déjà ce concept ne reçoit pas cet accès. TypeScript, catalogue et banc panier PASS sur fixture, dont sélection exacte, prix inconnu et refus après changement du Draft.
+
+### Laser game, trampolines, parc aquatique et zoo
+
+Quatre activités s’ouvrent depuis la bibliothèque et leur concept exact du catalogue. Elles utilisent les exports Clay carrés existants et l’éditeur Activité pour la date, le lieu, le tarif, les frais distincts et le transport lorsqu’il est admis. TypeScript, catalogue et les dix groupes du banc de parcours PASS. Le banc couvre désormais 23 activités, avec maintien des identités et coûts officiels. Contrôle navigateur reporté.

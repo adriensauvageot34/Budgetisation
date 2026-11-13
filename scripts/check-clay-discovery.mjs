@@ -42,7 +42,10 @@ const activityAsset={assetKey:'template:activity',kind:'CONTEXT_ASSET',templateK
 const createActivity={sourceAssetKey:activityAsset.assetKey,target:{kind:'BOARD_ZONE'},resolution:'ACCEPTED',semanticAction:'ADD_CONTEXT'};
 for(const activity of ACTIVITY_PRESETS){
  const entry=entries.find(item=>item.visualConceptId===activity.visualConceptId);
- assert(entry);assert.equal(clayCatalogArtwork(entry,'wide').src,presetIllustrationPath(activity));
+ assert(entry);
+ const square='squareArtwork' in activity, art=clayCatalogArtwork(entry,square?'primary':'wide');
+ assert.equal(art.src,presetIllustrationPath(activity));
+ assert.equal(art.width/art.height,square?1:2);
  const empty={...model,board:{contexts:[]},library:{searchableAssets:[activityAsset]},dropCapabilities:[createActivity]};
  const available=discoveryActions(entry,empty,{});
  assert.equal(available.length,1);assert.equal(available[0].presetKey,activity.presetKey);assert.equal(available[0].asset,activityAsset);

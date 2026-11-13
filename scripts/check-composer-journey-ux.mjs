@@ -125,7 +125,7 @@ for(const [index,id] of [impactIds.cinema,impactIds.restaurant].entries()){
  const suggestions=projectCompletionSuggestions(composed,projectId);
  if(index===0){
   assert.equal(suggestions[0]?.preset.presetKey,'restaurant-for-two');
-  assert.match(suggestions[0].reason,/contient un cinéma/);
+  assert.match(suggestions[0].reason,/« Cinéma » est déjà lié/);
   const blocked={...composed,dropCapabilities:composed.dropCapabilities.filter(drop=>drop.target.contextOccurrenceId!==projectId)};
   assert.deepEqual(projectCompletionSuggestions(blocked,projectId),[]);
   const disabled=renderToStaticMarkup(React.createElement(ProjectCompletionPreference.Provider,
