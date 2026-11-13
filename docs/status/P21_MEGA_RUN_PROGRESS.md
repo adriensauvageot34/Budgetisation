@@ -641,3 +641,7 @@ Les projets composés et visites amicales ouvrent le catalogue Activités depuis
 ### Catalogue Activités partagé avec les séjours et visites familiales
 
 Le même sélecteur dessert les projets composés, séjours et visites. Les droits sont revérifiés à la confirmation, les saisies RAW restent gardées et une activité déjà liée ouvre son occurrence. TypeScript et onze groupes de contrôles PASS, dont les éditeurs Séjour et Visite familiale, le retrait d’une capacité pendant la confirmation et le rattachement admis après un nouvel essai.
+
+### Réutiliser une activité du Board depuis le catalogue
+
+La fiche propose de rattacher une activité compatible déjà présente sur le Board. Deux homonymes restent deux choix distincts. La confirmation conserve l’identité et les postes, et le droit de rattachement suffit lorsque la création est indisponible. TypeScript et douze groupes de contrôles PASS sur fixture, dont le choix du second homonyme et la conservation des deux activités sans création supplémentaire.

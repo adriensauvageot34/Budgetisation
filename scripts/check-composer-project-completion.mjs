@@ -3,7 +3,7 @@ import path from 'node:path';
 import Module,{createRequire} from 'node:module';
 import {require} from './lib/phase2-ts-loader.mjs';
 import {readMonthFixture} from './fixtures/composer-v22-b1.mjs';
-import {uuid,householdId} from './fixtures/planner-headless.mjs';
+import {uuid,householdId,component} from './fixtures/planner-headless.mjs';
 const testRequire=createRequire(path.resolve(process.env.PLANNER_REACT_TEST_TOOLS||'outputs/p21-react-tools','package.json'));
 const React=testRequire('react'),jsx=testRequire('react/jsx-runtime'),{create,act}=testRequire('react-test-renderer');
 const originalLoad=Module._load;let confirmation;
@@ -207,6 +207,30 @@ try{
   const updated=await request(source.semanticState,accepted[0]);
   assert.equal(updated.semanticState.contexts.find(child=>child.contextOccurrenceId===accepted[0].identity).parentContextOccurrenceId,owner);
  }
+ let reusable=leisure;
+ const rootIds=[uuid(++counter),uuid(++counter)];
+ for(const [index,id] of rootIds.entries()){
+  reusable=await request(reusable.semanticState,{kind:'DROP',assetKey:'template:activity',presetKey:'laser-game',
+   target:{kind:'BOARD_ZONE'},identity:id,selectionId:uuid(++counter),values:{}});
+  reusable=await request(reusable.semanticState,{kind:'EDIT_PRESET_CONTEXT',edit:{contextOccurrenceId:id,
+   slots:{main:[component('activity',index?'21.00':'14.00',uuid(++counter))]}}});
+ }
+ const priorRoots=rootIds.map(id=>reusable.semanticState.contexts.find(context=>context.contextOccurrenceId===id));
+ await act(async()=>root.unmount());root=null;accepted=[];
+ const reuseOnly={...reusable,dropCapabilities:reusable.dropCapabilities.filter(drop=>drop.sourceAssetKey!=='template:activity')};
+ await act(async()=>{root=create(editorModel(reuseOnly,leisureId));});
+ const rootCatalog=root.root.findAllByType(CatalogOpenButton).find(button=>button.props.target?.scope==='activity');
+ const reuseCommands=rootCatalog.props.target.resolveCommands({visualConceptId:composerPreset('laser-game').visualConceptId});
+ assert.deepEqual(reuseCommands.map(command=>command.key),rootIds);
+ assert(reuseCommands.every(command=>command.label.startsWith('Rattacher Laser game')));
+ await act(async()=>reuseCommands[1].run());assert.equal(accepted.length,0);
+ await act(async()=>confirmation.accept());assert.equal(accepted.length,1);
+ assert.equal(accepted[0].assetKey,'context-occurrence:'+rootIds[1]);assert.equal(accepted[0].identity,rootIds[1]);
+ const reattached=await request(reusable.semanticState,accepted[0]);
+ assert.equal(reattached.semanticState.contexts.length,reusable.semanticState.contexts.length);
+ assert.deepEqual(reattached.semanticState.contexts.find(context=>context.contextOccurrenceId===rootIds[0]),priorRoots[0]);
+ const moved=reattached.semanticState.contexts.find(context=>context.contextOccurrenceId===rootIds[1]);
+ assert.equal(moved.parentContextOccurrenceId,leisureId);assert.deepEqual(moved.slotSelections,priorRoots[1].slotSelections);
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
  console.log('S3-04 Weekend complements follow the actual children without repeating an existing activity: PASS');
  console.log('S3-05 Two leisure activities offer one meal, suppressed when any meal is already linked: PASS');
@@ -217,5 +241,6 @@ try{
  console.log('S3-09 Generic stays, visits and home projects reuse admitted complements without mutation: PASS');
  console.log('S3-10 The project catalog reopens an exact linked activity or confirms a new child through the existing owner: PASS');
  console.log('S3-11 Stay and family visit editors confirm catalog activities and reject lost capability before adoption: PASS');
- console.log(JSON.stringify({status:'PASS',checks:11,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ console.log('S3-12 Catalog attachment selects the exact existing homonym and preserves both activities and their official posts: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:12,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

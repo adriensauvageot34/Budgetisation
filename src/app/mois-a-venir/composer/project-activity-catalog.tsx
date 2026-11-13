@@ -27,26 +27,36 @@ export function ProjectActivityCatalog({ model, parentId, busy, decide, open }: 
     && parent.sockets.some(socket => socket.contextOccurrenceId === parentId && socket.slotKey === slotKey
       && socket.capabilityRefs.includes(`${parent.templateKey}:${slotKey}:ATTACH_CHILD_CONTEXT`));
   const activityAllowed = writable && publishedDrop(model, "template:activity", target)?.semanticAction === "PATCH_CONTEXT";
-  const options = activityAllowed ? COMPOSER_LIBRARY_PRESETS.filter(preset => preset.templateKey === "activity") : [];
   const linked = model.board.contexts.filter(child => child.parentContextOccurrenceId === parentId
     && parent?.childContextOccurrenceIds.includes(child.contextOccurrenceId));
-  const adopt = useCommittedEvent((key: string, digest: string) => {
+  const roots = writable ? model.board.contexts.filter(card => card.contextOccurrenceId !== parentId && !card.parentContextOccurrenceId
+    && !card.readOnly && !catalogRefLocked(model, card.contextOccurrenceId)
+    && publishedDrop(model, `context-occurrence:${card.contextOccurrenceId}`, target)?.choices.includes("REPARENT_PRESERVE_ID")) : [];
+  const existingPresets = new Set([...roots, ...linked].map(card => presetForContext(card)?.presetKey));
+  const options = writable ? COMPOSER_LIBRARY_PRESETS.filter(preset => preset.templateKey === "activity"
+    && (activityAllowed || existingPresets.has(preset.presetKey))) : [];
+  const adopt = useCommittedEvent((key: string, digest: string, existingId?: string) => {
     const option = options.find(preset => preset.presetKey === key);
-    if (busy || !option || digest !== model.board.draft.semanticStateDigest
-      || linked.some(child => presetForContext(child)?.presetKey === key)) {
+    const existing = roots.find(card => card.contextOccurrenceId === existingId && presetForContext(card)?.presetKey === key);
+    if (busy || !option || !existingId && !activityAllowed || digest !== model.board.draft.semanticStateDigest
+      || existingId && !existing || linked.some(child => presetForContext(child)?.presetKey === key)) {
       setError("Le projet ou ses droits ont changé. Rouvrez le catalogue avant d’ajouter cette activité.");
       return;
     }
-    const added = decide({ kind: "DROP", assetKey: "template:activity", presetKey: option.presetKey, target,
-      identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {} });
+    const added = decide({ kind: "DROP", assetKey: existing ? `context-occurrence:${existing.contextOccurrenceId}` : "template:activity",
+      ...(!existing ? { presetKey: option.presetKey } : {}), target,
+      identity: existing?.contextOccurrenceId ?? crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {} });
     setError(added ? "" : "Cette activité n’a pas été ajoutée. Consultez le message du brouillon, puis réessayez.");
   });
-  const ask = useCommittedEvent((key: string) => {
+  const ask = useCommittedEvent((key: string, existingId?: string) => {
     const option = options.find(preset => preset.presetKey === key);
-    if (busy || !option) return;
+    const existing = roots.find(card => card.contextOccurrenceId === existingId && presetForContext(card)?.presetKey === key);
+    if (busy || !option || existingId && !existing || !existingId && !activityAllowed) return;
     const digest = model.board.draft.semanticStateDigest;
-    const show = () => confirm({ message: `Associer « ${option.label} » à ce projet ? Son prix restera à préciser.`,
-      acceptLabel: "Associer cette activité", accept: () => adopt(key, digest) });
+    const show = () => confirm({ message: existing
+      ? `Rattacher « ${existing.label} » à ce projet ? Son identité et ses postes seront conservés.`
+      : `Associer « ${option.label} » à ce projet ? Son prix restera à préciser.`,
+      acceptLabel: "Associer cette activité", accept: () => adopt(key, digest, existingId) });
     if (!edits || edits.guard(show)) show();
   });
   const openLinked = useCommittedEvent((id: string) => {
@@ -62,6 +72,11 @@ export function ProjectActivityCatalog({ model, parentId, busy, decide, open }: 
         key: child.id, visualConceptId: entry.visualConceptId, editsExisting: true,
         label: `Ouvrir ${child.label}`, run: () => openLinked(child.id),
       })) : [];
+      const reusable = intentionNavigationEntries(roots.filter(card => presetForContext(card)?.presetKey === option.presetKey));
+      if (reusable.length) return reusable.map(card => ({
+        key: card.id, visualConceptId: entry.visualConceptId,
+        label: `Rattacher ${card.label}`, run: () => ask(option.presetKey, card.id),
+      }));
       return [{ key: option.presetKey, visualConceptId: entry.visualConceptId,
         label: `Associer ${option.label} à ce projet`, run: () => ask(option.presetKey) }];
     } }}>Choisir une activité dans le catalogue</CatalogOpenButton>}
