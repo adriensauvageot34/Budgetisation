@@ -94,7 +94,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Retour après déplacement | Destination révélée uniquement après réponse admise de l’évaluateur |
 | DONE | Informations de financement | Accès en lecture aux sources du mois depuis le détail de financement |
 | DONE | Liste des intentions | Recherche dans les parents et numéros d’homonymes stables sous filtrage |
-| READY | Modèles et disponibilité | Préférer les compléments effectivement disponibles sans masquer la structure |
+| DONE | Modèles et disponibilité | Structures existantes proposées à l’ouverture, compléments filtrés selon les droits |
 | DONE | Date du modèle | Date facultative du parent, sans propagation aux compléments |
 | READY | Mobilité explicite | Clarifier le prix de trajet complet et le statut du retour |
 | DONE | Synthèse des projets | Compteurs officiels et filtres pour les projets contenant plusieurs enfants |
@@ -223,3 +223,9 @@ TypeScript, diff et deux contrôles React/propriétaire PASS. Un cadeau lié à 
 Le résumé indique combien d’intentions sont à compléter ou en consultation, à partir de la connaissance et des capacités publiées. Au-delà de quatre enfants, des filtres permettent de les repérer. Les coûts restent individuels. Les protections de composition, y compris celles propagées par un enfant ancré, sont affichées telles que le propriétaire les publie.
 
 TypeScript, diff et deux contrôles React/propriétaire PASS sur cinq Cinéma homonymes. Zéro explicite est distinct d’UNKNOWN, les numéros restent stables sous filtrage et STALE masque la classification à compléter. Le modèle financier, les intentions et leurs droits ne sont pas modifiés par les filtres.
+
+### Retrouver une structure avant de recréer
+
+L’aperçu d’un modèle montre les intentions du même type déjà présentes dans le mois. Il permet de les ouvrir ou consulter par leur identité, avec les droits courants, sans ajouter automatiquement les compléments du modèle. Le nouveau projet reste une action explicite distincte.
+
+TypeScript, diff et trois contrôles React d’aperçu PASS. L’ouverture d’un séjour existant ne crée pas une deuxième structure et conserve son digest. Aucun writer distant.
