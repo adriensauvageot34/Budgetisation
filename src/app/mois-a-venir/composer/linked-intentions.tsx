@@ -85,8 +85,6 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
     <ul>{children.map(child => {
       const impact = current ? reading?.byContext[child.id] : undefined;
       const card = byId.get(child.id)!;
-      const missing = current ? model.board.diagnostics.filter(diagnostic => diagnostic.targetRef === child.id
-        && diagnostic.severity !== "INFO") : [];
       const destinations = decide ? linkedIntentionMoveTargets(model, parentId, child.id) : [];
       return <li key={child.id} className={styles.linkedIntention} data-linked-intention={child.id}>
         {open ? <button type="button" disabled={busy} onClick={() => open(child.id)}>{child.label}</button> : <span>{child.label}</span>}
@@ -96,7 +94,6 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
         {(card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")) && <small> · Consultation seule</small>}
         {current && <details><summary>Budget et informations à compléter</summary>
           <IntentBudgetImpact model={model} contextId={child.id} />
-          {missing.length > 0 && <ul>{missing.map((diagnostic, index) => <li key={`${diagnostic.code}:${index}`}>{diagnostic.message}</li>)}</ul>}
         </details>}
         {destinations.length > 0 && <details><summary>Déplacer vers un autre projet</summary>
           <p>L’intention conserve ses postes. Choisissez le projet qui doit la contenir.</p>

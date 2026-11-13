@@ -89,7 +89,10 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Compléments des séjours | Ouverture exacte des enfants et confirmation explicite de leur retrait |
 | DONE | Autres intentions déjà éditables | Tous les presets publiés retrouvables sous leurs droits actuels |
 | READY | Relations sur le Board | Afficher le parent d’un enfant et faciliter son accès sans mutation |
-| READY | Synthèse des informations manquantes | Accès aux diagnostics officiels de l’intention sélectionnée |
+| DONE | Synthèse des informations manquantes | Diagnostics officiels de l’intention et de ses postes, masqués si périmés |
+| READY | Navigation du Board | Accès direct au projet parent sans agrandir les cartes |
+| READY | Retour après déplacement | Repérage de la destination et maintien des identités |
+| READY | Informations de financement | Renvois lisibles vers les sources du mois sans calcul parallèle |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
 | BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
@@ -179,3 +182,9 @@ TypeScript, diff et deux contrôles React/propriétaire PASS. Deux Cinéma homon
 Un espace dédié liste les intentions déjà présentes sans imposer de recherche préalable. Les filtres montrent tous les projets ou les intentions à compléter selon la connaissance publiée par le Compiler. Les indications périmées sont masquées. La reprise inclut désormais les soirées, repas livrés, restauration rapide et cadeaux déjà admis par les presets existants ; elle ne crée aucune capacité depuis un nom de catalogue.
 
 TypeScript et deux contrôles React/propriétaire PASS. Six familles de presets sont créées sur fixture puis retrouvées avec leur identité. L’ouverture, les filtres et le passage en état STALE ne modifient pas le Draft et n’exécutent aucun writer distant.
+
+### Diagnostics d’une intention
+
+Le résumé d’impact affiche les diagnostics publiés qui ciblent exactement l’intention, ses composants, son intention Mobility ou son trajet. Les messages globaux et ceux des autres intentions restent hors de ce détail. Les doublons sont retirés et la lecture périmée est masquée. Aucun diagnostic ne déduit à lui seul une autorisation Apply ou une modification du statut FRESH.
+
+TypeScript, diff et deux contrôles de portée/rendu PASS. Les références sont celles du propriétaire ; FRESH et BLOCKED affichent les repères courants, STALE et PENDING les masquent. Zéro écriture distante. Le banc de dix parcours a également été rejoué au checkpoint `8bf7414` avec huit modèles et sept activités : PASS.
