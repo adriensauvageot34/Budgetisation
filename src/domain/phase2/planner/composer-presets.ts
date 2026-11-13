@@ -245,6 +245,11 @@ export const ACTIVITY_PRESETS = ([
 
 /** Additional basket entry points reuse artwork already approved for M18. */
 export const PURCHASE_BASKET_PRESETS = [
+  { presetKey: "home-equipment-basket", label: "Acheter pour la maison", templateKey: "purchase", categoryKey: "HOME",
+    illustrationKey: "v22-art-extra-decor-general", artworkPath: "/planned-visuals/builder/clay/v22/wide/v22-art-extra-decor-general.webp",
+    searchTerms: ["maison", "mobilier", "meuble", "décoration", "équipement", "panier"],
+    defaults: { label: "Achats pour la maison", budgetDomain: "other" }, questions: ["Articles", "Quantités", "Prix", "Livraison"],
+    guidance: "Choisissez les articles du panier et leurs frais distincts." },
   { presetKey: "groceries-purchase", label: "Préparer mes courses", templateKey: "purchase", categoryKey: "HOME",
     illustrationKey: "groceries", searchTerms: ["courses", "panier alimentaire", "liste de courses"],
     defaults: { label: "Courses alimentaires", budgetDomain: "groceries" }, questions: ["Produits", "Quantités", "Prix", "Enveloppe"],

@@ -28,6 +28,8 @@ export const projectStarters = [
     children: [{ key: "museum-exhibition", slot: "activities" }, { key: "restaurant-for-two", slot: "restaurants" }] },
   { key: "weekend-groceries-and-walk", label: "Week-end, courses et balade", parent: "weekend-gite",
     children: [{ key: "groceries-purchase", slot: "purchases" }, { key: "hiking-nature", slot: "activities" }] },
+  { key: "home-furnishing-and-basket", label: "Aménager une pièce et préparer ses achats", parent: "furnish-room",
+    children: [{ key: "home-equipment-basket", slot: "purchases" }] },
 ] as const satisfies readonly {
   key: string; label: string; parent: ComposerPresetKey; children: readonly { key: ComposerPresetKey; slot: string }[];
 }[];
@@ -38,6 +40,7 @@ export function projectStarterCategory(starter: ProjectStarter) {
   switch (composerPreset(starter.parent)?.templateKey) {
     case "short-stay": return "Séjours";
     case "friend-visit": return "Visites";
+    case "home-project": return "Maison";
     case "purchase": return "Achats";
     default: return "Sorties";
   }

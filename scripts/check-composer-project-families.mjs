@@ -63,6 +63,7 @@ const renderHome=()=>renderToStaticMarkup(React.createElement(CatalogContextEdit
  editor:model.editors.find(editor=>editor.assetKey==='template:home-project'),targetMonth:'2026-11',householdPersons:[],busy:false,model,
  choose(){assert.fail();},onSave(){assert.fail();},onCancel(){},onOpenChild(){assert.fail();}}));
 assert.match(renderHome(),/Rattacher Panier pour la pièce/);
+assert.match(renderHome(),/Ajouter Acheter pour la maison/);
 await request({kind:'DROP',assetKey:'context-occurrence:'+purchaseId,target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:homeId,slotKey:'purchases'},
  identity:purchaseId,selectionId:uuid(++id),values:{}});
 assert.match(renderHome(),/Intentions liées/);

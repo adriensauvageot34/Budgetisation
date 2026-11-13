@@ -30,7 +30,8 @@ const beautyGroups: Readonly<Record<string,string>> = { mascara:"Maquillage", ey
 export function libraryPresetGroup(preset:ComposerPreset):string {
   if(preset.categoryKey==="PURCHASE") return "merchantLabel" in preset.defaults ? "Acheter chez…" : "Choisir un achat";
   if(preset.categoryKey==="BEAUTY") return beautyGroups[preset.presetKey]??"Visage";
-  if(preset.categoryKey==="HOME") return preset.templateKey==="home-project" ? "Projets maison" : "Consommables";
+  if(preset.categoryKey==="HOME") return preset.templateKey==="home-project" ? "Projets maison"
+    : preset.presetKey==="home-equipment-basket" ? "Équipement" : "Consommables";
   return "";
 }
 export const normalizeLibrarySearch = (text:string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr").replace(/[\p{P}\p{S}]+/gu," ").replace(/\s+/gu," ").trim();

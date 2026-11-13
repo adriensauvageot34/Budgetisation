@@ -77,7 +77,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const candidates = canAttach ? intentionNavigationEntries(model.board.contexts.filter(child =>
     child.contextOccurrenceId !== context.contextOccurrenceId && !child.parentContextOccurrenceId && !child.readOnly && !protectedRef(child.contextOccurrenceId)
     && publishedDrop(model, `context-occurrence:${child.contextOccurrenceId}`, childTarget)?.choices.includes("REPARENT_PRESERVE_ID"))) : [];
-  const additions = homeProject ? [] : [
+  const additions = homeProject ? ["home-equipment-basket"] : [
     project === "visit-friends" ? "museum-exhibition" : "cinema",
     "restaurant-for-two",
     ...ACTIVITY_PRESETS.map(preset => preset.presetKey),
@@ -230,6 +230,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
           }))}>Rattacher {child.label}</button>)}
           {visibleAdditions.map(({ preset, assetKey }) => <button key={preset.presetKey} type="button" onClick={() => confirmAttachment(preset.label, () => ({
             kind: "DROP", assetKey, presetKey: preset.presetKey, target: childTarget, identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {},
+            ...(preset.templateKey === "purchase" ? { purchaseBasket: true } : {}),
           }))}>Ajouter {preset.label}</button>)}
           {!visibleCandidates.length && !visibleAdditions.length && <p role="status">Aucune intention admissible ne correspond à cette recherche.</p>}
         </details>}

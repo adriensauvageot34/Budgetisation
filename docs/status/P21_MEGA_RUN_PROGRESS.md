@@ -505,3 +505,9 @@ TypeScript, diff et banc catalogue PASS. Clous crée un panier vide, puis la lig
 La bibliothèque propose « Aménager une pièce » avec le visuel Clay mobilier et l’éditeur Projet maison existant. L’utilisateur peut rattacher un panier déjà présent quand le socket Achats l’admet. Le projet expose ses coûts et ceux de ses enfants.
 
 TypeScript, diff et trois contrôles familles de projets PASS. La fixture vérifie le rattachement d’un panier générique sans préremplir un article ou un prix. Aucun writer distant ni Apply. Suite · modèle Maison avec panier vide.
+
+### Modèle Maison avec panier d’équipement
+
+Le treizième modèle associe le projet d’aménagement à un panier `purchase@v2` vide, dans le socket Achats. Le panier utilise le domaine générique et son visuel Clay. Le projet existant propose aussi de créer ce panier via l’association explicite.
+
+TypeScript, diff, recherche, familles de projets et dix groupes du banc de parcours PASS. Le reçu confirme l’identité de l’enfant et le coût reste inconnu. Aucun writer distant ni Apply. Suite · suggestion de panier pour un projet Maison.
