@@ -205,7 +205,8 @@ assert.equal(projectCompletionSuggestions(model,impactIds.weekend)[0]?.preset.pr
 const protectedProject={...model,semanticState:{...model.semanticState,preferences:{...model.semanticState.preferences,anchors:[impactIds.weekend]}}};
 assert.deepEqual(projectCompletionSuggestions(protectedProject,impactIds.weekend),[]);
 console.log('UX-09 S3 is contextual, capability-bound, reversible and suppresses adopted complements: PASS');
-for(const [index,[presetKey,label]] of [['concert','Billet de concert'],['museum-exhibition','Entrée du musée'],['ropes-course','Entrée ou parcours']].entries()){
+for(const [index,[presetKey,label]] of [['concert','Billet de concert'],['museum-exhibition','Entrée du musée'],['ropes-course','Entrée ou parcours'],
+ ['spa-relax','Soin ou entrée au spa'],['fishing-day','Budget de la journée pêche'],['beach-day','Budget de la journée plage'],['hiking-nature','Budget de la randonnée']].entries()){
  const id=uuid(29300+index*10);
  await compose({kind:'DROP',assetKey:'template:activity',presetKey,target:{kind:'BOARD_ZONE'},identity:id,selectionId:uuid(29301+index*10),values:{}});
  const context=composed.semanticState.contexts.find(row=>row.contextOccurrenceId===id);
@@ -213,13 +214,22 @@ for(const [index,[presetKey,label]] of [['concert','Billet de concert'],['museum
  const markup=renderToStaticMarkup(React.createElement(RestaurantEditor,{context,card,model:composed,creating:false,busy:false,
   decide(){assert.fail('render must not adopt an activity');},close(){}}));
  assert(markup.includes(label));
+ assert.equal(libraryOccurrences(composed).find(row=>row.contextOccurrenceId===id)?.action,'EDIT');
  assert.deepEqual(context.slotSelections,{});
  const component=buildComponentRow({...fresh(label),costMode:'MANUAL',amount:'12,50'},'activity');
  await compose({kind:'EDIT_PRESET_CONTEXT',edit:{contextOccurrenceId:id,slots:{main:[component]}}});
  assert.equal(composed.budgetReading.byContext[id].gross,'12.50');
  assert.equal(composed.semanticState.contexts.find(row=>row.contextOccurrenceId===id).slotSelections.main.items[0].selectionId,component.selectionId);
+ if(presetKey==='beach-day'){
+  const free={...component,cost:{kind:'MANUAL',unitAmount:'0.00'}};
+  await compose({kind:'EDIT_PRESET_CONTEXT',edit:{contextOccurrenceId:id,slots:{main:[free]}}});
+  assert.equal(composed.budgetReading.byContext[id].gross,'0.00');
+  const unknown={...free,cost:{kind:'UNKNOWN'}};
+  await compose({kind:'EDIT_PRESET_CONTEXT',edit:{contextOccurrenceId:id,slots:{main:[unknown]}}});
+  assert.equal(composed.budgetReading.byContext[id].gross,null);
+ }
 }
-console.log('UX-10 Concert, museum and ropes course use admitted activity slots and the official cost: PASS');
+console.log('UX-10 Seven activities use admitted slots, exact reopening and explicit zero distinct from unknown: PASS');
 assert.equal(semanticStateDigest(model.semanticState),original);
 assert.equal(JSON.stringify(fixture.world),world);
 assert.deepEqual(fixture.writes,[]);

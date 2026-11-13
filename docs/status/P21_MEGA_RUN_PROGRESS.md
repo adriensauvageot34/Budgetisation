@@ -75,7 +75,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | DONE | Aperçu personnalisable des modèles | Nom du projet, compléments facultatifs, six modèles dont Week-end multi-enfants |
 | DONE | Lecture des intentions liées | Impact officiel par enfant, diagnostics ciblés et consultation seule visibles |
 | DONE | Déplacements | Rubriques de saisie et accès au parking du trajet déjà choisi |
-| READY | Activités et achats | Étendre les éditeurs communs aux presets compatibles |
+| DONE | Activités et achats | Reprise exacte des presets Activity/Purchase existants, labels adaptés et coût nul explicite |
 | READY | Découverte des modèles | Catégories, contenu et recherche dans la bibliothèque |
 | READY | Suggestions S3 | Classement explicable et priorités de session |
 | READY | Navigation et accessibilité | Retour au projet et édition ciblée sans mutation de consultation |
@@ -101,3 +101,9 @@ TypeScript, diff et les dix groupes du banc de parcours PASS. Le contrôle de re
 L’éditeur d’activité/Restaurant regroupe les champs Mobility publiés en trajet, frais, financement, horaires et partage. Le parking d’une voiture déjà choisie possède un accès direct. Les péages et le carburant restent des résultats du propriétaire Mobility. Train, bus, taxi et les autres modes admis conservent leurs champs officiels.
 
 TypeScript et diff PASS. Deux contrôles React et propriétaire ont validé la conservation RAW entre rubriques, le parking adopté explicitement avec identité stable et le refus d’une édition obsolète. Les dix contrôles Restaurant/Cinéma ont réussi. Aucun appel distant ni writer financier exécuté.
+
+### Activités et achats retrouvables
+
+Les activités et achats déclarés par les presets publiés se retrouvent dans la bibliothèque du mois, sous les mêmes contrôles d’identité et de droits. Pêche, Plage, Randonnée et Spa utilisent des libellés de coût adaptés dans l’éditeur partagé. L’utilisateur peut préparer explicitement un coût nul, puis le valider ; cela ne renseigne pas les frais annexes.
+
+TypeScript, diff et dix groupes de parcours PASS. Sept activités ont été créées, rendues et chiffrées par leur propriétaire sur fixture. Plage a confirmé la distinction entre zéro déclaré et UNKNOWN. Les fixtures et le World restent inchangés, aucun writer distant exécuté.

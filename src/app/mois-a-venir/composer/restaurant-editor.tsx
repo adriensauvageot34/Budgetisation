@@ -6,6 +6,7 @@ import type { RestaurantEdit } from "@/domain/phase2/planner/restaurant-edit";
 import { assertRestaurantDetailsWritable, restaurantIncludedDetails, restaurantMealTariff, RESTAURANT_INCLUDED_DETAILS_LIMIT,
   type RestaurantIncludedDetail, type RestaurantDetailsDecision } from "@/domain/phase2/planner/restaurant-included-details";
 import { PresetIllustration } from "./preset-illustration";
+import { activityCostLabel } from "./guided-asset-labels";
 import { MobilityFields } from "./mobility-fields";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -86,10 +87,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const baseShape = guidedContextShape(context.templateKey), preset = presetForContext(context);
   const cinema = preset?.presetKey === "cinema";
   const activity = context.templateKey === "activity" && !!preset;
-  const activityMainLabel = cinema ? "Billet de cinéma"
-    : preset?.presetKey === "concert" ? "Billet de concert"
-    : preset?.presetKey === "museum-exhibition" ? "Entrée du musée"
-    : preset?.presetKey === "ropes-course" ? "Entrée ou parcours" : "Coût de l’activité";
+  const activityMainLabel = activityCostLabel(preset?.presetKey);
   const restaurant = context.templateKey === "restaurant";
   const labels = guidedAssetLabels(context.templateKey, preset?.presetKey);
   const confirm = useWorkshopConfirmation(), activeQuestion = useActiveWorkshopQuestion();
@@ -665,8 +663,14 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         <button type="button" disabled={!place || place.kind === "TEXT" && !place.label.trim()} onClick={() => fields({ placeRef: place! }, "place")}>Choisir ce lieu</button></>}
       {step === "date" && <><label>Date facultative<input type="date" value={date} min={`${model.semanticState.targetMonth}-01`} max={`${model.semanticState.targetMonth}-31`} onChange={event => setDate(event.target.value)} /></label>
         <button type="button" onClick={() => { if (date && !date.startsWith(`${model.semanticState.targetMonth}-`)) setError("Choisissez une date dans le mois composé."); else fields({ plannedDate: date || null }, "date"); }}>Confirmer la date</button></>}
-      {step === "budget" && activity && <WorkshopComponentRow title={activityMainLabel} row={row} participantCount={refs.length}
-        onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy || !activityTicket} />}
+      {step === "budget" && activity && <>
+        <p>Renseignez le tarif et sa quantité, ou déclarez explicitement un coût nul. Les frais et déplacements distincts gardent leur propre montant.</p>
+        <button type="button" disabled={busy || !activityTicket} onClick={() => {
+          setRaw(true); setRow(previous => ({ ...previous, costMode: "MANUAL", amount: "0", edited: true }));
+        }}>Préparer un coût nul pour l’activité</button>
+        <WorkshopComponentRow title={activityMainLabel} row={row} participantCount={refs.length}
+          onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy || !activityTicket} />
+      </>}
       {step === "budget" && !activity && <>
         {detail ? <WorkshopComponentRow title={context.templateKey==="purchase"?"Article de cet achat":"Élément hors compléments"} row={row} participantCount={refs.length} onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy} bindingChoices={!!shape.envelope} />
           : <><label>Coût prévu à notre charge (€)<input autoFocus inputMode="decimal" placeholder="Encore inconnu" value={row.costMode==="MANUAL"?row.amount:""} onChange={event=>setRow(r=>({...r,amount:event.target.value,costMode:event.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}))}/></label>
