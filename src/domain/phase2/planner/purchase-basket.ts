@@ -21,7 +21,7 @@ export type PurchaseBasketChange =
   | { kind: "REMOVE_ITEM"; selectionId: string }
   | { kind: "SAVE_EXTRA"; selectionId: string; label: string; price: string }
   | { kind: "REMOVE_EXTRA"; selectionId: string }
-  | { kind: "SET_DETAILS"; merchant: string; date: string; coverage: "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" }
+  | { kind: "SET_DETAILS"; label?: string; merchant: string; date: string; coverage: "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" }
   | { kind: "SET_DELIVERY"; mode: BasketDeliveryMode; coverage: BasketDeliveryCoverage; selectionId?: string; price?: string };
 export type PurchaseBasketEdit = Readonly<{ contextOccurrenceId: string; expectedContextDigest: string; change: PurchaseBasketChange }>;
 export const isPurchaseBasket = (context: Pick<PlannedContextState, "templateKey" | "fields">) =>
@@ -120,6 +120,11 @@ export function editPurchaseBasket(state: PlanSemanticStateV1, edit: PurchaseBas
         break;
       }
       case "SET_DETAILS": {
+        if (change.label !== undefined) {
+          const label = change.label.trim();
+          if (!label || label.length > 120) throw new TypeError("PURCHASE_BASKET_LABEL_INVALID");
+          fields.label = plannerString(label);
+        }
         const merchant = change.merchant.trim();
         fields.merchantLabel = merchant ? plannerString(merchant) : null;
         if (change.date && (!/^\d{4}-\d{2}-\d{2}$/u.test(change.date) || !change.date.startsWith(state.targetMonth + "-")

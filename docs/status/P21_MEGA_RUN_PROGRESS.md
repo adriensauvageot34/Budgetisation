@@ -477,3 +477,9 @@ Entrée dans la recherche du panier ouvre le résultat unique lorsqu’il est mo
 ### Visuels exacts dans le Dock Activité
 
 Le poste principal reprend le visuel Clay de l’activité choisie. TypeScript, diff et onze contrôles Restaurant/Cinéma/Activité PASS. Le Dock de Bowling publie son identité Clay exacte et ouvre le prix sans mutation.
+
+### Nommer un panier
+
+Le formulaire de détails permet de nommer un panier via sa commande existante. Un renommage conserve l’occurrence, les lignes et les montants. La bibliothèque retrouve le même panier par son nouveau nom.
+
+TypeScript, diff, banc catalogue et cinq groupes panier PASS. Le banc réexécute Amazon, Vêtements, Courses, la compatibilité historique et le Save/Reload sur PGlite isolé. Le sélecteur du script navigateur a été adapté au nouveau libellé. Ce script reste NOT_RUN.

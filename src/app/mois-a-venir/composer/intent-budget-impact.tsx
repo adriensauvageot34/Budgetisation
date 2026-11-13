@@ -17,7 +17,7 @@ export function budgetAmountsCurrent(model: ComposerUiModel, status: PreviewStat
 const coverageText = {
   ABSENT: "Aucune enveloppe Courses chiffrée n’est disponible pour ce mois.",
   UNRESOLVED: "La part couverte par l’enveloppe Courses reste à établir.",
-  CONFIRM: "Précisez si les courses utilisent l’enveloppe du mois ou s’y ajoutent dans « Vendeur, date et budget ».",
+  CONFIRM: "Précisez si les courses utilisent l’enveloppe du mois ou s’y ajoutent dans « Nom, vendeur et date ».",
   COVERED: "Les lignes rattachées sont entièrement couvertes par l’enveloppe Courses.",
   PARTIAL: "L’enveloppe Courses ne couvre qu’une partie des lignes rattachées.",
   EXHAUSTED: "L’enveloppe Courses ne couvre plus les lignes rattachées.",

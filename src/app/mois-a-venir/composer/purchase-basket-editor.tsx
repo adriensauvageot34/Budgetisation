@@ -34,7 +34,7 @@ const coverageLabels = { UNKNOWN: "Frais à préciser", INCLUDED: "Frais compris
 type Coverage = "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT";
 type ArticleForm = { kind: "article"; id: string; label: string; quantity: string; unit: BasketUnit; price: string; concept?: BasketConcept; existing?: PurchaseComponent };
 type Form = ArticleForm | { kind: "extra"; selectionId: string; label: string; price: string }
-  | { kind: "details"; merchant: string; date: string; coverage: Coverage }
+  | { kind: "details"; label: string; merchant: string; date: string; coverage: Coverage }
   | { kind: "delivery"; mode: BasketDeliveryMode; coverage: BasketDeliveryCoverage; price: string; selectionId: string };
 type Props = { context: PlannedContextState; card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
   decide: (operation: ComposerOperation) => boolean; close: () => void; initialConcept?: BasketConcept; catalogChoice?: GuidedCatalogChoice };
@@ -116,7 +116,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     }
     edit(item);
   });
-  const details = () => open({ kind: "details", merchant: text(context.fields.merchantLabel), date: text(context.fields.plannedDate),
+  const details = () => open({ kind: "details", label: card.label, merchant: text(context.fields.merchantLabel), date: text(context.fields.plannedDate),
     coverage: (context.fields.basketCoverage as Coverage | undefined) ?? "AUTO" });
   const editDelivery = () => open({ kind: "delivery", mode: (context.fields.deliveryMode as BasketDeliveryMode | undefined) ?? "UNKNOWN",
     coverage: (context.fields.deliveryCoverage as BasketDeliveryCoverage | undefined) ?? "UNKNOWN",
@@ -145,7 +145,8 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const save = () => {
     if (form?.kind === "article") send({ kind: "SAVE_ITEM", selectionId: form.id, label: form.label, quantity: form.quantity,
       unit: form.unit, price: form.price, ...(form.concept ? { concept: form.concept } : {}) }, openedDigest);
-    if (form?.kind === "details") send({ kind: "SET_DETAILS", merchant: form.merchant, date: form.date, coverage: form.coverage }, openedDigest);
+    if (form?.kind === "details") send({ kind: "SET_DETAILS", ...(form.label !== card.label ? { label: form.label } : {}),
+      merchant: form.merchant, date: form.date, coverage: form.coverage }, openedDigest);
     if (form?.kind === "extra") send({ kind: "SAVE_EXTRA", selectionId: form.selectionId, label: form.label, price: form.price }, openedDigest);
     if (form?.kind === "delivery") send({ kind: "SET_DELIVERY", mode: form.mode, coverage: form.coverage,
       ...(form.coverage === "ADDITIONAL" ? { selectionId: form.selectionId, price: form.price } : {}) }, openedDigest);
@@ -196,7 +197,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     identity: "purchase-suggestions", nature: "DECISION",
     choices: ranked.map(suggestion => ({ ...suggestion, showHint: true, choose: () => chooseSuggestion(suggestion.key, digest) })),
   } : { title: groceries ? "Préparer mes courses" : "Composer cet achat", choices: [
-    { key: "details", label: "Vendeur, date et budget", iconKey: "purchase", choose: details },
+    { key: "details", label: "Nom, vendeur et date", iconKey: "purchase", choose: details },
     ...(!delivery || !protectedLine("shipping", delivery) ? [
       { key: "delivery", label: "Livraison et frais", iconKey: "purchase", choose: editDelivery },
     ] : []),
@@ -270,8 +271,9 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
           onChange={event => update({ ...form, price: event.target.value })} /></label>
       </>}
       {form.kind === "details" && <>
-        <h3>Vendeur et date{groceries ? " des courses" : ""}</h3>
-        <label>Vendeur<input autoFocus maxLength={1024} value={form.merchant} onChange={event => update({ ...form, merchant: event.target.value })} /></label>
+        <h3>Détails du panier</h3>
+        <label>Nom du panier<input autoFocus required maxLength={120} value={form.label} onChange={event => update({ ...form, label: event.target.value })} /></label>
+        <label>Vendeur<input maxLength={1024} value={form.merchant} onChange={event => update({ ...form, merchant: event.target.value })} /></label>
         <label>Date prévue<input type="date" value={form.date} onChange={event => update({ ...form, date: event.target.value })} /></label>
         {groceries && <label>Enveloppe Courses<select value={form.coverage} onChange={event => update({ ...form, coverage: event.target.value as Coverage })}>
           <option value="AUTO">À préciser</option><option value="CONFIRMED_CONSUMPTION">Compris dans l’enveloppe mensuelle</option>
@@ -343,7 +345,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       </li>)}</ul>}
       {historicalDelivery && <p>Ce panier possède déjà un poste de livraison historique.</p>}
       <div className={styles.actions}>
-        {writable && <button type="button" disabled={busy} onClick={details}>Vendeur, date et budget</button>}
+        {writable && <button type="button" disabled={busy} onClick={details}>Nom, vendeur et date</button>}
         {writable && <button type="button" disabled={busy || !!delivery && protectedLine("shipping", delivery)} onClick={editDelivery}>Livraison et frais</button>}
         {writable && <button type="button" disabled={busy} onClick={() => editExtra()}>Ajouter un supplément</button>}
         <button type="button" onClick={close}>Retour au Board</button>

@@ -179,7 +179,10 @@ try{
  assert(confirmation);assert.equal(operations.length,0);
  const current=mixed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
  const changed=await request(mixed,{kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:contextId,expectedContextDigest:plannerDigest(current),
-  change:{kind:'SET_DETAILS',merchant:'Vendeur modifié',date:'',coverage:'AUTO'}}});
+  change:{kind:'SET_DETAILS',label:'  Panier de voyage  ',merchant:'Vendeur modifié',date:'',coverage:'AUTO'}}});
+ const renamed=changed.semanticState.contexts.find(context=>context.contextOccurrenceId===contextId);
+ assert.equal(renamed.fields.label,'Panier de voyage');assert.deepEqual(renamed.slotSelections,current.slotSelections);
+ assert.deepEqual(filterLibraryIntentions(libraryOccurrences(changed),'panier voyage').map(row=>row.contextOccurrenceId),[contextId]);
  await act(async()=>root.update(render(changed)));
  await act(async()=>confirmation.accept());
  assert.equal(operations.length,0);
