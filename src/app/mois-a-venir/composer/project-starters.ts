@@ -20,6 +20,10 @@ export const projectStarters = [
     children: ["museum-exhibition"] },
   { key: "relatives-and-nature", label: "Séjour chez des proches et balade", parent: "stay-with-relatives", slot: "activities",
     children: ["hiking-nature"] },
+  { key: "bowling-and-dinner", label: "Bowling et restaurant", parent: "composed-outing", slot: "children",
+    children: ["bowling", "restaurant-for-two"] },
+  { key: "friends-and-escape", label: "Visite amicale et escape game", parent: "visit-friends", slot: "activities",
+    children: ["escape-game"] },
 ] as const satisfies readonly { key: string; label: string; parent: ComposerPresetKey; slot: string | null; children: readonly ComposerPresetKey[] }[];
 export type ProjectStarter = typeof projectStarters[number];
 export type ProjectStarterChoices = { label: string; children: readonly ComposerPresetKey[]; plannedDate?: string };

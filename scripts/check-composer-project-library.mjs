@@ -11,6 +11,8 @@ const byKey=key=>projectStarters.find(project=>project.key===key);
 assert(projectStarterMatches(byKey('weekend-discovery'),'musée randonnée'));
 assert(projectStarterMatches(byKey('cinema-dinner'),'film dîner'));
 assert(projectStarterMatches(byKey('games-basket'),'achats manette'));
+assert(projectStarterMatches(byKey('bowling-and-dinner'),'quilles dîner'));
+assert(projectStarterMatches(byKey('friends-and-escape'),'amis énigme'));
 assert(!projectStarterMatches(byKey('visit-and-activity'),'randonnée'));
 assert.equal(projectStarterCategory(byKey('weekend-culture')),'Séjours');
 const f=await readMonthFixture();

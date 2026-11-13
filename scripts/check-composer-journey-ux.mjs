@@ -150,13 +150,14 @@ assert.equal(newCinema.parentContextOccurrenceId,projectId);
 assert.deepEqual(newCinema.slotSelections,{});
 console.log('UX-07 Composed outing attaches exact occurrences and preserves official child costs: PASS');
 const starters=availableProjectStarters(model);
-assert.equal(starters.length,8);
+assert.equal(starters.length,10);
 let starterId=29200, starterSequence=20;
 const transport=command=>handleComposerRequest(fixture.deps,householdId,command);
 for(const starter of starters){
  const added=await evaluateProjectStarter(starter,model,transport,()=>uuid(++starterId),()=>++starterSequence);
  const children=added.model.semanticState.contexts.filter(context=>context.parentContextOccurrenceId===added.parentId);
  assert.equal(children.length,starter.children.length);
+ assert.deepEqual(children.map(child=>child.fields.composerPresentation.presetKey),starter.children);
  assert(children.every(child=>Object.keys(child.slotSelections).length===0&&!child.fields.plannedDate));
  if(starter.key==='games-basket'){
   const basket=added.model.semanticState.contexts.find(context=>context.contextOccurrenceId===added.parentId);

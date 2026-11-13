@@ -289,3 +289,9 @@ Le banc des intentions liées vérifie 0 € explicite, un sous-total officiel d
 Les six visuels exacts ouvrent leur intention existante même après renommage. Si aucune n’existe, le catalogue propose sa préparation lorsque le Board admet le dépôt. Dans une activité libre, un choix peut préparer le poste principal encore vide selon la capacité publiée. Un contexte budgétaire distinct ne propose pas cette création.
 
 Le banc Clay PASS sur les 687 visuels, les six correspondances exactes, la reprise, les capacités refusées et la non-régression Cinéma. Aucun changement du catalogue public ni nouvelle illustration. Suite · nouveaux modèles de projets.
+
+### Bowling et restaurant, visite amicale et escape game
+
+Deux modèles préparent des compléments facultatifs via les sockets existants, ce qui porte la bibliothèque à dix modèles. Le modèle de visite ne déduit ni personne ni lieu. Les deux modèles laissent les tarifs, dates des enfants et trajets à renseigner.
+
+TypeScript, diff, recherche/rendu de la bibliothèque et les dix groupes du banc de parcours PASS. L’évaluateur confirme les rattachements par identité de preset, leur ordre et l’absence de poste prérempli. Aucun writer distant ni Apply. Suite · suggestions S3 fondées sur les activités effectivement liées.
