@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 import { ACTIVITY_PRESETS, composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
@@ -86,25 +86,35 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
   const preference = useContext(ProjectCompletionPreference);
   const confirm = useWorkshopConfirmation(), edits = useInlineEditRegistry();
   const summary = useRef<HTMLElement>(null);
+  const [adoptionError, setAdoptionError] = useState("");
   const dismissed = preference.dismissed[parentId] ?? [];
   const candidates = projectCompletionSuggestions(model, parentId, preference.priority);
-  const adopt = useCommittedEvent((key: string) => {
+  const adopt = useCommittedEvent((key: string, expectedDigest: string) => {
     const candidate = candidates.find(item => item.key === key);
-    if (!candidate || busy || !preference.enabled || dismissed.includes(key)) return;
+    if (!candidate || busy || !preference.enabled || dismissed.includes(key) || model.board.draft.semanticStateDigest !== expectedDigest) {
+      setAdoptionError("Le projet a changé. Consultez les suggestions actuelles avant d’ajouter une intention.");
+      return;
+    }
+    setAdoptionError("");
     decide({ kind: "DROP", assetKey: candidate.assetKey, presetKey: candidate.preset.presetKey, target: candidate.target,
       identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {} });
   });
   const ask = useCommittedEvent((key: string) => {
     const candidate = candidates.find(item => item.key === key);
     if (!candidate || busy || !preference.enabled || dismissed.includes(key)) return;
-    const open = () => confirm({ message: `Ajouter « ${candidate.preset.label} » au projet ? Son prix restera à préciser.`,
-      acceptLabel: "Ajouter cette intention", accept: () => adopt(candidate.key) });
+    const expectedDigest = model.board.draft.semanticStateDigest;
+    const open = () => {
+      setAdoptionError("");
+      confirm({ message: `Ajouter « ${candidate.preset.label} » au projet ? Son prix restera à préciser.`,
+        acceptLabel: "Ajouter cette intention", accept: () => adopt(candidate.key, expectedDigest) });
+    };
     if (!edits || edits.guard(open)) open();
   });
-  if (preference.enabled && !candidates.length && !dismissed.length) return null;
+  if (preference.enabled && !candidates.length && !dismissed.length && !adoptionError) return null;
   const visible = candidates.filter(candidate => !dismissed.includes(candidate.key)).slice(0, 4);
   return <details className={styles.suggestionControls} data-project-completion>
     <summary ref={summary}>Suggestions pour compléter le projet</summary>
+    {adoptionError && <p role="alert">{adoptionError}</p>}
     <button type="button" aria-pressed={preference.enabled} onClick={preference.toggle}>
       {preference.enabled ? "Désactiver pour cette session" : "Réactiver les suggestions de projet"}
     </button>

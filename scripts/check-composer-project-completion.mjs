@@ -56,8 +56,10 @@ try{
  await click('Préparer Restaurant à deux');assert(confirmation);assert.equal(accepted.length,0);
  model=await add(model,'restaurant-for-two',parentId);
  await act(async()=>setModel(model));await act(async()=>confirmation.accept());assert.equal(accepted.length,0);
+ assert(root.root.findAllByProps({role:'alert'}).some(node=>text(node).includes('Le projet a changé')));
  console.log('S3-02 A previously adopted complement invalidates an open confirmation: PASS');
  await click('Préparer Cinéma');await act(async()=>confirmation.accept());assert.equal(accepted.length,1);
+ assert.equal(root.root.findAllByProps({role:'alert'}).length,0);
  assert.equal(accepted[0].target.contextOccurrenceId,parentId);
  model=await request(model.semanticState,accepted[0]);
  assert.deepEqual(projectCompletionSuggestions(model,parentId),[]);

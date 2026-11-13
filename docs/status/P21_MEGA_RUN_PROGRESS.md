@@ -465,3 +465,7 @@ TypeScript, diff et banc catalogue/panier PASS. La fixture ouvre un panier Cours
 ### Filtrer les paniers du mois
 
 « Mes intentions » propose le filtre « Mes paniers ». Il inclut les paniers génériques et spécialisés et reste combinable avec la recherche. TypeScript, diff et quatre contrôles de bibliothèque PASS. Entrée ouvre le panier générique exact lorsque le résultat est unique, sans mutation.
+
+### Confirmation d’une suggestion S3 obsolète
+
+La confirmation vérifie le digest capturé et les capacités courantes. Un changement de composition ou de disponibilité demande de consulter à nouveau les suggestions. TypeScript, diff et six contrôles S3 PASS, dont le refus et son message lorsqu’un repas a été ajouté entre-temps.
