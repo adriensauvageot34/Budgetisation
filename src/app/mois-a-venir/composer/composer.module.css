@@ -1120,6 +1120,9 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .linkedIntention { padding:10px 0; overflow-wrap:anywhere; }
 .linkedIntention details { margin-top:8px; }
 .linkedIntention summary { cursor:pointer; min-height:32px; }
+.linkedFilters { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.linkedFilters button { min-height:40px; }
+.linkedFilters button[aria-pressed=true] { background:#efe4f6; border-color:#775299; }
 .mobilitySections { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
 .mobilitySections button { min-height:44px; }
 .mobilitySections button[aria-current=step] { border-color:#775299; background:#efe4f6; }

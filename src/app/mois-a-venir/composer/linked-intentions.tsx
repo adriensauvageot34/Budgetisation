@@ -55,6 +55,7 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
   const preview = useContext(BudgetPreviewStatus);
   const confirm = useWorkshopConfirmation(), edits = useInlineEditRegistry();
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"ALL" | "INCOMPLETE" | "READ_ONLY">("ALL");
   const move = useCommittedEvent((childId: string, key: string, digest: string) => {
     if (busy || !decide) return;
     const target = linkedIntentionMoveTargets(model, parentId, childId).find(target => target.key === key);
@@ -80,18 +81,36 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
   const reading = model.budgetReading;
   const current = reading?.semanticStateDigest === model.board.draft.semanticStateDigest
     && (preview === "FRESH" || preview === "BLOCKED");
+  const readOnly = (id: string) => {
+    const card = byId.get(id)!;
+    return card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT") || model.semanticState.preferences.anchors.includes(id)
+      || model.semanticState.preferences.flexibility[id] === "PRESERVE";
+  };
+  const incomplete = (id: string) => { const knowledge = byId.get(id)!.knowledge; return current && (knowledge === "UNKNOWN" || knowledge === "PARTIAL"); };
+  const activeFilter = children.length > 4 ? filter : "ALL";
+  const visible = children.filter(child => activeFilter === "ALL" || (activeFilter === "READ_ONLY" ? readOnly(child.id) : incomplete(child.id)));
+  const consultationCount = children.filter(child => readOnly(child.id)).length;
+  const incompleteCount = children.filter(child => incomplete(child.id)).length;
   return <section className={styles.nightSection} aria-label="Intentions liées">
     <h3>Intentions liées</h3>
-    <ul>{children.map(child => {
+    <p>{children.length} intention{children.length > 1 ? "s" : ""} · {current ? `${incompleteCount} à compléter` : "Évaluation à actualiser"}
+      {consultationCount > 0 ? ` · ${consultationCount} en consultation` : ""}</p>
+    {children.length > 4 && <nav className={styles.linkedFilters} aria-label="Afficher les intentions liées">
+      {([ ["ALL", "Toutes"], ["INCOMPLETE", "À compléter"], ["READ_ONLY", "En consultation"] ] as const).map(([key, label]) =>
+        <button type="button" key={key} data-linked-filter={key} aria-pressed={activeFilter === key}
+          disabled={key === "INCOMPLETE" && !current} onClick={() => setFilter(key)}>{label}</button>)}
+    </nav>}
+    {!visible.length && <p role="status">{activeFilter === "INCOMPLETE" && !current ? "Attendez la nouvelle projection pour retrouver les informations à compléter."
+      : "Aucune intention liée ne correspond à ce filtre."}</p>}
+    <ul>{visible.map(child => {
       const impact = current ? reading?.byContext[child.id] : undefined;
-      const card = byId.get(child.id)!;
       const destinations = decide ? linkedIntentionMoveTargets(model, parentId, child.id) : [];
       return <li key={child.id} className={styles.linkedIntention} data-linked-intention={child.id}>
         {open ? <button type="button" disabled={busy} onClick={() => open(child.id)}>{child.label}</button> : <span>{child.label}</span>}
         <small> · {impact ? impact.gross === null && impact.knownSubtotal !== null
           ? `${money(impact.knownSubtotal)} connus, total à préciser` : money(impact.gross)
           : current ? "Coût à préciser" : "Coût à actualiser"}</small>
-        {(card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")) && <small> · Consultation seule</small>}
+        {readOnly(child.id) && <small> · Consultation seule</small>}
         {current && <details><summary>Budget et informations à compléter</summary>
           <IntentBudgetImpact model={model} contextId={child.id} />
         </details>}

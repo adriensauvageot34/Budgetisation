@@ -97,7 +97,7 @@ Fenêtre demandée de 09 h 30 à 14 h 30, heure de Paris, sous réserve des limi
 | READY | Modèles et disponibilité | Préférer les compléments effectivement disponibles sans masquer la structure |
 | DONE | Date du modèle | Date facultative du parent, sans propagation aux compléments |
 | READY | Mobilité explicite | Clarifier le prix de trajet complet et le statut du retour |
-| READY | Synthèse des projets | Repérer les enfants en consultation et les informations non évaluées |
+| DONE | Synthèse des projets | Compteurs officiels et filtres pour les projets contenant plusieurs enfants |
 | DONE | Préférences de lecture | Espace Mes intentions, filtres projets et informations à compléter |
 | BLOCKED | Détachement vers la racine | Aucun contrat existant ne détache sans supprimer l’enfant. `CLEAR_SOCKET` supprime les descendants, donc inutilisable pour cette action |
 | BLOCKED | Relations racines N1 et Before | Gates et chemin durable historiques fermés, aucun contournement autorisé |
@@ -217,3 +217,9 @@ TypeScript et les deux contrôles React d’aperçu PASS. Les dix groupes du ban
 La liste du mois retrouve une intention par le nom de son projet ou d’un parent. Deux intentions homonymes conservent leur numéro de repérage quand un filtre en masque une. Le parent reste indiqué dans les résultats avec sa propre distinction d’occurrence.
 
 TypeScript, diff et deux contrôles React/propriétaire PASS. Un cadeau lié à un projet culturel est retrouvé par ce projet ; l’autre cadeau homonyme reste distinct et le numéro ne dépend pas des résultats visibles. Aucune mutation à la recherche.
+
+### Lire un projet comportant plusieurs enfants
+
+Le résumé indique combien d’intentions sont à compléter ou en consultation, à partir de la connaissance et des capacités publiées. Au-delà de quatre enfants, des filtres permettent de les repérer. Les coûts restent individuels. Les protections de composition, y compris celles propagées par un enfant ancré, sont affichées telles que le propriétaire les publie.
+
+TypeScript, diff et deux contrôles React/propriétaire PASS sur cinq Cinéma homonymes. Zéro explicite est distinct d’UNKNOWN, les numéros restent stables sous filtrage et STALE masque la classification à compléter. Le modèle financier, les intentions et leurs droits ne sont pas modifiés par les filtres.
