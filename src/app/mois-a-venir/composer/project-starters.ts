@@ -82,12 +82,18 @@ export async function evaluateProjectStarter(starter: ProjectStarter, model: Com
     const preset = composerPreset(key);
     if (!preset) throw new Error("Intention indisponible pour ce modèle.");
     const sequence = nextSequence();
+    const selectionId = nextId();
     const response = await transport({ kind: "DROP", assetKey: `template:${preset.templateKey}`, presetKey: key, target, identity,
-      selectionId: nextId(), values: identity === parentId ? { ...(label ? { label } : {}), ...(date ? { plannedDate: date } : {}) } : {},
+      selectionId, values: identity === parentId ? { ...(label ? { label } : {}), ...(date ? { plannedDate: date } : {}) } : {},
       sequence, targetMonth: model.semanticState.targetMonth, draft: evaluated.semanticState,
       ...(preset.templateKey === "purchase" ? { purchaseBasket: true } : {}) });
     if (!response.ok) throw new Error(response.message);
+    const destination = target.contextOccurrenceId && response.model.board.contexts.find(card => card.contextOccurrenceId === target.contextOccurrenceId);
+    const attached = target.kind === "BOARD_ZONE" || !!destination && destination.childContextOccurrenceIds.includes(identity)
+      && destination.sockets.some(socket => socket.slotKey === target.slotKey && socket.currentItems.some(item =>
+        item.kind === "CHILD_CONTEXT" && item.selectionId === selectionId && item.childContextOccurrenceId === identity));
     if (response.sequence !== sequence || response.applied || response.applyReceipt
+      || !attached
       || response.model.semanticState.targetMonth !== model.semanticState.targetMonth
       || response.model.proof.expectedBaselineDigest !== base.expectedBaselineDigest
       || response.model.proof.expectedActiveRevisionId !== base.expectedActiveRevisionId

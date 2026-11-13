@@ -217,6 +217,15 @@ await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
 },()=>uuid(++starterId),()=>++starterSequence),/Second step refused/);
 assert.equal(attempted,2);
 assert.equal(semanticStateDigest(model.semanticState),original);
+await assert.rejects(evaluateProjectStarter(starters.find(starter=>starter.key==='hotel-and-dinner'),model,async command=>{
+ const answer=await transport(command);
+ if(!answer.ok||command.target.slotKey!=='restaurants')return answer;
+ return {...answer,model:{...answer.model,board:{...answer.model.board,contexts:answer.model.board.contexts.map(card=>
+  card.contextOccurrenceId===command.target.contextOccurrenceId
+   ? {...card,sockets:card.sockets.map(socket=>socket.slotKey==='restaurants'?{...socket,currentItems:[]}:socket)}
+   : card)}}};
+},()=>uuid(++starterId),()=>++starterSequence),/référence du mois a changé/);
+assert.equal(semanticStateDigest(model.semanticState),original);
 await assert.rejects(evaluateProjectStarter(starters[0],model,async command=>{
  const answer=await transport(command);
  return answer.ok ? {...answer,model:{...answer.model,proof:{...answer.model.proof,expectedActiveRevisionNumber:1}}} : answer;

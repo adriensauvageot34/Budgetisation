@@ -367,3 +367,9 @@ TypeScript, diff et bancs séjour/enfants et familles de projets PASS. Retirer l
 Canoë / Kayak, Parc d’attractions, Spectacle, Assister à un match, Atelier créatif et Sortie photo utilisent leurs visuels exacts et l’éditeur Activité. Ils sont retrouvables dans le catalogue, la bibliothèque et les destinations de projet déjà admises. Les prix, lieux, participants et trajets restent à choisir.
 
 TypeScript, diff, catalogue et dix groupes du banc de parcours PASS. Le banc vérifie douze routes visuelles et dix-neuf activités, leurs identités exactes et leurs coûts officiels sur fixture. Aucun writer distant ni Apply.
+
+### Vérifier le reçu des rattachements d’un modèle
+
+Le reçu doit confirmer l’identité de l’enfant et celle de sa sélection dans le socket demandé avant que le Shell installe la composition. Un reçu sans le rattachement attendu interrompt le modèle.
+
+TypeScript, diff et dix groupes du banc de parcours PASS. Le contrôle simule un reçu dépourvu de la sélection Restaurants après création de l’enfant. Le modèle est refusé et le digest initial est préservé. Aucun writer distant ni Apply.
