@@ -483,3 +483,5 @@ Le poste principal reprend le visuel Clay de l’activité choisie. TypeScript, 
 Le formulaire de détails permet de nommer un panier via sa commande existante. Un renommage conserve l’occurrence, les lignes et les montants. La bibliothèque retrouve le même panier par son nouveau nom.
 
 TypeScript, diff, banc catalogue et cinq groupes panier PASS. Le banc réexécute Amazon, Vêtements, Courses, la compatibilité historique et le Save/Reload sur PGlite isolé. Le sélecteur du script navigateur a été adapté au nouveau libellé. Ce script reste NOT_RUN.
+
+Le catalogue nomme explicitement l’action « Préparer un panier Courses » et confirme qu’elle cible l’asset de création de panier publié. TypeScript, diff et banc catalogue PASS.

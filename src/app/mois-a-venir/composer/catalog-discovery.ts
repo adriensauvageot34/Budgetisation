@@ -118,7 +118,7 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
          ...(editable?{focus:'basket-item:'+item.selectionId}:{}),label:`${editable?'Modifier':'Voir'} ${entry.label} · ligne ${number} · ${info.label}`});
      }
    }
-   const asset=model.library.searchableAssets.find(candidate=>candidate.assetKey==="template:purchase");
+   const asset=model.library.searchableAssets.find(candidate=>candidate.kind==="CONTEXT_ASSET"&&candidate.assetKey==="template:purchase");
    if(asset&&publishedDrop(model,asset.assetKey,{kind:"BOARD_ZONE"})?.semanticAction==="ADD_CONTEXT"){
      const presetKey=groceryProduct?'groceries-purchase':product?.module==='beauty'?'beauty-purchase':product?.module==='clothing'?'clothing-shopping'
        :product&&purchaseStarterPresets[product.assetKey];
@@ -126,7 +126,7 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
      const domain=defaults&&'budgetDomain' in defaults?defaults.budgetDomain:'other';
      const concept={id:entry.visualConceptId,label:entry.label};
      if(isBasketCatalogProduct(entry,domain))actions.push(presetKey?{key:(product?.module==='beauty'?'beauty-basket:':'catalog-basket:')+entry.visualConceptId,kind:'PRESET',presetKey,asset,concept,
-       label:`Préparer un achat de ${entry.label}`}
+       label:groceryProduct?`Préparer un panier Courses · ${entry.label}`:`Préparer un achat de ${entry.label}`}
        :{key:'catalog-basket:'+entry.visualConceptId,kind:'CHOOSE',asset,target:{kind:'BOARD_ZONE'},concept,label:`Préparer un panier pour ${entry.label}`});
    }
  }

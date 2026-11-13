@@ -18,6 +18,7 @@ const f=await readMonthFixture(),world=JSON.stringify(f.world),initial=semanticS
 const grocery=entries.find(entry=>entry.discovery.family==='Courses et produits alimentaires'&&entry.label==='Pain');
 const groceryStart=discoveryActions(grocery,f.model,{scope:'courses'}).find(action=>action.kind==='PRESET');
 assert.equal(groceryStart?.presetKey,'groceries-purchase');
+assert.equal(groceryStart.label,'Préparer un panier Courses · Pain');
 assert.deepEqual(groceryStart.concept,{id:grocery.visualConceptId,label:grocery.label});
 assert(!discoveryActions(grocery,f.model,{scope:'courses',controlRef:'HOUSEHOLD:household:groceries'}).some(action=>action.concept));
 const request=async(model,operation)=>{
