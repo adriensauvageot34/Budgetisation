@@ -359,6 +359,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       else { setFuture(f => f.slice(0, -1)); setPast(p => [...p, beforeFrame]); }
     }
     localDraft.current = next; setDraftState(next); setSuggestions(null); setBalanceOpen(false); setHoverModel(null); setInteractionImpact(null); setErrorMessage(null);
+    if (history === "push" && beforeDigest !== nextDigest) focusAttachedChild(operation, before, next);
     if (history !== "push") {
       const restoredContext = next.contexts.find(context =>
         !before.contexts.some(previous => previous.contextOccurrenceId === context.contextOccurrenceId));
@@ -619,6 +620,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         setMessage(response.mutationKind === "CANCEL_CONTEXT" ? "Context retiré du brouillon. Son annulation sera conservée à l’application." : changed ? "Brouillon mis à jour et prévisualisé." : "Prévisualisation à jour.");
       }
       install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
+      if (!response.applied && history === "push" && changed) focusAttachedChild(operation, beforeDraft, response.model.semanticState);
       setEditor(current => operation.kind === "DROP" && operation.target.kind === "CONTEXT_SOCKET"
         && (operation.target.contextOccurrenceId === current?.catalogContextId || operation.target.contextOccurrenceId === current?.stayContextId
           || operation.target.contextOccurrenceId === current?.familyContextId) ? current
@@ -1012,6 +1014,18 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     else choose(asset,target,selection,undefined,undefined,componentLabel,concept);
   });
   const [returnedChild, setReturnedChild] = useState<{ parentId: string; childId: string } | null>(null);
+  const focusAttachedChild = useCommittedEvent((operation: ComposerOperation, before: PlanSemanticStateV1, next: PlanSemanticStateV1) => {
+    if (operation.kind !== "DROP" || operation.target.kind !== "CONTEXT_SOCKET" || !operation.assetKey.startsWith("template:")) return;
+    const { contextOccurrenceId: parentId, slotKey } = operation.target;
+    const childId = operation.identity;
+    if (!parentId || !slotKey || editorOccurrenceId(editor) !== parentId
+      || before.contexts.some(context => context.contextOccurrenceId === childId)) return;
+    const parent = next.contexts.find(context => context.contextOccurrenceId === parentId);
+    const selections = (parent?.slotSelections[slotKey]?.items ?? []) as readonly ComponentSelectionV1[];
+    if (selections.some(item => item.kind === "CHILD_CONTEXT" && item.childContextOccurrenceId === childId)
+      && next.contexts.some(context => context.contextOccurrenceId === childId && context.parentContextOccurrenceId === parentId))
+      setReturnedChild({ parentId, childId });
+  });
   const stableLibraryOpen=useCommittedEvent((id:string, childId?: string)=>{
     if(busyRef.current)return;
     const occurrence=libraryOccurrences(shown).find(row=>row.contextOccurrenceId===id);

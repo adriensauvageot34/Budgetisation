@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
@@ -190,10 +190,10 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const update = (next: Form) => { setForm(next); setDirty(true); };
   const evaluations = card.sockets.find(socket => socket.slotKey === "item")?.evaluations;
   const visibleTotal = summary?.knownAmount;
-  const suggestions = purchaseSuggestions(context, card, model);
+  const suggestions = useMemo(() => purchaseSuggestions(context, card, model), [context, card, model]);
   const ranked = suggestions.filter(suggestion => !dismissedSuggestions?.includes(suggestion.key)).slice(0, 4);
   const openSuggestion = useCommittedEvent((key: string, expected: string, selectionId?: string) => {
-    if (busy || !writable || expected !== digest) return;
+    if (busy || !writable || expected !== digest || dismissedSuggestions?.includes(key)) return;
     const suggestion = suggestions.find(candidate => candidate.key === key);
     if (!suggestion) return;
     if (suggestion.kind === "ADD") edit();
@@ -206,7 +206,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     if (suggestion.kind === "ITEM" || suggestion.kind === "CHOOSE_ITEM" && selectionId) {
       const item = articles.find(item => item.selectionId === (selectionId ?? suggestion.selectionIds[0])
         && suggestion.selectionIds.includes(item.selectionId) && canChooseArticle(item));
-      if (item) edit(item);
+      if (item) edit(item, undefined, "price");
     }
     if (suggestion.kind === "CHOOSE_ITEM" && !selectionId) {
       setForm(null); setError(""); setSelectionPrompt({ key, digest });

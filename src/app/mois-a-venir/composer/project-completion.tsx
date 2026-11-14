@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useMemo, useRef, useState } from "react";
 import { composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
@@ -93,7 +93,7 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
   const summary = useRef<HTMLElement>(null);
   const [adoptionError, setAdoptionError] = useState("");
   const dismissed = preference.dismissed[parentId] ?? [];
-  const candidates = projectCompletionSuggestions(model, parentId, preference.priority);
+  const candidates = useMemo(() => projectCompletionSuggestions(model, parentId, preference.priority), [model, parentId, preference.priority]);
   const adopt = useCommittedEvent((key: string, expectedDigest: string) => {
     const candidate = candidates.find(item => item.key === key);
     if (!candidate || busy || !preference.enabled || dismissed.includes(key) || model.board.draft.semanticStateDigest !== expectedDigest) {

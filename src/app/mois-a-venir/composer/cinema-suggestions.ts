@@ -58,14 +58,14 @@ export function cinemaSuggestions(input: CinemaSuggestionInput, limit = 4) {
       return { conceptKey, category: "extra", action: chosen ? "EDIT" : "ADD", selectionId: chosen?.selectionId, extraLabel: label,
         label: chosen ? `${chosen.label} — Modifier ce complément` : `${label} — Préparer un supplément`,
         reason: chosen ? "Complément déjà choisi pour cette sortie" : "Complément facultatif pour cette sortie",
-        iconKey: "purchase", priority, allowed: input.extrasAllowed && matches.length <= 1 && !chosen?.locked };
+        iconKey: "purchase", priority: chosen ? 2 : priority, allowed: input.extrasAllowed && matches.length <= 1 && !chosen?.locked };
     }),
     { conceptKey: transport?.selectionId ? "trajet-cinema" : "taxi", category: "transport", sourceRow: transport?.selectionId ? undefined : 499,
       action: transport?.selectionId ? "EDIT" : "CONFIGURE", selectionId: transport?.selectionId,
       label: transport?.selectionId ? `${transport.label} — Modifier le trajet` : "Taxi — Configurer le trajet",
       reason: transport?.selectionId ? "Trajet déjà choisi pour cette sortie"
         : placeChosen ? "Le lieu est choisi, le trajet reste à préciser" : "Trajet facultatif pour cette sortie",
-      iconKey: transport?.iconKey ?? "activity", priority: placeChosen || transport?.selectionId ? 2 : 5, allowed: !!transport },
+      iconKey: transport?.iconKey ?? "activity", priority: transport?.selectionId ? 2 : 5, allowed: !!transport },
   ];
 
   return rankDiscoveryCandidates(candidates

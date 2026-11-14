@@ -62,7 +62,8 @@ export function shortStaySuggestions(context: PlannedContextState, model: Compos
   if (lodgingSocket?.cardinality === "REQUIRED_ONE" && lodgingSocket.capabilityRefs.includes("short-stay:lodging:SELECT_COMPONENT")
     && sameTargets(lodgingSocket.currentItems, items(context, "lodging"))
     && (!lodging || lodging.kind === "COMPONENT" && !componentLocked(model, id, "lodging", lodging.selectionId))) {
-    candidates.push({ kind: "LODGING", selectionId: lodging?.selectionId, priority: 0,
+    const needsPrice = lodging?.kind === "COMPONENT" && lodging.cost.kind === "UNKNOWN";
+    candidates.push({ kind: "LODGING", selectionId: lodging?.selectionId, priority: !lodging || needsPrice ? 0 : 3,
       label: lodging ? "Modifier l’hébergement" : "Préciser l’hébergement",
       hint: lodging?.kind === "COMPONENT" ? lodging.label : "Type et prix à votre choix",
       visualConceptId: "v22-art:extra:hotel-stay-general" });
@@ -77,12 +78,11 @@ export function shortStaySuggestions(context: PlannedContextState, model: Compos
     const reviewable = lodging?.kind === "COMPONENT" && ["HOTEL", "HOSTEL", "RENTAL"].includes(String(context.fields.lodgingKind));
     for (const topic of stayExtraTopics) {
       const matches = extras.filter(item => item.kind === "COMPONENT" && matchesStayExtra(topic, item.label));
-      const selectionIds = matches.map(item => item.selectionId).sort();
-      const editable = matches.some(item => !componentLocked(model, id, "extras", item.selectionId));
-      if (matches.length > 1 && editable) candidates.push({ kind: "CHOOSE_EXTRA", topic, selectionIds,
+      const selectionIds = matches.filter(item => !componentLocked(model, id, "extras", item.selectionId)).map(item => item.selectionId).sort();
+      if (selectionIds.length > 1) candidates.push({ kind: "CHOOSE_EXTRA", topic, selectionIds,
         label: "Choisir la ligne · " + topic.label, hint: "Plusieurs lignes de ce séjour portent ce nom",
         visualConceptId: topic.visualConceptId, priority: 2 });
-      else if (editable) candidates.push({ kind: "EDIT_EXTRA", topic, selectionIds,
+      else if (selectionIds.length) candidates.push({ kind: "EDIT_EXTRA", topic, selectionIds,
         label: "Modifier · " + topic.label, hint: "Supplément déjà prévu pour ce séjour", visualConceptId: topic.visualConceptId, priority: 2 });
       else if (!matches.length && reviewable) candidates.push({ kind: "REVIEW_EXTRA", topic, selectionIds,
         label: "Examiner · " + topic.label, hint: topic.hint, visualConceptId: topic.visualConceptId, priority: 5 });
@@ -91,8 +91,9 @@ export function shortStaySuggestions(context: PlannedContextState, model: Compos
 
   if (!context.fields.plannedDate || !context.fields.endDate) {
     const departureMissing = !context.fields.plannedDate;
-    candidates.push({ kind: departureMissing ? "DEPARTURE" : "RETURN", label: departureMissing ? "Préciser le départ" : "Préciser le retour",
-      hint: "Date du séjour · facultative", iconKey: "activity", priority: 3 });
+    candidates.push({ kind: departureMissing ? "DEPARTURE" : "RETURN", label: "Préciser la période",
+      hint: departureMissing && !context.fields.endDate ? "Départ et retour restent à choisir"
+        : departureMissing ? "Le départ reste à choisir" : "Le retour reste à choisir", iconKey: "activity", priority: 1 });
   }
   const transport = items(context, "transport")[0];
   const destination = context.fields.destinationRef as ProspectivePlaceRef | null | undefined;
@@ -108,7 +109,8 @@ export function shortStaySuggestions(context: PlannedContextState, model: Compos
     const target = "selectionIds" in candidate ? [candidate.topic.key, ...candidate.selectionIds]
       : "selectionId" in candidate ? [candidate.selectionId] : [];
     return { ...candidate, iconKey: candidate.iconKey ?? "short-stay",
-      key: ["short-stay", id, candidate.kind, ...target].join(":"), tiers: [candidate.priority] };
+      key: ["short-stay", id, candidate.kind === "DEPARTURE" || candidate.kind === "RETURN" ? "PERIOD" : candidate.kind, ...target].join(":"),
+      tiers: [candidate.priority, Number(candidate.kind === "DEPARTURE" || candidate.kind === "RETURN")] };
   }));
 }
 

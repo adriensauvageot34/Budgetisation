@@ -56,14 +56,18 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
   const preview = useContext(BudgetPreviewStatus);
   const returnedChild = useContext(WorkshopNavigationContext)?.returnedChild;
   const returnButton = useRef<HTMLButtonElement>(null);
+  const focusedReturn = useRef<typeof returnedChild>(null);
   useEffect(() => {
-    if (returnedChild?.parentId !== parentId || !returnButton.current) return;
+    if (busy || returnedChild?.parentId !== parentId || focusedReturn.current === returnedChild || !returnButton.current) return;
     const button = returnButton.current;
     const frame = requestAnimationFrame(() => {
-      if (button.isConnected && !button.disabled) button.focus();
+      if (button.isConnected && !button.disabled) {
+        focusedReturn.current = returnedChild;
+        button.focus();
+      }
     });
     return () => cancelAnimationFrame(frame);
-  }, [parentId, returnedChild]);
+  }, [busy, parentId, returnedChild]);
   const confirm = useWorkshopConfirmation(), edits = useInlineEditRegistry();
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"ALL" | "INCOMPLETE" | "READ_ONLY">("ALL");

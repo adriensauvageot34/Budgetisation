@@ -110,7 +110,9 @@ await check('A06-S01-SUGGESTIONS-FOLLOW-LODGING-AND-CALENDAR',async()=>{
   assert.deepEqual(compile(m.semanticState).financialAdapterInput,financial);
   const nightly={...lodging,lodgingPricing:{version:'lodging-pricing@v1',basis:'PER_NIGHT',nightCount:null}};
   const incomplete=await request(withStay({fields:{...first.fields,nightCount:null,endDate:null},slotSelections:{lodging:{items:[nightly]}}}));
-  assert.deepEqual(suggestions(incomplete).slice(0,3).map(({kind})=>kind),['LODGING','NIGHTS','RETURN']);
+  assert.deepEqual(suggestions(incomplete).slice(0,3).map(({kind})=>kind),['NIGHTS','RETURN','LODGING']);
+  assert.equal(suggestions(incomplete)[1].label,'Préciser la période');
+  assert.equal(suggestions(incomplete)[1].key,suggestions(missing)[1].key);
   assert.equal(compile(incomplete.semanticState).components.find(c=>c.contextOccurrenceId===first.contextOccurrenceId).evaluation.economicAmount,null);
   assert.notEqual(suggestions(m,sibling.contextOccurrenceId)[0].key,candidates[0].key);
 });
@@ -123,6 +125,11 @@ await check('A06-S02-HOMONYMS-EDIT-EXACT-LINE-WITHOUT-DOUBLING-LODGING',async()=
   const candidate=suggestions(m).find(c=>c.topic?.key==='breakfast');
   assert.equal(candidate.kind,'CHOOSE_EXTRA');
   assert.deepEqual(candidate.selectionIds,[breakfast.selectionId,second.selectionId]);
+  const protectedMatch=structuredClone(m);
+  protectedMatch.semanticState.preferences.anchors.push(componentId(first.contextOccurrenceId,'extras',breakfast.selectionId));
+  const direct=suggestions(protectedMatch).find(c=>c.topic?.key==='breakfast');
+  assert.equal(direct.kind,'EDIT_EXTRA');
+  assert.deepEqual(direct.selectionIds,[second.selectionId]);
   assert.equal(suggestions(m).find(c=>c.topic?.key==='tax').kind,'EDIT_EXTRA');
   const edit={contextOccurrenceId:first.contextOccurrenceId,fields:{},slots:{extras:[breakfast,{...second,cost:{kind:'MANUAL',unitAmount:'10.00'}},tax]}};
   const operation={kind:'EDIT_SHORT_STAY',edit};

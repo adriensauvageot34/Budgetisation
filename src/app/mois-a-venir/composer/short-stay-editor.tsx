@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type ComponentProps } from "react";
+import { useMemo, useRef, useState, type ComponentProps } from "react";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
@@ -137,20 +137,23 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
   };
   const tile=(key:string,label:string,choose:()=>void,selected=false,hint?:string)=>({key,label,choose,selected,hint,iconKey:"short-stay"});
   const openPost=(key:typeof postSection)=>{setExtraSuggestionKey(null);setPostSection(key);setPostPage(0);};
-  const transportModes = writable ? shortStayTransportModes(context, props.model) : [];
-  const candidates = writable ? shortStaySuggestions(context, props.model, transportModes) : [];
+  const transportModes = useMemo(() => writable ? shortStayTransportModes(context, props.model) : [], [writable, context, props.model]);
+  const candidates = useMemo(() => writable ? shortStaySuggestions(context, props.model, transportModes) : [],
+    [writable, context, props.model, transportModes]);
+  const suggestionContext = useMemo(() => canonicalPlannerJson(context), [context]);
   const ranked = candidates.filter(candidate => !dismissedSuggestions.includes(candidate.key)).slice(0, 4);
-  const extraSuggestion = candidates.find(candidate => candidate.key === extraSuggestionKey);
-  const extraTopic = extraSuggestion && "topic" in extraSuggestion ? extraSuggestion.topic : null;
+  const activeSuggestion = candidates.find(candidate => candidate.key === extraSuggestionKey);
+  const extraSuggestion = activeSuggestion && "topic" in activeSuggestion ? activeSuggestion : undefined;
+  const extraTopic = extraSuggestion?.topic;
   const extraLocked = (id: string) => locked(componentId(context.contextOccurrenceId, "extras", id));
   const openExtra = (selectionId: string) => {
     const index = posts.extras.findIndex(post => post.row.id === selectionId && !post.link);
     if (index < 0 || extraLocked(selectionId) || !slotAllowed("extras", "extra")) return;
     openPost("extras"); setPostPage(index);
   };
-  const openSuggestion = useCommittedEvent((key: string, open?: (target: StaySummaryTarget) => void) => {
+  const openSuggestion = useCommittedEvent((key: string, expected: string, open?: (target: StaySummaryTarget) => void) => {
     const suggestion = candidates.find(candidate => candidate.key === key);
-    if (!suggestion || props.busy) return;
+    if (!suggestion || props.busy || suggestionContext !== expected || dismissedSuggestions.includes(key)) return;
     switch (suggestion.kind) {
       case "LODGING":
         openPost("lodging"); setLodgingPage(suggestion.selectionId ? "price" : open ? "terms" : "kind"); open?.("posts"); break;
@@ -167,7 +170,7 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     }
   });
   const guardedSuggestion = (suggestion: ShortStaySuggestion, open?: (target: StaySummaryTarget) => void) => {
-    const activate = () => openSuggestion(suggestion.key, open);
+    const activate = () => openSuggestion(suggestion.key, suggestionContext, open);
     if (leaveRaw(activate)) activate();
   };
   const staySummary = {
@@ -264,7 +267,7 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
       : <button type="button" onClick={() => { setGroceries(fresh("Courses du séjour")); setGroceriesDirty(true); }}>Ajouter des courses</button>}</>}
     {postSection === "extras" && extraTopic && <section data-stay-topic={extraTopic.key} aria-label={extraTopic.label}>
       <h3>{extraSuggestion?.label}</h3>
-      {matchingExtras.map(post => <button type="button" key={post.row.id} data-stay-extra={post.row.id}
+      {matchingExtras.filter(post => extraSuggestion?.selectionIds.includes(post.row.id)).map(post => <button type="button" key={post.row.id} data-stay-extra={post.row.id}
         disabled={props.busy || extraLocked(post.row.id)} onClick={() => openExtra(post.row.id)}>
         Ouvrir {post.row.label} · ligne {posts.extras.indexOf(post) + 1} · {post.row.quantity.replace(".", ",")} × {post.row.amount ? money(post.row.amount) : "Prix à préciser"}
       </button>)}

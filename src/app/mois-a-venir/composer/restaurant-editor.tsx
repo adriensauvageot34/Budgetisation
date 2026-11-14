@@ -445,18 +445,20 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     ...(activityComplements ? [tile("extras", completeTitle, () => open("complete"), "activity")] : []),
   ] : [];
   const showCinemaSuggestions = cinema && (step === null || step === "complete" && !extraRow && !equipment);
+  const cinemaPlaceChosen = placeLabel?.kind === "TEXT" ? !!placeLabel.label.trim()
+    : placeLabel?.kind === "KNOWN" && !!model.mobilityOptions?.places.some(place => place.placeId === placeLabel.placeId);
   const cinemaCatalogSuggestions = cinema ? cinemaSuggestions({
     contextOccurrenceId: contextId, writable: activityWritable, ticketAllowed: activityTicket, ticket: main,
     dayChosen: !!context.fields.plannedDate,
-    placeChosen: placeLabel?.kind === "TEXT" ? !!placeLabel.label.trim()
-      : placeLabel?.kind === "KNOWN" && !!model.mobilityOptions?.places.some(place => place.placeId === placeLabel.placeId),
+    placeChosen: cinemaPlaceChosen,
     extrasAllowed: activityExtras,
     extras: extras.map(({ label, selectionId }) => ({ label, selectionId, locked: cinemaSelectionLocked("extras", selectionId) })),
     transport: activityMode && { label: activityMode.label, iconKey: activityMode.iconKey, selectionId: currentTransport?.selectionId },
-    complementsOnly: false, dismissed: dismissedSuggestions,
+    complementsOnly: false, dismissed: [],
   }, Infinity) : [];
   const rankedCinema = showCinemaSuggestions
-    ? cinemaCatalogSuggestions.filter(suggestion => step !== "complete" || suggestion.category === "extra" || suggestion.category === "transport").slice(0, 4)
+    ? cinemaCatalogSuggestions.filter(suggestion => !dismissedSuggestions.includes(suggestion.key)
+      && (step !== "complete" || suggestion.category === "extra" || suggestion.category === "transport")).slice(0, 4)
     : [];
   const cinemaArtwork: Readonly<Record<string, string>> = { 'billet-cinema': 'v22-art:excel:329', taxi: 'v22-art:excel:499',
     popcorn: 'v22-art:extra:popcorn', boisson: 'v22-art:extra:boisson-generale' };
@@ -482,7 +484,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         suggestion.reason, suggestion.action === "EDIT" || undefined),
         visualConceptId: cinemaArtwork[suggestion.conceptKey] };
     }) : step === "date" && activityWritable ? [
-      tile("place", "Cinéma — Préciser le lieu", () => open("place"), "family-visit"),
+      ...(!cinemaPlaceChosen ? [tile("place", "Cinéma — Préciser le lieu", () => open("place"), "family-visit")] : []),
       tile("people", "Participants — Préciser", () => open("participants"), "family-visit"), backToSummary,
     ] : [backToSummary],
   } : undefined;
