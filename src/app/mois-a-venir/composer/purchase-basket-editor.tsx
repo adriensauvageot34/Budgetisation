@@ -32,7 +32,8 @@ const unitLabels = { UNIT: "Unité", PACK: "Lot ou pack", KG: "Kilogramme", L: "
 const modeLabels = { UNKNOWN: "À préciser", DELIVERY: "Livraison", PICKUP: "Retrait", IN_STORE: "Sur place" };
 const coverageLabels = { UNKNOWN: "Frais à préciser", INCLUDED: "Frais compris", FREE: "Sans frais", ADDITIONAL: "Frais en plus" };
 type Coverage = "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT";
-type ArticleForm = { kind: "article"; id: string; label: string; quantity: string; unit: BasketUnit; price: string; concept?: BasketConcept; existing?: PurchaseComponent };
+type ArticleFocus = "label" | "quantity" | "price";
+type ArticleForm = { kind: "article"; id: string; label: string; quantity: string; unit: BasketUnit; price: string; concept?: BasketConcept; existing?: PurchaseComponent; focus?: ArticleFocus };
 type Form = ArticleForm | { kind: "extra"; selectionId: string; label: string; price: string }
   | { kind: "details"; label: string; merchant: string; date: string; coverage: Coverage }
   | { kind: "delivery"; mode: BasketDeliveryMode; coverage: BasketDeliveryCoverage; price: string; selectionId: string };
@@ -68,6 +69,8 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const [articleQuery, setArticleQuery] = useState("");
   const [missingPricesOnly, setMissingPricesOnly] = useState(false);
   const articleSearch = useRef<HTMLInputElement>(null);
+  const articleButtons = useRef(new Map<string, HTMLButtonElement>());
+  const returnedArticle = useRef<string | null>(null);
   const [entries, setEntries] = useState<readonly ClayCatalogEntry[]>([]);
   const seed = initialConcept?.label ?? (!articles.length ? text(context.fields.productLabel) : "");
   const [form, setForm] = useState<Form | null>(() => seed ? { kind: "article", id: crypto.randomUUID(),
@@ -78,6 +81,12 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const promptHeading = useRef<HTMLHeadingElement>(null);
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => {
+    if (form || busy || !returnedArticle.current) return;
+    const button = articleButtons.current.get(returnedArticle.current);
+    returnedArticle.current = null;
+    (button ?? articleSearch.current)?.focus();
+  }, [form, busy]);
   const month = model.semanticState.targetMonth;
   const lastDay = new Date(`${month}-01T12:00:00Z`);
   lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
@@ -103,11 +112,11 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     if (!writable || busy || !guard(() => open(next))) return;
     setOpenedDigest(digest); setForm(next); setSelectionPrompt(null); setDirty(false); setError("");
   };
-  const edit = (item?: PurchaseComponent, concept?: BasketConcept) => open({
+  const edit = (item?: PurchaseComponent, concept?: BasketConcept, focus: ArticleFocus = "label") => open({
     kind: "article", id: item?.selectionId ?? crypto.randomUUID(), label: item?.label ?? concept?.label ?? "",
     quantity: item?.quantity ?? "1", unit: articleUnit(item),
     price: item?.cost.kind === "MANUAL" ? item.cost.unitAmount : "",
-    concept: item?.basketArticle?.concept ?? concept, existing: item,
+    concept: item?.basketArticle?.concept ?? concept, existing: item, focus,
   });
   const handledCatalogChoice=useRef<GuidedCatalogChoice | undefined>(undefined);
   useEffect(()=>{
@@ -144,7 +153,10 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       return;
     }
     try {
-      if (decide({ kind: "EDIT_PURCHASE_BASKET", edit: { contextOccurrenceId: id, expectedContextDigest, change } })) discard();
+      if (decide({ kind: "EDIT_PURCHASE_BASKET", edit: { contextOccurrenceId: id, expectedContextDigest, change } })) {
+        if (change.kind === "SAVE_ITEM") returnedArticle.current = change.selectionId;
+        discard();
+      }
       else setError("Ce choix n’a pas été conservé. Vérifiez l’état du panier et réessayez.");
     } catch (failure) {
       const code = failure instanceof Error ? failure.message : "";
@@ -240,7 +252,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       <button type="button" aria-label="Fermer le panier" onClick={close}>Fermer</button></header>
     <WorkshopNavigation contextId={id} />
     {!form && !selectionPrompt && <IntentBudgetImpact model={model} contextId={id} />}
-    <div className={styles.actions}>
+    {!form && !selectionPrompt && <div className={styles.actions}>
       {writable && <CatalogOpenButton target={{ contextId: id, scope: groceries ? "courses" : undefined, moment: "article",
         resolveCommands: entry => {
           if (!isBasketCatalogProduct(entry, context.fields.budgetDomain)) return [];
@@ -258,7 +270,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       {canAdd && <button type="button" disabled={busy} onClick={() => edit()}>Saisir un article</button>}
       {!form && !selectionPrompt && ranked.length > 0 && <button type="button" aria-pressed={showChoices}
         onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : "Tous les choix du panier"}</button>}
-    </div>
+    </div>}
     {!form && !selectionPrompt && <SuggestionControls occurrenceId={id} choices={ranked} busy={busy}
       dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} />}
     {selectionPrompt && <section className={styles.form} aria-label="Choisir la ligne du panier">
@@ -272,16 +284,17 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       ] : []) : <p role="status">Le panier a changé. Rouvrez la suggestion pour choisir la ligne actuelle.</p>}
       <button type="button" onClick={discard}>Retour au panier</button>
     </section>}
-    {form && <form className={styles.form} onSubmit={event => { event.preventDefault(); save(); }}>
+    {form && <form key={form.kind === "article" ? `${form.id}:${form.focus ?? "label"}` : form.kind}
+      className={styles.form} onSubmit={event => { event.preventDefault(); save(); }}>
       {form.kind === "article" && <>
         <h3>{form.existing ? "Modifier l’article" : "Nouvel article"}</h3>
-        <label>Nom de l’article<input autoFocus required maxLength={1024} value={form.label} onChange={event => update({ ...form, label: event.target.value })} /></label>
+        <label>Nom de l’article<input autoFocus={form.focus !== "price" && form.focus !== "quantity"} required maxLength={1024} value={form.label} onChange={event => update({ ...form, label: event.target.value })} /></label>
         <div className={styles.columns}>
-          <label>Quantité<input required inputMode="decimal" value={form.quantity} onChange={event => update({ ...form, quantity: event.target.value })} /></label>
+          <label>Quantité<input autoFocus={form.focus === "quantity"} required inputMode="decimal" value={form.quantity} onChange={event => update({ ...form, quantity: event.target.value })} /></label>
           <label>Unité<select value={form.unit} onChange={event => update({ ...form, unit: event.target.value as BasketUnit })}>
             {BASKET_UNITS.map(unit => <option key={unit} value={unit}>{unitLabels[unit]}</option>)}</select></label>
         </div>
-        <label>Prix par {unitLabels[form.unit].toLocaleLowerCase("fr")} (€)<input inputMode="decimal" value={form.price}
+        <label>Prix par {unitLabels[form.unit].toLocaleLowerCase("fr")} (€)<input autoFocus={form.focus === "price"} inputMode="decimal" value={form.price}
           placeholder={form.existing?.cost.kind === "QUOTE" ? "Devis conservé" : "Prix à préciser"}
           onChange={event => update({ ...form, price: event.target.value })} /></label>
       </>}
@@ -345,11 +358,20 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
         const amount = summary && evaluations?.find(evaluation => evaluation.selectionId === item.selectionId)?.economicAmount;
         const duplicate = (nameCounts.get(normalizeCatalog(item.label)) ?? 0) > 1;
         const line = duplicate ? `${item.label} · ligne ${index + 1} · ${lineCaption(item)}` : item.label;
+        const canEdit = writable && canChooseArticle(item);
+        const price = item.cost.kind === "MANUAL" ? money(item.cost.unitAmount) : item.cost.kind === "QUOTE" ? "Devis" : "Prix à préciser";
+        const units = `${item.quantity.replace(".", ",")} · ${unitLabels[articleUnit(item)]}`;
         return <li key={item.selectionId} data-basket-line={item.selectionId}>
           {image && <img src={image.src} alt="" width={44} height={44} />}
-          <div><strong>{item.label}</strong><small>{duplicate && `Ligne ${index + 1} · `}{lineCaption(item)}{amount != null ? ` · Total ${money(amount)}` : ""}</small></div>
-          {writable && !protectedLine("item", item) && <div className={styles.actions}>
-            <button type="button" disabled={busy} onClick={() => edit(item)} aria-label={`Modifier ${line}`}>Modifier</button>
+          <div><strong>{item.label}</strong>{duplicate && <small>Ligne {index + 1}</small>}
+            {canEdit ? <div className={styles.values}>
+              <button type="button" disabled={busy} onClick={() => edit(item, undefined, "quantity")} aria-label={`Modifier la quantité de ${line}`}>{units}</button>
+              <button type="button" disabled={busy} onClick={() => edit(item, undefined, "price")} aria-label={`Modifier le prix de ${line}`}>{price}</button>
+            </div> : <small>{lineCaption(item)}</small>}
+            {amount != null && <small>Total {money(amount)}</small>}</div>
+          {canEdit && <div className={styles.actions}>
+            <button ref={node => { if(node) articleButtons.current.set(item.selectionId, node); else articleButtons.current.delete(item.selectionId); }}
+              type="button" disabled={busy} onClick={() => edit(item)} aria-label={`Modifier ${line}`}>Modifier</button>
             <button type="button" disabled={busy} onClick={() => remove(item)} aria-label={`Retirer ${line}`}>Retirer</button></div>}
         </li>;
       })}</ul>

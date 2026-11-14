@@ -5,6 +5,8 @@
 .lines img { object-fit: contain; }
 .lines li > div:first-of-type { flex: 1 1 8rem; min-width: 0; overflow-wrap: anywhere; }
 .lines small { display: block; }
+.values { display:flex; flex-wrap:wrap; gap:.15rem .45rem; }
+.panel .values button { border:0; padding:0 .15rem; min-height:24px; background:transparent; text-decoration:underline; text-underline-offset:.15em; }
 .lineFilters { display: flex; align-items: end; flex-wrap: wrap; gap: .4rem .7rem; }
 .lineFilters label:first-child { display: grid; flex: 1 1 12rem; min-width: 0; gap: .2rem; }
 .lineFilters input[type="search"] { width: 100%; min-width: 0; }

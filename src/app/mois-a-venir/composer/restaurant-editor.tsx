@@ -190,7 +190,10 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   };
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      panel.current?.querySelector<HTMLElement>(step === null ? "h2" : "[data-restaurant-focus]")?.focus({ preventScroll: step === null });
+      const field = step === "date" ? 'input[type="date"]' : step === "budget" ? 'input[inputmode="decimal"]' : null;
+      const target = (field ? panel.current?.querySelector<HTMLElement>(field) : undefined)
+        ?? panel.current?.querySelector<HTMLElement>(step === null ? "h2" : "[data-restaurant-focus]");
+      target?.focus({ preventScroll: step === null });
       if (step === null && panel.current) panel.current.scrollTop = 0;
     });
     return () => cancelAnimationFrame(frame);

@@ -171,6 +171,7 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     if (leaveRaw(activate)) activate();
   };
   const staySummary = {
+    canEditPeriod: writable,
     question: (open: (target: StaySummaryTarget) => void) => !showAllChoices && ranked.length ? {
       title: "Suggestions pour ce séjour", identity: "stay-suggestions", nature: "DECISION" as const, catalogMoment: "lodging" as const,
       choices: ranked.map(suggestion => ({ ...suggestion, showHint: true, choose: () => guardedSuggestion(suggestion, open) })),
@@ -228,11 +229,16 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
   const currentLodging = card?.sockets.find(socket => socket.slotKey === "lodging");
   const evaluated = props.fresh && canonicalPlannerJson(currentLodging?.currentItems ?? []) === canonicalPlannerJson(items(context, "lodging"))
     ? currentLodging?.evaluations?.find(evaluation => evaluation.selectionId === oldLodging?.selectionId)?.economicAmount : null;
-  const stayDetails = <div data-stay-details>
+  const lodgingPrice = oldLodging?.cost.kind === "MANUAL"
+    ? `Prix déclaré : ${money(oldLodging.cost.unitAmount)}${oldLodging.lodgingPricing?.basis === "PER_NIGHT" ? " / nuit" : ""}`
+    : oldLodging?.cost.kind === "QUOTE" ? "Devis de référence conservé" : "Prix encore inconnu";
+  const stayDetails = (openLodgingPosts: (target: StaySummaryTarget) => void) => <div data-stay-details>
     <h4>{oldLodging?.label === "Hébergement" ? oldLodging.label : "Hébergement · " + (oldLodging?.label || "À préciser")}</h4>
     <p>{context.fields.nightCount == null ? "Durée inconnue" : `${context.fields.nightCount} nuit(s) déclarée(s)`} · {oldLodging?.lodgingPricing?.basis === "PER_NIGHT" ? "Tarif par nuit" : oldLodging?.lodgingPricing?.basis === "TOTAL" ? "Forfait total" : "Base existante conservée"}</p>
-    <p>{oldLodging?.cost.kind === "MANUAL" ? `Prix déclaré : ${money(oldLodging.cost.unitAmount)}${oldLodging.lodgingPricing?.basis === "PER_NIGHT" ? " / nuit" : ""}`
-      : oldLodging?.cost.kind === "QUOTE" ? "Devis de référence conservé, sans preuve de réservation" : "Prix encore inconnu"}.
+    <p>{lodgingSuggestion && oldLodging && !props.busy
+      ? <button type="button" className={styles.nightLink} onClick={() => guardedSuggestion(lodgingSuggestion, openLodgingPosts)}
+          aria-label={`Modifier le prix de l’hébergement · ${lodgingPrice}`}>{lodgingPrice}</button>
+      : lodgingPrice}.
       {evaluated != null ? ` Estimation du brouillon : ${money(evaluated)}.` : " Total non confirmé ; prévisualisez pour l’actualiser."}</p>
     {JSON.stringify(buffer) !== JSON.stringify(initial) && <p role="status">Saisie non conservée : ce résumé décrit encore l’hébergement du brouillon.</p>}
     <p className={styles.helper}>Réservation et acompte : aucune attestation disponible ici. Un acompte déjà compris ne doit pas être ajouté aux extras ; seul un frais distinct explicitement décidé s’ajoute au total.</p>
@@ -307,7 +313,7 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
   const project = <><ProjectActivityCatalog model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} decide={props.onSave} open={onOpenChild} />
     <LinkedIntentions model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} open={onOpenChild} decide={props.onSave} />
     <ProjectCompletion model={props.model} parentId={context.contextOccurrenceId} busy={props.busy} decide={props.onSave} /></>;
-  return <ProspectiveContextEditor {...props} stay stayDetails={<>{stayDetails}{project}</>} posts={content} postsQuestion={postsQuestion} staySummary={staySummary} stayTransportModes={transportModes} onSave={operation => {
+  return <ProspectiveContextEditor {...props} stay stayDetails={openLodgingPosts => <>{stayDetails(openLodgingPosts)}{project}</>} posts={content} postsQuestion={postsQuestion} staySummary={staySummary} stayTransportModes={transportModes} onSave={operation => {
     if (operation.kind !== "EDIT_SHORT_STAY") return false;
     if (!writable || operation.edit.contextOccurrenceId !== context.contextOccurrenceId)
       throw Error("Ce séjour ou ses droits ont changé. Votre saisie est conservée ; rouvrez la bonne occurrence.");
