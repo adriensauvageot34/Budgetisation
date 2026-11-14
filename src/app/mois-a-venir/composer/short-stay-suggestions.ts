@@ -3,12 +3,13 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import { componentId } from "@/domain/phase2/planner/identity";
-import { catalogRefLocked, catalogSocket, normalizeCatalog, rankDiscoveryCandidates } from "./catalog-discovery";
+import { catalogRefLocked, catalogSocket, normalizeCatalog } from "./catalog-discovery";
+import { rankCatalogRecommendations, v22Concepts, workbookSource } from "./catalog-relevance";
 
 export const stayExtraTopics = [
-  { key: "breakfast", label: "Petit-déjeuner", visualConceptId: "v22-art:excel:479",
+  { key: "breakfast", label: "Petit-déjeuner", visualConceptId: v22Concepts.breakfast.id,
     hint: "Vérifier s’il est compris dans le prix", names: ["petit dejeuner", "petit dejeuner d hebergement"] },
-  { key: "tax", label: "Taxe de séjour", visualConceptId: "v22-art:excel:483",
+  { key: "tax", label: "Taxe de séjour", visualConceptId: v22Concepts.tax.id,
     hint: "Vérifier si elle s’applique et si elle est comprise", names: ["taxe de sejour"] },
 ] as const;
 export type StayExtraTopic = typeof stayExtraTopics[number];
@@ -105,10 +106,11 @@ export function shortStaySuggestions(context: PlannedContextState, model: Compos
       catalogAssetKey: transport ? "option:short-stay:transport:" + transport.optionKey : undefined });
   }
 
-  return rankDiscoveryCandidates(candidates.map(candidate => {
+  return rankCatalogRecommendations(candidates.map(candidate => {
     const target = "selectionIds" in candidate ? [candidate.topic.key, ...candidate.selectionIds]
       : "selectionId" in candidate ? [candidate.selectionId] : [];
-    return { ...candidate, iconKey: candidate.iconKey ?? "short-stay",
+    const source = "topic" in candidate ? workbookSource(v22Concepts[candidate.topic.key]) : undefined;
+    return { ...candidate, source, iconKey: candidate.iconKey ?? "short-stay",
       key: ["short-stay", id, candidate.kind === "DEPARTURE" || candidate.kind === "RETURN" ? "PERIOD" : candidate.kind, ...target].join(":"),
       tiers: [candidate.priority, Number(candidate.kind === "DEPARTURE" || candidate.kind === "RETURN")] };
   }));

@@ -8,6 +8,7 @@ import { publishedDrop } from "./interactions";
 import { useInlineEditRegistry } from "./inline-edit-registry";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
+import { conceptForPreset, rankCatalogRecommendations, workbookSource } from "./catalog-relevance";
 import styles from "./composer.module.css";
 
 type CompletionCandidate = Readonly<{ add: ComposerPresetKey; reason: string }>;
@@ -64,7 +65,7 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
     && !parent.sockets.find(socket => socket.slotKey === "groceries")?.currentItems.some(item => item.kind === "COMPONENT")
     ? [{ add: "groceries-purchase" as const,
       reason: "Vous avez choisi une location. Vous pouvez préparer un panier pour les repas pris sur place." }] : [];
-  return [...candidates, ...stayMeal, ...stayGroceries].flatMap(candidate => {
+  return rankCatalogRecommendations([...candidates, ...stayMeal, ...stayGroceries].flatMap(candidate => {
     const child = composerPreset(candidate.add);
     const assetKey = `template:${child?.templateKey}`;
     const destination = candidate.add === "groceries-purchase" ? "purchases" : stay && child?.templateKey === "restaurant" ? "restaurants" : slotKey;
@@ -73,10 +74,13 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
       || !parent.sockets.some(socket => socket.slotKey === destination && socket.contextOccurrenceId === parentId
         && socket.capabilityRefs.includes(`${parent.templateKey}:${destination}:ATTACH_CHILD_CONTEXT`))
       || publishedDrop(model, assetKey, target)?.semanticAction !== "PATCH_CONTEXT") return [];
+    const category = child.templateKey === "restaurant" || candidate.add === "groceries-purchase" ? "MEALS" as const
+      : home ? "PURCHASES" as const : "ACTIVITIES" as const;
+    const concept = conceptForPreset(child.presetKey);
     return [{ key: `${parentId}:${child.presetKey}`, preset: child, target, assetKey, reason: candidate.reason,
-      category: child.templateKey === "restaurant" || candidate.add === "groceries-purchase" ? "MEALS" as const
-        : home ? "PURCHASES" as const : "ACTIVITIES" as const }];
-  }).sort((left, right) => Number(right.category === priority) - Number(left.category === priority));
+      category, tiers: [Number(priority !== "BALANCED" && category !== priority), Number(category !== "ACTIVITIES")],
+      source: concept ? workbookSource(concept) : undefined }];
+  }));
 }
 
 export const ProjectCompletionPreference = createContext<{

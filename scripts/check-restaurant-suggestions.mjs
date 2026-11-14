@@ -202,8 +202,8 @@ try {
       complementsOnly: false, dismissed: [] };
     const suggestions = cinemaSuggestions(input);
     assert.deepEqual(suggestions.map(item => item.conceptKey), ["billet-cinema", "jour-seance", "lieu-cinema", "popcorn"]);
-    assert.equal(suggestions[0].sourceRow, 329);
-    assert.equal(suggestions.find(item => item.conceptKey === "popcorn").sourceRow, undefined);
+    assert.deepEqual(suggestions[0].source,{kind:"EXCEL",id:"v22-art:excel:329",label:"Billet de cinéma"});
+    assert.equal(suggestions.find(item => item.conceptKey === "popcorn").source.kind, "BUSINESS");
     assert.deepEqual(cinemaSuggestions({ ...input, writable: false, ticketAllowed: false, extrasAllowed: false, transport: undefined }), []);
     const popcorn = { selectionId: uuid(99721), label: " PÓPCORN ", locked: false };
     const extrasOnly = { ...input, complementsOnly: true, transport: undefined };
