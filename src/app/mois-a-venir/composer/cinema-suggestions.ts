@@ -1,4 +1,4 @@
-import { rankDiscoveryCandidates } from './catalog-discovery';
+import { businessSource, rankCatalogRecommendations, v22Concepts, workbookSource } from "./catalog-relevance";
 type Choice = { selectionId: string; label: string };
 type CinemaExtra = Choice & { locked: boolean };
 type CinemaTransport = { label: string; iconKey: string; selectionId?: string };
@@ -10,7 +10,7 @@ type Candidate = {
   label: string;
   reason: string;
   iconKey: string;
-  sourceRow?: number;
+  source?: ReturnType<typeof workbookSource>;
   selectionId?: string;
   extraLabel?: string;
   priority: number;
@@ -41,9 +41,9 @@ type CinemaSuggestionInput = {
 export function cinemaSuggestions(input: CinemaSuggestionInput, limit = 4) {
   const { ticket, transport, dayChosen, placeChosen } = input;
   const candidates: Candidate[] = [
-    { conceptKey: "billet-cinema", category: "ticket", sourceRow: 329,
+    { conceptKey: "billet-cinema", category: "ticket", source: workbookSource(v22Concepts.ticket),
       action: ticket ? "EDIT" : "ADD", selectionId: ticket?.selectionId,
-      label: ticket ? `Modifier · ${ticket.label}` : "Billet de cinéma — Préparer",
+      label: ticket ? `Modifier · ${ticket.label}` : v22Concepts.ticket.label + " — Préparer",
       reason: ticket ? "Billet déjà choisi pour cette sortie" : "Billet facultatif pour cette sortie",
       iconKey: "activity", priority: 0, allowed: input.ticketAllowed },
     { conceptKey: "jour-seance", category: "session", action: "CONFIGURE",
@@ -55,20 +55,20 @@ export function cinemaSuggestions(input: CinemaSuggestionInput, limit = 4) {
     ...extraLabels.map(({ conceptKey, label, priority }): Candidate => {
       const matches = input.extras.filter(extra => sameCinemaExtra(extra.label, label));
       const chosen = matches[0];
-      return { conceptKey, category: "extra", action: chosen ? "EDIT" : "ADD", selectionId: chosen?.selectionId, extraLabel: label,
+      return { conceptKey, category: "extra", source: businessSource("Complément métier Cinéma"), action: chosen ? "EDIT" : "ADD", selectionId: chosen?.selectionId, extraLabel: label,
         label: chosen ? `${chosen.label} — Modifier ce complément` : `${label} — Préparer un supplément`,
         reason: chosen ? "Complément déjà choisi pour cette sortie" : "Complément facultatif pour cette sortie",
-        iconKey: "purchase", priority, allowed: input.extrasAllowed && matches.length <= 1 && !chosen?.locked };
+        iconKey: "purchase", priority: chosen ? 2 : priority, allowed: input.extrasAllowed && matches.length <= 1 && !chosen?.locked };
     }),
-    { conceptKey: transport?.selectionId ? "trajet-cinema" : "taxi", category: "transport", sourceRow: transport?.selectionId ? undefined : 499,
+    { conceptKey: transport?.selectionId ? "trajet-cinema" : "taxi", category: "transport", source: transport?.selectionId ? undefined : workbookSource(v22Concepts.taxi),
       action: transport?.selectionId ? "EDIT" : "CONFIGURE", selectionId: transport?.selectionId,
       label: transport?.selectionId ? `${transport.label} — Modifier le trajet` : "Taxi — Configurer le trajet",
       reason: transport?.selectionId ? "Trajet déjà choisi pour cette sortie"
         : placeChosen ? "Le lieu est choisi, le trajet reste à préciser" : "Trajet facultatif pour cette sortie",
-      iconKey: transport?.iconKey ?? "activity", priority: placeChosen || transport?.selectionId ? 2 : 5, allowed: !!transport },
+      iconKey: transport?.iconKey ?? "activity", priority: transport?.selectionId ? 2 : 5, allowed: !!transport },
   ];
 
-  return rankDiscoveryCandidates(candidates
+  return rankCatalogRecommendations(candidates
     .filter(candidate => candidate.allowed && (!input.complementsOnly || candidate.category === "extra" || candidate.category === "transport"))
     .map(candidate => ({ ...candidate, contextOccurrenceId: input.contextOccurrenceId,
       key: [candidate.conceptKey, candidate.action, input.contextOccurrenceId, candidate.selectionId].join(":") }))

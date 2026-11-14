@@ -10,6 +10,8 @@ import { plannedAsset } from '@/domain/phase2/planned-assets';
 import { isPurchaseBasket, MAX_PURCHASE_ARTICLES, purchaseComponents, type BasketConcept } from '@/domain/phase2/planner/purchase-basket';
 import { libraryOccurrences } from '@/domain/phase2/planner/composer-library-index';
 import { isBasketCatalogProduct } from '@/domain/phase2/planner/purchase-catalog';
+import { clayWorkbookSource, rankCatalogRecommendations, sourceReason, v22Concepts } from './catalog-relevance';
+export { rankDiscoveryCandidates } from './catalog-relevance';
 
 export const CATALOG_SCOPES = [['all','Tous les éléments'],['courses','Courses'],['cinema','Cinéma'],['bar','Bar / Apéro'],
   ['restaurant','Restaurant et repas'],['purchase','Achats / Amazon'],['beauty','Beauté'],['stay','Week-end et visites'],
@@ -30,18 +32,13 @@ export function scopeForCard(model:ComposerUiModel,id?:string){
  const scope=scopes[card.templateKey]??card.templateKey;
  return CATALOG_SCOPES.some(([key])=>key===scope)?scope:'all';
 }
-/** Shared ordinal comparator used by discovery and the existing cinema Dock.
- * Lower tiers first; no probabilities, private affinity or financial computation. */
-export function rankDiscoveryCandidates<T extends {key:string;tiers:readonly number[]}>(candidates:readonly T[]):T[]{
- return [...candidates].sort((a,b)=>{for(let i=0;i<Math.max(a.tiers.length,b.tiers.length);i++){const d=(a.tiers[i]??0)-(b.tiers[i]??0);if(d)return d;}return a.key<b.key?-1:a.key>b.key?1:0;});
-}
 export function selectedCatalogIdentities(model:ComposerUiModel,contextId?:string):ReadonlySet<string>{
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===contextId),ids=new Set<string>();
  for(const socket of card?.sockets??[])for(const item of socket.currentItems){
    if(item.kind!=='COMPONENT')continue;
    if(item.basketArticle?.concept)ids.add(item.basketArticle.concept.id);
    const id=clayAssetArtwork(item.productAssetRef?.assetKey)?.visualConceptId;if(id)ids.add(id);
-   if(scopeForCard(model,contextId)==='cinema'&&socket.slotKey==='main'&&item.optionKey==='activity')ids.add('v22-art:excel:329');
+   if(scopeForCard(model,contextId)==='cinema'&&socket.slotKey==='main'&&item.optionKey==='activity')ids.add(v22Concepts.ticket.id);
  }return ids;
 }
 function momentRank(entry:ClayCatalogEntry,moment?:CatalogMoment){
@@ -55,22 +52,34 @@ function momentRank(entry:ClayCatalogEntry,moment?:CatalogMoment){
    default: return 1;
  }
 }
+const searchEntries = new WeakMap<readonly ClayCatalogEntry[], readonly {
+ entry: ClayCatalogEntry; label: string; aliases: readonly string[]; text: string; source: ReturnType<typeof clayWorkbookSource>;
+}[]>();
+function indexedEntries(entries: readonly ClayCatalogEntry[]) {
+ let indexed = searchEntries.get(entries);
+ if (!indexed) {
+   indexed = entries.map(entry => {
+     const label = normalizeCatalog(entry.label), aliases = activityByConcept.get(entry.visualConceptId)?.aliases ?? [];
+     return { entry, label, aliases, text: [label,normalizeCatalog(entry.discovery.family),...aliases].join(' '), source: clayWorkbookSource(entry) };
+   });
+   searchEntries.set(entries,indexed);
+ }
+ return indexed;
+}
 export function catalogResults(entries:readonly ClayCatalogEntry[],{query='',scope='all',family='',nature='',selectedIds=new Set<string>(),moment,commandIds=new Set<string>()}:{query?:string;scope?:string;family?:string;nature?:string;selectedIds?:ReadonlySet<string>;moment?:CatalogMoment;commandIds?:ReadonlySet<string>}){
  const q=normalizeCatalog(query),tokens=q.split(' ').filter(Boolean);
- return rankDiscoveryCandidates(entries.flatMap(entry=>{
-   const label=normalizeCatalog(entry.label);
-   const aliases=activityByConcept.get(entry.visualConceptId)?.aliases??[];
-   const text=[label,normalizeCatalog(entry.discovery.family),...aliases].join(' ');
+ return rankCatalogRecommendations(indexedEntries(entries).flatMap(({entry,label,aliases,text,source})=>{
    const inMoment=commandIds.has(entry.visualConceptId);
    if(family&&entry.discovery.family!==family||nature&&entry.discovery.nature!==nature||scope!=='all'&&!entry.discovery.contexts.includes(scope)&&!inMoment||!tokens.every(t=>text.includes(t)))return [];
-   const core=scope==='cinema'?entry.discovery.sourceRow===329?0:entry.visualConceptId==='v22-art:extra:popcorn'?1:2
+   const core=scope==='cinema'?entry.visualConceptId===v22Concepts.ticket.id?0:entry.visualConceptId==='v22-art:extra:popcorn'?1:2
      :scope==='courses'?entry.discovery.family==='Courses et produits alimentaires'?0:entry.discovery.family==='Boissons'?1:2
      :scope==='bar'?entry.discovery.family==='Boissons'?0:1
      :scope==='purchase'?purchaseCatalogProduct(entry)?0:1:entry.discovery.nature==='INTENT'?0:1;
-   const chosen=selectedIds.has(entry.visualConceptId),complement=scope==='cinema'&&selectedIds.has('v22-art:excel:329')&&entry.visualConceptId==='v22-art:extra:popcorn';
+   const chosen=selectedIds.has(entry.visualConceptId),complement=scope==='cinema'&&selectedIds.has(v22Concepts.ticket.id)&&entry.visualConceptId==='v22-art:extra:popcorn';
    const situated=inMoment?0:momentRank(entry,moment);
-   return [{key:entry.visualConceptId,entry,tiers:[q?label===q||aliases.includes(q)?0:label.startsWith(q)?1:2:0,core,situated,chosen?0:1,complement?0:1],
-     reason:chosen?'Déjà choisi · retrouver cet élément':complement?'Complément facultatif du billet':inMoment?'Choix disponible dans cette étape':scope==='all'?'Catalogue V22':core===0?'Au cœur de ce contexte':entry.discovery.nature==='SCENE'||entry.discovery.nature==='MODE'?'Repère visuel du contexte':'Élément pertinent dans ce contexte'}];
+   return [{key:entry.visualConceptId,entry,source,
+     tiers:[q?label===q||aliases.includes(q)?0:label.startsWith(q)?1:2:0,core,situated,chosen?0:1,complement?0:1],
+     reason:chosen?'Déjà choisi · retrouver cet élément':complement?'Complément facultatif du billet':inMoment?'Choix disponible dans cette étape':scope==='all'?(sourceReason(source)??'Repère Composer'):core===0?'Au cœur de ce contexte':entry.discovery.nature==='SCENE'||entry.discovery.nature==='MODE'?'Repère visuel du contexte':'Élément pertinent dans ce contexte'}];
  }));
 }
 const purchaseModules = new Set(['beauty','clothing','household','home','tech','automotive']);
@@ -139,6 +148,8 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
          concept:{id:entry.visualConceptId,label:entry.label},label:`Préparer ${entry.label} dans ${info.label}`});
    }
    const asset=model.library.searchableAssets.find(candidate=>candidate.kind==="CONTEXT_ASSET"&&candidate.assetKey==="template:purchase");
+   if(actions.some(action=>action.key.startsWith('basket-existing:')))
+     return actions.filter(action=>action.key.startsWith('basket-existing:'));
    if(asset&&publishedDrop(model,asset.assetKey,{kind:"BOARD_ZONE"})?.semanticAction==="ADD_CONTEXT"){
      const presetKey=groceryProduct?'groceries-purchase':product?.module==='beauty'?'beauty-purchase':product?.module==='clothing'?'clothing-shopping'
        :product&&purchaseStarterPresets[product.assetKey];
@@ -212,7 +223,7 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
  }
  for(const socket of card.sockets){
    const keys=[...entry.assetKeys];
-   if(preset==='cinema'&&entry.discovery.sourceRow===329&&socket.slotKey==='main')keys.push('option:activity:main:activity');
+   if(preset==='cinema'&&entry.visualConceptId===v22Concepts.ticket.id&&socket.slotKey==='main')keys.push('option:activity:main:activity');
    if(preset==='cinema'&&entry.discovery.sourceRow===499&&socket.slotKey==='transport')keys.push('option:activity:transport:taxi');
    if(preset==='cinema'&&entry.discovery.sourceRow===520&&socket.slotKey==='transport'
      &&socket.currentItems.some(item=>item.kind==='MOBILITY_INTENT'&&item.optionKey==='car'))keys.push('option:activity:transport:car');

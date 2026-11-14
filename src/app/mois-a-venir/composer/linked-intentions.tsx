@@ -1,10 +1,10 @@
 "use client";
 
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { BudgetPreviewStatus, IntentBudgetImpact } from "./intent-budget-impact";
 import { money } from "./display";
-import { intentionNavigationEntries } from "./workshop-navigation";
+import { intentionNavigationEntries, WorkshopNavigationContext } from "./workshop-navigation";
 import { publishedDrop } from "./interactions";
 import { semanticStateDigest } from "@/domain/phase2/planner/semantic-state";
 import { componentId } from "@/domain/phase2/planner/identity";
@@ -54,6 +54,20 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
   decide?: (operation: ComposerOperation) => boolean;
 }) {
   const preview = useContext(BudgetPreviewStatus);
+  const returnedChild = useContext(WorkshopNavigationContext)?.returnedChild;
+  const returnButton = useRef<HTMLButtonElement>(null);
+  const focusedReturn = useRef<typeof returnedChild>(null);
+  useEffect(() => {
+    if (busy || returnedChild?.parentId !== parentId || focusedReturn.current === returnedChild || !returnButton.current) return;
+    const button = returnButton.current;
+    const frame = requestAnimationFrame(() => {
+      if (button.isConnected && !button.disabled) {
+        focusedReturn.current = returnedChild;
+        button.focus();
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [busy, parentId, returnedChild]);
   const confirm = useWorkshopConfirmation(), edits = useInlineEditRegistry();
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"ALL" | "INCOMPLETE" | "READ_ONLY">("ALL");
@@ -126,7 +140,9 @@ export function LinkedIntentions({ model, parentId, busy, open, decide }: {
       const impact = current ? reading?.byContext[child.id] : undefined;
       const destinations = decide ? linkedIntentionMoveTargets(model, parentId, child.id) : [];
       return <li key={child.id} className={styles.linkedIntention} data-linked-intention={child.id}>
-        {open ? <button type="button" disabled={busy} onClick={() => open(child.id)}>{child.label}</button> : <span>{child.label}</span>}
+        {open ? <button type="button" disabled={busy}
+          ref={returnedChild?.parentId === parentId && returnedChild.childId === child.id ? returnButton : undefined}
+          onClick={() => open(child.id)}>{child.label}</button> : <span>{child.label}</span>}
         <p className={styles.linkedCost}>
           {!current ? "Coût à actualiser" : impact?.gross != null ? <>Coût total · <strong>{money(impact.gross)}</strong></>
             : impact?.knownSubtotal != null ? <>Sous-total connu · <strong>{money(impact.knownSubtotal)}</strong> · Total à préciser</>

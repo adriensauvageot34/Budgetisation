@@ -40,6 +40,7 @@ import { isRestaurantBeer, restaurantBeer, restaurantSuggestions, type Restauran
 import { CompactCatalogVisual } from './compact-catalog-visual';
 import { CatalogOpenButton } from './catalog-discovery-provider';
 import { catalogSocket, normalizeCatalog, purchaseCatalogProduct, type CatalogCommand, type GuidedCatalogChoice } from './catalog-discovery';
+import { sourceReason, v22Concepts } from "./catalog-relevance";
 import type { ClayCatalogEntry } from '../clay-v22-catalog';
 import { guidedAssetLabels } from "./guided-asset-labels";
 import { clayV22Artwork } from '../clay-v22-media';
@@ -190,7 +191,10 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   };
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      panel.current?.querySelector<HTMLElement>(step === null ? "h2" : "[data-restaurant-focus]")?.focus({ preventScroll: step === null });
+      const field = step === "date" ? 'input[type="date"]' : step === "budget" ? 'input[inputmode="decimal"]' : null;
+      const target = (field ? panel.current?.querySelector<HTMLElement>(field) : undefined)
+        ?? panel.current?.querySelector<HTMLElement>(step === null ? "h2" : "[data-restaurant-focus]");
+      target?.focus({ preventScroll: step === null });
       if (step === null && panel.current) panel.current.scrollTop = 0;
     });
     return () => cancelAnimationFrame(frame);
@@ -442,20 +446,22 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     ...(activityComplements ? [tile("extras", completeTitle, () => open("complete"), "activity")] : []),
   ] : [];
   const showCinemaSuggestions = cinema && (step === null || step === "complete" && !extraRow && !equipment);
+  const cinemaPlaceChosen = placeLabel?.kind === "TEXT" ? !!placeLabel.label.trim()
+    : placeLabel?.kind === "KNOWN" && !!model.mobilityOptions?.places.some(place => place.placeId === placeLabel.placeId);
   const cinemaCatalogSuggestions = cinema ? cinemaSuggestions({
     contextOccurrenceId: contextId, writable: activityWritable, ticketAllowed: activityTicket, ticket: main,
     dayChosen: !!context.fields.plannedDate,
-    placeChosen: placeLabel?.kind === "TEXT" ? !!placeLabel.label.trim()
-      : placeLabel?.kind === "KNOWN" && !!model.mobilityOptions?.places.some(place => place.placeId === placeLabel.placeId),
+    placeChosen: cinemaPlaceChosen,
     extrasAllowed: activityExtras,
     extras: extras.map(({ label, selectionId }) => ({ label, selectionId, locked: cinemaSelectionLocked("extras", selectionId) })),
     transport: activityMode && { label: activityMode.label, iconKey: activityMode.iconKey, selectionId: currentTransport?.selectionId },
-    complementsOnly: false, dismissed: dismissedSuggestions,
+    complementsOnly: false, dismissed: [],
   }, Infinity) : [];
   const rankedCinema = showCinemaSuggestions
-    ? cinemaCatalogSuggestions.filter(suggestion => step !== "complete" || suggestion.category === "extra" || suggestion.category === "transport").slice(0, 4)
+    ? cinemaCatalogSuggestions.filter(suggestion => !dismissedSuggestions.includes(suggestion.key)
+      && (step !== "complete" || suggestion.category === "extra" || suggestion.category === "transport")).slice(0, 4)
     : [];
-  const cinemaArtwork: Readonly<Record<string, string>> = { 'billet-cinema': 'v22-art:excel:329', taxi: 'v22-art:excel:499',
+  const cinemaArtwork: Readonly<Record<string, string>> = { 'billet-cinema': v22Concepts.ticket.id, taxi: v22Concepts.taxi.id,
     popcorn: 'v22-art:extra:popcorn', boisson: 'v22-art:extra:boisson-generale' };
   const chooseCinemaSuggestion = (suggestion: CinemaSuggestion) => {
     if (suggestion.contextOccurrenceId !== contextId) return;
@@ -476,10 +482,10 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     emptyLabel: "Aucune suggestion pour cette sortie. Les choix de la carte restent accessibles.",
     choices: showCinemaSuggestions ? rankedCinema.map(suggestion => {
       return { ...tile(suggestion.key, suggestion.label, () => chooseCinemaSuggestion(suggestion), suggestion.iconKey,
-        suggestion.reason, suggestion.action === "EDIT" || undefined),
+        [suggestion.reason, sourceReason(suggestion.source)].filter(Boolean).join(" · "), suggestion.action === "EDIT" || undefined),
         visualConceptId: cinemaArtwork[suggestion.conceptKey] };
     }) : step === "date" && activityWritable ? [
-      tile("place", "Cinéma — Préciser le lieu", () => open("place"), "family-visit"),
+      ...(!cinemaPlaceChosen ? [tile("place", "Cinéma — Préciser le lieu", () => open("place"), "family-visit")] : []),
       tile("people", "Participants — Préciser", () => open("participants"), "family-visit"), backToSummary,
     ] : [backToSummary],
   } : undefined;

@@ -202,8 +202,8 @@ try {
       complementsOnly: false, dismissed: [] };
     const suggestions = cinemaSuggestions(input);
     assert.deepEqual(suggestions.map(item => item.conceptKey), ["billet-cinema", "jour-seance", "lieu-cinema", "popcorn"]);
-    assert.equal(suggestions[0].sourceRow, 329);
-    assert.equal(suggestions.find(item => item.conceptKey === "popcorn").sourceRow, undefined);
+    assert.deepEqual(suggestions[0].source,{kind:"EXCEL",id:"v22-art:excel:329",label:"Billet de cinéma"});
+    assert.equal(suggestions.find(item => item.conceptKey === "popcorn").source.kind, "BUSINESS");
     assert.deepEqual(cinemaSuggestions({ ...input, writable: false, ticketAllowed: false, extrasAllowed: false, transport: undefined }), []);
     const popcorn = { selectionId: uuid(99721), label: " PÓPCORN ", locked: false };
     const extrasOnly = { ...input, complementsOnly: true, transport: undefined };
@@ -218,6 +218,12 @@ try {
     const ticket = cinemaSuggestions({ ...dismissed, ticket: { selectionId: uuid(99724), label: "Billet" } })
       .find(item => item.conceptKey === "billet-cinema");
     assert.equal(ticket.action, "EDIT"); assert.equal(ticket.selectionId, uuid(99724));
+    const drink = { selectionId: uuid(99725), label: "Boisson", locked: false };
+    const ready = { ...input, dayChosen: true, placeChosen: true, extras: [drink] };
+    const ranked = cinemaSuggestions(ready);
+    assert.deepEqual(ranked.map(item => item.conceptKey), ["billet-cinema", "boisson", "popcorn", "taxi"]);
+    assert.equal(ranked[1].selectionId, drink.selectionId);
+    assert(!cinemaSuggestions({ ...ready, transport: undefined }).some(item => item.category === "transport"));
   });
   await check("RS-11-ACTIVITY-HOMONYMS-KEEP-EXACT-LINE-AND-ORDER", async () => {
     const first = { ...extra, label: "Location de chaussures" };

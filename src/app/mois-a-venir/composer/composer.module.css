@@ -996,6 +996,13 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .dialog[data-night-workshop-panel=true] > header h2 { font-size:17px; }
 .dialog[data-night-workshop-panel=true] .nightEditor { flex:1; max-height:100%; }
 .dialog[data-night-workshop-panel=true] .nightEditorScroll { overflow-y:auto; }
+.dialog[data-night-workshop-panel=true]:has([data-project-editor]) {
+  overflow:auto;
+  overscroll-behavior:contain;
+  overflow-wrap:anywhere;
+}
+.dialog[data-night-workshop-panel=true] [data-project-editor] { flex:none; max-height:none; }
+.dialog[data-night-workshop-panel=true] [data-project-editor] :is(.nightEditorScroll,.formFields) { overflow:visible; }
 [data-mascara-price-editor] .formFields { grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); overflow:visible; }
 [data-mascara-price-editor] .formFields input { box-sizing:border-box; }
 .dialog[data-night-workshop-panel=true]:has([data-mascara-catalog],[data-mascara-reference]) { overflow:auto; }
@@ -1131,6 +1138,10 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .mobilitySections button { min-height:44px; }
 .mobilitySections button[aria-current=step] { border-color:#775299; background:#efe4f6; }
 .libraryProjects { display:grid; gap:10px; margin-bottom:16px; }
+.libraryRecommendations { display:grid; gap:5px; }
+.libraryRecommendations .libraryProject { grid-template-columns:44px minmax(0,1fr); min-height:52px; padding:6px; }
+.libraryRecommendations .libraryProject img { width:44px; height:38px; }
+.libraryRecommendations .libraryProject small { margin-top:2px; }
 .libraryProject { display:grid; grid-template-columns:64px minmax(0,1fr); align-items:center; gap:10px; width:100%; min-height:76px; padding:10px; text-align:left; border:1px solid #decceb; border-radius:14px; background:#fffaff; color:#533e65; cursor:pointer; }
 .libraryProject img { width:64px; height:48px; object-fit:contain; }
 .libraryProject small { display:block; margin-top:5px; overflow-wrap:anywhere; line-height:1.4; }

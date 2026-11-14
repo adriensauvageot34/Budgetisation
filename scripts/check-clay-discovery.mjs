@@ -35,6 +35,8 @@ const {COMPOSER_PRESETS,ACTIVITY_PRESETS,presetCreationFields,presetIllustration
 const preset=COMPOSER_PRESETS.find(p=>p.presetKey==='cinema');card.fields={...preset.defaults,composerPresentation:{version:'composer-context-presentation@v1',presetKey:'cinema'}};
 const model={board:{contexts:[card]},semanticState:{preferences:{anchors:[],flexibility:{}}},library:{searchableAssets:[{assetKey,kind:'SLOT_OPTION_ASSET',optionKey:'activity',optionKind:'COMPONENT'}]},dropCapabilities:[{sourceAssetKey:assetKey,target,resolution:'NEEDS_CHOICE',semanticAction:'PATCH_CONTEXT'}]};
 const ticket=entries.find(e=>e.discovery.sourceRow===329);
+const parking=entries.find(e=>e.discovery.sourceRow===520);
+const taxi=entries.find(e=>e.discovery.sourceRow===499);
 const protectedCinema=entries.find(e=>e.presetKey==='cinema');
 assert(protectedCinema);
 assert.deepEqual(discoveryActions(protectedCinema,model,{controlRef:'HOUSEHOLD:household:groceries'}),[]);
@@ -42,6 +44,19 @@ let actions=discoveryActions(ticket,model,{contextId:cid});assert(actions.some(a
 card.sockets[0].currentItems=[{selectionId:'ticket-1',kind:'COMPONENT',optionKey:'activity',label:'Billet'}];
 actions=discoveryActions(ticket,model,{contextId:cid});assert.equal(actions.filter(a=>a.kind==='CHOOSE').length,1);assert.equal(actions.find(a=>a.kind==='CHOOSE').selection.selectionId,'ticket-1');
 card.readOnly=true;assert.equal(discoveryActions(ticket,model,{contextId:cid}).length,0);
+const mode=(key)=>({assetKey:'option:activity:transport:'+key,kind:'SLOT_OPTION_ASSET',optionKey:key,optionKind:'MOBILITY_INTENT'});
+const mobilityTarget={kind:'CONTEXT_SOCKET',contextOccurrenceId:cid,slotKey:'transport'};
+const mobilitySocket={contextOccurrenceId:cid,slotKey:'transport',label:'Trajet',cardinality:'OPTIONAL_ONE',
+  capabilityRefs:['activity:transport:SELECT_MOBILITY_INTENT'],choiceAssetKeys:[mode('car').assetKey,mode('taxi').assetKey],currentItems:[]};
+const mobility={...model,board:{contexts:[{...card,readOnly:false,sockets:[mobilitySocket]}]},
+  library:{searchableAssets:[mode('car'),mode('taxi')]},dropCapabilities:['car','taxi'].map(key=>({
+    sourceAssetKey:mode(key).assetKey,target:mobilityTarget,resolution:'NEEDS_CHOICE',semanticAction:'PATCH_CONTEXT'}))};
+assert.equal(discoveryActions(parking,mobility,{contextId:cid}).length,0);
+assert(discoveryActions(taxi,mobility,{contextId:cid}).some(a=>a.asset?.assetKey===mode('taxi').assetKey));
+assert.equal(discoveryActions(taxi,{...mobility,dropCapabilities:[]},{contextId:cid}).length,0);
+mobilitySocket.currentItems=[{selectionId:'car-1',kind:'MOBILITY_INTENT',optionKey:'car'}];
+assert.equal(discoveryActions(parking,mobility,{contextId:cid})[0]?.selection?.selectionId,'car-1');
+assert.equal(discoveryActions(parking,{...mobility,dropCapabilities:[]},{contextId:cid}).length,0);
 const activityAsset={assetKey:'template:activity',kind:'CONTEXT_ASSET',templateKey:'activity'};
 const createActivity={sourceAssetKey:activityAsset.assetKey,target:{kind:'BOARD_ZONE'},resolution:'ACCEPTED',semanticAction:'ADD_CONTEXT'};
 for(const activity of ACTIVITY_PRESETS){
@@ -62,7 +77,7 @@ for(const activity of ACTIVITY_PRESETS){
  assert(discoveryActions(entry,{...model,board:{contexts:[generic]}},{contextId:cid}).some(action=>action.kind==='CHOOSE'));
 }
 const suggestions=cinemaSuggestions({contextOccurrenceId:cid,writable:true,ticketAllowed:true,dayChosen:false,placeChosen:false,extrasAllowed:true,extras:[],complementsOnly:false,dismissed:[]});
-assert.equal(suggestions[0].sourceRow,329);assert(!suggestions.find(s=>s.conceptKey==='popcorn')?.sourceRow);
+assert.equal(suggestions[0].source?.id,ticket.visualConceptId);assert.equal(suggestions.find(s=>s.conceptKey==='popcorn')?.source.kind,'BUSINESS');
 const output={status:'PASS',identities:687,newIllustrations:632,excelConcepts:529,protected:55,reachableBySearch:687,reachableInContext:687,
  orders:{cinema:cinema.slice(0,4).map(r=>({id:r.key,label:r.entry.label})),courses:courses.slice(0,4).map(r=>({id:r.key,label:r.entry.label}))},
  activityRoutes:ACTIVITY_PRESETS.length,

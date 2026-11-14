@@ -34,13 +34,13 @@ export function EquipmentComponentEditor({asset,target,model,values,selection,kn
     return {...fresh(values.label||String(model.semanticState.contexts.find(c=>c.contextOccurrenceId===target.contextOccurrenceId)?.fields.label||asset.label)),
       amount:values.amount??"",costMode:values.amount?.trim()?"MANUAL":"UNKNOWN",quantity:values.quantity||"1"};
   });
-  const shortSelection = beautyProduct && selection && !advanced && (!selection.unitBasis || selection.unitBasis === "ITEM") ? selection : undefined;
+  const quickProduct = beautyProduct && !advanced && (!selection?.unitBasis || selection.unitBasis === "ITEM");
   const reference=beautyProduct?undefined:knowledge?.dimensions.find(d=>d.key==="UNIT_PRICE"&&d.suggestionPolicy==="OFFER_PREFILL"&&d.value!==null);
   const update = (next: Row) => {setRow(next);onValues(componentEditorValues(next,values));};
   const save = () => {
     try {
       setError("");
-      const component = shortSelection ? editBeautyProductPriceAndQuantity(shortSelection, row.quantity, row.amount, row.costMode)
+      const component = quickProduct && selection ? editBeautyProductPriceAndQuantity(selection, row.quantity, row.amount, row.costMode)
         : buildComponentRow({...row,edited:beautyProduct?row.edited:true},asset.optionKey!);
       onSave(componentEditorValues(row,values),component);
     } catch(failure) {setError(workshopErrorMessage(failure));}
@@ -50,7 +50,7 @@ export function EquipmentComponentEditor({asset,target,model,values,selection,kn
     {beautyProduct ? <section className={styles.nightSection} data-mascara-reference aria-label="Prix historique">
       <strong>Prix historique · repère uniquement</strong><p>Aucun prix historique daté et rattaché à ce produit n’est publié.</p>
     </section> : <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge}/></details>}
-    {shortSelection ? <form className={styles.nightSection} data-mascara-price-editor={shortSelection.selectionId} onSubmit={event => {event.preventDefault(); if (!busy) save();}}>
+    {quickProduct ? <form className={styles.nightSection} data-mascara-price-editor={selection?.selectionId ?? "new"} onSubmit={event => {event.preventDefault(); if (!busy) save();}}>
       <div className={styles.formFields}>
         <label>Prix unitaire prévu (€)<input autoFocus inputMode="decimal" autoComplete="off" placeholder="Encore inconnu"
           value={row.amount} onChange={event => {

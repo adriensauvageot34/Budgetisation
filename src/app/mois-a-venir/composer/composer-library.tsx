@@ -17,6 +17,9 @@ import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { MONTHLY_GROCERIES_REF } from "./catalog-discovery";
 import { BudgetPreviewStatus } from "./intent-budget-impact";
 import { availableProjectStarters, projectStarterCategory, projectStarterContents, projectStarterMatches, type ProjectStarter } from "./project-starters";
+import { libraryRecommendations, searchRecommendedIntents, searchRecommendedOccurrences } from "./library-recommendations";
+import { useWorkshopConfirmation } from "./workshop-confirmation";
+import { useCommittedEvent } from "./use-committed-event";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
 const intentionFilters=[
@@ -29,28 +32,34 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   prepareProject?:(starter:ProjectStarter)=>void}) {
   const [space,setSpace]=useState<"add"|"intentions"|"manage">("add"),[query,setQuery]=useState(""),[opened,setOpened]=useState<string|null>("SOCIAL");
   const [intentionFilter,setIntentionFilter]=useState<typeof intentionFilters[number][0]>("ALL");
+  const [ideaCategory,setIdeaCategory]=useState<string>();
   const [expanded,setExpanded]=useState<ReadonlySet<string>>(()=>new Set()),[favorites,setFavorites]=useState<readonly string[]>([]);
   const [favoriteNotice,setFavoriteNotice]=useState("");
   const search=useRef<HTMLInputElement>(null), interaction=useComposerInteractions();
   const previewStatus=useContext(BudgetPreviewStatus);
+  const confirmRecommendation=useWorkshopConfirmation();
   const index=useMemo(()=>composerLibraryIndex(model),[model]);
   useEffect(()=>{try {const stored:unknown=JSON.parse(localStorage.getItem(FAVORITES_KEY)??"[]");if(Array.isArray(stored))setFavorites(stored.filter((v):v is string=>typeof v==="string").slice(0,100));}catch{setFavoriteNotice("Favoris indisponibles dans ce navigateur.");}},[]);
-  useEffect(()=>{if(openToken>0){setSpace("add");setQuery("");search.current?.focus();}},[openToken]);
+  useEffect(()=>{if(openToken>0){setSpace("add");setQuery("");setIdeaCategory(undefined);search.current?.focus();}},[openToken]);
   useEffect(()=>{const quick=(event:KeyboardEvent)=>{if(event.key!=="/"||event.ctrlKey||event.metaKey||event.altKey||event.target instanceof Element&&event.target.closest("input,textarea,select,[contenteditable=true],dialog[open]"))return;event.preventDefault();search.current?.focus();};window.addEventListener("keydown",quick);return()=>window.removeEventListener("keydown",quick);},[]);
   const toggleFavorite=(key:string)=>{
     const next=favorites.includes(key)?favorites.filter(k=>k!==key):[...favorites,key];setFavorites(next);
     try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(next));setFavoriteNotice("");}catch{setFavoriteNotice("Favoris conservés pour cette session uniquement.");}
   };
-  const matches=useMemo(()=>filterLibraryIntentions(index.intentions,query),[index.intentions,query]);
-  const occurrences=useMemo(()=>query.trim()?filterLibraryIntentions(index.occurrences,query):[],[index.occurrences,query]);
+  const matches=useMemo(()=>searchRecommendedIntents(index.intentions,query),[index.intentions,query]);
+  const occurrences=useMemo(()=>searchRecommendedOccurrences(index.occurrences,query),[index.occurrences,query]);
   const serviceQuery=["coiffeur","coiffure","coupe de cheveux","brushing","soin capillaire"].includes(normalizeLibrarySearch(query));
   const favoriteItems=matches.filter(item=>favorites.includes(item.key));
   const categories=LIBRARY_CATEGORIES.map(([key,label])=>({key,label,items:matches.filter(item=>item.category===key)})).filter(g=>g.items.length);
-  const projects = prepareProject ? availableProjectStarters(model).filter(project => projectStarterMatches(project, query)) : [];
+  const projects = useMemo(() => prepareProject ? availableProjectStarters(model).filter(project => projectStarterMatches(project, query)) : [],
+    [model, prepareProject, query]);
   const projectGroups = [...new Set(projects.map(projectStarterCategory))];
   const readingCurrent = model.budgetReading?.semanticStateDigest === model.board.draft.semanticStateDigest
     && previewStatus!=="PENDING"&&previewStatus!=="STALE"&&previewStatus!=="FAILED";
-  const monthIntentions = filterLibraryIntentions(index.occurrences,query).filter(row=>{
+  const recommendations = useMemo(() => space === "add" && !query.trim()
+    ? libraryRecommendations(model, index, {category:ideaCategory, projects, currentReading:readingCurrent}) : [],
+    [space, query, model, index, ideaCategory, projects, readingCurrent]);
+  const monthIntentions = (query.trim()?occurrences:index.occurrences).filter(row=>{
     const card=composerRenderIndex(model).contexts.get(row.contextOccurrenceId);
     if(!card)return false;
     if(intentionFilter==="BASKETS")return row.surface==="BASKET";
@@ -74,6 +83,10 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     </button>;
   };
   const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
+  const addRecommended = useCommittedEvent((key: string, expectedDigest: string) => {
+    const idea = recommendations.find(candidate => candidate.key === key);
+    if (!busy && idea?.kind === "ADD" && model.board.draft.semanticStateDigest === expectedDigest) activate(idea.item);
+  });
   const focusActions=(preferExisting=false)=>{
     const panel=search.current?.closest("aside");
     const actions=Array.from(panel?.querySelectorAll<HTMLButtonElement>(
@@ -113,7 +126,10 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setQuery("");search.current?.focus();}
       else if(e.key==="Enter"&&space==="intentions"&&!busy){e.preventDefault();if(monthIntentions.length===1)openContext(monthIntentions[0].contextOccurrenceId);else focusActions(true);}
       else if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
-        if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){const item=matches.find(item=>item.key===action.key);if(item)activate(item);}
+        if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){
+          const item=filterLibraryIntentions(index.intentions,query).find(item=>item.key===action.key);
+          if(item)activate(item);else focusActions(true);
+        }
         else if(!matches.length&&!occurrences.length&&projects.length===1)prepareProject?.(projects[0]);else focusActions(true);
       }else if(e.key==="ArrowDown"){
         e.preventDefault();
@@ -131,6 +147,29 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       buttons[e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowUp"?-1:1)))]?.focus();
     }}>
     {space==="add"?<>
+      {recommendations.length>0&&<section className={styles.assetGroup} data-library-recommendations
+        aria-label={ideaCategory ? "Idées dans cette catégorie" : "Idées pour ce mois"}>
+        <h3>{ideaCategory ? "Idées dans cette catégorie" : "Idées pour ce mois"}</h3>
+        <div className={styles.libraryRecommendations}>{recommendations.map(idea=>{
+          const preset=idea.kind==="ADD"?idea.item.preset:idea.kind==="PROJECT"?composerPreset(idea.project.parent)
+            :idea.occurrence.presetKey?composerPreset(idea.occurrence.presetKey):undefined;
+          return <button type="button" key={idea.key} className={styles.libraryProject} disabled={busy}
+            data-library-recommendation={idea.kind} data-library-recommendation-key={idea.key}
+            onClick={()=>{
+              if(idea.kind==="OPEN")openContext(idea.occurrence.contextOccurrenceId);
+              else if(idea.kind==="PROJECT")prepareProject?.(idea.project);
+              else {
+                const expected=model.board.draft.semanticStateDigest;
+                confirmRecommendation({message:`Préparer « ${idea.label} » dans ce brouillon ? Les informations manquantes resteront à préciser.`,
+                  acceptLabel:"Préparer cette intention",accept:()=>addRecommended(idea.key,expected)});
+              }
+            }}>
+            {preset?<PresetIllustration preset={preset}/>:<PlannerIcon iconKey="purchase" scale="LIBRARY"/>}
+            <span><strong>{idea.label}</strong><small>{idea.reason}</small>
+              <small>{idea.kind==="OPEN"?"Reprendre cette intention":idea.kind==="PROJECT"?"Voir et personnaliser le modèle":"Préparer une nouvelle intention"}</small></span>
+          </button>;
+        })}</div>
+      </section>}
       {projects.length > 0 && <details className={styles.assetGroup} open={!!query || undefined}>
         <summary>Modèles de projets</summary>
         {projectGroups.map(group => <section key={group} aria-label={`Modèles · ${group}`}><h3>{group}</h3>
@@ -152,7 +191,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
         const primary=group.items.filter(item=>item.preset),generic=group.items.filter(item=>!item.preset),visible=all||primary.length===7?primary:primary.slice(0,6);
         const groups=[...new Set(visible.map(item=>item.group))],freeOpen=searching||!primary.length||expanded.has("free:"+group.key);
         return <section className={styles.assetGroup} key={group.key} data-library-group={group.key}>
-        <h3><button type="button" className={styles.assetGroupToggle} data-library-group-toggle={group.key} aria-expanded={isOpen} aria-controls={`library-${group.key}`} onClick={()=>{if(query)setQuery("");setOpened(opened===group.key?null:group.key);}}>
+        <h3><button type="button" className={styles.assetGroupToggle} data-library-group-toggle={group.key} aria-expanded={isOpen} aria-controls={`library-${group.key}`} onClick={()=>{if(query)setQuery("");const next=opened===group.key?null:group.key;setOpened(next);setIdeaCategory(next??undefined);}}>
           <span aria-hidden="true">{isOpen?"▾":"▸"}</span>{group.label}<small>{group.items.length}</small></button></h3>
         {isOpen&&<div id={`library-${group.key}`}>
           {groups.map(subgroup=><div key={subgroup} data-library-subgroup={subgroup}>{subgroup&&<h4 className={styles.librarySubgroupTitle}>{subgroup}</h4>}<div className={styles.presetGrid}>{visible.filter(item=>item.group===subgroup).map(tile)}</div></div>)}

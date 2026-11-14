@@ -38,8 +38,8 @@ export type StaySummaryTarget = "posts" | "departure" | "return" | "route";
 
 export function ProspectiveContextEditor({ stay = false, stayDetails, posts, postsQuestion, staySummary, stayTransportModes, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, dockHost, model, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, onOpenChild }: {
   context: PlannedContextState; householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
-  targetMonth: string; stay?: boolean; stayDetails?: ReactNode; posts?: ReactNode; postsQuestion?: PaletteQuestion;
-  staySummary?: { controls: ReactNode; question: (open: (target: StaySummaryTarget) => void) => PaletteQuestion | undefined };
+  targetMonth: string; stay?: boolean; stayDetails?: (open: (target: StaySummaryTarget) => void) => ReactNode; posts?: ReactNode; postsQuestion?: PaletteQuestion;
+  staySummary?: { controls: ReactNode; canEditPeriod?: boolean; question: (open: (target: StaySummaryTarget) => void) => PaletteQuestion | undefined };
   stayTransportModes?: readonly string[];
   summary?: ComposerMobilitySummary; fresh: boolean; knowledge?: CardKnowledgeRead; initialMode?: string; busy: boolean; dockHost?: HTMLElement | null;
   placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
@@ -174,7 +174,10 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       ...SOCIAL_CONTACTS_V1.filter(p=>match(p.label)).map(p=>tile(p.key,p.label,()=>selectPerson({kind:"CONTACT",contactKey:p.key}),selectedPerson?.kind==="CONTACT"&&selectedPerson.contactKey===p.key)),
       tile("free","Autre personne",()=>selectPerson({kind:"TEXT",label:""})),returnTile]}:undefined;
   const currentQuestion:PaletteQuestion|undefined = referenceQuestion??(section==="posts"?postsQuestion:section==="route"?routeQuestion:section==="timing"?{title:"Le calendrier peut rester souple",choices:[
-    tile("out","Départ",()=>setTimingPage("out"),timingPage==="out"),tile("back","Retour",()=>setTimingPage("back"),timingPage==="back"),tile("note","Un dimanche, plus tard…",()=>setTimingPage("note"),timingPage==="note"),returnTile]}:section==="summary"?staySummary?.question(openStaySuggestion):undefined);
+    ...(stay ? [tile("period","Période",()=>setTimingPage("out"),timingPage!=="note")]
+      : [tile("out","Départ",()=>setTimingPage("out"),timingPage==="out"),tile("back","Retour",()=>setTimingPage("back"),timingPage==="back")]),
+    tile("note","Un dimanche, plus tard…",()=>setTimingPage("note"),timingPage==="note"),returnTile]}:section==="summary"?staySummary?.question(openStaySuggestion):undefined);
+  const periodLabel = [date || "Départ à préciser", endDate || "Retour à préciser"].join(" → ");
   return <div data-short-stay-editor={stay || undefined} data-family-visit-editor={!stay || undefined} className={styles.nightEditor}>
     <WorkshopNavigation contextId={context.contextOccurrenceId} />
     {section !== "summary" && <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
@@ -184,8 +187,11 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       <p>{stay ? "Choisissez l’hébergement ou un poste quand vous le souhaitez." : "La visite reste enregistrable même sans date ou trajet."}</p>
       {visited && <p>Proche : {visited.kind === "HOUSEHOLD_PERSON" ? householdPersons.find(person => person.personId === visited.personId)?.displayName ?? "Personne indisponible" : prospectivePersonLabel(visited) ?? "Contact indisponible"}</p>}
       {destination && <p>Destination : {physicalLabel(destination)}</p>}
-      {(date || note || stay && endDate) && <p>{stay ? "Période du projet" : "Quand"} : {date || note || "Départ à préciser"}{stay && endDate ? ` → ${endDate}` : ""}</p>}
-      {stay && <><p className={styles.helper}>Le départ prévu positionne la carte du mois. Ces dates ne prouvent ni ne déplacent une réservation d’hôtel.</p>{stayDetails}</>}
+      {stay ? <p>{staySummary?.canEditPeriod
+        ? <button type="button" className={styles.nightLink} disabled={busy} onClick={() => openStaySuggestion("departure")}>Période · {periodLabel}</button>
+        : <>Période · {periodLabel}</>}{note && <> · {note}</>}</p>
+        : (date || note) && <p>Quand : {date || note}</p>}
+      {stay && <><p className={styles.helper}>Le départ prévu positionne la carte du mois. Ces dates ne prouvent ni ne déplacent une réservation d’hôtel.</p>{stayDetails?.(openStaySuggestion)}</>}
       {mode && <p>Déplacement : {modeLabels[mode] ?? mode}</p>}
       <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection(stay ? "posts" : "people")}>{stay ? "Composer le séjour" : "Préciser la visite"}</button>
         {(!stayTransportModes || stayTransportModes.length > 0) && <button type="button" onClick={() => setSection("route")}>Prévoir le déplacement</button>}</div>
@@ -212,9 +218,9 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       {section === "timing" && <section className={styles.nightSection} data-visit-section="timing" tabIndex={-1}><h3>Quand ?</h3>
 
         <p>Le jour et l’heure peuvent rester inconnus.</p>
-        {timingPage === "out" && <><label>Date de départ (facultative)<input type="date" value={date} onChange={event => { setDate(event.target.value); if (!event.target.value) setOutTime(""); }} /></label>
+        {(timingPage === "out" || stay && timingPage === "back") && <><label>Date de départ (facultative)<input type="date" value={date} onChange={event => { setDate(event.target.value); if (!event.target.value) setOutTime(""); }} /></label>
           <label>Heure de départ<input type="time" disabled={!date} value={outTime} onChange={event => setOutTime(event.target.value)} /></label></>}
-        {timingPage === "back" && <><label>Date de retour (facultative)<input type="date" value={endDate} onChange={event => { setEndDate(event.target.value); if (!event.target.value) setReturnTime(""); }} /></label>
+        {(timingPage === "back" || stay && timingPage === "out") && <><label>Date de retour (facultative)<input type="date" value={endDate} onChange={event => { setEndDate(event.target.value); if (!event.target.value) setReturnTime(""); }} /></label>
           <label>Heure de retour<input type="time" disabled={!endDate} value={returnTime} onChange={event => setReturnTime(event.target.value)} /></label></>}
         {timingPage === "note" && <label>Repère de temps<input value={note} maxLength={160} onChange={event => setNote(event.target.value)} placeholder="Par exemple : un dimanche" /></label>}
       </section>}
