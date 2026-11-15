@@ -1143,6 +1143,7 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .libraryRecommendations .libraryProject img { width:44px; height:38px; }
 .libraryRecommendations .libraryProject small { margin-top:2px; }
 .libraryProject { display:grid; grid-template-columns:64px minmax(0,1fr); align-items:center; gap:10px; width:100%; min-height:76px; padding:10px; text-align:left; border:1px solid #decceb; border-radius:14px; background:#fffaff; color:#533e65; cursor:pointer; }
+.libraryProject > span { min-width:0; overflow-wrap:anywhere; }
 .libraryProject img { width:64px; height:48px; object-fit:contain; }
 .libraryProject small { display:block; margin-top:5px; overflow-wrap:anywhere; line-height:1.4; }
 .libraryProject:focus-visible { outline:3px solid #a77bc8; outline-offset:2px; }
