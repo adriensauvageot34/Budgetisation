@@ -1,4 +1,7 @@
 .panel { gap: .7rem; }
+.panel > header > div { flex: 1; min-width: 0; }
+.panel > header h2 { overflow-wrap: anywhere; }
+.panel > header > button { flex-shrink: 0; }
 .actions { display: flex; flex-wrap: wrap; gap: .35rem; }
 .lines { display: grid; gap: .4rem; padding: 0; margin: .4rem 0; list-style: none; }
 .lines li { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; padding: .55rem; border-radius: .7rem; background: #fffaf3; }
