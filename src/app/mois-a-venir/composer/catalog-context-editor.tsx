@@ -220,6 +220,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       } })),
     } : undefined;
   return <div data-catalog-context-editor={context.templateKey} data-beauty-product={beautyProduct?.key} data-mascara-catalog={mascaraPreset || undefined}
+    data-project-editor={childSlot ? true : undefined}
     data-mascara-suggestions={mascaraPreset && question?.identity === "beauty-product-suggestions" || undefined} className={styles.nightEditor}>
     <WorkshopNavigation contextId={context.contextOccurrenceId} />
     <p className={styles.helper}>Les informations restent liées à ce moment. La palette propose les postes compatibles ; seuls ces postes peuvent porter un coût.</p>

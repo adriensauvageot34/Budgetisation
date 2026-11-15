@@ -83,6 +83,13 @@ try {
   await article(amazon, uuid(21006), "Shampoing", "1", "");
   const homonyms = suggestions(amazon).find(candidate => candidate.kind === "CHOOSE_ITEM");
   assert.deepEqual(homonyms.selectionIds, [shampoo, uuid(21006)]);
+  assert.equal(suggestions(amazon)[0].key, homonyms.key, "Le prix manquant doit primer sur un nouvel article");
+  assert(!suggestions(amazon).some(candidate => candidate.kind === "DETAILS"), "Amazon est déjà déclaré");
+  const singleEditable = { ...model, semanticState: { ...draft,
+    preferences: { ...draft.preferences, anchors: [componentId(amazon, "item", shampoo)] } } };
+  const direct = purchaseSuggestions(context(amazon), card(amazon), singleEditable)[0];
+  assert.equal(direct.kind, "ITEM");
+  assert.deepEqual(direct.selectionIds, [uuid(21006)]);
   const protectedModel = { ...model, semanticState: { ...draft,
     preferences: { ...draft.preferences, anchors: [componentId(amazon, "item", shampoo), componentId(amazon, "item", uuid(21006))] } } };
   assert(!purchaseSuggestions(context(amazon), card(amazon), protectedModel).some(candidate => candidate.kind === "CHOOSE_ITEM"));

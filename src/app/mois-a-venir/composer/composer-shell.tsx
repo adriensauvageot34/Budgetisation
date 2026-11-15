@@ -359,6 +359,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       else { setFuture(f => f.slice(0, -1)); setPast(p => [...p, beforeFrame]); }
     }
     localDraft.current = next; setDraftState(next); setSuggestions(null); setBalanceOpen(false); setHoverModel(null); setInteractionImpact(null); setErrorMessage(null);
+    if (history === "push" && beforeDigest !== nextDigest) focusAttachedChild(operation, before, next);
     if (history !== "push") {
       const restoredContext = next.contexts.find(context =>
         !before.contexts.some(previous => previous.contextOccurrenceId === context.contextOccurrenceId));
@@ -619,6 +620,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         setMessage(response.mutationKind === "CANCEL_CONTEXT" ? "Context retiré du brouillon. Son annulation sera conservée à l’application." : changed ? "Brouillon mis à jour et prévisualisé." : "Prévisualisation à jour.");
       }
       install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
+      if (!response.applied && history === "push" && changed) focusAttachedChild(operation, beforeDraft, response.model.semanticState);
       setEditor(current => operation.kind === "DROP" && operation.target.kind === "CONTEXT_SOCKET"
         && (operation.target.contextOccurrenceId === current?.catalogContextId || operation.target.contextOccurrenceId === current?.stayContextId
           || operation.target.contextOccurrenceId === current?.familyContextId) ? current
@@ -884,9 +886,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     const catalog = editor?.catalogContextId ? draftState.contexts.find(c => c.contextOccurrenceId === editor.catalogContextId) : undefined;
     const productContextId = editor?.equipment?.beautyProduct ? editor.equipment.target.contextOccurrenceId
       : catalog && isBeautyProductContext(catalog) ? catalog.contextOccurrenceId : undefined;
-    const returnContext = livingBarId ?? productContextId ?? editorOccurrenceId(editor);
+    const editedContext = editorOccurrenceId(editor);
+    const parent = editedContext ? shown.board.contexts.find(card => card.contextOccurrenceId === editedContext)?.parentContextOccurrenceId : null;
+    const returnContext = parent ?? livingBarId ?? productContextId ?? editedContext;
+    setReturnedChild(null);
     setEditor(null); setProjectionOpen(false); setErrorMessage(null);
     if (returnContext) {
+      if (parent) setFocusedContext(parent);
       // The Board can remount the intention inside a group or on another page.
       setReveal(previous=>({targetRef:returnContext,sequence:(previous?.sequence??0)+1}));
     }
@@ -1007,7 +1013,20 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       editContext(card,undefined,undefined,{kind:"socket",asset,target,selection});
     else choose(asset,target,selection,undefined,undefined,componentLabel,concept);
   });
-  const stableLibraryOpen=useCommittedEvent((id:string)=>{
+  const [returnedChild, setReturnedChild] = useState<{ parentId: string; childId: string } | null>(null);
+  const focusAttachedChild = useCommittedEvent((operation: ComposerOperation, before: PlanSemanticStateV1, next: PlanSemanticStateV1) => {
+    if (operation.kind !== "DROP" || operation.target.kind !== "CONTEXT_SOCKET" || !operation.assetKey.startsWith("template:")) return;
+    const { contextOccurrenceId: parentId, slotKey } = operation.target;
+    const childId = operation.identity;
+    if (!parentId || !slotKey || editorOccurrenceId(editor) !== parentId
+      || before.contexts.some(context => context.contextOccurrenceId === childId)) return;
+    const parent = next.contexts.find(context => context.contextOccurrenceId === parentId);
+    const selections = (parent?.slotSelections[slotKey]?.items ?? []) as readonly ComponentSelectionV1[];
+    if (selections.some(item => item.kind === "CHILD_CONTEXT" && item.childContextOccurrenceId === childId)
+      && next.contexts.some(context => context.contextOccurrenceId === childId && context.parentContextOccurrenceId === parentId))
+      setReturnedChild({ parentId, childId });
+  });
+  const stableLibraryOpen=useCommittedEvent((id:string, childId?: string)=>{
     if(busyRef.current)return;
     const occurrence=libraryOccurrences(shown).find(row=>row.contextOccurrenceId===id);
     const card=shown.board.contexts.find(card=>card.contextOccurrenceId===id);
@@ -1019,7 +1038,10 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       return; // Keep the mounted editor and its unaccepted RAW values.
     }
     const origin=document.activeElement as HTMLElement|null;
-    if(!inlineEdits.registry.guard(()=>{if(origin?.isConnected)origin.focus();stableLibraryOpen(id);}))return;
+    if(!inlineEdits.registry.guard(()=>{if(origin?.isConnected)origin.focus();stableLibraryOpen(id,childId);}))return;
+    const returning = occurrence.action === "EDIT" && childId
+      && shown.board.contexts.some(child => child.contextOccurrenceId === childId && child.parentContextOccurrenceId === id);
+    setReturnedChild(returning ? { parentId: id, childId } : null);
     invoker.current=origin;
     setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));
     if(occurrence.action==="EDIT"||isClothingPurchase(card)&&draftState.contexts.some(context=>context.contextOccurrenceId===id&&isClothingPurchase(context)))editContext(card);
@@ -1030,6 +1052,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     const parentId = editorOccurrenceId(editor);
     const card = shown.board.contexts.find(candidate => candidate.contextOccurrenceId === id && candidate.parentContextOccurrenceId === parentId);
     if (!parentId || !card) return;
+    setReturnedChild(null);
     if (card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT") || draftState.preferences.anchors.includes(id)
       || draftState.preferences.flexibility[id] === "PRESERVE") {
       closeDialog();
@@ -1089,8 +1112,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     const parents = new Map(shown.board.contexts.flatMap(card => card.parentContextOccurrenceId && available.has(card.parentContextOccurrenceId)
       ? [[card.contextOccurrenceId, card.parentContextOccurrenceId] as const] : []));
     return { entries: intentionNavigationEntries(shown.board.contexts.filter(card => available.has(card.contextOccurrenceId))),
-      parents, open: stableLibraryOpen, back: stableBackToBoard, busy };
-  }, [shown, stableLibraryOpen, stableBackToBoard, busy]);
+      parents, open: stableLibraryOpen, returnToProject: stableLibraryOpen, returnedChild, back: stableBackToBoard, busy };
+  }, [shown, stableLibraryOpen, stableBackToBoard, returnedChild, busy]);
   const navigationScope = rootRelationAccess?.scopeKey;
   const [navigationRestored, setNavigationRestored] = useState(false);
   const [resumeContext, setResumeContext] = useState<string | null>(null);

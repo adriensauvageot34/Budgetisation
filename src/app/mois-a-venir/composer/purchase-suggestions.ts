@@ -44,7 +44,7 @@ export function purchaseSuggestions(context: PlannedContextState, card: Composer
     if (articles.length < MAX_PURCHASE_ARTICLES) {
       const label = clothing ? (articles.length ? "Ajouter un autre vêtement ou une chaussure" : "Préciser le vêtement ou la chaussure")
         : articles.length ? "Ajouter un " + noun : "Ajouter le premier " + noun;
-      offer("ADD", label, "Saisie libre dans ce panier · éditeur", articles.length ? 2 : 0);
+      offer("ADD", label, "Saisie libre dans ce panier · éditeur", articles.length ? 3 : 0);
     }
     const groups = new Map<string, PurchaseComponent[]>();
     for (const article of articles) {
@@ -58,17 +58,18 @@ export function purchaseSuggestions(context: PlannedContextState, card: Composer
       const item = editable[0];
       if (!item) continue;
       const unknownPrice = editable.some(line => line.cost.kind === "UNKNOWN");
-      offer(group.length > 1 ? "CHOOSE_ITEM" : "ITEM",
-        group.length > 1 ? "Choisir la ligne · " + item.label : (unknownPrice ? "Préciser le prix · " : "Modifier · ") + item.label,
-        group.length > 1 ? "Plusieurs lignes portent ce nom" : unknownPrice ? "Prix inconnu · ligne existante" : "Prix et quantité · ligne existante",
-        unknownPrice ? 0 : 3, group.map(line => line.selectionId), item.basketArticle?.concept?.id);
+      const choose = editable.length > 1;
+      offer(choose ? "CHOOSE_ITEM" : "ITEM",
+        choose ? "Choisir la ligne · " + item.label : (unknownPrice ? "Préciser le prix · " : "Modifier · ") + item.label,
+        choose ? (unknownPrice ? "Un prix reste à préciser parmi ces lignes" : "Plusieurs lignes modifiables portent ce nom")
+          : unknownPrice ? "Prix inconnu · ligne existante" : "Prix et quantité · ligne existante",
+        unknownPrice ? 0 : 2, editable.map(line => line.selectionId), choose ? undefined : item.basketArticle?.concept?.id);
     }
   }
   const editor = model.editors.find(candidate => candidate.assetKey === "template:purchase");
   const merchant = typeof context.fields.merchantLabel === "string" && context.fields.merchantLabel.trim();
-  if (editor?.fields.some(field => field.key === "merchantLabel") && (!groceries || !merchant)) {
-    offer("DETAILS", merchant ? "Modifier le vendeur" : "Préciser le vendeur",
-      merchant ? "Vendeur déjà déclaré · éditeur" : "Vendeur facultatif · configuration", merchant ? 5 : 2);
+  if (editor?.fields.some(field => field.key === "merchantLabel") && !merchant) {
+    offer("DETAILS", "Préciser le vendeur", "Vendeur facultatif · configuration", 4);
   }
   const historicalFees = purchaseComponents(context, "extras").filter(legacyDeliveryFee);
   const fee = purchaseComponents(context, "shipping")[0];
@@ -86,7 +87,7 @@ export function purchaseSuggestions(context: PlannedContextState, card: Composer
     const label = fee ? (fee.cost.kind === "UNKNOWN" ? "Préciser le montant de livraison" : "Modifier les frais de livraison")
       : coverage === "UNKNOWN" ? "Préciser la livraison et les frais" : "Consulter la livraison";
     offer("DELIVERY", label, fee ? "Frais distincts · ligne existante" : coverage === "INCLUDED" ? "Livraison comprise" : "Modalité et frais · éditeur",
-      fee || coverage === "UNKNOWN" ? 1 : 5, fee ? [fee.selectionId] : []);
+      (!fee && coverage === "UNKNOWN") || fee?.cost.kind === "UNKNOWN" ? 1 : 5, fee ? [fee.selectionId] : []);
   }
   return rankDiscoveryCandidates(candidates);
 }

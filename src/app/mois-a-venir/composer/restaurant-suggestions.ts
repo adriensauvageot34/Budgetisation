@@ -5,9 +5,10 @@ import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state
 import type { ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { componentId } from "@/domain/phase2/planner/identity";
 import { restaurantIncludedDetails, RESTAURANT_INCLUDED_DETAILS_LIMIT } from "@/domain/phase2/planner/restaurant-included-details";
-import { catalogRefLocked, catalogSocket, normalizeCatalog, rankDiscoveryCandidates } from "./catalog-discovery";
+import { catalogRefLocked, catalogSocket, normalizeCatalog } from "./catalog-discovery";
+import { rankCatalogRecommendations, v22Concepts, workbookSource } from "./catalog-relevance";
 
-export const restaurantBeer = { label: "Bière", artwork: "v22-art:excel:2" } as const;
+export const restaurantBeer = { label: v22Concepts.beer.label, artwork: v22Concepts.beer.id } as const;
 export const isRestaurantBeer = (label: string) => normalizeCatalog(label) === normalizeCatalog(restaurantBeer.label);
 const mealAsset = "option:restaurant:meal:restaurant";
 const extraAsset = "option:restaurant:extras:extra";
@@ -74,7 +75,7 @@ export function restaurantSuggestions(context: PlannedContextState, card: Compos
     candidates.push({ kind: "EDIT_EXTRA", selectionId: editableBeer.selectionId, label: "Modifier la bière en supplément",
       hint: "Supplément déjà choisi pour ce restaurant", iconKey: "restaurant", visualConceptId: restaurantBeer.artwork, priority: 0 });
   } else if (!beerCount && canEditIncluded && included.length < RESTAURANT_INCLUDED_DETAILS_LIMIT) {
-    candidates.push({ kind: "ADD_INCLUDED", label: "Renseigner une bière comprise", hint: "Décrire une consommation sans augmenter l’addition",
+    candidates.push({ kind: "ADD_INCLUDED", label: "Renseigner une bière comprise", hint: "Boisson du catalogue · décrire sans augmenter l’addition",
       iconKey: "restaurant", visualConceptId: restaurantBeer.artwork, priority: 1 });
   }
   const otherExtra = extras.find(item => !isRestaurantBeer(item.label) && canEditExtra(item));
@@ -100,12 +101,15 @@ export function restaurantSuggestions(context: PlannedContextState, card: Compos
   if (canConfigureRoute) candidates.push({ kind: "TRANSPORT", assetKey: transportAsset, selectionId: transport?.selectionId,
     label: transport ? `Modifier le trajet · ${route.asset.label}` : "Configurer le trajet en taxi",
     hint: transport ? "Modifier le trajet déjà choisi pour ce restaurant" : "Préparer un trajet vers ce lieu connu",
-    iconKey: route.asset.iconKey, visualConceptId: transportAsset === taxiAsset ? "v22-art:excel:499" : undefined, priority: 2 });
+    iconKey: route.asset.iconKey, visualConceptId: transportAsset === taxiAsset ? v22Concepts.taxi.id : undefined, priority: 2 });
 
-  return rankDiscoveryCandidates(candidates.map(candidate => {
+  return rankCatalogRecommendations(candidates.map(candidate => {
     const targetId = "selectionId" in candidate ? candidate.selectionId : undefined;
     const key = ["restaurant", id, candidate.kind, targetId, candidate.kind === "TRANSPORT" ? candidate.assetKey : undefined].join(":");
-    return { ...candidate, key, contextOccurrenceId: id, tiers: [candidate.priority] };
+    const source = candidate.visualConceptId === v22Concepts.beer.id ? workbookSource(v22Concepts.beer)
+      : candidate.visualConceptId === v22Concepts.taxi.id ? workbookSource(v22Concepts.taxi) : undefined;
+    // The addition is the prerequisite for describing a detail "compris".
+    return { ...candidate, key, source, contextOccurrenceId: id, tiers: [candidate.priority, candidate.kind === "BUDGET" ? 0 : 1] };
   }).filter(candidate => !dismissed.includes(candidate.key)));
 }
 
