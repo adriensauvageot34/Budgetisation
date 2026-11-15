@@ -1,4 +1,5 @@
 import "server-only";
+import { contextFingerprints } from "@/domain/phase2/planner/context-fingerprints";
 import { editHomeEquipment } from "@/domain/phase2/planner/home-equipment";
 import { validateControlValue } from "@/domain/phase2/planner/control-input";
 import { ControlDecisionAdmissionError } from "./control-fields";
@@ -100,7 +101,7 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
   }));
   // An unknown envelope can become visible in a pending local Draft. Savings
   // cards also provide the existing fallback when a reservation is not listed.
-  const monthCards = [...view.board.baselineControls.filter(card => Object.hasOwn(controlDomains, card.targetRef)),
+  const monthCards = [...view.board.baselineControls,
     ...view.board.discretionaryControls, ...view.board.savings];
   const monthSourceRefs = new Set([
     ...preview.baseline.structuralFacts.resources.flatMap(fact => fact.sourceRefs),
@@ -143,6 +144,7 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
     proof: { expectedActiveRevisionId: preview.baseActiveRevisionId, expectedActiveRevisionNumber: preview.baseRevisionNumber,
       expectedBaselineDigest: preview.baselineDigest, expectedPreviewDigest: preview.previewDigest },
     appliedContextIds: active?.activeRevision?.semanticState.contexts.map(c => c.contextOccurrenceId) ?? [],
+    ...(active?.activeRevision ? { appliedContextDigests: contextFingerprints(active.activeRevision.semanticState) } : {}),
     editors, controlEditors, sectionLabels: { ...familyLabels, options: "Composants", controls: "Leviers du mois" } };
 }
 

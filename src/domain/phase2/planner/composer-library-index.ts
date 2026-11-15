@@ -84,6 +84,11 @@ export function isHairdresserReference(model:ComposerUiModel, card:ComposerConte
       && new Date(`${date}T12:00:00Z`).toISOString().slice(0,10)===date)
     && hairdresserReferenceLines(card).length>0;
 }
+export function isComposerProject(card: Pick<ComposerContextCardView, "templateKey" | "childContextOccurrenceIds">) {
+  return card.childContextOccurrenceIds.length > 0
+    || ["home-project", "friend-visit", "family-visit", "short-stay", "other-context"].includes(card.templateKey);
+}
+
 /** Exact presentation identities in the displayed month, never a label/template guess. */
 export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccurrence[] {
   if(model.board.targetMonth!==model.semanticState.targetMonth)return [];

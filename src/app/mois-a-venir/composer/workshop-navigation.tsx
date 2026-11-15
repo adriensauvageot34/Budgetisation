@@ -4,6 +4,7 @@ import { createContext, useContext, useId, useState } from "react";
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
 import { plannedDayLabel } from "./display";
+import { IntentionProgressLabel } from "./context-progress";
 import styles from "./workshop-navigation.module.css";
 
 export function intentionNavigationEntries(cards: readonly ComposerContextCardView[]) {
@@ -120,5 +121,6 @@ export function WorkshopNavigation({ contextId }: { contextId: string }) {
       {parent ? "← Revenir au projet" : "← Mes intentions"}
     </button>
     <IntentionSwitcher contextId={contextId} />
+    <IntentionProgressLabel id={contextId} withMonth />
   </nav>;
 }

@@ -2,7 +2,8 @@ import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { memo, useState, useRef, useEffect, useMemo, useContext } from "react";
 import { composerPreset, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
-import { composerLibraryIndex, filterLibraryIntentions, hairdresserReferenceLines, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
+import { composerLibraryIndex, hairdresserReferenceLines, isComposerProject, isHairdresserReference, librarySearchAction, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
+import { IntentionProgressLabel } from "./context-progress";
 import { PresetIllustration } from "./preset-illustration";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { Search, Star } from "lucide-react";
@@ -63,8 +64,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     const card=composerRenderIndex(model).contexts.get(row.contextOccurrenceId);
     if(!card)return false;
     if(intentionFilter==="BASKETS")return row.surface==="BASKET";
-    if(intentionFilter==="PROJECTS")return card.childContextOccurrenceIds.length>0||row.presetKey==="composed-outing"
-      ||["home-project","friend-visit","family-visit","short-stay","other-context"].includes(card.templateKey);
+    if(intentionFilter==="PROJECTS")return isComposerProject(card);
     if(intentionFilter==="INCOMPLETE")return readingCurrent&&(card.knowledge==="UNKNOWN"||card.knowledge==="PARTIAL");
     if(intentionFilter==="VIEW")return row.action==="VIEW";
     return true;
@@ -78,6 +78,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       <strong>{row.action==="EDIT"?"Modifier":"Voir"} {row.label}{row.occurrence?` · Intention ${row.occurrence}`:""}</strong>
       <small>{row.plannedDate?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium",timeZone:"UTC"}).format(new Date(`${row.plannedDate}T12:00:00Z`)):"Date à préciser"} · {row.surface==="BASKET"?"Panier multi-articles":row.surface==="ARTICLE"?"Fiche de cet article":row.surface==="EXTERNAL"?"Prestation externe":"Éditeur de cette carte"}{row.action==="VIEW"?" · Lecture seule sur le Board":""}</small>
       {parent&&<small>Projet · {parent.label}{parentOccurrence?` · Intention ${parentOccurrence}`:""}</small>}
+      <IntentionProgressLabel id={row.contextOccurrenceId} />
       {readingCurrent&&card&&(card.knowledge==="UNKNOWN"||card.knowledge==="PARTIAL")&&<small>Coûts ou informations à préciser</small>}
       {card&&isHairdresserReference(model,card)&&<small>Prestation externe · dépense du mois · voir cette prestation sur le Board</small>}
     </button>;
@@ -87,12 +88,13 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
     const idea = recommendations.find(candidate => candidate.key === key);
     if (!busy && idea?.kind === "ADD" && model.board.draft.semanticStateDigest === expectedDigest) activate(idea.item);
   });
-  const focusActions=(preferExisting=false)=>{
+  const focusActions=(preferExisting=false, addKey?:string)=>{
     const panel=search.current?.closest("aside");
     const actions=Array.from(panel?.querySelectorAll<HTMLButtonElement>(
       "[data-library-existing-action]:not(:disabled),[data-library-add-action]:not(:disabled),[data-library-project-action]:not(:disabled)")??[]);
     const visible=actions.filter(action=>action.getClientRects().length>0);
-    const button=(preferExisting ? visible.find(action=>action.hasAttribute("data-library-existing-action")) : undefined) ?? visible[0];
+    const button=(preferExisting ? visible.find(action=>action.hasAttribute("data-library-existing-action")) : undefined)
+      ?? (addKey ? visible.find(action=>action.getAttribute("data-library-add-action") === addKey) : undefined) ?? visible[0];
     if(!button)return false;
     button.focus();
     return true;
@@ -125,12 +127,10 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
       onKeyDown={e=>{if(e.nativeEvent.isComposing)return;
       if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setQuery("");search.current?.focus();}
       else if(e.key==="Enter"&&space==="intentions"&&!busy){e.preventDefault();if(monthIntentions.length===1)openContext(monthIntentions[0].contextOccurrenceId);else focusActions(true);}
-      else if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();const action=librarySearchAction(matches,occurrences,query);
-        if(action.kind==="OPEN")openContext(action.contextOccurrenceId);else if(action.kind==="ADD"){
-          const item=filterLibraryIntentions(index.intentions,query).find(item=>item.key===action.key);
-          if(item)activate(item);else focusActions(true);
-        }
-        else if(!matches.length&&!occurrences.length&&projects.length===1)prepareProject?.(projects[0]);else focusActions(true);
+      else if(e.key==="Enter"&&space==="add"&&query.trim()&&!busy){e.preventDefault();
+        const action=librarySearchAction(matches,occurrences,query);
+        if(action.kind==="OPEN")openContext(action.contextOccurrenceId);
+        else focusActions(true,action.kind==="ADD"?action.key:undefined);
       }else if(e.key==="ArrowDown"){
         e.preventDefault();
         if(!focusActions())Array.from(e.currentTarget.closest("aside")?.querySelectorAll<HTMLButtonElement>("[data-library-scroll] button:not(:disabled)")??[])

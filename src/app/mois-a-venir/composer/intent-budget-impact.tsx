@@ -41,6 +41,7 @@ export function IntentBudgetImpact({ model, contextId }: { model: ComposerUiMode
     {!impact ? <p>{status === "FAILED" ? "Calcul indisponible. Réessayez la simulation depuis le bandeau."
       : current ? "Aucun impact évalué pour cette intention." : "Les montants se mettent à jour avec vos choix."}</p>
       : <>
+        {status === "BLOCKED" && <p>Projection bloquée · montants évalués à titre de repères.</p>}
         <dl>
           <div><dt>Coût total</dt><dd>{impact.gross === null && impact.knownSubtotal !== null
             ? <>{money(impact.knownSubtotal)} connus <small>Total à préciser</small></> : money(impact.gross)}</dd></div>

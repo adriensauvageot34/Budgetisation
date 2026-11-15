@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ComposerCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { PlannerJsonObject } from "@/domain/phase2/planner/json";
@@ -25,13 +25,14 @@ export function MonthlyDraftControl({ model, card, busy, decide, groceries }: {
     && card.capability.flexibility !== "LOCKED" && rule?.status === "EDITABLE"
     && !model.semanticState.preferences.anchors.includes(card.targetRef)
     && model.semanticState.preferences.flexibility[card.targetRef] !== "PRESERVE";
-  const presentation = controlValuePresentation(card);
+  const presentation = controlValuePresentation(card, dimension);
   const rawReference = card.value.referenceValue;
   const reference = rawReference && typeof rawReference === "object" && !Array.isArray(rawReference) ? rawReference as PlannerJsonObject : null;
   const floor = typeof reference?.minimumAmount === "string" ? reference.minimumAmount : null;
   const [editing, setEditing] = useState(false), [text, setText] = useState(""), [error, setError] = useState("");
   const [accepted, setAccepted] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
+  const restoreFocus = useRef(false);
   const original = useRef("");
   const authority = canonicalPlannerJson({ month, ref: card.targetRef, baseline: model.proof.expectedBaselineDigest,
     revisionId: model.proof.expectedActiveRevisionId, revision: model.proof.expectedActiveRevisionNumber,
@@ -39,12 +40,17 @@ export function MonthlyDraftControl({ model, card, busy, decide, groceries }: {
     choice: model.semanticState.controls.find(control => control.decisionSlotKey === card.targetRef) ?? null });
   const discard = () => { setEditing(false); setError(""); };
   useWorkshopRaw(card.targetRef, editing, discard, "month-control");
-  const cancel = () => { discard(); requestAnimationFrame(() => trigger.current?.focus()); };
+  const cancel = () => { restoreFocus.current = true; discard(); };
+  useEffect(() => {
+    if (!restoreFocus.current || editing || busy) return;
+    restoreFocus.current = false;
+    if (document.activeElement === document.body) trigger.current?.focus();
+  }, [editing, busy]);
   const label = groceries ? "Nouvelle cible Courses (€)" : dimension === "count" ? "Occurrences restantes" : "Montant du mois (€)";
   return <section className={styles.target} aria-label={groceries ? "Cible Courses du mois" : `Réglage · ${card.label}`}
     data-month-control-target={card.targetRef} data-courses-target={groceries ? card.targetRef : undefined}>
     {groceries && <><p>{presentation.kind === "DECISION" ? "Cible choisie dans le brouillon" : "Montant publié · aucune nouvelle cible choisie"} : {money(presentation.value)} · {monthLabel(month)}</p>
-      <p>{floor !== null ? `Plancher réel publié : ${money(floor)} · fondé sur la consommation constatée.` : "Plancher réel non publié dans cette lecture."} Les dépenses constatées ne sont pas modifiées par ce réglage.</p></>}
+      <p>{floor !== null ? `Réel constaté : ${money(floor)} · plancher de cette cible.` : "Plancher réel non publié dans cette lecture."} La cible porte sur le budget prévu.</p></>}
     {!editing ? <button ref={trigger} type="button" disabled={busy || !admitted} onClick={() => {
       original.current = authority;
       const value = card.value[dimension];

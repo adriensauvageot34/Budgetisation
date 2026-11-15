@@ -45,7 +45,9 @@ await check('B1-03-UNKNOWN-PARTIAL-ZERO-AND-STALE-DISTINCT', async () => {
 await check('B1-04-PROTECTED-SAVINGS-AND-SAFETY-RESERVE-VISIBLE', () => {
   const view = html(november.model);
   assert.match(view, /Épargne protégée/); assert.match(view, /Réserve de sécurité/); assert.match(view, /data-protected="true"/);
-  assert.match(view, /Réservation · pas un virement/); assert.doesNotMatch(view, /<input|<form|Modifier|Ajuster/u);
+  assert.match(view, /Réservation · pas un virement/);
+  assert.doesNotMatch(view, /<input|<form|<button[^>]*>(?:Modifier|Ajuster)/u);
+  assert.match(view, /focus=update%3Aitem%3Aobligation%3Arent[^>]*>Ajuster la prévision de cette charge/u);
   assert.match(view, /Plan annuel · réservation du mois/);
 });
 await check('B1-05-NO-WRITE-NO-DUPLICATE-NO-NEW-FINANCIAL-STATE', () => {
@@ -95,7 +97,10 @@ await check('B1-UX-10-STALE-KEEPS-OWNER-REFERENCES-NOT-OPTIMISTIC-VALUES', () =>
   Object.assign(saving.value,{amount:'8888.00',decisionValue:{amount:'8888.00'},projectionPending:true});
   const before=JSON.stringify(pending), view=html(pending,true), reading=monthControlReading(pending,groceries,true);
   assert.match(reading.value,/325,00/);assert.equal(reading.origin,'HISTORICAL');
-  assert.match(view,/100,00/);assert.doesNotMatch(view,/9999|9.?999|8888|8.?888/);
+  assert.match(view,/100,00/);
+  assert.match(view,/Choix dans le brouillon : 9.?999,00[^<]+projection à recalculer/u);
+  assert.match(view,/Choix dans le brouillon : 8.?888,00[^<]+projection à recalculer/u);
+  assert.doesNotMatch(view,/<b>[^<]*(?:9.?999|8.?888)/u);
   assert.match(view,/Dernière valeur connue · actualisation en attente/);
   assert.equal(JSON.stringify(pending),before);
   assert.match(html(november.model),/Référence historique · non choisie/);
@@ -106,7 +111,8 @@ await check('B1-UX-11-STALE-UNKNOWN-OLD-DTO-AND-SUGGESTION-ZERO-STAY-HONEST', ()
   saving.value.amount='7777.00';saving.value.decisionValue={amount:'7777.00'};delete saving.value.referenceValue;
   const reading=monthControlReading(legacy,saving,true);
   assert.equal(reading.origin,'UNKNOWN');assert.equal(reading.value,'Projection à recalculer');
-  assert.doesNotMatch(html(legacy,true),/7777|7.?777/);
+  assert.match(html(legacy,true),/Choix dans le brouillon : 7.?777,00/u);
+  assert.doesNotMatch(html(legacy,true),/<b>[^<]*7.?777/u);
   const optional=legacy.board.discretionaryControls.find(card=>card.value.inclusion==='SUGGESTION_ONLY');
   optional.value.amount='2222.00';optional.value.decisionValue={amount:'2222.00'};
   const noReference=monthControlReading(legacy,optional,true);
@@ -180,13 +186,14 @@ await check('B1-MIN-15-ONLY-CONSUMED-SOURCES-INCLUDING-PENDING-ENVELOPES', async
     {sourceKey:'synthetic:other-card',owner:'UNUSED_OTHER_OWNER',digest:'synthetic',evidenceRefs:[]});
   const model=await composerUiModel(f.deps,householdId,read);
   assert.equal(model.monthRead.sourceOwners['synthetic:pending-envelope'],'CanonicalEconomicHistory');
-  assert(!Object.hasOwn(model.monthRead.sourceOwners,'synthetic:other-card'));
+  assert.equal(model.monthRead.sourceOwners['synthetic:other-card'],'UNUSED_OTHER_OWNER');
   assert(!Object.hasOwn(model.monthRead.controlDomains,other.targetRef));
   const pending=structuredClone(model), card=pending.board.discretionaryControls.find(c=>c.targetRef===envelope.targetRef);
   Object.assign(card.value,{amount:'12.00',decisionValue:{amount:'12.00'},projectionPending:true});
   const view=html(pending,true), start=view.indexOf(`data-month-row="${card.targetRef}"`);assert(start>=0);
   const row=view.slice(start,view.indexOf('</details>',start));
   assert.match(row,/Historique économique/);assert.match(row,/Projection à recalculer/);
-  assert.doesNotMatch(row,/Source non détaillée|12,00/);assert.equal(f.writes.length,0);
+  assert.doesNotMatch(row,/Source non détaillée|<b>12,00/u);
+  assert.match(row,/Choix dans le brouillon : 12,00[^<]+projection à recalculer/u);assert.equal(f.writes.length,0);
 });
 console.log(`B1 + UX-R1 + MIN ${checks}/${checks} PASS · synthetic memory only · SQL=0 remote=0 writers=0`);

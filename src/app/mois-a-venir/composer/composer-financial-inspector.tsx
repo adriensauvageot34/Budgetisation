@@ -12,17 +12,19 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { ComposerMonthRead, monthReadTargets, monthControlReading } from "./month-read";
 
 /** Non-modal, local presentation of the already admitted model. No transport. */
-export function ComposerFinancialInspector({ model, mode, stale, focused, focus, close, busy = false, decide, retry }: {
+export function ComposerFinancialInspector({ model, mode, stale, focused, focus, close, busy = false, decide, retry, returnTo }: {
   model: ComposerUiModel; mode: "FINANCE" | "UNRESOLVED"; stale: boolean; focused: string | null;
   focus: (ref: string) => void; close: () => void;
   busy?: boolean; decide?: (operation: ComposerOperation) => boolean; retry?: () => void;
+  returnTo?: { label: string; open: () => void };
 }) {
   const panel = useRef<HTMLElement>(null);
   const inlineEdits = useInlineEditRegistry();
-  const closePanel = () => {
-    const targets = monthReadTargets(model);
-    if (!inlineEdits || inlineEdits.guard(close, targets)) close();
+  const leavePanel = (action: () => void) => {
+    if (!inlineEdits || inlineEdits.guard(action, monthReadTargets(model))) action();
   };
+  const closePanel = () => leavePanel(close);
+  const revealCard = (id: string) => leavePanel(() => { close(); focus(id); });
   useEffect(() => {
     const invoker = document.activeElement as HTMLElement | null;
     const node = panel.current;
@@ -45,7 +47,7 @@ export function ComposerFinancialInspector({ model, mode, stale, focused, focus,
   const decisions = <section className={styles.financeDecisions} aria-label={mode === "FINANCE" ? "Retrouver une décision sur le Board" : "Décisions à préciser"}>
     {mode === "UNRESOLVED" && <h3>{shown.length} élément(s) à regarder</h3>}
     {mode === "FINANCE" && <p>Chaque ligne rejoint sa carte par son identité. Les montants ne sont pas additionnés ici.</p>}
-    {shown.map(row => <button key={row.ref} data-inspector-target={row.ref} data-value-status={row.valueStatus} aria-current={focused === row.ref ? "true" : undefined} onClick={() => focus(row.ref)}>
+    {shown.map(row => <button key={row.ref} data-inspector-target={row.ref} data-value-status={row.valueStatus} aria-current={focused === row.ref ? "true" : undefined} onClick={() => revealCard(row.ref)}>
       <span><strong>{row.label}</strong><small>{mode === "UNRESOLVED" && !row.locked ? row.hint : row.access}</small></span>
       {row.locked && <LockKeyhole size={12} aria-label="Lecture seule" />}<b>{row.caption}</b><ArrowUpRight size={14} /></button>)}
     {!shown.length && <p>Aucun élément à préciser dans cet état du scénario.</p>}
@@ -57,8 +59,9 @@ export function ComposerFinancialInspector({ model, mode, stale, focused, focus,
     <div className={styles.inspectorScroll}>
       {mode === "FINANCE" ? <>
         <MonthlySimulationStatus projection={model.board.cockpit} stale={stale} />
+        {returnTo && <button type="button" className={styles.financialLink} onClick={() => leavePanel(returnTo.open)}>Revenir à {returnTo.label}</button>}
         {retry && <button type="button" className={budgetStyles.retry} onClick={retry}>Actualiser les finances</button>}
-        <ComposerMonthRead model={model} stale={stale} focused={focused} focus={focus} busy={busy} decide={decide} />
+        <ComposerMonthRead model={model} stale={stale} focused={focused} focus={revealCard} busy={busy} decide={decide} />
         <details className={styles.cockpitDetails}><summary>Projection et financement du mois</summary>
           <ComposerProjectionDetails projection={model.board.cockpit} stale={stale} budgetReading={model.budgetReading} showStatus={false} /></details></> : <p className={styles.financeExplanation}>Une information à préciser peut rester dans un brouillon sauvegardé. Elle n’est pas forcément bloquante. Le contrôle de transformation en Plan vérifie les contraintes réelles.</p>}
       {focused && model.cardKnowledge[`control:${focused}`] && <details className={styles.cockpitDetails} data-card-inspector>

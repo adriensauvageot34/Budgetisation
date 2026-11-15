@@ -56,6 +56,10 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   // remain available; expanding restores the original monthly card owners.
   const [showMonthCards, setShowMonthCards] = useState(false);
   const monthTargets = new Set([...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings].map(card => card.targetRef));
+  const revealMonthlyControl = !!reveal && monthTargets.has(reveal.targetRef);
+  useEffect(() => {
+    if (revealMonthlyControl) setShowMonthCards(true);
+  }, [revealMonthlyControl, reveal?.sequence]);
   const toggleMonthCards = () => {
     const change = () => { inlineEdits?.flushPending(); setShowMonthCards(value => !value); };
     if (!showMonthCards || !inlineEdits || inlineEdits.guard(change, monthTargets)) change();
@@ -127,6 +131,8 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
     {model.presentation.elementCount < 4 && <button data-add-element className={styles.emptyInvitation} disabled={busy} onClick={add}><Plus size={14} /> Ajouter à votre mois</button>}
     {!focusedInCluster && palette}
     {!openCluster && trashZone}
-    {fixedOpen && <FixedChargesDetails facts={fixedOpen === "group" ? fixedFacts.filter(f => !detached.has(f.factKey)) : fixedFacts.filter(f => f.factKey === fixedOpen)} detached={detached} toggle={toggleFixed} close={() => setFixedOpen(null)} />}
+    {fixedOpen && <FixedChargesDetails month={model.board.targetMonth} editableKeys={model.budgetReading?.monthUpdate?.obligationKeys}
+      facts={fixedOpen === "group" ? fixedFacts.filter(f => !detached.has(f.factKey)) : fixedFacts.filter(f => f.factKey === fixedOpen)}
+      detached={detached} toggle={toggleFixed} close={() => setFixedOpen(null)} />}
   </section>;
 }

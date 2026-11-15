@@ -12,7 +12,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { require } from './lib/phase2-ts-loader.mjs';
 import {readLiveProviderKeys} from './lib/bar-live-provider-keys.mjs';
 import { createKernelPostgres } from './lib/planner-kernel-postgres.mjs';
-import { fixture as plannerFixture, state as plannerState, simpleMonth, nightMonth, weekendMonth, renewalMonth, externalMonth, householdId, uuid } from './fixtures/planner-headless.mjs';
+import { fixture as plannerFixture, state as plannerState, simpleMonth, nightMonth, weekendMonth, renewalMonth, externalMonth, householdId, uuid,
+  context, selections, child, component, rebuild } from './fixtures/planner-headless.mjs';
 import { providers } from './fixtures/planner-mobility.mjs';
 import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtures/planner-atomic-ui.mjs';
 import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
@@ -92,6 +93,26 @@ fs.writeFileSync(path.join(out,'global.css'),globalCss);
 } else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
 if (process.env.PLANNER_C8_BUILD_ONLY === '1') process.exit(0);
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
+  M11M12: () => {
+    const month = simpleMonth();
+    month.world.monthInputs.declaredResources = {};
+    month.world.monthInputs.benefit = { currentBalance: null, expectedLoading: null };
+    for (const wallet of Object.values(month.world.monthInputs.benefitWallets ?? {})) wallet.expectedLoading = null;
+    month.world.asOfDate = '2026-11-02';
+    month.world.sources.knowledgeCutoff = '2026-11-02T10:00:00Z';
+    month.world.sources.evidence.currentEconomicEntries = [{
+      operationId: 'synthetic-groceries-floor', date: '2026-11-01', amount: '42.00',
+      subcategory: 'Courses alimentaires', person: null, preciseType: null, merchant: 'Épicerie fictive',
+    }];
+    rebuild(month.world);
+    month.semantic.contexts = [
+      context(11120, 'other-context', { children: selections(child('activity', 11121)) },
+        { ...presetCreationFields('other-context', 'composed-outing'), label: 'Sortie de recette' }),
+      context(11121, 'activity', { main: selections(component('activity', '18.00')) },
+        { ...presetCreationFields('activity', 'cinema'), plannedTime: '14:00' }, 11120),
+    ];
+    return month;
+  },
   COMMERCE: () => {
     const month = simpleMonth();
     const place = (placeId, name, usage, subtype, confirmedMerchant) => ({ placeId, name, usage, subtype,

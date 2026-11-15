@@ -24,6 +24,7 @@ import { catalogRefLocked } from "./catalog-discovery";
 import { purchaseLineLabel } from "./purchase-line-label";
 import { CommerceBadges } from "./commerce-badges";
 import { budgetAmountsCurrent, BudgetPreviewStatus } from "./intent-budget-impact";
+import { IntentionProgressLabel } from "./context-progress";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
 const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
@@ -102,6 +103,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
         {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
       </p>}
       <ParentProjectLink contextId={card.contextOccurrenceId} />
+      <IntentionProgressLabel id={card.contextOccurrenceId} />
       <span className={styles.contextState} title={knowledgeLabel(card.knowledge)} aria-label={knowledgeLabel(card.knowledge)}>{preserved ? <LockKeyhole size={12} /> : card.readOnly ? <Link2 size={12} /> : card.knowledge === "UNKNOWN" ? <i /> : null}</span></div>
       <div className={styles.contextTools}>{!card.readOnly && <><button className={styles.iconButton} disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={() => request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved })}><Pin size={15} /></button>
         <button className={styles.iconButton} disabled={busy || !editable} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>

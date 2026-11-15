@@ -30,7 +30,8 @@ export function monthReadTargets(model: ComposerUiModel): ReadonlySet<string> {
 
 type Row = Readonly<{ id: string; label: string; value: string; meaning: string; caption: string; knowledge: string;
   date: string; source: string; origin: "HISTORICAL" | "PUBLISHED" | "SCENARIO" | "UNKNOWN";
-  notice?: string; referencePeriod?: string; referenceValue?: string; protected?: boolean; targetRef?: string; targetNote?: string; updateFocus?: string }>;
+  notice?: string; referencePeriod?: string; referenceValue?: string; draftValue?: string; protected?: boolean;
+  targetRef?: string; targetNote?: string; updateFocus?: string }>;
 
 /** Display an immutable owner reference while the local Draft/Preview is pending.
  * Card.value.amount/count can be optimistic; knowledge and referenceValue are not. */
@@ -60,7 +61,8 @@ export function monthControlReading(model: ComposerUiModel, card: ComposerCardVi
       : "Projection à recalculer ; aucune référence connue ne permet de remplacer ce montant." : undefined,
     knowledge: knowledgeLabel(history?.evidenceState ?? card.knowledge),
     referencePeriod: history?.coverageFrom && history.coverageTo ? `${monthLabel(history.coverageFrom)} → ${monthLabel(history.coverageTo)}` : "Période de référence non publiée",
-    referenceValue: history?.unit === "EUR_PER_MONTH" ? money(history.value) : fallback ?? undefined };
+    referenceValue: historyKnown ? historyValue ?? undefined : fallback ?? undefined,
+    draftValue: stale && published.kind === "DECISION" ? controlValueSummary(card) : undefined };
 }
 
 export function ComposerMonthRead({ model, stale, focused, focus, busy = false, decide }: {
@@ -117,7 +119,8 @@ export function ComposerMonthRead({ model, stale, focused, focus, busy = false, 
       knowledge: card ? knowledgeLabel(card.knowledge) : "Déclarée dans le mois",
       protected: reservation.adjustability === "PROTECTED" || card?.capability?.flexibility === "LOCKED",
       source: reservation.source === "ANNUAL_PLAN" ? "Plan annuel · réservation du mois" : sources(reservation.sourceRefs), date: `Échéance : ${dateLabel(reservation.dueDate)}`,
-      referenceValue: money(reservation.amount), ...(card ? { targetRef: isOnBoard(targetRef) ? targetRef : undefined,
+      referenceValue: money(reservation.amount), draftValue: stale && card && controlValuePresentation(card).kind === "DECISION" ? money(card.value.amount) : undefined,
+      ...(card ? { targetRef: isOnBoard(targetRef) ? targetRef : undefined,
         targetNote: isOnBoard(targetRef) ? undefined : "Réservation publiée sans carte active sur le Board." } : {}) };
   });
   // Older UI models still retain every published reservation, even without the new metadata.
@@ -129,7 +132,7 @@ export function ComposerMonthRead({ model, stale, focused, focus, busy = false, 
   }
   const groups = [
     { key: "charges", label: "Charges prévues", rows: (model.board.structuralObligations ?? []).map(fact => factRow(fact, false)), empty: "Aucune charge publiée dans cette lecture." },
-    { key: "resources", label: "Revenus et solde déclaré", rows: resources.map(fact => factRow(fact, true, fact.role === "STOCK_NOT_INCOME")), empty: "Détail des ressources non publié dans cette lecture." },
+    { key: "resources", label: "Ressources et solde bancaire", rows: resources.map(fact => factRow(fact, true, fact.role === "STOCK_NOT_INCOME")), empty: "Détail des ressources non publié dans cette lecture." },
     { key: "funding", label: "Titres-restaurant", rows: [], empty: "" },
     { key: "groceries", label: "Courses", rows: controls.filter(card => facts?.controlDomains[card.targetRef] === "groceries").map(controlRow), empty: "Référence Courses non publiée." },
     { key: "tobacco", label: "Tabac", rows: controls.filter(card => facts?.controlDomains[card.targetRef] === "tobacco-vape").map(controlRow), empty: "Référence Tabac non publiée." },
@@ -139,30 +142,33 @@ export function ComposerMonthRead({ model, stale, focused, focus, busy = false, 
     ].map(controlRow), empty: "Aucune enveloppe publiée dans cette lecture." },
   ];
   return <section className={styles.monthRead} data-month-read data-month={month} aria-label="Lecture du mois">
-    <p className={styles.monthReadPeriod}><strong>{monthLabel(month)}</strong> · Consultation</p>
+    <p className={styles.monthReadPeriod}><strong>{monthLabel(month)}</strong></p>
     <p className={styles.monthReadNotice}>{facts ? `Connaissance arrêtée au ${dateLabel(facts.knowledgeCutoff)}.` : "Date de connaissance non publiée."}</p>
     {stale && <p className={styles.monthReadNotice} role="status">Actualisation en attente · les dernières valeurs publiées restent consultables. La projection reste à recalculer.</p>}
     <p className={styles.monthReadNotice}>Prévisions et réservations ne prouvent aucun paiement, encaissement ou virement.</p>
     <MissingMonthlySources reading={reading} month={month} stale={stale} />
-    {groups.map(group => <details key={group.key} name="composer-month-rubric" className={styles.monthReadGroup} data-month-group={group.key}>
-      <summary><h3>{group.label}{group.key !== "funding" && <span>{group.rows.length}</span>}</h3></summary>
+    {groups.map(group => <details key={group.key} name="composer-month-rubric" className={styles.monthReadGroup} data-month-group={group.key}
+      open={!!focused && group.rows.some(row => row.id === focused) || undefined}>
+      <summary><h3>{group.label}{group.key !== "funding" && <span>{group.rows.length}</span>}</h3>
+        {group.key !== "funding" && group.rows.some(row => row.origin === "UNKNOWN") && <small>{group.rows.filter(row => row.origin === "UNKNOWN").length} à préciser</small>}</summary>
       {group.key === "funding" && <MonthlyLoadings reading={reading} month={month} stale={stale} />}
-      {group.key === "charges" && facts && <p className={styles.monthReadNotice}>Les charges viennent de la prévision. Lorsqu’un ajustement est publié, la ligne ouvre le formulaire du mois.</p>}
+      {group.key === "charges" && facts && <p className={styles.monthReadNotice}>Une exception porte sur la prévision de ce mois. Le contrat et le statut du paiement se gèrent auprès de leur source.</p>}
       {group.key === "groceries" && <p className={styles.monthReadNotice}>L’enveloppe est un montant prévu pour les courses. Le solde bancaire reste distinct.</p>}
       {group.key === "envelopes" && <p className={styles.monthReadNotice}>Ces montants sont des postes prévus. Le solde bancaire reste distinct.</p>}
       {group.key === "savings" && <p className={styles.monthReadNotice}>La réserve de sécurité est distincte des « Cagnottes réservées ». Aucun total des lignes n’est calculé ici.</p>}
-      {group.rows.map(row => <details key={row.id} className={styles.monthReadRow} data-month-row={row.id} data-protected={row.protected || undefined} data-value-origin={row.origin}>
+      {group.rows.map(row => <details key={row.id} className={styles.monthReadRow} data-month-row={row.id} data-protected={row.protected || undefined} data-value-origin={row.origin} open={row.id === focused || undefined}>
         <summary><span><strong>{row.label}</strong><small>{row.protected && <><LockKeyhole size={11} aria-hidden="true" /> Protégée · </>}{row.caption}</small></span><b>{row.value}</b></summary>
         <div className={styles.monthReadDetail}>
           <p>{row.meaning}</p>{row.notice && <p>{row.notice}</p>}<p>{row.knowledge} · {row.source}</p><p>Mois concerné : {monthLabel(month)} · {row.date}</p>
           {row.referencePeriod && <p>Référence : {row.referencePeriod}</p>}
           {row.referenceValue && <p>{group.key === "savings" ? "Montant déclaré" : "Repère publié"} : {row.referenceValue}</p>}
+          {row.draftValue && <p>Choix dans le brouillon : {row.draftValue} · projection à recalculer.</p>}
           {row.protected && <p>Protection conservée · aucune modification depuis cette consultation.</p>}
           {row.targetNote && <p>{row.targetNote}</p>}
-          {row.updateFocus && <MonthlySourceLink month={month} focus={row.updateFocus}>Ouvrir le formulaire du mois</MonthlySourceLink>}
+          {row.updateFocus && <MonthlySourceLink month={month} focus={row.updateFocus}>{group.key === "charges" ? "Ajuster la prévision de cette charge" : "Ouvrir le formulaire du mois"}</MonthlySourceLink>}
           {group.key === "charges" && !row.updateFocus && <p>Source en lecture seule pour cette charge.</p>}
-          {row.targetRef && decide && editableCards.has(row.targetRef) &&
-            <MonthlyDraftControl key={`${month}:${row.targetRef}`} model={model} card={editableCards.get(row.targetRef)!} busy={busy} decide={decide} groceries={group.key === "groceries"} />}
+          {decide && !row.protected && editableCards.has(row.id) &&
+            <MonthlyDraftControl key={`${month}:${row.id}`} model={model} card={editableCards.get(row.id)!} busy={busy} decide={decide} groceries={group.key === "groceries"} />}
           {row.targetRef && <button type="button" data-month-target={row.targetRef} aria-current={focused === row.targetRef ? "true" : undefined}
             onClick={() => { if (row.targetRef) focus(row.targetRef); }}>Voir la carte sur le Board</button>}
         </div>

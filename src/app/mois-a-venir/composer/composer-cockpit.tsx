@@ -28,6 +28,8 @@ const monthProjectionLabel = (projection: PlanProjectionV1) => projection.projec
   ? "Projection du mois indisponible" : "Projection du mois actualisée";
 /** Only official C7 values. Separate indicators are never summed in React. */
 export function ComposerCockpit({ projection, goalMargin, temporary, pending, stale = false, staleLabel, canonicalRemainder, interactionImpact, variant, details, retry }: { projection: PlanProjectionV1; goalMargin: string | null; temporary: boolean; pending?: boolean; stale?: boolean; staleLabel?: string; canonicalRemainder?: string | null; interactionImpact?: string | null; variant?: boolean; details?: () => void; retry?: () => void }) {
+  const status = useContext(BudgetPreviewStatus);
+  const blocked = temporary ? projection.applyReadiness === "BLOCKED" : status === "BLOCKED";
   const impact = temporary ? interactionImpact ?? null : projection.plan.impactOnMonthEnd;
   const hasImpact = temporary || impact !== null && Number(impact) !== 0;
   const hasSavings = projection.economic.savingsReservations !== null && Number(projection.economic.savingsReservations) !== 0;
@@ -39,7 +41,7 @@ export function ComposerCockpit({ projection, goalMargin, temporary, pending, st
     {hasImpact && <div className={styles.hudMetric} data-gesture-impact={temporary || undefined} data-tone={stale ? "unknown" : tone(impact)} title={temporary ? "Impact de ce geste, calculé par le serveur" : "Impact consolidé par rapport à la référence"}><span>{temporary ? "Impact du geste" : "Impact de mes choix"}</span><b>{stale ? "—" : signedMoney(impact)}</b></div>}
     {hasSavings && <div className={styles.hudMetric} title="Somme réservée dans le scénario, pas un mouvement bancaire"><span>Cagnottes réservées</span><b>{stale ? "—" : money(projection.economic.savingsReservations)}</b></div>}
     {projection.goal.targetMonthEnd !== null && <div className={styles.hudMetric}><span>Objectif</span><b>{stale ? "—" : money(projection.goal.targetMonthEnd)}</b><small data-tone={stale ? "unknown" : tone(goalMargin)}>Marge sur l’objectif {stale ? "—" : signedMoney(goalMargin)}</small></div>}
-    <div className={styles.hudEnd}><span className={styles.previewStatus} data-hud-status>{pending ? "Simulation en cours…" : stale ? staleLabel ?? "Projection à recalculer" : projection.projectionCompleteness === "PARTIAL" ? "Projection actualisée · données partielles" : monthProjectionLabel(projection)}</span>
+    <div className={styles.hudEnd}><span className={styles.previewStatus} data-hud-status>{pending ? "Simulation en cours…" : stale ? staleLabel ?? "Projection à recalculer" : blocked ? "Projection bloquée" : projection.projectionCompleteness === "PARTIAL" ? "Projection actualisée · données partielles" : monthProjectionLabel(projection)}</span>
       {retry && <button type="button" className={styles.financialLink} onClick={retry}>Réessayer la simulation</button>}
       <button className={styles.financialLink} data-open-finances onClick={details}>Les finances du mois <ArrowUpRight size={15} /></button></div>
   </div>;
@@ -48,6 +50,7 @@ export function ComposerCockpit({ projection, goalMargin, temporary, pending, st
 export function ComposerProjectionDetails({ projection, stale = false, budgetReading, showStatus = true }: {
   projection: PlanProjectionV1; stale?: boolean; budgetReading?: ComposerBudgetReading; showStatus?: boolean;
 }) {
+  const blocked = useContext(BudgetPreviewStatus) === "BLOCKED";
   const rows = [["Engagements certains", projection.economic.certainCommitments],
     ["Besoins & habitudes", projection.economic.needsAndHabits], ["Budgets discrétionnaires", projection.economic.discretionaryLife], ["Intentions ponctuelles", projection.economic.explicitContexts],
     ["Coût d’usage mobilité", projection.economic.mobilityUsageEconomicCost]];
@@ -56,8 +59,9 @@ export function ComposerProjectionDetails({ projection, stale = false, budgetRea
   const missingSalaries = budgetReading?.missingSalaryForecasts ?? [];
   return <div className={styles.projectionDetails}>
     <section className={styles.financeSummary} aria-label="Projection du mois">
-      <span>Reste prévisionnel du mois</span><strong data-finance-summary>{stale ? "En attente de simulation" : projection.plan.economicMonthEndRemainder === null ? "Projection incomplète" : money(projection.plan.economicMonthEndRemainder)}</strong>
+      <span>Reste prévisionnel du mois</span><strong data-finance-summary>{stale ? "En attente de simulation" : blocked ? "Projection bloquée" : projection.plan.economicMonthEndRemainder === null ? "Projection incomplète" : money(projection.plan.economicMonthEndRemainder)}</strong>
       {stale && <p>Les résultats attendent une nouvelle simulation.</p>}
+      {blocked && !stale && <p>Les valeurs ci-dessous sont les repères disponibles dans le calcul bloqué.</p>}
       {showStatus && <MonthlySimulationStatus projection={projection} stale={stale} />}
       {!stale && projection.projectionCompleteness === "UNKNOWN" && <p>Projection du mois indisponible. Les montants évalués par intention gardent leur portée.</p>}
       {!stale && projection.diagnostics.some(diagnostic => diagnostic.code === "FINANCIAL_SCENARIO_UNRESOLVED") && <>

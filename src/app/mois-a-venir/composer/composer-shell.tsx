@@ -13,7 +13,7 @@ import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/p
 import { canonicalPlannerJson, plannerDigest } from "@/domain/phase2/planner/json";
 import type { SemanticMutation, PlanBalanceSuggestions } from "@/domain/phase2/planner/adjustment-contract";
 import { composerPreset, presetForContext, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
-import { isClothingPurchase, libraryOccurrences } from "@/domain/phase2/planner/composer-library-index";
+import { isClothingPurchase, isComposerProject, libraryOccurrences } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
 import { MonthReuse } from "./month-reuse";
 import { ComposerLibrary } from "./composer-library";
@@ -22,6 +22,7 @@ import { catalogBasketArticleTarget, type GuidedCatalogChoice } from "./catalog-
 import { isPurchaseBasket, type BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { assetEditorTarget, editorOccurrenceId, admittedProjectMove } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
+import { composerContextProgress, ContextProgress } from "./context-progress";
 import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
 import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter, type ProjectStarterChoices } from "./project-starters";
 import { ProjectStarterPreview } from "./project-starter-preview";
@@ -208,6 +209,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const ShortStayEditor = loadedEditors.stay, GiftEditor = loadedEditors.gift, CatalogContextEditor = loadedEditors.catalog;
   const NightOutEditor = loadedEditors.night, BarLivingEditor = loadedEditors.bar;
   const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
+  const [financeReturnId, setFinanceReturnId] = useState<string | null>(null);
   const [unresolvedOpen, setUnresolvedOpen] = useState(false);
   const [reveal, setReveal] = useState<{ targetRef: string; sequence: number } | null>(null);
   const [hoverModel, setHoverModel] = useState<ComposerUiModel | null>(null), gate = useRef(new ComposerResponseGate()), timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -287,7 +289,11 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       if (status === "STALE") setMessage("Projection obsolète. Votre brouillon est conservé ; relancez la prévisualisation avant d’appliquer le mois.");
     }, response => {
       if (!response.ok) { setMessage(response.message); setErrorMessage(response.message); return; }
-      if (install(response.model)) { setErrorMessage(null); setMessage(relationSessionRef.current ? "Simulation financière actualisée ; organisation locale non sauvegardée." : "Projection du brouillon actualisée."); }
+      if (install(response.model)) {
+        setErrorMessage(null);
+        setMessage(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "Projection bloquée. Consultez les finances du mois."
+          : relationSessionRef.current ? "Simulation financière actualisée ; organisation locale non sauvegardée." : "Projection du brouillon actualisée.");
+      }
     });
   }
   useEffect(() => { if (recovered) schedulePreview(recovered.frame.draft); }, []);
@@ -617,7 +623,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         if (changed && history === "push") { setPast(p => [...p, { draft: beforeDraft, relations: relationRef.current }]); setFuture([]); }
         else if (history === "undo") { setPast(p => p.slice(0, -1)); setFuture(f => [...f, { draft: beforeDraft, relations: relationRef.current }]); }
         else if (history === "redo") { setFuture(f => f.slice(0, -1)); setPast(p => [...p, { draft: beforeDraft, relations: relationRef.current }]); }
-        setMessage(response.mutationKind === "CANCEL_CONTEXT" ? "Context retiré du brouillon. Son annulation sera conservée à l’application." : changed ? "Brouillon mis à jour et prévisualisé." : "Prévisualisation à jour.");
+        setMessage(response.mutationKind === "CANCEL_CONTEXT" ? "Intention retirée du brouillon. Le Plan actif reste consultable dans sa révision."
+          : response.model.board.cockpit.applyReadiness === "BLOCKED" ? "Projection bloquée. Consultez les finances du mois."
+            : changed ? "Brouillon mis à jour et prévisualisé." : "Prévisualisation à jour.");
       }
       install(response.model); setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH"); setSuggestions(response.suggestions ?? null);
       if (!response.applied && history === "push" && changed) focusAttachedChild(operation, beforeDraft, response.model.semanticState);
@@ -935,6 +943,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const openProjectionDetails = () => {
     if (!inlineEdits.registry.guard(openProjectionDetails)) return;
     clearHover();
+    if (!projectionOpen) setFinanceReturnId(editorOccurrenceId(editor) ?? null);
     setEditor(null); setUnresolvedOpen(false); setCompletenessFocus(false); setProjectionOpen(true);
   };
   const showUnresolved = () => { if (!inlineEdits.registry.guard(showUnresolved)) return; clearHover(); setEditor(null); setProjectionOpen(false); setUnresolvedOpen(value => !value); setCompletenessFocus(!unresolvedOpen); };
@@ -1151,7 +1160,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const resumableContext = resumeContext === focusedContext && !currentEditorId && !relationSession && !comparison
     ? intentionNavigation.entries.find(entry => entry.id === resumeContext) : undefined;
   const resumedCard = shown.board.contexts.find(card => card.contextOccurrenceId === resumableContext?.id);
-  const resumedPreset = resumedCard && presetForContext(resumedCard)?.presetKey;
+  const financeReturn = intentionNavigation.entries.find(entry => entry.id === financeReturnId);
+  const savedDigest = durable.status === "SAVED" && !durable.unsaved && !durable.snapshot?.baseStale
+    ? activeDraft?.digest : undefined;
+  const temporary = !!comparison || relationSession;
+  const contextProgress = useMemo(() => composerContextProgress(shown, previewStatus, savedDigest, temporary),
+    [shown, previewStatus, savedDigest, temporary]);
   // Accepted context changes (also Undo/Redo and child edits) replace workshop buffers.
   // Preview responses with the same semantic content leave RAW inputs untouched.
   const workshopKey = (id: string) => canonicalPlannerJson(draftState.contexts.filter(context => context.contextOccurrenceId === id || context.parentContextOccurrenceId === id));
@@ -1164,7 +1178,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
-  return <ProjectCompletionPreference.Provider value={projectSuggestionPreference}><BudgetPreviewStatus.Provider value={previewStatus}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
+  return <ProjectCompletionPreference.Provider value={projectSuggestionPreference}><BudgetPreviewStatus.Provider value={previewStatus}><ContextProgress.Provider value={contextProgress}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}
     prepareBasketArticle={prepareCatalogBasketArticle}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
@@ -1189,7 +1203,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       <div className={styles.toolbar}><IntentionSwitcher contextId={focusedContext} compact />
         {resumableContext && <button type="button" className={styles.financialLink} disabled={busy} onClick={() => {
           setResumeContext(null); stableLibraryOpen(resumableContext.id);
-        }}>{resumedPreset === "composed-outing" || resumedPreset === "weekend-gite" ? "Ouvrir le projet" : "Reprendre l’intention"}</button>}
+        }}>{resumedCard && isComposerProject(resumedCard) ? "Ouvrir le projet" : "Reprendre l’intention"}</button>}
         <div ref={historyTools} className={styles.historyTools}>
         <button data-history-action="undo" className={styles.historyButton} title="Annuler (Ctrl/Cmd+Z)" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => stage({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
         <button data-history-action="redo" className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => stage({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
@@ -1261,6 +1275,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           : undefined} />
       {(projectionOpen || unresolvedOpen) && <ComposerFinancialInspector model={shown} mode={unresolvedOpen ? "UNRESOLVED" : "FINANCE"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} focused={focusedContext}
         busy={busy || !!comparison || !!relationSession || durable.status === "CONFLICT"} decide={stage}
+        returnTo={financeReturn ? { label: financeReturn.label, open: () => stableLibraryOpen(financeReturn.id) } : undefined}
         retry={!busy && previewStatus !== "PENDING" && !comparison && !relationSession ? retryPreview : undefined}
         focus={navigateDecision} close={() => { setProjectionOpen(false); setUnresolvedOpen(false); setCompletenessFocus(false); }} />}</div>
     {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
@@ -1387,5 +1402,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></OpenMonthlyFinances.Provider></BudgetPreviewStatus.Provider></ProjectCompletionPreference.Provider>;
+  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></OpenMonthlyFinances.Provider></ContextProgress.Provider></BudgetPreviewStatus.Provider></ProjectCompletionPreference.Provider>;
 }

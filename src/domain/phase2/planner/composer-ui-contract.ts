@@ -96,6 +96,7 @@ export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly
   nightOutComponentGroups?: readonly import('./component-group-presentation').ComponentGroupProjection[];
   proof: Omit<PlannerApplyCommand, "applyRequestId">;
   appliedContextIds: readonly string[];
+  appliedContextDigests?: Readonly<Record<string, string>>;
   editors: readonly ComposerEditor[];
   controlEditors: readonly Readonly<{ targetRef: string; fields: readonly ComposerField[] }>[];
   sectionLabels: Readonly<Record<string, string>>;

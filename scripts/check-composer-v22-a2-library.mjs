@@ -16,6 +16,7 @@ class NodeMock {
   closest(selector){return selector==='aside'?this:null;}
   contains(node){return node===this;}
   hasAttribute(name){return this.props[name]!==undefined&&this.props[name]!==null;}
+  getAttribute(name){return this.props[name]??null;}
   matches(selector){return this.props['data-probe-input']?selector.includes('input'):false;}
   show(){this.open=true;}showModal(){this.open=true;}close(){this.open=false;}
   querySelector(selector){
@@ -95,6 +96,9 @@ try{
  await check('A2-01-ABSENT-ADDS-ONE-EXPLICIT-MASCARA',async()=>{
   await mount(f.model);await query('mascara');assert.equal(existing().length,0);
   assert(addMascara());assert.match(textOf(addMascara()),/Ajouter Mascara/);await enter();
+  assert.equal(board.model.semanticState.contexts.length,0);
+  assert.equal(document.activeElement.props['data-preset'],'mascara');
+  await invoke(addMascara());
   assert.equal(board.model.semanticState.contexts.length,1);assert.equal(mountedEditor()[0].props['data-probe-template'],'beauty-restock');
  });
  await check('A2-02-UNIQUE-ENTER-OPENS-EXACT-EDITOR-NO-TRANSPORT',async()=>{

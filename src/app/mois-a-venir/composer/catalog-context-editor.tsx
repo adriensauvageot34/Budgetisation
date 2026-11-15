@@ -30,7 +30,7 @@ import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
-import { money } from "./display";
+import { money, monthLabel, parsePlannedDay, plannedDayLabel } from "./display";
 import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
 import styles from "./composer.module.css";
 
@@ -76,6 +76,9 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const visitProject = project === "visit-friends" || bareProject && context.templateKey === "friend-visit";
   const outingProject = project === "composed-outing" || bareProject && context.templateKey === "other-context";
   const childSlot = outingProject ? "children" : visitProject ? "activities" : homeProject ? "purchases" : null;
+  const dateField = childSlot && editor.fields.find(field => field.key === "plannedDate" && field.kind === "DATE");
+  const canDate = !!dateField && !!card?.capabilityRefs.includes("PATCH_CONTEXT") && !card.readOnly && !protectedRef(context.contextOccurrenceId);
+  const lastDay = new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5)), 0)).toISOString().slice(0, 10);
   const childTarget: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: childSlot ?? undefined };
   const childSocket = childSlot && card?.sockets.find(socket => socket.slotKey === childSlot
     && socket.capabilityRefs.includes(`${context.templateKey}:${childSlot}:ATTACH_CHILD_CONTEXT`));
@@ -169,8 +172,8 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
           if (refs.some(ref => ref.kind === "TEXT" && !ref.label.trim()) || new Set(refs.map(prospectivePersonIdentity)).size !== refs.length)
             throw Error("Précisez chaque participant une seule fois, ou retirez la ligne vide.");
         }
-        if (field.kind === "DATE" && value && typeof value === "string" && !value.startsWith(`${targetMonth}-`))
-          throw Error("La date doit appartenir au mois composé.");
+        if (field.kind === "DATE" && value && (!parsePlannedDay(value) || !String(value).startsWith(`${targetMonth}-`)))
+          throw Error("Choisissez une date valide dans le mois du projet.");
         const normalized = field.kind === "COUNT" ? value === "" || value === null ? null : Number(value) : value;
         if (field.kind === "COUNT" && normalized !== null && (typeof normalized !== "number" || !Number.isInteger(normalized) || normalized < 1 || normalized > 366))
           throw Error("Indiquez un nombre entier admissible, ou laissez-le inconnu.");
@@ -243,6 +246,9 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       {(beautyProduct || context.templateKey === "activity" || homeProject) && !activeNeed &&
         <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {childSlot && <>
+        {dateField && <p><strong>Date du projet</strong> · {plannedDayLabel(context.fields.plannedDate) ?? "À préciser"}{" "}
+          {canDate && <button type="button" disabled={busy} onClick={() => setActiveKey("plannedDate")}>Modifier la date du projet</button>}
+        </p>}
         {homeProject && <HomeEquipmentEditor key={homeEquipmentLabel ?? context.contextOccurrenceId} project={context}
           model={model} busy={busy} onSave={onSave} openBasket={onOpenChild} suggestedLabel={homeEquipmentLabel}
           legacyPurchases={linkedPurchases.filter(child => !isPurchaseBasket(child))}
@@ -316,16 +322,18 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         <div className={styles.nightPage}><button type="button" disabled={personPage === 0} onClick={() => setPersonPage(page => page - 1)}>Précédent</button><span>{participants(value).length ? personPage + 1 : 0} / {participants(value).length}</span><button type="button" disabled={personPage + 1 >= participants(value).length} onClick={() => setPersonPage(page => page + 1)}>Suivant</button></div>
         <button type="button" onClick={() => { setPersonPage(participants(value).length); update(field.key, [...participants(value), { kind: "TEXT", label: "" }]); }}>Ajouter une personne</button>
       </fieldset>;
-      return <label key={field.key}>{field.label}{field.kind === "CHOICE" ? <p>{field.choices?.find(c=>c.value===value)?.label??"À préciser"} · choix dans le dock</p>
-        : <input type={field.key === "plannedTime" ? "time" : field.kind === "DATE" ? "date" : field.kind === "COUNT" ? "number" : "text"} min={field.kind === "COUNT" ? 1 : undefined}
-          max={field.kind === "COUNT" ? 366 : undefined} value={typeof value === "string" || typeof value === "number" ? value : ""}
+      return <label key={field.key}>{field.key === "plannedDate" && childSlot ? "Date du projet" : field.label}{field.kind === "CHOICE" ? <p>{field.choices?.find(c=>c.value===value)?.label??"À préciser"} · choix dans le dock</p>
+        : <input type={field.key === "plannedTime" ? "time" : field.kind === "DATE" ? "date" : field.kind === "COUNT" ? "number" : "text"} min={field.kind === "COUNT" ? 1 : field.kind === "DATE" ? `${targetMonth}-01` : undefined}
+          max={field.kind === "COUNT" ? 366 : field.kind === "DATE" ? lastDay : undefined} value={typeof value === "string" || typeof value === "number" ? value : ""}
           onChange={event => update(field.key, event.target.value)} autoComplete="off" />}</label>;
     })}</div></div>
+    {childSlot && activeKey === "plannedDate" && <p className={styles.helper}>Mois de rattachement : {monthLabel(targetMonth)}. Reporter cette date conserve les intentions liées, leurs dates et les réservations externes.</p>}
     <WorkshopDock question={question} host={dockHost} contextId={context.contextOccurrenceId} model={model} busy={busy} choose={choose} summary={() => setActiveKey(null)}
       choices={[...(directChoice ? [directChoice] : []),{ key: "summary", label: "Résumé", iconKey: "activity", selected: activeKey === null, choose: () => setActiveKey(null) },
         ...editor.fields.map(field => ({ key: field.key, label: field.label, iconKey: "activity", selected: activeKey === field.key, choose: () => setActiveKey(field.key) }))]} />
     {error && <p role="alert" className={styles.formError}>{error}</p>}
     <footer><button type="button" className={styles.secondary} disabled={busy} onClick={activeKey === null ? onCancel : () => setActiveKey(null)}>{activeKey === null ? "Retour au mois" : "Retour au résumé"}</button>
-      {activeKey !== null && <button type="button" className={styles.primary} disabled={busy} onClick={save}>Conserver et prévisualiser</button>}</footer>
+      {activeKey !== null && <button type="button" className={styles.primary} disabled={busy || !!childSlot && activeKey === "plannedDate" && !canDate} onClick={save}>
+        {childSlot && activeKey === "plannedDate" ? "Conserver la date du projet" : "Conserver et prévisualiser"}</button>}</footer>
   </div>;
 }

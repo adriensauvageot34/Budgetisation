@@ -29,6 +29,8 @@ if (measuring) {
   }).observe(document.getElementById("root")!, { childList: true, subtree: true });
 }
 const draftUrl = `/draft${location.search}`;
+const navigationFixture = new URLSearchParams(location.search).get("scenario") === "M11M12"
+  ? { scopeKey: "synthetic-m11m12-2026-11", enabled: false } : null;
 const draftRead = async (): Promise<ComposerDraftSnapshot> => {
   const response = await fetch(draftUrl);
   if (!response.ok) throw new Error("FIXTURE_DRAFT_READ_FAILED");
@@ -60,4 +62,4 @@ const model = readyContract ? { ...initial.model, board: { ...initial.model.boar
   cockpit: { ...initial.model.board.cockpit, projectionCompleteness: "COMPLETE", applyReadiness: "READY" } } } : initial.model;
 const fixtureTransport = readyContract ? async (request: ComposerRequest) => ({ ok: false, sequence: request.sequence,
   code: "UI_CONTRACT_ONLY", message: "Fixture de présentation uniquement : aucune application autorisée." }) : transport;
-createRoot(document.getElementById("root")!).render(<AppShell><div data-ui-contract={readyContract ? "ready-presentation-only" : undefined} style={{height:"100%"}}><ComposerShell initialModel={model} transport={fixtureTransport} initialDrafts={initialDrafts} draftTransport={draftTransport} snapshotMetrics={measuring} /></div></AppShell>);
+createRoot(document.getElementById("root")!).render(<AppShell><div data-ui-contract={readyContract ? "ready-presentation-only" : undefined} style={{height:"100%"}}><ComposerShell initialModel={model} transport={fixtureTransport} initialDrafts={initialDrafts} draftTransport={draftTransport} snapshotMetrics={measuring} rootRelationAccess={navigationFixture} /></div></AppShell>);
