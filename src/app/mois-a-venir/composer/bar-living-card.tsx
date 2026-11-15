@@ -15,6 +15,7 @@ import {barBefore} from "./bar-before";
 import {componentPresentationGroups} from '@/domain/phase2/planner/component-group-presentation';
 import {BarComponentGroup} from './bar-component-group';
 import {BarRouteLine,barPlaceLabel,barModeLabel,barPeopleLabel,barDateLabel,barPersonLabel} from "./bar-living-details";
+import { CommerceBadges } from "./commerce-badges";
 import type {ProspectivePersonRef,ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 import {nightOutDirectSelectionId,globalConsumptionCovers} from "@/domain/phase2/planner/night-out-consumption";
 export {barPlaceLabel,barModeLabel,barPeopleLabel};
@@ -90,6 +91,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
         {expanded&&!place&&<button type="button" className={styles.barMissingPlace} disabled={locked} aria-label="Modifier le lieu" onClick={()=>open('place')}><Plus size={14}/></button>}
         {place&&<><span aria-hidden="true"> · </span><button type="button" data-bar-closed-place className={styles.barClosedPlace} disabled={locked} title={placeLabel??undefined} aria-label={`Modifier le lieu · ${placeLabel}`} onClick={()=>open('place')}><span>{placeLabel}</span></button></>}
       </h3>
+        <CommerceBadges context={card} model={model} />
         <div className={styles.barLivingAmount} data-cost-unknown={summary?.knownAmount==null}>{expanded?<div data-bar-open-amount><strong data-bar-amount-fallback aria-label={summary?.knownAmount==null?"Montant à renseigner":undefined}>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></div>:<button type="button" data-bar-amount-trigger className={styles.barAmountTrigger} disabled={locked} aria-label={summary?.knownAmount==null?"Modifier l’estimation des consommations · Montant à renseigner":"Modifier l’estimation des consommations"} title="Choisir la portée à modifier · aucun total calculé n’est écrasé" onClick={()=>open("quick")}><strong>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></button>}
         {expanded ? summary?.knownAmount!=null&&<>{!fresh?<small>Estimation à actualiser</small>:summary.costIncomplete?<small aria-label={incompleteExplanation}>Montant partiel</small>:null}</>
           : !fresh&&summary ? <span className={styles.barClosedCostStatus} data-bar-cost-info tabIndex={0} aria-describedby={infoId}><Info size={13} aria-hidden="true"/>Estimation à actualiser<span id={infoId} role="tooltip" className={styles.barClosedCostTip}>La projection précédente doit être actualisée avant de servir de projection actuelle.</span></span>

@@ -279,7 +279,19 @@ export const HOME_PROJECT_PRESET = {
   defaults: { label: "Aménager une pièce" }, questions: ["Équipement", "Achats", "Services"],
   guidance: "Préparez les équipements, prestations et achats prévus. Vous pourrez préciser leurs montants séparément.",
 } as const;
-export const COMPOSER_LIBRARY_PRESETS = [...COMPOSER_PRESETS, ...ACTIVITY_PRESETS, ...PURCHASE_BASKET_PRESETS, HOME_PROJECT_PRESET];
+const SERVICE_PRESETS = [
+  { presetKey: "hairdresser-service", label: "Coiffeur", templateKey: "activity", categoryKey: "BEAUTY",
+    illustrationKey: "hairdresser", artworkPath: "/planned-visuals/builder/clay/beauty/hairdresser.webp",
+    searchTerms: ["coiffeur", "coiffure", "coupe de cheveux", "brushing", "soin capillaire", "prestation"],
+    defaults: { label: "Coiffeur" }, questions: ["Prestation", "Établissement", "Rendez-vous", "Tarif"],
+    guidance: "Préparez la prestation et son tarif. La réservation se fait auprès du prestataire." },
+  { presetKey: "planned-service", label: "Autre prestation", templateKey: "activity", categoryKey: "BEAUTY",
+    illustrationKey: "hairdresser", artworkPath: "/planned-visuals/builder/clay/beauty/hairdresser.webp",
+    searchTerms: ["prestation", "service", "prestataire", "rendez-vous"],
+    defaults: { label: "Prestation" }, questions: ["Prestation", "Prestataire", "Rendez-vous", "Tarif"],
+    guidance: "Gardez les coordonnées utiles et le tarif prévu de cette prestation." },
+] as const;
+export const COMPOSER_LIBRARY_PRESETS = [...COMPOSER_PRESETS, ...ACTIVITY_PRESETS, ...PURCHASE_BASKET_PRESETS, HOME_PROJECT_PRESET, ...SERVICE_PRESETS];
 export type ComposerPreset = typeof COMPOSER_LIBRARY_PRESETS[number];
 export type ComposerPresetKey = ComposerPreset["presetKey"];
 export const COMPOSER_PRESENTATION_VERSION = "composer-context-presentation@v1" as const;
@@ -300,6 +312,10 @@ export function presetForContext(context: { templateKey: string; fields: Planner
   // Forward-compatible reader: unknown presentation keys preserve their JSON,
   // use the generic template visual and grant no creation/edit capability.
   return preset;
+}
+export function isServiceContext(context: Parameters<typeof presetForContext>[0]) {
+  const key = presetForContext(context)?.presetKey;
+  return key === "hairdresser-service" || key === "planned-service";
 }
 export function presetCreationFields(templateKey: string, presetKey?: string): PlannerJsonObject {
   if (presetKey === undefined) return {};

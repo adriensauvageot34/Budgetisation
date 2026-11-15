@@ -22,6 +22,7 @@ import { HairdresserReference } from "./hairdresser-reference";
 import { isPurchaseBasket, purchaseComponents, type PurchaseComponent } from "@/domain/phase2/planner/purchase-basket";
 import { catalogRefLocked } from "./catalog-discovery";
 import { purchaseLineLabel } from "./purchase-line-label";
+import { CommerceBadges } from "./commerce-badges";
 import { budgetAmountsCurrent, BudgetPreviewStatus } from "./intent-budget-impact";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
@@ -93,9 +94,10 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
     <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} disabled={busy}
-      onClick={() => editable && (["restaurant", "activity", "home-project"].includes(card.templateKey) || purchase || !!preset)
+      onClick={() => editable && (["restaurant", "activity", "home-project", "gift"].includes(card.templateKey) || purchase || !!preset)
         ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>
       {(typeof card.fields.plannedDate === "string" || plannedTime) && <p>{[plannedDay ?? "Date à préciser", plannedTime].filter(Boolean).join(" · ")}</p>}
+      <CommerceBadges context={card} model={model} />
       {card.childContextOccurrenceIds.length > 0 && <p data-linked-intentions-count={card.childContextOccurrenceIds.length}>
         {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
       </p>}
@@ -130,8 +132,6 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
         : basketSummary?.knownAmount == null ? "Total à préciser"
           : basketSummary.complete ? `Total brut ${money(basketSummary.knownAmount)}`
             : `Sous-total connu ${money(basketSummary.knownAmount)} · Total à préciser`}</small>
-      {typeof card.fields.merchantLabel === "string" && card.fields.merchantLabel !== card.label
-        && <small>Vendeur · {card.fields.merchantLabel}</small>}
     </div>{editable && !!basketArticles.length &&
       <BasketBoardArticles items={basketArticles} busy={busy} open={selectionId => edit(card, selectionId)}
         canEdit={selectionId => admittedBasketArticles.has(selectionId)

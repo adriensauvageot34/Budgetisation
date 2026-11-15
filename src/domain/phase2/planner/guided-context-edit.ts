@@ -1,9 +1,12 @@
 import type { ComponentSelectionV1 } from "./component-contract";
-import type { PlannerJson } from "./json";
+import { plannerDigest, type PlannerJson } from "./json";
 import { parsePlanSemanticState, type PlanSemanticStateV1 } from "./semantic-state";
-import { presetForContext } from "./composer-presets";
+import { isServiceContext, presetForContext } from "./composer-presets";
 import { isPurchaseBasket } from "./purchase-basket";
 import { parseOutingTime } from "./outing-time";
+import { componentId } from "./identity";
+
+export const SERVICE_FIELDS = ["providerLabel", "appointmentIntent"] as const;
 
 export type GuidedContextEdit = Readonly<{ contextOccurrenceId: string; fields?: Readonly<Record<string, PlannerJson>>;
   slots?: Readonly<Partial<Record<"meal" | "main" | "item" | "extras" | "transport", readonly ComponentSelectionV1[]>>> }>;
@@ -24,12 +27,16 @@ export function editGuidedContext(raw: PlanSemanticStateV1, edit: GuidedContextE
   if (state.preferences.anchors.includes(context.contextOccurrenceId) || state.preferences.flexibility[context.contextOccurrenceId] === "PRESERVE")
     throw new TypeError("COMPOSER_CONTEXT_LOCKED");
   const shape = guidedContextShape(context.templateKey), fields = { ...context.fields }, slots = { ...context.slotSelections };
+  const service = isServiceContext(context);
   const allowedFields = ["label", "plannedDate", "placeRef", ...(context.templateKey === "activity" ? ["plannedTime"] : []),
+    ...(service ? SERVICE_FIELDS : []),
     ...(shape.participants ? ["participantRefs"] : ["budgetDomain", "productLabel", "merchantLabel"])];
   for (const [key, value] of Object.entries(edit.fields ?? {})) {
     if (!allowedFields.includes(key)) throw new TypeError("COMPOSER_PRESET_FIELD_INVALID");
+    if (key === "appointmentIntent" && value !== "" && value !== null && value !== "CONSIDERING")
+      throw new TypeError("COMPOSER_SERVICE_APPOINTMENT_INVALID");
     const next = key === "plannedTime" ? parseOutingTime(value) : value;
-    if (next === "" || key === "plannedTime" && next === null) delete fields[key]; else fields[key] = next;
+    if (next === "" || next === null && (key === "plannedTime" || SERVICE_FIELDS.some(field => field === key))) delete fields[key]; else fields[key] = next;
   }
   for (const [key, items] of Object.entries(edit.slots ?? {})) {
     if (![shape.slot, "extras", ...(shape.transport ? ["transport"] : [])].includes(key) || !Array.isArray(items)
@@ -37,6 +44,16 @@ export function editGuidedContext(raw: PlanSemanticStateV1, edit: GuidedContextE
       || items.some(item => key === "transport" ? item.kind !== "MOBILITY_INTENT"
         : item.kind !== "COMPONENT" || item.optionKey !== (key === "extras" ? "extra" : shape.option)))
       throw new TypeError("COMPOSER_PRESET_SLOT_INVALID");
+    if (service && key === "main") {
+      const before = (slots.main?.items ?? []) as readonly ComponentSelectionV1[];
+      const prior = before.find(item => item.kind === "COMPONENT");
+      if (prior && items[0]?.selectionId !== prior.selectionId) throw new TypeError("COMPOSER_SERVICE_POST_CHANGED");
+      if (prior) {
+        const ref = componentId(context.contextOccurrenceId, key, prior.selectionId);
+        if ((state.preferences.anchors.includes(ref) || state.preferences.flexibility[ref] === "PRESERVE")
+          && plannerDigest(prior) !== plannerDigest(items[0])) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+      }
+    }
     slots[key] = { ...slots[key], items };
   }
   return parsePlanSemanticState({ ...state, contexts: state.contexts.map(c => c === context ? { ...c, fields, slotSelections: slots } : c) });

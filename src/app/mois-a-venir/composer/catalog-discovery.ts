@@ -8,7 +8,8 @@ import { componentId } from '@/domain/phase2/planner/identity';
 import { clayAssetArtwork } from '../clay-v22-media';
 import { plannedAsset } from '@/domain/phase2/planned-assets';
 import { isPurchaseBasket, MAX_PURCHASE_ARTICLES, purchaseComponents, type BasketConcept, type PurchaseComponent } from '@/domain/phase2/planner/purchase-basket';
-import { libraryOccurrences } from '@/domain/phase2/planner/composer-library-index';
+import { isHairdresserReference, libraryOccurrences } from '@/domain/phase2/planner/composer-library-index';
+import { intentionNavigationEntries } from './workshop-navigation';
 import { isBasketCatalogProduct } from '@/domain/phase2/planner/purchase-catalog';
 import { homeEquipment, homeEquipmentBaskets, homeEquipmentKey, homeEquipmentPurchases, homeLegacyEquipment } from '@/domain/phase2/planner/home-equipment';
 import { purchaseLineLabel } from './purchase-line-label';
@@ -139,6 +140,14 @@ export function catalogSocket(model:ComposerUiModel,contextId:string,slotKey:str
 export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,target:DiscoveryTarget):DiscoveryAction[]{
  const actions:DiscoveryAction[]=[];
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===target.contextId);
+ if (!target.contextId && !target.controlRef && entry.assetKeys.includes("beauty:hairdresser")) {
+   const existing = intentionNavigationEntries(model.board.contexts.filter(candidate =>
+     presetForContext(candidate)?.presetKey === "hairdresser-service" || isHairdresserReference(model, candidate)));
+   const asset = model.library.searchableAssets.find(candidate => candidate.assetKey === "template:activity");
+   if (existing.length) return existing.map(item => ({ key: item.id, kind: "OPEN", contextId: item.id, label: `Ouvrir ${item.label}` }));
+   if (asset && publishedDrop(model, asset.assetKey, { kind: "BOARD_ZONE" })?.semanticAction === "ADD_CONTEXT")
+     return [{ key: "hairdresser-service", kind: "PRESET", presetKey: "hairdresser-service", asset, label: "Préparer une prestation de coiffure" }];
+ }
  const groceryProduct=target.scope==="courses"&&isBasketCatalogProduct(entry,"groceries");
  const product=purchaseCatalogProduct(entry);
  const homeProduct = product?.module === "home" || entry.discovery.contexts.includes("home")

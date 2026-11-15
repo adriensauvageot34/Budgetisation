@@ -128,6 +128,7 @@ async function buildComposerUiModel(deps: PlannerDependencies, household: string
       relationships: p.relationships,
       routeResolvable: !!p.googlePlaceId||!!p.address?.trim()||!!p.coordinates&&Number.isFinite(p.coordinates.latitude)&&Number.isFinite(p.coordinates.longitude),
       ...(!p.privatePlace&&p.googlePlaceId?{googlePlaceId:p.googlePlaceId}:{}),
+      ...(!p.privatePlace && p.confirmedMerchant ? { confirmedMerchant: p.confirmedMerchant } : {}),
       ...(mobilityOptions.placeKnowledge ? { currentRelationships: p.currentRelationships, ...(!p.privatePlace ? { visits12Months: p.visits12Months, lastVisitDate: p.lastVisitDate } : {}) } : {}),
       ...(!p.privatePlace && p.address ? { address: p.address } : {}) })) } } : {}),
     mobilitySummaries: mobilitySummaries(preview.compiled.journeys, preview.compiled.journeyPrices),
@@ -342,13 +343,20 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_GIFT") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.contextOccurrenceId);
-      if (card?.templateKey !== "gift" || !card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_GIFT_TARGET_INVALID");
+      if (card?.templateKey !== "gift" || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_GIFT_TARGET_INVALID");
       const prior = card.sockets.find(socket => socket.slotKey === "item")?.currentItems ?? [];
       if (request.item.kind !== "COMPONENT" || request.item.optionKey !== "gift"
         || prior.some(item => item.kind === "COMPONENT" && item.selectionId !== request.item.selectionId))
         throw new TypeError("COMPOSER_GIFT_ITEM_INVALID");
       state = setContextSlotSelections(patchContextEditorFields(state, card.contextOccurrenceId, request.values),
         card.contextOccurrenceId, "item", [request.item]);
+      if (Object.hasOwn(request.values, "recipientRef") || Object.hasOwn(request.values, "placeRef")) {
+        const refs = knownContextReferences(state);
+        if (refs.personIds.length || refs.placeIds.length) {
+          if (!deps.validateContextReferences) throw new TypeError("CONTEXT_REFERENCE_OWNER_UNAVAILABLE");
+          await deps.validateContextReferences(household, refs);
+        }
+      }
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_NIGHT_OUT") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);

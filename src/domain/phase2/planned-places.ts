@@ -11,6 +11,7 @@ export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commu
   /** Current, owner-published links. Never authorize by a display name. */
   currentRelationships?: readonly { personId: string; role: string }[];
   brandLabel?: string | null;
+  confirmedMerchant?: Readonly<{ id: string; name: string }>;
   address?: string | null; coordinates?: import("./planned-car").RouteCoordinates; googlePlaceId?: string;
   /** Ephemeral UI admission evidence; private coordinates need not be exposed. */
   routeResolvable?: boolean;

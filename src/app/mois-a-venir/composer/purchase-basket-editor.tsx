@@ -17,6 +17,7 @@ import { clayCatalogArtwork, loadClayV22Collection, type ClayCatalogEntry } from
 import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { catalogBasketArticleTarget, catalogRefLocked, normalizeCatalog, type GuidedCatalogChoice } from "./catalog-discovery";
 import { purchaseLineLabel, purchaseVariantText } from "./purchase-line-label";
+import { CommerceBadges } from "./commerce-badges";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { purchaseSuggestions } from "./purchase-suggestions";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
@@ -261,6 +262,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       <h2 id="basket-heading" tabIndex={-1}>{card.label}</h2></div>
       <button type="button" aria-label="Fermer le panier" onClick={close}>Fermer</button></header>
     <WorkshopNavigation contextId={id} />
+    <CommerceBadges context={context} model={model} />
     {!form && !selectionPrompt && <IntentBudgetImpact model={model} contextId={id} />}
     {!form && !selectionPrompt && <div className={styles.actions}>
       {writable && <CatalogOpenButton target={{ contextId: id, scope: groceries ? "courses" : undefined, moment: "article" }}>
@@ -389,7 +391,6 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       })}</ul>
     </section>
     <footer className={styles.footer}>
-      {typeof context.fields.merchantLabel === "string" && <p>Vendeur · {context.fields.merchantLabel}</p>}
       {!model.budgetReading && <p>{!amountsCurrent ? "Total en attente de simulation" : visibleTotal == null ? "Total à préciser"
         : summary?.complete ? `Total brut · ${money(visibleTotal)}` : `Montant connu · ${money(visibleTotal)} · total à préciser`}</p>}
       <p>{plannedDelivery[(context.fields.deliveryMode as BasketDeliveryMode | undefined) ?? "UNKNOWN"]} · {coverageLabels[(context.fields.deliveryCoverage as BasketDeliveryCoverage | undefined) ?? "UNKNOWN"]}{delivery?.cost.kind === "MANUAL" ? ` · ${money(delivery.cost.unitAmount)}` : ""}</p>

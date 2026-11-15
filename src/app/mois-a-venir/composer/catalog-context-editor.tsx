@@ -92,6 +92,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     "restaurant-for-two",
     ...COMPOSER_LIBRARY_PRESETS.filter(preset => preset.templateKey === "activity"
       && preset.presetKey !== (visitProject ? "museum-exhibition" : "cinema")).map(preset => preset.presetKey),
+    ...(outingProject ? ["gift-present"] : []),
   ];
   const addOptions = canAttach ? additions.map(composerPreset).flatMap(preset => {
     const assetKey = `template:${preset?.templateKey}`;

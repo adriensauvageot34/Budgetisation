@@ -1,5 +1,7 @@
 import "server-only";
 import { parseOutingTime } from "@/domain/phase2/planner/outing-time";
+import { isServiceContext } from "@/domain/phase2/planner/composer-presets";
+import { SERVICE_FIELDS } from "@/domain/phase2/planner/guided-context-edit";
 import { HOME_EQUIPMENT_FIELD, parseHomeEquipment } from "@/domain/phase2/planner/home-equipment";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import {parseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
@@ -166,6 +168,8 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
 }
 export function readContextSelections(context: PlannedContextState, targetMonth: string): ReadonlyMap<string, readonly ComponentSelectionV1[]> {
   restaurantIncludedDetails(context);
+  if (SERVICE_FIELDS.some(key => Object.hasOwn(context.fields, key)) && !isServiceContext(context))
+    throw new TypeError("COMPOSER_SERVICE_TARGET_INVALID");
   const template = resolveContextTemplate(context.templateKey, context.fields);
   const basket = isPurchaseBasket(context);
   if (basket && context.fields.basketCoverage != null && context.fields.budgetDomain !== "groceries")

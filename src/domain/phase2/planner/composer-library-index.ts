@@ -26,7 +26,7 @@ const genericLabels: Readonly<Record<string,string>> = {
   "family-visit":"Autre visite familiale", "friend-visit":"Autre visite amicale", "short-stay":"Autre séjour",
   "home-project":"Autre projet maison", "other-context":"Autre intention",
 };
-const beautyGroups: Readonly<Record<string,string>> = { mascara:"Maquillage", eyeliner:"Maquillage", "eyebrow-pencil":"Maquillage", "makeup-remover":"Maquillage", "hair-wax":"Cheveux", "care-lotion":"Autres soins" };
+const beautyGroups: Readonly<Record<string,string>> = { mascara:"Maquillage", eyeliner:"Maquillage", "eyebrow-pencil":"Maquillage", "makeup-remover":"Maquillage", "hair-wax":"Cheveux", "care-lotion":"Autres soins", "hairdresser-service":"Prestations", "planned-service":"Prestations" };
 export function libraryPresetGroup(preset:ComposerPreset):string {
   if(preset.categoryKey==="PURCHASE") return "merchantLabel" in preset.defaults ? "Acheter chez…" : "Choisir un achat";
   if(preset.categoryKey==="BEAUTY") return beautyGroups[preset.presetKey]??"Visage";
@@ -97,7 +97,7 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
     const bareActivity=card.templateKey==="activity"&&card.fields.composerPresentation===undefined;
     const bareProject=["home-project","friend-visit","family-visit","short-stay","other-context"].includes(card.templateKey)
       &&card.fields.composerPresentation===undefined;
-    const bare=bareBasket||bareActivity||bareProject;
+    const bare=bareBasket||bareActivity||bareProject||card.templateKey==="gift"&&card.fields.composerPresentation===undefined;
     if(!hairdresserReference&&!bare&&!preset)return [];
     const day=typeof card.fields.plannedDate==="string"?card.fields.plannedDate:null;
     const parsed=day&&/^\d{4}-\d{2}-\d{2}$/.test(day)?new Date(`${day}T12:00:00Z`):null;

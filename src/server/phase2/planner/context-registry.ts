@@ -6,6 +6,7 @@ import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state
 import { nightOutConsumption } from "@/domain/phase2/planner/night-out-consumption";
 import { DELIVERY_COVERAGES, DELIVERY_MODES, isPurchaseBasket, PURCHASE_BASKET_FIELDS } from "@/domain/phase2/planner/purchase-basket";
 import { LODGING_RESERVATION_STATES } from "@/domain/phase2/planner/short-stay-edit";
+import { SERVICE_FIELDS } from "@/domain/phase2/planner/guided-context-edit";
 
 export const CONTEXT_REGISTRY_VERSION = "planner-context-registry@v3-renewals";
 export const GIFT_ASSET_CONTEXT_REGISTRY_VERSION = "planner-context-registry@v4-gift-asset";
@@ -143,6 +144,8 @@ export function isLegacyContextField(templateKey: string, fieldKey: string): boo
   return ["label", "plannedDate"].includes(fieldKey)
     || ["activity", "restaurant"].includes(templateKey) && fieldKey === "plannedTime"
     || templateKey === "short-stay" && fieldKey === "lodgingReservation"
+    || templateKey === "activity" && SERVICE_FIELDS.some(key => key === fieldKey)
+    || templateKey === "gift" && ["merchantLabel", "placeRef"].includes(fieldKey)
     || templateKey === "purchase" && fieldKey === "budgetDomain"
     || ["night-out", "short-stay"].includes(templateKey) && fieldKey === "endDate";
 }
@@ -175,6 +178,13 @@ function withOutingFields(template: ContextTemplateV1, scheduling: boolean, rese
       : undefined;
   return field ? { ...template, version: `${template.version}+${field.fieldKey}@v1`, fields: [...template.fields, field] } : template;
 }
+function withCommerceFields(template: ContextTemplateV1) {
+  const fields: readonly ContextFieldDefinition[] = template.templateKey === "gift" ? [text("merchantLabel"), place("placeRef")]
+    : template.templateKey === "activity" ? [text("providerLabel"),
+      { fieldKey: "appointmentIntent", kind: "CHOICE", choices: ["CONSIDERING"], required: false }]
+    : [];
+  return fields.length ? { ...template, version: `${template.version}+commerce@v1`, fields: [...template.fields, ...fields] } : template;
+}
 
 export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
   const source = baseManifestRegistry(state);
@@ -182,11 +192,16 @@ export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegi
   const scheduled = new Set(state.contexts.filter(context => ["activity", "restaurant"].includes(context.templateKey)
     && Object.hasOwn(context.fields, "plannedTime")).map(context => context.templateKey));
   const reservation = state.contexts.some(context => context.templateKey === "short-stay" && Object.hasOwn(context.fields, "lodgingReservation"));
-  if (!home && !scheduled.size && !reservation) return source;
+  const commerce = new Set(state.contexts.filter(context => context.templateKey === "activity"
+    ? SERVICE_FIELDS.some(key => Object.hasOwn(context.fields, key))
+    : context.templateKey === "gift" && ["merchantLabel", "placeRef"].some(key => Object.hasOwn(context.fields, key))).map(context => context.templateKey));
+  if (!home && !scheduled.size && !reservation && !commerce.size) return source;
   const version = source.version + (home ? "+home-equipment@v1" : "") + (scheduled.size ? "+outing-time@v1" : "")
-    + (reservation ? "+lodging-reservation@v1" : "");
-  return freeze({ version, templates: source.templates.map(template => withOutingFields(
-    home ? withHomeEquipment(template) : template, scheduled.has(template.templateKey), reservation)) });
+    + (reservation ? "+lodging-reservation@v1" : "") + (commerce.size ? "+commerce@v1" : "");
+  return freeze({ version, templates: source.templates.map(template => {
+    const current = withOutingFields(home ? withHomeEquipment(template) : template, scheduled.has(template.templateKey), reservation);
+    return commerce.has(template.templateKey) ? withCommerceFields(current) : current;
+  }) });
 }
 
 export function resolveContextTemplate(key: string, fields?: PlanSemanticStateV1["contexts"][number]["fields"]): ContextTemplateV1 {
@@ -194,5 +209,8 @@ export function resolveContextTemplate(key: string, fields?: PlanSemanticStateV1
   const found = restaurantDetailsRegistry.templates.find(t => t.templateKey === key);
   if (!found) throw new TypeError(`PLANNER_CONTEXT_TEMPLATE_UNSUPPORTED:${key}`);
   const template = key === "home-project" && fields && Object.hasOwn(fields, HOME_EQUIPMENT_FIELD) ? withHomeEquipment(found) : found;
-  return withOutingFields(template, !fields || Object.hasOwn(fields, "plannedTime"), !fields || Object.hasOwn(fields, "lodgingReservation"));
+  const current = withOutingFields(template, !fields || Object.hasOwn(fields, "plannedTime"), !fields || Object.hasOwn(fields, "lodgingReservation"));
+  const usesCommerce = key === "gift" ? !fields || ["merchantLabel", "placeRef"].some(field => Object.hasOwn(fields, field))
+    : key === "activity" && !!fields && SERVICE_FIELDS.some(field => Object.hasOwn(fields, field));
+  return usesCommerce ? withCommerceFields(current) : current;
 }

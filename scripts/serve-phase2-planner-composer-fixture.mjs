@@ -12,7 +12,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { require } from './lib/phase2-ts-loader.mjs';
 import {readLiveProviderKeys} from './lib/bar-live-provider-keys.mjs';
 import { createKernelPostgres } from './lib/planner-kernel-postgres.mjs';
-import { fixture as plannerFixture, state as plannerState, simpleMonth, nightMonth, weekendMonth, renewalMonth, externalMonth, householdId } from './fixtures/planner-headless.mjs';
+import { fixture as plannerFixture, state as plannerState, simpleMonth, nightMonth, weekendMonth, renewalMonth, externalMonth, householdId, uuid } from './fixtures/planner-headless.mjs';
 import { providers } from './fixtures/planner-mobility.mjs';
 import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtures/planner-atomic-ui.mjs';
 import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
@@ -33,6 +33,7 @@ const { appliedMobilitySummaries } = require('@/server/phase2/planner/mobility-p
 const { appliedPlanControls } = require('@/server/phase2/planner/applied-plan-read');
 const { AppliedMonthView } = require('@/app/mois-a-venir/applied-month-view');
 const { semanticStateDigest, parsePlanSemanticState } = require('@/domain/phase2/planner/semantic-state');
+const { presetCreationFields } = require('@/domain/phase2/planner/composer-presets');
 // Explicit localhost opt-in only. No Supabase, redirects, or unbounded calls.
 const liveProviders=process.env.BAR_LOCAL_LIVE_PROVIDERS==='1';
 if(liveProviders)await readLiveProviderKeys();
@@ -91,6 +92,26 @@ fs.writeFileSync(path.join(out,'global.css'),globalCss);
 } else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
 if (process.env.PLANNER_C8_BUILD_ONLY === '1') process.exit(0);
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
+  COMMERCE: () => {
+    const month = simpleMonth();
+    const place = (placeId, name, usage, subtype, confirmedMerchant) => ({ placeId, name, usage, subtype,
+      nature: "Commerce", commune: "Ville de recette", privatePlace: false, relationships: [], visits12Months: 5, confirmedMerchant });
+    month.world.mobilityFacts = { ...month.world.mobilityFacts, places: [
+      place("f2000000-0000-4000-8000-000000000001", "Salon de recette", "Soins personnels", "Salon de coiffure", { id: "m-salon", name: "Atelier de recette" }),
+      place("f2000000-0000-4000-8000-000000000002", "Table de recette", "Restaurant", "Restaurant"),
+      place("f2000000-0000-4000-8000-000000000003", "Bar de recette", "Bar", "Bar"),
+    ] };
+    month.semantic = { ...month.semantic, contexts: [
+      ...[
+        ["restaurant", "restaurant-for-two", 8021, { kind: "KNOWN", placeId: "f2000000-0000-4000-8000-000000000002" }],
+        ["night-out", "bar-apero", 8022, { kind: "KNOWN", placeId: "f2000000-0000-4000-8000-000000000003" }],
+        ["restaurant", "restaurant-for-two", 8023, { kind: "TEXT", label: "Table de recette", provenance: "USER_DECLARED_PROSPECTIVE" }],
+      ].map(([templateKey, preset, id, placeRef]) => ({ contextOccurrenceId: uuid(id), templateKey, status: "ACTIVE",
+        parentContextOccurrenceId: null, fields: { ...presetCreationFields(templateKey, preset), fieldSchemaVersion: "context-fields@v2", placeRef },
+        provenance: "EXPLICIT_USER_DECISION", slotSelections: {} })),
+    ] };
+    return month;
+  },
   L1: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P05: () => ({ world: plannerFixture(), semantic: plannerState() }),

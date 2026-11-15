@@ -6,7 +6,7 @@ import { useWorkshopQuestion } from "./workshop-choices";
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette } from "./context-palette";
-import type { ProspectivePersonRef } from "@/domain/phase2/planned-contract";
+import type { ProspectivePersonRef, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { prospectivePersonLabel } from "@/domain/phase2/planned-product";
 import { assetsForModule, PLANNED_ASSET_CATALOG_VERSION, type PlannedAssetRef } from "@/domain/phase2/planned-assets";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -22,6 +22,9 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { catalogRefLocked, catalogSocket } from "./catalog-discovery";
 import { componentId } from "@/domain/phase2/planner/identity";
+import { PlannedPlaceField } from "../planned-place-field";
+import { CommerceBadges } from "./commerce-badges";
+import { WorkshopNavigation } from "./workshop-navigation";
 
 const occasionChoices = ["Sans occasion particulière", "Anniversaire", "Noël", "Fête ou célébration"];
 const giftAssets = assetsForModule("gift").filter(asset => !/(?:delivery_fee|service_fee)$/u.test(asset.assetKey));
@@ -46,20 +49,24 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
   const [assetKey, setAssetKey] = useState(existingAssetRef?.assetKey ?? "");
   const [objectLabel, setObjectLabel] = useState(string(context.fields.objectLabel) || (existing?.label === "Cadeau" ? "" : existing?.label) || "");
   const [date, setDate] = useState(string(context.fields.plannedDate));
+  const [seller, setSeller] = useState(string(context.fields.merchantLabel));
+  const [place, setPlace] = useState((context.fields.placeRef ?? undefined) as ProspectivePlaceRef | undefined);
   const [row, setRow] = useState(() => existing ? fromSelection(existing) : fresh("Cadeau"));
   const [error, setError] = useState("");
-  const [section, setSection] = useState<"summary" | "recipient" | "occasion" | "object" | "budget" | "date">("summary");
-  const buffer = { recipient, occasion, assetKey, objectLabel, date, row };
+  const [section, setSection] = useState<"summary" | "recipient" | "occasion" | "object" | "budget" | "date" | "seller">("summary");
+  const buffer = { recipient, occasion, assetKey, objectLabel, date, seller, place, row };
   const acceptedBuffer = useRef(buffer), initial = acceptedBuffer.current;
   useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(buffer) !== JSON.stringify(initial), () => {
     setRecipient(initial.recipient); setOccasion(initial.occasion); setAssetKey(initial.assetKey);
-    setObjectLabel(initial.objectLabel); setDate(initial.date); setRow(initial.row); setError("");
+    setObjectLabel(initial.objectLabel); setDate(initial.date); setSeller(initial.seller); setPlace(initial.place); setRow(initial.row); setError("");
   });
   const [query,setQuery] = useState("");
   const selectedAsset = giftAssets.find(asset => asset.assetKey === assetKey);
   const save = () => { try {
     if (recipient?.kind === "TEXT" && !recipient.label.trim()) throw Error("Indiquez le nom du destinataire ou retirez cette sélection.");
+    if (place?.kind === "TEXT" && !place.label.trim()) throw Error("Indiquez le nom du lieu ou retirez cette sélection.");
     const values = { recipientRef: recipient ?? "", occasion: occasion.trim(), plannedDate: date || "", objectLabel: objectLabel.trim(),
+      merchantLabel: seller.trim(), placeRef: place ?? "",
       ...(assetKey === (existingAssetRef?.assetKey ?? "") ? {} : { objectAssetRef: assetKey
         ? { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection: selectedAsset?.label ?? "", provenance: "EXPLICIT_USER_DECISION" } : "" }) };
     const patch = Object.fromEntries(Object.entries(values).filter(([key, value]) => JSON.stringify(value || null) !== JSON.stringify(context.fields[key] ?? null)));
@@ -85,6 +92,8 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
       ...SOCIAL_CONTACTS_V1.filter(p=>match(p.label)).map(p=>tile(p.key,p.label,()=>setRecipient({kind:"CONTACT",contactKey:p.key}))),
       tile("text","Autre personne",()=>setRecipient({kind:"TEXT",label:""})),tile("later","Plus tard",()=>setRecipient(undefined))]}:null);
   return <form data-gift-editor className={styles.nightEditor} onSubmit={event => { event.preventDefault(); save(); }}>
+    <WorkshopNavigation contextId={context.contextOccurrenceId} />
+    <CommerceBadges context={context} model={model} />
     {section === "summary" && <section className={styles.nightSection} data-gift-summary><h3>{objectLabel || "Cadeau à préciser"}</h3>
       {assetKey && <ComposerAssetVisual assetKey={assetKey} iconKey="gift" />}
       <p>Le cadeau reste dans votre brouillon, même si sa date ou son prix sont inconnus.</p>
@@ -92,7 +101,8 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
       {occasion && <p>Occasion : {occasion}</p>}
       {existing && <p>Prix : {existing.cost.kind === "MANUAL" ? `${existing.cost.unitAmount} €` : "inconnu ou devis conservé"}</p>}
       <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection("object")}>Choisir l’objet</button>
-        <button type="button" onClick={() => setSection("budget")}>Préciser le prix</button></div></section>}
+        <button type="button" onClick={() => setSection("budget")}>Préciser le prix</button>
+        <button type="button" onClick={() => setSection("seller")}>Vendeur et établissement</button></div></section>}
     {section === "budget" && <details><summary>Repères historiques · ne décident aucun prix</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
     {section !== "summary" && <p className={styles.helper}>Le coût provient uniquement de l’objet et de ses éventuels compléments.</p>}
     <div className={styles.formFields}>
@@ -111,6 +121,11 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
       {assetKey && !selectedAsset && <p role="status" className={styles.helper}>Cette référence de catalogue n’est plus disponible. Elle reste conservée tant que vous ne choisissez pas un autre type.</p>}
       <label>Quel objet ou produit ?<input value={objectLabel} onChange={event => setObjectLabel(event.target.value)} maxLength={120} /></label></>}
       {section === "date" && <label>Date prévue (facultative)<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>}
+      {section === "seller" && <>
+        <label>Vendeur (facultatif)<input value={seller} maxLength={120} onChange={event => setSeller(event.target.value)} /></label>
+        <PlannedPlaceField label="Établissement" places={(model.mobilityOptions?.places ?? []).filter(place => !place.privatePlace)}
+          value={place} onChange={setPlace} exact />
+      </>}
       {section === "budget" && <WorkshopComponentRow title="Cadeau" row={{ ...row, label: objectLabel || row.label }} onChange={next => {
         if (next.label !== (objectLabel || row.label)) setObjectLabel(next.label);
         setRow(next);
@@ -120,8 +135,8 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
     <footer><button type="button" className={styles.secondary} disabled={busy} onClick={section === "summary" ? onCancel : () => setSection("summary")}>{section === "summary" ? "Retour au mois" : "Retour au résumé"}</button>
       {section !== "budget" && <button data-submit className={styles.primary} disabled={busy}>{objectLabel.trim() ? "Conserver et prévisualiser" : "Conserver cette intention"}</button>}</footer>
     <WorkshopDock host={dockHost} contextId={context.contextOccurrenceId} model={model} busy={busy} choose={choose} summary={() => setSection("summary")}
-      choices={(["summary", "recipient", "occasion", "object", "budget", "date"] as const).map(key => ({ key,
-        label: ({ summary: "Résumé", recipient: "Destinataire", occasion: "Occasion", object: "Objet", budget: "Prix", date: "Date" } as const)[key],
+      choices={(["summary", "recipient", "occasion", "object", "seller", "budget", "date"] as const).map(key => ({ key,
+        label: ({ summary: "Résumé", recipient: "Destinataire", occasion: "Occasion", object: "Objet", seller: "Vendeur", budget: "Prix", date: "Date" } as const)[key],
         iconKey: "gift", selected: section === key, choose: () => setSection(key) }))} />
   </form>;
 }

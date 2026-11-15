@@ -74,7 +74,8 @@ try{
  console.log('S3-03 Explicit adoption uses the existing owner and suppresses the realized suggestion: PASS');
  const weekend=await add(model,'weekend-gite');
  const stayId=weekend.semanticState.contexts.find(context=>context.templateKey==='short-stay').contextOccurrenceId;
- assert.equal(projectCompletionSuggestions(weekend,stayId).length,2);
+ assert.deepEqual(projectCompletionSuggestions(weekend,stayId).map(candidate=>candidate.preset.presetKey),
+  ['museum-exhibition','hiking-nature','restaurant-for-two']);
  const culture=await add(weekend,'museum-exhibition',stayId,'activities');
  assert.deepEqual(projectCompletionSuggestions(culture,stayId).map(candidate=>candidate.preset.presetKey),['hiking-nature','restaurant-for-two']);
  const complete=await add(culture,'hiking-nature',stayId,'activities');
@@ -133,7 +134,7 @@ try{
   ? {...card,sockets:card.sockets.map(socket=>socket.slotKey==='items'?{...socket,currentItems:[{kind:'COMPONENT'}]}:socket)}:card)}};
  assert.deepEqual(projectCompletionSuggestions(directEquipment,furnishingId),[]);
  for(const [template,expected] of [['home-project',['home-equipment-basket']],['friend-visit',['museum-exhibition']],
-  ['short-stay',['museum-exhibition','hiking-nature']]]){
+  ['short-stay',['museum-exhibition','hiking-nature','restaurant-for-two']]]){
   const genericId=uuid(++counter);
   const generic=await request(f.semantic,{kind:'DROP',assetKey:'template:'+template,target:{kind:'BOARD_ZONE'},
    identity:genericId,selectionId:uuid(++counter),values:{label:'Projet personnalisé'}});
@@ -231,6 +232,21 @@ try{
  assert.deepEqual(reattached.semanticState.contexts.find(context=>context.contextOccurrenceId===rootIds[0]),priorRoots[0]);
  const moved=reattached.semanticState.contexts.find(context=>context.contextOccurrenceId===rootIds[1]);
  assert.equal(moved.parentContextOccurrenceId,leisureId);assert.deepEqual(moved.slotSelections,priorRoots[1].slotSelections);
+ assert.equal(reattached.budgetReading.byContext[rootIds[1]].gross,reusable.budgetReading.byContext[rootIds[1]].gross);
+ await act(async()=>root.unmount());root=null;accepted=[];
+ await act(async()=>{root=create(editorModel(leisure,leisureId));});
+ const noGift={...leisure,dropCapabilities:leisure.dropCapabilities.filter(drop=>drop.sourceAssetKey!=='template:gift')};
+ await act(async()=>root.update(editorModel(noGift,leisureId)));
+ assert(!buttons().some(button=>text(button)==='Ajouter Cadeau'));
+ await act(async()=>root.update(editorModel(leisure,leisureId)));
+ await click('Ajouter Cadeau');assert.equal(accepted.length,0);
+ await act(async()=>confirmation.accept());assert.equal(accepted.length,1);
+ assert.equal(accepted[0].presetKey,'gift-present');assert.equal(accepted[0].target.slotKey,'children');
+ const withGift=await request(leisure.semanticState,accepted[0]);
+ const gift=withGift.semanticState.contexts.find(context=>context.contextOccurrenceId===accepted[0].identity);
+ assert.equal(gift.templateKey,'gift');assert.equal(gift.parentContextOccurrenceId,leisureId);
+ assert.deepEqual(gift.slotSelections,{});
+ assert.equal(withGift.budgetReading.byContext[gift.contextOccurrenceId].gross,null);
  assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
  console.log('S3-04 Weekend complements follow the actual children without repeating an existing activity: PASS');
  console.log('S3-05 Two leisure activities offer one meal, suppressed when any meal is already linked: PASS');
@@ -242,5 +258,6 @@ try{
  console.log('S3-10 The project catalog reopens an exact linked activity or confirms a new child through the existing owner: PASS');
  console.log('S3-11 Stay and family visit editors confirm catalog activities and reject lost capability before adoption: PASS');
  console.log('S3-12 Catalog attachment selects the exact existing homonym and preserves both activities and their official posts: PASS');
- console.log(JSON.stringify({status:'PASS',checks:12,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
+ console.log('S3-13 Composed projects add a gift only after explicit confirmation and published permission: PASS');
+ console.log(JSON.stringify({status:'PASS',checks:13,remoteWrites:0,apply:false,level:'LOCAL_REACT_AND_OWNER_FIXTURE'}));
 }finally{if(root)await act(async()=>root.unmount());Module._load=originalLoad;}

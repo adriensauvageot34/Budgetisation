@@ -1,7 +1,7 @@
 "use client";
 
 import { guidedContextShape, type GuidedContextEdit } from "@/domain/phase2/planner/guided-context-edit";
-import { presetForContext } from "@/domain/phase2/planner/composer-presets";
+import { isServiceContext, presetForContext } from "@/domain/phase2/planner/composer-presets";
 import type { RestaurantEdit } from "@/domain/phase2/planner/restaurant-edit";
 import { assertRestaurantDetailsWritable, restaurantIncludedDetails, restaurantMealTariff, RESTAURANT_INCLUDED_DETAILS_LIMIT,
   type RestaurantIncludedDetail, type RestaurantDetailsDecision } from "@/domain/phase2/planner/restaurant-included-details";
@@ -26,6 +26,8 @@ import { PlannedContactField } from "../planned-people-fields";
 import { PlannedPlaceField } from "../planned-place-field";
 import { fresh, fromSelection, buildComponentRow, type Row } from "./night-out-components";
 import { WorkshopComponentRow, type CountedUnit } from "./workshop-component-row";
+import { ServiceIntentionEditor } from "./service-intention-editor";
+import { CommerceBadges } from "./commerce-badges";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
@@ -88,6 +90,7 @@ type RestaurantEditorProps = {
   initialConcept?: BasketConcept;
 };
 export function RestaurantEditor(props: RestaurantEditorProps) {
+  if (isServiceContext(props.context)) return <ServiceIntentionEditor key={canonicalPlannerJson(props.context)} {...props} />;
   if (isPurchaseBasket(props.context)) return <PurchaseBasketEditor {...props} />;
   return !props.creating && isClothingPurchase(props.context) && clothingItem(props.context)
     ? <ClothingItemEditor {...props} /> : <GuidedRestaurantEditor {...props} />;
@@ -643,6 +646,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     <header>{preset ? <PresetIllustration preset={preset} className={styles.presetInspectorImage} /> : <PlannerIcon iconKey="restaurant" scale="SATELLITE" />}<div><small>Votre mois, à votre façon</small><h2 id="restaurant-heading" tabIndex={-1}>{heading}</h2></div>
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
     <WorkshopNavigation contextId={contextId} />
+    <CommerceBadges context={context} model={model} />
     <p className={styles.restaurantIntro}>{cinema ? "Le billet, l’horaire de la séance, les compléments et le trajet se préparent séparément."
       : step === null ? "Choisissez seulement ce que vous voulez prévoir. Les autres précisions restent facultatives." : "Budget = coût économique prévu, pas un plafond. Les choix validés restent conservés."}</p>
     {purchase && <EnablePurchaseBasket context={context} card={card} model={model} busy={busy} decide={decide} />}

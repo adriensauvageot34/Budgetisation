@@ -106,7 +106,8 @@ export async function saveComposerDraft(scope: Scope, command: ComposerDraftSave
     targetMonth = plannerMonth(command.targetMonth);
     const state = parsePlanSemanticState(command.semanticState);
     if (state.contexts.some(context => isPurchaseBasket(context)
-      || [HOME_EQUIPMENT_FIELD, "plannedTime", "lodgingReservation"].some(key => Object.hasOwn(context.fields, key))))
+      || [HOME_EQUIPMENT_FIELD, "plannedTime", "lodgingReservation", "providerLabel", "appointmentIntent"].some(key => Object.hasOwn(context.fields, key))
+      || context.templateKey === "gift" && ["merchantLabel", "placeRef"].some(key => Object.hasOwn(context.fields, key))))
       validateContextGraph(state);
     const digest = plannerDigestString(command.digest);
     const requestId = plannerUuid(command.requestId);

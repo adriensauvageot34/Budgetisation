@@ -101,13 +101,16 @@ function stageDecision(model: ComposerUiModel, raw: PlanSemanticStateV1, operati
       for (const [key, value] of Object.entries(operation.values)) {
         if (value === "") delete fields[key]; else fields[key] = value;
       }
+      if (c.templateKey === "gift" && !fields.fieldSchemaVersion
+        && ["recipientRef", "occasion", "objectLabel", "objectAssetRef"].some(key => Object.hasOwn(fields, key)))
+        fields.fieldSchemaVersion = Object.hasOwn(fields, "objectAssetRef") ? "context-fields@v3" : "context-fields@v2";
       return { ...c, fields };
     }) });
   }
   if (operation.kind === "EDIT_GIFT") {
     const context = state.contexts.find(c => c.contextOccurrenceId === operation.contextOccurrenceId);
     if (context?.templateKey !== "gift" || operation.item.kind !== "COMPONENT" || operation.item.optionKey !== "gift"
-      || Object.keys(operation.values).some(key => !["label", "plannedDate", "recipientRef", "occasion", "objectLabel", "objectAssetRef"].includes(key))) return null;
+      || Object.keys(operation.values).some(key => !["label", "plannedDate", "recipientRef", "occasion", "objectLabel", "objectAssetRef", "merchantLabel", "placeRef"].includes(key))) return null;
     const prior = context.slotSelections.item?.items;
     if (Array.isArray(prior) && prior.some(item => item && typeof item === "object" && !Array.isArray(item)
       && item.kind === "COMPONENT" && item.selectionId !== operation.item.selectionId)) return null;
