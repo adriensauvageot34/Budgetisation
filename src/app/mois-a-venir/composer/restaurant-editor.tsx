@@ -25,7 +25,7 @@ import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import { PlannedContactField } from "../planned-people-fields";
 import { PlannedPlaceField } from "../planned-place-field";
 import { fresh, fromSelection, buildComponentRow, type Row } from "./night-out-components";
-import { WorkshopComponentRow } from "./workshop-component-row";
+import { WorkshopComponentRow, type CountedUnit } from "./workshop-component-row";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
@@ -56,6 +56,14 @@ import styles from "./composer.module.css";
 
 type Component = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
 type Step = "product" | "participants" | "place" | "date" | "budget" | "binding" | "complete" | "included" | "shipping" | null;
+const ticketUnit = { singular: "billet", plural: "billets" };
+const gameUnit = { singular: "partie", plural: "parties" };
+const sessionUnit = { singular: "séance", plural: "séances" };
+const admissionUnit = { singular: "entrée", plural: "entrées" };
+const activityUnits: Readonly<Partial<Record<string, CountedUnit>>> = {
+  cinema: ticketUnit, bowling: gameUnit, billard: gameUnit, "laser-game": gameUnit, karting: sessionUnit,
+  "escape-game": sessionUnit, "trampoline-park": sessionUnit, "museum-exhibition": admissionUnit, "sport-match": ticketUnit, "live-show": ticketUnit,
+};
 type IncludedBuffer = { id: string; mealSelectionId: string; label: string; amount: string; quantity: string; unitBasis: "" | "ITEM" | "PERSON" | "SHARED" };
 const includedDrink = restaurantBeer.label;
 const restaurantQuestions = [{ id: "participants", key: "participantRefs", title: "Qui vient au restaurant ?" },
@@ -90,6 +98,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const activity = context.templateKey === "activity" && !!preset;
   const activityMainLabel = activityCostLabel(preset?.presetKey);
   const restaurant = context.templateKey === "restaurant";
+  const schedule = activity || restaurant;
+  const dateCaption = [context.fields.plannedDate, context.fields.plannedTime].filter(Boolean).join(" · ");
   const labels = guidedAssetLabels(context.templateKey, preset?.presetKey);
   const confirm = useWorkshopConfirmation(), activeQuestion = useActiveWorkshopQuestion();
   const purchaseEnvelope = context.fields.budgetDomain === "clothing" ? "Vêtements" : context.fields.budgetDomain === "home-small" ? "Petits achats maison" : context.fields.budgetDomain === "games-digital" ? "Jeux/Numérique" : null;
@@ -129,6 +139,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const [person, setPerson] = useState<ProspectivePersonRef>();
   const [place, setPlace] = useState<ProspectivePlaceRef | undefined>(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
   const [date, setDate] = useState(String(context.fields.plannedDate ?? ""));
+  const [time, setTime] = useState(String(context.fields.plannedTime ?? ""));
   const [row, setRow] = useState<Row>(() => main ? fromSelection(main) : { ...fresh(mainLabel),
     unitBasis: activity ? "ITEM" : "SHARED", ...(quickPurchase ? { costMode: "MANUAL" } : {}) });
   const [detail, setDetail] = useState(isDetailed(context));
@@ -175,7 +186,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const resetBuffer = () => {
     catalogArticleId.current = null;
     setRaw(false); setError(""); setExtraRow(null); setIncludedRow(null); setEquipment(null); setPerson(undefined);
-    setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
+    setDate(String(context.fields.plannedDate ?? "")); setTime(String(context.fields.plannedTime ?? ""));
+    setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
     setRow(main ? fromSelection(main) : { ...fresh(activity ? mainLabel : shape.total), unitBasis: activity ? "ITEM" : "SHARED" });
     setDetail(admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context)); setFormKey(key => key + 1);
   };
@@ -185,7 +197,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     catalogArticleId.current = null;
     if (activity && next === "budget") ticketSignature.current = mealSignature;
     setStep(next); setRestaurantChoices(false); setError(""); setExtraRow(null); setIncludedRow(null); setExtraAdded(false); setEquipment(null); setFormKey(k => k + 1);
-    setDate(String(context.fields.plannedDate ?? "")); setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
+    setDate(String(context.fields.plannedDate ?? "")); setTime(String(context.fields.plannedTime ?? ""));
+    setPlace(context.fields.placeRef as ProspectivePlaceRef | undefined ?? undefined);
     setRow(main ? fromSelection(main) : { ...fresh(mainLabel), unitBasis: activity ? "ITEM" : "SHARED" });
     setDetail(purchase || (admittedMode.current?.signature===mealSignature?admittedMode.current.detail:isDetailed(context)));
   };
@@ -354,19 +367,21 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     { id: "budget", icon: cinema?<CompactCatalogVisual src={clayV22Artwork('v22-art:excel:329')!.src} visualConceptId="v22-art:excel:329" iconKey="activity" size={40}/>:<Receipt size={16} />, label: activity ? main?.label ?? mainLabel : detail ? "Postes prévus" : shape.total,
       caption: activity && !main ? activityTicket ? "Facultatif · préparer" : !card.sockets.length?"Sélection à confirmer · catalogue consultable":"Poste indisponible" : `${priceCaption(main)}${!cinema && extras.length ? ` · ${extras.length} complément(s)` : ""}`,
       disabled: activity && !activityTicket },
-    ...(activity ? [{ id: "date" as const, icon: <CalendarDays size={16} />, label: cinema ? "Séance" : "Date", caption: String(context.fields.plannedDate ?? "Jour facultatif"), disabled: !activityWritable },
+    ...(activity ? [{ id: "date" as const, icon: <CalendarDays size={16} />, label: cinema ? "Séance" : "Horaire", caption: dateCaption || "Jour et heure facultatifs", disabled: !activityWritable },
       { id: "complete" as const, icon: <MapPin size={16} />, label: completeTitle, caption: "Choix facultatifs", disabled: !activityComplements }] : []),
     ...(context.templateKey === "purchase" ? [
       { id: "product" as const, icon: <Receipt size={16} />, label: "Article et vendeur", caption: String(context.fields.productLabel ?? "À préciser") },
       ...(!creating ? [{ id: "shipping" as const, icon: <MapPin size={16} />, label: "Vendeur, livraison et frais", caption: String(context.fields.merchantLabel ?? "Vendeur à préciser") }] : []),
     ] : []),
-    ...(refs.length ? [{ id: "participants" as const, icon: <Users size={16} />, label: "Participants", caption: refs.map(personLabel).join(", ") }] : []),
+    ...(restaurant ? [{ id: "date" as const, icon: <CalendarDays size={16} />, label: "Horaire du repas", caption: dateCaption || "Jour et heure facultatifs" }] : []),
+    ...(schedule || refs.length ? [{ id: "participants" as const, icon: <Users size={16} />, label: "Participants",
+      caption: refs.length ? refs.map(personLabel).join(", ") : "Facultatifs" }] : []),
     ...(context.templateKey === "restaurant" && !creating ? [{ id: "complete" as const, icon: <Receipt size={16} />,
       label: completeTitle, caption: included ? included.items.length === 1 ? "1 détail compris" : `${included.items.length} détails compris`
         : "Détails compris et suppléments" }] : []),
     ...(placeLabel ? [{ id: "place" as const, icon: <MapPin size={16} />, label: "Lieu", caption: placeLabel.kind === "TEXT" ? placeLabel.label
       : model.mobilityOptions?.places.find(p => p.placeId === placeLabel.placeId)?.name ?? "Lieu lié indisponible" }] : []),
-    ...(!activity && context.fields.plannedDate ? [{ id: "date" as const, icon: <CalendarDays size={16} />, label: "Date", caption: String(context.fields.plannedDate) }] : []),
+    ...(!schedule && context.fields.plannedDate ? [{ id: "date" as const, icon: <CalendarDays size={16} />, label: "Date", caption: dateCaption }] : []),
     ...(shape.envelope && binding && binding !== "AUTO" ? [{ id: "binding" as const, icon: <Check size={16} />, label: "Enveloppe", caption: bindingLabel.replaceAll("Restaurants", shape.envelope) }] : []),
     ...(!activity && shape.transport && currentTransport ? [{ id: "complete" as const, icon: <MapPin size={16} />, label: "Transport", caption: currentTransport.optionKey }] : []),
   ];
@@ -451,6 +466,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const cinemaCatalogSuggestions = cinema ? cinemaSuggestions({
     contextOccurrenceId: contextId, writable: activityWritable, ticketAllowed: activityTicket, ticket: main,
     dayChosen: !!context.fields.plannedDate,
+    timeChosen: !!context.fields.plannedTime,
     placeChosen: cinemaPlaceChosen,
     extrasAllowed: activityExtras,
     extras: extras.map(({ label, selectionId }) => ({ label, selectionId, locked: cinemaSelectionLocked("extras", selectionId) })),
@@ -627,7 +643,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     <header>{preset ? <PresetIllustration preset={preset} className={styles.presetInspectorImage} /> : <PlannerIcon iconKey="restaurant" scale="SATELLITE" />}<div><small>Votre mois, à votre façon</small><h2 id="restaurant-heading" tabIndex={-1}>{heading}</h2></div>
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
     <WorkshopNavigation contextId={contextId} />
-    <p className={styles.restaurantIntro}>{cinema ? "Le billet, le jour de la séance, les compléments et le trajet se préparent séparément."
+    <p className={styles.restaurantIntro}>{cinema ? "Le billet, l’horaire de la séance, les compléments et le trajet se préparent séparément."
       : step === null ? "Choisissez seulement ce que vous voulez prévoir. Les autres précisions restent facultatives." : "Budget = coût économique prévu, pas un plafond. Les choix validés restent conservés."}</p>
     {purchase && <EnablePurchaseBasket context={context} card={card} model={model} busy={busy} decide={decide} />}
     <CatalogOpenButton target={{contextId,moment:cinema?"cinema":context.templateKey==="purchase"?"article":context.templateKey==="restaurant"?"included":undefined,
@@ -635,7 +651,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     {restaurant && step === null && restaurantCandidates.length > 0 && <button type="button" aria-pressed={restaurantChoices}
       onClick={() => setRestaurantChoices(value => !value)}>{restaurantChoices ? "Revenir aux suggestions" : "Tous les choix du restaurant"}</button>}
     {step === null ? <><nav aria-label={`Choix de ${heading}`} className={styles.restaurantSummary} data-quick-purchase={quickPurchase || undefined}>
-      {summaryEntries.slice(summaryPage * summaryPageSize, (summaryPage + 1) * summaryPageSize).map(entry => <button key={entry.id} type="button" disabled={entry.disabled} onClick={() => open(entry.id)}>
+      {summaryEntries.slice(summaryPage * summaryPageSize, (summaryPage + 1) * summaryPageSize).map(entry => <button key={entry.id} type="button"
+        data-guided-step={entry.id} disabled={entry.disabled} onClick={() => open(entry.id)}>
         {entry.icon}<span><small>{entry.label}</small><strong>{entry.caption}</strong></span><ChevronRight size={14} /></button>)}
     </nav>{summaryEntries.length > summaryPageSize && <div className={styles.nightPage}><button type="button" disabled={summaryPage === 0} onClick={() => setSummaryPage(page => page - 1)}>Précédent</button>
       <span>{summaryPage + 1} / {Math.ceil(summaryEntries.length / summaryPageSize)}</span><button type="button" disabled={(summaryPage + 1) * summaryPageSize >= summaryEntries.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}</>
@@ -645,7 +662,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       dismissedSuggestions={dismissedSuggestions} updateSuggestionDismissal={updateSuggestionDismissal} busy={busy} />}
     {step !== null && <div className={styles.restaurantQuestion} key={`${step}:${formKey}`}>
       <h3 data-restaurant-focus tabIndex={-1}>{step === "shipping" ? "Vendeur, livraison et frais" : cinema && step === "budget" ? (row.existing ? "Modifier le poste de cette sortie" : "Préparer un billet facultatif")
-        : cinema && step === "date" ? "Préciser le jour de la séance"
+        : cinema && step === "date" ? "Préciser la séance"
           : step === "included" ? "Déjà compris dans l’addition" : quickPurchase && step === "budget" ? "Quel montant souhaitez-vous prévoir ?" : questions.find(q => q.id === step)?.title ?? (step === "complete" ? completeTitle : "Votre intention est dans le brouillon")}</h3>
       {step === "included" && includedRow && <form onSubmit={event => { event.preventDefault(); saveIncluded(); }}>
         <p>Ce détail est compris dans l’addition. Son montant décrit toute la ligne et ne s’ajoute pas au coût prévu.</p>
@@ -673,21 +690,28 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       </ul>}<PlannedContactField label="Ajouter une personne" value={person} householdPersons={model.householdPersons} onChange={next => { setRaw(true); setPerson(next); }} />
         <button type="button" disabled={!person || person.kind === "TEXT" && !person.label.trim()} onClick={() => {
           if (person && !refs.some(ref => prospectivePersonIdentity(ref) === prospectivePersonIdentity(person))) fields({ participantRefs: [...refs, person] }, "participants");
-        }}>Ajouter aux participants</button><p>Les participants ne multiplient pas le montant prévu.</p></>}
+        }}>Ajouter aux participants</button><p>Les invités et les personnes tarifées sont saisis séparément.</p></>}
       {step === "place" && <><PlannedPlaceField label={cinema ? "Cinéma (facultatif)" : context.templateKey === "restaurant" ? "Lieu du Restaurant" : "Lieu ou destination (facultatif)"} places={model.mobilityOptions?.places ?? []} value={place} exact onChange={next => { setRaw(true); setPlace(next); }} />
         <button type="button" disabled={!place || place.kind === "TEXT" && !place.label.trim()} onClick={() => fields({ placeRef: place! }, "place")}>Choisir ce lieu</button></>}
       {step === "date" && <><label>Date facultative<input type="date" value={date} min={`${model.semanticState.targetMonth}-01`} max={`${model.semanticState.targetMonth}-31`} onChange={event => setDate(event.target.value)} /></label>
-        <button type="button" onClick={() => { if (date && !date.startsWith(`${model.semanticState.targetMonth}-`)) setError("Choisissez une date dans le mois composé."); else fields({ plannedDate: date || null }, "date"); }}>Confirmer la date</button></>}
+        {schedule && <label>{cinema ? "Heure de la séance" : restaurant ? "Heure du repas" : "Heure de l’activité"}<input type="time" value={time}
+          onChange={event => setTime(event.target.value)} /></label>}
+        <button type="button" disabled={busy} onClick={() => {
+          if (date && !date.startsWith(`${model.semanticState.targetMonth}-`)) setError("Choisissez une date dans le mois composé.");
+          else fields({ plannedDate: date || null, ...(schedule ? { plannedTime: time || null } : {}) }, "date");
+        }}>{schedule ? "Conserver le jour et l’heure" : "Confirmer la date"}</button></>}
       {step === "budget" && activity && <>
         <p>Renseignez le tarif et sa quantité, ou déclarez explicitement un coût nul. Les frais et déplacements distincts gardent leur propre montant.</p>
         <button type="button" disabled={busy || !activityTicket} onClick={() => {
           setRaw(true); setRow(previous => ({ ...previous, costMode: "MANUAL", amount: "0", edited: true }));
         }}>Préparer un coût nul pour l’activité</button>
-        <WorkshopComponentRow title={activityMainLabel} row={row} participantCount={refs.length}
+        <WorkshopComponentRow title={activityMainLabel} row={row} participantCount={refs.length} countedUnit={activityUnits[preset!.presetKey] ?? { singular: "unité", plural: "unités" }}
           onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy || !activityTicket} />
       </>}
       {step === "budget" && !activity && <>
-        {detail ? <WorkshopComponentRow title={context.templateKey==="purchase"?"Article de cet achat":"Élément hors compléments"} row={row} participantCount={refs.length} onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy} bindingChoices={!!shape.envelope} />
+        {detail ? <WorkshopComponentRow title={context.templateKey==="purchase"?"Article de cet achat":"Élément hors compléments"} row={row}
+          countedUnit={restaurant ? { singular: "repas", plural: "repas" } : undefined}
+          participantCount={refs.length} onChange={next => { setRaw(true); setRow(next); }} onSave={() => saveBudget()} busy={busy} bindingChoices={!!shape.envelope} />
           : <><label>Coût prévu à notre charge (€)<input autoFocus inputMode="decimal" placeholder="Encore inconnu" value={row.costMode==="MANUAL"?row.amount:""} onChange={event=>setRow(r=>({...r,amount:event.target.value,costMode:event.target.value.trim()?"MANUAL":"UNKNOWN",edited:true}))}/></label>
             <details><summary>Financement · facultatif</summary><label>Source<select value={row.fundingMode} onChange={e=>setRow(r=>({...r,fundingMode:e.target.value as Row['fundingMode'],edited:true}))}><option value="UNDECIDED">À préciser</option><option value="BANK">Banque déclarée</option>{row.fundingMode==="EXISTING"&&<option value="EXISTING">Conserver le financement antérieur</option>}</select></label>{row.fundingMode==="BANK"&&<label>Montant Banque (€)<input inputMode="decimal" value={row.fundingAmount} onChange={e=>setRow(r=>({...r,fundingAmount:e.target.value,edited:true}))}/></label>}</details></>}
         <p>{detail ? "Les éléments et les compléments constituent le budget. Aucun total parent ne s’y ajoute." : "Un seul montant à notre charge, quel que soit le nombre de participants."}</p>

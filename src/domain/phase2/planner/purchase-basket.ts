@@ -12,12 +12,15 @@ export type BasketUnit = typeof BASKET_UNITS[number];
 export type BasketDeliveryMode = typeof DELIVERY_MODES[number];
 export type BasketDeliveryCoverage = typeof DELIVERY_COVERAGES[number];
 export type BasketConcept = Readonly<{ id: string; label: string }>;
-export type BasketArticle = Readonly<{ unit: BasketUnit; concept?: BasketConcept }>;
+export type BasketVariant = Readonly<{ size?: string; color?: string; model?: string }>;
+export const BASKET_VARIANT_FIELDS = ["size", "color", "model"] as const;
+export const BASKET_VARIANT_MAX_LENGTH = 100;
+export type BasketArticle = Readonly<{ unit: BasketUnit; concept?: BasketConcept; variant?: BasketVariant }>;
 export type PurchaseComponent = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
 
 export type PurchaseBasketChange =
   | { kind: "UPGRADE" }
-  | { kind: "SAVE_ITEM"; selectionId: string; label: string; quantity: string; unit: BasketUnit; price: string; concept?: BasketConcept }
+  | { kind: "SAVE_ITEM"; selectionId: string; label: string; quantity: string; unit: BasketUnit; price: string; concept?: BasketConcept; variant?: BasketVariant | null }
   | { kind: "REMOVE_ITEM"; selectionId: string }
   | { kind: "SAVE_EXTRA"; selectionId: string; label: string; price: string }
   | { kind: "REMOVE_EXTRA"; selectionId: string }
@@ -36,18 +39,33 @@ function oneOf<const T extends string>(values: readonly T[], value: unknown): T 
   if (typeof value !== "string" || !values.includes(value as T)) throw new TypeError("PURCHASE_BASKET_CHOICE_INVALID");
   return value as T;
 }
+function readBasketVariant(raw: unknown): BasketVariant | undefined {
+  const value = plannerRecord(raw);
+  plannerKeys(value, BASKET_VARIANT_FIELDS, []);
+  const entries = BASKET_VARIANT_FIELDS.flatMap(key => {
+    if (value[key] === undefined) return [];
+    if (typeof value[key] !== "string" || value[key].length > BASKET_VARIANT_MAX_LENGTH)
+      throw new TypeError("PURCHASE_BASKET_VARIANT_INVALID");
+    const label = value[key].trim();
+    return label ? [[key, plannerString(label)] as const] : [];
+  });
+  return entries.length ? Object.fromEntries(entries) : undefined;
+}
+
 export function readBasketArticle(raw: unknown, quantity: string): BasketArticle {
   const value = plannerRecord(raw);
-  plannerKeys(value, ["unit", "concept"], ["unit"]);
+  plannerKeys(value, ["unit", "concept", "variant"], ["unit"]);
   const unit = oneOf(BASKET_UNITS, value.unit);
   if ((unit === "UNIT" || unit === "PACK") && !/^\d+(?:\.0+)?$/u.test(quantity))
     throw new TypeError("PURCHASE_BASKET_WHOLE_QUANTITY_REQUIRED");
-  if (value.concept === undefined) return { unit };
+  const variant = value.variant === undefined ? undefined : readBasketVariant(value.variant);
+  const article = { unit, ...(variant ? { variant } : {}) };
+  if (value.concept === undefined) return article;
   const concept = plannerRecord(value.concept);
   plannerKeys(concept, ["id", "label"]);
   const id = plannerString(concept.id);
   if (!/^v22-art:excel:\d+$/u.test(id)) throw new TypeError("PURCHASE_BASKET_CONCEPT_INVALID");
-  return { unit, concept: { id, label: plannerString(concept.label) } };
+  return { ...article, concept: { id, label: plannerString(concept.label) } };
 }
 
 /** One command changes one line, or a declared basket property. The Compiler owns all totals. */
@@ -82,7 +100,8 @@ export function editPurchaseBasket(state: PlanSemanticStateV1, edit: PurchaseBas
         const concept = previous?.basketArticle?.concept ?? change.concept;
         if (previous && change.concept && (!concept || plannerDigest(concept) !== plannerDigest(change.concept)))
           throw new TypeError("PURCHASE_BASKET_CONCEPT_CHANGED");
-        const basketArticle = readBasketArticle({ unit: change.unit, ...(concept ? { concept } : {}) }, quantity);
+        const variant = change.variant === undefined ? previous?.basketArticle?.variant : change.variant;
+        const basketArticle = readBasketArticle({ unit: change.unit, ...(concept ? { concept } : {}), ...(variant == null ? {} : { variant }) }, quantity);
         const { quantityEvidenceVersion, quantityPerPerson, pricedParticipantCount, ...previousFields } = previous ?? {};
         const item: PurchaseComponent = { ...previousFields, selectionId: id, optionKey: "item", kind: "COMPONENT",
           label, quantity, unitBasis: change.unit === "PACK" ? "SHARED" : "ITEM", basketArticle,

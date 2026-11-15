@@ -3,6 +3,17 @@ import { plannerDigest, type PlannerJson } from "./json";
 import type { ComponentSelectionV1 } from "./component-contract";
 import { isPurchaseBasket } from "./purchase-basket";
 
+export const LODGING_RESERVATION_STATES = ["CONSIDERING", "USER_DECLARED"] as const;
+
+/** The calendar checks the declared duration. The financial owner prices the lodging. */
+export function validateStayCalendar(fields: PlannedContextState["fields"]) {
+  const start = fields.plannedDate, end = fields.endDate, nights = fields.nightCount;
+  if (typeof start !== "string" || typeof end !== "string" || typeof nights !== "number") return;
+  const calendarNights = (Date.parse(end) - Date.parse(start)) / 86_400_000;
+  if (Number.isFinite(calendarNights) && calendarNights !== nights)
+    throw Error(`Les dates indiquent ${calendarNights} nuit(s), mais vous en avez déclaré ${nights}. Corrigez les dates ou la durée.`);
+}
+
 export type ShortStayEdit = Readonly<{ contextOccurrenceId: string; fields: Readonly<Record<string, PlannerJson>>;
   slots?: Readonly<Partial<Record<"lodging" | "groceries" | "restaurants" | "activities" | "purchases" | "extras", readonly ComponentSelectionV1[]>>>;
   children?: readonly PlannedContextState[];
@@ -16,10 +27,13 @@ export function editShortStay(raw: PlanSemanticStateV1, edit: ShortStayEdit): Pl
   if (protectedContext(parent.contextOccurrenceId)) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
   const fields = { ...parent.fields };
   for (const [key, value] of Object.entries(edit.fields)) {
-    if (!["label", "plannedDate", "endDate", "participantRefs", "destinationRef", "nightCount", "lodgingKind", "timingNote"].includes(key))
+    if (!["label", "plannedDate", "endDate", "participantRefs", "destinationRef", "nightCount", "lodgingKind", "timingNote", "lodgingReservation"].includes(key))
       throw new TypeError("COMPOSER_SHORT_STAY_FIELD_INVALID");
-    if (value === "") delete fields[key]; else fields[key] = value;
+    if (key === "lodgingReservation" && value !== null && value !== "" && !LODGING_RESERVATION_STATES.some(state => state === value))
+      throw new TypeError("COMPOSER_LODGING_RESERVATION_INVALID");
+    if (value === "" || key === "lodgingReservation" && value === null) delete fields[key]; else fields[key] = value;
   }
+  if (["plannedDate", "endDate", "nightCount"].some(key => Object.hasOwn(edit.fields, key))) validateStayCalendar(fields);
   fields.fieldSchemaVersion = "context-fields@v5";
   const slots = { ...parent.slotSelections };
   for (const [key, items] of Object.entries(edit.slots ?? {})) {

@@ -62,7 +62,7 @@ export function purchaseSuggestions(context: PlannedContextState, card: Composer
       offer(choose ? "CHOOSE_ITEM" : "ITEM",
         choose ? "Choisir la ligne · " + item.label : (unknownPrice ? "Préciser le prix · " : "Modifier · ") + item.label,
         choose ? (unknownPrice ? "Un prix reste à préciser parmi ces lignes" : "Plusieurs lignes modifiables portent ce nom")
-          : unknownPrice ? "Prix inconnu · ligne existante" : "Prix et quantité · ligne existante",
+          : unknownPrice ? "Prix inconnu · ligne existante" : "Ligne existante",
         unknownPrice ? 0 : 2, editable.map(line => line.selectionId), choose ? undefined : item.basketArticle?.concept?.id);
     }
   }

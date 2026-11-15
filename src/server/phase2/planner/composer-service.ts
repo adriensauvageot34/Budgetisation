@@ -1,4 +1,5 @@
 import "server-only";
+import { editHomeEquipment } from "@/domain/phase2/planner/home-equipment";
 import { validateControlValue } from "@/domain/phase2/planner/control-input";
 import { ControlDecisionAdmissionError } from "./control-fields";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
@@ -40,9 +41,11 @@ const field = (key: string, label: string, kind: ComposerField["kind"] = "TEXT",
 const choice = (key: string, label: string, choices: readonly (readonly [string, string])[]): ComposerField => ({ ...field(key, label, "CHOICE"), choices: choices.map(([value, label]) => ({ value, label })) });
 const fundingField = choice("funding", "Financement déclaré", [["", "À préciser"], ["BANK", "Banque"]]);
 const fieldLabels: Record<string, string> = { label: "Nom de l’intention", plannedDate: "Date prévue (facultative)", endDate: "Date de fin (facultative)", budgetDomain: "Enveloppe concernée",
+  plannedTime: "Heure prévue (facultative)", lodgingReservation: "Réservation de l’hébergement",
   participantRefs: "Personnes concernées", personVisitedRef: "Personne visitée", placeRef: "Lieu ou destination", destinationRef: "Destination",
   productLabel: "Produit ou objet", merchantLabel: "Commerce ou vendeur", timingNote: "Repère de temps", nightCount: "Nombre de nuits", lodgingKind: "Type d’hébergement" };
-const choiceLabels: Record<string, string> = { clothing: "Vêtements", "home-small": "Maison petit", "games-digital": "Jeux et numérique", other: "Autre" };
+const choiceLabels: Record<string, string> = { clothing: "Vêtements", "home-small": "Maison petit", "games-digital": "Jeux et numérique", other: "Autre",
+  CONSIDERING: "Envisagée", USER_DECLARED: "Déclarée comme effectuée" };
 const familyLabels: Record<string, string> = { FOOD: "Sortir & manger", ACTIVITY: "Activités", VISIT: "Voir quelqu’un", PURCHASE: "Acheter", SOCIAL: "Sortir", TRAVEL: "Partir", BEAUTY: "Prendre soin", HOME: "Maison", OTHER: "Autres envies" };
 
 export function composerUiModel(deps: PlannerDependencies, household: string, model: MonthComposerReadModel): Promise<ComposerUiModel> {
@@ -285,7 +288,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     }
     // The opt-in historical reader is never passed into Apply or its post-commit reload.
     if (deps.readComposerWorld) deps = { ...deps, readWorld: deps.readComposerWorld };
-    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_RESTAURANT", "EDIT_PRESET_CONTEXT", "EDIT_PURCHASE_BASKET", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
+    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_RESTAURANT", "EDIT_PRESET_CONTEXT", "EDIT_PURCHASE_BASKET", "EDIT_HOME_EQUIPMENT", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
     const readDeps = mutationRead && process.env.COMPOSER_P14_P2_SINGLE_WORLD !== "0"
       ? composerMutationDependencies(deps, household, month) : deps;
     // Suggestions and Board describe the same admitted state in this request.
@@ -374,6 +377,14 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
         const options = await deps.readMobilityOptions?.(household);
         if (vehicleRef.vehicleId !== priorId && vehicleRef.vehicleId !== options?.vehicle?.vehicleId) throw new TypeError("COMPOSER_VEHICLE_NOT_ADMITTED");
       }
+      mutationKind = "PATCH_CONTEXT";
+    } else if (request.kind === "EDIT_HOME_EQUIPMENT") {
+      const { contextOccurrenceId, change } = request.edit;
+      const writable = (id: string, template: string) => model.board.contexts.some(card =>
+        card.contextOccurrenceId === id && card.templateKey === template && !card.readOnly && card.capabilityRefs.includes("PATCH_CONTEXT"));
+      if (!writable(contextOccurrenceId, "home-project") || change.kind === "BUY" && !writable(change.basketId, "purchase"))
+        throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+      state = editHomeEquipment(state, request.edit);
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_PURCHASE_BASKET") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);

@@ -18,6 +18,8 @@
 .form label { display: grid; gap: .25rem; min-width: 0; }
 .form input, .form select { width: 100%; min-width: 0; }
 .columns { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.variant { min-width: 0; margin: 0; padding: 0; border: 0; }
+.variant legend { padding: 0; margin-bottom: .25rem; }
 .footer { display: grid; gap: .35rem; }
 @media (max-width: 640px) {
   .panel { inset: .5rem .5rem 1rem; width: auto; max-width: none; }

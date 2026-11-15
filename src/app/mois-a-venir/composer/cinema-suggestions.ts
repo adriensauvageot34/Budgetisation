@@ -30,6 +30,7 @@ type CinemaSuggestionInput = {
   ticketAllowed: boolean;
   ticket?: Choice;
   dayChosen: boolean;
+  timeChosen?: boolean;
   placeChosen: boolean;
   extrasAllowed: boolean;
   extras: readonly CinemaExtra[];
@@ -47,8 +48,9 @@ export function cinemaSuggestions(input: CinemaSuggestionInput, limit = 4) {
       reason: ticket ? "Billet déjà choisi pour cette sortie" : "Billet facultatif pour cette sortie",
       iconKey: "activity", priority: 0, allowed: input.ticketAllowed },
     { conceptKey: "jour-seance", category: "session", action: "CONFIGURE",
-      label: "Séance — Préciser le jour", reason: "Le jour de cette séance reste à choisir",
-      iconKey: "activity", priority: 1, allowed: input.writable && !dayChosen },
+      label: dayChosen ? "Séance — Préciser l’heure" : "Séance — Préciser le jour",
+      reason: dayChosen ? "L’heure de cette séance reste à choisir" : "Le jour de cette séance reste à choisir",
+      iconKey: "activity", priority: 1, allowed: input.writable && (!dayChosen || input.timeChosen === false) },
     { conceptKey: "lieu-cinema", category: "session", action: "CONFIGURE",
       label: "Cinéma — Préciser le lieu", reason: "Le lieu de cette séance reste à choisir",
       iconKey: "family-visit", priority: 1, allowed: input.writable && !placeChosen },

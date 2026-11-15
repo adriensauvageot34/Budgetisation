@@ -7,9 +7,11 @@ import { publishedDrop } from './interactions';
 import { componentId } from '@/domain/phase2/planner/identity';
 import { clayAssetArtwork } from '../clay-v22-media';
 import { plannedAsset } from '@/domain/phase2/planned-assets';
-import { isPurchaseBasket, MAX_PURCHASE_ARTICLES, purchaseComponents, type BasketConcept } from '@/domain/phase2/planner/purchase-basket';
+import { isPurchaseBasket, MAX_PURCHASE_ARTICLES, purchaseComponents, type BasketConcept, type PurchaseComponent } from '@/domain/phase2/planner/purchase-basket';
 import { libraryOccurrences } from '@/domain/phase2/planner/composer-library-index';
 import { isBasketCatalogProduct } from '@/domain/phase2/planner/purchase-catalog';
+import { homeEquipment, homeEquipmentBaskets, homeEquipmentKey, homeEquipmentPurchases, homeLegacyEquipment } from '@/domain/phase2/planner/home-equipment';
+import { purchaseLineLabel } from './purchase-line-label';
 import { clayWorkbookSource, rankCatalogRecommendations, sourceReason, v22Concepts } from './catalog-relevance';
 export { rankDiscoveryCandidates } from './catalog-relevance';
 
@@ -25,7 +27,9 @@ const activityByConcept = new Map(ACTIVITY_PRESETS.map(preset=>[preset.visualCon
  { preset, aliases:[preset.label,...preset.searchTerms].map(normalizeCatalog) }] as const));
 export function scopeForCard(model:ComposerUiModel,id?:string){
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===id);if(!card)return 'all';
- if(presetForContext(card)?.presetKey==='cinema')return 'cinema';
+ const preset = presetForContext(card)?.presetKey;
+ if(preset==='cinema')return 'cinema';
+ if(preset==='beauty-purchase')return 'beauty';
  if(isPurchaseBasket(card)&&card.fields.budgetDomain==='groceries')return 'courses';
  const scopes:Readonly<Record<string,string>>={'night-out':'bar','short-stay':'stay','family-visit':'stay','friend-visit':'stay','fast-food':'restaurant',delivery:'restaurant','beauty-restock':'beauty','home-project':'home'};
  if(card.templateKey==='purchase'&&card.fields.budgetDomain==='home-small')return 'home';
@@ -103,13 +107,23 @@ export type DiscoveryAction = Readonly<{key:string;label:string;kind:'OPEN'|'PRE
 export function catalogRefLocked(model:ComposerUiModel,id:string){
  return model.semanticState.preferences.anchors.includes(id)||model.semanticState.preferences.flexibility[id]==='PRESERVE';
 }
-export function catalogBasketArticleTarget(model:ComposerUiModel,id:string,conceptId:string){
+function catalogMatchesPurchaseArticle(item: PurchaseComponent, concept: BasketConcept) {
+ const selected = item.basketArticle?.concept;
+ return selected ? selected.id === concept.id : normalizeCatalog(item.label) === normalizeCatalog(concept.label);
+}
+export function catalogBasketArticleTarget(model:ComposerUiModel,id:string,concept:BasketConcept){
  const card=model.board.contexts.find(item=>item.contextOccurrenceId===id);
  const context=model.semanticState.contexts.find(item=>item.contextOccurrenceId===id);
  if(!card||!isPurchaseBasket(card)||!context||!isPurchaseBasket(context)||context.status!=='ACTIVE'
    ||card.externalIntentId!==null||card.readOnly||!card.capabilityRefs.includes('PATCH_CONTEXT')||catalogRefLocked(model,id))return;
  const articles=purchaseComponents(context,'item');
- if(articles.length<MAX_PURCHASE_ARTICLES&&!articles.some(item=>item.basketArticle?.concept?.id===conceptId))return context;
+ const parent = model.semanticState.contexts.find(item => item.contextOccurrenceId === context.parentContextOccurrenceId);
+ if (parent?.templateKey === "home-project") {
+   const key = homeEquipmentKey(concept.label);
+   if (homeEquipment(parent).some(item => item.status === "OWNED" && homeEquipmentKey(item.label) === key)
+     || homeEquipmentPurchases(homeEquipmentBaskets(model.semanticState, parent), concept).length) return;
+ }
+ if(articles.length<MAX_PURCHASE_ARTICLES&&!articles.some(item=>catalogMatchesPurchaseArticle(item,concept)))return context;
 }
 export function catalogSocket(model:ComposerUiModel,contextId:string,slotKey:string,assetKey:string){
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===contextId);
@@ -127,25 +141,76 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
  const card=model.board.contexts.find(c=>c.contextOccurrenceId===target.contextId);
  const groceryProduct=target.scope==="courses"&&isBasketCatalogProduct(entry,"groceries");
  const product=purchaseCatalogProduct(entry);
+ const homeProduct = product?.module === "home" || entry.discovery.contexts.includes("home")
+   && entry.discovery.family === "Mobilier, équipement et décoration" && isBasketCatalogProduct(entry, "other");
+ const homeProject = card?.templateKey === "home-project" && model.semanticState.contexts.find(context =>
+   context.contextOccurrenceId === card.contextOccurrenceId);
+ if (homeProject && homeProduct) {
+   const key = homeEquipmentKey(entry.label);
+   const equipment = homeEquipment(homeProject).find(item => homeEquipmentKey(item.label) === key);
+   const existing = homeEquipmentPurchases(homeEquipmentBaskets(model.semanticState, homeProject), equipment ?? entry);
+   if (equipment?.status !== "OWNED" && existing.length) return existing.map(({ basket, line }) => ({
+     key: `home-line:${basket.contextOccurrenceId}:${line.selectionId}`, kind: "OPEN", contextId: basket.contextOccurrenceId,
+     focus: `basket-item:${line.selectionId}`, label: `Reprendre ${line.label} dans le panier`,
+   }));
+   const recorded = equipment || homeLegacyEquipment(homeProject).some(item => homeEquipmentKey(item.label) === key);
+   return [{ key: `home-equipment:${homeProject.contextOccurrenceId}`, kind: "OPEN", contextId: homeProject.contextOccurrenceId,
+     articleLabel: equipment?.label ?? entry.label,
+     label: recorded ? `Retrouver ${entry.label} · ${equipment?.status === "OWNED" ? "déjà possédé" : "équipement du projet"}`
+       : `Classer ${entry.label} dans le projet Maison` }];
+ }
+ if (homeProduct && !target.controlRef) {
+   const projects = model.semanticState.contexts.filter(context => context.templateKey === "home-project"
+     && model.board.contexts.some(candidate => candidate.contextOccurrenceId === context.contextOccurrenceId)
+     && (card ? isPurchaseBasket(card) && card.parentContextOccurrenceId === context.contextOccurrenceId : !target.contextId));
+   const key = homeEquipmentKey(entry.label);
+   const recorded = projects.flatMap(project => {
+     const equipment = homeEquipment(project).find(item => homeEquipmentKey(item.label) === key);
+     const baskets = homeEquipmentBaskets(model.semanticState, project);
+     const existing = homeEquipmentPurchases(baskets, equipment ?? entry);
+     return equipment || existing.length || homeLegacyEquipment(project).some(item => homeEquipmentKey(item.label) === key)
+       ? discoveryActions(entry, model, { contextId: project.contextOccurrenceId })
+       : [];
+   });
+   if (recorded.length) return recorded;
+ }
+ const concept = { id: entry.visualConceptId, label: entry.label };
+ const basketActions = (basket: ComposerUiModel["board"]["contexts"][number], editable: boolean, location = "") => {
+   const context = model.semanticState.contexts.find(item => item.contextOccurrenceId === basket.contextOccurrenceId);
+   const admitted = new Set(basket.sockets.find(socket => socket.slotKey === "item")?.currentItems.map(item => item.selectionId));
+   const items = context ? purchaseComponents(context, "item") : [];
+   const matches = items.flatMap((item, index) => admitted.has(item.selectionId) && catalogMatchesPurchaseArticle(item, concept) ? [{item,index}] : []);
+   if (!editable && matches.length) return [{ key: `basket-existing:${basket.contextOccurrenceId}`, kind: "OPEN" as const,
+     contextId: basket.contextOccurrenceId, label: `Voir ${entry.label}${location}` }];
+   return matches.map(({ item, index }) => {
+     const canEdit = !catalogRefLocked(model, componentId(basket.contextOccurrenceId, "item", item.selectionId));
+     return { key: `basket-existing:${basket.contextOccurrenceId}:${item.selectionId}`, kind: "OPEN" as const, contextId: basket.contextOccurrenceId,
+       ...(canEdit ? { focus: `basket-item:${item.selectionId}` } : {}),
+       label: `${canEdit ? "Modifier" : "Voir"} ${purchaseLineLabel(item, index)}${location}` };
+   });
+ };
+ if (card && isPurchaseBasket(card) && isBasketCatalogProduct(entry, card.fields.budgetDomain)) {
+   const canEdit = !card.readOnly && card.capabilityRefs.includes("PATCH_CONTEXT") && !catalogRefLocked(model, card.contextOccurrenceId);
+   const existing = basketActions(card, canEdit);
+   if (existing.length) return existing;
+   if (catalogBasketArticleTarget(model, card.contextOccurrenceId, concept)) return [{
+     key: `basket-add:${card.contextOccurrenceId}`, kind: "BASKET_ARTICLE", contextId: card.contextOccurrenceId, concept,
+     label: `Préparer ${entry.label} dans ce panier`,
+   }];
+ }
  const unboundPurchase=entry.assetKeys.length===0&&entry.discovery.contexts.includes("purchase")&&isBasketCatalogProduct(entry,"other");
  if(!target.contextId&&!target.controlRef&&entry.discovery.sourceRow&&entry.discovery.nature==="ELEMENT"&&(groceryProduct||product||unboundPurchase)){
    const labels=new Map(libraryOccurrences(model).filter(row=>row.surface==='BASKET').map(row=>[row.contextOccurrenceId,
      {action:row.action,label:row.label+(row.occurrence?` · Achat ${row.occurrence}`:'')+(row.plannedDate?` · ${row.plannedDate}`:'')}]));
    for(const basket of model.board.contexts.filter(card=>isPurchaseBasket(card)&&labels.has(card.contextOccurrenceId))){
-     const itemSocket=basket.sockets.find(socket=>socket.slotKey==='item');
-     const matches=itemSocket?.currentItems.filter(item=>item.kind==='COMPONENT'&&item.basketArticle?.concept?.id===entry.visualConceptId)??[];
      const info=labels.get(basket.contextOccurrenceId)!;
-     if(info.action==='VIEW'&&matches.length)actions.push({key:'basket-existing:'+basket.contextOccurrenceId,kind:'OPEN',contextId:basket.contextOccurrenceId,label:`Voir ${entry.label} dans ${info.label}`});
-     else for(const item of matches){
-       const editable=!catalogRefLocked(model,componentId(basket.contextOccurrenceId,'item',item.selectionId));
-       const number=itemSocket!.currentItems.findIndex(candidate=>candidate.selectionId===item.selectionId)+1;
-       actions.push({key:'basket-existing:'+basket.contextOccurrenceId+':'+item.selectionId,kind:'OPEN',contextId:basket.contextOccurrenceId,
-         ...(editable?{focus:'basket-item:'+item.selectionId}:{}),label:`${editable?'Modifier':'Voir'} ${entry.label} · ligne ${number} · ${info.label}`});
-     }
-     const destination=info.action==='EDIT'&&catalogBasketArticleTarget(model,basket.contextOccurrenceId,entry.visualConceptId);
+     const seller = basket.fields.merchantLabel;
+     const location = typeof seller === "string" && seller !== basket.label ? `${info.label} · ${seller}` : info.label;
+     actions.push(...basketActions(basket,info.action==='EDIT',` · ${location}`));
+     const destination=info.action==='EDIT'&&catalogBasketArticleTarget(model,basket.contextOccurrenceId,concept);
      if(destination&&isBasketCatalogProduct(entry,destination.fields.budgetDomain))
        actions.push({key:'basket-add:'+basket.contextOccurrenceId,kind:'BASKET_ARTICLE',contextId:basket.contextOccurrenceId,
-         concept:{id:entry.visualConceptId,label:entry.label},label:`Préparer ${entry.label} dans ${info.label}`});
+         concept,label:`Préparer ${entry.label} dans ${info.label}`});
    }
    const asset=model.library.searchableAssets.find(candidate=>candidate.kind==="CONTEXT_ASSET"&&candidate.assetKey==="template:purchase");
    if(actions.some(action=>action.key.startsWith('basket-existing:')))
@@ -155,7 +220,6 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
        :product&&purchaseStarterPresets[product.assetKey];
      const defaults=presetKey?composerPreset(presetKey)?.defaults:undefined;
      const domain=defaults&&'budgetDomain' in defaults?defaults.budgetDomain:'other';
-     const concept={id:entry.visualConceptId,label:entry.label};
      if(isBasketCatalogProduct(entry,domain))actions.push(presetKey?{key:(product?.module==='beauty'?'beauty-basket:':'catalog-basket:')+entry.visualConceptId,kind:'PRESET',presetKey,asset,concept,
        label:groceryProduct?`Préparer un panier Courses · ${entry.label}`:`Préparer un achat de ${entry.label}`}
        :{key:'catalog-basket:'+entry.visualConceptId,kind:'CHOOSE',asset,target:{kind:'BOARD_ZONE'},concept,label:`Préparer un panier pour ${entry.label}`});
@@ -205,8 +269,7 @@ export function discoveryActions(entry:ClayCatalogEntry,model:ComposerUiModel,ta
  }
  const productSlot=card.templateKey==='beauty-restock'&&product?.module==='beauty'
    ? {slot:'products',key:'option:beauty-restock:products:product'}
-   : card.templateKey==='home-project'&&product?.module==='home'
-     ? {slot:'items',key:'option:home-project:items:item'} : undefined;
+   : undefined;
  if(productSlot){
    const route=catalogSocket(model,id,productSlot.slot,productSlot.key);
    if(route?.socket.cardinality==='REPEATING'){

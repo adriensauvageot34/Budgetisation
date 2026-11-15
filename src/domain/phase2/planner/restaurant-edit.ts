@@ -4,6 +4,7 @@ import type { ComponentSelectionV1 } from "./component-contract";
 import { parseRestaurantIncludedDetails, assertRestaurantDetailsWritable, validateRestaurantDetailsTransition,
   type RestaurantIncludedDetailsV1, type RestaurantDetailsDecision } from "./restaurant-included-details";
 import { plannerKeys, plannerRecord } from "./json";
+import { parseOutingTime } from "./outing-time";
 
 export type RestaurantEdit = Readonly<{ contextOccurrenceId: string; fields?: Readonly<Record<string, PlannerJson>>;
   includedDetails?: RestaurantIncludedDetailsV1 | null; includedDetailsAfterMealChange?: RestaurantDetailsDecision;
@@ -26,8 +27,9 @@ export function editRestaurant(raw: PlanSemanticStateV1, edit: RestaurantEdit): 
   if (edit.includedDetails === null || edit.includedDetailsAfterMealChange === "REMOVE_ALL") delete fields.restaurantIncludedDetails;
   else if (edit.includedDetails !== undefined) fields.restaurantIncludedDetails = parseRestaurantIncludedDetails(edit.includedDetails);
   for (const [key, value] of Object.entries(edit.fields ?? {})) {
-    if (!["label", "plannedDate", "participantRefs", "placeRef"].includes(key)) throw new TypeError("COMPOSER_RESTAURANT_FIELD_INVALID");
-    if (value === "") delete fields[key]; else fields[key] = value;
+    if (!["label", "plannedDate", "plannedTime", "participantRefs", "placeRef"].includes(key)) throw new TypeError("COMPOSER_RESTAURANT_FIELD_INVALID");
+    const next = key === "plannedTime" ? parseOutingTime(value) : value;
+    if (next === "" || key === "plannedTime" && next === null) delete fields[key]; else fields[key] = next;
   }
   // Existing JSON/C0 version; no change to historical manifests or registry.
   fields.fieldSchemaVersion ??= "context-fields@v2";

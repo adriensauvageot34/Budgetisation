@@ -996,14 +996,18 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }
     else if (card&&!card.readOnly&&focus?.startsWith("component:")&&presetForContext(card)?.presetKey==="bar-apero")
       editContext(card,focus as BarTarget);
-    else if(card&&!card.readOnly&&articleLabel&&card.templateKey==="purchase")
+    else if(card&&!card.readOnly&&articleLabel&&(card.templateKey==="purchase"||card.templateKey==="home-project"))
       editContext(card,undefined,undefined,{kind:"article",label:articleLabel});
     else stableLibraryOpen(id);
+  });
+  const editBoardContext = useCommittedEvent((card: ComposerContextCardView, selectionId?: string) => {
+    if (selectionId) openCatalogContext(card.contextOccurrenceId, `basket-item:${selectionId}`);
+    else stableEditContext(card);
   });
   const prepareCatalogBasketArticle=useCommittedEvent((id:string,concept:BasketConcept)=>{
     if(busyRef.current)return;
     const card=shown.board.contexts.find(item=>item.contextOccurrenceId===id);
-    const context=catalogBasketArticleTarget(shown,id,concept.id);
+    const context=catalogBasketArticleTarget(shown,id,concept);
     if(card&&context)editContext(card,undefined,undefined,{kind:"basket-article",contextId:id,concept,expectedContextDigest:plannerDigest(context)});
   });
   const chooseCatalogSocket=useCommittedEvent((asset:ComposerAssetView,target:DropTarget,selection?:ComponentSelectionV1,componentLabel?:string,concept?:BasketConcept)=>{
@@ -1047,8 +1051,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     if(occurrence.action==="EDIT"||isClothingPurchase(card)&&draftState.contexts.some(context=>context.contextOccurrenceId===id&&isClothingPurchase(context)))editContext(card);
     else {clearHover();setEditor(null);setProjectionOpen(false);setUnresolvedOpen(false);setFocusedContext(id);}
   });
-  const stableOpenChild = useCommittedEvent((id: string) => {
-    if (busyRef.current || !inlineEdits.registry.guard(() => stableOpenChild(id))) return;
+  const stableOpenChild = useCommittedEvent((id: string, selectionId?: string) => {
+    if (busyRef.current || !inlineEdits.registry.guard(() => stableOpenChild(id, selectionId))) return;
     const parentId = editorOccurrenceId(editor);
     const card = shown.board.contexts.find(candidate => candidate.contextOccurrenceId === id && candidate.parentContextOccurrenceId === parentId);
     if (!parentId || !card) return;
@@ -1058,7 +1062,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       closeDialog();
       setFocusedContext(id);
       setReveal(previous => ({ targetRef: id, sequence: (previous?.sequence ?? 0) + 1 }));
-    } else editContext(card);
+    } else if (selectionId && isPurchaseBasket(card)) openCatalogContext(id, `basket-item:${selectionId}`);
+    else editContext(card);
   });
   const stableBackToBoard = useCommittedEvent((id: string) => {
     if (!shown.board.contexts.some(card => card.contextOccurrenceId === id)) return;
@@ -1239,7 +1244,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           dockHost={nightDockHost} busy={busy || draftState.preferences.anchors.includes(livingBarId) || draftState.preferences.flexibility[livingBarId]==="PRESERVE"} creating={editor?.nightCreating} admission={editor?.nightAdmission??0} serverError={errorMessage}
           onSave={stage} onCancel={closeDialog} onOpenChild={id=>{const child=shown.board.contexts.find(c=>c.contextOccurrenceId===id);if(child)editContext(child);}} />
           : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>,barHost.node,livingBarId)}
-      <ComposerBoard livingBar={livingBarId ? {id:livingBarId,removingId:removingBarId,open:stableEditContext,close:closeDialog,content:<BarLivingMount host={barHost}/>} : {removingId:removingBarId,open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? editor?.stayContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
+      <ComposerBoard livingBar={livingBarId ? {id:livingBarId,removingId:removingBarId,open:stableEditContext,close:closeDialog,content:<BarLivingMount host={barHost}/>} : {removingId:removingBarId,open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? editor?.stayContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={editBoardContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
         add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} reveal={reveal}
          contextGuide={editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment?.asset.optionKind === "COMPONENT" ? <div ref={setNightDockHost} data-night-dock-host /> : editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
           && draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)
@@ -1311,6 +1316,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         : editor?.catalogContextId && CatalogContextEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)
         ? <CatalogContextEditor key={workshopKey(editor.catalogContextId)} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)!}
           onOpenChild={stableOpenChild}
+          homeEquipmentLabel={editor.guidedCatalogChoice?.kind === "article" ? editor.guidedCatalogChoice.label : undefined}
           editor={{ assetKey: editor.cardKey ?? "", fields: editor.fields }} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons}
           options={model.mobilityOptions} knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} model={shown} dockHost={nightDockHost} choose={stableChoose} placeDeclines={placeDeclines} declinePlace={declinePlace} onCancel={closeDialog}
            onSave={stage} focusSelectionId={editor.catalogSelectionId}

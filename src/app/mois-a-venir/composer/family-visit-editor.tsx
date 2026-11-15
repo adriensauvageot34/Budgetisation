@@ -39,7 +39,7 @@ export type StaySummaryTarget = "posts" | "departure" | "return" | "route";
 export function ProspectiveContextEditor({ stay = false, stayDetails, posts, postsQuestion, staySummary, stayTransportModes, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, dockHost, model, choose, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, onOpenChild }: {
   context: PlannedContextState; householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
   targetMonth: string; stay?: boolean; stayDetails?: (open: (target: StaySummaryTarget) => void) => ReactNode; posts?: ReactNode; postsQuestion?: PaletteQuestion;
-  staySummary?: { controls: ReactNode; canEditPeriod?: boolean; question: (open: (target: StaySummaryTarget) => void) => PaletteQuestion | undefined };
+  staySummary?: { controls: ReactNode; canEditPeriod?: boolean; periodControls?: ReactNode; question: (open: (target: StaySummaryTarget) => void) => PaletteQuestion | undefined };
   stayTransportModes?: readonly string[];
   summary?: ComposerMobilitySummary; fresh: boolean; knowledge?: CardKnowledgeRead; initialMode?: string; busy: boolean; dockHost?: HTMLElement | null;
   placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
@@ -194,6 +194,7 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       {stay && <><p className={styles.helper}>Le départ prévu positionne la carte du mois. Ces dates ne prouvent ni ne déplacent une réservation d’hôtel.</p>{stayDetails?.(openStaySuggestion)}</>}
       {mode && <p>Déplacement : {modeLabels[mode] ?? mode}</p>}
       <div className={styles.restaurantSummaryActions}><button type="button" className={styles.primary} onClick={() => setSection(stay ? "posts" : "people")}>{stay ? "Composer le séjour" : "Préciser la visite"}</button>
+        {stay && <button type="button" disabled={busy || !staySummary?.canEditPeriod} onClick={() => setSection("people")}>Participants{people.length ? ` · ${people.length}` : ""}</button>}
         {(!stayTransportModes || stayTransportModes.length > 0) && <button type="button" onClick={() => setSection("route")}>Prévoir le déplacement</button>}</div>
       {staySummary?.controls}
       {!stay && <><ProjectActivityCatalog model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} open={onOpenChild} />
@@ -222,6 +223,7 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
           <label>Heure de départ<input type="time" disabled={!date} value={outTime} onChange={event => setOutTime(event.target.value)} /></label></>}
         {(timingPage === "back" || stay && timingPage === "out") && <><label>Date de retour (facultative)<input type="date" value={endDate} onChange={event => { setEndDate(event.target.value); if (!event.target.value) setReturnTime(""); }} /></label>
           <label>Heure de retour<input type="time" disabled={!endDate} value={returnTime} onChange={event => setReturnTime(event.target.value)} /></label></>}
+        {stay && timingPage !== "note" && staySummary?.periodControls}
         {timingPage === "note" && <label>Repère de temps<input value={note} maxLength={160} onChange={event => setNote(event.target.value)} placeholder="Par exemple : un dimanche" /></label>}
       </section>}
       {stay && section === "posts" && <section className={styles.nightSection} data-visit-section="posts" tabIndex={-1}>{posts}</section>}
