@@ -68,7 +68,11 @@ const built = await build({ entryPoints: [p4dMeasuring ? 'scripts/lib/planner-co
   ...(p4Split ? { outdir:out, entryNames:'app', chunkNames:'chunks/[name]-[hash]', splitting:true, metafile:true } : { outfile: path.join(out, 'app.js') }),
   loader: { '.css': 'local-css' }, sourcemap: true,
   external: ['/planned-visuals/*'],
-  plugins: [...(process.env.PLANNER_L33_CLUSTER_TRIAL === '1' ? [{ name:'l33-real-expansion-comparison',setup(builder){
+  plugins: [...(process.env.COMMERCE_BADGE_FIXTURE === '1' ? [{ name:'badge-synthetic-global-art',setup(builder){
+    builder.onLoad({filter:/commerce-illustrations[.]json$/},()=>({contents:JSON.stringify({ identities:{
+      "platform:amazon":{src:"/planned-visuals/commerce/platforms/amazon.webp",width:64,height:64}},
+      categories:{RESTAURANT:{src:"/planned-visuals/commerce/categories/restaurant.webp",width:64,height:64}} }),loader:'json'}));
+  }}] : []),...(process.env.PLANNER_L33_CLUSTER_TRIAL === '1' ? [{ name:'l33-real-expansion-comparison',setup(builder){
     builder.onLoad({filter:/[\\/]visual-cluster\.tsx$/},args=>{
       const original=fs.readFileSync(args.path,'utf8');
       const before=original.slice(0,original.indexOf('export function VisualClusterOverlay'));
@@ -92,6 +96,7 @@ if (!globalCss || !/\.h-dvh\s*\{/.test(globalCss)) throw new Error('A production
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
 } else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
 if (process.env.PLANNER_C8_BUILD_ONLY === '1') process.exit(0);
+let badgeFixture;
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
   M11M12: () => {
     const month = simpleMonth();
@@ -111,6 +116,30 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
       context(11121, 'activity', { main: selections(component('activity', '18.00')) },
         { ...presetCreationFields('activity', 'cinema'), plannedTime: '14:00' }, 11120),
     ];
+    return month;
+  },
+  BADGES: () => {
+    const month = simpleMonth();
+    const place = (id, name, usage, subtype, merchantId) => ({ placeId: uuid(id), name, usage, subtype,
+      nature: "Commerce", privatePlace: false, commune: "Ville fictive", relationships: [], visits12Months: 4,
+      ...(merchantId ? { confirmedMerchant: { id: uuid(merchantId), name } } : {}) });
+    month.world.mobilityFacts.places = [
+      place(97101, "E.Leclerc", "Courses", "Supermarché", 97001),
+      place(97102, "Restaurant de recette", "Restaurant", "Restaurant"),
+      place(97103, "Salon de recette", "Soins personnels", "Salon de coiffure"),
+    ];
+    month.semantic.contexts = [
+      ["purchase", "amazon-purchase", 97201, { merchantLabel: "Librairie tierce" }],
+      ["purchase", "groceries-purchase", 97202, { placeRef: { kind: "KNOWN", placeId: uuid(97101) } }],
+      ["restaurant", "restaurant-for-two", 97203, { placeRef: { kind: "KNOWN", placeId: uuid(97102) } }],
+      ["activity", "hairdresser-service", 97204, { placeRef: { kind: "KNOWN", placeId: uuid(97103) } }],
+      ["gift", "gift-present", 97205, { merchantLabel: "Atelier Homonyme" }],
+      ["gift", "gift-present", 97206, { merchantLabel: "Atelier Homonyme" }],
+      ["gift", "gift-present", 97208, { merchantLabel: "Atelier Homonyme" }],
+      ["restaurant", "restaurant-for-two", 97207, { placeRef: { kind: "TEXT", label: "Restaurant de recette", provenance: "USER_DECLARED_PROSPECTIVE" } }],
+    ].map(([templateKey, preset, id, fields]) => ({ contextOccurrenceId: uuid(id), templateKey, status: "ACTIVE",
+      parentContextOccurrenceId: null, fields: { ...presetCreationFields(templateKey, preset),
+        fieldSchemaVersion: templateKey === "purchase" ? "context-fields@v7" : "context-fields@v2", ...fields }, slotSelections: {}, provenance: "EXPLICIT_USER_DECISION" }));
     return month;
   },
   COMMERCE: () => {
@@ -203,6 +232,23 @@ const server = http.createServer(async (request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1');
     const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
     const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
+    if (key === 'BADGES' && (url.pathname.startsWith('/api/composer/badge-library') || url.pathname.startsWith('/fixture-badge-image/')
+      || url.pathname.startsWith('/planned-visuals/commerce/'))) {
+      badgeFixture ??= (await import('./lib/commerce-library-fixture.mjs')).commerceLibraryFixture();
+      const fixture = await badgeFixture;
+      if (url.pathname.startsWith('/fixture-badge-image/')) {
+        const bytes = fixture.signedImage(url.pathname.split('/').at(-1).replace('.webp',''));
+        response.writeHead(bytes ? 200 : 404,{'Content-Type':'image/webp'}); response.end(bytes); return;
+      }
+      if (url.pathname.startsWith('/planned-visuals/commerce/')) {
+        response.writeHead(200,{'Content-Type':'image/webp'}); response.end(fixture.syntheticImage); return;
+      }
+      const chunks = []; for await(const chunk of request) chunks.push(chunk);
+      const incoming = new Request('http://' + request.headers.host + request.url, { method:request.method,
+        headers:request.headers, ...(request.method !== 'GET' ? {body:Buffer.concat(chunks)}:{}) });
+      const result = await fixture.request(incoming, url.pathname.endsWith('/image') ? 'IMAGE' : request.method === 'PUT' ? 'UPLOAD' : 'COMMAND');
+      response.writeHead(result.status,Object.fromEntries(result.headers));response.end(Buffer.from(await result.arrayBuffer()));return;
+    }
     // Explicit synthetic provider surface, localhost only. Never proxies Google.
     if(['BAR16_GOOGLE','BARLIVE_PERSONAL'].includes(key)&&request.method==='POST'&&['/api/places/autocomplete','/api/places/details'].includes(url.pathname)){
       const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>4096)throw Error('FIXTURE_INPUT_TOO_LARGE');chunks.push(chunk);}

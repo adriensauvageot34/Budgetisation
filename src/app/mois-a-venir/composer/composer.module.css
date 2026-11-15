@@ -986,10 +986,15 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .contextHero:has(.intentionProgress) .contextObjectIcon { width:55px; height:55px; }
 .contextHero:has(.intentionProgress) .contextObjectIcon svg { width:55px; height:55px; }
 .contextHeader:has(.intentionProgress) [data-linked-intentions-count] { display:none; }
+.commerceBadge img { width:24px; height:24px; flex:none; object-fit:contain; }
+.commerceBadgeEdit { border:0; padding:2px; display:inline-flex; flex:none; border-radius:5px; color:#735c8c; background:transparent; cursor:pointer; }
+.commerceBadgeEdit:focus-visible { outline:2px solid #ab83c5; outline-offset:1px; }
+.contextHeader .commerceBadge img { width:20px; height:20px; }
 .contextHeader,.contextHeader>div { min-width:0; max-width:100%; }
 .contextHeader .commerceBadges { flex-wrap:nowrap; justify-content:center; }
 .contextHeader .commerceBadge { min-width:0; font-size:.66rem; padding:.12rem .25rem; }
 .contextHeader .commerceBadge>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.contextHero:has(.commerceBadges) .presetBoardImage { flex-shrink:1; min-height:0; object-fit:contain; }
 .basketBoardArticles { font-size: 12px; }
 .basketBoardArticles summary { cursor: pointer; }
 .basketBoardArticles ul { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 4px; max-height: 130px; overflow-y: auto; }

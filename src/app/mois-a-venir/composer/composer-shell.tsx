@@ -23,6 +23,7 @@ import { isPurchaseBasket, type BasketConcept } from "@/domain/phase2/planner/pu
 import { assetEditorTarget, editorOccurrenceId, admittedProjectMove } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
 import { composerContextProgress, ContextProgress } from "./context-progress";
+import { CommerceLibraryProvider } from "./commerce-library";
 import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
 import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter, type ProjectStarterChoices } from "./project-starters";
 import { ProjectStarterPreview } from "./project-starter-preview";
@@ -1180,7 +1181,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         }} /> : null;
   return <ProjectCompletionPreference.Provider value={projectSuggestionPreference}><BudgetPreviewStatus.Provider value={previewStatus}><ContextProgress.Provider value={contextProgress}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}
-    prepareBasketArticle={prepareCatalogBasketArticle}>
+    prepareBasketArticle={prepareCatalogBasketArticle}><CommerceLibraryProvider model={shown}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
       if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-bar-place-suggestions],[data-catalog-open],[popover],dialog'))return;
@@ -1402,5 +1403,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></OpenMonthlyFinances.Provider></ContextProgress.Provider></BudgetPreviewStatus.Provider></ProjectCompletionPreference.Provider>;
+  </div></CommerceLibraryProvider></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></OpenMonthlyFinances.Provider></ContextProgress.Provider></BudgetPreviewStatus.Provider></ProjectCompletionPreference.Provider>;
 }

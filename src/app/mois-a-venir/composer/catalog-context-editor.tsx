@@ -15,6 +15,7 @@ import type { DropTarget } from "@/domain/phase2/planner/composer-contract";
 import { PlannedContactField } from "../planned-people-fields";
 import { ContactPlaceReference } from "./workshop-place-reference";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
+import { CommerceBadges } from "./commerce-badges";
 import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { WorkshopDock } from "./workshop-dock";
 import type { ContextPalette, PaletteQuestion } from "./context-palette";
@@ -232,6 +233,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     data-project-editor={childSlot ? true : undefined}
     data-mascara-suggestions={mascaraPreset && question?.identity === "beauty-product-suggestions" || undefined} className={styles.nightEditor}>
     <WorkshopNavigation contextId={context.contextOccurrenceId} />
+    <CommerceBadges context={context} model={model} />
     <p className={styles.helper}>Les informations restent liées à ce moment. La palette propose les postes compatibles ; seuls ces postes peuvent porter un coût.</p>
     {activeKey === null && <section className={styles.nightSection} data-catalog-summary><h3>{String(context.fields.label ?? "Votre intention")}</h3>
       <p>Choisissez uniquement la précision utile maintenant. Les autres informations restent inconnues.</p>
