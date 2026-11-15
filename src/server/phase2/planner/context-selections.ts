@@ -1,4 +1,5 @@
 import "server-only";
+import { HOME_EQUIPMENT_FIELD, parseHomeEquipment } from "@/domain/phase2/planner/home-equipment";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import {parseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
 import { plannerDigest, plannerInteger, plannerKeys, plannerRecord, plannerString, plannerUuid } from "@/domain/phase2/planner/json";
@@ -178,6 +179,10 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
     for (const item of (consumption.version === "night-out-consumption@v1" ? consumption.inactive : consumption.legacyV1?.inactive ?? [])) selection(item, extras);
   }
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
+    if (field.fieldKey === HOME_EQUIPMENT_FIELD) {
+      parseHomeEquipment(context.fields[field.fieldKey]);
+      continue;
+    }
     if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
       || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
       && !["context-fields@v2", "context-fields@v3", ...(basket ? [PURCHASE_BASKET_FIELDS] : context.templateKey === "night-out" ? ["context-fields@v6"] : context.templateKey === "family-visit" ? ["context-fields@v4"] : context.templateKey === "short-stay" ? ["context-fields@v5"] : [])].includes(String(context.fields.fieldSchemaVersion)))

@@ -1,4 +1,5 @@
 import "server-only";
+import { HOME_EQUIPMENT_FIELD } from "@/domain/phase2/planner/home-equipment";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { plannerDigest, plannerDigestString, plannerInteger, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
 import { parsePlanSemanticState, semanticStateDigest } from "@/domain/phase2/planner/semantic-state";
@@ -104,7 +105,8 @@ export async function saveComposerDraft(scope: Scope, command: ComposerDraftSave
   try {
     targetMonth = plannerMonth(command.targetMonth);
     const state = parsePlanSemanticState(command.semanticState);
-    if (state.contexts.some(isPurchaseBasket)) validateContextGraph(state);
+    if (state.contexts.some(context => isPurchaseBasket(context) || Object.hasOwn(context.fields, HOME_EQUIPMENT_FIELD)))
+      validateContextGraph(state);
     const digest = plannerDigestString(command.digest);
     const requestId = plannerUuid(command.requestId);
     const expectedId = command.expectedDraftId === null ? null : plannerUuid(command.expectedDraftId);

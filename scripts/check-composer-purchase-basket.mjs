@@ -65,6 +65,9 @@ try {
   assert.deepEqual(summary(amazon), { articleCount: 3, knownAmount: "48.00", complete: true });
   assert.equal(suggestions(amazon).find(candidate => candidate.kind === "DELIVERY").hint, "Livraison comprise");
   assert.equal(context(amazon).slotSelections.shipping.items.length, 0);
+  await edit(amazon, { kind: "SET_DELIVERY", mode: "DELIVERY", coverage: "ADDITIONAL", selectionId: fee, price: "" });
+  assert.equal(context(amazon).slotSelections.shipping.items[0].cost.kind, "UNKNOWN");
+  assert.deepEqual(summary(amazon), { articleCount: 3, knownAmount: "48.00", complete: false });
   await edit(amazon, { kind: "SET_DELIVERY", mode: "DELIVERY", coverage: "ADDITIONAL", selectionId: fee, price: "5" });
   assert.equal(summary(amazon).knownAmount, "53.00");
   assert.deepEqual(suggestions(amazon).find(candidate => candidate.kind === "DELIVERY").selectionIds, [fee]);
@@ -128,20 +131,46 @@ try {
   assert.equal(libraryOccurrences(model).find(row=>row.contextOccurrenceId===clothing)?.surface,"BASKET");
   assert.match(suggestions(clothing).find(candidate => candidate.kind === "ADD").label, /vêtement/);
   await article(clothing, tee1, "T-shirt noir", "2", "8", "UNIT", concept("T-shirt"));
+  await edit(clothing, { kind: "SAVE_ITEM", selectionId: tee1, label: "T-shirt noir", quantity: "2", price: "8", unit: "UNIT",
+    variant: { size: " M ", color: "Noir" } });
+  await edit(clothing, { kind: "SAVE_ITEM", selectionId: tee1, label: "T-shirt noir", quantity: "2", price: "8", unit: "UNIT" });
+  assert.deepEqual(context(clothing).slotSelections.item.items[0].basketArticle.variant, { size: "M", color: "Noir" });
+  const invalidVariant = await call(operation(clothing, { kind: "SAVE_ITEM", selectionId: tee1,
+    label: "T-shirt noir", quantity: "2", price: "8", unit: "UNIT", variant: { model: "m".repeat(101) } }));
+  assert.equal(invalidVariant.code, "PURCHASE_BASKET_VARIANT_INVALID");
   await edit(clothing, { kind: "SAVE_ITEM", selectionId: jeans, label: "Jean", quantity: "1", price: "20", unit: "UNIT" });
   await article(clothing, tee2, "T-shirt noir", "1", "", "UNIT", concept("T-shirt"));
+  await edit(clothing, { kind: "SAVE_ITEM", selectionId: tee2, label: "T-shirt noir", quantity: "1", price: "", unit: "UNIT",
+    variant: { size: "L" } });
   assert.deepEqual(suggestions(clothing).find(candidate => candidate.kind === "CHOOSE_ITEM").selectionIds, [tee1, tee2]);
   const beforeClothing = structuredClone(context(clothing).slotSelections.item.items);
   await article(clothing, tee2, "T-shirt noir", "1", "5", "UNIT", concept("T-shirt"));
   assert.deepEqual(context(clothing).slotSelections.item.items.slice(0, 2), beforeClothing.slice(0, 2));
+  assert.deepEqual(context(clothing).slotSelections.item.items[2].basketArticle.variant, { size: "L" });
+  await edit(clothing, { kind: "SAVE_ITEM", selectionId: tee2, label: "T-shirt noir", quantity: "1", price: "5", unit: "UNIT",
+    variant: null });
+  assert.equal(context(clothing).slotSelections.item.items[2].basketArticle.variant, undefined);
   assert.equal(summary(clothing).knownAmount, "41.00");
   await edit(clothing, { kind: "REMOVE_ITEM", selectionId: tee2 });
   assert.deepEqual(context(clothing).slotSelections.item.items, beforeClothing.slice(0, 2));
   assert.equal(summary(clothing).knownAmount, "36.00");
   assert(filterLibraryIntentions(libraryOccurrences(model),"Jean").some(row=>row.contextOccurrenceId===clothing));
+  assert(filterLibraryIntentions(libraryOccurrences(model),"T-shirt noir M").some(row=>row.contextOccurrenceId===clothing));
+  await edit(clothing, { kind: "SET_DETAILS", merchant: "Atelier fixture", date: "", coverage: "AUTO" });
   const lockedBasket={...model,semanticState:{...draft,preferences:{...draft.preferences,anchors:[clothing]}}};
   assert.equal(libraryOccurrences(lockedBasket).find(row=>row.contextOccurrenceId===clothing)?.action,"VIEW");
   console.log("Vêtements, prix inconnu et édition/retrait ciblés : PASS");
+
+  const beauty = uuid(21105);
+  await create(beauty, "beauty-purchase");
+  await edit(beauty, { kind: "SAVE_ITEM", selectionId: mascara, label: "Mascara", quantity: "2", price: "", unit: "UNIT",
+    concept: concept("Mascara"), variant: { color: "Noir", model: "8 ml" } });
+  await edit(beauty, { kind: "SET_DETAILS", merchant: "Beauté fixture", date: "", coverage: "AUTO" });
+  await edit(beauty, { kind: "SET_DELIVERY", mode: "DELIVERY", coverage: "INCLUDED" });
+  assert.deepEqual(context(beauty).slotSelections.item.items[0].basketArticle.variant, { color: "Noir", model: "8 ml" });
+  assert.equal(context(beauty).slotSelections.item.items[0].cost.kind, "UNKNOWN");
+  assert.deepEqual(context(beauty).slotSelections.shipping.items, []);
+  assert.deepEqual([amazon, clothing, beauty].map(id => context(id).fields.merchantLabel), ["Amazon", "Atelier fixture", "Beauté fixture"]);
 
   const groceries = uuid(21012), pastas = uuid(21013), milk = uuid(21014), bread = uuid(21015);
   const groceriesSlot = world.baseline.slots.find(slot => slot.semanticKey === "groceries");

@@ -1,9 +1,10 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import {BarLivingCard,type LivingBar} from "./bar-living-card";
 import { CatalogOpenButton } from './catalog-discovery-provider';
 import { GripVertical, MoreHorizontal, Pin, Link2, Pencil, LockKeyhole } from "lucide-react";
 import type { ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
+import { componentId } from "@/domain/phase2/planner/identity";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { ContextSocket } from "./context-socket";
 import { money, knowledgeLabel, plannedDayLabel } from "./display";
@@ -18,7 +19,9 @@ import { useComposerInteractions, useDragHandle, leftSurface } from "./interacti
 import { visibleEmptySocketKeys } from "./presentation/socket-visibility";
 import { composerRenderIndex } from "./render-index";
 import { HairdresserReference } from "./hairdresser-reference";
-import { isPurchaseBasket, purchaseComponents } from "@/domain/phase2/planner/purchase-basket";
+import { isPurchaseBasket, purchaseComponents, type PurchaseComponent } from "@/domain/phase2/planner/purchase-basket";
+import { catalogRefLocked } from "./catalog-discovery";
+import { purchaseLineLabel } from "./purchase-line-label";
 import { budgetAmountsCurrent, BudgetPreviewStatus } from "./intent-budget-impact";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
@@ -32,7 +35,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   focused: string | null; focus: (id: string | null) => void;
   selected: string | null; drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
-  request: (operation: ComposerOperation) => void; edit: (card: ComposerContextCardView) => void; livingBar?: LivingBar }) {
+  request: (operation: ComposerOperation) => void; edit: (card: ComposerContextCardView, selectionId?: string) => void; livingBar?: LivingBar }) {
   const instance = `context-occurrence:${card.contextOccurrenceId}`;
   const index=composerRenderIndex(model), ownDrops=index.drops.get(instance) ?? [];
   const removable = ownDrops.some(d => d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
@@ -49,7 +52,9 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const amountsCurrent = budgetAmountsCurrent(model, preview);
   const basketSummary = amountsCurrent ? card.purchaseSummary : undefined;
   const basketContext = basket ? model.semanticState.contexts.find(context => context.contextOccurrenceId === card.contextOccurrenceId) : undefined;
-  const articleCount = basketContext ? purchaseComponents(basketContext, "item").length : basketSummary?.articleCount ?? 0;
+  const basketArticles = basketContext ? purchaseComponents(basketContext, "item") : [];
+  const articleCount = basketContext ? basketArticles.length : basketSummary?.articleCount ?? 0;
+  const admittedBasketArticles = new Set(main?.currentItems.map(item => item.selectionId));
   const mainAmount = amountsCurrent && main?.evaluations?.length === 1 ? main.evaluations[0].economicAmount : null;
   const nightSummary = model.nightOutSummaries?.find(summary => summary.contextOccurrenceId === card.contextOccurrenceId);
   const currentNightSummary = amountsCurrent && nightSummary?.semanticStateDigest === model.board.draft.semanticStateDigest ? nightSummary : undefined;
@@ -87,7 +92,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
     <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} disabled={busy}
-      onClick={() => editable && (card.templateKey === "restaurant" || card.templateKey === "activity" || purchase || !!preset)
+      onClick={() => editable && (["restaurant", "activity", "home-project"].includes(card.templateKey) || purchase || !!preset)
         ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{plannedDay ?? "Date à préciser"}</p>}
       {card.childContextOccurrenceIds.length > 0 && <p data-linked-intentions-count={card.childContextOccurrenceIds.length}>
         {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
@@ -117,13 +122,19 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       {currentNightSummary?.knownAmount != null && <small>{currentNightSummary.costIncomplete
         ? "Coût connu · à compléter" : "Coût connu · modifier ma soirée"}</small>}
     </div>}
-    {basket ? <div className={styles.purchaseSummary} data-purchase-summary>
+    {basket ? <><div className={styles.purchaseSummary} data-purchase-summary>
       <button type="button" onClick={() => edit(card)} disabled={busy || card.readOnly || !card.capabilityRefs.includes("PATCH_CONTEXT")}>{editable ? "Ouvrir le panier" : "Consulter le panier"}</button>
       <small>{articleCount} article{articleCount > 1 ? "s" : ""} · {!amountsCurrent ? "Calcul à actualiser"
         : basketSummary?.knownAmount == null ? "Total à préciser"
           : basketSummary.complete ? `Total brut ${money(basketSummary.knownAmount)}`
             : `Sous-total connu ${money(basketSummary.knownAmount)} · Total à préciser`}</small>
-    </div> : purchase && <div className={styles.purchaseSummary} data-purchase-summary>
+      {typeof card.fields.merchantLabel === "string" && card.fields.merchantLabel !== card.label
+        && <small>Vendeur · {card.fields.merchantLabel}</small>}
+    </div>{editable && !!basketArticles.length &&
+      <BasketBoardArticles items={basketArticles} busy={busy} open={selectionId => edit(card, selectionId)}
+        canEdit={selectionId => admittedBasketArticles.has(selectionId)
+          && !catalogRefLocked(model, componentId(card.contextOccurrenceId, "item", selectionId))} />}
+    </> : purchase && <div className={styles.purchaseSummary} data-purchase-summary>
       <button type="button" data-budget-unknown={mainAmount===null||undefined} disabled={busy || !editable} onClick={() => edit(card)}>
         {!amountsCurrent ? "Calcul à actualiser" : mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
@@ -147,4 +158,19 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     </div>
     </div>
   </article>;
+}
+
+function BasketBoardArticles({ items, open, canEdit, busy }: {
+  items: readonly PurchaseComponent[]; open: (selectionId: string) => void; canEdit: (selectionId: string) => boolean; busy: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const action = (item: PurchaseComponent, index?: number) => canEdit(item.selectionId)
+    ? <button type="button" data-board-basket-line={item.selectionId} disabled={busy} onClick={() => open(item.selectionId)}>
+      Modifier {purchaseLineLabel(item, index)}</button>
+    : <span>{purchaseLineLabel(item, index)} · protégé</span>;
+  if (items.length === 1) return <div className={styles.basketBoardArticles}>{action(items[0])}</div>;
+  return <details className={styles.basketBoardArticles} onToggle={event => setExpanded(event.currentTarget.open)}>
+    <summary>Articles du panier</summary>
+    {expanded && <ul>{items.map((item, index) => <li key={item.selectionId}>{action(item, index)}</li>)}</ul>}
+  </details>;
 }

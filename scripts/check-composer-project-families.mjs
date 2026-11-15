@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {existsSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 import {require} from './lib/phase2-ts-loader.mjs';
 import {readMonthFixture} from './fixtures/composer-v22-b1.mjs';
 import {uuid,householdId} from './fixtures/planner-headless.mjs';
@@ -13,6 +13,9 @@ const {HOME_PROJECT_PRESET,presetIllustrationPath}=require('@/domain/phase2/plan
 const {IntentBudgetImpact,BudgetPreviewStatus}=require('@/app/mois-a-venir/composer/intent-budget-impact');
 const {libraryOccurrences}=require('@/domain/phase2/planner/composer-library-index');
 const {semanticStateDigest}=require('@/domain/phase2/planner/semantic-state');
+const {plannerDigest}=require('@/domain/phase2/planner/json');
+const {stageLocalDecision}=require('@/app/mois-a-venir/composer/local-draft');
+const {discoveryActions}=require('@/app/mois-a-venir/composer/catalog-discovery');
 const {fresh,buildComponentRow}=require('@/app/mois-a-venir/composer/night-out-components');
 globalThis.fetch=async()=>{throw Error('PROJECT_FAMILIES_REMOTE_FORBIDDEN');};
 const f=await readMonthFixture(),world=JSON.stringify(f.world),original=semanticStateDigest(f.model.semanticState);let id=30200;
@@ -67,19 +70,58 @@ const renderHome=()=>renderToStaticMarkup(React.createElement(CatalogContextEdit
  choose(){assert.fail();},onSave(){assert.fail();},onCancel(){},onOpenChild(){assert.fail();}}));
 assert.match(renderHome(),/Rattacher Panier pour la pièce/);
 assert.match(renderHome(),/Ajouter Acheter pour la maison/);
-assert.match(renderHome(),/Préparer un équipement/);
+assert.match(renderHome(),/Équipements du projet/);
 assert.match(renderHome(),/Préparer une prestation/);
 const readyHome=model;
 model={...model,dropCapabilities:model.dropCapabilities.filter(drop=>drop.target.contextOccurrenceId!==homeId||drop.target.slotKey!=='services')};
 assert.doesNotMatch(renderHome(),/Préparer une prestation/);
-assert.match(renderHome(),/Préparer un équipement/);
+assert.match(renderHome(),/Marquer comme déjà possédé/);
 model=readyHome;
 await request({kind:'DROP',assetKey:'context-occurrence:'+purchaseId,target:{kind:'CONTEXT_SOCKET',contextOccurrenceId:homeId,slotKey:'purchases'},
  identity:purchaseId,selectionId:uuid(++id),values:{}});
 assert.match(renderHome(),/Intentions liées/);
 assert.match(renderHome(),/Panier pour la pièce/);
+assert.doesNotMatch(renderHome(),/Ajouter Acheter pour la maison/);
 assert.equal(model.semanticState.contexts.find(context=>context.contextOccurrenceId===purchaseId).parentContextOccurrenceId,homeId);
 assert.equal(model.budgetReading.byContext[purchaseId].gross,null);
+const contextById=key=>model.semanticState.contexts.find(context=>context.contextOccurrenceId===key);
+const editEquipment=change=>({kind:'EDIT_HOME_EQUIPMENT',edit:{contextOccurrenceId:homeId,
+ expectedContextDigest:plannerDigest(contextById(homeId)),change}});
+const beforeEquipment=contextById(homeId).slotSelections,beforeBasket=contextById(purchaseId).slotSelections;
+assert(!model.dropCapabilities.some(drop=>drop.target.contextOccurrenceId===homeId&&drop.target.slotKey==='items'&&drop.resolution!=='BLOCKED'));
+const ownedId=uuid(++id),needId=uuid(++id);
+const markOwned=editEquipment({kind:'SET',equipment:{id:ownedId,label:'Lampe',status:'OWNED'}});
+const optimistic=stageLocalDecision(model,model.semanticState,markOwned);
+await request(markOwned);
+assert.deepEqual(model.semanticState,optimistic);
+const catalog=JSON.parse(readFileSync('public/planned-visuals/builder/clay/v22/collection.json','utf8'));
+const lamp=catalog.entries.find(entry=>entry.visualConceptId==='v22-art:extra:lamp');
+for(const contextId of [homeId,purchaseId,undefined]){
+ const actions=discoveryActions(lamp,model,{contextId});
+ assert.equal(actions.length,1);
+ assert.equal(actions[0].kind,'OPEN');
+ assert.equal(actions[0].contextId,homeId);
+ assert.match(actions[0].label,/déjà possédé/u);
+}
+await request(editEquipment({kind:'SET',equipment:{id:needId,label:'Étagère',status:'NEEDED'}}));
+assert.deepEqual(contextById(purchaseId).slotSelections,beforeBasket);
+const buy=equipmentId=>editEquipment({kind:'BUY',id:equipmentId,basketId:purchaseId,expectedBasketDigest:plannerDigest(contextById(purchaseId))});
+await request(buy(needId));
+const repeat=await transport({...buy(needId),sequence:++id,targetMonth:'2026-11',draft:model.semanticState});
+assert.equal(repeat.ok,false);
+assert.equal(repeat.code,'HOME_EQUIPMENT_DUPLICATE');
+await request({kind:'EDIT_PURCHASE_BASKET',edit:{contextOccurrenceId:purchaseId,expectedContextDigest:plannerDigest(contextById(purchaseId)),
+ change:{kind:'SAVE_ITEM',selectionId:needId,label:'Étagère',quantity:'3',unit:'UNIT',price:''}}});
+assert.deepEqual(contextById(homeId).slotSelections,beforeEquipment);
+assert.deepEqual(contextById(homeId).fields.homeEquipment.items.map(({id,status})=>[id,status]),[[ownedId,'OWNED'],[needId,'NEEDED']]);
+assert.deepEqual(contextById(purchaseId).slotSelections.item.items.map(({selectionId,quantity,cost})=>[selectionId,quantity,cost.kind]),[[needId,'3','UNKNOWN']]);
+const addParentCost={kind:'MUTATE',mutation:{kind:'PATCH_CONTEXT',contextOccurrenceId:homeId,slotKey:'items',
+ items:[{...contextById(purchaseId).slotSelections.item.items[0]}]}};
+assert.equal(stageLocalDecision(model,model.semanticState,addParentCost),null);
+const rejectedCost=await transport({...addParentCost,sequence:++id,targetMonth:'2026-11',draft:model.semanticState});
+assert.equal(rejectedCost.code,'HOME_EQUIPMENT_OWNER_REQUIRED');
+assert.equal(model.budgetReading.byContext[purchaseId].gross,null);
+assert.match(renderHome(),/Étagère · Quantité 3/u);
 assert.equal(JSON.stringify(f.world),world);assert.deepEqual(f.writes,[]);
 console.log('PF-03 The home project admits an existing basket without assigning costs: PASS');
 const freeActivityId=uuid(++id);
@@ -109,7 +151,7 @@ for(const [template,label,slot] of [['home-project','Mon atelier','purchases'],[
   editor:model.editors.find(editor=>editor.assetKey==='template:'+template),targetMonth:'2026-11',householdPersons:[],busy:false,model,
   choose(){assert.fail();},onSave(){assert.fail();},onCancel(){}}));
  assert.match(editorMarkup,/Associer une intention/);
- if(template==='home-project')assert.match(editorMarkup,/Préparer un équipement/);
+ if(template==='home-project')assert.match(editorMarkup,/Équipements du projet/);
  const childKey=template==='home-project'?'home-equipment-basket':'laser-game';
  const childId=uuid(++id);
  await request({kind:'DROP',assetKey:'template:'+(template==='home-project'?'purchase':'activity'),presetKey:childKey,

@@ -25,6 +25,8 @@ import { intentionNavigationEntries, WorkshopNavigation } from "./workshop-navig
 import { LinkedIntentions } from "./linked-intentions";
 import { ProjectCompletion } from "./project-completion";
 import { ProjectActivityCatalog } from "./project-activity-catalog";
+import { HomeEquipmentEditor } from "./home-equipment-editor";
+import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
 import { publishedDrop } from "./interactions";
@@ -40,15 +42,16 @@ const place = (value: PlannerJson | undefined): ProspectivePlaceRef | undefined 
 const participants = (value: PlannerJson | undefined): ProspectivePersonRef[] => Array.isArray(value)
   ? value.flatMap(item => person(item) ? [person(item)!] : []) : [];
 
-/** Edits only published context fields. Equipment remains attached through its R6 sockets. */
-export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, focusSelectionId, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, onOpenChild, dismissedSuggestions, updateSuggestionDismissal }: {
+/** Edits published context fields and delegates Maison equipment decisions to its owner. */
+export function CatalogContextEditor({ context, editor, targetMonth, householdPersons, options, knowledge, busy, model, dockHost, choose, focusSelectionId, placeDeclines = [], declinePlace = () => {}, onSave, onCancel, onOpenChild, homeEquipmentLabel, dismissedSuggestions, updateSuggestionDismissal }: {
   context: PlannedContextState; editor: ComposerEditor; targetMonth: string;
   householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
   knowledge?: CardKnowledgeRead;
   placeDeclines?: readonly string[]; declinePlace?: (key: string) => void;
   model: ComposerUiModel; dockHost?: HTMLElement | null; choose: Parameters<typeof ContextPalette>[0]["choose"];
   focusSelectionId?: string;
-  onOpenChild?: (id: string) => void;
+  onOpenChild?: (id: string, selectionId?: string) => void;
+  homeEquipmentLabel?: string;
   busy: boolean; onSave: (operation: ComposerOperation) => boolean; onCancel: () => void;
 } & SuggestionDismissal) {
   const [values, setValues] = useState<Values>(() => Object.fromEntries(editor.fields.map(field => [field.key, context.fields[field.key] ?? null])) as Values);
@@ -81,7 +84,10 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
   const candidates = canAttach ? intentionNavigationEntries(model.board.contexts.filter(child =>
     child.contextOccurrenceId !== context.contextOccurrenceId && !child.parentContextOccurrenceId && !child.readOnly && !protectedRef(child.contextOccurrenceId)
     && publishedDrop(model, `context-occurrence:${child.contextOccurrenceId}`, childTarget)?.choices.includes("REPARENT_PRESERVE_ID"))) : [];
-  const additions = homeProject ? ["home-equipment-basket"] : [
+  const linkedPurchases = homeProject ? model.board.contexts.filter(child => child.templateKey === "purchase"
+    && child.parentContextOccurrenceId === context.contextOccurrenceId
+    && card?.childContextOccurrenceIds.includes(child.contextOccurrenceId)) : [];
+  const additions = homeProject ? (linkedPurchases.length ? [] : ["home-equipment-basket"]) : [
     visitProject ? "museum-exhibition" : "cinema",
     "restaurant-for-two",
     ...COMPOSER_LIBRARY_PRESETS.filter(preset => preset.templateKey === "activity"
@@ -123,7 +129,6 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     return { asset, target, selection };
   };
   const homePosts = homeProject ? [
-    { slotKey: "items", optionKey: "item", label: "Préparer un équipement" },
     { slotKey: "services", optionKey: "service", label: "Préparer une prestation" },
   ].flatMap(post => {
     const route = componentRoute(post.slotKey, post.optionKey);
@@ -237,6 +242,14 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
       {(beautyProduct || context.templateKey === "activity" || homeProject) && !activeNeed &&
         <IntentBudgetImpact model={model} contextId={context.contextOccurrenceId} />}
       {childSlot && <>
+        {homeProject && <HomeEquipmentEditor key={homeEquipmentLabel ?? context.contextOccurrenceId} project={context}
+          model={model} busy={busy} onSave={onSave} openBasket={onOpenChild} suggestedLabel={homeEquipmentLabel}
+          legacyPurchases={linkedPurchases.filter(child => !isPurchaseBasket(child))}
+          createBasket={addOptions.length ? () => {
+            const { preset, assetKey } = addOptions[0];
+            confirmAttachment(preset.label, () => ({ kind: "DROP", assetKey, presetKey: preset.presetKey,
+              target: childTarget, identity: crypto.randomUUID(), selectionId: crypto.randomUUID(), values: {}, purchaseBasket: true }));
+          } : undefined} />}
         {homePosts.length > 0 && <div className={styles.linkedFilters}>
           {homePosts.map(({ slotKey, label, route }) => <button type="button" key={slotKey} disabled={busy}
             onClick={() => {
@@ -245,7 +258,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
             }}>{label}</button>)}
         </div>}
         <LinkedIntentions model={model} parentId={context.contextOccurrenceId} busy={busy} open={onOpenChild} decide={onSave} />
-        <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />
+        {!homeProject && <ProjectCompletion model={model} parentId={context.contextOccurrenceId} busy={busy} decide={onSave} />}
         {(candidates.length > 0 || addOptions.length > 0) && <details>
           <summary>Associer une intention</summary>
           {!homeProject && <ProjectActivityCatalog model={model} parentId={context.contextOccurrenceId}

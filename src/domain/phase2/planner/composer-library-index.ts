@@ -111,7 +111,7 @@ export function libraryOccurrences(model:ComposerUiModel): readonly LibraryOccur
       ||publishedPreset(context)?.presetKey!==preset.presetKey))return [];
     const clothing=isClothingPurchase(card)&&!basket, article=context&&clothing?clothingItem(context):undefined;
     const basketLabels=basket&&context?purchaseComponents(context,"item").flatMap(item=>[
-      item.label, item.basketArticle?.concept?.label ?? "",
+      item.label, item.basketArticle?.concept?.label ?? "", ...Object.values(item.basketArticle?.variant ?? {}),
     ]):[];
     const merchant=basket&&typeof context?.fields.merchantLabel==="string"?context.fields.merchantLabel:"";
     const parentLabels:string[]=[],seenParents=new Set([card.contextOccurrenceId]);

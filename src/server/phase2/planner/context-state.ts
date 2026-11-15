@@ -8,6 +8,7 @@ import { isLegacyContextField, resolveContextTemplate } from "./context-registry
 import { parseContextField, validateContextGraph } from "./context-selections";
 import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
 import { isPurchaseBasket } from "@/domain/phase2/planner/purchase-basket";
+import { addsHomeEquipmentCost } from "@/domain/phase2/planner/home-equipment";
 
 const children = (items: readonly ComponentSelectionV1[]): string[] => items.flatMap(item => item.kind === "CHILD_CONTEXT" ? [item.childContextOccurrenceId] : []);
 function prune(contexts: readonly PlannedContextState[], removedIds: readonly string[]): PlannedContextState[] {
@@ -75,6 +76,7 @@ export function setContextSlotSelections(raw: PlanSemanticStateV1, contextId: st
   const context = state.contexts.find(c => c.contextOccurrenceId === contextId);
   if (context && isPurchaseBasket(context) && ["item", "shipping"].includes(slotKey)) throw new TypeError("PURCHASE_BASKET_OWNER_REQUIRED");
   if (!context || !resolveContextTemplate(context.templateKey).componentSlots.some(s => s.slotKey === slotKey)) throw new TypeError("CONTEXT_SLOT_UNKNOWN");
+  if (addsHomeEquipmentCost(context, slotKey, items)) throw new TypeError("HOME_EQUIPMENT_OWNER_REQUIRED");
   const before = graph.selections.get(contextId)!.get(slotKey)!;
   const keep = new Set(children(items)), removed = children(before).filter(id => !keep.has(id));
   const contexts = prune(state.contexts.map(c => c.contextOccurrenceId === contextId ? withItems(c, slotKey, items) : c), removed);

@@ -22,7 +22,7 @@ type BoardProps=Parameters<typeof ComposerBoard>[0];
 const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"|"livingBar"> & {item:AtomicNode;inCluster:boolean;closeCluster:(after?:()=>void)=>boolean}) {
   const {model,busy,selected,focused,focus,edit,editContext,choose,drag,drop,request,hover,details,livingBar}=props,index=composerRenderIndex(model);
   // The drag geometry may be held, but card values always use the current model.
-  if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard livingBar={livingBar} card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={value=>{if(inCluster&&!closeCluster(()=>editContext(value)))return;editContext(value);}}/>:null;}
+  if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard livingBar={livingBar} card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={(value,selectionId)=>{if(inCluster&&!closeCluster(()=>editContext(value,selectionId)))return;editContext(value,selectionId);}}/>:null;}
   const card=index.controls.get(item.id);if(!card)return null;
   return <ComposerCard card={card} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused===item.id} focus={()=>focus(item.id)}
     preserved={model.semanticState.preferences.flexibility[item.id]==="PRESERVE"} edit={()=>{if(inCluster&&!closeCluster(()=>edit(card)))return;edit(card);}}
@@ -33,7 +33,7 @@ const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeClust
 export function ComposerBoard({ model, busy, selected, focused, focus, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details, contextGuide, reveal, livingBar }: { model: ComposerUiModel; busy: boolean; selected: string | null;
   focused: string | null; focus: (id: string | null) => void;
   edit: (card: ComposerCardView) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
-  drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void; request: (operation: ComposerOperation) => void; hover: (mutation: SemanticMutation | null) => void; editContext: (card: ComposerContextCardView) => void;
+  drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void; request: (operation: ComposerOperation) => void; hover: (mutation: SemanticMutation | null) => void; editContext: (card: ComposerContextCardView, selectionId?: string) => void;
   add: () => void; preview: () => void; balance: () => void; details: () => void; livingBar?:LivingBar; contextGuide?: ReactNode; reveal?: { targetRef: string; sequence: number } | null }) {
   const boardAccepts = !!selected && (model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED")
     || model.presentation.dragSources[selected]?.editorDropTarget?.kind === "BOARD_ZONE");

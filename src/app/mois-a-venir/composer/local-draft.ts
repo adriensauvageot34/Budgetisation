@@ -10,6 +10,7 @@ import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { validateRestaurantDetailsTransition } from "@/domain/phase2/planner/restaurant-included-details";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
+import { addsHomeEquipmentCost, editHomeEquipment } from "@/domain/phase2/planner/home-equipment";
 import { editPurchaseBasket, isPurchaseBasket, PURCHASE_BASKET_FIELDS } from "@/domain/phase2/planner/purchase-basket";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
 import { refreshGlobalConsumption } from "@/domain/phase2/planner/night-out-consumption";
@@ -19,6 +20,16 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 export function restaurantLocalRefusalMessage(error: unknown): string | null {
   if (!(error instanceof TypeError)) return null;
   switch (error.message) {
+    case "HOME_EQUIPMENT_CHANGED":
+      return "Le projet ou le panier a changé. Rouvrez l’équipement avant de réessayer.";
+    case "HOME_EQUIPMENT_DUPLICATE":
+      return "Cet équipement est déjà présent. Reprenez son entrée existante.";
+    case "HOME_EQUIPMENT_IN_BASKET":
+      return "Cet équipement est dans un panier. Retirez d’abord sa ligne si vous souhaitez changer son état.";
+    case "HOME_EQUIPMENT_INVALID":
+      return "Indiquez un nom d’équipement valide.";
+    case "HOME_EQUIPMENT_OWNER_REQUIRED":
+      return "Ouvrez le projet Maison pour classer cet équipement ou l’ajouter à un panier.";
     case "RESTAURANT_INCLUDED_DETAILS_PARENT_INVALID":
       return "Cette addition contient des détails déjà inclus. Ouvrez l’éditeur Restaurant et retirez explicitement ces détails avant de retirer ou remplacer l’addition.";
     case "RESTAURANT_INCLUDED_DETAILS_REVIEW_REQUIRED":
@@ -38,6 +49,7 @@ function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, co
   if (!context || !socket || !card?.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly
     || state.preferences.anchors.includes(contextId) || state.preferences.flexibility[contextId] === "PRESERVE"
     || socket.cardinality !== "REPEATING" && items.length > 1) return null;
+  if (addsHomeEquipmentCost(context, slotKey, items)) return null;
   const prior = context.slotSelections[slotKey]?.items;
   const keep = new Set(items.flatMap(item => item.kind === "CHILD_CONTEXT" ? [item.childContextOccurrenceId] : []));
   const removed = new Set(Array.isArray(prior) ? prior.flatMap(item => item && typeof item === "object" && !Array.isArray(item)
@@ -120,6 +132,13 @@ function stageDecision(model: ComposerUiModel, raw: PlanSemanticStateV1, operati
     if (!context || (card ? !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly
       : !model.dropCapabilities.some(d => d.sourceAssetKey === `template:${context.templateKey}` && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED"))) return null;
     return editGuidedContext(state, operation.edit);
+  }
+  if (operation.kind === "EDIT_HOME_EQUIPMENT") {
+    const { contextOccurrenceId, change } = operation.edit;
+    const writable = (id: string, template: string) => model.board.contexts.some(card =>
+      card.contextOccurrenceId === id && card.templateKey === template && !card.readOnly && card.capabilityRefs.includes("PATCH_CONTEXT"));
+    if (!writable(contextOccurrenceId, "home-project") || change.kind === "BUY" && !writable(change.basketId, "purchase")) return null;
+    return editHomeEquipment(state, operation.edit);
   }
   if (operation.kind === "EDIT_PURCHASE_BASKET") {
     const card = model.board.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);

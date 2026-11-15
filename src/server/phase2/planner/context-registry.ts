@@ -1,4 +1,5 @@
 import "server-only";
+import { HOME_EQUIPMENT_FIELD } from "@/domain/phase2/planner/home-equipment";
 import type { ComponentOptionDefinition, ComponentSlotDefinition } from "@/domain/phase2/planner/component-contract";
 import type { ContextCapability, ContextFieldDefinition, ContextRegistryV1, ContextTemplateV1 } from "@/domain/phase2/planner/context-contract";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
@@ -145,7 +146,7 @@ export function isLegacyContextField(templateKey: string, fieldKey: string): boo
 const legacyRegistry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION,
   templates: v2Registry.templates.map(template => ({ ...template,
     fields: template.fields.filter(field => isLegacyContextField(template.templateKey, field.fieldKey)) })) });
-export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
+function baseManifestRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
   if (state.contexts.some(isPurchaseBasket)) return basketRegistry;
   if (state.contexts.some(context => Object.hasOwn(context.fields, "restaurantIncludedDetails"))) return restaurantDetailsManifestRegistry;
   if (state.contexts.some(context => nightOutConsumption(context)?.version === "night-out-consumption@v2")) return globalConsumptionRegistry;
@@ -157,9 +158,22 @@ export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegi
   if (state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v3")) return giftRegistry;
   return state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v2") ? v2Registry : legacyRegistry;
 }
+function withHomeEquipment(template: ContextTemplateV1): ContextTemplateV1 {
+  return template.templateKey !== "home-project" ? template : {
+    ...template, version: "home-project@v2",
+    fields: [...template.fields, { fieldKey: HOME_EQUIPMENT_FIELD, kind: "TEXT", required: false, semanticContract: "HOME_EQUIPMENT" }],
+  };
+}
+
+export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
+  const source = baseManifestRegistry(state);
+  if (!state.contexts.some(context => context.templateKey === "home-project" && Object.hasOwn(context.fields, HOME_EQUIPMENT_FIELD))) return source;
+  return freeze({ version: `${source.version}+home-equipment@v1`, templates: source.templates.map(withHomeEquipment) });
+}
+
 export function resolveContextTemplate(key: string, fields?: PlanSemanticStateV1["contexts"][number]["fields"]): ContextTemplateV1 {
   if (fields && isPurchaseBasket({ templateKey: key, fields })) return basketPurchase;
   const found = restaurantDetailsRegistry.templates.find(t => t.templateKey === key);
   if (!found) throw new TypeError(`PLANNER_CONTEXT_TEMPLATE_UNSUPPORTED:${key}`);
-  return found;
+  return key === "home-project" && fields && Object.hasOwn(fields, HOME_EQUIPMENT_FIELD) ? withHomeEquipment(found) : found;
 }

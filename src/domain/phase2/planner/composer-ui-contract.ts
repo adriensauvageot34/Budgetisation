@@ -118,6 +118,7 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
   | Readonly<{ kind: "EDIT_RESTAURANT"; edit: RestaurantEdit }>
   | Readonly<{ kind: "EDIT_PRESET_CONTEXT"; edit: GuidedContextEdit }>
   | Readonly<{ kind: "EDIT_PURCHASE_BASKET"; edit: import("./purchase-basket").PurchaseBasketEdit }>
+  | Readonly<{ kind: "EDIT_HOME_EQUIPMENT"; edit: import("./home-equipment").HomeEquipmentEdit }>
   | Readonly<{ kind: "EDIT_GIFT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>>; item: ComponentSelectionV1 }>
   | Readonly<{ kind: "EDIT_NIGHT_OUT"; edit: NightOutEdit }>
   | Readonly<{ kind: "EDIT_FAMILY_VISIT"; edit: FamilyVisitEdit }>

@@ -119,6 +119,7 @@ export function composerFromDraftRead(read: Awaited<ReturnType<typeof readPlanne
     for (const socket of card.sockets) {
       const slot = resolveContextTemplate(card.templateKey, card.fields).componentSlots.find(s => s.slotKey === socket.slotKey)!;
       if (isPurchaseBasket(card) && ["item", "shipping"].includes(slot.slotKey)) continue;
+      if (card.templateKey === "home-project" && slot.slotKey === "items") continue;
       const target: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey };
       for (const asset of assets.filter(a => a.kind === "CONTEXT_ASSET" || a.kind === "SLOT_OPTION_ASSET")) {
         const allowed = asset.kind === "CONTEXT_ASSET" ? slot.allowedChildTemplates.includes(asset.templateKey!)

@@ -7,15 +7,16 @@ import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner
 import { componentId } from "@/domain/phase2/planner/identity";
 import { plannerDigest } from "@/domain/phase2/planner/json";
 import {
-  BASKET_UNITS, DELIVERY_COVERAGES, DELIVERY_MODES, isPurchaseBasket, legacyDeliveryFee, MAX_PURCHASE_ARTICLES, purchaseComponents,
+  BASKET_UNITS, BASKET_VARIANT_FIELDS, BASKET_VARIANT_MAX_LENGTH, DELIVERY_COVERAGES, DELIVERY_MODES, isPurchaseBasket, legacyDeliveryFee, MAX_PURCHASE_ARTICLES, purchaseComponents,
   type BasketConcept, type BasketUnit, type BasketDeliveryMode, type BasketDeliveryCoverage,
-  type PurchaseBasketChange, type PurchaseComponent,
+  type BasketVariant, type PurchaseBasketChange, type PurchaseComponent,
 } from "@/domain/phase2/planner/purchase-basket";
-import { isBasketCatalogProduct } from "@/domain/phase2/planner/purchase-catalog";
+import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import { clayCatalogArtwork, loadClayV22Collection, type ClayCatalogEntry } from "../clay-v22-catalog";
 import { CatalogOpenButton } from "./catalog-discovery-provider";
 import { catalogBasketArticleTarget, catalogRefLocked, normalizeCatalog, type GuidedCatalogChoice } from "./catalog-discovery";
+import { purchaseLineLabel, purchaseVariantText } from "./purchase-line-label";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
 import { purchaseSuggestions } from "./purchase-suggestions";
 import { SuggestionControls, type SuggestionDismissal } from "./suggestion-controls";
@@ -30,10 +31,14 @@ import composer from "./composer.module.css";
 
 const unitLabels = { UNIT: "Unité", PACK: "Lot ou pack", KG: "Kilogramme", L: "Litre" };
 const modeLabels = { UNKNOWN: "À préciser", DELIVERY: "Livraison", PICKUP: "Retrait", IN_STORE: "Sur place" };
+const plannedDelivery = { UNKNOWN: "Modalité à préciser", DELIVERY: "Livraison prévue", PICKUP: "Retrait prévu", IN_STORE: "Passage en magasin prévu" };
 const coverageLabels = { UNKNOWN: "Frais à préciser", INCLUDED: "Frais compris", FREE: "Sans frais", ADDITIONAL: "Frais en plus" };
+const variantLabels = { size: "Taille", color: "Couleur", model: "Modèle" };
+const beautyVariantLabels = { size: "Taille", color: "Teinte ou couleur", model: "Format ou modèle" };
 type Coverage = "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT";
 type ArticleFocus = "label" | "quantity" | "price";
-type ArticleForm = { kind: "article"; id: string; label: string; quantity: string; unit: BasketUnit; price: string; concept?: BasketConcept; existing?: PurchaseComponent; focus?: ArticleFocus };
+type ArticleForm = { kind: "article"; id: string; label: string; quantity: string; unit: BasketUnit; price: string;
+  concept?: BasketConcept; variant?: BasketVariant; existing?: PurchaseComponent; focus?: ArticleFocus };
 type Form = ArticleForm | { kind: "extra"; selectionId: string; label: string; price: string }
   | { kind: "details"; label: string; merchant: string; date: string; coverage: Coverage }
   | { kind: "delivery"; mode: BasketDeliveryMode; coverage: BasketDeliveryCoverage; price: string; selectionId: string };
@@ -57,6 +62,9 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const digest = plannerDigest(context);
   const groceries = context.fields.budgetDomain === "groceries";
   const clothing = context.fields.budgetDomain === "clothing";
+  const preset = presetForContext(context)?.presetKey;
+  const beauty = preset === "beauty-purchase";
+  const offerVariants = clothing || beauty || preset === "amazon-purchase";
   const writable = context.status === "ACTIVE" && card.contextOccurrenceId === id && isPurchaseBasket(card)
     && !card.readOnly && card.externalIntentId === null && card.capabilityRefs.includes("PATCH_CONTEXT") && !catalogRefLocked(model, id);
   const articles = purchaseComponents(context, "item");
@@ -116,7 +124,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     kind: "article", id: item?.selectionId ?? crypto.randomUUID(), label: item?.label ?? concept?.label ?? "",
     quantity: item?.quantity ?? "1", unit: articleUnit(item),
     price: item?.cost.kind === "MANUAL" ? item.cost.unitAmount : "",
-    concept: item?.basketArticle?.concept ?? concept, existing: item, focus,
+    concept: item?.basketArticle?.concept ?? concept, variant: item?.basketArticle?.variant, existing: item, focus,
   });
   const handledCatalogChoice=useRef<GuidedCatalogChoice | undefined>(undefined);
   useEffect(()=>{
@@ -124,7 +132,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     handledCatalogChoice.current=catalogChoice;
     if(catalogChoice.kind==='basket-article'){
       if(catalogChoice.contextId!==id)return;
-      if(!writable||catalogChoice.expectedContextDigest!==digest||!catalogBasketArticleTarget(model,id,catalogChoice.concept.id)){
+      if(!writable||catalogChoice.expectedContextDigest!==digest||!catalogBasketArticleTarget(model,id,catalogChoice.concept)){
         setError('Le panier ou ses droits ont changé. Rouvrez le catalogue pour choisir cet article.');return;
       }
       edit(undefined,catalogChoice.concept);
@@ -163,7 +171,8 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       setError(code === "PURCHASE_BASKET_CHANGED" ? "Le panier a changé. Rouvrez ce poste pour poursuivre."
         : code === "PURCHASE_BASKET_LEGACY_DELIVERY" ? "Un poste de livraison existe déjà dans les frais historiques. Vérifiez-le sur la carte avant d’en déclarer un nouveau."
         : code === "PURCHASE_BASKET_USE_DELIVERY" ? "Utilisez « Livraison et frais » pour déclarer la livraison."
-          : code === "PURCHASE_BASKET_LIMIT" ? "Ce panier a atteint sa limite de 500 articles."
+        : code === "PURCHASE_BASKET_LIMIT" ? "Ce panier a atteint sa limite de 500 articles."
+        : code === "PURCHASE_BASKET_VARIANT_INVALID" ? "Vérifiez les détails de la variante."
         : code === "PURCHASE_BASKET_WHOLE_QUANTITY_REQUIRED" ? "Indiquez un nombre entier d’unités ou de lots."
           : "Vérifiez le nom, la quantité, le prix ou la date. La saisie est conservée.");
     }
@@ -171,15 +180,16 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const save = () => {
     if (!validDate) return;
     if (form?.kind === "article") send({ kind: "SAVE_ITEM", selectionId: form.id, label: form.label, quantity: form.quantity,
-      unit: form.unit, price: form.price, ...(form.concept ? { concept: form.concept } : {}) }, openedDigest);
+      unit: form.unit, price: form.price, ...(form.concept ? { concept: form.concept } : {}),
+      ...(form.variant ? { variant: form.variant } : {}) }, openedDigest);
     if (form?.kind === "details") send({ kind: "SET_DETAILS", ...(form.label !== card.label ? { label: form.label } : {}),
       merchant: form.merchant, date: form.date, coverage: form.coverage }, openedDigest);
     if (form?.kind === "extra") send({ kind: "SAVE_EXTRA", selectionId: form.selectionId, label: form.label, price: form.price }, openedDigest);
     if (form?.kind === "delivery") send({ kind: "SET_DELIVERY", mode: form.mode, coverage: form.coverage,
       ...(form.coverage === "ADDITIONAL" ? { selectionId: form.selectionId, price: form.price } : {}) }, openedDigest);
   };
-  const remove = (item: PurchaseComponent, extra = false) => {
-    const ask = () => confirm({ message: `Retirer « ${item.label} » de ce panier ?`,
+  const remove = (item: PurchaseComponent, extra = false, index?: number) => {
+    const ask = () => confirm({ message: `Retirer « ${purchaseLineLabel(item, index)} » de ce panier ?`,
       acceptLabel: extra ? "Retirer le supplément" : "Retirer l’article",
       accept: () => removeCurrent(extra, item.selectionId, digest) });
     if (guard(ask)) ask();
@@ -242,7 +252,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
   const filterArticles = articles.length > 1;
   const matchingArticles = articles.map((item, index) => ({ item, index })).filter(({ item }) => {
     if (!filterArticles) return true;
-    const searchable = normalizeCatalog([item.label, item.basketArticle?.concept?.label].filter(Boolean).join(" "));
+    const searchable = normalizeCatalog([item.label, item.basketArticle?.concept?.label, purchaseVariantText(item)].filter(Boolean).join(" "));
     return (!missingPricesOnly || item.cost.kind === "UNKNOWN") && terms.every(term => searchable.includes(term));
   });
   const panel = <aside className={`${composer.restaurantInspector} ${styles.panel}`} role="dialog" aria-modal="false"
@@ -253,20 +263,9 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
     <WorkshopNavigation contextId={id} />
     {!form && !selectionPrompt && <IntentBudgetImpact model={model} contextId={id} />}
     {!form && !selectionPrompt && <div className={styles.actions}>
-      {writable && <CatalogOpenButton target={{ contextId: id, scope: groceries ? "courses" : undefined, moment: "article",
-        resolveCommands: entry => {
-          if (!isBasketCatalogProduct(entry, context.fields.budgetDomain)) return [];
-          const concept = { id: entry.visualConceptId, label: entry.label };
-          const matches = articles.flatMap((item, index) => item.basketArticle?.concept?.id === concept.id ? [{ item, index }] : []);
-          return [
-            ...matches.flatMap(({ item, index }) => canChooseArticle(item) ? [{
-              key: item.selectionId, visualConceptId: concept.id, label: `Modifier ${item.label}${matches.length > 1 ? ` · ligne ${index + 1}` : ""}`,
-              editsExisting: true, run: () => edit(item),
-            }] : []),
-            ...(canAdd ? [{ key: "new", visualConceptId: concept.id, label: matches.length ? `Ajouter un autre ${entry.label}` : `Préparer ${entry.label} dans ce panier`,
-              allowRepeat: true, run: () => edit(undefined, concept) }] : []),
-          ];
-        } }}>Ajouter depuis le catalogue</CatalogOpenButton>}
+      {writable && <CatalogOpenButton target={{ contextId: id, scope: groceries ? "courses" : undefined, moment: "article" }}>
+        Ajouter depuis le catalogue
+      </CatalogOpenButton>}
       {canAdd && <button type="button" disabled={busy} onClick={() => edit()}>Saisir un article</button>}
       {!form && !selectionPrompt && ranked.length > 0 && <button type="button" aria-pressed={showChoices}
         onClick={() => setShowChoices(value => !value)}>{showChoices ? "Revenir aux suggestions" : "Tous les choix du panier"}</button>}
@@ -279,7 +278,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
         <button type="button" key={item.selectionId} data-basket-choice={item.selectionId}
           disabled={busy || !canChooseArticle(item)}
           onClick={() => chooseSuggestion(prompted.key, selectionPrompt.digest, item.selectionId)}>
-          {item.label} · Ligne {index + 1} · {lineCaption(item)}
+          {purchaseLineLabel(item, index)} · {lineCaption(item)}
         </button>,
       ] : []) : <p role="status">Le panier a changé. Rouvrez la suggestion pour choisir la ligne actuelle.</p>}
       <button type="button" onClick={discard}>Retour au panier</button>
@@ -294,6 +293,16 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
           <label>Unité<select value={form.unit} onChange={event => update({ ...form, unit: event.target.value as BasketUnit })}>
             {BASKET_UNITS.map(unit => <option key={unit} value={unit}>{unitLabels[unit]}</option>)}</select></label>
         </div>
+        {(offerVariants || form.variant) && <fieldset className={styles.variant}>
+          <legend>Variante facultative</legend>
+          <div className={styles.columns}>
+            {BASKET_VARIANT_FIELDS.filter(key => key !== "size" || !beauty || !!form.variant?.size).map(key =>
+              <label key={key}>{(beauty ? beautyVariantLabels : variantLabels)[key]}
+                <input maxLength={BASKET_VARIANT_MAX_LENGTH} value={form.variant?.[key] ?? ""}
+                  onChange={event => update({ ...form, variant: { ...form.variant, [key]: event.target.value } })} />
+              </label>)}
+          </div>
+        </fieldset>}
         <label>Prix par {unitLabels[form.unit].toLocaleLowerCase("fr")} (€)<input autoFocus={form.focus === "price"} inputMode="decimal" value={form.price}
           placeholder={form.existing?.cost.kind === "QUOTE" ? "Devis conservé" : "Prix à préciser"}
           onChange={event => update({ ...form, price: event.target.value })} /></label>
@@ -322,6 +331,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       </>}
       {form.kind === "delivery" && <>
         <h3>Livraison et frais</h3>
+        <p>Modalité prévue pour ce panier.</p>
         <label>Modalité<select value={form.mode} onChange={event => update({ ...form, mode: event.target.value as BasketDeliveryMode })}>
           {DELIVERY_MODES.map(mode => <option key={mode} value={mode}>{modeLabels[mode]}</option>)}</select></label>
         <label>Frais de livraison<select value={form.coverage} onChange={event => update({ ...form, coverage: event.target.value as BasketDeliveryCoverage })}>
@@ -357,13 +367,15 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
         const image = artwork && clayCatalogArtwork(artwork);
         const amount = summary && evaluations?.find(evaluation => evaluation.selectionId === item.selectionId)?.economicAmount;
         const duplicate = (nameCounts.get(normalizeCatalog(item.label)) ?? 0) > 1;
-        const line = duplicate ? `${item.label} · ligne ${index + 1} · ${lineCaption(item)}` : item.label;
+        const variant = purchaseVariantText(item);
+        const line = purchaseLineLabel(item, duplicate ? index : undefined);
         const canEdit = writable && canChooseArticle(item);
         const price = item.cost.kind === "MANUAL" ? money(item.cost.unitAmount) : item.cost.kind === "QUOTE" ? "Devis" : "Prix à préciser";
         const units = `${item.quantity.replace(".", ",")} · ${unitLabels[articleUnit(item)]}`;
         return <li key={item.selectionId} data-basket-line={item.selectionId}>
           {image && <img src={image.src} alt="" width={44} height={44} />}
-          <div><strong>{item.label}</strong>{duplicate && <small>Ligne {index + 1}</small>}
+          <div><strong>{item.label}</strong>{variant && <small>{variant}</small>}
+            {duplicate && <small>Ligne {index + 1}</small>}
             {canEdit ? <div className={styles.values}>
               <button type="button" disabled={busy} onClick={() => edit(item, undefined, "quantity")} aria-label={`Modifier la quantité de ${line}`}>{units}</button>
               <button type="button" disabled={busy} onClick={() => edit(item, undefined, "price")} aria-label={`Modifier le prix de ${line}`}>{price}</button>
@@ -372,7 +384,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
           {canEdit && <div className={styles.actions}>
             <button ref={node => { if(node) articleButtons.current.set(item.selectionId, node); else articleButtons.current.delete(item.selectionId); }}
               type="button" disabled={busy} onClick={() => edit(item)} aria-label={`Modifier ${line}`}>Modifier</button>
-            <button type="button" disabled={busy} onClick={() => remove(item)} aria-label={`Retirer ${line}`}>Retirer</button></div>}
+            <button type="button" disabled={busy} onClick={() => remove(item, false, duplicate ? index : undefined)} aria-label={`Retirer ${line}`}>Retirer</button></div>}
         </li>;
       })}</ul>
     </section>
@@ -380,7 +392,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       {typeof context.fields.merchantLabel === "string" && <p>Vendeur · {context.fields.merchantLabel}</p>}
       {!model.budgetReading && <p>{!amountsCurrent ? "Total en attente de simulation" : visibleTotal == null ? "Total à préciser"
         : summary?.complete ? `Total brut · ${money(visibleTotal)}` : `Montant connu · ${money(visibleTotal)} · total à préciser`}</p>}
-      <p>{coverageLabels[(context.fields.deliveryCoverage as BasketDeliveryCoverage | undefined) ?? "UNKNOWN"]}{delivery?.cost.kind === "MANUAL" ? ` · ${money(delivery.cost.unitAmount)}` : ""}</p>
+      <p>{plannedDelivery[(context.fields.deliveryMode as BasketDeliveryMode | undefined) ?? "UNKNOWN"]} · {coverageLabels[(context.fields.deliveryCoverage as BasketDeliveryCoverage | undefined) ?? "UNKNOWN"]}{delivery?.cost.kind === "MANUAL" ? ` · ${money(delivery.cost.unitAmount)}` : ""}</p>
       {extras.length > 0 && <ul className={styles.lines} aria-label="Suppléments distincts">{extras.map(item => <li key={item.selectionId}>
         <div><strong>{item.label}</strong><small>{item.cost.kind === "MANUAL" ? `${item.quantity} × ${money(item.cost.unitAmount)}` : "Prix à préciser"}</small></div>
         {writable && !protectedLine("extras", item) && <div className={styles.actions}>

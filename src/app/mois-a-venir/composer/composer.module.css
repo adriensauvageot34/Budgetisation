@@ -976,6 +976,10 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .purchaseSummary { display:flex; flex-direction:column; gap:3px; margin:4px 0; }
 .purchaseSummary button { font-size:17px; font-weight:700; color:#20354a; border:0; background:none; text-align:left; cursor:pointer; }
 .purchaseSummary small { font-size:10px; color:#627069; }
+.basketBoardArticles { font-size: 12px; }
+.basketBoardArticles summary { cursor: pointer; }
+.basketBoardArticles ul { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 4px; max-height: 130px; overflow-y: auto; }
+.basketBoardArticles button { text-align: left; font-size: inherit; overflow-wrap: anywhere; }
 
 .card { box-sizing:border-box; }
 .financialHud .previewStatus { white-space:normal; line-height:1.3; text-align:right; max-width:150px; }
@@ -1901,4 +1905,34 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 @media (max-width:380px) {
   body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector:is([data-cinema-editor],[data-restaurant-suggestions],[data-basket-suggestions]) { bottom:224px; }
   body:has(.board .questionPalette[data-dock-nature="DECISION"]) .dialog[data-night-workshop-panel=true]:has([data-short-stay-editor],[data-mascara-catalog],[data-mascara-reference]) { max-height:calc(100dvh - 236px); }
+}
+.homeEquipment {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.homeEquipment h4, .homeEquipment h5, .homeEquipment p {
+  margin: 0;
+}
+.homeEquipment ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+.homeEquipment li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0;
+  overflow-wrap: anywhere;
+}
+.homeEquipment label {
+  display: grid;
+  gap: 4px;
+  margin-block: 6px;
+}
+.homeEquipment input {
+  width: 100%;
+  min-width: 0;
 }
