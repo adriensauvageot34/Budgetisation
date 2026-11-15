@@ -6,16 +6,18 @@ import { useWorkshopQuestion } from "./workshop-choices";
 import styles from "./composer.module.css";
 
 type Page = "quantity" | "price" | "funding" | "binding" | "name";
+export type CountedUnit = Readonly<{ singular: string; plural: string }>;
 /** A short value editor; choices live in the existing horizontal workshop dock. */
 export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, participantCount = 0,
-  reference, back, bindingChoices = false, fixedQuantity = false, initialPage = "price", priceLabel, busy = false, removePrompt }: {
+  reference, back, bindingChoices = false, fixedQuantity = false, initialPage = "price", priceLabel, countedUnit, busy = false }: {
   title: string; row: Row; onChange: (row: Row) => void; onSave?: () => void; onRemove?: () => void;
   reference?: {value:string;caption:string;period:string}; back?: {label:string; action:()=>void}; participantCount?: number; bindingChoices?: boolean; fixedQuantity?: boolean;
-  initialPage?: Page; priceLabel?: string; busy?: boolean;
-  removePrompt?: { message: string; acceptLabel: string };
+  initialPage?: Page; priceLabel?: string; countedUnit?: CountedUnit; busy?: boolean;
 }) {
   const confirm = useWorkshopConfirmation();
   const [page, setPage] = useState<Page>(initialPage);
+  const unit = countedUnit?.plural ?? "unités";
+  const groupUnit = countedUnit ? "Forfaits partagés" : "Lots partagés";
   const update = <K extends keyof Row>(key: K, value: Row[K]) => onChange({ ...row, [key]: value, edited: true });
   const choice = (key: string, label: string, choose: () => void, selected = false, hint?: string) => ({ key, label, choose, selected, hint, iconKey: "activity" });
   const priceChoices = [
@@ -26,7 +28,7 @@ export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, p
     choice("funding", "Financement", () => setPage("funding")), choice("name", "Nom du poste", () => setPage("name")),
     ...(onSave ? [choice("save", "Conserver ce poste", onSave)] : []),...(back?[choice("back",back.label,back.action)]:[])];
   const choices = page === "quantity" ? [
-    ...([["ITEM", "Unités au total"], ["PERSON", "Par personne"], ["SHARED", "Lot partagé"]] as const).map(([basis,label]) => choice(basis,label,() => onChange({ ...row, edited: true, unitBasis: basis,
+    ...([["ITEM", countedUnit ? `Par ${countedUnit.singular}` : "Unités au total"], ["PERSON", "Par personne"], ["SHARED", countedUnit ? "Forfait partagé" : "Lot partagé"]] as const).map(([basis,label]) => choice(basis,label,() => onChange({ ...row, edited: true, unitBasis: basis,
       personCount: basis === "PERSON" && !row.personCount && participantCount ? String(participantCount) : row.personCount }),row.unitBasis === basis)),
     choice("price","Retour au prix",() => setPage("price"))]
     : page === "funding" ? [choice("unknown","À préciser",() => update("fundingMode","UNDECIDED"),row.fundingMode === "UNDECIDED"),
@@ -44,13 +46,15 @@ export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, p
     {row.existing?.provenance === "PERSONAL_SUGGESTION" && <p className={styles.helper}>Repère exploratoire, pas encore une décision retenue.</p>}
     {!inDock && <nav className={styles.workshopTabs} aria-label={"Configurer " + title}>{choices.map(c=><button type="button" key={c.key} aria-pressed={c.selected} onClick={c.choose}>{c.label}</button>)}</nav>}
     {page === "price" && <>
-      <label>{priceLabel ?? (row.unitBasis === "SHARED" ? "Coût prévu par lot (€)" : "Prix unitaire prévu (€)")}
+      <label>{priceLabel ?? (row.unitBasis === "SHARED" ? (countedUnit ? "Tarif par forfait (€)" : "Coût prévu par lot (€)")
+        : countedUnit ? `Tarif par ${countedUnit.singular} (€)` : "Prix unitaire prévu (€)")}
         <input autoFocus inputMode="decimal" placeholder="Encore inconnu" value={row.costMode === "MANUAL" ? row.amount : ""}
           onChange={event => onChange({ ...row, amount: event.target.value, costMode: event.target.value.trim() ? "MANUAL" : "UNKNOWN", edited: true })} /></label>
-      <p className={styles.helper}>{row.costMode === "QUOTE" ? "Le devis enregistré est conservé." : row.costMode === "UNKNOWN" ? "Coût à préciser · vous pouvez continuer." : "Coût prévu, pas un plafond ni un paiement."} {row.quantity} {row.unitBasis === "SHARED" ? "lot(s) pour le groupe" : row.unitBasis === "PERSON" ? "unité(s) par personne tarifée" : "unité(s) au total"}.</p>
+      <p className={styles.helper}>{row.costMode === "QUOTE" ? "Le devis enregistré est conservé." : row.costMode === "UNKNOWN" ? "Coût à préciser · vous pouvez continuer." : "Coût prévu, pas un plafond ni un paiement."} {row.quantity} {row.unitBasis === "SHARED" ? `${groupUnit.toLocaleLowerCase("fr")} pour le groupe` : row.unitBasis === "PERSON" ? `${unit} par personne tarifée` : `${unit} au total`}.</p>
     </>}
     {page === "quantity" && <>
-      <label>{row.unitBasis === "PERSON" ? "Unités par personne" : row.unitBasis === "SHARED" ? "Lots partagés" : "Quantité totale"}
+      <label>{row.unitBasis === "PERSON" ? `${unit[0].toLocaleUpperCase("fr")}${unit.slice(1)} par personne` : row.unitBasis === "SHARED" ? groupUnit
+        : countedUnit ? `Nombre de ${unit}` : "Quantité totale"}
         <span className={styles.workshopStepper}><button type="button" aria-label="Réduire la quantité" disabled={Number(row.quantity)<=1} onClick={()=>adjustQuantity(-1)}>−</button>
           <input type="number" min="0.01" max="9999" step="0.01" value={row.quantity} onChange={event=>update("quantity",event.target.value)} />
           <button type="button" aria-label="Augmenter la quantité" onClick={()=>adjustQuantity(1)}>+</button></span></label>
@@ -62,7 +66,7 @@ export function WorkshopComponentRow({ title, row, onChange, onSave, onRemove, p
     {page === "binding" && <p>Seuls les coûts déjà compris dans cette enveloppe sont remplacés. Ce choix ne crée pas de plafond.</p>}
     <footer>{onSave && <button type="button" className={styles.nightAction} disabled={busy} onClick={onSave}>Conserver ce poste</button>}
       {onRemove && <button type="button" className={styles.nightLink} disabled={busy} onClick={() => confirm({
-        message:removePrompt?.message ?? "Retirer ce poste ? Les autres décisions sont conservées. Undo permet de revenir en arrière.",
-        acceptLabel:removePrompt?.acceptLabel ?? "Retirer ce poste", accept:onRemove})}>Retirer ce poste</button>}</footer>
+        message:"Retirer ce poste ? Les autres décisions sont conservées. Undo permet de revenir en arrière.",
+        acceptLabel:"Retirer ce poste", accept:onRemove})}>Retirer ce poste</button>}</footer>
   </section>;
 }

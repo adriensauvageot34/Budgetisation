@@ -3,7 +3,7 @@ import { useMemo, useRef, useState, type ComponentProps } from "react";
 import { useWorkshopRaw } from "./inline-edit-registry";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
-import type { ShortStayEdit } from "@/domain/phase2/planner/short-stay-edit";
+import { LODGING_RESERVATION_STATES, validateStayCalendar, type ShortStayEdit } from "@/domain/phase2/planner/short-stay-edit";
 import { canonicalPlannerJson } from "@/domain/phase2/planner/json";
 import { componentId } from "@/domain/phase2/planner/identity";
 import { isPurchaseBasket, purchaseComponents } from "@/domain/phase2/planner/purchase-basket";
@@ -36,14 +36,8 @@ const items = (context: PlannedContextState, slot: string) => (context.slotSelec
 const firstComponent = (context: PlannedContextState, slot: string) => items(context, slot).find((item): item is Component => item.kind === "COMPONENT");
 const noDismissals: readonly string[] = [];
 
-/** Calendar consistency only; pricing and quantity valuation remain in the Compiler. */
-export function validateStayCalendar(fields: PlannedContextState["fields"]) {
-  const start = fields.plannedDate, end = fields.endDate, nights = fields.nightCount;
-  if (typeof start !== "string" || typeof end !== "string" || typeof nights !== "number") return;
-  const calendarNights = (Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000;
-  if (Number.isFinite(calendarNights) && calendarNights !== nights)
-    throw Error(`Les dates indiquent ${calendarNights} nuit(s), mais vous en avez déclaré ${nights}. Corrigez les dates ou la durée ; aucun tarif n’a été recalculé.`);
-}
+export { validateStayCalendar };
+const reservationLabels = { CONSIDERING: "Envisagée", USER_DECLARED: "Déclarée comme effectuée" };
 
 export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestions = noDismissals, updateSuggestionDismissal, ...props }: Omit<ComponentProps<typeof ProspectiveContextEditor>, "stay" | "stayDetails" | "posts" | "postsQuestion" | "staySummary" | "stayTransportModes"> & {
   semanticState: PlanSemanticStateV1; onOpenChild?: (id: string) => void;
@@ -52,6 +46,7 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
   const context = props.context, oldLodging = firstComponent(context, "lodging"), oldGroceries = firstComponent(context, "groceries");
   const [nights, setNights] = useState(context.fields.nightCount?.toString() ?? "");
   const [lodgingKind, setLodgingKind] = useState(String(context.fields.lodgingKind ?? "LATER"));
+  const [reservation, setReservation] = useState(String(context.fields.lodgingReservation ?? ""));
   const [basis, setBasis] = useState<"TOTAL" | "PER_NIGHT" | "LEGACY">(oldLodging?.lodgingPricing?.basis ?? (oldLodging ? "LEGACY" : "TOTAL"));
   const [lodging, setLodging] = useState<Row | null>(() => oldLodging ? fromSelection(oldLodging) : null);
   const [lodgingDirty, setLodgingDirty] = useState(false);
@@ -89,11 +84,12 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
       && socket.choiceAssetKeys?.includes(`option:short-stay:${slot}:${option}`)
       && publishedDrop(props.model, `option:short-stay:${slot}:${option}`, { kind: "CONTEXT_SOCKET", contextOccurrenceId: context.contextOccurrenceId, slotKey: slot })?.semanticAction === "PATCH_CONTEXT";
   };
-  const buffer = { nights, lodgingKind, basis, lodging, groceries, posts };
+  const buffer = { nights, lodgingKind, reservation, basis, lodging, groceries, posts };
   const acceptedBuffer = useRef(buffer), initial = acceptedBuffer.current;
   const confirm = useWorkshopConfirmation();
   const leaveRaw = useWorkshopRaw(context.contextOccurrenceId, JSON.stringify(buffer) !== JSON.stringify(initial), () => {
     setNights(initial.nights); setLodgingKind(initial.lodgingKind); setBasis(initial.basis); setLodging(initial.lodging);
+    setReservation(initial.reservation);
     setGroceries(initial.groceries); setPosts(initial.posts); setLodgingDirty(false); setGroceriesDirty(false); setDirty({});
   }, "stay-posts-workshop");
   const update = (slot: Group, values: Post[]) => { setPosts(p => ({ ...p, [slot]: values })); setDirty(d => ({ ...d, [slot]: true })); };
@@ -101,7 +97,8 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     const nightCount = nights.trim() ? Number(nights) : null;
     if (nightCount !== null && (!Number.isInteger(nightCount) || nightCount < 1 || nightCount > 366)) throw Error("Indiquez un nombre de nuits entre 1 et 366, ou laissez-le inconnu.");
     const fields: ShortStayEdit["fields"] = { ...(nightCount !== (context.fields.nightCount ?? null) ? { nightCount } : {}),
-      ...(lodgingKind !== (context.fields.lodgingKind ?? "LATER") ? { lodgingKind } : {}) };
+      ...(lodgingKind !== (context.fields.lodgingKind ?? "LATER") ? { lodgingKind } : {}),
+      ...(reservation !== (context.fields.lodgingReservation ?? "") ? { lodgingReservation: reservation || null } : {}) };
     const slots: NonNullable<ShortStayEdit["slots"]> = {};
     const mutable = slots as Record<string, readonly ComponentSelectionV1[]>;
     if (lodgingDirty || nights !== (context.fields.nightCount?.toString() ?? "") && oldLodging?.lodgingPricing) {
@@ -116,22 +113,17 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     if (groceriesDirty) mutable.groceries = groceries ? [buildComponentRow(groceries, "groceries")] : [];
     const children: PlannedContextState[] = [];
     for (const [slot] of groups) if (dirty[slot]) mutable[slot] = posts[slot].map(post => {
-      if (post.link && post.child && (isPurchaseBasket(post.child) || !post.row.edited)) return post.link;
-      const useChild = !!post.link || slot === "activities" || slot === "purchases";
+      if (post.link) return post.link;
+      const useChild = slot === "activities" || slot === "purchases" || slot === "restaurants" && !post.row.existing;
       if (!useChild) return buildComponentRow(post.row, post.templateKey);
-      const childId = post.child?.contextOccurrenceId ?? crypto.randomUUID(), key = post.templateKey;
-      const priorItems = post.child ? items(post.child, mainSlot(key)) : [];
+      const childId = crypto.randomUUID(), key = post.templateKey;
       const main = buildComponentRow(post.row, mainOption(key));
-      const priorMain = post.child ? firstComponent(post.child, mainSlot(key)) : undefined;
-      const replaceExisting = priorItems.some(item => item.selectionId === main.selectionId);
-      const syncChildLabel = post.row.edited && (!post.child || typeof post.child.fields.label !== "string" || post.child.fields.label === priorMain?.label);
       const child: PlannedContextState = { contextOccurrenceId: childId, templateKey: key, status: "ACTIVE", parentContextOccurrenceId: context.contextOccurrenceId,
-        provenance: "EXPLICIT_USER_DECISION", fields: { ...post.child?.fields, fieldSchemaVersion: post.child?.fields.fieldSchemaVersion ?? "context-fields@v2",
-          ...(syncChildLabel ? { label: post.row.label.trim() } : {}), ...(!post.child && key === "purchase" ? { budgetDomain: "other" } : {}) },
-        slotSelections: { ...post.child?.slotSelections, [mainSlot(key)]: { items: replaceExisting
-          ? priorItems.map(item => item.selectionId === main.selectionId ? main : item) : [main] } } };
+        provenance: "EXPLICIT_USER_DECISION", fields: { fieldSchemaVersion: "context-fields@v2", label: main.label,
+          ...(key === "purchase" ? { budgetDomain: "other" } : {}) },
+        slotSelections: { [mainSlot(key)]: { items: [main] } } };
       children.push(child);
-      return post.link ? { ...post.link, provenance: post.row.edited ? "EXPLICIT_USER_DECISION" : post.link.provenance } : { selectionId: crypto.randomUUID(), optionKey: key, kind: "CHILD_CONTEXT", childContextOccurrenceId: childId, provenance: "EXPLICIT_USER_DECISION" };
+      return { selectionId: crypto.randomUUID(), optionKey: key, kind: "CHILD_CONTEXT", childContextOccurrenceId: childId, provenance: "EXPLICIT_USER_DECISION" };
     });
     return { fields, slots, children };
   };
@@ -173,8 +165,11 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     const activate = () => openSuggestion(suggestion.key, suggestionContext, open);
     if (leaveRaw(activate)) activate();
   };
+  const duration = <label>Nombre de nuits (facultatif)<input type="number" min="1" max="366" value={nights}
+    disabled={props.busy || !writable} onChange={event => setNights(event.target.value)} placeholder="Inconnu" /></label>;
   const staySummary = {
     canEditPeriod: writable,
+    periodControls: duration,
     question: (open: (target: StaySummaryTarget) => void) => !showAllChoices && ranked.length ? {
       title: "Suggestions pour ce séjour", identity: "stay-suggestions", nature: "DECISION" as const, catalogMoment: "lodging" as const,
       choices: ranked.map(suggestion => ({ ...suggestion, showHint: true, choose: () => guardedSuggestion(suggestion, open) })),
@@ -194,7 +189,7 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     tile("total","Prix total",()=>{setBasis("TOTAL");setLodgingDirty(true);if(!lodging)setLodging(fresh("Hébergement"));setLodgingPage("price");},basis==="TOTAL","Le forfait n’est pas multiplié par les nuits"),
     tile("night","Prix par nuit",()=>{setBasis("PER_NIGHT");setLodgingDirty(true);if(!lodging)setLodging(fresh("Hébergement"));setLodgingPage("price");},basis==="PER_NIGHT"),
     tile("kind","Type d’hébergement",()=>setLodgingPage("kind")),...postChoices.filter(c=>c.key!=="lodging")]
-    :postSection==="lodging"&&lodgingPage==="kind"?[["RELATIVE","Chez un proche"],["HOTEL","Hôtel"],["HOSTEL","Auberge"],["RENTAL","Location"],["OTHER","Autre"],["LATER","À préciser"]].map(([key,label])=>({
+    :postSection==="lodging"&&lodgingPage==="kind"?[["RELATIVE","Chez un proche"],["HOTEL","Hôtel"],["HOSTEL","Auberge"],["RENTAL","Location / gîte"],["OTHER","Autre"],["LATER","À préciser"]].map(([key,label])=>({
       ...tile(key,label,()=>{setLodgingKind(key);setLodgingPage("terms");},lodgingKind===key),
       visualConceptId: ({RELATIVE:'v22-art:extra:family-visit',HOTEL:'v22-art:extra:hotel-stay-general',HOSTEL:'v22-art:extra:hostel-category',RENTAL:'v22-art:extra:rental-platform'} as Readonly<Record<string,string>>)[key]}))
     :postChoices};
@@ -244,7 +239,8 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
       : lodgingPrice}.
       {evaluated != null ? ` Estimation du brouillon : ${money(evaluated)}.` : " Total non confirmé ; prévisualisez pour l’actualiser."}</p>
     {JSON.stringify(buffer) !== JSON.stringify(initial) && <p role="status">Saisie non conservée : ce résumé décrit encore l’hébergement du brouillon.</p>}
-    <p className={styles.helper}>Réservation et acompte : aucune attestation disponible ici. Un acompte déjà compris ne doit pas être ajouté aux extras ; seul un frais distinct explicitement décidé s’ajoute au total.</p>
+    <p>Réservation · {reservationLabels[context.fields.lodgingReservation as keyof typeof reservationLabels] ?? "À préciser"}</p>
+    <p className={styles.helper}>La confirmation de réservation relève du prestataire. Ajoutez un acompte aux extras uniquement s’il est facturé en plus du forfait.</p>
   </div>;
   const content = <>
     <CatalogOpenButton target={{contextId:context.contextOccurrenceId,moment:"lodging",commands:lodgingCommands}}>Parcourir les éléments du séjour</CatalogOpenButton>
@@ -252,9 +248,16 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     {!writable && <p role="status">Ce séjour est en consultation ou sa cible a changé. La saisie reste conservée ; aucune modification ne peut être validée ici.</p>}
     {attachmentError && <p role="alert">{attachmentError}</p>}
     {postSection === "lodging" && <>
-    {lodgingPage === "terms" && <p>Choisis le prix total ou le tarif par nuit dans le dock. La date reste facultative.</p>}
+    {lodgingPage === "terms" && <>
+      <label>Réservation de l’hébergement<select value={reservation} disabled={props.busy || !writable}
+        onChange={event => setReservation(event.target.value)}>
+        <option value="">À préciser</option>
+        {LODGING_RESERVATION_STATES.map(state => <option key={state} value={state}>{reservationLabels[state]}</option>)}
+      </select></label>
+      <p>Choisis le prix total ou le tarif par nuit dans le dock.</p>
+    </>}
     {lodgingPage === "kind" && <p>Type actuel : {({RELATIVE:"chez un proche",HOTEL:"hôtel",HOSTEL:"auberge",RENTAL:"location",OTHER:"autre",LATER:"à préciser"} as Record<string,string>)[lodgingKind]??"référence conservée"}. Ce choix ne prouve aucun prix.</p>}
-    {(lodgingPage === "duration" || lodgingPage === "price" && basis === "PER_NIGHT") && <label>Nombre de nuits (facultatif)<input type="number" min="1" max="366" value={nights} onChange={event=>setNights(event.target.value)} placeholder="Inconnu"/></label>}
+    {(lodgingPage === "duration" || lodgingPage === "price" && basis === "PER_NIGHT") && duration}
     {lodgingPage === "price" && (lodging ? <WorkshopComponentRow title="Hébergement" row={lodging} back={{label:"Hébergement et autres postes",action:()=>setLodgingPage("terms")}} participantCount={0} fixedQuantity={basis !== "LEGACY"}
       priceLabel={basis === "PER_NIGHT" ? "Tarif par nuit (€)" : "Coût total prévu (€)"}
       onChange={row => { setLodging(row); setLodgingDirty(true); }} onRemove={() => { setLodging(null); setLodgingDirty(true); }} />
@@ -283,15 +286,13 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
     </section>}
     {groups.filter(([slot]) => slot === postSection && !extraTopic).map(([slot, caption, key]) => <div key={slot}><h3>{caption}</h3>
       {posts[slot].slice(postPage, postPage + 1).map(post => { const index = postPage; return <div key={post.row.id}>
-        {slot === "restaurants" && !post.link && <label>Type de repas<select value={post.templateKey} onChange={e => update(slot, posts[slot].map((p, i) => i === index ? { ...p, templateKey: e.target.value } : p))}>
+        {slot === "restaurants" && !post.link && !post.row.existing && <label>Type de repas<select value={post.templateKey} onChange={e => update(slot, posts[slot].map((p, i) => i === index ? { ...p, templateKey: e.target.value } : p))}>
           <option value="restaurant">Restaurant</option><option value="fast-food">Restauration rapide</option><option value="delivery">Livraison</option></select></label>}
         {slot === "extras" && (!slotAllowed("extras", "extra") || extraLocked(post.row.id))
           ? <p>{post.row.label} · Poste en consultation</p>
-          : post.child && isPurchaseBasket(post.child)
+          : post.link
           ? null
           : <WorkshopComponentRow title={caption} row={post.row} back={{label:"Autres postes du séjour",action:()=>{setPostSection("lodging");setLodgingPage("terms");}}} participantCount={0} bindingChoices={slot === "restaurants"}
-          removePrompt={post.child ? { message: `Préparer le retrait de « ${String(post.child.fields.label ?? post.row.label)} » ? Après « Conserver et prévisualiser », cette intention enfant, ses postes et ses éventuelles intentions liées seront retirés du brouillon. Vous pouvez aussi la déplacer depuis les intentions liées du résumé.`,
-            acceptLabel: "Préparer le retrait de l’intention" } : undefined}
           onChange={row => update(slot, posts[slot].map((p, i) => i === index ? { ...p, row } : p))}
           onRemove={() => { update(slot, posts[slot].filter((_, i) => i !== index)); setPostPage(page => Math.max(0, page - 1)); }} />}
         {post.child && onOpenChild && <button type="button" disabled={props.busy}
@@ -301,7 +302,13 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
             if (child) onOpenChild(child.contextOccurrenceId);
           }}>{isPurchaseBasket(post.child) ? "Ouvrir le panier" : "Ouvrir l’intention"} · {String(post.child.fields.label ?? post.row.label)}
           {isPurchaseBasket(post.child) && ` · ${purchaseComponents(post.child, "item").length} article(s)`}</button>}
-        {post.child && <p className={styles.helper}>Cette intention conserve ses participants, son lieu et ses autres postes. Ouvrez-la pour les consulter ou les modifier.</p>}
+        {post.link && post.child && <button type="button"
+          disabled={props.busy || !writable || locked(post.child.contextOccurrenceId)
+            || locked(componentId(context.contextOccurrenceId, slot, post.link.selectionId))}
+          onClick={() => confirm({ message: `Préparer le retrait de « ${String(post.child?.fields.label ?? post.row.label)} » ? Le retrait prendra effet à la sauvegarde de ce séjour.`,
+            acceptLabel: "Préparer le retrait", accept: () => {
+              update(slot, posts[slot].filter((_, i) => i !== index)); setPostPage(page => Math.max(0, page - 1));
+            } })}>Préparer le retrait de cette intention</button>}
       </div>; })}
       {posts[slot].length > 1 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {posts[slot].length}</span><button type="button" disabled={postPage + 1 >= posts[slot].length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
       <button type="button" disabled={slot === "extras" && !slotAllowed("extras", "extra")} onClick={() => { setPostPage(posts[slot].length); update(slot, [...posts[slot], { row: fresh(slot === "activities" ? "Activité" : slot === "purchases" ? "Achat" : slot === "extras" ? "Extra" : "Restaurant"), templateKey: key }]); }}>Ajouter · {caption}</button>
@@ -333,7 +340,6 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
         && canonicalPlannerJson(prepared.slots[slot]?.find(next => next.selectionId === item.selectionId) ?? null) !== canonicalPlannerJson(item))
         throw Error("Ce poste est protégé. Votre saisie est conservée.");
     }
-    validateStayCalendar({ ...context.fields, ...operation.edit.fields, ...prepared.fields });
     const admitted = props.onSave({ ...operation, edit: { ...operation.edit, ...prepared, fields: { ...operation.edit.fields, ...prepared.fields } } });
     if (admitted) acceptedBuffer.current = buffer;
     return admitted;

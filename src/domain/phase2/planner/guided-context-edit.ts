@@ -3,6 +3,7 @@ import type { PlannerJson } from "./json";
 import { parsePlanSemanticState, type PlanSemanticStateV1 } from "./semantic-state";
 import { presetForContext } from "./composer-presets";
 import { isPurchaseBasket } from "./purchase-basket";
+import { parseOutingTime } from "./outing-time";
 
 export type GuidedContextEdit = Readonly<{ contextOccurrenceId: string; fields?: Readonly<Record<string, PlannerJson>>;
   slots?: Readonly<Partial<Record<"meal" | "main" | "item" | "extras" | "transport", readonly ComponentSelectionV1[]>>> }>;
@@ -23,10 +24,12 @@ export function editGuidedContext(raw: PlanSemanticStateV1, edit: GuidedContextE
   if (state.preferences.anchors.includes(context.contextOccurrenceId) || state.preferences.flexibility[context.contextOccurrenceId] === "PRESERVE")
     throw new TypeError("COMPOSER_CONTEXT_LOCKED");
   const shape = guidedContextShape(context.templateKey), fields = { ...context.fields }, slots = { ...context.slotSelections };
-  const allowedFields = ["label", "plannedDate", "placeRef", ...(shape.participants ? ["participantRefs"] : ["budgetDomain", "productLabel", "merchantLabel"])];
+  const allowedFields = ["label", "plannedDate", "placeRef", ...(context.templateKey === "activity" ? ["plannedTime"] : []),
+    ...(shape.participants ? ["participantRefs"] : ["budgetDomain", "productLabel", "merchantLabel"])];
   for (const [key, value] of Object.entries(edit.fields ?? {})) {
     if (!allowedFields.includes(key)) throw new TypeError("COMPOSER_PRESET_FIELD_INVALID");
-    if (value === "") delete fields[key]; else fields[key] = value;
+    const next = key === "plannedTime" ? parseOutingTime(value) : value;
+    if (next === "" || key === "plannedTime" && next === null) delete fields[key]; else fields[key] = next;
   }
   for (const [key, items] of Object.entries(edit.slots ?? {})) {
     if (![shape.slot, "extras", ...(shape.transport ? ["transport"] : [])].includes(key) || !Array.isArray(items)

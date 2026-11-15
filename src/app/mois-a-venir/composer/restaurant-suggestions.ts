@@ -96,7 +96,8 @@ export function restaurantSuggestions(context: PlannedContextState, card: Compos
     iconKey: "family-visit", priority: 3 });
   if (!hasPlace) candidates.push({ kind: "PLACE", label: "Préciser le lieu", hint: "Où se trouve ce restaurant ?",
     iconKey: "family-visit", priority: 4 });
-  if (!context.fields.plannedDate) candidates.push({ kind: "DATE", label: "Choisir une date", hint: "Quand souhaitez-vous y aller ?",
+  if (!context.fields.plannedDate || !context.fields.plannedTime) candidates.push({ kind: "DATE",
+    label: context.fields.plannedDate ? "Préciser l’heure du repas" : "Choisir une date", hint: "Quand souhaitez-vous y aller ?",
     iconKey: "activity", priority: 5 });
   if (canConfigureRoute) candidates.push({ kind: "TRANSPORT", assetKey: transportAsset, selectionId: transport?.selectionId,
     label: transport ? `Modifier le trajet · ${route.asset.label}` : "Configurer le trajet en taxi",

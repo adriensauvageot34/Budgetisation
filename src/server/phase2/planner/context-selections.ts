@@ -1,4 +1,5 @@
 import "server-only";
+import { parseOutingTime } from "@/domain/phase2/planner/outing-time";
 import { HOME_EQUIPMENT_FIELD, parseHomeEquipment } from "@/domain/phase2/planner/home-equipment";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import {parseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
@@ -76,6 +77,7 @@ function nightProductAssetRef(raw: unknown): PlannedAssetRef {
 export function parseContextField(raw: unknown, field: ContextFieldDefinition, targetMonth: string): unknown {
   if (field.semanticContract === "RESTAURANT_INCLUDED_DETAILS") return parseRestaurantIncludedDetails(raw);
   if (raw == null) return null;
+  if (field.fieldKey === "plannedTime") return parseOutingTime(raw);
   if(field.semanticContract==="NIGHT_OUT_CONSUMPTION")return parseNightOutConsumption(raw);
   if(field.semanticContract==="NIGHT_OUT_VENUE")return parseNightOutVenue(raw);
   if (field.kind === "PLANNED_ASSET_REF") return giftAssetRef(raw);

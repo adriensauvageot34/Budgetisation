@@ -316,7 +316,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         <button type="button" onClick={() => { setPersonPage(participants(value).length); update(field.key, [...participants(value), { kind: "TEXT", label: "" }]); }}>Ajouter une personne</button>
       </fieldset>;
       return <label key={field.key}>{field.label}{field.kind === "CHOICE" ? <p>{field.choices?.find(c=>c.value===value)?.label??"À préciser"} · choix dans le dock</p>
-        : <input type={field.kind === "DATE" ? "date" : field.kind === "COUNT" ? "number" : "text"} min={field.kind === "COUNT" ? 1 : undefined}
+        : <input type={field.key === "plannedTime" ? "time" : field.kind === "DATE" ? "date" : field.kind === "COUNT" ? "number" : "text"} min={field.kind === "COUNT" ? 1 : undefined}
           max={field.kind === "COUNT" ? 366 : undefined} value={typeof value === "string" || typeof value === "number" ? value : ""}
           onChange={event => update(field.key, event.target.value)} autoComplete="off" />}</label>;
     })}</div></div>

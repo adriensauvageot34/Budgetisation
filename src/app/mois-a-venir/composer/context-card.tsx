@@ -46,6 +46,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const preset = presetForContext(card);
   const plannedDay = plannedDayLabel(card.fields.plannedDate);
+  const plannedTime = typeof card.fields.plannedTime === "string" ? card.fields.plannedTime : null;
   const purchase = card.templateKey === "purchase", main = card.sockets.find(s => s.slotKey === "item");
   const basket = isPurchaseBasket(card);
   const preview = useContext(BudgetPreviewStatus);
@@ -93,7 +94,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
     <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} disabled={busy}
       onClick={() => editable && (["restaurant", "activity", "home-project"].includes(card.templateKey) || purchase || !!preset)
-        ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{plannedDay ?? "Date à préciser"}</p>}
+        ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>
+      {(typeof card.fields.plannedDate === "string" || plannedTime) && <p>{[plannedDay ?? "Date à préciser", plannedTime].filter(Boolean).join(" · ")}</p>}
       {card.childContextOccurrenceIds.length > 0 && <p data-linked-intentions-count={card.childContextOccurrenceIds.length}>
         {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
       </p>}
