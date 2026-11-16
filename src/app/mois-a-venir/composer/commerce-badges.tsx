@@ -26,7 +26,7 @@ function CommerceBadgeView({ badge }: { badge: CommerceBadge }) {
   const boundIdentity = identity && !badge.identity;
   const caption = boundIdentity && identity.label !== badge.label ? `${badge.text} · ${identity.label}` : badge.text;
   const title = [caption, category ? `Catégorie · ${BADGE_CATEGORIES[category]}` : null,
-    personal?.imageUrl === src ? "Illustration privée" : null].filter(Boolean).join(" · ");
+    src && personal?.imageUrl === src ? "Illustration privée" : null].filter(Boolean).join(" · ");
   return <span className={styles.commerceBadge} data-commerce-badge={badge.kind} data-badge-identity={identity?.key}
     data-badge-category={category} data-badge-visual={src ? src === generic ? "CATEGORY" : "IDENTITY" : category ? "CATEGORY_ICON" : "NEUTRAL"} title={title}>
     {src ? <img key={src} src={src} alt="" width={24} height={24} loading="lazy" decoding="async"

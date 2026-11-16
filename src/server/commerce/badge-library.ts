@@ -1,6 +1,5 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import sharp from "sharp";
 import { randomUUID } from "node:crypto";
 import { BADGE_BUCKET, MAX_BADGE_BYTES, badgeAnchor, badgeCategory, badgeIdentityKey, badgeLabel, badgeVersion,
   type BadgeAnchor, type BadgeIdentity, type BadgeLibraryRead, type PersonalBadge } from "@/domain/phase2/commerce-media";
@@ -183,6 +182,7 @@ export async function prepareBadgeImage(file: File): Promise<Buffer> {
   const webp = bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP";
   if (!(png && file.type === "image/png" || webp && file.type === "image/webp")) throw new TypeError("BADGE_IMAGE_INVALID");
   try {
+    const sharp = (await import("sharp")).default;
     const image = sharp(bytes, { limitInputPixels: 16_777_216, animated: false, failOn: "warning" });
     const meta = await image.metadata();
     if (!meta.width || !meta.height || meta.width > 4096 || meta.height > 4096 || (meta.pages ?? 1) !== 1) throw Error();
