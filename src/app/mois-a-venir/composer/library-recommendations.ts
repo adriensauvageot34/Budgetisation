@@ -1,12 +1,13 @@
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import { composerLibraryIndex, filterLibraryIntentions, type LibraryIntention, type LibraryOccurrence } from "@/domain/phase2/planner/composer-library-index";
-import { conceptForPreset, conceptSearch, rankCatalogRecommendations, sourceReason, workbookSource } from "./catalog-relevance";
+import { conceptForPreset, conceptSearch, presetPreferenceKey, rankCatalogRecommendations, sourceReason, workbookSource } from "./catalog-relevance";
+import { preferenceEffect, type PersonalRecommendationScope } from "@/domain/phase2/composer-preferences";
 import { publishedDrop } from "./interactions";
 import { projectPresetAvailable, type ProjectStarter } from "./project-starters";
 
 type LibraryIndex = ReturnType<typeof composerLibraryIndex>;
-type Recommendation = { key: string; label: string; reason: string; group: string; tiers: readonly number[];
+type Recommendation = { key: string; label: string; reason: string; group: string; tiers: readonly number[]; preferenceKey?:string; preferenceExempt?:boolean;
   source?: ReturnType<typeof workbookSource> } & (
   { kind: "OPEN"; occurrence: LibraryOccurrence } | { kind: "ADD"; item: LibraryIntention } | { kind: "PROJECT"; project: ProjectStarter });
 
@@ -36,8 +37,8 @@ export function searchRecommendedOccurrences(items: LibraryIndex["occurrences"],
 }
 
 export function libraryRecommendations(model: ComposerUiModel, index: LibraryIndex, {
-  category, projects = [], currentReading = false,
-}: { category?: string; projects?: readonly ProjectStarter[]; currentReading?: boolean } = {}) {
+  category, projects = [], currentReading = false, personal,
+}: { category?: string; projects?: readonly ProjectStarter[]; currentReading?: boolean; personal?:PersonalRecommendationScope } = {}) {
   const cards = new Map(model.board.contexts.map(card => [card.contextOccurrenceId, card]));
   const candidates: Recommendation[] = [];
   const existingPresets = new Set(index.occurrences.map(row => row.presetKey));
@@ -64,16 +65,18 @@ export function libraryRecommendations(model: ComposerUiModel, index: LibraryInd
     candidates.push({ kind: "OPEN", key: "open:" + occurrence.contextOccurrenceId, occurrence,
       label: occurrence.label + (occurrence.occurrence ? " · Intention " + occurrence.occurrence : ""), group,
       reason: incomplete ? "Dans ce mois · à compléter" : "Dans ce mois · retrouver cette intention",
-      tiers: [incomplete ? 0 : 1], source: concept && workbookSource(concept) });
+      tiers: [incomplete ? 0 : 1], source: concept && workbookSource(concept),preferenceExempt:true });
   }
   for (const item of index.intentions) {
     const preset = item.preset;
-    if (!preset || existingPresets.has(preset.presetKey) || (category ? item.category !== category : !ideas.has(preset.presetKey))
+    const preferenceKey=preset&&presetPreferenceKey(preset.presetKey);
+    const interested=!!preferenceKey&&preferenceEffect(preferenceKey,personal).tier===0;
+    if (!preset || existingPresets.has(preset.presetKey) || (category ? item.category !== category : !ideas.has(preset.presetKey)&&!interested)
       || publishedDrop(model, item.asset.assetKey, boardTarget)?.semanticAction !== "ADD_CONTEXT") continue;
     const concept = conceptForPreset(preset.presetKey);
-    if (!ideas.has(preset.presetKey) && !concept) continue;
+    if (!ideas.has(preset.presetKey) && !concept && !interested) continue;
     const source = concept && workbookSource(concept);
-    candidates.push({ kind: "ADD", key: item.key, item, label: item.label, group: item.category, source,
+    candidates.push({ kind: "ADD", key: item.key, item, label: item.label, group: item.category, source,preferenceKey,
       reason: preset.presetKey === "laundry-detergent" ? "Consommable du catalogue · aucune échéance déduite"
         : sourceReason(source) ?? "Modèle disponible dans cette catégorie",
       tiers: [preset.presetKey === "laundry-detergent" ? 4 : 2, category === "ACTIVITY"
@@ -88,9 +91,9 @@ export function libraryRecommendations(model: ComposerUiModel, index: LibraryInd
     const concept = project.children.map(child => conceptForPreset(child.key)).find(row => row?.topic === "activity");
     if (!concept) continue;
     candidates.push({ kind: "PROJECT", key: "project:" + project.key, project, label: project.label, group,
-      source: workbookSource(concept), reason: "Modèle à personnaliser · " + concept.label, tiers: [2, category ? 1 : 0] });
+      source: workbookSource(concept),preferenceKey:`preset:project-${project.key}`, reason: "Modèle à personnaliser · " + concept.label, tiers: [2, category ? 1 : 0] });
   }
-  const ranked = rankCatalogRecommendations(candidates);
+  const ranked = rankCatalogRecommendations(candidates,undefined,personal);
   const result: Recommendation[] = [];
   const seen = new Set<string>();
   // A general shortlist should leave room for multiple families, while a

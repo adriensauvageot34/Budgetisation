@@ -21,6 +21,7 @@ import { availableProjectStarters, projectStarterCategory, projectStarterContent
 import { libraryRecommendations, searchRecommendedIntents, searchRecommendedOccurrences } from "./library-recommendations";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
+import { PreferenceFeedback, PreferencesButton, usePersonalization } from "./personalization";
 
 const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
 const intentionFilters=[
@@ -38,6 +39,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   const [favoriteNotice,setFavoriteNotice]=useState("");
   const search=useRef<HTMLInputElement>(null), interaction=useComposerInteractions();
   const previewStatus=useContext(BudgetPreviewStatus);
+  const personal=usePersonalization();
   const confirmRecommendation=useWorkshopConfirmation();
   const index=useMemo(()=>composerLibraryIndex(model),[model]);
   useEffect(()=>{try {const stored:unknown=JSON.parse(localStorage.getItem(FAVORITES_KEY)??"[]");if(Array.isArray(stored))setFavorites(stored.filter((v):v is string=>typeof v==="string").slice(0,100));}catch{setFavoriteNotice("Favoris indisponibles dans ce navigateur.");}},[]);
@@ -58,8 +60,8 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   const readingCurrent = model.budgetReading?.semanticStateDigest === model.board.draft.semanticStateDigest
     && previewStatus!=="PENDING"&&previewStatus!=="STALE"&&previewStatus!=="FAILED";
   const recommendations = useMemo(() => space === "add" && !query.trim()
-    ? libraryRecommendations(model, index, {category:ideaCategory, projects, currentReading:readingCurrent}) : [],
-    [space, query, model, index, ideaCategory, projects, readingCurrent]);
+    ? libraryRecommendations(model, index, {category:ideaCategory, projects, currentReading:readingCurrent,personal:{rows:personal?.rows??[],today:personal?.today}}) : [],
+    [space, query, model, index, ideaCategory, projects, readingCurrent,personal?.rows,personal?.today]);
   const monthIntentions = (query.trim()?occurrences:index.occurrences).filter(row=>{
     const card=composerRenderIndex(model).contexts.get(row.contextOccurrenceId);
     if(!card)return false;
@@ -121,6 +123,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
   };
   return <aside className={styles.library} data-library aria-label="Bibliothèque d’intentions">
     <header className={styles.panelHeader}><h2><button className={styles.libraryOpen} data-library-open onClick={()=>search.current?.focus()}>Que veux-tu prévoir ?</button></h2></header>
+    <PreferencesButton/>
     <nav className={styles.libraryTabs} aria-label="Espaces de la bibliothèque"><button type="button" aria-pressed={space==="add"} onClick={()=>setSpace("add")}>À ajouter</button><button type="button" aria-pressed={space==="intentions"} onClick={()=>setSpace("intentions")}>Mes intentions</button><button type="button" aria-pressed={space==="manage"} onClick={()=>setSpace("manage")}>À piloter</button></nav>
     <div className={styles.catalogLibraryAccess}><CatalogOpenButton target={{query,scope:'all'}}>Tous les éléments{query.trim()?` · ${query}`:''}</CatalogOpenButton><CatalogOpenButton target={{scope:'courses',controlRef:index.controls.find(a=>a.capabilityRef===MONTHLY_GROCERIES_REF)?.capabilityRef}}>Produits pour Courses</CatalogOpenButton></div>
     <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="manage"?"Budget ou cagnotte…":"Soirée, repas, achat…"} value={query} onChange={e=>setQuery(e.target.value)}
@@ -153,7 +156,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
         <div className={styles.libraryRecommendations}>{recommendations.map(idea=>{
           const preset=idea.kind==="ADD"?idea.item.preset:idea.kind==="PROJECT"?composerPreset(idea.project.parent)
             :idea.occurrence.presetKey?composerPreset(idea.occurrence.presetKey):undefined;
-          return <button type="button" key={idea.key} className={styles.libraryProject} disabled={busy}
+          return <div key={idea.key}><button type="button" className={styles.libraryProject} disabled={busy}
             data-library-recommendation={idea.kind} data-library-recommendation-key={idea.key}
             onClick={()=>{
               if(idea.kind==="OPEN")openContext(idea.occurrence.contextOccurrenceId);
@@ -167,7 +170,7 @@ function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,
             {preset?<PresetIllustration preset={preset}/>:<PlannerIcon iconKey="purchase" scale="LIBRARY"/>}
             <span><strong>{idea.label}</strong><small>{idea.reason}</small>
               <small>{idea.kind==="OPEN"?"Reprendre cette intention":idea.kind==="PROJECT"?"Voir et personnaliser le modèle":"Préparer une nouvelle intention"}</small></span>
-          </button>;
+          </button>{idea.kind!=="OPEN"&&<PreferenceFeedback subjectKey={idea.preferenceKey} label={idea.label}/>}</div>;
         })}</div>
       </section>}
       {projects.length > 0 && <details className={styles.assetGroup} open={!!query || undefined}>

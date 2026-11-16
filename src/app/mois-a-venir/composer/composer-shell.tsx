@@ -24,6 +24,7 @@ import { assetEditorTarget, editorOccurrenceId, admittedProjectMove } from "./as
 import { ComposerSaveStatus } from "./composer-save-status";
 import { composerContextProgress, ContextProgress } from "./context-progress";
 import { CommerceLibraryProvider } from "./commerce-library";
+import { PersonalizationProvider } from "./personalization";
 import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation-memory";
 import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter, type ProjectStarterChoices } from "./project-starters";
 import { ProjectStarterPreview } from "./project-starter-preview";
@@ -1179,7 +1180,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
-  return <ProjectCompletionPreference.Provider value={projectSuggestionPreference}><BudgetPreviewStatus.Provider value={previewStatus}><ContextProgress.Provider value={contextProgress}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
+  return <PersonalizationProvider><ProjectCompletionPreference.Provider value={projectSuggestionPreference}><BudgetPreviewStatus.Provider value={previewStatus}><ContextProgress.Provider value={contextProgress}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}
     prepareBasketArticle={prepareCatalogBasketArticle}><CommerceLibraryProvider model={shown}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
@@ -1403,5 +1404,5 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
           onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
-  </div></CommerceLibraryProvider></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></OpenMonthlyFinances.Provider></ContextProgress.Provider></BudgetPreviewStatus.Provider></ProjectCompletionPreference.Provider>;
+  </div></CommerceLibraryProvider></CatalogDiscoveryProvider></ComposerInteractionContext.Provider></InlineEditContext.Provider></WorkshopChoicesProvider></WorkshopConfirmationProvider></WorkshopNavigationContext.Provider></OpenMonthlyFinances.Provider></ContextProgress.Provider></BudgetPreviewStatus.Provider></ProjectCompletionPreference.Provider></PersonalizationProvider>;
 }

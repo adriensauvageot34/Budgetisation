@@ -96,7 +96,7 @@ if (!globalCss || !/\.h-dvh\s*\{/.test(globalCss)) throw new Error('A production
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
 } else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
 if (process.env.PLANNER_C8_BUILD_ONLY === '1') process.exit(0);
-let badgeFixture;
+let badgeFixture, preferenceFixture;
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
   M11M12: () => {
     const month = simpleMonth();
@@ -232,6 +232,12 @@ const server = http.createServer(async (request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1');
     const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
     const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
+    if(process.env.COMPOSER_PREFERENCES_FIXTURE==='1'&&url.pathname==='/api/composer/preferences'){
+      preferenceFixture??=(await import('./lib/composer-preferences-fixture.mjs')).composerPreferencesFixture();
+      const fixture=await preferenceFixture;const chunks=[];for await(const chunk of request)chunks.push(chunk);
+      const incoming=new Request('http://'+request.headers.host+request.url,{method:request.method,headers:request.headers,body:Buffer.concat(chunks)});
+      const result=await fixture.request(incoming);response.writeHead(result.status,Object.fromEntries(result.headers));response.end(Buffer.from(await result.arrayBuffer()));return;
+    }
     if (key === 'BADGES' && (url.pathname.startsWith('/api/composer/badge-library') || url.pathname.startsWith('/fixture-badge-image/')
       || url.pathname.startsWith('/planned-visuals/commerce/'))) {
       badgeFixture ??= (await import('./lib/commerce-library-fixture.mjs')).commerceLibraryFixture();

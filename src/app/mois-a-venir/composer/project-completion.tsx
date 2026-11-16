@@ -8,14 +8,16 @@ import { publishedDrop } from "./interactions";
 import { useInlineEditRegistry } from "./inline-edit-registry";
 import { useWorkshopConfirmation } from "./workshop-confirmation";
 import { useCommittedEvent } from "./use-committed-event";
-import { conceptForPreset, rankCatalogRecommendations, workbookSource } from "./catalog-relevance";
+import { conceptForPreset, presetPreferenceKey, rankCatalogRecommendations, workbookSource } from "./catalog-relevance";
+import type { PersonalRecommendationScope } from "@/domain/phase2/composer-preferences";
+import { PreferenceFeedback, usePersonalization } from "./personalization";
 import { intentionNavigationEntries } from "./workshop-navigation";
 import styles from "./composer.module.css";
 
 type CompletionCandidate = Readonly<{ add: ComposerPresetKey; reason: string }>;
 export type ProjectCompletionPriority = "BALANCED" | "ACTIVITIES" | "MEALS";
 
-export function projectCompletionSuggestions(model: ComposerUiModel, parentId: string, priority: ProjectCompletionPriority = "BALANCED") {
+export function projectCompletionSuggestions(model: ComposerUiModel, parentId: string, priority: ProjectCompletionPriority = "BALANCED",personal?:PersonalRecommendationScope) {
   const parent = model.board.contexts.find(card => card.contextOccurrenceId === parentId);
   if (!parent || parent.readOnly || !parent.capabilityRefs.includes("PATCH_CONTEXT") || model.semanticState.preferences.anchors.includes(parentId)
     || model.semanticState.preferences.flexibility[parentId] === "PRESERVE") return [];
@@ -83,8 +85,8 @@ export function projectCompletionSuggestions(model: ComposerUiModel, parentId: s
       && publishedDrop(model, `context-occurrence:${card.contextOccurrenceId}`, target)?.choices.includes("REPARENT_PRESERVE_ID")));
     return [{ key: `${parentId}:${child.presetKey}`, preset: child, target, assetKey, reason: candidate.reason,
       reusable, category, tiers: [Number(priority !== "BALANCED" && category !== priority), Number(category !== "ACTIVITIES")],
-      source: concept ? workbookSource(concept) : undefined }];
-  }));
+      preferenceKey:presetPreferenceKey(child.presetKey),source: concept ? workbookSource(concept) : undefined }];
+  }),undefined,personal);
 }
 
 export const ProjectCompletionPreference = createContext<{
@@ -97,11 +99,12 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
   model: ComposerUiModel; parentId: string; busy: boolean; decide: (operation: ComposerOperation) => boolean;
 }) {
   const preference = useContext(ProjectCompletionPreference);
+  const personal=usePersonalization();
   const confirm = useWorkshopConfirmation(), edits = useInlineEditRegistry();
   const summary = useRef<HTMLElement>(null);
   const [adoptionError, setAdoptionError] = useState("");
   const dismissed = preference.dismissed[parentId] ?? [];
-  const candidates = useMemo(() => projectCompletionSuggestions(model, parentId, preference.priority), [model, parentId, preference.priority]);
+  const candidates = useMemo(() => projectCompletionSuggestions(model, parentId, preference.priority,{rows:personal?.rows??[],contextId:parentId,today:personal?.today}), [model, parentId, preference.priority,personal?.rows,personal?.today]);
   const adopt = useCommittedEvent((key: string, expectedDigest: string, childId?: string) => {
     const candidate = candidates.find(item => item.key === key);
     if (!candidate || busy || !preference.enabled || dismissed.includes(key) || model.board.draft.semanticStateDigest !== expectedDigest
@@ -145,6 +148,8 @@ export function ProjectCompletion({ model, parentId, busy, decide }: {
       && <p>Votre priorité de session change l’ordre des propositions admissibles. Elle est conservée pendant cette session Composer.</p>}
     {preference.enabled && visible.map(candidate => <div key={candidate.key}>
       <p>{candidate.reason}</p>
+      <PreferenceFeedback subjectKey={candidate.preferenceKey} label={candidate.preset.label} contextId={parentId}
+        contextLabel={model.board.contexts.find(c=>c.contextOccurrenceId===parentId)?.label}/>
       {candidate.reusable.length ? candidate.reusable.map(child => <button key={child.id} type="button" disabled={busy}
         onClick={() => ask(candidate.key, child.id)}>Rattacher {child.label}</button>)
         : <button type="button" disabled={busy} onClick={() => ask(candidate.key)}>Préparer {candidate.preset.label}</button>}

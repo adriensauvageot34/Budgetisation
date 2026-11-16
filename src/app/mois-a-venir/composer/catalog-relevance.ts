@@ -1,6 +1,8 @@
 import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
 import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
 import type { ClayCatalogEntry } from "../clay-v22-catalog";
+import { preferenceEffect, type PersonalRecommendationScope } from "@/domain/phase2/composer-preferences";
+export const presetPreferenceKey = (key: ComposerPresetKey) => conceptForPreset(key)?.id ?? `preset:${key}`;
 
 // Public Clay identities checked against workbook family, label and provenance.
 // A relation describes a concept; only owners can publish an executable action.
@@ -59,13 +61,18 @@ export function preferenceTier(conceptId?: string, scope?: { authorizedSubject: 
   return matches.length === 1 && (matches[0].value === "SOUVENT" || matches[0].value === "PARFOIS") ? 0 : 1;
 }
 
-export function rankCatalogRecommendations<T extends { key: string; tiers: readonly number[]; source?: Source }>(
-  candidates: readonly T[], scope?: Parameters<typeof preferenceTier>[1],
+export function rankCatalogRecommendations<T extends { key: string; tiers: readonly number[]; source?: Source; preferenceKey?: string; preferenceExempt?: boolean; reason?: string }>(
+  candidates: readonly T[], scope?: Parameters<typeof preferenceTier>[1], personal?: PersonalRecommendationScope,
 ): T[] {
   // Existing business tiers decide admissible action and urgency first.
-  const ranked = candidates.map(candidate => ({ key: candidate.key, candidate,
-    tiers: [...candidate.tiers, candidate.source?.kind === "EXCEL" ? 0 : 1,
-      preferenceTier(candidate.source?.kind === "EXCEL" ? candidate.source.id : undefined, scope)] }));
+  const ranked = candidates.flatMap(candidate => {
+    const effect=preferenceEffect(candidate.preferenceKey??(candidate.source?.kind==="EXCEL"?candidate.source.id:undefined),personal);
+    if(effect.hidden&&!candidate.preferenceExempt)return [];
+    const decorated=effect.reason&&!candidate.preferenceExempt&&candidate.reason?{...candidate,reason:candidate.reason+" · "+effect.reason}:candidate;
+    return [{ key:candidate.key,candidate:decorated,
+      tiers:[candidate.tiers[0]??0,candidate.preferenceExempt?1:effect.tier,...candidate.tiers.slice(1),candidate.source?.kind === "EXCEL" ? 0 : 1,
+        preferenceTier(candidate.source?.kind === "EXCEL" ? candidate.source.id : undefined, scope)] }];
+  });
   return rankDiscoveryCandidates(ranked).map(row => row.candidate);
 }
 

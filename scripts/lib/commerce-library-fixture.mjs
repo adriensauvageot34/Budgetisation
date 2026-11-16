@@ -8,7 +8,7 @@ const { badgeRequest } = require("@/server/commerce/badge-http");
 const sharp = require("sharp");
 
 /** Actual additive schema, RLS and service on isolated PostgreSQL. Storage bytes stay in memory. */
-export async function commerceLibraryFixture() {
+export async function commerceLibraryFixture(extraTables = []) {
   const pg = await createKernelPostgres();
   const other = uuid(98002), files = new Map(), tokens = new Map(), faults = { loseImageUpdateReply: false };
   await pg.db.exec(`reset role;
@@ -46,7 +46,7 @@ export async function commerceLibraryFixture() {
   function client(actor) {
     return {
       from(table) {
-        if (!["composer_badge_visuals", "composer_badge_bindings", "merchants", "referentiel_lieu"].includes(table)) throw Error("BADGE_FINANCIAL_WRITE_FORBIDDEN");
+        if (!["composer_badge_visuals", "composer_badge_bindings", "merchants", "referentiel_lieu", ...extraTables].includes(table)) throw Error("BADGE_FINANCIAL_WRITE_FORBIDDEN");
         const filters = [], values = []; let operation = "SELECT", projection = "*", data, single = false, order, limit;
         const parameter = value => { values.push(value); return "$" + values.length; };
         const query = {
@@ -69,6 +69,8 @@ export async function commerceLibraryFixture() {
                 if (operation === "UPDATE") sql = "update public." + table + " set " + Object.entries(data).map(([key, value]) => identifier(key) + "=" + parameter(value)).join(",") + where + " returning " + projection;
                 if (operation === "DELETE") sql = "delete from public." + table + where + " returning " + projection;
                 const result = await pg.db.query(sql, values);
+                // PostgREST serializes a SQL date as YYYY-MM-DD, unlike PGlite's Date object.
+                for (const row of result.rows) if (row.review_on instanceof Date) row.review_on = row.review_on.toISOString().slice(0,10);
                 if (operation === "UPDATE" && data.object_path && faults.loseImageUpdateReply) {
                   faults.loseImageUpdateReply = false; throw new Error("Synthetic reply lost after commit");
                 }

@@ -10,6 +10,7 @@ import { CATALOG_SCOPES, catalogRefLocked, catalogResults, discoveryActions, sco
 import { isPurchaseBasket, type BasketConcept } from '@/domain/phase2/planner/purchase-basket';
 import { publishedDrop } from './interactions';
 import styles from './catalog-discovery.module.css';
+import { PreferenceFeedback, usePersonalization } from './personalization';
 
 type Request=DiscoveryTarget&Readonly<{query?:string;entryId?:string;commands?:readonly CatalogCommand[];
  resolveCommands?:(entry:ClayCatalogEntry)=>readonly CatalogCommand[]}>;
@@ -23,6 +24,7 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
  choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey,concept?:BasketConcept)=>void;
  prepareBasketArticle?:(id:string,concept:BasketConcept)=>void}){
  const [request,setRequest]=useState<Request|null>(null),[entries,setEntries]=useState<readonly ClayCatalogEntry[]>([]),[error,setError]=useState('');
+ const personal=usePersonalization();
  const [loadAttempt,setLoadAttempt]=useState(0);
  const [query,setQuery]=useState(''),[scope,setScope]=useState('all'),[family,setFamily]=useState(''),[nature,setNature]=useState(''),[page,setPage]=useState(0),[selected,setSelected]=useState<string|null>(null);
  const dialog=useRef<HTMLDialogElement>(null), trigger=useRef<HTMLElement|null>(null), requestDigest=useRef('');
@@ -39,7 +41,8 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
    return()=>{current=false;};},[request,loadAttempt]);
  const commandIds=useMemo(()=>new Set(request?.commands?.map(command=>command.visualConceptId)),[request]);
  const results=useMemo(()=>catalogResults(entries,{query,scope,family,nature,selectedIds:frozenSelections.current,
-   moment:request?.moment,commandIds}),[entries,query,scope,family,nature,request?.moment,commandIds]);
+   moment:request?.moment,commandIds,personal:{rows:personal?.rows??[],contextId:request?.contextId,today:personal?.today}}),[entries,query,scope,family,nature,request?.moment,request?.contextId,commandIds,personal?.rows,personal?.today]);
+ useEffect(()=>setPage(0),[personal?.rows]);
  const chosen=entries.find(e=>e.visualConceptId===selected),context=model.board.contexts.find(c=>c.contextOccurrenceId===request?.contextId);
  const chosenId=chosen?.visualConceptId;
  useEffect(()=>{
@@ -100,6 +103,7 @@ export function CatalogDiscoveryProvider({model,busy,children,openContext,choose
       <button type="button" className={styles.back} onClick={()=>{returnToResults.current=true;setSelected(null);}}>Retour aux résultats</button>
       {(()=>{const art=clayCatalogArtwork(chosen,chosen.nativeRatio==='2:1'?'wide':'primary');return art?<img src={art.src} width={art.width} height={art.height} alt={chosen.label}/>:null;})()}
       <h3 ref={detailHeading} tabIndex={-1}>{chosen.label}</h3><p>{chosen.discovery.family}</p>
+      <PreferenceFeedback subjectKey={chosen.visualConceptId} label={chosen.label} contextId={request?.contextId} contextLabel={context?.label}/>
       <p>{chosen.discovery.sourceRow?`Concept Excel V22 · ligne ${chosen.discovery.sourceRow}`:chosen.protected?'Illustration historique protégée':'Visuel complémentaire M10 · hors Excel'}</p>
       {!!alreadyChosen&&<p>Déjà présent dans cette composition.</p>}
       {context?.templateKey==='purchase'&&!basket&&actions.some(action=>action.target?.slotKey==='item'&&action.selection)&&<p>Cet achat contient une seule ligne article.</p>}

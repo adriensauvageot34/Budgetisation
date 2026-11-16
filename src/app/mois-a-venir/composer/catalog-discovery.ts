@@ -14,6 +14,7 @@ import { isBasketCatalogProduct } from '@/domain/phase2/planner/purchase-catalog
 import { homeEquipment, homeEquipmentBaskets, homeEquipmentKey, homeEquipmentPurchases, homeLegacyEquipment } from '@/domain/phase2/planner/home-equipment';
 import { purchaseLineLabel } from './purchase-line-label';
 import { clayWorkbookSource, rankCatalogRecommendations, sourceReason, v22Concepts } from './catalog-relevance';
+import type { PersonalRecommendationScope } from '@/domain/phase2/composer-preferences';
 export { rankDiscoveryCandidates } from './catalog-relevance';
 
 export const CATALOG_SCOPES = [['all','Tous les éléments'],['courses','Courses'],['cinema','Cinéma'],['bar','Bar / Apéro'],
@@ -71,7 +72,7 @@ function indexedEntries(entries: readonly ClayCatalogEntry[]) {
  }
  return indexed;
 }
-export function catalogResults(entries:readonly ClayCatalogEntry[],{query='',scope='all',family='',nature='',selectedIds=new Set<string>(),moment,commandIds=new Set<string>()}:{query?:string;scope?:string;family?:string;nature?:string;selectedIds?:ReadonlySet<string>;moment?:CatalogMoment;commandIds?:ReadonlySet<string>}){
+export function catalogResults(entries:readonly ClayCatalogEntry[],{query='',scope='all',family='',nature='',selectedIds=new Set<string>(),moment,commandIds=new Set<string>(),personal}:{query?:string;scope?:string;family?:string;nature?:string;selectedIds?:ReadonlySet<string>;moment?:CatalogMoment;commandIds?:ReadonlySet<string>;personal?:PersonalRecommendationScope}){
  const q=normalizeCatalog(query),tokens=q.split(' ').filter(Boolean);
  return rankCatalogRecommendations(indexedEntries(entries).flatMap(({entry,label,aliases,text,source})=>{
    const inMoment=commandIds.has(entry.visualConceptId);
@@ -82,10 +83,10 @@ export function catalogResults(entries:readonly ClayCatalogEntry[],{query='',sco
      :scope==='purchase'?purchaseCatalogProduct(entry)?0:1:entry.discovery.nature==='INTENT'?0:1;
    const chosen=selectedIds.has(entry.visualConceptId),complement=scope==='cinema'&&selectedIds.has(v22Concepts.ticket.id)&&entry.visualConceptId==='v22-art:extra:popcorn';
    const situated=inMoment?0:momentRank(entry,moment);
-   return [{key:entry.visualConceptId,entry,source,
+   return [{key:entry.visualConceptId,entry,source,preferenceKey:entry.visualConceptId,preferenceExempt:chosen,
      tiers:[q?label===q||aliases.includes(q)?0:label.startsWith(q)?1:2:0,core,situated,chosen?0:1,complement?0:1],
      reason:chosen?'Déjà choisi · retrouver cet élément':complement?'Complément facultatif du billet':inMoment?'Choix disponible dans cette étape':scope==='all'?(sourceReason(source)??'Repère Composer'):core===0?'Au cœur de ce contexte':entry.discovery.nature==='SCENE'||entry.discovery.nature==='MODE'?'Repère visuel du contexte':'Élément pertinent dans ce contexte'}];
- }));
+ }),undefined,{...personal,rows:personal?.rows??[],search:!!q});
 }
 const purchaseModules = new Set(['beauty','clothing','household','home','tech','automotive']);
 const purchaseStarterPresets: Readonly<Partial<Record<string,ComposerPresetKey>>> = {
