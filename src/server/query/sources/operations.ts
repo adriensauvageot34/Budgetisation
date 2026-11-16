@@ -2,6 +2,8 @@ import "server-only";
 
 import type { EconomicComponentFact, EconomicTiming } from "@/analytics/facts";
 import { MetricProductionContractError } from "@/analytics/production";
+import { parseMerchantId } from "@/core/identity";
+import { merchantIdentityKinds, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
 import type {
   CategoryId,
   MerchantId,
@@ -192,6 +194,7 @@ export function buildOperationRow(
     readonly categories?: ReadonlyMap<string, string>;
     readonly subcategories?: ReadonlyMap<string, string>;
     readonly merchants?: ReadonlyMap<string, string>;
+    readonly merchantIdentity?: ReadonlyMap<string, { kind: MerchantIdentityKind; visualId?: MerchantId }>;
     readonly places?: ReadonlyMap<string, string>;
   } = {},
 ): OperationRowReadModel {
@@ -208,6 +211,7 @@ export function buildOperationRow(
     facts.map(({ merchant }) => merchant),
     "id",
   ) ?? operation.merchantId;
+  const merchantIdentity = merchantId === undefined ? undefined : labels.merchantIdentity?.get(merchantId);
   const placeId = uniqueResolved<PlaceId>(
     facts.map(({ canonicalPlace }) =>
       canonicalPlace.kind === "resolved"
@@ -224,6 +228,8 @@ export function buildOperationRow(
     ...(merchantId === undefined
       ? {}
       : { merchant: { id: merchantId, label: labels.merchants?.get(merchantId) ?? merchantId } }),
+    ...(merchantIdentity ? { merchantIdentityKind: merchantIdentity.kind } : {}),
+    ...(merchantIdentity?.visualId ? { merchantVisualId: merchantIdentity.visualId } : {}),
     bankAmount: moneyEnvelope(operation.bankAmount),
     economicNet:
       facts.length === 0
@@ -298,6 +304,13 @@ export async function loadOperationReferenceLabels(
     categories: canonicalLabelMap(categories, ["category_id"]),
     subcategories: canonicalLabelMap(subcategories, ["subcategory_id"]),
     merchants: canonicalLabelMap(merchants, ["merchant_id", "id"]),
+    merchantIdentity: new Map(merchants.flatMap(row => {
+      const kind = row.identity_kind as MerchantIdentityKind;
+      if (typeof row.merchant_id !== "string" || !merchantIdentityKinds.has(kind)) return [];
+      const visualId = kind === "commercial" && typeof row.visual_brand_merchant_id === "string"
+        ? parseMerchantId(row.visual_brand_merchant_id) : undefined;
+      return [[row.merchant_id, { kind, visualId }] as const];
+    })),
     places: canonicalLabelMap(places, ["place_id", "id"]),
   };
 }

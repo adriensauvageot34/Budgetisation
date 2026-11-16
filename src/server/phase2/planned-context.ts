@@ -4,6 +4,7 @@ const OBSERVED_PRICE_ASSETS_V1: Record<string, string> = {
 };
 import "server-only";
 import { parseCanonicalHouseholdScope } from "@/analytics/facts/canonical";
+import { isPrivateMerchantKind } from "@/core/identity/merchant-kind";
 
 import Big from "big.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -80,7 +81,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
       .order("date_achat", { ascending: false }).limit(100) : Promise.resolve({ data: [], error: null }),
     client.from("benefit_wallets").select("provider,owner_person_id,status").eq("household_id", householdId),
     readRecentLocations(client, persons.map((person) => person.personId), cutoffDate.toISOString().slice(0, 10)),
-    client.from("merchant_place_aliases").select("place_id,merchants(merchant_id,nom_canonique)").eq("active", true).eq("validation_status", "Confirmé").limit(500),
+    client.from("merchant_place_aliases").select("place_id,merchants(merchant_id,nom_canonique,identity_kind)").eq("active", true).eq("validation_status", "Confirmé").limit(500),
   ]);
   for (const result of [placesResult, rolesResult, legsResult, pricesResult, productResult, walletsResult, brandsResult]) if (result.error) throw result.error;
   const visits = new Map<string, Set<string>>();
@@ -88,15 +89,19 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
     const dates = visits.get(row.place_id) ?? new Set<string>(); dates.add(row.person_days.date); visits.set(row.place_id, dates);
   }
   const roles = rolesResult.data ?? [];
-  const aliases = brandsResult.data ?? [];
+  type MerchantAlias = { merchant_id?: string; nom_canonique?: string; identity_kind?: string };
+  const sourceAliases = brandsResult.data ?? [];
+  const aliases = sourceAliases.flatMap(alias => {
+    const merchant = alias.merchants as unknown as MerchantAlias | null;
+    return !merchant || isPrivateMerchantKind(merchant.identity_kind) ? [] : [{ placeId: alias.place_id, merchant }];
+  });
   const confirmedByPlace = new Map<string, { id: string; name: string } | null>();
-  if (composerKnowledge && aliases.length < 500) for (const alias of aliases) {
-    const merchant = alias.merchants as unknown as { merchant_id?: string; nom_canonique?: string } | null;
-    const previous = confirmedByPlace.get(alias.place_id);
-    if (!merchant?.merchant_id || !merchant.nom_canonique?.trim() || previous === null
+  if (composerKnowledge && sourceAliases.length < 500) for (const { placeId, merchant } of aliases) {
+    const previous = confirmedByPlace.get(placeId);
+    if (!merchant.merchant_id || !merchant.nom_canonique?.trim() || previous === null
       || previous && (previous.id !== merchant.merchant_id || previous.name !== merchant.nom_canonique)) {
-      confirmedByPlace.set(alias.place_id, null);
-    } else confirmedByPlace.set(alias.place_id, { id: merchant.merchant_id, name: merchant.nom_canonique });
+      confirmedByPlace.set(placeId, null);
+    } else confirmedByPlace.set(placeId, { id: merchant.merchant_id, name: merchant.nom_canonique });
   }
   const places: PlannedPlaceOption[] = (placesResult.data ?? []).map((place) => ({
     placeId: place.place_id, name: place.nom_canonique, commune: place.commune,
@@ -111,7 +116,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
     ...(place.latitude_canonique != null && place.longitude_canonique != null ? { coordinates: { latitude: Number(place.latitude_canonique), longitude: Number(place.longitude_canonique), source: "CANONICAL" as const } } : {}),
     visits12Months: visits.get(place.place_id)?.size ?? 0,
     lastVisitDate: [...visits.get(place.place_id) ?? []].sort().at(-1) ?? null,
-    brandLabel: (brandsResult.data?.find((row) => row.place_id === place.place_id)?.merchants as unknown as { nom_canonique?: string } | undefined)?.nom_canonique ?? null,
+    brandLabel: aliases.find(row => row.placeId === place.place_id)?.merchant.nom_canonique ?? null,
     ...(!place.private_place && confirmedByPlace.get(place.place_id) ? { confirmedMerchant: confirmedByPlace.get(place.place_id)! } : {}),
     relationships: roles.filter((role) => role.place_id === place.place_id).flatMap((role) => {
       const person = persons.find((candidate) => candidate.personId === role.person_id);

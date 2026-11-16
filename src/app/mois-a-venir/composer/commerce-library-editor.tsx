@@ -66,11 +66,11 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
     {!library.available && <p role="status">Bibliothèque privée indisponible. Les illustrations génériques restent disponibles.</p>}
     <section><h3>Entreprise</h3>
       {identity ? <>
-        <p data-confirmed-badge-identity>{identity.label} · {identity.key.startsWith("personal:") ? "Identité personnelle confirmée" : "Identité sélectionnée"}</p>
+        <p data-confirmed-badge-identity>{identity.label} · {identity.key.startsWith("personal:") ? "Fiche visuelle privée" : "Identité sélectionnée"}</p>
         <small className={styles.identity}>{identity.key}</small>
         {badge.anchor && <button type="button" disabled={busy} onClick={() => { setIdentity(undefined); setMedia(undefined); setCandidate(null); }}>Corriger l’entreprise associée</button>}
       </> : <>
-        <p>Choisissez l’entreprise concernée ou créez une identité personnelle. Les noms similaires restent des choix distincts.</p>
+        <p>Choisissez l’entreprise concernée ou créez une fiche dans votre bibliothèque visuelle.</p>
         <form onSubmit={event => { event.preventDefault(); void run(async () => {
           setResults((await badgeCommand({ kind: "SEARCH", query })).identities); setCandidate(null);
         }); }}>
@@ -82,7 +82,7 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
             checked={candidate?.key === item.key} onChange={() => setCandidate(item)} />
             <span>{item.label}<small>{item.key.startsWith("personal:") ? "Votre bibliothèque" : "Référentiel marchand"} · {item.key.split(":")[1]}</small></span></label>)}</fieldset>}
         {candidate && <button type="button" disabled={busy || !library.available} onClick={() => confirm(false)}>Confirmer cette entreprise</button>}
-        <button type="button" disabled={busy || !library.available || !query.trim() || !badge.anchor} onClick={() => confirm(true)}>Créer et confirmer une identité personnelle</button>
+        <button type="button" disabled={busy || !library.available || !query.trim() || !badge.anchor} onClick={() => confirm(true)}>Créer une fiche visuelle privée</button>
       </>}
     </section>
     <section><h3>Catégorie</h3>

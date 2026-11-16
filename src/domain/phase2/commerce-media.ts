@@ -1,4 +1,5 @@
 import { plannerDigest, plannerDigestString, plannerKeys, plannerRecord, plannerString, plannerUuid } from "./planner/json";
+import type { MerchantIdentityKind } from "../../core/identity/merchant-kind";
 
 export const BADGE_CATEGORIES = {
   GROCERIES: "Courses", RESTAURANT: "Restaurant", BAR: "Bar", HAIRDRESSER: "Coiffure",
@@ -9,7 +10,12 @@ export type BadgeIdentity = Readonly<{ key: string; label: string }>;
 export type BadgeAnchor = Readonly<{ key: string; digest: string }>;
 export type BadgeBinding = BadgeAnchor & Readonly<{ identityKey: string | null; category: BadgeCategory | null; version: number }>;
 export type PersonalBadge = BadgeIdentity & Readonly<{ category: BadgeCategory | null; version: number; hasImage: boolean; imageUrl?: string }>;
-export type BadgeLibraryRead = Readonly<{ media: readonly PersonalBadge[]; bindings: readonly BadgeBinding[] }>;
+export type MerchantBadgeIdentity = Readonly<{ key: string; kind: MerchantIdentityKind; visualKey?: string }>;
+export type BadgeLibraryRead = Readonly<{
+  media: readonly PersonalBadge[];
+  bindings: readonly BadgeBinding[];
+  merchants?: readonly MerchantBadgeIdentity[];
+}>;
 export const BADGE_BUCKET = "composer-badge-illustrations";
 export const MAX_BADGE_BYTES = 5 * 1024 * 1024;
 export function badgeIdentityKey(raw: unknown): string {

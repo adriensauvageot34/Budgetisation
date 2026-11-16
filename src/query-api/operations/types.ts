@@ -10,6 +10,7 @@ import type { LocalDate } from "../../core/time";
 import type { QueryCapabilities } from "../capabilities";
 import type { CursorPage } from "../collections";
 import type { NormalizedOperationsBrowseParams } from "../request/operations-params";
+import type { MerchantIdentityKind } from "../../core/identity/merchant-kind";
 
 export type OperationReference<Id extends string> = {
   readonly id: Id;
@@ -34,6 +35,8 @@ export type OperationRowReadModel = {
   readonly bankDate: LocalDate;
   readonly bankLabel: string;
   readonly merchant?: OperationReference<MerchantId>;
+  readonly merchantIdentityKind?: MerchantIdentityKind;
+  readonly merchantVisualId?: MerchantId;
   readonly account?: { readonly id: string; readonly label: string };
   readonly bankAmount: MoneyMetricEnvelope;
   readonly economicNet: MoneyMetricEnvelope;

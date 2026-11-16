@@ -1,4 +1,45 @@
 {
-  "identities": {},
+  "identities": {
+    "merchant:031843be-2553-5796-8e80-bcd7da91bbd8": {
+      "src": "/planned-visuals/commerce/merchants/carrefour.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:07e817e8-98b9-585d-a69c-f17a25798098": {
+      "src": "/planned-visuals/commerce/merchants/dgfip.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:61c66378-7cd9-56bc-a46e-9068a8b6dfdf": {
+      "src": "/planned-visuals/commerce/merchants/galzin.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:4597316a-0ef8-5d0b-b738-5b2f27a444af": {
+      "src": "/planned-visuals/commerce/merchants/intermarche.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:9ed31eb9-c3a2-53e8-b7eb-f07354aabe3c": {
+      "src": "/planned-visuals/commerce/merchants/ornikar.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:3adc8d57-d737-53b5-a942-ebe006e457cc": {
+      "src": "/planned-visuals/commerce/merchants/suno.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:fb28946a-3644-5675-b85d-f147a1e243fd": {
+      "src": "/planned-visuals/commerce/merchants/supermercat-xoroi.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:7748749a-9d80-59ab-86de-d5c82f308701": {
+      "src": "/planned-visuals/commerce/merchants/totalenergies.webp",
+      "width": 128,
+      "height": 128
+    }
+  },
   "categories": {}
 }

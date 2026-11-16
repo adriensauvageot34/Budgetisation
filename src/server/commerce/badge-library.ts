@@ -2,7 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { BADGE_BUCKET, MAX_BADGE_BYTES, badgeAnchor, badgeCategory, badgeIdentityKey, badgeLabel, badgeVersion,
-  type BadgeAnchor, type BadgeIdentity, type BadgeLibraryRead, type PersonalBadge } from "@/domain/phase2/commerce-media";
+  type BadgeAnchor, type BadgeIdentity, type BadgeLibraryRead, type MerchantBadgeIdentity, type PersonalBadge } from "@/domain/phase2/commerce-media";
+import { isPrivateMerchantKind, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
 
 type Row = { user_id: string; identity_key: string; label: string; category: PersonalBadge["category"]; object_path: string | null; version: number };
 type BindingRow = { anchor_key: string; source_digest: string; identity_key: string | null; category: PersonalBadge["category"]; version: number };
@@ -20,6 +21,33 @@ export class BadgeLibrary {
   constructor(private readonly client: SupabaseClient, private readonly userId: string,
     private readonly canonical: () => Promise<SupabaseClient> = async () => client) {}
 
+  private async merchants(keys: readonly string[]): Promise<readonly MerchantBadgeIdentity[]> {
+    const ids = [...new Set(keys.filter(key => key.startsWith("merchant:")).map(key => key.slice("merchant:".length)))];
+    if (!ids.length) return [];
+    const client = await this.canonical();
+    type MerchantRow = { merchant_id: string; identity_kind: MerchantIdentityKind; visual_brand_merchant_id: string | null };
+    const result = await client.from("merchants").select("merchant_id,identity_kind,visual_brand_merchant_id").in("merchant_id", ids);
+    storageError(result.error);
+    const rows = (result.data ?? []) as MerchantRow[];
+    const targets = [...new Set(rows.flatMap(row =>
+      row.identity_kind === "commercial" && row.visual_brand_merchant_id ? [row.visual_brand_merchant_id] : []))];
+    const roots = targets.length ? await client.from("merchants").select("merchant_id").in("merchant_id", targets)
+      .eq("identity_kind", "commercial").is("visual_brand_merchant_id", null) : { data: [], error: null };
+    storageError(roots.error);
+    const allowed = new Set((roots.data ?? []).map(row => row.merchant_id));
+    return rows.map(row => ({
+      key: "merchant:" + row.merchant_id, kind: row.identity_kind,
+      ...(row.visual_brand_merchant_id && allowed.has(row.visual_brand_merchant_id)
+        ? { visualKey: "merchant:" + row.visual_brand_merchant_id } : {}),
+    }));
+  }
+
+  private async assertMerchantMediaAllowed(key: string) {
+    if (!key.startsWith("merchant:")) return;
+    const [entry] = await this.merchants([key]);
+    if (!entry || isPrivateMerchantKind(entry.kind)) throw new TypeError("BADGE_IDENTITY_INVALID");
+  }
+
   async read(keys: readonly string[], anchors: readonly BadgeAnchor[]): Promise<BadgeLibraryRead> {
     if (keys.length > 100 || anchors.length > 100) throw new TypeError("BADGE_BATCH_INVALID");
     const ids = keys.map(badgeIdentityKey), refs = anchors.map(badgeAnchor);
@@ -28,14 +56,20 @@ export class BadgeLibrary {
       : { data: [], error: null };
     storageError(bindingsRead.error);
     const bindings = bindingsRead.data as BindingRow[];
-    const wanted = [...new Set([...ids, ...bindings.flatMap(row => row.identity_key && refs.some(ref => ref.key === row.anchor_key && ref.digest === row.source_digest) ? [row.identity_key] : [])])];
+    const keysToRead = [...new Set([...ids, ...bindings.flatMap(row => row.identity_key && refs.some(ref => ref.key === row.anchor_key && ref.digest === row.source_digest) ? [row.identity_key] : [])])];
+    const merchants = await this.merchants(keysToRead);
+    const readable = new Set(merchants.filter(row => !isPrivateMerchantKind(row.kind)).map(row => row.key));
+    const wanted = [...new Set([
+      ...keysToRead.filter(key => !key.startsWith("merchant:") || readable.has(key)),
+      ...merchants.flatMap(row => row.visualKey ? [row.visualKey] : []),
+    ])];
     const media = wanted.length ? await this.client.from("composer_badge_visuals").select(columns).eq("user_id", this.userId).in("identity_key", wanted)
       : { data: [], error: null };
     storageError(media.error);
     const rows = media.data as Row[], paths = rows.flatMap(row => row.object_path ? [row.object_path] : []);
     const signed = paths.length ? await this.client.storage.from(BADGE_BUCKET).createSignedUrls(paths, 300) : { data: [] };
     const urls = new Map((signed.data ?? []).flatMap(item => item.signedUrl ? [[item.path, item.signedUrl] as const] : []));
-    return { media: rows.map(row => ({ ...visual(row), imageUrl: row.object_path ? urls.get(row.object_path) : undefined })), bindings: bindings.map(row => ({
+    return { merchants, media: rows.map(row => ({ ...visual(row), imageUrl: row.object_path ? urls.get(row.object_path) : undefined })), bindings: bindings.map(row => ({
       key: row.anchor_key, digest: row.source_digest, identityKey: row.identity_key, category: row.category, version: row.version,
     })) };
   }
@@ -45,8 +79,10 @@ export class BadgeLibrary {
     if (label.length < 2) return [];
     const escaped = "%" + label.replace(/[\\%_]/gu, char => "\\" + char) + "%";
     const [personal, merchants] = await Promise.all([
-      this.client.from("composer_badge_visuals").select("identity_key,label").eq("user_id", this.userId).ilike("label", escaped).order("label").limit(20),
-      this.canonical().then(client => client.from("merchants").select("merchant_id,nom_canonique").ilike("nom_canonique", escaped).order("nom_canonique").limit(20))
+      this.client.from("composer_badge_visuals").select("identity_key,label").eq("user_id", this.userId)
+        .not("identity_key", "like", "merchant:%").ilike("label", escaped).order("label").limit(20),
+      this.canonical().then(client => client.from("merchants").select("merchant_id,nom_canonique").eq("identity_kind", "commercial")
+        .ilike("nom_canonique", escaped).order("nom_canonique").limit(20))
         .catch(() => ({ data: [], error: new Error("Canonical unavailable") })),
     ]);
     storageError(personal.error);
@@ -73,6 +109,7 @@ export class BadgeLibrary {
     const place = key.startsWith("place:"), table = place ? "referentiel_lieu" : "merchants", id = place ? "place_id" : "merchant_id";
     let query = (await this.canonical()).from(table).select("nom_canonique").eq(id, key.split(":")[1]);
     if (place) query = query.eq("private_place", false);
+    else query = query.eq("identity_kind", "commercial");
     const result = await query.maybeSingle();
     if (result.error || !result.data) throw new TypeError("BADGE_IDENTITY_INVALID");
     return { key, label: badgeLabel(result.data.nom_canonique) };
@@ -124,7 +161,9 @@ export class BadgeLibrary {
   }
 
   async category(key: unknown, version: unknown, category: unknown) {
-    return this.update(badgeIdentityKey(key), badgeVersion(version), { category: badgeCategory(category) });
+    const identity = badgeIdentityKey(key);
+    await this.assertMerchantMediaAllowed(identity);
+    return this.update(identity, badgeVersion(version), { category: badgeCategory(category) });
   }
 
   async anchorCategory(raw: unknown, expectedVersion: unknown, category: unknown) {
@@ -144,6 +183,7 @@ export class BadgeLibrary {
 
   async image(key: unknown, version: unknown, file: File) {
     const identity = badgeIdentityKey(key), expected = badgeVersion(version);
+    await this.assertMerchantMediaAllowed(identity);
     const row = await this.row(identity);
     if (!row || row.version !== expected) throw new TypeError("BADGE_CONFLICT");
     const bytes = await prepareBadgeImage(file);
@@ -167,7 +207,9 @@ export class BadgeLibrary {
   }
 
   async download(key: unknown, version: unknown) {
-    const row = await this.row(badgeIdentityKey(key));
+    const identity = badgeIdentityKey(key);
+    await this.assertMerchantMediaAllowed(identity);
+    const row = await this.row(identity);
     if (!row?.object_path || row.version !== badgeVersion(version)) return null;
     const result = await this.client.storage.from(BADGE_BUCKET).download(row.object_path);
     return result.error ? null : result.data;

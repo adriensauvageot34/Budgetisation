@@ -6,6 +6,7 @@ import {
   parseSubcategoryId,
 } from "../../core/identity";
 import { parseLocalDate } from "../../core/time";
+import { merchantIdentityKinds, type MerchantIdentityKind } from "../../core/identity/merchant-kind";
 import {
   hasOwn,
   parseStrictRecord,
@@ -54,6 +55,8 @@ function parseOperationRow(value: unknown): OperationRowReadModel {
       "bankDate",
       "bankLabel",
       "merchant",
+      "merchantIdentityKind",
+      "merchantVisualId",
       "account",
       "bankAmount",
       "economicNet",
@@ -96,6 +99,8 @@ function parseOperationRow(value: unknown): OperationRowReadModel {
     bankDate: parseLocalDate(requireProperty(record, "bankDate", "OperationRowReadModel")),
     bankLabel: label(requireProperty(record, "bankLabel", "OperationRowReadModel"), "OperationRowReadModel.bankLabel"),
     ...(hasOwn(record, "merchant") ? { merchant: reference(record.merchant, parseMerchantId, "OperationMerchant") } : {}),
+    ...(hasOwn(record, "merchantIdentityKind") ? { merchantIdentityKind: parseStringLiteral<MerchantIdentityKind>(record.merchantIdentityKind, merchantIdentityKinds, "merchantIdentityKind") } : {}),
+    ...(hasOwn(record, "merchantVisualId") ? { merchantVisualId: parseMerchantId(record.merchantVisualId) } : {}),
     ...(account === undefined ? {} : { account }),
     bankAmount: parseMoneyEnvelope(requireProperty(record, "bankAmount", "OperationRowReadModel")),
     economicNet: parseMoneyEnvelope(requireProperty(record, "economicNet", "OperationRowReadModel")),
