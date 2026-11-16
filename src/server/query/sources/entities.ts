@@ -10,6 +10,7 @@ import type {
   PlaceId,
 } from "@/core/identity";
 import { parseMoney, type Money } from "@/core/money";
+import { merchantDisplayName } from "@/core/identity/merchant-kind";
 import { parseLocalDate, yearMonthOf } from "@/core/time";
 import type {
   EntityMerchantReadModel,
@@ -408,7 +409,7 @@ async function merchantEntity(input: {
     : "unknown";
   return {
     id: input.merchantId,
-    identity: { title: entityLabel(merchant, input.merchantId) },
+    identity: { title: merchantDisplayName(merchant) ?? entityLabel(merchant, input.merchantId) },
     spatialMode: parsedSpatialMode,
     headline: { economicAmount: economicAmount as ScopedMoneyMetricReadModel },
     placePreview:

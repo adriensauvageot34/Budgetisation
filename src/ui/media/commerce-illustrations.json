@@ -30,16 +30,82 @@
       "width": 128,
       "height": 128
     },
-    "merchant:fb28946a-3644-5675-b85d-f147a1e243fd": {
-      "src": "/planned-visuals/commerce/merchants/supermercat-xoroi.webp",
-      "width": 128,
-      "height": 128
-    },
     "merchant:7748749a-9d80-59ab-86de-d5c82f308701": {
       "src": "/planned-visuals/commerce/merchants/totalenergies.webp",
       "width": 128,
       "height": 128
+    },
+    "merchant:be9869b8-2e7a-52f8-812d-735e75128ed7": {
+      "src": "/planned-visuals/commerce/merchants/amazon.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:bfed61d1-7faa-5850-8086-b44f7069094c": {
+      "src": "/planned-visuals/commerce/merchants/amazon-prime.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:79b61e7b-b233-59da-913f-307c90c6c219": {
+      "src": "/planned-visuals/commerce/merchants/amazon-video.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:4bb981e1-0e71-5cdd-bcc3-c6084cfb7122": {
+      "src": "/planned-visuals/commerce/merchants/la-banque-postale.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:82b68e8e-3883-5556-a2a8-e616e8ed372f": {
+      "src": "/planned-visuals/commerce/merchants/la-poste.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:02632afc-acb8-531d-84c3-322615b3e20a": {
+      "src": "/planned-visuals/commerce/merchants/super-u.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:3b1aaa12-21bb-5b57-8af1-aed95dab7710": {
+      "src": "/planned-visuals/commerce/merchants/utile.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:aa245318-796c-571f-8a24-552d9aab8b02": {
+      "src": "/planned-visuals/commerce/merchants/uber.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:b8a0b3aa-d860-5d96-b3cc-7f71227baff0": {
+      "src": "/planned-visuals/commerce/merchants/uber-eats.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:08526d47-2a13-5334-80ce-6de1fdadd817": {
+      "src": "/planned-visuals/commerce/merchants/doje-eat.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:732c9e81-1526-519c-aeed-fdd65c8ea7bb": {
+      "src": "/planned-visuals/commerce/merchants/espit-chupitos.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:caf34b4b-039c-5086-aa9e-ac3117076063": {
+      "src": "/planned-visuals/commerce/merchants/dali-barber.webp",
+      "width": 128,
+      "height": 128
+    },
+    "platform:amazon": {
+      "src": "/planned-visuals/commerce/merchants/amazon.webp",
+      "width": 128,
+      "height": 128
     }
   },
-  "categories": {}
+  "categories": {
+    "BAKERY": {
+      "src": "/planned-visuals/commerce/categories/bakery.webp",
+      "width": 128,
+      "height": 128
+    }
+  }
 }

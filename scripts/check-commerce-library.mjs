@@ -13,6 +13,19 @@ const anchor = commerceAnchor(uuid(97205), "seller", "Atelier Homonyme");
 const second = commerceAnchor(uuid(97206), "seller", "Atelier Homonyme");
 
 try {
+  await fixture.pg.db.exec("reset role");
+  const aliasId = uuid(97004);
+  await fixture.pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at,
+      identity_source, commercial_display_name, commercial_family_key, visual_brand_merchant_id, generic_badge_category)
+    values ($1,'Terminal bancaire 42','commercial',now(),'owner_confirmed','Fournil de recette','fournil',$2,'BAKERY')`,
+  [aliasId, uuid(97001)]);
+  const alias = { key: "merchant:" + aliasId, label: "Fournil de recette" };
+  assert.deepEqual(await a.search("Terminal bancaire"), [alias]);
+  assert.deepEqual(await a.search("Fournil de recette"), [alias]);
+  assert.equal((await a.confirm({ identityKey: alias.key })).label, alias.label);
+  assert.deepEqual((await a.read([alias.key], [])).merchants, [{
+    key: alias.key, kind: "commercial", displayName: alias.label, genericCategory: "BAKERY", visualKey: "merchant:" + uuid(97001),
+  }]);
   assert.equal((await a.read([], [anchor])).bindings.length, 0);
   const categoryOnly = await a.anchorCategory(anchor, 0, "CLOTHING");
   assert.equal(categoryOnly.identityKey, null);

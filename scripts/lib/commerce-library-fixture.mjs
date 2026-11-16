@@ -24,8 +24,11 @@ export async function commerceLibraryFixture(extraTables = []) {
     grant select on public.merchants,public.referentiel_lieu to authenticated;`);
   await pg.db.query("insert into auth.users values($1)", [other]);
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261115211441_composer_badge_library.sql", "utf8"));
+  await pg.db.exec(fs.readFileSync("supabase/migrations/20261116223846_merchant_counterparty_identity.sql", "utf8"));
+  await pg.db.exec(fs.readFileSync("supabase/migrations/20261116231908_merchant_commercial_presentation.sql", "utf8"));
   for (const [id, name] of [[uuid(97001), "E.Leclerc"], [uuid(97002), "Atelier Homonyme"], [uuid(97003), "Atelier Homonyme"]])
-    await pg.db.query("insert into public.merchants values($1,$2)", [id, name]);
+    await pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at, identity_source)
+      values($1,$2,'commercial',now(),'owner_confirmed')`, [id, name]);
   for (const [id, name] of [[uuid(97101), "E.Leclerc"], [uuid(97102), "Restaurant de recette"], [uuid(97103), "Salon de recette"]])
     await pg.db.query("insert into public.referentiel_lieu(place_id,nom_canonique) values($1,$2)", [id, name]);
   let queue = Promise.resolve();
@@ -47,14 +50,22 @@ export async function commerceLibraryFixture(extraTables = []) {
     return {
       from(table) {
         if (!["composer_badge_visuals", "composer_badge_bindings", "merchants", "referentiel_lieu", ...extraTables].includes(table)) throw Error("BADGE_FINANCIAL_WRITE_FORBIDDEN");
-        const filters = [], values = []; let operation = "SELECT", projection = "*", data, single = false, order, limit;
+        const filters = [], values = [], order = []; let operation = "SELECT", projection = "*", data, single = false, limit;
         const parameter = value => { values.push(value); return "$" + values.length; };
         const query = {
           select(columns) { if (!/^[a-z_,*]+$/u.test(columns)) throw Error("FIXTURE_PROJECTION"); projection = columns; return query; },
           eq(key, value) { filters.push(identifier(key) + "=" + parameter(value)); return query; },
+          is(key, value) {
+            if (value !== null) throw Error("FIXTURE_FILTER");
+            filters.push(identifier(key) + " is null"); return query;
+          },
+          not(key, operator, value) {
+            if (operator !== "like") throw Error("FIXTURE_FILTER");
+            filters.push(identifier(key) + " not like " + parameter(value)); return query;
+          },
           in(key, list) { filters.push(identifier(key) + "=any(" + parameter(list) + ")"); return query; },
           ilike(key, value) { filters.push(identifier(key) + " ilike " + parameter(value)); return query; },
-          order(key) { order = identifier(key); return query; }, limit(count) { limit = count; return query; },
+          order(key) { order.push(identifier(key)); return query; }, limit(count) { limit = count; return query; },
           insert(value) { operation = "INSERT"; data = value; return query; },
           update(value) { operation = "UPDATE"; data = value; return query; },
           delete() { operation = "DELETE"; return query; },
@@ -64,7 +75,7 @@ export async function commerceLibraryFixture(extraTables = []) {
               try {
                 const where = filters.length ? " where " + filters.join(" and ") : "";
                 let sql;
-                if (operation === "SELECT") sql = "select " + projection + " from public." + table + where + (order ? " order by " + order : "") + (limit ? " limit " + Number(limit) : "");
+                if (operation === "SELECT") sql = "select " + projection + " from public." + table + where + (order.length ? " order by " + order.join(",") : "") + (limit ? " limit " + Number(limit) : "");
                 if (operation === "INSERT") sql = "insert into public." + table + "(" + Object.keys(data).map(identifier).join(",") + ") values(" + Object.values(data).map(parameter).join(",") + ") returning " + projection;
                 if (operation === "UPDATE") sql = "update public." + table + " set " + Object.entries(data).map(([key, value]) => identifier(key) + "=" + parameter(value)).join(",") + where + " returning " + projection;
                 if (operation === "DELETE") sql = "delete from public." + table + where + " returning " + projection;

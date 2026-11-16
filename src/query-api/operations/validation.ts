@@ -6,7 +6,7 @@ import {
   parseSubcategoryId,
 } from "../../core/identity";
 import { parseLocalDate } from "../../core/time";
-import { merchantIdentityKinds, type MerchantIdentityKind } from "../../core/identity/merchant-kind";
+import { merchantGenericBadgeCategories, merchantIdentityKinds, type MerchantGenericBadgeCategory, type MerchantIdentityKind } from "../../core/identity/merchant-kind";
 import {
   hasOwn,
   parseStrictRecord,
@@ -57,6 +57,7 @@ function parseOperationRow(value: unknown): OperationRowReadModel {
       "merchant",
       "merchantIdentityKind",
       "merchantVisualId",
+      "merchantGenericBadgeCategory",
       "account",
       "bankAmount",
       "economicNet",
@@ -101,6 +102,9 @@ function parseOperationRow(value: unknown): OperationRowReadModel {
     ...(hasOwn(record, "merchant") ? { merchant: reference(record.merchant, parseMerchantId, "OperationMerchant") } : {}),
     ...(hasOwn(record, "merchantIdentityKind") ? { merchantIdentityKind: parseStringLiteral<MerchantIdentityKind>(record.merchantIdentityKind, merchantIdentityKinds, "merchantIdentityKind") } : {}),
     ...(hasOwn(record, "merchantVisualId") ? { merchantVisualId: parseMerchantId(record.merchantVisualId) } : {}),
+    ...(hasOwn(record, "merchantGenericBadgeCategory") ? {
+      merchantGenericBadgeCategory: parseStringLiteral<MerchantGenericBadgeCategory>(record.merchantGenericBadgeCategory, merchantGenericBadgeCategories, "merchantGenericBadgeCategory"),
+    } : {}),
     ...(account === undefined ? {} : { account }),
     bankAmount: parseMoneyEnvelope(requireProperty(record, "bankAmount", "OperationRowReadModel")),
     economicNet: parseMoneyEnvelope(requireProperty(record, "economicNet", "OperationRowReadModel")),

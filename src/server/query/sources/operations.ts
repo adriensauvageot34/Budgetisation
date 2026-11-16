@@ -3,7 +3,7 @@ import "server-only";
 import type { EconomicComponentFact, EconomicTiming } from "@/analytics/facts";
 import { MetricProductionContractError } from "@/analytics/production";
 import { parseMerchantId } from "@/core/identity";
-import { merchantIdentityKinds, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
+import { merchantDisplayName, merchantGenericBadgeCategory, merchantIdentityKinds } from "@/core/identity/merchant-kind";
 import type {
   CategoryId,
   MerchantId,
@@ -194,7 +194,11 @@ export function buildOperationRow(
     readonly categories?: ReadonlyMap<string, string>;
     readonly subcategories?: ReadonlyMap<string, string>;
     readonly merchants?: ReadonlyMap<string, string>;
-    readonly merchantIdentity?: ReadonlyMap<string, { kind: MerchantIdentityKind; visualId?: MerchantId }>;
+    readonly merchantIdentity?: ReadonlyMap<string, {
+      kind: NonNullable<OperationRowReadModel["merchantIdentityKind"]>;
+      visualId?: MerchantId;
+      genericCategory?: OperationRowReadModel["merchantGenericBadgeCategory"];
+    }>;
     readonly places?: ReadonlyMap<string, string>;
   } = {},
 ): OperationRowReadModel {
@@ -230,6 +234,7 @@ export function buildOperationRow(
       : { merchant: { id: merchantId, label: labels.merchants?.get(merchantId) ?? merchantId } }),
     ...(merchantIdentity ? { merchantIdentityKind: merchantIdentity.kind } : {}),
     ...(merchantIdentity?.visualId ? { merchantVisualId: merchantIdentity.visualId } : {}),
+    ...(merchantIdentity?.genericCategory ? { merchantGenericBadgeCategory: merchantIdentity.genericCategory } : {}),
     bankAmount: moneyEnvelope(operation.bankAmount),
     economicNet:
       facts.length === 0
@@ -300,16 +305,32 @@ export async function loadOperationReferenceLabels(
     repository.loadEntityRows("merchants", "merchant_id", merchantIds),
     repository.loadEntityRows("places", "place_id", placeIds),
   ]);
+  const loadedMerchantIds = new Set(merchants.map(row => row.merchant_id));
+  const extraVisualIds = [...new Set(merchants.flatMap(row =>
+    row.identity_kind === "commercial" && typeof row.visual_brand_merchant_id === "string"
+      && !loadedMerchantIds.has(row.visual_brand_merchant_id) ? [row.visual_brand_merchant_id] : [],
+  ))];
+  const visualTargets = extraVisualIds.length ? await repository.loadEntityRows("merchants", "merchant_id", extraVisualIds) : [];
+  const merchantRoots = new Set([...merchants, ...visualTargets].filter(row =>
+    row.identity_kind === "commercial" && row.visual_brand_merchant_id == null,
+  ).map(row => row.merchant_id));
+  const merchantLabels = new Map(canonicalLabelMap(merchants, ["merchant_id", "id"]));
+  for (const row of merchants) {
+    const label = merchantDisplayName(row);
+    if (label && typeof row.merchant_id === "string") merchantLabels.set(row.merchant_id, label);
+  }
   return {
     categories: canonicalLabelMap(categories, ["category_id"]),
     subcategories: canonicalLabelMap(subcategories, ["subcategory_id"]),
-    merchants: canonicalLabelMap(merchants, ["merchant_id", "id"]),
+    merchants: merchantLabels,
     merchantIdentity: new Map(merchants.flatMap(row => {
-      const kind = row.identity_kind as MerchantIdentityKind;
+      const kind = row.identity_kind as NonNullable<OperationRowReadModel["merchantIdentityKind"]>;
       if (typeof row.merchant_id !== "string" || !merchantIdentityKinds.has(kind)) return [];
       const visualId = kind === "commercial" && typeof row.visual_brand_merchant_id === "string"
+        && merchantRoots.has(row.visual_brand_merchant_id)
         ? parseMerchantId(row.visual_brand_merchant_id) : undefined;
-      return [[row.merchant_id, { kind, visualId }] as const];
+      const genericCategory = kind === "commercial" ? merchantGenericBadgeCategory(row.generic_badge_category) : undefined;
+      return [[row.merchant_id, { kind, visualId, genericCategory }] as const];
     })),
     places: canonicalLabelMap(places, ["place_id", "id"]),
   };

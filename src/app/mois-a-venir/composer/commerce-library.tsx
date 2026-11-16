@@ -30,10 +30,12 @@ export function resolveBadgeMedia(badge: CommerceBadge, library: BadgeLibraryRea
   const merchant = library?.merchants?.find(row => row.key === (badge.identity?.key ?? binding?.identityKey));
   if (isPrivateMerchantKind(merchant?.kind)) return { counterpartyKind: merchant.kind };
   const bound = binding?.identityKey ? library?.media.find(row => row.key === binding.identityKey) : undefined;
-  const identity = badge.identity ?? (bound ? { key: bound.key, label: bound.label } : undefined);
+  const baseIdentity = badge.identity ?? (bound ? { key: bound.key, label: bound.label } : undefined);
+  const identity = baseIdentity && merchant?.displayName ? { ...baseIdentity, label: merchant.displayName } : baseIdentity;
   const personal = identity ? library?.media.find(row => row.key === identity.key) : undefined;
   const shared = merchant?.visualKey ? library?.media.find(row => row.key === merchant.visualKey) : undefined;
-  return { identity, personal, shared, visualKey: merchant?.visualKey, category: binding?.category ?? personal?.category ?? badge.category };
+  return { identity, personal, shared, visualKey: merchant?.visualKey,
+    category: binding?.category ?? personal?.category ?? merchant?.genericCategory ?? badge.category };
 }
 
 /** One bounded batch per set of displayed subjects, independent of the financial transports. */
