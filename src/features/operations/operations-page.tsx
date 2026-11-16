@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from "react";
-import { ArrowLeftRight, UserRound } from "lucide-react";
+import { ArrowLeftRight, Croissant, Martini, Scissors, UserRound } from "lucide-react";
 import { commerceAssetPath, commerceIllustrations } from "@/ui/media/commerce-illustrations";
 import {
   parseCategoryId,
@@ -45,12 +45,18 @@ import {
 
 export type OperationsDisplayMode = "compact" | "standard" | "complete";
 type PersonOption = { readonly id: string; readonly label: string };
+const genericBadgeIcons = { BAKERY: Croissant, BAR: Martini, HAIRDRESSER: Scissors };
 
 function OperationCounterparty({ row }: { row: OperationRowReadModel }) {
   const kind = row.merchantIdentityKind;
-  const id = row.merchantVisualId ?? row.merchant?.id;
-  const logo = kind === "commercial" && id ? commerceAssetPath(commerceIllustrations.identities["merchant:" + id]) : undefined;
-  const Icon = kind === "private_person" ? UserRound : kind === "personal_transfer_label" ? ArrowLeftRight : undefined;
+  const genericCategory = kind === "commercial" ? row.merchantGenericBadgeCategory : undefined;
+  const logo = kind === "commercial"
+    ? commerceAssetPath(commerceIllustrations.identities["merchant:" + row.merchantVisualId])
+      ?? commerceAssetPath(commerceIllustrations.identities["merchant:" + row.merchant?.id])
+      ?? (genericCategory ? commerceAssetPath(commerceIllustrations.categories[genericCategory]) : undefined)
+    : undefined;
+  const Icon = kind === "private_person" ? UserRound : kind === "personal_transfer_label" ? ArrowLeftRight
+    : genericCategory ? genericBadgeIcons[genericCategory] : undefined;
   const description = kind === "private_person" ? "Contrepartie privée"
     : kind === "personal_transfer_label" ? "Libellé de virement personnel" : undefined;
   return <>

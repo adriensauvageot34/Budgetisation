@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeftRight, Building2, MapPin, Martini, Scissors, ShoppingCart, Sparkles, Store, UserRound, Utensils, Shirt, House, Ticket, ImagePlus } from "lucide-react";
+import { ArrowLeftRight, Building2, Croissant, MapPin, Martini, Scissors, ShoppingCart, Sparkles, Store, UserRound, Utensils, Shirt, House, Ticket, ImagePlus } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { commerceBadges, type CommerceContext, type CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
 import { BADGE_CATEGORIES } from "@/domain/phase2/commerce-media";
@@ -11,7 +11,7 @@ import styles from "./composer.module.css";
 export { commerceBadges } from "@/domain/phase2/planner/commerce-badges";
 
 const icons = { platform: Store, salon: Scissors, restaurant: Utensils, bar: Martini, place: MapPin, merchant: Building2, seller: Store };
-const categoryIcons = { GROCERIES: ShoppingCart, RESTAURANT: Utensils, BAR: Martini, HAIRDRESSER: Scissors,
+const categoryIcons = { GROCERIES: ShoppingCart, BAKERY: Croissant, RESTAURANT: Utensils, BAR: Martini, HAIRDRESSER: Scissors,
   BEAUTY: Sparkles, CLOTHING: Shirt, HOME: House, ACTIVITY: Ticket, SHOP: Store };
 
 function CommerceBadgeView({ badge }: { badge: CommerceBadge }) {
@@ -21,7 +21,7 @@ function CommerceBadgeView({ badge }: { badge: CommerceBadge }) {
   const globalSpecific = identity ? commerceAssetPath(commerceIllustrations.identities[identity.key]) : undefined;
   const sharedSpecific = visualKey ? commerceAssetPath(commerceIllustrations.identities[visualKey]) : undefined;
   const generic = category ? commerceAssetPath(commerceIllustrations.categories[category]) : undefined;
-  const candidates = [personal?.imageUrl, globalSpecific, shared?.imageUrl, sharedSpecific, generic].filter((url): url is string => !!url);
+  const candidates = [personal?.imageUrl, shared?.imageUrl, sharedSpecific, globalSpecific, generic].filter((url): url is string => !!url);
   const src = candidates.find(url => !failed.includes(url));
   const Icon = counterpartyKind === "private_person" ? UserRound : counterpartyKind === "personal_transfer_label" ? ArrowLeftRight
     : category ? categoryIcons[category] : icons[badge.kind];

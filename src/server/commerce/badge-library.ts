@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { BADGE_BUCKET, MAX_BADGE_BYTES, badgeAnchor, badgeCategory, badgeIdentityKey, badgeLabel, badgeVersion,
   type BadgeAnchor, type BadgeIdentity, type BadgeLibraryRead, type MerchantBadgeIdentity, type PersonalBadge } from "@/domain/phase2/commerce-media";
-import { isPrivateMerchantKind, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
+import { isPrivateMerchantKind, merchantDisplayName, merchantGenericBadgeCategory, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
 
 type Row = { user_id: string; identity_key: string; label: string; category: PersonalBadge["category"]; object_path: string | null; version: number };
 type BindingRow = { anchor_key: string; source_digest: string; identity_key: string | null; category: PersonalBadge["category"]; version: number };
@@ -25,8 +25,12 @@ export class BadgeLibrary {
     const ids = [...new Set(keys.filter(key => key.startsWith("merchant:")).map(key => key.slice("merchant:".length)))];
     if (!ids.length) return [];
     const client = await this.canonical();
-    type MerchantRow = { merchant_id: string; identity_kind: MerchantIdentityKind; visual_brand_merchant_id: string | null };
-    const result = await client.from("merchants").select("merchant_id,identity_kind,visual_brand_merchant_id").in("merchant_id", ids);
+    type MerchantRow = {
+      merchant_id: string; identity_kind: MerchantIdentityKind; visual_brand_merchant_id: string | null;
+      commercial_display_name: string | null; generic_badge_category: string | null;
+    };
+    const result = await client.from("merchants")
+      .select("merchant_id,identity_kind,visual_brand_merchant_id,commercial_display_name,generic_badge_category").in("merchant_id", ids);
     storageError(result.error);
     const rows = (result.data ?? []) as MerchantRow[];
     const targets = [...new Set(rows.flatMap(row =>
@@ -37,6 +41,9 @@ export class BadgeLibrary {
     const allowed = new Set((roots.data ?? []).map(row => row.merchant_id));
     return rows.map(row => ({
       key: "merchant:" + row.merchant_id, kind: row.identity_kind,
+      ...(row.commercial_display_name && row.identity_kind === "commercial" ? { displayName: merchantDisplayName(row) } : {}),
+      ...(row.generic_badge_category && row.identity_kind === "commercial"
+        ? { genericCategory: merchantGenericBadgeCategory(row.generic_badge_category) } : {}),
       ...(row.visual_brand_merchant_id && allowed.has(row.visual_brand_merchant_id)
         ? { visualKey: "merchant:" + row.visual_brand_merchant_id } : {}),
     }));
@@ -81,14 +88,22 @@ export class BadgeLibrary {
     const [personal, merchants] = await Promise.all([
       this.client.from("composer_badge_visuals").select("identity_key,label").eq("user_id", this.userId)
         .not("identity_key", "like", "merchant:%").ilike("label", escaped).order("label").limit(20),
-      this.canonical().then(client => client.from("merchants").select("merchant_id,nom_canonique").eq("identity_kind", "commercial")
-        .ilike("nom_canonique", escaped).order("nom_canonique").limit(20))
-        .catch(() => ({ data: [], error: new Error("Canonical unavailable") })),
+      this.canonical().then(client => Promise.all((["commercial_display_name", "nom_canonique"] as const).map(column =>
+        client.from("merchants").select("merchant_id,nom_canonique,identity_kind,commercial_display_name")
+          .eq("identity_kind", "commercial").ilike(column, escaped).order(column).order("merchant_id").limit(20),
+      ))).catch(() => []),
     ]);
     storageError(personal.error);
     // A denied or unavailable Canonical search grants no identity. Private identities remain usable.
     const results = new Map<string, BadgeIdentity>();
-    for (const row of merchants.error ? [] : merchants.data ?? []) results.set("merchant:" + row.merchant_id, { key: "merchant:" + row.merchant_id, label: row.nom_canonique });
+    for (const match of merchants) {
+      for (const row of match.error ? [] : match.data ?? []) {
+        const key = "merchant:" + row.merchant_id;
+        results.set(key, { key, label: merchantDisplayName(row) ?? row.nom_canonique });
+        if (results.size >= 20) break;
+      }
+      if (results.size >= 20) break;
+    }
     for (const row of personal.data ?? []) results.set(row.identity_key, { key: row.identity_key, label: row.label });
     return [...results.values()];
   }
@@ -106,13 +121,14 @@ export class BadgeLibrary {
       if (!row) throw new TypeError("BADGE_IDENTITY_INVALID");
       return { key, label: row.label };
     }
-    const place = key.startsWith("place:"), table = place ? "referentiel_lieu" : "merchants", id = place ? "place_id" : "merchant_id";
-    let query = (await this.canonical()).from(table).select("nom_canonique").eq(id, key.split(":")[1]);
-    if (place) query = query.eq("private_place", false);
-    else query = query.eq("identity_kind", "commercial");
-    const result = await query.maybeSingle();
+    const client = await this.canonical(), id = key.split(":")[1];
+    const result = key.startsWith("place:")
+      ? await client.from("referentiel_lieu").select("nom_canonique").eq("place_id", id).eq("private_place", false).maybeSingle()
+      : await client.from("merchants").select("nom_canonique,identity_kind,commercial_display_name")
+        .eq("merchant_id", id).eq("identity_kind", "commercial").maybeSingle();
     if (result.error || !result.data) throw new TypeError("BADGE_IDENTITY_INVALID");
-    return { key, label: badgeLabel(result.data.nom_canonique) };
+    const row = result.data as { nom_canonique: string; identity_kind?: string; commercial_display_name?: string };
+    return { key, label: badgeLabel(merchantDisplayName(row) ?? row.nom_canonique) };
   }
 
   async confirm(raw: { identityKey?: unknown; newLabel?: unknown; anchor?: unknown; expectedBindingVersion?: unknown }) {
@@ -149,7 +165,7 @@ export class BadgeLibrary {
         throw error;
       }
     }
-    return visual(row);
+    return { ...visual(row), ...(identity.key.startsWith("merchant:") ? { label: identity.label } : {}) };
   }
 
   private async update(key: string, version: number, patch: { category?: PersonalBadge["category"]; object_path?: string }) {
