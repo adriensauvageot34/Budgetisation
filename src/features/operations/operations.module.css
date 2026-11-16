@@ -20,5 +20,7 @@
 .page tbody tr[data-selected] { background: color-mix(in srgb, var(--color-primary) 9%, white); }
 .page tbody tr:focus-visible { outline: 3px solid var(--color-primary); outline-offset: -3px; }
 .page td small { display: block; margin-top: .2rem; color: var(--color-muted); }
+.counterparty { display: inline-flex; align-items: center; gap: .4rem; }
+.counterparty img, .counterparty svg { flex: none; }
 @media (max-width: 900px) { .toolbar, .advancedGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .search { grid-column: span 2; } }
 @media (max-width: 600px) { .toolbar { grid-template-columns: 1fr; } .search { grid-column: auto; } }

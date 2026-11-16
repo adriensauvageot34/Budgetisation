@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from "react";
+import { ArrowLeftRight, UserRound } from "lucide-react";
+import { commerceAssetPath, commerceIllustrations } from "@/ui/media/commerce-illustrations";
 import {
   parseCategoryId,
   parseMerchantId,
@@ -43,6 +45,24 @@ import {
 
 export type OperationsDisplayMode = "compact" | "standard" | "complete";
 type PersonOption = { readonly id: string; readonly label: string };
+
+function OperationCounterparty({ row }: { row: OperationRowReadModel }) {
+  const kind = row.merchantIdentityKind;
+  const id = row.merchantVisualId ?? row.merchant?.id;
+  const logo = kind === "commercial" && id ? commerceAssetPath(commerceIllustrations.identities["merchant:" + id]) : undefined;
+  const Icon = kind === "private_person" ? UserRound : kind === "personal_transfer_label" ? ArrowLeftRight : undefined;
+  const description = kind === "private_person" ? "Contrepartie privée"
+    : kind === "personal_transfer_label" ? "Libellé de virement personnel" : undefined;
+  return <>
+    <span className={styles.counterparty} data-counterparty-kind={kind}>
+      {logo ? <img src={logo} alt="" width={24} height={24} loading="lazy" decoding="async" />
+        : Icon ? <Icon size={16} aria-hidden="true" /> : null}
+      <strong>{row.merchant?.label ?? row.bankLabel}</strong>
+    </span>
+    {description && <small>{description}</small>}
+    {row.merchant && <small>{row.bankLabel}</small>}
+  </>;
+}
 
 function timeFrom(filters: OperationsNavigationFilters): OperationsTimeFilter | null {
   if ((filters.timeKind === "bank_month" || filters.timeKind === "economic_month") && filters.month) {
@@ -156,7 +176,7 @@ function OperationRow({
       onKeyDown={onKeyDown}
     >
       <td>{row.bankDate}</td>
-      <td><strong>{row.merchant?.label ?? row.bankLabel}</strong>{row.merchant ? <small>{row.bankLabel}</small> : null}</td>
+      <td><OperationCounterparty row={row} /></td>
       <td><MetricDisplay metric={row.bankAmount} qualifierMode="full" /></td>
       {mode !== "compact" ? (
         <>
@@ -299,10 +319,10 @@ export function OperationsPage({
               <label><span>{time.kind === "bank_month" ? "Période bancaire" : "Période économique"}</span><select className="field" name="month" defaultValue={time.month}>{months.map((month) => <option key={month} value={month}>{month}</option>)}</select></label>
             ) : <div><span className={styles.fieldLabel}>Période</span><strong>{time.kind === "global_window" ? `${time.window} · ${time.asOf}` : `${time.start} → ${time.endExclusive}`}</strong></div>}
             <label><span>Sujet</span><select className="field" name="personId" defaultValue={filters.personId ?? "household"}><option value="household">Foyer</option>{persons.map((person) => <option key={person.id} value={person.id} disabled={filters.personId !== person.id}>{person.label} · attribution indisponible</option>)}</select></label>
-            <label className={styles.search}><span>Recherche serveur</span><input className="field" name="search" defaultValue={filters.search ?? ""} maxLength={120} placeholder="Libellé, marchand, référence…" /></label>
+            <label className={styles.search}><span>Recherche serveur</span><input className="field" name="search" defaultValue={filters.search ?? ""} maxLength={120} placeholder="Libellé, contrepartie, référence…" /></label>
             <label><span>Tri serveur</span><select className="field" name="sort" defaultValue={filters.sort ?? "bank_date_desc"}><option value="bank_date_desc">Date bancaire · récent</option><option value="bank_date_asc">Date bancaire · ancien</option><option value="economic_timing_desc">Temporalité économique</option><option value="bank_amount_desc">Montant bancaire</option><option value="economic_net_desc">Valeur économique</option></select></label>
             {capability("category") ? <FilterInput name="categoryIds" label="Catégorie · ID canonique" value={filters.categoryIds} /> : null}
-            {capability("merchant") ? <FilterInput name="merchantIds" label="Marchand · ID canonique" value={filters.merchantIds} /> : null}
+            {capability("merchant") ? <FilterInput name="merchantIds" label="Contrepartie · ID canonique" value={filters.merchantIds} /> : null}
             <button className="button-primary" type="submit">Appliquer</button>
           </form>
 
@@ -312,7 +332,7 @@ export function OperationsPage({
 
           <div className={styles.chips} aria-label="Filtres actifs">
             {([
-              ["categoryIds", "Catégorie"], ["subcategoryIds", "Sous-catégorie"], ["merchantIds", "Marchand"],
+              ["categoryIds", "Catégorie"], ["subcategoryIds", "Sous-catégorie"], ["merchantIds", "Contrepartie"],
               ["placeIds", "Lieu"], ["accountIds", "Compte"], ["preciseTypes", "Type précis"],
               ["necessity", "Nécessité"], ["fixedVariable", "Fixe / variable"], ["lifeScope", "Périmètre de vie"],
               ["quality", "Qualité"], ["amountMin", "Montant min"], ["amountMax", "Montant max"],
@@ -342,7 +362,7 @@ export function OperationsPage({
           {model && model.page.items.length > 0 ? (
             <div className="table-shell" data-operations-table="">
               <table className="data-table">
-                <thead><tr><th>Date</th><th>Libellé / marchand</th><th>Montant bancaire exact</th>{mode !== "compact" ? <><th>Valeur économique</th><th>Catégorie</th><th>Compte</th></> : null}{mode === "complete" ? <><th>Sous-catégorie</th><th>Type précis</th><th>Nécessité</th><th>Fixe / variable</th><th>Périmètre</th><th>Lieu</th><th>Temporalité économique</th><th>Qualité</th></> : null}<th><span className="sr-only">Détail</span></th></tr></thead>
+                <thead><tr><th>Date</th><th>Libellé / contrepartie</th><th>Montant bancaire exact</th>{mode !== "compact" ? <><th>Valeur économique</th><th>Catégorie</th><th>Compte</th></> : null}{mode === "complete" ? <><th>Sous-catégorie</th><th>Type précis</th><th>Nécessité</th><th>Fixe / variable</th><th>Périmètre</th><th>Lieu</th><th>Temporalité économique</th><th>Qualité</th></> : null}<th><span className="sr-only">Détail</span></th></tr></thead>
                 <tbody>{model.page.items.map((row) => <OperationRow key={row.operationId} row={row} mode={mode} selected={selectedOperationId === row.operationId} onOpen={(selected, anchor) => { setSelectedOperationId(selected.operationId); runtime.run((controller) => controller.openExploration({ kind: "operation", id: selected.operationId }, anchor)); }} />)}</tbody>
               </table>
             </div>

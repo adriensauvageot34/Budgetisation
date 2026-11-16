@@ -1,3 +1,4 @@
+import "server-only";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { getCurrentHousehold } from "@/server/bootstrap/queries";
 import { BootstrapAuthenticationRequiredError } from "@/server/bootstrap/errors";

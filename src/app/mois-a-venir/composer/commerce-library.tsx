@@ -4,6 +4,7 @@ import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useM
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { commerceBadges, type CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
 import type { BadgeLibraryRead } from "@/domain/phase2/commerce-media";
+import { isPrivateMerchantKind } from "@/core/identity/merchant-kind";
 
 const LibraryEditor = lazy(() => import("./commerce-library-editor").then(module => ({ default: module.CommerceLibraryEditor })));
 const empty: BadgeLibraryRead = { media: [], bindings: [] };
@@ -26,10 +27,13 @@ export const useCommerceLibrary = () => useContext(LibraryContext);
 
 export function resolveBadgeMedia(badge: CommerceBadge, library: BadgeLibraryRead | null) {
   const binding = badge.anchor ? library?.bindings.find(row => row.key === badge.anchor!.key && row.digest === badge.anchor!.digest) : undefined;
+  const merchant = library?.merchants?.find(row => row.key === (badge.identity?.key ?? binding?.identityKey));
+  if (isPrivateMerchantKind(merchant?.kind)) return { counterpartyKind: merchant.kind };
   const bound = binding?.identityKey ? library?.media.find(row => row.key === binding.identityKey) : undefined;
   const identity = badge.identity ?? (bound ? { key: bound.key, label: bound.label } : undefined);
   const personal = identity ? library?.media.find(row => row.key === identity.key) : undefined;
-  return { identity, personal, category: binding?.category ?? personal?.category ?? badge.category };
+  const shared = merchant?.visualKey ? library?.media.find(row => row.key === merchant.visualKey) : undefined;
+  return { identity, personal, shared, visualKey: merchant?.visualKey, category: binding?.category ?? personal?.category ?? badge.category };
 }
 
 /** One bounded batch per set of displayed subjects, independent of the financial transports. */
@@ -48,16 +52,18 @@ export function CommerceLibraryProvider({ model, children }: { model: ComposerUi
     let cancelled = false;
     setLibrary(empty); setAvailable(false);
     const read = async () => {
-      const merged: { media: BadgeLibraryRead["media"][number][]; bindings: BadgeLibraryRead["bindings"][number][] } = { media: [], bindings: [] };
+      const merged: { media: BadgeLibraryRead["media"][number][]; bindings: BadgeLibraryRead["bindings"][number][];
+        merchants: NonNullable<BadgeLibraryRead["merchants"]>[number][] } = { media: [], bindings: [], merchants: [] };
       const batches = Math.max(1, Math.ceil(Math.max(request.keys.length, request.anchors.length) / 100));
       for (let index = 0; index < batches; index++) {
         if (cancelled) return;
         const result = await badgeCommand({ kind: "READ", keys: request.keys.slice(index * 100, index * 100 + 100),
           anchors: request.anchors.slice(index * 100, index * 100 + 100) }) as BadgeLibraryRead;
-        merged.media.push(...result.media); merged.bindings.push(...result.bindings);
+        merged.media.push(...result.media); merged.bindings.push(...result.bindings); merged.merchants.push(...(result.merchants ?? []));
       }
       if (!cancelled) {
-        setLibrary({ media: [...new Map(merged.media.map(item => [item.key, item])).values()], bindings: merged.bindings });
+        setLibrary({ media: [...new Map(merged.media.map(item => [item.key, item])).values()],
+          bindings: merged.bindings, merchants: [...new Map(merged.merchants.map(item => [item.key, item])).values()] });
         setAvailable(true);
       }
     };
