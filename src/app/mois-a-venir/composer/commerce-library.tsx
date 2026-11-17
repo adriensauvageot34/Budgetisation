@@ -16,6 +16,7 @@ export async function badgeCommand(command: unknown) {
   const result = await response.json();
   if (!response.ok) throw new Error(result.code === "BADGE_CONFLICT"
     ? "La bibliothèque a changé. Fermez ce panneau et rouvrez-le pour relire sa version."
+    : result.code === "BADGE_POLICY_DENIED" ? "La politique visuelle de ce marchand ne permet pas cette action."
     : response.status === 401 ? "Reconnectez-vous pour accéder à votre bibliothèque privée."
       : "La bibliothèque privée est indisponible. Les badges génériques restent utilisables.");
   return result;
@@ -29,14 +30,21 @@ export function resolveBadgeMedia(badge: CommerceBadge, library: BadgeLibraryRea
   const binding = badge.anchor ? library?.bindings.find(row => row.key === badge.anchor!.key && row.digest === badge.anchor!.digest) : undefined;
   const merchant = library?.merchants?.find(row => row.key === (badge.identity?.key ?? binding?.identityKey));
   if (isPrivateMerchantKind(merchant?.kind)) return { counterpartyKind: merchant.kind };
+  if (merchant?.policy === "none") {
+    return { policy: merchant.policy,
+      identity: { key: merchant.key, label: merchant.displayName ?? badge.identity?.label ?? badge.label, policy: merchant.policy } };
+  }
   const bound = binding?.identityKey ? library?.media.find(row => row.key === binding.identityKey) : undefined;
   const baseIdentity = badge.identity ?? (bound ? { key: bound.key, label: bound.label } : undefined);
-  const identity = baseIdentity && merchant?.displayName ? { ...baseIdentity, label: merchant.displayName } : baseIdentity;
+  const identity = baseIdentity && merchant ? {
+    ...baseIdentity, label: merchant.displayName ?? baseIdentity.label, policy: merchant.policy,
+  } : baseIdentity;
   const personal = identity ? library?.media.find(row => row.key === identity.key) : undefined;
   const shared = merchant?.visualKey ? library?.media.find(row => row.key === merchant.visualKey) : undefined;
   const manualCategory = binding?.category ?? personal?.category ?? undefined;
   const merchantCategory = manualCategory ?? merchant?.genericCategory;
-  return { identity, personal, shared, visualKey: merchant?.visualKey,
+  return { identity, personal, shared, visualKey: merchant?.visualKey, policy: merchant?.policy,
+    awaitingMerchant: identity?.key.startsWith("merchant:") && !merchant,
     category: merchantCategory ?? badge.category,
     imageCategory: merchantCategory ?? (identity?.key.startsWith("merchant:") ? undefined : badge.category),
     fallbackCategory: manualCategory ?? badge.category };

@@ -16,10 +16,10 @@ const categoryIcons: Partial<Record<BadgeCategory, typeof Store>> = { GROCERIES:
 
 function CommerceBadgeView({ badge }: { badge: CommerceBadge }) {
   const library = useCommerceLibrary();
-  const { identity, personal, shared, visualKey, category, imageCategory, fallbackCategory, counterpartyKind } = resolveBadgeMedia(badge, library);
+  const { identity, personal, shared, visualKey, category, imageCategory, fallbackCategory, counterpartyKind, policy, awaitingMerchant } = resolveBadgeMedia(badge, library);
   const [failed, setFailed] = useState<readonly string[]>([]);
-  const candidates = commerceBadgeImages({ identityKey: identity?.key, sharedKey: visualKey, category: imageCategory,
-    personalSrc: personal?.imageUrl, sharedPersonalSrc: shared?.imageUrl });
+  const candidates = awaitingMerchant ? [] : commerceBadgeImages({ identityKey: identity?.key, sharedKey: visualKey, category: imageCategory,
+    personalSrc: personal?.imageUrl, sharedPersonalSrc: shared?.imageUrl, policy });
   const image = candidates.find(candidate => !failed.includes(candidate.src));
   const categoryIcon = fallbackCategory ? categoryIcons[fallbackCategory] : undefined;
   const Icon = counterpartyKind === "private_person" ? UserRound : counterpartyKind === "personal_transfer_label" ? ArrowLeftRight
@@ -27,15 +27,16 @@ function CommerceBadgeView({ badge }: { badge: CommerceBadge }) {
   const boundIdentity = identity && !badge.identity;
   const caption = counterpartyKind ? `${counterpartyKind === "private_person" ? "Contrepartie privée" : "Virement personnel"} · ${badge.label}`
     : boundIdentity && identity.label !== badge.label ? `${badge.text} · ${identity.label}` : badge.text;
-  const title = [caption, category ? `Catégorie · ${BADGE_CATEGORIES[category]}` : null,
+  const title = [caption, policy === "none" ? "Exclu des illustrations" : null, category ? `Catégorie · ${BADGE_CATEGORIES[category]}` : null,
     image && personal?.imageUrl === image.src ? "Illustration privée" : null].filter(Boolean).join(" · ");
-  return <span className={styles.commerceBadge} data-commerce-badge={badge.kind} data-badge-identity={identity?.key}
+  return <span className={styles.commerceBadge} data-commerce-badge={badge.kind} data-badge-identity={identity?.key} data-badge-policy={policy}
     data-badge-category={category} data-badge-visual={image?.kind ?? (categoryIcon ? "CATEGORY_ICON" : "NEUTRAL")} title={title}>
     {image ? <img key={image.src} src={image.src} alt="" width={24} height={24} loading="lazy" decoding="async"
       onError={() => setFailed(current => current.includes(image.src) ? current : [...current, image.src])} />
       : <Icon size={15} aria-hidden="true" />}
     <span>{caption}</span>
-    {!counterpartyKind && library && (identity || badge.anchor) && <button type="button" className={styles.commerceBadgeEdit}
+    {policy === "none" && <small>Exclu des illustrations</small>}
+    {!counterpartyKind && policy !== "none" && !awaitingMerchant && library && (identity || badge.anchor) && <button type="button" className={styles.commerceBadgeEdit}
       aria-label={`Personnaliser le badge ${badge.label}`} title={!category && !identity ? "Choisir une catégorie ou ajouter une illustration"
         : personal?.hasImage ? "Modifier l’illustration ou la catégorie" : "Ajouter une illustration"}
       onClick={event => { event.stopPropagation(); library.open(badge); }}><ImagePlus size={12} aria-hidden="true" /></button>}

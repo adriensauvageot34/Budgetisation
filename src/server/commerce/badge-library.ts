@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { BADGE_BUCKET, MAX_BADGE_BYTES, badgeAnchor, badgeCategory, badgeIdentityKey, badgeLabel, badgeVersion,
   type BadgeAnchor, type BadgeIdentity, type BadgeLibraryRead, type MerchantBadgeIdentity, type PersonalBadge } from "@/domain/phase2/commerce-media";
-import { isPrivateMerchantKind, merchantDisplayName, merchantGenericBadgeCategory, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
+import { isPrivateMerchantKind, merchantBadgePolicy, merchantDisplayName, merchantGenericBadgeCategory, type MerchantBadgePolicy, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
 
 type Row = { user_id: string; identity_key: string; label: string; category: PersonalBadge["category"]; object_path: string | null; version: number };
 type BindingRow = { anchor_key: string; source_digest: string; identity_key: string | null; category: PersonalBadge["category"]; version: number };
@@ -28,31 +28,35 @@ export class BadgeLibrary {
     type MerchantRow = {
       merchant_id: string; identity_kind: MerchantIdentityKind; visual_brand_merchant_id: string | null;
       commercial_display_name: string | null; generic_badge_category: string | null;
+      badge_policy: MerchantBadgePolicy;
     };
     const result = await client.from("merchants")
-      .select("merchant_id,identity_kind,visual_brand_merchant_id,commercial_display_name,generic_badge_category").in("merchant_id", ids);
+      .select("merchant_id,identity_kind,visual_brand_merchant_id,commercial_display_name,generic_badge_category,badge_policy").in("merchant_id", ids);
     storageError(result.error);
     const rows = (result.data ?? []) as MerchantRow[];
     const targets = [...new Set(rows.flatMap(row =>
-      row.identity_kind === "commercial" && row.visual_brand_merchant_id ? [row.visual_brand_merchant_id] : []))];
+      row.identity_kind === "commercial" && row.badge_policy !== "none" && row.visual_brand_merchant_id ? [row.visual_brand_merchant_id] : []))];
     const roots = targets.length ? await client.from("merchants").select("merchant_id").in("merchant_id", targets)
-      .eq("identity_kind", "commercial").is("visual_brand_merchant_id", null) : { data: [], error: null };
+      .eq("identity_kind", "commercial").eq("badge_policy", "normal").is("visual_brand_merchant_id", null) : { data: [], error: null };
     storageError(roots.error);
     const allowed = new Set((roots.data ?? []).map(row => row.merchant_id));
     return rows.map(row => ({
       key: "merchant:" + row.merchant_id, kind: row.identity_kind,
+      ...(row.badge_policy !== "normal" ? { policy: row.badge_policy } : {}),
       ...(row.commercial_display_name && row.identity_kind === "commercial" ? { displayName: merchantDisplayName(row) } : {}),
-      ...(row.generic_badge_category && row.identity_kind === "commercial"
+      ...(row.badge_policy !== "none" && row.generic_badge_category && row.identity_kind === "commercial"
         ? { genericCategory: merchantGenericBadgeCategory(row.generic_badge_category) } : {}),
-      ...(row.visual_brand_merchant_id && allowed.has(row.visual_brand_merchant_id)
+      ...(row.badge_policy !== "none" && row.visual_brand_merchant_id && allowed.has(row.visual_brand_merchant_id)
         ? { visualKey: "merchant:" + row.visual_brand_merchant_id } : {}),
     }));
   }
 
-  private async assertMerchantMediaAllowed(key: string) {
+  private async assertMerchantMediaAllowed(key: string, specific = true) {
     if (!key.startsWith("merchant:")) return;
     const [entry] = await this.merchants([key]);
     if (!entry || isPrivateMerchantKind(entry.kind)) throw new TypeError("BADGE_IDENTITY_INVALID");
+    if (entry.policy === "none" || specific && entry.policy === "reuse_only") throw new TypeError("BADGE_POLICY_DENIED");
+    return entry;
   }
 
   async read(keys: readonly string[], anchors: readonly BadgeAnchor[]): Promise<BadgeLibraryRead> {
@@ -65,7 +69,8 @@ export class BadgeLibrary {
     const bindings = bindingsRead.data as BindingRow[];
     const keysToRead = [...new Set([...ids, ...bindings.flatMap(row => row.identity_key && refs.some(ref => ref.key === row.anchor_key && ref.digest === row.source_digest) ? [row.identity_key] : [])])];
     const merchants = await this.merchants(keysToRead);
-    const readable = new Set(merchants.filter(row => !isPrivateMerchantKind(row.kind)).map(row => row.key));
+    const readable = new Set(merchants.filter(row => !isPrivateMerchantKind(row.kind) && row.policy !== "none").map(row => row.key));
+    const reuseOnly = new Set(merchants.filter(row => row.policy === "reuse_only").map(row => row.key));
     const wanted = [...new Set([
       ...keysToRead.filter(key => !key.startsWith("merchant:") || readable.has(key)),
       ...merchants.flatMap(row => row.visualKey ? [row.visualKey] : []),
@@ -73,7 +78,8 @@ export class BadgeLibrary {
     const media = wanted.length ? await this.client.from("composer_badge_visuals").select(columns).eq("user_id", this.userId).in("identity_key", wanted)
       : { data: [], error: null };
     storageError(media.error);
-    const rows = media.data as Row[], paths = rows.flatMap(row => row.object_path ? [row.object_path] : []);
+    const rows = (media.data as Row[]).map(row => reuseOnly.has(row.identity_key) ? { ...row, object_path: null } : row);
+    const paths = rows.flatMap(row => row.object_path ? [row.object_path] : []);
     const signed = paths.length ? await this.client.storage.from(BADGE_BUCKET).createSignedUrls(paths, 300) : { data: [] };
     const urls = new Map((signed.data ?? []).flatMap(item => item.signedUrl ? [[item.path, item.signedUrl] as const] : []));
     return { merchants, media: rows.map(row => ({ ...visual(row), imageUrl: row.object_path ? urls.get(row.object_path) : undefined })), bindings: bindings.map(row => ({
@@ -89,8 +95,8 @@ export class BadgeLibrary {
       this.client.from("composer_badge_visuals").select("identity_key,label").eq("user_id", this.userId)
         .not("identity_key", "like", "merchant:%").ilike("label", escaped).order("label").limit(20),
       this.canonical().then(client => Promise.all((["commercial_display_name", "nom_canonique"] as const).map(column =>
-        client.from("merchants").select("merchant_id,nom_canonique,identity_kind,commercial_display_name")
-          .eq("identity_kind", "commercial").ilike(column, escaped).order(column).order("merchant_id").limit(20),
+        client.from("merchants").select("merchant_id,nom_canonique,identity_kind,commercial_display_name,badge_policy")
+          .eq("identity_kind", "commercial").neq("badge_policy", "none").ilike(column, escaped).order(column).order("merchant_id").limit(20),
       ))).catch(() => []),
     ]);
     storageError(personal.error);
@@ -99,7 +105,9 @@ export class BadgeLibrary {
     for (const match of merchants) {
       for (const row of match.error ? [] : match.data ?? []) {
         const key = "merchant:" + row.merchant_id;
-        results.set(key, { key, label: merchantDisplayName(row) ?? row.nom_canonique });
+        const policy = merchantBadgePolicy(row.badge_policy);
+        results.set(key, { key, label: merchantDisplayName(row) ?? row.nom_canonique,
+          ...(policy !== "normal" ? { policy } : {}) });
         if (results.size >= 20) break;
       }
       if (results.size >= 20) break;
@@ -124,11 +132,13 @@ export class BadgeLibrary {
     const client = await this.canonical(), id = key.split(":")[1];
     const result = key.startsWith("place:")
       ? await client.from("referentiel_lieu").select("nom_canonique").eq("place_id", id).eq("private_place", false).maybeSingle()
-      : await client.from("merchants").select("nom_canonique,identity_kind,commercial_display_name")
+      : await client.from("merchants").select("nom_canonique,identity_kind,commercial_display_name,badge_policy")
         .eq("merchant_id", id).eq("identity_kind", "commercial").maybeSingle();
     if (result.error || !result.data) throw new TypeError("BADGE_IDENTITY_INVALID");
-    const row = result.data as { nom_canonique: string; identity_kind?: string; commercial_display_name?: string };
-    return { key, label: badgeLabel(merchantDisplayName(row) ?? row.nom_canonique) };
+    const row = result.data as { nom_canonique: string; identity_kind?: string; commercial_display_name?: string; badge_policy?: string };
+    const policy = merchantBadgePolicy(row.badge_policy);
+    if (policy === "none") throw new TypeError("BADGE_POLICY_DENIED");
+    return { key, label: badgeLabel(merchantDisplayName(row) ?? row.nom_canonique), ...(policy !== "normal" ? { policy } : {}) };
   }
 
   async confirm(raw: { identityKey?: unknown; newLabel?: unknown; anchor?: unknown; expectedBindingVersion?: unknown }) {
@@ -165,7 +175,10 @@ export class BadgeLibrary {
         throw error;
       }
     }
-    return { ...visual(row), ...(identity.key.startsWith("merchant:") ? { label: identity.label } : {}) };
+    return {
+      ...visual(identity.policy === "reuse_only" ? { ...row, object_path: null } : row),
+      ...(identity.key.startsWith("merchant:") ? { label: identity.label, policy: identity.policy } : {}),
+    };
   }
 
   private async update(key: string, version: number, patch: { category?: PersonalBadge["category"]; object_path?: string }) {
@@ -178,8 +191,9 @@ export class BadgeLibrary {
 
   async category(key: unknown, version: unknown, category: unknown) {
     const identity = badgeIdentityKey(key);
-    await this.assertMerchantMediaAllowed(identity);
-    return this.update(identity, badgeVersion(version), { category: badgeCategory(category) });
+    const merchant = await this.assertMerchantMediaAllowed(identity, false);
+    const media = await this.update(identity, badgeVersion(version), { category: badgeCategory(category) });
+    return merchant?.policy === "reuse_only" ? { ...media, hasImage: false, imageUrl: undefined, policy: merchant.policy } : media;
   }
 
   async anchorCategory(raw: unknown, expectedVersion: unknown, category: unknown) {
@@ -187,6 +201,8 @@ export class BadgeLibrary {
     const current = await this.read([], [anchor]);
     const old = current.bindings.find(row => row.key === anchor.key);
     if ((old?.version ?? 0) !== version) throw new TypeError("BADGE_CONFLICT");
+    if (old?.digest === anchor.digest && current.merchants?.some(row => row.key === old.identityKey && row.policy === "none"))
+      throw new TypeError("BADGE_POLICY_DENIED");
     const value = { user_id: this.userId, anchor_key: anchor.key, source_digest: anchor.digest,
       identity_key: old?.digest === anchor.digest ? old.identityKey : null, category: badgeCategory(category), version: version + 1 };
     const result = version === 0 ? await this.client.from("composer_badge_bindings").insert(value).select("version").maybeSingle()

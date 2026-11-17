@@ -67,6 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <Link href="/diagnostic" className="button-ghost text-xs">Diagnostic</Link>
+          <Link href="/parametres" className="button-ghost text-xs">Marchands</Link>
 
           <SignOutButton compact />
         </div>

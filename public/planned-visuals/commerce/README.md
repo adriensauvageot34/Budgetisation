@@ -1,5 +1,12 @@
 # Illustrations des badges Composer
 
+Pour préparer une génération individuelle, ouvrir **Marchands → À illustrer**
+(`/parametres?vue=generation`). La vue applique `merchants.badge_policy` et
+retire les fiches déjà illustrées dans le registre de l’app. Vérifier aussi la
+collection locale avant de générer une image. Les fiches `reuse_only` utilisent
+les visuels partagés ou génériques disponibles. Les fiches `none` ont un
+affichage neutre. La politique se modifie dans le référentiel Supabase.
+
 Le registre est `src/ui/media/commerce-illustrations.json`. Chaque entrée utilise
 les dimensions `width`, `height` et le chemin `src` des médias Budgetisation.
 

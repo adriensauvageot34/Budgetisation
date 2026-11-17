@@ -39,6 +39,33 @@ try {
   assert.deepEqual(genericBadges.merchants, keys.map(key => ({ key, kind: "commercial", genericCategory: "TOBACCO" })));
   assert.deepEqual(genericBadges.media, []);
   assert.deepEqual(await fixture.service(fixture.userId).read(keys, []), genericBadges);
+  const [reuseKey, excludedKey] = keys;
+  const policyAnchor = commerceAnchor(uuid(97209), "seller", "Exclusion de recette");
+  const originalReuse = await a.confirm({ identityKey: reuseKey });
+  const originalExcluded = await a.confirm({ identityKey: excludedKey, anchor: policyAnchor, expectedBindingVersion: 0 });
+  const existingImage = new File([fixture.syntheticImage], "fixture.webp", { type: "image/webp" });
+  await a.image(reuseKey, originalReuse.version, existingImage);
+  await a.image(excludedKey, originalExcluded.version, existingImage);
+  await fixture.pg.db.exec("reset role");
+  await fixture.pg.db.query("update public.merchants set badge_policy = 'reuse_only' where merchant_id = $1", [uuid(97005)]);
+  await fixture.pg.db.query("update public.merchants set badge_policy = 'none' where merchant_id = $1", [uuid(97006)]);
+  const policyResult = await a.read(keys, [policyAnchor]);
+  assert.deepEqual(policyResult.merchants, [
+    { key: reuseKey, kind: "commercial", policy: "reuse_only", genericCategory: "TOBACCO" },
+    { key: excludedKey, kind: "commercial", policy: "none" },
+  ]);
+  assert.equal(policyResult.media.length, 1);
+  assert.equal(policyResult.media[0].key, reuseKey);
+  assert.equal(policyResult.media[0].hasImage, false);
+  assert.equal(policyResult.media[0].imageUrl, undefined);
+  assert.deepEqual((await a.search("Tabac de recette")).map(entry => entry.key), [reuseKey]);
+  assert.equal((await a.confirm({ identityKey: reuseKey })).hasImage, false);
+  await assert.rejects(a.confirm({ identityKey: excludedKey }), /BADGE_POLICY_DENIED/u);
+  await assert.rejects(a.anchorCategory(policyAnchor, 1, "TOBACCO"), /BADGE_POLICY_DENIED/u);
+  await assert.rejects(a.image(reuseKey, originalReuse.version + 1, existingImage), /BADGE_POLICY_DENIED/u);
+  await assert.rejects(a.download(reuseKey, originalReuse.version + 1), /BADGE_POLICY_DENIED/u);
+  await assert.rejects(a.download(excludedKey, originalExcluded.version + 1), /BADGE_POLICY_DENIED/u);
+  const existingPaths = new Set(fixture.files.keys());
   assert.equal((await a.read([], [anchor])).bindings.length, 0);
   const categoryOnly = await a.anchorCategory(anchor, 0, "PHARMACY");
   assert.equal(categoryOnly.identityKey, null);
@@ -62,15 +89,15 @@ try {
   assert.equal(meta.format, "webp");
   assert.equal(meta.hasAlpha, true);
   assert.equal(meta.width, 48);
-  assert.equal(fixture.files.size, 1);
+  assert.equal(fixture.files.size, 3);
   fixture.faults.loseImageUpdateReply = true;
   const replacement = await a.image(one.key, first.version, new File([fixture.syntheticImage], "replacement.webp", { type: "image/webp" }));
   assert.equal(replacement.version, first.version + 1);
-  assert.equal(fixture.files.size, 1);
+  assert.equal(fixture.files.size, 3);
   await assert.rejects(a.image(one.key, first.version, file), /BADGE_CONFLICT/u);
   await assert.rejects(a.confirm({ newLabel: "Atelier Homonyme", anchor, expectedBindingVersion: 1 }), /BADGE_CONFLICT/u);
   assert.equal((await a.search("Atelier Homonyme")).length, 4);
-  assert.equal(fixture.files.size, 1);
+  assert.equal(fixture.files.size, 3);
   const race = await Promise.allSettled([a.category(one.key, replacement.version, "HOME"), a.category(one.key, replacement.version, "BEAUTY")]);
   assert.equal(race.filter(row => row.status === "fulfilled").length, 1);
   assert.equal(race.filter(row => row.status === "rejected" && /BADGE_CONFLICT/u.test(row.reason.message)).length, 1);
@@ -80,7 +107,8 @@ try {
   assert.equal((await b.read([one.key], [anchor])).media.length, 0);
   assert.equal((await b.search("Atelier Homonyme")).filter(row => row.key.startsWith("personal:")).length, 0);
   assert.equal(await b.download(one.key, ownRead.media[0].version), null);
-  const path = [...fixture.files.keys()][0];
+  const path = [...fixture.files.keys()].find(key => !existingPaths.has(key));
+  assert.ok(path);
   assert.ok((await fixture.client(fixture.other).storage.from("composer-badge-illustrations").download(path)).error);
   assert.ok((await fixture.client(fixture.other).storage.from("composer-badge-illustrations").upload(path + "x", png)).error);
   assert.ok((await fixture.client(fixture.other).from("composer_badge_visuals").insert({
