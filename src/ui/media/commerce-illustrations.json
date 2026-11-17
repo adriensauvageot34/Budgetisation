@@ -161,6 +161,161 @@
       "src": "/planned-visuals/builder/clay/v22/compact/v22-art-extra-restaurant-intent.webp",
       "width": 256,
       "height": 256
+    },
+    "DIGITAL": {
+      "src": "/planned-visuals/commerce/categories/digital.webp",
+      "width": 128,
+      "height": 128
+    },
+    "SHOP": {
+      "src": "/planned-visuals/commerce/categories/shop.webp",
+      "width": 128,
+      "height": 128
+    },
+    "CLOTHING": {
+      "src": "/planned-visuals/commerce/categories/clothing.webp",
+      "width": 128,
+      "height": 128
+    },
+    "TRANSPORT": {
+      "src": "/planned-visuals/commerce/categories/transport.webp",
+      "width": 128,
+      "height": 128
+    },
+    "TICKETS": {
+      "src": "/planned-visuals/commerce/categories/tickets.webp",
+      "width": 128,
+      "height": 128
+    },
+    "ACTIVITY": {
+      "src": "/planned-visuals/commerce/categories/activity.webp",
+      "width": 128,
+      "height": 128
+    },
+    "HOME": {
+      "src": "/planned-visuals/commerce/categories/home.webp",
+      "width": 128,
+      "height": 128
+    },
+    "PUBLIC_SERVICES": {
+      "src": "/planned-visuals/commerce/categories/public-services.webp",
+      "width": 128,
+      "height": 128
+    },
+    "INSURANCE": {
+      "src": "/planned-visuals/commerce/categories/insurance.webp",
+      "width": 128,
+      "height": 128
+    },
+    "BANK": {
+      "src": "/planned-visuals/commerce/categories/bank.webp",
+      "width": 128,
+      "height": 128
+    },
+    "ICE_CREAM": {
+      "src": "/planned-visuals/commerce/categories/ice-cream.webp",
+      "width": 128,
+      "height": 128
+    },
+    "SPORT": {
+      "src": "/planned-visuals/commerce/categories/sport.webp",
+      "width": 128,
+      "height": 128
+    },
+    "AUTOMOTIVE": {
+      "src": "/planned-visuals/commerce/categories/automotive.webp",
+      "width": 128,
+      "height": 128
+    },
+    "UTILITIES": {
+      "src": "/planned-visuals/commerce/categories/utilities.webp",
+      "width": 128,
+      "height": 128
+    },
+    "PAYMENT": {
+      "src": "/planned-visuals/commerce/categories/payment.webp",
+      "width": 128,
+      "height": 128
+    },
+    "PHOTO": {
+      "src": "/planned-visuals/commerce/categories/photo.webp",
+      "width": 128,
+      "height": 128
+    },
+    "BEAUTY": {
+      "src": "/planned-visuals/commerce/categories/beauty.webp",
+      "width": 128,
+      "height": 128
+    },
+    "TRAINING": {
+      "src": "/planned-visuals/commerce/categories/training.webp",
+      "width": 128,
+      "height": 128
+    },
+    "GARDEN": {
+      "src": "/planned-visuals/commerce/categories/garden.webp",
+      "width": 128,
+      "height": 128
+    },
+    "PARKING": {
+      "src": "/planned-visuals/commerce/categories/parking.webp",
+      "width": 128,
+      "height": 128
+    },
+    "VAPE": {
+      "src": "/planned-visuals/commerce/categories/vape.webp",
+      "width": 128,
+      "height": 128
+    },
+    "HAIRDRESSER": {
+      "src": "/planned-visuals/commerce/categories/hairdresser.webp",
+      "width": 128,
+      "height": 128
+    },
+    "HOTEL": {
+      "src": "/planned-visuals/commerce/categories/hotel.webp",
+      "width": 128,
+      "height": 128
+    },
+    "REAL_ESTATE": {
+      "src": "/planned-visuals/commerce/categories/real-estate.webp",
+      "width": 128,
+      "height": 128
+    },
+    "CAR_RENTAL": {
+      "src": "/planned-visuals/commerce/categories/car-rental.webp",
+      "width": 128,
+      "height": 128
+    },
+    "TELECOM": {
+      "src": "/planned-visuals/commerce/categories/telecom.webp",
+      "width": 128,
+      "height": 128
+    },
+    "TOURISM": {
+      "src": "/planned-visuals/commerce/categories/tourism.webp",
+      "width": 128,
+      "height": 128
+    },
+    "ASSOCIATION": {
+      "src": "/planned-visuals/commerce/categories/association.webp",
+      "width": 128,
+      "height": 128
+    },
+    "BUTCHER": {
+      "src": "/planned-visuals/commerce/categories/butcher.webp",
+      "width": 128,
+      "height": 128
+    },
+    "CHEESE": {
+      "src": "/planned-visuals/commerce/categories/cheese.webp",
+      "width": 128,
+      "height": 128
+    },
+    "PROFESSIONAL_SERVICES": {
+      "src": "/planned-visuals/commerce/categories/professional-services.webp",
+      "width": 128,
+      "height": 128
     }
   }
 }
