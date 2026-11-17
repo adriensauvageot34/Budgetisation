@@ -29,8 +29,8 @@ export function clayAssetArtwork(assetKey: string | undefined) {
   const meal = assetKey.match(/^option:[a-z-]+:(?:meal|food|restaurants):(restaurant|fast-food|delivery)$/)?.[1];
   return meal ? clayContextArtwork(meal) : undefined;
 }
-export function clayBuilderArtwork(semanticKey: string) {
-  return clayV22Artwork(builders[semanticKey], 'builder');
+export function clayBuilderArtwork(semanticKey: string, usage: 'compact' | 'builder' = 'builder') {
+  return clayV22Artwork(builders[semanticKey], usage);
 }
 
 const contextArt: Readonly<Record<string, string>> = {
