@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import {BarLivingCard,type LivingBar} from "./bar-living-card";
 import { CatalogOpenButton } from './catalog-discovery-provider';
-import { GripVertical, MoreHorizontal, Pin, Link2, Pencil, LockKeyhole } from "lucide-react";
+import { GripVertical, MoreHorizontal, Pin, Link2, LockKeyhole, Plus } from "lucide-react";
 import type { ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import { componentId } from "@/domain/phase2/planner/identity";
@@ -33,18 +33,19 @@ const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
   gift: ["item", "extras"],
   "family-visit": ["hospitality", "activities", "transport"],
 };
-export function ContextCard({ card, model, busy, selected, focused, focus, drag, drop, choose, request, edit, livingBar }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
+export function ContextCard({ card, model, busy, selected, focused, focus, drag, drop, choose, request, edit, openEquipment, livingBar }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
   focused: string | null; focus: (id: string | null) => void;
   selected: string | null; drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
-  request: (operation: ComposerOperation) => void; edit: (card: ComposerContextCardView, selectionId?: string) => void; livingBar?: LivingBar }) {
+  request: (operation: ComposerOperation) => void; edit: (card: ComposerContextCardView, selectionId?: string) => void;
+  openEquipment?: (contextId: string, slotKey?: string) => void; livingBar?: LivingBar }) {
   const instance = `context-occurrence:${card.contextOccurrenceId}`;
   const index=composerRenderIndex(model), ownDrops=index.drops.get(instance) ?? [];
   const removable = ownDrops.some(d => d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
   const preserved = model.semanticState.preferences.flexibility[card.contextOccurrenceId] === "PRESERVE";
   const editable = !card.readOnly && !preserved && card.capabilityRefs.includes("PATCH_CONTEXT")
     && !model.semanticState.preferences.anchors.includes(card.contextOccurrenceId);
-  const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
+  const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} openEquipment={openEquipment} /> : null; };
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const preset = presetForContext(card);
   const plannedDay = plannedDayLabel(card.fields.plannedDate);
@@ -65,7 +66,9 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const coverage = mainSelection?.kind === "COMPONENT" ? mainSelection.binding?.mode : null;
   const interaction = useComposerInteractions(), handle = useDragHandle(instance);
   const displayPhase = interaction?.grabbed ? "DRAGGING" : focused === card.contextOccurrenceId ? "SELECTED" : "REST";
-  const visibleEmpty = visibleEmptySocketKeys(card, model, displayPhase, interaction?.grabbed?.assetKey ?? null);
+  const visibleEmpty = visibleEmptySocketKeys(card, model, displayPhase === "REST" && editable ? "SELECTED" : displayPhase, interaction?.grabbed?.assetKey ?? null);
+  const quickAddSlot = visibleEmpty.values().next().value;
+  const quickAddLabel = card.sockets.find(socket => socket.slotKey === quickAddSlot)?.label ?? quickAddSlot;
   const targets = selected ? (index.drops.get(selected) ?? []).filter(d => d.target.kind === "CONTEXT_SOCKET" && d.target.contextOccurrenceId === card.contextOccurrenceId && d.resolution !== "BLOCKED") : [];
   const magnetic = targets.length === 1 ? targets[0].target : null;
   const reparentTargets = ownDrops.filter(d => d.target.kind === "CONTEXT_SOCKET" && d.resolution !== "BLOCKED");
@@ -80,14 +83,14 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       onDrop:e=>{e.preventDefault();e.stopPropagation();if(interaction?.canTarget(card.contextOccurrenceId)&&!busy)interaction.placeAssistant(card.contextOccurrenceId);else if(magnetic&&interaction?.grabbed&&!busy)interaction.place(magnetic);}}}
     preserve={()=>request({kind:"PRESERVE",targetRef:card.contextOccurrenceId,preserve:!preserved})}
     remove={removable?()=>drop({kind:"TRASH"},instance):undefined} drag={()=>drag(selected===instance?null:instance)}/>;
-  return <article className={styles.contextCard} data-context={card.contextOccurrenceId} data-template-key={card.templateKey} data-focused={focused === card.contextOccurrenceId} data-variant={presentation.variant} data-state={card.readOnly ? "derived" : card.knowledge === "UNKNOWN" ? "unresolved" : "chosen"}
+  return <article className={styles.contextCard} data-compact-card data-context={card.contextOccurrenceId} data-template-key={card.templateKey} data-focused={focused === card.contextOccurrenceId} data-variant={presentation.variant} data-state={card.readOnly ? "derived" : card.knowledge === "UNKNOWN" ? "unresolved" : "chosen"}
     data-compatible={targets.length > 0 || interaction?.canTarget(card.contextOccurrenceId)} data-magnetic={interaction?.overTarget?.contextOccurrenceId === card.contextOccurrenceId}
     data-unresolved={interaction?.unresolvedRefs.includes(card.contextOccurrenceId)} data-snap={interaction?.motionTarget === card.contextOccurrenceId ? interaction.motion : undefined}
     data-grabbed={interaction?.grabbed?.sourceKey === instance} data-recoil={interaction?.motion === "recoil" && interaction.motionTarget === instance}
     onDragOver={e => { e.stopPropagation(); if (interaction?.canTarget(card.contextOccurrenceId) && !busy) { e.preventDefault(); interaction.overAssistant(card.contextOccurrenceId); } else if (magnetic && interaction?.grabbed && !busy) { e.preventDefault(); interaction.over(magnetic); } else interaction?.over(null); }}
     onDragLeave={e => { e.stopPropagation(); if (leftSurface(e)) { interaction?.over(null); interaction?.overAssistant(null); } }}
     onDrop={e => { e.preventDefault(); e.stopPropagation(); if (interaction?.canTarget(card.contextOccurrenceId) && !busy) interaction.placeAssistant(card.contextOccurrenceId); else if (magnetic && interaction?.grabbed && !busy) interaction.place(magnetic); }}
-    onClick={e => { if (e.target instanceof Element && !e.target.closest("button,input,select,a,[popover]")) focus(card.contextOccurrenceId); }}>
+    onClick={e => { if (e.target instanceof Element && e.target.closest("article") === e.currentTarget && !e.target.closest("button,input,select,a,summary,[popover]")) focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId); }}>
     {magnetic && interaction?.grabbed && <span className={styles.magneticLabel}>Rattacher à {card.label}</span>}
     <div className={styles.contextComposition}>
     <div className={styles.contextHero}>
@@ -95,18 +98,17 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
     <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} disabled={busy}
-      onClick={() => editable && (["restaurant", "activity", "home-project", "gift"].includes(card.templateKey) || purchase || !!preset)
-        ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>
-      {(typeof card.fields.plannedDate === "string" || plannedTime) && <p>{[plannedDay ?? "Date à préciser", plannedTime].filter(Boolean).join(" · ")}</p>}
-      <CommerceBadges context={card} model={model} expanded={focused === card.contextOccurrenceId} />
-      {card.childContextOccurrenceIds.length > 0 && <p data-linked-intentions-count={card.childContextOccurrenceIds.length}>
-        {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
-      </p>}
+      onClick={() => editable ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>
+      <div className={styles.contextMeta}>
+        {(typeof card.fields.plannedDate === "string" || plannedTime) && <span>{[plannedDay ?? "Date à préciser", plannedTime].filter(Boolean).join(" · ")}</span>}
+        <IntentionProgressLabel id={card.contextOccurrenceId} compact />
+        {card.childContextOccurrenceIds.length > 0 && <span data-linked-intentions-count={card.childContextOccurrenceIds.length}>
+          {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
+        </span>}
+      </div>
       <ParentProjectLink contextId={card.contextOccurrenceId} />
-      <IntentionProgressLabel id={card.contextOccurrenceId} />
       <span className={styles.contextState} title={knowledgeLabel(card.knowledge)} aria-label={knowledgeLabel(card.knowledge)}>{preserved ? <LockKeyhole size={12} /> : card.readOnly ? <Link2 size={12} /> : card.knowledge === "UNKNOWN" ? <i /> : null}</span></div>
-      <div className={styles.contextTools}>{!card.readOnly && <><button className={styles.iconButton} disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={() => request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved })}><Pin size={15} /></button>
-        <button className={styles.iconButton} disabled={busy || !editable} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>
+      <div className={styles.contextTools}>{!card.readOnly && <>
         <button className={styles.dragHandle} disabled={busy} {...handle} aria-label={`Déplacer ${card.label}`} onClick={e => {
           // A child can be chosen from its satellite popover. Free the Board so
           // the next click can reach a destination without losing that choice.
@@ -114,6 +116,12 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
           drag(selected === instance ? null : instance);
         }}><GripVertical size={17} /></button>
         <AtomicPopover utility label={`Actions de ${card.label}`} state="ACTIONS" focus={() => focus(card.contextOccurrenceId)} icon={<MoreHorizontal size={15} />}>{close => <div className={styles.popoverActions}>
+          <button type="button" disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved}
+            onClick={() => { close(); request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved }); }}>
+            <Pin size={13} aria-hidden="true" />{preserved ? "Libérer" : "Préserver"}
+          </button>
+          {editable && <button type="button" disabled={busy} aria-label={`Modifier les informations de ${card.label}`}
+            onClick={() => { close(); edit(card); }}>Modifier</button>}
           <CatalogOpenButton target={{contextId:card.contextOccurrenceId}}>Parcourir les éléments de {card.label}</CatalogOpenButton>
           {removable && <button disabled={busy} aria-label={`Retirer ${card.label}`} onClick={() => { close(); drop({ kind: "TRASH" }, instance); }}>Retirer ce moment</button>}
           {reparentTargets.map(d => <button key={`${d.target.contextOccurrenceId}:${d.target.slotKey}`} disabled={busy} onClick={() => { close(); drop(d.target, instance); }}>Rattacher à {model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.label} · {model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.sockets.find(s => s.slotKey === d.target.slotKey)?.label}</button>)}
@@ -143,6 +151,14 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
         {!amountsCurrent ? "Calcul à actualiser" : mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
     </div>}
+    <div className={styles.controlActions}>
+    <CommerceBadges context={card} model={model} expanded={focused === card.contextOccurrenceId} />
+    {!purchase && quickAddSlot && displayPhase !== "DRAGGING" && openEquipment && <button type="button" className={styles.socketAdd} disabled={busy}
+      aria-label={`Ajouter · ${quickAddLabel}`}
+      onClick={() => openEquipment(card.contextOccurrenceId, quickAddSlot)}>
+      <Plus size={14} aria-hidden="true" />{quickAddLabel}
+    </button>}
+    </div>
     <div className={styles.contextEquipmentRow} data-context-equipment-row aria-label={`Équipements de ${card.label}`}>
     {sockets.map(socket => {
       if (basket && ["item", "shipping"].includes(socket.slotKey)) return null;
@@ -150,7 +166,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       const assets = socketPresentation.options.map(o => index.assets.get(o.assetKey)!);
       const compatible = !!selected && (index.drops.get(selected) ?? []).some(d => d.target.kind === "CONTEXT_SOCKET"
         && d.target.contextOccurrenceId === card.contextOccurrenceId && d.target.slotKey === socket.slotKey && d.resolution !== "BLOCKED");
-      const showEmpty = visibleEmpty.has(socket.slotKey) && !purchase;
+      const showEmpty = !purchase && (displayPhase === "DRAGGING" ? visibleEmpty.has(socket.slotKey) : !openEquipment && socket.slotKey === quickAddSlot);
       if (!socketPresentation.satellites.length && !showEmpty) return null;
       return <ContextSocket key={socket.slotKey} socket={socket} presentation={socketPresentation} focus={() => focus(card.contextOccurrenceId)} busy={busy} compatible={compatible} showEmpty={showEmpty && !purchase} assets={assets} drop={drop} choose={choose}
         moveTargets={socketPresentation.satellites.flatMap(item => (index.drops.get(item.editableAssetKey ?? "") ?? []).filter(d => d.target.kind === "CONTEXT_SOCKET"

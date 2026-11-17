@@ -994,6 +994,14 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stableDetails=useCommittedEvent(openProjectionDetails);
   const stableFocus=useCommittedEvent((id:string|null)=>{if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId)&&!inlineEdits.registry.guard(()=>stableFocus(id)))return;setFocusedContext(id);if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId))setEditor(null);});
   const stableRevealFocus=useCommittedEvent((id:string|null)=>{stableFocus(id);if(id)setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));});
+  const focusEquipment = useCommittedEvent((id: string, ready: () => void) => {
+    const open = () => {
+      setEditor(null);
+      setFocusedContext(id);
+      ready();
+    };
+    if (!editor || inlineEdits.registry.guard(open)) open();
+  });
   const openCatalogContext=useCommittedEvent((id:string,focus?:string,articleLabel?:string)=>{
     if (busyRef.current) return;
     const card=shown.board.contexts.find(item=>item.contextOccurrenceId===id);
@@ -1260,7 +1268,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           dockHost={nightDockHost} busy={busy || draftState.preferences.anchors.includes(livingBarId) || draftState.preferences.flexibility[livingBarId]==="PRESERVE"} creating={editor?.nightCreating} admission={editor?.nightAdmission??0} serverError={errorMessage}
           onSave={stage} onCancel={closeDialog} onOpenChild={id=>{const child=shown.board.contexts.find(c=>c.contextOccurrenceId===id);if(child)editContext(child);}} />
           : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>,barHost.node,livingBarId)}
-      <ComposerBoard livingBar={livingBarId ? {id:livingBarId,removingId:removingBarId,open:stableEditContext,close:closeDialog,content:<BarLivingMount host={barHost}/>} : {removingId:removingBarId,open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? editor?.stayContextId ?? focusedContext} focus={stableFocus} edit={stableEdit} editContext={editBoardContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
+      <ComposerBoard livingBar={livingBarId ? {id:livingBarId,removingId:removingBarId,open:stableEditContext,close:closeDialog,content:<BarLivingMount host={barHost}/>} : {removingId:removingBarId,open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? editor?.stayContextId ?? focusedContext} focus={stableFocus} focusEquipment={focusEquipment} edit={stableEdit} editContext={editBoardContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
         add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} reveal={reveal}
          contextGuide={editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment?.asset.optionKind === "COMPONENT" ? <div ref={setNightDockHost} data-night-dock-host /> : editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
           && draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)

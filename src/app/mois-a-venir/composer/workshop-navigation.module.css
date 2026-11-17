@@ -1,13 +1,17 @@
 .navigation {
-  display: grid;
-  gap: .45rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .3rem .5rem;
   margin: .5rem 0;
   min-width: 0;
 }
 
-.navigation > button {
-  justify-self: start;
-}
+.navigation > button { flex:none; white-space:nowrap; }
+.navigation .switcher { flex:1 1 120px; }
+.navigation .switcher > label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+.navigation .switcher select { min-height:36px; padding-block:.25rem; }
+.navigation > :last-child:not(.switcher) { flex-basis:100%; }
 
 .switcher {
   display: grid;

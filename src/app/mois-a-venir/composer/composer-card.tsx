@@ -23,7 +23,7 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
   const interaction = useComposerInteractions(), handle = useDragHandle(presentation.protectedSavings || preserved ? `control:${card.targetRef}` : undefined);
   const assistantTarget = interaction?.canTarget(card.targetRef);
   const label = presentationLabel(card.label), valuePresentation = controlValuePresentation(card);
-  return <article className={styles.card} data-control={card.targetRef} data-variant={presentation.variant} data-focused={focused} data-protected={presentation.protectedSavings} data-card-family={locked ? "PROTECTED" : card.kind === "SAVINGS" ? "RESERVATION" : "ADJUSTABLE"}
+  return <article className={styles.card} data-compact-card data-control={card.targetRef} data-variant={presentation.variant} data-focused={focused} data-protected={presentation.protectedSavings} data-card-family={locked ? "PROTECTED" : card.kind === "SAVINGS" ? "RESERVATION" : "ADJUSTABLE"}
     data-state={valuePresentation.kind === "DECISION" ? "chosen" : valuePresentation.kind === "UNKNOWN" ? "unresolved" : "derived"} data-value-status={valuePresentation.kind} {...handle}
     data-compatible={assistantTarget} data-unresolved={interaction?.unresolvedRefs.includes(card.targetRef)} data-snap={interaction?.motionTarget === card.targetRef ? interaction.motion : undefined}
     data-recoil={interaction?.motion === "recoil" && interaction.motionTarget === `control:${card.targetRef}`}
@@ -53,8 +53,10 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
       </div></div>
     <div className={styles.objectIdentity}><PlannerIcon iconKey={presentation.iconKey} identityRef={card.targetRef} className={styles.objectIcon} />
       <div><h3 title={card.label}>{label.title}</h3>{label.person && <span className={styles.personChip}>{label.person}</span>}</div></div>
-    {card.targetRef===MONTHLY_GROCERIES_REF&&<CatalogOpenButton target={{scope:'courses',controlRef:card.targetRef}}>Parcourir les produits</CatalogOpenButton>}
-    <MonthlyCommerceBadge card={card} expanded={focused} />
+    <div className={styles.controlActions}>
+      {card.targetRef===MONTHLY_GROCERIES_REF&&<CatalogOpenButton target={{scope:'courses',controlRef:card.targetRef}}>Produits</CatalogOpenButton>}
+      <MonthlyCommerceBadge card={card} expanded={focused} />
+    </div>
     <InlineControlValue card={card} dimension={controlMainDimension(card)} busy={busy} focus={focus} mutate={mutate} />
     {card.capability?.fields?.count?.status === "EDITABLE" && <><InlineControlValue card={card} dimension="unitAmount" busy={busy} focus={focus} mutate={mutate} />
       <small className={styles.officialSlotCost}>{card.value.remainingCount !== card.value.count && !card.value.projectionPending ? "Coût restant du poste" : "Coût du mois"} : {card.value.projectionPending ? "simulation en cours" : money(card.value.economicAmount)}</small></>}

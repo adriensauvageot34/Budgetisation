@@ -25,7 +25,10 @@ export function ContextSatellite({ satellite, item, target, editAsset, busy, foc
       ? `satellite:${target.contextOccurrenceId}:${target.slotKey}:${item.selectionId}` : undefined;
   const stateText = satellite.state === "SUGGESTED" ? "Suggestion à confirmer" : satellite.state === "DERIVED" ? "Lié à un autre objet"
     : satellite.state === "UNRESOLVED" ? "À préciser" : "Équipé pour ce moment";
-  return <AtomicPopover label={title} state={satellite.state} selectionId={item.selectionId} focus={focus} dragSourceKey={sourceKey}
+  const edit = editAsset && !satellite.canAccept && !busy && item.kind !== "CHILD_CONTEXT"
+    ? () => choose(editAsset, target, item)
+    : undefined;
+  return <div className={styles.satelliteTile}><AtomicPopover label={title} state={satellite.state} selectionId={item.selectionId} focus={focus} dragSourceKey={sourceKey} primaryAction={edit}
     icon={<>{productAssetKey ? <ComposerAssetVisual assetKey={productAssetKey} iconKey={satellite.iconKey} scale="SATELLITE" />
       : <PlannerIcon iconKey={satellite.iconKey} scale="SATELLITE" />}<span className={styles.equipmentName}>{title}</span><span className={styles.satelliteMarker} aria-hidden="true">
       {satellite.state === "SUGGESTED" ? <Sparkle size={10} /> : satellite.state === "DERIVED" ? <Link2 size={10} /> : satellite.state === "UNRESOLVED" ? <i /> : <Check size={9} />}</span></>}>
@@ -48,5 +51,5 @@ export function ContextSatellite({ satellite, item, target, editAsset, busy, foc
         </div>
       </details>}
     </div>}
-  </AtomicPopover>;
+  </AtomicPopover></div>;
 }

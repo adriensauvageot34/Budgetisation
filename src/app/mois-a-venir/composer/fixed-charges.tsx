@@ -7,12 +7,14 @@ import styles from "./composer.module.css";
 
 export function FixedChargeCard({ facts, detached, open, reattach }: { facts: readonly BaselineStructuralFact[]; detached?: boolean; open: () => void; reattach: () => void }) {
   const known = facts.filter(f => f.value.central !== null).length;
-  return <article className={styles.fixedChargeCard} data-fixed-charges={detached ? facts[0]?.factKey : "group"}>
-    <FileText size={24} /><h3>{detached ? facts[0]?.label : "Charges fixes"}</h3>
+  return <article className={styles.fixedChargeCard} data-compact-card data-fixed-charges={detached ? facts[0]?.factKey : "group"}>
+    <header><FileText size={18} aria-hidden="true" /><h3>{detached ? facts[0]?.label : "Charges fixes"}</h3></header>
     {detached ? <strong>{money(facts[0]?.value.central)}</strong> : <p>{known} montant(s) connu(s) · {facts.length - known} à préciser</p>}
     <small>Prévision du mois · paiement non attesté</small>
-    <button type="button" onClick={open}>{detached ? "Voir la charge" : `Voir les charges (${facts.length})`}</button>
-    {detached && <button type="button" onClick={reattach}>Remettre dans Charges fixes</button>}
+    <div className={styles.fixedChargeActions}>
+      <button type="button" onClick={open}>{detached ? "Voir la charge" : `Voir les charges (${facts.length})`}</button>
+      {detached && <button type="button" onClick={reattach}>Remettre dans Charges fixes</button>}
+    </div>
   </article>;
 }
 export function FixedChargesDetails({ month, facts, editableKeys, detached, toggle, close }: { month?: string; facts: readonly BaselineStructuralFact[];

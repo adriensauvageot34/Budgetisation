@@ -244,7 +244,6 @@ export function ShortStayEditor({ semanticState, onOpenChild, dismissedSuggestio
   </div>;
   const content = <>
     <CatalogOpenButton target={{contextId:context.contextOccurrenceId,moment:"lodging",commands:lodgingCommands}}>Parcourir les éléments du séjour</CatalogOpenButton>
-    <p className={styles.helper}>Le séjour regroupe ses postes, sans coût parent ajouté. Les autres postes restent accessibles dans le dock.</p>
     {!writable && <p role="status">Ce séjour est en consultation ou sa cible a changé. La saisie reste conservée ; aucune modification ne peut être validée ici.</p>}
     {attachmentError && <p role="alert">{attachmentError}</p>}
     {postSection === "lodging" && <>

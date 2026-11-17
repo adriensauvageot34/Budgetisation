@@ -39,10 +39,12 @@ export function composerContextProgress(model: ComposerUiModel, status: PreviewS
   }));
 }
 
-export function IntentionProgressLabel({ id, withMonth = false }: { id: string; withMonth?: boolean }) {
+export function IntentionProgressLabel({ id, withMonth = false, compact = false }: { id: string; withMonth?: boolean; compact?: boolean }) {
   const progress = useContext(ContextProgress)?.[id];
   if (!progress) return null;
   const label = [withMonth ? monthLabel(progress.month) : null, progress.lifecycle,
     progress.saved && progress.lifecycle !== "Sauvegardé" ? "Brouillon sauvegardé" : null, progress.projection].filter(Boolean).join(" · ");
-  return <small className={styles.intentionProgress} data-intention-progress={id} title={label}>{label}</small>;
+  return <small className={styles.intentionProgress} data-intention-progress={id} title={label} aria-label={compact ? label : undefined}>
+    {compact ? progress.lifecycle : label}
+  </small>;
 }

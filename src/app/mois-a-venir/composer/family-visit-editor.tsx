@@ -184,7 +184,6 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
     {section === "summary" && <p className={styles.helper}>{stay ? "Le séjour regroupe ses postes sans coût supplémentaire. Aucun prix, participant ou date n’est décidé automatiquement. Les séjours intermois sont hors périmètre." : "Une visite est votre intention. Un trajet historique ou un véhicule disponible ne décide ni la visite ni ses participants."}</p>}
     {section === "summary" && <section className={styles.nightSection} data-visit-summary tabIndex={stay ? -1 : undefined}>
       <h3>{label || (stay ? "Votre séjour" : "Votre visite")}</h3>
-      <p>{stay ? "Choisissez l’hébergement ou un poste quand vous le souhaitez." : "La visite reste enregistrable même sans date ou trajet."}</p>
       {visited && <p>Proche : {visited.kind === "HOUSEHOLD_PERSON" ? householdPersons.find(person => person.personId === visited.personId)?.displayName ?? "Personne indisponible" : prospectivePersonLabel(visited) ?? "Contact indisponible"}</p>}
       {destination && <p>Destination : {physicalLabel(destination)}</p>}
       {stay ? <p>{staySummary?.canEditPeriod
