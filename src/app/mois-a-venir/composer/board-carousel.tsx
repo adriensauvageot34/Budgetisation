@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode }
 import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
+import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryRootRef, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";
 import { useComposerInteractions } from "./interactions";
 import styles from "./composer.module.css";
@@ -22,13 +23,13 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     if(viewport.current)viewport.current.dataset.barLayoutProbe=JSON.stringify(reception.current);
   };
   const [expandedMeasure, setExpandedMeasure] = useState<{ id: string; height: number; surface: BarSurface; checkpoint: string } | null>(null);
-  const [compactBarHeights,setCompactBarHeights]=useState<Readonly<Record<string,number>>>({});
+  const [compactCardHeights,setCompactCardHeights]=useState<Readonly<Record<string,number>>>({});
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
   const projected = useMemo(() => inventory ?? inventoryItems(model), [model,inventory]);
   const stableItems = useRef(projected), stableSize = useRef(size), stableExpanded = useRef(expandedId);
   const stableExpandedHeight = useRef<number | undefined>(undefined);
   const dragging = !!interaction?.grabbed;
-  const measuredItems=useMemo(()=>projected.map(item=>compactBarHeights[item.id]&&item.id!==expandedId?{...item,height:compactBarHeights[item.id]}:item),[projected,compactBarHeights,expandedId]);
+  const measuredItems=useMemo(()=>projected.map(item=>compactCardHeights[item.id]&&item.id!==expandedId?{...item,height:compactCardHeights[item.id]}:item),[projected,compactCardHeights,expandedId]);
   const items = dragging ? stableItems.current : measuredItems, layoutSize = dragging ? stableSize.current : size;
   const spatialKey = inventorySpatialKey(items);
   // The existing shelf observer is the only height budget. Never enlarge it
@@ -78,15 +79,21 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
     const board=viewport.current;let lastSignature='';
     // Measure intrinsic children, not the stretched grid cell: otherwise the
     // reserved height feeds back into itself and can never shrink on folding.
-    const cards=()=>[...board.querySelectorAll<HTMLElement>('[data-bar-living-card][data-expanded="false"]')];
+    const cards=()=>[...board.querySelectorAll<HTMLElement>('[data-inventory-id] > :is([data-compact-card],[data-bar-living-card][data-expanded="false"])')];
     const resize=new ResizeObserver(()=>{note('resizes');measure(true);});
-    function observe(){resize.disconnect();for(const card of cards())for(const child of card.children)if(child instanceof HTMLElement)resize.observe(child);}
+    function observe(){resize.disconnect();for(const card of cards()){
+      if(card.hasAttribute("data-compact-card")) resize.observe(card);
+      else for(const child of card.children) if(child instanceof HTMLElement)resize.observe(child);
+    }}
     function measure(synchronous=false){note('measures');const heights:Record<string,number>={};for(const card of cards()){
-      const id=card.dataset.context;if(!id||card.getAnimations().some(animation=>animation.playState==='running'))continue;
-      heights[id]=Math.max(130,Math.ceil([...card.children].reduce((sum,child)=>sum+child.getBoundingClientRect().height,0)+2));
+      const id=card.parentElement?.dataset.inventoryId;
+      if(!id||card.getAnimations().some(animation=>animation.playState==='running'))continue;
+      heights[id]=card.hasAttribute("data-compact-card")
+        ? Math.ceil(card.getBoundingClientRect().height)
+        : Math.max(130,Math.ceil([...card.children].reduce((sum,child)=>sum+child.getBoundingClientRect().height,0)+2));
     }
       const signature=JSON.stringify(heights);if(signature===lastSignature)return;lastSignature=signature;
-      const reserve=()=>setCompactBarHeights(previous=>{
+      const reserve=()=>setCompactCardHeights(previous=>{
         const next={...previous,...heights};for(const id of Object.keys(next))if(!projected.some(item=>item.id===id))delete next[id];
         return Object.keys(next).length===Object.keys(previous).length&&Object.entries(next).every(([id,height])=>previous[id]===height)?previous:next;
       });
@@ -320,7 +327,7 @@ export function BoardCarousel({ model, inventory, focused, render, emptyClick, c
   const stripWidth=Math.max(availableWidth,stripColumns*(trackWidth+10)-10);
   return <>
     <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-continuous data-board-drop data-board-page-active={active} tabIndex={0} aria-label="Board du mois, défilement horizontal"
-      data-bar-page={!!expandedId||(layouts[active]??[]).some(box=>compactBarHeights[box.item.id])||undefined}
+      data-bar-page={!!expandedId||(layouts[active]??[]).some(({item})=>compactCardHeights[item.id]&&item.kind==="CONTEXT"&&item.context&&presetForContext(item.context)?.presetKey==="bar-apero")||undefined}
       style={{'--bar-shelf-height':`${shelfHeight}px`} as React.CSSProperties} {...dropProps}
       onKeyDown={event=>{if(event.target!==event.currentTarget||!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();viewport.current?.scrollBy({left:event.key==='ArrowRight'?260:-260,behavior:boardScrollBehavior()});}}
       onDragOverCapture={event=>{if(!interaction?.grabbed||!viewport.current)return;const rect=viewport.current.getBoundingClientRect(),x=event.clientX;

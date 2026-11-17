@@ -58,11 +58,13 @@ export function AnchoredAtomicPopover({label,anchor,onClose,children}:{label:str
 }
 
 /** Viewport coordinates are transient DOM placement, never part of a draft. */
-export function AtomicPopover({ label, state, selectionId, empty, children, icon, focus, dragSourceKey, utility }: {
+export function AtomicPopover({ label, state, selectionId, empty, children, icon, focus, dragSourceKey, utility, primaryAction }: {
   label: string; state: string; selectionId?: string; empty?: boolean; icon: ReactNode;
   children: (close: () => void) => ReactNode; focus: () => void; dragSourceKey?: string; utility?: boolean;
+  primaryAction?: () => void;
 }) {
   const id = useId(), trigger = useRef<HTMLButtonElement>(null), panel = useRef<HTMLDivElement>(null), [open, setOpen] = useState(false);
+  const detailsTrigger = useRef<HTMLButtonElement>(null);
   const titleId = `${id}-title`;
   const dragProps = useDragHandle(dragSourceKey);
   const close = () => panel.current?.hidePopover();
@@ -70,23 +72,26 @@ export function AtomicPopover({ label, state, selectionId, empty, children, icon
     const node = panel.current;
     const place = () => {
       if (!node?.matches(":popover-open") || !trigger.current) return;
-      placeAtomicPopover(node,trigger.current);
+      placeAtomicPopover(node,detailsTrigger.current ?? trigger.current);
     };
     const toggle = (event: Event) => {
       if ((event as ToggleEvent).newState === "open") { setOpen(true); place(); window.addEventListener("resize", place); window.addEventListener("scroll", place, true);
         node?.querySelector<HTMLElement>("[data-popover-title]")?.focus(); }
       else { setOpen(false); window.removeEventListener("resize", place); window.removeEventListener("scroll", place, true);
-        if (!document.querySelector("dialog[open]") && (!document.activeElement || document.activeElement === document.body || node?.contains(document.activeElement))) trigger.current?.focus(); }
+        if (!document.querySelector("dialog[open]") && (!document.activeElement || document.activeElement === document.body || node?.contains(document.activeElement))) (detailsTrigger.current ?? trigger.current)?.focus(); }
     };
     node?.addEventListener("toggle", toggle);
     return () => { node?.removeEventListener("toggle", toggle); window.removeEventListener("resize", place); window.removeEventListener("scroll", place, true); };
   }, []);
   return <>
     <button ref={trigger} type="button" className={utility ? styles.iconButton : styles.satellite} data-context-actions={utility || undefined} data-satellite={utility ? undefined : true} data-selection={selectionId} data-state={state} data-empty={empty || undefined} {...dragProps}
-      title={label} aria-label={label} aria-haspopup="dialog" aria-controls={id} aria-expanded={open} onClick={() => { focus(); panel.current?.togglePopover(); }}>{icon}</button>
+      title={label} aria-label={label} aria-haspopup={primaryAction ? undefined : "dialog"} aria-controls={primaryAction ? undefined : id}
+      aria-expanded={primaryAction ? undefined : open} onClick={() => { if (primaryAction) primaryAction(); else { focus(); panel.current?.togglePopover(); } }}>{icon}</button>
+    {primaryAction && <button ref={detailsTrigger} type="button" className={styles.satelliteDetails} aria-label={`Détails de ${label}`}
+      aria-haspopup="dialog" aria-controls={id} aria-expanded={open} onClick={() => { focus(); panel.current?.togglePopover(); }}>⋯</button>}
     <div ref={panel} id={id} popover="auto" role="dialog" aria-labelledby={titleId} className={styles.atomicPopover} data-atomic-popover>
-      <header><h4 id={titleId} tabIndex={-1} data-popover-title>{label}</h4><button type="button" className={styles.iconButton} aria-label="Fermer les détails" onClick={() => { close(); trigger.current?.focus(); }}><X size={15} /></button></header>
-      {open && children(() => { close(); trigger.current?.focus(); })}
+      <header><h4 id={titleId} tabIndex={-1} data-popover-title>{label}</h4><button type="button" className={styles.iconButton} aria-label="Fermer les détails" onClick={() => { close(); (detailsTrigger.current ?? trigger.current)?.focus(); }}><X size={15} /></button></header>
+      {open && children(() => { close(); (detailsTrigger.current ?? trigger.current)?.focus(); })}
     </div>
   </>;
 }

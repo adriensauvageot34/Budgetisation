@@ -5,7 +5,6 @@ import type { AtomicNode, ClusterFamily, ComposerPresentationNode, ContentDensit
 import { stableVisualIdentity } from "../planner-icons/visual-identity";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import { barClosedWidth } from "./bar-closed-width";
-import { monthlyCommerceBadges } from "@/domain/phase2/planner/commerce-badge-profiles";
 
 const clusterLook: Readonly<Record<ClusterFamily, Pick<VisualClusterNode, "title" | "iconKey" | "width" | "height" | "spatialFamily">>> = {
   BEAUTY: { title: "Beauté", iconKey: "beauty", width: 530, height: 165, spatialFamily: "PERSONAL_CARE" },
@@ -75,9 +74,8 @@ export function composePresentationNodes(model: ComposerUiModel, showMonthCards 
       const barHeight = 125 + barRoutes*58 + (tileCount||hasBefore?123:0);
       return { id:context.contextOccurrenceId, kind:"CONTEXT" as const, context, density, spatialFamily:contextFamily(template),
         iconKey:model.presentation.objects[context.contextOccurrenceId].iconKey,
-        width:bar?barClosedWidth(context,model):template === "short-stay" ? 400 : template === "night-out" ? 350 : ["gift", "family-visit"].includes(template) ? 240 : 230,
-        height:bar ? barHeight : template === "short-stay" ? 212 : template === "night-out" ? 212 : template === "gift" ? 148
-          : template === "family-visit" ? 142 : density === "SPARSE" ? 140 : density === "RICH" ? 190 : 170 };
+        width:bar ? barClosedWidth(context,model) : ["short-stay", "night-out", "home-project"].includes(template) ? 250 : 225,
+        height:bar ? barHeight : density === "SPARSE" ? 118 : 148 };
     }),
     ...(showMonthCards ? [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings] : [])
       .filter(control => !available.has(control.targetRef)).map(control => {
@@ -85,8 +83,7 @@ export function composePresentationNodes(model: ComposerUiModel, showMonthCards 
         const spatialFamily = controlFamily(control, view.iconKey);
         return { id:control.targetRef, kind:"CONTROL" as const, control, density, spatialFamily, iconKey:view.iconKey,
           width:control.kind === "SAVINGS" ? 260 : spatialFamily === "DAILY" ? 230 : density === "SPARSE" ? 210 : 230,
-          height:(control.kind === "SAVINGS" ? 165 : control.capability?.fields?.count?.status === "EDITABLE" ? 205 : density === "SPARSE" ? 128 : density === "RICH" ? 155 : 142)
-            + (monthlyCommerceBadges(control).length ? 85 : 0) };
+          height:control.kind === "SAVINGS" || control.capability?.fields?.count?.status === "EDITABLE" ? 146 : 128 };
       }),
   ];
   const groups: Record<ClusterFamily, AtomicNode[]> = { BEAUTY:[], FOOD:[], ACTIVITY:[] };

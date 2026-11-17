@@ -1,5 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { Check, Sparkle, ArrowLeft, ArrowLeftRight, Plus, X, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Sparkle, ArrowLeft, ArrowLeftRight, Plus, X, ChevronDown, ChevronLeft, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -16,6 +16,7 @@ import { CatalogOpenButton } from "./catalog-discovery-provider";
 import type { CatalogMoment } from "./catalog-discovery";
 import { clayBarArtwork } from "../clay-v22-media";
 import { composerPreset, presetIllustrationPath, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
 
 function routeCaption(groupKey: string, slotKey: string, assetKey: string, socketLabel: string | null | undefined): string {
   if (groupKey === "meal") return assetKey.startsWith("template:") ? "Objet autonome" : "Composant du repas";
@@ -90,15 +91,17 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
 
 export type PaletteQuestion = { title: string; identity?:string; catalogMoment?:CatalogMoment; nature?:"FAMILIES"|"OBJECTS"|"PEOPLE"|"MODES"|"KNOWN_ROUTES"|"PLACE_FAVORITES"|"FINANCING"|"DECISION"; choices: readonly { key: string; label: string; iconKey: string; selected?: boolean; hint?: string; showHint?:boolean; symbol?: string; visualKey?:string; catalogAssetKey?: string; visualConceptId?: string; presetArtwork?: ComposerPresetKey; catalogActionLabel?:string; catalogRepeat?:boolean; catalogUnavailable?:boolean; drag?:BarDockDrag; choose: () => void }[];
   search?: { value: string; change: (value: string) => void; label: string }; filterChoices?:boolean; emptyLabel?:string; backToFamilies?:()=>void };
-export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, question, appearance, questionScroll, onQuestionScrollChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; question?: PaletteQuestion; appearance?:"bar";
+export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure, equipmentTarget, question, appearance, questionScroll, onQuestionScrollChange }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void; equipmentTarget?: { slotKey?: string }; question?: PaletteQuestion; appearance?:"bar";
   questionScroll?:Readonly<Record<string,number>>; onQuestionScrollChange?:(key:string,index:number)=>void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void; close: () => void;
 }) {
   const interaction=useComposerInteractions();
   const groups = question ? [] : displayEquipmentGroups(card, model);
   const assets = new Map(model.library.searchableAssets.map(asset => [asset.assetKey, asset]));
-  const [mode, setMode] = useState<"complete" | "all">("complete"), [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<{ owner: typeof equipmentTarget; group?: string }>();
+  const [query, setQuery] = useState(""), [searchOpen, setSearchOpen] = useState(false);
   const options = useRef<HTMLDivElement>(null), searchInput=useRef<HTMLInputElement>(null), optionsId = useId();
+  const searchTrigger = useRef<HTMLButtonElement>(null);
   const questionFocus=useRef<HTMLElement|null>(null);
   const [scroll, setScroll] = useState({ before: false, after: false });
   const scrollPositions=useRef<Record<string,number>>({});
@@ -138,7 +141,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
   },[appearance,answerKey,searchValue]);
   const hasGroups = !!question || groups.length > 0;
   useEffect(()=>{
-    const node=options.current;if(!productScene||!node)return;
+    const node=options.current;if((appearance==="bar"&&!productScene)||!node)return;
     const wheel=(event:WheelEvent)=>{
       if(Math.abs(event.deltaX)>=Math.abs(event.deltaY)||event.ctrlKey)return;
       const before=node.scrollLeft;
@@ -147,7 +150,7 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     };
     node.addEventListener("wheel",wheel,{passive:false});
     return()=>node.removeEventListener("wheel",wheel);
-  },[productScene,hasGroups]);
+  },[productScene,hasGroups,appearance]);
   useLayoutEffect(() => {
     const node = options.current; if (!node) return;
     measureScroll(); const observer = new ResizeObserver(measureScroll); observer.observe(node);
@@ -158,13 +161,32 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
     measureScroll();
     // Restore only when the semantic scene changes, never on an admitted object or keystroke.
   }, [answerKey,appearance]);
-  useLayoutEffect(measureScroll, [card, mode, query, question, renderedChoicesKey]);
-  const normalize = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr");
-  const visible = groups.map(group => ({ ...group, tiles: group.tiles.filter(tile => !query.trim()
-    || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
+  const manuallyFiltered = !!filter && filter.owner === equipmentTarget;
+  const requestedSlot = manuallyFiltered ? undefined : equipmentTarget?.slotKey;
+  const groupKey = manuallyFiltered ? filter.group
+    : groups.find(group => group.tiles.some(tile => tile.routes.some(route => route.socket.slotKey === requestedSlot)))?.key;
+  const terms = normalizeLibrarySearch(query).split(" ").filter(Boolean);
+  const searching = terms.length > 0;
+  const visible = groups.filter(group => searching || !groupKey || group.key === groupKey).map(group => ({ ...group,
+    tiles: group.tiles.flatMap(tile => {
+      const routes = tile.routes.filter(route => {
+        if (!searching) return !requestedSlot || route.socket.slotKey === requestedSlot;
+        const label = assets.get(route.option.assetKey)?.label;
+        return !!label && terms.every(term => normalizeLibrarySearch(label + " " + group.title).includes(term));
+      });
+      return routes.length ? [{ ...tile, routes }] : [];
+    }),
+  }))
     .filter(group => group.tiles.length);
+  useLayoutEffect(() => {
+    if (!question && options.current) options.current.scrollLeft = 0;
+  }, [equipmentTarget, groupKey, question]);
+  useLayoutEffect(() => {
+    if (equipmentTarget && !question) options.current?.focus({ preventScroll: true });
+  }, [equipmentTarget, question]);
+  useLayoutEffect(measureScroll, [card, groupKey, query, question, renderedChoicesKey]);
   const iconKey = model.presentation.objects[card.contextOccurrenceId]?.iconKey ?? "activity";
-  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:""}`} data-bar-dock={appearance==="bar"?true:undefined} data-compact-dock={appearance==='bar'&&question.choices.length<=3&&!search} data-context-palette={card.contextOccurrenceId} data-question-dock data-dock-nature={question.nature} aria-label={question.title}
+  if (question) return <section className={`${styles.contextPalette} ${styles.questionPalette} ${appearance==="bar"?styles.barCompositionDock:styles.compactQuestionDock}`} data-bar-dock={appearance==="bar"?true:undefined} data-compact-dock={appearance==='bar'&&question.choices.length<=3&&!search} data-context-palette={card.contextOccurrenceId} data-question-dock data-dock-nature={question.nature} aria-label={question.title}
     onFocusCapture={event=>{if(appearance==="bar"&&event.target instanceof HTMLElement)questionFocus.current=event.target;}}>
     {appearance==="bar"&&caption&&caption.key.startsWith(answerKey+":")&&<div role="tooltip" id={optionsId+"-full-label"} className={styles.barDockFullLabel}>{caption.label}</div>}
     <header>{appearance==="bar"?(question.nature==="OBJECTS"&&question.backToFamilies&&<button type="button" className={styles.barFamiliesBack} aria-label="Revenir aux catégories" title="Revenir aux catégories" disabled={busy} onClick={question.backToFamilies}><ArrowLeft size={15}/></button>):<div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><h3>{question.title}</h3></div>}
@@ -175,9 +197,9 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
         const art=clayV22Artwork(c.visualConceptId)??clayBarArtwork(c.catalogAssetKey??c.visualKey??c.key);
         return art?[{key:c.key,visualConceptId:art.visualConceptId,label:c.catalogActionLabel??`Configurer ${c.label} · ${question.title}`,allowRepeat:c.catalogRepeat,run:c.choose}]:[];
       })}}>Parcourir les éléments</CatalogOpenButton>
-      {appearance!=="bar"&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
-        <button type="button" aria-label="Réponses précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => scrollRail(-300)}><ChevronLeft size={18} /></button>
-        <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => scrollRail(300)}><ChevronRight size={18} /></button>
+      {appearance!=="bar"&&(scroll.before||scroll.after)&&<div className={styles.paletteScrollControls} aria-label="Parcourir les réponses">
+        <button type="button" aria-label="Réponses précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => scrollRail(-300)}><ChevronLeft size={16} /></button>
+        <button type="button" aria-label="Réponses suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => scrollRail(300)}><ChevronRight size={16} /></button>
       </div>}</header>
     <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options data-overflow-before={scroll.before} data-overflow-after={scroll.after} onLoadCapture={measureScroll} onScroll={()=>{
         measureScroll();if(appearance==="bar"&&options.current){const value=options.current.scrollLeft;scrollPositions.current[answerKey]=value;onQuestionScrollChange?.(answerKey,value);}
@@ -199,24 +221,41 @@ export function ContextPalette({ card, model, busy, choose, close, configure = f
       {appearance==="bar"&&catalogue.remaining>0&&<button type="button" className={styles.questionAnswer} onClick={()=>setLimits(previous=>({...previous,[answerKey]:(previous[answerKey]??24)+24}))}>Afficher la suite ({catalogue.remaining})</button>}
       {!(appearance==="bar"?catalogue.total:question.choices.length) && <p>{question.emptyLabel??"Aucun résultat. Vous pouvez saisir votre choix."}</p>}
     </div></section>;
-  return <section className={styles.contextPalette} data-context-palette={card.contextOccurrenceId} aria-label={`Équiper ${card.label}`}>
-    <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><div><h3>Équiper · {card.label}</h3><p>Choisissez un objet pour ce moment</p></div></div>
-      <div className={styles.paletteModes}>{onConfigure && <button type="button" onClick={onConfigure}>Configurer</button>}
-        <button type="button" aria-pressed={mode === "complete"} onClick={() => { setMode("complete"); setQuery(""); }}>Compléter</button>
-        <button type="button" title="Voir tous les compléments admissibles" aria-pressed={mode === "all"} onClick={() => setMode("all")}>Autres options</button></div>
-      {hasGroups && <div className={styles.paletteScrollControls} aria-label="Parcourir les compléments">
-        <button type="button" aria-label="Options précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => options.current?.scrollBy({ left: -320, behavior: "smooth" })}><ChevronLeft size={16} /></button>
-        <button type="button" aria-label="Options suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => options.current?.scrollBy({ left: 320, behavior: "smooth" })}><ChevronRight size={16} /></button>
+  return <section className={`${styles.contextPalette} ${styles.compactEquipmentDock}`} data-context-palette={card.contextOccurrenceId} aria-label={`Équiper ${card.label}`}
+    onKeyDown={event => {
+      if (event.key !== "Escape" || event.nativeEvent.isComposing || (event.target instanceof Element && event.target.closest("[popover]:popover-open"))) return;
+      event.stopPropagation();
+      if (searchOpen) {
+        setQuery("");
+        setSearchOpen(false);
+        searchTrigger.current?.focus({ preventScroll:true });
+      } else close();
+    }}>
+    <header><div className={styles.paletteHeading}><h3 title={card.label}>{card.label}</h3></div>
+      {searchOpen && <input type="search" autoFocus className={styles.dockSearch} placeholder="Rechercher un complément" aria-label="Rechercher un complément" value={query} onChange={event => setQuery(event.target.value)} />}
+      <div className={styles.dockTools}>{onConfigure && <button type="button" className={styles.iconButton} disabled={busy} aria-label="Configurer" title="Configurer" onClick={onConfigure}><SlidersHorizontal size={15} /></button>}
+        {hasGroups && <button type="button" ref={searchTrigger} className={styles.iconButton} aria-label="Rechercher" title="Rechercher" aria-expanded={searchOpen} onClick={() => {
+          setSearchOpen(!searchOpen);
+          if (searchOpen) setQuery("");
+        }}><Search size={15} /></button>}</div>
+      {hasGroups && (scroll.before||scroll.after) && <div className={styles.paletteScrollControls} aria-label="Parcourir les compléments">
+        <button type="button" aria-label="Options précédentes" aria-controls={optionsId} disabled={!scroll.before} onClick={() => scrollRail(-320)}><ChevronLeft size={16} /></button>
+        <button type="button" aria-label="Options suivantes" aria-controls={optionsId} disabled={!scroll.after} onClick={() => scrollRail(320)}><ChevronRight size={16} /></button>
       </div>}
-      <CatalogOpenButton target={{contextId:card.contextOccurrenceId}}>Parcourir les éléments</CatalogOpenButton>
+      <CatalogOpenButton target={{contextId:card.contextOccurrenceId}}>Catalogue</CatalogOpenButton>
       <button className={styles.iconButton} aria-label="Quitter la sélection du moment" onClick={close}><X size={16} /></button></header>
-    {mode === "all" && <label className={styles.paletteSearch}>Rechercher un complément<input aria-label="Rechercher un complément" value={query} onChange={event => setQuery(event.target.value)} /></label>}
+    {groups.length > 1 && !searching && <div className={styles.dockGroups} role="group" aria-label="Familles de compléments">
+      {[{ key: undefined, title: "Tout" }, ...groups].map(group => <button key={group.key ?? "all"} type="button"
+        aria-pressed={groupKey === group.key} aria-controls={optionsId} onClick={() => setFilter({ owner: equipmentTarget, group: group.key })}>{group.title}</button>)}
+    </div>}
     {groups.length ? <div ref={options} id={optionsId} className={styles.paletteOptions} data-palette-options onScroll={measureScroll} tabIndex={0} aria-label={`Options pour ${card.label}`}
       onKeyDown={event => { if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault(); event.currentTarget.scrollBy({ left: event.key === "ArrowRight" ? 150 : -150, behavior: "smooth" }); }}>
       {visible.map(group => <div key={group.key} className={styles.paletteGroup} data-palette-group={group.key}>
-        <span>{group.title}</span><div>{(mode === "all" ? group.tiles : group.tiles.slice(0,5)).map(tile => <EquipmentTileButton key={tile.visualKey} tile={tile} groupKey={group.key} card={card} model={model}
+        {!groupKey && groups.length > 1 && <span>{group.title}</span>}
+        <div>{group.tiles.map(tile => <EquipmentTileButton key={tile.visualKey} tile={tile} groupKey={group.key} card={card} model={model}
           assets={assets} busy={busy} choose={choose} configure={configure} />)}</div>
-      </div>)}</div> : <p className={styles.popoverNote}>Ce moment est préservé ou suivi par son éditeur habituel.</p>}
+      </div>)}
+      {!visible.length && <p role="status" className={styles.popoverNote}>Aucun complément trouvé.</p>}</div> : <p className={styles.popoverNote}>Aucun complément disponible pour ce moment.</p>}
   </section>;
 }

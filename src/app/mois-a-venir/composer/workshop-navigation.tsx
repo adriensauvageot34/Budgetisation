@@ -113,12 +113,12 @@ export function WorkshopNavigation({ contextId }: { contextId: string }) {
   if (!navigation) return null;
   const parent = navigation.parents?.get(contextId);
   return <nav className={styles.navigation} aria-label="Navigation de cette intention" data-workshop-navigation>
-    <button type="button" disabled={navigation.busy} onClick={() => {
+    <button type="button" disabled={navigation.busy} aria-label={parent ? "Revenir au projet" : "Mes intentions"} onClick={() => {
       if (!parent) navigation.back(contextId);
       else if (navigation.returnToProject) navigation.returnToProject(parent, contextId);
       else navigation.open(parent);
     }}>
-      {parent ? "← Revenir au projet" : "← Mes intentions"}
+      {parent ? "← Projet" : "← Intentions"}
     </button>
     <IntentionSwitcher contextId={contextId} />
     <IntentionProgressLabel id={contextId} withMonth />

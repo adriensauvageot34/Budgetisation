@@ -1821,6 +1821,94 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 
 /* Bar finishing: intrinsic rails and metadata in their existing card anchors. */
 .barCompositionDock>header:empty { display:none; }
+
+.inventoryCell > :is(.contextCard,.card)[data-compact-card],
+.contextCard[data-compact-card],.card[data-compact-card] {
+  box-sizing:border-box;
+  height:auto;
+  min-height:106px;
+  padding:9px 10px;
+}
+.contextCard[data-compact-card] .contextComposition { height:auto; gap:5px; }
+.contextCard[data-compact-card] .contextHero { flex-direction:row; justify-content:flex-start; align-items:flex-start; gap:6px; padding:2px 4px 0 0; text-align:left; }
+.contextCard[data-compact-card] .contextHero::before { display:none; }
+.contextCard[data-compact-card] .contextHeader { flex:1; min-width:0; }
+.contextCard[data-compact-card] .contextHeader h3 { padding-right:39px; font-size:14px; line-height:1.18; }
+.contextCard[data-compact-card][data-state=derived] .contextHeader h3 { padding-right:0; }
+.contextCard[data-compact-card] .contextHeader h3 button { text-align:left; }
+.contextMeta { display:flex; flex-wrap:wrap; align-items:center; gap:2px 7px; margin-top:3px; font-size:10px; color:#58627f; }
+.contextMeta:empty { display:none; }
+.contextMeta .intentionProgress { margin:0; font-size:inherit; }
+.contextCard[data-compact-card] .contextMeta [data-linked-intentions-count] { display:inline; }
+.contextCard[data-compact-card] .contextTools { top:-3px; right:-4px; background:var(--scene-tint,#fffdfb); border-radius:8px; }
+.contextCard[data-compact-card] .contextState { position:static; display:inline-flex; vertical-align:middle; }
+.contextCard[data-compact-card] .contextState:empty { display:none; }
+.contextCard[data-compact-card] .contextHero :is(.presetBoardImage,.contextObjectIcon) { flex:0 0 42px; width:42px; height:42px; object-fit:contain; }
+.contextCard[data-compact-card] .contextObjectIcon svg { width:44px; height:44px; }
+.contextCard[data-compact-card] .commerceBadges { justify-content:flex-start; flex-wrap:wrap; gap:3px; }
+.contextCard[data-compact-card] .contextEquipmentRow { flex:none; gap:5px; justify-content:flex-start; padding:5px 1px 2px; }
+.contextCard[data-compact-card] .contextEquipmentRow .satellite { height:36px; width:65px; box-shadow:none; }
+.contextCard[data-compact-card] .contextEquipmentRow .satellite [data-planner-icon] { height:20px; }
+.contextCard[data-compact-card] .contextEquipmentRow .satellite [data-planner-icon] svg { width:21px; height:21px; }
+.socketAdd { display:inline-flex; align-items:center; align-self:flex-start; gap:4px; max-width:100%; min-height:28px; padding:3px 7px; border:1px dashed #cbb8db; border-radius:8px; background:#fffafed9; color:#634f7b; font:inherit; font-size:11px; line-height:1.15; text-align:left; }
+.socketAdd svg { flex:none; }
+.satelliteTile { position:relative; flex:none; }
+.satelliteDetails { display:grid; place-items:center; position:absolute; top:0; right:0; width:22px; height:23px; padding:0; border:0; border-radius:7px; background:#fffafeee; color:#62477d; font-size:15px; cursor:pointer; }
+.satelliteDetails:hover,.satelliteDetails:focus-visible { background:#eadef7; }
+.satelliteTile:has(.satelliteDetails) .satelliteMarker { left:2px; right:auto; }
+.contextCard[data-compact-card] .purchaseSummary { margin:0; gap:2px; }
+.contextCard[data-compact-card] .purchaseSummary button { align-self:flex-start; padding:1px 4px; font-size:13px; }
+.card[data-compact-card] .objectIdentity { min-height:44px; gap:6px; margin-bottom:3px; padding-right:23px; }
+.card[data-compact-card] .objectIdentity :is(.objectIcon,.objectIcon svg) { width:42px; height:42px; flex-basis:42px; }
+.controlActions { display:flex; align-items:center; flex-wrap:wrap; gap:5px; margin:3px 0; }
+.controlActions:empty { display:none; }
+.contextComposition > .controlActions { margin:0; }
+.controlActions > .commerceBadges { margin:0; }
+.controlActions [data-catalog-open] { min-height:27px; padding:3px 6px; font-size:11px; }
+.fixedChargeCard[data-compact-card] { min-height:0; padding:9px 10px; }
+.fixedChargeCard > header { display:flex; align-items:center; gap:6px; }
+.fixedChargeCard > header svg { flex:none; }
+.fixedChargeCard > header h3 { margin:0; line-height:1.2; overflow-wrap:anywhere; }
+.fixedChargeActions { display:flex; flex-wrap:wrap; gap:0 8px; }
+
+.contextPalette:is(.compactEquipmentDock,.compactQuestionDock)[data-context-palette] { gap:4px; padding:6px 8px; }
+.contextPalette:is(.compactEquipmentDock,.compactQuestionDock) header { min-height:28px; gap:4px; }
+.compactEquipmentDock .paletteHeading { min-width:0; flex:1; }
+.compactEquipmentDock header { flex-wrap:nowrap; }
+.compactEquipmentDock header:has(.dockSearch) .paletteHeading { display:none; }
+.compactEquipmentDock header [data-catalog-open],.compactQuestionDock header [data-catalog-open] { min-height:28px; padding:3px 7px; font-size:11px; white-space:nowrap; }
+.dockTools { display:flex; align-items:center; flex:none; gap:3px; }
+.dockTools button[aria-expanded=true] { background:#eee2f9; }
+.compactEquipmentDock .paletteHeading h3,.compactQuestionDock .paletteHeading h3 { font-size:12px; overflow:hidden; text-overflow:ellipsis; }
+.compactEquipmentDock .paletteOptions { gap:8px; padding:2px 1px 4px; scroll-snap-type:none; }
+.compactEquipmentDock .paletteGroup { padding-left:0; border:0; gap:2px; }
+.compactEquipmentDock .paletteGroup > span { font-size:10px; line-height:12px; }
+.compactEquipmentDock .paletteGroup .equipmentTile { width:128px; flex-basis:128px; height:44px; font-size:11px; box-shadow:none; }
+.compactEquipmentDock .paletteGroup .equipmentTile > :is([data-planner-icon],img) { width:28px; height:28px; flex-basis:28px; }
+.compactEquipmentDock .paletteGroup .equipmentTile [data-planner-icon] svg { width:28px; height:28px; }
+.paletteDock:has(.compactEquipmentDock) { margin-inline:0; }
+.columns[data-night-workshop-open=true] .paletteDock:has(.compactEquipmentDock,.compactQuestionDock) { height:auto; flex:0 0 auto; }
+.dockGroups { display:flex; gap:4px; min-width:0; overflow-x:auto; padding-block:2px; scrollbar-width:thin; }
+.dockGroups button { flex:none; padding:3px 8px; min-height:25px; border:1px solid #e1d6ee; border-radius:7px; background:#fff; color:#614d7b; font-size:11px; }
+.dockGroups button[aria-pressed=true] { border-color:#bda4de; background:#f0e8fb; }
+.compactEquipmentDock header .dockSearch { flex:1 1 100px; min-width:0; width:100%; padding:4px 7px; border:1px solid #e1d6ee; border-radius:8px; color:inherit; font:inherit; font-size:12px; }
+.compactQuestionDock .paletteOptions { min-height:46px; height:auto; padding:2px 1px 4px; gap:6px; }
+.compactQuestionDock .questionAnswer { min-height:46px; height:auto; align-self:stretch; padding:4px 7px; gap:5px; }
+.compactQuestionDock .questionAnswer > :is([data-planner-icon],img) { width:29px; height:29px; flex:0 0 29px; }
+.compactQuestionDock .questionAnswer [data-planner-icon] svg { width:29px; height:29px; }
+.workshopFieldActions { display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:5px; }
+.workshopFieldActions button { display:grid; min-width:0; gap:2px; text-align:left; overflow-wrap:anywhere; }
+.workshopFieldActions button small { font-weight:400; }
+.dialog[data-night-workshop-panel=true] .nightEditorScroll { gap:10px; }
+.dialog[data-night-workshop-panel=true] .formFields { gap:8px; }
+.dialog[data-night-workshop-panel=true] .formFields :is(input,select) { padding:7px 9px; }
+@media (pointer:coarse) {
+  .socketAdd,.dockGroups button,.controlActions [data-catalog-open] { min-height:36px; }
+}
+@media (max-width:760px) {
+  .compactEquipmentDock header { flex-wrap:nowrap; }
+  .compactEquipmentDock .paletteScrollControls { display:none; }
+}
 .barCompositionDock>header { min-height:0; padding-block:0; }
 .barCompositionDock .barFamiliesBack { font-size:10px; padding:2px 5px; }
 .barCompositionDock .paletteOptions { width:100%; padding:0; gap:8px; box-shadow:none; scroll-padding-inline:0; }

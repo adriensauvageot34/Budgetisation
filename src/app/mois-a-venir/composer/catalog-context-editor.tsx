@@ -64,7 +64,6 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     setValues(initialValues); setError("");
   });
   const [activeKey, setActiveKey] = useState<string | null>(null);
-  const [summaryPage, setSummaryPage] = useState(0);
   const posts = Object.entries(context.slotSelections).flatMap(([slotKey, slot]) =>
     ((slot.items ?? []) as readonly ComponentSelectionV1[]).flatMap(item => item.kind === "COMPONENT" ? [{ slotKey, item }] : []));
   const card = model.board.contexts.find(item => item.contextOccurrenceId === context.contextOccurrenceId);
@@ -285,9 +284,9 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
         </details>}
       </>}
       {!!posts.length && <nav className={styles.nightNav} aria-label="Résumé de l’intention"><button type="button" aria-pressed={summaryTab === "fields"} onClick={() => setSummaryTab("fields")}>Informations</button><button type="button" aria-pressed={summaryTab === "posts"} onClick={() => setSummaryTab("posts")}>Postes ({posts.length})</button></nav>}
-      {summaryTab === "fields" && editor.fields.slice(summaryPage * 3, summaryPage * 3 + 3).map(field => <button key={field.key} type="button" onClick={() => setActiveKey(field.key)}>
-        {field.label} · {typeof values[field.key] === "string" || typeof values[field.key] === "number" ? String(values[field.key] || "À préciser") : values[field.key] ? "Choix conservé" : "À préciser"}</button>)}
-      {summaryTab === "fields" && editor.fields.length > 3 && <div className={styles.nightPage}><button type="button" disabled={summaryPage === 0} onClick={() => setSummaryPage(page => page - 1)}>Précédent</button><span>{summaryPage + 1} / {Math.ceil(editor.fields.length / 3)}</span><button type="button" disabled={(summaryPage + 1) * 3 >= editor.fields.length} onClick={() => setSummaryPage(page => page + 1)}>Suivant</button></div>}
+      {summaryTab === "fields" && <div className={styles.workshopFieldActions}>{editor.fields.map(field => <button key={field.key} type="button" onClick={() => setActiveKey(field.key)}>
+        <strong>{field.label}</strong><small>{typeof values[field.key] === "string" || typeof values[field.key] === "number" ? String(values[field.key] || "À préciser") : values[field.key] ? "Choix conservé" : "À préciser"}</small>
+      </button>)}</div>}
       {summaryTab === "posts" && posts.slice(postPage * 3, postPage * 3 + 3).map(({slotKey, item}, index) => {
         if (beautyProduct) {
           const writable = beautyProductEquipment(model, model.semanticState, context.contextOccurrenceId, item);
@@ -306,7 +305,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
           {route ? "Modifier" : "Consulter"} {item.label} · {item.cost.kind === "MANUAL" ? `${item.quantity} × ${item.cost.unitAmount} €` : "Prix inconnu ou devis conservé"}</button>;
       })}
       {summaryTab === "posts" && posts.length > 3 && <div className={styles.nightPage}><button type="button" disabled={postPage === 0} onClick={() => setPostPage(page => page - 1)}>Précédent</button><span>{postPage + 1} / {Math.ceil(posts.length / 3)}</span><button type="button" disabled={(postPage + 1) * 3 >= posts.length} onClick={() => setPostPage(page => page + 1)}>Suivant</button></div>}
-      <p>Choisissez les composants réels et leur prix dans le dock sous le Board.</p></section>}
+    </section>}
     {activeKey !== null && <details><summary>Repères et provenance</summary><CardKnowledgePanel knowledge={knowledge} /></details>}
     <div className={styles.nightEditorScroll}><div className={styles.formFields}>{editor.fields.filter(field => field.key === activeKey).map(field => {
       const value = values[field.key];
