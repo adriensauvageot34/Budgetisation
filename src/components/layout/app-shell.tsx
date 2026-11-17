@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Landmark } from "lucide-react";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 import { useProductRuntime } from "@/components/runtime";
+import { JULY_COMPOSER_HREF } from "@/domain/phase2/planner/realized-month-entry";
 import scene from "@/app/mois-a-venir/planned-scroll-scene.module.css";
 
 const modules = [
@@ -67,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <Link href="/diagnostic" className="button-ghost text-xs">Diagnostic</Link>
-          <Link href="/parametres" className="button-ghost text-xs">Marchands</Link>
+          <Link href={JULY_COMPOSER_HREF} prefetch={false} className="button-ghost text-xs">Juillet 2026 Composer</Link>
 
           <SignOutButton compact />
         </div>

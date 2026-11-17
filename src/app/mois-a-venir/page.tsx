@@ -8,6 +8,10 @@ import { monthControlSection, monthControlDestination, type MonthControlSectionI
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
+import { parseYearMonth } from "@/core/time";
+import { JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
+import { RealizedComposerMonth } from "./composer/realized-month";
 import { MONTH_FORECAST_RESOURCE } from "@/server/phase2/month-forecast-snapshot";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
@@ -35,6 +39,11 @@ export const dynamic = "force-dynamic";
 export default async function MonthForecastPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const context = await withProductAuthentication(() => getBootstrapContext());
   if (context.household === null) notFound();
+  const params = await searchParams;
+  const today = planningDate(context.household.timezone);
+  if (params.month === JULY_COMPOSER_MONTH && JULY_COMPOSER_MONTH < today.slice(0, 7)) {
+    return <RealizedComposerMonth board={await readRealizedMonth(context, parseYearMonth(JULY_COMPOSER_MONTH))} />;
+  }
   const client = createCanonicalReadClient();
   const { data: latest, error } = await client.from("analytics_query_snapshots")
     .select("period_month").eq("household_id", context.household.householdId)
@@ -42,11 +51,9 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     .order("period_month", { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
   if (!latest?.period_month) return <section className="card mx-auto max-w-3xl p-8" role="status"><p className="eyebrow">Notre mois à venir</p><h1 className="mt-2 text-3xl font-black">Prévision indisponible</h1><p className="mt-3 text-slate-600">Aucun mois prospectif publié pour ce foyer.</p></section>;
-  const params = await searchParams;
   const activeMonth = String(latest.period_month).slice(0, 7);
   const requestedMonth = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : activeMonth;
   const targetMonth = requestedMonth;
-  const today = planningDate(context.household.timezone);
   if (targetMonth < today.slice(0, 7)) {
     const [evidence, memory] = await Promise.all([
       readMonthPredictionEvidence(client, context.household.householdId, targetMonth, true),

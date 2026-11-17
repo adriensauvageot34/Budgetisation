@@ -81,7 +81,7 @@ function rangeForParams(
   }
 }
 
-function groupFactsByOperation(
+export function groupFactsByOperation(
   facts: readonly EconomicComponentFact[],
 ): ReadonlyMap<string, readonly EconomicComponentFact[]> {
   const groups = new Map<string, EconomicComponentFact[]>();
@@ -330,6 +330,8 @@ export async function loadOperationReferenceLabels(
   return {
     categories: canonicalLabelMap(categories, ["category_id"]),
     subcategories: canonicalLabelMap(subcategories, ["subcategory_id"]),
+    categoryKeys: new Map(categories.map(row => [String(row.category_id), String(row.category_key)])),
+    subcategoryKeys: new Map(subcategories.map(row => [String(row.subcategory_id), String(row.subcategory_key)])),
     merchants: merchantLabels,
     merchantIdentity: new Map(merchants.flatMap(row => {
       const kind = row.identity_kind as NonNullable<OperationRowReadModel["merchantIdentityKind"]>;

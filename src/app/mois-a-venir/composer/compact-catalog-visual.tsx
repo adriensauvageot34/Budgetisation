@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, type ComponentProps } from "react";
 import styles from "./composer.module.css";
 import { PlannerIcon } from "./planner-icons/planner-icon";
