@@ -7,6 +7,20 @@ import { plannerDigest } from "./json";
 const presets: Readonly<Record<string, readonly string[]>> = profiles.presets;
 const templates: Readonly<Record<string, readonly string[]>> = profiles.templates;
 const controls: Readonly<Record<string, readonly string[]>> = profiles.controls;
+const personalControls: Readonly<Record<string, readonly string[]>> = {
+  "adrien-work-coffee": ["categories:cafe"],
+  "adrien-work-meals": ["categories:restaurant", "categories:fast-food", "categories:bakery"],
+  "manon-work-meals": ["categories:restaurant", "categories:fast-food", "categories:bakery"],
+  hairdresser: ["categories:hairdresser"],
+  "need:hairdresser": ["categories:hairdresser"],
+  "need:maquillage_manon_mascara": ["categories:cosmetics", "categories:perfume", "categories:pharmacy"],
+  "need:maquillage_manon_sourcils": ["categories:cosmetics", "categories:perfume", "categories:pharmacy"],
+  "need:maquillage_manon_eyeliner": ["categories:cosmetics", "categories:perfume", "categories:pharmacy"],
+  "need:cire_adrien": ["categories:beauty", "categories:pharmacy", "categories:hairdresser"],
+  "need:haircare_adrien_cire": ["categories:beauty", "categories:pharmacy", "categories:hairdresser"],
+  "need:haircare_manon": ["categories:beauty", "categories:pharmacy", "categories:hairdresser"],
+  "need:skincare_manon": ["categories:beauty", "categories:pharmacy", "categories:perfume"],
+};
 
 /** Explicit workbook choices suggest visuals only; they never classify a merchant. */
 export function contextBadgeSuggestions(context: CommerceContext): readonly string[] {
@@ -17,7 +31,8 @@ export function contextBadgeSuggestions(context: CommerceContext): readonly stri
 }
 
 export function monthlyCommerceBadges(card: Pick<ComposerCardView, "targetRef" | "label" | "kind">): readonly CommerceBadge[] {
-  const suggestedKeys = controls[card.targetRef];
+  const semanticKey = card.targetRef.split(":").slice(2).join(":");
+  const suggestedKeys = controls[card.targetRef] ?? personalControls[semanticKey];
   if (card.kind === "SAVINGS" || !suggestedKeys?.length) return [];
   return [{ kind: "seller", label: card.label, cardLabel: card.label, text: "Badge entreprise", custom: true, suggestedKeys,
     anchor: { key: "control:" + plannerDigest(card.targetRef), digest: plannerDigest({ kind: "monthly-commerce-badge", targetRef: card.targetRef }) } }];

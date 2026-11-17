@@ -29,3 +29,32 @@
 .merchantChoice small { display:block; color:#665773; font-size:.75rem; }
 .editor .merchantChoice[aria-pressed=true] { border-color:#8660aa; background:#f2e9fb; }
 @media(max-width:420px) { .gallery { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.dock { display:grid; gap:5px; min-width:0; padding:7px 8px; color:#50375d; }
+.dock header { display:flex; align-items:center; gap:5px; min-width:0; }
+.dock h3 { flex:1; min-width:0; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
+.dock button { flex:none; display:inline-flex; align-items:center; justify-content:center; min-height:30px; padding:3px 7px; border:1px solid #e2d4ed; border-radius:8px; background:#fff; color:inherit; font:inherit; font-size:11px; cursor:pointer; }
+.dock button[hidden] { display:none; }
+.dock button[aria-pressed=true] { background:#eee3f8; border-color:#a886c3; }
+.dock button:disabled { cursor:default; opacity:.58; }
+.dock :is(button,input,div):focus-visible { outline:2px solid #946cb5; outline-offset:1px; }
+.dock input { min-width:0; min-height:30px; padding:3px 7px; border:1px solid #e2d4ed; border-radius:8px; background:#fff; color:inherit; font:inherit; font-size:12px; }
+.dock header input { width:clamp(82px,18%,170px); }
+.dock p { margin:0; font-size:12px; }
+.dock [role=alert] { color:#9c303f; }
+.dockRail { display:flex; align-items:center; gap:4px; min-width:0; }
+.dockRail > button { padding:2px 3px; }
+.dockOptions { display:flex; gap:6px; flex:1; min-width:0; overflow-x:auto; padding:3px 2px; scrollbar-width:thin; }
+.dock .dockTile { flex:0 0 133px; justify-content:flex-start; min-height:45px; min-width:0; gap:6px; padding:3px 5px; text-align:left; }
+.dockTile :is(img,svg) { flex:none; object-fit:contain; }
+.dockTile > span { min-width:0; }
+.dockTile strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; line-height:1.1; }
+.dockTile small { font-size:10px; color:#6f5b7a; }
+.dockName,.dockName label { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.dockName label { font-size:12px; }
+.dock .dockFilter { justify-self:start; min-height:24px; }
+@media (max-width:760px) {
+  .dock header { flex-wrap:wrap; }
+  .dock header h3 { flex-basis:100%; }
+  .dock header input { flex:1; width:65px; }
+  .dockRail > button { display:none; }
+}

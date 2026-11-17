@@ -8,6 +8,7 @@ import { merchantBadgeCategoryFor, referencedMerchantActivities } from "@/core/i
 import { readMerchantActivities } from "./merchant-activities";
 import { clayBadgeAsset } from "@/domain/phase2/commerce-badge-catalog";
 import { readMerchantSuggestions } from "./merchant-suggestions";
+import { merchantSuggestionActivities } from "@/domain/phase2/planner/merchant-suggestion-activities";
 
 type Row = { user_id: string; identity_key: string; label: string; category: PersonalBadge["category"];
   object_path: string | null; bundled_asset_key: string | null; version: number };
@@ -167,8 +168,27 @@ export class BadgeLibrary {
     return { key, label: badgeLabel(merchantDisplayName(row) ?? row.nom_canonique), ...(policy !== "normal" ? { policy } : {}) };
   }
 
+  async merchantCatalog() {
+    const media = async () => {
+      const rows: PersonalBadge[] = [];
+      for (let offset = 0; ; offset += 500) {
+        const result = await this.client.from("composer_badge_visuals").select(columns).eq("user_id", this.userId)
+          .like("identity_key", "merchant:%").order("identity_key").range(offset, offset + 499);
+        storageError(result.error);
+        rows.push(...(result.data as Row[]).map(visual));
+        if (result.data!.length < 500) return rows;
+      }
+    };
+    const canonical = await this.canonical();
+    return readMerchantSuggestions(canonical, media());
+  }
+
   async suggestions(keys: unknown) {
-    return readMerchantSuggestions(await this.canonical(), keys, identities => this.read(identities, []));
+    if (!Array.isArray(keys) || keys.length > 32 || keys.some(key => clayBadgeAsset(key)?.type !== "generic"))
+      throw new TypeError("BADGE_SUGGESTIONS_INVALID");
+    const activities = merchantSuggestionActivities(keys);
+    if (!activities.size) return [];
+    return (await this.merchantCatalog()).filter(merchant => activities.has(merchant.activityKey));
   }
 
   async confirm(raw: { identityKey?: unknown; newLabel?: unknown; anchor?: unknown; expectedBindingVersion?: unknown }) {

@@ -33,10 +33,16 @@ export async function commerceLibraryFixture(extraTables = []) {
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261117122008_composer_bundled_badges.sql", "utf8"));
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261117144355_composer_contextual_generic_badges.sql", "utf8"));
   await pg.db.exec(`grant select on public.merchant_activities to authenticated;
-    create policy merchant_activities_fixture on public.merchant_activities for select to authenticated using (true);`);
+    create policy merchant_activities_fixture on public.merchant_activities for select to authenticated using (true);
+    create table public.composer_fixture_operations(merchant_id uuid, flux text, statut text, date_bancaire date);
+    grant select on public.composer_fixture_operations, public.merchants, public.merchant_activities to service_role;`);
+  await pg.db.exec(fs.readFileSync("supabase/migrations/20261117221627_composer_merchant_suggestions.sql", "utf8")
+    .replace("public.operations", "public.composer_fixture_operations"));
   for (const [id, name] of [[uuid(97001), "E.Leclerc"], [uuid(97002), "Atelier Homonyme"], [uuid(97003), "Atelier Homonyme"]])
     await pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at, identity_source)
       values($1,$2,'commercial',now(),'owner_confirmed')`, [id, name]);
+  await pg.db.query("update public.merchants set activity_key='SUPERMARKET' where merchant_id=$1", [uuid(97001)]);
+  await pg.db.query("insert into public.composer_fixture_operations values($1,'Dépense',null,'2026-10-01'),($1,'Revenu',null,'2026-11-01')", [uuid(97001)]);
   for (const [id, name] of [[uuid(97101), "E.Leclerc"], [uuid(97102), "Restaurant de recette"], [uuid(97103), "Salon de recette"]])
     await pg.db.query("insert into public.referentiel_lieu(place_id,nom_canonique) values($1,$2)", [id, name]);
   let queue = Promise.resolve();
@@ -56,10 +62,20 @@ export async function commerceLibraryFixture(extraTables = []) {
   };
   function client(actor) {
     return {
+      rpc(name) {
+        if (name !== "composer_merchant_suggestions") throw Error("FIXTURE_RPC");
+        const task = queue.then(async () => {
+          await pg.db.exec("reset role; set role service_role");
+          try { return { data: (await pg.db.query("select * from public.composer_merchant_suggestions()")).rows, error: null }; }
+          finally { await pg.db.exec("reset role"); }
+        });
+        queue = task.catch(() => {});
+        return task;
+      },
       from(table) {
         if (!["composer_badge_visuals", "composer_badge_bindings", "merchants", "merchant_activities", "referentiel_lieu", ...extraTables].includes(table))
           throw Error("BADGE_FINANCIAL_WRITE_FORBIDDEN");
-        const filters = [], values = [], order = []; let operation = "SELECT", projection = "*", data, single = false, limit;
+        const filters = [], values = [], order = []; let operation = "SELECT", projection = "*", data, single = false, limit, offset;
         const parameter = value => { values.push(value); return "$" + values.length; };
         const query = {
           select(columns) { if (!/^[a-z_,*]+$/u.test(columns)) throw Error("FIXTURE_PROJECTION"); projection = columns; return query; },
@@ -74,8 +90,10 @@ export async function commerceLibraryFixture(extraTables = []) {
             filters.push(identifier(key) + " not like " + parameter(value)); return query;
           },
           in(key, list) { filters.push(identifier(key) + "=any(" + parameter(list) + ")"); return query; },
+          like(key, value) { filters.push(identifier(key) + " like " + parameter(value)); return query; },
           ilike(key, value) { filters.push(identifier(key) + " ilike " + parameter(value)); return query; },
           order(key) { order.push(identifier(key)); return query; }, limit(count) { limit = count; return query; },
+          range(from, to) { offset = from; limit = to - from + 1; return query; },
           insert(value) { operation = "INSERT"; data = value; return query; },
           update(value) { operation = "UPDATE"; data = value; return query; },
           delete() { operation = "DELETE"; return query; },
@@ -85,7 +103,7 @@ export async function commerceLibraryFixture(extraTables = []) {
               try {
                 const where = filters.length ? " where " + filters.join(" and ") : "";
                 let sql;
-                if (operation === "SELECT") sql = "select " + projection + " from public." + table + where + (order.length ? " order by " + order.join(",") : "") + (limit ? " limit " + Number(limit) : "");
+                if (operation === "SELECT") sql = "select " + projection + " from public." + table + where + (order.length ? " order by " + order.join(",") : "") + (limit ? " limit " + Number(limit) : "") + (offset ? " offset " + Number(offset) : "");
                 if (operation === "INSERT") sql = "insert into public." + table + "(" + Object.keys(data).map(identifier).join(",") + ") values(" + Object.values(data).map(parameter).join(",") + ") returning " + projection;
                 if (operation === "UPDATE") sql = "update public." + table + " set " + Object.entries(data).map(([key, value]) => identifier(key) + "=" + parameter(value)).join(",") + where + " returning " + projection;
                 if (operation === "DELETE") sql = "delete from public." + table + where + " returning " + projection;

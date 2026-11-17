@@ -5,7 +5,7 @@ export const BADGE_CATEGORIES = MERCHANT_GENERIC_BADGE_LABELS;
 export type BadgeCategory = keyof typeof BADGE_CATEGORIES;
 export type BadgeIdentity = Readonly<{ key: string; label: string; policy?: MerchantBadgePolicy }>;
 export type MerchantBadgeSuggestion = BadgeIdentity & Readonly<{
-  activity: string; purchaseCount: number; imageUrl?: string;
+  activity: string; activityKey: string; purchaseCount: number; imageUrl?: string;
 }>;
 export type BadgeAnchor = Readonly<{ key: string; digest: string }>;
 export type BadgeBinding = BadgeAnchor & Readonly<{ identityKey: string | null; category: BadgeCategory | null; version: number;

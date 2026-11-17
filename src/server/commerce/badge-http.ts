@@ -74,6 +74,10 @@ export async function badgeRequest(request: Request, kind: "COMMAND" | "UPLOAD" 
       plannerKeys(raw, ["kind", "keys"]);
       return reply({ merchants: await service.suggestions(raw.keys) });
     }
+    if (raw.kind === "MERCHANT_CATALOG") {
+      plannerKeys(raw, ["kind"]);
+      return reply({ merchants: await service.merchantCatalog() });
+    }
     if (raw.kind === "CONFIRM") {
       plannerKeys(raw, ["kind", "identityKey", "newLabel", "anchor", "expectedBindingVersion"], ["kind"]);
       if ((raw.identityKey !== undefined) === (raw.newLabel !== undefined)) throw new TypeError("BADGE_REQUEST_INVALID");
