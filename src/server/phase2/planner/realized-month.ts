@@ -25,8 +25,9 @@ export type RealizedPayment = Readonly<{
   art: Art | undefined;
   components: readonly { id: string; label: string; amount: string }[];
 }>;
-type Occurrence = Readonly<{ id: string; label: string; date: string; endDate: string }>;
+type Occurrence = Readonly<{ id: string; label: string; date: string; endDate: string; status: string }>;
 type Section = "fixed" | "daily" | "events" | "flows";
+type RelatedPayment = Readonly<{ id: string; label: string; date: string; cardId: string; cardLabel: string }>;
 type CardGroup = {
   id: string;
   section: Section;
@@ -34,16 +35,22 @@ type CardGroup = {
   art: Art;
   date?: string;
   endDate?: string;
+  eventStatus?: string;
   payments: RealizedPayment[];
   occurrences?: Occurrence[];
-  relatedPayments?: number;
+  relatedPayments?: RelatedPayment[];
 };
-export type RealizedCard = Readonly<CardGroup & { amount: string | null }>;
+export type RealizedCard = Readonly<CardGroup & {
+  amount: string | null;
+  transferAmounts?: { incoming: string; outgoing: string };
+}>;
 export type RealizedBoard = Readonly<{
   month: YearMonth;
   totals: Readonly<Record<Flow, { amount: string; count: number }>>;
   operationCount: number;
   eventCount: number;
+  net: string;
+  sectionAmounts: Readonly<Record<Exclude<Section, "flows">, string>>;
   cards: readonly RealizedCard[];
 }>;
 
@@ -59,7 +66,6 @@ const beauty = { iconKey: "beauty" };
 const gift = { templateKey: "gift", iconKey: "gift" };
 const bank = { assetKey: "other:fee", iconKey: "savings" };
 const home = { iconKey: "home" };
-const social = { assetKey: "scene:visit", iconKey: "family" };
 
 const categoryArt: Readonly<Record<string, Art>> = {
   alimentation: groceries,
@@ -153,15 +159,16 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const range = { start: parseLocalDate(`${month}-01`), endExclusive: parseLocalDate(`${addMonths(month, 1)}-01`) };
   const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(new Date().toISOString()));
   const repository = new CanonicalRepository(createCanonicalReadClient(), context, { shareEconomicReads: true });
-  const [rows, facts, occurrences] = await Promise.all([
-    repository.loadOperationsByBankRange(range), repository.loadEconomicFacts(range), repository.loadActivityOccurrences(range),
-  ]);
-  const operations = rows.map(operationFromCanonicalRow);
-  const eventIds = occurrences.map(event => event.lifeEventId);
-  const [labels, eventDetails, directLinks, momentLinks] = await Promise.all([
-    loadOperationReferenceLabels(repository, operations, facts), repository.loadLifeEventRecords(eventIds),
-    repository.loadFinancialLinkRowsByOperationIds(operations.map(operation => operation.operationId)),
-    repository.loadMomentLifeEventRowsByLifeEventIds(eventIds),
+  const operationRead = repository.loadOperationsByBankRange(range).then(rows => rows.map(operationFromCanonicalRow));
+  const factRead = repository.loadEconomicFacts(range);
+  const occurrenceRead = repository.loadActivityOccurrences(range);
+  const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
+  const [operations, facts, occurrences, labels, eventDetails, directLinks, momentLinks] = await Promise.all([
+    operationRead, factRead, occurrenceRead,
+    Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts)),
+    eventIds.then(ids => repository.loadLifeEventRecords(ids)),
+    operationRead.then(rows => repository.loadFinancialLinkRowsByOperationIds(rows.map(operation => operation.operationId))),
+    eventIds.then(ids => repository.loadMomentLifeEventRowsByLifeEventIds(ids)),
   ]);
 
   const eventById = new Map(eventDetails.map(row => [String(row.life_event_id), row]));
@@ -176,9 +183,9 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const id = groceryEvent?.id ?? (visual.recurring ? `events-${event.activityId}` : `event-${event.lifeEventId}`);
     const card: CardGroup = cards.get(id) ?? {
       ...(groceryEvent ?? { id, section: "events", label: visual.recurring ? visual.label : title, art: visual.art, payments: [] }),
-      ...(visual.recurring ? { occurrences: [] } : { date: event.startDate, endDate: event.endDate }),
+      ...(visual.recurring ? { occurrences: [] } : { date: event.startDate, endDate: event.endDate, eventStatus: event.validationStatus }),
     };
-    card.occurrences?.push({ id: event.lifeEventId, label: title, date: event.startDate, endDate: event.endDate });
+    card.occurrences?.push({ id: event.lifeEventId, label: title, date: event.startDate, endDate: event.endDate, status: event.validationStatus });
     cards.set(id, card);
     eventCards.set(event.lifeEventId, card);
   }
@@ -237,7 +244,12 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       cards.set(card.id, card);
     }
     card.payments.push(payment);
-    for (const linkedCard of linkedCards) if (linkedCard !== card) linkedCard.relatedPayments = (linkedCard.relatedPayments ?? 0) + 1;
+    for (const linkedCard of linkedCards) {
+      if (linkedCard === card) continue;
+      (linkedCard.relatedPayments ??= []).push({
+        id: payment.id, label: payment.label, date: payment.date, cardId: card.id, cardLabel: card.label,
+      });
+    }
   }
   const totals = Object.fromEntries((["expense", "income", "refund", "transfer", "other"] as const).map(flow => {
     const items = payments.filter(payment => payment.flow === flow);
@@ -245,6 +257,21 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   })) as RealizedBoard["totals"];
   return {
     month, totals, operationCount: payments.length, eventCount: occurrences.length,
-    cards: [...cards.values()].map(card => ({ ...card, amount: card.payments.length ? realizedBankSum(card.payments) : null })),
+    net: new Big(totals.income.amount).plus(totals.expense.amount).plus(totals.refund.amount).plus(totals.other.amount).toFixed(2),
+    sectionAmounts: {
+      fixed: realizedBankSum([...cards.values()].filter(card => card.section === "fixed").flatMap(card => card.payments)),
+      daily: realizedBankSum([...cards.values()].filter(card => card.section === "daily").flatMap(card => card.payments)),
+      events: realizedBankSum([...cards.values()].filter(card => card.section === "events").flatMap(card => card.payments)),
+    },
+    cards: [...cards.values()].map(card => ({
+      ...card,
+      amount: card.payments.length ? realizedBankSum(card.payments) : null,
+      ...(card.payments[0]?.flow === "transfer" ? {
+        transferAmounts: {
+          incoming: realizedBankSum(card.payments.filter(payment => new Big(payment.amount).gt(0))),
+          outgoing: realizedBankSum(card.payments.filter(payment => new Big(payment.amount).lt(0))),
+        },
+      } : {}),
+    })),
   };
 }
