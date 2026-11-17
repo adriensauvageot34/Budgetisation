@@ -5,8 +5,7 @@ import { BootstrapAuthenticationRequiredError } from "@/server/bootstrap/errors"
 import { plannerKeys, plannerRecord } from "@/domain/phase2/planner/json";
 import { MAX_BADGE_BYTES } from "@/domain/phase2/commerce-media";
 import { BadgeLibrary } from "./badge-library";
-import { createCanonicalReadClient } from "@/server/canonical/client";
-import { parseCanonicalHouseholdScope } from "@/analytics/facts/canonical";
+import { getCanonicalCommerceClient } from "./canonical";
 
 const headers = { "Cache-Control": "private, no-store", Vary: "Cookie", "X-Content-Type-Options": "nosniff" };
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers });
@@ -14,13 +13,7 @@ async function owner() {
   const { supabase, user } = await getAuthenticatedBootstrapClient();
   const household = await getCurrentHousehold(supabase);
   if (!household) throw new TypeError("BADGE_DENIED");
-  return new BadgeLibrary(supabase, user.id, async () => {
-    const canonical = createCanonicalReadClient();
-    const { data, error } = await canonical.from("canonical_household_scope_control").select("household_count,household_id,status").limit(2);
-    if (error || data?.length !== 1 || parseCanonicalHouseholdScope(data[0]) !== String(household.householdId))
-      throw new TypeError("BADGE_DENIED");
-    return canonical;
-  });
+  return new BadgeLibrary(supabase, user.id, () => getCanonicalCommerceClient(household.householdId));
 }
 async function boundedBody(request: Request, max: number) {
   if (Number(request.headers.get("content-length") ?? 0) > max) throw new TypeError("BADGE_TOO_LARGE");
@@ -94,7 +87,7 @@ export async function badgeRequest(request: Request, kind: "COMMAND" | "UPLOAD" 
   } catch (error) {
     if (error instanceof BootstrapAuthenticationRequiredError) return reply({ code: "BADGE_AUTH_REQUIRED" }, 401);
     const message = error instanceof TypeError ? error.message : "";
-    if (message === "BADGE_DENIED") return reply({ code: message }, 403);
+    if (message === "BADGE_DENIED" || message === "BADGE_POLICY_DENIED") return reply({ code: message }, 403);
     if (message === "BADGE_CONFLICT") return reply({ code: message }, 409);
     if (message === "BADGE_TOO_LARGE") return reply({ code: message }, 413);
     if (/^(BADGE_.*INVALID|PLANNER_)/u.test(message)) return reply({ code: message }, 400);

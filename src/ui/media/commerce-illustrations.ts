@@ -1,6 +1,7 @@
 import registry from "./commerce-illustrations.json";
 import type { BundledMediaAsset } from "./media-registry";
 import type { BadgeCategory } from "@/domain/phase2/commerce-media";
+import type { MerchantBadgePolicy } from "@/core/identity/merchant-kind";
 
 export type CommerceIllustrations = Readonly<{
   identities: Readonly<Record<string, BundledMediaAsset>>;
@@ -15,19 +16,21 @@ function commerceAssetPath(asset: BundledMediaAsset | undefined) {
 type BadgeImage = Readonly<{ src: string; kind: "IDENTITY" | "CATEGORY" }>;
 
 export function commerceBadgeImages({
-  identityKey, sharedKey, category, personalSrc, sharedPersonalSrc,
+  identityKey, sharedKey, category, personalSrc, sharedPersonalSrc, policy = "normal",
 }: {
   identityKey?: string;
   sharedKey?: string;
   category?: BadgeCategory;
   personalSrc?: string;
   sharedPersonalSrc?: string;
+  policy?: MerchantBadgePolicy;
 }): readonly BadgeImage[] {
-  const specific = identityKey ? commerceAssetPath(commerceIllustrations.identities[identityKey]) : undefined;
+  if (policy === "none") return [];
+  const specific = policy === "normal" && identityKey ? commerceAssetPath(commerceIllustrations.identities[identityKey]) : undefined;
   const shared = sharedKey ? commerceAssetPath(commerceIllustrations.identities[sharedKey]) : undefined;
   const activity = category === "INDIAN_RESTAURANT" ? "RESTAURANT" : category;
   const generic = activity ? commerceAssetPath(commerceIllustrations.categories[activity]) : undefined;
-  const identities = [personalSrc, specific, sharedPersonalSrc, shared].flatMap(src =>
+  const identities = [policy === "normal" ? personalSrc : undefined, specific, sharedPersonalSrc, shared].flatMap(src =>
     src ? [{ src, kind: "IDENTITY" as const }] : [],
   );
   return generic ? [...identities, { src: generic, kind: "CATEGORY" }] : identities;

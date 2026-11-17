@@ -3,7 +3,7 @@ import "server-only";
 import type { EconomicComponentFact, EconomicTiming } from "@/analytics/facts";
 import { MetricProductionContractError } from "@/analytics/production";
 import { parseMerchantId } from "@/core/identity";
-import { merchantDisplayName, merchantGenericBadgeCategory, merchantIdentityKinds } from "@/core/identity/merchant-kind";
+import { merchantBadgePolicy, merchantDisplayName, merchantGenericBadgeCategory, merchantIdentityKinds } from "@/core/identity/merchant-kind";
 import type {
   CategoryId,
   MerchantId,
@@ -198,6 +198,7 @@ export function buildOperationRow(
       kind: NonNullable<OperationRowReadModel["merchantIdentityKind"]>;
       visualId?: MerchantId;
       genericCategory?: OperationRowReadModel["merchantGenericBadgeCategory"];
+      policy?: OperationRowReadModel["merchantBadgePolicy"];
     }>;
     readonly places?: ReadonlyMap<string, string>;
   } = {},
@@ -235,6 +236,7 @@ export function buildOperationRow(
     ...(merchantIdentity ? { merchantIdentityKind: merchantIdentity.kind } : {}),
     ...(merchantIdentity?.visualId ? { merchantVisualId: merchantIdentity.visualId } : {}),
     ...(merchantIdentity?.genericCategory ? { merchantGenericBadgeCategory: merchantIdentity.genericCategory } : {}),
+    ...(merchantIdentity?.policy && merchantIdentity.policy !== "normal" ? { merchantBadgePolicy: merchantIdentity.policy } : {}),
     bankAmount: moneyEnvelope(operation.bankAmount),
     economicNet:
       facts.length === 0
@@ -307,12 +309,12 @@ export async function loadOperationReferenceLabels(
   ]);
   const loadedMerchantIds = new Set(merchants.map(row => row.merchant_id));
   const extraVisualIds = [...new Set(merchants.flatMap(row =>
-    row.identity_kind === "commercial" && typeof row.visual_brand_merchant_id === "string"
+    row.identity_kind === "commercial" && merchantBadgePolicy(row.badge_policy) !== "none" && typeof row.visual_brand_merchant_id === "string"
       && !loadedMerchantIds.has(row.visual_brand_merchant_id) ? [row.visual_brand_merchant_id] : [],
   ))];
   const visualTargets = extraVisualIds.length ? await repository.loadEntityRows("merchants", "merchant_id", extraVisualIds) : [];
   const merchantRoots = new Set([...merchants, ...visualTargets].filter(row =>
-    row.identity_kind === "commercial" && row.visual_brand_merchant_id == null,
+    row.identity_kind === "commercial" && row.visual_brand_merchant_id == null && merchantBadgePolicy(row.badge_policy) === "normal",
   ).map(row => row.merchant_id));
   const merchantLabels = new Map(canonicalLabelMap(merchants, ["merchant_id", "id"]));
   for (const row of merchants) {
@@ -326,11 +328,12 @@ export async function loadOperationReferenceLabels(
     merchantIdentity: new Map(merchants.flatMap(row => {
       const kind = row.identity_kind as NonNullable<OperationRowReadModel["merchantIdentityKind"]>;
       if (typeof row.merchant_id !== "string" || !merchantIdentityKinds.has(kind)) return [];
-      const visualId = kind === "commercial" && typeof row.visual_brand_merchant_id === "string"
+      const policy = merchantBadgePolicy(row.badge_policy);
+      const visualId = policy !== "none" && kind === "commercial" && typeof row.visual_brand_merchant_id === "string"
         && merchantRoots.has(row.visual_brand_merchant_id)
         ? parseMerchantId(row.visual_brand_merchant_id) : undefined;
-      const genericCategory = kind === "commercial" ? merchantGenericBadgeCategory(row.generic_badge_category) : undefined;
-      return [[row.merchant_id, { kind, visualId, genericCategory }] as const];
+      const genericCategory = kind === "commercial" && policy !== "none" ? merchantGenericBadgeCategory(row.generic_badge_category) : undefined;
+      return [[row.merchant_id, { kind, visualId, genericCategory, policy }] as const];
     })),
     places: canonicalLabelMap(places, ["place_id", "id"]),
   };

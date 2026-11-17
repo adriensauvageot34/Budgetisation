@@ -5,6 +5,7 @@ const { CanonicalRepository, sourceAwareEconomicDimensions } = require('@/server
 const { operationFromCanonicalRow } = require('@/server/query/sources/shared');
 const { buildOperationRow, loadOperationReferenceLabels } = require('@/server/query/sources/operations');
 const { commerceBadgeImages, commerceIllustrations } = require('@/ui/media/commerce-illustrations.ts');
+const { canCreateMerchantBadge } = require('@/core/identity/merchant-kind');
 const { resolveGlobalM2NeedAuthorities } = require('@/server/analytics/global-v2-category-needs-authority');
 const householdId = '00000000-0000-4000-8000-000000000001';
 const ids = Array.from({ length: 241 }, (_, n) => `00000000-0000-4000-8000-${String(n + 10).padStart(12, '0')}`);
@@ -88,12 +89,12 @@ for (const [size, expected] of [[120, [120, 120, 1]], [100, [100, 100, 41]]]) {
 const [storeId, brandId, bakeryId, tobacconistAId, tobacconistBId] = ids;
 const merchantRows = [
   { merchant_id: storeId, nom_canonique: 'PAIEMENT 42', identity_kind: 'commercial',
-    commercial_display_name: 'Enseigne de recette', visual_brand_merchant_id: brandId },
+    commercial_display_name: 'Enseigne de recette', visual_brand_merchant_id: brandId, badge_policy: 'reuse_only' },
   { merchant_id: brandId, nom_canonique: 'Marque de recette', identity_kind: 'commercial', visual_brand_merchant_id: null },
   { merchant_id: bakeryId, nom_canonique: 'TERMINAL 43', identity_kind: 'commercial',
     commercial_display_name: 'Fournil de recette', generic_badge_category: 'BAKERY' },
   { merchant_id: tobacconistAId, nom_canonique: 'Tabac de recette A', identity_kind: 'commercial', generic_badge_category: 'TOBACCO' },
-  { merchant_id: tobacconistBId, nom_canonique: 'Tabac de recette B', identity_kind: 'commercial', generic_badge_category: 'TOBACCO' },
+  { merchant_id: tobacconistBId, nom_canonique: 'Tabac de recette B', identity_kind: 'commercial', generic_badge_category: 'TOBACCO', badge_policy: 'reuse_only' },
 ];
 const operations = [storeId, bakeryId, tobacconistAId, tobacconistBId]
   .map((merchant_id, index) => operationFromCanonicalRow({ ...full[index], merchant_id }));
@@ -105,11 +106,13 @@ const [store, bakery, tobacconistA, tobacconistB] = operations.map(operation => 
 assert.equal(store.bankLabel, full[0].libelle_bancaire);
 assert.deepEqual(store.merchant, { id: storeId, label: 'Enseigne de recette' });
 assert.equal(store.merchantVisualId, brandId);
+assert.equal(store.merchantBadgePolicy, 'reuse_only');
 assert.deepEqual(bakery.merchant, { id: bakeryId, label: 'Fournil de recette' });
 assert.equal(bakery.merchantGenericBadgeCategory, 'BAKERY');
 const genericBadge = row => commerceBadgeImages({
   identityKey: 'merchant:' + row.merchant.id,
   category: row.merchantGenericBadgeCategory,
+  policy: row.merchantBadgePolicy,
 })[0];
 assert.notEqual(tobacconistA.merchant.label, tobacconistB.merchant.label);
 assert.deepEqual(genericBadge(tobacconistA), genericBadge(tobacconistB));
@@ -125,4 +128,14 @@ assert.ok(commerceBadgeImages({ identityKey: espit, category: 'BAR' })[0].src.en
 assert.ok(commerceBadgeImages({ identityKey: 'merchant:' + storeId, sharedKey: carrefour, category: 'GROCERIES' })[0].src.endsWith('/carrefour.webp'));
 assert.deepEqual(commerceBadgeImages({ category: 'INDIAN_RESTAURANT' }), commerceBadgeImages({ category: 'RESTAURANT' }));
 assert.deepEqual(commerceBadgeImages({ identityKey: 'merchant:' + storeId }), []);
+assert.deepEqual(commerceBadgeImages({
+  identityKey: espit, sharedKey: carrefour, category: 'TOBACCO', personalSrc: '/fixture.webp', policy: 'none',
+}), []);
+assert.deepEqual(commerceBadgeImages({
+  identityKey: espit, sharedKey: carrefour, category: 'TOBACCO', personalSrc: '/fixture.webp', policy: 'reuse_only',
+}).map(image => image.src.split('/').at(-1)), ['carrefour.webp', 'tobacco.webp']);
+assert.equal(canCreateMerchantBadge('commercial', 'normal'), true);
+assert.equal(canCreateMerchantBadge('commercial', 'reuse_only'), false);
+assert.equal(canCreateMerchantBadge('unknown', 'none'), false);
+assert.equal(canCreateMerchantBadge('private_person', 'normal'), false);
 console.log('HISTORICAL_OPERATIONS_FIELDSET PASS (population, batches, exact money, browse, merchant presentation, dimensions, Need authority, memo)');

@@ -4,6 +4,17 @@ export const merchantIdentityKinds = new Set([
 
 export type MerchantIdentityKind = typeof merchantIdentityKinds extends Set<infer Kind> ? Kind : never;
 
+export const merchantBadgePolicies = new Set(["normal", "reuse_only", "none"] as const);
+export type MerchantBadgePolicy = typeof merchantBadgePolicies extends Set<infer Policy> ? Policy : never;
+
+export function merchantBadgePolicy(value: unknown): MerchantBadgePolicy {
+  return merchantBadgePolicies.has(value as MerchantBadgePolicy) ? value as MerchantBadgePolicy : "normal";
+}
+
+export function canCreateMerchantBadge(kind: MerchantIdentityKind, policy: MerchantBadgePolicy) {
+  return policy === "normal" && !isPrivateMerchantKind(kind);
+}
+
 export const MERCHANT_GENERIC_BADGE_LABELS = {
   TOBACCO: "Tabac",
   BAKERY: "Boulangerie",

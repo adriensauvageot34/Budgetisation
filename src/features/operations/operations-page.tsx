@@ -53,13 +53,15 @@ function OperationCounterparty({ row }: { row: OperationRowReadModel }) {
       identityKey: row.merchant ? "merchant:" + row.merchant.id : undefined,
       sharedKey: row.merchantVisualId ? "merchant:" + row.merchantVisualId : undefined,
       category: row.merchantGenericBadgeCategory,
+      policy: row.merchantBadgePolicy,
     }).find(candidate => !failed.includes(candidate.src))
     : undefined;
   const Icon = kind === "private_person" ? UserRound : kind === "personal_transfer_label" ? ArrowLeftRight : undefined;
   const description = kind === "private_person" ? "Contrepartie privée"
     : kind === "personal_transfer_label" ? "Libellé de virement personnel" : undefined;
   return <>
-    <span className={styles.counterparty} data-counterparty-kind={kind} data-badge-visual={image?.kind ?? "NEUTRAL"}>
+    <span className={styles.counterparty} data-counterparty-kind={kind} data-badge-policy={row.merchantBadgePolicy}
+      data-badge-visual={image?.kind ?? "NEUTRAL"}>
       {image ? <img key={image.src} src={image.src} alt="" width={24} height={24} loading="lazy" decoding="async"
         onError={() => setFailed(current => current.includes(image.src) ? current : [...current, image.src])} />
         : Icon ? <Icon size={16} aria-hidden="true" /> : null}

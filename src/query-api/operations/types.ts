@@ -10,7 +10,7 @@ import type { LocalDate } from "../../core/time";
 import type { QueryCapabilities } from "../capabilities";
 import type { CursorPage } from "../collections";
 import type { NormalizedOperationsBrowseParams } from "../request/operations-params";
-import type { MerchantGenericBadgeCategory, MerchantIdentityKind } from "../../core/identity/merchant-kind";
+import type { MerchantBadgePolicy, MerchantGenericBadgeCategory, MerchantIdentityKind } from "../../core/identity/merchant-kind";
 
 export type OperationReference<Id extends string> = {
   readonly id: Id;
@@ -38,6 +38,7 @@ export type OperationRowReadModel = {
   readonly merchantIdentityKind?: MerchantIdentityKind;
   readonly merchantVisualId?: MerchantId;
   readonly merchantGenericBadgeCategory?: MerchantGenericBadgeCategory;
+  readonly merchantBadgePolicy?: MerchantBadgePolicy;
   readonly account?: { readonly id: string; readonly label: string };
   readonly bankAmount: MoneyMetricEnvelope;
   readonly economicNet: MoneyMetricEnvelope;

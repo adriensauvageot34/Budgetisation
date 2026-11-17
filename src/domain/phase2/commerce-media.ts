@@ -1,18 +1,19 @@
 import { plannerDigest, plannerDigestString, plannerKeys, plannerRecord, plannerString, plannerUuid } from "./planner/json";
-import { MERCHANT_GENERIC_BADGE_LABELS, type MerchantGenericBadgeCategory, type MerchantIdentityKind } from "../../core/identity/merchant-kind";
+import { MERCHANT_GENERIC_BADGE_LABELS, type MerchantBadgePolicy, type MerchantGenericBadgeCategory, type MerchantIdentityKind } from "../../core/identity/merchant-kind";
 
 export const BADGE_CATEGORIES = {
   ...MERCHANT_GENERIC_BADGE_LABELS,
   BEAUTY: "Beauté", CLOTHING: "Vêtements", HOME: "Maison", ACTIVITY: "Activités", SHOP: "Commerce",
 } as const;
 export type BadgeCategory = keyof typeof BADGE_CATEGORIES;
-export type BadgeIdentity = Readonly<{ key: string; label: string }>;
+export type BadgeIdentity = Readonly<{ key: string; label: string; policy?: MerchantBadgePolicy }>;
 export type BadgeAnchor = Readonly<{ key: string; digest: string }>;
 export type BadgeBinding = BadgeAnchor & Readonly<{ identityKey: string | null; category: BadgeCategory | null; version: number }>;
 export type PersonalBadge = BadgeIdentity & Readonly<{ category: BadgeCategory | null; version: number; hasImage: boolean; imageUrl?: string }>;
 export type MerchantBadgeIdentity = Readonly<{
   key: string;
   kind: MerchantIdentityKind;
+  policy?: MerchantBadgePolicy;
   displayName?: string;
   visualKey?: string;
   genericCategory?: MerchantGenericBadgeCategory;

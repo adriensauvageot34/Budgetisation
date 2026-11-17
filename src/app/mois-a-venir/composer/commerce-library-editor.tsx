@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import Link from "next/link";
 import { BADGE_CATEGORIES, type BadgeCategory, type BadgeIdentity, type BadgeLibraryRead, type PersonalBadge } from "@/domain/phase2/commerce-media";
 import type { CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
 import { badgeCommand, commerceLibraryPath, resolveBadgeMedia } from "./commerce-library";
@@ -42,7 +43,7 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
     catch (failure) { setError(failure instanceof Error ? failure.message : "Enregistrement non confirmé."); }
     finally { setBusy(false); }
   };
-  const adopt = (next: PersonalBadge) => { setIdentity({ key: next.key, label: next.label }); setMedia(next); };
+  const adopt = (next: PersonalBadge) => { setIdentity({ key: next.key, label: next.label, policy: next.policy }); setMedia(next); };
   const ensureIdentity = async () => {
     if (!identity) throw Error("Confirmez l’entreprise avant d’ajouter son illustration.");
     if (media) return media;
@@ -63,11 +64,13 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
       <button type="button" disabled={busy} aria-label="Fermer la bibliothèque visuelle" onClick={close}><X size={18} /></button></header>
     <p>{badge.text}</p>
     <p className={styles.notice}>Bibliothèque privée de votre compte. Vos choix visuels sont enregistrés séparément de vos intentions.</p>
+    <Link href="/parametres">Référentiel des marchands</Link>
     {!library.available && <p role="status">Bibliothèque privée indisponible. Les illustrations génériques restent disponibles.</p>}
     <section><h3>Entreprise</h3>
       {identity ? <>
         <p data-confirmed-badge-identity>{identity.label} · {identity.key.startsWith("personal:") ? "Fiche visuelle privée" : "Identité sélectionnée"}</p>
         <small className={styles.identity}>{identity.key}</small>
+        {identity.policy === "reuse_only" && <p>Réutilisation de badges existants uniquement.</p>}
         {badge.anchor && <button type="button" disabled={busy} onClick={() => { setIdentity(undefined); setMedia(undefined); setCandidate(null); }}>Corriger l’entreprise associée</button>}
       </> : <>
         <p>Choisissez l’entreprise concernée ou créez une fiche dans votre bibliothèque visuelle.</p>
@@ -103,7 +106,7 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
         </select></label><button disabled={busy || !library.available}>Conserver la catégorie</button>
       </form>
     </section>
-    <section><h3>Illustration</h3>
+    {identity?.policy !== "reuse_only" && <section><h3>Illustration</h3>
       {media?.imageUrl && <img src={media.imageUrl} alt={"Illustration personnelle de " + identity?.label} width={80} height={80} />}
       <p>PNG ou WebP, 5 Mo maximum. La transparence existante est conservée lors de la préparation du WebP.</p>
       <label>Fichier de l’illustration<input type="file" accept="image/png,image/webp" disabled={busy || !identity}
@@ -120,7 +123,7 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
         setMedia(result.media); setFile(null);
         setMessage("Illustration enregistrée dans votre bibliothèque privée.");
       })}>{media?.hasImage ? "Remplacer l’illustration" : "Ajouter l’illustration"}</button>
-    </section>
+    </section>}
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}
   </dialog>;
   return typeof document === "undefined" ? null : createPortal(panel, document.body);
