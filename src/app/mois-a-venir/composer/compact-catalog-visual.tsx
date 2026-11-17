@@ -3,7 +3,7 @@
 import { useState, type ComponentProps } from "react";
 import styles from "./composer.module.css";
 import { PlannerIcon } from "./planner-icons/planner-icon";
-import { clayAssetArtwork, clayContextArtwork } from "../clay-v22-media";
+import { clayAssetArtwork, clayBuilderArtwork, clayContextArtwork } from "../clay-v22-media";
 
 const catalog = "/planned-visuals/builder/clay/catalog-compact";
 const bar = "/planned-visuals/builder/clay/bar-compact";
@@ -42,11 +42,11 @@ export function CompactCatalogVisual({ src, iconKey, fallbackSrc, visualConceptI
   </span>;
 }
 
-/** Exact catalogue key, or an explicitly identified generic context. Presets keep their own images. */
+/** Use the published catalogue or builder key before falling back to the context. */
 export function ComposerAssetVisual({ assetKey, templateKey, iconKey, className = "", size, identityRef, scale = 'LIBRARY' }: {
   assetKey: string; templateKey?: string; iconKey: string; className?: string; size?: number; identityRef?: string; scale?: ComponentProps<typeof PlannerIcon>['scale'];
 }) {
-  const artwork = clayAssetArtwork(assetKey) ?? clayContextArtwork(templateKey);
+  const artwork = clayAssetArtwork(assetKey) ?? clayBuilderArtwork(assetKey, "compact") ?? clayContextArtwork(templateKey);
   const historical = catalogImages.get(assetKey);
   return artwork || historical ? <CompactCatalogVisual src={artwork?.src ?? historical!} fallbackSrc={historical}
     visualConceptId={artwork?.visualConceptId} iconKey={iconKey} className={className} size={size} />
