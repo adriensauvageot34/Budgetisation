@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeftRight, Building2, Croissant, MapPin, Martini, Scissors, ShoppingCart, Sparkles, Store, UserRound, Utensils, Shirt, House, Ticket, ImagePlus } from "lucide-react";
+import { ArrowLeftRight, Building2, CreditCard, Croissant, MapPin, Martini, Scissors, ShoppingCart, Sparkles, Store, UserRound, Utensils, Shirt, House, Ticket, ImagePlus } from "lucide-react";
+import { nonMerchantLabel } from "@/core/identity/merchant-kind";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { commerceBadges, type CommerceContext, type CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
 import { BADGE_CATEGORIES, type BadgeCategory } from "@/domain/phase2/commerce-media";
@@ -23,9 +24,9 @@ function CommerceBadgeView({ badge }: { badge: CommerceBadge }) {
   const image = candidates.find(candidate => !failed.includes(candidate.src));
   const categoryIcon = fallbackCategory ? categoryIcons[fallbackCategory] : undefined;
   const Icon = counterpartyKind === "private_person" ? UserRound : counterpartyKind === "personal_transfer_label" ? ArrowLeftRight
-    : categoryIcon ?? icons[badge.kind];
+    : counterpartyKind === "payment_instrument" ? CreditCard : categoryIcon ?? icons[badge.kind];
   const boundIdentity = identity && !badge.identity;
-  const caption = counterpartyKind ? `${counterpartyKind === "private_person" ? "Contrepartie privée" : "Virement personnel"} · ${badge.label}`
+  const caption = counterpartyKind ? `${nonMerchantLabel(counterpartyKind)} · ${badge.label}`
     : boundIdentity && identity.label !== badge.label ? `${badge.text} · ${identity.label}` : badge.text;
   const title = [caption, policy === "none" ? "Exclu des illustrations" : null, category ? `Catégorie · ${BADGE_CATEGORIES[category]}` : null,
     image && personal?.imageUrl === image.src ? "Illustration privée" : null].filter(Boolean).join(" · ");

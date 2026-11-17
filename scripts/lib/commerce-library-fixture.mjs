@@ -29,6 +29,7 @@ export async function commerceLibraryFixture(extraTables = []) {
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261117001552_merchant_generic_badge_categories.sql", "utf8"));
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261117012301_merchant_badge_policy.sql", "utf8"));
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261117105049_merchant_activity_catalog.sql", "utf8"));
+  await pg.db.exec(fs.readFileSync("supabase/migrations/20261117114551_merchant_payment_instrument.sql", "utf8"));
   await pg.db.exec(`grant select on public.merchant_activities to authenticated;
     create policy merchant_activities_fixture on public.merchant_activities for select to authenticated using (true);`);
   for (const [id, name] of [[uuid(97001), "E.Leclerc"], [uuid(97002), "Atelier Homonyme"], [uuid(97003), "Atelier Homonyme"]])

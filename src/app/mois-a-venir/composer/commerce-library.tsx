@@ -4,7 +4,7 @@ import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useM
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { commerceBadges, type CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
 import type { BadgeLibraryRead } from "@/domain/phase2/commerce-media";
-import { isPrivateMerchantKind } from "@/core/identity/merchant-kind";
+import { isNonMerchantKind } from "@/core/identity/merchant-kind";
 
 const LibraryEditor = lazy(() => import("./commerce-library-editor").then(module => ({ default: module.CommerceLibraryEditor })));
 const empty: BadgeLibraryRead = { media: [], bindings: [] };
@@ -29,7 +29,7 @@ export const useCommerceLibrary = () => useContext(LibraryContext);
 export function resolveBadgeMedia(badge: CommerceBadge, library: BadgeLibraryRead | null) {
   const binding = badge.anchor ? library?.bindings.find(row => row.key === badge.anchor!.key && row.digest === badge.anchor!.digest) : undefined;
   const merchant = library?.merchants?.find(row => row.key === (badge.identity?.key ?? binding?.identityKey));
-  if (isPrivateMerchantKind(merchant?.kind)) return { counterpartyKind: merchant.kind };
+  if (isNonMerchantKind(merchant?.kind)) return { counterpartyKind: merchant.kind };
   if (merchant?.policy === "none") {
     return { policy: merchant.policy,
       identity: { key: merchant.key, label: merchant.displayName ?? badge.identity?.label ?? badge.label, policy: merchant.policy } };

@@ -1,5 +1,5 @@
 export const merchantIdentityKinds = new Set([
-  "commercial", "private_person", "personal_transfer_label", "unknown",
+  "commercial", "private_person", "personal_transfer_label", "payment_instrument", "unknown",
 ] as const);
 
 export type MerchantIdentityKind = typeof merchantIdentityKinds extends Set<infer Kind> ? Kind : never;
@@ -12,7 +12,7 @@ export function merchantBadgePolicy(value: unknown): MerchantBadgePolicy {
 }
 
 export function canCreateMerchantBadge(kind: MerchantIdentityKind, policy: MerchantBadgePolicy) {
-  return policy === "normal" && !isPrivateMerchantKind(kind);
+  return policy === "normal" && !isNonMerchantKind(kind);
 }
 
 export const MERCHANT_GENERIC_BADGE_LABELS = {
@@ -77,6 +77,18 @@ export function merchantGenericBadgeCategory(value: unknown): MerchantGenericBad
     ? value as MerchantGenericBadgeCategory : undefined;
 }
 
-export function isPrivateMerchantKind(value: unknown): value is "private_person" | "personal_transfer_label" {
-  return value === "private_person" || value === "personal_transfer_label";
+const nonMerchantLabels = {
+  private_person: "Contrepartie privée",
+  personal_transfer_label: "Libellé de virement personnel",
+  payment_instrument: "Instrument de paiement",
+} as const;
+
+type NonMerchantKind = keyof typeof nonMerchantLabels;
+
+export function isNonMerchantKind(value: unknown): value is NonMerchantKind {
+  return typeof value === "string" && Object.hasOwn(nonMerchantLabels, value);
+}
+
+export function nonMerchantLabel(kind: unknown): string | undefined {
+  return isNonMerchantKind(kind) ? nonMerchantLabels[kind] : undefined;
 }
