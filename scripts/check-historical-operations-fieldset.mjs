@@ -92,7 +92,7 @@ const merchantRows = [
     commercial_display_name: 'Enseigne de recette', visual_brand_merchant_id: brandId, badge_policy: 'reuse_only' },
   { merchant_id: brandId, nom_canonique: 'Marque de recette', identity_kind: 'commercial', visual_brand_merchant_id: null },
   { merchant_id: bakeryId, nom_canonique: 'TERMINAL 43', identity_kind: 'commercial',
-    commercial_display_name: 'Fournil de recette', generic_badge_category: 'BAKERY' },
+    commercial_display_name: 'Fournil de recette', activity_key: 'BAKERY' },
   { merchant_id: tobacconistAId, nom_canonique: 'Tabac de recette A', identity_kind: 'commercial', generic_badge_category: 'TOBACCO' },
   { merchant_id: tobacconistBId, nom_canonique: 'Tabac de recette B', identity_kind: 'commercial', generic_badge_category: 'TOBACCO', badge_policy: 'reuse_only' },
 ];
@@ -100,7 +100,12 @@ const operations = [storeId, bakeryId, tobacconistAId, tobacconistBId]
   .map((merchant_id, index) => operationFromCanonicalRow({ ...full[index], merchant_id }));
 const labels = await loadOperationReferenceLabels({
   loadTaxonomyRows: async () => [],
-  loadEntityRows: async (table, _column, keys) => table === 'merchants' ? merchantRows.filter(row => keys.includes(row.merchant_id)) : [],
+  loadEntityRows: async (table, _column, keys) => {
+    if (table === "merchantActivities" && keys.includes("BAKERY")) {
+      return [{ activity_key: 'BAKERY', label: 'Boulangerie', sector: 'Alimentation', badge_category: 'BAKERY' }];
+    }
+    return table === 'merchants' ? merchantRows.filter(row => keys.includes(row.merchant_id)) : [];
+  },
 }, operations, []);
 const [store, bakery, tobacconistA, tobacconistB] = operations.map(operation => buildOperationRow(operation, [], labels));
 assert.equal(store.bankLabel, full[0].libelle_bancaire);

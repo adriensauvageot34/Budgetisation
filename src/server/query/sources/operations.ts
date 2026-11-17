@@ -3,7 +3,8 @@ import "server-only";
 import type { EconomicComponentFact, EconomicTiming } from "@/analytics/facts";
 import { MetricProductionContractError } from "@/analytics/production";
 import { parseMerchantId } from "@/core/identity";
-import { merchantBadgePolicy, merchantDisplayName, merchantGenericBadgeCategory, merchantIdentityKinds } from "@/core/identity/merchant-kind";
+import { merchantBadgePolicy, merchantDisplayName, merchantIdentityKinds } from "@/core/identity/merchant-kind";
+import { indexMerchantActivities, merchantBadgeCategoryFor, referencedMerchantActivities } from "@/core/identity/merchant-activity";
 import type {
   CategoryId,
   MerchantId,
@@ -312,7 +313,12 @@ export async function loadOperationReferenceLabels(
     row.identity_kind === "commercial" && merchantBadgePolicy(row.badge_policy) !== "none" && typeof row.visual_brand_merchant_id === "string"
       && !loadedMerchantIds.has(row.visual_brand_merchant_id) ? [row.visual_brand_merchant_id] : [],
   ))];
-  const visualTargets = extraVisualIds.length ? await repository.loadEntityRows("merchants", "merchant_id", extraVisualIds) : [];
+  const activityKeys = referencedMerchantActivities(merchants);
+  const [visualTargets, activityRows] = await Promise.all([
+    extraVisualIds.length ? repository.loadEntityRows("merchants", "merchant_id", extraVisualIds) : [],
+    activityKeys.length ? repository.loadEntityRows("merchantActivities", "activity_key", activityKeys) : [],
+  ]);
+  const activities = indexMerchantActivities(activityRows);
   const merchantRoots = new Set([...merchants, ...visualTargets].filter(row =>
     row.identity_kind === "commercial" && row.visual_brand_merchant_id == null && merchantBadgePolicy(row.badge_policy) === "normal",
   ).map(row => row.merchant_id));
@@ -332,7 +338,7 @@ export async function loadOperationReferenceLabels(
       const visualId = policy !== "none" && kind === "commercial" && typeof row.visual_brand_merchant_id === "string"
         && merchantRoots.has(row.visual_brand_merchant_id)
         ? parseMerchantId(row.visual_brand_merchant_id) : undefined;
-      const genericCategory = kind === "commercial" && policy !== "none" ? merchantGenericBadgeCategory(row.generic_badge_category) : undefined;
+      const genericCategory = merchantBadgeCategoryFor(row, activities);
       return [[row.merchant_id, { kind, visualId, genericCategory, policy }] as const];
     })),
     places: canonicalLabelMap(places, ["place_id", "id"]),

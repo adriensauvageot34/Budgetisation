@@ -27,6 +27,16 @@ try {
     key: alias.key, kind: "commercial", displayName: alias.label, genericCategory: "BAKERY", visualKey: "merchant:" + uuid(97001),
   }]);
   await fixture.pg.db.exec("reset role");
+  const digitalId = uuid(97007);
+  await fixture.pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at,
+      identity_source, activity_key)
+    values ($1,'Logiciel de recette','commercial',now(),'owner_confirmed','DIGITAL')`, [digitalId]);
+  const digitalKey = "merchant:" + digitalId;
+  assert.equal((await a.read([digitalKey], [])).merchants[0].genericCategory, "DIGITAL");
+  await fixture.pg.db.exec("reset role");
+  await fixture.pg.db.query("update public.merchants set activity_review_required=true where merchant_id=$1", [digitalId]);
+  assert.equal((await a.read([digitalKey], [])).merchants[0].genericCategory, undefined);
+  await fixture.pg.db.exec("reset role");
   for (const [id, name] of [[uuid(97005), "Tabac de recette A"], [uuid(97006), "Tabac de recette B"]]) {
     await fixture.pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at,
         identity_source, generic_badge_category)
