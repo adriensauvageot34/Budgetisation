@@ -35,7 +35,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
       // Repacking can remount the card while the user is still in its dock.
       // Keep that live focus, including buttons and the options group.
       if(expanded&&active instanceof HTMLElement&&active!==document.body
-        &&(root.current?.contains(active)||active.closest('[data-bar-dock]')))return;
+        &&(root.current?.contains(active)||active.closest('[data-bar-dock],[data-commerce-dock]')))return;
       const scene=root.current?.querySelector<HTMLElement>('[data-bar-living-editor]')?.dataset.barStep;
       const sceneFocus=expanded&&(scene==="place"||scene==="google")?root.current?.querySelector<HTMLElement>('[data-bar-google-search] input')
         :expanded&&scene==="date"?root.current?.querySelector<HTMLElement>('[data-bar-calendar] button[tabindex="0"]'):null;

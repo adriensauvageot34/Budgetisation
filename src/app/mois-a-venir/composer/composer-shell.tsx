@@ -1193,7 +1193,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     prepareBasketArticle={prepareCatalogBasketArticle}><CommerceLibraryProvider model={shown}>
   <div className={styles.workspace} data-composer data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
-      if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-bar-place-suggestions],[data-catalog-open],[popover],dialog'))return;
+      if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-commerce-dock],[data-bar-place-suggestions],[data-catalog-open],[popover],dialog'))return;
       // Capture the click across the whole Composer, including the Library.
       // A RAW refusal also stops the clicked control's action, not only closing.
       if(!inlineEdits.registry.guard(closeDialog)){event.preventDefault();event.stopPropagation();return;}

@@ -1,10 +1,10 @@
 "use client";
 
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { commerceBadges, type CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
 import { monthlyCommerceBadges } from "@/domain/phase2/planner/commerce-badge-profiles";
-import type { BadgeLibraryRead } from "@/domain/phase2/commerce-media";
+import type { BadgeLibraryRead, MerchantBadgeSuggestion } from "@/domain/phase2/commerce-media";
 import { isNonMerchantKind } from "@/core/identity/merchant-kind";
 
 const LibraryEditor = lazy(() => import("./commerce-library-editor").then(module => ({ default: module.CommerceLibraryEditor })));
@@ -23,7 +23,18 @@ export async function badgeCommand(command: unknown) {
   return result;
 }
 
-type LibraryState = BadgeLibraryRead & { available: boolean; open: (badge: CommerceBadge) => void };
+type DockSelection = { badge: CommerceBadge; invoker: HTMLElement; cluster: boolean };
+type LibraryState = BadgeLibraryRead & {
+  available: boolean;
+  open: (badge: CommerceBadge, invoker: HTMLElement) => void;
+  dock: DockSelection | null;
+  closeDock: (restoreFocus?: boolean) => void;
+  openAdvanced: () => void;
+  refresh: () => void;
+  catalog: readonly MerchantBadgeSuggestion[] | null;
+  catalogError: boolean;
+  loadCatalog: () => void;
+};
 const LibraryContext = createContext<LibraryState | null>(null);
 export const useCommerceLibrary = () => useContext(LibraryContext);
 
@@ -66,11 +77,24 @@ export function CommerceLibraryProvider({ model, children }: { model: ComposerUi
   });
   const [library, setLibrary] = useState<BadgeLibraryRead>(empty);
   const [available, setAvailable] = useState(false), [generation, setGeneration] = useState(0);
-  const [selected, setSelected] = useState<CommerceBadge | null>(null);
+  const [dock, setDock] = useState<DockSelection | null>(null);
+  const [advanced, setAdvanced] = useState<CommerceBadge | null>(null);
+  const [catalog, setCatalog] = useState<readonly MerchantBadgeSuggestion[] | null>(null);
+  const [catalogError, setCatalogError] = useState(false);
+  const pendingCatalog = useRef(false);
+  const loadCatalog = useCallback(() => {
+    if (pendingCatalog.current) return;
+    pendingCatalog.current = true;
+    setCatalogError(false);
+    void badgeCommand({ kind: "MERCHANT_CATALOG" })
+      .then(result => setCatalog(result.merchants as readonly MerchantBadgeSuggestion[]))
+      .catch(() => setCatalogError(true))
+      .finally(() => { pendingCatalog.current = false; });
+  }, []);
+  useEffect(() => { loadCatalog(); }, [loadCatalog]);
   useEffect(() => {
     const request = JSON.parse(signature) as { keys: string[]; anchors: NonNullable<CommerceBadge["anchor"]>[] };
     let cancelled = false;
-    setLibrary(empty); setAvailable(false);
     const read = async () => {
       const merged: { media: BadgeLibraryRead["media"][number][]; bindings: BadgeLibraryRead["bindings"][number][];
         merchants: NonNullable<BadgeLibraryRead["merchants"]>[number][] } = { media: [], bindings: [], merchants: [] };
@@ -90,11 +114,23 @@ export function CommerceLibraryProvider({ model, children }: { model: ComposerUi
     void read().catch(() => { if (!cancelled) setAvailable(false); });
     return () => { cancelled = true; };
   }, [signature, generation]);
-  const open = useCallback((badge: CommerceBadge) => setSelected(badge), []);
-  const value = useMemo(() => ({ ...library, available, open }), [library, available, open]);
+  const open = useCallback((badge: CommerceBadge, invoker: HTMLElement) => {
+    if (!badge.anchor) { setAdvanced(badge); return; }
+    setDock({ badge, invoker, cluster: !!invoker.closest("[data-cluster-overlay]") });
+    if (badge.kind !== "platform" && !catalog) loadCatalog();
+  }, [catalog, loadCatalog]);
+  const closeDock = useCallback((restoreFocus = false) => {
+    if (restoreFocus && dock?.invoker.isConnected && document.activeElement?.closest("[data-commerce-dock]"))
+      dock.invoker.focus({ preventScroll: true });
+    setDock(current => current === dock ? null : current);
+  }, [dock]);
+  const openAdvanced = useCallback(() => { if (dock) setAdvanced(dock.badge); }, [dock]);
+  const refresh = useCallback(() => setGeneration(current => current + 1), []);
+  const value = useMemo(() => ({ ...library, available, open, dock, closeDock, openAdvanced, refresh, catalog, catalogError, loadCatalog }),
+    [library, available, open, dock, closeDock, openAdvanced, refresh, catalog, catalogError, loadCatalog]);
   return <LibraryContext.Provider value={value}>{children}
-    {selected && <Suspense fallback={<p role="status">Ouverture de la bibliothèque…</p>}>
-      <LibraryEditor badge={selected} library={value} refresh={() => setGeneration(current => current + 1)} close={() => setSelected(null)} />
+    {advanced && <Suspense fallback={<p role="status">Ouverture de la bibliothèque…</p>}>
+      <LibraryEditor badge={advanced} library={value} refresh={() => { refresh(); loadCatalog(); }} close={() => setAdvanced(null)} />
     </Suspense>}
   </LibraryContext.Provider>;
 }

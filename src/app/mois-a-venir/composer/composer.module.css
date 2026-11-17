@@ -1456,7 +1456,9 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .barLivingCard .barRouteLine { font-size:12px; }
 
 /* R5: an empty scene does not reserve a passive dock. The portal host stays mounted. */
-.columns[data-bar-living-open=true] .paletteDock:not(:has([data-bar-dock])) { display:none; }
+.columns[data-bar-living-open=true] .paletteDock:not(:has([data-bar-dock],[data-commerce-dock])) { display:none; }
+.board .paletteDock[hidden],.clusterDialog .paletteDock[hidden] { display:none; }
+.board .paletteDock:has([data-commerce-dock]) { margin-inline:0; }
 
 /* R5: stable choice artwork box; no card or Board sizing changes. */
 .barCompositionDock .barProductSymbol { flex:0 0 64px; width:64px; height:36px; display:grid; place-items:center; }
@@ -1887,7 +1889,7 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .compactEquipmentDock .paletteGroup .equipmentTile > :is([data-planner-icon],img) { width:28px; height:28px; flex-basis:28px; }
 .compactEquipmentDock .paletteGroup .equipmentTile [data-planner-icon] svg { width:28px; height:28px; }
 .paletteDock:has(.compactEquipmentDock) { margin-inline:0; }
-.columns[data-night-workshop-open=true] .paletteDock:has(.compactEquipmentDock,.compactQuestionDock) { height:auto; flex:0 0 auto; }
+.columns[data-night-workshop-open=true] .paletteDock:has(.compactEquipmentDock,.compactQuestionDock,[data-commerce-dock]) { height:auto; flex:0 0 auto; }
 .dockGroups { display:flex; gap:4px; min-width:0; overflow-x:auto; padding-block:2px; scrollbar-width:thin; }
 .dockGroups button { flex:none; padding:3px 8px; min-height:25px; border:1px solid #e1d6ee; border-radius:7px; background:#fff; color:#614d7b; font-size:11px; }
 .dockGroups button[aria-pressed=true] { border-color:#bda4de; background:#f0e8fb; }

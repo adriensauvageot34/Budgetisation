@@ -9,6 +9,8 @@ import { FixedChargeCard, FixedChargesDetails } from "./fixed-charges";
 import { ComposerCard } from "./composer-card";
 import { ContextCard } from "./context-card";
 import { ContextPalette } from "./context-palette";
+import { CommerceDock } from "./commerce-dock";
+import { useCommerceLibrary } from "./commerce-library";
 import styles from "./composer.module.css";
 import { useComposerInteractions, sameTarget, leftSurface } from "./interactions";
 import { BoardCarousel } from "./board-carousel";
@@ -40,6 +42,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
     || model.presentation.dragSources[selected]?.editorDropTarget?.kind === "BOARD_ZONE");
   const trashAccepts = !!selected && model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
   const focusedCard = model.board.contexts.find(c => c.contextOccurrenceId === focused);
+  const commerce = useCommerceLibrary();
   const [equipmentTarget, setEquipmentTarget] = useState<{ id: string; slotKey?: string }>();
   const openEquipment = useCallback((id: string, slotKey?: string) => {
     focusEquipment(id, () => setEquipmentTarget({ id, slotKey }));
@@ -66,7 +69,11 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
     if (revealMonthlyControl) setShowMonthCards(true);
   }, [revealMonthlyControl, reveal?.sequence]);
   const toggleMonthCards = () => {
-    const change = () => { inlineEdits?.flushPending(); setShowMonthCards(value => !value); };
+    const change = () => {
+      inlineEdits?.flushPending();
+      if (showMonthCards && commerce?.dock?.badge.anchor?.key.startsWith("control:")) commerce.closeDock();
+      setShowMonthCards(value => !value);
+    };
     if (!showMonthCards || !inlineEdits || inlineEdits.guard(change, monthTargets)) change();
   };
   const restaurantFocus = livingBar?.id ?? (contextGuide && focusedCard?.templateKey === "restaurant" ? focusedCard.contextOccurrenceId : null);
@@ -113,7 +120,9 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
   // The compact living card already exposes its direct entry points. Do not
   // leave the generic equipment dock behind after folding it: that changes
   // the Board's available height and prevents an exact return to its layout.
-  const palette = focusedCard && (presetForContext(focusedCard)?.presetKey !== "bar-apero" || livingBar?.id === focusedCard.contextOccurrenceId) && <div className={styles.paletteDock} data-palette-dock>{contextGuide ?? <ContextPalette key={focusedCard.contextOccurrenceId} card={focusedCard} model={model} busy={busy} choose={choose}
+  const paletteInCluster = commerce?.dock ? commerce.dock.cluster && !!openCluster : focusedInCluster;
+  const merchantPalette = commerce?.dock && <CommerceDock key={`${commerce.dock.badge.anchor?.key}:${commerce.dock.badge.anchor?.digest}`} library={commerce} />;
+  const regularPalette = focusedCard && (presetForContext(focusedCard)?.presetKey !== "bar-apero" || livingBar?.id === focusedCard.contextOccurrenceId) && <div className={styles.paletteDock} data-palette-dock hidden={!!merchantPalette}>{contextGuide ?? <ContextPalette key={focusedCard.contextOccurrenceId} card={focusedCard} model={model} busy={busy} choose={choose}
     equipmentTarget={equipmentTarget?.id === focusedCard.contextOccurrenceId ? equipmentTarget : undefined}
     onConfigure={!focusedCard.readOnly ? () => editContext(focusedCard) : undefined}
     close={() => { setEquipmentTarget(undefined); focus(null); }} />}</div>;
@@ -135,9 +144,11 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
     }} render={item => item.kind === "FIXED" ? <FixedChargeCard facts={item.facts} detached={item.detached} open={() => setFixedOpen(item.detached ? item.facts[0].factKey : "group")} reattach={() => toggleFixed(item.facts[0].factKey)} />
       : item.kind === "CLUSTER" ? <VisualClusterCard node={item} open={() => setOpenClusterId(item.id)} /> : renderAtomic(item)}>
     </BoardCarousel>
-    {openCluster && <VisualClusterOverlay node={openCluster} focused={focused} close={()=>closeCluster()} renderChild={item => renderAtomic(item, true)} palette={focusedInCluster ? palette : null} trash={trashZone} />}
+    {openCluster && <VisualClusterOverlay node={openCluster} focused={focused} close={()=>closeCluster(() => { if (commerce?.dock?.cluster) commerce.closeDock(); })} renderChild={item => renderAtomic(item, true)}
+      palette={<>{focusedInCluster && regularPalette}{paletteInCluster && merchantPalette && <div className={styles.paletteDock} data-palette-dock>{merchantPalette}</div>}</>} trash={trashZone} />}
     {model.presentation.elementCount < 4 && <button data-add-element className={styles.emptyInvitation} disabled={busy} onClick={add}><Plus size={14} /> Ajouter à votre mois</button>}
-    {!focusedInCluster && palette}
+    {!focusedInCluster && regularPalette}
+    {!paletteInCluster && merchantPalette && <div className={styles.paletteDock} data-palette-dock>{merchantPalette}</div>}
     {!openCluster && trashZone}
     {fixedOpen && <FixedChargesDetails month={model.board.targetMonth} editableKeys={model.budgetReading?.monthUpdate?.obligationKeys}
       facts={fixedOpen === "group" ? fixedFacts.filter(f => !detached.has(f.factKey)) : fixedFacts.filter(f => f.factKey === fixedOpen)}

@@ -7,6 +7,11 @@ const originalLoad = Module._load, originalResolve = Module._resolveFilename;
 Module._load = function(request, parent, isMain) { return request === "server-only" ? {} : originalLoad.call(this, request, parent, isMain); };
 Module._resolveFilename = function(request, parent, isMain, options) {
   const target = request.startsWith("@/") ? path.resolve(process.cwd(), "src", request.slice(2)) : request;
+  if (request.startsWith("@/") && !path.extname(target)) {
+    for (const extension of [".ts", ".tsx"]) {
+      if (fs.existsSync(target + extension)) return originalResolve.call(this, target + extension, parent, isMain, options);
+    }
+  }
   try { return originalResolve.call(this, target, parent, isMain, options); } catch (error) {
     if (path.extname(target)) throw error;
     for (const candidate of [`${target}.ts`, `${target}.tsx`, path.join(target, "index.ts")]) {

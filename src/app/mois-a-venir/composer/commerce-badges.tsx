@@ -35,7 +35,7 @@ function CommerceBadgeView({ badge, expanded = false }: { badge: CommerceBadge; 
     image && personal?.imageUrl === image.src ? personal.bundledAssetKey ? "Badge Clay choisi" : "Illustration privée" : null].filter(Boolean).join(" · ");
   if (badge.custom && !identity && !category && !genericAsset && library) return <button type="button" className={styles.commerceBadgeAdd}
     aria-label={`Choisir le badge entreprise de ${badge.cardLabel ?? badge.label}`}
-    onClick={event => { event.stopPropagation(); library.open(badge); }}>
+    onClick={event => { event.stopPropagation(); library.open(badge, event.currentTarget); }}>
     <ImagePlus size={14} aria-hidden="true" /> Entreprise
   </button>;
   const editable = !counterpartyKind && policy !== "none" && !awaitingMerchant && library && (identity || badge.anchor);
@@ -52,7 +52,7 @@ function CommerceBadgeView({ badge, expanded = false }: { badge: CommerceBadge; 
     {editable && !genericAsset && <span className={styles.commerceBadgeEdit}><ImagePlus size={12} aria-hidden="true" /><span>Badge</span></span>}
   </>;
   return editable ? <button type="button" {...attrs} aria-label={`Personnaliser le badge ${businessLabel ?? badge.label}`}
-    onClick={event => { event.stopPropagation(); library!.open(badge); }}>{contents}</button> : <span {...attrs}>{contents}</span>;
+    onClick={event => { event.stopPropagation(); library!.open(badge, event.currentTarget); }}>{contents}</button> : <span {...attrs}>{contents}</span>;
 }
 
 export function CommerceBadges({ context, model, expanded = false }: { context: CommerceContext; model: ComposerUiModel; expanded?: boolean }) {

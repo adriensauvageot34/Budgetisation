@@ -16,6 +16,11 @@ const anchor = commerceAnchor(uuid(97205), "seller", "Atelier Homonyme");
 const second = commerceAnchor(uuid(97206), "seller", "Atelier Homonyme");
 
 try {
+  const courses = await a.suggestions(["categories:groceries"]);
+  assert.deepEqual(courses.map(item => [item.label, item.purchaseCount]), [["E.Leclerc", 1]]);
+  assert.equal((await a.merchantCatalog())[0].activityKey, "SUPERMARKET");
+  await assert.rejects(a.suggestions(["merchant:invalid"]), /BADGE_SUGGESTIONS_INVALID/u);
+  await assert.rejects(fixture.asUser(fixture.other, () => fixture.pg.db.query("select * from public.composer_merchant_suggestions()")), /permission denied/u);
   await fixture.pg.db.exec("reset role");
   const aliasId = uuid(97004);
   await fixture.pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at,
