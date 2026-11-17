@@ -3,6 +3,7 @@
 import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { commerceBadges, type CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
+import { monthlyCommerceBadges } from "@/domain/phase2/planner/commerce-badge-profiles";
 import type { BadgeLibraryRead } from "@/domain/phase2/commerce-media";
 import { isNonMerchantKind } from "@/core/identity/merchant-kind";
 
@@ -34,6 +35,8 @@ export function resolveBadgeMedia(badge: CommerceBadge, library: BadgeLibraryRea
     return { policy: merchant.policy,
       identity: { key: merchant.key, label: merchant.displayName ?? badge.identity?.label ?? badge.label, policy: merchant.policy } };
   }
+  // Explicit visual choice for this card; Canonical merchant identities stay unchanged.
+  if (binding?.genericAsset) return { genericAsset: binding.genericAsset, businessLabel: binding.businessLabel, policy: merchant?.policy };
   const bound = binding?.identityKey ? library?.media.find(row => row.key === binding.identityKey) : undefined;
   const baseIdentity = badge.identity ?? (bound ? { key: bound.key, label: bound.label } : undefined);
   const identity = baseIdentity && merchant ? {
@@ -52,7 +55,8 @@ export function resolveBadgeMedia(badge: CommerceBadge, library: BadgeLibraryRea
 
 /** One bounded batch per set of displayed subjects, independent of the financial transports. */
 export function CommerceLibraryProvider({ model, children }: { model: ComposerUiModel; children: ReactNode }) {
-  const subjects = model.board.contexts.flatMap(context => commerceBadges(context, model.mobilityOptions?.places));
+  const subjects = [...model.board.contexts.flatMap(context => commerceBadges(context, model.mobilityOptions?.places)),
+    ...model.board.baselineControls.flatMap(monthlyCommerceBadges), ...model.board.discretionaryControls.flatMap(monthlyCommerceBadges)];
   const signature = JSON.stringify({
     keys: [...new Set(subjects.flatMap(subject => subject.identity ? [subject.identity.key] : []))].sort(),
     anchors: [...new Map(subjects.flatMap(subject => subject.anchor ? [[subject.anchor.key, subject.anchor] as const] : [])).values()]

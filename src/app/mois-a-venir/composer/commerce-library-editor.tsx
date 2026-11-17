@@ -7,7 +7,7 @@ import Link from "next/link";
 import { BADGE_CATEGORIES, type BadgeCategory, type BadgeIdentity, type BadgeLibraryRead, type PersonalBadge } from "@/domain/phase2/commerce-media";
 import type { CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
 import { badgeCommand, commerceLibraryPath, resolveBadgeMedia } from "./commerce-library";
-import type { ClayBadgeAsset } from "@/domain/phase2/commerce-badge-catalog";
+import { clayBadgeAsset, type ClayBadgeAsset } from "@/domain/phase2/commerce-badge-catalog";
 import { CommerceBadgeGallery } from "./commerce-badge-gallery";
 import styles from "./commerce-library.module.css";
 
@@ -23,7 +23,10 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
   const [bindingVersion, setBindingVersion] = useState(binding?.version ?? 0);
   const [query, setQuery] = useState(badge.label), [results, setResults] = useState<readonly BadgeIdentity[]>([]);
   const [candidate, setCandidate] = useState<BadgeIdentity | null>(null);
-  const [asset, setAsset] = useState<ClayBadgeAsset | null>(null);
+  const [genericSelection, setGenericSelection] = useState(resolved.genericAsset);
+  const [businessName, setBusinessName] = useState(resolved.businessLabel ?? (badge.custom ? "" : badge.label));
+  const [asset, setAsset] = useState<ClayBadgeAsset | null>(() => clayBadgeAsset(resolved.genericAsset?.key) ?? null);
+  const genericEditing = !!badge.genericOnly || asset?.type === "generic" || !!genericSelection;
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState(""), [message, setMessage] = useState("");
   const initialRead = useRef(library.available);
@@ -32,6 +35,8 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
     initialRead.current = true;
     const current = resolveBadgeMedia(badge, library);
     setIdentity(current.identity); setMedia(current.personal); setCategory(current.category ?? "");
+    setGenericSelection(current.genericAsset); setBusinessName(current.businessLabel ?? (badge.custom ? "" : badge.label));
+    setAsset(clayBadgeAsset(current.genericAsset?.key) ?? null);
     setBindingVersion(binding?.version ?? 0);
   }, [library, badge, binding?.version]);
   useEffect(() => {
@@ -63,18 +68,15 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
   });
   const applyAsset = () => void run(async () => {
     if (!asset) return;
-    if (asset.category) {
+    if (asset.type === "generic") {
       if (badge.anchor) {
-        const next = await badgeCommand({ kind: "ANCHOR_CATEGORY", anchor: badge.anchor,
-          expectedVersion: bindingVersion, category: asset.category });
+        const next = await badgeCommand({ kind: "ANCHOR_GENERIC", anchor: badge.anchor,
+          expectedVersion: bindingVersion, assetKey: asset.key, businessLabel: businessName.trim() });
         setBindingVersion(next.binding.version);
+        setGenericSelection(next.binding.genericAsset);
       } else {
-        const current = await ensureIdentity();
-        const next = (await badgeCommand({ kind: "CATEGORY", identityKey: current.key,
-          expectedVersion: current.version, category: asset.category })).media;
-        setMedia(next);
+        throw Error("Enregistrez d’abord la carte pour lui associer ce badge.");
       }
-      setCategory(asset.category);
     } else {
       let current = media;
       if (!identity) {
@@ -96,20 +98,29 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
     <header><h2 id="commerce-library-title">Illustration du badge</h2>
       <button type="button" disabled={busy} aria-label="Fermer la bibliothèque visuelle" onClick={close}><X size={18} /></button></header>
     <p>{badge.text}</p>
-    <p className={styles.notice}>Bibliothèque privée de votre compte. Vos choix visuels sont enregistrés séparément de vos intentions.</p>
-    <Link href="/parametres">Référentiel des marchands</Link>
+    <p className={styles.notice}>{genericEditing ? "Choisissez un badge puis saisissez le nom de l’entreprise." : "Bibliothèque privée de votre compte. Vos choix visuels sont enregistrés séparément de vos intentions."}</p>
+    {!genericEditing && <Link href="/parametres">Référentiel des marchands</Link>}
     {!library.available && <p role="status">Bibliothèque privée indisponible. Les illustrations génériques restent disponibles.</p>}
     <CommerceBadgeGallery busy={busy} available={library.available} reuseOnly={identity?.policy === "reuse_only"}
-      selectedKey={asset?.key ?? media?.bundledAssetKey} choose={setAsset} />
-    {asset && <section>
+      selectedKey={asset?.key ?? genericSelection?.key ?? media?.bundledAssetKey} choose={setAsset}
+      suggestedKeys={badge.suggestedKeys} cardLabel={badge.cardLabel} genericOnly={badge.genericOnly || !!genericSelection} />
+    {asset && <section><form onSubmit={event => { event.preventDefault(); applyAsset(); }}>
       <div className={styles.selection}>
         <img src={asset.src} alt="" width={72} height={72} />
         <span>{asset.label}</span>
       </div>
       {asset.reviewRequired && <p>Vérifiez que cette illustration correspond au commerce choisi.</p>}
-      <button type="button" disabled={busy || !library.available} onClick={applyAsset}>Utiliser cette illustration</button>
-    </section>}
-    <section><h3>Entreprise</h3>
+      {asset.type === "generic" && <label>Nom de l’entreprise<input value={businessName} maxLength={120} required autoFocus
+        disabled={busy} onChange={event => setBusinessName(event.target.value)} />
+        <small>Visible carte ouverte et au survol du badge carte fermée.</small></label>}
+      <button type="submit" disabled={busy || !library.available || asset.type === "generic" && !businessName.trim()}>Utiliser cette illustration</button>
+    </form></section>}
+    {genericSelection && <section><p>{businessName} · {genericSelection.label}</p><button type="button" disabled={busy || !library.available} onClick={() => void run(async () => {
+      const next = await badgeCommand({ kind: "ANCHOR_GENERIC", anchor: badge.anchor, expectedVersion: bindingVersion, assetKey: null, businessLabel: null });
+      setBindingVersion(next.binding.version); setGenericSelection(undefined); setAsset(null);
+      setMessage("Badge générique retiré de cette carte.");
+    })}>Retirer le badge générique</button></section>}
+    {!genericEditing && <><section><h3>Entreprise</h3>
       {identity ? <>
         <p data-confirmed-badge-identity>{identity.label} · {identity.key.startsWith("personal:") ? "Fiche visuelle privée" : "Identité sélectionnée"}</p>
         {identity.policy === "reuse_only" && <p>Réutilisation de badges existants uniquement.</p>}
@@ -170,7 +181,7 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
         setMedia(result.media); setFile(null);
         setMessage("Illustration enregistrée dans votre bibliothèque privée.");
       })}>{media?.hasImage ? "Remplacer l’illustration" : "Ajouter l’illustration"}</button>
-    </section>}
+    </section>}</>}
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}
   </dialog>;
   return typeof document === "undefined" ? null : createPortal(panel, document.body);

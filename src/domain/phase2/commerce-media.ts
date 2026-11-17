@@ -5,7 +5,8 @@ export const BADGE_CATEGORIES = MERCHANT_GENERIC_BADGE_LABELS;
 export type BadgeCategory = keyof typeof BADGE_CATEGORIES;
 export type BadgeIdentity = Readonly<{ key: string; label: string; policy?: MerchantBadgePolicy }>;
 export type BadgeAnchor = Readonly<{ key: string; digest: string }>;
-export type BadgeBinding = BadgeAnchor & Readonly<{ identityKey: string | null; category: BadgeCategory | null; version: number }>;
+export type BadgeBinding = BadgeAnchor & Readonly<{ identityKey: string | null; category: BadgeCategory | null; version: number;
+  businessLabel?: string; genericAsset?: Readonly<{ key: string; label: string; src: string }> }>;
 export type PersonalBadge = BadgeIdentity & Readonly<{
   category: BadgeCategory | null; version: number; hasImage: boolean; imageUrl?: string; bundledAssetKey?: string;
 }>;
@@ -44,6 +45,8 @@ export function badgeLabel(raw: unknown): string {
 export function badgeAnchor(raw: unknown): BadgeAnchor {
   const value = plannerRecord(raw);
   plannerKeys(value, ["key", "digest"]);
+  if (typeof value.key === "string" && /^control:[0-9a-f]{64}$/u.test(value.key))
+    return { key: value.key, digest: plannerDigestString(value.digest) };
   if (typeof value.key !== "string" || !/^(seller|provider|place):/u.test(value.key)) throw new TypeError("BADGE_ANCHOR_INVALID");
   const [role, id, extra] = value.key.split(":");
   if (extra) throw new TypeError("BADGE_ANCHOR_INVALID");

@@ -5,10 +5,12 @@ import { derivePlannedPlaceRoles } from "../planned-place-rules";
 import { parseNightOutVenue, sameVenuePlace } from "./night-out-venue";
 import type { ProspectivePlaceRef } from "../planned-contract";
 import { commerceAnchor, type BadgeAnchor, type BadgeCategory, type BadgeIdentity } from "../commerce-media";
+import { contextBadgeSuggestions } from "./commerce-badge-profiles";
 
-export type CommerceContext = Pick<PlannedContextState, "templateKey" | "fields"> & Partial<Pick<PlannedContextState, "contextOccurrenceId">>;
+export type CommerceContext = Pick<PlannedContextState, "templateKey" | "fields"> & Partial<Pick<PlannedContextState, "contextOccurrenceId">> & { label?: string };
 export type CommerceBadge = Readonly<{ kind: "platform" | "salon" | "restaurant" | "bar" | "place" | "merchant" | "seller";
-  text: string; label: string; category?: BadgeCategory; identity?: BadgeIdentity; anchor?: BadgeAnchor; custom?: boolean }>;
+  text: string; label: string; category?: BadgeCategory; identity?: BadgeIdentity; anchor?: BadgeAnchor; custom?: boolean;
+  suggestedKeys?: readonly string[]; genericOnly?: boolean; cardLabel?: string }>;
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const categories: Readonly<Record<string, BadgeCategory>> = {
   GROCERY: "GROCERIES", RESTAURANT: "RESTAURANT", FAST_FOOD: "RESTAURANT", BAR: "BAR",
@@ -53,9 +55,12 @@ export function commerceBadges(context: CommerceContext, places: NonNullable<Com
       text: googleBar ? `Bar sélectionné · ${ref.label}` : `Lieu saisi · ${ref.label}`,
       category: googleBar ? "BAR" : undefined, anchor: commerceAnchor(id, "place", ref) });
   }
-  if (!badges.length && id) badges.push({
+  const suggestedKeys = contextBadgeSuggestions(context);
+  if (!badges.length && id && suggestedKeys.length) badges.push({
     kind: "seller", label: "Badge de la carte", text: "Badge de la carte", custom: true,
     anchor: commerceAnchor(id, "seller", { kind: "card-badge", templateKey: context.templateKey }),
   });
-  return badges;
+  return badges.map(badge => ({ ...badge, suggestedKeys, cardLabel: context.label ?? presetForContext(context)?.label ?? "cette carte",
+    genericOnly: badge.custom || undefined,
+    anchor: badge.anchor ?? commerceAnchor(id, badge.kind === "platform" ? "provider" : badge.kind === "merchant" ? "seller" : "place", badge.identity?.key ?? badge.label) }));
 }

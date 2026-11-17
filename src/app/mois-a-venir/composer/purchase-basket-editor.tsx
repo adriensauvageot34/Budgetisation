@@ -262,7 +262,7 @@ export function PurchaseBasketEditor({ context, card, model, busy, decide, close
       <h2 id="basket-heading" tabIndex={-1}>{card.label}</h2></div>
       <button type="button" aria-label="Fermer le panier" onClick={close}>Fermer</button></header>
     <WorkshopNavigation contextId={id} />
-    <CommerceBadges context={context} model={model} />
+    <CommerceBadges context={context} model={model} expanded />
     {!form && !selectionPrompt && <IntentBudgetImpact model={model} contextId={id} />}
     {!form && !selectionPrompt && <div className={styles.actions}>
       {writable && <CatalogOpenButton target={{ contextId: id, scope: groceries ? "courses" : undefined, moment: "article" }}>
