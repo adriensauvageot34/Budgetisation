@@ -13,6 +13,7 @@ import { MONTHLY_GROCERIES_REF } from "./catalog-discovery";
 import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { presentationLabel } from "./presentation-label";
 import { controlMainDimension, controlValuePresentation, controlValueSummary } from "./control-value-presentation";
+import { MonthlyCommerceBadge } from "./commerce-badges";
 
 export function ComposerCard({ card, presentation, busy, preserved, focused = false, focus = () => {}, edit, preserve, mutate, hover, details }: {
   card: ComposerCardView; presentation: ComposerObjectPresentation; busy: boolean; preserved: boolean; focused?: boolean; focus?: () => void;
@@ -53,6 +54,7 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
     <div className={styles.objectIdentity}><PlannerIcon iconKey={presentation.iconKey} identityRef={card.targetRef} className={styles.objectIcon} />
       <div><h3 title={card.label}>{label.title}</h3>{label.person && <span className={styles.personChip}>{label.person}</span>}</div></div>
     {card.targetRef===MONTHLY_GROCERIES_REF&&<CatalogOpenButton target={{scope:'courses',controlRef:card.targetRef}}>Parcourir les produits</CatalogOpenButton>}
+    <MonthlyCommerceBadge card={card} expanded={focused} />
     <InlineControlValue card={card} dimension={controlMainDimension(card)} busy={busy} focus={focus} mutate={mutate} />
     {card.capability?.fields?.count?.status === "EDITABLE" && <><InlineControlValue card={card} dimension="unitAmount" busy={busy} focus={focus} mutate={mutate} />
       <small className={styles.officialSlotCost}>{card.value.remainingCount !== card.value.count && !card.value.projectionPending ? "Coût restant du poste" : "Coût du mois"} : {card.value.projectionPending ? "simulation en cours" : money(card.value.economicAmount)}</small></>}

@@ -233,7 +233,7 @@ export function CatalogContextEditor({ context, editor, targetMonth, householdPe
     data-project-editor={childSlot ? true : undefined}
     data-mascara-suggestions={mascaraPreset && question?.identity === "beauty-product-suggestions" || undefined} className={styles.nightEditor}>
     <WorkshopNavigation contextId={context.contextOccurrenceId} />
-    <CommerceBadges context={context} model={model} />
+    <CommerceBadges context={context} model={model} expanded />
     <p className={styles.helper}>Les informations restent liées à ce moment. La palette propose les postes compatibles ; seuls ces postes peuvent porter un coût.</p>
     {activeKey === null && <section className={styles.nightSection} data-catalog-summary><h3>{String(context.fields.label ?? "Votre intention")}</h3>
       <p>Choisissez uniquement la précision utile maintenant. Les autres informations restent inconnues.</p>

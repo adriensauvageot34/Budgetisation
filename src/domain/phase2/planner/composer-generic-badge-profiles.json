@@ -1,0 +1,422 @@
+{
+  "presets": {
+    "techno-night": [
+      "categories:nightclub",
+      "categories:concert-hall",
+      "categories:tickets",
+      "categories:bar"
+    ],
+    "uber-eats-order": [
+      "categories:meal-delivery",
+      "categories:restaurant",
+      "categories:fast-food",
+      "categories:pizzeria"
+    ],
+    "fishing-day": [
+      "categories:fishing-shop",
+      "categories:sport",
+      "categories:equipment-rental",
+      "categories:activity"
+    ],
+    "fontes-family-visit": [],
+    "clothing-shopping": [
+      "categories:clothing",
+      "categories:shoe-shop",
+      "categories:marketplace",
+      "categories:jewellery"
+    ],
+    "bar-apero": [
+      "categories:bar",
+      "categories:pub-brasserie",
+      "categories:cafe",
+      "categories:wine-bar"
+    ],
+    "nightclub": [
+      "categories:nightclub",
+      "categories:bar",
+      "categories:tickets"
+    ],
+    "friends-evening": [],
+    "home-evening": [],
+    "chicken-snack": [
+      "categories:fast-food",
+      "categories:restaurant",
+      "categories:takeaway",
+      "categories:meal-delivery"
+    ],
+    "restaurant-for-two": [
+      "categories:restaurant",
+      "categories:pub-brasserie",
+      "categories:pizzeria",
+      "categories:fast-food"
+    ],
+    "hiking-nature": [
+      "categories:hiking-shop",
+      "categories:sport",
+      "categories:equipment-rental",
+      "categories:activity"
+    ],
+    "beach-day": [
+      "categories:beach-shop",
+      "categories:nautical-rental",
+      "categories:activity",
+      "categories:beach-restaurant"
+    ],
+    "cinema": [
+      "categories:cinema",
+      "categories:tickets"
+    ],
+    "composed-outing": [],
+    "spa-relax": [
+      "categories:spa",
+      "categories:beauty"
+    ],
+    "servian-family-visit": [],
+    "visit-friends": [],
+    "weekend-gite": [
+      "categories:holiday-rental",
+      "categories:hotel",
+      "categories:camping",
+      "categories:booking-platform"
+    ],
+    "video-game-purchase": [
+      "categories:video-game-shop",
+      "categories:electronics",
+      "categories:marketplace",
+      "categories:digital-game-shop",
+      "categories:groceries"
+    ],
+    "amazon-purchase": [
+      "categories:marketplace",
+      "categories:shop"
+    ],
+    "shein-purchase": [
+      "categories:clothing",
+      "categories:shoe-shop",
+      "categories:jewellery"
+    ],
+    "aliexpress-purchase": [
+      "categories:marketplace",
+      "categories:shop",
+      "categories:electronics",
+      "categories:home",
+      "categories:clothing",
+      "categories:beauty"
+    ],
+    "mascara": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:beauty",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "hair-wax": [
+      "categories:cosmetics",
+      "categories:perfume",
+      "categories:hairdresser",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "laundry-detergent": [
+      "categories:groceries",
+      "categories:household-shop",
+      "categories:marketplace"
+    ],
+    "dishwashing-liquid": [
+      "categories:groceries",
+      "categories:household-shop"
+    ],
+    "concert": [
+      "categories:concert-hall",
+      "categories:tickets",
+      "categories:festival"
+    ],
+    "ropes-course": [
+      "categories:tree-adventure",
+      "categories:activity"
+    ],
+    "museum-exhibition": [
+      "categories:museum",
+      "categories:art-gallery",
+      "categories:heritage-site",
+      "categories:tickets"
+    ],
+    "gift-present": [
+      "categories:gift-shop",
+      "categories:bookshop",
+      "categories:toy-shop",
+      "categories:jewellery",
+      "categories:florist",
+      "categories:clothing",
+      "categories:beauty",
+      "categories:marketplace"
+    ],
+    "shoes-purchase": [
+      "categories:shoe-shop",
+      "categories:sport",
+      "categories:clothing",
+      "categories:marketplace",
+      "categories:groceries"
+    ],
+    "eyeliner": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "eyebrow-pencil": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "facial-toner": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "face-serum": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "face-moisturizer": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "face-cleanser": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "care-lotion": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "makeup-remover": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "hotel-night": [
+      "categories:hotel",
+      "categories:booking-platform"
+    ],
+    "stay-with-relatives": [],
+    "dishwasher-tablets": [
+      "categories:groceries",
+      "categories:household-shop"
+    ],
+    "floor-cleaner": [
+      "categories:groceries",
+      "categories:household-shop"
+    ],
+    "sponges": [
+      "categories:groceries",
+      "categories:household-shop"
+    ],
+    "trash-bags": [
+      "categories:groceries",
+      "categories:household-shop"
+    ],
+    "toilet-paper": [
+      "categories:groceries",
+      "categories:household-shop"
+    ],
+    "paper-towels": [
+      "categories:groceries",
+      "categories:household-shop"
+    ],
+    "bowling": [
+      "categories:bowling",
+      "categories:activity"
+    ],
+    "karting": [
+      "categories:karting"
+    ],
+    "escape-game": [
+      "categories:escape-game",
+      "categories:activity"
+    ],
+    "mini-golf": [
+      "categories:mini-golf",
+      "categories:activity"
+    ],
+    "billiards": [
+      "categories:billiards",
+      "categories:pub-brasserie"
+    ],
+    "pool": [
+      "categories:swimming-pool",
+      "categories:sport"
+    ],
+    "canoe-kayak": [
+      "categories:canoe-kayak"
+    ],
+    "theme-park": [
+      "categories:amusement-park",
+      "categories:tickets",
+      "categories:activity"
+    ],
+    "live-show": [
+      "categories:theatre",
+      "categories:tickets"
+    ],
+    "sport-match": [
+      "categories:stadium",
+      "categories:sport",
+      "categories:tickets"
+    ],
+    "creative-workshop": [
+      "categories:craft-workshop"
+    ],
+    "photo-outing": [
+      "categories:photo",
+      "categories:photo-rental"
+    ],
+    "laser-game": [
+      "categories:laser-game",
+      "categories:activity"
+    ],
+    "trampoline-park": [
+      "categories:trampoline-park",
+      "categories:activity"
+    ],
+    "water-park": [
+      "categories:water-park",
+      "categories:tickets"
+    ],
+    "zoo-visit": [
+      "categories:zoo",
+      "categories:tickets"
+    ],
+    "home-equipment-basket": [
+      "categories:furniture-shop",
+      "categories:decoration-shop",
+      "categories:home",
+      "categories:appliances",
+      "categories:garden",
+      "categories:marketplace"
+    ],
+    "groceries-purchase": [
+      "categories:groceries",
+      "categories:organic-grocer",
+      "categories:greengrocer",
+      "categories:bakery",
+      "categories:butcher",
+      "categories:fishmonger",
+      "categories:cheese",
+      "categories:delicatessen",
+      "categories:frozen-food"
+    ],
+    "beauty-purchase": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries",
+      "categories:marketplace"
+    ],
+    "furnish-room": [
+      "categories:furniture-shop",
+      "categories:decoration-shop",
+      "categories:home",
+      "categories:appliances",
+      "categories:garden",
+      "categories:marketplace"
+    ],
+    "hairdresser-service": [
+      "categories:hairdresser"
+    ],
+    "planned-service": [
+      "categories:professional-services"
+    ]
+  },
+  "templates": {
+    "night-out": [
+      "categories:bar",
+      "categories:nightclub",
+      "categories:pub-brasserie",
+      "categories:cafe",
+      "categories:concert-hall",
+      "categories:tickets"
+    ],
+    "restaurant": [
+      "categories:restaurant",
+      "categories:pub-brasserie",
+      "categories:pizzeria"
+    ],
+    "fast-food": [
+      "categories:fast-food",
+      "categories:takeaway",
+      "categories:pizzeria"
+    ],
+    "delivery": [
+      "categories:meal-delivery",
+      "categories:restaurant",
+      "categories:fast-food",
+      "categories:pizzeria",
+      "categories:caterer"
+    ],
+    "activity": [
+      "categories:activity",
+      "categories:tickets",
+      "categories:sport",
+      "categories:theatre"
+    ],
+    "purchase": [
+      "categories:shop",
+      "categories:marketplace",
+      "categories:groceries"
+    ],
+    "beauty-restock": [
+      "categories:perfume",
+      "categories:cosmetics",
+      "categories:pharmacy",
+      "categories:groceries"
+    ],
+    "family-visit": [],
+    "friend-visit": [],
+    "short-stay": [
+      "categories:hotel",
+      "categories:holiday-rental",
+      "categories:camping"
+    ],
+    "gift": [
+      "categories:gift-shop",
+      "categories:bookshop",
+      "categories:jewellery",
+      "categories:florist",
+      "categories:toy-shop",
+      "categories:clothing",
+      "categories:beauty",
+      "categories:marketplace"
+    ],
+    "home-project": [
+      "categories:furniture-shop",
+      "categories:decoration-shop",
+      "categories:home",
+      "categories:garden",
+      "categories:appliances"
+    ],
+    "other-context": []
+  },
+  "controls": {
+    "HOUSEHOLD:household:groceries": [
+      "categories:groceries",
+      "categories:organic-grocer",
+      "categories:greengrocer",
+      "categories:bakery",
+      "categories:butcher",
+      "categories:fishmonger",
+      "categories:cheese"
+    ]
+  }
+}

@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { BADGE_BUCKET, MAX_BADGE_BYTES, badgeAnchor, badgeCategory, badgeIdentityKey, badgeLabel, badgeVersion,
-  type BadgeAnchor, type BadgeIdentity, type BadgeLibraryRead, type MerchantBadgeIdentity, type PersonalBadge } from "@/domain/phase2/commerce-media";
+  type BadgeAnchor, type BadgeBinding, type BadgeIdentity, type BadgeLibraryRead, type MerchantBadgeIdentity, type PersonalBadge } from "@/domain/phase2/commerce-media";
 import { isNonMerchantKind, merchantBadgePolicy, merchantDisplayName, type MerchantBadgePolicy, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
 import { merchantBadgeCategoryFor, referencedMerchantActivities } from "@/core/identity/merchant-activity";
 import { readMerchantActivities } from "./merchant-activities";
@@ -10,7 +10,16 @@ import { clayBadgeAsset } from "@/domain/phase2/commerce-badge-catalog";
 
 type Row = { user_id: string; identity_key: string; label: string; category: PersonalBadge["category"];
   object_path: string | null; bundled_asset_key: string | null; version: number };
-type BindingRow = { anchor_key: string; source_digest: string; identity_key: string | null; category: PersonalBadge["category"]; version: number };
+type BindingRow = { anchor_key: string; source_digest: string; identity_key: string | null; category: PersonalBadge["category"]; version: number;
+  bundled_asset_key: string | null; business_label: string | null };
+const bindingColumns = "anchor_key,source_digest,identity_key,category,version,bundled_asset_key,business_label";
+const bindingVisual = (row: BindingRow): BadgeBinding => {
+  const asset = clayBadgeAsset(row.bundled_asset_key);
+  return { key: row.anchor_key, digest: row.source_digest, identityKey: row.identity_key, category: row.category, version: row.version,
+    ...(asset?.type === "generic" && row.business_label ? {
+      businessLabel: row.business_label, genericAsset: { key: asset.key, label: asset.label, src: asset.src },
+    } : {}) };
+};
 const columns = "identity_key,label,category,object_path,bundled_asset_key,version";
 const visual = (row: Row): PersonalBadge => {
   const asset = clayBadgeAsset(row.bundled_asset_key);
@@ -78,7 +87,7 @@ export class BadgeLibrary {
     if (keys.length > 100 || anchors.length > 100) throw new TypeError("BADGE_BATCH_INVALID");
     const ids = keys.map(badgeIdentityKey), refs = anchors.map(badgeAnchor);
     const bindingsRead = refs.length ? await this.client.from("composer_badge_bindings")
-      .select("anchor_key,source_digest,identity_key,category,version").eq("user_id", this.userId).in("anchor_key", refs.map(ref => ref.key))
+      .select(bindingColumns).eq("user_id", this.userId).in("anchor_key", refs.map(ref => ref.key))
       : { data: [], error: null };
     storageError(bindingsRead.error);
     const bindings = bindingsRead.data as BindingRow[];
@@ -100,9 +109,7 @@ export class BadgeLibrary {
     const urls = new Map((signed.data ?? []).flatMap(item => item.signedUrl ? [[item.path, item.signedUrl] as const] : []));
     return { merchants, media: rows.map(row => ({
       ...visual(row), ...(row.object_path && !row.bundled_asset_key ? { imageUrl: urls.get(row.object_path) } : {}),
-    })), bindings: bindings.map(row => ({
-      key: row.anchor_key, digest: row.source_digest, identityKey: row.identity_key, category: row.category, version: row.version,
-    })) };
+    })), bindings: bindings.map(bindingVisual) };
   }
 
   async search(query: string): Promise<readonly BadgeIdentity[]> {
@@ -179,7 +186,8 @@ export class BadgeLibrary {
     if (!row) throw new TypeError("BADGE_LIBRARY_UNAVAILABLE");
     if (anchor) {
       const value = { user_id: this.userId, anchor_key: anchor.key, source_digest: anchor.digest, identity_key: identity.key,
-        category: previous?.digest === anchor.digest ? previous.category : null, version: version + 1 };
+        category: previous?.digest === anchor.digest ? previous.category : null, version: version + 1,
+        bundled_asset_key: null, business_label: null };
       try {
         const result = version === 0 ? await this.client.from("composer_badge_bindings").insert(value).select("version").maybeSingle()
           : await this.client.from("composer_badge_bindings").update(value).eq("user_id", this.userId).eq("anchor_key", anchor.key)
@@ -233,13 +241,34 @@ export class BadgeLibrary {
       && (row.policy === "none" || isNonMerchantKind(row.kind))))
       throw new TypeError("BADGE_POLICY_DENIED");
     const value = { user_id: this.userId, anchor_key: anchor.key, source_digest: anchor.digest,
-      identity_key: old?.digest === anchor.digest ? old.identityKey : null, category: badgeCategory(category), version: version + 1 };
+      identity_key: old?.digest === anchor.digest ? old.identityKey : null, category: badgeCategory(category), version: version + 1,
+      bundled_asset_key: null, business_label: null };
     const result = version === 0 ? await this.client.from("composer_badge_bindings").insert(value).select("version").maybeSingle()
       : await this.client.from("composer_badge_bindings").update(value).eq("user_id", this.userId).eq("anchor_key", anchor.key)
         .eq("version", version).select("version").maybeSingle();
     storageError(result.error);
     if (!result.data) throw new TypeError("BADGE_CONFLICT");
     return { ...anchor, category: value.category, identityKey: value.identity_key, version: version + 1 };
+  }
+
+  async anchorGeneric(raw: unknown, expectedVersion: unknown, assetKey: unknown, businessLabel: unknown) {
+    const anchor = badgeAnchor(raw), version = badgeVersion(expectedVersion), asset = clayBadgeAsset(assetKey);
+    if (assetKey !== null && asset?.type !== "generic") throw new TypeError("BADGE_ASSET_INVALID");
+    const label = assetKey === null ? null : badgeLabel(businessLabel);
+    const current = await this.read([], [anchor]), old = current.bindings.find(row => row.key === anchor.key);
+    if ((old?.version ?? 0) !== version) throw new TypeError("BADGE_CONFLICT");
+    const matches = old?.digest === anchor.digest;
+    if (matches && current.merchants?.some(row => row.key === old.identityKey
+      && (row.policy === "none" || isNonMerchantKind(row.kind)))) throw new TypeError("BADGE_POLICY_DENIED");
+    const value = { user_id: this.userId, anchor_key: anchor.key, source_digest: anchor.digest,
+      identity_key: matches ? old.identityKey : null, category: matches ? old.category : null,
+      bundled_asset_key: asset?.key ?? null, business_label: label, version: version + 1 };
+    const result = version === 0 ? await this.client.from("composer_badge_bindings").insert(value).select(bindingColumns).maybeSingle()
+      : await this.client.from("composer_badge_bindings").update(value).eq("user_id", this.userId).eq("anchor_key", anchor.key)
+        .eq("version", version).select(bindingColumns).maybeSingle();
+    storageError(result.error);
+    if (!result.data) throw new TypeError("BADGE_CONFLICT");
+    return bindingVisual(result.data as BindingRow);
   }
 
   async image(key: unknown, version: unknown, file: File) {

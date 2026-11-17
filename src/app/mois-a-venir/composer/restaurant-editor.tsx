@@ -646,7 +646,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
     <header>{preset ? <PresetIllustration preset={preset} className={styles.presetInspectorImage} /> : <PlannerIcon iconKey="restaurant" scale="SATELLITE" />}<div><small>Votre mois, à votre façon</small><h2 id="restaurant-heading" tabIndex={-1}>{heading}</h2></div>
       <button type="button" className={styles.iconButton} onClick={close} aria-label={`Fermer ${heading}`}><X size={18} /></button></header>
     <WorkshopNavigation contextId={contextId} />
-    <CommerceBadges context={context} model={model} />
+    <CommerceBadges context={context} model={model} expanded />
     <p className={styles.restaurantIntro}>{cinema ? "Le billet, l’horaire de la séance, les compléments et le trajet se préparent séparément."
       : step === null ? "Choisissez seulement ce que vous voulez prévoir. Les autres précisions restent facultatives." : "Budget = coût économique prévu, pas un plafond. Les choix validés restent conservés."}</p>
     {purchase && <EnablePurchaseBasket context={context} card={card} model={model} busy={busy} decide={decide} />}

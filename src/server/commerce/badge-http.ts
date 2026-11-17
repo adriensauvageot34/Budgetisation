@@ -87,6 +87,10 @@ export async function badgeRequest(request: Request, kind: "COMMAND" | "UPLOAD" 
       plannerKeys(raw, ["kind", "anchor", "expectedVersion", "category"]);
       return reply({ binding: await service.anchorCategory(raw.anchor, raw.expectedVersion, raw.category) });
     }
+    if (raw.kind === "ANCHOR_GENERIC") {
+      plannerKeys(raw, ["kind", "anchor", "expectedVersion", "assetKey", "businessLabel"]);
+      return reply({ binding: await service.anchorGeneric(raw.anchor, raw.expectedVersion, raw.assetKey, raw.businessLabel) });
+    }
     throw new TypeError("BADGE_REQUEST_INVALID");
   } catch (error) {
     if (error instanceof BootstrapAuthenticationRequiredError) return reply({ code: "BADGE_AUTH_REQUIRED" }, 401);

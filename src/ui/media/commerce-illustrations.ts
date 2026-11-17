@@ -16,20 +16,22 @@ function commerceAssetPath(asset: BundledMediaAsset | undefined) {
 type BadgeImage = Readonly<{ src: string; kind: "IDENTITY" | "CATEGORY" }>;
 
 export function commerceBadgeImages({
-  identityKey, sharedKey, category, personalSrc, sharedPersonalSrc, policy = "normal",
+  identityKey, sharedKey, category, personalSrc, sharedPersonalSrc, genericSrc, policy = "normal",
 }: {
   identityKey?: string;
   sharedKey?: string;
   category?: BadgeCategory;
   personalSrc?: string;
   sharedPersonalSrc?: string;
+  genericSrc?: string;
   policy?: MerchantBadgePolicy;
 }): readonly BadgeImage[] {
   if (policy === "none") return [];
   const specific = policy === "normal" && identityKey ? commerceAssetPath(commerceIllustrations.identities[identityKey]) : undefined;
   const shared = sharedKey ? commerceAssetPath(commerceIllustrations.identities[sharedKey]) : undefined;
   const activity = category === "INDIAN_RESTAURANT" ? "RESTAURANT" : category;
-  const generic = activity ? commerceAssetPath(commerceIllustrations.categories[activity]) : undefined;
+  const generic = commerceAssetPath(genericSrc ? { src: genericSrc, width: 128, height: 128 } : undefined)
+    ?? (activity ? commerceAssetPath(commerceIllustrations.categories[activity]) : undefined);
   const identities = [policy === "normal" ? personalSrc : undefined, specific, sharedPersonalSrc, shared].flatMap(src =>
     src ? [{ src, kind: "IDENTITY" as const }] : [],
   );

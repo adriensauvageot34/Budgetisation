@@ -93,7 +93,7 @@ export function GiftEditor({ context, householdPersons, knowledge, busy, dockHos
       tile("text","Autre personne",()=>setRecipient({kind:"TEXT",label:""})),tile("later","Plus tard",()=>setRecipient(undefined))]}:null);
   return <form data-gift-editor className={styles.nightEditor} onSubmit={event => { event.preventDefault(); save(); }}>
     <WorkshopNavigation contextId={context.contextOccurrenceId} />
-    <CommerceBadges context={context} model={model} />
+    <CommerceBadges context={context} model={model} expanded />
     {section === "summary" && <section className={styles.nightSection} data-gift-summary><h3>{objectLabel || "Cadeau à préciser"}</h3>
       {assetKey && <ComposerAssetVisual assetKey={assetKey} iconKey="gift" />}
       <p>Le cadeau reste dans votre brouillon, même si sa date ou son prix sont inconnus.</p>

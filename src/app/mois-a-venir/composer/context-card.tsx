@@ -98,7 +98,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       onClick={() => editable && (["restaurant", "activity", "home-project", "gift"].includes(card.templateKey) || purchase || !!preset)
         ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>
       {(typeof card.fields.plannedDate === "string" || plannedTime) && <p>{[plannedDay ?? "Date à préciser", plannedTime].filter(Boolean).join(" · ")}</p>}
-      <CommerceBadges context={card} model={model} />
+      <CommerceBadges context={card} model={model} expanded={focused === card.contextOccurrenceId} />
       {card.childContextOccurrenceIds.length > 0 && <p data-linked-intentions-count={card.childContextOccurrenceIds.length}>
         {card.childContextOccurrenceIds.length} intention{card.childContextOccurrenceIds.length === 1 ? " liée" : "s liées"}
       </p>}

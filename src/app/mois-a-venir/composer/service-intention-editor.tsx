@@ -79,7 +79,7 @@ export function ServiceIntentionEditor({ context, card, model, busy, decide, clo
     <header><h2 id="service-intention-title" tabIndex={-1}>{card.label}</h2>
       <button type="button" className={styles.iconButton} onClick={close} aria-label="Fermer la prestation"><X size={18} /></button></header>
     <WorkshopNavigation contextId={id} />
-    <CommerceBadges context={context} model={model} />
+    <CommerceBadges context={context} model={model} expanded />
     <form onSubmit={event => { event.preventDefault(); save(); }} className={styles.formFields}>
       {hairdresser && tariffWritable && <div className={styles.linkedFilters} aria-label="Prestations de coiffure">
         {suggestions.map(label => <button key={label} type="button" disabled={busy}

@@ -990,6 +990,10 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .commerceBadgeEdit { border:0; padding:2px; display:inline-flex; flex:none; border-radius:5px; color:#735c8c; background:transparent; cursor:pointer; }
 .commerceBadgeEdit:focus-visible { outline:2px solid #ab83c5; outline-offset:1px; }
 .commerceBadgeEdit { gap:3px; font:inherit; }
+button.commerceBadge { cursor:pointer; text-align:left; font-family:inherit; }
+button.commerceBadge:focus-visible { outline:2px solid #ab83c5; outline-offset:2px; }
+.commerceBadge[data-badge-compact] { padding:0; border:0; background:transparent; border-radius:50%; min-width:32px; min-height:32px; }
+.commerceBadge[data-badge-compact] img { width:32px; height:32px; }
 .commerceBadgeAdd { display:inline-flex; align-items:center; gap:5px; border:1px dashed #bba9ce; border-radius:7px; padding:4px 7px; background:#faf6ff; color:#634775; font:inherit; font-size:.72rem; cursor:pointer; }
 .commerceBadgeAdd:focus-visible { outline:2px solid #ab83c5; outline-offset:2px; }
 .contextHeader .commerceBadge img { width:20px; height:20px; }

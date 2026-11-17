@@ -1994,5 +1994,493 @@
     "height": 256,
     "type": "generic",
     "category": "RESTAURANT"
+  },
+  {
+    "key": "categories:nightclub",
+    "label": "Discothèque et club",
+    "src": "/planned-visuals/commerce/categories/nightclub.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:concert-hall",
+    "label": "Salle de concert",
+    "src": "/planned-visuals/commerce/categories/concert-hall.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:meal-delivery",
+    "label": "Livraison de repas",
+    "src": "/planned-visuals/commerce/categories/meal-delivery.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:fast-food",
+    "label": "Restauration rapide",
+    "src": "/planned-visuals/commerce/categories/fast-food.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:pizzeria",
+    "label": "Pizzeria",
+    "src": "/planned-visuals/commerce/categories/pizzeria.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:fishing-shop",
+    "label": "Magasin de pêche",
+    "src": "/planned-visuals/commerce/categories/fishing-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:equipment-rental",
+    "label": "Location de matériel",
+    "src": "/planned-visuals/commerce/categories/equipment-rental.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:hiking-shop",
+    "label": "Magasin de randonnée",
+    "src": "/planned-visuals/commerce/categories/hiking-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:beach-shop",
+    "label": "Commerce de plage",
+    "src": "/planned-visuals/commerce/categories/beach-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:nautical-rental",
+    "label": "Location nautique",
+    "src": "/planned-visuals/commerce/categories/nautical-rental.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:beach-restaurant",
+    "label": "Restaurant de plage",
+    "src": "/planned-visuals/commerce/categories/beach-restaurant.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:cinema",
+    "label": "Cinéma",
+    "src": "/planned-visuals/commerce/categories/cinema.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:spa",
+    "label": "Spa et bien-être",
+    "src": "/planned-visuals/commerce/categories/spa.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:holiday-rental",
+    "label": "Gîte et location saisonnière",
+    "src": "/planned-visuals/commerce/categories/holiday-rental.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:camping",
+    "label": "Camping",
+    "src": "/planned-visuals/commerce/categories/camping.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:booking-platform",
+    "label": "Réservation d’hébergement",
+    "src": "/planned-visuals/commerce/categories/booking-platform.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:video-game-shop",
+    "label": "Magasin de jeux vidéo",
+    "src": "/planned-visuals/commerce/categories/video-game-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:electronics",
+    "label": "Électronique",
+    "src": "/planned-visuals/commerce/categories/electronics.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:digital-game-shop",
+    "label": "Boutique de jeux numériques",
+    "src": "/planned-visuals/commerce/categories/digital-game-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:marketplace",
+    "label": "Marketplace",
+    "src": "/planned-visuals/commerce/categories/marketplace.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:perfume",
+    "label": "Parfumerie",
+    "src": "/planned-visuals/commerce/categories/perfume.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:cosmetics",
+    "label": "Magasin de cosmétiques",
+    "src": "/planned-visuals/commerce/categories/cosmetics.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:household-shop",
+    "label": "Droguerie et produits ménagers",
+    "src": "/planned-visuals/commerce/categories/household-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:festival",
+    "label": "Festival",
+    "src": "/planned-visuals/commerce/categories/festival.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:tree-adventure",
+    "label": "Accrobranche et parc aventure",
+    "src": "/planned-visuals/commerce/categories/tree-adventure.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:museum",
+    "label": "Musée",
+    "src": "/planned-visuals/commerce/categories/museum.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:art-gallery",
+    "label": "Galerie d’art",
+    "src": "/planned-visuals/commerce/categories/art-gallery.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:heritage-site",
+    "label": "Site patrimonial",
+    "src": "/planned-visuals/commerce/categories/heritage-site.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:gift-shop",
+    "label": "Boutique de cadeaux",
+    "src": "/planned-visuals/commerce/categories/gift-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:bookshop",
+    "label": "Librairie",
+    "src": "/planned-visuals/commerce/categories/bookshop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:toy-shop",
+    "label": "Magasin de jouets",
+    "src": "/planned-visuals/commerce/categories/toy-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:jewellery",
+    "label": "Bijouterie et accessoires",
+    "src": "/planned-visuals/commerce/categories/jewellery.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:shoe-shop",
+    "label": "Magasin de chaussures",
+    "src": "/planned-visuals/commerce/categories/shoe-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:bowling",
+    "label": "Bowling",
+    "src": "/planned-visuals/commerce/categories/bowling.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:karting",
+    "label": "Karting",
+    "src": "/planned-visuals/commerce/categories/karting.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:escape-game",
+    "label": "Escape game",
+    "src": "/planned-visuals/commerce/categories/escape-game.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:mini-golf",
+    "label": "Mini-golf",
+    "src": "/planned-visuals/commerce/categories/mini-golf.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:billiards",
+    "label": "Billard",
+    "src": "/planned-visuals/commerce/categories/billiards.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:swimming-pool",
+    "label": "Piscine et centre aquatique",
+    "src": "/planned-visuals/commerce/categories/swimming-pool.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:canoe-kayak",
+    "label": "Canoë et kayak",
+    "src": "/planned-visuals/commerce/categories/canoe-kayak.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:amusement-park",
+    "label": "Parc d’attractions",
+    "src": "/planned-visuals/commerce/categories/amusement-park.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:theatre",
+    "label": "Théâtre et spectacles",
+    "src": "/planned-visuals/commerce/categories/theatre.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:stadium",
+    "label": "Stade et arena",
+    "src": "/planned-visuals/commerce/categories/stadium.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:craft-workshop",
+    "label": "Atelier créatif",
+    "src": "/planned-visuals/commerce/categories/craft-workshop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:photo-rental",
+    "label": "Location de matériel photo",
+    "src": "/planned-visuals/commerce/categories/photo-rental.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:laser-game",
+    "label": "Laser game",
+    "src": "/planned-visuals/commerce/categories/laser-game.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:trampoline-park",
+    "label": "Parc de trampolines",
+    "src": "/planned-visuals/commerce/categories/trampoline-park.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:water-park",
+    "label": "Parc aquatique",
+    "src": "/planned-visuals/commerce/categories/water-park.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:zoo",
+    "label": "Zoo et parc animalier",
+    "src": "/planned-visuals/commerce/categories/zoo.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:furniture-shop",
+    "label": "Magasin de meubles",
+    "src": "/planned-visuals/commerce/categories/furniture-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:decoration-shop",
+    "label": "Magasin de décoration",
+    "src": "/planned-visuals/commerce/categories/decoration-shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:appliances",
+    "label": "Électroménager",
+    "src": "/planned-visuals/commerce/categories/appliances.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:organic-grocer",
+    "label": "Magasin bio",
+    "src": "/planned-visuals/commerce/categories/organic-grocer.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:greengrocer",
+    "label": "Primeur",
+    "src": "/planned-visuals/commerce/categories/greengrocer.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:fishmonger",
+    "label": "Poissonnerie",
+    "src": "/planned-visuals/commerce/categories/fishmonger.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:delicatessen",
+    "label": "Épicerie fine",
+    "src": "/planned-visuals/commerce/categories/delicatessen.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:frozen-food",
+    "label": "Magasin de surgelés",
+    "src": "/planned-visuals/commerce/categories/frozen-food.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:pub-brasserie",
+    "label": "Pub et brasserie",
+    "src": "/planned-visuals/commerce/categories/pub-brasserie.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:wine-bar",
+    "label": "Bar à vin",
+    "src": "/planned-visuals/commerce/categories/wine-bar.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:takeaway",
+    "label": "Vente à emporter",
+    "src": "/planned-visuals/commerce/categories/takeaway.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
+  },
+  {
+    "key": "categories:caterer",
+    "label": "Traiteur",
+    "src": "/planned-visuals/commerce/categories/caterer.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic"
   }
 ]
