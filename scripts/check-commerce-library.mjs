@@ -7,6 +7,7 @@ const { commerceAnchor } = require("@/domain/phase2/commerce-media");
 const { prepareBadgeImage } = require("@/server/commerce/badge-library");
 const { BootstrapAuthenticationRequiredError } = require("@/server/bootstrap/errors");
 const { badgeRequest } = require("@/server/commerce/badge-http");
+const { clayBadgeCatalog } = require("@/domain/phase2/commerce-badge-catalog");
 const fixture = await commerceLibraryFixture();
 const a = fixture.service(fixture.userId), b = fixture.service(fixture.other);
 const anchor = commerceAnchor(uuid(97205), "seller", "Atelier Homonyme");
@@ -133,6 +134,22 @@ try {
   assert.ok((await fixture.client(fixture.other).from("composer_badge_visuals").insert({
     user_id: fixture.userId, identity_key: "personal:" + uuid(98999), label: "Refus",
   }).select("version").maybeSingle()).error);
+  const bundledAsset = clayBadgeCatalog.find(asset => asset.key === "merchants:carrefour");
+  assert.ok(bundledAsset);
+  const selected = await a.bundled(one.key, ownRead.media[0].version, bundledAsset.key);
+  assert.equal(selected.imageUrl, bundledAsset.src);
+  assert.equal(selected.bundledAssetKey, bundledAsset.key);
+  assert.equal((await a.read([one.key], [])).media[0].imageUrl, bundledAsset.src);
+  assert.equal((await fixture.service(fixture.userId).read([one.key], [])).media[0].bundledAssetKey, bundledAsset.key);
+  await assert.rejects(b.bundled(one.key, selected.version, bundledAsset.key), /BADGE_CONFLICT/u);
+  await assert.rejects(a.bundled(one.key, ownRead.media[0].version, bundledAsset.key), /BADGE_CONFLICT/u);
+  await assert.rejects(a.bundled(one.key, selected.version, "merchants:invented"), /BADGE_ASSET_INVALID/u);
+  await assert.rejects(a.bundled(one.key, selected.version, "categories:pharmacy"), /BADGE_ASSET_INVALID/u);
+  await assert.rejects(a.bundled(reuseKey, 2, bundledAsset.key), /BADGE_POLICY_DENIED/u);
+  await assert.rejects(a.bundled(excludedKey, 2, bundledAsset.key), /BADGE_POLICY_DENIED/u);
+  const reset = await a.bundled(one.key, selected.version, null);
+  assert.equal(reset.bundledAssetKey, undefined);
+  assert.match(reset.imageUrl, /\/image\?/u);
   assert.equal((await a.read([], [{ ...anchor, digest: "f".repeat(64) }])).media.length, 0);
   for (const invalid of [
     new File([Buffer.from("<svg onload='alert(1)'/>")], "unsafe.png", { type: "image/png" }),

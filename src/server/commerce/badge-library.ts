@@ -6,14 +6,20 @@ import { BADGE_BUCKET, MAX_BADGE_BYTES, badgeAnchor, badgeCategory, badgeIdentit
 import { isNonMerchantKind, merchantBadgePolicy, merchantDisplayName, type MerchantBadgePolicy, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
 import { merchantBadgeCategoryFor, referencedMerchantActivities } from "@/core/identity/merchant-activity";
 import { readMerchantActivities } from "./merchant-activities";
+import { clayBadgeAsset } from "@/domain/phase2/commerce-badge-catalog";
 
-type Row = { user_id: string; identity_key: string; label: string; category: PersonalBadge["category"]; object_path: string | null; version: number };
+type Row = { user_id: string; identity_key: string; label: string; category: PersonalBadge["category"];
+  object_path: string | null; bundled_asset_key: string | null; version: number };
 type BindingRow = { anchor_key: string; source_digest: string; identity_key: string | null; category: PersonalBadge["category"]; version: number };
-const columns = "identity_key,label,category,object_path,version";
-const visual = (row: Row): PersonalBadge => ({
-  key: row.identity_key, label: row.label, category: row.category, version: row.version, hasImage: !!row.object_path,
-  ...(row.object_path ? { imageUrl: "/api/composer/badge-library/image?identity=" + encodeURIComponent(row.identity_key) + "&version=" + row.version } : {}),
-});
+const columns = "identity_key,label,category,object_path,bundled_asset_key,version";
+const visual = (row: Row): PersonalBadge => {
+  const asset = clayBadgeAsset(row.bundled_asset_key);
+  return {
+    key: row.identity_key, label: row.label, category: row.category, version: row.version, hasImage: !!asset || !!row.object_path,
+    ...(asset ? { imageUrl: asset.src, bundledAssetKey: asset.key }
+      : row.object_path ? { imageUrl: "/api/composer/badge-library/image?identity=" + encodeURIComponent(row.identity_key) + "&version=" + row.version } : {}),
+  };
+};
 function storageError(error: unknown) {
   if (error) throw new TypeError(typeof error === "object" && "code" in error && error.code === "23505" ? "BADGE_CONFLICT" : "BADGE_LIBRARY_UNAVAILABLE");
 }
@@ -87,11 +93,14 @@ export class BadgeLibrary {
     const media = wanted.length ? await this.client.from("composer_badge_visuals").select(columns).eq("user_id", this.userId).in("identity_key", wanted)
       : { data: [], error: null };
     storageError(media.error);
-    const rows = (media.data as Row[]).map(row => reuseOnly.has(row.identity_key) ? { ...row, object_path: null } : row);
-    const paths = rows.flatMap(row => row.object_path ? [row.object_path] : []);
+    const rows = (media.data as Row[]).map(row => reuseOnly.has(row.identity_key)
+      ? { ...row, object_path: null, bundled_asset_key: null } : row);
+    const paths = rows.flatMap(row => !row.bundled_asset_key && row.object_path ? [row.object_path] : []);
     const signed = paths.length ? await this.client.storage.from(BADGE_BUCKET).createSignedUrls(paths, 300) : { data: [] };
     const urls = new Map((signed.data ?? []).flatMap(item => item.signedUrl ? [[item.path, item.signedUrl] as const] : []));
-    return { merchants, media: rows.map(row => ({ ...visual(row), imageUrl: row.object_path ? urls.get(row.object_path) : undefined })), bindings: bindings.map(row => ({
+    return { merchants, media: rows.map(row => ({
+      ...visual(row), ...(row.object_path && !row.bundled_asset_key ? { imageUrl: urls.get(row.object_path) } : {}),
+    })), bindings: bindings.map(row => ({
       key: row.anchor_key, digest: row.source_digest, identityKey: row.identity_key, category: row.category, version: row.version,
     })) };
   }
@@ -185,12 +194,14 @@ export class BadgeLibrary {
       }
     }
     return {
-      ...visual(identity.policy === "reuse_only" ? { ...row, object_path: null } : row),
+      ...visual(identity.policy === "reuse_only" ? { ...row, object_path: null, bundled_asset_key: null } : row),
       ...(identity.key.startsWith("merchant:") ? { label: identity.label, policy: identity.policy } : {}),
     };
   }
 
-  private async update(key: string, version: number, patch: { category?: PersonalBadge["category"]; object_path?: string }) {
+  private async update(key: string, version: number, patch: {
+    category?: PersonalBadge["category"]; object_path?: string; bundled_asset_key?: string | null;
+  }) {
     const result = await this.client.from("composer_badge_visuals").update({ ...patch, version: version + 1, updated_at: new Date().toISOString() })
       .eq("user_id", this.userId).eq("identity_key", key).eq("version", version).select(columns).maybeSingle();
     storageError(result.error);
@@ -203,6 +214,14 @@ export class BadgeLibrary {
     const merchant = await this.assertMerchantMediaAllowed(identity, false);
     const media = await this.update(identity, badgeVersion(version), { category: badgeCategory(category) });
     return merchant?.policy === "reuse_only" ? { ...media, hasImage: false, imageUrl: undefined, policy: merchant.policy } : media;
+  }
+
+  async bundled(key: unknown, version: unknown, assetKey: unknown) {
+    const identity = badgeIdentityKey(key);
+    await this.assertMerchantMediaAllowed(identity);
+    const asset = clayBadgeAsset(assetKey);
+    if (assetKey !== null && (!asset || asset.type === "generic")) throw new TypeError("BADGE_ASSET_INVALID");
+    return this.update(identity, badgeVersion(version), { bundled_asset_key: asset?.key ?? null });
   }
 
   async anchorCategory(raw: unknown, expectedVersion: unknown, category: unknown) {
@@ -234,7 +253,7 @@ export class BadgeLibrary {
     const upload = await bucket.upload(path, bytes, { contentType: "image/webp", upsert: false, cacheControl: "60" });
     storageError(upload.error);
     let result;
-    try { result = await this.update(identity, expected, { object_path: path }); }
+    try { result = await this.update(identity, expected, { object_path: path, bundled_asset_key: null }); }
     catch (error) {
       // A lost reply can follow a committed association. Inspect it before cleaning up the uploaded object.
       const current = await this.row(identity).catch(() => undefined);

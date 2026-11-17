@@ -6,7 +6,9 @@ export type BadgeCategory = keyof typeof BADGE_CATEGORIES;
 export type BadgeIdentity = Readonly<{ key: string; label: string; policy?: MerchantBadgePolicy }>;
 export type BadgeAnchor = Readonly<{ key: string; digest: string }>;
 export type BadgeBinding = BadgeAnchor & Readonly<{ identityKey: string | null; category: BadgeCategory | null; version: number }>;
-export type PersonalBadge = BadgeIdentity & Readonly<{ category: BadgeCategory | null; version: number; hasImage: boolean; imageUrl?: string }>;
+export type PersonalBadge = BadgeIdentity & Readonly<{
+  category: BadgeCategory | null; version: number; hasImage: boolean; imageUrl?: string; bundledAssetKey?: string;
+}>;
 export type MerchantBadgeIdentity = Readonly<{
   key: string;
   kind: MerchantIdentityKind;

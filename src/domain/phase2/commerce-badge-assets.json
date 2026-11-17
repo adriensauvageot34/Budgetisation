@@ -1,0 +1,1998 @@
+[
+  {
+    "key": "merchants:3-brasseurs",
+    "label": "3 Brasseurs",
+    "src": "/planned-visuals/commerce/merchants/3-brasseurs.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:adobe-lightroom",
+    "label": "Adobe Lightroom",
+    "src": "/planned-visuals/commerce/merchants/adobe-lightroom.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:airbnb",
+    "label": "Airbnb",
+    "src": "/planned-visuals/commerce/merchants/airbnb.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:aldi",
+    "label": "Aldi",
+    "src": "/planned-visuals/commerce/merchants/aldi.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:aliexpress",
+    "label": "AliExpress",
+    "src": "/planned-visuals/commerce/merchants/aliexpress.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:alma-essai",
+    "label": "Alma (essai)",
+    "src": "/planned-visuals/commerce/merchants/alma-essai.webp",
+    "width": 128,
+    "height": 128,
+    "type": "trial",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:alma",
+    "label": "Alma",
+    "src": "/planned-visuals/commerce/merchants/alma.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:amazon-prime",
+    "label": "Amazon Prime",
+    "src": "/planned-visuals/commerce/merchants/amazon-prime.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:amazon-video",
+    "label": "Amazon Video",
+    "src": "/planned-visuals/commerce/merchants/amazon-video.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:amazon",
+    "label": "Amazon",
+    "src": "/planned-visuals/commerce/merchants/amazon.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:amorino",
+    "label": "Amorino",
+    "src": "/planned-visuals/commerce/merchants/amorino.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:apple",
+    "label": "Apple",
+    "src": "/planned-visuals/commerce/merchants/apple.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:apt-musique-developpement-amd",
+    "label": "APT Musique Développement — AMD",
+    "src": "/planned-visuals/commerce/merchants/apt-musique-developpement-amd.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:areas-concessions-gares-france",
+    "label": "Areas — Concessions Gares France",
+    "src": "/planned-visuals/commerce/merchants/areas-concessions-gares-france.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:artguru",
+    "label": "Artguru",
+    "src": "/planned-visuals/commerce/merchants/artguru.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:association-dentisoin",
+    "label": "Association Dentisoin",
+    "src": "/planned-visuals/commerce/merchants/association-dentisoin.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:assurance-maladie-cpam",
+    "label": "Assurance Maladie — CPAM",
+    "src": "/planned-visuals/commerce/merchants/assurance-maladie-cpam.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:atelier-banette-best-of-bread",
+    "label": "Atelier Banette — Best Of Bread",
+    "src": "/planned-visuals/commerce/merchants/atelier-banette-best-of-bread.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:au-bon-coin",
+    "label": "Au Bon Coin",
+    "src": "/planned-visuals/commerce/merchants/au-bon-coin.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:auchan",
+    "label": "Auchan",
+    "src": "/planned-visuals/commerce/merchants/auchan.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:autodistribution-fia-littoral",
+    "label": "Autodistribution — FIA Littoral",
+    "src": "/planned-visuals/commerce/merchants/autodistribution-fia-littoral.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:baazar-nimes",
+    "label": "Baazar Nîmes",
+    "src": "/planned-visuals/commerce/merchants/baazar-nimes.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:baraka-jeux",
+    "label": "Baraka Jeux",
+    "src": "/planned-visuals/commerce/merchants/baraka-jeux.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:bershka",
+    "label": "Bershka",
+    "src": "/planned-visuals/commerce/merchants/bershka.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:bill-s-burger",
+    "label": "Bill’s Burger",
+    "src": "/planned-visuals/commerce/merchants/bill-s-burger.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:black-corner",
+    "label": "Black Corner",
+    "src": "/planned-visuals/commerce/merchants/black-corner.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:bnp-paribas",
+    "label": "BNP Paribas",
+    "src": "/planned-visuals/commerce/merchants/bnp-paribas.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:boucherie-dari-boumediene",
+    "label": "Boucherie Dari — Boumediene",
+    "src": "/planned-visuals/commerce/merchants/boucherie-dari-boumediene.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:boulanger",
+    "label": "Boulanger",
+    "src": "/planned-visuals/commerce/merchants/boulanger.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:boulangerie-ange",
+    "label": "Boulangerie Ange",
+    "src": "/planned-visuals/commerce/merchants/boulangerie-ange.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:brasserie-le-republique-lyon",
+    "label": "Brasserie Le République — Lyon",
+    "src": "/planned-visuals/commerce/merchants/brasserie-le-republique-lyon.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:bureau-vallee",
+    "label": "Bureau Vallée",
+    "src": "/planned-visuals/commerce/merchants/bureau-vallee.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:burger-king",
+    "label": "Burger King",
+    "src": "/planned-visuals/commerce/merchants/burger-king.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:burger-university-montpellier",
+    "label": "Burger University — Montpellier",
+    "src": "/planned-visuals/commerce/merchants/burger-university-montpellier.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:but",
+    "label": "BUT",
+    "src": "/planned-visuals/commerce/merchants/but.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:cafe-des-arts-c-k-l",
+    "label": "Café des Arts — C.K.L.",
+    "src": "/planned-visuals/commerce/merchants/cafe-des-arts-c-k-l.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:cafe-general",
+    "label": "Café Général",
+    "src": "/planned-visuals/commerce/merchants/cafe-general.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:cafes-bibal",
+    "label": "Cafés Bibal",
+    "src": "/planned-visuals/commerce/merchants/cafes-bibal.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:canoe-le-pont-suspendu",
+    "label": "Canoë Le Pont Suspendu",
+    "src": "/planned-visuals/commerce/merchants/canoe-le-pont-suspendu.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:carrefour",
+    "label": "Carrefour",
+    "src": "/planned-visuals/commerce/merchants/carrefour.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:castorama",
+    "label": "Castorama",
+    "src": "/planned-visuals/commerce/merchants/castorama.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:celio",
+    "label": "Celio",
+    "src": "/planned-visuals/commerce/merchants/celio.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:centre-andre-benech-chu-de-montpellier",
+    "label": "Centre André Benech — CHU de Montpellier",
+    "src": "/planned-visuals/commerce/merchants/centre-andre-benech-chu-de-montpellier.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:chamas-tacos",
+    "label": "Chamas Tacos",
+    "src": "/planned-visuals/commerce/merchants/chamas-tacos.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:chicken-place-montpellier",
+    "label": "Chicken Place — Montpellier",
+    "src": "/planned-visuals/commerce/merchants/chicken-place-montpellier.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:click-et-rent",
+    "label": "Click & Rent",
+    "src": "/planned-visuals/commerce/merchants/click-et-rent.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:conforama",
+    "label": "Conforama",
+    "src": "/planned-visuals/commerce/merchants/conforama.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:copy-com",
+    "label": "Copy Com",
+    "src": "/planned-visuals/commerce/merchants/copy-com.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:credit-agricole",
+    "label": "Crédit Agricole",
+    "src": "/planned-visuals/commerce/merchants/credit-agricole.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:dali-barber",
+    "label": "Dali Barber",
+    "src": "/planned-visuals/commerce/merchants/dali-barber.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:darty",
+    "label": "Darty",
+    "src": "/planned-visuals/commerce/merchants/darty.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:decathlon",
+    "label": "Decathlon",
+    "src": "/planned-visuals/commerce/merchants/decathlon.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:dekra",
+    "label": "DEKRA",
+    "src": "/planned-visuals/commerce/merchants/dekra.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:delacrem",
+    "label": "DelaCrem",
+    "src": "/planned-visuals/commerce/merchants/delacrem.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:dgfip-drfip",
+    "label": "DGFiP – DRFIP",
+    "src": "/planned-visuals/commerce/merchants/dgfip-drfip.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:dieze-warehouse",
+    "label": "Dieze Warehouse",
+    "src": "/planned-visuals/commerce/merchants/dieze-warehouse.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:digital-learning-contest",
+    "label": "Digital Learning Contest",
+    "src": "/planned-visuals/commerce/merchants/digital-learning-contest.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:discord",
+    "label": "Discord",
+    "src": "/planned-visuals/commerce/merchants/discord.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:disney-plus",
+    "label": "Disney+",
+    "src": "/planned-visuals/commerce/merchants/disney-plus.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:doctolib",
+    "label": "Doctolib",
+    "src": "/planned-visuals/commerce/merchants/doctolib.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:doje-eat",
+    "label": "Doje Eat",
+    "src": "/planned-visuals/commerce/merchants/doje-eat.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:e-leclerc",
+    "label": "E.Leclerc",
+    "src": "/planned-visuals/commerce/merchants/e-leclerc.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:eastlodge-lyon-est-eurexpo",
+    "label": "Eastlodge Lyon Est Eurexpo",
+    "src": "/planned-visuals/commerce/merchants/eastlodge-lyon-est-eurexpo.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:edenred-ticket-restaurant",
+    "label": "Edenred — Ticket Restaurant",
+    "src": "/planned-visuals/commerce/merchants/edenred-ticket-restaurant.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:edf",
+    "label": "EDF",
+    "src": "/planned-visuals/commerce/merchants/edf.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:eni",
+    "label": "Eni",
+    "src": "/planned-visuals/commerce/merchants/eni.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:espit-chupitos",
+    "label": "Espit Chupitos",
+    "src": "/planned-visuals/commerce/merchants/espit-chupitos.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:etsy",
+    "label": "Etsy",
+    "src": "/planned-visuals/commerce/merchants/etsy.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:festival-insane-apt-musique-developpement",
+    "label": "Festival Insane — APT Musique Développement",
+    "src": "/planned-visuals/commerce/merchants/festival-insane-apt-musique-developpement.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:fnac",
+    "label": "Fnac",
+    "src": "/planned-visuals/commerce/merchants/fnac.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:francebillet",
+    "label": "Francebillet",
+    "src": "/planned-visuals/commerce/merchants/francebillet.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:galzin-languedoc-victoire",
+    "label": "Galzin — Languedoc – Victoire",
+    "src": "/planned-visuals/commerce/merchants/galzin-languedoc-victoire.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:gamm-vert",
+    "label": "Gamm Vert",
+    "src": "/planned-visuals/commerce/merchants/gamm-vert.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "categories:association",
+    "label": "Association",
+    "src": "/planned-visuals/commerce/categories/association.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "ASSOCIATION"
+  },
+  {
+    "key": "categories:insurance",
+    "label": "Assurance",
+    "src": "/planned-visuals/commerce/categories/insurance.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "INSURANCE"
+  },
+  {
+    "key": "categories:automotive",
+    "label": "Automobile",
+    "src": "/planned-visuals/commerce/categories/automotive.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "AUTOMOTIVE"
+  },
+  {
+    "key": "categories:bank",
+    "label": "Banque",
+    "src": "/planned-visuals/commerce/categories/bank.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "BANK"
+  },
+  {
+    "key": "categories:beauty",
+    "label": "Beauté",
+    "src": "/planned-visuals/commerce/categories/beauty.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "BEAUTY"
+  },
+  {
+    "key": "categories:butcher",
+    "label": "Boucherie",
+    "src": "/planned-visuals/commerce/categories/butcher.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "BUTCHER"
+  },
+  {
+    "key": "categories:bakery",
+    "label": "Boulangerie",
+    "src": "/planned-visuals/commerce/categories/bakery.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "BAKERY"
+  },
+  {
+    "key": "categories:cafe",
+    "label": "Café",
+    "src": "/planned-visuals/commerce/categories/cafe.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "CAFE"
+  },
+  {
+    "key": "categories:hairdresser",
+    "label": "Coiffure",
+    "src": "/planned-visuals/commerce/categories/hairdresser.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "HAIRDRESSER"
+  },
+  {
+    "key": "categories:shop",
+    "label": "Commerce général",
+    "src": "/planned-visuals/commerce/categories/shop.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "SHOP"
+  },
+  {
+    "key": "categories:utilities",
+    "label": "Eau / énergie",
+    "src": "/planned-visuals/commerce/categories/utilities.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "UTILITIES"
+  },
+  {
+    "key": "categories:groceries",
+    "label": "Épicerie",
+    "src": "/planned-visuals/commerce/categories/groceries.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "GROCERIES"
+  },
+  {
+    "key": "categories:tickets",
+    "label": "Événement / billetterie",
+    "src": "/planned-visuals/commerce/categories/tickets.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "TICKETS"
+  },
+  {
+    "key": "categories:florist",
+    "label": "Fleuriste",
+    "src": "/planned-visuals/commerce/categories/florist.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "FLORIST"
+  },
+  {
+    "key": "categories:training",
+    "label": "Formation",
+    "src": "/planned-visuals/commerce/categories/training.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "TRAINING"
+  },
+  {
+    "key": "categories:cheese",
+    "label": "Fromagerie",
+    "src": "/planned-visuals/commerce/categories/cheese.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "CHEESE"
+  },
+  {
+    "key": "categories:ice-cream",
+    "label": "Glacier",
+    "src": "/planned-visuals/commerce/categories/ice-cream.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "ICE_CREAM"
+  },
+  {
+    "key": "categories:hotel",
+    "label": "Hébergement / hôtel",
+    "src": "/planned-visuals/commerce/categories/hotel.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "HOTEL"
+  },
+  {
+    "key": "categories:real-estate",
+    "label": "Immobilier",
+    "src": "/planned-visuals/commerce/categories/real-estate.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "REAL_ESTATE"
+  },
+  {
+    "key": "categories:garden",
+    "label": "Jardinerie",
+    "src": "/planned-visuals/commerce/categories/garden.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "GARDEN"
+  },
+  {
+    "key": "categories:ski-rental",
+    "label": "Location de ski",
+    "src": "/planned-visuals/commerce/categories/ski-rental.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "SKI_RENTAL"
+  },
+  {
+    "key": "categories:car-rental",
+    "label": "Location de voiture",
+    "src": "/planned-visuals/commerce/categories/car-rental.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "CAR_RENTAL"
+  },
+  {
+    "key": "categories:activity",
+    "label": "Loisirs",
+    "src": "/planned-visuals/commerce/categories/activity.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "ACTIVITY"
+  },
+  {
+    "key": "categories:home",
+    "label": "Maison / bricolage",
+    "src": "/planned-visuals/commerce/categories/home.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "HOME"
+  },
+  {
+    "key": "categories:clothing",
+    "label": "Mode / vêtements",
+    "src": "/planned-visuals/commerce/categories/clothing.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "CLOTHING"
+  },
+  {
+    "key": "categories:payment",
+    "label": "Paiement / titres-restaurant",
+    "src": "/planned-visuals/commerce/categories/payment.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "PAYMENT"
+  },
+  {
+    "key": "categories:parking",
+    "label": "Parking",
+    "src": "/planned-visuals/commerce/categories/parking.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "PARKING"
+  },
+  {
+    "key": "categories:pharmacy",
+    "label": "Pharmacie",
+    "src": "/planned-visuals/commerce/categories/pharmacy.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "PHARMACY"
+  },
+  {
+    "key": "categories:photo",
+    "label": "Photo / impression",
+    "src": "/planned-visuals/commerce/categories/photo.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "PHOTO"
+  },
+  {
+    "key": "categories:health",
+    "label": "Santé",
+    "src": "/planned-visuals/commerce/categories/health.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "HEALTH"
+  },
+  {
+    "key": "categories:digital",
+    "label": "Services numériques",
+    "src": "/planned-visuals/commerce/categories/digital.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "DIGITAL"
+  },
+  {
+    "key": "categories:professional-services",
+    "label": "Services professionnels",
+    "src": "/planned-visuals/commerce/categories/professional-services.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "PROFESSIONAL_SERVICES"
+  },
+  {
+    "key": "categories:public-services",
+    "label": "Services publics",
+    "src": "/planned-visuals/commerce/categories/public-services.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "PUBLIC_SERVICES"
+  },
+  {
+    "key": "categories:sport",
+    "label": "Sport",
+    "src": "/planned-visuals/commerce/categories/sport.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "SPORT"
+  },
+  {
+    "key": "categories:gas-station",
+    "label": "Station-service",
+    "src": "/planned-visuals/commerce/categories/gas-station.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "GAS_STATION"
+  },
+  {
+    "key": "categories:tobacco",
+    "label": "Tabac",
+    "src": "/planned-visuals/commerce/categories/tobacco.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "TOBACCO"
+  },
+  {
+    "key": "categories:telecom",
+    "label": "Télécommunications",
+    "src": "/planned-visuals/commerce/categories/telecom.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "TELECOM"
+  },
+  {
+    "key": "categories:transport",
+    "label": "Transports",
+    "src": "/planned-visuals/commerce/categories/transport.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "TRANSPORT"
+  },
+  {
+    "key": "categories:vape",
+    "label": "Vape",
+    "src": "/planned-visuals/commerce/categories/vape.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "VAPE"
+  },
+  {
+    "key": "categories:tourism",
+    "label": "Voyage / tourisme",
+    "src": "/planned-visuals/commerce/categories/tourism.webp",
+    "width": 128,
+    "height": 128,
+    "type": "generic",
+    "category": "TOURISM"
+  },
+  {
+    "key": "merchants:getyourguide",
+    "label": "GetYourGuide",
+    "src": "/planned-visuals/commerce/merchants/getyourguide.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:glacier-catalan",
+    "label": "Glacier Catalan",
+    "src": "/planned-visuals/commerce/merchants/glacier-catalan.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:google-one",
+    "label": "Google One",
+    "src": "/planned-visuals/commerce/merchants/google-one.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:google",
+    "label": "Google",
+    "src": "/planned-visuals/commerce/merchants/google.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:grand-cafe-riche-montpellier",
+    "label": "Grand Café Riche — Montpellier",
+    "src": "/planned-visuals/commerce/merchants/grand-cafe-riche-montpellier.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:grand-frais-essai",
+    "label": "Grand Frais (essai)",
+    "src": "/planned-visuals/commerce/merchants/grand-frais-essai.webp",
+    "width": 128,
+    "height": 128,
+    "type": "trial",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:grand-frais",
+    "label": "Grand Frais",
+    "src": "/planned-visuals/commerce/merchants/grand-frais.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:grand-traiteur",
+    "label": "Grand Traiteur",
+    "src": "/planned-visuals/commerce/merchants/grand-traiteur.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:grillade-tacos-montpellier",
+    "label": "Grillade Tacos — Montpellier",
+    "src": "/planned-visuals/commerce/merchants/grillade-tacos-montpellier.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:groupe-banette-best-of-bread",
+    "label": "Groupe Banette — Best Of Bread",
+    "src": "/planned-visuals/commerce/merchants/groupe-banette-best-of-bread.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:groupe-ssp-ssp-aeropuerto",
+    "label": "Groupe SSP — SSP Aeropuerto",
+    "src": "/planned-visuals/commerce/merchants/groupe-ssp-ssp-aeropuerto.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:groupe-tandem-cafe-joseph",
+    "label": "Groupe Tandem — Café Joseph",
+    "src": "/planned-visuals/commerce/merchants/groupe-tandem-cafe-joseph.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:groupon",
+    "label": "Groupon",
+    "src": "/planned-visuals/commerce/merchants/groupon.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:hema",
+    "label": "HEMA",
+    "src": "/planned-visuals/commerce/merchants/hema.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:herault-transport-smtch",
+    "label": "Hérault Transport — SMTCH",
+    "src": "/planned-visuals/commerce/merchants/herault-transport-smtch.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:histoire-d-or",
+    "label": "Histoire d’Or",
+    "src": "/planned-visuals/commerce/merchants/histoire-d-or.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:hopulus-brewpub-montpellier",
+    "label": "Hopulus Brewpub — Montpellier",
+    "src": "/planned-visuals/commerce/merchants/hopulus-brewpub-montpellier.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:hossegor-bar-montpellier",
+    "label": "Hossegor Bar — Montpellier",
+    "src": "/planned-visuals/commerce/merchants/hossegor-bar-montpellier.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:hurricane-group",
+    "label": "Hurricane Group",
+    "src": "/planned-visuals/commerce/merchants/hurricane-group.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:ikea",
+    "label": "IKEA",
+    "src": "/planned-visuals/commerce/merchants/ikea.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:inter-fetes-lattes",
+    "label": "Inter Fêtes — Lattes",
+    "src": "/planned-visuals/commerce/merchants/inter-fetes-lattes.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:intermarche",
+    "label": "Intermarché",
+    "src": "/planned-visuals/commerce/merchants/intermarche.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:intersport-ip-sport-pezenas",
+    "label": "Intersport — IP Sport Pézenas",
+    "src": "/planned-visuals/commerce/merchants/intersport-ip-sport-pezenas.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:jardiland",
+    "label": "Jardiland",
+    "src": "/planned-visuals/commerce/merchants/jardiland.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:jj-gelato-candidat",
+    "label": "JJ Gelato (candidat)",
+    "src": "/planned-visuals/commerce/merchants/jj-gelato-candidat.webp",
+    "width": 128,
+    "height": 128,
+    "type": "candidate",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:keep-cool",
+    "label": "Keep Cool",
+    "src": "/planned-visuals/commerce/merchants/keep-cool.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:kfc",
+    "label": "KFC",
+    "src": "/planned-visuals/commerce/merchants/kfc.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:krousty-sabaidi",
+    "label": "Krousty Sabaidi",
+    "src": "/planned-visuals/commerce/merchants/krousty-sabaidi.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:l-alaska-maison-poiret",
+    "label": "L’Alaska — Maison Poiret",
+    "src": "/planned-visuals/commerce/merchants/l-alaska-maison-poiret.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:l-aveyronnais-candidat",
+    "label": "L’Aveyronnais (candidat)",
+    "src": "/planned-visuals/commerce/merchants/l-aveyronnais-candidat.webp",
+    "width": 128,
+    "height": 128,
+    "type": "candidate",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:la-banque-postale",
+    "label": "La Banque Postale",
+    "src": "/planned-visuals/commerce/merchants/la-banque-postale.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:la-casita-del-barrio",
+    "label": "La Casita del Barrio",
+    "src": "/planned-visuals/commerce/merchants/la-casita-del-barrio.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:la-churrasqueira-candidat",
+    "label": "La Churrasqueira (candidat)",
+    "src": "/planned-visuals/commerce/merchants/la-churrasqueira-candidat.webp",
+    "width": 128,
+    "height": 128,
+    "type": "candidate",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:la-coquille-montpellier",
+    "label": "La Coquille — Montpellier",
+    "src": "/planned-visuals/commerce/merchants/la-coquille-montpellier.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:la-fromangerie-candidat",
+    "label": "La Fromangerie (candidat)",
+    "src": "/planned-visuals/commerce/merchants/la-fromangerie-candidat.webp",
+    "width": 128,
+    "height": 128,
+    "type": "candidate",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:la-mie-caline-essai",
+    "label": "La Mie Câline (essai)",
+    "src": "/planned-visuals/commerce/merchants/la-mie-caline-essai.webp",
+    "width": 128,
+    "height": 128,
+    "type": "trial",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:la-mie-caline",
+    "label": "La Mie Câline",
+    "src": "/planned-visuals/commerce/merchants/la-mie-caline.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:la-poste",
+    "label": "La Poste",
+    "src": "/planned-visuals/commerce/merchants/la-poste.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:lady-sushi",
+    "label": "Lady Sushi",
+    "src": "/planned-visuals/commerce/merchants/lady-sushi.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:lance-ta-hache-lth",
+    "label": "Lance Ta Hache — LTH",
+    "src": "/planned-visuals/commerce/merchants/lance-ta-hache-lth.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:le-cercle-de-la-vap",
+    "label": "Le Cercle de la Vap",
+    "src": "/planned-visuals/commerce/merchants/le-cercle-de-la-vap.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:le-comptoir-de-mathilde-lattes",
+    "label": "Le Comptoir de Mathilde — Lattes",
+    "src": "/planned-visuals/commerce/merchants/le-comptoir-de-mathilde-lattes.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:le-kiosque-a-pizzas-lucalex-candidat",
+    "label": "Le Kiosque à Pizzas — Lucalex (candidat)",
+    "src": "/planned-visuals/commerce/merchants/le-kiosque-a-pizzas-lucalex-candidat.webp",
+    "width": 128,
+    "height": 128,
+    "type": "candidate",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:le-novelty",
+    "label": "Le Novelty",
+    "src": "/planned-visuals/commerce/merchants/le-novelty.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:le-p-tit-festif-esta-fetes",
+    "label": "Le P’tit Festif — Esta Fêtes",
+    "src": "/planned-visuals/commerce/merchants/le-p-tit-festif-esta-fetes.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:le-petit-nice",
+    "label": "Le Petit Nice",
+    "src": "/planned-visuals/commerce/merchants/le-petit-nice.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:le-petrin-de-saint-gely",
+    "label": "Le Pétrin de Saint-Gély",
+    "src": "/planned-visuals/commerce/merchants/le-petrin-de-saint-gely.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:le-petrin-des-hauts-bmf-fabregues",
+    "label": "Le Pétrin des Hauts — BMF Fabrègues",
+    "src": "/planned-visuals/commerce/merchants/le-petrin-des-hauts-bmf-fabregues.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:le-puja",
+    "label": "Le Puja",
+    "src": "/planned-visuals/commerce/merchants/le-puja.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:le-victoria-candidat",
+    "label": "Le Victoria (candidat)",
+    "src": "/planned-visuals/commerce/merchants/le-victoria-candidat.webp",
+    "width": 128,
+    "height": 128,
+    "type": "candidate",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:leroy-merlin",
+    "label": "Leroy Merlin",
+    "src": "/planned-visuals/commerce/merchants/leroy-merlin.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:les-7-laux",
+    "label": "Les 7 Laux",
+    "src": "/planned-visuals/commerce/merchants/les-7-laux.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:les-halles-solanid",
+    "label": "Les Halles Solanid",
+    "src": "/planned-visuals/commerce/merchants/les-halles-solanid.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:li-s-raviolis-chinois-cayer",
+    "label": "Li’s Raviolis Chinois — Cayer",
+    "src": "/planned-visuals/commerce/merchants/li-s-raviolis-chinois-cayer.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:lidl",
+    "label": "Lidl",
+    "src": "/planned-visuals/commerce/merchants/lidl.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:lolly-s",
+    "label": "Lolly’s",
+    "src": "/planned-visuals/commerce/merchants/lolly-s.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:marie-blachere",
+    "label": "Marie Blachère",
+    "src": "/planned-visuals/commerce/merchants/marie-blachere.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:max",
+    "label": "Max",
+    "src": "/planned-visuals/commerce/merchants/max.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:maxicoffee",
+    "label": "MaxiCoffee",
+    "src": "/planned-visuals/commerce/merchants/maxicoffee.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:mcdonald-s",
+    "label": "McDonald’s",
+    "src": "/planned-visuals/commerce/merchants/mcdonald-s.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:me-group-photomaton",
+    "label": "ME Group — Photomaton",
+    "src": "/planned-visuals/commerce/merchants/me-group-photomaton.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:menorca-beach-markets-the-village-store",
+    "label": "Menorca Beach Markets — The Village Store",
+    "src": "/planned-visuals/commerce/merchants/menorca-beach-markets-the-village-store.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:microsoft",
+    "label": "Microsoft",
+    "src": "/planned-visuals/commerce/merchants/microsoft.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:monkey-factory",
+    "label": "Monkey Factory",
+    "src": "/planned-visuals/commerce/merchants/monkey-factory.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:monoprix",
+    "label": "Monoprix",
+    "src": "/planned-visuals/commerce/merchants/monoprix.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:morgan",
+    "label": "Morgan",
+    "src": "/planned-visuals/commerce/merchants/morgan.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:mr-bricolage",
+    "label": "Mr. Bricolage",
+    "src": "/planned-visuals/commerce/merchants/mr-bricolage.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:mr-vape",
+    "label": "Mr. Vape",
+    "src": "/planned-visuals/commerce/merchants/mr-vape.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:mureka",
+    "label": "Mureka",
+    "src": "/planned-visuals/commerce/merchants/mureka.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:naturalia",
+    "label": "Naturalia",
+    "src": "/planned-visuals/commerce/merchants/naturalia.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:netflix",
+    "label": "Netflix",
+    "src": "/planned-visuals/commerce/merchants/netflix.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:nexity",
+    "label": "Nexity",
+    "src": "/planned-visuals/commerce/merchants/nexity.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:next2-supermercat-xoroi",
+    "label": "Next2 — Supermercat Xoroi",
+    "src": "/planned-visuals/commerce/merchants/next2-supermercat-xoroi.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:noveocare",
+    "label": "Noveocare",
+    "src": "/planned-visuals/commerce/merchants/noveocare.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:o-brazeiro-montblanc",
+    "label": "O Brazeiro — Montblanc",
+    "src": "/planned-visuals/commerce/merchants/o-brazeiro-montblanc.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:openai",
+    "label": "OpenAI",
+    "src": "/planned-visuals/commerce/merchants/openai.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:orchestra",
+    "label": "Orchestra",
+    "src": "/planned-visuals/commerce/merchants/orchestra.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:ornikar-version-violette",
+    "label": "Ornikar — version violette",
+    "src": "/planned-visuals/commerce/merchants/ornikar-version-violette.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:ornikar",
+    "label": "Ornikar",
+    "src": "/planned-visuals/commerce/merchants/ornikar-original.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:pacifica",
+    "label": "Pacifica",
+    "src": "/planned-visuals/commerce/merchants/pacifica.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:palavas-les-flots-blason-municipal",
+    "label": "Palavas-les-Flots — blason municipal",
+    "src": "/planned-visuals/commerce/merchants/palavas-les-flots-blason-municipal.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:paypal",
+    "label": "PayPal",
+    "src": "/planned-visuals/commerce/merchants/paypal.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:pimkie",
+    "label": "Pimkie",
+    "src": "/planned-visuals/commerce/merchants/pimkie.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:pinterest",
+    "label": "Pinterest",
+    "src": "/planned-visuals/commerce/merchants/pinterest.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:pizza-capri",
+    "label": "Pizza Capri",
+    "src": "/planned-visuals/commerce/merchants/pizza-capri.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:planet-sushi",
+    "label": "Planet Sushi",
+    "src": "/planned-visuals/commerce/merchants/planet-sushi.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:playstation",
+    "label": "PlayStation",
+    "src": "/planned-visuals/commerce/merchants/playstation.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:pokawa",
+    "label": "Pokawa",
+    "src": "/planned-visuals/commerce/merchants/pokawa.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:promotrans",
+    "label": "Promotrans",
+    "src": "/planned-visuals/commerce/merchants/promotrans.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:qare",
+    "label": "Qare",
+    "src": "/planned-visuals/commerce/merchants/qare.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:qobuz",
+    "label": "Qobuz",
+    "src": "/planned-visuals/commerce/merchants/qobuz.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:regie-des-eaux-de-montpellier",
+    "label": "Régie des Eaux de Montpellier",
+    "src": "/planned-visuals/commerce/merchants/regie-des-eaux-de-montpellier.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:royal-parking-marseille",
+    "label": "Royal Parking — Marseille",
+    "src": "/planned-visuals/commerce/merchants/royal-parking-marseille.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:ryanair",
+    "label": "Ryanair",
+    "src": "/planned-visuals/commerce/merchants/ryanair.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:salins-de-camargue",
+    "label": "Salins de Camargue",
+    "src": "/planned-visuals/commerce/merchants/salins-de-camargue.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:sephora",
+    "label": "Sephora",
+    "src": "/planned-visuals/commerce/merchants/sephora.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:seven-tattoocing",
+    "label": "Seven Tattoocing",
+    "src": "/planned-visuals/commerce/merchants/seven-tattoocing.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:sfr",
+    "label": "SFR",
+    "src": "/planned-visuals/commerce/merchants/sfr.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:shotgun",
+    "label": "Shotgun",
+    "src": "/planned-visuals/commerce/merchants/shotgun.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:snapchat",
+    "label": "Snapchat",
+    "src": "/planned-visuals/commerce/merchants/snapchat.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:sncf",
+    "label": "SNCF",
+    "src": "/planned-visuals/commerce/merchants/sncf.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:spotify",
+    "label": "Spotify",
+    "src": "/planned-visuals/commerce/merchants/spotify.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:starbucks",
+    "label": "Starbucks",
+    "src": "/planned-visuals/commerce/merchants/starbucks.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:subway",
+    "label": "Subway",
+    "src": "/planned-visuals/commerce/merchants/subway.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:suno",
+    "label": "Suno",
+    "src": "/planned-visuals/commerce/merchants/suno.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:super-u",
+    "label": "Super U",
+    "src": "/planned-visuals/commerce/merchants/super-u.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:swile",
+    "label": "Swile",
+    "src": "/planned-visuals/commerce/merchants/swile.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:tcheezebox",
+    "label": "Tcheezebox",
+    "src": "/planned-visuals/commerce/merchants/tcheezebox.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:tcl-essai",
+    "label": "TCL (essai)",
+    "src": "/planned-visuals/commerce/merchants/tcl-essai.webp",
+    "width": 128,
+    "height": 128,
+    "type": "trial",
+    "reviewRequired": true
+  },
+  {
+    "key": "merchants:tcl",
+    "label": "TCL",
+    "src": "/planned-visuals/commerce/merchants/tcl.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:temu",
+    "label": "Temu",
+    "src": "/planned-visuals/commerce/merchants/temu.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:tezenis",
+    "label": "Tezenis",
+    "src": "/planned-visuals/commerce/merchants/tezenis.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:thai-to-box",
+    "label": "Thaï To Box",
+    "src": "/planned-visuals/commerce/merchants/thai-to-box.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:tisspark",
+    "label": "TissPark",
+    "src": "/planned-visuals/commerce/merchants/tisspark.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:totalenergies",
+    "label": "TotalEnergies",
+    "src": "/planned-visuals/commerce/merchants/totalenergies.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:tsuki-sushi-et-box-thaime",
+    "label": "Tsuki Sushi & Box Thaïme",
+    "src": "/planned-visuals/commerce/merchants/tsuki-sushi-et-box-thaime.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:uber-eats",
+    "label": "Uber Eats",
+    "src": "/planned-visuals/commerce/merchants/uber-eats.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:uber",
+    "label": "Uber",
+    "src": "/planned-visuals/commerce/merchants/uber.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:utile",
+    "label": "Utile",
+    "src": "/planned-visuals/commerce/merchants/utile.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:viaduc-de-millau",
+    "label": "Viaduc de Millau",
+    "src": "/planned-visuals/commerce/merchants/viaduc-de-millau.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:vinci-autoroutes",
+    "label": "VINCI Autoroutes",
+    "src": "/planned-visuals/commerce/merchants/vinci-autoroutes.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:viva-la-fiesta-lattes",
+    "label": "Viva La Fiesta — Lattes",
+    "src": "/planned-visuals/commerce/merchants/viva-la-fiesta-lattes.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:whatsapp",
+    "label": "WhatsApp",
+    "src": "/planned-visuals/commerce/merchants/whatsapp.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:willis-towers-watson",
+    "label": "Willis Towers Watson",
+    "src": "/planned-visuals/commerce/merchants/willis-towers-watson.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:xceed",
+    "label": "Xceed",
+    "src": "/planned-visuals/commerce/merchants/xceed.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:xtreme-bowling",
+    "label": "Xtreme Bowling",
+    "src": "/planned-visuals/commerce/merchants/xtreme-bowling.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:young-min-grill",
+    "label": "Young Min Grill",
+    "src": "/planned-visuals/commerce/merchants/young-min-grill.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "merchants:youtube",
+    "label": "YouTube",
+    "src": "/planned-visuals/commerce/merchants/youtube.webp",
+    "width": 128,
+    "height": 128,
+    "type": "merchant"
+  },
+  {
+    "key": "categories:bar",
+    "label": "Bar",
+    "src": "/planned-visuals/builder/clay/bar-compact/cocktail.webp",
+    "width": 256,
+    "height": 256,
+    "type": "generic",
+    "category": "BAR"
+  },
+  {
+    "key": "categories:restaurant",
+    "label": "Restaurant",
+    "src": "/planned-visuals/builder/clay/v22/compact/v22-art-extra-restaurant-intent.webp",
+    "width": 256,
+    "height": 256,
+    "type": "generic",
+    "category": "RESTAURANT"
+  }
+]

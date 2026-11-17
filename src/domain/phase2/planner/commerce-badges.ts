@@ -8,7 +8,7 @@ import { commerceAnchor, type BadgeAnchor, type BadgeCategory, type BadgeIdentit
 
 export type CommerceContext = Pick<PlannedContextState, "templateKey" | "fields"> & Partial<Pick<PlannedContextState, "contextOccurrenceId">>;
 export type CommerceBadge = Readonly<{ kind: "platform" | "salon" | "restaurant" | "bar" | "place" | "merchant" | "seller";
-  text: string; label: string; category?: BadgeCategory; identity?: BadgeIdentity; anchor?: BadgeAnchor }>;
+  text: string; label: string; category?: BadgeCategory; identity?: BadgeIdentity; anchor?: BadgeAnchor; custom?: boolean }>;
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const categories: Readonly<Record<string, BadgeCategory>> = {
   GROCERY: "GROCERIES", RESTAURANT: "RESTAURANT", FAST_FOOD: "RESTAURANT", BAR: "BAR",
@@ -53,5 +53,9 @@ export function commerceBadges(context: CommerceContext, places: NonNullable<Com
       text: googleBar ? `Bar sélectionné · ${ref.label}` : `Lieu saisi · ${ref.label}`,
       category: googleBar ? "BAR" : undefined, anchor: commerceAnchor(id, "place", ref) });
   }
+  if (!badges.length && id) badges.push({
+    kind: "seller", label: "Badge de la carte", text: "Badge de la carte", custom: true,
+    anchor: commerceAnchor(id, "seller", { kind: "card-badge", templateKey: context.templateKey }),
+  });
   return badges;
 }

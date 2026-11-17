@@ -989,6 +989,9 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .commerceBadge img { width:24px; height:24px; flex:none; object-fit:contain; }
 .commerceBadgeEdit { border:0; padding:2px; display:inline-flex; flex:none; border-radius:5px; color:#735c8c; background:transparent; cursor:pointer; }
 .commerceBadgeEdit:focus-visible { outline:2px solid #ab83c5; outline-offset:1px; }
+.commerceBadgeEdit { gap:3px; font:inherit; }
+.commerceBadgeAdd { display:inline-flex; align-items:center; gap:5px; border:1px dashed #bba9ce; border-radius:7px; padding:4px 7px; background:#faf6ff; color:#634775; font:inherit; font-size:.72rem; cursor:pointer; }
+.commerceBadgeAdd:focus-visible { outline:2px solid #ab83c5; outline-offset:2px; }
 .contextHeader .commerceBadge img { width:20px; height:20px; }
 .contextHeader,.contextHeader>div { min-width:0; max-width:100%; }
 .contextHeader .commerceBadges { flex-wrap:nowrap; justify-content:center; }
