@@ -79,6 +79,10 @@ export async function badgeRequest(request: Request, kind: "COMMAND" | "UPLOAD" 
       plannerKeys(raw, ["kind", "identityKey", "expectedVersion", "category"]);
       return reply({ media: await service.category(raw.identityKey, raw.expectedVersion, raw.category) });
     }
+    if (raw.kind === "BUNDLED") {
+      plannerKeys(raw, ["kind", "identityKey", "expectedVersion", "assetKey"]);
+      return reply({ media: await service.bundled(raw.identityKey, raw.expectedVersion, raw.assetKey) });
+    }
     if (raw.kind === "ANCHOR_CATEGORY") {
       plannerKeys(raw, ["kind", "anchor", "expectedVersion", "category"]);
       return reply({ binding: await service.anchorCategory(raw.anchor, raw.expectedVersion, raw.category) });

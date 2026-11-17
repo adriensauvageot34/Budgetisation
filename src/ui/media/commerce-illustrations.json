@@ -104,6 +104,586 @@
       "src": "/planned-visuals/commerce/merchants/marie-blachere.webp",
       "width": 128,
       "height": 128
+    },
+    "merchant:65f20af0-fc4e-57c5-90f3-60b1f4711ebc": {
+      "src": "/planned-visuals/commerce/merchants/3-brasseurs.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:d501a091-bfeb-5bcd-8a8a-5a13e02df5e5": {
+      "src": "/planned-visuals/commerce/merchants/adobe-lightroom.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:c092b612-fd5c-5c8c-8012-2d253d91d1d7": {
+      "src": "/planned-visuals/commerce/merchants/aldi.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:b2c394ba-58ef-5708-94c7-3d6e82c67e30": {
+      "src": "/planned-visuals/commerce/merchants/aliexpress.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:4ef0db51-2fe6-56f9-a88c-f0affb4bb8fa": {
+      "src": "/planned-visuals/commerce/merchants/alma.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:0f0281e7-20f2-53e0-bd9c-aa111f46e5ca": {
+      "src": "/planned-visuals/commerce/merchants/amorino.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:7ae5e636-d1c0-5936-be63-2066d32d384d": {
+      "src": "/planned-visuals/commerce/merchants/artguru.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:c6f6a765-ae3c-56b1-a5b0-25bc71b91e7b": {
+      "src": "/planned-visuals/commerce/merchants/association-dentisoin.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:7a7173b0-da8b-53cf-adfb-51a661b49cf2": {
+      "src": "/planned-visuals/commerce/merchants/au-bon-coin.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:2c251204-5eff-57d5-a996-08a67efa8c27": {
+      "src": "/planned-visuals/commerce/merchants/auchan.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:179f8ef7-2ef5-59af-a5b0-2413672aeedb": {
+      "src": "/planned-visuals/commerce/merchants/baraka-jeux.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:1ff60b54-36ce-5477-8784-efd7ab110260": {
+      "src": "/planned-visuals/commerce/merchants/bershka.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:fc6b956b-97e2-5f1b-a77b-f7e8ccdd72f8": {
+      "src": "/planned-visuals/commerce/merchants/bill-s-burger.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:df227750-0e31-5b47-90c2-1c7e34e3029f": {
+      "src": "/planned-visuals/commerce/merchants/black-corner.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:9388f41c-c182-5a78-aed7-5d2a464eba04": {
+      "src": "/planned-visuals/commerce/merchants/boulangerie-ange.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:8aeffe7e-dd5f-5a2d-b316-ee6f123b9212": {
+      "src": "/planned-visuals/commerce/merchants/boucherie-dari-boumediene.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:29937888-ca4c-5216-9dd9-bb21c8cfbb12": {
+      "src": "/planned-visuals/commerce/merchants/bureau-vallee.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:1ae40819-57a8-513c-b8cb-7694e33c11f5": {
+      "src": "/planned-visuals/commerce/merchants/burger-king.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:25199bc3-e08e-5df4-a034-c43a8a265723": {
+      "src": "/planned-visuals/commerce/merchants/burger-university-montpellier.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:c5dc2237-8c20-5bd6-8a8a-3bb1240f4f9b": {
+      "src": "/planned-visuals/commerce/merchants/but.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:7adef3c9-ec50-581b-838b-f3a649aa7db9": {
+      "src": "/planned-visuals/commerce/merchants/cafe-des-arts-c-k-l.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:45c08adb-64df-59da-86aa-47b1b31ff861": {
+      "src": "/planned-visuals/commerce/merchants/cafes-bibal.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:5bdd5312-2271-590b-9d2d-a24d28a94806": {
+      "src": "/planned-visuals/commerce/merchants/canoe-le-pont-suspendu.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:782fe8c5-b809-5c08-b779-b03b3d6841cb": {
+      "src": "/planned-visuals/commerce/merchants/castorama.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:ef6c6e5b-b7df-594a-a8b7-261612216357": {
+      "src": "/planned-visuals/commerce/merchants/li-s-raviolis-chinois-cayer.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:971484cb-148f-5f6d-adf4-7d6c03a1e4d5": {
+      "src": "/planned-visuals/commerce/merchants/celio.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:f1268b8b-8dbd-5de5-b4e8-b6d81449ebb4": {
+      "src": "/planned-visuals/commerce/merchants/centre-andre-benech-chu-de-montpellier.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:011a1546-6447-500d-9a3d-3057a263c193": {
+      "src": "/planned-visuals/commerce/merchants/le-cercle-de-la-vap.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:bc87a0c1-607f-5339-a514-26a85324ba05": {
+      "src": "/planned-visuals/commerce/merchants/chamas-tacos.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:a29a82ba-2369-58d0-9b2e-cd2c8bd299e9": {
+      "src": "/planned-visuals/commerce/merchants/chicken-place-montpellier.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:b38513ad-c931-5cc4-940b-f41581ee89cf": {
+      "src": "/planned-visuals/commerce/merchants/conforama.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:60bdbfbf-2d2c-54b7-9876-da9a47894a04": {
+      "src": "/planned-visuals/commerce/merchants/copy-com.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:da87216e-a798-5ef6-b2fd-5b4dea2eb61c": {
+      "src": "/planned-visuals/commerce/merchants/credit-agricole.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:7952a0d1-39cb-50f1-87fa-18d58733b9a6": {
+      "src": "/planned-visuals/commerce/merchants/decathlon.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:19a37fd7-4669-5b6c-b8c4-e64ecefbaf34": {
+      "src": "/planned-visuals/commerce/merchants/dekra.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:8b03bf62-98a7-5428-853e-682632c54d1c": {
+      "src": "/planned-visuals/commerce/merchants/dieze-warehouse.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:568fefda-7f87-5a84-88c5-397305c5c298": {
+      "src": "/planned-visuals/commerce/merchants/digital-learning-contest.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:39e66f07-2e8c-5dbc-8404-84557020886f": {
+      "src": "/planned-visuals/commerce/merchants/disney-plus.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:f35a1d32-8ec5-51ea-9582-24a5a8619b0d": {
+      "src": "/planned-visuals/commerce/merchants/doctolib.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:132822ae-242b-5c6b-bdda-fd698905e2ec": {
+      "src": "/planned-visuals/commerce/merchants/eastlodge-lyon-est-eurexpo.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:86acc316-1e78-5c38-aaad-ca13b5ba7602": {
+      "src": "/planned-visuals/commerce/merchants/edf.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:31a7910b-a749-5d99-80a4-07780c692eb4": {
+      "src": "/planned-visuals/commerce/merchants/eni.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:fbe99167-aa63-5048-9718-c782497f6cdc": {
+      "src": "/planned-visuals/commerce/merchants/le-p-tit-festif-esta-fetes.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:e203a8cf-03b7-5363-b120-4f157730bfd6": {
+      "src": "/planned-visuals/commerce/merchants/autodistribution-fia-littoral.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:277a17e7-69c5-588f-84b4-0eb34d6819fc": {
+      "src": "/planned-visuals/commerce/merchants/fnac.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:18b047f0-a1d6-5ce0-96f9-9ffa4f396ab5": {
+      "src": "/planned-visuals/commerce/merchants/francebillet.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:943ff9bf-2a2e-53e1-9e2a-d971d6807b4d": {
+      "src": "/planned-visuals/commerce/merchants/gamm-vert.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:f9739320-5258-5080-baf7-07f66361de66": {
+      "src": "/planned-visuals/commerce/merchants/getyourguide.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:8c33d386-292e-5f12-b5c4-a5c6af82e29e": {
+      "src": "/planned-visuals/commerce/merchants/glacier-catalan.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:872468f4-79d9-55d1-b566-b709a82fc158": {
+      "src": "/planned-visuals/commerce/merchants/google-one.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:825b541e-bed7-59ed-a994-1ef7ea921597": {
+      "src": "/planned-visuals/commerce/merchants/grand-cafe-riche-montpellier.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:443105fa-10f7-5ad9-bd5a-e0e7cdd3cb0b": {
+      "src": "/planned-visuals/commerce/merchants/grand-frais.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:a31a70d6-be05-5552-a018-389583e25e99": {
+      "src": "/planned-visuals/commerce/merchants/grand-traiteur.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:8560ab44-6921-56c6-a550-9659c5f0aec2": {
+      "src": "/planned-visuals/commerce/merchants/grillade-tacos-montpellier.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:2bf24b02-c59a-56ee-83a3-947764ded38b": {
+      "src": "/planned-visuals/commerce/merchants/groupon.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:5c6b394b-df93-5704-a94a-b4c6502c68d5": {
+      "src": "/planned-visuals/commerce/merchants/hema.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:6ca114a6-e375-56b0-8808-afe672226b07": {
+      "src": "/planned-visuals/commerce/merchants/histoire-d-or.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:1309b570-99ed-547e-9fbb-1eae70dd9722": {
+      "src": "/planned-visuals/commerce/merchants/hopulus-brewpub-montpellier.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:7fd3a62b-bd2c-5797-a79c-9a7484f7d69a": {
+      "src": "/planned-visuals/commerce/merchants/hurricane-group.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:d0c9703d-96c0-5058-9d81-ea74ad856381": {
+      "src": "/planned-visuals/commerce/merchants/inter-fetes-lattes.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:0f25ef00-60da-5432-b022-a27b85e83865": {
+      "src": "/planned-visuals/commerce/merchants/intersport-ip-sport-pezenas.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:75b43e83-e1cd-5221-b2f8-27c4c4d28f28": {
+      "src": "/planned-visuals/commerce/merchants/jardiland.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:b1b26fd6-250d-565b-a954-d869ee8873f5": {
+      "src": "/planned-visuals/commerce/merchants/keep-cool.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:fc26a32a-31c7-5c2b-ad83-31f5d9a33e4b": {
+      "src": "/planned-visuals/commerce/merchants/kfc.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:c1bf605f-8c1a-57e1-8ce5-67c8e890fb04": {
+      "src": "/planned-visuals/commerce/merchants/krousty-sabaidi.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:01e77517-b47b-5830-966b-bca93247c5f9": {
+      "src": "/planned-visuals/commerce/merchants/l-alaska-maison-poiret.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:21388b31-287d-5a75-b0a5-28a5374b3323": {
+      "src": "/planned-visuals/commerce/merchants/la-coquille-montpellier.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:604411eb-980f-5d30-ae5c-5b3c8ec4171b": {
+      "src": "/planned-visuals/commerce/merchants/la-mie-caline.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:2e0d2656-4aef-55d4-8b00-bd35c431b4ae": {
+      "src": "/planned-visuals/commerce/merchants/lady-sushi.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:742cbfb0-a211-5985-abba-88856ac3c7d8": {
+      "src": "/planned-visuals/commerce/merchants/le-novelty.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:70bfef4e-0cb2-5d06-b1aa-0e9a2a378a94": {
+      "src": "/planned-visuals/commerce/merchants/leroy-merlin.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:f35ba68a-93db-541d-9137-ddbc018b69a2": {
+      "src": "/planned-visuals/commerce/merchants/les-halles-solanid.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:95f92b29-f076-5bb0-b33f-23995702a0d1": {
+      "src": "/planned-visuals/commerce/merchants/les-7-laux.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:3368f6fe-aad4-50e5-a9a4-d2e58a9f133c": {
+      "src": "/planned-visuals/commerce/merchants/lidl.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:8d35752f-3891-5e22-b94b-3c0f436c5ef6": {
+      "src": "/planned-visuals/commerce/merchants/lolly-s.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:5e7ea247-c902-5fdc-ac55-35a3c95a8a4b": {
+      "src": "/planned-visuals/commerce/merchants/lance-ta-hache-lth.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:8b87980a-f18b-567f-95dc-2212782a5c11": {
+      "src": "/planned-visuals/commerce/merchants/max.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:7059edbe-bb8f-5b86-9feb-1e9d977652d4": {
+      "src": "/planned-visuals/commerce/merchants/maxicoffee.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:05164b0e-f23b-5d08-bc98-9860ed4d4019": {
+      "src": "/planned-visuals/commerce/merchants/mcdonald-s.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:664a4d86-c231-53bd-b730-62812cec9a63": {
+      "src": "/planned-visuals/commerce/merchants/monkey-factory.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:ce639d36-e8a6-520c-a0ad-dc5eb6cc8b12": {
+      "src": "/planned-visuals/commerce/merchants/monoprix.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:e6993a1e-2d61-5b7d-bbef-adad71e87426": {
+      "src": "/planned-visuals/commerce/merchants/morgan.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:a9f01014-a8fa-5246-bd91-d7d2d9eab879": {
+      "src": "/planned-visuals/commerce/merchants/mr-bricolage.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:fddde5cf-53ad-57b9-b837-258cce7882b6": {
+      "src": "/planned-visuals/commerce/merchants/mureka.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:e06c56fd-50db-5616-b4da-843a21a1a377": {
+      "src": "/planned-visuals/commerce/merchants/netflix.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:42af4a83-5f72-5a79-b9eb-135c67215c67": {
+      "src": "/planned-visuals/commerce/merchants/nexity.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:244a3304-c698-59c3-aa68-1cf3d79f1617": {
+      "src": "/planned-visuals/commerce/merchants/noveocare.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:449b445f-2965-59b6-8def-be3657448a78": {
+      "src": "/planned-visuals/commerce/merchants/o-brazeiro-montblanc.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:a4864f03-0cd2-5934-a2ac-a452a567f07d": {
+      "src": "/planned-visuals/commerce/merchants/openai.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:54bbdcea-685a-589d-a229-2bbf0780c49c": {
+      "src": "/planned-visuals/commerce/merchants/orchestra.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:ef7fa7fe-ea87-5c3a-82f0-64eca7a74e8f": {
+      "src": "/planned-visuals/commerce/merchants/pacifica.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:353d38a9-ad9d-5ca0-9fea-e84105fab9a0": {
+      "src": "/planned-visuals/commerce/merchants/me-group-photomaton.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:0bb9a359-fcea-54a0-906b-c7dabd866eaa": {
+      "src": "/planned-visuals/commerce/merchants/pimkie.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:deba667f-a369-5a56-a074-922fcf58bcda": {
+      "src": "/planned-visuals/commerce/merchants/pizza-capri.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:22cf2127-986f-5933-8db6-a15f03981b6b": {
+      "src": "/planned-visuals/commerce/merchants/planet-sushi.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:a2c2a18e-5ff4-5dbd-9633-103d63a04b0e": {
+      "src": "/planned-visuals/commerce/merchants/playstation.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:bb2664ed-4055-5ae2-8e5b-ed1683634ee4": {
+      "src": "/planned-visuals/commerce/merchants/pokawa.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:3f247006-2af8-526a-b850-da92e1d96e50": {
+      "src": "/planned-visuals/commerce/merchants/promotrans.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:f29cf21d-ef21-5dfa-a1dd-8d46a7e6927b": {
+      "src": "/planned-visuals/commerce/merchants/qare.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:a2ea8840-94fe-5c2f-b806-b6e61f33b258": {
+      "src": "/planned-visuals/commerce/merchants/qobuz.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:a5e5261b-a9bd-58c1-91ee-083bf8838d22": {
+      "src": "/planned-visuals/commerce/merchants/regie-des-eaux-de-montpellier.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:c2f22f11-11a6-5179-94c4-87936a10f50d": {
+      "src": "/planned-visuals/commerce/merchants/royal-parking-marseille.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:d224dddb-7290-5880-92ad-9c36f5327ccf": {
+      "src": "/planned-visuals/commerce/merchants/ryanair.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:8918633a-5313-55c4-8448-a3f97f7943a3": {
+      "src": "/planned-visuals/commerce/merchants/sephora.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:08d20f0f-6c6f-594a-8bfc-e18cd0f53939": {
+      "src": "/planned-visuals/commerce/merchants/sfr.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:1615748a-af6f-5bf6-a550-df31e8c8879f": {
+      "src": "/planned-visuals/commerce/merchants/shotgun.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:6f058d61-8ce4-51c2-8261-12a4f5cf2415": {
+      "src": "/planned-visuals/commerce/merchants/snapchat.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:569f9c99-964e-5966-9f4f-f098d1dcb5b3": {
+      "src": "/planned-visuals/commerce/merchants/sncf.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:0907502c-7e07-5362-9055-1f9e2f51dfbc": {
+      "src": "/planned-visuals/commerce/merchants/starbucks.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:84467d04-c3f6-520a-9da7-692857850469": {
+      "src": "/planned-visuals/commerce/merchants/subway.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:88cc4e53-2506-5dd9-b7cf-846125ea443a": {
+      "src": "/planned-visuals/commerce/merchants/swile.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:b5fe78db-a099-51d4-9fe5-8e4e14453528": {
+      "src": "/planned-visuals/commerce/merchants/herault-transport-smtch.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:917be1ab-dad9-5b58-81aa-371861082896": {
+      "src": "/planned-visuals/commerce/merchants/tcl.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:75a46714-7747-559a-8bc8-199f77381cea": {
+      "src": "/planned-visuals/commerce/merchants/temu.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:81076db9-dc11-5b43-ae1d-1adc1ecd204f": {
+      "src": "/planned-visuals/commerce/merchants/vinci-autoroutes.webp",
+      "width": 128,
+      "height": 128
+    },
+    "merchant:e9f820a6-54c9-556a-af7c-2bf81270030c": {
+      "src": "/planned-visuals/commerce/merchants/willis-towers-watson.webp",
+      "width": 128,
+      "height": 128
     }
   },
   "categories": {

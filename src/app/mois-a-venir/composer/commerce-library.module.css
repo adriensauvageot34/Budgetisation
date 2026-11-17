@@ -15,3 +15,10 @@
 .editor [role=alert] { color:#9c303f; }
 .editor img { object-fit:contain; }
 .editor :focus-visible { outline:3px solid #b795d2; outline-offset:2px; }
+.gallery { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; max-height:330px; overflow:auto; padding:4px; }
+.editor .galleryItem { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:5px; margin:0; padding:10px 5px; min-width:0; background:#fff; }
+.galleryItem span { overflow-wrap:anywhere; text-align:center; font-size:.75rem; }
+.galleryItem small { font-size:.65rem; color:#76607a; }
+.editor .galleryItem[aria-pressed=true] { border-color:#8660aa; background:#f2e9fb; }
+.selection { display:flex; align-items:center; gap:12px; }
+@media(max-width:420px) { .gallery { grid-template-columns:repeat(2,minmax(0,1fr)); } }
