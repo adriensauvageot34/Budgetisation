@@ -5,6 +5,7 @@ import type { AtomicNode, ClusterFamily, ComposerPresentationNode, ContentDensit
 import { stableVisualIdentity } from "../planner-icons/visual-identity";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import { barClosedWidth } from "./bar-closed-width";
+import { monthlyCommerceBadges } from "@/domain/phase2/planner/commerce-badge-profiles";
 
 const clusterLook: Readonly<Record<ClusterFamily, Pick<VisualClusterNode, "title" | "iconKey" | "width" | "height" | "spatialFamily">>> = {
   BEAUTY: { title: "Beauté", iconKey: "beauty", width: 530, height: 165, spatialFamily: "PERSONAL_CARE" },
@@ -84,7 +85,8 @@ export function composePresentationNodes(model: ComposerUiModel, showMonthCards 
         const spatialFamily = controlFamily(control, view.iconKey);
         return { id:control.targetRef, kind:"CONTROL" as const, control, density, spatialFamily, iconKey:view.iconKey,
           width:control.kind === "SAVINGS" ? 260 : spatialFamily === "DAILY" ? 230 : density === "SPARSE" ? 210 : 230,
-          height:control.kind === "SAVINGS" ? 165 : control.capability?.fields?.count?.status === "EDITABLE" ? 205 : density === "SPARSE" ? 128 : density === "RICH" ? 155 : 142 };
+          height:(control.kind === "SAVINGS" ? 165 : control.capability?.fields?.count?.status === "EDITABLE" ? 205 : density === "SPARSE" ? 128 : density === "RICH" ? 155 : 142)
+            + (monthlyCommerceBadges(control).length ? 85 : 0) };
       }),
   ];
   const groups: Record<ClusterFamily, AtomicNode[]> = { BEAUTY:[], FOOD:[], ACTIVITY:[] };
