@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { Store, X } from "lucide-react";
 import Link from "next/link";
-import { BADGE_CATEGORIES, type BadgeCategory, type BadgeIdentity, type BadgeLibraryRead, type PersonalBadge } from "@/domain/phase2/commerce-media";
+import { BADGE_CATEGORIES, type BadgeCategory, type BadgeIdentity, type BadgeLibraryRead, type MerchantBadgeSuggestion, type PersonalBadge } from "@/domain/phase2/commerce-media";
 import type { CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
 import { badgeCommand, commerceLibraryPath, resolveBadgeMedia } from "./commerce-library";
 import { clayBadgeAsset, type ClayBadgeAsset } from "@/domain/phase2/commerce-badge-catalog";
@@ -26,7 +26,13 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
   const [genericSelection, setGenericSelection] = useState(resolved.genericAsset);
   const [businessName, setBusinessName] = useState(resolved.businessLabel ?? (badge.custom ? "" : badge.label));
   const [asset, setAsset] = useState<ClayBadgeAsset | null>(() => clayBadgeAsset(resolved.genericAsset?.key) ?? null);
-  const genericEditing = !!badge.genericOnly || asset?.type === "generic" || !!genericSelection;
+  const merchantKeys = badge.anchor && badge.kind !== "platform" ? badge.suggestedKeys : undefined;
+  const contextual = !!merchantKeys?.length;
+  const [choice, setChoice] = useState<"merchant" | "illustration">(contextual && !resolved.genericAsset ? "merchant" : "illustration");
+  const [suggestions, setSuggestions] = useState<readonly MerchantBadgeSuggestion[] | null>(null);
+  const [suggestionError, setSuggestionError] = useState(false);
+  const [showAllMerchants, setShowAllMerchants] = useState(false);
+  const genericEditing = asset?.type === "generic" || !!genericSelection;
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState(""), [message, setMessage] = useState("");
   const initialRead = useRef(library.available);
@@ -37,8 +43,17 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
     setIdentity(current.identity); setMedia(current.personal); setCategory(current.category ?? "");
     setGenericSelection(current.genericAsset); setBusinessName(current.businessLabel ?? (badge.custom ? "" : badge.label));
     setAsset(clayBadgeAsset(current.genericAsset?.key) ?? null);
+    if (current.genericAsset) setChoice("illustration");
     setBindingVersion(binding?.version ?? 0);
   }, [library, badge, binding?.version]);
+  useEffect(() => {
+    if (!merchantKeys?.length) return;
+    let active = true;
+    void badgeCommand({ kind: "SUGGEST_MERCHANTS", keys: merchantKeys }).then(result => {
+      if (active) setSuggestions(result.merchants);
+    }).catch(() => { if (active) setSuggestionError(true); });
+    return () => { active = false; };
+  }, [merchantKeys]);
   useEffect(() => {
     const invoker = document.activeElement as HTMLElement | null;
     dialog.current?.showModal();
@@ -65,6 +80,11 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
       anchor: badge.anchor, expectedBindingVersion: bindingVersion })).media as PersonalBadge;
     adopt(next); setBindingVersion(value => value + 1); setCandidate(null);
     setMessage("Entreprise confirmée pour ce badge dans votre compte.");
+  });
+  const chooseMerchant = (merchant: MerchantBadgeSuggestion) => void run(async () => {
+    await badgeCommand({ kind: "CONFIRM", identityKey: merchant.key,
+      anchor: badge.anchor, expectedBindingVersion: bindingVersion });
+    close();
   });
   const applyAsset = () => void run(async () => {
     if (!asset) return;
@@ -98,12 +118,32 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
     <header><h2 id="commerce-library-title">Illustration du badge</h2>
       <button type="button" disabled={busy} aria-label="Fermer la bibliothèque visuelle" onClick={close}><X size={18} /></button></header>
     <p>{badge.text}</p>
-    <p className={styles.notice}>{genericEditing ? "Choisissez un badge puis saisissez le nom de l’entreprise." : "Bibliothèque privée de votre compte. Vos choix visuels sont enregistrés séparément de vos intentions."}</p>
-    {!genericEditing && <Link href="/parametres">Référentiel des marchands</Link>}
+    {contextual && <div className={styles.choices} aria-label="Choix de l’entreprise">
+      <button type="button" aria-pressed={choice === "merchant"} disabled={busy} onClick={() => setChoice("merchant")}>Marchands connus</button>
+      <button type="button" aria-pressed={choice === "illustration"} disabled={busy} onClick={() => setChoice("illustration")}>Badge générique et nom libre</button>
+    </div>}
+    {!contextual && !genericEditing && <Link href="/parametres">Référentiel des marchands</Link>}
     {!library.available && <p role="status">Bibliothèque privée indisponible. Les illustrations génériques restent disponibles.</p>}
-    <CommerceBadgeGallery busy={busy} available={library.available} reuseOnly={identity?.policy === "reuse_only"}
+    {choice === "merchant" && <section aria-label="Marchands adaptés à cette carte">
+      <h3>Marchands adaptés à {badge.cardLabel ?? badge.label}</h3>
+      {suggestionError ? <p role="status">Suggestions indisponibles.</p> : suggestions === null ? <p role="status">Chargement des marchands…</p>
+        : suggestions.length === 0 ? <p>Aucun marchand du référentiel ne correspond à cette carte.</p> : <>
+          <div className={styles.merchantList}>
+            {(showAllMerchants ? suggestions : suggestions.slice(0, 6)).map(merchant => <button key={merchant.key} type="button"
+              className={styles.merchantChoice} data-suggested-merchant={merchant.key} aria-pressed={identity?.key === merchant.key}
+              disabled={busy || !library.available} onClick={() => chooseMerchant(merchant)}>
+              {merchant.imageUrl ? <img src={merchant.imageUrl} alt="" width={40} height={40} loading="lazy" /> : <Store size={24} aria-hidden="true" />}
+              <span>{merchant.label}<small>{merchant.activity}</small></span>
+              {merchant.purchaseCount > 0 && <small>{merchant.purchaseCount} {merchant.purchaseCount === 1 ? "achat" : "achats"}</small>}
+            </button>)}
+          </div>
+          {suggestions.length > 6 && <button type="button" disabled={busy} aria-expanded={showAllMerchants}
+            onClick={() => setShowAllMerchants(value => !value)}>{showAllMerchants ? "Afficher les plus utilisés" : `Voir les ${suggestions.length} marchands`}</button>}
+        </>}
+    </section>}
+    {choice === "illustration" && <><CommerceBadgeGallery busy={busy} available={library.available} reuseOnly={identity?.policy === "reuse_only"}
       selectedKey={asset?.key ?? genericSelection?.key ?? media?.bundledAssetKey} choose={setAsset}
-      suggestedKeys={badge.suggestedKeys} cardLabel={badge.cardLabel} genericOnly={badge.genericOnly || !!genericSelection} />
+      suggestedKeys={badge.suggestedKeys} cardLabel={badge.cardLabel} genericOnly={badge.custom || !!genericSelection} />
     {asset && <section><form onSubmit={event => { event.preventDefault(); applyAsset(); }}>
       <div className={styles.selection}>
         <img src={asset.src} alt="" width={72} height={72} />
@@ -119,8 +159,8 @@ export function CommerceLibraryEditor({ badge, library, refresh, close }: {
       const next = await badgeCommand({ kind: "ANCHOR_GENERIC", anchor: badge.anchor, expectedVersion: bindingVersion, assetKey: null, businessLabel: null });
       setBindingVersion(next.binding.version); setGenericSelection(undefined); setAsset(null);
       setMessage("Badge générique retiré de cette carte.");
-    })}>Retirer le badge générique</button></section>}
-    {!genericEditing && <><section><h3>Entreprise</h3>
+    })}>Retirer le badge générique</button></section>}</>}
+    {!genericEditing && choice === "illustration" && (!badge.custom || identity) && <><section><h3>Entreprise</h3>
       {identity ? <>
         <p data-confirmed-badge-identity>{identity.label} · {identity.key.startsWith("personal:") ? "Fiche visuelle privée" : "Identité sélectionnée"}</p>
         {identity.policy === "reuse_only" && <p>Réutilisation de badges existants uniquement.</p>}

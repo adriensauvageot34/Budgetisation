@@ -417,6 +417,13 @@
       "categories:butcher",
       "categories:fishmonger",
       "categories:cheese"
-    ]
+    ],
+    "HOUSEHOLD:household:tobacco-vape": ["categories:tobacco", "categories:vape"],
+    "HOUSEHOLD:household:restaurants": ["categories:restaurant", "categories:pizzeria", "categories:pub-brasserie"],
+    "HOUSEHOLD:household:fast-food": ["categories:fast-food", "categories:takeaway"],
+    "HOUSEHOLD:household:delivery": ["categories:meal-delivery"],
+    "HOUSEHOLD:household:clothing": ["categories:clothing", "categories:shoe-shop"],
+    "HOUSEHOLD:household:home-small": ["categories:home", "categories:furniture-shop", "categories:household-shop"],
+    "HOUSEHOLD:household:games-digital": ["categories:video-game-shop", "categories:digital-game-shop", "categories:electronics"]
   }
 }

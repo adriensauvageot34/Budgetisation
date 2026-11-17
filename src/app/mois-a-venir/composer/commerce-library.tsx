@@ -29,7 +29,10 @@ export const useCommerceLibrary = () => useContext(LibraryContext);
 
 export function resolveBadgeMedia(badge: CommerceBadge, library: BadgeLibraryRead | null) {
   const binding = badge.anchor ? library?.bindings.find(row => row.key === badge.anchor!.key && row.digest === badge.anchor!.digest) : undefined;
-  const merchant = library?.merchants?.find(row => row.key === (badge.identity?.key ?? binding?.identityKey));
+  const originalMerchant = library?.merchants?.find(row => row.key === badge.identity?.key);
+  const bound = binding?.identityKey ? library?.media.find(row => row.key === binding.identityKey) : undefined;
+  const merchant = originalMerchant?.policy === "none" || isNonMerchantKind(originalMerchant?.kind) ? originalMerchant
+    : library?.merchants?.find(row => row.key === (binding?.identityKey ?? badge.identity?.key));
   if (isNonMerchantKind(merchant?.kind)) return { counterpartyKind: merchant.kind };
   if (merchant?.policy === "none") {
     return { policy: merchant.policy,
@@ -37,8 +40,7 @@ export function resolveBadgeMedia(badge: CommerceBadge, library: BadgeLibraryRea
   }
   // Explicit visual choice for this card; Canonical merchant identities stay unchanged.
   if (binding?.genericAsset) return { genericAsset: binding.genericAsset, businessLabel: binding.businessLabel, policy: merchant?.policy };
-  const bound = binding?.identityKey ? library?.media.find(row => row.key === binding.identityKey) : undefined;
-  const baseIdentity = badge.identity ?? (bound ? { key: bound.key, label: bound.label } : undefined);
+  const baseIdentity = bound ? { key: bound.key, label: bound.label } : badge.identity;
   const identity = baseIdentity && merchant ? {
     ...baseIdentity, label: merchant.displayName ?? baseIdentity.label, policy: merchant.policy,
   } : baseIdentity;

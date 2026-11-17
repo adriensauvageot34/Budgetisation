@@ -7,6 +7,7 @@ import { isNonMerchantKind, merchantBadgePolicy, merchantDisplayName, type Merch
 import { merchantBadgeCategoryFor, referencedMerchantActivities } from "@/core/identity/merchant-activity";
 import { readMerchantActivities } from "./merchant-activities";
 import { clayBadgeAsset } from "@/domain/phase2/commerce-badge-catalog";
+import { readMerchantSuggestions } from "./merchant-suggestions";
 
 type Row = { user_id: string; identity_key: string; label: string; category: PersonalBadge["category"];
   object_path: string | null; bundled_asset_key: string | null; version: number };
@@ -166,6 +167,10 @@ export class BadgeLibrary {
     return { key, label: badgeLabel(merchantDisplayName(row) ?? row.nom_canonique), ...(policy !== "normal" ? { policy } : {}) };
   }
 
+  async suggestions(keys: unknown) {
+    return readMerchantSuggestions(await this.canonical(), keys, identities => this.read(identities, []));
+  }
+
   async confirm(raw: { identityKey?: unknown; newLabel?: unknown; anchor?: unknown; expectedBindingVersion?: unknown }) {
     const anchor = raw.anchor === undefined ? undefined : badgeAnchor(raw.anchor);
     if (raw.newLabel !== undefined && !anchor) throw new TypeError("BADGE_ANCHOR_INVALID");
@@ -186,7 +191,8 @@ export class BadgeLibrary {
     if (!row) throw new TypeError("BADGE_LIBRARY_UNAVAILABLE");
     if (anchor) {
       const value = { user_id: this.userId, anchor_key: anchor.key, source_digest: anchor.digest, identity_key: identity.key,
-        category: previous?.digest === anchor.digest ? previous.category : null, version: version + 1,
+        category: previous?.digest === anchor.digest && (!previous.identityKey || previous.identityKey === identity.key) ? previous.category : null,
+        version: version + 1,
         bundled_asset_key: null, business_label: null };
       try {
         const result = version === 0 ? await this.client.from("composer_badge_bindings").insert(value).select("version").maybeSingle()

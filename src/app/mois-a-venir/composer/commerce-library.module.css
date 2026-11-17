@@ -21,4 +21,11 @@
 .galleryItem small { font-size:.65rem; color:#76607a; }
 .editor .galleryItem[aria-pressed=true] { border-color:#8660aa; background:#f2e9fb; }
 .selection { display:flex; align-items:center; gap:12px; }
+.choices { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.editor .choices button[aria-pressed=true] { border-color:#8660aa; background:#e9d9f7; }
+.merchantList { display:grid; gap:6px; max-height:340px; overflow:auto; padding:4px; }
+.editor .merchantChoice { display:grid; grid-template-columns:40px minmax(0,1fr) auto; align-items:center; gap:10px; margin:0; text-align:left; background:#fff; }
+.merchantChoice > span { overflow-wrap:anywhere; }
+.merchantChoice small { display:block; color:#665773; font-size:.75rem; }
+.editor .merchantChoice[aria-pressed=true] { border-color:#8660aa; background:#f2e9fb; }
 @media(max-width:420px) { .gallery { grid-template-columns:repeat(2,minmax(0,1fr)); } }

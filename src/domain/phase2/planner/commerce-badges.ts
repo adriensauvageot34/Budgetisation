@@ -10,7 +10,7 @@ import { contextBadgeSuggestions } from "./commerce-badge-profiles";
 export type CommerceContext = Pick<PlannedContextState, "templateKey" | "fields"> & Partial<Pick<PlannedContextState, "contextOccurrenceId">> & { label?: string };
 export type CommerceBadge = Readonly<{ kind: "platform" | "salon" | "restaurant" | "bar" | "place" | "merchant" | "seller";
   text: string; label: string; category?: BadgeCategory; identity?: BadgeIdentity; anchor?: BadgeAnchor; custom?: boolean;
-  suggestedKeys?: readonly string[]; genericOnly?: boolean; cardLabel?: string }>;
+  suggestedKeys?: readonly string[]; cardLabel?: string }>;
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const categories: Readonly<Record<string, BadgeCategory>> = {
   GROCERY: "GROCERIES", RESTAURANT: "RESTAURANT", FAST_FOOD: "RESTAURANT", BAR: "BAR",
@@ -61,6 +61,5 @@ export function commerceBadges(context: CommerceContext, places: NonNullable<Com
     anchor: commerceAnchor(id, "seller", { kind: "card-badge", templateKey: context.templateKey }),
   });
   return badges.map(badge => ({ ...badge, suggestedKeys, cardLabel: context.label ?? presetForContext(context)?.label ?? "cette carte",
-    genericOnly: badge.custom || undefined,
     anchor: badge.anchor ?? commerceAnchor(id, badge.kind === "platform" ? "provider" : badge.kind === "merchant" ? "seller" : "place", badge.identity?.key ?? badge.label) }));
 }
