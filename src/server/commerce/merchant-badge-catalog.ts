@@ -10,7 +10,7 @@ import { readMerchantActivities } from "./merchant-activities";
 type MerchantRow = {
   merchant_id: string;
   nom_canonique: string;
-  identity_kind: "commercial" | "unknown";
+  identity_kind: "commercial" | "payment_instrument" | "unknown";
   commercial_display_name: string | null;
   visual_brand_merchant_id: string | null;
   generic_badge_category: string | null;
@@ -26,7 +26,7 @@ export async function readMerchantBadgeCatalog(householdId: HouseholdId) {
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await client.from("merchants")
       .select("merchant_id,nom_canonique,identity_kind,commercial_display_name,visual_brand_merchant_id,generic_badge_category,badge_policy,activity_key,activity_review_required")
-      .in("identity_kind", ["commercial", "unknown"]).order("merchant_id").range(offset, offset + pageSize - 1);
+      .in("identity_kind", ["commercial", "payment_instrument", "unknown"]).order("merchant_id").range(offset, offset + pageSize - 1);
     if (error || !data) throw new TypeError("BADGE_CATALOG_UNAVAILABLE");
     rows.push(...data as MerchantRow[]);
     if (data.length < pageSize) break;

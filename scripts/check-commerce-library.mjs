@@ -37,6 +37,15 @@ try {
   await fixture.pg.db.query("update public.merchants set activity_review_required=true where merchant_id=$1", [digitalId]);
   assert.equal((await a.read([digitalKey], [])).merchants[0].genericCategory, undefined);
   await fixture.pg.db.exec("reset role");
+  const paymentId = uuid(97009);
+  await fixture.pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at,
+      identity_source, activity_key)
+    values ($1,'Instrument de recette','payment_instrument',now(),'owner_confirmed','PAYMENT_LABEL')`, [paymentId]);
+  const paymentKey = "merchant:" + paymentId;
+  assert.deepEqual((await a.read([paymentKey], [])).merchants, [{ key: paymentKey, kind: "payment_instrument" }]);
+  assert.deepEqual(await a.search("Instrument de recette"), []);
+  await assert.rejects(a.confirm({ identityKey: paymentKey }), /BADGE_IDENTITY_INVALID/u);
+  await fixture.pg.db.exec("reset role");
   for (const [id, name] of [[uuid(97005), "Tabac de recette A"], [uuid(97006), "Tabac de recette B"]]) {
     await fixture.pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at,
         identity_source, generic_badge_category)

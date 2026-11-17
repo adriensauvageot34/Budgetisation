@@ -143,4 +143,5 @@ assert.equal(canCreateMerchantBadge('commercial', 'normal'), true);
 assert.equal(canCreateMerchantBadge('commercial', 'reuse_only'), false);
 assert.equal(canCreateMerchantBadge('unknown', 'none'), false);
 assert.equal(canCreateMerchantBadge('private_person', 'normal'), false);
+assert.equal(canCreateMerchantBadge('payment_instrument', 'normal'), false);
 console.log('HISTORICAL_OPERATIONS_FIELDSET PASS (population, batches, exact money, browse, merchant presentation, dimensions, Need authority, memo)');

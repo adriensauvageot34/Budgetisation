@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from "react";
-import { ArrowLeftRight, UserRound } from "lucide-react";
+import { ArrowLeftRight, CreditCard, UserRound } from "lucide-react";
+import { nonMerchantLabel } from "@/core/identity/merchant-kind";
 import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import {
   parseCategoryId,
@@ -56,9 +57,9 @@ function OperationCounterparty({ row }: { row: OperationRowReadModel }) {
       policy: row.merchantBadgePolicy,
     }).find(candidate => !failed.includes(candidate.src))
     : undefined;
-  const Icon = kind === "private_person" ? UserRound : kind === "personal_transfer_label" ? ArrowLeftRight : undefined;
-  const description = kind === "private_person" ? "Contrepartie privée"
-    : kind === "personal_transfer_label" ? "Libellé de virement personnel" : undefined;
+  const Icon = kind === "private_person" ? UserRound : kind === "personal_transfer_label" ? ArrowLeftRight
+    : kind === "payment_instrument" ? CreditCard : undefined;
+  const description = nonMerchantLabel(kind);
   return <>
     <span className={styles.counterparty} data-counterparty-kind={kind} data-badge-policy={row.merchantBadgePolicy}
       data-badge-visual={image?.kind ?? "NEUTRAL"}>

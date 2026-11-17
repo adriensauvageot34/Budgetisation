@@ -4,7 +4,7 @@ const OBSERVED_PRICE_ASSETS_V1: Record<string, string> = {
 };
 import "server-only";
 import { parseCanonicalHouseholdScope } from "@/analytics/facts/canonical";
-import { isPrivateMerchantKind, merchantDisplayName } from "@/core/identity/merchant-kind";
+import { isNonMerchantKind, merchantDisplayName } from "@/core/identity/merchant-kind";
 
 import Big from "big.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -94,7 +94,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
   const sourceAliases = brandsResult.data ?? [];
   const aliases = sourceAliases.flatMap(alias => {
     const merchant = alias.merchants as unknown as MerchantAlias | null;
-    if (!merchant || isPrivateMerchantKind(merchant.identity_kind)) return [];
+    if (!merchant || isNonMerchantKind(merchant.identity_kind)) return [];
     return [{ placeId: alias.place_id, merchantId: merchant.merchant_id, name: merchantDisplayName(merchant) ?? merchant.nom_canonique }];
   });
   const confirmedByPlace = new Map<string, { id: string; name: string } | null>();

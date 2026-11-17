@@ -4,7 +4,7 @@ import { withProductAuthentication } from "@/app/product-query";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { getCurrentHousehold } from "@/server/bootstrap/queries";
 import { readMerchantBadgeCatalog } from "@/server/commerce/merchant-badge-catalog";
-import { MERCHANT_GENERIC_BADGE_LABELS } from "@/core/identity/merchant-kind";
+import { MERCHANT_GENERIC_BADGE_LABELS, nonMerchantLabel } from "@/core/identity/merchant-kind";
 
 export const metadata = { title: "Référentiel des marchands" };
 export const dynamic = "force-dynamic";
@@ -65,7 +65,7 @@ export default async function SettingsPage({ searchParams }: {
           </div>
         </div>
         <span className="text-sm text-[var(--color-muted)]" data-badge-policy={row.policy}>
-          {policyLabels[row.policy]}
+          {nonMerchantLabel(row.kind) ?? policyLabels[row.policy]}
           {row.kind === "unknown" && generation ? " · Identité à confirmer" : ""}
         </span>
       </li>)}

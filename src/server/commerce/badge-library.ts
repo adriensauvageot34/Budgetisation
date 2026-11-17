@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { BADGE_BUCKET, MAX_BADGE_BYTES, badgeAnchor, badgeCategory, badgeIdentityKey, badgeLabel, badgeVersion,
   type BadgeAnchor, type BadgeIdentity, type BadgeLibraryRead, type MerchantBadgeIdentity, type PersonalBadge } from "@/domain/phase2/commerce-media";
-import { isPrivateMerchantKind, merchantBadgePolicy, merchantDisplayName, type MerchantBadgePolicy, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
+import { isNonMerchantKind, merchantBadgePolicy, merchantDisplayName, type MerchantBadgePolicy, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
 import { merchantBadgeCategoryFor, referencedMerchantActivities } from "@/core/identity/merchant-activity";
 import { readMerchantActivities } from "./merchant-activities";
 
@@ -63,7 +63,7 @@ export class BadgeLibrary {
   private async assertMerchantMediaAllowed(key: string, specific = true) {
     if (!key.startsWith("merchant:")) return;
     const [entry] = await this.merchants([key]);
-    if (!entry || isPrivateMerchantKind(entry.kind)) throw new TypeError("BADGE_IDENTITY_INVALID");
+    if (!entry || isNonMerchantKind(entry.kind)) throw new TypeError("BADGE_IDENTITY_INVALID");
     if (entry.policy === "none" || specific && entry.policy === "reuse_only") throw new TypeError("BADGE_POLICY_DENIED");
     return entry;
   }
@@ -78,7 +78,7 @@ export class BadgeLibrary {
     const bindings = bindingsRead.data as BindingRow[];
     const keysToRead = [...new Set([...ids, ...bindings.flatMap(row => row.identity_key && refs.some(ref => ref.key === row.anchor_key && ref.digest === row.source_digest) ? [row.identity_key] : [])])];
     const merchants = await this.merchants(keysToRead);
-    const readable = new Set(merchants.filter(row => !isPrivateMerchantKind(row.kind) && row.policy !== "none").map(row => row.key));
+    const readable = new Set(merchants.filter(row => !isNonMerchantKind(row.kind) && row.policy !== "none").map(row => row.key));
     const reuseOnly = new Set(merchants.filter(row => row.policy === "reuse_only").map(row => row.key));
     const wanted = [...new Set([
       ...keysToRead.filter(key => !key.startsWith("merchant:") || readable.has(key)),
@@ -210,7 +210,8 @@ export class BadgeLibrary {
     const current = await this.read([], [anchor]);
     const old = current.bindings.find(row => row.key === anchor.key);
     if ((old?.version ?? 0) !== version) throw new TypeError("BADGE_CONFLICT");
-    if (old?.digest === anchor.digest && current.merchants?.some(row => row.key === old.identityKey && row.policy === "none"))
+    if (old?.digest === anchor.digest && current.merchants?.some(row => row.key === old.identityKey
+      && (row.policy === "none" || isNonMerchantKind(row.kind))))
       throw new TypeError("BADGE_POLICY_DENIED");
     const value = { user_id: this.userId, anchor_key: anchor.key, source_digest: anchor.digest,
       identity_key: old?.digest === anchor.digest ? old.identityKey : null, category: badgeCategory(category), version: version + 1 };
