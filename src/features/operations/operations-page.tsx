@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from "react";
-import { ArrowLeftRight, Croissant, Martini, Scissors, UserRound } from "lucide-react";
-import { commerceAssetPath, commerceIllustrations } from "@/ui/media/commerce-illustrations";
+import { ArrowLeftRight, UserRound } from "lucide-react";
+import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import {
   parseCategoryId,
   parseMerchantId,
@@ -45,23 +45,23 @@ import {
 
 export type OperationsDisplayMode = "compact" | "standard" | "complete";
 type PersonOption = { readonly id: string; readonly label: string };
-const genericBadgeIcons = { BAKERY: Croissant, BAR: Martini, HAIRDRESSER: Scissors };
-
 function OperationCounterparty({ row }: { row: OperationRowReadModel }) {
+  const [failed, setFailed] = useState<readonly string[]>([]);
   const kind = row.merchantIdentityKind;
-  const genericCategory = kind === "commercial" ? row.merchantGenericBadgeCategory : undefined;
-  const logo = kind === "commercial"
-    ? commerceAssetPath(commerceIllustrations.identities["merchant:" + row.merchantVisualId])
-      ?? commerceAssetPath(commerceIllustrations.identities["merchant:" + row.merchant?.id])
-      ?? (genericCategory ? commerceAssetPath(commerceIllustrations.categories[genericCategory]) : undefined)
+  const image = kind === "commercial"
+    ? commerceBadgeImages({
+      identityKey: row.merchant ? "merchant:" + row.merchant.id : undefined,
+      sharedKey: row.merchantVisualId ? "merchant:" + row.merchantVisualId : undefined,
+      category: row.merchantGenericBadgeCategory,
+    }).find(candidate => !failed.includes(candidate.src))
     : undefined;
-  const Icon = kind === "private_person" ? UserRound : kind === "personal_transfer_label" ? ArrowLeftRight
-    : genericCategory ? genericBadgeIcons[genericCategory] : undefined;
+  const Icon = kind === "private_person" ? UserRound : kind === "personal_transfer_label" ? ArrowLeftRight : undefined;
   const description = kind === "private_person" ? "Contrepartie privée"
     : kind === "personal_transfer_label" ? "Libellé de virement personnel" : undefined;
   return <>
-    <span className={styles.counterparty} data-counterparty-kind={kind}>
-      {logo ? <img src={logo} alt="" width={24} height={24} loading="lazy" decoding="async" />
+    <span className={styles.counterparty} data-counterparty-kind={kind} data-badge-visual={image?.kind ?? "NEUTRAL"}>
+      {image ? <img key={image.src} src={image.src} alt="" width={24} height={24} loading="lazy" decoding="async"
+        onError={() => setFailed(current => current.includes(image.src) ? current : [...current, image.src])} />
         : Icon ? <Icon size={16} aria-hidden="true" /> : null}
       <strong>{row.merchant?.label ?? row.bankLabel}</strong>
     </span>

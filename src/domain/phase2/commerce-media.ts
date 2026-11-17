@@ -1,8 +1,8 @@
 import { plannerDigest, plannerDigestString, plannerKeys, plannerRecord, plannerString, plannerUuid } from "./planner/json";
-import type { MerchantGenericBadgeCategory, MerchantIdentityKind } from "../../core/identity/merchant-kind";
+import { MERCHANT_GENERIC_BADGE_LABELS, type MerchantGenericBadgeCategory, type MerchantIdentityKind } from "../../core/identity/merchant-kind";
 
 export const BADGE_CATEGORIES = {
-  GROCERIES: "Courses", BAKERY: "Boulangerie", RESTAURANT: "Restaurant", BAR: "Bar", HAIRDRESSER: "Coiffure",
+  ...MERCHANT_GENERIC_BADGE_LABELS,
   BEAUTY: "Beauté", CLOTHING: "Vêtements", HOME: "Maison", ACTIVITY: "Activités", SHOP: "Commerce",
 } as const;
 export type BadgeCategory = keyof typeof BADGE_CATEGORIES;

@@ -26,12 +26,25 @@ try {
   assert.deepEqual((await a.read([alias.key], [])).merchants, [{
     key: alias.key, kind: "commercial", displayName: alias.label, genericCategory: "BAKERY", visualKey: "merchant:" + uuid(97001),
   }]);
+  await fixture.pg.db.exec("reset role");
+  for (const [id, name] of [[uuid(97005), "Tabac de recette A"], [uuid(97006), "Tabac de recette B"]]) {
+    await fixture.pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at,
+        identity_source, generic_badge_category)
+      values ($1,$2,'commercial',now(),'owner_confirmed','TOBACCO')`, [id, name]);
+  }
+  const tobacconists = await a.search("Tabac de recette");
+  assert.deepEqual(tobacconists.map(entry => entry.label), ["Tabac de recette A", "Tabac de recette B"]);
+  const keys = tobacconists.map(entry => entry.key);
+  const genericBadges = await a.read(keys, []);
+  assert.deepEqual(genericBadges.merchants, keys.map(key => ({ key, kind: "commercial", genericCategory: "TOBACCO" })));
+  assert.deepEqual(genericBadges.media, []);
+  assert.deepEqual(await fixture.service(fixture.userId).read(keys, []), genericBadges);
   assert.equal((await a.read([], [anchor])).bindings.length, 0);
-  const categoryOnly = await a.anchorCategory(anchor, 0, "CLOTHING");
+  const categoryOnly = await a.anchorCategory(anchor, 0, "PHARMACY");
   assert.equal(categoryOnly.identityKey, null);
   const one = await a.confirm({ newLabel: "Atelier Homonyme", anchor, expectedBindingVersion: 1 });
   let snapshot = await a.read([], [anchor, second]);
-  assert.equal(snapshot.bindings.find(row => row.key === anchor.key).category, "CLOTHING");
+  assert.equal(snapshot.bindings.find(row => row.key === anchor.key).category, "PHARMACY");
   assert.equal(snapshot.bindings.filter(row => row.key === second.key).length, 0);
   const two = await a.confirm({ newLabel: "Atelier Homonyme", anchor: second, expectedBindingVersion: 0 });
   assert.notEqual(one.key, two.key);
