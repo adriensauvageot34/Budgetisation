@@ -27,7 +27,7 @@ function CommerceBadgeView({ badge, expanded = false }: { badge: CommerceBadge; 
   const categoryIcon = fallbackCategory ? categoryIcons[fallbackCategory] : undefined;
   const Icon = counterpartyKind === "private_person" ? UserRound : counterpartyKind === "personal_transfer_label" ? ArrowLeftRight
     : counterpartyKind === "payment_instrument" ? CreditCard : categoryIcon ?? icons[badge.kind];
-  const boundIdentity = identity && !badge.identity;
+  const boundIdentity = identity && identity.key !== badge.identity?.key;
   const caption = businessLabel ?? (badge.custom ? identity?.label ?? (category ? BADGE_CATEGORIES[category] : badge.text)
     : counterpartyKind ? `${nonMerchantLabel(counterpartyKind)} · ${badge.label}`
     : boundIdentity && identity.label !== badge.label ? `${badge.text} · ${identity.label}` : badge.text);

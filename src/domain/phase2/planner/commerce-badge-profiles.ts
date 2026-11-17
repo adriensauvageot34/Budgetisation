@@ -19,6 +19,6 @@ export function contextBadgeSuggestions(context: CommerceContext): readonly stri
 export function monthlyCommerceBadges(card: Pick<ComposerCardView, "targetRef" | "label" | "kind">): readonly CommerceBadge[] {
   const suggestedKeys = controls[card.targetRef];
   if (card.kind === "SAVINGS" || !suggestedKeys?.length) return [];
-  return [{ kind: "seller", label: card.label, cardLabel: card.label, text: "Badge entreprise", custom: true, genericOnly: true, suggestedKeys,
+  return [{ kind: "seller", label: card.label, cardLabel: card.label, text: "Badge entreprise", custom: true, suggestedKeys,
     anchor: { key: "control:" + plannerDigest(card.targetRef), digest: plannerDigest({ kind: "monthly-commerce-badge", targetRef: card.targetRef }) } }];
 }

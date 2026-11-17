@@ -70,6 +70,10 @@ export async function badgeRequest(request: Request, kind: "COMMAND" | "UPLOAD" 
       if (typeof raw.query !== "string") throw new TypeError("BADGE_REQUEST_INVALID");
       return reply({ identities: await service.search(raw.query) });
     }
+    if (raw.kind === "SUGGEST_MERCHANTS") {
+      plannerKeys(raw, ["kind", "keys"]);
+      return reply({ merchants: await service.suggestions(raw.keys) });
+    }
     if (raw.kind === "CONFIRM") {
       plannerKeys(raw, ["kind", "identityKey", "newLabel", "anchor", "expectedBindingVersion"], ["kind"]);
       if ((raw.identityKey !== undefined) === (raw.newLabel !== undefined)) throw new TypeError("BADGE_REQUEST_INVALID");

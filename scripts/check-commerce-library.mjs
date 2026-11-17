@@ -188,6 +188,12 @@ try {
   const cleared = await a.anchorGeneric(genericAnchor, free.version + 1, null, null);
   assert.equal(cleared.genericAsset, undefined);
   assert.equal(cleared.businessLabel, undefined);
+  const freeBeforeMerchant = await a.anchorGeneric(genericAnchor, cleared.version, "categories:bakery", "Boulangerie libre");
+  await a.confirm({ anchor: genericAnchor, expectedBindingVersion: freeBeforeMerchant.version, identityKey: alias.key });
+  const reloadedMerchantBadge = await fixture.service(fixture.userId).read([], [genericAnchor]);
+  assert.equal(reloadedMerchantBadge.bindings[0].genericAsset, undefined);
+  assert.equal(resolveBadgeMedia(cardBadge, reloadedMerchantBadge).identity.label, alias.label);
+  assert.equal((await b.read([], [genericAnchor])).bindings[0].businessLabel, otherChoice.businessLabel);
   assert.equal((await fixture.request(request(readCommand, "https://foreign.test"), "COMMAND")).status, 403);
   assert.equal((await badgeRequest(request(readCommand), "COMMAND", async () => { throw new BootstrapAuthenticationRequiredError(); })).status, 401);
   assert.equal((await fixture.request(request({ ...readCommand, userId: fixture.other }), "COMMAND")).status, 400);
