@@ -299,11 +299,12 @@ const compositionMappings = {
   }
 >;
 
-type EntityTable = "places" | "merchants" | "moments";
+type EntityTable = "places" | "merchants" | "merchantActivities" | "moments";
 
 const entityMappings = {
   places: { physicalTable: "referentiel_lieu", idColumn: "place_id" },
   merchants: { physicalTable: "merchants", idColumn: "merchant_id" },
+  merchantActivities: { physicalTable: "merchant_activities", idColumn: "activity_key" },
   moments: { physicalTable: "moments", idColumn: "moment_id" },
 } as const satisfies Record<
   EntityTable,
@@ -2366,7 +2367,7 @@ export class CanonicalRepository {
 
   async loadEntityRows(
     table: EntityTable,
-    idColumn: "place_id" | "merchant_id" | "moment_id",
+    idColumn: (typeof entityMappings)[EntityTable]["idColumn"],
     ids?: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {
     const normalizedIds = ids === undefined ? undefined : unique(ids);

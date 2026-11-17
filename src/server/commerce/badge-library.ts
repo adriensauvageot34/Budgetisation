@@ -3,7 +3,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { BADGE_BUCKET, MAX_BADGE_BYTES, badgeAnchor, badgeCategory, badgeIdentityKey, badgeLabel, badgeVersion,
   type BadgeAnchor, type BadgeIdentity, type BadgeLibraryRead, type MerchantBadgeIdentity, type PersonalBadge } from "@/domain/phase2/commerce-media";
-import { isPrivateMerchantKind, merchantBadgePolicy, merchantDisplayName, merchantGenericBadgeCategory, type MerchantBadgePolicy, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
+import { isPrivateMerchantKind, merchantBadgePolicy, merchantDisplayName, type MerchantBadgePolicy, type MerchantIdentityKind } from "@/core/identity/merchant-kind";
+import { merchantBadgeCategoryFor, referencedMerchantActivities } from "@/core/identity/merchant-activity";
+import { readMerchantActivities } from "./merchant-activities";
 
 type Row = { user_id: string; identity_key: string; label: string; category: PersonalBadge["category"]; object_path: string | null; version: number };
 type BindingRow = { anchor_key: string; source_digest: string; identity_key: string | null; category: PersonalBadge["category"]; version: number };
@@ -29,26 +31,33 @@ export class BadgeLibrary {
       merchant_id: string; identity_kind: MerchantIdentityKind; visual_brand_merchant_id: string | null;
       commercial_display_name: string | null; generic_badge_category: string | null;
       badge_policy: MerchantBadgePolicy;
+      activity_key: string; activity_review_required: boolean;
     };
     const result = await client.from("merchants")
-      .select("merchant_id,identity_kind,visual_brand_merchant_id,commercial_display_name,generic_badge_category,badge_policy").in("merchant_id", ids);
+      .select("merchant_id,identity_kind,visual_brand_merchant_id,commercial_display_name,generic_badge_category,badge_policy,activity_key,activity_review_required").in("merchant_id", ids);
     storageError(result.error);
     const rows = (result.data ?? []) as MerchantRow[];
     const targets = [...new Set(rows.flatMap(row =>
       row.identity_kind === "commercial" && row.badge_policy !== "none" && row.visual_brand_merchant_id ? [row.visual_brand_merchant_id] : []))];
-    const roots = targets.length ? await client.from("merchants").select("merchant_id").in("merchant_id", targets)
-      .eq("identity_kind", "commercial").eq("badge_policy", "normal").is("visual_brand_merchant_id", null) : { data: [], error: null };
+    const [roots, activities] = await Promise.all([
+      targets.length ? client.from("merchants").select("merchant_id").in("merchant_id", targets)
+        .eq("identity_kind", "commercial").eq("badge_policy", "normal").is("visual_brand_merchant_id", null) : { data: [], error: null },
+      readMerchantActivities(client, referencedMerchantActivities(rows)),
+    ]);
     storageError(roots.error);
     const allowed = new Set((roots.data ?? []).map(row => row.merchant_id));
-    return rows.map(row => ({
-      key: "merchant:" + row.merchant_id, kind: row.identity_kind,
-      ...(row.badge_policy !== "normal" ? { policy: row.badge_policy } : {}),
-      ...(row.commercial_display_name && row.identity_kind === "commercial" ? { displayName: merchantDisplayName(row) } : {}),
-      ...(row.badge_policy !== "none" && row.generic_badge_category && row.identity_kind === "commercial"
-        ? { genericCategory: merchantGenericBadgeCategory(row.generic_badge_category) } : {}),
-      ...(row.badge_policy !== "none" && row.visual_brand_merchant_id && allowed.has(row.visual_brand_merchant_id)
-        ? { visualKey: "merchant:" + row.visual_brand_merchant_id } : {}),
-    }));
+    return rows.map(row => {
+      const genericCategory = merchantBadgeCategoryFor(row, activities);
+      const displayName = merchantDisplayName(row);
+      return {
+        key: "merchant:" + row.merchant_id, kind: row.identity_kind,
+        ...(row.badge_policy !== "normal" ? { policy: row.badge_policy } : {}),
+        ...(displayName ? { displayName } : {}),
+        ...(genericCategory ? { genericCategory } : {}),
+        ...(row.badge_policy !== "none" && row.visual_brand_merchant_id && allowed.has(row.visual_brand_merchant_id)
+          ? { visualKey: "merchant:" + row.visual_brand_merchant_id } : {}),
+      };
+    });
   }
 
   private async assertMerchantMediaAllowed(key: string, specific = true) {

@@ -7,6 +7,12 @@ collection locale avant de générer une image. Les fiches `reuse_only` utilisen
 les visuels partagés ou génériques disponibles. Les fiches `none` ont un
 affichage neutre. La politique se modifie dans le référentiel Supabase.
 
+Attribuer une activité à une nouvelle fiche via `merchants.activity_key`,
+en choisissant un code du catalogue `merchant_activities`. Le champ
+`badge_category` du catalogue fournit le visuel de secours pour les
+commerces éligibles. Une activité marquée `activity_review_required`
+reste visible dans le référentiel et attend une validation pour ce secours.
+
 Le registre est `src/ui/media/commerce-illustrations.json`. Chaque entrée utilise
 les dimensions `width`, `height` et le chemin `src` des médias Budgetisation.
 
