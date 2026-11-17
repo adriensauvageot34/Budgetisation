@@ -26,6 +26,7 @@ export async function commerceLibraryFixture(extraTables = []) {
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261115211441_composer_badge_library.sql", "utf8"));
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261116223846_merchant_counterparty_identity.sql", "utf8"));
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261116231908_merchant_commercial_presentation.sql", "utf8"));
+  await pg.db.exec(fs.readFileSync("supabase/migrations/20261117001552_merchant_generic_badge_categories.sql", "utf8"));
   for (const [id, name] of [[uuid(97001), "E.Leclerc"], [uuid(97002), "Atelier Homonyme"], [uuid(97003), "Atelier Homonyme"]])
     await pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at, identity_source)
       values($1,$2,'commercial',now(),'owner_confirmed')`, [id, name]);

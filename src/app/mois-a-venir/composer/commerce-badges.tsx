@@ -4,36 +4,35 @@ import { useState } from "react";
 import { ArrowLeftRight, Building2, Croissant, MapPin, Martini, Scissors, ShoppingCart, Sparkles, Store, UserRound, Utensils, Shirt, House, Ticket, ImagePlus } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { commerceBadges, type CommerceContext, type CommerceBadge } from "@/domain/phase2/planner/commerce-badges";
-import { BADGE_CATEGORIES } from "@/domain/phase2/commerce-media";
-import { commerceAssetPath, commerceIllustrations } from "@/ui/media/commerce-illustrations";
+import { BADGE_CATEGORIES, type BadgeCategory } from "@/domain/phase2/commerce-media";
+import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import { resolveBadgeMedia, useCommerceLibrary } from "./commerce-library";
 import styles from "./composer.module.css";
 export { commerceBadges } from "@/domain/phase2/planner/commerce-badges";
 
 const icons = { platform: Store, salon: Scissors, restaurant: Utensils, bar: Martini, place: MapPin, merchant: Building2, seller: Store };
-const categoryIcons = { GROCERIES: ShoppingCart, BAKERY: Croissant, RESTAURANT: Utensils, BAR: Martini, HAIRDRESSER: Scissors,
+const categoryIcons: Partial<Record<BadgeCategory, typeof Store>> = { GROCERIES: ShoppingCart, BAKERY: Croissant, RESTAURANT: Utensils, BAR: Martini, HAIRDRESSER: Scissors,
   BEAUTY: Sparkles, CLOTHING: Shirt, HOME: House, ACTIVITY: Ticket, SHOP: Store };
 
 function CommerceBadgeView({ badge }: { badge: CommerceBadge }) {
   const library = useCommerceLibrary();
-  const { identity, personal, shared, visualKey, category, counterpartyKind } = resolveBadgeMedia(badge, library);
+  const { identity, personal, shared, visualKey, category, imageCategory, fallbackCategory, counterpartyKind } = resolveBadgeMedia(badge, library);
   const [failed, setFailed] = useState<readonly string[]>([]);
-  const globalSpecific = identity ? commerceAssetPath(commerceIllustrations.identities[identity.key]) : undefined;
-  const sharedSpecific = visualKey ? commerceAssetPath(commerceIllustrations.identities[visualKey]) : undefined;
-  const generic = category ? commerceAssetPath(commerceIllustrations.categories[category]) : undefined;
-  const candidates = [personal?.imageUrl, shared?.imageUrl, sharedSpecific, globalSpecific, generic].filter((url): url is string => !!url);
-  const src = candidates.find(url => !failed.includes(url));
+  const candidates = commerceBadgeImages({ identityKey: identity?.key, sharedKey: visualKey, category: imageCategory,
+    personalSrc: personal?.imageUrl, sharedPersonalSrc: shared?.imageUrl });
+  const image = candidates.find(candidate => !failed.includes(candidate.src));
+  const categoryIcon = fallbackCategory ? categoryIcons[fallbackCategory] : undefined;
   const Icon = counterpartyKind === "private_person" ? UserRound : counterpartyKind === "personal_transfer_label" ? ArrowLeftRight
-    : category ? categoryIcons[category] : icons[badge.kind];
+    : categoryIcon ?? icons[badge.kind];
   const boundIdentity = identity && !badge.identity;
   const caption = counterpartyKind ? `${counterpartyKind === "private_person" ? "Contrepartie privée" : "Virement personnel"} · ${badge.label}`
     : boundIdentity && identity.label !== badge.label ? `${badge.text} · ${identity.label}` : badge.text;
   const title = [caption, category ? `Catégorie · ${BADGE_CATEGORIES[category]}` : null,
-    src && personal?.imageUrl === src ? "Illustration privée" : null].filter(Boolean).join(" · ");
+    image && personal?.imageUrl === image.src ? "Illustration privée" : null].filter(Boolean).join(" · ");
   return <span className={styles.commerceBadge} data-commerce-badge={badge.kind} data-badge-identity={identity?.key}
-    data-badge-category={category} data-badge-visual={src ? src === generic ? "CATEGORY" : "IDENTITY" : category ? "CATEGORY_ICON" : "NEUTRAL"} title={title}>
-    {src ? <img key={src} src={src} alt="" width={24} height={24} loading="lazy" decoding="async"
-      onError={() => setFailed(current => current.includes(src) ? current : [...current, src])} />
+    data-badge-category={category} data-badge-visual={image?.kind ?? (categoryIcon ? "CATEGORY_ICON" : "NEUTRAL")} title={title}>
+    {image ? <img key={image.src} src={image.src} alt="" width={24} height={24} loading="lazy" decoding="async"
+      onError={() => setFailed(current => current.includes(image.src) ? current : [...current, image.src])} />
       : <Icon size={15} aria-hidden="true" />}
     <span>{caption}</span>
     {!counterpartyKind && library && (identity || badge.anchor) && <button type="button" className={styles.commerceBadgeEdit}

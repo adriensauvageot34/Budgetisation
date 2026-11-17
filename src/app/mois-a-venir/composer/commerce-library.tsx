@@ -34,8 +34,12 @@ export function resolveBadgeMedia(badge: CommerceBadge, library: BadgeLibraryRea
   const identity = baseIdentity && merchant?.displayName ? { ...baseIdentity, label: merchant.displayName } : baseIdentity;
   const personal = identity ? library?.media.find(row => row.key === identity.key) : undefined;
   const shared = merchant?.visualKey ? library?.media.find(row => row.key === merchant.visualKey) : undefined;
+  const manualCategory = binding?.category ?? personal?.category ?? undefined;
+  const merchantCategory = manualCategory ?? merchant?.genericCategory;
   return { identity, personal, shared, visualKey: merchant?.visualKey,
-    category: binding?.category ?? personal?.category ?? merchant?.genericCategory ?? badge.category };
+    category: merchantCategory ?? badge.category,
+    imageCategory: merchantCategory ?? (identity?.key.startsWith("merchant:") ? undefined : badge.category),
+    fallbackCategory: manualCategory ?? badge.category };
 }
 
 /** One bounded batch per set of displayed subjects, independent of the financial transports. */

@@ -99,6 +99,11 @@
       "src": "/planned-visuals/commerce/merchants/amazon.webp",
       "width": 128,
       "height": 128
+    },
+    "merchant:d9ffd43f-0729-59ca-96df-8fb1f3a62d6a": {
+      "src": "/planned-visuals/commerce/merchants/marie-blachere.webp",
+      "width": 128,
+      "height": 128
     }
   },
   "categories": {
@@ -106,6 +111,56 @@
       "src": "/planned-visuals/commerce/categories/bakery.webp",
       "width": 128,
       "height": 128
+    },
+    "TOBACCO": {
+      "src": "/planned-visuals/commerce/categories/tobacco.webp",
+      "width": 128,
+      "height": 128
+    },
+    "PHARMACY": {
+      "src": "/planned-visuals/commerce/categories/pharmacy.webp",
+      "width": 128,
+      "height": 128
+    },
+    "GROCERIES": {
+      "src": "/planned-visuals/commerce/categories/groceries.webp",
+      "width": 128,
+      "height": 128
+    },
+    "CAFE": {
+      "src": "/planned-visuals/commerce/categories/cafe.webp",
+      "width": 128,
+      "height": 128
+    },
+    "FLORIST": {
+      "src": "/planned-visuals/commerce/categories/florist.webp",
+      "width": 128,
+      "height": 128
+    },
+    "HEALTH": {
+      "src": "/planned-visuals/commerce/categories/health.webp",
+      "width": 128,
+      "height": 128
+    },
+    "GAS_STATION": {
+      "src": "/planned-visuals/commerce/categories/gas-station.webp",
+      "width": 128,
+      "height": 128
+    },
+    "SKI_RENTAL": {
+      "src": "/planned-visuals/commerce/categories/ski-rental.webp",
+      "width": 128,
+      "height": 128
+    },
+    "BAR": {
+      "src": "/planned-visuals/builder/clay/bar-compact/cocktail.webp",
+      "width": 256,
+      "height": 256
+    },
+    "RESTAURANT": {
+      "src": "/planned-visuals/builder/clay/v22/compact/v22-art-extra-restaurant-intent.webp",
+      "width": 256,
+      "height": 256
     }
   }
 }

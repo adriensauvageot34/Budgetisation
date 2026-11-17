@@ -4,6 +4,7 @@ import { require } from './lib/phase2-ts-loader.mjs';
 const { CanonicalRepository, sourceAwareEconomicDimensions } = require('@/server/canonical/repository');
 const { operationFromCanonicalRow } = require('@/server/query/sources/shared');
 const { buildOperationRow, loadOperationReferenceLabels } = require('@/server/query/sources/operations');
+const { commerceBadgeImages, commerceIllustrations } = require('@/ui/media/commerce-illustrations.ts');
 const { resolveGlobalM2NeedAuthorities } = require('@/server/analytics/global-v2-category-needs-authority');
 const householdId = '00000000-0000-4000-8000-000000000001';
 const ids = Array.from({ length: 241 }, (_, n) => `00000000-0000-4000-8000-${String(n + 10).padStart(12, '0')}`);
@@ -84,23 +85,44 @@ for (const [size, expected] of [[120, [120, 120, 1]], [100, [100, 100, 41]]]) {
   assert.strictEqual(await repository.loadOperationsByIds(ids, size), rows);
   assert.equal(calls.filter(c => c.table === 'operations').length, before);
 }
-const [storeId, brandId, bakeryId] = ids;
+const [storeId, brandId, bakeryId, tobacconistAId, tobacconistBId] = ids;
 const merchantRows = [
   { merchant_id: storeId, nom_canonique: 'PAIEMENT 42', identity_kind: 'commercial',
     commercial_display_name: 'Enseigne de recette', visual_brand_merchant_id: brandId },
   { merchant_id: brandId, nom_canonique: 'Marque de recette', identity_kind: 'commercial', visual_brand_merchant_id: null },
   { merchant_id: bakeryId, nom_canonique: 'TERMINAL 43', identity_kind: 'commercial',
     commercial_display_name: 'Fournil de recette', generic_badge_category: 'BAKERY' },
+  { merchant_id: tobacconistAId, nom_canonique: 'Tabac de recette A', identity_kind: 'commercial', generic_badge_category: 'TOBACCO' },
+  { merchant_id: tobacconistBId, nom_canonique: 'Tabac de recette B', identity_kind: 'commercial', generic_badge_category: 'TOBACCO' },
 ];
-const operations = [storeId, bakeryId].map((merchant_id, index) => operationFromCanonicalRow({ ...full[index], merchant_id }));
+const operations = [storeId, bakeryId, tobacconistAId, tobacconistBId]
+  .map((merchant_id, index) => operationFromCanonicalRow({ ...full[index], merchant_id }));
 const labels = await loadOperationReferenceLabels({
   loadTaxonomyRows: async () => [],
   loadEntityRows: async (table, _column, keys) => table === 'merchants' ? merchantRows.filter(row => keys.includes(row.merchant_id)) : [],
 }, operations, []);
-const [store, bakery] = operations.map(operation => buildOperationRow(operation, [], labels));
+const [store, bakery, tobacconistA, tobacconistB] = operations.map(operation => buildOperationRow(operation, [], labels));
 assert.equal(store.bankLabel, full[0].libelle_bancaire);
 assert.deepEqual(store.merchant, { id: storeId, label: 'Enseigne de recette' });
 assert.equal(store.merchantVisualId, brandId);
 assert.deepEqual(bakery.merchant, { id: bakeryId, label: 'Fournil de recette' });
 assert.equal(bakery.merchantGenericBadgeCategory, 'BAKERY');
+const genericBadge = row => commerceBadgeImages({
+  identityKey: 'merchant:' + row.merchant.id,
+  category: row.merchantGenericBadgeCategory,
+})[0];
+assert.notEqual(tobacconistA.merchant.label, tobacconistB.merchant.label);
+assert.deepEqual(genericBadge(tobacconistA), genericBadge(tobacconistB));
+assert.deepEqual(genericBadge(tobacconistA), { kind: 'CATEGORY', src: '/planned-visuals/commerce/categories/tobacco.webp' });
+assert.equal(genericBadge(bakery).src, '/planned-visuals/commerce/categories/bakery.webp');
+const identityFor = asset => Object.entries(commerceIllustrations.identities).find(([, value]) => value.src.endsWith(`/${asset}.webp`))?.[0];
+const espit = identityFor('espit-chupitos');
+const carrefour = identityFor('carrefour');
+assert.ok(espit && carrefour);
+assert.deepEqual(commerceBadgeImages({ identityKey: espit, sharedKey: carrefour, category: 'BAR' }).map(image => image.kind),
+  ['IDENTITY', 'IDENTITY', 'CATEGORY']);
+assert.ok(commerceBadgeImages({ identityKey: espit, category: 'BAR' })[0].src.endsWith('/espit-chupitos.webp'));
+assert.ok(commerceBadgeImages({ identityKey: 'merchant:' + storeId, sharedKey: carrefour, category: 'GROCERIES' })[0].src.endsWith('/carrefour.webp'));
+assert.deepEqual(commerceBadgeImages({ category: 'INDIAN_RESTAURANT' }), commerceBadgeImages({ category: 'RESTAURANT' }));
+assert.deepEqual(commerceBadgeImages({ identityKey: 'merchant:' + storeId }), []);
 console.log('HISTORICAL_OPERATIONS_FIELDSET PASS (population, batches, exact money, browse, merchant presentation, dimensions, Need authority, memo)');
