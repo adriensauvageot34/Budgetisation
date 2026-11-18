@@ -60,7 +60,7 @@ export function detailedRealizedCards(source: RealizedCard): RealizedCardView[] 
 
 export type PackedCardPosition = Readonly<{ column: number; top: number; height: number }>;
 
-export function packRealizedCards(cards: readonly { id: string; height: number }[], heightLimit: number, gap: number) {
+export function packRealizedCards(cards: readonly { id: string; height: number }[], heightLimit: number, gap: number, fill: boolean) {
   const best = [{ start: 0, columns: 0, unused: 0, height: 0 }];
   for (let end = 1; end <= cards.length; end++) {
     let used = 0;
@@ -80,11 +80,14 @@ export function packRealizedCards(cards: readonly { id: string; height: number }
   }
 
   const positions: Record<string, PackedCardPosition> = {};
+  const totalColumns = best[cards.length]!.columns;
+  const fillColumns = fill && totalColumns > 1;
   let height = 0;
   for (let end = cards.length; end > 0;) {
     const { start, columns, height: used } = best[end]!;
-    // Give each card a little extra space without inflating sparse columns.
-    const extra = used < heightLimit * .6 ? 0 : Math.min(32 * (end - start), Math.max(0, heightLimit - used));
+    const free = Math.max(0, heightLimit - used);
+    // Sparse views keep their natural height. The complete board fills every column.
+    const extra = fillColumns ? free : used < heightLimit * .6 ? 0 : Math.min(32 * (end - start), free);
     const share = extra / (end - start);
     let top = 0;
     for (let index = start; index < end; index++) {
@@ -96,5 +99,5 @@ export function packRealizedCards(cards: readonly { id: string; height: number }
     height = Math.max(height, used + extra);
     end = start;
   }
-  return { columns: best[cards.length]!.columns, height, positions };
+  return { columns: totalColumns, height, positions };
 }
