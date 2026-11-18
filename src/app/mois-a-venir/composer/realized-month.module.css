@@ -217,6 +217,7 @@
 }
 .cardLocation[data-confirmed="true"] { color: var(--category-ink); font-weight: 650; }
 .cardLocation svg { flex: none; }
+.cardLocation small { flex: none; font-size: inherit; font-weight: 650; }
 .cardLocation > span {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -307,6 +308,18 @@
 .panelBody h3 { margin: 0 0 7px; font-size: .93rem; font-weight: 720; }
 .panelBody h3 span { color: var(--muted); margin-left: 4px; font-size: .8rem; font-weight: 500; }
 .panelBody p { margin: 0; color: var(--muted); font-size: .86rem; }
+.places {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.places li { padding: 6px 9px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.placeLink { display: grid; gap: 1px; overflow-wrap: anywhere; }
+.placeLink a { color: #5c3f7c; font-size: .81rem; font-weight: 650; text-decoration: underline; text-underline-offset: 2px; }
+.placeLink a svg { display: inline; margin-inline-start: 5px; vertical-align: -2px; }
+.placeLink small { color: var(--muted); font-size: .74rem; }
 .tripDetail {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);

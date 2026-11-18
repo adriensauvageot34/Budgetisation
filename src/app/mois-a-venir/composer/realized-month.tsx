@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ChevronRight, MapPin, Pencil, Search, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronRight, ExternalLink, MapPin, Pencil, Search, X } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard, RealizedCard, RealizedCardGroup, RealizedPayment } from "@/server/phase2/planner/realized-month";
+import type { RealizedPlace } from "@/server/phase2/planner/realized-places";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { money, plannedDayLabel } from "./display";
 import { RealizedBadge } from "./realized-badge";
@@ -36,11 +37,22 @@ function searchableDate(date: string | undefined) {
 
 function paymentSearch(payment: RealizedPayment) {
   return searchText(payment.label, payment.bankLabel, payment.category, payment.date, searchableDate(payment.date), days(payment.date),
-    payment.amount, money(payment.amount), ...payment.components.map(component => component.label));
+    payment.place?.label, payment.place?.address, payment.amount, money(payment.amount), ...payment.components.map(component => component.label));
 }
 
 function matches(text: string, terms: readonly string[]) {
   return terms.every(term => text.includes(term));
+}
+
+const placeStatus = { confirmed: "Confirmé", probable: "Lieu probable", town: "Commune" } as const;
+
+function PlaceLink({ place, detail }: { place: RealizedPlace; detail?: boolean }) {
+  return <span className={styles.placeLink}>
+    <a href={place.mapsUrl} target="_blank" rel="noopener noreferrer" title="Ouvrir dans Google Maps">
+      {place.label}<ExternalLink size={12} aria-hidden="true" />
+    </a>
+    {detail && <small>{[placeStatus[place.certainty], place.address].filter(Boolean).join(" · ")}</small>}
+  </span>;
 }
 
 function RealizedElement({ payment, highlighted }: { payment: RealizedPayment; highlighted: boolean }) {
@@ -55,6 +67,7 @@ function RealizedElement({ payment, highlighted }: { payment: RealizedPayment; h
       <strong>{payment.label}</strong>
       <span>{[days(payment.date), payment.category].filter(Boolean).join(" · ")}</span>
       {payment.bankLabel !== payment.label && <small>{payment.bankLabel}</small>}
+      {payment.place && <PlaceLink place={payment.place} detail />}
     </div>
     <b className={styles.amount}>{money(payment.amount)}</b>
     {payment.components.length > 0 && <dl className={styles.components} aria-label="Détail économique de l’opération">
@@ -95,7 +108,9 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open
   const linked = card.relatedPayments?.length;
   const visibleDate = card.date ?? date;
   const caption = cardCaption(card, null);
-  const location = card.eventPlace || (card.label === "Restaurant" && card.eventStatus ? "Lieu à confirmer" : undefined);
+  const firstPlace = card.places?.[0];
+  const additionalPlaces = (card.places?.length ?? 0) - 1;
+  const location = firstPlace ? firstPlace.label : card.label === "Restaurant" && card.eventStatus ? "Lieu à confirmer" : undefined;
   return <button id={card.id} type="button" className={styles.card} data-realized-card={card.section}
     data-realized-category={category?.id} data-card-date={visibleDate}
     data-operation-count={card.payments.length} data-card-amount={card.amount ?? undefined}
@@ -106,9 +121,12 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open
     </span>
     <span className={styles.cardIdentity}>
       <strong className={styles.cardTitle} title={card.label}>{card.label}</strong>
-      {location && searchText(location) !== searchText(card.label) && <span className={styles.cardLocation}
-        data-confirmed={Boolean(card.eventPlace)} title={location}>
-        <MapPin size={12} aria-hidden="true" /><span>{location}</span>
+      {location && <span className={styles.cardLocation} data-place-certainty={firstPlace?.certainty}
+        data-confirmed={firstPlace?.certainty === "confirmed"}
+        title={card.places?.map(place => `${place.label} · ${placeStatus[place.certainty]}`).join("\n") || location}>
+        <MapPin size={12} aria-hidden="true" />
+        <span>{firstPlace?.certainty === "probable" && "≈ "}{location}</span>
+        {additionalPlaces > 0 && <small aria-label={`${additionalPlaces} autres lieux`}>+{additionalPlaces}</small>}
       </span>}
     </span>
     {caption && <span className={styles.cardSubtitle}>{caption}</span>}
@@ -148,6 +166,12 @@ function RealizedDetail({ card, terms, open }: {
   open: (cardId: string, paymentId?: string, componentId?: string) => void;
 }) {
   return <>
+    {!!card.places?.length && <section aria-labelledby="realized-places-title">
+      <h3 id="realized-places-title">{card.places.length === 1 ? "Lieu" : "Lieux"}</h3>
+      <ul className={styles.places}>
+        {card.places.map(place => <li key={place.key}><PlaceLink place={place} detail /></li>)}
+      </ul>
+    </section>}
     {card.carTrip && <section className={styles.tripDetail} aria-label="Trajet en voiture">
       <ComposerAssetVisual assetKey={carArtwork} iconKey="car" size={42} />
       <div>
@@ -173,6 +197,7 @@ function RealizedDetail({ card, terms, open }: {
         {card.occurrences.map(occurrence => <li key={occurrence.id}>
           <time dateTime={occurrence.date}>{days(occurrence.date, occurrence.endDate)}</time>
           <span>{occurrence.label}</span><small>{occurrence.status}</small>
+          {occurrence.places.length > 0 && <small>{occurrence.places.map(place => place.label).join(" · ")}</small>}
         </li>)}
       </ul>
     </section> : null}
@@ -215,7 +240,8 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
       card, category,
       date: earliestDate(card),
       lines: [
-        searchText(card.label, card.eventPlace, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
+        searchText(card.label, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
+        ...(card.places ?? []).map(place => searchText(card.label, place.label, place.address, searchableDate(card.date))),
         searchText(category?.label, category?.shortLabel),
         ...(card.carTrip ? [searchText(card.label, "trajet voiture essence", card.carTrip.route, card.carTrip.compactRoute)] : []),
         ...card.payments.map(payment => searchText(card.label, paymentSearch(payment))),
@@ -355,7 +381,6 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
           <div>
             <h2 id="realized-dialog-title">{selected.label}</h2>
             <p>{[cardCaption(selected), selected.eventStatus].filter(Boolean).join(" · ")}</p>
-            {selected.eventPlace && <p>{selected.eventPlace}</p>}
             {selected.amount !== null && <strong>{money(selected.amount)}</strong>}
           </div>
           <button ref={closeButton} type="button" className={styles.close} aria-label="Fermer la carte" onClick={() => dialog.current?.close()}>

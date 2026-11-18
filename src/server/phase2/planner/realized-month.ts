@@ -14,6 +14,7 @@ import { buildOperationRow, groupFactsByOperation, loadOperationReferenceLabels 
 import { operationFromCanonicalRow } from "@/server/query/sources/shared";
 import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import { matchJulyCarTrips, readJulyCarLegs } from "./july-car-trips";
+import { cashActivityPlace, distinctRealizedPlaces, merchantPlaceAlias, probableMerchantPlace, realizedPlace, type RealizedPlace } from "./realized-places";
 
 type Art = Readonly<{ assetKey?: string; templateKey?: string; iconKey: string }>;
 type Badge = Readonly<{ label: string; sources: readonly string[] }>;
@@ -28,9 +29,12 @@ export type RealizedPayment = Readonly<{
   flow: Flow;
   badge: Badge | undefined;
   art: Art | undefined;
+  place?: RealizedPlace;
   components: readonly { id: string; label: string; amount: string }[];
 }>;
-type Occurrence = Readonly<{ id: string; label: string; date: string; endDate: string; status: string }>;
+type Occurrence = Readonly<{
+  id: string; label: string; date: string; endDate: string; status: string; places: readonly RealizedPlace[];
+}>;
 type Section = "fixed" | "daily" | "events" | "flows";
 type RelatedPayment = Readonly<{
   id: string;
@@ -54,7 +58,7 @@ type CardGroup = {
   date?: string;
   endDate?: string;
   eventStatus?: string;
-  eventPlace?: string;
+  places?: readonly RealizedPlace[];
   payments: RealizedPayment[];
   occurrences?: Occurrence[];
   relatedPayments?: RelatedPayment[];
@@ -253,10 +257,13 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const factRead = repository.loadEconomicFacts(range);
   const occurrenceRead = repository.loadActivityOccurrences(range);
   const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
-  const [operations, facts, occurrences, labels, eventDetails, directLinks, momentLinks, causalLinks, carLegs] = await Promise.all([
+  const referenceRead = Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts));
+  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs] = await Promise.all([
     operationRead, factRead, occurrenceRead,
-    Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts)),
+    referenceRead,
     eventIds.then(ids => repository.loadLifeEventRecords(ids)),
+    eventIds.then(ids => repository.loadLifeEventLocalizationRows(ids, "confirmed-venues")),
+    referenceRead.then(labels => repository.loadRealizedMerchantPlaceAliases([...labels.merchantIdentity.keys()])),
     operationRead.then(rows => repository.loadFinancialLinkRowsByOperationIds(rows.map(operation => operation.operationId))),
     eventIds.then(ids => repository.loadMomentLifeEventRowsByLifeEventIds(ids)),
     eventIds.then(ids => repository.loadActivityCausalFinancialLinkRows(ids)).then(parseActivityCausalFinancialLinks),
@@ -264,22 +271,29 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   ]);
 
   const eventById = new Map(eventDetails.map(row => [String(row.life_event_id), row]));
-  const confirmedPlaceByEvent = new Map<string, string>();
-  for (const event of occurrences) {
-    if (event.validationStatus !== "Confirmé" || eventVisuals[event.activityId]?.recurring) continue;
-    const detail = eventById.get(event.lifeEventId);
-    const placeId = detail && optionalCanonicalString(detail, ["primary_place_id"]);
-    if (placeId) confirmedPlaceByEvent.set(event.lifeEventId, placeId);
+  const localizationIdsByEvent: Links = new Map();
+  for (const row of localizations) link(localizationIdsByEvent, String(row.life_event_id), String(row.place_id));
+  const aliasesByMerchant = new Map<string, typeof aliases[number][]>();
+  for (const alias of aliases) {
+    const id = String(alias.merchant_id);
+    const entries = aliasesByMerchant.get(id) ?? [];
+    entries.push(alias);
+    aliasesByMerchant.set(id, entries);
   }
   const matchedTrips = carLegs.length ? matchJulyCarTrips(occurrences, eventDetails, carLegs) : [];
-  const placeIds = new Set([...confirmedPlaceByEvent.values(), ...matchedTrips.flatMap(trip => trip.placeIds)]);
+  const placeIds = new Set([
+    ...eventDetails.flatMap(row => optionalCanonicalString(row, ["primary_place_id"]) ?? []),
+    ...localizations.map(row => String(row.place_id)),
+    ...aliases.map(row => String(row.place_id)),
+    ...labels.places.keys(),
+    ...matchedTrips.flatMap(trip => trip.placeIds),
+  ]);
   const places = placeIds.size ? await repository.loadEntityRows("places", "place_id", [...placeIds]) : [];
-  const placeNames = new Map(places.flatMap(place => {
-    const subtype = optionalCanonicalString(place, ["sous_type"]) ?? "";
-    if (place.private_place !== false || /\bnon identifié/iu.test(subtype)) return [];
-    const name = optionalCanonicalString(place, ["nom_canonique"])?.trim();
-    return name ? [[String(place.place_id), name] as const] : [];
-  }));
+  const placeById = new Map(places.map(row => [String(row.place_id), row]));
+  function placeOf(id: string, certainty: "confirmed" | "probable") {
+    const row = placeById.get(id);
+    return row && realizedPlace(row, certainty);
+  }
   const trips = realizedCarTrips(matchedTrips, places);
   const cards = new Map<string, CardGroup>();
   const eventCards = new Map<string, CardGroup>();
@@ -291,15 +305,21 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       ? paymentCard("expense", false, visual.label, "alimentation", "alimentation__courses_alimentaires") : null;
     const id = groceryEvent?.id ?? (visual.recurring ? `events-${event.activityId}` : `event-${event.lifeEventId}`);
     const carTrip = !visual.recurring ? trips.get(event.lifeEventId) : undefined;
-    const placeId = confirmedPlaceByEvent.get(event.lifeEventId);
-    const eventPlace = placeId && placeNames.get(placeId);
+    const primaryPlaceId = detail && optionalCanonicalString(detail, ["primary_place_id"]);
+    const linkedIds = localizationIdsByEvent.get(event.lifeEventId);
+    const eventPlaces = distinctRealizedPlaces([...(linkedIds ?? [])].flatMap(id => placeOf(id, "confirmed") ?? []));
+    if (!eventPlaces.length && primaryPlaceId) {
+      const place = placeOf(primaryPlaceId, event.validationStatus === "Confirmé" ? "confirmed" : "probable");
+      if (place) eventPlaces.push(place);
+    }
     const card: CardGroup = cards.get(id) ?? {
       ...(groceryEvent ?? { id, section: "events", label: visual.recurring ? visual.label : title, art: visual.art, payments: [] }),
       ...(visual.recurring ? { occurrences: [] } : { date: event.startDate, endDate: event.endDate, eventStatus: event.validationStatus }),
-      ...(eventPlace ? { eventPlace } : {}),
       ...(carTrip ? { carTrip } : {}),
     };
-    card.occurrences?.push({ id: event.lifeEventId, label: title, date: event.startDate, endDate: event.endDate, status: event.validationStatus });
+    if (eventPlaces.length) card.places = distinctRealizedPlaces([...(card.places ?? []), ...eventPlaces]);
+    card.occurrences?.push({ id: event.lifeEventId, label: title, date: event.startDate, endDate: event.endDate,
+      status: event.validationStatus, places: eventPlaces });
     cards.set(id, card);
     eventCards.set(event.lifeEventId, card);
   }
@@ -339,6 +359,11 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       policy: row.merchantBadgePolicy,
     }).map(image => image.src) : [];
     const label = row.merchant?.label ?? row.bankLabel;
+    const alias = row.merchant && flow === "expense" && !row.canonicalPlace
+      ? merchantPlaceAlias(aliasesByMerchant.get(row.merchant.id) ?? [], row.bankLabel, row.bankDate) : undefined;
+    const place = row.canonicalPlace ? placeOf(row.canonicalPlace.id, "confirmed")
+      : (alias && placeOf(alias.id, alias.certainty))
+        ?? (flow === "expense" && row.merchantIdentityKind === "commercial" ? probableMerchantPlace(label, row.bankLabel) : undefined);
     const componentLinks = componentLinksByOperation.get(operation.operationId) ?? [];
     const showComponents = componentLinks.length > 0 || operationFacts.length > 1 || operationFacts.some(fact =>
       fact.sourceKind === "Allocation" || fact.sourceKind === "Item" || fact.sourceKind === "Cash_economic_use");
@@ -354,6 +379,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       category: row.subcategory?.label ?? row.preciseType ?? row.category?.label, amount: operation.bankAmount, flow,
       badge: badgeSources.length ? { label, sources: badgeSources } : undefined,
       art: specialized[subcategoryKey]?.item ?? specialized[subcategoryKey]?.art,
+      ...(place ? { place } : {}),
       components,
     } satisfies RealizedPayment;
     payments.push(payment);
@@ -378,6 +404,11 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     }
     for (const relation of componentLinks) {
       const linkedCard = eventCards.get(relation.lifeEventId);
+      if (linkedCard && relation.relationType === "Paiement_activite"
+        && factsByKey.get(relation.canonicalComponentKey)?.sourceKind === "Cash_economic_use" && !linkedCard.places?.length) {
+        const cashPlace = cashActivityPlace(label);
+        if (cashPlace) linkedCard.places = [cashPlace];
+      }
       if (!linkedCard || linkedCard === card || linkedCards.has(linkedCard)) continue;
       const component = payment.components.find(item => item.id === relation.canonicalComponentKey);
       const related = linkedCard.relatedPayments ??= [];
@@ -401,6 +432,8 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   })) as RealizedBoard["totals"];
   const realizedCards: RealizedCard[] = [...cards.values()].map(card => ({
       ...card,
+      places: card.places?.length ? card.places : card.section === "events"
+        ? [] : distinctRealizedPlaces(card.payments.flatMap(payment => payment.place ?? [])),
       amount: card.payments.length ? realizedBankSum(card.payments) : null,
       ...(card.payments[0]?.flow === "transfer" ? {
         transferAmounts: {
