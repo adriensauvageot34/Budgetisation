@@ -82,7 +82,7 @@ export const ComposerLibrary = memo(function ComposerLibrary({
           else { event.dataTransfer.setData("application/x-planner-asset", asset.assetKey); drag(asset.assetKey); }
         }}
         onDragEnd={() => { interaction?.end(); drag(null); }}>
-        {preset ? <PresetIllustration preset={preset} />
+        {preset ? <PresetIllustration preset={preset} thumbnail />
           : <ComposerAssetVisual assetKey={asset.assetKey} templateKey={asset.templateKey}
               iconKey={asset.iconKey} identityRef={asset.capabilityRef} className={styles.assetIcon} />}
         <span>{item.label}</span>
@@ -133,7 +133,7 @@ export const ComposerLibrary = memo(function ComposerLibrary({
             {projects.filter(project => projectStarterCategory(project) === group).map(project =>
               <button key={project.key} type="button" className={styles.libraryProject} disabled={busy}
                 data-library-project-action={project.key} aria-label={`Prévisualiser ${project.label}`} onClick={() => prepareProject?.(project)}>
-                <PresetIllustration preset={composerPreset(project.parent)!} />
+                <PresetIllustration preset={composerPreset(project.parent)!} thumbnail />
                 <span><strong>{project.label}</strong><small>{projectStarterContents(project)}</small></span>
               </button>)}
           </div>
