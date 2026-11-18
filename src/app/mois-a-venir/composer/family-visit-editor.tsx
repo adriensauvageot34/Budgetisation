@@ -50,6 +50,7 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
   const prior = context.slotSelections.transport?.items;
   const original = Array.isArray(prior) && prior[0]?.kind === "MOBILITY_INTENT" ? prior[0] as Transport : undefined;
   const initialTransport = initialMode !== undefined && initialMode !== original?.optionKey ? undefined : original;
+  const historicalOpenChain = !original?.returnRequired && original?.route?.stops.some(stop => stop.distanceSource === "HISTORICAL_ROUTE");
   const [label, setLabel] = useState(text(context.fields.label)), [date, setDate] = useState(text(context.fields.plannedDate));
   const [endDate, setEndDate] = useState(text(context.fields.endDate)), [note, setNote] = useState(text(context.fields.timingNote));
   const [visited, setVisited] = useState(context.fields.personVisitedRef as ProspectivePersonRef | undefined);
@@ -109,7 +110,8 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       for (const [key, value, baseline] of [["label", label.trim(), text(context.fields.label)], ["plannedDate", date, text(context.fields.plannedDate)],
         ["endDate", endDate, text(context.fields.endDate)], ["timingNote", note.trim(), text(context.fields.timingNote)]] as const)
         if (value !== baseline) fields[key] = value || null;
-      for (const [key, value] of [...(stay ? [] : [["personVisitedRef", visited] as const]), ["participantRefs", people], [stay ? "destinationRef" : "placeRef", destination]] as const)
+      for (const [key, value] of [...(stay ? [] : [["personVisitedRef", visited] as const]), ["participantRefs", people],
+        ...(historicalOpenChain ? [] : [[stay ? "destinationRef" : "placeRef", destination] as const])] as const)
         if (!equal(value, context.fields[key])) fields[key] = (value ?? null) as unknown as PlannerJson;
       if (people.some(p => p.kind === "TEXT" && !p.label.trim()) || visited?.kind === "TEXT" && !visited.label.trim()) throw Error("Précisez le nom des personnes choisies.");
       if (destination?.kind === "TEXT" && !destination.label.trim() || origin?.kind === "TEXT" && !origin.label.trim()) throw Error("Précisez les lieux saisis, ou laissez-les inconnus.");
@@ -127,7 +129,14 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
         vehicleRef: vehicleId ? { vehicleId, labelAtSelection: vehicleId === vehicle?.vehicleId ? vehicle.label
           : original?.route?.vehicleRef?.labelAtSelection ?? "Véhicule indisponible", provenance: "EXPLICIT_USER_DECISION" as const } : null,
         stops: availableRef(origin) && availableRef(destination) ? [stopForPlace(origin!, physicalLabel(origin!), "DIRECT_PLACE"), ...outStops,
-          stopForPlace(destination!, physicalLabel(destination!), "ROOT_PLACE"), ...(returnRequired ? [...backStops, stopForPlace(origin!, physicalLabel(origin!), "DIRECT_PLACE")] : [])] : [],
+          stopForPlace(destination!, physicalLabel(destination!), "ROOT_PLACE"), ...(returnRequired ? [...backStops, stopForPlace(origin!, physicalLabel(origin!), "DIRECT_PLACE")] : [])].map((stop, index, stops) => {
+          const prior = original?.route?.stops[index], next = stops[index + 1];
+          if (prior?.distanceSource !== "HISTORICAL_ROUTE" || !stop.placeId || !next?.placeId
+            || prior.placeId !== stop.placeId || original?.route?.stops[index + 1]?.placeId !== next.placeId
+            || date !== text(context.fields.plannedDate) || endDate !== text(context.fields.endDate)
+            || preference !== original?.pricing?.preference || vehicleId !== original?.route?.vehicleRef?.vehicleId) return stop;
+          return { ...stop, distanceSource: prior.distanceSource, distanceToNextKm: prior.distanceToNextKm };
+        }) : [],
         ...(normalizedFuel ? { manualFuelPrice: normalizedFuel } : {}),
         ...(tollMode === "AUTO" ? {} : { toll: tollMode === "MANUAL" ? { kind: "MANUAL" as const, unitAmount: amount(toll) }
           : tollMode === "QUOTE" && original?.route?.toll?.kind === "QUOTE" ? original.route.toll : { kind: "UNKNOWN" as const } }) } : undefined;

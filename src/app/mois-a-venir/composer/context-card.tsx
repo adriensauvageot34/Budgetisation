@@ -56,6 +56,9 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const basket = isPurchaseBasket(card);
   const preview = useContext(BudgetPreviewStatus);
   const amountsCurrent = budgetAmountsCurrent(model, preview);
+  const julyTrip = reconstructed && amountsCurrent && model.mobilitySummaries?.find(summary =>
+    summary.contextOccurrenceId === card.contextOccurrenceId && summary.routeSource === "HISTORICAL_ROUTE"
+    && summary.economicFuel !== null && summary.distanceKm !== null);
   const basketSummary = amountsCurrent ? card.purchaseSummary : undefined;
   const basketContext = basket ? model.semanticState.contexts.find(context => context.contextOccurrenceId === card.contextOccurrenceId) : undefined;
   const basketArticles = basketContext ? purchaseComponents(basketContext, "item") : [];
@@ -154,6 +157,10 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
         {!amountsCurrent ? "Calcul à actualiser" : mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
     </div>}
+    {julyTrip && <small className={styles.historicalTrip} data-july-car-trip
+      title={`${Number(julyTrip.fuelLiters).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} L · ${Number(julyTrip.fuelPricePerLiter).toLocaleString("fr-FR", { maximumFractionDigits: 3 })} €/L`}>
+      Voiture · {Number(julyTrip.distanceKm).toLocaleString("fr-FR")} km · {money(julyTrip.economicFuel)} d’essence estimée
+    </small>}
     <div className={styles.controlActions}>
     <ObservedMerchantBadges card={reconstructed} />
     <CommerceBadges context={card} model={model} expanded={focused === card.contextOccurrenceId} />

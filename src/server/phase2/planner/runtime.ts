@@ -11,6 +11,7 @@ import { snapshotHistoryTrace, snapshotWork } from "./snapshot-observation";
 import { createHistoricalBasisStore } from "./historical-basis";
 import { JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import { reconstructionWorld } from "./reconstruction-world";
+import { readJulyCarLegs } from "./july-car-trips";
 
 /** Never accepts a household, user, client or authority from the browser. */
 export async function authorizedPlanner() {
@@ -35,7 +36,14 @@ export async function authorizedPlanner() {
   const deps = createPlannerDependencies(canonical, supabase, () => now, history,
     process.env.COMPOSER_P14_SNAP3_HISTORICAL_BASIS === "1" ? createHistoricalBasisStore(supabase) : undefined);
   const householdId = String(context.householdId), readComposerWorld = deps.readComposerWorld ?? deps.readWorld;
+  const prepareWorld: NonNullable<typeof deps.prepareWorld> = async (world, state, historical) => {
+    const useJulyLegs = world.reconstruction && state.contexts.some(context => {
+      const items = context.slotSelections.transport?.items;
+      return Array.isArray(items) && items.some(item => item?.kind === "MOBILITY_INTENT" && item?.route);
+    });
+    return deps.prepareWorld!(useJulyLegs ? { ...world, reconstructionLegs: await readJulyCarLegs(canonical) } : world, state, historical);
+  };
   return { householdId, userId: user.id, supabase, canonical, canonicalClient,
     deps: { ...deps, readComposerWorld: (owner: string, month: string) => owner === householdId && month === JULY_COMPOSER_MONTH
-      ? Promise.resolve(reconstructionWorld(owner, month)) : readComposerWorld(owner, month) } };
+      ? Promise.resolve(reconstructionWorld(owner, month)) : readComposerWorld(owner, month), prepareWorld } };
 }
