@@ -61,11 +61,14 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
   const [outTime, setOutTime] = useState(original?.plannedTime ?? ""), [returnTime, setReturnTime] = useState(original?.returnTime ?? "");
   const [vehicleId, setVehicleId] = useState(initialTransport?.route?.vehicleRef?.vehicleId ?? "");
   const [preference, setPreference] = useState(initialTransport?.pricing?.preference ?? "FASTEST");
-  const [fareMode, setFareMode] = useState(initialTransport?.pricing?.fare.kind ?? "UNKNOWN"), [fare, setFare] = useState(initialTransport?.pricing?.fare.kind === "MANUAL" ? initialTransport.pricing.fare.unitAmount : "");
-  const [parkingMode, setParkingMode] = useState(initialTransport?.pricing?.parking.kind ?? "UNKNOWN"), [parking, setParking] = useState(initialTransport?.pricing?.parking.kind === "MANUAL" ? initialTransport.pricing.parking.unitAmount : "");
+  const initialFare = initialTransport?.pricing?.fare;
+  const initialParking = initialTransport?.pricing?.parking;
+  const initialFunding = initialTransport?.pricing?.fundingAllocations?.[0];
+  const [fareMode, setFareMode] = useState(initialFare?.kind ?? "UNKNOWN"), [fare, setFare] = useState(initialFare?.kind === "MANUAL" ? initialFare.unitAmount : "");
+  const [parkingMode, setParkingMode] = useState(initialParking?.kind ?? "UNKNOWN"), [parking, setParking] = useState(initialParking?.kind === "MANUAL" ? initialParking.unitAmount : "");
   const [tollMode, setTollMode] = useState(initialTransport?.route?.toll?.kind ?? "AUTO"), [toll, setToll] = useState(initialTransport?.route?.toll?.kind === "MANUAL" ? initialTransport.route.toll.unitAmount : "");
   const [fuelPrice, setFuelPrice] = useState(initialTransport?.route?.manualFuelPrice ?? "");
-  const [funding, setFunding] = useState(initialTransport?.pricing?.fundingAllocations[0]?.source ?? ""), [fundingAmount, setFundingAmount] = useState(initialTransport?.pricing?.fundingAllocations[0]?.amount ?? "");
+  const [funding, setFunding] = useState(initialFunding?.source ?? ""), [fundingAmount, setFundingAmount] = useState(initialFunding?.amount ?? "");
   const [ownJourney, setOwnJourney] = useState(!initialTransport?.journey || initialTransport.journey.relation === "OWNS_JOURNEY");
   const anchor = initialTransport?.route?.stops.findIndex(stop => stop.endpointSource === "ROOT_PLACE") ?? -1;
   const [outStops, setOutStops] = useState<readonly PlannedRouteStop[]>(anchor > 0 ? initialTransport!.route!.stops.slice(1, anchor) : []);
@@ -120,9 +123,9 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
       if (date && endDate && (endDate < date || endDate === date && outTime && returnTime && returnTime < outTime)) throw Error("Le retour doit être après le départ.");
       const normalizedFuel = fuelPrice.trim().replace(",", ".");
       if (normalizedFuel && !/^[0-9](?:\.[0-9]{1,3})?$/u.test(normalizedFuel)) throw Error("Renseignez un prix carburant positif avec trois décimales au maximum.");
-      const pricing = { fare: fareMode === "QUOTE" && original?.pricing?.fare.kind === "QUOTE" ? original.pricing.fare
+      const pricing = { fare: fareMode === "QUOTE" && original?.pricing?.fare?.kind === "QUOTE" ? original.pricing.fare
         : fareMode === "MANUAL" ? { kind: "MANUAL" as const, unitAmount: amount(fare) } : { kind: "UNKNOWN" as const },
-        parking: mode !== "car" ? { kind: "UNKNOWN" as const } : parkingMode === "QUOTE" && original?.pricing?.parking.kind === "QUOTE" ? original.pricing.parking
+        parking: mode !== "car" ? { kind: "UNKNOWN" as const } : parkingMode === "QUOTE" && original?.pricing?.parking?.kind === "QUOTE" ? original.pricing.parking
           : parkingMode === "MANUAL" ? { kind: "MANUAL" as const, unitAmount: amount(parking) } : { kind: "UNKNOWN" as const },
         fundingAllocations: funding === "BANK" ? [{ source: "BANK" as const, amount: amount(fundingAmount) }] : [], preference };
       const route = mode === "car" && ownJourney ? { version: "composer-mobility-route@v1" as const,
@@ -134,7 +137,7 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
           if (prior?.distanceSource !== "HISTORICAL_ROUTE" || !stop.placeId || !next?.placeId
             || prior.placeId !== stop.placeId || original?.route?.stops[index + 1]?.placeId !== next.placeId
             || date !== text(context.fields.plannedDate) || endDate !== text(context.fields.endDate)
-            || preference !== original?.pricing?.preference || vehicleId !== original?.route?.vehicleRef?.vehicleId) return stop;
+            || preference !== (original?.pricing?.preference ?? "FASTEST") || vehicleId !== original?.route?.vehicleRef?.vehicleId) return stop;
           return { ...stop, distanceSource: prior.distanceSource, distanceToNextKm: prior.distanceToNextKm };
         }) : [],
         ...(normalizedFuel ? { manualFuelPrice: normalizedFuel } : {}),

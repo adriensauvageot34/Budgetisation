@@ -25,9 +25,9 @@ export function selectionValues(selection?: ComponentSelectionV1): Record<string
   if (selection?.kind === "COMPONENT") return { label: selection.label, quantity: selection.quantity, amount: selection.cost.kind === "MANUAL" ? selection.cost.unitAmount : "",
     funding: selection.fundingAllocations?.[0]?.source ?? "", fundingAmount: selection.fundingAllocations?.[0]?.amount ?? "", binding: selection.binding?.mode ?? "AUTO", needOccurrenceId: selection.needOccurrenceId ?? "" };
   if (selection?.kind === "MOBILITY_INTENT") return { origin: selection.origin?.kind === "TEXT" ? selection.origin.label : "", destination: selection.destination?.kind === "TEXT" ? selection.destination.label : "",
-    amount: selection.pricing?.fare.kind === "MANUAL" ? selection.pricing.fare.unitAmount : "", funding: selection.pricing?.fundingAllocations[0]?.source ?? "", fundingAmount: selection.pricing?.fundingAllocations[0]?.amount ?? "",
+    amount: selection.pricing?.fare?.kind === "MANUAL" ? selection.pricing.fare.unitAmount : "", funding: selection.pricing?.fundingAllocations?.[0]?.source ?? "", fundingAmount: selection.pricing?.fundingAllocations?.[0]?.amount ?? "",
     returnRequired: String(selection.returnRequired === true), targetIntentId: selection.journey?.targetIntentId ?? "", plannedTime: selection.plannedTime ?? "", returnTime: selection.returnTime ?? "",
-    preference: selection.pricing?.preference ?? "FASTEST", parkingMode: selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount === "0" || selection.pricing.parking.unitAmount === "0.00" ? "NO" : "YES" : "UNKNOWN", parkingAmount: selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount : "" };
+    preference: selection.pricing?.preference ?? "FASTEST", parkingMode: selection.pricing?.parking?.kind === "MANUAL" ? selection.pricing.parking.unitAmount === "0" || selection.pricing.parking.unitAmount === "0.00" ? "NO" : "YES" : "UNKNOWN", parkingAmount: selection.pricing?.parking?.kind === "MANUAL" ? selection.pricing.parking.unitAmount : "" };
   return {};
 }
 export function preparedDrop(source: ComposerDragSession, target: DropTarget, identity: string, selectionId: string): ComposerOperation {

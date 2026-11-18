@@ -73,7 +73,8 @@ export async function addJulyCarTrips(canonical: CanonicalRepository, places: re
       slotSelections: { ...context.slotSelections, transport: { items: [{
         selectionId: reconstructedId(state.targetMonth, `mobility:${id}`), optionKey: "car", kind: "MOBILITY_INTENT",
         provenance: "EXPLICIT_USER_DECISION", origin: place(start), destination: place(returnRequired ? venue : end),
-        returnRequired, pricing: { parking: { kind: "UNKNOWN" } },
+        returnRequired, pricing: { fare: { kind: "UNKNOWN" }, parking: { kind: "UNKNOWN" },
+          fundingAllocations: [], preference: "FASTEST" },
         route: { version: "composer-mobility-route@v1", stops,
           vehicleRef: { vehicleId: vehicle.vehicleId, labelAtSelection: vehicle.label, provenance: "EXPLICIT_USER_DECISION" } },
       }] } },
