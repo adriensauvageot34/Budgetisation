@@ -9,6 +9,8 @@ import { createPlannerDependencies } from "@/server/phase2/planner/world-reader"
 import { createActivityHistoryStore } from "./activity-history-store";
 import { snapshotHistoryTrace, snapshotWork } from "./snapshot-observation";
 import { createHistoricalBasisStore } from "./historical-basis";
+import { JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { reconstructionWorld } from "./reconstruction-world";
 
 /** Never accepts a household, user, client or authority from the browser. */
 export async function authorizedPlanner() {
@@ -30,7 +32,10 @@ export async function authorizedPlanner() {
   const history = process.env.COMPOSER_P14_SNAP1_ACTIVITY_HISTORY === "1"
     ? createActivityHistoryStore(supabase) : undefined;
   if (history) history.trace = snapshotHistoryTrace;
-  return { householdId: String(context.householdId), userId: user.id, supabase, canonical, canonicalClient,
-    deps: createPlannerDependencies(canonical, supabase, () => now, history,
-      process.env.COMPOSER_P14_SNAP3_HISTORICAL_BASIS === "1" ? createHistoricalBasisStore(supabase) : undefined) };
+  const deps = createPlannerDependencies(canonical, supabase, () => now, history,
+    process.env.COMPOSER_P14_SNAP3_HISTORICAL_BASIS === "1" ? createHistoricalBasisStore(supabase) : undefined);
+  const householdId = String(context.householdId), readComposerWorld = deps.readComposerWorld ?? deps.readWorld;
+  return { householdId, userId: user.id, supabase, canonical, canonicalClient,
+    deps: { ...deps, readComposerWorld: (owner: string, month: string) => owner === householdId && month === JULY_COMPOSER_MONTH
+      ? Promise.resolve(reconstructionWorld(owner, month)) : readComposerWorld(owner, month) } };
 }

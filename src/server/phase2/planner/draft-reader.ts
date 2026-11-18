@@ -4,7 +4,7 @@ import { plannerMonth, plannerUuid } from "@/domain/phase2/planner/json";
 import { emptyPlanSemanticState, parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { PlannerDependencies } from "./apply";
-import { evaluatePlanScenario, evaluateHistoricalPlanScenario } from "./preview";
+import { evaluatePlanScenario, evaluateHistoricalPlanScenario, evaluatePlanMutation } from "./preview";
 import { historicalControlAdmission } from "./historical-control-admission";
 import { assertRevisionEvidence } from "./revision-evidence";
 /** Authenticated dependency supplies a single household. Reads only; drafts live in memory. */
@@ -19,7 +19,8 @@ export async function readPlannerDraft(deps: PlannerDependencies, householdId: s
   const official = rawDraft === undefined ? active?.activeRevision : undefined;
   const historical = official ? historicalControlAdmission(official) : undefined;
   const prepared = deps.prepareWorld ? await snapshotWork("World_Preparation", () => deps.prepareWorld!(world, state, historical)) : world;
-  const preview = official ? evaluateHistoricalPlanScenario(prepared, official, base) : evaluatePlanScenario(prepared, state, base);
+  const preview = official ? evaluateHistoricalPlanScenario(prepared, official, base)
+    : prepared.reconstruction ? evaluatePlanMutation(prepared, state, base) : evaluatePlanScenario(prepared, state, base);
   if (!rawDraft && active?.activeRevision && preview.compiledManifestDigest === active.activeRevision.compiledManifestDigest
     && preview.projectionDigest !== active.activeRevision.projectionEvidence.projectionDigest) throw new TypeError("PLANNER_IMMEDIATE_RELOAD_DIVERGED");
   return { world, prepared, active, state, base, preview };

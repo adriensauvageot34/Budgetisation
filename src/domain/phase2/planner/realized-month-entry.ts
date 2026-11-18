@@ -1,2 +1,9 @@
+import { plannerDigest } from "./json";
+
 export const JULY_COMPOSER_MONTH = "2026-07";
-export const JULY_COMPOSER_HREF = `/mois-a-venir?month=${JULY_COMPOSER_MONTH}`;
+export const JULY_COMPOSER_HREF = `/mois-a-venir/composer?month=${JULY_COMPOSER_MONTH}`;
+
+export function reconstructedId(month: string, key: string) {
+  const digest = plannerDigest({ owner: "composer-reconstruction", month, key });
+  return `${digest.slice(0, 8)}-${digest.slice(8, 12)}-4${digest.slice(13, 16)}-8${digest.slice(17, 20)}-${digest.slice(20, 32)}`;
+}

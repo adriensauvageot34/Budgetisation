@@ -20,6 +20,8 @@ import { VisualClusterCard, VisualClusterOverlay } from "./visual-cluster";
 import { composerRenderIndex } from "./render-index";
 import { useInlineEditRegistry } from "./inline-edit-registry";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
+import type { RealizedCard } from "@/server/phase2/planner/realized-month";
+const reconstructionOrder = { fixed: 0, daily: 1, events: 2, flows: 3 };
 type BoardProps=Parameters<typeof ComposerBoard>[0];
 const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,openEquipment,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"|"livingBar"> & {item:AtomicNode;inCluster:boolean;closeCluster:(after?:()=>void)=>boolean;openEquipment:(id:string,slotKey?:string)=>void}) {
   const {model,busy,selected,focused,focus,edit,editContext,choose,drag,drop,request,hover,details,livingBar}=props,index=composerRenderIndex(model);
@@ -32,12 +34,13 @@ const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeClust
     details={()=>{if(inCluster&&!closeCluster(()=>{focus(item.id);details();}))return;focus(item.id);details();}}
     mutate={mutation=>request({kind:"MUTATE",mutation})} hover={hover}/>;
 });
-export function ComposerBoard({ model, busy, selected, focused, focus, focusEquipment, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details, contextGuide, reveal, livingBar }: { model: ComposerUiModel; busy: boolean; selected: string | null;
+export function ComposerBoard({ model, busy, selected, focused, focus, focusEquipment, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details, contextGuide, reveal, livingBar, reconstructedCards }: { model: ComposerUiModel; busy: boolean; selected: string | null;
   focused: string | null; focus: (id: string | null) => void;
   focusEquipment: (id: string, ready: () => void) => void;
   edit: (card: ComposerCardView) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
   drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void; request: (operation: ComposerOperation) => void; hover: (mutation: SemanticMutation | null) => void; editContext: (card: ComposerContextCardView, selectionId?: string) => void;
-  add: () => void; preview: () => void; balance: () => void; details: () => void; livingBar?:LivingBar; contextGuide?: ReactNode; reveal?: { targetRef: string; sequence: number } | null }) {
+  add: () => void; preview: () => void; balance: () => void; details: () => void; livingBar?:LivingBar; contextGuide?: ReactNode; reveal?: { targetRef: string; sequence: number } | null;
+  reconstructedCards?: ReadonlyMap<string, RealizedCard> }) {
   const boardAccepts = !!selected && (model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED")
     || model.presentation.dragSources[selected]?.editorDropTarget?.kind === "BOARD_ZONE");
   const trashAccepts = !!selected && model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
@@ -78,6 +81,12 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
   };
   const restaurantFocus = livingBar?.id ?? (contextGuide && focusedCard?.templateKey === "restaurant" ? focusedCard.contextOccurrenceId : null);
   const items=useMemo(()=>{
+    if (reconstructedCards) return inventoryItems(model, false, false).sort((a, b) => {
+      const left = reconstructedCards.get(a.id), right = reconstructedCards.get(b.id);
+      return (left ? reconstructionOrder[left.section] : 4) - (right ? reconstructionOrder[right.section] : 4)
+        || (left?.date ?? "").localeCompare(right?.date ?? "")
+        || (left?.label ?? "").localeCompare(right?.label ?? "", "fr");
+    });
     const grouped = fixedFacts.filter(f => !detached.has(f.factKey));
     const fixed: ComposerPresentationNode[] = [...(grouped.length ? [{ id:"fixed:group", kind:"FIXED" as const, iconKey:"home" as const, width:225, height:112, density:"NORMAL" as const, spatialFamily:"OTHER" as const, facts:grouped, detached:false }] : []),
       ...fixedFacts.filter(f => detached.has(f.factKey)).map(f => ({ id:`fixed:${f.factKey}`, kind:"FIXED" as const, iconKey:"home" as const, width:225, height:124, density:"NORMAL" as const, spatialFamily:"OTHER" as const, facts:[f], detached:true }))];
@@ -88,7 +97,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
     const remaining = item.children.filter(child => child.id !== restaurantFocus);
     // Keep the intention visible while its guide is open; this is transient layout only.
     return [selected, ...(remaining.length > 1 ? [{ ...item, children: remaining }] : remaining)];
-  })];},[model,restaurantFocus,detached,showMonthCards]),closeCluster=useCallback((after?:()=>void)=>{
+  })];},[model,restaurantFocus,detached,showMonthCards,reconstructedCards]),closeCluster=useCallback((after?:()=>void)=>{
     const targets = new Set([...document.querySelectorAll<HTMLElement>("dialog [data-control]")].map(node => node.dataset.control!));
     if (inlineEdits && !inlineEdits.guard(() => { inlineEdits.flushPending(); setOpenClusterId(null); after?.(); }, targets)) return false;
     inlineEdits?.flushPending();
@@ -134,8 +143,10 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
     onDragLeave={() => interaction?.over(null)} onDrop={e => { e.preventDefault(); e.stopPropagation(); if (!busy) interaction?.place(trashTarget); }}>
     {interaction?.grabbed?.protected ? <LockKeyhole size={17} /> : <Trash2 size={17} />}{interaction?.grabbed?.protected ? "Protégée" : "Retirer"}</div>;
   return <section className={styles.board} aria-label="Board du mois" data-bar-workspace={!!livingBar?.id}>
-    <div className={styles.boardHeading}><h2>Votre mois prend forme</h2><span>{showMonthCards ? "Socle · habitudes et enveloppes · intentions" : "Intentions · cartes du mois repliées"}</span>
-      <button type="button" className={styles.monthCardsToggle} aria-expanded={showMonthCards} disabled={busy} onClick={toggleMonthCards}>{showMonthCards ? "Replier les cartes du mois" : "Afficher les cartes du mois"}</button></div>
+    <div className={styles.boardHeading}><h2>{reconstructedCards ? "Brouillon de juillet" : "Votre mois prend forme"}</h2>
+      {reconstructedCards ? <span>Cartes reconstituées · modifications dans le brouillon</span>
+        : <><span>{showMonthCards ? "Socle · habitudes et enveloppes · intentions" : "Intentions · cartes du mois repliées"}</span>
+          <button type="button" className={styles.monthCardsToggle} aria-expanded={showMonthCards} disabled={busy} onClick={toggleMonthCards}>{showMonthCards ? "Replier les cartes du mois" : "Afficher les cartes du mois"}</button></>}</div>
     <BoardCarousel expandedId={livingBar?.id} model={model} inventory={items} focused={focused} revealSequence={(reveal?.sequence ?? 0) + selectionReveal} revealFocused={revealFocused} emptyClick={() => focus(null)} dropProps={{ "data-compatible": boardAccepts,
       "data-drag-over": sameTarget(interaction?.overTarget ?? null, boardTarget),
       onDragOver: e => { if (boardAccepts && !busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(boardTarget); } else interaction?.over(null); },

@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, ArrowRight, ChevronRight, Search, X } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { addMonths } from "@/core/time";
+import { ArrowLeft, ArrowRight, ChevronRight, Pencil, Search, X } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard, RealizedCard, RealizedPayment } from "@/server/phase2/planner/realized-month";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
-import { money, monthLabel, plannedDayLabel } from "./display";
+import { money, plannedDayLabel } from "./display";
 import { RealizedBadge } from "./realized-badge";
 import styles from "./realized-month.module.css";
 
@@ -145,8 +144,9 @@ function RealizedDetail({ card, terms, open }: {
   </>;
 }
 
-export function RealizedComposerMonth({ board }: { board: RealizedBoard }) {
-  const previous = addMonths(board.month, -1), next = addMonths(board.month, 1);
+export function RealizedComposerMonth({ board, onEdit, editableIds }: {
+  board: RealizedBoard; onEdit: (cardId: string) => void; editableIds: ReadonlySet<string>;
+}) {
   const [sectionFilter, setSectionFilter] = useState<RealizedCard["section"] | "all">("all");
   const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<{ cardId: string; paymentId?: string; componentId?: string } | null>(null);
@@ -154,6 +154,8 @@ export function RealizedComposerMonth({ board }: { board: RealizedBoard }) {
   const body = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
+  const rail = useRef<HTMLDivElement>(null);
+  const [rows, setRows] = useState(1);
   const terms = searchText(query).split(" ").filter(Boolean);
   const indexed = useMemo(() => board.cards.map(card => ({
     card,
@@ -168,6 +170,31 @@ export function RealizedComposerMonth({ board }: { board: RealizedBoard }) {
   const visible = indexed.filter(({ card, lines }) => (sectionFilter === "all" || card.section === sectionFilter)
     && (!terms.length || lines.some(line => matches(line, terms)))).map(({ card }) => card);
   const selected = board.cards.find(card => card.id === selection?.cardId);
+
+  useEffect(() => {
+    if (!rail.current) return;
+    const observer = new ResizeObserver(entries => setRows(Math.max(1, Math.floor((entries[0]!.contentRect.height - 34) / 116))));
+    observer.observe(rail.current);
+    return () => observer.disconnect();
+  }, []);
+
+  function scrollRail(direction: number) {
+    const node = rail.current;
+    if (!node) return;
+    node.scrollBy({ left: Math.max(220, node.clientWidth * .7) * direction,
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+  }
+  function startRail() {
+    if (rail.current) rail.current.scrollLeft = 0;
+  }
+  function filterSection(value: typeof sectionFilter) {
+    setSectionFilter(value);
+    startRail();
+  }
+  function filterQuery(value: string) {
+    setQuery(value);
+    startRail();
+  }
 
   useEffect(() => {
     const panel = dialog.current;
@@ -191,68 +218,66 @@ export function RealizedComposerMonth({ board }: { board: RealizedBoard }) {
   }, []);
 
   return <div className={styles.board} data-realized-month={board.month}>
-    <nav className={styles.monthNav} aria-label="Mois consulté">
-      <Link href={`/mois-a-venir?month=${previous}`} prefetch={false}><ArrowLeft size={15} aria-hidden="true" /> Mois précédent</Link>
-      <Link href={`/mois-a-venir?month=${next}`} prefetch={false}>Mois suivant <ArrowRight size={15} aria-hidden="true" /></Link>
-    </nav>
     <header className={styles.hero}>
-      <div>
-        <p>Composer · Mois réalisé</p>
-        <h1>{monthLabel(board.month)}</h1>
-        <span>{board.operationCount} opérations bancaires · {board.eventCount} événements documentés</span>
-      </div>
       <dl className={styles.totals}>
         <div><dt>Revenus encaissés</dt><dd>{money(board.totals.income.amount)}</dd></div>
         <div><dt>Dépenses débitées</dt><dd>{money(board.totals.expense.amount)}</dd></div>
         {board.totals.refund.count > 0 && <div><dt>Remboursements reçus</dt><dd>{money(board.totals.refund.amount)}</dd></div>}
         <div className={styles.net}><dt>Net hors transferts</dt><dd>{money(board.net)}</dd></div>
       </dl>
+      <span>{board.eventCount} événements documentés</span>
     </header>
     <div className={styles.toolbar}>
       <nav className={styles.sections} aria-label="Filtrer les cartes du mois">
-        <button type="button" aria-pressed={sectionFilter === "all"} onClick={() => setSectionFilter("all")}>Tout</button>
+        <button type="button" aria-pressed={sectionFilter === "all"} onClick={() => filterSection("all")}>Tout</button>
         {sections.filter(section => board.cards.some(card => card.section === section.id)).map(section =>
-          <button type="button" key={section.id} aria-pressed={sectionFilter === section.id} onClick={() => setSectionFilter(section.id)}>{section.label}</button>)}
+          <button type="button" key={section.id} aria-pressed={sectionFilter === section.id} onClick={() => filterSection(section.id)}>{section.label}</button>)}
       </nav>
       <div className={styles.search} role="search" aria-label="Recherche dans juillet">
         <Search size={16} aria-hidden="true" />
         <input ref={search} type="search" aria-label="Rechercher une carte ou une opération" placeholder="Marchand, événement, date…" value={query}
-          onChange={event => setQuery(event.target.value)} onKeyDown={event => {
-            if (event.key === "Escape" && query) { event.preventDefault(); setQuery(""); }
+          onChange={event => filterQuery(event.target.value)} onKeyDown={event => {
+            if (event.key === "Escape" && query) { event.preventDefault(); filterQuery(""); }
           }} />
-        {query && <button type="button" aria-label="Effacer la recherche" onClick={() => { setQuery(""); search.current?.focus(); }}>
+        {query && <button type="button" aria-label="Effacer la recherche" onClick={() => { filterQuery(""); search.current?.focus(); }}>
           <X size={16} aria-hidden="true" />
         </button>}
       </div>
+      <p className={styles.resultCount} role="status">{visible.length} {visible.length === 1 ? "carte" : "cartes"}</p>
+      <div className={styles.railArrows}>
+        <button type="button" aria-label="Défiler à gauche" onClick={() => scrollRail(-1)}><ArrowLeft size={16} aria-hidden="true" /></button>
+        <button type="button" aria-label="Défiler à droite" onClick={() => scrollRail(1)}><ArrowRight size={16} aria-hidden="true" /></button>
+      </div>
     </div>
-    <p className={styles.resultCount} role="status">{visible.length} {visible.length === 1 ? "carte" : "cartes"}</p>
+    <div ref={rail} className={styles.rail} style={{ "--rail-rows": rows } as CSSProperties}
+      tabIndex={0} aria-label="Cartes réalisées, défilement horizontal" data-realized-rail
+      onKeyDown={event => {
+        if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+        event.preventDefault(); scrollRail(event.key === "ArrowRight" ? 1 : -1);
+      }}>
     {!visible.length && <p className={styles.empty}>{board.cards.length
       ? "Aucune carte ne correspond à cette recherche dans la section sélectionnée."
       : "Aucune opération ni événement importé pour ce mois."}</p>}
     {sections.map(section => {
       const cards = visible.filter(card => card.section === section.id);
       if (!cards.length) return null;
-      const recurring = section.id === "events" ? cards.filter(card => card.occurrences?.length) : [];
-      const featured = cards.filter(card => !recurring.includes(card));
-      if (section.id === "events") featured.sort((a, b) =>
+      if (section.id === "events") cards.sort((a, b) =>
         Number(!!(b.payments.length || b.relatedPayments?.length)) - Number(!!(a.payments.length || a.relatedPayments?.length))
+        || Number(!!a.occurrences?.length) - Number(!!b.occurrences?.length)
         || (a.date ?? "").localeCompare(b.date ?? ""));
-      if (section.id === "fixed" || section.id === "daily") featured.sort((a, b) =>
+      if (section.id === "fixed" || section.id === "daily") cards.sort((a, b) =>
         Number(a.amount ?? 0) - Number(b.amount ?? 0) || a.label.localeCompare(b.label, "fr"));
       return <section key={section.id} id={section.id} aria-labelledby={`title-${section.id}`} className={styles.section}>
         <header className={styles.sectionHeading}>
           <h2 id={`title-${section.id}`}>{section.label}</h2>
           {section.id !== "flows" && terms.length === 0 && <span>{money(board.sectionAmounts[section.id])} débité</span>}
         </header>
-        {featured.length > 0 && <div className={styles.grid}>
-          {featured.map(card => <RealizedMonthCard key={card.id} card={card} open={open} />)}
-        </div>}
-        {recurring.length > 0 && <details className={styles.recurring} open={terms.length > 0 || undefined}>
-          <summary>Rythmes récurrents <span>{recurring.length} cartes</span></summary>
-          <div className={styles.grid}>{recurring.map(card => <RealizedMonthCard key={card.id} card={card} open={open} />)}</div>
-        </details>}
+        <div className={styles.grid}>
+          {cards.map(card => <RealizedMonthCard key={card.id} card={card} open={open} />)}
+        </div>
       </section>;
     })}
+    </div>
     <dialog ref={dialog} className={styles.dialog} aria-labelledby="realized-dialog-title"
       onClose={() => setSelection(null)} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
       {selected && <div className={styles.panel}>
@@ -267,7 +292,11 @@ export function RealizedComposerMonth({ board }: { board: RealizedBoard }) {
             <X size={20} aria-hidden="true" />
           </button>
         </header>
-        <div ref={body} className={styles.panelBody}><RealizedDetail card={selected} terms={terms} open={open} /></div>
+        <div ref={body} className={styles.panelBody}>
+          {editableIds.has(reconstructedId(board.month, selected.id)) && <button type="button" className={styles.editCard}
+            onClick={() => { dialog.current?.close(); onEdit(selected.id); }}><Pencil size={15} aria-hidden="true" /> Modifier dans le brouillon</button>}
+          <RealizedDetail card={selected} terms={terms} open={open} />
+        </div>
       </div>}
     </dialog>
   </div>;

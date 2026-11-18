@@ -96,6 +96,9 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .workspace button:disabled { cursor:default; opacity:.48; }
 .workspace :is(button,input,select,a,summary,[tabindex]):focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
 .workspaceHeader { display:flex; flex-wrap:wrap; align-items:center; align-content:center; gap:8px 18px; flex:0 0 auto; min-height:80px; padding:0 2px; min-width:0; }
+.reconstructionModes { display:flex; gap:4px; align-items:center; border:1px solid #e1d3ee; border-radius:11px; padding:3px; background:#faf6fd; }
+.reconstructionModes button { border:1px solid transparent; border-radius:8px; padding:5px 12px; min-height:34px; color:#644586; background:transparent; }
+.reconstructionModes button[aria-pressed=true] { border-color:#cbb2df; color:#513378; background:#efe4f7; font-weight:700; }
 .headerIdentity { flex:1 1 290px; min-width:min(100%,290px); }
 .backLink { display:inline-flex; align-items:center; gap:5px; font-size:10px!important; color:var(--muted); text-decoration:none; }
 .backLink:hover { color:var(--ink); }
@@ -2021,6 +2024,13 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 @media (max-width:380px) {
   body:has(.board .questionPalette[data-dock-nature="DECISION"]) .restaurantInspector:is([data-cinema-editor],[data-restaurant-suggestions],[data-basket-suggestions]) { bottom:224px; }
   body:has(.board .questionPalette[data-dock-nature="DECISION"]) .dialog[data-night-workshop-panel=true]:has([data-short-stay-editor],[data-mascara-catalog],[data-mascara-reference]) { max-height:calc(100dvh - 236px); }
+}
+@media (max-width:760px) {
+  .workspace[data-reconstruction-mode] { display:flex; overflow:hidden; padding-bottom:0; }
+  .workspace[data-reconstruction-mode] .workspaceHeader { padding:2px 0 8px; gap:6px 8px; }
+  .workspace[data-reconstruction-mode] .columns { flex:1; min-height:0; height:auto; gap:6px; }
+  .workspace[data-reconstruction-mode] .library { flex:0 0 clamp(106px, 23dvh, 175px); height:auto; }
+  .workspace[data-reconstruction-mode] .board { flex:1; min-height:0; height:auto; }
 }
 .homeEquipment {
   display: grid;
