@@ -16,6 +16,8 @@ const sections = [
   { id: "flows", label: "Revenus et mouvements" },
 ] as const;
 const fullDate = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const distance = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
+const carArtwork = "option:activity:transport:car";
 
 function days(date: string, end?: string) {
   const start = plannedDayLabel(date);
@@ -90,12 +92,19 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, open }: { card
       {badges.length > 4 && <span title={badges.slice(4).map(badge => badge.label).join(", ")}>+${badges.length - 4}</span>}
     </span>}
     <CardArtwork card={card} size={60} />
-    <span className={styles.cardTotal}>
+    {(card.amount !== null || linked || !card.carTrip) && <span className={styles.cardTotal}>
       {card.amount !== null ? <><strong>{money(card.amount)}</strong>
         {card.transferAmounts && <small>Solde des transferts</small>}
         {card.section === "events" && <small>Débits rattachés</small>}</>
         : <small>{linked ? `${linked} ${linked === 1 ? "opération associée" : "opérations associées"}` : "Aucun paiement rattaché"}</small>}
-    </span>
+    </span>}
+    {card.carTrip && <span className={styles.cardTrip} data-realized-car-trip title={card.carTrip.route}>
+      <ComposerAssetVisual assetKey={carArtwork} iconKey="car" size={23} />
+      <span className={styles.cardTripRoute}>{card.carTrip.compactRoute}</span>
+      <strong className={styles.cardTripCost} aria-label={`${money(card.carTrip.estimatedFuel)} d’essence estimée`} title="Essence estimée">
+        ≈ {money(card.carTrip.estimatedFuel)}
+      </strong>
+    </span>}
     <ChevronRight className={styles.chevron} size={16} aria-hidden="true" />
   </button>;
 });
@@ -106,6 +115,14 @@ function RealizedDetail({ card, terms, open }: {
   open: (cardId: string, paymentId?: string, componentId?: string) => void;
 }) {
   return <>
+    {card.carTrip && <section className={styles.tripDetail} aria-label="Trajet en voiture">
+      <ComposerAssetVisual assetKey={carArtwork} iconKey="car" size={42} />
+      <div>
+        <h3>Trajet en voiture</h3>
+        <p>{card.carTrip.route}</p>
+        <p>{distance.format(Number(card.carTrip.distanceKm))} km · {money(card.carTrip.estimatedFuel)} d’essence estimée</p>
+      </div>
+    </section>}
     {card.transferAmounts && <dl className={styles.transferTotals}>
       <div><dt>Transferts entrants</dt><dd>{money(card.transferAmounts.incoming)}</dd></div>
       <div><dt>Transferts sortants</dt><dd>{money(card.transferAmounts.outgoing)}</dd></div>
@@ -160,6 +177,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
     card,
     lines: [
       searchText(card.label, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
+      ...(card.carTrip ? [searchText(card.label, "trajet voiture essence", card.carTrip.route, card.carTrip.compactRoute)] : []),
       ...card.payments.map(payment => searchText(card.label, paymentSearch(payment))),
       ...(card.occurrences ?? []).map(occurrence => searchText(card.label, occurrence.label, occurrence.date, searchableDate(occurrence.date))),
       ...(card.relatedPayments ?? []).map(payment => searchText(card.label, payment.label, payment.cardLabel,
