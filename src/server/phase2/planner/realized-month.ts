@@ -280,7 +280,9 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const placeIds = new Set([...confirmedPlaceByEvent.values(), ...matchedTrips.flatMap(trip => trip.placeIds)]);
   const places = placeIds.size ? await repository.loadEntityRows("places", "place_id", [...placeIds]) : [];
   const placeNames = new Map(places.flatMap(place => {
-    const name = place.private_place === false && optionalCanonicalString(place, ["nom_canonique"])?.trim();
+    const subtype = optionalCanonicalString(place, ["sous_type"]) ?? "";
+    if (place.private_place !== false || /\bnon identifié/iu.test(subtype)) return [];
+    const name = optionalCanonicalString(place, ["nom_canonique"])?.trim();
     return name ? [[String(place.place_id), name] as const] : [];
   }));
   const trips = realizedCarTrips(matchedTrips, places);
