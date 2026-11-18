@@ -1,0 +1,121 @@
+import "server-only";
+import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonical/record";
+
+export type RealizedPlace = Readonly<{
+  key: string;
+  label: string;
+  address?: string;
+  mapsUrl: string;
+  certainty: "confirmed" | "probable" | "town";
+}>;
+
+// Public Maps listings for names that can otherwise resolve to another branch.
+const verifiedBranches = [
+  { name: "boulangerie ange", label: "Boulangerie Ange – Castelnau-le-Lez",
+    address: "2 allée Charles R. Darwin, 34170 Castelnau-le-Lez",
+    latitude: 43.6198522, longitude: 3.9153171, googlePlaceId: "ChIJbduvq9ClthIRkDTG96lmZ1A" },
+  { name: "marie blachere montpellier sud", label: "Marie Blachère – avenue Étienne-Méhul",
+    address: "3056 avenue Étienne-Méhul, 34000 Montpellier",
+    latitude: 43.5754751, longitude: 3.8588181 },
+  { name: "mcdonald s", label: "McDonald’s Croix d’Argent",
+    address: "109 avenue de Toulouse, 34070 Montpellier",
+    latitude: 43.5892217, longitude: 3.8560867 },
+] as const;
+
+const publicMerchantPlaces = [
+  { name: "delacrem", cityPrefix: "montpell", label: "Delacrem", address: "16 rue Saint-Guilhem, 34000 Montpellier" },
+  { name: "le petit nice", cityPrefix: "montpe", label: "Le Petit Nice", address: "1 place Jean-Jaurès, 34000 Montpellier" },
+  { name: "boulangerie saint julien", cityPrefix: "ser", label: "Boulangerie Saint-Julien",
+    address: "6 rue du Coussat, 34290 Servian" },
+  { name: "pharmacie polygone", cityPrefix: "m", label: "Pharmacie du Polygone",
+    address: "71 rue des Pertuisanes, 34000 Montpellier" },
+] as const;
+
+function normalized(text: string) {
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+function coordinates(lat: unknown, lng: unknown) {
+  const latitude = typeof lat === "number" || typeof lat === "string" && lat.trim() ? Number(lat) : NaN;
+  const longitude = typeof lng === "number" || typeof lng === "string" && lng.trim() ? Number(lng) : NaN;
+  return Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 && (latitude !== 0 || longitude !== 0)
+    ? { latitude, longitude } : undefined;
+}
+
+function mapsSearch(query: string, googlePlaceId?: string) {
+  const params = new URLSearchParams({ api: "1", query });
+  if (googlePlaceId) params.set("query_place_id", googlePlaceId);
+  return `https://www.google.com/maps/search/?${params}`;
+}
+
+export function realizedPlace(row: CanonicalRecord, certainty: "confirmed" | "probable"): RealizedPlace | undefined {
+  const town = optionalCanonicalString(row, ["commune"])?.trim();
+  const name = optionalCanonicalString(row, ["nom_canonique"])?.trim();
+  const subtype = optionalCanonicalString(row, ["sous_type"]) ?? "";
+  if (row.private_place !== false || !name || /\bnon (?:identifi[ée]|pr[ée]cis[ée])/iu.test(subtype + " " + name)) {
+    return town ? { key: `town:${normalized(town)}`, label: town, certainty: "town", mapsUrl: mapsSearch(`${town}, France`) } : undefined;
+  }
+
+  const coords = coordinates(row.latitude_canonique, row.longitude_canonique);
+  const branch = coords && verifiedBranches.find(candidate => candidate.name === normalized(name)
+    && Math.hypot(coords.latitude - candidate.latitude, (coords.longitude - candidate.longitude) * Math.cos(coords.latitude * Math.PI / 180)) < .0025);
+  const canonicalAddress = optionalCanonicalString(row, ["adresse"])?.trim();
+  const address = canonicalAddress || branch?.address;
+  const label = canonicalAddress ? name : branch?.label ?? name;
+  const publicAddressQuery = [label, address, canonicalAddress || !address ? town : undefined].filter(Boolean).join(", ");
+  const query = address || !coords ? publicAddressQuery : `${coords.latitude},${coords.longitude}`;
+  return {
+    key: String(row.place_id), label, ...(address ? { address } : {}),
+    certainty, mapsUrl: mapsSearch(query, !canonicalAddress && branch && "googlePlaceId" in branch ? branch.googlePlaceId : undefined),
+  };
+}
+
+export function merchantPlaceAlias(aliases: readonly CanonicalRecord[], descriptor: string, day: string) {
+  const bank = bankText(descriptor);
+  const matches = new Map<string, "confirmed" | "probable">();
+  for (const alias of aliases) {
+    const id = optionalCanonicalString(alias, ["place_id"]);
+    const pattern = optionalCanonicalString(alias, ["bank_descriptor_pattern"]);
+    const start = optionalCanonicalString(alias, ["valid_from"]);
+    const end = optionalCanonicalString(alias, ["valid_to"]);
+    if (!id || !pattern || start && day < start || end && day > end) continue;
+    const prefix = normalized(pattern);
+    if (!prefix || (pattern.endsWith("%") ? !bank.startsWith(prefix) : bank !== prefix)) continue;
+    if (matches.get(id) !== "confirmed") matches.set(id, alias.validation_status === "Confirmé" ? "confirmed" : "probable");
+  }
+  const match = matches.size === 1 ? [...matches][0] : undefined;
+  return match && { id: match[0], certainty: match[1] };
+}
+
+function bankText(descriptor: string) {
+  return normalized(descriptor).replace(/^paiement par carte x\d+ /u, "");
+}
+
+export function probableMerchantPlace(name: string, descriptor: string): RealizedPlace | undefined {
+  const merchant = normalized(name);
+  const bank = bankText(descriptor);
+  const locationWords = bank.split(" ").filter(word => /^\p{L}+$/u.test(word));
+  const match = publicMerchantPlaces.find(place => place.name === merchant
+    && locationWords.slice(0, 5).some(word => place.cityPrefix.length === 1
+      ? word === place.cityPrefix : word.startsWith(place.cityPrefix)));
+  if (!match) return undefined;
+  return { key: `public:${merchant}`, label: match.label, address: match.address,
+    mapsUrl: mapsSearch(`${match.label}, ${match.address}`), certainty: "probable" };
+}
+
+export function distinctRealizedPlaces(places: readonly RealizedPlace[]) {
+  const distinct = new Map<string, RealizedPlace>();
+  for (const place of places) {
+    const previous = distinct.get(place.key);
+    if (!previous || place.certainty === "confirmed") distinct.set(place.key, place);
+  }
+  return [...distinct.values()];
+}
+
+export function cashActivityPlace(label: string): RealizedPlace | undefined {
+  // This merchant label explicitly names the salon as the cash use's recipient.
+  if (normalized(label) !== "retraits d especes associes a dali barber") return undefined;
+  const name = "Dali Barber", address = "673 chemin de Moularès, 34000 Montpellier";
+  return { key: "public:dali-barber-montpellier", label: name, address,
+    mapsUrl: mapsSearch(`${name}, ${address}`), certainty: "confirmed" };
+}

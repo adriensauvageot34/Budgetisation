@@ -2624,25 +2624,28 @@ export class CanonicalRepository {
   /** Explicit Canonical LifeEvent-to-Place links. Place visits are not a substitute. */
   async loadLifeEventLocalizationRows(
     lifeEventIds: readonly string[],
+    mode: "all" | "confirmed-venues" = "all",
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(lifeEventIds);
     if (ids.length === 0) return Promise.resolve([]);
-    return this.cached(`life-event-localizations:resolved:${ids.join(",")}`, async () => {
+    return this.cached(`life-event-localizations:resolved:${mode}:${ids.join(",")}`, async () => {
       const links = await this.readRowsByInBatches(
-        `life-event-localizations:links:${ids.join(",")}`,
+        `life-event-localizations:links:${mode}:${ids.join(",")}`,
         "life_events",
         ids,
         ["life_event_id", "localization_id"],
         ["life_event_id", "localization_id"],
-        (batch) =>
-        this.client
-          .from("life_event_localizations")
-          .select("life_event_id,localization_id")
-          .in("life_event_id", batch)
-          .order("life_event_id", { ascending: true })
-          .order("localization_id", { ascending: true }),
+        (batch) => {
+          const query = this.client.from("life_event_localizations").select("life_event_id,localization_id")
+            .in("life_event_id", batch)
+            .order("life_event_id", { ascending: true })
+            .order("localization_id", { ascending: true });
+          return mode === "confirmed-venues"
+            ? query.in("role", ["Principal", "Rendez-vous"]).eq("location_certainty", "Confirmée") : query;
+        },
         CANONICAL_IN_BATCH_SIZE,
-        { namespace: "historical:localization-links", keyColumn: "life_event_id", historical: true });
+        { namespace: mode === "all" ? "historical:localization-links" : "historical:confirmed-venue-links",
+          keyColumn: "life_event_id", historical: true });
       const localizationIds = unique(links.map((row) =>
         canonicalString(row, ["localization_id"], "life_events")));
       if (localizationIds.length === 0) return [];
@@ -2686,6 +2689,21 @@ export class CanonicalRepository {
           canonicalString(right, ["place_id"], "life_events"),
         ));
     });
+  }
+
+  async loadRealizedMerchantPlaceAliases(merchantIds: readonly string[]): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(merchantIds);
+    if (!ids.length) return [];
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    return this.readRowsByInBatches(
+      `realized-merchant-place-aliases:${ids.join(",")}`,
+      "places", ids, ["merchant_place_alias_id"], ["merchant_place_alias_id"],
+      (batch) => this.client.from("merchant_place_aliases")
+        .select("merchant_place_alias_id,merchant_id,place_id,bank_descriptor_pattern,validation_status,valid_from,valid_to")
+        .eq("active", true).in("merchant_id", batch).in("relation_type", ["venue", "branch", "fuel_component"])
+        .in("validation_status", ["Confirmé", "Probable fort"]).order("merchant_place_alias_id"),
+      CANONICAL_IN_BATCH_SIZE,
+    );
   }
 
   loadMomentLifeEventRowsByMomentIds(
