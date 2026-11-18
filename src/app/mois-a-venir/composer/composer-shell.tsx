@@ -33,7 +33,7 @@ import { readDraftNavigation, rememberDraftNavigation } from "./draft-navigation
 import { availableProjectStarters, evaluateProjectStarter, type ProjectStarter, type ProjectStarterChoices } from "./project-starters";
 import { ProjectStarterPreview } from "./project-starter-preview";
 import { ProjectCompletionPreference, type ProjectCompletionPriority } from "./project-completion";
-import { WorkshopNavigationContext, IntentionSwitcher, intentionNavigationEntries } from "./workshop-navigation";
+import { WorkshopNavigationContext, intentionNavigationEntries } from "./workshop-navigation";
 import { ComposerBoard } from "./composer-board";
 import { ContextPalette } from "./context-palette";
 import { ComposerCockpit } from "./composer-cockpit";
@@ -219,7 +219,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   useEffect(() => { if (currentEditorId && !draftState.contexts.some(c => c.contextOccurrenceId === currentEditorId)) setEditor(null); }, [draftState.contexts, currentEditorId]);
   const ShortStayEditor = loadedEditors.stay, GiftEditor = loadedEditors.gift, CatalogContextEditor = loadedEditors.catalog;
   const NightOutEditor = loadedEditors.night, BarLivingEditor = loadedEditors.bar;
-  const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
+  const [projectionOpen, setProjectionOpen] = useState(false);
   const [financeReturnId, setFinanceReturnId] = useState<string | null>(null);
   const [unresolvedOpen, setUnresolvedOpen] = useState(false);
   const [reveal, setReveal] = useState<{ targetRef: string; sequence: number } | null>(null);
@@ -994,12 +994,9 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stablePresetChoose=useCommittedEvent((asset:ComposerAssetView,key:ComposerPresetKey,concept?:BasketConcept)=>choose(asset,{kind:"BOARD_ZONE"},undefined,undefined,key,undefined,concept));
   const stableLibraryChoose=useCommittedEvent((asset:ComposerAssetView)=>choose(asset));
   const stableLibraryDrag=useCommittedEvent((key:string|null)=>{clearHover();setSelected(key);});
-  const stableAdd=useCommittedEvent(()=>{clearHover();setLibraryOpenToken(n=>n+1);});
-  const stablePreview=useCommittedEvent(()=>void run({kind:"READ"},"none"));
   const retryPreview=useCommittedEvent(() => {
     if (!busyRef.current && !scheduler.current.pending()) schedulePreview(localDraft.current);
   });
-  const stableBalance=useCommittedEvent(()=>{clearHover();setBalanceOpen(v=>!v);if(!balanceOpen)void run({kind:"SUGGESTIONS"},"none");});
   const stableDetails=useCommittedEvent(openProjectionDetails);
   const stableFocus=useCommittedEvent((id:string|null)=>{if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId)&&!inlineEdits.registry.guard(()=>stableFocus(id)))return;setFocusedContext(id);if((editor?.restaurantContextId||livingBarId)&&id!==(livingBarId??editor?.restaurantContextId))setEditor(null);});
   const stableRevealFocus=useCommittedEvent((id:string|null)=>{stableFocus(id);if(id)setReveal(previous=>({targetRef:id,sequence:(previous?.sequence??0)+1}));});
@@ -1238,8 +1235,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <button type="button" aria-pressed={showingRealized} disabled={busy} onClick={showRealized}>Réalisé</button>
         <button type="button" aria-pressed={!showingRealized} disabled={busy} onClick={() => setReconstructionEditing(true)}>Édition</button>
       </nav>}
-      {!showingRealized && <div className={styles.toolbar}><IntentionSwitcher contextId={focusedContext} compact />
-        {reconstruction && <button type="button" className={styles.primary} disabled={busy} onClick={stableAdd}>Ajouter une carte</button>}
+      {!showingRealized && <div className={styles.toolbar}>
         {resumableContext && <button type="button" className={styles.financialLink} disabled={busy} onClick={() => {
           setResumeContext(null); stableLibraryOpen(resumableContext.id);
         }}>{resumedCard && isComposerProject(resumedCard) ? "Ouvrir le projet" : "Reprendre l’intention"}</button>}
@@ -1290,7 +1286,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       undo={() => stage({ kind: "READ" }, "undo", past.at(-1))} redo={() => stage({ kind: "READ" }, "redo", future.at(-1))} canUndo={!!past.length} canRedo={!!future.length} />}
     {showingRealized && reconstruction ? <RealizedComposerMonth board={reconstruction} onEdit={editReconstructedCard}
       editableIds={new Set(shown.board.contexts.map(card => card.contextOccurrenceId))} />
-      : <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag} inspectContext={stableRevealFocus} openContext={stableLibraryOpen}
+      : <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag}
       prepareProject={!relationSession && !comparison && !pendingApply ? prepareProject : undefined} />
       {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
           initialBarView={barViews.current.get(`${draftState.targetMonth}:${livingBarId}`)} onViewChange={rememberCurrentBarView}
@@ -1300,7 +1296,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           onSave={stage} onCancel={closeDialog} onOpenChild={id=>{const child=shown.board.contexts.find(c=>c.contextOccurrenceId===id);if(child)editContext(child);}} />
           : <section role={editorLoadError?"alert":"status"}><p>{editorLoadError?"L’atelier n’a pas pu être chargé. Votre brouillon est conservé.":"Ouverture de la carte…"}</p>{editorLoadError&&<button type="button" onClick={()=>setEditorLoadRetry(n=>n+1)}>Réessayer</button>}</section>,barHost.node,livingBarId)}
       <ComposerBoard livingBar={livingBarId ? {id:livingBarId,removingId:removingBarId,open:stableEditContext,close:closeDialog,content:<BarLivingMount host={barHost}/>} : {removingId:removingBarId,open:stableEditContext,close:closeDialog}} model={shown} busy={busy} selected={selected} focused={editor?.nightContextId ?? editor?.stayContextId ?? focusedContext} focus={stableFocus} focusEquipment={focusEquipment} edit={stableEdit} editContext={editBoardContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
-        add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} reveal={reveal} reconstructedCards={reconstructedCards}
+        details={stableDetails} reveal={reveal} reconstructedCards={reconstructedCards}
          contextGuide={editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment?.asset.optionKind === "COMPONENT" ? <div ref={setNightDockHost} data-night-dock-host /> : editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
           && draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)
           && shown.board.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)

@@ -1,6 +1,6 @@
 import type {LivingBar} from "./bar-living-card";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Plus, Trash2, LockKeyhole } from "lucide-react";
+import { Trash2, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerCardView, ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -34,12 +34,12 @@ const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeClust
     details={()=>{if(inCluster&&!closeCluster(()=>{focus(item.id);details();}))return;focus(item.id);details();}}
     mutate={mutation=>request({kind:"MUTATE",mutation})} hover={hover}/>;
 });
-export function ComposerBoard({ model, busy, selected, focused, focus, focusEquipment, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details, contextGuide, reveal, livingBar, reconstructedCards }: { model: ComposerUiModel; busy: boolean; selected: string | null;
+export function ComposerBoard({ model, busy, selected, focused, focus, focusEquipment, edit, choose, drag, drop, request, hover, editContext, details, contextGuide, reveal, livingBar, reconstructedCards }: { model: ComposerUiModel; busy: boolean; selected: string | null;
   focused: string | null; focus: (id: string | null) => void;
   focusEquipment: (id: string, ready: () => void) => void;
   edit: (card: ComposerCardView) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
   drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void; request: (operation: ComposerOperation) => void; hover: (mutation: SemanticMutation | null) => void; editContext: (card: ComposerContextCardView, selectionId?: string) => void;
-  add: () => void; preview: () => void; balance: () => void; details: () => void; livingBar?:LivingBar; contextGuide?: ReactNode; reveal?: { targetRef: string; sequence: number } | null;
+  details: () => void; livingBar?:LivingBar; contextGuide?: ReactNode; reveal?: { targetRef: string; sequence: number } | null;
   reconstructedCards?: ReadonlyMap<string, RealizedCard> }) {
   const boardAccepts = !!selected && (model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED")
     || model.presentation.dragSources[selected]?.editorDropTarget?.kind === "BOARD_ZONE");
@@ -157,7 +157,6 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
     </BoardCarousel>
     {openCluster && <VisualClusterOverlay node={openCluster} focused={focused} close={()=>closeCluster(() => { if (commerce?.dock?.cluster) commerce.closeDock(); })} renderChild={item => renderAtomic(item, true)}
       palette={<>{focusedInCluster && regularPalette}{paletteInCluster && merchantPalette && <div className={styles.paletteDock} data-palette-dock>{merchantPalette}</div>}</>} trash={trashZone} />}
-    {model.presentation.elementCount < 4 && <button data-add-element className={styles.emptyInvitation} disabled={busy} onClick={add}><Plus size={14} /> Ajouter à votre mois</button>}
     {!focusedInCluster && regularPalette}
     {!paletteInCluster && merchantPalette && <div className={styles.paletteDock} data-palette-dock>{merchantPalette}</div>}
     {!openCluster && trashZone}

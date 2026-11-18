@@ -158,20 +158,26 @@ export function librarySearchAction(items:readonly LibraryIntention[], occurrenc
   return item?{kind:"ADD",key:item.key}:{kind:"FOCUS"};
 }
 /** Presentation index only. Admission, money and permissions remain server-owned. */
-export function composerLibraryIndex(model:ComposerUiModel) {
+export function composerLibraryAssets(model: Pick<ComposerUiModel, "library" | "dropCapabilities">): readonly LibraryIntention[] {
   const templates = model.library.searchableAssets.filter(a=>a.kind==="CONTEXT_ASSET");
+  const admitted = new Set(model.dropCapabilities
+    .filter(drop => drop.target.kind === "BOARD_ZONE" && drop.resolution !== "BLOCKED")
+    .map(drop => drop.sourceAssetKey));
   const generic = templates.map(asset=>({key:asset.assetKey, category:templateCategory[asset.templateKey??""]??"OTHER", asset,
     label:genericLabels[asset.templateKey??""]??asset.label, group:"Intentions libres",
     search:normalizeLibrarySearch([asset.label,genericLabels[asset.templateKey??""]??"","libre personnaliser générique"].join(" "))}));
   const presets:LibraryIntention[] = COMPOSER_LIBRARY_PRESETS.flatMap(preset=>{
     const asset=templates.find(a=>a.templateKey===preset.templateKey);
-    if(!asset || !model.dropCapabilities.some(d=>d.sourceAssetKey===asset.assetKey && d.target.kind==="BOARD_ZONE" && d.resolution!=="BLOCKED")) return [];
+    if (!asset || !admitted.has(asset.assetKey)) return [];
     const group=libraryPresetGroup(preset);
     return [{key:"preset:"+preset.presetKey, category:preset.categoryKey, asset,preset,label:preset.label,group,
       search:normalizeLibrarySearch([preset.label,group,...preset.searchTerms].join(" "))}];
   });
+  return [...presets, ...generic];
+}
+export function composerLibraryIndex(model:ComposerUiModel) {
   const controls=model.library.searchableAssets.filter(a=>a.kind==="PLAN_CONTROL" || a.kind==="RESERVATION_CONTROL");
-  return { intentions:[...presets,...generic] as readonly LibraryIntention[], controls, occurrences:libraryOccurrences(model) };
+  return { intentions: composerLibraryAssets(model), controls, occurrences:libraryOccurrences(model) };
 }
 export function filterLibraryIntentions<T extends Readonly<{label:string;search:string}>>(items:readonly T[], query:string):T[] {
   const normalized=normalizeLibrarySearch(query), terms=normalized.split(/\s+/u).filter(Boolean);
