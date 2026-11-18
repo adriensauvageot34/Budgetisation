@@ -97,14 +97,25 @@
   line-height: 1.3;
 }
 .grid {
-  display: grid;
+  --card-width: min(236px, calc(100vw - 55px));
+  --card-gap: 8px;
+  position: relative;
+  display: flex;
   flex: none;
-  grid-auto-flow: column;
-  grid-auto-columns: min(236px, calc(100vw - 55px));
-  grid-template-rows: repeat(var(--rail-rows, 1), max-content);
-  gap: 8px;
+  align-items: flex-start;
+  gap: var(--card-gap);
+}
+.grid[data-packed="true"] {
+  inline-size: calc(var(--packed-columns) * (var(--card-width) + var(--card-gap)) - var(--card-gap));
+}
+.grid[data-packed="true"] > .card {
+  position: absolute;
+  inset-inline-start: calc(var(--card-column) * (var(--card-width) + var(--card-gap)));
 }
 .card {
+  box-sizing: border-box;
+  inline-size: var(--card-width);
+  flex: none;
   min-width: 0;
   border: 1px solid var(--category-pale);
   border-inline-start: 3px solid var(--category-accent);
@@ -112,22 +123,21 @@
   background: var(--category-tint);
   box-shadow: 0 3px 8px #5c427314;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 60px 16px;
-  grid-template-areas:
-    "meta meta chevron"
-    "title title chevron"
-    "subtitle visual chevron"
-    "badges visual chevron"
-    "total visual chevron";
-  grid-template-rows: auto auto auto auto 1fr;
-  gap: 2px 6px;
   align-items: center;
-  min-height: 6.75rem;
-  padding: 7px 10px 7px 8px;
+  padding: 0;
   color: inherit;
   cursor: pointer;
   text-align: left;
 }
+.cardContent {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: start;
+  gap: 5px 8px;
+  min-width: 0;
+  padding: 8px 9px 8px 7px;
+}
+.card[data-multiple-badges="true"] .cardContent { grid-template-columns: 64px minmax(0, 1fr); }
 .board [data-realized-category="fixed"] {
   --category-ink: #384e77;
   --category-accent: #839acc;
@@ -173,8 +183,8 @@
 .card:hover { background: var(--category-pale); border-color: var(--category-accent); }
 .board button:focus-visible, .board summary:focus-visible { outline: 2px solid #76539c; outline-offset: 2px; }
 .cardMeta {
-  grid-area: meta;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 4px;
@@ -193,9 +203,8 @@
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.cardIdentity { grid-area: title; min-width: 0; }
+.cardIdentity { min-width: 0; display: grid; gap: 2px; }
 .cardTitle {
-  grid-area: title;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -225,23 +234,13 @@
   overflow: hidden;
   overflow-wrap: anywhere;
 }
-.cardSubtitle { grid-area: subtitle; }
 .cardSubtitle, .cardTotal small { display: block; color: var(--muted); font-size: .75rem; line-height: 1.3; overflow-wrap: anywhere; }
 .cardVisual { display: grid; place-items: center; flex: none; }
-.card > .cardVisual { grid-area: visual; width: 60px; height: 60px; }
-.card > .cardVisual > svg { display: block; width: 100%; height: 100%; }
-.card:has(.cardTrip) {
-  grid-template-areas:
-    "meta meta chevron"
-    "title title chevron"
-    "subtitle visual chevron"
-    "badges visual chevron"
-    "total visual chevron"
-    "trip trip trip";
-  grid-template-rows: auto auto auto auto 1fr auto;
-}
+.cardVisuals { display: grid; justify-items: center; gap: 3px; }
+.cardVisuals > .cardVisual { width: 42px; height: 42px; }
+.cardVisuals > .cardVisual > svg { display: block; width: 100%; height: 100%; }
 .cardTrip {
-  grid-area: trip;
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: 23px minmax(0, 1fr) auto;
   align-items: center;
@@ -261,11 +260,12 @@
 .cardTripCost { color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cardTrip svg, .tripDetail svg { width: 100%; height: 100%; }
 .cardTrip > :first-child { width: 23px; height: 23px; }
-.cardTotal { grid-area: total; align-self: end; min-width: 0; }
-.cardTotal strong { display: block; font-size: 1rem; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.chevron { grid-area: chevron; color: var(--category-ink); }
-.badges { grid-area: badges; display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
-.badges img { flex: none; width: 21px; height: 21px; object-fit: contain; border-radius: 50%; }
+.cardTotal { display: block; min-width: 0; color: #201c2e; font-size: 1.15rem; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.cardTotal[data-positive="true"] { color: #255b46; }
+.cardTotal small { font-weight: 500; }
+.badges { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; }
+.badges img { flex: none; width: 32px; height: 32px; object-fit: contain; border-radius: 50%; box-shadow: 0 0 0 1px #fff; }
+.card[data-multiple-badges="true"] .badges img { width: 29px; height: 29px; }
 .badges span { font-size: .72rem; color: var(--muted); }
 .observedBadges { display: inline-flex; align-items: center; gap: 3px; }
 .observedBadges img { width: 21px; height: 21px; object-fit: contain; border-radius: 50%; }
