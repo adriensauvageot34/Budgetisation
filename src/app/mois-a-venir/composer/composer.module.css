@@ -1830,6 +1830,11 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .contextReferenceChip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 button.contextReferenceChip:hover { background:#f0e6f8; border-color:#c8b3db; }
 .paletteDock:has([data-card-reference-dock]) { margin-inline:0; }
+.cardPlaceDock { position:relative; min-width:0; padding:4px 8px 0; }
+.cardPlaceDock > button:first-child { position:absolute; top:4px; right:6px; z-index:1; }
+.cardPlaceDock > [data-bar-google-search] { margin-right:30px; }
+.cardPlaceDock [data-bar-place-detail] small { overflow-wrap:anywhere; }
+.cardPlaceDock [data-bar-place-detail] { flex-wrap:wrap; }
 .contextMeta { display:flex; flex-wrap:wrap; align-items:center; gap:2px 7px; margin-top:3px; font-size:10px; color:#58627f; }
 .contextMeta:empty { display:none; }
 .contextMeta .intentionProgress { margin:0; font-size:inherit; }

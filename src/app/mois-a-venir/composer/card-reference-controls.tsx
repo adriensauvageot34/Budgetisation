@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { MapPin, Plus, Users } from "lucide-react";
+import { MapPin, Plus, Users, X } from "lucide-react";
 import type { ProspectivePersonRef, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { prospectivePersonIdentity } from "@/domain/phase2/planned-product";
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import type { ComposerContextCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { PlannerJson } from "@/domain/phase2/planner/json";
+import { isGoogleCardPlace, savedCardGooglePlaces } from "@/domain/phase2/planner/card-google-places";
 import { barPersonLabel, barPlaceLabel } from "./bar-living-details";
 import { barEndpointLabel } from "./bar-place-knowledge";
 import { barSearchText } from "./bar-search";
 import { ContextPalette, type PaletteQuestion } from "./context-palette";
+import { BarPlaceSearch } from "./bar-place-search";
 import styles from "./composer.module.css";
 
 export type CardReferenceKind = "place" | "people";
@@ -71,20 +73,34 @@ export function CardReferenceDock({ card, model, kind, busy, close, request }: {
   if (kind === "place") {
     const current = card.fields[key] as ProspectivePlaceRef | undefined;
     const places = model.mobilityOptions?.places ?? [];
-    const sorted = [...places].filter(place => matches(`${place.name} ${place.commune ?? ""} ${barEndpointLabel(place)}`))
+    const sorted = [...places]
       .sort((a, b) => Number(b.placeId === (current?.kind === "KNOWN" ? current.placeId : null))
         - Number(a.placeId === (current?.kind === "KNOWN" ? current.placeId : null))
         || (b.visits12Months ?? 0) - (a.visits12Months ?? 0) || a.name.localeCompare(b.name, "fr"));
-    if (typed && !sorted.some(place => barSearchText(place.name) === needle || barSearchText(barEndpointLabel(place)) === needle)) {
-      choices.push({ key: "new-place", label: `Utiliser « ${typed} »`, iconKey: "place",
-        choose: () => save({ kind: "TEXT", label: typed, provenance: "USER_DECLARED_PROSPECTIVE" }) });
-    }
+    choices.push(...savedCardGooglePlaces(model.semanticState.contexts).map(place => ({
+      key: `google:${place.googlePlaceId}`, label: place.label, hint: "Google Maps", showHint: true, iconKey: "place",
+      selected: isGoogleCardPlace(current) && place.googlePlaceId === current.googlePlaceId,
+      choose: () => save(place),
+    })));
     choices.push(...sorted.map(place => ({
       key: place.placeId, label: barEndpointLabel(place), iconKey: "place",
+      hint: place.address ?? place.commune ?? undefined, showHint: true,
       selected: current?.kind === "KNOWN" && current.placeId === place.placeId,
       choose: () => save({ kind: "KNOWN", placeId: place.placeId }),
     })));
     if (current) choices.unshift({ key: "clear-place", label: "Retirer le lieu", iconKey: "place", choose: () => save(null) });
+    return <div data-card-reference-dock className={styles.cardPlaceDock}
+      onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); close(); } }}>
+      <button type="button" className={styles.iconButton} aria-label="Fermer le choix" onClick={close}><X size={16} /></button>
+      <BarPlaceSearch places={places} rawTargetRef={card.contextOccurrenceId} disabled={busy}
+        selectedGooglePlaceId={isGoogleCardPlace(current) ? current.googlePlaceId : undefined}
+        onKnown={placeId => { if (!busy) save({ kind: "KNOWN", placeId }); }}
+        onText={label => { if (!busy) save({ kind: "TEXT", label, provenance: "USER_DECLARED_PROSPECTIVE" }); }}
+        onAddress={place => { if (!busy) save({ kind: "TEXT", label: place.displayName.trim().slice(0, 120),
+          provenance: "USER_DECLARED_PROSPECTIVE", googlePlaceId: place.placeId }); }} />
+      <ContextPalette card={card} model={model} busy={busy} choose={() => {}} close={close} appearance="bar"
+        question={{ title: `Lieux enregistrés · ${card.label}`, choices, hideCatalog: true }} />
+    </div>;
   } else {
     const participants = peopleOnCard(card, key), multiple = key === "participantRefs";
     const active = new Set(participants.map(prospectivePersonIdentity));
@@ -110,11 +126,11 @@ export function CardReferenceDock({ card, model, kind, busy, close, request }: {
     }
     if (!multiple && participants.length) choices.unshift({ key: "clear-person", label: "Retirer le destinataire", iconKey: "people", choose: () => save(null) });
   }
-  const title = kind === "place" ? "Lieu" : key === "recipientRef" ? "Destinataire" : "Personnes";
+  const title = key === "recipientRef" ? "Destinataire" : "Personnes";
   return <div data-card-reference-dock onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); close(); } }}>
     <ContextPalette card={card} model={model} busy={busy} choose={() => {}} close={close} appearance="bar"
-      question={{ title: `${title} · ${card.label}`, nature: kind === "people" ? "PEOPLE" : "PLACE_FAVORITES", choices,
-        search: { value: query, change: setQuery, label: kind === "place" ? "Rechercher ou saisir un lieu" : "Rechercher ou saisir un nom" },
+      question={{ title: `${title} · ${card.label}`, nature: "PEOPLE", choices,
+        search: { value: query, change: setQuery, label: "Rechercher ou saisir un nom" },
         filterChoices: false, hideCatalog: true, dismissible: true }} />
   </div>;
 }

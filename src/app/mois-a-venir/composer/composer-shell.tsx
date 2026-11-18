@@ -9,6 +9,8 @@ import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, L
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerCardView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
+import { savedCardGooglePlaces } from "@/domain/phase2/planner/card-google-places";
+import { SavedRoutePlaceSelect } from "./mobility-fields";
 import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import { canonicalPlannerJson, plannerDigest } from "@/domain/phase2/planner/json";
 import type { SemanticMutation, PlanBalanceSuggestions } from "@/domain/phase2/planner/adjustment-contract";
@@ -866,6 +868,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         : selection.fundingAllocations?.length ? "BANK" : "", fundingAmount: selection.fundingAllocations?.[0]?.amount ?? "",
       binding: selection.binding?.mode ?? "AUTO", needOccurrenceId: selection.needOccurrenceId ?? "" });
     if (selection?.kind === "MOBILITY_INTENT") Object.assign(values, { origin: selection.origin?.kind === "TEXT" ? selection.origin.label : "", destination: selection.destination?.kind === "TEXT" ? selection.destination.label : "",
+      ...(selection.origin?.kind === "TEXT" && selection.origin.googlePlaceId ? { originGooglePlaceId: selection.origin.googlePlaceId } : {}),
+      ...(selection.destination?.kind === "TEXT" && selection.destination.googlePlaceId ? { destinationGooglePlaceId: selection.destination.googlePlaceId } : {}),
       amount: selection.optionKey === asset.optionKey && selection.pricing?.fare?.kind === "MANUAL" ? selection.pricing.fare.unitAmount : "",
       funding: selection.optionKey === asset.optionKey && selection.pricing?.fundingAllocations?.some(part => part.source !== "BANK") ? "EXISTING"
         : selection.optionKey === asset.optionKey && selection.pricing?.fundingAllocations?.length ? "BANK" : "",
@@ -1433,11 +1437,19 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           Réservation {model.board.savings.find(card => `control:${card.targetRef}` === editor.cardKey)?.value.reservationSource === "ANNUAL_PLAN" ? "issue d’un objectif annuel" : "déclarée pour le mois"}.
           Le montant choisi modifie seulement ce scénario ; aucun mouvement bancaire n’est créé. La projection sera recalculée par Finance V2.
         </p> : <p className={styles.helper}>Une valeur vide reste inconnue. Une date absente reste à préciser.</p>}
-        <div className={styles.formFields}>{(editor.equipment ? editor.fields.slice((editor.page ?? 0) * 3, (editor.page ?? 0) * 3 + 3) : editor.fields).map(f => <label key={f.key}>{f.label}{f.kind === "CHOICE" ? <select name={f.key}
+        <div className={styles.formFields}>{(editor.equipment ? editor.fields.slice((editor.page ?? 0) * 3, (editor.page ?? 0) * 3 + 3) : editor.fields).map(f => {
+          const endpoint = editor.equipment?.asset.optionKind === "MOBILITY_INTENT" && (f.key === "origin" || f.key === "destination");
+          const googleKey = `${f.key}GooglePlaceId`;
+          return <div key={f.key}><label>{f.label}{f.kind === "CHOICE" ? <select name={f.key}
           {...(editor.equipment ? { value: editor.values[f.key] ?? "", onChange: (event: React.ChangeEvent<HTMLSelectElement>) => { const value = event.target.value; setEditor(current => current ? { ...current, values: { ...current.values, [f.key]: value }, raw: true } : current); } } : { defaultValue: editor.values[f.key] ?? f.choices?.[0]?.value ?? "" })} required={f.required}>
           {[...(f.choices ?? []), ...(f.key === "funding" && editor.values.funding === "EXISTING" ? [{ value: "EXISTING", label: "Conserver le financement antérieur (lecture seule)" }] : [])].map(c => <option value={c.value} key={c.value}>{c.label}</option>)}</select>
-          : <input name={f.key} {...(editor.equipment ? { value: editor.values[f.key] ?? "", onChange: (event: React.ChangeEvent<HTMLInputElement>) => { const value = event.target.value; setEditor(current => current ? { ...current, values: { ...current.values, [f.key]: value }, raw: true } : current); } } : { defaultValue: editor.values[f.key] ?? f.initial ?? "" })}
-            type={f.kind === "DATE" ? "date" : "text"} inputMode={f.kind === "AMOUNT" ? "decimal" : undefined} required={f.required} autoComplete="off" />}</label>)}</div>
+          : <input name={f.key} {...(editor.equipment ? { value: editor.values[f.key] ?? "", onChange: (event: React.ChangeEvent<HTMLInputElement>) => { const value = event.target.value; setEditor(current => current ? { ...current, values: { ...current.values, [f.key]: value, ...(endpoint ? { [googleKey]: "" } : {}) }, raw: true } : current); } } : { defaultValue: editor.values[f.key] ?? f.initial ?? "" })}
+            type={f.kind === "DATE" ? "date" : "text"} inputMode={f.kind === "AMOUNT" ? "decimal" : undefined} required={f.required} autoComplete="off" />}</label>
+          {endpoint && <SavedRoutePlaceSelect places={savedCardGooglePlaces(draftState.contexts)} selected={editor.values[googleKey]}
+            label={f.key === "origin" ? "Lieu de départ enregistré" : "Lieu d’arrivée enregistré"}
+            choose={place => setEditor(current => current ? { ...current, values: { ...current.values, [f.key]: place.label, [googleKey]: place.googlePlaceId }, raw: true } : current)} />}
+          </div>;
+        })}</div>
         {editor.equipment && editor.fields.length > 3 && <nav className={styles.nightPage} aria-label="Précisions du poste"><button type="button" disabled={!editor.page} onClick={() => setEditor(current => current ? { ...current, page: (current.page ?? 0) - 1 } : current)}>Précédent</button>
           <span>{(editor.page ?? 0) + 1} / {Math.ceil(editor.fields.length / 3)}</span><button type="button" disabled={((editor.page ?? 0) + 1) * 3 >= editor.fields.length} onClick={() => setEditor(current => current ? { ...current, page: (current.page ?? 0) + 1 } : current)}>Suivant</button></nav>}
         <footer><button type="button" className={styles.secondary} disabled={busy} onClick={closeDialog}>Retour au mois</button><button data-submit className={styles.primary} disabled={busy}>Conserver et prévisualiser</button></footer>

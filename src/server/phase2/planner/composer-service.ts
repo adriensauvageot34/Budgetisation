@@ -36,6 +36,7 @@ import { acceptPlanBalanceSuggestion, balanceSuggestionsFromDraftRead } from "./
 import { readPlannerDraft } from "./draft-reader";
 import { parseMobilityPricing } from "./mobility-selections";
 import { patchContextEditorFields, setContextSlotSelections } from "./context-state";
+import { routePlaceFromInput } from "@/domain/phase2/planner/card-google-places";
 import { composerAssetIcon, composerPresentation } from "./composer-presentation";
 import {plannedAsset,PLANNED_ASSET_CATALOG_VERSION} from '@/domain/phase2/planned-assets';
 
@@ -222,12 +223,8 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
     : declareComponentQuantity(unitBasis === "PERSON" ? "PER_PERSON" : "TOTAL_UNITS", perPersonInput,
       unitBasis === "PERSON" ? Number(values.personCount ?? priorComponent?.pricedParticipantCount) : undefined);
   const priorMobility = previous?.kind === "MOBILITY_INTENT" ? previous : undefined;
-  const origin = values.origin === undefined ? priorMobility?.origin ?? null
-    : values.origin.trim() ? { kind: "TEXT" as const, label: values.origin.trim() }
-      : priorMobility?.origin?.kind === "KNOWN" ? priorMobility.origin : null;
-  const destination = values.destination === undefined ? priorMobility?.destination ?? null
-    : values.destination.trim() ? { kind: "TEXT" as const, label: values.destination.trim() }
-      : priorMobility?.destination?.kind === "KNOWN" ? priorMobility.destination : null;
+  const origin = routePlaceFromInput(model.semanticState.contexts, values.origin, values.originGooglePlaceId, priorMobility?.origin);
+  const destination = routePlaceFromInput(model.semanticState.contexts, values.destination, values.destinationGooglePlaceId, priorMobility?.destination);
   const returnRequired = values.returnRequired === undefined ? priorMobility?.returnRequired === true : values.returnRequired === "true";
   const plannedTime = values.plannedTime === undefined ? priorMobility?.plannedTime ?? null : values.plannedTime || null;
   const returnTime = values.returnTime === undefined ? priorMobility?.returnTime ?? null : values.returnTime || null;

@@ -17,6 +17,8 @@ import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { prospectivePersonLabel } from "@/domain/phase2/planned-product";
 import { PlannedContactField } from "../planned-people-fields";
 import { PlannedPlaceField } from "../planned-place-field";
+import { isGoogleCardPlace, savedCardGooglePlaces } from "@/domain/phase2/planner/card-google-places";
+import { SavedRoutePlaceSelect } from "./mobility-fields";
 import { ContactPlaceReference } from "./workshop-place-reference";
 import { PlannedRouteCoordinatesField } from "../planned-route-coordinates-field";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
@@ -79,6 +81,7 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
   const [query,setQuery]=useState("");
   const [peoplePage, setPeoplePage] = useState(-1);
   const [routePage, setRoutePage] = useState<"journey" | "origin" | "stops" | "cost">("journey");
+  const savedRoutePlaces = section === "route" ? savedCardGooglePlaces(model.semanticState.contexts) : [];
   const [timingPage, setTimingPage] = useState<"out" | "back" | "note">("out");
   const [costPage, setCostPage] = useState("estimate");
   const [stopTab, setStopTab] = useState<"vehicle" | "out" | "back">("vehicle"), [stopPage, setStopPage] = useState(0);
@@ -247,11 +250,17 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
         <p>Mode : {modeLabels[mode] ?? "à préciser"}. Choisis dans le dock.</p>
         {!!mode && ownJourney && <>
           <PlannedPlaceField label="Origine du déplacement" places={places} value={origin} onChange={setOrigin} exact />
+          <SavedRoutePlaceSelect places={savedRoutePlaces} selected={isGoogleCardPlace(origin) ? origin.googlePlaceId : undefined}
+            label="Lieu de départ enregistré" choose={setOrigin} />
+          <SavedRoutePlaceSelect places={savedRoutePlaces} selected={isGoogleCardPlace(destination) ? destination.googlePlaceId : undefined}
+            label="Lieu d’arrivée enregistré" choose={setDestination} />
           {!origin && home && <button type="button" onClick={() => setOrigin({ kind: "KNOWN", placeId: home.placeId })}>Utiliser comme départ {home.name} · domicile connu</button>}
           <label><input type="checkbox" checked={returnRequired} onChange={event => setReturnRequired(event.target.checked)} />Prévoir l’aller et le retour</label>
         </>}
         <button type="button" onClick={() => setRoutePage("origin")}>Préciser le départ</button></>}
         {routePage === "origin" && <><PlannedPlaceField label="Origine du déplacement" places={places} value={origin} onChange={setOrigin} exact />
+          <SavedRoutePlaceSelect places={savedRoutePlaces} selected={isGoogleCardPlace(origin) ? origin.googlePlaceId : undefined}
+            label="Lieu de départ enregistré" choose={setOrigin} />
           {!origin && home && <button type="button" onClick={() => setOrigin({ kind: "KNOWN", placeId: home.placeId })}>Utiliser comme départ {home.name} · domicile connu</button>}
           <button type="button" onClick={() => setRoutePage(mode === "car" ? "stops" : "cost")}>Continuer</button></>}
         {routePage === "stops" && (mode === "car" && ownJourney ? <>

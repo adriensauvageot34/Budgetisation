@@ -20,16 +20,22 @@ export function resolveJourneyRequirements(intents: readonly MobilityIntent[], w
     const id = prospectiveJourneyId(world.baseline.householdId, world.baseline.targetMonth, intent.mobilityIntentId);
     let stops = intent.origin && intent.destination ? [intent.origin, intent.destination, ...(intent.returnRequired ? [intent.origin] : [])] : [];
     if (intent.route?.stops.length) {
-      const selected = intent.route.stops.map(stop => stop.placeId ? { kind: "KNOWN" as const, placeId: stop.placeId }
+      const selected: typeof stops = intent.route.stops.map(stop => stop.placeId ? { kind: "KNOWN" as const, placeId: stop.placeId }
         : { kind: "TEXT" as const, label: stop.label, provenance: "USER_DECLARED_PROSPECTIVE" as const });
       const anchor = intent.route.stops.findIndex(stop => stop.endpointSource === "ROOT_PLACE");
       const equivalent = (a: unknown, b: unknown) => plannerDigest(a) === plannerDigest(b);
-      const plain = (ref: typeof intent.origin) => ref?.kind === "TEXT" ? { ...ref, provenance: "USER_DECLARED_PROSPECTIVE" } : ref;
+      const plain = (ref: typeof intent.origin) => ref?.kind === "TEXT"
+        ? { kind: "TEXT", label: ref.label, provenance: "USER_DECLARED_PROSPECTIVE" } : ref;
       if (!intent.origin || !intent.destination || anchor < 1 || !equivalent(selected[0], plain(intent.origin))
         || !equivalent(selected[anchor], plain(intent.destination))
         || intent.route.stops.filter(stop => stop.endpointSource === "ROOT_PLACE").length !== 1
         || intent.returnRequired && (anchor >= selected.length - 1 || !equivalent(selected.at(-1), plain(intent.origin)))
         || !intent.returnRequired && anchor !== selected.length - 1) throw new TypeError("COMPOSER_ROUTE_TOPOLOGY_INVALID");
+      if (intent.origin.kind === "TEXT" && intent.origin.googlePlaceId) {
+        selected[0] = intent.origin;
+        if (intent.returnRequired) selected[selected.length - 1] = intent.origin;
+      }
+      if (intent.destination.kind === "TEXT" && intent.destination.googlePlaceId) selected[anchor] = intent.destination;
       stops = selected;
     }
     const journey: Journey = { physicalJourneyRequirementId: id, ownerContextOccurrenceId: intent.contextOccurrenceId, ownerIntentId: intent.mobilityIntentId,

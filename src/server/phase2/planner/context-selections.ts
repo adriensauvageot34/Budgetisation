@@ -5,6 +5,7 @@ import { SERVICE_FIELDS } from "@/domain/phase2/planner/guided-context-edit";
 import { HOME_EQUIPMENT_FIELD, parseHomeEquipment } from "@/domain/phase2/planner/home-equipment";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import {parseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
+import { validGooglePlaceId } from "@/domain/phase2/restaurant-places";
 import { plannerDigest, plannerInteger, plannerKeys, plannerRecord, plannerString, plannerUuid } from "@/domain/phase2/planner/json";
 import { parseRestaurantIncludedDetails, restaurantIncludedDetails } from "@/domain/phase2/planner/restaurant-included-details";
 import type { ComponentSelectionV1, ComponentSlotDefinition } from "@/domain/phase2/planner/component-contract";
@@ -36,9 +37,12 @@ function place(raw: unknown): ProspectivePlaceRef | null {
   if (raw == null) return null;
   const value = plannerRecord(raw);
   if (value.kind === "KNOWN") { plannerKeys(value, ["kind", "placeId"]); return { kind: "KNOWN", placeId: plannerUuid(value.placeId) }; }
-  plannerKeys(value, ["kind", "label", "provenance"], ["kind", "label"]);
+  plannerKeys(value, ["kind", "label", "provenance", "googlePlaceId"], ["kind", "label"]);
   if (value.kind !== "TEXT" || value.provenance !== undefined && value.provenance !== "USER_DECLARED_PROSPECTIVE") throw new TypeError("CONTEXT_MOBILITY_PLACE_INVALID");
-  return { kind: "TEXT", label: plannerString(value.label), provenance: "USER_DECLARED_PROSPECTIVE" };
+  const label = plannerString(value.label), googlePlaceId = value.googlePlaceId;
+  if (googlePlaceId !== undefined && (!validGooglePlaceId(googlePlaceId) || label.length > 120))
+    throw new TypeError("CONTEXT_GOOGLE_PLACE_INVALID");
+  return { kind: "TEXT", label, provenance: "USER_DECLARED_PROSPECTIVE", ...(googlePlaceId !== undefined ? { googlePlaceId } : {}) };
 }
 function person(raw: unknown): ProspectivePersonRef | null {
   if (raw == null) return null;
