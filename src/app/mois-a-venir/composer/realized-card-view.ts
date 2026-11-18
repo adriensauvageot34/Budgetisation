@@ -59,8 +59,9 @@ export function detailedRealizedCards(source: RealizedCard): RealizedCardView[] 
 }
 
 export type PackedCardPosition = Readonly<{ column: number; top: number; height: number }>;
+type MeasuredCard = Readonly<{ id: string; height: number }>;
 
-export function packRealizedCards(cards: readonly { id: string; height: number }[], heightLimit: number, gap: number, fill: boolean) {
+export function packRealizedCards(cards: readonly MeasuredCard[], heightLimit: number, gap: number, fill: boolean) {
   const best = [{ start: 0, columns: 0, unused: 0, height: 0 }];
   for (let end = 1; end <= cards.length; end++) {
     let used = 0;
@@ -100,4 +101,40 @@ export function packRealizedCards(cards: readonly { id: string; height: number }
     end = start;
   }
   return { columns: totalColumns, height, positions };
+}
+
+/** Keep reading down within a category, then right. A later category can
+ * start in available space below a previous one without moving either group. */
+export function packRealizedCategories(
+  groups: readonly { id: string; cards: readonly MeasuredCard[] }[],
+  heightLimit: number, gap: number, inset: number, heading: number,
+) {
+  const bottoms: number[] = [];
+  const positions: Record<string, PackedCardPosition> = {};
+  const frames: Record<string, { column: number; top: number; height: number }[]> = {};
+  const header = inset + heading;
+  for (const group of groups) {
+    const groupFrames: typeof frames[string] = [];
+    let column = 0;
+    let frame: typeof groupFrames[number] | undefined;
+    for (const card of group.cards) {
+      let bottom = bottoms[column] ?? 0;
+      let top = frame ? bottom - inset + gap : bottom + (bottom ? gap : 0) + header;
+      while (bottom > 0 && top + card.height + inset > heightLimit) {
+        column += 1;
+        frame = undefined;
+        bottom = bottoms[column] ?? 0;
+        top = bottom + (bottom ? gap : 0) + header;
+      }
+      if (!frame) {
+        frame = { column, top: top - header, height: 0 };
+        groupFrames.push(frame);
+      }
+      positions[card.id] = { column, top, height: card.height };
+      bottoms[column] = top + card.height + inset;
+      frame.height = bottoms[column]! - frame.top;
+    }
+    frames[group.id] = groupFrames;
+  }
+  return { columns: bottoms.length, height: Math.max(0, ...bottoms), positions, frames };
 }

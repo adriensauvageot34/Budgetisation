@@ -71,6 +71,8 @@
 .railArrows { display: flex; gap: 4px; }
 .railArrows button { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: #624681; }
 .rail {
+  --card-width: min(236px, calc(100vw - 55px));
+  --card-gap: 8px;
   display: flex;
   align-items: flex-start;
   flex: 1;
@@ -82,28 +84,64 @@
   scrollbar-color: #c8b1da #f9f3fc;
 }
 .empty { margin: 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
-.category {
+.groupedBoard {
+  --frame-inset: 9px;
+  --frame-heading: 24px;
+  --frame-width: calc(var(--card-width) + 2 * var(--frame-inset));
+  --frame-step: calc(var(--frame-width) + var(--card-gap));
+  display: flex;
   flex: none;
-  padding: 8px;
+  align-items: flex-start;
+  gap: var(--card-gap);
+  position: relative;
+}
+.category, .groupFrame {
+  padding: calc(var(--frame-inset) - 1px);
   border: 1px dashed var(--category-accent);
   border-radius: 16px;
   background: color-mix(in srgb, var(--category-pale) 36%, transparent);
 }
-.category h2 {
-  margin: 0 2px 6px;
+.category { flex: none; }
+.category h2, .groupFrameTitle {
+  display: block;
+  margin: 0;
+  padding-inline: 2px;
+  block-size: var(--frame-heading);
   color: var(--category-ink);
   font-size: .85rem;
   font-weight: 750;
   line-height: 1.3;
 }
+.groupedBoard[data-packed="true"] {
+  inline-size: calc(var(--packed-columns) * var(--frame-step) - var(--card-gap));
+}
+.groupedBoard[data-packed="true"] .category { padding: 0; border: 0; background: transparent; }
+.groupedBoard[data-packed="true"] .category > h2 {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.groupFrame {
+  box-sizing: border-box;
+  position: absolute;
+  inline-size: var(--frame-width);
+  inset-inline-start: calc(var(--card-column) * var(--frame-step));
+  pointer-events: none;
+}
 .grid {
-  --card-width: min(236px, calc(100vw - 55px));
-  --card-gap: 8px;
   position: relative;
   display: flex;
   flex: none;
   align-items: flex-start;
   gap: var(--card-gap);
+}
+.groupedBoard[data-packed="true"] .grid { position: static; }
+.groupedBoard[data-packed="true"] .card {
+  position: absolute;
+  inset-inline-start: calc(var(--card-column) * var(--frame-step) + var(--frame-inset));
 }
 .grid[data-packed="true"] {
   inline-size: calc(var(--packed-columns) * (var(--card-width) + var(--card-gap)) - var(--card-gap));
