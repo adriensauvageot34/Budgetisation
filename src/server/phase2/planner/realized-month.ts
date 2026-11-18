@@ -54,6 +54,7 @@ type CardGroup = {
   date?: string;
   endDate?: string;
   eventStatus?: string;
+  eventPlace?: string;
   payments: RealizedPayment[];
   occurrences?: Occurrence[];
   relatedPayments?: RelatedPayment[];
@@ -64,8 +65,9 @@ export type RealizedCard = Readonly<CardGroup & {
   transferAmounts?: { incoming: string; outgoing: string };
 }>;
 export type RealizedCardGroup = Readonly<{
-  id: string;
+  id: RealizedGroupId;
   label: string;
+  shortLabel: string;
   art: Art;
   amount: string | null;
   cardIds: readonly string[];
@@ -95,14 +97,14 @@ const home = { iconKey: "home" };
 
 const groceriesCardId = "daily-alimentation__courses_alimentaires";
 const groupDefinitions = {
-  fixed: { label: "Charges fixes", art: home },
-  groceries: { label: "Courses alimentaires", art: groceries },
-  restaurants: { label: "Restaurants et cafés", art: restaurant },
-  activities: { label: "Activités et sorties", art: activity },
-  transport: { label: "Mobilité", art: transport },
-  daily: { label: "Vie courante", art: purchase },
-  flows: { label: "Revenus et mouvements", art: bank },
-} satisfies Record<string, { label: string; art: Art }>;
+  fixed: { label: "Charges fixes", shortLabel: "Charges fixes", art: home },
+  groceries: { label: "Courses alimentaires", shortLabel: "Courses", art: groceries },
+  restaurants: { label: "Restaurants et cafés", shortLabel: "Restauration", art: restaurant },
+  activities: { label: "Activités et sorties", shortLabel: "Activités", art: activity },
+  transport: { label: "Mobilité", shortLabel: "Mobilité", art: transport },
+  daily: { label: "Vie courante", shortLabel: "Vie courante", art: purchase },
+  flows: { label: "Revenus et mouvements", shortLabel: "Mouvements", art: bank },
+} satisfies Record<string, { label: string; shortLabel: string; art: Art }>;
 type RealizedGroupId = keyof typeof groupDefinitions;
 
 function realizedGroupId(card: RealizedCard): RealizedGroupId {
@@ -220,8 +222,7 @@ function realizedBankSum(payments: readonly RealizedPayment[]) {
   return payments.reduce((sum, payment) => sum.plus(payment.amount), new Big(0)).toFixed(2);
 }
 
-async function realizedCarTrips(repository: CanonicalRepository, trips: ReturnType<typeof matchJulyCarTrips>) {
-  const places = await repository.loadEntityRows("places", "place_id", trips.flatMap(trip => trip.placeIds));
+function realizedCarTrips(trips: ReturnType<typeof matchJulyCarTrips>, places: Awaited<ReturnType<CanonicalRepository["loadEntityRows"]>>) {
   const names = new Map(places.flatMap(place => {
     const name = optionalCanonicalString(place, ["nom_canonique"]);
     if (!name) return [];
@@ -267,8 +268,22 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     month === JULY_COMPOSER_MONTH ? readJulyCarLegs(repository) : [],
   ]);
 
-  const trips = carLegs.length ? await realizedCarTrips(repository, matchJulyCarTrips(occurrences, eventDetails, carLegs)) : new Map<string, RealizedCarTrip>();
   const eventById = new Map(eventDetails.map(row => [String(row.life_event_id), row]));
+  const confirmedPlaceByEvent = new Map<string, string>();
+  for (const event of occurrences) {
+    if (event.validationStatus !== "Confirmé" || eventVisuals[event.activityId]?.recurring) continue;
+    const detail = eventById.get(event.lifeEventId);
+    const placeId = detail && optionalCanonicalString(detail, ["primary_place_id"]);
+    if (placeId) confirmedPlaceByEvent.set(event.lifeEventId, placeId);
+  }
+  const matchedTrips = carLegs.length ? matchJulyCarTrips(occurrences, eventDetails, carLegs) : [];
+  const placeIds = new Set([...confirmedPlaceByEvent.values(), ...matchedTrips.flatMap(trip => trip.placeIds)]);
+  const places = placeIds.size ? await repository.loadEntityRows("places", "place_id", [...placeIds]) : [];
+  const placeNames = new Map(places.flatMap(place => {
+    const name = place.private_place === false && optionalCanonicalString(place, ["nom_canonique"])?.trim();
+    return name ? [[String(place.place_id), name] as const] : [];
+  }));
+  const trips = realizedCarTrips(matchedTrips, places);
   const cards = new Map<string, CardGroup>();
   const eventCards = new Map<string, CardGroup>();
   for (const event of occurrences) {
@@ -279,9 +294,12 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       ? paymentCard("expense", false, visual.label, "alimentation", "alimentation__courses_alimentaires") : null;
     const id = groceryEvent?.id ?? (visual.recurring ? `events-${event.activityId}` : `event-${event.lifeEventId}`);
     const carTrip = !visual.recurring ? trips.get(event.lifeEventId) : undefined;
+    const placeId = confirmedPlaceByEvent.get(event.lifeEventId);
+    const eventPlace = placeId && placeNames.get(placeId);
     const card: CardGroup = cards.get(id) ?? {
       ...(groceryEvent ?? { id, section: "events", label: visual.recurring ? visual.label : title, art: visual.art, payments: [] }),
       ...(visual.recurring ? { occurrences: [] } : { date: event.startDate, endDate: event.endDate, eventStatus: event.validationStatus }),
+      ...(eventPlace ? { eventPlace } : {}),
       ...(carTrip ? { carTrip } : {}),
     };
     card.occurrences?.push({ id: event.lifeEventId, label: title, date: event.startDate, endDate: event.endDate, status: event.validationStatus });
