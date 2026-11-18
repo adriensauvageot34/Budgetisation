@@ -244,6 +244,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   const [layout, setLayout] = useState<{ key: string; grids: Record<string, ReturnType<typeof packRealizedCards>> }>();
   const terms = searchText(query).split(" ").filter(Boolean);
   const byCategory = sortOrder === "category";
+  const fillColumns = !byCategory && terms.length === 0;
   const categoryByCard = useMemo(() => new Map(board.groups.flatMap(item =>
     item.cardIds.map(id => [id, item] as const))), [board.groups]);
   const views = useMemo(() => byCategory ? board.cards.map(source => ({ source, card: source } satisfies RealizedCardView))
@@ -284,7 +285,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   const selectedView = indexed.find(({ card }) => card.id === paymentCardId)?.view
     ?? indexed.find(({ card }) => card.id === selection?.cardId)?.view;
   const selected = selectedView?.card;
-  const visibleKeys = `${sortOrder}:${visible.map(({ card }) => card.id).join("|")}`;
+  const visibleKeys = `${sortOrder}:${fillColumns}:${visible.map(({ card }) => card.id).join("|")}`;
 
   useLayoutEffect(() => {
     const node = rail.current;
@@ -305,7 +306,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
           const height = (card.firstElementChild?.getBoundingClientRect().height ?? 0) + card.offsetHeight - card.clientHeight;
           return { id: card.id, height: Math.ceil(height) };
         });
-        return [grid.dataset.realizedGrid!, packRealizedCards(sizes, available - inset - 1, gap)];
+        return [grid.dataset.realizedGrid!, packRealizedCards(sizes, available - inset - 1, gap, fillColumns)];
       }));
       setLayout(previous => previous?.key === visibleKeys && JSON.stringify(previous.grids) === JSON.stringify(next)
         ? previous : { key: visibleKeys, grids: next });
@@ -316,7 +317,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
     const contents = grids.flatMap(grid => [...grid.querySelectorAll(`.${styles.cardContent}`)]);
     for (const element of [node, ...contents]) observer.observe(element, { box: "border-box" });
     return () => observer.disconnect();
-  }, [visibleKeys, byCategory]);
+  }, [visibleKeys, byCategory, fillColumns]);
 
   function scrollRail(direction: number) {
     const node = rail.current;
