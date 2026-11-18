@@ -1,5 +1,5 @@
 import { mobilitySummaries } from "@/server/phase2/planner/mobility-presentation";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { MonthForecastView } from "./month-forecast-view";
 import { appliedPlanRevisionControls } from "@/server/phase2/planner/applied-plan-read";
@@ -8,10 +8,7 @@ import { monthControlSection, monthControlDestination, type MonthControlSectionI
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { parseYearMonth } from "@/core/time";
-import { JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
-import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
-import { RealizedComposerMonth } from "./composer/realized-month";
+import { JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import { MONTH_FORECAST_RESOURCE } from "@/server/phase2/month-forecast-snapshot";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
@@ -42,7 +39,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const params = await searchParams;
   const today = planningDate(context.household.timezone);
   if (params.month === JULY_COMPOSER_MONTH && JULY_COMPOSER_MONTH < today.slice(0, 7)) {
-    return <RealizedComposerMonth board={await readRealizedMonth(context, parseYearMonth(JULY_COMPOSER_MONTH))} />;
+    redirect(JULY_COMPOSER_HREF);
   }
   const client = createCanonicalReadClient();
   const { data: latest, error } = await client.from("analytics_query_snapshots")

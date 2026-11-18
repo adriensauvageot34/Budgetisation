@@ -17,6 +17,7 @@ import {BarComponentGroup} from './bar-component-group';
 import {BarRouteLine,barPlaceLabel,barModeLabel,barPeopleLabel,barDateLabel,barPersonLabel} from "./bar-living-details";
 import { IntentionProgressLabel } from "./context-progress";
 import { CommerceBadges } from "./commerce-badges";
+import { ObservedMerchantBadges, useReconstructedCard } from "./reconstructed-cards";
 import type {ProspectivePersonRef,ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 import {nightOutDirectSelectionId,globalConsumptionCovers} from "@/domain/phase2/planner/night-out-consumption";
 export {barPlaceLabel,barModeLabel,barPeopleLabel};
@@ -43,6 +44,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
     });wasExpanded.current=expanded;return()=>cancelAnimationFrame(frame);}
   },[expanded]);
   const summary=model.nightOutSummaries?.find(s=>s.contextOccurrenceId===card.contextOccurrenceId);
+  const reconstructed = useReconstructedCard(card.contextOccurrenceId);
   const fresh=summary?.semanticStateDigest===model.board.draft.semanticStateDigest;
 
   const removing=living.removingId===card.contextOccurrenceId;
@@ -92,6 +94,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
         {expanded&&!place&&<button type="button" className={styles.barMissingPlace} disabled={locked} aria-label="Modifier le lieu" onClick={()=>open('place')}><Plus size={14}/></button>}
         {place&&<><span aria-hidden="true"> · </span><button type="button" data-bar-closed-place className={styles.barClosedPlace} disabled={locked} title={placeLabel??undefined} aria-label={`Modifier le lieu · ${placeLabel}`} onClick={()=>open('place')}><span>{placeLabel}</span></button></>}
       </h3>
+        <ObservedMerchantBadges card={reconstructed} />
         <CommerceBadges context={card} model={model} expanded={expanded} />
         <IntentionProgressLabel id={card.contextOccurrenceId} withMonth={expanded} />
         <div className={styles.barLivingAmount} data-cost-unknown={summary?.knownAmount==null}>{expanded?<div data-bar-open-amount><strong data-bar-amount-fallback aria-label={summary?.knownAmount==null?"Montant à renseigner":undefined}>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></div>:<button type="button" data-bar-amount-trigger className={styles.barAmountTrigger} disabled={locked} aria-label={summary?.knownAmount==null?"Modifier l’estimation des consommations · Montant à renseigner":"Modifier l’estimation des consommations"} title="Choisir la portée à modifier · aucun total calculé n’est écrasé" onClick={()=>open("quick")}><strong>{summary?.knownAmount!=null?money(summary.knownAmount):"… €"}</strong></button>}

@@ -15,6 +15,7 @@ import type { PlanProjectionV1 } from "./projection-contract";
 import type { NeedOccurrence } from "./renewal-contract";
 
 export type PlanningWorldFacts = Readonly<{ baseline: PlanningBaselineV1; forecast: MonthForecastSnapshot;
+  reconstruction?: true;
   monthInputs: MonthInputs; externalIntents: readonly PlannedExpense[]; asOfDate: string;
   costQuotes: Readonly<Record<string, Readonly<{ unitAmount: string; evidenceRef: string; modelVersion: string; observedAt: string }>>>;
   modelVersions: Readonly<Record<string, string>>;

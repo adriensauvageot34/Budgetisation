@@ -7,6 +7,7 @@ import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import { validateRestaurantDetailsTransition } from "@/domain/phase2/planner/restaurant-included-details";
 import { editGuidedContext } from "@/domain/phase2/planner/guided-context-edit";
 import { presetCreationFields } from "@/domain/phase2/planner/composer-presets";
+import { JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import { snapshotWork } from "./snapshot-observation";
 import { composerMutationDependencies } from "./composer-mutation-world";
 import Big from "big.js";
@@ -271,6 +272,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     const month = plannerMonth(request.targetMonth);
     if (request.draft && parsePlanSemanticState(request.draft).targetMonth !== month) throw new TypeError("PLANNER_DRAFT_MONTH_INVALID");
     if (request.kind === "APPLY" || request.kind === "CHECK_APPLY") {
+      if (request.kind === "APPLY" && month === JULY_COMPOSER_MONTH) throw new TypeError("PLANNER_PAST_MONTH_READ_ONLY");
       if (!request.draft) throw new TypeError("COMPOSER_DRAFT_REQUIRED");
       const state = parsePlanSemanticState(request.draft);
       const committed = request.kind === "APPLY"

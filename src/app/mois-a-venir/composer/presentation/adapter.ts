@@ -59,7 +59,7 @@ export function semanticRank(node: ComposerPresentationNode): number {
 }
 
 /** Reversible, deterministic projection of the existing Board. No DTO or state mutation. */
-export function composePresentationNodes(model: ComposerUiModel, showMonthCards = true): ComposerPresentationNode[] {
+export function composePresentationNodes(model: ComposerUiModel, showMonthCards = true, clusterContexts = true): ComposerPresentationNode[] {
   const available = new Set(model.presentation.availableReservationRefs ?? []);
   const roots: AtomicNode[] = [
     ...model.board.contexts.filter(context => !context.parentContextOccurrenceId).map(context => {
@@ -86,6 +86,7 @@ export function composePresentationNodes(model: ComposerUiModel, showMonthCards 
           height:control.kind === "SAVINGS" || control.capability?.fields?.count?.status === "EDITABLE" ? 146 : 128 };
       }),
   ];
+  if (!clusterContexts) return roots.sort((a, b) => semanticRank(a) - semanticRank(b) || a.id.localeCompare(b.id));
   const groups: Record<ClusterFamily, AtomicNode[]> = { BEAUTY:[], FOOD:[], ACTIVITY:[] };
   for (const node of roots) { const family = visualFamily(node, model); if (family) groups[family].push(node); }
   const clustered = new Set<string>();

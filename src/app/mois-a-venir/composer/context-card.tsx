@@ -25,6 +25,7 @@ import { purchaseLineLabel } from "./purchase-line-label";
 import { CommerceBadges } from "./commerce-badges";
 import { budgetAmountsCurrent, BudgetPreviewStatus } from "./intent-budget-impact";
 import { IntentionProgressLabel } from "./context-progress";
+import { ObservedMerchantBadges, useReconstructedCard } from "./reconstructed-cards";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
 const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
@@ -40,6 +41,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   request: (operation: ComposerOperation) => void; edit: (card: ComposerContextCardView, selectionId?: string) => void;
   openEquipment?: (contextId: string, slotKey?: string) => void; livingBar?: LivingBar }) {
   const instance = `context-occurrence:${card.contextOccurrenceId}`;
+  const reconstructed = useReconstructedCard(card.contextOccurrenceId);
   const index=composerRenderIndex(model), ownDrops=index.drops.get(instance) ?? [];
   const removable = ownDrops.some(d => d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
   const preserved = model.semanticState.preferences.flexibility[card.contextOccurrenceId] === "PRESERVE";
@@ -94,7 +96,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     {magnetic && interaction?.grabbed && <span className={styles.magneticLabel}>Rattacher à {card.label}</span>}
     <div className={styles.contextComposition}>
     <div className={styles.contextHero}>
-    {preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : card.readOnly
+    {reconstructed ? <ComposerAssetVisual assetKey={reconstructed.art.assetKey ?? ""} templateKey={reconstructed.art.templateKey} iconKey={reconstructed.art.iconKey}
+      className={styles.contextObjectIcon} size={72} scale="CARD" /> : preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : card.readOnly
       ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
     <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} disabled={busy}
@@ -152,6 +155,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
     </div>}
     <div className={styles.controlActions}>
+    <ObservedMerchantBadges card={reconstructed} />
     <CommerceBadges context={card} model={model} expanded={focused === card.contextOccurrenceId} />
     {!purchase && quickAddSlot && displayPhase !== "DRAGGING" && openEquipment && <button type="button" className={styles.socketAdd} disabled={busy}
       aria-label={`Ajouter · ${quickAddLabel}`}

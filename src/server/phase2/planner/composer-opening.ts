@@ -1,6 +1,7 @@
 import "server-only";
 import { snapshotWork } from "./snapshot-observation";
 import type { ComposerDraftSnapshot } from "@/domain/phase2/planner/composer-draft-contract";
+import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { PlannerDependencies } from "./apply";
 import { readMonthComposer } from "./read-model";
 import { composerUiModel } from "./composer-service";
@@ -11,7 +12,7 @@ import { composerUiModel } from "./composer-service";
  * request or Apply. Preserve Draft-first error precedence and observe early I/O
  * rejection without turning it into a successful or partial financial result. */
 export async function readComposerOpening(deps: PlannerDependencies, householdId: string, month: string,
-  readDrafts: () => Promise<ComposerDraftSnapshot | null>) {
+  readDrafts: () => Promise<ComposerDraftSnapshot | null>, initialDraft?: () => Promise<PlanSemanticStateV1>) {
   const world = Promise.resolve().then(() => (deps.readComposerWorld ?? deps.readWorld)(householdId, month));
   void world.catch(() => undefined);
   const drafts = await snapshotWork("Draft_Read", readDrafts);
@@ -20,5 +21,5 @@ export async function readComposerOpening(deps: PlannerDependencies, householdId
     return world;
   } };
   return { model: await composerUiModel(openingDeps, householdId,
-    await readMonthComposer(openingDeps, householdId, month, drafts?.active?.semanticState)), drafts };
+    await readMonthComposer(openingDeps, householdId, month, drafts?.active?.semanticState ?? await initialDraft?.())), drafts };
 }
