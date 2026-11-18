@@ -866,14 +866,14 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         : selection.fundingAllocations?.length ? "BANK" : "", fundingAmount: selection.fundingAllocations?.[0]?.amount ?? "",
       binding: selection.binding?.mode ?? "AUTO", needOccurrenceId: selection.needOccurrenceId ?? "" });
     if (selection?.kind === "MOBILITY_INTENT") Object.assign(values, { origin: selection.origin?.kind === "TEXT" ? selection.origin.label : "", destination: selection.destination?.kind === "TEXT" ? selection.destination.label : "",
-      amount: selection.optionKey === asset.optionKey && selection.pricing?.fare.kind === "MANUAL" ? selection.pricing.fare.unitAmount : "",
-      funding: selection.optionKey === asset.optionKey && selection.pricing?.fundingAllocations.some(part => part.source !== "BANK") ? "EXISTING"
-        : selection.optionKey === asset.optionKey && selection.pricing?.fundingAllocations.length ? "BANK" : "",
-      fundingAmount: selection.optionKey === asset.optionKey ? selection.pricing?.fundingAllocations[0]?.amount ?? "" : "",
+      amount: selection.optionKey === asset.optionKey && selection.pricing?.fare?.kind === "MANUAL" ? selection.pricing.fare.unitAmount : "",
+      funding: selection.optionKey === asset.optionKey && selection.pricing?.fundingAllocations?.some(part => part.source !== "BANK") ? "EXISTING"
+        : selection.optionKey === asset.optionKey && selection.pricing?.fundingAllocations?.length ? "BANK" : "",
+      fundingAmount: selection.optionKey === asset.optionKey ? selection.pricing?.fundingAllocations?.[0]?.amount ?? "" : "",
       returnRequired: String(selection.returnRequired === true), targetIntentId: selection.optionKey === asset.optionKey ? selection.journey?.targetIntentId ?? "" : "",
       plannedTime: selection.plannedTime ?? "", returnTime: selection.returnTime ?? "", preference: selection.optionKey === asset.optionKey ? selection.pricing?.preference ?? "FASTEST" : "FASTEST",
-      parkingMode: selection.optionKey === asset.optionKey && selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount === "0" || selection.pricing.parking.unitAmount === "0.00" ? "NO" : "YES" : "UNKNOWN",
-      parkingAmount: selection.optionKey === asset.optionKey && selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount : "" });
+      parkingMode: selection.optionKey === asset.optionKey && selection.pricing?.parking?.kind === "MANUAL" ? selection.pricing.parking.unitAmount === "0" || selection.pricing.parking.unitAmount === "0.00" ? "NO" : "YES" : "UNKNOWN",
+      parkingAmount: selection.optionKey === asset.optionKey && selection.pricing?.parking?.kind === "MANUAL" ? selection.pricing.parking.unitAmount : "" });
     const identity = stableId ?? crypto.randomUUID(), selectionId = selection?.selectionId ?? crypto.randomUUID();
     if (asset.kind === "CONTEXT_ASSET" && target.kind === "BOARD_ZONE" && !selection) {
       const admitted = stage({ kind: "DROP", assetKey: asset.assetKey, target, values: {}, identity, selectionId,
