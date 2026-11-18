@@ -23,7 +23,7 @@ export type CostItem = Readonly<{ id: string; assetKey: string | null; label: st
   fundingAllocations?: readonly FundingAllocation[]; priceSource?: PriceSource; priceSourceLabel?: string | null;
   modulePath?: ModulePath }>;
 export type ProspectivePlaceRef = Readonly<{ kind: "KNOWN"; placeId: string }
-  | { kind: "TEXT"; label: string; provenance?: "USER_DECLARED_PROSPECTIVE" }>;
+  | { kind: "TEXT"; label: string; provenance?: "USER_DECLARED_PROSPECTIVE"; googlePlaceId?: string }>;
 export type PlannedExpensePlace = ProspectivePlaceRef;
 export type RouteEvidence = Readonly<{ method: string; observationCount: number; minimumKm: string;
   maximumKm: string; firstDate: string; lastDate: string }>;

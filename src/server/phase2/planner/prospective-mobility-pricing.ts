@@ -106,7 +106,16 @@ export async function preparePlanningMobility(world: PlanningWorldFacts, state: 
           if(intent.returnRequired||!stop||!sameVenuePlace(binding.venue.place,intent[key])||!sameVenuePlace(binding.venue.place,journey.stops[key==="origin"?0:journey.stops.length-1])||stop.placeId||binding.venue.place.kind!=="TEXT"||stop.label!==binding.venue.place.label)throw new TypeError("NIGHT_OUT_ENDPOINT_BINDING_INVALID");
           return [{stopIndex,placeId:binding.venue.google.placeId,kind:"BAR_APERO" as "BAR_APERO"|"ROUTE_ENDPOINT"}];
         });
-        const directedFacts={...facts,...(googleEndpoints.length?{googleEndpoints}:{})};
+        for (const [stopIndex, ref] of journey.stops.entries()) {
+          if (ref.kind !== "TEXT" || !ref.googlePlaceId) continue;
+          if (stops[stopIndex]?.label !== ref.label || stops[stopIndex]?.placeId) throw new TypeError("ROUTE_ENDPOINT_STOP_MISMATCH");
+          if (googleEndpoints.some(binding => binding.stopIndex === stopIndex)) throw new TypeError("ROUTE_ENDPOINT_DOUBLE_BINDING");
+          googleEndpoints.push({ stopIndex, placeId: ref.googlePlaceId, kind: "ROUTE_ENDPOINT" });
+        }
+        const directionFacts = (start: number, end: number) => ({
+          ...facts, googleEndpoints: googleEndpoints.filter(ref => ref.stopIndex >= start && ref.stopIndex <= end)
+            .map(ref => ({ ...ref, stopIndex: ref.stopIndex - start })),
+        });
         const date = journey.outbound.kind === "DATED" ? journey.outbound.date : null;
         try {
           const input = { stops, plannedDate: date,
@@ -116,14 +125,14 @@ export async function preparePlanningMobility(world: PlanningWorldFacts, state: 
             return: { required: true as const, date: journey.returnLeg.kind === "DATED" ? journey.returnLeg.date : null,
               time: journey.returnLeg.kind === "DATED" ? journey.returnLeg.time : null } } : null;
           // Both directed legs use the existing owner even without fixed dates. Never double a one-way distance.
-          const result = timing && intent.route ? await (async () => {
+          const result = timing && (intent.route || googleEndpoints.length) ? await (async () => {
             const split = journey.returnAnchorIndex!;
             const [outbound, returning] = await Promise.all([
-              estimatePlannedCar({ ...input, stops: stops.slice(0, split + 1) }, facts, admittedProviders),
-              estimatePlannedCar({ ...input, stops: stops.slice(split), plannedDate: timing.return.date, plannedTime: timing.return.time }, facts, admittedProviders) ]);
+              estimatePlannedCar({ ...input, stops: stops.slice(0, split + 1) }, directionFacts(0, split), admittedProviders),
+              estimatePlannedCar({ ...input, stops: stops.slice(split), plannedDate: timing.return.date, plannedTime: timing.return.time }, directionFacts(split, stops.length - 1), admittedProviders) ]);
             return { ...outbound, status: outbound.status === "LIVE" && returning.status === "LIVE" ? "LIVE" as const : "PARTIAL" as const,
               snapshot: outbound.snapshot && returning.snapshot ? combineProspectiveCarJourney(outbound.snapshot, returning.snapshot, timing) : null };
-          })() : await estimatePlannedCar({ ...input, ...(timing ? { tripTiming: timing } : {}) }, directedFacts, admittedProviders);
+          })() : await estimatePlannedCar({ ...input, ...(timing ? { tripTiming: timing } : {}) }, directionFacts(0, stops.length - 1), admittedProviders);
           snapshot = result.snapshot ? stableMobilityEvidence(result.snapshot) : null;
           economicFuel = result.snapshot?.fuelEconomicCost ?? null;
           toll = intent.route?.toll ? declaredCost(intent.route.toll, world) : result.snapshot?.toll.amount ?? null;

@@ -41,6 +41,7 @@ import {barDockDrag} from './bar-dock-drag';
 import {nightOutConsumption,globalConsumptionCovers} from '@/domain/phase2/planner/night-out-consumption';
 import {plannerDigest} from '@/domain/phase2/planner/json';
 import {BarRouteEndpointSearch} from './bar-route-endpoint-search';
+import { savedCardGooglePlaces } from "@/domain/phase2/planner/card-google-places";
 import type {RouteEndpointBinding} from '@/domain/phase2/planner/route-endpoint';
 
 type Page=Exclude<BarTarget,`component:${string}:${string}`|`route:${string}:${string}`>|"manual-place"|"google"|"row"|"endpoint"|"endpoint-free"|"return-choice"|"route-time"|"legacy"|"fare"|"vehicle"|"quick"|"coverage"|"before"|"more"|"venue-change"|"known-routes";
@@ -437,6 +438,11 @@ export function BarLivingEditor(props:ComponentProps<typeof NightOutEditor>&{ini
     const venueCandidate=routeVenue&&((direction==='outbound'&&endpoint==='destination')||(direction==='return'&&endpoint==='origin'))&&(!query.trim()||barSearchText(barPlaceLabel(routeVenue,model)).includes(barSearchText(query)));
     question={title:direction==='outbound'?'Aller · adresse':'Retour · adresse',identity:context.contextOccurrenceId+':'+direction+':'+endpoint,search:{value:query,change:setQuery,label:'Rechercher une adresse ou un lieu'},choices:[
       ...(venueCandidate?[{...choice(venueGoogle?'google-route:'+venueGoogle:routeVenue.kind==='KNOWN'?routeVenue.placeId:'venue',barPlaceLabel(routeVenue,model),()=>chooseEndpoint(routeVenue,false,!!selectedVenue),'activity','Lieu de la sortie · identité conservée'),showHint:true}]:[]),
+      ...savedCardGooglePlaces(model.semanticState.contexts)
+        .filter(place => (!venueCandidate || place.googlePlaceId !== venueGoogle) && barSearchText(place.label).includes(barSearchText(query)))
+        .map(place => ({ ...choice(`google-route:${place.googlePlaceId}`, place.label,
+          () => chooseEndpoint({ kind:"TEXT", label:place.label, provenance:"USER_DECLARED_PROSPECTIVE" }, false, false, place.googlePlaceId),
+          "activity", "Lieu enregistré · Google Maps"), showHint:true })),
       ...barEndpointSuggestions(model.mobilityOptions?.places??[],model.householdPersons,direction,endpoint,leg?.[endpoint==='origin'?'destination':'origin'],selectedPlace,query,allEndpoints)
         .filter(({place})=>!venueCandidate||!(routeVenue?.kind==='KNOWN'&&place.placeId===routeVenue.placeId||venueGoogle&&place.googlePlaceId===venueGoogle))
         .map(({place,hint})=>({...choice(place.googlePlaceId?'google-route:'+place.googlePlaceId:place.placeId,barEndpointLabel(place),()=>chooseEndpoint({kind:'KNOWN',placeId:place.placeId}),'activity',hint),visualKey:homes.some(home=>home.placeId===place.placeId)?'home':undefined,showHint:true}))

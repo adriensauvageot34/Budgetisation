@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ComposerField } from "@/domain/phase2/planner/composer-ui-contract";
+import type { GoogleCardPlace } from "@/domain/phase2/planner/card-google-places";
 import styles from "./composer.module.css";
 
 const sections = [
@@ -21,10 +22,22 @@ export function mobilityFieldGroups(fields: readonly ComposerField[]) {
     .filter(section => section.fields.length);
 }
 
-export function MobilityFields({ fields, values, preserved, focusField, busy, change, mode }: {
+export function SavedRoutePlaceSelect({ places, label, selected, choose }: {
+  places: readonly GoogleCardPlace[]; label: string; selected?: string; choose: (place: GoogleCardPlace) => void;
+}) {
+  if (!places.length) return null;
+  return <label>{label}<select value={places.some(place => place.googlePlaceId === selected) ? selected : ""}
+    onChange={event => { const place = places.find(place => place.googlePlaceId === event.target.value); if (place) choose(place); }}>
+    <option value="" disabled>Choisir un lieu Google Maps du brouillon</option>
+    {places.map(place => <option key={place.googlePlaceId} value={place.googlePlaceId}>{place.label}</option>)}
+  </select></label>;
+}
+
+export function MobilityFields({ fields, values, preserved, focusField, busy, change, mode, savedPlaces = [] }: {
   fields: readonly ComposerField[]; values: Readonly<Record<string, string>>; preserved: Readonly<Record<string, string>>;
   focusField?: string; busy: boolean; change(key: string, value: string): void;
   mode?: string;
+  savedPlaces?: readonly GoogleCardPlace[];
 }) {
   const groups = mobilityFieldGroups(fields);
   const [selected, setSelected] = useState(() => groups.find(group => group.fields.some(field => field.key === focusField))?.key ?? groups[0]?.key);
@@ -38,14 +51,23 @@ export function MobilityFields({ fields, values, preserved, focusField, busy, ch
     {inherited && <p role="status">Les frais et le financement appartiennent au trajet propriétaire. Choisissez « Trajet propre » dans Trajet partagé pour préparer des frais distincts.</p>}
     {free && !inherited && <p role="status">Le mode À pied / gratuit a été choisi. Aucun billet payant n’est prévu pour ce trajet. Les autres dépenses restent des postes distincts du projet.</p>}
     <fieldset disabled={busy || inherited || free} className={styles.nightQuestion}><legend>{active?.label}</legend>
-      {!inherited && !free && active?.fields.map(field => <label key={field.key}>{field.key === "amount" ? "Montant déclaré pour le trajet complet (€)" : field.label}{field.kind === "CHOICE"
+      {!inherited && !free && active?.fields.map(field => {
+        const endpoint = field.key === "origin" || field.key === "destination";
+        const googleKey = `${field.key}GooglePlaceId`;
+        return <div key={field.key}><label>{field.key === "amount" ? "Montant déclaré pour le trajet complet (€)" : field.label}{field.kind === "CHOICE"
         ? <select name={field.key} value={values[field.key] ?? field.choices?.[0]?.value ?? ""} onChange={event => change(field.key, event.target.value)}>
           {field.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
           {field.key === "funding" && preserved.funding === "EXISTING" && <option value="EXISTING">Conserver le financement antérieur</option>}
           {field.key === "parkingMode" && preserved.parkingMode === "EXISTING" && <option value="EXISTING">Conserver le devis de stationnement</option>}
         </select>
         : <input name={field.key} value={values[field.key] ?? preserved[field.key] ?? field.initial ?? ""} autoComplete="off"
-          onChange={event => change(field.key, event.target.value)} inputMode={field.kind === "AMOUNT" ? "decimal" : undefined} />}</label>)}
+          onChange={event => { change(field.key, event.target.value); if (endpoint) change(googleKey, ""); }}
+          inputMode={field.kind === "AMOUNT" ? "decimal" : undefined} />}</label>
+        {endpoint && <SavedRoutePlaceSelect places={savedPlaces} selected={values[googleKey] ?? preserved[googleKey]}
+          label={field.key === "origin" ? "Lieu de départ enregistré" : "Lieu d’arrivée enregistré"}
+          choose={place => { change(field.key, place.label); change(googleKey, place.googlePlaceId); }} />}
+        </div>;
+      })}
     </fieldset>
     {active?.key === "cost" && !inherited && !free && <p>{mode === "car" ? "Le parking appartient au trajet en voiture. Les péages et le carburant restent évalués par Mobility."
       : "Un billet ou une course reste un montant déclaré pour le trajet complet."} Précisez le départ et la destination dans Trajet pour l’évaluation.</p>}

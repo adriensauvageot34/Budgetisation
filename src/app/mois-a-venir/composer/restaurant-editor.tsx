@@ -8,6 +8,7 @@ import { assertRestaurantDetailsWritable, restaurantIncludedDetails, restaurantM
 import { PresetIllustration } from "./preset-illustration";
 import { activityCostLabel } from "./guided-asset-labels";
 import { MobilityFields } from "./mobility-fields";
+import { routePlaceFromInput, savedCardGooglePlaces } from "@/domain/phase2/planner/card-google-places";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronRight, X, Users, MapPin, CalendarDays, Receipt, Plus } from "lucide-react";
@@ -358,6 +359,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
   const transportValues: Record<string, string> = currentTransport ? {
     origin: currentTransport.origin?.kind === "TEXT" ? currentTransport.origin.label : "",
     destination: currentTransport.destination?.kind === "TEXT" ? currentTransport.destination.label : "",
+    ...(currentTransport.origin?.kind === "TEXT" && currentTransport.origin.googlePlaceId ? { originGooglePlaceId: currentTransport.origin.googlePlaceId } : {}),
+    ...(currentTransport.destination?.kind === "TEXT" && currentTransport.destination.googlePlaceId ? { destinationGooglePlaceId: currentTransport.destination.googlePlaceId } : {}),
     returnRequired: String(!!currentTransport.returnRequired), plannedTime: currentTransport.plannedTime ?? "", returnTime: currentTransport.returnTime ?? "",
     ...{
       amount: currentTransport.pricing?.fare.kind === "MANUAL" ? currentTransport.pricing.fare.unitAmount : "",
@@ -788,9 +791,8 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
         }
         try {
           const sameMode = currentTransport?.optionKey === equipment.asset.optionKey;
-          const placeValue = (raw: string, old: ProspectivePlaceRef | null | undefined): ProspectivePlaceRef | null => raw.trim()
-            ? old?.kind === "TEXT" && old.label === raw.trim() ? old : { kind: "TEXT", label: raw.trim(), provenance: "USER_DECLARED_PROSPECTIVE" } : old ?? null;
-          const origin = placeValue(values.origin ?? "", currentTransport?.origin), destination = placeValue(values.destination ?? "", currentTransport?.destination);
+          const origin = routePlaceFromInput(model.semanticState.contexts, values.origin, values.originGooglePlaceId, currentTransport?.origin);
+          const destination = routePlaceFromInput(model.semanticState.contexts, values.destination, values.destinationGooglePlaceId, currentTransport?.destination);
           const returnRequired = values.returnRequired === "true";
           const sameRoute = sameMode && JSON.stringify(origin) === JSON.stringify(currentTransport?.origin ?? null)
             && JSON.stringify(destination) === JSON.stringify(currentTransport?.destination ?? null) && returnRequired === !!currentTransport?.returnRequired
@@ -818,6 +820,7 @@ function GuidedRestaurantEditor({ context, card, model, creating, busy, decide, 
       }}><h4>{equipment.asset.label}</h4><p>Un coût d’usage n’est pas un plein bancaire. Les données absentes restent inconnues.</p>
          <MobilityFields key={`${equipment.asset.assetKey}:${equipment.focusField ?? "route"}:${formKey}`}
            fields={model.editors.find(e => e.assetKey === equipment.asset.assetKey)?.fields ?? []} values={equipmentValues} preserved={transportValues}
+           savedPlaces={savedCardGooglePlaces(model.semanticState.contexts)}
            mode={equipment.asset.optionKey}
            focusField={equipment.focusField} busy={busy} change={(key, value) => { setRaw(true); setEquipmentValues(values => ({ ...values, [key]: value })); }} />
          <button type="submit" disabled={busy}>Valider ce trajet</button></form>}
