@@ -23,16 +23,27 @@ const verifiedBranches = [
 ] as const;
 
 const publicMerchantPlaces = [
+  { name: "au bon coin", cityPrefix: "pez", label: "Au Bon Coin",
+    address: "34 place du 14-Juillet, 34120 Pézenas" },
+  { name: "cercle de la vap", cityPrefix: "montpell", label: "Cercle de la Vap",
+    address: "504 avenue du Mas d’Argelliers, 34070 Montpellier" },
+  { name: "chicken place", cityPrefix: "montpell", label: "Chicken Place",
+    address: "80 place Georges-Frêche, 34000 Montpellier" },
   { name: "delacrem", cityPrefix: "montpell", label: "Delacrem", address: "16 rue Saint-Guilhem, 34000 Montpellier" },
   { name: "le petit nice", cityPrefix: "montpe", label: "Le Petit Nice", address: "1 place Jean-Jaurès, 34000 Montpellier" },
   { name: "boulangerie saint julien", cityPrefix: "ser", label: "Boulangerie Saint-Julien",
     address: "6 rue du Coussat, 34290 Servian" },
   { name: "pharmacie polygone", cityPrefix: "m", label: "Pharmacie du Polygone",
     address: "71 rue des Pertuisanes, 34000 Montpellier" },
+  { name: "tabac du mas de verchant", cityPrefix: "castel", label: "Tabac du Mas de Verchant",
+    address: "rue du Mas-de-Verchant, 34170 Castelnau-le-Lez" },
+  { name: "tabac jacques coeur", cityPrefix: "montp", label: "Tabac Jacques Cœur",
+    address: "150 rue Élie-Wiesel, 34000 Montpellier" },
 ] as const;
 
 function normalized(text: string) {
-  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/œ/gu, "oe")
+    .replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
 function coordinates(lat: unknown, lng: unknown) {
