@@ -8,7 +8,7 @@ import type { RealizedPlace } from "@/server/phase2/planner/realized-places";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { money, plannedDayLabel } from "./display";
 import { RealizedBadge } from "./realized-badge";
-import { detailedRealizedCards, packRealizedCards, realizedOperationCardId, type PackedCardPosition, type RealizedCardView } from "./realized-card-view";
+import { detailedRealizedCards, packRealizedCards, packRealizedCategories, realizedOperationCardId, type PackedCardPosition, type RealizedCardView } from "./realized-card-view";
 import styles from "./realized-month.module.css";
 
 const sortOptions = [
@@ -241,7 +241,10 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   const closeButton = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const rail = useRef<HTMLDivElement>(null);
-  const [layout, setLayout] = useState<{ key: string; grids: Record<string, ReturnType<typeof packRealizedCards>> }>();
+  const [layout, setLayout] = useState<{
+    key: string;
+    packing: ReturnType<typeof packRealizedCards> & Partial<Pick<ReturnType<typeof packRealizedCategories>, "frames">>;
+  }>();
   const terms = searchText(query).split(" ").filter(Boolean);
   const byCategory = sortOrder === "category";
   const fillColumns = !byCategory && terms.length === 0;
@@ -286,30 +289,37 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
     ?? indexed.find(({ card }) => card.id === selection?.cardId)?.view;
   const selected = selectedView?.card;
   const visibleKeys = `${sortOrder}:${fillColumns}:${visible.map(({ card }) => card.id).join("|")}`;
+  const packing = layout?.key === visibleKeys ? layout.packing : undefined;
+  const groupedPacking = byCategory ? packing : undefined;
 
   useLayoutEffect(() => {
     const node = rail.current;
     if (!node) return;
     const grids = [...node.querySelectorAll<HTMLElement>("[data-realized-grid]")];
     if (!grids.length) return;
+    const groupedBoard = node.querySelector<HTMLElement>("[data-realized-grouped-grid]");
 
     function measure() {
       if (!node || !node.clientHeight) return;
       const railStyle = getComputedStyle(node);
-      const available = node.clientHeight - parseFloat(railStyle.paddingTop) - parseFloat(railStyle.paddingBottom);
-      const next = Object.fromEntries(grids.map(grid => {
-        const inset = byCategory ? (grid.parentElement?.offsetHeight ?? grid.offsetHeight) - grid.offsetHeight : 0;
-        const gap = parseFloat(getComputedStyle(grid).rowGap);
-        const sizes = [...grid.children].map(element => {
+      const available = node.clientHeight - parseFloat(railStyle.paddingTop) - parseFloat(railStyle.paddingBottom) - 1;
+      const gap = parseFloat(railStyle.getPropertyValue("--card-gap"));
+      const groups = grids.map(grid => ({
+        id: grid.dataset.realizedGrid!,
+        cards: [...grid.children].map(element => {
           const card = element as HTMLElement;
           // Measure the contents so height added to align the column cannot affect the next packing pass.
           const height = (card.firstElementChild?.getBoundingClientRect().height ?? 0) + card.offsetHeight - card.clientHeight;
           return { id: card.id, height: Math.ceil(height) };
-        });
-        return [grid.dataset.realizedGrid!, packRealizedCards(sizes, available - inset - 1, gap, fillColumns)];
+        }),
       }));
-      setLayout(previous => previous?.key === visibleKeys && JSON.stringify(previous.grids) === JSON.stringify(next)
-        ? previous : { key: visibleKeys, grids: next });
+      const groupStyle = groupedBoard && getComputedStyle(groupedBoard);
+      const next = groupStyle
+        ? packRealizedCategories(groups, available, gap, parseFloat(groupStyle.getPropertyValue("--frame-inset")),
+          parseFloat(groupStyle.getPropertyValue("--frame-heading")))
+        : packRealizedCards(groups[0]!.cards, available, gap, fillColumns);
+      setLayout(previous => previous?.key === visibleKeys && JSON.stringify(previous.packing) === JSON.stringify(next)
+        ? previous : { key: visibleKeys, packing: next });
     }
 
     measure();
@@ -317,7 +327,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
     const contents = grids.flatMap(grid => [...grid.querySelectorAll(`.${styles.cardContent}`)]);
     for (const element of [node, ...contents]) observer.observe(element, { box: "border-box" });
     return () => observer.disconnect();
-  }, [visibleKeys, byCategory, fillColumns]);
+  }, [visibleKeys, fillColumns]);
 
   function scrollRail(direction: number) {
     const node = rail.current;
@@ -354,9 +364,9 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
     setSelection({ cardId, paymentId, componentId });
   }, []);
   function renderGrid(key: string, entries: typeof visible) {
-    const packing = layout?.key === visibleKeys ? layout.grids[key] : undefined;
-    return <div className={styles.grid} data-realized-grid={key} data-packed={Boolean(packing)}
-      style={packing ? { "--packed-columns": packing.columns, height: packing.height } as CSSProperties : undefined}>
+    const flatPacking = !byCategory && packing;
+    return <div className={styles.grid} data-realized-grid={key} data-packed={Boolean(flatPacking)}
+      style={flatPacking ? { "--packed-columns": flatPacking.columns, height: flatPacking.height } as CSSProperties : undefined}>
       {entries.map(({ card, view, category, date }) => {
         const position = packing?.positions[card.id];
         return <RealizedMonthCard key={card.id} view={view} category={category} position={position}
@@ -405,11 +415,19 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
       {visibleCount === 0 && <p className={styles.empty}>{board.cards.length ? "Aucune carte ne correspond à cette recherche."
         : "Aucune opération ni événement importé pour ce mois."}</p>}
       {visibleCount > 0 && !byCategory && renderGrid("all", visible)}
-      {visibleCategories.map(({ category, entries }) => <section key={category.id} className={styles.category}
-        data-realized-category={category.id} aria-labelledby={`realized-category-${category.id}`}>
-        <h2 id={`realized-category-${category.id}`}>{category.label}</h2>
-        {renderGrid(category.id, entries)}
-      </section>)}
+      {visibleCategories.length > 0 && <div className={styles.groupedBoard} data-realized-grouped-grid data-packed={Boolean(groupedPacking)}
+        style={groupedPacking ? { "--packed-columns": groupedPacking.columns, height: groupedPacking.height } as CSSProperties : undefined}>
+        {visibleCategories.map(({ category, entries }) => <section key={category.id} className={styles.category}
+          data-realized-category={category.id} aria-labelledby={`realized-category-${category.id}`}>
+          <h2 id={`realized-category-${category.id}`}>{category.label}</h2>
+          {groupedPacking?.frames?.[category.id]?.map(frame => <div key={frame.column} className={styles.groupFrame}
+            data-category-frame={category.id} aria-hidden="true"
+            style={{ "--card-column": frame.column, insetBlockStart: frame.top, height: frame.height } as CSSProperties}>
+            <span className={styles.groupFrameTitle}>{category.label}</span>
+          </div>)}
+          {renderGrid(category.id, entries)}
+        </section>)}
+      </div>}
     </div>
     <dialog ref={dialog} className={styles.dialog} aria-labelledby="realized-dialog-title"
       onClose={() => setSelection(null)} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
