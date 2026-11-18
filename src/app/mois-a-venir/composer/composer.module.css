@@ -241,7 +241,6 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .contextTools button { padding:3px; }
 .contextCard:hover .contextTools,.contextCard:focus-within .contextTools,.contextCard[data-focused=true] .contextTools { opacity:1; }
 .externalNote { margin:3px 0 0; font-size:8px; color:var(--muted); line-height:1.3; }
-.historicalTrip { display:block; margin:4px 0; color:var(--muted); font-size:12px; line-height:1.35; }
 .hairdresserReference > button { width:auto; max-width:100%; height:auto; min-height:36px; padding:7px 10px; gap:6px; border-radius:10px; font-size:10px; }
 .serviceFacts { display:grid; gap:10px; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
 .serviceFacts p,.serviceFacts dl { margin:0; }
@@ -1834,6 +1833,24 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .socketAdd { display:inline-flex; align-items:center; align-self:flex-start; gap:4px; max-width:100%; min-height:28px; padding:3px 7px; border:1px dashed #cbb8db; border-radius:8px; background:#fffafed9; color:#634f7b; font:inherit; font-size:11px; line-height:1.15; text-align:left; }
 .socketAdd svg { flex:none; }
 .satelliteTile { position:relative; flex:none; }
+.contextCard[data-compact-card] .contextEquipmentRow:has([data-car-journey-socket]) { flex-wrap:wrap; overflow:visible; }
+.contextCard[data-compact-card] .contextEquipmentRow > [data-car-journey-socket] { flex:0 0 100%; min-width:0; order:-1; }
+[data-car-journey] { width:100%; min-width:0; }
+.contextCard[data-compact-card] .contextEquipmentRow [data-car-journey] .satellite {
+  display:grid; grid-template-columns:42px minmax(0,1fr); align-items:center; gap:6px;
+  width:100%; height:auto; min-height:52px; padding:5px 26px 5px 5px;
+  color:var(--ink); text-align:left;
+}
+.contextCard[data-compact-card] .contextEquipmentRow [data-car-journey] .carJourneyArt {
+  display:grid; place-items:center; width:42px; height:42px;
+}
+.carJourneyCopy { display:grid; gap:2px; min-width:0; font-size:.72rem; line-height:1.3; overflow-wrap:anywhere; }
+.carJourneyTop { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:1px 6px; }
+.carJourneyTop strong { font-variant-numeric:tabular-nums; }
+.carJourneyPlaces { color:var(--ink); font-weight:650; }
+.carJourneyCopy small { color:var(--muted); font-size:.68rem; }
+.contextEquipmentRow [data-car-journey] .satelliteDetails { right:2px; top:2px; }
+.contextEquipmentRow [data-car-journey]:has(.satelliteDetails) .satelliteMarker { left:auto; right:5px; top:auto; bottom:5px; }
 .satelliteDetails { display:grid; place-items:center; position:absolute; top:0; right:0; width:22px; height:23px; padding:0; border:0; border-radius:7px; background:#fffafeee; color:#62477d; font-size:15px; cursor:pointer; }
 .satelliteDetails:hover,.satelliteDetails:focus-visible { background:#eadef7; }
 .satelliteTile:has(.satelliteDetails) .satelliteMarker { left:2px; right:auto; }

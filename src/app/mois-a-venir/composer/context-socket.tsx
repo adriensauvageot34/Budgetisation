@@ -6,11 +6,13 @@ import styles from "./composer.module.css";
 import { AtomicPopover } from "./atomic-popover";
 import { useComposerInteractions, sameTarget, leftSurface } from "./interactions";
 import { ContextSatellite } from "./context-satellite";
-export function ContextSocket({ socket, presentation, busy, compatible, showEmpty, assets, drop, choose, remove, accept, child, focus, moveTargets = [] }: {
+import type { CarJourneyPresentation } from "./car-journey-face";
+export function ContextSocket({ socket, presentation, busy, compatible, showEmpty, assets, drop, choose, remove, accept, child, focus, moveTargets = [], carJourney }: {
   socket: ContextSocketView; presentation: ComposerSocketPresentation; busy: boolean; compatible: boolean; showEmpty: boolean; focus: () => void;
   assets: readonly ComposerAssetView[]; drop: (target: DropTarget, key?: string) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
   remove: (selection: ComponentSelectionV1) => void; accept: (selection: ComponentSelectionV1) => void; child: (id: string) => React.ReactNode;
   moveTargets?: readonly Readonly<{ selectionId: string; target: DropTarget; label: string }>[];
+  carJourney?: CarJourneyPresentation;
 }) {
   const target: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: socket.contextOccurrenceId, slotKey: socket.slotKey };
   const interaction = useComposerInteractions();
@@ -23,6 +25,7 @@ export function ContextSocket({ socket, presentation, busy, compatible, showEmpt
     })}</select>}
   </div>;
   return <section className={styles.socket} data-socket={`${socket.contextOccurrenceId}:${socket.slotKey}`} data-compatible={compatible} data-visual-state={socket.visualState}
+    data-car-journey-socket={carJourney ? true : undefined}
     data-drag-over={sameTarget(interaction?.overTarget ?? null, target)}
     onDragOver={e => { e.stopPropagation(); if (compatible && !busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(target); } else interaction?.over(null); }}
     onDragLeave={e => { e.stopPropagation(); if (leftSurface(e)) interaction?.over(null); }}
@@ -31,6 +34,7 @@ export function ContextSocket({ socket, presentation, busy, compatible, showEmpt
       const item = socket.currentItems.find(i => i.selectionId === satellite.selectionId)!;
       const editAsset = assets.find(a => a.assetKey === satellite.editableAssetKey);
       return <ContextSatellite key={item.selectionId} satellite={satellite} item={item} target={target} editAsset={editAsset} busy={busy} focus={focus} slotLabel={socket.label}
+        carJourney={carJourney}
         choose={choose} remove={remove} accept={accept} child={child} moveTargets={moveTargets.filter(t => t.selectionId === item.selectionId)} />;
     })}
     {showEmpty && presentation.canAdd && (socket.cardinality === "REPEATING" || !socket.currentItems.length) && <AtomicPopover label={`Ajouter · ${socket.label ?? socket.slotKey}`} state="EMPTY" empty focus={focus}

@@ -4,7 +4,7 @@ import { CatalogOpenButton } from './catalog-discovery-provider';
 import { GripVertical, MoreHorizontal, Pin, Link2, LockKeyhole, Plus } from "lucide-react";
 import type { ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
-import { componentId } from "@/domain/phase2/planner/identity";
+import { componentId, mobilityIntentId } from "@/domain/phase2/planner/identity";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { ContextSocket } from "./context-socket";
 import { money, knowledgeLabel, plannedDayLabel } from "./display";
@@ -56,9 +56,6 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const basket = isPurchaseBasket(card);
   const preview = useContext(BudgetPreviewStatus);
   const amountsCurrent = budgetAmountsCurrent(model, preview);
-  const julyTrip = reconstructed && amountsCurrent && model.mobilitySummaries?.find(summary =>
-    summary.contextOccurrenceId === card.contextOccurrenceId && summary.routeSource === "HISTORICAL_ROUTE"
-    && summary.economicFuel !== null && summary.distanceKm !== null);
   const basketSummary = amountsCurrent ? card.purchaseSummary : undefined;
   const basketContext = basket ? model.semanticState.contexts.find(context => context.contextOccurrenceId === card.contextOccurrenceId) : undefined;
   const basketArticles = basketContext ? purchaseComponents(basketContext, "item") : [];
@@ -157,10 +154,6 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
         {!amountsCurrent ? "Calcul à actualiser" : mainAmount !== null ? money(mainAmount) : "À prévoir"}</button>
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
     </div>}
-    {julyTrip && <small className={styles.historicalTrip} data-july-car-trip
-      title={`${Number(julyTrip.fuelLiters).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} L · ${Number(julyTrip.fuelPricePerLiter).toLocaleString("fr-FR", { maximumFractionDigits: 3 })} €/L`}>
-      Voiture · {Number(julyTrip.distanceKm).toLocaleString("fr-FR")} km · {money(julyTrip.economicFuel)} d’essence estimée
-    </small>}
     <div className={styles.controlActions}>
     <ObservedMerchantBadges card={reconstructed} />
     <CommerceBadges context={card} model={model} expanded={focused === card.contextOccurrenceId} />
@@ -179,7 +172,13 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
         && d.target.contextOccurrenceId === card.contextOccurrenceId && d.target.slotKey === socket.slotKey && d.resolution !== "BLOCKED");
       const showEmpty = !purchase && (displayPhase === "DRAGGING" ? visibleEmpty.has(socket.slotKey) : !openEquipment && socket.slotKey === quickAddSlot);
       if (!socketPresentation.satellites.length && !showEmpty) return null;
+      const car = socket.currentItems.some(item => item.kind === "MOBILITY_INTENT" && item.optionKey === "car");
+      const carJourney = car ? { assetKey: `option:${card.templateKey}:${socket.slotKey}:car`,
+        places: model.mobilityOptions?.places ?? [],
+        summary: amountsCurrent ? model.mobilitySummaries?.find(summary =>
+          summary.ownerIntentId === mobilityIntentId(card.contextOccurrenceId, socket.slotKey)) : undefined } : undefined;
       return <ContextSocket key={socket.slotKey} socket={socket} presentation={socketPresentation} focus={() => focus(card.contextOccurrenceId)} busy={busy} compatible={compatible} showEmpty={showEmpty && !purchase} assets={assets} drop={drop} choose={choose}
+        carJourney={carJourney}
         moveTargets={socketPresentation.satellites.flatMap(item => (index.drops.get(item.editableAssetKey ?? "") ?? []).filter(d => d.target.kind === "CONTEXT_SOCKET"
           && d.resolution !== "BLOCKED" && (d.target.contextOccurrenceId !== card.contextOccurrenceId || d.target.slotKey !== socket.slotKey))
           .map(d => ({ selectionId: item.selectionId, target: d.target, label: `${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.label} · ${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.sockets.find(s => s.slotKey === d.target.slotKey)?.label}` })))}
