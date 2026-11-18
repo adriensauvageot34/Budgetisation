@@ -7,15 +7,17 @@ import { money } from "./display";
 import { useComposerInteractions } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
+import { CarJourneyFace, type CarJourneyPresentation } from "./car-journey-face";
 import styles from "./composer.module.css";
 
-export function ContextSatellite({ satellite, item, target, editAsset, busy, focus, choose, remove, accept, child, moveTargets, slotLabel }: {
+export function ContextSatellite({ satellite, item, target, editAsset, busy, focus, choose, remove, accept, child, moveTargets, slotLabel, carJourney }: {
   satellite: ComposerSatellitePresentation; item: ComponentSelectionV1; target: DropTarget;
   editAsset?: ComposerAssetView; busy: boolean; focus: () => void; slotLabel?: string | null;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
   remove: (selection: ComponentSelectionV1) => void; accept: (selection: ComponentSelectionV1) => void;
   child: (id: string) => React.ReactNode;
   moveTargets: readonly Readonly<{ target: DropTarget; label: string }>[];
+  carJourney?: CarJourneyPresentation;
 }) {
   const interaction = useComposerInteractions();
   const productAssetKey = item.kind === 'COMPONENT' ? item.productAssetRef?.assetKey : undefined;
@@ -28,9 +30,11 @@ export function ContextSatellite({ satellite, item, target, editAsset, busy, foc
   const edit = editAsset && !satellite.canAccept && !busy && item.kind !== "CHILD_CONTEXT"
     ? () => choose(editAsset, target, item)
     : undefined;
-  return <div className={styles.satelliteTile}><AtomicPopover label={title} state={satellite.state} selectionId={item.selectionId} focus={focus} dragSourceKey={sourceKey} primaryAction={edit}
-    icon={<>{productAssetKey ? <ComposerAssetVisual assetKey={productAssetKey} iconKey={satellite.iconKey} scale="SATELLITE" />
-      : <PlannerIcon iconKey={satellite.iconKey} scale="SATELLITE" />}<span className={styles.equipmentName}>{title}</span><span className={styles.satelliteMarker} aria-hidden="true">
+  const car = carJourney && item.kind === "MOBILITY_INTENT" && item.optionKey === "car" ? item : null;
+  return <div className={styles.satelliteTile} data-car-journey={car ? true : undefined}><AtomicPopover label={title} labelFromContent={!!car} state={satellite.state} selectionId={item.selectionId} focus={focus} dragSourceKey={sourceKey} primaryAction={edit}
+    icon={<>{car && carJourney ? <CarJourneyFace intent={car} journey={carJourney} /> : <>
+      {productAssetKey ? <ComposerAssetVisual assetKey={productAssetKey} iconKey={satellite.iconKey} scale="SATELLITE" />
+        : <PlannerIcon iconKey={satellite.iconKey} scale="SATELLITE" />}<span className={styles.equipmentName}>{title}</span></>}<span className={styles.satelliteMarker} aria-hidden="true">
       {satellite.state === "SUGGESTED" ? <Sparkle size={10} /> : satellite.state === "DERIVED" ? <Link2 size={10} /> : satellite.state === "UNRESOLVED" ? <i /> : <Check size={9} />}</span></>}>
     {close => <div className={styles.objectSheet} data-object-sheet>
       <p className={styles.objectSheetState}>{stateText}</p>

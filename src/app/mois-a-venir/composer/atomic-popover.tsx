@@ -58,10 +58,11 @@ export function AnchoredAtomicPopover({label,anchor,onClose,children}:{label:str
 }
 
 /** Viewport coordinates are transient DOM placement, never part of a draft. */
-export function AtomicPopover({ label, state, selectionId, empty, children, icon, focus, dragSourceKey, utility, primaryAction }: {
+export function AtomicPopover({ label, state, selectionId, empty, children, icon, focus, dragSourceKey, utility, primaryAction, labelFromContent }: {
   label: string; state: string; selectionId?: string; empty?: boolean; icon: ReactNode;
   children: (close: () => void) => ReactNode; focus: () => void; dragSourceKey?: string; utility?: boolean;
   primaryAction?: () => void;
+  labelFromContent?: boolean;
 }) {
   const id = useId(), trigger = useRef<HTMLButtonElement>(null), panel = useRef<HTMLDivElement>(null), [open, setOpen] = useState(false);
   const detailsTrigger = useRef<HTMLButtonElement>(null);
@@ -85,7 +86,7 @@ export function AtomicPopover({ label, state, selectionId, empty, children, icon
   }, []);
   return <>
     <button ref={trigger} type="button" className={utility ? styles.iconButton : styles.satellite} data-context-actions={utility || undefined} data-satellite={utility ? undefined : true} data-selection={selectionId} data-state={state} data-empty={empty || undefined} {...dragProps}
-      title={label} aria-label={label} aria-haspopup={primaryAction ? undefined : "dialog"} aria-controls={primaryAction ? undefined : id}
+      title={label} aria-label={labelFromContent ? undefined : label} aria-haspopup={primaryAction ? undefined : "dialog"} aria-controls={primaryAction ? undefined : id}
       aria-expanded={primaryAction ? undefined : open} onClick={() => { if (primaryAction) primaryAction(); else { focus(); panel.current?.togglePopover(); } }}>{icon}</button>
     {primaryAction && <button ref={detailsTrigger} type="button" className={styles.satelliteDetails} aria-label={`Détails de ${label}`}
       aria-haspopup="dialog" aria-controls={id} aria-expanded={open} onClick={() => { focus(); panel.current?.togglePopover(); }}>⋯</button>}
