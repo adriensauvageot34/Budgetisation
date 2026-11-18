@@ -186,6 +186,19 @@ function withCommerceFields(template: ContextTemplateV1) {
   return fields.length ? { ...template, version: `${template.version}+commerce@v1`, fields: [...template.fields, ...fields] } : template;
 }
 
+const additionalCardReferences: Readonly<Record<string, readonly ContextFieldDefinition[]>> = {
+  purchase: [people],
+  "beauty-restock": sharedFields,
+  "home-project": sharedFields,
+  "other-context": sharedFields,
+};
+
+function withCardReferences(template: ContextTemplateV1, fields?: PlanSemanticStateV1["contexts"][number]["fields"]) {
+  const extra = (additionalCardReferences[template.templateKey] ?? [])
+    .filter(field => !fields || Object.hasOwn(fields, field.fieldKey));
+  return extra.length ? { ...template, version: `${template.version}+card-references@v1`, fields: [...template.fields, ...extra] } : template;
+}
+
 export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
   const source = baseManifestRegistry(state);
   const home = state.contexts.some(context => context.templateKey === "home-project" && Object.hasOwn(context.fields, HOME_EQUIPMENT_FIELD));
@@ -195,22 +208,30 @@ export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegi
   const commerce = new Set(state.contexts.filter(context => context.templateKey === "activity"
     ? SERVICE_FIELDS.some(key => Object.hasOwn(context.fields, key))
     : context.templateKey === "gift" && ["merchantLabel", "placeRef"].some(key => Object.hasOwn(context.fields, key))).map(context => context.templateKey));
-  if (!home && !scheduled.size && !reservation && !commerce.size) return source;
+  const cardReferences = new Map<string, PlanSemanticStateV1["contexts"][number]["fields"]>();
+  for (const context of state.contexts) {
+    const additions = (additionalCardReferences[context.templateKey] ?? []).filter(field => Object.hasOwn(context.fields, field.fieldKey));
+    if (additions.length) cardReferences.set(context.templateKey, { ...cardReferences.get(context.templateKey),
+      ...Object.fromEntries(additions.map(field => [field.fieldKey, context.fields[field.fieldKey]])) });
+  }
+  if (!home && !scheduled.size && !reservation && !commerce.size && !cardReferences.size) return source;
   const version = source.version + (home ? "+home-equipment@v1" : "") + (scheduled.size ? "+outing-time@v1" : "")
-    + (reservation ? "+lodging-reservation@v1" : "") + (commerce.size ? "+commerce@v1" : "");
+    + (reservation ? "+lodging-reservation@v1" : "") + (commerce.size ? "+commerce@v1" : "") + (cardReferences.size ? "+card-references@v1" : "");
   return freeze({ version, templates: source.templates.map(template => {
     const current = withOutingFields(home ? withHomeEquipment(template) : template, scheduled.has(template.templateKey), reservation);
-    return commerce.has(template.templateKey) ? withCommerceFields(current) : current;
+    const enriched = commerce.has(template.templateKey) ? withCommerceFields(current) : current;
+    const references = cardReferences.get(template.templateKey);
+    return references ? withCardReferences(enriched, references) : enriched;
   }) });
 }
 
 export function resolveContextTemplate(key: string, fields?: PlanSemanticStateV1["contexts"][number]["fields"]): ContextTemplateV1 {
-  if (fields && isPurchaseBasket({ templateKey: key, fields })) return basketPurchase;
+  if (fields && isPurchaseBasket({ templateKey: key, fields })) return withCardReferences(basketPurchase, fields);
   const found = restaurantDetailsRegistry.templates.find(t => t.templateKey === key);
   if (!found) throw new TypeError(`PLANNER_CONTEXT_TEMPLATE_UNSUPPORTED:${key}`);
   const template = key === "home-project" && fields && Object.hasOwn(fields, HOME_EQUIPMENT_FIELD) ? withHomeEquipment(found) : found;
   const current = withOutingFields(template, !fields || Object.hasOwn(fields, "plannedTime"), !fields || Object.hasOwn(fields, "lodgingReservation"));
   const usesCommerce = key === "gift" ? !fields || ["merchantLabel", "placeRef"].some(field => Object.hasOwn(fields, field))
     : key === "activity" && !!fields && SERVICE_FIELDS.some(field => Object.hasOwn(fields, field));
-  return usesCommerce ? withCommerceFields(current) : current;
+  return withCardReferences(usesCommerce ? withCommerceFields(current) : current, fields);
 }

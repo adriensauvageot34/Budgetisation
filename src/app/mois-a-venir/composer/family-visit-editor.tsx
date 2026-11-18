@@ -55,7 +55,8 @@ export function ProspectiveContextEditor({ stay = false, stayDetails, posts, pos
   const [endDate, setEndDate] = useState(text(context.fields.endDate)), [note, setNote] = useState(text(context.fields.timingNote));
   const [visited, setVisited] = useState(context.fields.personVisitedRef as ProspectivePersonRef | undefined);
   const [people, setPeople] = useState((context.fields.participantRefs ?? []) as unknown as ProspectivePersonRef[]);
-  const [destination, setDestination] = useState((context.fields[stay ? "destinationRef" : "placeRef"] ?? original?.destination ?? undefined) as ProspectivePlaceRef | undefined);
+  const [destination, setDestination] = useState((historicalOpenChain ? original?.destination
+    : context.fields[stay ? "destinationRef" : "placeRef"] ?? original?.destination) as ProspectivePlaceRef | undefined);
   const [origin, setOrigin] = useState(original?.origin ?? undefined), [mode, setMode] = useState(initialMode ?? original?.optionKey ?? "");
   const [returnRequired, setReturnRequired] = useState(original?.returnRequired ?? false);
   const [outTime, setOutTime] = useState(original?.plannedTime ?? ""), [returnTime, setReturnTime] = useState(original?.returnTime ?? "");

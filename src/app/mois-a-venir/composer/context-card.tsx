@@ -26,6 +26,7 @@ import { CommerceBadges } from "./commerce-badges";
 import { budgetAmountsCurrent, BudgetPreviewStatus } from "./intent-budget-impact";
 import { IntentionProgressLabel } from "./context-progress";
 import { ObservedMerchantBadges, useReconstructedCard } from "./reconstructed-cards";
+import { CardReferenceChip, type CardReferenceKind } from "./card-reference-controls";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
 const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
@@ -34,12 +35,13 @@ const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
   gift: ["item", "extras"],
   "family-visit": ["hospitality", "activities", "transport"],
 };
-export function ContextCard({ card, model, busy, selected, focused, focus, drag, drop, choose, request, edit, openEquipment, livingBar }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
+export function ContextCard({ card, model, busy, selected, focused, focus, drag, drop, choose, request, edit, openEquipment, openReference, livingBar }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
   focused: string | null; focus: (id: string | null) => void;
   selected: string | null; drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
   request: (operation: ComposerOperation) => void; edit: (card: ComposerContextCardView, selectionId?: string) => void;
-  openEquipment?: (contextId: string, slotKey?: string) => void; livingBar?: LivingBar }) {
+  openEquipment?: (contextId: string, slotKey?: string) => void;
+  openReference?: (contextId: string, kind: CardReferenceKind) => void; livingBar?: LivingBar }) {
   const instance = `context-occurrence:${card.contextOccurrenceId}`;
   const reconstructed = useReconstructedCard(card.contextOccurrenceId);
   const index=composerRenderIndex(model), ownDrops=index.drops.get(instance) ?? [];
@@ -47,7 +49,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const preserved = model.semanticState.preferences.flexibility[card.contextOccurrenceId] === "PRESERVE";
   const editable = !card.readOnly && !preserved && card.capabilityRefs.includes("PATCH_CONTEXT")
     && !model.semanticState.preferences.anchors.includes(card.contextOccurrenceId);
-  const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} openEquipment={openEquipment} /> : null; };
+  const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} openEquipment={openEquipment} openReference={openReference} /> : null; };
+  const references = { card, model, editable, busy, open: openReference ? (kind: CardReferenceKind) => openReference(card.contextOccurrenceId, kind) : undefined };
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const preset = presetForContext(card);
   const plannedDay = plannedDayLabel(card.fields.plannedDate);
@@ -100,8 +103,9 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       className={styles.contextObjectIcon} size={72} scale="CARD" /> : preset ? <PresetIllustration preset={preset} className={styles.presetBoardImage} /> : card.readOnly
       ? <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
       : <ComposerAssetVisual assetKey={card.contextOccurrenceId} templateKey={card.templateKey} iconKey={presentation.iconKey} className={styles.contextObjectIcon} size={83} scale="CARD" />}
-    <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} disabled={busy}
+    <header className={styles.contextHeader}><div><div className={styles.contextHeading}><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} disabled={busy}
       onClick={() => editable ? edit(card) : focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>
+      <CardReferenceChip {...references} kind="place" filled /></div>
       <div className={styles.contextMeta}>
         {(typeof card.fields.plannedDate === "string" || plannedTime) && <span>{[plannedDay ?? "Date à préciser", plannedTime].filter(Boolean).join(" · ")}</span>}
         <IntentionProgressLabel id={card.contextOccurrenceId} compact />
@@ -131,6 +135,10 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
           {!removable && <p>Moment protégé dans ce brouillon.</p>}</div>}</AtomicPopover></>}</div></header>
     {card.readOnly && <p className={styles.externalNote}>Intention déjà connue · comptée une fois</p>}
     {card.templateKey === "external-intent" && <HairdresserReference model={model} id={card.contextOccurrenceId} focus={() => focus(card.contextOccurrenceId)} />}
+    </div>
+    <div className={styles.contextReferenceStrip}>
+      <CardReferenceChip {...references} kind="place" />
+      <CardReferenceChip {...references} kind="people" />
     </div>
     {card.templateKey === "night-out" && <div className={styles.purchaseSummary} data-night-board-summary>
       <button type="button" disabled={busy || !editable} onClick={() => edit(card)}>

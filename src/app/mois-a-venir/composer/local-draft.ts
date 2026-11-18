@@ -104,6 +104,8 @@ function stageDecision(model: ComposerUiModel, raw: PlanSemanticStateV1, operati
       if (c.templateKey === "gift" && !fields.fieldSchemaVersion
         && ["recipientRef", "occasion", "objectLabel", "objectAssetRef"].some(key => Object.hasOwn(fields, key)))
         fields.fieldSchemaVersion = Object.hasOwn(fields, "objectAssetRef") ? "context-fields@v3" : "context-fields@v2";
+      if (!fields.fieldSchemaVersion && ["placeRef", "destinationRef", "participantRefs"].some(key => Object.hasOwn(fields, key)))
+        fields.fieldSchemaVersion = "context-fields@v2";
       return { ...c, fields };
     }) });
   }
