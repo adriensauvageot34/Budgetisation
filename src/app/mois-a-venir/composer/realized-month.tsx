@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ChevronRight, Pencil, Search, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronRight, MapPin, Pencil, Search, X } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard, RealizedCard, RealizedCardGroup, RealizedPayment } from "@/server/phase2/planner/realized-month";
@@ -69,7 +69,7 @@ function CardArtwork({ card, size }: { card: Pick<RealizedCard, "art">; size: nu
     iconKey={card.art.iconKey} className={styles.cardVisual} scale={size > 48 ? "CARD" : "LIBRARY"} size={size} />;
 }
 
-function cardCaption(card: RealizedCard, date = card.date) {
+function cardCaption(card: RealizedCard, date: string | null | undefined = card.date) {
   const number = card.occurrences?.length;
   const count = card.payments.length;
   return [date ? days(date, card.endDate) : null,
@@ -77,22 +77,43 @@ function cardCaption(card: RealizedCard, date = card.date) {
     count ? `${count} ${count === 1 ? "opération" : "opérations"}` : null].filter(Boolean).join(" · ");
 }
 
-const RealizedMonthCard = memo(function RealizedMonthCard({ card, open, date, groceryPurchase }: {
-  card: RealizedCard; open: (cardId: string) => void; date?: string; groceryPurchase?: boolean;
+function CardDate({ date, end }: { date: string; end?: string }) {
+  const hasRange = end && end !== date;
+  const sameMonth = hasRange && date.slice(0, 7) === end.slice(0, 7);
+  return <span className={styles.cardDate}>
+    <time dateTime={date} title={searchableDate(date)}>{sameMonth ? Number(date.slice(-2)) : plannedDayLabel(date)}</time>
+    {hasRange && <>–<time dateTime={end} title={searchableDate(end)}>{plannedDayLabel(end)}</time></>}
+  </span>;
+}
+
+const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open, date, groceryPurchase }: {
+  card: RealizedCard; category?: RealizedCardGroup; open: (cardId: string) => void; date?: string; groceryPurchase?: boolean;
 }) {
   const badges = [...new Map(card.payments.flatMap(payment => payment.badge
     ? [[payment.badge.label, payment.badge] as const] : [])).values()];
   const linked = card.relatedPayments?.length;
-  const caption = groceryPurchase ? days(card.date!) : cardCaption(card, date);
+  const visibleDate = card.date ?? date;
+  const caption = groceryPurchase ? null : cardCaption(card, null);
+  const location = card.eventPlace || (card.label === "Restaurant" && card.eventStatus ? "Lieu à confirmer" : undefined);
   return <button id={card.id} type="button" className={styles.card} data-realized-card={card.section}
-    data-card-date={date ?? card.date}
+    data-realized-category={category?.id} data-card-date={visibleDate}
     data-operation-count={card.payments.length} data-card-amount={card.amount ?? undefined}
     aria-haspopup="dialog" onClick={() => open(card.id)}>
-    <strong className={styles.cardTitle} title={card.label}>{card.label}</strong>
+    <span className={styles.cardMeta}>
+      {category && <span className={styles.cardCategory}>{category.shortLabel}</span>}
+      {visibleDate && <CardDate date={visibleDate} end={card.endDate} />}
+    </span>
+    <span className={styles.cardIdentity}>
+      <strong className={styles.cardTitle} title={card.label}>{card.label}</strong>
+      {location && searchText(location) !== searchText(card.label) && <span className={styles.cardLocation}
+        data-confirmed={Boolean(card.eventPlace)} title={location}>
+        <MapPin size={12} aria-hidden="true" /><span>{location}</span>
+      </span>}
+    </span>
     {caption && <span className={styles.cardSubtitle}>{caption}</span>}
     {badges.length > 0 && <span className={styles.badges}>
       {badges.slice(0, 4).map(badge => <RealizedBadge key={badge.label} {...badge} named />)}
-      {badges.length > 4 && <span title={badges.slice(4).map(badge => badge.label).join(", ")}>+${badges.length - 4}</span>}
+      {badges.length > 4 && <span title={badges.slice(4).map(badge => badge.label).join(", ")}>+{badges.length - 4}</span>}
     </span>}
     <CardArtwork card={card} size={60} />
     {(card.amount !== null || linked || !card.carTrip) && <span className={styles.cardTotal}>
@@ -116,7 +137,8 @@ function RealizedGroupTile({ group, count, open }: {
   group: RealizedCardGroup; count: number; open: () => void;
 }) {
   const unit = group.id === "groceries" ? count === 1 ? "achat" : "achats" : count === 1 ? "carte" : "cartes";
-  return <button type="button" className={`${styles.card} ${styles.groupCard}`} data-realized-group={group.id} onClick={open}>
+  return <button type="button" className={`${styles.card} ${styles.groupCard}`} data-realized-group={group.id}
+    data-realized-category={group.id} onClick={open}>
     <strong className={styles.cardTitle}>{group.label}</strong>
     <span className={styles.cardSubtitle}>{count} {unit}</span>
     <CardArtwork card={group} size={60} />
@@ -210,6 +232,8 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   const terms = searchText(query).split(" ").filter(Boolean);
   const group = mode === "grouped" ? board.groups.find(item => item.id === groupId) : undefined;
   const groupedOverview = mode === "grouped" && !group;
+  const categoryByCard = useMemo(() => new Map(board.groups.flatMap(item =>
+    item.cardIds.map(id => [id, item] as const))), [board.groups]);
   const groceryCards = useMemo(() => {
     const groceryParents = new Set(board.groups.find(item => item.id === "groceries")?.cardIds);
     return board.cards.filter(card => groceryParents.has(card.id))
@@ -219,7 +243,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
     card,
     date: earliestDate(card),
     lines: [
-      searchText(card.label, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
+      searchText(card.label, card.eventPlace, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
       ...(card.carTrip ? [searchText(card.label, "trajet voiture essence", card.carTrip.route, card.carTrip.compactRoute)] : []),
       ...card.payments.map(payment => searchText(card.label, paymentSearch(payment))),
       ...(card.occurrences ?? []).map(occurrence => searchText(card.label, occurrence.label, occurrence.date, searchableDate(occurrence.date))),
@@ -375,7 +399,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
         {groupedOverview ? visibleGroups.map(item => <RealizedGroupTile key={item.id} group={item}
           count={item.id === "groceries" ? groceryCards.length : item.cardIds.length} open={() => showGroup(item)} />)
           : visible.map(({ card, date }) => <RealizedMonthCard key={card.id} card={card} date={sortOrder === "date" ? date : undefined}
-            groceryPurchase={group?.id === "groceries"} open={open} />)}
+            category={group ?? categoryByCard.get(card.id)} groceryPurchase={group?.id === "groceries"} open={open} />)}
       </div> : <p className={styles.empty}>{board.cards.length ? "Aucune carte ne correspond à cette recherche."
         : "Aucune opération ni événement importé pour ce mois."}</p>}
     </div>
@@ -387,6 +411,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
           <div>
             <h2 id="realized-dialog-title">{selected.label}</h2>
             <p>{[cardCaption(selected), selected.eventStatus].filter(Boolean).join(" · ")}</p>
+            {selected.eventPlace && <p>{selected.eventPlace}</p>}
             {selected.amount !== null && <strong>{money(selected.amount)}</strong>}
           </div>
           <button ref={closeButton} type="button" className={styles.close} aria-label="Fermer la carte" onClick={() => dialog.current?.close()}>

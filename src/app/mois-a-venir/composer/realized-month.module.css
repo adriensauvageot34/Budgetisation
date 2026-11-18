@@ -116,31 +116,100 @@
   gap: 8px;
 }
 .card {
+  --category-ink: #594375;
+  --category-accent: #a68abb;
+  --category-tint: #f8f2fb;
+  --category-pale: #efe5f5;
   min-width: 0;
-  border: 1px solid var(--line);
+  border: 1px solid var(--category-pale);
+  border-inline-start: 3px solid var(--category-accent);
   border-radius: 18px;
-  background: #fcf9fef2;
+  background: var(--category-tint);
   box-shadow: 0 3px 8px #5c427314;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 60px 16px;
   grid-template-areas:
+    "meta meta chevron"
     "title title chevron"
     "subtitle visual chevron"
     "badges visual chevron"
     "total visual chevron";
-  grid-template-rows: auto auto auto 1fr;
+  grid-template-rows: auto auto auto auto 1fr;
   gap: 2px 6px;
   align-items: center;
   min-height: 6.75rem;
-  padding: 7px 10px;
+  padding: 7px 10px 7px 8px;
   color: inherit;
   cursor: pointer;
   text-align: left;
 }
-.card:hover { background-color: #f6effa; border-color: #c6aed9; }
-.groupCard { background: linear-gradient(120deg, #f0e6f7, #fcf9fe 72%); border-color: #dac9e7; }
-.groupCard:hover { background: #efe2f7; }
+.card[data-realized-category="fixed"] {
+  --category-ink: #384e77;
+  --category-accent: #839acc;
+  --category-tint: #f3f6fd;
+  --category-pale: #e2e9fa;
+}
+.card[data-realized-category="groceries"] {
+  --category-ink: #345b3b;
+  --category-accent: #7fa277;
+  --category-tint: #f2f8ef;
+  --category-pale: #e2eedc;
+}
+.card[data-realized-category="restaurants"] {
+  --category-ink: #784729;
+  --category-accent: #c58d64;
+  --category-tint: #fdf5ed;
+  --category-pale: #f5e7d7;
+}
+.card[data-realized-category="activities"] {
+  --category-ink: #5d407f;
+  --category-accent: #a587c9;
+  --category-tint: #f8f3fc;
+  --category-pale: #eee5f7;
+}
+.card[data-realized-category="transport"] {
+  --category-ink: #275d61;
+  --category-accent: #71a5a8;
+  --category-tint: #eff8f8;
+  --category-pale: #dceeee;
+}
+.card[data-realized-category="daily"] {
+  --category-ink: #7a4055;
+  --category-accent: #c08da0;
+  --category-tint: #fbf2f5;
+  --category-pale: #f4e3ea;
+}
+.card[data-realized-category="flows"] {
+  --category-ink: #685321;
+  --category-accent: #b49c5b;
+  --category-tint: #faf6e9;
+  --category-pale: #f1e9d0;
+}
+.groupCard { background: linear-gradient(125deg, var(--category-pale), var(--category-tint) 80%); }
+.card:hover { background: var(--category-pale); border-color: var(--category-accent); }
 .board button:focus-visible, .board summary:focus-visible { outline: 2px solid #76539c; outline-offset: 2px; }
+.cardMeta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  color: var(--category-ink);
+  font-size: .69rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.cardCategory { min-width: 0; }
+.cardDate {
+  flex: none;
+  margin-inline-start: auto;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--category-pale);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cardIdentity { grid-area: title; min-width: 0; }
 .cardTitle {
   grid-area: title;
   display: -webkit-box;
@@ -153,6 +222,24 @@
   font-weight: 750;
   line-height: 1.25;
 }
+.cardLocation {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .73rem;
+  line-height: 1.3;
+}
+.cardLocation[data-confirmed="true"] { color: var(--category-ink); font-weight: 650; }
+.cardLocation svg { flex: none; }
+.cardLocation > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
 .cardSubtitle { grid-area: subtitle; }
 .cardSubtitle, .cardTotal small { display: block; color: var(--muted); font-size: .75rem; line-height: 1.3; overflow-wrap: anywhere; }
 .cardVisual { display: grid; place-items: center; flex: none; }
@@ -160,12 +247,13 @@
 .card > .cardVisual > svg { display: block; width: 100%; height: 100%; }
 .card:has(.cardTrip) {
   grid-template-areas:
+    "meta meta chevron"
     "title title chevron"
     "subtitle visual chevron"
     "badges visual chevron"
     "total visual chevron"
     "trip trip trip";
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: auto auto auto auto 1fr auto;
 }
 .cardTrip {
   grid-area: trip;
@@ -190,7 +278,7 @@
 .cardTrip > :first-child { width: 23px; height: 23px; }
 .cardTotal { grid-area: total; align-self: end; min-width: 0; }
 .cardTotal strong { display: block; font-size: 1rem; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.chevron { grid-area: chevron; color: #705887; }
+.chevron { grid-area: chevron; color: var(--category-ink); }
 .badges { grid-area: badges; display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
 .badges img { flex: none; width: 21px; height: 21px; object-fit: contain; border-radius: 50%; }
 .badges span { font-size: .72rem; color: var(--muted); }
