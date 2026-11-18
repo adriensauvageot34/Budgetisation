@@ -1816,6 +1816,20 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .contextCard[data-compact-card] .contextHeader h3 { padding-right:39px; font-size:14px; line-height:1.18; }
 .contextCard[data-compact-card][data-state=derived] .contextHeader h3 { padding-right:0; }
 .contextCard[data-compact-card] .contextHeader h3 button { text-align:left; }
+.contextHeading { display:flex; align-items:baseline; flex-wrap:wrap; gap:2px 6px; min-width:0; padding-right:39px; }
+.contextCard[data-compact-card] .contextHeading h3 { min-width:0; padding-right:0; }
+.contextCard[data-compact-card][data-state=derived] .contextHeading { padding-right:0; }
+.contextReferenceStrip { display:flex; flex-wrap:wrap; gap:4px; }
+.contextReferenceStrip:empty { display:none; }
+.contextReferenceChip {
+  display:inline-flex; align-items:center; gap:3px; min-width:0; max-width:100%;
+  min-height:24px; padding:2px 6px; border:1px solid #dfd3e9; border-radius:10px;
+  background:#fffc; color:#5f4c75; font-size:11px!important; line-height:1.25;
+}
+.contextReferenceChip svg { flex:none; }
+.contextReferenceChip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+button.contextReferenceChip:hover { background:#f0e6f8; border-color:#c8b3db; }
+.paletteDock:has([data-card-reference-dock]) { margin-inline:0; }
 .contextMeta { display:flex; flex-wrap:wrap; align-items:center; gap:2px 7px; margin-top:3px; font-size:10px; color:#58627f; }
 .contextMeta:empty { display:none; }
 .contextMeta .intentionProgress { margin:0; font-size:inherit; }

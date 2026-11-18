@@ -21,12 +21,13 @@ import { composerRenderIndex } from "./render-index";
 import { useInlineEditRegistry } from "./inline-edit-registry";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import type { RealizedCard } from "@/server/phase2/planner/realized-month";
+import { CardReferenceDock, type CardReferenceKind } from "./card-reference-controls";
 const reconstructionOrder = { fixed: 0, daily: 1, events: 2, flows: 3 };
 type BoardProps=Parameters<typeof ComposerBoard>[0];
-const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,openEquipment,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"|"livingBar"> & {item:AtomicNode;inCluster:boolean;closeCluster:(after?:()=>void)=>boolean;openEquipment:(id:string,slotKey?:string)=>void}) {
+const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,openEquipment,openReference,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"|"livingBar"> & {item:AtomicNode;inCluster:boolean;closeCluster:(after?:()=>void)=>boolean;openEquipment:(id:string,slotKey?:string)=>void;openReference:(id:string,kind:CardReferenceKind)=>void}) {
   const {model,busy,selected,focused,focus,edit,editContext,choose,drag,drop,request,hover,details,livingBar}=props,index=composerRenderIndex(model);
   // The drag geometry may be held, but card values always use the current model.
-  if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard livingBar={livingBar} card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} openEquipment={openEquipment} edit={(value,selectionId)=>{if(inCluster&&!closeCluster(()=>editContext(value,selectionId)))return;editContext(value,selectionId);}}/>:null;}
+  if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard livingBar={livingBar} card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} openEquipment={openEquipment} openReference={openReference} edit={(value,selectionId)=>{if(inCluster&&!closeCluster(()=>editContext(value,selectionId)))return;editContext(value,selectionId);}}/>:null;}
   const card=index.controls.get(item.id);if(!card)return null;
   return <ComposerCard card={card} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused===item.id} focus={()=>focus(item.id)}
     preserved={model.semanticState.preferences.flexibility[item.id]==="PRESERVE"} edit={()=>{if(inCluster&&!closeCluster(()=>edit(card)))return;edit(card);}}
@@ -38,7 +39,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
   focused: string | null; focus: (id: string | null) => void;
   focusEquipment: (id: string, ready: () => void) => void;
   edit: (card: ComposerCardView) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
-  drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void; request: (operation: ComposerOperation) => void; hover: (mutation: SemanticMutation | null) => void; editContext: (card: ComposerContextCardView, selectionId?: string) => void;
+  drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void; request: (operation: ComposerOperation) => boolean | void; hover: (mutation: SemanticMutation | null) => void; editContext: (card: ComposerContextCardView, selectionId?: string) => void;
   details: () => void; livingBar?:LivingBar; contextGuide?: ReactNode; reveal?: { targetRef: string; sequence: number } | null;
   reconstructedCards?: ReadonlyMap<string, RealizedCard> }) {
   const boardAccepts = !!selected && (model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED")
@@ -47,9 +48,35 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
   const focusedCard = model.board.contexts.find(c => c.contextOccurrenceId === focused);
   const commerce = useCommerceLibrary();
   const [equipmentTarget, setEquipmentTarget] = useState<{ id: string; slotKey?: string }>();
+  const [referenceTarget, setReferenceTarget] = useState<{ id: string; kind: CardReferenceKind }>();
+  const referenceTrigger = useRef<HTMLElement | null>(null);
+  const closeCommerce = commerce?.closeDock;
+  const focusBoard = useCallback((id: string | null) => { setReferenceTarget(undefined); focus(id); }, [focus]);
+  const editBoard = useCallback((card: ComposerContextCardView, selectionId?: string) => {
+    setReferenceTarget(undefined);
+    editContext(card, selectionId);
+  }, [editContext]);
   const openEquipment = useCallback((id: string, slotKey?: string) => {
-    focusEquipment(id, () => setEquipmentTarget({ id, slotKey }));
+    focusEquipment(id, () => { setReferenceTarget(undefined); setEquipmentTarget({ id, slotKey }); });
   }, [focusEquipment]);
+  const openReference = useCallback((id: string, kind: CardReferenceKind) => {
+    const trigger = document.activeElement;
+    focusEquipment(id, () => {
+      referenceTrigger.current = trigger instanceof HTMLElement ? trigger : null;
+      closeCommerce?.();
+      setEquipmentTarget(undefined);
+      setReferenceTarget({ id, kind });
+    });
+  }, [focusEquipment, closeCommerce]);
+  const closeReference = () => {
+    focusBoard(null);
+    requestAnimationFrame(() => {
+      const trigger = referenceTrigger.current;
+      const replacement = referenceTarget && document.querySelector<HTMLElement>(
+        `[data-context="${CSS.escape(referenceTarget.id)}"] [data-context-reference="${referenceTarget.kind}"]`);
+      (trigger?.isConnected ? trigger : replacement)?.focus({ preventScroll: true });
+    });
+  };
   const interaction = useComposerInteractions(), inlineEdits = useInlineEditRegistry();
   const trashVisible = !!interaction?.grabbed && (!!interaction.grabbed.removeOperation || interaction.grabbed.protected);
   const boardTarget: DropTarget = { kind: "BOARD_ZONE" }, trashTarget: DropTarget = { kind: "TRASH" };
@@ -125,13 +152,16 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
   useEffect(() => { if (openClusterId && !openCluster) setOpenClusterId(null); }, [openClusterId, openCluster]);
   const focusedInCluster = !!openCluster?.children.some(child => child.id === focusedCard?.contextOccurrenceId);
   const renderAtomic = (item:AtomicNode,inCluster=false)=><InventoryAtomic item={item} inCluster={inCluster} closeCluster={closeCluster}
-    model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} editContext={editContext} hover={hover} details={details} livingBar={livingBar} openEquipment={openEquipment}/>;
+    model={model} busy={busy} selected={selected} focused={focused} focus={focusBoard} drag={drag} drop={drop} choose={choose} request={request} edit={edit} editContext={editBoard} hover={hover} details={details} livingBar={livingBar} openEquipment={openEquipment} openReference={openReference}/>;
   // The compact living card already exposes its direct entry points. Do not
   // leave the generic equipment dock behind after folding it: that changes
   // the Board's available height and prevents an exact return to its layout.
   const paletteInCluster = commerce?.dock ? commerce.dock.cluster && !!openCluster : focusedInCluster;
   const merchantPalette = commerce?.dock && <CommerceDock key={`${commerce.dock.badge.anchor?.key}:${commerce.dock.badge.anchor?.digest}`} library={commerce} />;
-  const regularPalette = focusedCard && (presetForContext(focusedCard)?.presetKey !== "bar-apero" || livingBar?.id === focusedCard.contextOccurrenceId) && <div className={styles.paletteDock} data-palette-dock hidden={!!merchantPalette}>{contextGuide ?? <ContextPalette key={focusedCard.contextOccurrenceId} card={focusedCard} model={model} busy={busy} choose={choose}
+  const referencePalette = referenceTarget && focusedCard?.contextOccurrenceId === referenceTarget.id
+    && <CardReferenceDock key={`${referenceTarget.id}:${referenceTarget.kind}`} card={focusedCard} model={model} kind={referenceTarget.kind}
+      busy={busy} close={closeReference} request={request} />;
+  const regularPalette = focusedCard && (presetForContext(focusedCard)?.presetKey !== "bar-apero" || livingBar?.id === focusedCard.contextOccurrenceId) && <div className={styles.paletteDock} data-palette-dock hidden={!!merchantPalette}>{contextGuide || referencePalette || <ContextPalette key={focusedCard.contextOccurrenceId} card={focusedCard} model={model} busy={busy} choose={choose}
     equipmentTarget={equipmentTarget?.id === focusedCard.contextOccurrenceId ? equipmentTarget : undefined}
     onConfigure={!focusedCard.readOnly ? () => editContext(focusedCard) : undefined}
     close={() => { setEquipmentTarget(undefined); focus(null); }} />}</div>;
@@ -147,7 +177,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
       {reconstructedCards ? <span>Cartes reconstituées · modifications dans le brouillon</span>
         : <><span>{showMonthCards ? "Socle · habitudes et enveloppes · intentions" : "Intentions · cartes du mois repliées"}</span>
           <button type="button" className={styles.monthCardsToggle} aria-expanded={showMonthCards} disabled={busy} onClick={toggleMonthCards}>{showMonthCards ? "Replier les cartes du mois" : "Afficher les cartes du mois"}</button></>}</div>
-    <BoardCarousel expandedId={livingBar?.id} model={model} inventory={items} focused={focused} revealSequence={(reveal?.sequence ?? 0) + selectionReveal} revealFocused={revealFocused} emptyClick={() => focus(null)} dropProps={{ "data-compatible": boardAccepts,
+    <BoardCarousel expandedId={livingBar?.id} model={model} inventory={items} focused={focused} revealSequence={(reveal?.sequence ?? 0) + selectionReveal} revealFocused={revealFocused} emptyClick={() => focusBoard(null)} dropProps={{ "data-compatible": boardAccepts,
       "data-drag-over": sameTarget(interaction?.overTarget ?? null, boardTarget),
       onDragOver: e => { if (boardAccepts && !busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(boardTarget); } else interaction?.over(null); },
       onDragLeave: e => { if (leftSurface(e)) interaction?.over(null); },
