@@ -1835,7 +1835,7 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 .satelliteTile { position:relative; flex:none; }
 .contextCard[data-compact-card] .contextEquipmentRow:has([data-car-journey-socket]) { flex-wrap:wrap; overflow:visible; }
 .contextCard[data-compact-card] .contextEquipmentRow > [data-car-journey-socket] { flex:0 0 100%; min-width:0; order:-1; }
-[data-car-journey] { width:100%; min-width:0; }
+.satelliteTile[data-car-journey] { width:100%; min-width:0; }
 .contextCard[data-compact-card] .contextEquipmentRow [data-car-journey] .satellite {
   display:grid; grid-template-columns:42px minmax(0,1fr); align-items:center; gap:6px;
   width:100%; height:auto; min-height:52px; padding:5px 26px 5px 5px;
