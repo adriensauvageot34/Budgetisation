@@ -1,5 +1,6 @@
 import "server-only";
 import Big from "big.js";
+import { parseActivityCausalFinancialLinks } from "@/analytics/facts/activity-cost";
 import { addMonths, parseInstant, parseLocalDate, type YearMonth } from "@/core/time";
 import type { getBootstrapContext } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
@@ -27,7 +28,14 @@ export type RealizedPayment = Readonly<{
 }>;
 type Occurrence = Readonly<{ id: string; label: string; date: string; endDate: string; status: string }>;
 type Section = "fixed" | "daily" | "events" | "flows";
-type RelatedPayment = Readonly<{ id: string; label: string; date: string; cardId: string; cardLabel: string }>;
+type RelatedPayment = Readonly<{
+  id: string;
+  label: string;
+  date: string;
+  cardId: string;
+  cardLabel: string;
+  component?: { key: string; amount: string | null };
+}>;
 type CardGroup = {
   id: string;
   section: Section;
@@ -163,12 +171,13 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const factRead = repository.loadEconomicFacts(range);
   const occurrenceRead = repository.loadActivityOccurrences(range);
   const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
-  const [operations, facts, occurrences, labels, eventDetails, directLinks, momentLinks] = await Promise.all([
+  const [operations, facts, occurrences, labels, eventDetails, directLinks, momentLinks, causalLinks] = await Promise.all([
     operationRead, factRead, occurrenceRead,
     Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts)),
     eventIds.then(ids => repository.loadLifeEventRecords(ids)),
     operationRead.then(rows => repository.loadFinancialLinkRowsByOperationIds(rows.map(operation => operation.operationId))),
     eventIds.then(ids => repository.loadMomentLifeEventRowsByLifeEventIds(ids)),
+    eventIds.then(ids => repository.loadActivityCausalFinancialLinkRows(ids)).then(parseActivityCausalFinancialLinks),
   ]);
 
   const eventById = new Map(eventDetails.map(row => [String(row.life_event_id), row]));
@@ -200,6 +209,16 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     link(primary, canonicalString(row, ["moment_id"], "life_events"), canonicalString(row, ["life_event_id"], "life_events"));
   }
   const factsByOperation = groupFactsByOperation(facts);
+  const factsByKey = new Map(facts.map(fact => [fact.canonicalComponentKey, fact]));
+  const componentLinksByOperation = new Map<string, typeof causalLinks[number][]>();
+  for (const relation of causalLinks) {
+    if (relation.canonicalComponentKey.startsWith("operation:")) continue;
+    const source = factsByKey.get(relation.canonicalComponentKey)?.sourceOperation;
+    if (source?.kind !== "resolved") continue;
+    const links = componentLinksByOperation.get(source.id) ?? [];
+    links.push(relation);
+    componentLinksByOperation.set(source.id, links);
+  }
   const payments: RealizedPayment[] = [];
   for (const operation of operations) {
     const operationFacts = factsByOperation.get(operation.operationId) ?? [];
@@ -215,9 +234,10 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       policy: row.merchantBadgePolicy,
     }).map(image => image.src) : [];
     const label = row.merchant?.label ?? row.bankLabel;
-    const components = operationFacts.length > 1 || operationFacts.some(fact =>
-      fact.sourceKind === "Allocation" || fact.sourceKind === "Item" || fact.sourceKind === "Cash_economic_use")
-      ? operationFacts.map(fact => ({
+    const componentLinks = componentLinksByOperation.get(operation.operationId) ?? [];
+    const showComponents = componentLinks.length > 0 || operationFacts.length > 1 || operationFacts.some(fact =>
+      fact.sourceKind === "Allocation" || fact.sourceKind === "Item" || fact.sourceKind === "Cash_economic_use");
+    const components = showComponents ? operationFacts.map(fact => ({
         id: fact.canonicalComponentKey,
         label: (fact.subcategory.kind === "resolved" ? labels.subcategories.get(fact.subcategory.id) : undefined)
           ?? (fact.category.kind === "resolved" ? labels.categories.get(fact.category.id) : undefined)
@@ -235,7 +255,8 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
 
     const fixed = row.fixedVariable === "fixed";
     const momentId = optionalCanonicalString(operation.raw, ["moment_id"]);
-    const linkedEvents = explicit.get(operation.operationId) ?? (momentId ? primary.get(momentId) : undefined);
+    // A link to part of a payment does not assign the full bank movement to that event.
+    const linkedEvents = explicit.get(operation.operationId) ?? (momentId && !componentLinks.length ? primary.get(momentId) : undefined);
     const linkedCards = new Set([...(linkedEvents ?? [])].flatMap(id => eventCards.get(id) ?? []));
     let card = flow === "expense" && !fixed && linkedEvents?.size === 1 ? [...linkedCards][0] : undefined;
     if (!card) {
@@ -248,6 +269,24 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       if (linkedCard === card) continue;
       (linkedCard.relatedPayments ??= []).push({
         id: payment.id, label: payment.label, date: payment.date, cardId: card.id, cardLabel: card.label,
+      });
+    }
+    for (const relation of componentLinks) {
+      const linkedCard = eventCards.get(relation.lifeEventId);
+      if (!linkedCard || linkedCard === card || linkedCards.has(linkedCard)) continue;
+      const component = payment.components.find(item => item.id === relation.canonicalComponentKey);
+      const related = linkedCard.relatedPayments ??= [];
+      const priorIndex = related.findIndex(reference => reference.id === payment.id && reference.component?.key === relation.canonicalComponentKey);
+      if (priorIndex !== -1) {
+        const prior = related[priorIndex]!;
+        if (prior.component?.amount !== relation.economicAmountLinked) {
+          related[priorIndex] = { ...prior, component: { key: relation.canonicalComponentKey, amount: null } };
+        }
+        continue;
+      }
+      related.push({
+        id: payment.id, label: component?.label ?? payment.label, date: payment.date, cardId: card.id, cardLabel: card.label,
+        component: { key: relation.canonicalComponentKey, amount: relation.economicAmountLinked },
       });
     }
   }

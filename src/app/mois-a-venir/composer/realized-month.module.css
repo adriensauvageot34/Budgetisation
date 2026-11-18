@@ -172,7 +172,8 @@
 .transferTotals { display: flex; flex-wrap: wrap; gap: 7px 20px; margin: 0; padding: 8px 12px; border-radius: 10px; background: #f2e9f8; font-size: .84rem; }
 .transferTotals dd { margin: 0; font-weight: 700; }
 .related { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
-.related button { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; text-align: left; }
+.related button { display: flex; align-items: center; width: 100%; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; text-align: left; }
+.related button > span { flex: 1; min-width: 0; }
 .related button:hover { background: #f6effa; }
 .related small { display: block; color: var(--muted); }
 .elements, .occurrences {
@@ -203,6 +204,7 @@
 .components { flex: 1 0 100%; margin: 0; padding-top: 4px; border-top: 1px solid var(--line); color: var(--muted); font-size: .75rem; }
 .components > div { display: flex; justify-content: space-between; gap: 6px; }
 .components dd { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.components > div:focus { outline: 2px solid #9270b4; outline-offset: 2px; background: #f9f1ff; }
 .elementIdentity { flex: 1; min-width: 0; display: grid; overflow-wrap: anywhere; }
 .elementIdentity strong { font-weight: 680; }
 .elementIdentity span, .elementIdentity small { font-size: .74rem; color: var(--muted); }

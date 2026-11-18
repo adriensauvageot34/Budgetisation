@@ -56,7 +56,7 @@ function RealizedElement({ payment, highlighted }: { payment: RealizedPayment; h
     </div>
     <b className={styles.amount}>{money(payment.amount)}</b>
     {payment.components.length > 0 && <dl className={styles.components} aria-label="Détail économique de l’opération">
-      {payment.components.map(component => <div key={component.id}>
+      {payment.components.map(component => <div key={component.id} data-realized-component={component.id} tabIndex={-1}>
         <dt>{component.label}</dt><dd>{money(component.amount)}</dd>
       </div>)}
     </dl>}
@@ -105,7 +105,7 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, open }: { card
 function RealizedDetail({ card, terms, open }: {
   card: RealizedCard;
   terms: readonly string[];
-  open: (cardId: string, paymentId?: string) => void;
+  open: (cardId: string, paymentId?: string, componentId?: string) => void;
 }) {
   return <>
     {card.transferAmounts && <dl className={styles.transferTotals}>
@@ -131,9 +131,10 @@ function RealizedDetail({ card, terms, open }: {
     {card.relatedPayments?.length ? <section aria-labelledby="realized-related-title">
       <h3 id="realized-related-title">Opérations associées dans d’autres cartes</h3>
       <ul className={styles.related}>
-        {card.relatedPayments.map(payment => <li key={payment.id}>
-          <button type="button" onClick={() => open(payment.cardId, payment.id)}>
+        {card.relatedPayments.map(payment => <li key={payment.component?.key ?? payment.id}>
+          <button type="button" onClick={() => open(payment.cardId, payment.id, payment.component?.key)}>
             <span><strong>{payment.label}</strong><small>{days(payment.date)} · {payment.cardLabel}</small></span>
+            {payment.component?.amount != null && <strong className={styles.amount}>{money(payment.component.amount)}</strong>}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </li>)}
@@ -148,7 +149,7 @@ export function RealizedComposerMonth({ board }: { board: RealizedBoard }) {
   const previous = addMonths(board.month, -1), next = addMonths(board.month, 1);
   const [sectionFilter, setSectionFilter] = useState<RealizedCard["section"] | "all">("all");
   const [query, setQuery] = useState("");
-  const [selection, setSelection] = useState<{ cardId: string; paymentId?: string } | null>(null);
+  const [selection, setSelection] = useState<{ cardId: string; paymentId?: string; componentId?: string } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -160,7 +161,8 @@ export function RealizedComposerMonth({ board }: { board: RealizedBoard }) {
       searchText(card.label, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
       ...card.payments.map(payment => searchText(card.label, paymentSearch(payment))),
       ...(card.occurrences ?? []).map(occurrence => searchText(card.label, occurrence.label, occurrence.date, searchableDate(occurrence.date))),
-      ...(card.relatedPayments ?? []).map(payment => searchText(card.label, payment.label, payment.cardLabel, payment.date, searchableDate(payment.date))),
+      ...(card.relatedPayments ?? []).map(payment => searchText(card.label, payment.label, payment.cardLabel,
+        payment.date, searchableDate(payment.date), payment.component?.amount)),
     ],
   })), [board.cards]);
   const visible = indexed.filter(({ card, lines }) => (sectionFilter === "all" || card.section === sectionFilter)
@@ -172,8 +174,10 @@ export function RealizedComposerMonth({ board }: { board: RealizedBoard }) {
     if (!selection || !panel) return;
     if (!panel.open) panel.showModal();
     if (body.current) body.current.scrollTop = 0;
-    const target = [...panel.querySelectorAll<HTMLElement>("[data-realized-operation]")]
+    const row = [...panel.querySelectorAll<HTMLElement>("[data-realized-operation]")]
       .find(row => row.dataset.realizedOperation === selection.paymentId);
+    const target = row && ([...row.querySelectorAll<HTMLElement>("[data-realized-component]")]
+      .find(component => component.dataset.realizedComponent === selection.componentId) ?? row);
     if (target) {
       target.focus({ preventScroll: true });
       target.scrollIntoView({ block: "nearest" });
@@ -182,8 +186,8 @@ export function RealizedComposerMonth({ board }: { board: RealizedBoard }) {
     }
   }, [selection]);
 
-  const open = useCallback((cardId: string, paymentId?: string) => {
-    setSelection({ cardId, paymentId });
+  const open = useCallback((cardId: string, paymentId?: string, componentId?: string) => {
+    setSelection({ cardId, paymentId, componentId });
   }, []);
 
   return <div className={styles.board} data-realized-month={board.month}>
