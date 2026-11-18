@@ -1,7 +1,10 @@
 import "server-only";
 import Big from "big.js";
+import { sumMobilityEstimatedFuelCost } from "@/analytics/facts";
 import { parseActivityCausalFinancialLinks } from "@/analytics/facts/activity-cost";
 import { addMonths, parseInstant, parseLocalDate, type YearMonth } from "@/core/time";
+import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
+import { JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import type { getBootstrapContext } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { createAuthorizedRuntimeContext } from "@/server/canonical/context";
@@ -10,6 +13,7 @@ import { CanonicalRepository } from "@/server/canonical/repository";
 import { buildOperationRow, groupFactsByOperation, loadOperationReferenceLabels } from "@/server/query/sources/operations";
 import { operationFromCanonicalRow } from "@/server/query/sources/shared";
 import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
+import { matchJulyCarTrips, readJulyCarLegs } from "./july-car-trips";
 
 type Art = Readonly<{ assetKey?: string; templateKey?: string; iconKey: string }>;
 type Badge = Readonly<{ label: string; sources: readonly string[] }>;
@@ -36,6 +40,12 @@ type RelatedPayment = Readonly<{
   cardLabel: string;
   component?: { key: string; amount: string | null };
 }>;
+type RealizedCarTrip = Readonly<{
+  route: string;
+  compactRoute: string;
+  distanceKm: string;
+  estimatedFuel: string;
+}>;
 type CardGroup = {
   id: string;
   section: Section;
@@ -47,6 +57,7 @@ type CardGroup = {
   payments: RealizedPayment[];
   occurrences?: Occurrence[];
   relatedPayments?: RelatedPayment[];
+  carTrip?: RealizedCarTrip;
 };
 export type RealizedCard = Readonly<CardGroup & {
   amount: string | null;
@@ -163,6 +174,35 @@ function realizedBankSum(payments: readonly RealizedPayment[]) {
   return payments.reduce((sum, payment) => sum.plus(payment.amount), new Big(0)).toFixed(2);
 }
 
+async function realizedCarTrips(repository: CanonicalRepository, trips: ReturnType<typeof matchJulyCarTrips>) {
+  const places = await repository.loadEntityRows("places", "place_id", trips.flatMap(trip => trip.placeIds));
+  const names = new Map(places.flatMap(place => {
+    const name = optionalCanonicalString(place, ["nom_canonique"]);
+    if (!name) return [];
+    const commune = optionalCanonicalString(place, ["commune"]);
+    const privatePlace = place.private_place === true;
+    const roles = derivePlannedPlaceRoles({ privatePlace, name, nature: optionalCanonicalString(place, ["nature_lieu"]) ?? null,
+      usage: optionalCanonicalString(place, ["usage_principal"]) ?? null, subtype: optionalCanonicalString(place, ["sous_type"]) ?? null });
+    const home = roles.includes("OWN_HOME");
+    const shortName = home ? "Domicile" : privatePlace && commune ? commune
+      : commune && name.endsWith(` – ${commune}`) ? name.slice(0, -commune.length - 3) : name;
+    return [[String(place.place_id), { full: home ? "Domicile" : name, short: shortName }] as const];
+  }));
+  const summaries = new Map<string, RealizedCarTrip>();
+  for (const { event, placeIds, pair } of trips) {
+    const [originId, venueId, endId] = placeIds;
+    const origin = names.get(originId), venue = names.get(venueId), end = names.get(endId);
+    if (!origin || !venue || !end) continue;
+    summaries.set(event.lifeEventId, {
+      route: [origin.full, venue.full, end.full].join(" → "),
+      compactRoute: originId === endId ? `${origin.short} ⇄ ${venue.short}` : `${origin.short} → … → ${end.short}`,
+      distanceKm: new Big(pair[0].distanceKm).plus(pair[1].distanceKm).toFixed(2),
+      estimatedFuel: new Big(sumMobilityEstimatedFuelCost(pair)).toFixed(2),
+    });
+  }
+  return summaries;
+}
+
 export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof getBootstrapContext>>, month: YearMonth): Promise<RealizedBoard> {
   const range = { start: parseLocalDate(`${month}-01`), endExclusive: parseLocalDate(`${addMonths(month, 1)}-01`) };
   const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(new Date().toISOString()));
@@ -171,15 +211,17 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const factRead = repository.loadEconomicFacts(range);
   const occurrenceRead = repository.loadActivityOccurrences(range);
   const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
-  const [operations, facts, occurrences, labels, eventDetails, directLinks, momentLinks, causalLinks] = await Promise.all([
+  const [operations, facts, occurrences, labels, eventDetails, directLinks, momentLinks, causalLinks, carLegs] = await Promise.all([
     operationRead, factRead, occurrenceRead,
     Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts)),
     eventIds.then(ids => repository.loadLifeEventRecords(ids)),
     operationRead.then(rows => repository.loadFinancialLinkRowsByOperationIds(rows.map(operation => operation.operationId))),
     eventIds.then(ids => repository.loadMomentLifeEventRowsByLifeEventIds(ids)),
     eventIds.then(ids => repository.loadActivityCausalFinancialLinkRows(ids)).then(parseActivityCausalFinancialLinks),
+    month === JULY_COMPOSER_MONTH ? readJulyCarLegs(repository) : [],
   ]);
 
+  const trips = carLegs.length ? await realizedCarTrips(repository, matchJulyCarTrips(occurrences, eventDetails, carLegs)) : new Map<string, RealizedCarTrip>();
   const eventById = new Map(eventDetails.map(row => [String(row.life_event_id), row]));
   const cards = new Map<string, CardGroup>();
   const eventCards = new Map<string, CardGroup>();
@@ -190,9 +232,11 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const groceryEvent = event.activityId === "courses_alimentaires"
       ? paymentCard("expense", false, visual.label, "alimentation", "alimentation__courses_alimentaires") : null;
     const id = groceryEvent?.id ?? (visual.recurring ? `events-${event.activityId}` : `event-${event.lifeEventId}`);
+    const carTrip = !visual.recurring ? trips.get(event.lifeEventId) : undefined;
     const card: CardGroup = cards.get(id) ?? {
       ...(groceryEvent ?? { id, section: "events", label: visual.recurring ? visual.label : title, art: visual.art, payments: [] }),
       ...(visual.recurring ? { occurrences: [] } : { date: event.startDate, endDate: event.endDate, eventStatus: event.validationStatus }),
+      ...(carTrip ? { carTrip } : {}),
     };
     card.occurrences?.push({ id: event.lifeEventId, label: title, date: event.startDate, endDate: event.endDate, status: event.validationStatus });
     cards.set(id, card);

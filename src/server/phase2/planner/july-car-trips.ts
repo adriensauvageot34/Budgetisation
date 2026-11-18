@@ -1,6 +1,6 @@
 import "server-only";
 import Big from "big.js";
-import type { MobilityLegFact } from "@/analytics/facts";
+import type { ActivityOccurrenceFact, MobilityLegFact } from "@/analytics/facts";
 import { parseLocalDate } from "@/core/time";
 import { fuelEconomicCost, type PlannedCarSnapshot } from "@/domain/phase2/planned-car";
 import type { PlannedRouteStop, PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
@@ -9,6 +9,7 @@ import type { MobilityIntent, PhysicalJourneyRequirement } from "@/domain/phase2
 import { JULY_COMPOSER_MONTH, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import { parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
 import type { CanonicalRepository } from "@/server/canonical/repository";
+import type { CanonicalRecord } from "@/server/canonical/record";
 import { validateContextGraph } from "./context-selections";
 
 const range = { start: parseLocalDate("2026-07-01"), endExclusive: parseLocalDate("2026-08-01") };
@@ -16,51 +17,55 @@ const activityTypes = new Set(["visite_famille", "activite_loisir"]);
 export const readJulyCarLegs = async (canonical: CanonicalRepository) =>
   (await canonical.loadMobilityLegFacts(range)).filter(leg => leg.source.status === "CERTIFIED_SOURCE");
 
+function julyCarEvents(occurrences: readonly ActivityOccurrenceFact[]) {
+  return occurrences.filter(event => event.validationStatus === "Confirmé" && event.startDate === event.endDate
+    && activityTypes.has(String(event.activityId)));
+}
+
+export function matchJulyCarTrips(occurrences: readonly ActivityOccurrenceFact[],
+  details: readonly CanonicalRecord[], legs: readonly MobilityLegFact[]) {
+  const venues = new Map(details.map(row => [row.life_event_id, row.primary_place_id]));
+  const candidates = julyCarEvents(occurrences).flatMap(event => {
+    const venue = venues.get(event.lifeEventId);
+    if (typeof venue !== "string") return [];
+    const day = legs.filter(leg => leg.date === event.startDate && leg.origin.placeId && leg.destination.placeId);
+    const inbound = day.filter(leg => leg.destination.placeId === venue && leg.origin.placeId !== venue);
+    const outbound = day.filter(leg => leg.origin.placeId === venue && leg.destination.placeId !== venue);
+    const [arrival] = inbound, [departure] = outbound;
+    if (inbound.length !== 1 || outbound.length !== 1 || !arrival || !departure || arrival.vehicleId !== departure.vehicleId) return [];
+    return [{ event, pair: [arrival, departure] as const,
+      placeIds: [String(arrival.origin.placeId), venue, String(departure.destination.placeId)] as const }];
+  });
+  const claimed = new Map<string, number>();
+  for (const { pair } of candidates) for (const leg of pair) claimed.set(leg.legId, (claimed.get(leg.legId) ?? 0) + 1);
+  return candidates.filter(trip => trip.pair.every(leg => claimed.get(leg.legId) === 1));
+}
+
 export async function addJulyCarTrips(canonical: CanonicalRepository, places: readonly PlannedPlaceOption[],
   vehicle: PlannedVehicleEstimate | null, draft: unknown) {
   const state = parsePlanSemanticState(draft);
   if (state.targetMonth !== JULY_COMPOSER_MONTH) throw new TypeError("JULY_MOBILITY_MONTH_INVALID");
   if (!vehicle?.vehicleId) return { state, count: 0 };
   const [occurrences, legs] = await Promise.all([canonical.loadActivityOccurrences(range), readJulyCarLegs(canonical)]);
-  const confirmed = occurrences.filter(event => event.validationStatus === "Confirmé" && event.startDate === event.endDate
-    && activityTypes.has(String(event.activityId)));
-  const events = new Map(confirmed.map(event => [reconstructedId(state.targetMonth, `event-${event.lifeEventId}`), event]));
-  const details = new Map((await canonical.loadLifeEventRecords(confirmed.map(event => String(event.lifeEventId))))
-    .map(row => [row.life_event_id, row.primary_place_id]));
+  const details = await canonical.loadLifeEventRecords(julyCarEvents(occurrences).map(event => String(event.lifeEventId)));
   const placeNames = new Map(places.map(place => [place.placeId, place.name]));
-  const routeFor = (date: string, venue: string) => {
-    const day = legs.filter(leg => leg.date === date && leg.vehicleId === vehicle.vehicleId
-      && leg.origin.placeId && leg.destination.placeId
-      && placeNames.has(leg.origin.placeId) && placeNames.has(leg.destination.placeId));
-    const inbound = day.filter(leg => leg.destination.placeId === venue && leg.origin.placeId !== venue);
-    const outbound = day.filter(leg => leg.origin.placeId === venue && leg.destination.placeId !== venue);
-    if (inbound.length !== 1 || outbound.length !== 1) return null;
-    const [first] = inbound, [second] = outbound;
-    return [first!, second!] as const;
-  };
-  const candidates = state.contexts.flatMap(context => {
-    const event = events.get(context.contextOccurrenceId), venue = event && details.get(event.lifeEventId);
-    if (!event || typeof venue !== "string" || context.fields.plannedDate !== event.startDate) return [];
-    const pair = routeFor(event.startDate, venue);
-    return pair ? [{ context, pair, venue }] : [];
-  });
-  const claimed = new Map<string, number>();
-  for (const { pair } of candidates) for (const leg of pair) claimed.set(leg.legId, (claimed.get(leg.legId) ?? 0) + 1);
-  const byContext = new Map(candidates.map(candidate => [candidate.context.contextOccurrenceId, candidate]));
+  const vehicleLegs = legs.filter(leg => leg.vehicleId === vehicle.vehicleId && leg.origin.placeId && leg.destination.placeId
+    && placeNames.has(leg.origin.placeId) && placeNames.has(leg.destination.placeId));
+  const byContext = new Map(matchJulyCarTrips(occurrences, details, vehicleLegs)
+    .map(trip => [reconstructedId(state.targetMonth, `event-${trip.event.lifeEventId}`), trip]));
   let count = 0;
   const contexts = state.contexts.map(context => {
     const id = context.contextOccurrenceId, candidate = byContext.get(id);
-    if (!candidate || candidate.pair.some(leg => claimed.get(leg.legId) !== 1)
+    if (!candidate || context.fields.plannedDate !== candidate.event.startDate
       || context.status !== "ACTIVE" || context.parentContextOccurrenceId
       || !["family-visit", "activity"].includes(context.templateKey) || context.slotSelections.transport
       || context.fields.placeRef != null || state.preferences.anchors.includes(id) || state.preferences.flexibility[id] === "PRESERVE") return context;
-    const { pair: [inbound, outbound], venue } = candidate;
-    const start = String(inbound.origin.placeId), end = String(outbound.destination.placeId);
+    const [start, venue, end] = candidate.placeIds;
     const returnRequired = start === end;
     if (returnRequired && (context.templateKey !== "family-visit"
       || context.fields.endDate != null && context.fields.endDate !== context.fields.plannedDate)) return context;
     const place = (placeId: string) => ({ kind: "KNOWN" as const, placeId });
-    const stops = [start, venue, end].map((placeId, index): PlannedRouteStop => ({
+    const stops = candidate.placeIds.map((placeId, index): PlannedRouteStop => ({
       placeId, label: placeNames.get(placeId)!,
       endpointSource: index === (returnRequired ? 1 : 2) ? "ROOT_PLACE" : "DIRECT_PLACE",
       ...(index < 2 ? { distanceSource: "HISTORICAL_ROUTE",
