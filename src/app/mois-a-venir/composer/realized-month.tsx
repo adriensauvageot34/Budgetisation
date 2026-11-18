@@ -13,6 +13,7 @@ const sortOptions = [
   { id: "amount-desc", label: "Montant du plus grand au plus petit" },
   { id: "amount-asc", label: "Montant du plus petit au plus grand" },
   { id: "date", label: "Chronologique" },
+  { id: "category", label: "Par catégorie" },
 ] as const;
 type SortOrder = typeof sortOptions[number]["id"];
 const fullDate = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -86,14 +87,14 @@ function CardDate({ date, end }: { date: string; end?: string }) {
   </span>;
 }
 
-const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open, date, groceryPurchase }: {
-  card: RealizedCard; category?: RealizedCardGroup; open: (cardId: string) => void; date?: string; groceryPurchase?: boolean;
+const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open, date }: {
+  card: RealizedCard; category?: RealizedCardGroup; open: (cardId: string) => void; date?: string;
 }) {
   const badges = [...new Map(card.payments.flatMap(payment => payment.badge
     ? [[payment.badge.label, payment.badge] as const] : [])).values()];
   const linked = card.relatedPayments?.length;
   const visibleDate = card.date ?? date;
-  const caption = groceryPurchase ? null : cardCaption(card, null);
+  const caption = cardCaption(card, null);
   const location = card.eventPlace || (card.label === "Restaurant" && card.eventStatus ? "Lieu à confirmer" : undefined);
   return <button id={card.id} type="button" className={styles.card} data-realized-card={card.section}
     data-realized-category={category?.id} data-card-date={visibleDate}
@@ -133,31 +134,12 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open
   </button>;
 });
 
-function RealizedGroupTile({ group, count, open }: {
-  group: RealizedCardGroup; count: number; open: () => void;
-}) {
-  const unit = group.id === "groceries" ? count === 1 ? "achat" : "achats" : count === 1 ? "carte" : "cartes";
-  return <button type="button" className={`${styles.card} ${styles.groupCard}`} data-realized-group={group.id}
-    data-realized-category={group.id} onClick={open}>
-    <strong className={styles.cardTitle}>{group.label}</strong>
-    <span className={styles.cardSubtitle}>{count} {unit}</span>
-    <CardArtwork card={group} size={60} />
-    {group.amount !== null && <span className={styles.cardTotal}><strong>{money(group.amount)}</strong></span>}
-    <ChevronRight className={styles.chevron} size={16} aria-hidden="true" />
-  </button>;
-}
-
 function earliestDate(card: RealizedCard): string | undefined {
   return card.date ?? [
     ...card.payments.map(payment => payment.date),
     ...(card.occurrences ?? []).map(item => item.date),
     ...(card.relatedPayments ?? []).map(payment => payment.date),
   ].sort()[0];
-}
-
-function operationCard(parent: RealizedCard, payment: RealizedPayment): RealizedCard {
-  return { id: `purchase-${payment.id}`, section: parent.section, label: payment.label,
-    art: payment.art ?? parent.art, date: payment.date, payments: [payment], amount: payment.amount };
 }
 
 function RealizedDetail({ card, terms, open }: {
@@ -214,9 +196,7 @@ function RealizedDetail({ card, terms, open }: {
 export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   board: RealizedBoard; onEdit: (cardId: string) => void; editableIds: ReadonlySet<string>;
 }) {
-  const [mode, setMode] = useState<"all" | "grouped">("all");
   const [sortOrder, setSortOrder] = useState<SortOrder>("amount-desc");
-  const [groupId, setGroupId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<{ cardId: string; paymentId?: string; componentId?: string } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -224,39 +204,28 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   const closeButton = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const rail = useRef<HTMLDivElement>(null);
-  const grid = useRef<HTMLDivElement>(null);
-  const groupHeading = useRef<HTMLHeadingElement>(null);
-  const overviewQuery = useRef("");
-  const returnToGroup = useRef<string | null>(null);
   const [rows, setRows] = useState(1);
   const terms = searchText(query).split(" ").filter(Boolean);
-  const group = mode === "grouped" ? board.groups.find(item => item.id === groupId) : undefined;
-  const groupedOverview = mode === "grouped" && !group;
+  const byCategory = sortOrder === "category";
   const categoryByCard = useMemo(() => new Map(board.groups.flatMap(item =>
     item.cardIds.map(id => [id, item] as const))), [board.groups]);
-  const groceryCards = useMemo(() => {
-    const groceryParents = new Set(board.groups.find(item => item.id === "groceries")?.cardIds);
-    return board.cards.filter(card => groceryParents.has(card.id))
-      .flatMap(card => card.payments.map(payment => operationCard(card, payment)));
-  }, [board.cards, board.groups]);
-  const indexed = useMemo(() => [...board.cards, ...groceryCards].map(card => ({
-    card,
-    date: earliestDate(card),
-    lines: [
-      searchText(card.label, card.eventPlace, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
-      ...(card.carTrip ? [searchText(card.label, "trajet voiture essence", card.carTrip.route, card.carTrip.compactRoute)] : []),
-      ...card.payments.map(payment => searchText(card.label, paymentSearch(payment))),
-      ...(card.occurrences ?? []).map(occurrence => searchText(card.label, occurrence.label, occurrence.date, searchableDate(occurrence.date))),
-      ...(card.relatedPayments ?? []).map(payment => searchText(card.label, payment.label, payment.cardLabel,
-        payment.date, searchableDate(payment.date), payment.component?.amount)),
-    ],
-  })), [board.cards, groceryCards]);
-  const groceryIds = new Set(groceryCards.map(card => card.id));
-  const matched = indexed.filter(({ lines }) => !terms.length || lines.some(line => matches(line, terms)));
-  const matchingIds = new Set(matched.map(({ card }) => card.id));
-  const groupMembers = new Set(group?.cardIds);
-  const visible = matched.filter(({ card }) => group?.id === "groceries" ? groceryIds.has(card.id)
-    : !groceryIds.has(card.id) && (!group || groupMembers.has(card.id))).sort((a, b) => {
+  const indexed = useMemo(() => board.cards.map(card => {
+    const category = categoryByCard.get(card.id);
+    return {
+      card, category,
+      date: earliestDate(card),
+      lines: [
+        searchText(card.label, card.eventPlace, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
+        searchText(category?.label, category?.shortLabel),
+        ...(card.carTrip ? [searchText(card.label, "trajet voiture essence", card.carTrip.route, card.carTrip.compactRoute)] : []),
+        ...card.payments.map(payment => searchText(card.label, paymentSearch(payment))),
+        ...(card.occurrences ?? []).map(occurrence => searchText(card.label, occurrence.label, occurrence.date, searchableDate(occurrence.date))),
+        ...(card.relatedPayments ?? []).map(payment => searchText(card.label, payment.label, payment.cardLabel,
+          payment.date, searchableDate(payment.date), payment.component?.amount)),
+      ],
+    };
+  }), [board.cards, categoryByCard]);
+  const visible = indexed.filter(({ lines }) => !terms.length || lines.some(line => matches(line, terms))).sort((a, b) => {
       const byDate = () => (a.date ?? "9999").localeCompare(b.date ?? "9999") || a.card.label.localeCompare(b.card.label, "fr")
         || a.card.id.localeCompare(b.card.id);
       if (sortOrder === "date") return byDate();
@@ -265,34 +234,32 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
       const difference = Math.abs(Number(left)) - Math.abs(Number(right));
       return (sortOrder === "amount-asc" ? difference : -difference) || byDate();
     });
-  const visibleGroups = groupedOverview ? board.groups.filter(item => !terms.length || matches(searchText(item.label), terms)
-    || (item.id === "groceries" ? groceryCards.some(card => matchingIds.has(card.id)) : item.cardIds.some(id => matchingIds.has(id)))) : [];
-  const visibleCount = groupedOverview ? visibleGroups.length : visible.length;
+  const visibleCategories = byCategory ? board.groups.flatMap(category => {
+    const entries = visible.filter(entry => entry.category?.id === category.id);
+    return entries.length ? [{ category, entries }] : [];
+  }) : [];
+  const visibleCount = visible.length;
   const selected = indexed.find(({ card }) => card.id === selection?.cardId)?.card;
-  const visibleKeys = (groupedOverview ? visibleGroups.map(item => item.id) : visible.map(({ card }) => card.id)).join("|");
+  const visibleKeys = visible.map(({ card }) => card.id).join("|");
 
   useEffect(() => {
-    const node = rail.current, gridNode = grid.current;
-    if (!node || !gridNode?.children.length) return;
-    const cards = [...gridNode.children];
+    const node = rail.current;
+    if (!node) return;
+    const grids = [...node.querySelectorAll<HTMLElement>(`.${styles.grid}`)];
+    if (!grids.length) return;
+    const cards = grids.flatMap(grid => [...grid.children]);
     const observer = new ResizeObserver(() => {
       const railStyle = getComputedStyle(node);
       const available = node.clientHeight - parseFloat(railStyle.paddingTop) - parseFloat(railStyle.paddingBottom);
-      const card = Math.max(...cards.map(card => card.getBoundingClientRect().height));
-      const gap = parseFloat(getComputedStyle(gridNode).rowGap);
-      setRows(Math.max(1, Math.floor((available + gap - 1) / (card + gap))));
+      const tallestCard = Math.max(...cards.map(card => card.getBoundingClientRect().height));
+      const categoryInset = byCategory ? Math.max(...grids.map(grid =>
+        (grid.parentElement?.offsetHeight ?? grid.offsetHeight) - grid.offsetHeight)) : 0;
+      const gap = parseFloat(getComputedStyle(grids[0]!).rowGap);
+      setRows(Math.max(1, Math.floor((available - categoryInset + gap - 1) / (tallestCard + gap))));
     });
     for (const element of [node, ...cards]) observer.observe(element, { box: "border-box" });
     return () => observer.disconnect();
-  }, [visibleKeys, groupedOverview]);
-
-  useEffect(() => {
-    if (groupId) groupHeading.current?.focus({ preventScroll: true });
-    else if (returnToGroup.current) {
-      grid.current?.querySelector<HTMLElement>(`[data-realized-group="${CSS.escape(returnToGroup.current)}"]`)?.focus();
-      returnToGroup.current = null;
-    }
-  }, [groupId]);
+  }, [visibleKeys, byCategory]);
 
   function scrollRail(direction: number) {
     const node = rail.current;
@@ -302,25 +269,6 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   }
   function startRail() {
     if (rail.current) rail.current.scrollLeft = 0;
-  }
-  function changeMode(value: typeof mode) {
-    if (value === mode) return;
-    if (groupId) setQuery(overviewQuery.current);
-    setGroupId(null);
-    setMode(value);
-    startRail();
-  }
-  function showGroup(item: RealizedCardGroup) {
-    overviewQuery.current = query;
-    if (matches(searchText(item.label), terms)) setQuery("");
-    setGroupId(item.id);
-    startRail();
-  }
-  function leaveGroup() {
-    returnToGroup.current = groupId;
-    setGroupId(null);
-    setQuery(overviewQuery.current);
-    startRail();
   }
   function filterQuery(value: string) {
     setQuery(value);
@@ -347,6 +295,11 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   const open = useCallback((cardId: string, paymentId?: string, componentId?: string) => {
     setSelection({ cardId, paymentId, componentId });
   }, []);
+  const renderGrid = (entries: typeof visible) =>
+    <div className={styles.grid} style={{ "--rail-rows": Math.min(rows, entries.length) } as CSSProperties}>
+      {entries.map(({ card, category, date }) => <RealizedMonthCard key={card.id} card={card} category={category}
+        date={sortOrder === "date" ? date : undefined} open={open} />)}
+    </div>;
 
   return <div className={styles.board} data-realized-month={board.month}>
     <header className={styles.hero}>
@@ -359,14 +312,10 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
       <span>{board.eventCount} événements documentés</span>
     </header>
     <div className={styles.toolbar}>
-      <nav className={styles.views} aria-label="Présentation des cartes réalisées">
-        <button type="button" aria-pressed={mode === "all"} onClick={() => changeMode("all")}>Toutes les cartes</button>
-        <button type="button" aria-pressed={mode === "grouped"} onClick={() => changeMode("grouped")}>Regroupé</button>
-      </nav>
-      {!groupedOverview && <select className={styles.sort} aria-label="Trier les cartes" value={sortOrder}
+      <select className={styles.sort} aria-label="Trier les cartes" value={sortOrder}
         onChange={event => { setSortOrder(event.target.value as SortOrder); startRail(); }}>
         {sortOptions.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
-      </select>}
+      </select>
       <div className={styles.search} role="search" aria-label="Recherche dans juillet">
         <Search size={16} aria-hidden="true" />
         <input ref={search} type="search" aria-label="Rechercher une carte ou une opération" placeholder="Marchand, événement, date…" value={query}
@@ -377,31 +326,26 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
           <X size={16} aria-hidden="true" />
         </button>}
       </div>
-      <p className={styles.resultCount} role="status">{visibleCount} {groupedOverview
-        ? visibleCount === 1 ? "catégorie" : "catégories" : visibleCount === 1 ? "carte" : "cartes"}</p>
+      <p className={styles.resultCount} role="status">{visibleCount} {visibleCount === 1 ? "carte" : "cartes"}</p>
       <div className={styles.railArrows}>
         <button type="button" aria-label="Défiler à gauche" onClick={() => scrollRail(-1)}><ArrowLeft size={16} aria-hidden="true" /></button>
         <button type="button" aria-label="Défiler à droite" onClick={() => scrollRail(1)}><ArrowRight size={16} aria-hidden="true" /></button>
       </div>
     </div>
-    {group && <div className={styles.groupHeading}>
-      <button type="button" onClick={leaveGroup}><ArrowLeft size={15} aria-hidden="true" /> Catégories</button>
-      <h2 ref={groupHeading} tabIndex={-1}>{group.label}</h2>
-      {group.amount !== null && <span>{money(group.amount)}</span>}
-    </div>}
     <div ref={rail} className={styles.rail}
       tabIndex={0} aria-label="Cartes réalisées, défilement horizontal" data-realized-rail
       onKeyDown={event => {
         if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault(); scrollRail(event.key === "ArrowRight" ? 1 : -1);
       }}>
-      {visibleCount ? <div ref={grid} className={styles.grid} style={{ "--rail-rows": Math.min(rows, visibleCount) } as CSSProperties}>
-        {groupedOverview ? visibleGroups.map(item => <RealizedGroupTile key={item.id} group={item}
-          count={item.id === "groceries" ? groceryCards.length : item.cardIds.length} open={() => showGroup(item)} />)
-          : visible.map(({ card, date }) => <RealizedMonthCard key={card.id} card={card} date={sortOrder === "date" ? date : undefined}
-            category={group ?? categoryByCard.get(card.id)} groceryPurchase={group?.id === "groceries"} open={open} />)}
-      </div> : <p className={styles.empty}>{board.cards.length ? "Aucune carte ne correspond à cette recherche."
+      {visibleCount === 0 && <p className={styles.empty}>{board.cards.length ? "Aucune carte ne correspond à cette recherche."
         : "Aucune opération ni événement importé pour ce mois."}</p>}
+      {visibleCount > 0 && !byCategory && renderGrid(visible)}
+      {visibleCategories.map(({ category, entries }) => <section key={category.id} className={styles.category}
+        data-realized-category={category.id} aria-labelledby={`realized-category-${category.id}`}>
+        <h2 id={`realized-category-${category.id}`}>{category.label}</h2>
+        {renderGrid(entries)}
+      </section>)}
     </div>
     <dialog ref={dialog} className={styles.dialog} aria-labelledby="realized-dialog-title"
       onClose={() => setSelection(null)} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>

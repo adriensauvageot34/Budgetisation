@@ -68,8 +68,6 @@ export type RealizedCardGroup = Readonly<{
   id: RealizedGroupId;
   label: string;
   shortLabel: string;
-  art: Art;
-  amount: string | null;
   cardIds: readonly string[];
 }>;
 export type RealizedBoard = Readonly<{
@@ -97,14 +95,14 @@ const home = { iconKey: "home" };
 
 const groceriesCardId = "daily-alimentation__courses_alimentaires";
 const groupDefinitions = {
-  fixed: { label: "Charges fixes", shortLabel: "Charges fixes", art: home },
-  groceries: { label: "Courses alimentaires", shortLabel: "Courses", art: groceries },
-  restaurants: { label: "Restaurants et cafés", shortLabel: "Restauration", art: restaurant },
-  activities: { label: "Activités et sorties", shortLabel: "Activités", art: activity },
-  transport: { label: "Mobilité", shortLabel: "Mobilité", art: transport },
-  daily: { label: "Vie courante", shortLabel: "Vie courante", art: purchase },
-  flows: { label: "Revenus et mouvements", shortLabel: "Mouvements", art: bank },
-} satisfies Record<string, { label: string; shortLabel: string; art: Art }>;
+  fixed: { label: "Charges fixes", shortLabel: "Charges fixes" },
+  groceries: { label: "Courses alimentaires", shortLabel: "Courses" },
+  restaurants: { label: "Restaurants et cafés", shortLabel: "Restauration" },
+  activities: { label: "Activités et sorties", shortLabel: "Activités" },
+  transport: { label: "Mobilité", shortLabel: "Mobilité" },
+  daily: { label: "Vie courante", shortLabel: "Vie courante" },
+  flows: { label: "Revenus et mouvements", shortLabel: "Mouvements" },
+} satisfies Record<string, { label: string; shortLabel: string }>;
 type RealizedGroupId = keyof typeof groupDefinitions;
 
 function realizedGroupId(card: RealizedCard): RealizedGroupId {
@@ -118,19 +116,16 @@ function realizedGroupId(card: RealizedCard): RealizedGroupId {
 }
 
 function realizedGroups(cards: readonly RealizedCard[]): RealizedCardGroup[] {
-  const members = new Map<RealizedGroupId, RealizedCard[]>();
+  const members = new Map<RealizedGroupId, string[]>();
   for (const card of cards) {
     const id = realizedGroupId(card);
     const current = members.get(id);
-    if (current) current.push(card);
-    else members.set(id, [card]);
+    if (current) current.push(card.id);
+    else members.set(id, [card.id]);
   }
   return (Object.keys(groupDefinitions) as RealizedGroupId[]).flatMap(id => {
-    const entries = members.get(id);
-    if (!entries?.length) return [];
-    const payments = entries.flatMap(card => card.payments);
-    return [{ ...groupDefinitions[id], id, amount: id !== "flows" && payments.length ? realizedBankSum(payments) : null,
-      cardIds: entries.map(card => card.id) }];
+    const cardIds = members.get(id);
+    return cardIds?.length ? [{ ...groupDefinitions[id], id, cardIds }] : [];
   });
 }
 
