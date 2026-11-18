@@ -26,6 +26,7 @@ import { reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
 import { RealizedComposerMonth } from "./realized-month";
 import { ReconstructedCards } from "./reconstructed-cards";
+import { proposeJulyCarTrips } from "./actions";
 import { composerContextProgress, ContextProgress } from "./context-progress";
 import { CommerceLibraryProvider } from "./commerce-library";
 import { PersonalizationProvider } from "./personalization";
@@ -131,6 +132,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   });
   const [model, setModel] = useState(recovered?.model ?? initialModel), current = useRef(model);
   const [draftState, setDraftState] = useState(recovered?.frame.draft ?? initialModel.semanticState), localDraft = useRef(draftState);
+  const [importingTrips, setImportingTrips] = useState(false);
+  const [tripStatus, setTripStatus] = useState<string | null>(null);
   const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(recovered ? "STALE" : initialModel.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH");
   const snapshotIntent = useRef<number | null>(null);
   const snapshotCommit = useRef<{ initialMs: number; statusMs: number } | null>(null);
@@ -279,6 +282,25 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   },[past.length,future.length,busy]);
   const motionTimer = useRef<ReturnType<typeof setTimeout> | null>(null), nextMotionTarget = useRef<string | null>(null);
   const frameNow = (): ComposerLocalFrame => ({ draft: localDraft.current, relations: relationRef.current });
+  async function importJulyTrips() {
+    const before = localDraft.current;
+    setImportingTrips(true);
+    setTripStatus(null);
+    try {
+      const { state, count } = await proposeJulyCarTrips(before);
+      if (semanticStateDigest(before) !== semanticStateDigest(localDraft.current) || inlineEdits.registry.count()) {
+        setTripStatus("Le brouillon a changé. Relancez l’ajout des trajets.");
+      } else if (!count) {
+        setTripStatus("Aucun nouveau trajet documenté à ajouter.");
+      } else if (stage({ kind: "READ" }, "push", state)) {
+        setTripStatus(`${count} trajet${count > 1 ? "s" : ""} ajouté${count > 1 ? "s" : ""}.`);
+      }
+    } catch {
+      setTripStatus("L’ajout des trajets a échoué. Réessayez depuis Options.");
+    } finally {
+      setImportingTrips(false);
+    }
+  }
   const transitionAllowed = (next: PlanSemanticStateV1) => {
     try { if (relationSessionRef.current) {
       if (!durable.snapshot?.active) throw new Error("N1_DRAFT_ACCESS_DENIED");
@@ -1250,6 +1272,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
                 {!!model.presentation.unresolvedCount && <button data-show-unresolved onClick={showUnresolved}>Afficher les éléments</button>}</div>}
             </div></>}
         <AtomicPopover utility label="Options du mois" state="ACTIONS" focus={() => {}} icon={<><MoreHorizontal size={17} /><span>Options</span></>}>{close => <div className={styles.popoverActions} data-workshop-options>
+          {reconstruction && <button type="button" data-july-import-trips disabled={busy || importingTrips || Boolean(relationSession)}
+            onClick={() => { close(); void importJulyTrips(); }}>Ajouter les trajets documentés</button>}
           {rootRelationsAvailable && <button data-root-organize disabled={busy || !!pendingApply || !!comparison || !relationSession && (!durable.snapshot?.active || durable.status === "SAVING" || !!durable.snapshot?.baseStale)} onClick={() => { close(); openRelations(); }}>Organiser une sortie</button>}
           {!reconstruction && !comparison && <button data-compare disabled={relationSession || busy || previewStatus !== "FRESH"} onClick={() => { close(); compare(); }}><ArrowLeftRight size={14} /> Comparer temporairement</button>}
           <button data-preview disabled={busy} onClick={() => { close(); void run({ kind: "READ" }, "none"); }}>{previewStatus === "FAILED" || previewStatus === "STALE" ? "Réessayer la simulation" : "Relancer la simulation"}</button>
@@ -1270,6 +1294,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
           Recharger avec mon brouillon sauvegardé</button>}
       </div>}</header>
+    {tripStatus && <p className={styles.draftRecovery} role="status" data-july-trip-status>{tripStatus}</p>}
     {saveIssue && <section className={styles.draftRecovery} aria-label="Récupération du brouillon">
       <p data-save-message role="status">{durable.message}</p>
       {durable.status === "CONFLICT" ? <>

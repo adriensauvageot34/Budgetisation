@@ -14,6 +14,7 @@ import type { PlannerKnowledge } from "./diagnostics";
 
 export type ComposerMobilitySummary = Readonly<{ contextOccurrenceId: string; journeyId: string; ownerIntentId?: string; requestDigest: string;
   status: "RESOLVED" | "PARTIAL" | "UNKNOWN"; distanceKm: string | null; economicFuel: string | null; durationSeconds?:number|null; fuelLiters?:string|null;
+  fuelPricePerLiter?: string;
   toll: string | null; parking: string | null; fare: string | null; cashTransport: string | null;
   routeSource: string | null; fuelSource: string | null; tollSource: string | null; vehicleLabel: string | null;
   methodRef: string | null; timeBasis: string | null; fallbacks: readonly string[] }>;

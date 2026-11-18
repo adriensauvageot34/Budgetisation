@@ -17,6 +17,7 @@ export function mobilitySummaries(journeys: readonly PhysicalJourneyRequirement[
     return { contextOccurrenceId: journey.ownerContextOccurrenceId, journeyId: journey.physicalJourneyRequirementId, ...(journey.ownerIntentId?{ownerIntentId:journey.ownerIntentId}:{}),
       requestDigest: price?.requestDigest ?? "", status: price?.status ?? "UNKNOWN", distanceKm: snapshot?.route.distanceKm ?? null,
       ...(snapshot?{durationSeconds:snapshot.route.durationSeconds,fuelLiters:snapshot.route.liters}:{}),
+      ...(snapshot?.fuelPrice ? { fuelPricePerLiter: snapshot.fuelPrice.pricePerLiter } : {}),
       economicFuel: price?.economicFuel ?? null, toll: price?.toll ?? null, parking: price?.parking ?? null, fare: price?.fare ?? null,
       cashTransport: price?.cashTransport ?? null, routeSource: snapshot?.route.provider ?? null, fuelSource: snapshot?.fuelPrice?.source ?? null,
       tollSource: evidence?.tollDecision?.kind === "MANUAL" ? "MANUAL" : evidence?.tollDecision?.kind === "QUOTE" ? "QUOTE"

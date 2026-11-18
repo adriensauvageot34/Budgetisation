@@ -13,9 +13,11 @@ import type { MonthForecastSnapshot } from "@/server/phase2/month-forecast-snaps
 import type { PlannedExpense, PlannedExpenseScenarioEntry, FundingAllocation } from "@/server/phase2/planned-expenses";
 import type { PlanProjectionV1 } from "./projection-contract";
 import type { NeedOccurrence } from "./renewal-contract";
+import type { MobilityLegFact } from "@/analytics/facts";
 
 export type PlanningWorldFacts = Readonly<{ baseline: PlanningBaselineV1; forecast: MonthForecastSnapshot;
   reconstruction?: true;
+  reconstructionLegs?: readonly MobilityLegFact[];
   monthInputs: MonthInputs; externalIntents: readonly PlannedExpense[]; asOfDate: string;
   costQuotes: Readonly<Record<string, Readonly<{ unitAmount: string; evidenceRef: string; modelVersion: string; observedAt: string }>>>;
   modelVersions: Readonly<Record<string, string>>;

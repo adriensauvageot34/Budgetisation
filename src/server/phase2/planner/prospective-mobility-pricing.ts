@@ -16,6 +16,7 @@ import { resolveJourneyRequirements } from "./journey-resolver";
 import type { HistoricalControlAdmission } from "./historical-control-admission";
 import {sameVenuePlace} from "@/domain/phase2/planner/night-out-venue";
 import {parseRouteEndpointBindings} from "@/domain/phase2/planner/route-endpoint";
+import { julyCarSnapshot } from "./july-car-trips";
 
 export const PROSPECTIVE_MOBILITY_PRICING_VERSION = "planner-existing-mobility-pricing@v1";
 export type MobilityProviders = Parameters<typeof estimatePlannedCar>[2];
@@ -76,6 +77,18 @@ export async function preparePlanningMobility(world: PlanningWorldFacts, state: 
       if (journey.mode === "CAR" && world.mobilityFacts?.vehicle
         && (!intent.route || intent.route.vehicleRef?.vehicleId === world.mobilityFacts.vehicle.vehicleId)) {
         const rawFacts = world.mobilityFacts, vehicle = rawFacts.vehicle!;
+        const reconstructed = world.reconstructionLegs && julyCarSnapshot(journey, intent, world.reconstructionLegs, vehicle);
+        if (reconstructed) {
+          const toll = intent.route?.toll ? declaredCost(intent.route.toll, world) : null;
+          const parking = declaredCost(intent.pricing?.parking ?? { kind: "UNKNOWN" }, world);
+          const cashTransport = parking === null ? null : transportTotals(reconstructed.fuelEconomicCost, toll, parking).cash;
+          prices[journey.physicalJourneyRequirementId] = { journeyId: journey.physicalJourneyRequirementId,
+            requestDigest: journeyPricingDigest(journey, intent, world), economicFuel: reconstructed.fuelEconomicCost,
+            cashTransport, fare: null, toll, parking, status: cashTransport === null ? "PARTIAL" : "RESOLVED",
+            evidence: { owner: "july-certified-car-legs", ...(intent.route?.toll ? { tollDecision: intent.route.toll } : {}) },
+            snapshot: stableMobilityEvidence(reconstructed) };
+          continue;
+        }
         const facts = { ...rawFacts, history: rawFacts.history.filter(leg => leg.date <= world.baseline.knowledgeCutoff.slice(0, 10)),
           vehicle: vehicle.fuelPriceObservedAt && Date.parse(vehicle.fuelPriceObservedAt) > cutoff ? { ...vehicle, fuelPricePerLiter: "0" } : vehicle };
         const anchor = journey.stops.findIndex((ref, index) => index > 0 && plannerDigest(ref) === plannerDigest(intent.destination));

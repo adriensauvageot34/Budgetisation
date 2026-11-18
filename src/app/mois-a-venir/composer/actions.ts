@@ -4,6 +4,13 @@ import type { ComposerRequest } from "@/domain/phase2/planner/composer-ui-contra
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { handleComposerRequest } from "@/server/phase2/planner/composer-service";
 import { observeSnapshot, snapshotBenchmarkReadOnly } from "@/server/phase2/planner/snapshot-observation";
+import { addJulyCarTrips } from "@/server/phase2/planner/july-car-trips";
+
+export async function proposeJulyCarTrips(draft: unknown) {
+  const { canonical, deps, householdId } = await authorizedPlanner();
+  const options = await deps.readMobilityOptions!(householdId);
+  return addJulyCarTrips(canonical, options.places, options.vehicle, draft);
+}
 export async function composerInteraction(request: ComposerRequest) {
   if (snapshotBenchmarkReadOnly() && (request.kind === "APPLY" || request.kind === "CHECK_APPLY")) throw new TypeError("SNAP_BENCHMARK_APPLY_REFUSED");
   const observed = await observeSnapshot(async () => {
