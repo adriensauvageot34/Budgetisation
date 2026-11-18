@@ -63,14 +63,21 @@ export type RealizedCard = Readonly<CardGroup & {
   amount: string | null;
   transferAmounts?: { incoming: string; outgoing: string };
 }>;
+export type RealizedCardGroup = Readonly<{
+  id: string;
+  label: string;
+  art: Art;
+  amount: string | null;
+  cardIds: readonly string[];
+}>;
 export type RealizedBoard = Readonly<{
   month: YearMonth;
   totals: Readonly<Record<Flow, { amount: string; count: number }>>;
   operationCount: number;
   eventCount: number;
   net: string;
-  sectionAmounts: Readonly<Record<Exclude<Section, "flows">, string>>;
   cards: readonly RealizedCard[];
+  groups: readonly RealizedCardGroup[];
 }>;
 
 const purchase = { templateKey: "purchase", iconKey: "activity" };
@@ -85,6 +92,45 @@ const beauty = { iconKey: "beauty" };
 const gift = { templateKey: "gift", iconKey: "gift" };
 const bank = { assetKey: "other:fee", iconKey: "savings" };
 const home = { iconKey: "home" };
+
+const groceriesCardId = "daily-alimentation__courses_alimentaires";
+const groupDefinitions = {
+  fixed: { label: "Charges fixes", art: home },
+  groceries: { label: "Courses alimentaires", art: groceries },
+  restaurants: { label: "Restaurants et cafés", art: restaurant },
+  activities: { label: "Activités et sorties", art: activity },
+  transport: { label: "Mobilité", art: transport },
+  daily: { label: "Vie courante", art: purchase },
+  flows: { label: "Revenus et mouvements", art: bank },
+} satisfies Record<string, { label: string; art: Art }>;
+type RealizedGroupId = keyof typeof groupDefinitions;
+
+function realizedGroupId(card: RealizedCard): RealizedGroupId {
+  if (card.section === "fixed" || card.section === "flows") return card.section;
+  if (card.id === groceriesCardId) return "groceries";
+  if (["restaurant", "fast-food", "delivery"].includes(card.art.templateKey ?? "")
+    || card.art.assetKey === coffee.assetKey || card.art.assetKey === bar.assetKey
+    || card.id.startsWith("daily-restauration")) return "restaurants";
+  if (card.art.assetKey === transport.assetKey || card.art.iconKey === "car") return "transport";
+  return card.section === "events" || card.art.templateKey === "activity" ? "activities" : "daily";
+}
+
+function realizedGroups(cards: readonly RealizedCard[]): RealizedCardGroup[] {
+  const members = new Map<RealizedGroupId, RealizedCard[]>();
+  for (const card of cards) {
+    const id = realizedGroupId(card);
+    const current = members.get(id);
+    if (current) current.push(card);
+    else members.set(id, [card]);
+  }
+  return (Object.keys(groupDefinitions) as RealizedGroupId[]).flatMap(id => {
+    const entries = members.get(id);
+    if (!entries?.length) return [];
+    const payments = entries.flatMap(card => card.payments);
+    return [{ ...groupDefinitions[id], id, amount: id !== "flows" && payments.length ? realizedBankSum(payments) : null,
+      cardIds: entries.map(card => card.id) }];
+  });
+}
 
 const categoryArt: Readonly<Record<string, Art>> = {
   alimentation: groceries,
@@ -338,15 +384,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const items = payments.filter(payment => payment.flow === flow);
     return [flow, { amount: realizedBankSum(items), count: items.length }];
   })) as RealizedBoard["totals"];
-  return {
-    month, totals, operationCount: payments.length, eventCount: occurrences.length,
-    net: new Big(totals.income.amount).plus(totals.expense.amount).plus(totals.refund.amount).plus(totals.other.amount).toFixed(2),
-    sectionAmounts: {
-      fixed: realizedBankSum([...cards.values()].filter(card => card.section === "fixed").flatMap(card => card.payments)),
-      daily: realizedBankSum([...cards.values()].filter(card => card.section === "daily").flatMap(card => card.payments)),
-      events: realizedBankSum([...cards.values()].filter(card => card.section === "events").flatMap(card => card.payments)),
-    },
-    cards: [...cards.values()].map(card => ({
+  const realizedCards: RealizedCard[] = [...cards.values()].map(card => ({
       ...card,
       amount: card.payments.length ? realizedBankSum(card.payments) : null,
       ...(card.payments[0]?.flow === "transfer" ? {
@@ -355,6 +393,11 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
           outgoing: realizedBankSum(card.payments.filter(payment => new Big(payment.amount).lt(0))),
         },
       } : {}),
-    })),
+    }));
+  return {
+    month, totals, operationCount: payments.length, eventCount: occurrences.length,
+    net: new Big(totals.income.amount).plus(totals.expense.amount).plus(totals.refund.amount).plus(totals.other.amount).toFixed(2),
+    cards: realizedCards,
+    groups: realizedGroups(realizedCards),
   };
 }
