@@ -8,6 +8,7 @@
   flex-direction: column;
   gap: 8px;
   min-height: 0;
+  min-width: 0;
 }
 
 .sections button {
@@ -95,7 +96,7 @@
   flex: 1;
   min-height: 0;
   gap: 14px;
-  overflow: auto hidden;
+  overflow: auto;
   overscroll-behavior-x: contain;
   padding: 4px 4px 8px;
   scrollbar-color: #c8b1da #f9f3fc;
@@ -106,7 +107,13 @@
 .sectionHeading { display: flex; align-items: baseline; gap: 4px 12px; min-height: 30px; margin: 0; }
 .section h2 { margin: 0; font-size: 1.15rem; font-weight: 750; }
 .sectionHeading > span { color: var(--muted); font-size: .83rem; font-variant-numeric: tabular-nums; }
-.grid { display: grid; grid-auto-flow: column; grid-auto-columns: min(236px, calc(100vw - 55px)); grid-template-rows: repeat(var(--rail-rows, 1), 108px); gap: 8px; }
+.grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(236px, calc(100vw - 55px));
+  grid-template-rows: repeat(var(--rail-rows, 1), max-content);
+  gap: 8px;
+}
 .card {
   min-width: 0;
   border: 1px solid var(--line);
@@ -114,10 +121,16 @@
   background: #fcf9fef2;
   box-shadow: 0 3px 8px #5c427314;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 72px 16px;
-  gap: 4px 6px;
+  grid-template-columns: minmax(0, 1fr) 60px 16px;
+  grid-template-areas:
+    "title title chevron"
+    "subtitle visual chevron"
+    "badges visual chevron"
+    "total visual chevron";
+  grid-template-rows: auto auto auto 1fr;
+  gap: 2px 6px;
   align-items: center;
-  min-height: 0;
+  min-height: 6.75rem;
   padding: 7px 10px;
   color: inherit;
   cursor: pointer;
@@ -125,17 +138,27 @@
 }
 .card:hover { background-color: #f6effa; border-color: #c6aed9; }
 .board button:focus-visible, .board summary:focus-visible { outline: 2px solid #76539c; outline-offset: 2px; }
-.cardIdentity { align-self: start; min-width: 0; }
-.cardIdentity strong { display: block; color: var(--ink); font-size: .98rem; font-weight: 750; overflow-wrap: anywhere; }
-.cardIdentity > strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-.cardSubtitle, .cardTotal small { display: block; color: var(--muted); font-size: .75rem; }
+.cardTitle {
+  grid-area: title;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: .98rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+.cardSubtitle { grid-area: subtitle; }
+.cardSubtitle, .cardTotal small { display: block; color: var(--muted); font-size: .75rem; line-height: 1.3; overflow-wrap: anywhere; }
 .cardVisual { display: grid; place-items: center; flex: none; }
-.card > .cardVisual { grid-area: 1 / 2 / 3 / 3; }
-.cardTotal { grid-column: 1; }
-.cardTotal strong { display: block; font-size: 1rem; }
-.chevron { grid-area: 1 / 3 / 3 / 4; color: #705887; }
-.badges { display: flex; align-items: center; gap: 4px; margin-top: 5px; min-height: 24px; }
-.badges img { width: 24px; height: 24px; object-fit: contain; border-radius: 50%; }
+.card > .cardVisual { grid-area: visual; width: 60px; height: 60px; }
+.cardTotal { grid-area: total; align-self: end; min-width: 0; }
+.cardTotal strong { display: block; font-size: 1rem; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.chevron { grid-area: chevron; color: #705887; }
+.badges { grid-area: badges; display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
+.badges img { flex: none; width: 21px; height: 21px; object-fit: contain; border-radius: 50%; }
 .badges span { font-size: .72rem; color: var(--muted); }
 .observedBadges { display: inline-flex; align-items: center; gap: 3px; }
 .observedBadges img { width: 21px; height: 21px; object-fit: contain; border-radius: 50%; }
@@ -174,7 +197,7 @@
 .panelHeader p { margin: 3px 0; font-size: .8rem; color: var(--muted); }
 .panelHeader strong { font-variant-numeric: tabular-nums; }
 .close { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 9px; background: #fffa; color: #624681; }
-.panelBody { flex: 1; overflow: auto; overscroll-behavior: contain; display: grid; align-content: start; gap: 16px; padding: 15px; }
+.panelBody { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 16px; padding: 15px; overflow-wrap: anywhere; }
 .panelBody h3 { margin: 0 0 7px; font-size: .93rem; font-weight: 720; }
 .panelBody h3 span { color: var(--muted); margin-left: 4px; font-size: .8rem; font-weight: 500; }
 .panelBody p { margin: 0; color: var(--muted); font-size: .86rem; }
@@ -183,6 +206,7 @@
 .related { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
 .related button { display: flex; align-items: center; width: 100%; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; text-align: left; }
 .related button > span { flex: 1; min-width: 0; }
+.related button > svg { flex: none; }
 .related button:hover { background: #f6effa; }
 .related small { display: block; color: var(--muted); }
 .elements, .occurrences {
@@ -203,7 +227,8 @@
   background: #fff;
   font-size: .84rem;
 }
-.occurrences time { white-space: nowrap; color: var(--muted); font-size: .76rem; }
+.occurrences li { flex-wrap: wrap; }
+.occurrences time { color: var(--muted); font-size: .76rem; }
 .occurrences small { margin-left: auto; color: var(--muted); }
 .element[data-highlighted="true"], .element:focus { border-color: #9270b4; background: #f9f1ff; }
 .elementVisual { flex: 0 0 auto; }
@@ -212,6 +237,7 @@
 .element:has(.components) { flex-wrap: wrap; }
 .components { flex: 1 0 100%; margin: 0; padding-top: 4px; border-top: 1px solid var(--line); color: var(--muted); font-size: .75rem; }
 .components > div { display: flex; justify-content: space-between; gap: 6px; }
+.components dt { min-width: 0; }
 .components dd { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .components > div:focus { outline: 2px solid #9270b4; outline-offset: 2px; background: #f9f1ff; }
 .elementIdentity { flex: 1; min-width: 0; display: grid; overflow-wrap: anywhere; }

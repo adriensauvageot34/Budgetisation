@@ -79,18 +79,17 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, open }: { card
   const badges = [...new Map(card.payments.flatMap(payment => payment.badge
     ? [[payment.badge.label, payment.badge] as const] : [])).values()];
   const linked = card.relatedPayments?.length;
+  const caption = cardCaption(card);
   return <button id={card.id} type="button" className={styles.card} data-realized-card={card.section}
     data-operation-count={card.payments.length} data-card-amount={card.amount ?? undefined}
     aria-haspopup="dialog" onClick={() => open(card.id)}>
-    <span className={styles.cardIdentity}>
-      <strong>{card.label}</strong>
-      <span className={styles.cardSubtitle}>{cardCaption(card)}</span>
-      {badges.length > 0 && <span className={styles.badges}>
-        {badges.slice(0, 4).map(badge => <RealizedBadge key={badge.label} {...badge} named />)}
-        {badges.length > 4 && <span title={badges.slice(4).map(badge => badge.label).join(", ")}>+${badges.length - 4}</span>}
-      </span>}
-    </span>
-    <CardArtwork card={card} size={72} />
+    <strong className={styles.cardTitle} title={card.label}>{card.label}</strong>
+    {caption && <span className={styles.cardSubtitle}>{caption}</span>}
+    {badges.length > 0 && <span className={styles.badges}>
+      {badges.slice(0, 4).map(badge => <RealizedBadge key={badge.label} {...badge} named />)}
+      {badges.length > 4 && <span title={badges.slice(4).map(badge => badge.label).join(", ")}>+${badges.length - 4}</span>}
+    </span>}
+    <CardArtwork card={card} size={60} />
     <span className={styles.cardTotal}>
       {card.amount !== null ? <><strong>{money(card.amount)}</strong>
         {card.transferAmounts && <small>Solde des transferts</small>}
@@ -172,11 +171,24 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   const selected = board.cards.find(card => card.id === selection?.cardId);
 
   useEffect(() => {
-    if (!rail.current) return;
-    const observer = new ResizeObserver(entries => setRows(Math.max(1, Math.floor((entries[0]!.contentRect.height - 34) / 116))));
-    observer.observe(rail.current);
+    const node = rail.current;
+    if (!node) return;
+    const grids = [...node.querySelectorAll<HTMLElement>(`.${styles.grid}`)];
+    if (!grids.length) return;
+    const headings = grids.map(grid => grid.previousElementSibling!);
+    const cards = grids.flatMap(grid => [...grid.children]);
+    const observer = new ResizeObserver(() => {
+      const railStyle = getComputedStyle(node);
+      const available = node.clientHeight - parseFloat(railStyle.paddingTop) - parseFloat(railStyle.paddingBottom);
+      const header = Math.max(...headings.map(heading => heading.getBoundingClientRect().height));
+      const card = Math.max(...cards.map(card => card.getBoundingClientRect().height));
+      const gap = parseFloat(getComputedStyle(grids[0]!).rowGap);
+      // Pack against the tallest card so pagination stays stable when content moves between rows.
+      setRows(Math.max(1, Math.floor((available - header + gap - 1) / (card + gap))));
+    });
+    for (const element of [node, ...headings, ...cards]) observer.observe(element, { box: "border-box" });
     return () => observer.disconnect();
-  }, []);
+  }, [board.cards, query, sectionFilter]);
 
   function scrollRail(direction: number) {
     const node = rail.current;
@@ -249,7 +261,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
         <button type="button" aria-label="Défiler à droite" onClick={() => scrollRail(1)}><ArrowRight size={16} aria-hidden="true" /></button>
       </div>
     </div>
-    <div ref={rail} className={styles.rail} style={{ "--rail-rows": rows } as CSSProperties}
+    <div ref={rail} className={styles.rail}
       tabIndex={0} aria-label="Cartes réalisées, défilement horizontal" data-realized-rail
       onKeyDown={event => {
         if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
@@ -272,7 +284,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
           <h2 id={`title-${section.id}`}>{section.label}</h2>
           {section.id !== "flows" && terms.length === 0 && <span>{money(board.sectionAmounts[section.id])} débité</span>}
         </header>
-        <div className={styles.grid}>
+        <div className={styles.grid} style={{ "--rail-rows": Math.min(rows, cards.length) } as CSSProperties}>
           {cards.map(card => <RealizedMonthCard key={card.id} card={card} open={open} />)}
         </div>
       </section>;
