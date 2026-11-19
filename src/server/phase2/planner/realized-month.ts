@@ -1,6 +1,6 @@
 import "server-only";
 import Big from "big.js";
-import { sumMobilityEstimatedFuelCost } from "@/analytics/facts";
+import { sumMobilityEstimatedFuelCost, type ActivityOccurrenceFact } from "@/analytics/facts";
 import { parseActivityCausalFinancialLinks } from "@/analytics/facts/activity-cost";
 import { addDays, addMonths, parseInstant, parseLocalDate, type YearMonth } from "@/core/time";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
@@ -16,8 +16,9 @@ import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import { matchJulyCarTrips, readJulyCarLegs } from "./july-car-trips";
 import { cashActivityPlace, distinctRealizedPlaces, merchantPlaceAlias, probableMerchantPlace, realizedPlace, type RealizedPlace } from "./realized-places";
 import { realizedWorkDays, realizedWorkPeople, workDayItems, workPurchaseDate, type ObservedWorkMeal, type RealizedWork, type WorkDay } from "./realized-work";
+import { julyEventParticipant, julyPaymentParticipant, type JulyParticipant } from "./july-realized-decisions";
 
-type Art = Readonly<{ assetKey?: string; templateKey?: string; iconKey: string }>;
+type Art = Readonly<{ assetKey?: string; templateKey?: string; iconKey: string; src?: string }>;
 type Badge = Readonly<{ label: string; sources: readonly string[] }>;
 type Flow = "expense" | "income" | "refund" | "transfer" | "other";
 export type RealizedPayment = Readonly<{
@@ -31,6 +32,7 @@ export type RealizedPayment = Readonly<{
   badge: Badge | undefined;
   art: Art | undefined;
   place?: RealizedPlace;
+  participant?: JulyParticipant;
   components: readonly { id: string; label: string; amount: string }[];
 }>;
 type Occurrence = Readonly<{
@@ -64,6 +66,8 @@ type CardGroup = {
   occurrences?: Occurrence[];
   relatedPayments?: RelatedPayment[];
   carTrip?: RealizedCarTrip;
+  participant?: JulyParticipant;
+  keepPaymentsTogether?: boolean;
 };
 export type RealizedCard = Readonly<CardGroup & {
   amount: string | null;
@@ -82,8 +86,10 @@ export type RealizedBoard = Readonly<{
   operationCount: number;
   net: string;
   cards: readonly RealizedCard[];
+  categoryCards?: readonly RealizedCard[];
   groups: readonly RealizedCardGroup[];
   participantPortraits: Readonly<Record<string, string>>;
+  julyPortraits: Readonly<Partial<Record<JulyParticipant, string>>>;
 }>;
 
 const purchase = { templateKey: "purchase", iconKey: "activity" };
@@ -98,6 +104,7 @@ const beauty = { iconKey: "beauty" };
 const gift = { templateKey: "gift", iconKey: "gift" };
 const bank = { assetKey: "other:fee", iconKey: "savings" };
 const home = { iconKey: "home" };
+const cannabis = { iconKey: "tobacco", src: "/composer/realized/cannabis.webp" };
 
 const groceriesCardId = "daily-alimentation__courses_alimentaires";
 const groupDefinitions = {
@@ -259,14 +266,26 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const factRead = repository.loadEconomicFacts(range);
   const occurrenceRead = repository.loadActivityOccurrences(range);
   const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
-  const people = month === JULY_COMPOSER_MONTH ? realizedWorkPeople(bootstrap.household, bootstrap.persons) : { profiles: [], portraits: {} };
+  const july = month === JULY_COMPOSER_MONTH;
+  const people = july ? realizedWorkPeople(bootstrap.household, bootstrap.persons) : { profiles: [], portraits: {} };
+  const julyPortraits: Partial<Record<JulyParticipant, string>> = {};
+  for (const profile of people.profiles) {
+    if (people.portraits[profile.ref.personId]) julyPortraits[profile.name] = people.portraits[profile.ref.personId];
+  }
+  try {
+    const image = JSON.parse(process.env.COMPOSER_COUPLE_PORTRAIT ?? "null");
+    if (july && bootstrap.household && image?.householdId === bootstrap.household.householdId
+      && typeof image.portrait === "string" && image.portrait.length < 16_000 && /^[a-z\d+/]+={0,2}$/iu.test(image.portrait)) {
+      julyPortraits.Couple = `data:image/webp;base64,${image.portrait}`;
+    }
+  } catch { /* A missing configured portrait has a text fallback. */ }
   const previousDates = people.profiles.length ? operationRead.then(operations => {
     const earliest = operations.flatMap(operation => workPurchaseDate(operation.raw) ?? [])
       .filter(date => date < range.start && date >= addDays(range.start, -7)).sort()[0];
     return earliest ? repository.loadActivityOccurrences({ start: earliest, endExclusive: range.start }) : [];
   }) : [];
   const referenceRead = Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts));
-  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs, previousWork, mealParticipants] = await Promise.all([
+  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs, previousWork, mealParticipants, visits] = await Promise.all([
     operationRead, factRead, occurrenceRead,
     referenceRead,
     eventIds.then(ids => repository.loadLifeEventRecords(ids)),
@@ -280,6 +299,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     people.profiles.length ? occurrenceRead.then(events => repository.loadLifeEventParticipationRows(
       events.filter(event => event.activityId === "repas_restaurant").map(event => event.lifeEventId),
     )) : [],
+    july ? repository.loadPlaceVisits(range) : [],
   ]);
 
   const workDays = realizedWorkDays([...previousWork, ...occurrences], people.profiles);
@@ -294,13 +314,15 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     entries.push(alias);
     aliasesByMerchant.set(id, entries);
   }
-  const matchedTrips = carLegs.length ? matchJulyCarTrips(occurrences, eventDetails, carLegs) : [];
+  const matchedTrips = carLegs.length ? matchJulyCarTrips(occurrences, eventDetails, carLegs, july) : [];
+  const adrien = people.profiles.find(profile => profile.name === "Adrien")?.ref.personId;
   const placeIds = new Set([
     ...eventDetails.flatMap(row => optionalCanonicalString(row, ["primary_place_id"]) ?? []),
     ...localizations.map(row => String(row.place_id)),
     ...aliases.map(row => String(row.place_id)),
     ...labels.places.keys(),
     ...matchedTrips.flatMap(trip => trip.placeIds),
+    ...visits.filter(visit => visit.personId === adrien).map(visit => visit.placeId),
   ]);
   const places = placeIds.size ? await repository.loadEntityRows("places", "place_id", [...placeIds]) : [];
   const placeById = new Map(places.map(row => [String(row.place_id), row]));
@@ -313,6 +335,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const eventCards = new Map<string, CardGroup>();
   const workCards = new Map<string, { day: WorkDay; meals: ObservedWorkMeal[] }>();
   const paidMeals = new Set<string>();
+  const separateInCategory = new Set<string>();
   function getWorkCard(day: WorkDay) {
     const id = `work-${day.key}`;
     const existing = cards.get(id);
@@ -352,6 +375,19 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       ...(visual.recurring ? { occurrences: [] } : { date: event.startDate, endDate: event.endDate, eventStatus: event.validationStatus }),
       ...(carTrip ? { carTrip } : {}),
     };
+    if (july && !visual.recurring) {
+      const names = people.profiles.filter(profile => event.participantIds.includes(profile.ref.personId as typeof event.participantIds[number])).map(profile => profile.name);
+      const family = event.activityId === "visite_famille" && /servian|fontès/iu.test(title);
+      const familyVisit = family && visits.some(visit => visit.personId === adrien && visit.localDate >= event.startDate
+        && visit.localDate <= event.endDate && /^(Servian|Fontès)$/iu.test(String(placeById.get(visit.placeId)?.commune)));
+      const start = mealTiming.get(`${event.lifeEventId}:${event.participantIds[0]}`)?.start_at;
+      const hour = typeof start === "string" && Number.isFinite(Date.parse(start)) && bootstrap.household ? Number(new Intl.DateTimeFormat("fr-FR", {
+        hour: "numeric", hourCycle: "h23", timeZone: bootstrap.household.timezone,
+      }).format(new Date(start))) : undefined;
+      const castelnauAnge = eventPlaces.some(place => /boulangerie ange.*castelnau/iu.test(place.label));
+      card.participant = julyEventParticipant(event.activityId, title, names, familyVisit, castelnauAnge ? hour : undefined);
+      if (family || /chez lucas|kayak|h[oô]pital arnaud/iu.test(title) || event.activityId === "shopping_commerce") card.keepPaymentsTogether = true;
+    }
     if (eventPlaces.length) card.places = distinctRealizedPlaces([...(card.places ?? []), ...eventPlaces]);
     card.occurrences?.push({ id: event.lifeEventId, label: title, date: event.startDate, endDate: event.endDate,
       status: event.validationStatus, places: eventPlaces });
@@ -394,6 +430,9 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       policy: row.merchantBadgePolicy,
     }).map(image => image.src) : [];
     const label = row.merchant?.label ?? row.bankLabel;
+    const merchant = row.merchant ? labels.merchantKeys.get(row.merchant.id) ?? "" : "";
+    const fixed = row.fixedVariable === "fixed";
+    const purchaseDate = workPurchaseDate(operation.raw);
     const alias = row.merchant && flow === "expense" && !row.canonicalPlace
       ? merchantPlaceAlias(aliasesByMerchant.get(row.merchant.id) ?? [], row.bankLabel, row.bankDate) : undefined;
     const place = row.canonicalPlace ? placeOf(row.canonicalPlace.id, "confirmed")
@@ -409,22 +448,62 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
           ?? "Composant de dépense",
         amount: fact.net,
       })) : [];
+    const isCannabis = july && subcategoryKey === "tabac_vape__cannabis";
+    const participant = july ? julyPaymentParticipant({ merchant, subcategory: subcategoryKey, fixed, place, bankLabel: row.bankLabel }) : undefined;
     const payment = {
-      id: operation.operationId, date: row.bankDate, label, bankLabel: row.bankLabel,
+      id: operation.operationId, date: row.bankDate, label: isCannabis ? "Retrait pour cannabis" : label, bankLabel: row.bankLabel,
       category: row.subcategory?.label ?? row.preciseType ?? row.category?.label, amount: operation.bankAmount, flow,
       badge: badgeSources.length ? { label, sources: badgeSources } : undefined,
-      art: specialized[subcategoryKey]?.item ?? specialized[subcategoryKey]?.art,
+      art: isCannabis ? cannabis : specialized[subcategoryKey]?.item ?? specialized[subcategoryKey]?.art,
       ...(place ? { place } : {}),
+      ...(participant ? { participant } : {}),
       components,
     } satisfies RealizedPayment;
     payments.push(payment);
 
-    const fixed = row.fixedVariable === "fixed";
     const momentId = optionalCanonicalString(operation.raw, ["moment_id"]);
     // A link to part of a payment does not assign the full bank movement to that event.
     const linkedEvents = explicit.get(operation.operationId) ?? (momentId && !componentLinks.length ? primary.get(momentId) : undefined);
     const linkedCards = new Set([...(linkedEvents ?? [])].flatMap(id => eventCards.get(id) ?? []));
-    let card = flow === "expense" && !fixed && linkedEvents?.size === 1 ? [...linkedCards][0] : undefined;
+    let card = flow === "expense" && !fixed && linkedCards.size === 1 ? [...linkedCards][0] : undefined;
+    if (july && flow === "expense" && !fixed && purchaseDate) {
+      const matchingEvent = (test: (event: ActivityOccurrenceFact, title: string) => boolean) => {
+        const candidates = occurrences.filter(event => test(event, String(eventById.get(event.lifeEventId)?.title ?? "")));
+        return candidates.length === 1 ? eventCards.get(candidates[0]!.lifeEventId) : undefined;
+      };
+      if (["boulangerie_saint_julien", "espace_fleuri", "la_fromangerie"].includes(merchant)) {
+        const visit = matchingEvent((event, title) => event.startDate <= purchaseDate && purchaseDate <= event.endDate
+          && event.activityId === "visite_famille" && /servian|fontès/iu.test(title));
+        if (visit) {
+          card = visit;
+          if (merchant === "boulangerie_saint_julien") separateInCategory.add(payment.id);
+        }
+      }
+      if (["sephora", "pharmacie_polygone"].includes(merchant)) {
+        card = matchingEvent(event => event.startDate === purchaseDate && event.activityId === "shopping_commerce"
+          && eventById.get(event.lifeEventId)?.primary_place_id != null
+          && /polygone/iu.test(String(placeById.get(String(eventById.get(event.lifeEventId)?.primary_place_id))?.nom_canonique ?? ""))) ?? card;
+      }
+      if (merchant === "cent_administ_andre_benech") {
+        card = matchingEvent((event, title) => event.startDate === purchaseDate && /h[oô]pital arnaud/iu.test(title)) ?? card;
+      }
+      if (merchant === "vinci_autoroutes") {
+        card = matchingEvent((event, title) => event.startDate === purchaseDate && /servian|fontès/iu.test(title)
+          && trips.has(event.lifeEventId)) ?? card;
+      }
+      if (subcategoryKey === "soins_personnels__coiffure") {
+        const linkedCash = componentLinks.filter(relation => relation.relationType === "Paiement_activite"
+          && factsByKey.get(relation.canonicalComponentKey)?.sourceKind === "Cash_economic_use"
+          && relation.economicAmountLinked !== null && new Big(relation.economicAmountLinked).abs().eq(new Big(payment.amount).abs()));
+        if (linkedCash.length === 1) {
+          const target = eventCards.get(linkedCash[0]!.lifeEventId);
+          if (target) {
+            card = target;
+            card.participant = "Adrien";
+          }
+        }
+      }
+    }
     if (!card && flow === "expense" && !fixed) {
       const workDay = workDays.forPayment(operation.raw, operationFacts, subcategoryKey, operation.preciseType);
       if (workDay) card = getWorkCard(workDay);
@@ -474,8 +553,14 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const work = workCards.get(card.id);
     const meals = work?.meals.filter(meal => !paidMeals.has(meal.id)) ?? [];
     if (work && !card.payments.length && !meals.length && !card.relatedPayments?.length) return [];
+    if (july && ["events-lecon_conduite", "events-journee_maison"].includes(card.id)
+      && !card.payments.length && !card.relatedPayments?.length) return [];
+    const peopleOnPayments = new Set(card.payments.flatMap(payment => payment.participant ?? []));
+    const participant = card.participant ?? (card.id === groceriesCardId ? "Couple"
+      : peopleOnPayments.size === 1 && card.payments.every(payment => payment.participant) ? [...peopleOnPayments][0] : undefined);
     return [{
       ...card,
+      ...(participant ? { participant } : {}),
       places: card.places?.length ? card.places : card.section === "events"
         ? [] : distinctRealizedPlaces(card.payments.flatMap(payment => payment.place ?? [])),
       amount: card.payments.length ? realizedBankSum(card.payments) : null,
@@ -489,11 +574,24 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       } : {}),
     }];
   });
+  const categoryCards = separateInCategory.size ? realizedCards.flatMap(card => {
+    const standalone = card.payments.filter(payment => separateInCategory.has(payment.id));
+    if (!standalone.length) return [card];
+    const remaining = card.payments.filter(payment => !separateInCategory.has(payment.id));
+    return [{ ...card, payments: remaining, amount: remaining.length ? realizedBankSum(remaining) : null },
+      ...standalone.map(payment => ({
+        id: `category-payment-${payment.id}`, section: "daily" as const, label: payment.label,
+        art: payment.art ?? { assetKey: "groceries:bread", iconKey: "meal" }, date: payment.date,
+        amount: payment.amount, payments: [payment], participant: card.participant, places: payment.place ? [payment.place] : [],
+      }))];
+  }) : undefined;
   return {
     month, totals, operationCount: payments.length,
     net: new Big(totals.income.amount).plus(totals.expense.amount).plus(totals.refund.amount).plus(totals.other.amount).toFixed(2),
     cards: realizedCards,
-    groups: realizedGroups(realizedCards),
+    ...(categoryCards ? { categoryCards } : {}),
+    groups: realizedGroups(categoryCards ?? realizedCards),
     participantPortraits: people.portraits,
+    julyPortraits,
   };
 }

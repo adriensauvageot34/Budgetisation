@@ -13,7 +13,7 @@ export function realizedOperationCardId(paymentId: string) {
 /** Every bank operation has one visible owner. A multi-payment event retains
  * its date, places and trip, and links to the individual amounts. */
 export function detailedRealizedCards(source: RealizedCard): RealizedCardView[] {
-  if (source.work) return [{ source, card: source }];
+  if (source.work || source.keepPaymentsTogether) return [{ source, card: source }];
   const datedEvent = source.section === "events" && Boolean(source.date);
   if (datedEvent && source.payments.length <= 1) return [{ source, card: source }];
   if (source.payments.length) {
@@ -28,6 +28,7 @@ export function detailedRealizedCards(source: RealizedCard): RealizedCardView[] 
         places: operation.place ? [operation.place] : [],
         payments: [operation],
         amount: operation.amount,
+        participant: operation.participant ?? source.participant,
       } satisfies RealizedCard,
     }));
     if (!datedEvent) return operations;

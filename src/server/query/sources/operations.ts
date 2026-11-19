@@ -333,6 +333,8 @@ export async function loadOperationReferenceLabels(
     categoryKeys: new Map(categories.map(row => [String(row.category_id), String(row.category_key)])),
     subcategoryKeys: new Map(subcategories.map(row => [String(row.subcategory_id), String(row.subcategory_key)])),
     merchants: merchantLabels,
+    merchantKeys: new Map(merchants.flatMap(row => typeof row.merchant_id === "string" && typeof row.merchant_key === "string"
+      ? [[row.merchant_id, row.merchant_key] as const] : [])),
     merchantIdentity: new Map(merchants.flatMap(row => {
       const kind = row.identity_kind as NonNullable<OperationRowReadModel["merchantIdentityKind"]>;
       if (typeof row.merchant_id !== "string" || !merchantIdentityKinds.has(kind)) return [];

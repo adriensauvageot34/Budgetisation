@@ -81,6 +81,7 @@ function RealizedElement({ payment, highlighted }: { payment: RealizedPayment; h
 }
 
 function CardArtwork({ card, size }: { card: Pick<RealizedCard, "art">; size: number }) {
+  if (card.art.src) return <img src={card.art.src} alt="" className={styles.cardVisual} width={size} height={size} loading="lazy" />;
   return <ComposerAssetVisual assetKey={card.art.assetKey ?? ""} templateKey={card.art.templateKey}
     iconKey={card.art.iconKey} className={styles.cardVisual} scale={size > 48 ? "CARD" : "LIBRARY"} size={size} />;
 }
@@ -102,6 +103,13 @@ function CardDate({ date, end }: { date: string; end?: string }) {
   </span>;
 }
 
+function ParticipantBadge({ name, portrait }: { name: string; portrait?: string }) {
+  return <span className={styles.workParticipant} data-realized-participant={name} title={`Participant · ${name}`}>
+    {portrait ? <img src={portrait} alt={name} width={29} height={29} />
+      : <span aria-label={name}>{name === "Manon et son père" ? "M+" : name.slice(0, 1)}</span>}
+  </span>;
+}
+
 function WorkDayFooter({ work, portrait }: { work: RealizedWork; portrait?: string }) {
   return <span className={styles.workFooter}>
     <span className={styles.workItems}>
@@ -111,10 +119,7 @@ function WorkDayFooter({ work, portrait }: { work: RealizedWork; portrait?: stri
         {item.count > 1 && <strong aria-label={`${item.count} achats`}>×{item.count}</strong>}
       </span>)}
     </span>
-    <span className={styles.workParticipant} data-realized-participant={work.name} title={`Participant · ${work.name}`}>
-      {portrait ? <img src={portrait} alt={work.name} width={29} height={29} />
-        : <span aria-label={work.name}>{work.name.slice(0, 1)}</span>}
-    </span>
+    <ParticipantBadge name={work.name} portrait={portrait} />
   </span>;
 }
 
@@ -180,6 +185,9 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
         </strong>
       </span>}
       {card.work && <WorkDayFooter work={card.work} portrait={portrait} />}
+      {!card.work && card.participant && <span className={styles.cardParticipant}>
+        <ParticipantBadge name={card.participant} portrait={portrait} />
+      </span>}
     </span>
   </button>;
 });
@@ -198,6 +206,7 @@ function RealizedDetail({ card, terms, open }: {
   open: (cardId: string, paymentId?: string, componentId?: string) => void;
 }) {
   return <>
+    {!card.work && card.participant && <section aria-label="Participants"><p>{card.participant}</p></section>}
     {card.work && <section aria-labelledby="realized-work-title">
       <h3 id="realized-work-title">Journée de travail · {card.work.name}</h3>
       <ul className={styles.places}>
@@ -279,8 +288,9 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   const fillColumns = !byCategory && terms.length === 0;
   const categoryByCard = useMemo(() => new Map(board.groups.flatMap(item =>
     item.cardIds.map(id => [id, item] as const))), [board.groups]);
-  const views = useMemo(() => byCategory ? board.cards.map(source => ({ source, card: source } satisfies RealizedCardView))
-    : board.cards.flatMap(detailedRealizedCards), [board.cards, byCategory]);
+  const views = useMemo(() => byCategory ? (board.categoryCards ?? board.cards).map(card => ({
+    card, source: board.cards.find(source => source.id === card.id) ?? card,
+  } satisfies RealizedCardView)) : board.cards.flatMap(detailedRealizedCards), [board.cards, board.categoryCards, byCategory]);
   const indexed = useMemo(() => views.map(view => {
     const { card, source } = view;
     const category = categoryByCard.get(source.id);
@@ -288,7 +298,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
       card, view, category,
       date: earliestDate(card),
       lines: [
-        searchText(card.label, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
+        searchText(card.label, card.date, card.endDate, searchableDate(card.date), cardCaption(card), card.participant),
         ...(card.places ?? []).map(place => searchText(card.label, place.label, place.address, searchableDate(card.date))),
         ...(card.work?.items ?? []).map(item => searchText(card.label, item.label, searchableDate(card.date))),
         searchText(source.label, category?.label, category?.shortLabel),
@@ -401,7 +411,8 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
         const position = packing?.positions[card.id];
         return <RealizedMonthCard key={card.id} view={view} category={category} position={position}
           date={sortOrder === "date" ? date : undefined}
-          portrait={card.work && board.participantPortraits[card.work.participant.personId]} open={open} />;
+          portrait={card.work ? board.participantPortraits[card.work.participant.personId]
+            : card.participant && board.julyPortraits[card.participant]} open={open} />;
       })}
     </div>;
   }
