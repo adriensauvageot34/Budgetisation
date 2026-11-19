@@ -1257,10 +1257,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails}
         retry={previewStatus === "FAILED" && !busy ? retryPreview : undefined} /></div>}
-      {reconstruction && <nav className={styles.reconstructionModes} aria-label="Mode de juillet">
-        <button type="button" aria-pressed={showingRealized} disabled={busy} onClick={showRealized}>Réalisé</button>
-        <button type="button" aria-pressed={!showingRealized} disabled={busy} onClick={() => setReconstructionEditing(true)}>Édition</button>
-      </nav>}
+      {showingRealized && reconstruction && <dl className={styles.realizedTotals} aria-label="Bilan financier du mois">
+        <div><dt>Revenus encaissés</dt><dd>{money(reconstruction.totals.income.amount)}</dd></div>
+        <div><dt>Dépenses débitées</dt><dd>{money(reconstruction.totals.expense.amount)}</dd></div>
+        {reconstruction.totals.refund.count > 0 && <div><dt>Remboursements reçus</dt><dd>{money(reconstruction.totals.refund.amount)}</dd></div>}
+        <div className={styles.realizedNet}><dt>Net hors transferts</dt><dd>{money(reconstruction.net)}</dd></div>
+      </dl>}
       {!showingRealized && <div className={styles.toolbar}>
         {resumableContext && <button type="button" className={styles.financialLink} disabled={busy} onClick={() => {
           setResumeContext(null); stableLibraryOpen(resumableContext.id);
@@ -1297,7 +1299,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         </div>}</div>}</AtomicPopover>
         {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
           Recharger avec mon brouillon sauvegardé</button>}
-      </div>}</header>
+      </div>}
+      {reconstruction && <nav className={styles.reconstructionModes} aria-label="Mode de juillet">
+        <button type="button" aria-pressed={showingRealized} disabled={busy} onClick={showRealized}>Réalisé</button>
+        <button type="button" aria-pressed={!showingRealized} disabled={busy} onClick={() => setReconstructionEditing(true)}>Édition</button>
+      </nav>}
+    </header>
     {tripStatus && <p className={styles.draftRecovery} role="status" data-july-trip-status>{tripStatus}</p>}
     {saveIssue && <section className={styles.draftRecovery} aria-label="Récupération du brouillon">
       <p data-save-message role="status">{durable.message}</p>

@@ -376,15 +376,6 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
   }
 
   return <div className={styles.board} data-realized-month={board.month}>
-    <header className={styles.hero}>
-      <dl className={styles.totals}>
-        <div><dt>Revenus encaissés</dt><dd>{money(board.totals.income.amount)}</dd></div>
-        <div><dt>Dépenses débitées</dt><dd>{money(board.totals.expense.amount)}</dd></div>
-        {board.totals.refund.count > 0 && <div><dt>Remboursements reçus</dt><dd>{money(board.totals.refund.amount)}</dd></div>}
-        <div className={styles.net}><dt>Net hors transferts</dt><dd>{money(board.net)}</dd></div>
-      </dl>
-      <span>{board.eventCount} événements documentés</span>
-    </header>
     <div className={styles.toolbar}>
       <select className={styles.sort} aria-label="Trier les cartes" value={sortOrder}
         onChange={event => { setSortOrder(event.target.value as SortOrder); startRail(); }}>

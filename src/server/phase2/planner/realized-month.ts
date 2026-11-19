@@ -78,7 +78,6 @@ export type RealizedBoard = Readonly<{
   month: YearMonth;
   totals: Readonly<Record<Flow, { amount: string; count: number }>>;
   operationCount: number;
-  eventCount: number;
   net: string;
   cards: readonly RealizedCard[];
   groups: readonly RealizedCardGroup[];
@@ -443,7 +442,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       } : {}),
     }));
   return {
-    month, totals, operationCount: payments.length, eventCount: occurrences.length,
+    month, totals, operationCount: payments.length,
     net: new Big(totals.income.amount).plus(totals.expense.amount).plus(totals.refund.amount).plus(totals.other.amount).toFixed(2),
     cards: realizedCards,
     groups: realizedGroups(realizedCards),
