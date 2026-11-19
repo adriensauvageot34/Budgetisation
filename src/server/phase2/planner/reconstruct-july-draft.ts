@@ -88,6 +88,8 @@ export function reconstructJulyDraft(board: RealizedBoard) {
     });
     const fields: PlannerJsonObject = {
       ...presetCreationFields(shape.template, shape.preset), label: card.label, ...dateFields,
+      ...(card.work ? { participantRefs: [card.work.participant],
+        ...(card.places?.[0] ? { placeRef: { kind: "TEXT", label: card.places[0].label } } : {}) } : {}),
       ...(shape.template === "purchase" ? { fieldSchemaVersion: PURCHASE_BASKET_FIELDS,
         ...(shape.preset === "groceries-purchase" ? { basketCoverage: "EXTRA_TO_SLOT" } : {}) } : {}),
       ...(shape.template === "night-out" && card.endDate?.startsWith(`${board.month}-`) ? { endDate: card.endDate } : {}),

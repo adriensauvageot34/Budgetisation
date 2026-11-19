@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, Search, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, Search, Utensils, X } from "lucide-react";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard, RealizedCard, RealizedCardGroup, RealizedPayment } from "@/server/phase2/planner/realized-month";
 import type { RealizedPlace } from "@/server/phase2/planner/realized-places";
+import type { RealizedWork } from "@/server/phase2/planner/realized-work";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { money, plannedDayLabel } from "./display";
 import { RealizedBadge } from "./realized-badge";
@@ -49,9 +50,9 @@ const placeStatus = { confirmed: "Confirmé", probable: "Lieu probable", town: "
 
 function PlaceLink({ place, detail }: { place: RealizedPlace; detail?: boolean }) {
   return <span className={styles.placeLink}>
-    <a href={place.mapsUrl} target="_blank" rel="noopener noreferrer" title="Ouvrir dans Google Maps">
+    {place.mapsUrl ? <a href={place.mapsUrl} target="_blank" rel="noopener noreferrer" title="Ouvrir dans Google Maps">
       {place.label}<ExternalLink size={12} aria-hidden="true" />
-    </a>
+    </a> : <strong>{place.label}</strong>}
     {detail && <small>{[placeStatus[place.certainty], place.address].filter(Boolean).join(" · ")}</small>}
   </span>;
 }
@@ -101,9 +102,25 @@ function CardDate({ date, end }: { date: string; end?: string }) {
   </span>;
 }
 
-const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open, date, position }: {
+function WorkDayFooter({ work, portrait }: { work: RealizedWork; portrait?: string }) {
+  return <span className={styles.workFooter}>
+    <span className={styles.workItems}>
+      {work.items.map(item => <span key={item.id} className={styles.workItem} data-work-item={item.count}>
+        {item.badge ? <RealizedBadge {...item.badge} /> : <Utensils size={14} aria-hidden="true" />}
+        <span title={item.label}>{item.label}</span>
+        {item.count > 1 && <strong aria-label={`${item.count} achats`}>×{item.count}</strong>}
+      </span>)}
+    </span>
+    <span className={styles.workParticipant} data-realized-participant={work.name} title={`Participant · ${work.name}`}>
+      {portrait ? <img src={portrait} alt={work.name} width={29} height={29} />
+        : <span aria-label={work.name}>{work.name.slice(0, 1)}</span>}
+    </span>
+  </span>;
+}
+
+const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open, date, position, portrait }: {
   view: RealizedCardView; category?: RealizedCardGroup; open: (cardId: string) => void; date?: string;
-  position?: PackedCardPosition;
+  position?: PackedCardPosition; portrait?: string;
 }) {
   const { card, operation, source } = view;
   const badges = [...new Map(card.payments.flatMap(payment => payment.badge
@@ -121,13 +138,14 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
     data-realized-category={category?.id} data-card-date={visibleDate}
     data-operation-id={card.payments.length === 1 ? card.payments[0]?.id : undefined}
     data-operation-count={card.payments.length} data-card-amount={card.amount ?? undefined}
-    data-multiple-badges={badges.length > 1 || undefined}
+    data-multiple-badges={!card.work && badges.length > 1 || undefined}
+    data-realized-work={card.work?.mode}
     style={position ? { "--card-column": position.column, insetBlockStart: position.top, minHeight: position.height } as CSSProperties : undefined}
     aria-haspopup="dialog" onClick={() => open(card.id)}>
     <span className={styles.cardContent}>
       <span className={styles.cardVisuals}>
         <CardArtwork card={card} size={42} />
-        {badges.length > 0 && <span className={styles.badges}>
+        {!card.work && badges.length > 0 && <span className={styles.badges}>
           {badges.slice(0, 5).map(badge => <RealizedBadge key={badge.label} {...badge} named />)}
           {badges.length > 5 && <span title={badges.slice(5).map(badge => badge.label).join(", ")}>+{badges.length - 5}</span>}
         </span>}
@@ -150,7 +168,8 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
         </span>}
         {caption && <span className={styles.cardSubtitle}>{caption}</span>}
         {card.amount === null && (linked || !card.carTrip) && <span className={styles.cardSubtitle}>
-          {linked ? `${linked} ${linked === 1 ? "opération associée" : "opérations associées"}` : "Aucun paiement rattaché"}
+          {linked ? `${linked} ${linked === 1 ? "opération associée" : "opérations associées"}`
+            : card.work ? "Montant non renseigné" : "Aucun paiement rattaché"}
         </span>}
       </span>
       {card.carTrip && <span className={styles.cardTrip} data-realized-car-trip title={card.carTrip.route}>
@@ -160,6 +179,7 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
           ≈ {money(card.carTrip.estimatedFuel)}
         </strong>
       </span>}
+      {card.work && <WorkDayFooter work={card.work} portrait={portrait} />}
     </span>
   </button>;
 });
@@ -178,6 +198,15 @@ function RealizedDetail({ card, terms, open }: {
   open: (cardId: string, paymentId?: string, componentId?: string) => void;
 }) {
   return <>
+    {card.work && <section aria-labelledby="realized-work-title">
+      <h3 id="realized-work-title">Journée de travail · {card.work.name}</h3>
+      <ul className={styles.places}>
+        {card.work.items.map(item => <li key={item.id}>
+          {item.place ? <><PlaceLink place={item.place} detail />Montant non renseigné</>
+            : <>{item.label}{item.count > 1 ? ` ×${item.count}` : ""} · {item.amount === null ? "Montant non renseigné" : money(item.amount)}</>}
+        </li>)}
+      </ul>
+    </section>}
     {!!card.places?.length && <section aria-labelledby="realized-places-title">
       <h3 id="realized-places-title">{card.places.length === 1 ? "Lieu" : "Lieux"}</h3>
       <ul className={styles.places}>
@@ -225,7 +254,7 @@ function RealizedDetail({ card, terms, open }: {
         </li>)}
       </ul>
     </section> : null}
-    {!card.payments.length && !card.occurrences?.length && !card.relatedPayments?.length
+    {!card.work && !card.payments.length && !card.occurrences?.length && !card.relatedPayments?.length
       && <p>Aucun paiement rattaché à cet événement en juillet.</p>}
   </>;
 }
@@ -261,6 +290,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
       lines: [
         searchText(card.label, card.date, card.endDate, searchableDate(card.date), cardCaption(card)),
         ...(card.places ?? []).map(place => searchText(card.label, place.label, place.address, searchableDate(card.date))),
+        ...(card.work?.items ?? []).map(item => searchText(card.label, item.label, searchableDate(card.date))),
         searchText(source.label, category?.label, category?.shortLabel),
         ...(card.carTrip ? [searchText(card.label, "trajet voiture essence", card.carTrip.route, card.carTrip.compactRoute)] : []),
         ...card.payments.map(payment => searchText(source.label, card.label, paymentSearch(payment))),
@@ -370,7 +400,8 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
       {entries.map(({ card, view, category, date }) => {
         const position = packing?.positions[card.id];
         return <RealizedMonthCard key={card.id} view={view} category={category} position={position}
-          date={sortOrder === "date" ? date : undefined} open={open} />;
+          date={sortOrder === "date" ? date : undefined}
+          portrait={card.work && board.participantPortraits[card.work.participant.personId]} open={open} />;
       })}
     </div>;
   }
