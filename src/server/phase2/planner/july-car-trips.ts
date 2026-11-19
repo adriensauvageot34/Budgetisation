@@ -23,16 +23,19 @@ function julyCarEvents(occurrences: readonly ActivityOccurrenceFact[]) {
 }
 
 export function matchJulyCarTrips(occurrences: readonly ActivityOccurrenceFact[],
-  details: readonly CanonicalRecord[], legs: readonly MobilityLegFact[]) {
+  details: readonly CanonicalRecord[], legs: readonly MobilityLegFact[], includeAdditionalVisits = false) {
   const venues = new Map(details.map(row => [row.life_event_id, row.primary_place_id]));
-  const candidates = julyCarEvents(occurrences).flatMap(event => {
+  const eligible = includeAdditionalVisits ? [...julyCarEvents(occurrences), ...occurrences.filter(event =>
+    event.activityId === "visite_ami" || event.activityId === "deplacement_pro")] : julyCarEvents(occurrences);
+  const candidates = eligible.flatMap(event => {
     const venue = venues.get(event.lifeEventId);
     if (typeof venue !== "string") return [];
-    const day = legs.filter(leg => leg.date === event.startDate && leg.origin.placeId && leg.destination.placeId);
+    const day = legs.filter(leg => leg.date >= event.startDate && leg.date <= event.endDate && leg.origin.placeId && leg.destination.placeId);
     const inbound = day.filter(leg => leg.destination.placeId === venue && leg.origin.placeId !== venue);
     const outbound = day.filter(leg => leg.origin.placeId === venue && leg.destination.placeId !== venue);
     const [arrival] = inbound, [departure] = outbound;
-    if (inbound.length !== 1 || outbound.length !== 1 || !arrival || !departure || arrival.vehicleId !== departure.vehicleId) return [];
+    if (inbound.length !== 1 || outbound.length !== 1 || !arrival || !departure
+      || arrival.date > departure.date || arrival.vehicleId !== departure.vehicleId) return [];
     return [{ event, pair: [arrival, departure] as const,
       placeIds: [String(arrival.origin.placeId), venue, String(departure.destination.placeId)] as const }];
   });

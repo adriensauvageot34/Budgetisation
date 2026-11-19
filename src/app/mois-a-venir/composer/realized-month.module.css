@@ -328,6 +328,7 @@
   font-weight: 700;
 }
 .workParticipant img { display: block; height: 100%; width: 100%; object-fit: cover; }
+.cardParticipant { grid-column: 1 / -1; justify-self: end; }
 .observedBadges { display: inline-flex; align-items: center; gap: 3px; }
 .observedBadges img { width: 21px; height: 21px; object-fit: contain; border-radius: 50%; }
 .observedBadges small { font-size: .7rem; color: #655574; }
