@@ -15,26 +15,6 @@
   min-width: 0;
 }
 
-.hero {
-  display: flex;
-  flex: none;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 7px 16px;
-  border: 1px solid #fffc;
-  border-radius: 14px;
-  padding: 7px 14px;
-  background: linear-gradient(130deg, #fffc, #f7f0f9c9);
-  box-shadow: 0 8px 28px #654d8217;
-  backdrop-filter: blur(14px);
-}
-
-.hero span, .totals dt { color: var(--muted); font-size: .86rem; }
-.totals { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin: 0; }
-.totals dd { font-size: 1.2rem; font-weight: 750; margin: 0; font-variant-numeric: tabular-nums; }
-.net { border-radius: 12px; padding: 5px 12px; background: #eee4f6; }
-
 .toolbar {
   flex: none;
   z-index: 10;
