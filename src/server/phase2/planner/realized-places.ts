@@ -5,7 +5,7 @@ export type RealizedPlace = Readonly<{
   key: string;
   label: string;
   address?: string;
-  mapsUrl: string;
+  mapsUrl?: string;
   certainty: "confirmed" | "probable" | "town";
 }>;
 

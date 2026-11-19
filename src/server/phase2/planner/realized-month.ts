@@ -2,7 +2,7 @@ import "server-only";
 import Big from "big.js";
 import { sumMobilityEstimatedFuelCost } from "@/analytics/facts";
 import { parseActivityCausalFinancialLinks } from "@/analytics/facts/activity-cost";
-import { addMonths, parseInstant, parseLocalDate, type YearMonth } from "@/core/time";
+import { addDays, addMonths, parseInstant, parseLocalDate, type YearMonth } from "@/core/time";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import { JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import type { getBootstrapContext } from "@/server/bootstrap/context";
@@ -15,6 +15,7 @@ import { operationFromCanonicalRow } from "@/server/query/sources/shared";
 import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import { matchJulyCarTrips, readJulyCarLegs } from "./july-car-trips";
 import { cashActivityPlace, distinctRealizedPlaces, merchantPlaceAlias, probableMerchantPlace, realizedPlace, type RealizedPlace } from "./realized-places";
+import { realizedWorkDays, realizedWorkPeople, workDayItems, workPurchaseDate, type ObservedWorkMeal, type RealizedWork, type WorkDay } from "./realized-work";
 
 type Art = Readonly<{ assetKey?: string; templateKey?: string; iconKey: string }>;
 type Badge = Readonly<{ label: string; sources: readonly string[] }>;
@@ -67,6 +68,7 @@ type CardGroup = {
 export type RealizedCard = Readonly<CardGroup & {
   amount: string | null;
   transferAmounts?: { incoming: string; outgoing: string };
+  work?: RealizedWork;
 }>;
 export type RealizedCardGroup = Readonly<{
   id: RealizedGroupId;
@@ -81,6 +83,7 @@ export type RealizedBoard = Readonly<{
   net: string;
   cards: readonly RealizedCard[];
   groups: readonly RealizedCardGroup[];
+  participantPortraits: Readonly<Record<string, string>>;
 }>;
 
 const purchase = { templateKey: "purchase", iconKey: "activity" };
@@ -256,8 +259,14 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const factRead = repository.loadEconomicFacts(range);
   const occurrenceRead = repository.loadActivityOccurrences(range);
   const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
+  const people = month === JULY_COMPOSER_MONTH ? realizedWorkPeople(bootstrap.household, bootstrap.persons) : { profiles: [], portraits: {} };
+  const previousDates = people.profiles.length ? operationRead.then(operations => {
+    const earliest = operations.flatMap(operation => workPurchaseDate(operation.raw) ?? [])
+      .filter(date => date < range.start && date >= addDays(range.start, -7)).sort()[0];
+    return earliest ? repository.loadActivityOccurrences({ start: earliest, endExclusive: range.start }) : [];
+  }) : [];
   const referenceRead = Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts));
-  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs] = await Promise.all([
+  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs, previousWork, mealParticipants] = await Promise.all([
     operationRead, factRead, occurrenceRead,
     referenceRead,
     eventIds.then(ids => repository.loadLifeEventRecords(ids)),
@@ -267,8 +276,14 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     eventIds.then(ids => repository.loadMomentLifeEventRowsByLifeEventIds(ids)),
     eventIds.then(ids => repository.loadActivityCausalFinancialLinkRows(ids)).then(parseActivityCausalFinancialLinks),
     month === JULY_COMPOSER_MONTH ? readJulyCarLegs(repository) : [],
+    previousDates,
+    people.profiles.length ? occurrenceRead.then(events => repository.loadLifeEventParticipationRows(
+      events.filter(event => event.activityId === "repas_restaurant").map(event => event.lifeEventId),
+    )) : [],
   ]);
 
+  const workDays = realizedWorkDays([...previousWork, ...occurrences], people.profiles);
+  const mealTiming = new Map(mealParticipants.map(row => [`${row.life_event_id}:${row.person_id}`, row]));
   const eventById = new Map(eventDetails.map(row => [String(row.life_event_id), row]));
   const localizationIdsByEvent: Links = new Map();
   for (const row of localizations) link(localizationIdsByEvent, String(row.life_event_id), String(row.place_id));
@@ -296,6 +311,18 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const trips = realizedCarTrips(matchedTrips, places);
   const cards = new Map<string, CardGroup>();
   const eventCards = new Map<string, CardGroup>();
+  const workCards = new Map<string, { day: WorkDay; meals: ObservedWorkMeal[] }>();
+  const paidMeals = new Set<string>();
+  function getWorkCard(day: WorkDay) {
+    const id = `work-${day.key}`;
+    const existing = cards.get(id);
+    if (existing) return existing;
+    const visual = eventVisuals[day.mode === "remote" ? "teletravail" : "travail_site"]!;
+    const card: CardGroup = { id, section: "events", label: day.label, art: visual.art, date: day.day, places: [day.place], payments: [] };
+    cards.set(id, card);
+    workCards.set(id, { day, meals: [] });
+    return card;
+  }
   for (const event of occurrences) {
     const detail = eventById.get(event.lifeEventId);
     const visual = eventVisuals[event.activityId] ?? { label: "Événement", art: activity };
@@ -310,6 +337,15 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     if (!eventPlaces.length && primaryPlaceId) {
       const place = placeOf(primaryPlaceId, event.validationStatus === "Confirmé" ? "confirmed" : "probable");
       if (place) eventPlaces.push(place);
+    }
+    const worked = workDays.forEvent(event.lifeEventId);
+    const lunch = bootstrap.household && workDays.forMeal(event,
+      mealTiming.get(`${event.lifeEventId}:${event.participantIds[0]}`), bootstrap.household.timezone);
+    if (worked || lunch) {
+      const card = getWorkCard((worked ?? lunch)!);
+      eventCards.set(event.lifeEventId, card);
+      if (lunch) workCards.get(card.id)!.meals.push({ id: event.lifeEventId, place: eventPlaces[0] });
+      continue;
     }
     const card: CardGroup = cards.get(id) ?? {
       ...(groceryEvent ?? { id, section: "events", label: visual.recurring ? visual.label : title, art: visual.art, payments: [] }),
@@ -389,12 +425,17 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const linkedEvents = explicit.get(operation.operationId) ?? (momentId && !componentLinks.length ? primary.get(momentId) : undefined);
     const linkedCards = new Set([...(linkedEvents ?? [])].flatMap(id => eventCards.get(id) ?? []));
     let card = flow === "expense" && !fixed && linkedEvents?.size === 1 ? [...linkedCards][0] : undefined;
+    if (!card && flow === "expense" && !fixed) {
+      const workDay = workDays.forPayment(operation.raw, operationFacts, subcategoryKey, operation.preciseType);
+      if (workDay) card = getWorkCard(workDay);
+    }
     if (!card) {
       const fallback = paymentCard(flow, fixed, category, categoryKey, subcategoryKey);
       card = cards.get(fallback.id) ?? fallback;
       cards.set(card.id, card);
     }
     card.payments.push(payment);
+    if (workCards.has(card.id)) for (const eventId of linkedEvents ?? []) paidMeals.add(eventId);
     for (const linkedCard of linkedCards) {
       if (linkedCard === card) continue;
       (linkedCard.relatedPayments ??= []).push({
@@ -429,22 +470,30 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const items = payments.filter(payment => payment.flow === flow);
     return [flow, { amount: realizedBankSum(items), count: items.length }];
   })) as RealizedBoard["totals"];
-  const realizedCards: RealizedCard[] = [...cards.values()].map(card => ({
+  const realizedCards: RealizedCard[] = [...cards.values()].flatMap(card => {
+    const work = workCards.get(card.id);
+    const meals = work?.meals.filter(meal => !paidMeals.has(meal.id)) ?? [];
+    if (work && !card.payments.length && !meals.length && !card.relatedPayments?.length) return [];
+    return [{
       ...card,
       places: card.places?.length ? card.places : card.section === "events"
         ? [] : distinctRealizedPlaces(card.payments.flatMap(payment => payment.place ?? [])),
       amount: card.payments.length ? realizedBankSum(card.payments) : null,
+      ...(work ? { work: { participant: work.day.person.ref, name: work.day.person.name, mode: work.day.mode,
+        items: workDayItems(card.payments, meals) } } : {}),
       ...(card.payments[0]?.flow === "transfer" ? {
         transferAmounts: {
           incoming: realizedBankSum(card.payments.filter(payment => new Big(payment.amount).gt(0))),
           outgoing: realizedBankSum(card.payments.filter(payment => new Big(payment.amount).lt(0))),
         },
       } : {}),
-    }));
+    }];
+  });
   return {
     month, totals, operationCount: payments.length,
     net: new Big(totals.income.amount).plus(totals.expense.amount).plus(totals.refund.amount).plus(totals.other.amount).toFixed(2),
     cards: realizedCards,
     groups: realizedGroups(realizedCards),
+    participantPortraits: people.portraits,
   };
 }

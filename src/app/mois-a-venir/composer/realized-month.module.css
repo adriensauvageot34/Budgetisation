@@ -285,6 +285,49 @@
 .badges img { flex: none; width: 32px; height: 32px; object-fit: contain; border-radius: 50%; box-shadow: 0 0 0 1px #fff; }
 .card[data-multiple-badges="true"] .badges img { width: 29px; height: 29px; }
 .badges span { font-size: .72rem; color: var(--muted); }
+.workFooter {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 6px;
+  padding-top: 5px;
+  border-top: 1px solid var(--category-pale);
+}
+.workItems { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.workItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 3px 5px;
+  border: 1px solid var(--category-pale);
+  border-radius: 8px;
+  background: #fffd;
+  color: var(--category-ink);
+  font-size: .71rem;
+  line-height: 1.2;
+}
+.workItem :is(img, svg) { flex: none; width: 19px; height: 19px; object-fit: contain; border-radius: 50%; }
+.workItem span { overflow-wrap: anywhere; }
+.workItem strong { flex: none; font-variant-numeric: tabular-nums; }
+.workParticipant {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  overflow: hidden;
+  border: 1px solid var(--category-accent);
+  border-radius: 50%;
+  background: var(--category-pale);
+  color: var(--category-ink);
+  font-size: .8rem;
+  font-weight: 700;
+}
+.workParticipant img { display: block; height: 100%; width: 100%; object-fit: cover; }
 .observedBadges { display: inline-flex; align-items: center; gap: 3px; }
 .observedBadges img { width: 21px; height: 21px; object-fit: contain; border-radius: 50%; }
 .observedBadges small { font-size: .7rem; color: #655574; }
