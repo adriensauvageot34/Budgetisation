@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { REALIZED_2025_MONTHS, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { ARCHIVED_REALIZED_MONTHS, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
 import { MonthPicker } from "../month-picker";
 import { monthLabel, money } from "./display";
@@ -15,9 +15,9 @@ export function RealizedFinancialTotals({ board }: { board: RealizedBoard }) {
   </dl>;
 }
 
-export function ArchivedRealizedMonth({ board }: { board: RealizedBoard }) {
-  const index = REALIZED_2025_MONTHS.findIndex(month => month === board.month);
-  const previous = REALIZED_2025_MONTHS[index - 1], next = REALIZED_2025_MONTHS[index + 1];
+export function ArchivedRealizedMonth({ board, initialCardId }: { board: RealizedBoard; initialCardId?: string }) {
+  const index = ARCHIVED_REALIZED_MONTHS.findIndex(month => month === board.month);
+  const previous = ARCHIVED_REALIZED_MONTHS[index - 1], next = ARCHIVED_REALIZED_MONTHS[index + 1];
   return <div className={styles.workspace} data-composer data-reconstruction-mode="realized">
     <header className={styles.workspaceHeader}>
       <div className={styles.headerIdentity}>
@@ -35,6 +35,6 @@ export function ArchivedRealizedMonth({ board }: { board: RealizedBoard }) {
         {next && <a className="p-1.5" href={realizedComposerHref(next)} aria-label="Mois suivant"><ArrowRight size={16} /></a>}
       </nav>
     </header>
-    <RealizedComposerMonth board={board} />
+    <RealizedComposerMonth board={board} initialCardId={initialCardId} />
   </div>;
 }
