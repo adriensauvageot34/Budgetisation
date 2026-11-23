@@ -83,14 +83,15 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
-export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false, previewHttp = false, rootRelationAccess = null, rootRelationTransport = rootRelationHttp, reconstruction }: {
+export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false, previewHttp = false, rootRelationAccess = null, rootRelationTransport = rootRelationHttp, reconstruction, initialReconstructionEditing = false }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null; durableDraftHttp?: boolean;
   snapshotMetrics?: boolean; previewHttp?: boolean;
   rootRelationAccess?: RootRelationAccess | null; rootRelationTransport?: RootRelationTransport;
   reconstruction?: RealizedBoard;
+  initialReconstructionEditing?: boolean;
 }) {
-  const [reconstructionEditing, setReconstructionEditing] = useState(false);
+  const [reconstructionEditing, setReconstructionEditing] = useState(initialReconstructionEditing);
   const showingRealized = !!reconstruction && !reconstructionEditing;
   const reconstructedCards = useMemo(() => reconstruction && new Map(reconstruction.cards
     .map(card => [reconstructedId(reconstruction.month, card.id), card])), [reconstruction]);

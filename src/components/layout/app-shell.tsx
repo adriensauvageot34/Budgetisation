@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Landmark } from "lucide-react";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 import { useProductRuntime } from "@/components/runtime";
-import { JULY_COMPOSER_HREF } from "@/domain/phase2/planner/realized-month-entry";
+import { JULY_V2_HREF } from "@/domain/phase2/planner/realized-month-entry";
 import scene from "@/app/mois-a-venir/planned-scroll-scene.module.css";
 
 const modules = [
@@ -13,13 +13,15 @@ const modules = [
   { href: "/mois-a-venir", label: "Mois à venir" },
   { href: "/analyse-globale", label: "Analyse globale" },
   { href: "/operations", label: "Opérations" },
+  { href: JULY_V2_HREF, label: "Juillet V2" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const runtime = useProductRuntime();
   const historyV2 = /^\/historique\/\d{4}-\d{2}$/.test(pathname);
-  const plannedMonth = pathname === "/mois-a-venir";
+  const julyV2 = pathname === JULY_V2_HREF;
+  const plannedMonth = pathname === "/mois-a-venir" || julyV2;
   const composer = pathname === "/mois-a-venir/composer" || pathname === "/recette/bar-favoris";
 
   if (pathname === "/connexion" || pathname === "/acces-refuse") {
@@ -49,12 +51,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <nav className="flex flex-wrap gap-1" aria-label="Navigation principale">
             {modules.map((module) => {
-              const active =
-                pathname.startsWith(module.href);
+              const active = julyV2 ? module.href === JULY_V2_HREF : pathname.startsWith(module.href);
               return (
                 <Link
                   key={module.href}
                   href={module.href}
+                  prefetch={module.href === JULY_V2_HREF ? false : undefined}
+                  aria-current={active ? "page" : undefined}
                   className={`rounded-xl px-3 py-2 text-sm font-bold transition ${
                     active
                       ? "bg-[var(--color-surface-soft)] text-[var(--color-primary-deep)]"
@@ -68,7 +71,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <Link href="/diagnostic" className="button-ghost text-xs">Diagnostic</Link>
-          <Link href={JULY_COMPOSER_HREF} prefetch={false} className="button-ghost text-xs">Juillet 2026 Composer</Link>
 
           <SignOutButton compact />
         </div>

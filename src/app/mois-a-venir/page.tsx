@@ -9,7 +9,7 @@ import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
-import { MONTH_FORECAST_RESOURCE } from "@/server/phase2/month-forecast-snapshot";
+import { monthEntry } from "./month-entry";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
@@ -38,25 +38,18 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   if (context.household === null) notFound();
   const params = await searchParams;
   const today = planningDate(context.household.timezone);
-  if (params.month === JULY_COMPOSER_MONTH && JULY_COMPOSER_MONTH < today.slice(0, 7)) {
+  const entry = monthEntry(today, params.month, context.periods);
+  const { currentMonth, targetMonth } = entry;
+  if (targetMonth === JULY_COMPOSER_MONTH && targetMonth < currentMonth) {
     redirect(JULY_COMPOSER_HREF);
   }
   const client = createCanonicalReadClient();
-  const { data: latest, error } = await client.from("analytics_query_snapshots")
-    .select("period_month").eq("household_id", context.household.householdId)
-    .eq("resource", MONTH_FORECAST_RESOURCE).eq("is_active", true).is("invalidated_at", null)
-    .order("period_month", { ascending: false }).limit(1).maybeSingle();
-  if (error) throw error;
-  if (!latest?.period_month) return <section className="card mx-auto max-w-3xl p-8" role="status"><p className="eyebrow">Notre mois à venir</p><h1 className="mt-2 text-3xl font-black">Prévision indisponible</h1><p className="mt-3 text-slate-600">Aucun mois prospectif publié pour ce foyer.</p></section>;
-  const activeMonth = String(latest.period_month).slice(0, 7);
-  const requestedMonth = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : activeMonth;
-  const targetMonth = requestedMonth;
-  if (targetMonth < today.slice(0, 7)) {
+  if (targetMonth < currentMonth) {
     const [evidence, memory] = await Promise.all([
       readMonthPredictionEvidence(client, context.household.householdId, targetMonth, true),
       readForecastMemory(client, context.household.householdId, targetMonth),
     ]);
-    return <PastMonthView targetMonth={targetMonth} review={projectPastMonthReview(targetMonth, evidence, memory)} />;
+    return <PastMonthView targetMonth={targetMonth} entry={entry} review={projectPastMonthReview(targetMonth, evidence, memory)} />;
   }
   let forecast:Awaited<ReturnType<typeof readPlanningMonthForecast>>;
   try {
@@ -123,7 +116,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const historicalRemainder = historicalPlan && typeof historicalPlan === "object" && !Array.isArray(historicalPlan)
     && typeof (historicalPlan as Record<string, unknown>).economicMonthEndRemainder === "string"
     ? (historicalPlan as Record<string, string>).economicMonthEndRemainder : null;
-  return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
+  return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored} entry={entry}
     controlModel={projectMonthControlCenter(simulation ? effectiveChoiceContext(simulation) : { forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today }, effective.owner === "PLAN_V1" ? scenario : undefined, effective.projection ?? undefined)}
     appliedProjection={effective.projection ?? undefined} appliedComparison={effective.comparison ?? undefined} appliedSemanticState={effective.semanticState ?? undefined} appliedControls={appliedControls} appliedMobility={effective.preview ? mobilitySummaries(effective.preview.compiled.journeys, effective.preview.compiled.journeyPrices) : undefined} activeRevisionNumber={effective.revision?.revisionNumber}
     appliedEvidenceStatus={effective.evidenceStatus} historicalRemainder={historicalRemainder}
