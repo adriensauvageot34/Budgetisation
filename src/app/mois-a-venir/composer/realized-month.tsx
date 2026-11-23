@@ -69,6 +69,7 @@ function RealizedElement({ payment, highlighted }: { payment: RealizedPayment; h
       <strong>{payment.label}</strong>
       <span>{[days(payment.date), payment.category].filter(Boolean).join(" · ")}</span>
       {payment.bankLabel !== payment.label && <small>{payment.bankLabel}</small>}
+      {payment.inferredEvent && <small>Rattachement estimé à cet événement</small>}
       {payment.place && <PlaceLink place={payment.place} detail />}
     </div>
     <b className={styles.amount}>{money(payment.amount)}</b>
@@ -226,8 +227,14 @@ function RealizedDetail({ card, terms, open }: {
       <ComposerAssetVisual assetKey={carArtwork} iconKey="car" size={42} />
       <div>
         <h3>Trajet en voiture</h3>
-        <p>{card.carTrip.route}</p>
+        {!card.carTrip.legs?.length && <p>{card.carTrip.route}</p>}
         <p>{distance.format(Number(card.carTrip.distanceKm))} km · {money(card.carTrip.estimatedFuel)} d’essence estimée</p>
+        {card.carTrip.legs?.length ? <ul className={styles.places}>
+          {card.carTrip.legs.map(leg => <li key={leg.id}>
+            <strong>{leg.route}</strong><br />
+            <small>{[days(leg.date), leg.participant, `${distance.format(Number(leg.distanceKm))} km`, `≈ ${money(leg.estimatedFuel)}`].filter(Boolean).join(" · ")}</small>
+          </li>)}
+        </ul> : null}
       </div>
     </section>}
     {card.transferAmounts && <dl className={styles.transferTotals}>
@@ -242,7 +249,7 @@ function RealizedDetail({ card, terms, open }: {
       </ul>
     </section>}
     {card.occurrences?.length ? <section aria-labelledby="realized-occurrences-title">
-      <h3 id="realized-occurrences-title">Occurrences <span>{card.occurrences.length}</span></h3>
+      <h3 id="realized-occurrences-title">{card.keepPaymentsTogether ? "Activités regroupées" : "Occurrences"} <span>{card.occurrences.length}</span></h3>
       <ul className={styles.occurrences}>
         {card.occurrences.map(occurrence => <li key={occurrence.id}>
           <time dateTime={occurrence.date}>{days(occurrence.date, occurrence.endDate)}</time>
@@ -264,12 +271,12 @@ function RealizedDetail({ card, terms, open }: {
       </ul>
     </section> : null}
     {!card.work && !card.payments.length && !card.occurrences?.length && !card.relatedPayments?.length
-      && <p>Aucun paiement rattaché à cet événement en juillet.</p>}
+      && !card.carTrip && <p>Aucun paiement rattaché à cet événement.</p>}
   </>;
 }
 
 export function RealizedComposerMonth({ board, onEdit, editableIds }: {
-  board: RealizedBoard; onEdit: (cardId: string) => void; editableIds: ReadonlySet<string>;
+  board: RealizedBoard; onEdit?: (cardId: string) => void; editableIds?: ReadonlySet<string>;
 }) {
   const [sortOrder, setSortOrder] = useState<SortOrder>("amount-desc");
   const [query, setQuery] = useState("");
@@ -423,7 +430,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
         onChange={event => { setSortOrder(event.target.value as SortOrder); startRail(); }}>
         {sortOptions.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
       </select>
-      <div className={styles.search} role="search" aria-label="Recherche dans juillet">
+      <div className={styles.search} role="search" aria-label="Recherche dans le mois">
         <Search size={16} aria-hidden="true" />
         <input ref={search} type="search" aria-label="Rechercher une carte ou une opération" placeholder="Marchand, événement, date…" value={query}
           onChange={event => filterQuery(event.target.value)} onKeyDown={event => {
@@ -477,7 +484,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
           </button>
         </header>
         <div ref={body} className={styles.panelBody}>
-          {editableIds.has(reconstructedId(board.month, selectedView.source.id)) && <button type="button" className={styles.editCard}
+          {onEdit && editableIds?.has(reconstructedId(board.month, selectedView.source.id)) && <button type="button" className={styles.editCard}
             onClick={() => { dialog.current?.close(); onEdit(selectedView.source.id); }}><Pencil size={15} aria-hidden="true" /> Modifier dans le brouillon</button>}
           <RealizedDetail card={selected} terms={terms} open={open} />
         </div>

@@ -10,7 +10,7 @@ import scene from "@/app/mois-a-venir/planned-scroll-scene.module.css";
 
 const modules = [
   { href: "/historique", label: "Historique" },
-  { href: "/mois-a-venir", label: "Mois à venir" },
+  { href: "/mois-a-venir", label: "Composer" },
   { href: "/analyse-globale", label: "Analyse globale" },
   { href: "/operations", label: "Opérations" },
   { href: JULY_V2_HREF, label: "Juillet V2" },

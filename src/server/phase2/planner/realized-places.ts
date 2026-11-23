@@ -4,6 +4,7 @@ import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonica
 export type RealizedPlace = Readonly<{
   key: string;
   label: string;
+  town?: string;
   address?: string;
   mapsUrl?: string;
   certainty: "confirmed" | "probable" | "town";
@@ -23,6 +24,12 @@ const verifiedBranches = [
 ] as const;
 
 const publicMerchantPlaces = [
+  { name: "maison regnier", cityPrefix: "chaud", label: "Maison Régnier",
+    address: "9 place du Marché, 15110 Chaudes-Aigues", town: "Chaudes-Aigues" },
+  { name: "tabac presse loto roujan", cityPrefix: "roujan", label: "Tabac Presse Loto Roujan",
+    address: "3 rue du Jeu-de-Ballon, 34320 Roujan", town: "Roujan" },
+  { name: "super u", cityPrefix: "serv", label: "Super U / Station U Servian",
+    address: "1 avenue du Mas-Viel, 34290 Servian", town: "Servian" },
   { name: "au bon coin", cityPrefix: "pez", label: "Au Bon Coin",
     address: "34 place du 14-Juillet, 34120 Pézenas" },
   { name: "cercle de la vap", cityPrefix: "montpell", label: "Cercle de la Vap",
@@ -41,10 +48,11 @@ const publicMerchantPlaces = [
     address: "150 rue Élie-Wiesel, 34000 Montpellier" },
 ] as const;
 
-function normalized(text: string) {
+export function realizedPlaceKey(text: string) {
   return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/œ/gu, "oe")
     .replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
+const normalized = realizedPlaceKey;
 
 function coordinates(lat: unknown, lng: unknown) {
   const latitude = typeof lat === "number" || typeof lat === "string" && lat.trim() ? Number(lat) : NaN;
@@ -64,7 +72,7 @@ export function realizedPlace(row: CanonicalRecord, certainty: "confirmed" | "pr
   const name = optionalCanonicalString(row, ["nom_canonique"])?.trim();
   const subtype = optionalCanonicalString(row, ["sous_type"]) ?? "";
   if (row.private_place !== false || !name || /\bnon (?:identifi[ée]|pr[ée]cis[ée])/iu.test(subtype + " " + name)) {
-    return town ? { key: `town:${normalized(town)}`, label: town, certainty: "town", mapsUrl: mapsSearch(`${town}, France`) } : undefined;
+    return town ? realizedTown(town) : undefined;
   }
 
   const coords = coordinates(row.latitude_canonique, row.longitude_canonique);
@@ -76,9 +84,13 @@ export function realizedPlace(row: CanonicalRecord, certainty: "confirmed" | "pr
   const publicAddressQuery = [label, address, canonicalAddress || !address ? town : undefined].filter(Boolean).join(", ");
   const query = address || !coords ? publicAddressQuery : `${coords.latitude},${coords.longitude}`;
   return {
-    key: String(row.place_id), label, ...(address ? { address } : {}),
+    key: String(row.place_id), label, ...(town ? { town } : {}), ...(address ? { address } : {}),
     certainty, mapsUrl: mapsSearch(query, !canonicalAddress && branch && "googlePlaceId" in branch ? branch.googlePlaceId : undefined),
   };
+}
+
+export function realizedTown(town: string): RealizedPlace {
+  return { key: `town:${normalized(town)}`, label: town, town, certainty: "town", mapsUrl: mapsSearch(`${town}, France`) };
 }
 
 export function merchantPlaceAlias(aliases: readonly CanonicalRecord[], descriptor: string, day: string) {
@@ -108,9 +120,11 @@ export function probableMerchantPlace(name: string, descriptor: string): Realize
   const locationWords = bank.split(" ").filter(word => /^\p{L}+$/u.test(word));
   const match = publicMerchantPlaces.find(place => place.name === merchant
     && locationWords.slice(0, 5).some(word => place.cityPrefix.length === 1
-      ? word === place.cityPrefix : word.startsWith(place.cityPrefix)));
+      ? word === place.cityPrefix : word.startsWith(place.cityPrefix))
+    || place.name === "super u" && merchant === place.name && /\bmarche u ser\b/u.test(bank));
   if (!match) return undefined;
-  return { key: `public:${merchant}`, label: match.label, address: match.address,
+  return { key: `public:${normalized(match.label)}`, label: match.label, address: match.address,
+    ...("town" in match ? { town: match.town } : {}),
     mapsUrl: mapsSearch(`${match.label}, ${match.address}`), certainty: "probable" };
 }
 
