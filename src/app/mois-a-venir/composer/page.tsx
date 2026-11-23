@@ -49,6 +49,6 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   }));
   const { model, drafts, rootRelationAccess, reconstruction } = observed.value;
   return <><ComposerShell key={rootRelationAccess?.scopeKey ?? month} rootRelationAccess={rootRelationAccess} initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
-    durableDraftHttp={!!drafts} reconstruction={reconstruction ?? undefined} />
+    durableDraftHttp={!!drafts} reconstruction={reconstruction ?? undefined} initialReconstructionEditing={isReconstruction && params.view === "edition"} />
     {observed.metrics && <span hidden data-snap-server={JSON.stringify(observed.metrics)} />}</>;
 }

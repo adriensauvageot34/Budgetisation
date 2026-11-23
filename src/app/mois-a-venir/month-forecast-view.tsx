@@ -17,12 +17,14 @@ import type { OfficialPlanComparisonV1 } from "@/domain/phase2/planner/official-
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ComposerMobilitySummary } from "@/domain/phase2/planner/composer-ui-contract";
 import type { AppliedPlanControl } from "@/server/phase2/planner/applied-plan-read";
+import { MonthDataStatus } from "./month-data-status";
+import type { MonthEntry } from "./month-entry";
 import material from "./month-material.module.css";
 
 const money = (value: string | null) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(value));
 const monthLabel = (value: string) => new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}-01T12:00:00Z`));
 
-type Props = { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored: StoredMonthInputs;
+type Props = { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored: StoredMonthInputs; entry?: MonthEntry;
   composerEnabled?: boolean; activePlan?: boolean; activeRevisionId?:string; planOwnership?: { categoryKeys: string[]; savingsIds: string[] };
   appliedProjection?: PlanProjectionV1; appliedSemanticState?: PlanSemanticStateV1; appliedControls?: readonly AppliedPlanControl[]; appliedMobility?: readonly ComposerMobilitySummary[]; activeRevisionNumber?: number;
   appliedEvidenceStatus?: "EXACT" | "CHANGED_AUTHORITIES" | "NOT_APPLICABLE"; historicalRemainder?: string | null; appliedComparison?: OfficialPlanComparisonV1;
@@ -31,7 +33,7 @@ type Props = { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored:
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
     prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[]; wallets: readonly import("@/domain/phase2/planned-contract").PlannedWalletOption[]; inputError: boolean; today: string };
 
-export function MonthForecastView({ forecast, scenario, stored, plannedExpenses, calendarCarryovers, persons, places, vehicle, prices, wallets, inputError, today, controlModel, initialSection, initialFocus, composerEnabled, activePlan, activeRevisionId, planOwnership, appliedProjection, appliedSemanticState, appliedControls, appliedMobility, activeRevisionNumber, appliedEvidenceStatus, historicalRemainder, appliedComparison }: Props) {
+export function MonthForecastView({ forecast, scenario, stored, entry, plannedExpenses, calendarCarryovers, persons, places, vehicle, prices, wallets, inputError, today, controlModel, initialSection, initialFocus, composerEnabled, activePlan, activeRevisionId, planOwnership, appliedProjection, appliedSemanticState, appliedControls, appliedMobility, activeRevisionNumber, appliedEvidenceStatus, historicalRemainder, appliedComparison }: Props) {
   const targetMonth = forecast.meta.targetMonth;
   const model = controlModel ?? projectMonthControlCenter({ forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today });
   return <PlannedExpenseInteractions><MonthControlCenter key={targetMonth} model={model} initialSection={initialSection} initialFocus={initialFocus} inputError={inputError}
@@ -39,6 +41,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
     <main data-planned-page data-effective-owner={activePlan ? "PLAN_V1" : "DIRECT_V2"} className={`${material.page} mx-auto max-w-[1280px] space-y-7 pb-20`}>
     <nav aria-label="Mois préparé" className={`${material.monthHeader} flex items-center justify-between gap-6 text-sm font-bold`}><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)) - 2, 1)).toISOString().slice(0, 7)}`}>‹ Mois précédent</a><h1 className="text-center text-4xl font-black uppercase tracking-tight">{monthLabel(targetMonth)}</h1><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)), 1)).toISOString().slice(0, 7)}`}>Mois suivant ›</a></nav>
     <MonthSectionNav hasProjects={plannedExpenses.length > 0} actionableCount={model.actionableCount} appliedPlan={activePlan} builderAvailable={!!scenario.economicPlan} composerHref={composerEnabled ? `/mois-a-venir/composer?month=${targetMonth}` : undefined} />
+    {entry && <MonthDataStatus entry={entry} />}
     {!activePlan && composerEnabled && <p className={material.composerInvitation}>Vous pouvez préparer votre mois dans <a href={`/mois-a-venir/composer?month=${targetMonth}`}>Composer</a>, puis retrouver ici les conséquences de votre Plan.</p>}
     {!scenario.economicPlan && <section className={`${material.glassSecondary} p-5`} role="status"><h2 className="font-bold">Compléter les ressources du mois</h2>
       <p className="mt-2 text-sm">Il manque des informations pour préparer ce mois. Le solde bancaire daté reste indépendant des ressources à compléter.</p>
