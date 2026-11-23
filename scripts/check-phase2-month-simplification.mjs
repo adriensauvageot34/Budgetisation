@@ -101,7 +101,7 @@ const withProject = render(React.createElement(MonthForecastView, { ...viewProps
 assert.match(withProject, /id="planned-expense-title"/); assert.match(withProject, /href="#planned-expense-title"/);
 assert.equal((withProject.match(/<h2[^>]*>Nos projets<\/h2>/g) ?? []).length, 1);
 assert.doesNotMatch(withProject, /À venir \/ prévues|Réalisées ce mois-ci/);
-const historic = render(React.createElement(MonthStory, { ...props, plan: early, today: "2026-10-01", settings,
+const historic = render(React.createElement(MonthStory, { ...props, scenario: deriveMonthScenario(live,inputs,null,"2026-10-01"), today: "2026-10-01", settings,
   memory: [{...row,model_version:forecastTemporalPolicy(early.narrative.prediction.forecastTemporalMode).modelVersion}] }));
 // History is now reached through the Centre; the pure read-model retains it.
 assert.equal(display(early,[],undefined,[{...row,model_version:forecastTemporalPolicy(early.narrative.prediction.forecastTemporalMode).modelVersion}]).change.sampleCount,1);

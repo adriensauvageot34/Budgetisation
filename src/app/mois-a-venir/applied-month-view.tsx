@@ -35,12 +35,13 @@ function DecisionGroup({ title, count, icon, children }: { title: string; count:
 }
 
 /** Display only: all money comes from B1/V2. Marginals and overlapping lenses are never summed. */
-export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, evidenceStatus = "EXACT", historicalRemainder = null, composerHref, today, calendarCarryovers = [], persons = [], mobility = [], places = [], comparison }: {
+export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, evidenceStatus = "EXACT", historicalRemainder = null, composerHref, today, calendarCarryovers = [], persons = [], mobility = [], places = [], comparison, embedded = false }: {
   projection: PlanProjectionV1; semanticState: PlanSemanticStateV1; controls?: readonly AppliedPlanControl[]; plan: MonthEconomicPlan | null;
   external?: ComponentProps<typeof PlannedExpensesControl>; revision: number; evidenceStatus?: "EXACT" | "CHANGED_AUTHORITIES" | "NOT_APPLICABLE";
   historicalRemainder?: string | null; composerHref?: string; today: string; comparison?: OfficialPlanComparisonV1;
   calendarCarryovers?: readonly PlannedExpenseCard[]; persons?: readonly { personId: string; displayName: string }[];
   mobility?: readonly ComposerMobilitySummary[]; places?: readonly import("@/domain/phase2/planned-places").PlannedPlaceOption[];
+  embedded?: boolean;
 }) {
   const budgets = controls.filter(control => !control.savings), savingsControls = controls.filter(control => control.savings);
   const unchangedSavings = plan?.savingsAllocations.items.filter(item => !savingsControls.some(control => control.savings?.reservationId === item.id)) ?? [];
@@ -87,7 +88,7 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
         {roots.map(context => {
           const parts = comparison?.components.filter(row => row.contextOccurrenceId === context.contextOccurrenceId && !row.physicalJourneyRequirementId) ?? [];
           const decision = comparison?.decisions.find(row => row.decisionId === context.contextOccurrenceId);
-          return <details key={context.contextOccurrenceId} className={styles.decisionCard} data-plan-context={context.contextOccurrenceId} data-plan-gift={context.templateKey === "gift" ? context.contextOccurrenceId : undefined} data-plan-night-out={context.templateKey === "night-out" ? context.contextOccurrenceId : undefined} data-plan-short-stay={context.templateKey === "short-stay" ? context.contextOccurrenceId : undefined} data-plan-family-visit={context.templateKey === "family-visit" ? context.contextOccurrenceId : undefined}>
+          return <details id={`plan-context-${context.contextOccurrenceId}`} key={context.contextOccurrenceId} className={styles.decisionCard} data-plan-context={context.contextOccurrenceId} data-plan-gift={context.templateKey === "gift" ? context.contextOccurrenceId : undefined} data-plan-night-out={context.templateKey === "night-out" ? context.contextOccurrenceId : undefined} data-plan-short-stay={context.templateKey === "short-stay" ? context.contextOccurrenceId : undefined} data-plan-family-visit={context.templateKey === "family-visit" ? context.contextOccurrenceId : undefined}>
             <summary><span className={styles.cardHeading}><strong>{contextLabel(context)}</strong><ChevronDown size={15} aria-hidden="true" /></span>
               <span className={styles.cardValue}>{parts.length === 1 ? money(parts[0].effect.grossAmount) : parts.length > 1 ? <>Postes distincts : {parts.slice(0, 2).map(part => money(part.effect.grossAmount)).join(" · ")}{parts.length > 2 ? " · voir le détail" : ""}</> : contextLabels[context.templateKey] ?? "Moment du Plan"}</span>
               <span className={styles.cardNote}>{parts.length === 1 ? coverageLabel(parts[0].effect) : context.templateKey === "short-stay" ? "Hébergement, moments et trajet liés" : "Détails et informations à préciser"}</span>
@@ -118,10 +119,10 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
           {comparison && <pre>{JSON.stringify({ revision: comparison.revision, freshness: comparison.freshness, authorities: comparison.authorities }, null, 2)}</pre>}
         </details></div>
     </details>
-    <div className={styles.practicalGrid}>
+    {!embedded && <div className={styles.practicalGrid}>
       <details id="resources-title" className={styles.practical}><summary>Banque et ressources</summary><div className={styles.practicalBody}>{plan ? <><BankStockCard balance={plan.bankCash.currentRealBankBalance} /><div className={styles.resourceGrid}>{plan.resources.map(resource => <ResourceEditor key={resource.key} resource={resource} targetMonth={projection.targetMonth} controls={false} walletObservation={resource.key === "benefit:swile" ? plan.benefitWallets.SWILE.latestObservation : resource.key === "benefit:edenred" ? plan.benefitWallets.EDENRED.latestObservation : null} />)}</div></> : <p>Les ressources restent accessibles dans le Centre de contrôle.</p>}</div></details>
       <details id="timeline-title" className={styles.practical}><summary>Calendrier du mois</summary><div className={styles.practicalBody}>{plan && external ? <MonthCalendar targetMonth={projection.targetMonth} today={today} {...projectMonthCalendar(plan.certainOutflows.items, [...external.expenses, ...calendarCarryovers])} /> : <p>Calendrier disponible après renseignement des ressources.</p>}</div></details>
-    </div>
+    </div>}
     {external && (external.expenses.length > 0
       ? <details id="plan-external" className={styles.practical}><summary>Dépenses planifiées indépendantes · {external.expenses.length}</summary><div className={styles.practicalBody}><PlannedExpensesControl {...external} /></div></details>
       : <PlannedExpensesControl {...external} />)}

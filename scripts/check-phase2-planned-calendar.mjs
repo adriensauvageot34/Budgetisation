@@ -43,6 +43,14 @@ const busy = projectMonthCalendar([certain("Loyer", "255.74"), certain("EDF", "7
   certain("Max", "13.99"), certain("Pacifica habitation", "8.98"), certain("Pacifica juridique", "8.92")], []);
 assert.equal(busy.dailyTotals["2026-10-04"], "365.83", "independent arithmetic fixture");
 const renderCalendar = data => renderToStaticMarkup(React.createElement(MonthCalendar, { targetMonth: "2026-10", ...data }));
+const withPlanMoment = projectMonthCalendar([certain("EDF", "78.20", "HISTORICAL_ESTIMATE")], [], [
+  { id: "moment-1", label: "Sortie du Plan", date: "2026-10-04" },
+  { id: "moment-2", label: "Projet à dater", date: null },
+]);
+assert.deepEqual(withPlanMoment.dailyTotals, { "2026-10-04": "78.20" });
+assert.equal(presentation.calendarStateLabel(withPlanMoment.entries.find(row => row.planContextId)), "Prévu · Plan appliqué");
+assert.match(renderCalendar(withPlanMoment), /Sortie du Plan/);
+assert.match(renderCalendar(withPlanMoment), /Projet à dater/);
 const html = renderCalendar(busy);
 assert.match(html, /365,83/); assert.match(html, /255,74/); assert.match(html, /13,99/); assert.match(html, /\+3 autres/);
 assert.equal((html.match(/data-calendar-event=/gu) ?? []).length, 2, "CAL-10/11 top two, then +N");

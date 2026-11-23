@@ -29,6 +29,8 @@ import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { resolveEffectiveMonthScenario } from "@/server/phase2/planner/effective-month-scenario";
 import { effectiveChoiceContext, type EffectiveMonthSimulation } from "@/server/phase2/planner/effective-simulation";
 import { plannerComposerEnabled, legacyPlanOwnership } from "@/server/phase2/planner/cutover";
+import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
+import { readActiveComposerDraft } from "@/server/phase2/planner/composer-draft-service";
 
 export const metadata = { title: "Notre mois à venir" };
 export const dynamic = "force-dynamic";
@@ -75,10 +77,19 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const persons = activePersons.map((person) => ({ ...person, isCurrentUser: person.personId === currentPersonId }));
   const options = await readPlannedContextOptions(client, context.household.householdId, persons);
   const planner = await authorizedPlanner();
+  const composerEnabled = plannerComposerEnabled();
   let simulation:EffectiveMonthSimulation|undefined;
-  const effective = await resolveEffectiveMonthScenario({ ...planner.deps,
-    captureSimulation:value=>{simulation=value;},
-    readDirectWorld: async () => ({ forecast, monthInputs: storedRead.inputs, externalIntents: expensesRead, asOfDate: today }) }, planner.householdId, targetMonth);
+  const [effective, draft] = await Promise.all([
+    resolveEffectiveMonthScenario({ ...planner.deps,
+      captureSimulation: value => { simulation = value; },
+      readDirectWorld: async () => ({ forecast, monthInputs: storedRead.inputs, externalIntents: expensesRead, asOfDate: today }) }, planner.householdId, targetMonth),
+    composerEnabled && composerDraftAutosaveEnabledFor(planner.userId)
+      ? readActiveComposerDraft(planner, targetMonth).catch(error => {
+        console.warn("MONTH_COMPOSER_DRAFT_READ_UNAVAILABLE", error instanceof Error ? error.name : "unknown");
+        return null;
+      })
+      : null,
+  ]);
   if(simulation)forecast=simulation.forecast;
   const stored=simulation?{...storedRead,inputs:simulation.inputs}:storedRead;
   const plannedExpenses=simulation?.expenses??expensesRead;
@@ -86,7 +97,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const ownership = await legacyPlanOwnership(planner.deps.repository, planner.householdId, targetMonth);
   const placeLabel = (ref: import("@/domain/phase2/planned-contract").ProspectivePlaceRef | undefined) =>
     ref?.kind === "TEXT" ? ref.label : ref?.kind === "KNOWN" ? options.places.find((place) => place.placeId === ref.placeId)?.name : undefined;
-  const cards = projectPlannedExpenseCards(plannedExpenses, today, scenario.economicPlan?.narrative.prediction?.reconciliation).map((card) => {
+  const cards = projectPlannedExpenseCards(plannedExpenses, today, scenario.observationMatches).map((card) => {
     if (!scenario.economicPlan || effective.owner === "PLAN_V1") return card;
     const before = deriveMonthScenario(forecast, stored.inputs, null, today,
       plannedExpenses.filter((row) => row.id !== card.id)).economicPlan;
@@ -120,7 +131,9 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     controlModel={projectMonthControlCenter(simulation ? effectiveChoiceContext(simulation) : { forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today }, effective.owner === "PLAN_V1" ? scenario : undefined, effective.projection ?? undefined)}
     appliedProjection={effective.projection ?? undefined} appliedComparison={effective.comparison ?? undefined} appliedSemanticState={effective.semanticState ?? undefined} appliedControls={appliedControls} appliedMobility={effective.preview ? mobilitySummaries(effective.preview.compiled.journeys, effective.preview.compiled.journeyPrices) : undefined} activeRevisionNumber={effective.revision?.revisionNumber}
     appliedEvidenceStatus={effective.evidenceStatus} historicalRemainder={historicalRemainder}
-    composerEnabled={plannerComposerEnabled()} planOwnership={ownership} activePlan={effective.owner === "PLAN_V1"} activeRevisionId={effective.revision?.planRevisionId}
+    composerEnabled={composerEnabled} planOwnership={ownership} activePlan={effective.owner === "PLAN_V1"} activeRevisionId={effective.revision?.planRevisionId}
+    draftRootCount={draft?.semanticState.contexts.filter(context => !context.parentContextOccurrenceId).length}
+    linkedPlanContextIds={effective.preview?.compiled.contexts.filter(context => context.externalIntentId).map(context => context.contextOccurrenceId)}
     initialSection={control?.section ?? null} initialFocus={control?.focus ?? null}
     plannedExpenses={cards} calendarCarryovers={projectPlannedExpenseCards(calendarCarryovers, today)} today={today}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={[...options.prices, ...(() => { const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []); return estimate ? [estimate] : []; })()]} wallets={options.wallets}
