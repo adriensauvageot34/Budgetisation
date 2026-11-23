@@ -27,6 +27,8 @@ import { ComposerSaveStatus } from "./composer-save-status";
 import { reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
 import { RealizedComposerMonth } from "./realized-month";
+import { RealizedFinancialTotals } from "./archived-realized-month";
+import { MonthPicker } from "../month-picker";
 import { ReconstructedCards } from "./reconstructed-cards";
 import { proposeJulyCarTrips } from "./actions";
 import { composerContextProgress, ContextProgress } from "./context-progress";
@@ -1253,17 +1255,13 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {reconstruction ? <span data-object-count>{showingRealized ? `${reconstruction.operationCount} opérations bancaires` : `${shown.board.contexts.filter(card => !card.parentContextOccurrenceId).length} cartes du brouillon`}</span>
           : <span data-object-count>{shown.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-label={previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Précisions en cours de calcul" : undefined} aria-pressed={unresolvedOpen} aria-controls={unresolvedOpen ? "composer-finances-title" : undefined} disabled={!model.presentation.unresolvedCount || previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} onClick={showUnresolved}>{previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Calcul…" : `${model.presentation.unresolvedCount} à préciser`}</button></span>}
         {model.activeRevisionNumber > 0 && <small data-official-revision>Plan · révision {model.activeRevisionNumber}</small>}
-        {!relationSession && previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
+        {!relationSession && previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}
+        {reconstruction && <MonthPicker targetMonth={reconstruction.month} />}</div></div>
       {!reconstruction && <div className={styles.hudContainer} data-compare-header>{comparison && <div className={styles.compareCurrent}><span>Actuel</span><strong>{money(comparison.model.board.cockpit.plan.economicMonthEndRemainder)}</strong></div>}
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails}
         retry={previewStatus === "FAILED" && !busy ? retryPreview : undefined} /></div>}
-      {showingRealized && reconstruction && <dl className={styles.realizedTotals} aria-label="Bilan financier du mois">
-        <div><dt>Revenus encaissés</dt><dd>{money(reconstruction.totals.income.amount)}</dd></div>
-        <div><dt>Dépenses débitées</dt><dd>{money(reconstruction.totals.expense.amount)}</dd></div>
-        {reconstruction.totals.refund.count > 0 && <div><dt>Remboursements reçus</dt><dd>{money(reconstruction.totals.refund.amount)}</dd></div>}
-        <div className={styles.realizedNet}><dt>Net hors transferts</dt><dd>{money(reconstruction.net)}</dd></div>
-      </dl>}
+      {showingRealized && reconstruction && <RealizedFinancialTotals board={reconstruction} />}
       {!showingRealized && <div className={styles.toolbar}>
         {resumableContext && <button type="button" className={styles.financialLink} disabled={busy} onClick={() => {
           setResumeContext(null); stableLibraryOpen(resumableContext.id);

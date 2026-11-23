@@ -66,7 +66,8 @@ function personDayKey(personId: string, date: string) {
   return `${personId}:${date}`;
 }
 
-export function realizedWorkDays(events: readonly ActivityOccurrenceFact[], profiles: readonly WorkPerson[]) {
+export function realizedWorkDays(events: readonly ActivityOccurrenceFact[], profiles: readonly WorkPerson[],
+  historicalWorkplace?: (eventId: string) => RealizedPlace | undefined) {
   const byPerson = new Map(profiles.map(profile => [profile.ref.personId, profile]));
   const byPersonDay = new Map<string, WorkDay | null>();
   const eventKeys = new Map<string, string>();
@@ -83,13 +84,13 @@ export function realizedWorkDays(events: readonly ActivityOccurrenceFact[], prof
       continue;
     }
     if (prior) continue;
-    const label = mode === "remote" ? person.remote! : person.site;
-    const address = mode === "onsite" ? person.siteAddress : undefined;
-    const mapsUrl = mode === "onsite"
+    const label = mode === "remote" ? person.remote! : historicalWorkplace ? "Site de travail" : person.site;
+    const address = mode === "onsite" && !historicalWorkplace ? person.siteAddress : undefined;
+    const mapsUrl = mode === "onsite" && !historicalWorkplace
       ? `https://www.google.com/maps/search/?${new URLSearchParams({ api: "1", query: `${label}, ${address ?? "Montpellier"}` })}` : undefined;
     byPersonDay.set(key, {
       key, day, mode, person, label: mode === "onsite" ? person.siteTitle : `Télétravail ${person.name}`,
-      place: { key: `work:${person.ref.personId}:${mode}`, label, certainty: "confirmed",
+      place: mode === "onsite" && historicalWorkplace?.(event.lifeEventId) || { key: `work:${person.ref.personId}:${mode}`, label, certainty: "confirmed",
         ...(address ? { address } : {}), ...(mapsUrl ? { mapsUrl } : {}) },
     });
   }
@@ -99,7 +100,13 @@ export function realizedWorkDays(events: readonly ActivityOccurrenceFact[], prof
       return key ? byPersonDay.get(key) ?? undefined : undefined;
     },
     forMeal(event: ActivityOccurrenceFact, participation: CanonicalRecord | undefined, timeZone: HouseholdTimeZone) {
-      if (event.activityId !== "repas_restaurant" || event.participantIds.length !== 1 || !participation) return undefined;
+      if (event.activityId !== "repas_restaurant" || event.participantIds.length !== 1) return undefined;
+      if (historicalWorkplace && event.parentLifeEventId) {
+        const key = eventKeys.get(event.parentLifeEventId);
+        const parent = key ? byPersonDay.get(key) : undefined;
+        if (parent?.mode === "onsite" && parent.day === event.startDate && parent.person.ref.personId === event.participantIds[0]) return parent;
+      }
+      if (!participation) return undefined;
       const start = optionalCanonicalString(participation, ["start_at"]);
       const time = start && new Date(start);
       if (!time || Number.isNaN(time.getTime())) return undefined;

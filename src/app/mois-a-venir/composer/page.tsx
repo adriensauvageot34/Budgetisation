@@ -12,7 +12,8 @@ import { plannerComposerEnabled } from "@/server/phase2/planner/cutover";
 import { ComposerShell } from "./composer-shell";
 import { composerInteraction } from "./actions";
 import { observeSnapshot } from "@/server/phase2/planner/snapshot-observation";
-import { JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { isRealized2025Month, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { ArchivedRealizedMonth } from "./archived-realized-month";
 import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
 import { reconstructJulyDraft } from "@/server/phase2/planner/reconstruct-july-draft";
 import { getBootstrapContext } from "@/server/bootstrap/context";
@@ -23,6 +24,14 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   if (!plannerComposerEnabled()) notFound();
   const params = await searchParams;
   const month = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : new Date().toISOString().slice(0, 7);
+  if (isRealized2025Month(month)) {
+    const board = await withProductAuthentication(async () => {
+      const context = await getBootstrapContext();
+      if (!context.household) notFound();
+      return readRealizedMonth(context, parseYearMonth(month));
+    });
+    return <ArchivedRealizedMonth board={board} />;
+  }
   const isReconstruction = month === JULY_COMPOSER_MONTH;
   const observed = await observeSnapshot(() => withProductAuthentication(async () => {
     const { deps, householdId, userId, supabase } = await authorizedPlanner();
