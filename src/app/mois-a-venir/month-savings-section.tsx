@@ -8,8 +8,8 @@ import material from "./month-material.module.css";
 const money = (amount: string | null) => amount === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(amount));
 
 /** Display only: all totals and policies arrive from the monthly plan. */
-export function MonthSavingsSection({ savings, targetMonth, controls = true }: {
-  savings: Omit<MonthEconomicPlan["savingsAllocations"], "total" | "protectedTotal" | "adjustableTotal"> & { total: string | null; protectedTotal: string | null; adjustableTotal: string | null }; targetMonth: string; controls?: boolean;
+export function MonthSavingsSection({ savings, targetMonth, controls = true, readOnly = false }: {
+  savings: Omit<MonthEconomicPlan["savingsAllocations"], "total" | "protectedTotal" | "adjustableTotal"> & { total: string | null; protectedTotal: string | null; adjustableTotal: string | null }; targetMonth: string; controls?: boolean; readOnly?: boolean;
 }) {
   return <section aria-labelledby="savings-title" className={`${material.glassSecondary} p-6`}>
     <div className="flex items-center justify-between gap-4">
@@ -24,12 +24,12 @@ export function MonthSavingsSection({ savings, targetMonth, controls = true }: {
           {item.dueDate && <p className="mt-1 text-xs text-slate-600">Mise de côté le {new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "Europe/Paris" }).format(new Date(`${item.dueDate}T12:00:00Z`))}</p>}
         </div>
         <strong className={`${material.data} text-lg`}><AnimatedMoney value={money(item.amount)} /></strong>
-        {controls ? <form action={updateMonthInputs}>
+        {!readOnly && (controls ? <form action={updateMonthInputs}>
           <input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="remove-declared-outflow" /><input type="hidden" name="outflowId" value={item.id} />
           <button className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-white/60" aria-label={`Supprimer la cagnotte ${item.label}`}>Supprimer</button>
-        </form> : <MonthControlLink section="choices" focus={`savings:${item.id}`} className="text-xs font-bold underline">Gérer</MonthControlLink>}
+        </form> : <MonthControlLink section="choices" focus={`savings:${item.id}`} className="text-xs font-bold underline">Gérer</MonthControlLink>)}
       </li>)}</ul>}
-    {controls ? <details className={`${material.disclosure} mt-4`}>
+    {!readOnly && (controls ? <details className={`${material.disclosure} mt-4`}>
       <summary className="cursor-pointer text-sm font-bold">Ajouter une cagnotte</summary>
       <form action={updateMonthInputs} className="mt-4 grid grid-cols-4 items-end gap-3">
         <input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="add-declared-savings" />
@@ -39,6 +39,6 @@ export function MonthSavingsSection({ savings, targetMonth, controls = true }: {
         <label className="text-xs font-semibold">Protection<select className={`${material.field} field mt-1 w-full`} name="outflowAdjustability" defaultValue="PROTECTED"><option value="PROTECTED">Protégée des ajustements automatiques</option><option value="ADJUSTABLE">Ajustable</option></select></label>
         <button className={`${material.clayPrimary} justify-self-start px-4 py-2 text-sm font-bold`}>Mettre de côté</button>
       </form>
-    </details> : <MonthControlLink section="choices" focus="savings" className="mt-4 text-sm font-bold underline">Gérer nos cagnottes</MonthControlLink>}
+    </details> : <MonthControlLink section="choices" focus="savings" className="mt-4 text-sm font-bold underline">Gérer nos cagnottes</MonthControlLink>)}
   </section>;
 }

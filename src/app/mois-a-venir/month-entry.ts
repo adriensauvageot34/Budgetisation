@@ -1,5 +1,22 @@
 import { JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { addMonths, parseYearMonth } from "@/core/time";
 import type { BootstrapAnalysisPeriod } from "@/server/bootstrap/types";
+
+const forecastStart = parseYearMonth("2026-08");
+const forecastEnd = parseYearMonth("2027-09");
+export const forecastWindowMonths: readonly string[] = (() => {
+  const months: string[] = [];
+  for (let month = forecastStart; month <= forecastEnd; month = addMonths(month, 1)) months.push(month);
+  return months;
+})();
+
+export function monthPlanningHref(month: string, view?: "bilan") {
+  return `/mois-a-venir?month=${month}${view ? `&vue=${view}` : ""}`;
+}
+
+export function showsArchivedForecast(targetMonth: string, currentMonth: string, view: unknown): boolean {
+  return targetMonth < currentMonth && forecastWindowMonths.includes(targetMonth) && view !== "bilan";
+}
 
 export function monthEntry(today: string, requestedMonth: unknown, periods: readonly BootstrapAnalysisPeriod[]) {
   const currentMonth = today.slice(0, 7);

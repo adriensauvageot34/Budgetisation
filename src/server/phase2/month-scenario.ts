@@ -213,6 +213,9 @@ function deriveMonthPlanningReference(forecast: MonthForecastSnapshot, inputs: M
   }
   const evidence = forecast.predictionEvidence;
   const items: PlanOutflow[] = [];
+  const month = forecast.meta.targetMonth;
+  const lastDay = new Date(`${month}-01T12:00:00Z`);
+  lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
   for (const component of forecast.components) {
     if (component.nature !== "CONTRACTUAL_EXPECTED" || component.additiveGroup !== "obligations" || component.central === null
       || inputs.excludedFixedObligations.includes(component.key)) continue;
@@ -220,8 +223,7 @@ function deriveMonthPlanningReference(forecast: MonthForecastSnapshot, inputs: M
     if (override?.dueDate && !override.dueDate.startsWith(forecast.meta.targetMonth))
       throw new TypeError("FIXED_OVERRIDE_MONTH_INVALID");
     const estimated = forecast.referencePlan?.estimatedDays[component.key];
-    const day = estimated?.day;
-    const estimatedDate = day ? `${forecast.meta.targetMonth}-${String(day).padStart(2, "0")}` : null;
+    const estimatedDate = estimated?.day ? `${month}-${String(Math.min(estimated.day, lastDay.getUTCDate())).padStart(2, "0")}` : null;
     items.push({ key: component.key, label: component.label, amount: override?.amount ?? component.central,
       group: outflowGroup(component.label), date: override?.dueDate ?? estimatedDate,
       dateCertainty: override?.dueDate ? "DECLARED" : estimatedDate ? "HISTORICAL_ESTIMATE" : "UNKNOWN",

@@ -1,7 +1,9 @@
 import { mobilitySummaries } from "@/server/phase2/planner/mobility-presentation";
 import { notFound, redirect } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
+import { addDays, parseLocalDate } from "@/core/time";
 import { MonthForecastView } from "./month-forecast-view";
+import { ArchivedMonthForecast } from "./archived-month-forecast";
 import { appliedPlanRevisionControls } from "@/server/phase2/planner/applied-plan-read";
 import { projectMonthControlCenter } from "@/server/phase2/month-control-center";
 import { monthControlSection, monthControlDestination, type MonthControlSectionInput } from "@/domain/phase2/month-control-contract";
@@ -9,7 +11,7 @@ import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
-import { monthEntry } from "./month-entry";
+import { monthEntry, showsArchivedForecast } from "./month-entry";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
@@ -46,21 +48,39 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     redirect(JULY_COMPOSER_HREF);
   }
   const client = createCanonicalReadClient();
-  if (targetMonth < currentMonth) {
+  const householdId = context.household.householdId;
+  const archivedForecast = showsArchivedForecast(targetMonth, currentMonth, params.vue);
+  async function readPastReview(referenceAvailable = true) {
     const [evidence, memory] = await Promise.all([
-      readMonthPredictionEvidence(client, context.household.householdId, targetMonth, true),
-      readForecastMemory(client, context.household.householdId, targetMonth),
+      readMonthPredictionEvidence(client, householdId, targetMonth, true),
+      readForecastMemory(client, householdId, targetMonth),
     ]);
-    return <PastMonthView targetMonth={targetMonth} entry={entry} review={projectPastMonthReview(targetMonth, evidence, memory)} />;
+    return <PastMonthView targetMonth={targetMonth} entry={entry} review={projectPastMonthReview(targetMonth, evidence, memory)} referenceAvailable={referenceAvailable} />;
   }
+  if (targetMonth < currentMonth && !archivedForecast) return readPastReview();
+
   let forecast:Awaited<ReturnType<typeof readPlanningMonthForecast>>;
+  const cutoff = archivedForecast ? addDays(parseLocalDate(`${targetMonth}-01`), -1) : null;
+  const openingEvidence = cutoff ? readMonthPredictionEvidence(client, householdId, targetMonth, true,
+    { asOfDate: cutoff, timezone: context.household.timezone }) : undefined;
   try {
-    forecast = await readPlanningMonthForecast(client, context.household.householdId, targetMonth);
+    if (openingEvidence) {
+      [forecast] = await Promise.all([readPlanningMonthForecast(client, householdId, targetMonth, openingEvidence), openingEvidence]);
+    } else {
+      forecast = await readPlanningMonthForecast(client, householdId, targetMonth);
+    }
   } catch (error) {
     if (!(error instanceof Error) || error.message !== "FORECAST_TARGET_MONTH_NOT_FUTURE") throw error;
+    if (archivedForecast) return readPastReview(false);
     return <section className="card mx-auto max-w-3xl p-8"><h1 className="text-2xl font-black">Ce mois ne fait pas partie des prévisions</h1><p className="mt-3">Choisissez un mois après la période historique de référence.</p><a className="mt-4 inline-block font-bold underline" href="/mois-a-venir">Revenir au mois à venir</a></section>;
   }
   const { supabase } = await getAuthenticatedBootstrapClient();
+  if (cutoff) {
+    const { inputs } = await readMonthInputs(supabase, householdId, targetMonth);
+    const openingBalance = inputs.openingBalance && inputs.openingBalance.asOfDate <= cutoff ? inputs.openingBalance : null;
+    const scenario = deriveMonthScenario({ ...forecast, forecastMemory: [] }, { ...inputs, openingBalance }, null, cutoff);
+    return <ArchivedMonthForecast entry={entry} forecast={forecast} scenario={scenario} cutoff={cutoff} />;
+  }
   const [storedRead, expensesRead, personsResult, calendarCarryovers] = await Promise.all([
     readMonthInputs(supabase, context.household.householdId, targetMonth),
     readPlannedExpenses(supabase, context.household.householdId, targetMonth),
