@@ -4,7 +4,7 @@ import { sumMobilityEstimatedFuelCost, type ActivityOccurrenceFact, type Mobilit
 import { parseActivityCausalFinancialLinks } from "@/analytics/facts/activity-cost";
 import { addDays, addMonths, parseInstant, parseLocalDate, type YearMonth } from "@/core/time";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
-import { isRealized2025Month, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import type { getBootstrapContext } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { createAuthorizedRuntimeContext } from "@/server/canonical/context";
@@ -301,7 +301,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const occurrenceRead = repository.loadActivityOccurrences(range);
   const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
   const july = month === JULY_COMPOSER_MONTH;
-  const historical = isRealized2025Month(month);
+  const historical = isArchivedRealizedMonth(month);
   const people = july || historical ? realizedWorkPeople(bootstrap.household, bootstrap.persons) : { profiles: [], portraits: {} };
   const julyPortraits: Partial<Record<JulyParticipant, string>> = {};
   for (const profile of people.profiles) {
@@ -485,8 +485,12 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       art: transport, date: leg.date, payments: [], carTrip: route, participant: tripParticipant(leg) });
   }
 
-  const explicit: Links = new Map(), primary: Links = new Map();
+  const explicit: Links = new Map(), primary: Links = new Map(), during: Links = new Map();
   for (const row of directLinks) {
+    if (historical && row.relation_type === "Effectue_pendant" && row.validation_status === "Confirmé") {
+      link(during, canonicalString(row, ["operation_id"], "financial_links"), canonicalString(row, ["life_event_id"], "financial_links"));
+      continue;
+    }
     if (row.relation_type !== "Paiement_activite" && row.relation_type !== "Cause_par_evenement" && row.relation_type !== "Preparation") continue;
     link(explicit, canonicalString(row, ["operation_id"], "financial_links"), canonicalString(row, ["life_event_id"], "financial_links"));
   }
@@ -561,9 +565,12 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     payments.push(payment);
 
     const momentId = optionalCanonicalString(operation.raw, ["moment_id"]);
+    const contextualCards = new Set([...(during.get(operation.operationId) ?? [])].flatMap(id => eventCards.get(id) ?? []));
+    const directEvents = explicit.get(operation.operationId);
     // A link to part of a payment does not assign the full bank movement to that event.
-    const linkedEvents = explicit.get(operation.operationId) ?? (momentId && !componentLinks.length ? primary.get(momentId) : undefined);
-    const linkedCards = new Set([...(linkedEvents ?? [])].flatMap(id => eventCards.get(id) ?? []));
+    const linkedEvents = directEvents ?? (momentId && !componentLinks.length ? primary.get(momentId) : undefined);
+    const linkedCards = new Set([...(linkedEvents ?? [])].flatMap(id => eventCards.get(id) ?? [])
+      .filter(card => directEvents || !contextualCards.has(card)));
     let card = flow === "expense" && !fixed && linkedCards.size === 1 ? [...linkedCards][0] : undefined;
     let inferredEvent = false;
     if (july && flow === "expense" && !fixed && purchaseDate) {
@@ -611,9 +618,10 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     if (!card && sessions && flow === "expense" && !fixed && purchaseDate && !componentLinks.length && !linkedCards.size
       && !/retrait\b/iu.test(row.bankLabel)) {
       const matched = sessions.paymentEvent(purchaseDate, place) ?? (assigned && sessions.tollEvent(purchaseDate, label, assigned.result));
-      if (matched) {
-        card = eventCards.get(matched);
-        inferredEvent = !!card;
+      const inferredCard = matched ? eventCards.get(matched) : undefined;
+      if (inferredCard && !contextualCards.has(inferredCard)) {
+        card = inferredCard;
+        inferredEvent = true;
       }
     }
     if (!card) {
@@ -630,7 +638,8 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
         if (matchingMeals.length === 1) paidMeals.add(matchingMeals[0]!.id);
       }
     }
-    for (const linkedCard of linkedCards) {
+    const referenceCards = new Set([...linkedCards, ...contextualCards]);
+    for (const linkedCard of referenceCards) {
       if (linkedCard === card) continue;
       (linkedCard.relatedPayments ??= []).push({
         id: payment.id, label: payment.label, date: payment.date, cardId: card.id, cardLabel: card.label,

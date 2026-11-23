@@ -2,14 +2,16 @@ import assert from "node:assert/strict";
 import Module from "node:module";
 import { require } from "./lib/phase2-ts-loader.mjs";
 
-const { REALIZED_2025_MONTHS, isRealized2025Month, realizedComposerHref } = require("@/domain/phase2/planner/realized-month-entry");
+const { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, realizedComposerHref } = require("@/domain/phase2/planner/realized-month-entry");
 const { realizedPlace, probableMerchantPlace } = require("@/server/phase2/planner/realized-places");
 const { buildHistoricalRealizedContext } = require("@/server/phase2/planner/historical-realized-context");
 const { detailedRealizedCards } = require("@/app/mois-a-venir/composer/realized-card-view");
 
-assert.equal(REALIZED_2025_MONTHS.length, 5);
-for (const month of REALIZED_2025_MONTHS) assert.equal(realizedComposerHref(month), `/mois-a-venir/composer?month=${month}`);
-assert.equal(isRealized2025Month("2026-01"), false);
+assert.equal(ARCHIVED_REALIZED_MONTHS.length, 8);
+for (const month of ARCHIVED_REALIZED_MONTHS) assert.equal(realizedComposerHref(month), `/mois-a-venir/composer?month=${month}`);
+assert.ok(["2026-01", "2026-02", "2026-03"].every(isArchivedRealizedMonth));
+assert.equal(isArchivedRealizedMonth("2026-04"), false);
+assert.equal(isArchivedRealizedMonth("2026-07"), false);
 assert.match(probableMerchantPlace("Maison Regnier", "Paiement par carte - X1111 MAISON REGNIER CHAUD")?.address ?? "", /Chaudes-Aigues/);
 
 const person = { adrien: "person-a", manon: "person-m" };
@@ -26,6 +28,8 @@ const lookup = id => {
   return row && realizedPlace(row, "confirmed");
 };
 assert.equal(lookup("home").address, undefined);
+assert.equal(realizedPlace({ place_id: "venue", private_place: false, nom_canonique: "Domaine de la Clausade" }, "confirmed").town, "Mauguio");
+assert.equal(realizedPlace({ place_id: "venue", private_place: true, nom_canonique: "Domaine de la Clausade" }, "confirmed"), undefined);
 const observed = (id, kind, start, end, ids = [], parent = null) => ({
   lifeEventId: id, activityId: kind, startDate: start, endDate: end, participantIds: ids, parentLifeEventId: parent,
   validationStatus: "Confirmé",
@@ -63,6 +67,15 @@ assert.equal(ctx.familyParticipant(loc, "servian"), "Couple");
 assert.equal(ctx.familyParticipant(next, "servian"), "Manon");
 assert.deepEqual(ctx.assignedLegs().result.get("visit-1").map(row => row.legId), ["out", "between", "back"]);
 
+const shortVisit = { event: observed("day-visit", "visite_famille", loc, loc, [person.manon]),
+  title: "Visite", placeIds: ["servian"], places: [lookup("servian")] };
+const familyStay = { event: observed("long-stay", "visite_famille", before, next, [person.manon]),
+  title: "Séjour", placeIds: ["fontes"], places: [lookup("fontes")] };
+const familyContext = checkedLegs => buildHistoricalRealizedContext([familyStay, shortVisit], [], checkedLegs, lookup, person);
+assert.equal(familyContext(trips).rootId("day-visit"), "long-stay");
+assert.equal(familyContext(trips).assignedLegs().result.get("long-stay").length, 3);
+assert.equal(familyContext([]).rootId("day-visit"), "day-visit");
+
 const bank = [
   ["coffee-1", before, "-1.40", "Café test", "alimentation__cafe_au_travail", null],
   ["coffee-2", before, "-1.40", "Café test", "alimentation__cafe_au_travail", null],
@@ -70,7 +83,8 @@ const bank = [
   ["shop", next, "-34.00", "Courses test", "alimentation__courses_alimentaires", "shop"],
 ].map(([id, date, amount, label, subcat, place]) => ({
   operationId: id, bankAmount: amount, preciseType: id === "meal" ? "Repas du midi au travail" : undefined,
-  raw: { flux: "Dépense", date_transaction_precision: "Jour exact", date_transaction_reelle: date },
+  raw: { flux: "Dépense", date_transaction_precision: "Jour exact", date_transaction_reelle: date,
+    ...(id === "coffee-1" ? { moment_id: "moment-stay" } : {}) },
   row: { bankDate: date, bankLabel: label, category: { id: "food", label: "Alimentation" }, subcategory: { id: subcat, label },
     canonicalPlace: place ? { id: place } : undefined },
 }));
@@ -85,8 +99,15 @@ class Repo {
   async loadLifeEventRecords() { return details; }
   async loadLifeEventLocalizationRows() { return []; }
   async loadRealizedMerchantPlaceAliases() { return []; }
-  async loadFinancialLinkRowsByOperationIds() { return [{ operation_id: "meal", life_event_id: "work-meal", relation_type: "Paiement_activite" }]; }
-  async loadMomentLifeEventRowsByLifeEventIds() { return []; }
+  async loadFinancialLinkRowsByOperationIds() {
+    return [
+      { operation_id: "meal", life_event_id: "work-meal", relation_type: "Paiement_activite" },
+      { operation_id: "coffee-1", life_event_id: "visit-1", relation_type: "Effectue_pendant", validation_status: "Confirmé" },
+    ];
+  }
+  async loadMomentLifeEventRowsByLifeEventIds() {
+    return [{ moment_id: "moment-stay", life_event_id: "visit-1", relation_type: "Événement principal" }];
+  }
   async loadActivityCausalFinancialLinkRows() { return []; }
   async loadMobilityLegFacts() { return trips; }
   async loadLifeEventParticipationRows() { return []; }
@@ -121,6 +142,8 @@ assert.equal(weekend.endDate, next);
 assert.equal(weekend.carTrip.estimatedFuel, "12.75");
 assert.equal(weekend.carTrip.legs.find(row => row.id === "back").participant, "Manon");
 assert.equal(weekend.payments[0].id, "shop");
+assert.equal(weekend.amount, "-34.00");
+assert.equal(weekend.relatedPayments[0].id, "coffee-1");
 assert.equal(weekend.occurrences.length, 2);
 assert.equal(detailedRealizedCards(weekend).length, 1);
 assert.equal(detailedRealizedCards(work).length, 1);
@@ -132,5 +155,13 @@ const html = renderToStaticMarkup(createElement(AppRouterContext.Provider, { val
 assert.match(html, /Mois réalisé · 4 opérations bancaires/);
 assert.match(html, /href="\/historique\/2025-10"/);
 assert.match(html, /value="2025-12"/);
+assert.match(html, /value="2026-01"/);
+assert.match(html, /value="2026-03"/);
 assert.doesNotMatch(html, /Modifier dans le brouillon|Enregistrer le Plan/);
-console.log("PASS: five realized months, dated work and grouped cafés, family weekend, route participants, no duplicated operation or estimated cost in bank totals");
+const ski = { ...weekend, id: "event-ski", date: "2026-02-26", endDate: "2026-03-01", label: "Séjour ski" };
+const march = { ...board, month: "2026-03", cards: [ski] };
+const marchHtml = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: {} },
+  createElement(ArchivedRealizedMonth, { board: march, initialCardId: ski.id })));
+assert.match(marchHtml, /href="\/mois-a-venir\/composer\?month=2026-02&amp;carte=event-ski"/);
+assert.match(marchHtml, /Paiements et trajets de mars 2026/);
+console.log("PASS: eight realized months, dated work and grouped cafés, family stays, cross-month event links, and consistent bank totals");

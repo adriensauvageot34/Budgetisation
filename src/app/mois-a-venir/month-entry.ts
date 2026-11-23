@@ -1,4 +1,4 @@
-import { isRealized2025Month, JULY_COMPOSER_MONTH, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { addMonths, parseYearMonth } from "@/core/time";
 import type { BootstrapAnalysisPeriod } from "@/server/bootstrap/types";
 
@@ -33,7 +33,7 @@ export function monthEntry(today: string, requestedMonth: unknown, periods: read
 
   return {
     currentMonth, targetMonth, lastComplete, financeStatus, realizedMonth,
-    realizedHref: realizedMonth === JULY_COMPOSER_MONTH || realizedMonth && isRealized2025Month(realizedMonth)
+    realizedHref: realizedMonth === JULY_COMPOSER_MONTH || realizedMonth && isArchivedRealizedMonth(realizedMonth)
       ? realizedComposerHref(realizedMonth) : realizedMonth ? `/historique/${realizedMonth}` : null,
   };
 }

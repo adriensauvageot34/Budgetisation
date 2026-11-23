@@ -68,18 +68,20 @@ function mapsSearch(query: string, googlePlaceId?: string) {
 }
 
 export function realizedPlace(row: CanonicalRecord, certainty: "confirmed" | "probable"): RealizedPlace | undefined {
-  const town = optionalCanonicalString(row, ["commune"])?.trim();
+  const canonicalTown = optionalCanonicalString(row, ["commune"])?.trim();
   const name = optionalCanonicalString(row, ["nom_canonique"])?.trim();
   const subtype = optionalCanonicalString(row, ["sous_type"]) ?? "";
   if (row.private_place !== false || !name || /\bnon (?:identifi[ée]|pr[ée]cis[ée])/iu.test(subtype + " " + name)) {
-    return town ? realizedTown(town) : undefined;
+    return canonicalTown ? realizedTown(canonicalTown) : undefined;
   }
 
   const coords = coordinates(row.latitude_canonique, row.longitude_canonique);
   const branch = coords && verifiedBranches.find(candidate => candidate.name === normalized(name)
     && Math.hypot(coords.latitude - candidate.latitude, (coords.longitude - candidate.longitude) * Math.cos(coords.latitude * Math.PI / 180)) < .0025);
   const canonicalAddress = optionalCanonicalString(row, ["adresse"])?.trim();
-  const address = canonicalAddress || branch?.address;
+  const clausade = /^domaine (?:de )?la clausade$/u.test(normalized(name)) && (!canonicalTown || normalized(canonicalTown) === "mauguio");
+  const town = canonicalTown || (clausade ? "Mauguio" : undefined);
+  const address = canonicalAddress || branch?.address || (clausade ? "Route de Mudaison, 34130 Mauguio" : undefined);
   const label = canonicalAddress ? name : branch?.label ?? name;
   const publicAddressQuery = [label, address, canonicalAddress || !address ? town : undefined].filter(Boolean).join(", ");
   const query = address || !coords ? publicAddressQuery : `${coords.latitude},${coords.longitude}`;

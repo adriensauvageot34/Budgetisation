@@ -65,6 +65,13 @@ export function buildHistoricalRealizedContext(items: readonly ObservedEvent[], 
     }
     return visited.has(current) ? id : current;
   }
+  const hasFamilyConnection = (first: ObservedEvent, second: ObservedEvent) => {
+    const from = eventTown(first), to = eventTown(second);
+    return from !== to && first.event.participantIds.some(id => second.event.participantIds.includes(id))
+      && legs.some(leg => leg.date === second.event.startDate && leg.source.status === "CERTIFIED_SOURCE"
+        && [endpointTown(leg.origin), endpointTown(leg.destination)].includes(from)
+        && [endpointTown(leg.origin), endpointTown(leg.destination)].includes(to));
+  };
   const holiday = items.filter(item => item.event.activityId === "celebration"
     && /^noel\b/u.test(realizedPlaceKey(item.title)) && item.event.startDate < item.event.endDate);
   const family = items.filter(item => item.event.activityId === "visite_famille" && familyTowns.has(eventTown(item)));
@@ -80,14 +87,23 @@ export function buildHistoricalRealizedContext(items: readonly ObservedEvent[], 
     if (parents.has(first.event.lifeEventId) || first.event.startDate === first.event.endDate) continue;
     const candidates = family.filter(second => !parents.has(second.event.lifeEventId) && second.event.startDate > first.event.startDate
       && second.event.startDate <= first.event.endDate && second.event.endDate > first.event.endDate
-      && eventTown(first) !== eventTown(second)
-      && first.event.participantIds.some(id => second.event.participantIds.includes(id))
-      && legs.some(leg => leg.date === second.event.startDate
-        && [endpointTown(leg.origin), endpointTown(leg.destination)].includes(eventTown(first))
-        && [endpointTown(leg.origin), endpointTown(leg.destination)].includes(eventTown(second))));
+      && hasFamilyConnection(first, second));
     if (candidates.length !== 1) continue;
     parents.set(candidates[0]!.event.lifeEventId, first.event.lifeEventId);
     extendedTitles.set(first.event.lifeEventId, "Week-end en famille · Fontès / Servian");
+  }
+  for (const visit of family) {
+    const { lifeEventId, startDate, endDate } = visit.event;
+    if (parents.has(lifeEventId) || startDate !== endDate) continue;
+    const candidates = family.filter(stay => stay.event.startDate < stay.event.endDate
+      && within(startDate, stay.event.startDate, stay.event.endDate) && hasFamilyConnection(stay, visit));
+    if (candidates.length !== 1) continue;
+    const parentId = candidates[0]!.event.lifeEventId;
+    parents.set(lifeEventId, parentId);
+    const root = rootId(parentId);
+    if (byId.get(root)?.event.activityId === "visite_famille" && !extendedTitles.has(root)) {
+      extendedTitles.set(root, "Séjour en famille · Fontès / Servian");
+    }
   }
 
   const groups = new Map<string, EventGroup>();

@@ -2,12 +2,12 @@
 
 import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, Search, Utensils, X } from "lucide-react";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
+import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, realizedComposerHref, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard, RealizedCard, RealizedCardGroup, RealizedPayment } from "@/server/phase2/planner/realized-month";
 import type { RealizedPlace } from "@/server/phase2/planner/realized-places";
 import type { RealizedWork } from "@/server/phase2/planner/realized-work";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
-import { money, plannedDayLabel } from "./display";
+import { money, monthLabel, plannedDayLabel } from "./display";
 import { RealizedBadge } from "./realized-badge";
 import { detailedRealizedCards, packRealizedCards, packRealizedCategories, realizedOperationCardId, type PackedCardPosition, type RealizedCardView } from "./realized-card-view";
 import styles from "./realized-month.module.css";
@@ -201,12 +201,22 @@ function earliestDate(card: RealizedCard): string | undefined {
   ].sort()[0];
 }
 
-function RealizedDetail({ card, terms, open }: {
+function RealizedDetail({ card, month, terms, open }: {
   card: RealizedCard;
+  month: string;
   terms: readonly string[];
   open: (cardId: string, paymentId?: string, componentId?: string) => void;
 }) {
+  const startMonth = card.date?.slice(0, 7), endMonth = card.endDate?.slice(0, 7);
+  const otherMonths = startMonth && endMonth && card.id.startsWith("event-") && isArchivedRealizedMonth(month)
+    ? ARCHIVED_REALIZED_MONTHS.filter(value => value !== month && value >= startMonth && value <= endMonth) : [];
   return <>
+    {otherMonths.length > 0 && <nav aria-label="Autres mois de l’événement">
+      <p>Paiements et trajets de {monthLabel(month)}.</p>
+      <ul className={styles.places}>{otherMonths.map(otherMonth => <li key={otherMonth}>
+        <a className="underline" href={realizedComposerHref(otherMonth, card.id)}>Voir en {monthLabel(otherMonth)}</a>
+      </li>)}</ul>
+    </nav>}
     {!card.work && card.participant && <section aria-label="Participants"><p>{card.participant}</p></section>}
     {card.work && <section aria-labelledby="realized-work-title">
       <h3 id="realized-work-title">Journée de travail · {card.work.name}</h3>
@@ -275,12 +285,14 @@ function RealizedDetail({ card, terms, open }: {
   </>;
 }
 
-export function RealizedComposerMonth({ board, onEdit, editableIds }: {
-  board: RealizedBoard; onEdit?: (cardId: string) => void; editableIds?: ReadonlySet<string>;
+export function RealizedComposerMonth({ board, onEdit, editableIds, initialCardId }: {
+  board: RealizedBoard; onEdit?: (cardId: string) => void; editableIds?: ReadonlySet<string>; initialCardId?: string;
 }) {
   const [sortOrder, setSortOrder] = useState<SortOrder>("amount-desc");
   const [query, setQuery] = useState("");
-  const [selection, setSelection] = useState<{ cardId: string; paymentId?: string; componentId?: string } | null>(null);
+  const [selection, setSelection] = useState<{ cardId: string; paymentId?: string; componentId?: string } | null>(
+    () => initialCardId ? { cardId: initialCardId } : null,
+  );
   const dialog = useRef<HTMLDialogElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -486,7 +498,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds }: {
         <div ref={body} className={styles.panelBody}>
           {onEdit && editableIds?.has(reconstructedId(board.month, selectedView.source.id)) && <button type="button" className={styles.editCard}
             onClick={() => { dialog.current?.close(); onEdit(selectedView.source.id); }}><Pencil size={15} aria-hidden="true" /> Modifier dans le brouillon</button>}
-          <RealizedDetail card={selected} terms={terms} open={open} />
+          <RealizedDetail card={selected} month={board.month} terms={terms} open={open} />
         </div>
       </div>}
     </dialog>
