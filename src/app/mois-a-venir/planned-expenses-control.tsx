@@ -29,7 +29,7 @@ type Preview = Extract<Awaited<ReturnType<typeof previewPlannedExpense>>, { ok: 
 type Funding = NonNullable<Preview["funding"]>;
 type Props = { targetMonth: string; expectedPlanRevisionId?:string|null; expenses: readonly PlannedExpenseCard[]; persons: readonly Person[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
-  prices: readonly PlannedPriceSuggestion[]; wallets: readonly PlannedWalletOption[]; funding: Funding;
+  prices: readonly PlannedPriceSuggestion[]; wallets: readonly PlannedWalletOption[]; funding?: Funding;
   observationCandidates?: import("@/server/phase2/month-scenario").MonthEconomicPlan["observationCandidates"] };
 
 const money = (value: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR",
@@ -47,7 +47,7 @@ function unwrap<T>(result: PlannedResult<T>): T {
   return result.value;
 }
 
-export function PlannedExpensesControl({ targetMonth, expectedPlanRevisionId, expenses, persons, places, vehicle, prices, wallets, funding, observationCandidates = {} }: Props) {
+export function PlannedExpensesControl({ targetMonth, expectedPlanRevisionId, expenses, persons, places, vehicle, prices, wallets, observationCandidates = {} }: Props) {
   const router = useRouter();
   const interactions = usePlannedExpenseInteractions();
   const [open, setOpen] = useState(false);

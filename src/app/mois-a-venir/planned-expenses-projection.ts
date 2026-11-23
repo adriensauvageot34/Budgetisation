@@ -13,12 +13,16 @@ export type PlannedExpenseCard = Pick<PlannedExpense, "id" | "familyKey" | "subt
     funding: readonly { source: "BANK" | "SWILE" | "EDENRED"; amount: string }[];
     placeLabel?: string; childPlaceLabels: readonly string[]; participantLabels?: readonly string[] };
 };
-export type CalendarItem = Readonly<{ key: string; label: string; amount: string; date: string | null;
-  nature: "CERTAIN_OUTFLOW" | "PLANNED_EXPENSE" | "DECLARED_REALIZED";
+export type PlanCalendarMoment = Readonly<{ id: string; label: string; date: string | null }>;
+export type CalendarItem = Readonly<{ key: string; label: string; amount: string | null; date: string | null;
+  nature: "CERTAIN_OUTFLOW" | "PLANNED_EXPENSE" | "DECLARED_REALIZED" | "PLAN_MOMENT";
+  fixedState?: CalendarOutflow["state"];
+  planContextId?: string;
   dateCertainty: "DECLARED" | "HISTORICAL_ESTIMATE" | "UNKNOWN";
   expense?: PlannedExpenseCard }> & CalendarMetadata;
 export type CalendarEntry = CalendarItem & { readonly date: string };
 export type CalendarOutflow = Readonly<{ key: string; label: string; amount: string; date: string | null;
+  state?: import("@/server/phase2/planned-observation-reconciliation").FixedOccurrence["state"];
   dateCertainty: "DECLARED" | "HISTORICAL_ESTIMATE" | "UNKNOWN" }> & CalendarMetadata;
 
 export const projectPlannedExpenseCards = (expenses: readonly PlannedExpense[], today = new Date().toISOString().slice(0, 10),
@@ -34,24 +38,24 @@ export const projectPlannedExpenseCards = (expenses: readonly PlannedExpense[], 
   });
 
 export function projectMonthCalendar(outflows: readonly CalendarOutflow[],
-  expenses: readonly PlannedExpenseCard[]): { entries: CalendarEntry[]; undated: CalendarItem[];
+  expenses: readonly PlannedExpenseCard[], planMoments: readonly PlanCalendarMoment[] = []): { entries: CalendarEntry[]; undated: CalendarItem[];
     dailyTotals: Record<string, string> } {
-  const entries: CalendarEntry[] = [
-    ...outflows.filter((item) => item.date !== null).map((item) => ({ ...calendarMetadata(item.label, item), key: item.key, label: item.label,
-      amount: item.amount, date: item.date!, nature: "CERTAIN_OUTFLOW" as const,
-      dateCertainty: item.dateCertainty })),
-    ...expenses.filter((item) => getPlannedExpenseDateRange(item).startDate !== null).map((item) => ({ fullLabel: item.title, calendarLabel: getPlannedExpenseCalendarLabel(item), brandKey: null, key: item.id, label: item.title,
-      amount: item.grossCost, date: getPlannedExpenseDateRange(item).startDate!, nature: item.status === "PLANNED"
-        ? "PLANNED_EXPENSE" as const : "DECLARED_REALIZED" as const, dateCertainty: "DECLARED" as const, expense: item })),
+  const items: CalendarItem[] = [
+    ...outflows.map(item => ({ ...calendarMetadata(item.label, item), ...item, fixedState: item.state, nature: "CERTAIN_OUTFLOW" as const })),
+    ...expenses.map(item => {
+      const date = getPlannedExpenseDateRange(item).startDate;
+      return { fullLabel: item.title, calendarLabel: getPlannedExpenseCalendarLabel(item), brandKey: null, key: item.id, label: item.title,
+        amount: item.grossCost, date, nature: item.status === "PLANNED" ? "PLANNED_EXPENSE" as const : "DECLARED_REALIZED" as const,
+        dateCertainty: date ? "DECLARED" as const : "UNKNOWN" as const, expense: item };
+    }),
+    ...planMoments.map(item => ({ key: `plan-context-${item.id}`, label: item.label, fullLabel: item.label, calendarLabel: item.label, brandKey: null,
+      amount: null, date: item.date, dateCertainty: item.date ? "DECLARED" as const : "UNKNOWN" as const,
+      nature: "PLAN_MOMENT" as const, planContextId: item.id })),
   ];
+  const entries = items.filter((item): item is CalendarEntry => item.date !== null);
   const totals = new Map<string, Big>();
-  for (const item of entries) totals.set(item.date, (totals.get(item.date) ?? new Big(0)).plus(item.amount));
-  return { entries, undated: [
-    ...outflows.filter((item) => item.date === null).map((item) => ({ ...calendarMetadata(item.label, item), ...item, nature: "CERTAIN_OUTFLOW" as const })),
-    ...expenses.filter((item) => getPlannedExpenseDateRange(item).startDate === null).map((item) => ({ fullLabel: item.title, calendarLabel: getPlannedExpenseCalendarLabel(item), brandKey: null, key: item.id, label: item.title,
-      amount: item.grossCost, date: null, dateCertainty: "UNKNOWN" as const,
-      nature: item.status === "PLANNED" ? "PLANNED_EXPENSE" as const : "DECLARED_REALIZED" as const, expense: item })),
-  ],
+  for (const item of entries) if (item.amount !== null) totals.set(item.date, (totals.get(item.date) ?? new Big(0)).plus(item.amount));
+  return { entries, undated: items.filter(item => item.date === null),
     dailyTotals: Object.fromEntries([...totals].map(([date, total]) => [date, total.toFixed(2)])) };
 }
 

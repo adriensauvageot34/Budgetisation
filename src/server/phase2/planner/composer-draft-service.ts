@@ -78,6 +78,14 @@ export async function readComposerDrafts(scope: Scope, targetMonth: string): Pro
     baseStale: !!active && (active.baseRevisionId !== base.revisionId || active.baseRevisionNumber !== base.revisionNumber) };
 }
 
+export async function readActiveComposerDraft(scope: Scope, targetMonth: string): Promise<StoredComposerDraft | null> {
+  const { data, error } = await measured(scope, "READ_DRAFTS", () => scope.supabase.from(table).select("*")
+    .eq("owner_user_id", plannerUuid(scope.userId)).eq("household_id", plannerUuid(scope.householdId))
+    .eq("target_month", monthDate(targetMonth)).eq("lifecycle", "ACTIVE").abortSignal(AbortSignal.timeout(15000)).maybeSingle());
+  if (error) throw error;
+  return data ? parseRow(data, targetMonth) : null;
+}
+
 function failed(code: Exclude<ComposerDraftResult, { ok: true }>["code"], latest: ComposerDraftSnapshot | null = null): ComposerDraftResult {
   const messages = {
     CONFLICT: "Ce brouillon a changé dans un autre onglet ou appareil. Vos modifications locales restent disponibles.",

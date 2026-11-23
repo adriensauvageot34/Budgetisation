@@ -18,9 +18,9 @@ import type { CSSProperties } from "react";
 import material from "./month-material.module.css";
 import { LiquidSelectionGroup } from "./liquid-selection-group";
 
-const eventTone = (item: CalendarItem) => item.nature === "DECLARED_REALIZED"
+const eventTone = (item: CalendarItem) => item.expense?.observedMatch || item.fixedState === "OBSERVED" || item.nature === "DECLARED_REALIZED"
   ? "text-emerald-800" : item.expense?.needsRealityConfirmation
-    ? "text-amber-800" : item.nature === "PLANNED_EXPENSE"
+    ? "text-amber-800" : item.nature === "PLANNED_EXPENSE" || item.nature === "PLAN_MOMENT"
       ? "text-sky-800" : "text-slate-700";
 const buttonClass = `${material.clayButton} px-3 py-2 text-sm font-bold disabled:opacity-50`;
 const disclosureClass = `${material.disclosure} border-t border-slate-200 pt-3 text-sm [&>summary]:cursor-pointer [&>summary]:font-semibold`;
@@ -39,8 +39,8 @@ function EventIcon({ item, size = 24 }: { item: CalendarItem; size?: number }) {
 }
 
 /** Read-model details only. Mutations use the existing builder and server contract. */
-export function CalendarEventDetails({ item, onAction, expanded = false, viewedMonth }: { item: CalendarItem;
-  onAction?: (interaction: PlannedExpenseInteraction) => void; expanded?: boolean; viewedMonth?: string }) {
+export function CalendarEventDetails({ item, onAction, onNavigate, expanded = false, viewedMonth }: { item: CalendarItem;
+  onAction?: (interaction: PlannedExpenseInteraction) => void; onNavigate?: () => void; expanded?: boolean; viewedMonth?: string }) {
   const expense = item.expense, detail = expense?.detail;
   const [revealed, setRevealed] = useState(expanded);
   const detailId = useId();
@@ -50,11 +50,12 @@ export function CalendarEventDetails({ item, onAction, expanded = false, viewedM
       className="grid w-full cursor-pointer grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-2 rounded text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-700">
       <span className="flex justify-center"><EventIcon item={item} /></span><span className="break-words text-sm font-bold">{calendarEventLabel(item)}</span>
       <strong className="whitespace-nowrap text-sm tabular-nums">{calendarBudgetLabel(item)}</strong></button>
-    {expense && <p className={`text-xs font-semibold ${eventTone(item)}`}>{calendarStateLabel(item)}</p>}
+    {(expense || item.planContextId || item.fixedState === "OBSERVED") && <p className={`text-xs font-semibold ${eventTone(item)}`}>{calendarStateLabel(item)}</p>}
     {expense && (calendarItemRange(item).hasReturn || calendarItemRange(item).isRange) ? <div className="text-xs text-slate-600" data-project-temporal-summary>{plannedExpenseTemporalSummary(expense).map(line => <p key={line}>{line}</p>)}</div> : <p className="text-xs text-slate-600">{item.dateCertainty === "HISTORICAL_ESTIMATE"
       ? `Date estimée autour du ${item.date ? calendarDate(item.date) : "jour non précisé"}`
       : item.date ? `${calendarDateLabel(item)} · ${calendarDate(item.date)}` : "Ce mois-ci · sans jour précis"}</p>}
     {revealed && <div id={detailId} className={`${material.sectionEnter} space-y-2`}>
+    {item.planContextId && <a className="text-sm font-bold text-sky-800 underline" href={`#plan-context-${item.planContextId}`} onClick={onNavigate}>Ouvrir le détail dans Mon Plan</a>}
     {expense && <>
       {projectVisualPlaceId(expense) && <RestaurantPhotoBackground placeId={projectVisualPlaceId(expense)} selectedIndex={compatibleProjectVisual(expense)?.selectedIndex} className="rounded-xl" />}
       {detail?.placeLabel && <p className="text-sm">Lieu : <strong>{detail.placeLabel}</strong></p>}
@@ -116,12 +117,12 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
   const cells = Array.from({ length: cellCount }, (_, index) => index < firstWeekday || index >= firstWeekday + days ? null : index - firstWeekday + 1);
   const weeks = Array.from({ length: cellCount / 7 }, (_, index) => cells.slice(index * 7, index * 7 + 7));
   const monthEntries = entries.filter((item) => { const r = calendarItemRange(item); return !!r.startDate && !!r.endDate && r.startDate.slice(0, 7) <= targetMonth && r.endDate.slice(0, 7) >= targetMonth; });
-  const accepts = (item: CalendarItem) => filter === "ALL" || (filter === "CHARGES" ? !item.expense : !!item.expense);
+  const accepts = (item: CalendarItem) => filter === "ALL" || (filter === "CHARGES" ? item.nature === "CERTAIN_OUTFLOW" : item.nature !== "CERTAIN_OUTFLOW");
   const ribbons = calendarRibbonWeeks(monthEntries.filter(accepts), targetMonth);
   // Reserve the same week geometry across filters; only event content transitions.
   const layoutRibbons = calendarRibbonWeeks(monthEntries, targetMonth);
-  const projects = undated.filter((item) => item.expense && accepts(item));
-  const monthly = undated.filter((item) => !item.expense && accepts(item));
+  const projects = undated.filter((item) => item.nature !== "CERTAIN_OUTFLOW" && accepts(item));
+  const monthly = undated.filter((item) => item.nature === "CERTAIN_OUTFLOW" && accepts(item));
   const selectedUndated = selected?.startsWith("undated:") ? undated.find((item) => `undated:${item.key}` === selected) : undefined;
   // The local panel shows the whole day, even when the grid is filtered.
   const selectedEntries = selectedUndated ? [selectedUndated] : selected ? calendarItemsOnDate(monthEntries, selected) : [];
@@ -192,7 +193,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
                 onFocus={() => setActiveDay(day)} onClick={(event) => allDay.length ? open(date, event.currentTarget) : create(date)}
                 className={`flex w-full items-start justify-between pt-1 text-left text-xs tabular-nums focus-visible:outline-2 focus-visible:outline-indigo-700 ${allDay.length ? "h-7" : "absolute inset-0 px-1.5"}`}>
                 <span className={`flex size-5 items-center justify-center ${isToday ? `${material.todayBadge} rounded-full font-bold text-white` : "text-slate-500"}`}>{day}</span>
-                {dayEntries.length > 1 && <span data-calendar-day-total={date} className="pt-0.5 font-medium text-slate-500">{calendarMoney(summary.grossTotal)}</span>}
+                {summary.exactCount + summary.estimatedCount > 1 && <span data-calendar-day-total={date} className="pt-0.5 font-medium text-slate-500">{calendarMoney(summary.grossTotal)}</span>}
                 {!allDay.length && <span className={`${material.calendarCreate} absolute inset-x-0 top-9 text-center text-xs font-medium text-sky-700`}>+ Prévoir</span>}
               </button>
               {lanes > 0 && <div style={{ height: lanes * 25 }} aria-hidden="true" />}
@@ -203,7 +204,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
                 aria-haspopup="dialog" aria-expanded={selected === date && focusedKey === item.key}
                 onClick={(event) => open(date, event.currentTarget, item.key)} className={`${material.calendarEvent} col-span-3 mb-0.5 grid h-6 w-full min-w-0 grid-cols-subgrid cursor-pointer items-center gap-x-1.5 rounded text-left text-xs focus-visible:bg-slate-100 ${eventTone(item)}`}>
                 <span className="relative flex w-10 items-center justify-center"><span aria-hidden="true" data-calendar-state={item.nature} className="absolute -left-1.5 w-2 text-center text-xs">
-                  {item.expense?.needsRealityConfirmation ? "!" : item.nature === "DECLARED_REALIZED" ? "✓" : item.nature === "PLANNED_EXPENSE" ? "●" : ""}</span><EventIcon item={item} /></span>
+                  {item.expense?.needsRealityConfirmation ? "!" : item.expense?.observedMatch || item.nature === "DECLARED_REALIZED" || item.fixedState === "OBSERVED" ? "✓" : item.nature === "PLANNED_EXPENSE" || item.nature === "PLAN_MOMENT" ? "●" : ""}</span><EventIcon item={item} /></span>
                 <span className="min-w-0 truncate">{calendarEventLabel(item)}</span>
                 <strong className="shrink-0 whitespace-nowrap font-semibold tabular-nums">{calendarBudgetLabel(item)}</strong>
               </button>)}</div>
@@ -243,11 +244,12 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
       onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); } }}>
       <header className="flex items-start justify-between gap-3"><div>
         <h2 id="calendar-panel-title" className="text-base font-bold capitalize">{title}</h2>
-        <p id="calendar-panel-summary" className="mt-0.5 text-xs text-slate-600">{selectedEntries.length} élément{selectedEntries.length > 1 ? "s" : ""} · {selectedEntries.length > 0 && !selectedUndated && selectedEntries.every(item => item.date !== selected) ? "projet en cours" : <strong>{calendarMoney(selectedTotal.grossTotal)}</strong>}</p>
+        <p id="calendar-panel-summary" className="mt-0.5 text-xs text-slate-600">{selectedEntries.length} élément{selectedEntries.length > 1 ? "s" : ""}{selectedEntries.length > 0 && !selectedUndated && selectedEntries.every(item => item.date !== selected)
+          ? " · projet en cours" : selectedTotal.exactCount + selectedTotal.estimatedCount > 0 && <> · <strong>{calendarMoney(selectedTotal.grossTotal)}</strong></>}</p>
       </div><button type="button" className={`${material.iconButton} p-1 text-slate-600`} aria-label="Fermer les détails du jour" onClick={close}><X size={16} aria-hidden="true" /></button></header>
       <div className="mt-1">{orderCalendarItems(selectedEntries).map((item) => <div key={item.key} tabIndex={-1} ref={(node) => { if (node) eventDetails.current.set(item.key, node); else eventDetails.current.delete(item.key); }}
         className={`scroll-mt-2 focus-visible:outline-2 focus-visible:outline-indigo-700 ${focusedKey === item.key ? "rounded bg-slate-50 px-2" : ""}`}>
-        <CalendarEventDetails item={item} viewedMonth={targetMonth} onAction={item.expense && item.expense.targetMonth !== targetMonth ? undefined : onAction} expanded={focusedKey === item.key} /></div>)}</div>
+        <CalendarEventDetails item={item} viewedMonth={targetMonth} onNavigate={() => setSelected(null)} onAction={item.expense && item.expense.targetMonth !== targetMonth ? undefined : onAction} expanded={focusedKey === item.key} /></div>)}</div>
       {!selectedUndated && selectedTotal.estimatedCount > 0 && selectedTotal.exactCount > 0 && <details className="mt-2 text-xs text-slate-500"><summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-indigo-700">Détail du total</summary>
         <p className="mt-1">À date précise : {calendarMoney(selectedTotal.exactDateTotal)} · À date estimée : {calendarMoney(selectedTotal.estimatedDateTotal)}</p></details>}
       {!selectedUndated && interactions && <button type="button" className="mt-2 w-full border-t border-slate-100 pt-2 text-left text-xs font-semibold text-sky-800 focus-visible:outline-2 focus-visible:outline-indigo-700" onClick={() => create(selected)}>+ Prévoir ce jour</button>}

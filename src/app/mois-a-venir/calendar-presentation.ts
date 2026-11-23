@@ -8,13 +8,15 @@ import { parseLocalDate } from "@/core/time";
 export const calendarMoney = (value: string) => new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2,
 }).format(Number(value));
-export const calendarBudgetLabel = (item: Pick<CalendarItem, "expense" | "amount">) => item.expense?.context.project?.unpricedComponents?.length
-  ? Number(item.amount) === 0 ? "À préciser" : `≥ ${calendarMoney(item.amount)}` : calendarMoney(item.amount);
+export const calendarBudgetLabel = (item: Pick<CalendarItem, "expense" | "amount">) => item.amount === null ? "Voir le Plan"
+  : item.expense?.context.project?.unpricedComponents?.length
+    ? Number(item.amount) === 0 ? "À préciser" : `≥ ${calendarMoney(item.amount)}` : calendarMoney(item.amount);
 export const calendarDate = (date: string) => new Intl.DateTimeFormat("fr-FR", {
   day: "numeric", month: "long", timeZone: "UTC",
 }).format(new Date(`${date}T12:00:00Z`));
 
-export const calendarStateLabel = (item: Pick<CalendarItem, "expense" | "nature">) => item.expense?.observedMatch
+export const calendarStateLabel = (item: Pick<CalendarItem, "expense" | "nature" | "fixedState">) => item.nature === "PLAN_MOMENT" ? "Prévu · Plan appliqué"
+  : item.fixedState === "OBSERVED" ? "Débit observé" : item.expense?.observedMatch
   ? item.expense.observedMatch.declared ? "Observée · réalisation déclarée conservée" : "Observée"
   : item.nature === "DECLARED_REALIZED"
   ? "✓ Réalisée · déclarée par vous" : item.nature === "PLANNED_EXPENSE"
@@ -29,10 +31,10 @@ export const calendarEventLabel = (item: CalendarItem) => item.calendarLabel ?? 
 /** Visual salience only; this never changes financial ordering or totals. */
 export function orderCalendarItems(items: readonly CalendarItem[]): CalendarItem[] {
   const priority = (item: CalendarItem) => item.expense?.needsRealityConfirmation ? 0
-    : item.nature === "PLANNED_EXPENSE" ? 1 : item.nature === "DECLARED_REALIZED" ? 2
+    : item.nature === "PLANNED_EXPENSE" || item.nature === "PLAN_MOMENT" ? 1 : item.nature === "DECLARED_REALIZED" ? 2
       : item.dateCertainty === "DECLARED" ? 3 : item.dateCertainty === "HISTORICAL_ESTIMATE" ? 5 : 4;
   return [...items].sort((a, b) => priority(a) - priority(b)
-    || new Big(b.amount).cmp(a.amount) || a.key.localeCompare(b.key));
+    || new Big(b.amount ?? 0).cmp(a.amount ?? 0) || a.key.localeCompare(b.key));
 }
 export const visibleCalendarItems = (items: readonly CalendarItem[]) =>
   orderCalendarItems(items).slice(0, 2);
@@ -40,10 +42,10 @@ export const visibleCalendarItems = (items: readonly CalendarItem[]) =>
 /** Date certainty breakdown of positioned amounts, not a cash-flow forecast. */
 export function calendarDaySummary(items: readonly CalendarItem[], date?: string) {
   // A continuation is visible that day, but its amount is anchored only once.
-  items = date ? items.filter(item => item.date === date) : items;
+  items = items.filter(item => item.amount !== null && (!date || item.date === date));
   const exact = items.filter((item) => item.dateCertainty === "DECLARED");
   const estimated = items.filter((item) => item.dateCertainty === "HISTORICAL_ESTIMATE");
-  const sum = (rows: readonly CalendarItem[]) => rows.reduce((total, item) => total.plus(item.amount), new Big(0)).toFixed(2);
+  const sum = (rows: readonly CalendarItem[]) => rows.reduce((total, item) => total.plus(item.amount ?? 0), new Big(0)).toFixed(2);
   return { grossTotal: sum(items), exactDateTotal: sum(exact), estimatedDateTotal: sum(estimated),
     exactCount: exact.length, estimatedCount: estimated.length };
 }
@@ -100,6 +102,7 @@ export function calendarKeyboardDay(day: number, key: string, days: number, firs
 }
 
 export function calendarIcon(item: CalendarItem): { brandKey: string | null; semanticIconKey: string } {
+  if (item.nature === "PLAN_MOMENT") return { brandKey: null, semanticIconKey: "moment" };
   if (item.expense) {
     const { familyKey, subtypeKey } = item.expense;
     const subtypeIcons: Record<string, string> = { house_party: "celebration", family_visit: "family",

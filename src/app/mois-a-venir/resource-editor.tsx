@@ -7,10 +7,8 @@ import Image from "next/image";
 import { updateMonthControlInputs } from "./actions";
 import { MonthControlLink } from "./month-control-center";
 import { AnimatedMoney } from "./animated-money";
+import type { MonthResourceReference } from "@/server/phase2/month-scenario";
 import material from "./month-material.module.css";
-
-type Resource = Readonly<{ key: string; label: string; amount: string; sourceAmount: string | null;
-  provenance: "SNAPSHOT" | "USER_DECLARED" | "MONTH_OVERRIDE"; pocket: "BANK_CASH" | "MEAL_BENEFIT" }>;
 
 const money = (value: string) => new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2,
@@ -23,7 +21,7 @@ const resourceBrands: Record<string, { logo: string; label: string; tone: string
   "benefit:edenred": { logo: "edenred.png", label: "Edenred", tone: "edenred" },
 };
 
-export function ResourceEditor({ resource, targetMonth, walletObservation = null, controls = true }: { resource: Resource; targetMonth: string;
+export function ResourceEditor({ resource, targetMonth, walletObservation = null, controls = true }: { resource: MonthResourceReference; targetMonth: string;
   controls?: boolean; walletObservation?: Readonly<{ amount: string; asOfDate: string }> | null }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,11 +70,11 @@ export function ResourceEditor({ resource, targetMonth, walletObservation = null
     </div>
     {editing ? <form className={`${material.sectionEnter} mt-3 space-y-2`} onSubmit={(event) => { event.preventDefault(); send("set-resource-override", inputRef.current?.value.trim()); }}>
       <label htmlFor={`resource-${resource.key}`} className="text-xs font-bold text-slate-700">Montant de {resource.label} pour ce mois (€)</label>
-      <div className="flex flex-wrap items-center gap-2"><input ref={inputRef} id={`resource-${resource.key}`} className={`${material.field} field min-w-0 flex-1 text-base`} type="number" min="0" step="0.01" inputMode="decimal" defaultValue={resource.amount} required autoFocus disabled={pending} />
+      <div className="flex flex-wrap items-center gap-2"><input ref={inputRef} id={`resource-${resource.key}`} className={`${material.field} field min-w-0 flex-1 text-base`} type="number" min="0" step="0.01" inputMode="decimal" defaultValue={resource.amount ?? ""} required autoFocus disabled={pending} />
         <button className={`${material.clayPrimary} min-h-10 px-3 text-sm font-bold`} type="submit" disabled={pending}>{pending ? "Enregistrement…" : "Valider"}</button>
         <button className={`${material.iconButton} !min-h-10 !px-2`} type="button" aria-label={`Annuler la modification de ${resource.label}`} disabled={pending} onClick={() => setEditing(false)}><X size={17} /></button></div>
-    </form> : <p className={`${material.data} mt-4 break-words text-2xl font-black tracking-tight sm:text-[1.8rem]`}><AnimatedMoney value={money(resource.amount)} /></p>}
-    <div className="mt-2 min-h-5 text-xs text-slate-600">{overridden ? `Modifié pour ${monthName}` : resource.provenance === "USER_DECLARED" ? `Déclaré pour ${monthName}` : `Prévu pour ${monthName}`}</div>
+    </form> : <p className={`${material.data} mt-4 break-words text-2xl font-black tracking-tight sm:text-[1.8rem]`}><AnimatedMoney value={resource.amount === null ? "À compléter" : money(resource.amount)} /></p>}
+    <div className="mt-2 min-h-5 text-xs text-slate-600">{resource.amount === null ? "Montant attendu à renseigner" : overridden ? `Modifié pour ${monthName}` : resource.provenance === "USER_DECLARED" ? `Déclaré pour ${monthName}` : `Estimé pour ${monthName}`}</div>
     {meal && walletObservation && <p className="mt-2 text-xs text-slate-600">Solde observé : {money(walletObservation.amount)} au {new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${walletObservation.asOfDate}T12:00:00Z`))} · distinct du chargement.</p>}
     {controls && overridden && !editing && <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-bold text-emerald-900 underline underline-offset-2" disabled={pending} onClick={() => send("clear-resource-override")}><RotateCcw size={13} />{pending ? "Restauration…" : `Revenir à ${resource.sourceAmount === null ? "la prévision" : money(resource.sourceAmount)}`}</button>}
     {error && <p role="alert" className="mt-2 text-xs font-semibold text-red-800">{error}</p>}

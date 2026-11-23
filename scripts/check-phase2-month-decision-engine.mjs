@@ -182,13 +182,13 @@ assert(writes.every(w=>["phase2_month_inputs","phase2_forecast_checkpoints"].inc
 const { AppRouterContext }=require("next/dist/shared/lib/app-router-context.shared-runtime");
 const { MonthStory }=require("../src/app/mois-a-venir/month-story.tsx");
 const { PastMonthView }=require("../src/app/mois-a-venir/past-month-view.tsx");
-const props={plan:base,targetMonth:"2026-10",plannedExpenses:[],persons:[],places:[],vehicle:null,prices:[],today:"2026-09-30",dateEvidence:{},references:{},settings};
+const props={scenario:deriveMonthScenario(live,inputs,null,"2026-09-30"),reference:live.referencePlan,targetMonth:"2026-10",plannedExpenses:[],persons:[],places:[],vehicle:null,prices:[],wallets:[],today:"2026-09-30",references:{},settings};
 const render=element=>renderToStaticMarkup(React.createElement(AppRouterContext.Provider,{value:{refresh(){},push(){},replace(){},back(){},forward(){},prefetch(){}}},element));
 const html=render(React.createElement(MonthStory,props));
 assert.doesNotMatch(html,/Après nos charges et nos projets|À regarder ensemble|vous pouvez dépenser/);
 assert.doesNotMatch(html,/Tester une dépense|Pourquoi \?|Notre hypothèse ce mois|Référence du quotidien nécessaire|Référence des dépenses facultatives/);
 assert.match(html,/data-month-story="true"/); assert.match(html,/Projection de fin de mois/);
-const currentHtml=render(React.createElement(MonthStory,{...props,plan:current,today:"2026-10-15"}));
+const currentHtml=render(React.createElement(MonthStory,{...props,scenario:deriveMonthScenario({...live,predictionEvidence:currentEvidence},inputs,null,"2026-10-15"),today:"2026-10-15"}));
 assert.match(currentHtml,/Déjà observé/);assert.doesNotMatch(currentHtml,/Total central du mois|imports partiels/);
 const pastHtml=render(React.createElement(PastMonthView,{targetMonth:"2026-04",review}));
 assert.match(pastHtml,/Prévu \/ réalisé \/ écart/);assert.doesNotMatch(pastHtml,/Ce qui pourrait encore|Tester une dépense/);
