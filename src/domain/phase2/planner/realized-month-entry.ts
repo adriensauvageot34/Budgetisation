@@ -5,7 +5,8 @@ export const JULY_COMPOSER_HREF = `/mois-a-venir/composer?month=${JULY_COMPOSER_
 export const JULY_COMPOSER_EDIT_HREF = `${JULY_COMPOSER_HREF}&view=edition`;
 export const JULY_V2_HREF = "/mois-a-venir/juillet-v2";
 export const ARCHIVED_REALIZED_MONTHS = [
-  "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03",
+  "2025-08", "2025-09", "2025-10", "2025-11", "2025-12",
+  "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06",
 ] as const;
 
 export function isArchivedRealizedMonth(month: string): boolean {
