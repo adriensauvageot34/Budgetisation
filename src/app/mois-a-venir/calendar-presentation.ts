@@ -75,11 +75,11 @@ export function calendarExpenseActions(expense: NonNullable<CalendarItem["expens
       : [{ action: "EDIT", label: "Modifier" }, { action: "REPORT", label: "Reporter" }, { action: "DELETE", label: "Supprimer" }] as const;
 }
 
-export function calendarDayDescription(date: string, items: readonly CalendarItem[], total?: string) {
+export function calendarDayDescription(date: string, items: readonly CalendarItem[], total?: string, canCreate = true) {
   return `${calendarDate(date)}. ${items.length} élément${items.length > 1 ? "s" : ""}`
     + (total ? `. Total ${calendarMoney(total)}` : "")
     + (items.length ? ". Ouvrir les détails"
-      : ". Rien de prévu. Prévoir quelque chose ce jour");
+      : canCreate ? ". Rien de prévu. Prévoir quelque chose ce jour" : ". Aucune échéance prévue");
 }
 
 /** Local panel positioning only; no calendar/financial state is derived here. */

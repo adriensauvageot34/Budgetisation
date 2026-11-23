@@ -21,8 +21,8 @@ const resourceBrands: Record<string, { logo: string; label: string; tone: string
   "benefit:edenred": { logo: "edenred.png", label: "Edenred", tone: "edenred" },
 };
 
-export function ResourceEditor({ resource, targetMonth, walletObservation = null, controls = true }: { resource: MonthResourceReference; targetMonth: string;
-  controls?: boolean; walletObservation?: Readonly<{ amount: string; asOfDate: string }> | null }) {
+export function ResourceEditor({ resource, targetMonth, walletObservation = null, controls = true, readOnly = false }: { resource: MonthResourceReference; targetMonth: string;
+  controls?: boolean; readOnly?: boolean; walletObservation?: Readonly<{ amount: string; asOfDate: string }> | null }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
@@ -66,9 +66,9 @@ export function ResourceEditor({ resource, targetMonth, walletObservation = null
         </span>
         <div className="min-w-0"><p className="truncate text-sm font-bold">{resource.label}</p><p className="text-xs text-slate-600">{meal ? "Chargement prévu du mois" : "Salaire prévu du mois"}</p></div>
       </div>
-      {!controls ? <MonthControlLink section="update" focus={controlFocus} className={`${material.iconButton} !p-2`}><span className="sr-only">Modifier {resource.label}</span><Pencil size={16} /></MonthControlLink> : !editing && <button type="button" className={`${material.iconButton} shrink-0 !p-2`} title={`Modifier ${resource.label}`} aria-label={`Modifier ${resource.label}`} onClick={() => { setError(null); setEditing(true); }}><Pencil size={16} /></button>}
+      {!readOnly && (!controls ? <MonthControlLink section="update" focus={controlFocus} className={`${material.iconButton} !p-2`}><span className="sr-only">Modifier {resource.label}</span><Pencil size={16} /></MonthControlLink> : !editing && <button type="button" className={`${material.iconButton} shrink-0 !p-2`} title={`Modifier ${resource.label}`} aria-label={`Modifier ${resource.label}`} onClick={() => { setError(null); setEditing(true); }}><Pencil size={16} /></button>)}
     </div>
-    {editing ? <form className={`${material.sectionEnter} mt-3 space-y-2`} onSubmit={(event) => { event.preventDefault(); send("set-resource-override", inputRef.current?.value.trim()); }}>
+    {!readOnly && editing ? <form className={`${material.sectionEnter} mt-3 space-y-2`} onSubmit={(event) => { event.preventDefault(); send("set-resource-override", inputRef.current?.value.trim()); }}>
       <label htmlFor={`resource-${resource.key}`} className="text-xs font-bold text-slate-700">Montant de {resource.label} pour ce mois (€)</label>
       <div className="flex flex-wrap items-center gap-2"><input ref={inputRef} id={`resource-${resource.key}`} className={`${material.field} field min-w-0 flex-1 text-base`} type="number" min="0" step="0.01" inputMode="decimal" defaultValue={resource.amount ?? ""} required autoFocus disabled={pending} />
         <button className={`${material.clayPrimary} min-h-10 px-3 text-sm font-bold`} type="submit" disabled={pending}>{pending ? "Enregistrement…" : "Valider"}</button>
@@ -76,7 +76,7 @@ export function ResourceEditor({ resource, targetMonth, walletObservation = null
     </form> : <p className={`${material.data} mt-4 break-words text-2xl font-black tracking-tight sm:text-[1.8rem]`}><AnimatedMoney value={resource.amount === null ? "À compléter" : money(resource.amount)} /></p>}
     <div className="mt-2 min-h-5 text-xs text-slate-600">{resource.amount === null ? "Montant attendu à renseigner" : overridden ? `Modifié pour ${monthName}` : resource.provenance === "USER_DECLARED" ? `Déclaré pour ${monthName}` : `Estimé pour ${monthName}`}</div>
     {meal && walletObservation && <p className="mt-2 text-xs text-slate-600">Solde observé : {money(walletObservation.amount)} au {new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${walletObservation.asOfDate}T12:00:00Z`))} · distinct du chargement.</p>}
-    {controls && overridden && !editing && <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-bold text-emerald-900 underline underline-offset-2" disabled={pending} onClick={() => send("clear-resource-override")}><RotateCcw size={13} />{pending ? "Restauration…" : `Revenir à ${resource.sourceAmount === null ? "la prévision" : money(resource.sourceAmount)}`}</button>}
+    {!readOnly && controls && overridden && !editing && <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-bold text-emerald-900 underline underline-offset-2" disabled={pending} onClick={() => send("clear-resource-override")}><RotateCcw size={13} />{pending ? "Restauration…" : `Revenir à ${resource.sourceAmount === null ? "la prévision" : money(resource.sourceAmount)}`}</button>}
     {error && <p role="alert" className="mt-2 text-xs font-semibold text-red-800">{error}</p>}
   </div>;
 }

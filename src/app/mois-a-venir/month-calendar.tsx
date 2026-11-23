@@ -188,13 +188,13 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
               onKeyDown={(event) => { const next = calendarKeyboardDay(day, event.key, days, firstWeekday);
                 if (next !== null) { event.preventDefault(); setActiveDay(next); dayButtons.current.get(next)?.focus(); } }}>
               <button type="button" data-calendar-day={day} ref={(node) => { if (node) dayButtons.current.set(day, node); else dayButtons.current.delete(day); }}
-                tabIndex={activeDay === day ? 0 : -1} aria-current={isToday ? "date" : undefined} aria-label={`${isToday ? "Aujourd’hui, " : ""}${calendarDayDescription(date, allDay, dailyTotals[date])}`}
+                tabIndex={activeDay === day ? 0 : -1} aria-current={isToday ? "date" : undefined} aria-label={`${isToday ? "Aujourd’hui, " : ""}${calendarDayDescription(date, allDay, dailyTotals[date], !!interactions)}`}
                 aria-haspopup={allDay.length ? "dialog" : undefined} aria-expanded={allDay.length ? selected === date : undefined}
                 onFocus={() => setActiveDay(day)} onClick={(event) => allDay.length ? open(date, event.currentTarget) : create(date)}
                 className={`flex w-full items-start justify-between pt-1 text-left text-xs tabular-nums focus-visible:outline-2 focus-visible:outline-indigo-700 ${allDay.length ? "h-7" : "absolute inset-0 px-1.5"}`}>
                 <span className={`flex size-5 items-center justify-center ${isToday ? `${material.todayBadge} rounded-full font-bold text-white` : "text-slate-500"}`}>{day}</span>
                 {summary.exactCount + summary.estimatedCount > 1 && <span data-calendar-day-total={date} className="pt-0.5 font-medium text-slate-500">{calendarMoney(summary.grossTotal)}</span>}
-                {!allDay.length && <span className={`${material.calendarCreate} absolute inset-x-0 top-9 text-center text-xs font-medium text-sky-700`}>+ Prévoir</span>}
+                {!allDay.length && interactions && <span className={`${material.calendarCreate} absolute inset-x-0 top-9 text-center text-xs font-medium text-sky-700`}>+ Prévoir</span>}
               </button>
               {lanes > 0 && <div style={{ height: lanes * 25 }} aria-hidden="true" />}
               <div key={filter} data-calendar-content className={`${material.calendarContent} grid grid-cols-[40px_minmax(0,1fr)_max-content] gap-x-1.5`}>

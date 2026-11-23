@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import ts from "typescript";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { forecast, inputs } from "./check-phase2-october-contract.mjs";
+import { forecast, inputs, referenceEvidence } from "./check-phase2-october-contract.mjs";
 import { planningHarness, value, item } from "./lib/planned-actions-harness.mjs";
 // Preserve every temporal assertion and action parity under the explicit temporal mode.
 process.env.PHASE2_FORECAST_TEMPORAL_MODE = "AS_OF_TEMPORAL";
@@ -14,7 +14,7 @@ require.extensions[".css"] = module => { module.exports = new Proxy({}, { get: (
 require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true }, fileName: filename,
 }).outputText, filename);
-const { deriveMonthScenario, simulatePlannedExpenseScenario } = require("../src/server/phase2/month-scenario.ts");
+const { defaultMonthInputs, deriveMonthScenario, simulatePlannedExpenseScenario } = require("../src/server/phase2/month-scenario.ts");
 const { forecastRemainingMonth } = require("../src/server/phase2/remaining-month-forecast.ts");
 const { sourceCoverage, FORECAST_SOURCES } = require("../src/server/phase2/forecast-opportunities.ts");
 const { projectPlannedExpenseImpact } = require("../src/server/phase2/planned-impact.ts");
@@ -189,6 +189,37 @@ const partialWithObservation=deriveMonthScenario({...live,predictionEvidence:{..
 assert.equal(partialWithObservation.economicPlan,null);
 assert.equal(partialWithObservation.observationMatches[0]?.plannedExpenseId,habitual.id);
 assert.equal(partialWithObservation.observationMatches[0]?.declared,true);
+const { ArchivedMonthForecast } = require("../src/app/mois-a-venir/archived-month-forecast.tsx");
+const { forecastWindowMonths, showsArchivedForecast, monthEntry } = require("../src/app/mois-a-venir/month-entry.ts");
+const { buildMonthReference } = require("../src/server/phase2/month-reference.ts");
+assert.equal(forecastWindowMonths.length,14);
+assert.equal(forecastWindowMonths[0],"2026-08");
+assert.equal(forecastWindowMonths.at(-1),"2027-09");
+assert.equal(showsArchivedForecast("2026-08","2026-11",undefined),true);
+assert.equal(showsArchivedForecast("2026-08","2026-11","bilan"),false);
+assert.equal(showsArchivedForecast("2026-11","2026-11",undefined),false);
+assert.equal(showsArchivedForecast("2026-07","2026-11",undefined),false);
+const workMealEstimates = new Set();
+for (const month of forecastWindowMonths) {
+  const monthReference = buildMonthReference(referenceEvidence,month,["2026-03-31","2026-05-31","2026-07-31"].map(date=>({componentKey:"obligation:edf",date})));
+  workMealEstimates.add(monthReference.flexible.find(item=>item.key==="manon-work-meals").central);
+  const monthForecast = {...forecast,meta:{...forecast.meta,targetMonth:month},referencePlan:monthReference};
+  const beforeMonth = new Date(Date.parse(`${month}-01T00:00:00Z`)-86400000).toISOString().slice(0,10);
+  const monthScenario = deriveMonthScenario(monthForecast,defaultMonthInputs(),null,beforeMonth);
+  const dueDate = monthScenario.planningReference.certainOutflows.items.find(item=>item.key==="obligation:edf").date;
+  assert.equal(new Date(`${dueDate}T12:00:00Z`).toISOString().slice(0,10),dueDate);
+  assert.ok(dueDate.startsWith(month));
+  assert.equal(monthScenario.planningReference.resources.find(resource=>resource.key==="benefit:swile").amount,null);
+}
+assert.ok(workMealEstimates.size>1,"Workday-dependent monthly estimates vary across the window");
+const archive=renderToStaticMarkup(React.createElement(AppRouterContext.Provider,{value:router},React.createElement(ArchivedMonthForecast,{
+  entry:monthEntry("2026-11-23","2026-10",[]),forecast:live,scenario:partial,cutoff:"2026-09-30",
+})));
+assert.match(archive,/Prévisions de référence/);
+assert.match(archive,/month=2026-10&amp;vue=bilan/);
+assert.match(archive,/value="2026-08"/);
+assert.match(archive,/value="2027-09"/);
+assert.doesNotMatch(archive,/Modifier le solde Banque|Ajouter une dépense|Compléter les ressources|Déjà observé/);
 // Precision controls now belong to the existing OverlayFrame, outside the narrative.
 assert(!fs.readFileSync("src/app/mois-a-venir/month-forecast-view.tsx","utf8").includes("Améliorer la précision du mois"));
 assert(fs.readFileSync("src/app/mois-a-venir/month-control-update.tsx","utf8").includes("save-bank-balance"));
