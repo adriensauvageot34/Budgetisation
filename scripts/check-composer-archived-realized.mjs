@@ -7,10 +7,9 @@ const { realizedPlace, probableMerchantPlace } = require("@/server/phase2/planne
 const { buildHistoricalRealizedContext } = require("@/server/phase2/planner/historical-realized-context");
 const { detailedRealizedCards } = require("@/app/mois-a-venir/composer/realized-card-view");
 
-assert.equal(ARCHIVED_REALIZED_MONTHS.length, 8);
+assert.equal(ARCHIVED_REALIZED_MONTHS.length, 11);
 for (const month of ARCHIVED_REALIZED_MONTHS) assert.equal(realizedComposerHref(month), `/mois-a-venir/composer?month=${month}`);
-assert.ok(["2026-01", "2026-02", "2026-03"].every(isArchivedRealizedMonth));
-assert.equal(isArchivedRealizedMonth("2026-04"), false);
+assert.ok(["2026-03", "2026-04", "2026-05", "2026-06"].every(isArchivedRealizedMonth));
 assert.equal(isArchivedRealizedMonth("2026-07"), false);
 assert.match(probableMerchantPlace("Maison Regnier", "Paiement par carte - X1111 MAISON REGNIER CHAUD")?.address ?? "", /Chaudes-Aigues/);
 
@@ -30,6 +29,12 @@ const lookup = id => {
 assert.equal(lookup("home").address, undefined);
 assert.equal(realizedPlace({ place_id: "venue", private_place: false, nom_canonique: "Domaine de la Clausade" }, "confirmed").town, "Mauguio");
 assert.equal(realizedPlace({ place_id: "venue", private_place: true, nom_canonique: "Domaine de la Clausade" }, "confirmed"), undefined);
+const serignan = realizedPlace({ place_id: "shop-a", private_place: false, nom_canonique: "Carrefour Sérignan", commune: "Sérignan" }, "confirmed");
+assert.equal(serignan.address, "Route de Valras, 34410 Sérignan");
+assert.match(new URL(serignan.mapsUrl).searchParams.get("query"), /Carrefour Sérignan.*34410/u);
+const longchamp = { place_id: "shop-b", private_place: false, nom_canonique: "Le Longchamp – Valras", commune: "Valras-Plage" };
+assert.equal(realizedPlace(longchamp, "confirmed").address, "31 rue Charles-Thomas, 34350 Valras-Plage");
+assert.equal(realizedPlace({ ...longchamp, commune: "Autre commune" }, "confirmed").address, undefined);
 const observed = (id, kind, start, end, ids = [], parent = null) => ({
   lifeEventId: id, activityId: kind, startDate: start, endDate: end, participantIds: ids, parentLifeEventId: parent,
   validationStatus: "Confirmé",
@@ -40,8 +45,9 @@ const events = [
   observed("shopping", "courses_alimentaires", next, next, [person.manon]),
   observed("work-site", "travail_site", before, before, [person.adrien]),
   observed("work-meal", "repas_restaurant", before, before, [person.adrien], "work-site"),
+  observed("unpaid-lesson", "lecon_conduite", before, before, [person.adrien]),
 ];
-const eventPlaces = ["fontes", "servian", "shop", "site", "site"];
+const eventPlaces = ["fontes", "servian", "shop", "site", "site", "site"];
 const details = events.map((event, index) => ({ life_event_id: event.lifeEventId, primary_place_id: eventPlaces[index] }));
 const presence = [
   { personId: person.adrien, placeId: "fontes", localDate: before },
@@ -130,6 +136,7 @@ const bootstrap = { household: { householdId: "test", timezone: "Europe/Paris" }
 const board = await readRealizedMonth(bootstrap, "2025-10");
 Module._load = originalLoad;
 assert.equal(board.operationCount, bank.length);
+assert.ok(!board.cards.some(card => card.id === "events-lecon_conduite"));
 assert.equal(board.totals.expense.amount, "-42.80");
 assert.deepEqual(board.cards.flatMap(card => card.payments.map(payment => payment.id)).sort(), bank.map(item => item.operationId).sort());
 const work = board.cards.find(card => card.work);
@@ -157,6 +164,7 @@ assert.match(html, /href="\/historique\/2025-10"/);
 assert.match(html, /value="2025-12"/);
 assert.match(html, /value="2026-01"/);
 assert.match(html, /value="2026-03"/);
+assert.match(html, /value="2026-06"/);
 assert.doesNotMatch(html, /Modifier dans le brouillon|Enregistrer le Plan/);
 const ski = { ...weekend, id: "event-ski", date: "2026-02-26", endDate: "2026-03-01", label: "Séjour ski" };
 const march = { ...board, month: "2026-03", cards: [ski] };
@@ -164,4 +172,11 @@ const marchHtml = renderToStaticMarkup(createElement(AppRouterContext.Provider, 
   createElement(ArchivedRealizedMonth, { board: march, initialCardId: ski.id })));
 assert.match(marchHtml, /href="\/mois-a-venir\/composer\?month=2026-02&amp;carte=event-ski"/);
 assert.match(marchHtml, /Paiements et trajets de mars 2026/);
-console.log("PASS: eight realized months, dated work and grouped cafés, family stays, cross-month event links, and consistent bank totals");
+const trip = { ...weekend, id: "event-spring-trip", date: "2026-03-31", endDate: "2026-04-01", label: "Déplacement professionnel" };
+const aprilHtml = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: {} },
+  createElement(ArchivedRealizedMonth, { board: { ...board, month: "2026-04", cards: [trip] }, initialCardId: trip.id })));
+assert.match(aprilHtml, /href="\/mois-a-venir\/composer\?month=2026-03&amp;carte=event-spring-trip"/);
+const juneHtml = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: {} },
+  createElement(ArchivedRealizedMonth, { board: { ...board, month: "2026-06" } })));
+assert.match(juneHtml, /href="\/mois-a-venir\/composer\?month=2026-07" aria-label="Mois suivant"/);
+console.log("PASS: eleven realized months, work cafés, family stays, cross-month event links, confirmed venue addresses, and consistent bank totals");

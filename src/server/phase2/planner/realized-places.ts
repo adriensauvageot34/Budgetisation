@@ -23,6 +23,13 @@ const verifiedBranches = [
     latitude: 43.5892217, longitude: 3.8560867 },
 ] as const;
 
+// Exact public venue names from the canonical referential and their published addresses.
+const verifiedVenues = [
+  { names: ["domaine de la clausade", "domaine la clausade"], town: "Mauguio", address: "Route de Mudaison, 34130 Mauguio" },
+  { names: ["le longchamp valras"], town: "Valras-Plage", address: "31 rue Charles-Thomas, 34350 Valras-Plage" },
+  { names: ["carrefour serignan"], town: "Sérignan", address: "Route de Valras, 34410 Sérignan" },
+];
+
 const publicMerchantPlaces = [
   { name: "maison regnier", cityPrefix: "chaud", label: "Maison Régnier",
     address: "9 place du Marché, 15110 Chaudes-Aigues", town: "Chaudes-Aigues" },
@@ -79,9 +86,11 @@ export function realizedPlace(row: CanonicalRecord, certainty: "confirmed" | "pr
   const branch = coords && verifiedBranches.find(candidate => candidate.name === normalized(name)
     && Math.hypot(coords.latitude - candidate.latitude, (coords.longitude - candidate.longitude) * Math.cos(coords.latitude * Math.PI / 180)) < .0025);
   const canonicalAddress = optionalCanonicalString(row, ["adresse"])?.trim();
-  const clausade = /^domaine (?:de )?la clausade$/u.test(normalized(name)) && (!canonicalTown || normalized(canonicalTown) === "mauguio");
-  const town = canonicalTown || (clausade ? "Mauguio" : undefined);
-  const address = canonicalAddress || branch?.address || (clausade ? "Route de Mudaison, 34130 Mauguio" : undefined);
+  const nameKey = normalized(name);
+  const venue = verifiedVenues.find(candidate => candidate.names.includes(nameKey)
+    && (!canonicalTown || normalized(canonicalTown) === normalized(candidate.town)));
+  const town = canonicalTown || venue?.town;
+  const address = canonicalAddress || branch?.address || venue?.address;
   const label = canonicalAddress ? name : branch?.label ?? name;
   const publicAddressQuery = [label, address, canonicalAddress || !address ? town : undefined].filter(Boolean).join(", ");
   const query = address || !coords ? publicAddressQuery : `${coords.latitude},${coords.longitude}`;

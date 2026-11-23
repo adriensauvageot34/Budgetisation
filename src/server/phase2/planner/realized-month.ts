@@ -677,7 +677,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const work = workCards.get(card.id);
     const meals = work?.meals.filter(meal => !paidMeals.has(meal.id)) ?? [];
     if (work && !card.payments.length && !meals.length && !card.relatedPayments?.length) return [];
-    if (july && ["events-lecon_conduite", "events-journee_maison"].includes(card.id)
+    if ((july || historical) && ["events-lecon_conduite", "events-journee_maison"].includes(card.id)
       && !card.payments.length && !card.relatedPayments?.length) return [];
     const peopleOnPayments = new Set(card.payments.flatMap(payment => payment.participant ?? []));
     const participant = card.participant ?? (card.id === groceriesCardId ? "Couple"
