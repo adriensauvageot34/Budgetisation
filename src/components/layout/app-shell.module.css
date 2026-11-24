@@ -6,9 +6,14 @@
 }
 .toolbar { flex: 1; min-width: 0; }
 .toolbar:empty { display: none; }
+.period { min-width: 0; }
 .account { margin-inline-start: auto; flex: none; }
 .bar:has(.toolbar:not(:empty)) .account > button { min-height: 34px; padding-block: 6px; }
 
+@media (min-width: 1121px) and (max-width: 1440px) {
+  .bar:has(.toolbar:not(:empty)) { column-gap: 8px; padding-inline: 16px; }
+  .bar:has(.toolbar:not(:empty)) .period select { width: clamp(145px, 13vw, 196px); }
+}
 @media (max-width: 1120px) {
   .bar { flex-wrap: wrap; }
   .toolbar { order: 1; flex: 0 0 100%; }

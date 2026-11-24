@@ -45,7 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
             <span className="sr-only font-bold sm:not-sr-only">Budgetisation</span>
           </div>
-          <nav className="min-w-0" aria-label="Période de Budgetisation">
+          <nav className={styles.period} aria-label="Période de Budgetisation">
             <Suspense fallback={<span aria-hidden className="block h-8 w-28 sm:w-56" />}>
               <MonthPicker />
             </Suspense>
