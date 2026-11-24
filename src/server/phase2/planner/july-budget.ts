@@ -173,12 +173,8 @@ export function readJulyBudget(source: RealizedBoard, board: RealizedBoard, evid
     amount: lines.every(line => line.amount !== null) ? sum(lines.map(line => line.amount)) : null,
     category: lines[0]!.category, artwork: lines[0]!.artwork,
   }));
-  const dailyCalendarTotals: Record<string, string> = {};
-  for (const entry of [...fixedCalendar, ...plannedCalendar]) if (entry.date && entry.amount !== null) {
-    dailyCalendarTotals[entry.date] = sum([dailyCalendarTotals[entry.date] ?? "0", entry.amount]);
-  }
   return {
-    rows, totalExpenses, strictMinimum, afterMinimum, recordedExpenses, fixedConfirmed, fixedPlanned, fixedTotal, fixedCalendar, plannedCalendar, dailyCalendarTotals,
+    rows, totalExpenses, strictMinimum, afterMinimum, recordedExpenses, fixedConfirmed, fixedPlanned, fixedTotal, fixedCalendar, plannedCalendar,
     receipts, confirmedIncome, plannedIncome, final, planned,
     hasSavedDraft: !!model, mobilityUsage: mobility?.projectedMonth ?? null, trainingThrough: evidence.history.endMonth,
   };

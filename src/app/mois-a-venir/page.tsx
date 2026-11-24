@@ -15,7 +15,7 @@ import { monthEntry, showsArchivedForecast } from "./month-entry";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
-import { readPlannedExpenses, readPlannedCalendarCarryovers } from "@/server/phase2/planned-expenses";
+import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 import { readPlannedContextOptions } from "@/server/phase2/planned-context";
 import { groceryBasketEstimate } from "@/domain/phase2/planned-price-estimates";
 import { projectPlannedExpenseCards, projectExpenseFunding } from "./planned-expenses-projection";
@@ -90,11 +90,10 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     const scenario = deriveMonthScenario({ ...forecast, forecastMemory: [] }, { ...inputs, openingBalance }, null, cutoff);
     return <ArchivedMonthForecast entry={entry} forecast={forecast} scenario={scenario} cutoff={cutoff} />;
   }
-  const [storedRead, expensesRead, personsResult, calendarCarryovers] = await Promise.all([
+  const [storedRead, expensesRead, personsResult] = await Promise.all([
     readMonthInputs(supabase, context.household.householdId, targetMonth),
     readPlannedExpenses(supabase, context.household.householdId, targetMonth),
     supabase.from("persons").select("person_id,display_name,status").eq("household_id", context.household.householdId).order("display_name"),
-    readPlannedCalendarCarryovers(supabase, context.household.householdId, targetMonth),
   ]);
   if (personsResult.error) throw personsResult.error;
   const activePersons = (personsResult.data ?? []).filter((person) => person.status === "active")
@@ -162,9 +161,8 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     appliedEvidenceStatus={effective.evidenceStatus} historicalRemainder={historicalRemainder}
     composerEnabled={composerEnabled} planOwnership={ownership} activePlan={effective.owner === "PLAN_V1"} activeRevisionId={effective.revision?.planRevisionId}
     draftRootCount={draft?.semanticState.contexts.filter(context => !context.parentContextOccurrenceId).length}
-    linkedPlanContextIds={effective.preview?.compiled.contexts.filter(context => context.externalIntentId).map(context => context.contextOccurrenceId)}
     initialSection={control?.section ?? null} initialFocus={control?.focus ?? null}
-    plannedExpenses={cards} calendarCarryovers={projectPlannedExpenseCards(calendarCarryovers, today)} today={today}
+    plannedExpenses={cards} today={today}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={[...options.prices, ...(() => { const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []); return estimate ? [estimate] : []; })()]} wallets={options.wallets}
     inputError={params.inputError === "1"} />;
 }

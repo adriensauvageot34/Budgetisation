@@ -4,9 +4,8 @@ import type { MonthForecastSnapshot } from "@/server/phase2/month-forecast-snaps
 import type { StatisticalComponent } from "@/server/phase2/month-reference";
 import type { ReactNode } from "react";
 import { ResourceEditor } from "./resource-editor";
-import { MonthCalendar } from "./month-calendar";
 import { PlannedExpensesControl } from "./planned-expenses-control";
-import { projectMonthCalendar, type PlanCalendarMoment, type PlannedExpenseCard } from "./planned-expenses-projection";
+import type { PlannedExpenseCard } from "./planned-expenses-projection";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
 import { RemainingForecastCard, ScenarioMilestone, ForecastInfo } from "./month-narrative-cards";
@@ -52,22 +51,18 @@ function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "ne
   </article>;
 }
 
-export function MonthStory({ scenario, reference, targetMonth, plannedExpenses, calendarCarryovers = [], persons, places, vehicle, prices, wallets, today, references, settings: rawSettings, memory = [], applied, planMoments, draft, readOnly = false }: {
+export function MonthStory({ scenario, reference, targetMonth, plannedExpenses, persons, places, vehicle, prices, wallets, today, settings: rawSettings, memory = [], applied, draft, readOnly = false }: {
   scenario: MonthScenario; reference: MonthForecastSnapshot["referencePlan"]; targetMonth: string;
   settings?: MonthDecisionSettings; memory?: readonly ForecastCheckpoint[]; applied?: ReactNode;
   draft?: { composerHref: string; rootCount: number };
-  planMoments?: readonly PlanCalendarMoment[];
   readOnly?: boolean;
-  plannedExpenses: readonly PlannedExpenseCard[]; calendarCarryovers?: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
+  plannedExpenses: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
   prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[]; today: string;
-  wallets: readonly import("@/domain/phase2/planned-contract").PlannedWalletOption[];
-  references: Readonly<Record<string, { freshnessDate: string | null; confidence: string }>> }) {
+  wallets: readonly import("@/domain/phase2/planned-contract").PlannedWalletOption[] }) {
   const plan = scenario.economicPlan;
   const { certainOutflows, resources, balance } = scenario.planningReference;
   const groups = [...certainOutflows.groups].sort((a, b) => groupOrder.indexOf(a.label) - groupOrder.indexOf(b.label));
-  const calendar = projectMonthCalendar(certainOutflows.items.map((item) => ({ ...item, ...references[item.key],
-    dateEvidenceCount: item.dateCertainty === "HISTORICAL_ESTIMATE" ? reference?.estimatedDays[item.key]?.observationCount : undefined })), [...plannedExpenses, ...calendarCarryovers], planMoments);
   const narrative = plan?.narrative, prediction = readOnly ? null : narrative?.prediction;
   const importsMissing = prediction?.currentImportsMissing ?? false;
   const settings = parseMonthDecisionSettings(rawSettings);
@@ -93,8 +88,6 @@ export function MonthStory({ scenario, reference, targetMonth, plannedExpenses, 
         return <details key={group.label} className={`${material.glassSecondary} ${material.chargeRow} ${material.disclosure} group min-w-0`}><summary data-month-motion-item="charge" data-motion-order={groupIndex} className="flex min-h-17 cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden"><span className={material.roundBadge}><Icon size={20} aria-hidden="true" /></span><span className="min-w-0 flex-1 font-bold">{group.label}<span className="block text-xs font-normal text-slate-600">{`${group.items.length} ${group.items.length > 1 ? "éléments" : "élément"}`}</span></span><strong className={`${material.data} shrink-0 text-right text-lg`}><AnimatedMoney value={money(group.total, true)} /></strong><ChevronDown className="size-4 shrink-0 text-slate-500 transition-transform motion-reduce:transition-none group-open:rotate-180" aria-hidden="true" /></summary>
           <ul className="mx-4 border-t border-slate-200 pb-3 pt-2 text-sm">{group.items.map((item) => <li key={item.key} className="flex flex-wrap justify-between gap-x-3 py-1"><span className="min-w-0 break-words">{item.label}<span className="block text-xs text-slate-500">{item.state === "OBSERVED" ? "Déjà débité" : item.state === "OVERDUE_UNOBSERVED" ? "Échéance passée, débit non observé · montant réservé" : item.state === "PENDING_OBSERVATION" ? "En attente du débit · montant réservé" : "À venir"} · {item.dateCertainty === "DECLARED" ? "Date déclarée" : item.dateCertainty === "HISTORICAL_ESTIMATE" ? "Date habituelle estimée" : "Date à confirmer"}</span></span><strong className="shrink-0 tabular-nums">{money(item.amount, true)}</strong></li>)}</ul></details>;
       })}</div></section>
-
-    <section id="timeline-title" className="scroll-mt-24" aria-label="Calendrier du mois"><MonthCalendar key={targetMonth} targetMonth={targetMonth} today={today} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
 
     {draft && <section className={`${material.glassSecondary} flex flex-wrap items-center justify-between gap-3 p-5`} aria-labelledby="composer-draft-title">
       <div><h2 id="composer-draft-title" className="text-lg font-black">Brouillon Composer</h2>

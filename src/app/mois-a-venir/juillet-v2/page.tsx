@@ -20,9 +20,8 @@ import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { money, monthLabel, plannedDayLabel } from "../composer/display";
 import { detailedRealizedCards } from "../composer/realized-card-view";
 import { composerCalendarHref } from "../month-entry";
-import { CalendarEventIcon, MonthCalendar } from "../month-calendar";
+import { CalendarEventIcon } from "../month-calendar";
 import { composerCalendarArtwork } from "../calendar-artwork";
-import type { CalendarEntry } from "../planned-expenses-projection";
 import material from "../month-material.module.css";
 import pilotStyles from "../composer/realized-month.module.css";
 
@@ -69,7 +68,7 @@ export default async function JulyV2Page() {
       <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-4xl font-black tracking-tight sm:text-5xl">Juillet 2026</h1>
         <nav aria-label="Accès du mois de juillet" className="flex flex-wrap gap-2">
-          {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} prefetch={false} className={button}>Calendrier pleine page</Link>}
+          {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} prefetch={false} className={button}>Calendrier</Link>}
           {composerEnabled && board && <Link href={JULY_COMPOSER_HREF} prefetch={false} className={`${material.clayPrimary} inline-flex items-center px-4 py-2 text-sm font-bold`}>Voir les cartes</Link>}
           {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} prefetch={false} className={button}>Éditer le brouillon</Link>}
         </nav>
@@ -95,7 +94,7 @@ export default async function JulyV2Page() {
         <Metrics values={[
           ["Déjà débité", budget.fixedConfirmed], ["À payer", budget.fixedPlanned], ["Total renseigné", budget.fixedTotal],
         ]} />
-        <BudgetCalendar items={budget.fixedCalendar} projects={budget.plannedCalendar} dailyTotals={budget.dailyCalendarTotals} />
+        <BudgetDeadlines items={budget.fixedCalendar} />
       </section>
       <section className={`${material.glassSoft} p-5 sm:p-6`} aria-labelledby="july-essentials">
         <h2 id="july-essentials" className="text-xl font-black">Variables du quotidien</h2>
@@ -154,9 +153,7 @@ export default async function JulyV2Page() {
 
 type JulyBudget = ReturnType<typeof readJulyBudget>;
 
-function BudgetCalendar({ items, projects, dailyTotals }: {
-  items: JulyBudget["fixedCalendar"]; projects: JulyBudget["plannedCalendar"]; dailyTotals: JulyBudget["dailyCalendarTotals"];
-}) {
+function BudgetDeadlines({ items }: { items: JulyBudget["fixedCalendar"] }) {
   const chargeEntries = items.map(item => ({
     key: item.id, label: item.label, date: item.date, amount: item.amount, nature: "CERTAIN_OUTFLOW" as const,
     artwork: composerCalendarArtwork({ label: item.label + " " + item.family, art: item.artwork, badge: item.badge, category: item.category }),
@@ -164,27 +161,19 @@ function BudgetCalendar({ items, projects, dailyTotals }: {
     dateCertainty: item.status === "confirmed" ? "DECLARED" as const : "HISTORICAL_ESTIMATE" as const,
     fixedState: item.status === "confirmed" ? "OBSERVED" as const : "UPCOMING" as const,
   }));
-  const charges: CalendarEntry[] = chargeEntries.flatMap(item => item.date ? [{ ...item, date: item.date }] : []);
-  const projectEntries: CalendarEntry[] = projects.map(project => ({
-    key: project.id, label: project.label, date: project.date, amount: project.amount, nature: "PLANNED_EXPENSE", dateCertainty: "DECLARED",
-    artwork: composerCalendarArtwork({ label: project.label, art: project.artwork, category: project.category }),
-  }));
-  return <div className="mt-4">
-    <MonthCalendar targetMonth={JULY_COMPOSER_MONTH} entries={[...charges, ...projectEntries]} undated={[]} dailyTotals={dailyTotals} today={JULY_PILOT_DATE} compactArtwork />
-    <details className="mt-3 rounded-xl border border-slate-200 p-3">
-      <summary className="cursor-pointer text-sm font-bold">Toutes les échéances du mois</summary>
-      <ol className="mt-2 divide-y divide-slate-200">
-        {chargeEntries.map(item => <li key={item.key} className="grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-2 py-2.5 sm:grid-cols-[6rem_minmax(0,1fr)_7rem_7rem]">
-          {item.date ? <time className="text-sm font-bold" dateTime={item.date}>{plannedDayLabel(item.date)}</time> : <span className="text-sm">À dater</span>}
-          <div className="flex min-w-0 items-center gap-2 text-sm"><CalendarEventIcon item={item} size={30} />
-            <div className="min-w-0"><strong>{item.label}</strong><span className="block text-xs text-slate-600">{item.group}</span></div>
-          </div>
-          <StateBadge status={item.status} />
-          <strong className="col-start-2 text-sm sm:col-start-auto sm:text-right">{item.amount === null ? "À chiffrer" : money(item.amount)}</strong>
-        </li>)}
-      </ol>
-    </details>
-  </div>;
+  return <details className="mt-4 rounded-xl border border-slate-200 p-3">
+    <summary className="cursor-pointer text-sm font-bold">Toutes les échéances du mois</summary>
+    <ol className="mt-2 divide-y divide-slate-200">
+      {chargeEntries.map(item => <li key={item.key} className="grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-2 py-2.5 sm:grid-cols-[6rem_minmax(0,1fr)_7rem_7rem]">
+        {item.date ? <time className="text-sm font-bold" dateTime={item.date}>{plannedDayLabel(item.date)}</time> : <span className="text-sm">À dater</span>}
+        <div className="flex min-w-0 items-center gap-2 text-sm"><CalendarEventIcon item={item} size={30} />
+          <div className="min-w-0"><strong>{item.label}</strong><span className="block text-xs text-slate-600">{item.group}</span></div>
+        </div>
+        <StateBadge status={item.status} />
+        <strong className="col-start-2 text-sm sm:col-start-auto sm:text-right">{item.amount === null ? "À chiffrer" : money(item.amount)}</strong>
+      </li>)}
+    </ol>
+  </details>;
 }
 
 function VariableCard({ row }: { row: JulyBudget["rows"][number] }) {
