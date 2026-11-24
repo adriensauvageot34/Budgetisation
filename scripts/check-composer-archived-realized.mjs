@@ -6,6 +6,15 @@ const { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, realizedComposerHref 
 const { realizedPlace, probableMerchantPlace } = require("@/server/phase2/planner/realized-places");
 const { buildHistoricalRealizedContext } = require("@/server/phase2/planner/historical-realized-context");
 const { detailedRealizedCards } = require("@/app/mois-a-venir/composer/realized-card-view");
+const { groceryDetour, historicalPaymentParticipant } = require("@/server/phase2/planner/historical-realized-patterns");
+const paymentInput = { bankLabel: "", subcategory: "", fixed: false, flow: "expense" };
+assert.equal(historicalPaymentParticipant({ ...paymentInput, merchant: "netflix" }), "Manon");
+assert.equal(historicalPaymentParticipant({ ...paymentInput, merchant: "uber_eats" }), "Couple");
+assert.equal(historicalPaymentParticipant({ ...paymentInput, merchant: "suno", tags: ["Contexte:projet_suno_manon"] }), "Manon");
+assert.equal(historicalPaymentParticipant({ ...paymentInput, merchant: "suno" }), undefined);
+assert.equal(historicalPaymentParticipant({ ...paymentInput, merchant: "ornikar_assurances", subcategory: "assurances__assurance_automobile" }), "Manon");
+assert.equal(historicalPaymentParticipant({ ...paymentInput, merchant: "promotrans", flow: "income", subcategory: "revenus__salaire_revenu_professionnel" }), "Manon");
+assert.equal(historicalPaymentParticipant({ ...paymentInput, merchant: "", flow: "transfer", subcategory: "transferts__avance_personnelle" }), "Couple");
 
 assert.equal(ARCHIVED_REALIZED_MONTHS.length, 11);
 for (const month of ARCHIVED_REALIZED_MONTHS) assert.equal(realizedComposerHref(month), `/mois-a-venir/composer?month=${month}`);
@@ -46,8 +55,9 @@ const events = [
   observed("work-site", "travail_site", before, before, [person.adrien]),
   observed("work-meal", "repas_restaurant", before, before, [person.adrien], "work-site"),
   observed("unpaid-lesson", "lecon_conduite", before, before, [person.adrien]),
+  observed("night-out", "sortie_soiree", before, loc, [person.adrien]),
 ];
-const eventPlaces = ["fontes", "servian", "shop", "site", "site", "site"];
+const eventPlaces = ["fontes", "servian", "shop", "site", "site", "site", "site"];
 const details = events.map((event, index) => ({ life_event_id: event.lifeEventId, primary_place_id: eventPlaces[index] }));
 const presence = [
   { personId: person.adrien, placeId: "fontes", localDate: before },
@@ -59,6 +69,15 @@ const presence = [
 const leg = (id, date, origin, destination) => ({ legId: id, date, origin: { placeId: origin }, destination: { placeId: destination },
   vehicleId: "vehicle", source: { status: "CERTIFIED_SOURCE" }, time: {}, distanceKm: "30.00", estimatedFuelCost: "4.25" });
 const trips = [leg("out", before, "home", "fontes"), leg("between", loc, "fontes", "servian"), leg("back", next, "servian", "home")];
+const measuredLeg = (id, day, origin, destination, distance, cost, time) => ({
+  ...leg(id, day, origin, destination), distanceKm: distance, estimatedFuelCost: cost,
+  routeMethodRef: "method", time: { observedTime: `${day}T${time}:00` },
+});
+assert.deepEqual(groceryDetour(loc, lookup("shop"), [
+  measuredLeg("in", loc, "home", "shop", "6.00", "0.60", "10:00"),
+  measuredLeg("out", loc, "shop", "fontes", "4.00", "0.40", "10:40"),
+  measuredLeg("direct", before, "home", "fontes", "8.00", "0.80", "10:00"),
+]), { distance: "2.00", fuel: "0.20" });
 const ctx = buildHistoricalRealizedContext(events.map((event, i) => ({
   event, title: event.lifeEventId, placeIds: [eventPlaces[i]], places: [lookup(eventPlaces[i])],
 })), presence, trips, lookup, person);
@@ -87,16 +106,18 @@ const bank = [
   ["coffee-2", before, "-1.40", "Café test", "alimentation__cafe_au_travail", null],
   ["meal", before, "-6.00", "Déjeuner test", "alimentation__boulangerie", "site"],
   ["shop", next, "-34.00", "Courses test", "alimentation__courses_alimentaires", "shop"],
+  ["ride", loc, "-10.00", "Uber", "transport_voiture__vtc_taxi", null],
 ].map(([id, date, amount, label, subcat, place]) => ({
   operationId: id, bankAmount: amount, preciseType: id === "meal" ? "Repas du midi au travail" : undefined,
-  raw: { flux: "Dépense", date_transaction_precision: "Jour exact", date_transaction_reelle: date,
+  raw: { flux: "Dépense", date_transaction_precision: "Jour exact", date_transaction_reelle: date, subcategory_id: subcat,
+    ...(id === "ride" ? { merchant_id: "merchant-ride" } : {}),
     ...(id === "coffee-1" ? { moment_id: "moment-stay" } : {}) },
   row: { bankDate: date, bankLabel: label, category: { id: "food", label: "Alimentation" }, subcategory: { id: subcat, label },
-    canonicalPlace: place ? { id: place } : undefined },
+    canonicalPlace: place ? { id: place } : undefined, ...(id === "ride" ? { merchant: { id: "merchant-ride", label: "Uber" } } : {}) },
 }));
 const labels = {
   categoryKeys: new Map([["food", "alimentation"]]), subcategoryKeys: new Map(bank.map(item => [item.row.subcategory.id, item.row.subcategory.id])),
-  merchantIdentity: new Map(), places: new Map(), merchantKeys: new Map(),
+  merchantIdentity: new Map(), places: new Map(), merchantKeys: new Map([["merchant-ride", "uber"]]),
 };
 class Repo {
   async loadOperationsByBankRange() { return bank; }
@@ -116,7 +137,12 @@ class Repo {
   }
   async loadActivityCausalFinancialLinkRows() { return []; }
   async loadMobilityLegFacts() { return trips; }
-  async loadLifeEventParticipationRows() { return []; }
+  async loadLifeEventParticipationRows() {
+    return [{ life_event_id: "night-out", person_id: person.adrien, participation_status: "Déduite",
+      start_at: "2025-10-17T21:00:00+02:00", end_at: "2025-10-18T03:00:00+02:00" }];
+  }
+  async loadRealizedOperationTags() { return []; }
+  async loadRealizedProductPeople() { return []; }
   async loadPlaceVisits() { return presence; }
   async loadEntityRows() { return places; }
 }
@@ -137,7 +163,7 @@ const board = await readRealizedMonth(bootstrap, "2025-10");
 Module._load = originalLoad;
 assert.equal(board.operationCount, bank.length);
 assert.ok(!board.cards.some(card => card.id === "events-lecon_conduite"));
-assert.equal(board.totals.expense.amount, "-42.80");
+assert.equal(board.totals.expense.amount, "-52.80");
 assert.deepEqual(board.cards.flatMap(card => card.payments.map(payment => payment.id)).sort(), bank.map(item => item.operationId).sort());
 const work = board.cards.find(card => card.work);
 assert.equal(work.work.items.length, 2);
@@ -148,7 +174,14 @@ const weekend = board.cards.find(card => card.carTrip);
 assert.equal(weekend.endDate, next);
 assert.equal(weekend.carTrip.estimatedFuel, "12.75");
 assert.equal(weekend.carTrip.legs.find(row => row.id === "back").participant, "Manon");
+assert.equal(weekend.carTrip.legs.find(row => row.id === "back").driver, "Manon");
 assert.equal(weekend.payments[0].id, "shop");
+assert.equal(weekend.payments[0].shopper, "Manon");
+assert.equal(weekend.payments[0].participant, "Couple");
+const night = board.cards.find(card => card.id === "event-night-out");
+assert.equal(night.participant, "Couple");
+assert.equal(night.payments[0].id, "ride");
+assert.match(night.mobilityNote, /Uber probablement associé/u);
 assert.equal(weekend.amount, "-34.00");
 assert.equal(weekend.relatedPayments[0].id, "coffee-1");
 assert.equal(weekend.occurrences.length, 2);
@@ -159,7 +192,7 @@ const { AppRouterContext } = require("next/dist/shared/lib/app-router-context.sh
 const { createElement } = require("react");
 const { renderToStaticMarkup } = require("react-dom/server");
 const html = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: {} }, createElement(ArchivedRealizedMonth, { board })));
-assert.match(html, /Mois réalisé · 4 opérations bancaires/);
+assert.match(html, /Mois réalisé · 5 opérations bancaires/);
 assert.match(html, /href="\/historique\/2025-10"/);
 assert.match(html, /value="2025-12"/);
 assert.match(html, /value="2026-01"/);
