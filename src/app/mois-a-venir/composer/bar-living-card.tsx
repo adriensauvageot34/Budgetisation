@@ -17,7 +17,7 @@ import {BarComponentGroup} from './bar-component-group';
 import {BarRouteLine,barPlaceLabel,barModeLabel,barPeopleLabel,barDateLabel,barPersonLabel} from "./bar-living-details";
 import { IntentionProgressLabel } from "./context-progress";
 import { CommerceBadges } from "./commerce-badges";
-import { ObservedMerchantBadges, useReconstructedCard } from "./reconstructed-cards";
+import { DraftJulyStatus, ObservedMerchantBadges, useReconstructedCard } from "./reconstructed-cards";
 import type {ProspectivePersonRef,ProspectivePlaceRef} from "@/domain/phase2/planned-contract";
 import {nightOutDirectSelectionId,globalConsumptionCovers} from "@/domain/phase2/planner/night-out-consumption";
 export {barPlaceLabel,barModeLabel,barPeopleLabel};
@@ -94,6 +94,7 @@ export function BarLivingCard({card,model,living,busy,preserved,preserve,remove,
         {expanded&&!place&&<button type="button" className={styles.barMissingPlace} disabled={locked} aria-label="Modifier le lieu" onClick={()=>open('place')}><Plus size={14}/></button>}
         {place&&<><span aria-hidden="true"> · </span><button type="button" data-bar-closed-place className={styles.barClosedPlace} disabled={locked} title={placeLabel??undefined} aria-label={`Modifier le lieu · ${placeLabel}`} onClick={()=>open('place')}><span>{placeLabel}</span></button></>}
       </h3>
+        <DraftJulyStatus id={card.contextOccurrenceId} date={card.fields.plannedDate} />
         <ObservedMerchantBadges card={reconstructed} />
         <CommerceBadges context={card} model={model} expanded={expanded} />
         <IntentionProgressLabel id={card.contextOccurrenceId} withMonth={expanded} />

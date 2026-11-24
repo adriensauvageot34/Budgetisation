@@ -2126,3 +2126,14 @@ button.contextReferenceChip:hover { background:#f0e6f8; border-color:#c8b3db; }
   min-width: 0;
 }
 .commerceBadge[data-generic-badge]>span { min-width:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; overflow-wrap:anywhere; line-height:1.25; }
+
+.reconstructionLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: .85rem;
+  color: #644586;
+}
+.reconstructionLink:hover { background: #efe4f7; }

@@ -27,6 +27,7 @@ type Flow = "expense" | "income" | "refund" | "transfer" | "other";
 export type RealizedPayment = Readonly<{
   id: string;
   date: string;
+  activityDate?: string;
   label: string;
   bankLabel: string;
   category: string | undefined;
@@ -86,6 +87,8 @@ export type CardGroup = {
 };
 export type RealizedCard = Readonly<CardGroup & {
   amount: string | null;
+  pilotSourceId?: string;
+  pilotStatus?: import("@/domain/phase2/planner/july-pilot").JulyPilotStatus;
   transferAmounts?: { incoming: string; outgoing: string };
   work?: RealizedWork;
 }>;
@@ -680,6 +683,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       : shopper === "Adrien" && weekday > 0 && weekday < 6 && localShop ? "Tram habituel · 0 € estimé" : undefined;
     const payment = {
       id: operation.operationId, date: row.bankDate, label: isCannabis ? "Retrait pour cannabis" : label, bankLabel: row.bankLabel,
+      ...(july && purchaseDate ? { activityDate: purchaseDate } : {}),
       category: row.subcategory?.label ?? row.preciseType ?? row.category?.label, amount: operation.bankAmount, flow,
       badge: badgeSources.length ? { label, sources: badgeSources } : undefined,
       art: isCannabis ? cannabis : specialized[subcategoryKey]?.item ?? specialized[subcategoryKey]?.art,

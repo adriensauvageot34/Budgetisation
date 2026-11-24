@@ -25,7 +25,7 @@ import { purchaseLineLabel } from "./purchase-line-label";
 import { CommerceBadges } from "./commerce-badges";
 import { budgetAmountsCurrent, BudgetPreviewStatus } from "./intent-budget-impact";
 import { IntentionProgressLabel } from "./context-progress";
-import { ObservedMerchantBadges, useReconstructedCard } from "./reconstructed-cards";
+import { DraftJulyStatus, ObservedMerchantBadges, useReconstructedCard } from "./reconstructed-cards";
 import { CardReferenceChip, type CardReferenceKind } from "./card-reference-controls";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
@@ -163,6 +163,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       {mainSelection&&<small>{coverage === "CONFIRMED_CONSUMPTION" ? "Consomme l’enveloppe retenue" : coverage === "EXTRA_TO_SLOT" ? "En plus de l’enveloppe" : "Rattachement à préciser"}</small>}
     </div>}
     <div className={styles.controlActions}>
+    <DraftJulyStatus id={card.contextOccurrenceId} date={card.fields.plannedDate} />
     <ObservedMerchantBadges card={reconstructed} />
     <CommerceBadges context={card} model={model} expanded={focused === card.contextOccurrenceId} />
     {!purchase && quickAddSlot && displayPhase !== "DRAGGING" && openEquipment && <button type="button" className={styles.socketAdd} disabled={busy}
