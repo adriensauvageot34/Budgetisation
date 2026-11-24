@@ -12,6 +12,7 @@ import { plannerComposerEnabled } from "@/server/phase2/planner/cutover";
 import { julyPilotForecast, projectJulyPilot } from "@/server/phase2/planner/july-pilot";
 import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
 import { money, plannedDayLabel } from "../composer/display";
+import { detailedRealizedCards } from "../composer/realized-card-view";
 import material from "../month-material.module.css";
 import pilotStyles from "../composer/realized-month.module.css";
 
@@ -35,6 +36,10 @@ export default async function JulyV2Page() {
     bank: evidence.bankObservations ?? [], intervals: evidence.bankCoverageIntervals,
   });
   const forecast = board ? julyPilotForecast(board, balance?.amount ?? null) : null;
+  const displayedCards = board?.cards.flatMap(detailedRealizedCards).map(({ card }) => card) ?? [];
+  const plannedCards = displayedCards.filter(card => card.pilotStatus === "planned");
+  const unpriced = plannedCards.filter(card => card.amount === null).length;
+  const pendingCount = displayedCards.filter(card => card.pilotStatus === "pending").length;
   const button = `${material.clayButton} inline-flex items-center px-4 py-2.5 text-sm font-bold`;
 
   return <div className={`${material.page} mx-auto max-w-6xl space-y-5`}>
@@ -63,7 +68,7 @@ export default async function JulyV2Page() {
         <div className={`${material.glassSecondary} p-5 sm:p-6`}>
           <span className={pilotStyles.pilotChip} data-pilot-chip="planned">Prévu</span>
           <h2 className="mt-2 text-xl font-black">Du 16 au 31 juillet</h2>
-          <p className="mt-1 text-sm text-slate-600">{forecast.plannedCount} cartes prévues{forecast.unpricedCount > 0 && ` · ${forecast.unpricedCount} sans montant`}</p>
+          <p className="mt-1 text-sm text-slate-600">{plannedCards.length} {plannedCards.length === 1 ? "carte prévue" : "cartes prévues"}{unpriced > 0 && ` · ${unpriced} sans montant`}</p>
           <Metrics values={[
             ["Encaissements attendus", forecast.plannedIncome], ["Charges fixes restantes", forecast.plannedFixed],
             ["Budget variable renseigné", forecast.plannedVariable], ["Net projeté de juillet", forecast.projectedNet],
@@ -75,7 +80,7 @@ export default async function JulyV2Page() {
       <section className={`${material.glassSecondary} p-5 sm:p-6`} aria-labelledby="july-pending">
         <span className={pilotStyles.pilotChip} data-pilot-chip="pending">Passé · à valider</span>
         <h2 id="july-pending" className="mt-2 text-xl font-black">Ce qu’il reste à confirmer</h2>
-        <p className="mt-1 text-sm text-slate-600">{forecast.pendingCount} {forecast.pendingCount === 1 ? "carte passée à vérifier" : "cartes passées à vérifier"}.
+        <p className="mt-1 text-sm text-slate-600">{pendingCount} {pendingCount === 1 ? "carte passée à vérifier" : "cartes passées à vérifier"}.
           {Number(forecast.pendingExpenses) !== 0 ? ` Montants connus à confirmer ${money(forecast.pendingExpenses)}. ` : " "}
           Leurs montants restent en dehors du net projeté tant que le paiement est à confirmer.</p>
       </section>
