@@ -24,12 +24,13 @@ export function detailedRealizedCards(source: RealizedCard): RealizedCardView[] 
         section: source.section,
         label: operation.label,
         art: operation.art ?? source.art,
-        date: operation.date,
+        date: source.pilotStatus && source.pilotStatus !== "confirmed" ? operation.activityDate ?? operation.date : operation.date,
         places: operation.place ? [operation.place] : [],
         payments: [operation],
         amount: operation.amount,
         participant: operation.participant ?? source.participant,
         mobilityNote: operation.mobilityNote,
+        ...(source.pilotStatus ? { pilotStatus: source.pilotStatus } : {}),
       } satisfies RealizedCard,
     }));
     if (!datedEvent) return operations;
@@ -57,6 +58,7 @@ export function detailedRealizedCards(source: RealizedCard): RealizedCardView[] 
       places: occurrence.places,
       payments: [],
       amount: null,
+      ...(source.pilotStatus ? { pilotStatus: source.pilotStatus } : {}),
     },
   }));
 }

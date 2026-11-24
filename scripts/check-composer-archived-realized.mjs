@@ -240,4 +240,45 @@ assert.match(aprilHtml, /href="\/mois-a-venir\/composer\?month=2026-03&amp;carte
 const juneHtml = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: {} },
   createElement(ArchivedRealizedMonth, { board: { ...board, month: "2026-06" } })));
 assert.match(juneHtml, /href="\/mois-a-venir\/composer\?month=2026-07" aria-label="Mois suivant"/);
+
+const { julyPilotForecast, projectJulyPilot } = require("@/server/phase2/planner/july-pilot");
+const { RealizedComposerMonth } = require("@/app/mois-a-venir/composer/realized-month");
+const julyPayment = (id, date, amount, flow = "expense", activityDate) => ({
+  id, date, activityDate, label: id, bankLabel: `Bancaire ${id}`, amount, flow, components: [],
+});
+const julyCards = [
+  { id: "fixed", label: "Charges", section: "fixed", art: { iconKey: "home" }, payments: [
+    julyPayment("Électricité", "2026-07-15", "-60.00"),
+    julyPayment("Internet", "2026-07-16", "-25.00"),
+  ] },
+  { id: "outing", label: "Sortie passée", section: "events", art: { iconKey: "activity" }, date: "2026-07-13", payments: [] },
+  { id: "late", label: "Restaurant", section: "events", art: { iconKey: "restaurant" }, date: "2026-07-14",
+    payments: [julyPayment("Repas", "2026-07-17", "-28.00", "expense", "2026-07-14")] },
+  { id: "salary", label: "Salaire", section: "flows", art: { iconKey: "savings" },
+    payments: [julyPayment("Salaire", "2026-07-01", "1500.00", "income")] },
+  { id: "outing-later", label: "Sortie prévue sans montant", section: "events", art: { iconKey: "activity" }, date: "2026-07-18", payments: [] },
+  { id: "undated", label: "Sortie sans date", section: "events", art: { iconKey: "activity" }, payments: [] },
+];
+const july = projectJulyPilot({ ...board, month: "2026-07", cards: julyCards, groups: [], categoryCards: undefined });
+const julyForecast = julyPilotForecast(july, "1000.00");
+assert.equal(july.operationCount, 2);
+assert.equal(july.totals.expense.amount, "-60.00");
+assert.equal(july.net, "1440.00");
+assert.equal(julyForecast.plannedFixed, "-25.00");
+assert.equal(julyForecast.pendingExpenses, "-28.00");
+assert.equal(julyForecast.projectedNet, "1415.00");
+assert.equal(julyForecast.projectedCash, "975.00");
+assert.equal(julyForecast.unpricedCount, 1);
+assert.equal(july.cards.find(card => card.id === "outing-pilot-pending").pilotStatus, "pending");
+assert.equal(july.cards.find(card => card.id === "undated-pilot-undated").pilotStatus, "undated");
+assert.equal(july.cards.flatMap(card => card.payments).length, 4);
+assert.equal(julyPilotForecast(july, null).projectedCash, null);
+const pilotHtml = renderToStaticMarkup(createElement(RealizedComposerMonth, {
+  board: july, pilot: true, initialCardId: "late-pilot-pending",
+}));
+assert.match(pilotHtml, /data-pilot-status="confirmed"/u);
+assert.match(pilotHtml, /data-pilot-status="pending"/u);
+assert.match(pilotHtml, /data-pilot-status="planned"/u);
+assert.match(pilotHtml, /Éléments budgétés/u);
+assert.doesNotMatch(pilotHtml, /Bancaire Repas/u);
 console.log("PASS: eleven realized months, work cafés, family stays, cross-month event links, confirmed venue addresses, and consistent bank totals");

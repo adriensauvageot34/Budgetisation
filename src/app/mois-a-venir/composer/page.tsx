@@ -15,6 +15,7 @@ import { observeSnapshot } from "@/server/phase2/planner/snapshot-observation";
 import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import { ArchivedRealizedMonth } from "./archived-realized-month";
 import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
+import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
 import { reconstructJulyDraft } from "@/server/phase2/planner/reconstruct-july-draft";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { parseYearMonth } from "@/core/time";
@@ -24,7 +25,8 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   if (!plannerComposerEnabled()) notFound();
   const params = await searchParams;
   const month = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : new Date().toISOString().slice(0, 7);
-  if (isArchivedRealizedMonth(month)) {
+  const isReconstruction = month === JULY_COMPOSER_MONTH;
+  if (isArchivedRealizedMonth(month) || isReconstruction && params.view === "bilan") {
     const board = await withProductAuthentication(async () => {
       const context = await getBootstrapContext();
       if (!context.household) notFound();
@@ -34,7 +36,6 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
     const initialCardId = typeof cardId === "string" && board.cards.some(card => card.id === cardId) ? cardId : undefined;
     return <ArchivedRealizedMonth key={month} board={board} initialCardId={initialCardId} />;
   }
-  const isReconstruction = month === JULY_COMPOSER_MONTH;
   const observed = await observeSnapshot(() => withProductAuthentication(async () => {
     const { deps, householdId, userId, supabase } = await authorizedPlanner();
     const draftEnabled = composerDraftAutosaveEnabledFor(userId);
@@ -60,6 +61,7 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   }));
   const { model, drafts, rootRelationAccess, reconstruction } = observed.value;
   return <><ComposerShell key={rootRelationAccess?.scopeKey ?? month} rootRelationAccess={rootRelationAccess} initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
-    durableDraftHttp={!!drafts} reconstruction={reconstruction ?? undefined} initialReconstructionEditing={isReconstruction && params.view === "edition"} />
+    durableDraftHttp={!!drafts} reconstruction={reconstruction ?? undefined} julyPilot={reconstruction ? projectJulyPilot(reconstruction) : undefined}
+    initialReconstructionEditing={isReconstruction && params.view === "edition"} />
     {observed.metrics && <span hidden data-snap-server={JSON.stringify(observed.metrics)} />}</>;
 }

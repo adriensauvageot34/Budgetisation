@@ -10,7 +10,7 @@ import { monthControlSection, monthControlDestination, type MonthControlSectionI
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { isArchivedRealizedMonth, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { monthEntry, showsArchivedForecast } from "./month-entry";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
@@ -45,7 +45,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const entry = monthEntry(today, params.month, context.periods);
   const { currentMonth, targetMonth } = entry;
   if (targetMonth === JULY_COMPOSER_MONTH && targetMonth < currentMonth) {
-    redirect(JULY_COMPOSER_HREF);
+    redirect(JULY_V2_HREF);
   }
   if (isArchivedRealizedMonth(targetMonth)) redirect(realizedComposerHref(targetMonth));
   const client = createCanonicalReadClient();
