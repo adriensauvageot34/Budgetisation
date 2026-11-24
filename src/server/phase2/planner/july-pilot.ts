@@ -132,8 +132,6 @@ export function julyPilotForecast(board: RealizedBoard, cashAtCutoff: string | n
     }))).sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label, "fr"));
   return {
     plannedIncome, plannedFixed, plannedVariable, pendingExpenses, confirmedFixed, confirmedVariable, projectedNet, fixedCalendar, cashAtCutoff,
-    plannedCount: planned.length, pendingCount: pending.length,
-    unpricedCount: planned.filter(card => card.amount === null).length,
     projectedCash: cashAtCutoff === null ? null : new Big(cashAtCutoff).plus(sum(futureMovements)).toFixed(2),
   };
 }

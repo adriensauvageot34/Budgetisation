@@ -268,7 +268,7 @@ assert.equal(julyForecast.plannedFixed, "-25.00");
 assert.equal(julyForecast.pendingExpenses, "-28.00");
 assert.equal(julyForecast.projectedNet, "1415.00");
 assert.equal(julyForecast.projectedCash, "975.00");
-assert.equal(julyForecast.unpricedCount, 1);
+assert.equal(july.cards.flatMap(detailedRealizedCards).filter(({ card }) => card.pilotStatus === "planned" && card.amount === null).length, 1);
 assert.equal(july.cards.find(card => card.id === "outing-pilot-pending").pilotStatus, "pending");
 assert.equal(july.cards.find(card => card.id === "undated-pilot-undated").pilotStatus, "undated");
 assert.equal(july.cards.flatMap(card => card.payments).length, 4);
