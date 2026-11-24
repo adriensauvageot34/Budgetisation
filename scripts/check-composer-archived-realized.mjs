@@ -119,7 +119,12 @@ const labels = {
   categoryKeys: new Map([["food", "alimentation"]]), subcategoryKeys: new Map(bank.map(item => [item.row.subcategory.id, item.row.subcategory.id])),
   merchantIdentity: new Map(), places: new Map(), merchantKeys: new Map([["merchant-ride", "uber"]]),
 };
+let reviewFixture;
 class Repo {
+  async loadRealizedReview() { return reviewFixture; }
+  async loadOperationsByIds(ids) {
+    return ids.includes("earlier-refund") ? [{ operationId: "earlier-refund", bankDate: "2025-09-17", bankAmount: "3.00", label: "Avoir test" }] : [];
+  }
   async loadOperationsByBankRange() { return bank; }
   async loadEconomicFacts() { return []; }
   async loadActivityOccurrences() { return events; }
@@ -160,7 +165,26 @@ const { readRealizedMonth } = require("@/server/phase2/planner/realized-month");
 const bootstrap = { household: { householdId: "test", timezone: "Europe/Paris" },
   persons: [{ personId: person.adrien, displayName: "Adrien Test" }, { personId: person.manon, displayName: "Manon Test" }] };
 const board = await readRealizedMonth(bootstrap, "2025-10");
+reviewFixture = { version: 1, cards: [{
+  id: "review-split", label: "Sortie test individualisée", date: next, activity: "activite_loisir",
+  participant: "Manon", operationIds: ["shop"], legIds: ["back"],
+  references: [{ id: "earlier-refund", role: "Avoir d’un autre mois" }],
+  groups: { shop: "Achat de la sortie" }, notes: ["Trajet documenté"],
+}], participants: { shop: "Couple" }, purchaseActors: { shop: "Courses faites par Manon" } };
+const reviewed = await readRealizedMonth(bootstrap, "2025-10");
 Module._load = originalLoad;
+assert.deepEqual(reviewed.totals, board.totals);
+assert.deepEqual(reviewed.cards.flatMap(card => card.payments.map(payment => payment.id)).sort(),
+  board.cards.flatMap(card => card.payments.map(payment => payment.id)).sort());
+const splitCard = reviewed.cards.find(card => card.id === "review-split");
+assert.equal(splitCard.amount, "-34.00");
+assert.equal(splitCard.participant, "Manon");
+assert.equal(splitCard.payments[0].participant, "Couple");
+assert.equal(splitCard.payments[0].reviewActor, "Courses faites par Manon");
+assert.equal(splitCard.payments[0].reviewGroup, "Achat de la sortie");
+assert.deepEqual(splitCard.reviewReferences.map(line => [line.role, line.date, line.amount]), [["Avoir d’un autre mois", "2025-09-17", "3.00"]]);
+assert.deepEqual(splitCard.carTrip.legIds, ["back"]);
+assert.deepEqual(reviewed.cards.find(card => card.id === "event-visit-1").carTrip.legIds, ["out", "between"]);
 assert.equal(board.operationCount, bank.length);
 assert.ok(!board.cards.some(card => card.id === "events-lecon_conduite"));
 assert.equal(board.totals.expense.amount, "-52.80");
@@ -192,6 +216,10 @@ const { AppRouterContext } = require("next/dist/shared/lib/app-router-context.sh
 const { createElement } = require("react");
 const { renderToStaticMarkup } = require("react-dom/server");
 const html = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: {} }, createElement(ArchivedRealizedMonth, { board })));
+const reviewedHtml = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: {} },
+  createElement(ArchivedRealizedMonth, { board: reviewed, initialCardId: splitCard.id })));
+assert.match(reviewedHtml, /Avoir test/);
+assert.match(reviewedHtml, /Voir le mois bancaire/);
 assert.match(html, /Mois réalisé · 5 opérations bancaires/);
 assert.match(html, /href="\/historique\/2025-10"/);
 assert.match(html, /value="2025-12"/);

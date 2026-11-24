@@ -19,6 +19,7 @@ import { realizedWorkDays, realizedWorkPeople, workDayItems, workPurchaseDate, t
 import { julyEventParticipant, julyPaymentParticipant, type JulyParticipant } from "./july-realized-decisions";
 import { buildHistoricalRealizedContext } from "./historical-realized-context";
 import { groceryDetour, groceryShopper, historicalMealPerson, historicalPaymentParticipant, historicalProjectTags, isUberRide } from "./historical-realized-patterns";
+import { applyRealizedReview, parseRealizedReview, type ReviewReference } from "./realized-review";
 
 type Art = Readonly<{ assetKey?: string; templateKey?: string; iconKey: string; src?: string }>;
 type Badge = Readonly<{ label: string; sources: readonly string[] }>;
@@ -39,6 +40,8 @@ export type RealizedPayment = Readonly<{
   shopperInferred?: boolean;
   recipient?: string;
   mobilityNote?: string;
+  reviewGroup?: string;
+  reviewActor?: string;
   inferredEvent?: boolean;
   components: readonly { id: string; label: string; amount: string }[];
 }>;
@@ -59,9 +62,10 @@ type RealizedCarTrip = Readonly<{
   compactRoute: string;
   distanceKm: string;
   estimatedFuel: string;
+  legIds?: readonly string[];
   legs?: readonly { id: string; date: string; route: string; distanceKm: string; estimatedFuel: string; participant?: JulyParticipant; driver?: "Manon" }[];
 }>;
-type CardGroup = {
+export type CardGroup = {
   id: string;
   section: Section;
   label: string;
@@ -77,6 +81,8 @@ type CardGroup = {
   mobilityNote?: string;
   participant?: JulyParticipant;
   keepPaymentsTogether?: boolean;
+  reviewNotes?: readonly string[];
+  reviewReferences?: readonly ReviewReference[];
 };
 export type RealizedCard = Readonly<CardGroup & {
   amount: string | null;
@@ -268,13 +274,14 @@ function realizedCarTrips(trips: ReturnType<typeof matchJulyCarTrips>, places: A
       compactRoute: originId === endId ? `${origin.short} ⇄ ${venue.short}` : `${origin.short} → … → ${end.short}`,
       distanceKm: new Big(pair[0].distanceKm).plus(pair[1].distanceKm).toFixed(2),
       estimatedFuel: new Big(sumMobilityEstimatedFuelCost(pair)).toFixed(2),
+      legIds: pair.map(leg => leg.legId),
     });
   }
   return summaries;
 }
 
 function historicalCarTrip(legs: readonly MobilityLegFact[], places: ReadonlyMap<string, CanonicalRecord>,
-  participant: (leg: MobilityLegFact) => JulyParticipant | undefined, driver?: "Manon"): RealizedCarTrip {
+  participant: (leg: MobilityLegFact) => JulyParticipant | undefined, driver?: "Manon", showVenue = false): RealizedCarTrip {
   const endpointLabel = (endpoint: MobilityLegFact["origin"]) => {
     const place = endpoint.placeId ? places.get(endpoint.placeId) : undefined;
     if (!place) return endpoint.sourceLabel ?? "Lieu à préciser";
@@ -282,7 +289,7 @@ function historicalCarTrip(legs: readonly MobilityLegFact[], places: ReadonlyMap
     if (place.private_place !== false) {
       return /^domicile\b/iu.test(source) ? "Montpellier · domicile" : optionalCanonicalString(place, ["commune"]) ?? "Lieu privé";
     }
-    return optionalCanonicalString(place, ["commune"]) ?? source;
+    return showVenue && source ? source : optionalCanonicalString(place, ["commune"]) ?? source;
   };
   const entries = [...legs].sort((a, b) => a.date.localeCompare(b.date)
     || (a.time.observedTime ?? "").localeCompare(b.time.observedTime ?? "") || a.legId.localeCompare(b.legId)).map(leg => ({
@@ -294,6 +301,7 @@ function historicalCarTrip(legs: readonly MobilityLegFact[], places: ReadonlyMap
     compactRoute: entries.length === 1 ? entries[0]!.route : `${entries.length} tronçons de voiture`,
     distanceKm: legs.reduce((total, leg) => total.plus(leg.distanceKm), new Big(0)).toFixed(2),
     estimatedFuel: legs.reduce((total, leg) => total.plus(leg.estimatedFuelCost), new Big(0)).toFixed(2),
+    legIds: entries.map(leg => leg.id),
     legs: entries,
   };
 }
@@ -308,6 +316,9 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
   const july = month === JULY_COMPOSER_MONTH;
   const historical = isArchivedRealizedMonth(month);
+  const reviewRead = (july || historical) && bootstrap.household
+    ? repository.loadRealizedReview(bootstrap.household.householdId, month).then(parseRealizedReview)
+    : Promise.resolve(undefined);
   const people = july || historical ? realizedWorkPeople(bootstrap.household, bootstrap.persons) : { profiles: [], portraits: {} };
   const julyPortraits: Partial<Record<JulyParticipant, string>> = {};
   for (const profile of people.profiles) {
@@ -326,7 +337,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     return earliest ? repository.loadActivityOccurrences({ start: earliest, endExclusive: range.start }) : [];
   }) : [];
   const referenceRead = Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts));
-  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs, previousWork, participants, visits, tags, products] = await Promise.all([
+  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs, previousWork, participants, visits, tags, products, review] = await Promise.all([
     operationRead, factRead, occurrenceRead,
     referenceRead,
     historical ? Promise.all([eventIds, previousDates]).then(([ids, previous]) =>
@@ -347,6 +358,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       repository.loadRealizedOperationTags(rows.map(operation => operation.operationId), historicalProjectTags)) : [],
     historical && people.profiles.length ? operationRead.then(rows =>
       repository.loadRealizedProductPeople(rows.filter(operation => operation.raw.flux === "Dépense").map(operation => operation.operationId))) : [],
+    reviewRead,
   ]);
 
   const mealTiming = new Map(participants.map(row => [`${row.life_event_id}:${row.person_id}`, row]));
@@ -393,7 +405,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     ...labels.places.keys(),
     ...matchedTrips.flatMap(trip => trip.placeIds),
     ...visits.filter(visit => historical || visit.personId === adrien).map(visit => visit.placeId),
-    ...(historical ? carLegs.flatMap(leg => [leg.origin.placeId, leg.destination.placeId].flatMap(id => id ?? [])) : []),
+    ...(historical || july ? carLegs.flatMap(leg => [leg.origin.placeId, leg.destination.placeId].flatMap(id => id ?? [])) : []),
   ]);
   const places = placeIds.size ? await repository.loadEntityRows("places", "place_id", [...placeIds]) : [];
   const placeById = new Map(places.map(row => [String(row.place_id), row]));
@@ -802,6 +814,32 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
         component: { key: relation.canonicalComponentKey, amount: relation.economicAmountLinked },
       });
     }
+  }
+  if (review) {
+    const byEvent = new Map(observedEvents.map(observed => [String(observed.event.lifeEventId), observed]));
+    const byLeg = new Map(carLegs.map(leg => [leg.legId, leg]));
+    const references = new Map(payments.map(payment => [payment.id, payment]));
+    const referenceIds = [...new Set(review.cards.flatMap(card => card.references?.map(reference => reference.id) ?? []))]
+      .filter(id => !references.has(id));
+    const external = referenceIds.length ? await repository.loadOperationsByIds(referenceIds) : [];
+    const lines = new Map<string, Omit<ReviewReference, "role">>(references);
+    for (const raw of external) {
+      const operation = operationFromCanonicalRow(raw);
+      const label = optionalCanonicalString(raw, ["marchand"]) ?? operation.label;
+      lines.set(operation.operationId, { id: operation.operationId, date: operation.bankDate, label, amount: operation.bankAmount });
+    }
+    applyRealizedReview({
+      review, cards, references: lines,
+      event: id => {
+        const observed = byEvent.get(id);
+        return observed && { places: observed.places, eventStatus: observed.event.validationStatus };
+      },
+      art: kind => eventVisuals[kind]?.art ?? purchase,
+      trip: (ids, participant) => {
+        const legs = ids.flatMap(id => byLeg.get(id) ?? []);
+        return legs.length ? historicalCarTrip(legs, placeById, leg => participant ?? tripParticipant(leg), manon ? "Manon" : undefined, true) : undefined;
+      },
+    });
   }
   const totals = Object.fromEntries((["expense", "income", "refund", "transfer", "other"] as const).map(flow => {
     const items = payments.filter(payment => payment.flow === flow);

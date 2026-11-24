@@ -2578,6 +2578,14 @@ export class CanonicalRepository {
         .order("type_key", { ascending: true }));
   }
 
+  async loadRealizedReview(householdId: string, month: string): Promise<unknown> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    const { data, error } = await this.client.from("composer_realized_reviews")
+      .select("payload").eq("household_id", householdId).eq("target_month", `${month}-01`).maybeSingle();
+    if (error) throw new CanonicalReadError("operations", error.message);
+    return data?.payload;
+  }
+
   loadRealizedOperationTags(
     operationIds: readonly string[], tagKeys: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {

@@ -71,7 +71,8 @@ function RealizedElement({ payment, highlighted }: { payment: RealizedPayment; h
       {payment.bankLabel !== payment.label && <small>{payment.bankLabel}</small>}
       {payment.inferredEvent && <small>Rattachement estimé à cet événement</small>}
       {payment.place && <PlaceLink place={payment.place} detail />}
-      {payment.shopper && <small>{payment.shopperInferred ? "Courses probablement faites par" : "Courses faites par"} {payment.shopper}</small>}
+      {payment.reviewActor ? <small>{payment.reviewActor}</small>
+        : payment.shopper && <small>{payment.shopperInferred ? "Courses probablement faites par" : "Courses faites par"} {payment.shopper}</small>}
       {payment.recipient && <small>Cadeau pour {payment.recipient}</small>}
       {payment.mobilityNote && <small>{payment.mobilityNote}</small>}
     </div>
@@ -135,6 +136,7 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
   const badges = [...new Map(card.payments.flatMap(payment => payment.badge
     ? [[payment.badge.label, payment.badge] as const] : [])).values()];
   const linked = card.relatedPayments?.length;
+  const reviewed = card.reviewReferences?.length;
   const visibleDate = card.date ?? date;
   const operationCaption = operation?.category ?? source.label;
   const caption = operation
@@ -176,8 +178,8 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
           {additionalPlaces > 0 && <small aria-label={`${additionalPlaces} autres lieux`}>+{additionalPlaces}</small>}
         </span>}
         {caption && <span className={styles.cardSubtitle}>{caption}</span>}
-        {card.amount === null && (linked || !card.carTrip) && <span className={styles.cardSubtitle}>
-          {linked ? `${linked} ${linked === 1 ? "opération associée" : "opérations associées"}`
+        {card.amount === null && (linked || reviewed || !card.carTrip) && <span className={styles.cardSubtitle}>
+          {linked || reviewed ? `${(linked ?? 0) + (reviewed ?? 0)} ${(linked ?? 0) + (reviewed ?? 0) === 1 ? "opération associée" : "opérations associées"}`
             : card.work ? "Montant non renseigné" : "Aucun paiement rattaché"}
         </span>}
       </span>
@@ -212,6 +214,8 @@ function RealizedDetail({ card, month, terms, open }: {
   open: (cardId: string, paymentId?: string, componentId?: string) => void;
 }) {
   const startMonth = card.date?.slice(0, 7), endMonth = card.endDate?.slice(0, 7);
+  const paymentGroups = card.payments.some(payment => payment.reviewGroup)
+    ? Object.entries(Object.groupBy(card.payments, payment => payment.reviewGroup ?? "Autres opérations")) : [];
   const otherMonths = startMonth && endMonth && card.id.startsWith("event-") && isArchivedRealizedMonth(month)
     ? ARCHIVED_REALIZED_MONTHS.filter(value => value !== month && value >= startMonth && value <= endMonth) : [];
   return <>
@@ -253,16 +257,32 @@ function RealizedDetail({ card, month, terms, open }: {
       </div>
     </section>}
     {card.mobilityNote && !card.payments.some(payment => payment.mobilityNote === card.mobilityNote) && <p>{card.mobilityNote}</p>}
+    {!!card.reviewNotes?.length && <ul className={styles.places} aria-label="Détails de la carte">
+      {card.reviewNotes.map(note => <li key={note}>{note}</li>)}
+    </ul>}
+    {!!card.reviewReferences?.length && <section aria-labelledby="realized-review-references">
+      <h3 id="realized-review-references">Préparation, financement et opérations associées</h3>
+      <ul className={styles.places}>
+        {card.reviewReferences.map(ref => <li key={ref.id}>
+          <strong>{ref.label} · {money(ref.amount)}</strong><br />
+          <small>{ref.role} · {fullDate.format(new Date(`${ref.date}T12:00:00Z`))}</small>
+          {ref.date.slice(0, 7) !== month && <small> · <a href={realizedComposerHref(ref.date.slice(0, 7), card.id)}>Voir le mois bancaire</a></small>}
+        </li>)}
+      </ul>
+    </section>}
     {card.transferAmounts && <dl className={styles.transferTotals}>
       <div><dt>Transferts entrants</dt><dd>{money(card.transferAmounts.incoming)}</dd></div>
       <div><dt>Transferts sortants</dt><dd>{money(card.transferAmounts.outgoing)}</dd></div>
     </dl>}
     {card.payments.length > 0 && <section aria-labelledby="realized-operations-title">
       <h3 id="realized-operations-title">Opérations bancaires <span>{card.payments.length}</span></h3>
-      <ul className={styles.elements}>
-        {card.payments.map(payment => <RealizedElement key={payment.id} payment={payment}
-          highlighted={terms.length > 0 && matches(paymentSearch(payment), terms)} />)}
-      </ul>
+      {(paymentGroups.length ? paymentGroups : [["", card.payments]] as const).map(([label, payments]) => <div key={label}>
+        {label && <h4>{label}</h4>}
+        <ul className={styles.elements}>
+          {payments?.map(payment => <RealizedElement key={payment.id} payment={payment}
+            highlighted={terms.length > 0 && matches(paymentSearch(payment), terms)} />)}
+        </ul>
+      </div>)}
     </section>}
     {card.occurrences?.length ? <section aria-labelledby="realized-occurrences-title">
       <h3 id="realized-occurrences-title">{card.keepPaymentsTogether ? "Activités regroupées" : "Occurrences"} <span>{card.occurrences.length}</span></h3>
@@ -287,7 +307,7 @@ function RealizedDetail({ card, month, terms, open }: {
       </ul>
     </section> : null}
     {!card.work && !card.payments.length && !card.occurrences?.length && !card.relatedPayments?.length
-      && !card.carTrip && <p>Aucun paiement rattaché à cet événement.</p>}
+      && !card.carTrip && !card.reviewReferences?.length && <p>Aucun paiement rattaché à cet événement.</p>}
   </>;
 }
 
@@ -332,6 +352,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds, initialCardI
         ...(card.occurrences ?? []).map(occurrence => searchText(card.label, occurrence.label, occurrence.date, searchableDate(occurrence.date))),
         ...(card.relatedPayments ?? []).map(payment => searchText(card.label, payment.label, payment.cardLabel,
           payment.date, searchableDate(payment.date), payment.component?.amount)),
+        ...(card.reviewReferences ?? []).map(ref => searchText(card.label, ref.label, ref.role, searchableDate(ref.date))),
       ],
     };
   }), [views, categoryByCard]);
