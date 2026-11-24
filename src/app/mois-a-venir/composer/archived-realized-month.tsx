@@ -1,7 +1,7 @@
-import { JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { isImportedRealizedMonth, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
-import { composerBalanceHref, composerCalendarHref } from "../month-entry";
+import { composerBalanceHref, composerCalendarHref, monthPlanningHref } from "../month-entry";
 import { monthLabel, money } from "./display";
 import { RealizedComposerMonth } from "./realized-month";
 import styles from "./composer.module.css";
@@ -17,15 +17,19 @@ export function RealizedFinancialTotals({ board, pilot = false }: { board: Reali
 
 export function ArchivedRealizedMonth({ board, initialCardId }: { board: RealizedBoard; initialCardId?: string }) {
   const july = board.month === JULY_COMPOSER_MONTH;
+  const imported = isImportedRealizedMonth(board.month);
   return <div className={styles.workspace} data-composer data-reconstruction-mode="realized">
     <h1 className="sr-only">Cartes · {monthLabel(board.month)}</h1>
     <AppToolbarContent className={styles.compactToolbar}>
       <RealizedFinancialTotals board={board} />
+      {imported && <small>Données bancaires partielles</small>}
       <nav className={styles.reconstructionModes} aria-label="Vues de Composer">
         {july && <a href={JULY_COMPOSER_HREF} className={styles.reconstructionLink}>Au 15 juillet</a>}
         <span className={styles.reconstructionLink} aria-current="page">Cartes</span>
         <a className={styles.reconstructionLink} href={composerCalendarHref(board.month)}>Calendrier</a>
-        {!july && <a className={styles.reconstructionLink} href={composerBalanceHref(board.month)}>Bilan du mois</a>}
+        {imported
+          ? <a className={styles.reconstructionLink} href={monthPlanningHref(board.month, "previsions")}>Prévisions</a>
+          : !july && <a className={styles.reconstructionLink} href={composerBalanceHref(board.month)}>Bilan du mois</a>}
       </nav>
     </AppToolbarContent>
     <RealizedComposerMonth board={board} initialCardId={initialCardId} />

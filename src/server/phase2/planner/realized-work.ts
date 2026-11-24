@@ -24,7 +24,7 @@ export type RealizedWorkItem = Readonly<{
   id: string; label: string; count: number; amount: string | null; badge?: RealizedPayment["badge"]; place?: RealizedPlace;
 }>;
 export type RealizedWork = Readonly<{
-  participant: PersonRef; name: string; mode: WorkMode; items: readonly RealizedWorkItem[];
+  participant: PersonRef; name: string; mode: WorkMode | "unspecified"; items: readonly RealizedWorkItem[];
 }>;
 
 function firstName(label: string) {

@@ -29,6 +29,10 @@ assert.equal(workspacePeriodHref("global", "/mois-a-venir/composer", "2026-07"),
 assert.equal(workspacePeriodHref("global", "/mois-a-venir/composer/calendrier", "2027-09"), "/analyse-globale?month=2027-09");
 assert.equal(workspacePeriodHref("global", "/mois-a-venir", "2027-10"), "/analyse-globale");
 assert.equal(workspacePeriodHref("2025-08", "/analyse-globale"), "/mois-a-venir/composer?month=2025-08");
+for (const month of ["2026-08", "2026-09", "2026-10"]) {
+  assert.equal(workspacePeriodHref(month, "/analyse-globale"), realizedComposerHref(month));
+  assert.equal(workspacePeriodHref(month, "/mois-a-venir/composer/calendrier"), `/mois-a-venir/composer/calendrier?month=${month}`);
+}
 assert.equal(workspacePeriodHref("2026-07", "/analyse-globale"), "/mois-a-venir/juillet-v2");
 assert.equal(workspacePeriodHref("2026-05", "/mois-a-venir/composer/bilan"), "/mois-a-venir/composer/bilan?month=2026-05");
 assert.equal(workspacePeriodHref("2026-07", "/mois-a-venir/composer/bilan"), "/mois-a-venir/juillet-v2");

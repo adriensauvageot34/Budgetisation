@@ -11,6 +11,12 @@ export const ARCHIVED_REALIZED_MONTHS = [
   "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06",
 ] as const;
 
+export const IMPORTED_REALIZED_MONTHS = ["2026-08", "2026-09", "2026-10"] as const;
+
+export function isImportedRealizedMonth(month: string): boolean {
+  return IMPORTED_REALIZED_MONTHS.some(value => value === month);
+}
+
 export function isArchivedRealizedMonth(month: string): boolean {
   return ARCHIVED_REALIZED_MONTHS.some(value => value === month);
 }

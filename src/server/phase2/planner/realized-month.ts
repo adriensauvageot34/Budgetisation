@@ -4,7 +4,7 @@ import { sumMobilityEstimatedFuelCost, type ActivityOccurrenceFact, type Mobilit
 import { parseActivityCausalFinancialLinks } from "@/analytics/facts/activity-cost";
 import { addDays, addMonths, parseInstant, parseLocalDate, type YearMonth } from "@/core/time";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
-import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import type { getBootstrapContext } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { createAuthorizedRuntimeContext } from "@/server/canonical/context";
@@ -320,10 +320,11 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
   const july = month === JULY_COMPOSER_MONTH;
   const historical = isArchivedRealizedMonth(month);
+  const imported = isImportedRealizedMonth(month);
   const reviewRead = (july || historical) && bootstrap.household
     ? repository.loadRealizedReview(bootstrap.household.householdId, month).then(parseRealizedReview)
     : Promise.resolve(undefined);
-  const people = july || historical ? realizedWorkPeople(bootstrap.household, bootstrap.persons) : { profiles: [], portraits: {} };
+  const people = july || historical || imported ? realizedWorkPeople(bootstrap.household, bootstrap.persons) : { profiles: [], portraits: {} };
   const julyPortraits: Partial<Record<JulyParticipant, string>> = {};
   for (const profile of people.profiles) {
     if (people.portraits[profile.ref.personId]) julyPortraits[profile.name] = people.portraits[profile.ref.personId];
@@ -335,7 +336,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       julyPortraits.Couple = `data:image/webp;base64,${image.portrait}`;
     }
   } catch { /* A missing configured portrait has a text fallback. */ }
-  const previousDates = people.profiles.length ? operationRead.then(operations => {
+  const previousDates = (july || historical) && people.profiles.length ? operationRead.then(operations => {
     const earliest = operations.flatMap(operation => workPurchaseDate(operation.raw) ?? [])
       .filter(date => date < range.start && date >= addDays(range.start, -7)).sort()[0];
     return earliest ? repository.loadActivityOccurrences({ start: earliest, endExclusive: range.start }) : [];
@@ -354,7 +355,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     july ? readJulyCarLegs(repository) : historical
       ? repository.loadMobilityLegFacts(range).then(legs => legs.filter(leg => leg.source.status === "CERTIFIED_SOURCE")) : [],
     previousDates,
-    people.profiles.length ? occurrenceRead.then(events => repository.loadLifeEventParticipationRows(
+    (july || historical) && people.profiles.length ? occurrenceRead.then(events => repository.loadLifeEventParticipationRows(
       events.filter(event => historical || event.activityId === "repas_restaurant").map(event => event.lifeEventId),
     )) : [],
     july || historical ? repository.loadPlaceVisits(range) : [],
@@ -447,6 +448,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const cards = new Map<string, CardGroup>();
   const eventCards = new Map<string, CardGroup>();
   const workCards = new Map<string, { day: WorkDay; meals: ObservedWorkMeal[] }>();
+  const coffeeCards = new Map<string, typeof people.profiles[number]>();
   const paidMeals = new Set<string>();
   const separateInCategory = new Set<string>();
   function getWorkCard(day: WorkDay) {
@@ -627,14 +629,15 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       category: row.merchantGenericBadgeCategory,
       policy: row.merchantBadgePolicy,
     }).map(image => image.src) : [];
-    const label = row.merchant?.label ?? row.bankLabel;
+    const importedLabel = imported ? optionalCanonicalString(operation.raw, ["marchand"]) : undefined;
+    const label = importedLabel ?? row.merchant?.label ?? row.bankLabel;
     const merchant = row.merchant ? labels.merchantKeys.get(row.merchant.id) ?? "" : "";
     const fixed = row.fixedVariable === "fixed";
     const purchaseDate = workPurchaseDate(operation.raw);
     const alias = row.merchant && flow === "expense" && !row.canonicalPlace
       ? merchantPlaceAlias(aliasesByMerchant.get(row.merchant.id) ?? [], row.bankLabel, row.bankDate) : undefined;
     const publicPlace = flow === "expense" && row.merchantIdentityKind === "commercial" ? probableMerchantPlace(label, row.bankLabel) : undefined;
-    const sourcedPlace = row.canonicalPlace ? placeOf(row.canonicalPlace.id, "confirmed")
+    const sourcedPlace = row.canonicalPlace ? placeOf(row.canonicalPlace.id, imported ? "probable" : "confirmed")
       : (alias && placeOf(alias.id, alias.certainty))
         ?? publicPlace;
     const place = historical && publicPlace && sourcedPlace?.certainty === "town"
@@ -652,6 +655,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       })) : [];
     const isCannabis = july && subcategoryKey === "tabac_vape__cannabis";
     const namedPerson = optionalCanonicalString(operation.raw, ["personne_concernee"]);
+    const documentedPerson = imported && namedPerson ? people.profiles.find(person => person.name === namedPerson) : undefined;
     const explicitPeople = [...new Set(operationFacts.flatMap(fact => fact.person.kind === "resolved" ? [String(fact.person.id)] : []))];
     const historicalPeople = explicitPeople.length ? explicitPeople : people.profiles.filter(person => namedPerson
       && namedPerson.trim().toLowerCase() === person.name.toLowerCase()).map(person => person.ref.personId);
@@ -672,7 +676,8 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const recipient = historical && flow === "expense" && categoryKey === "cadeaux" ? namedPerson : undefined;
     const participant = july ? julyPaymentParticipant({ merchant, subcategory: subcategoryKey, fixed, place, bankLabel: row.bankLabel })
       : flow === "transfer" && defaultParticipant ? defaultParticipant
-        : hasPersonConflict ? undefined : bothPeople ? "Couple" : (recipient ? undefined : canonicalParticipant) ?? personalProduct ?? deliveryParticipant ?? defaultParticipant;
+        : hasPersonConflict ? undefined : bothPeople ? "Couple" : (recipient ? undefined : canonicalParticipant)
+          ?? documentedPerson?.name ?? personalProduct ?? deliveryParticipant ?? defaultParticipant;
     const observedShopper = groceryPurchase && purchaseDate ? sessions?.groceryShopper(purchaseDate, place) : undefined;
     const shopper = groceryPurchase && !hasPersonConflict && !bothPeople
       ? observedShopper ?? groceryShopper(place, operation.preciseType ?? "", row.bankLabel) : undefined;
@@ -684,7 +689,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       : shopper === "Adrien" && weekday > 0 && weekday < 6 && localShop ? "Tram habituel · 0 € estimé" : undefined;
     const payment = {
       id: operation.operationId, date: row.bankDate, label: isCannabis ? "Retrait pour cannabis" : label, bankLabel: row.bankLabel,
-      ...(july && purchaseDate ? { activityDate: purchaseDate } : {}),
+      ...((july || imported) && purchaseDate ? { activityDate: purchaseDate } : {}),
       category: row.subcategory?.label ?? row.preciseType ?? row.category?.label, amount: operation.bankAmount, flow,
       ...(july && operation.preciseType ? { preciseType: operation.preciseType } : {}),
       badge: badgeSources.length ? { label, sources: badgeSources } : undefined,
@@ -776,6 +781,13 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
         inferredEvent = true;
       }
     }
+    if (!card && imported && flow === "expense" && subcategoryKey === "alimentation__cafe_au_travail" && documentedPerson?.coffee && purchaseDate) {
+      const id = `coffee-${documentedPerson.ref.personId}-${purchaseDate}`;
+      card = cards.get(id) ?? { id, section: "daily", label: `Cafés au travail · ${documentedPerson.name}`,
+        art: coffee, date: purchaseDate, payments: [] };
+      cards.set(id, card);
+      coffeeCards.set(id, documentedPerson);
+    }
     if (!card) {
       const fallback = paymentCard(flow, fixed, category, categoryKey, subcategoryKey);
       card = cards.get(fallback.id) ?? fallback;
@@ -853,6 +865,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   })) as RealizedBoard["totals"];
   const realizedCards: RealizedCard[] = [...cards.values()].flatMap(card => {
     const work = workCards.get(card.id);
+    const coffeePerson = coffeeCards.get(card.id);
     const meals = work?.meals.filter(meal => !paidMeals.has(meal.id)) ?? [];
     if (work && !card.payments.length && !card.relatedPayments?.length && (historical || !meals.length)) return [];
     if ((july || historical) && ["events-lecon_conduite", "events-journee_maison"].includes(card.id)
@@ -868,6 +881,8 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       amount: card.payments.length ? realizedBankSum(card.payments) : null,
       ...(work ? { work: { participant: work.day.person.ref, name: work.day.person.name, mode: work.day.mode,
         items: workDayItems(card.payments, meals) } } : {}),
+      ...(coffeePerson ? { work: { participant: coffeePerson.ref, name: coffeePerson.name, mode: "unspecified" as const,
+        items: workDayItems(card.payments, []) } } : {}),
       ...(card.payments[0]?.flow === "transfer" ? {
         transferAmounts: {
           incoming: realizedBankSum(card.payments.filter(payment => new Big(payment.amount).gt(0))),

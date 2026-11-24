@@ -1,4 +1,4 @@
-import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { addMonths, parseYearMonth } from "@/core/time";
 import type { BootstrapAnalysisPeriod } from "@/server/bootstrap/types";
 
@@ -10,7 +10,7 @@ export const forecastWindowMonths: readonly string[] = (() => {
   return months;
 })();
 
-export function monthPlanningHref(month: string, view?: "bilan") {
+export function monthPlanningHref(month: string, view?: "bilan" | "previsions") {
   return `/mois-a-venir?month=${month}${view ? `&vue=${view}` : ""}`;
 }
 
@@ -38,7 +38,7 @@ export function workspacePeriodHref(period: string, pathname: string, currentMon
   if (pathname === "/mois-a-venir/composer/calendrier" && isWorkspaceMonth(period)) {
     return composerCalendarHref(period);
   }
-  if (realized) return realizedComposerHref(period);
+  if (realized || isImportedRealizedMonth(period)) return realizedComposerHref(period);
   return pilot ? JULY_V2_HREF : monthPlanningHref(period);
 }
 
@@ -61,7 +61,7 @@ export function monthEntry(today: string, requestedMonth: unknown, periods: read
 
   return {
     currentMonth, targetMonth, lastComplete, financeStatus, realizedMonth,
-    realizedHref: realizedMonth === JULY_COMPOSER_MONTH || realizedMonth && isArchivedRealizedMonth(realizedMonth)
+    realizedHref: realizedMonth === JULY_COMPOSER_MONTH || realizedMonth && (isArchivedRealizedMonth(realizedMonth) || isImportedRealizedMonth(realizedMonth))
       ? realizedComposerHref(realizedMonth) : realizedMonth ? `/historique/${realizedMonth}` : null,
   };
 }

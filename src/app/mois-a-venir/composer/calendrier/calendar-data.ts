@@ -1,6 +1,6 @@
 import "server-only";
 import { addDays, parseLocalDate, parseYearMonth } from "@/core/time";
-import { JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { withProductAuthentication } from "@/app/product-query";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
@@ -27,6 +27,7 @@ type Bootstrap = Awaited<ReturnType<typeof getBootstrapContext>>;
 const categories = "/planned-visuals/commerce/categories";
 
 export function observedCalendarItems(board: RealizedBoard, pilot: boolean): CalendarItem[] {
+  const imported = isImportedRealizedMonth(board.month);
   const first = `${board.month}-01`;
   const last = new Date(Date.UTC(Number(board.month.slice(0, 4)), Number(board.month.slice(5, 7)), 0)).toISOString().slice(0, 10);
   return board.cards.flatMap(card => {
@@ -35,7 +36,9 @@ export function observedCalendarItems(board: RealizedBoard, pilot: boolean): Cal
     const participants = card.participant ? [card.participant] : card.work ? [card.work.name] : undefined;
     const status = pilot && card.pilotStatus !== "confirmed" ? "pending" : "confirmed";
     const payments: CalendarItem[] = status === "confirmed" ? card.payments.filter(payment => payment.flow === "expense").map(payment => ({
-      key: payment.id, date: payment.date, label: payment.label, amount: payment.amount.replace(/^-/, ""),
+      key: payment.id,
+      date: imported && payment.activityDate?.startsWith(board.month) ? payment.activityDate : payment.date,
+      label: payment.label, amount: payment.amount.replace(/^-/, ""),
       artwork: composerCalendarArtwork({ label: payment.label, art: payment.art ?? card.art, badge: payment.badge, category: payment.category }),
       nature: card.section === "fixed" ? "CERTAIN_OUTFLOW" : "DECLARED_REALIZED", composerStatus: status,
       dateCertainty: "DECLARED", participants: payment.participant ? [payment.participant] : participants, composerHref: link,
