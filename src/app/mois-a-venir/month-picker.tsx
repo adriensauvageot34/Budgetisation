@@ -4,7 +4,7 @@ import { useOptimistic, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { monthLabel } from "./composer/display";
-import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, ARCHIVED_REALIZED_MONTHS } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, ARCHIVED_REALIZED_MONTHS, IMPORTED_REALIZED_MONTHS } from "@/domain/phase2/planner/realized-month-entry";
 import { composerCalendarHref, forecastWindowMonths, globalAnalysisHref, isWorkspaceMonth, workspacePeriodHref } from "./month-entry";
 import material from "./month-material.module.css";
 
@@ -46,8 +46,11 @@ export function MonthPicker() {
       <optgroup label="Simulation">
         <option value={JULY_COMPOSER_MONTH}>Juillet 2026</option>
       </optgroup>
+      <optgroup label="Imports bancaires partiels">
+        {IMPORTED_REALIZED_MONTHS.map(month => <option key={month} value={month}>{monthLabel(month)}</option>)}
+      </optgroup>
       <optgroup label="Prévisions">
-        {forecastWindowMonths.map(month => <option key={month} value={month}>{monthLabel(month)}</option>)}
+        {forecastWindowMonths.filter(month => !isImportedRealizedMonth(month)).map(month => <option key={month} value={month}>{monthLabel(month)}</option>)}
       </optgroup>
       {outsideRange && <option value={period} disabled hidden>{monthLabel(period)}</option>}
     </select>

@@ -18,6 +18,7 @@ import type { ComposerMobilitySummary } from "@/domain/phase2/planner/composer-u
 import type { AppliedPlanControl } from "@/server/phase2/planner/applied-plan-read";
 import { MonthDataStatus } from "./month-data-status";
 import { MonthNavigation } from "./month-navigation";
+import { isImportedRealizedMonth } from "@/domain/phase2/planner/realized-month-entry";
 import type { MonthEntry } from "./month-entry";
 import material from "./month-material.module.css";
 
@@ -34,7 +35,7 @@ type Props = { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored:
 export function MonthForecastView({ forecast, scenario, stored, entry, plannedExpenses, persons, places, vehicle, prices, wallets, inputError, today, controlModel, initialSection, initialFocus, composerEnabled, activePlan, activeRevisionId, planOwnership, appliedProjection, appliedSemanticState, appliedControls, appliedMobility, activeRevisionNumber, appliedEvidenceStatus, historicalRemainder, appliedComparison, draftRootCount }: Props) {
   const targetMonth = forecast.meta.targetMonth;
   const model = controlModel ?? projectMonthControlCenter({ forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today });
-  const composerHref = composerEnabled ? `/mois-a-venir/composer?month=${targetMonth}` : undefined;
+  const composerHref = composerEnabled ? `/mois-a-venir/composer?month=${targetMonth}${isImportedRealizedMonth(targetMonth) ? "&view=edition" : ""}` : undefined;
   const applied = appliedProjection && appliedSemanticState ? <AppliedMonthView embedded projection={appliedProjection} semanticState={appliedSemanticState} controls={appliedControls ?? []} mobility={appliedMobility} places={places} persons={persons} plan={scenario.economicPlan}
     comparison={appliedComparison} revision={activeRevisionNumber ?? 0} evidenceStatus={appliedEvidenceStatus} historicalRemainder={historicalRemainder} today={today} composerHref={composerHref}
     external={{ targetMonth, expectedPlanRevisionId: activeRevisionId, expenses: plannedExpenses, persons, places, vehicle, prices, wallets,

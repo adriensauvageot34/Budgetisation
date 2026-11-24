@@ -10,7 +10,7 @@ import { monthControlSection, monthControlDestination, type MonthControlSectionI
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { monthEntry, showsArchivedForecast } from "./month-entry";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
@@ -47,7 +47,9 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   if (targetMonth === JULY_COMPOSER_MONTH && targetMonth < currentMonth) {
     redirect(JULY_V2_HREF);
   }
-  if (isArchivedRealizedMonth(targetMonth)) redirect(realizedComposerHref(targetMonth));
+  if (isArchivedRealizedMonth(targetMonth) || isImportedRealizedMonth(targetMonth) && params.vue === undefined) {
+    redirect(realizedComposerHref(targetMonth));
+  }
   if (params.month !== targetMonth) {
     const query = new URLSearchParams({ month: targetMonth });
     for (const [key, raw] of Object.entries(params)) {

@@ -231,7 +231,7 @@ function RealizedDetail({ card, month, terms, open }: {
     </nav>}
     {!card.work && card.participant && <section aria-label="Participants"><p>{card.participant}</p></section>}
     {card.work && <section aria-labelledby="realized-work-title">
-      <h3 id="realized-work-title">Journée de travail · {card.work.name}</h3>
+      <h3 id="realized-work-title">{card.work.mode === "unspecified" ? "Achats de café" : `Journée de travail · ${card.work.name}`}</h3>
       <ul className={styles.places}>
         {card.work.items.map(item => <li key={item.id}>
           {item.place ? <><PlaceLink place={item.place} detail />Montant non renseigné</>
