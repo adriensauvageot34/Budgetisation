@@ -1,5 +1,6 @@
 import { JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
+import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { composerBalanceHref, composerCalendarHref } from "../month-entry";
 import { monthLabel, money } from "./display";
 import { RealizedComposerMonth } from "./realized-month";
@@ -17,19 +18,16 @@ export function RealizedFinancialTotals({ board, pilot = false }: { board: Reali
 export function ArchivedRealizedMonth({ board, initialCardId }: { board: RealizedBoard; initialCardId?: string }) {
   const july = board.month === JULY_COMPOSER_MONTH;
   return <div className={styles.workspace} data-composer data-reconstruction-mode="realized">
-    <header className={styles.workspaceHeader}>
-      <div className={styles.headerIdentity}>
-        {july && <a href={JULY_COMPOSER_HREF} className={styles.backLink}>Simulation au 15 juillet</a>}
-        <h1>Composer <span>· {monthLabel(board.month)}</span></h1>
-        <p className={styles.headerMeta}>{july ? "Bilan complet" : "Mois réalisé"} · {board.operationCount} opérations bancaires</p>
-      </div>
+    <h1 className="sr-only">Cartes · {monthLabel(board.month)}</h1>
+    <AppToolbarContent className={styles.compactToolbar}>
       <RealizedFinancialTotals board={board} />
       <nav className={styles.reconstructionModes} aria-label="Vues de Composer">
+        {july && <a href={JULY_COMPOSER_HREF} className={styles.reconstructionLink}>Au 15 juillet</a>}
         <span className={styles.reconstructionLink} aria-current="page">Cartes</span>
         <a className={styles.reconstructionLink} href={composerCalendarHref(board.month)}>Calendrier</a>
         {!july && <a className={styles.reconstructionLink} href={composerBalanceHref(board.month)}>Bilan du mois</a>}
       </nav>
-    </header>
+    </AppToolbarContent>
     <RealizedComposerMonth board={board} initialCardId={initialCardId} />
   </div>;
 }

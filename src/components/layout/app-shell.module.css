@@ -1,0 +1,15 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 6px clamp(12px, 2vw, 24px);
+}
+.toolbar { flex: 1; min-width: 0; }
+.toolbar:empty { display: none; }
+.account { margin-inline-start: auto; flex: none; }
+.bar:has(.toolbar:not(:empty)) .account > button { min-height: 34px; padding-block: 6px; }
+
+@media (max-width: 1120px) {
+  .bar { flex-wrap: wrap; }
+  .toolbar { order: 1; flex: 0 0 100%; }
+}

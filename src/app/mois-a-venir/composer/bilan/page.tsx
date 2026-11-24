@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { readHistoryBalance } from "@/app/history-balance-data";
+import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { parseYearMonth } from "@/core/time";
 import { ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { HistoryV2Page, parseHistoryCalendarFilters, parseHistoryOverlaySearch } from "@/features/history-v2";
 import { composerCalendarHref, forecastWindowMonths } from "../../month-entry";
 import material from "../../month-material.module.css";
 import { monthLabel } from "../display";
-import styles from "../month-view.module.css";
+import styles from "../composer.module.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Bilan du mois · Composer" };
@@ -26,20 +27,17 @@ export default async function ComposerBalancePage({
   }
   const month = parseYearMonth(archivedMonth);
   const initialState = await readHistoryBalance(month);
-  const button = `${material.clayButton} ${styles.button}`;
+  const button = styles.reconstructionLink;
 
-  return <div className={`${material.page} ${styles.page}`}>
-    <header className={`${material.glassPremium} ${styles.header}`}>
-      <div>
-        <p className="eyebrow">Composer · Mois réalisé</p>
-        <h1>{monthLabel(month)}</h1>
-      </div>
-      <nav aria-label="Vues de Composer">
+  return <div className={material.page}>
+    <h1 className="sr-only">Bilan du mois · {monthLabel(month)}</h1>
+    <AppToolbarContent className={styles.compactToolbar}>
+      <nav aria-label="Vues de Composer" className={styles.reconstructionModes}>
         <Link className={button} href={realizedComposerHref(month)} prefetch={false}>Cartes</Link>
         <Link className={button} href={composerCalendarHref(month)} prefetch={false}>Calendrier</Link>
         <span className={button} aria-current="page">Bilan du mois</span>
       </nav>
-    </header>
+    </AppToolbarContent>
     <HistoryV2Page key={month} month={month} view="balance" surface="composer" initialState={initialState}
       filters={parseHistoryCalendarFilters({})} initialOverlay={parseHistoryOverlaySearch(search)} />
   </div>;

@@ -231,7 +231,8 @@ const reviewedHtml = renderToStaticMarkup(createElement(AppRouterContext.Provide
   createElement(ArchivedRealizedMonth, { board: reviewed, initialCardId: splitCard.id })));
 assert.match(reviewedHtml, /Avoir test/);
 assert.match(reviewedHtml, /Voir le mois bancaire/);
-assert.match(html, /Mois réalisé · 5 opérations bancaires/);
+assert.match(html, /Bilan financier du mois/);
+assert.doesNotMatch(html, /5 opérations bancaires/);
 assert.match(html, /href="\/mois-a-venir\/composer\/calendrier\?month=2025-10"/);
 assert.match(html, /href="\/mois-a-venir\/composer\/bilan\?month=2025-10"/);
 assert.doesNotMatch(html, /Choisir un mois|Mois précédent|Mois suivant/);

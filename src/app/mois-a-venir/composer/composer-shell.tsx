@@ -6,6 +6,7 @@ import {rememberBarView,type BarViewMemory} from "./bar-view-memory";
 import {startBarReceptionProbe} from "./bar-reception-probe";
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
 import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
+import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerCardView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -1265,17 +1266,20 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }}
     onKeyDown={event=>{if(event.key==='Escape'&&!event.defaultPrevented&&livingBarId&&!document.querySelector('dialog[open],[popover]:popover-open')){event.preventDefault();closeDialog();}}}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
-    <header className={styles.workspaceHeader}><div className={styles.headerIdentity}>{!reconstruction && <a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>}
-      <h1>Composer <span>· {monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<ComposerSaveStatus status={durable.status} durable={!!draftTransport} suspended={relationSession} raw={!!inlineEdits.count} />
-        {reconstruction ? <span data-object-count>{showingRealized ? `${displayedReconstruction?.operationCount} opérations bancaires${julyPilot ? " au 15 juillet" : ""}` : `${shown.board.contexts.filter(card => !card.parentContextOccurrenceId).length} cartes du brouillon`}</span>
-          : <span data-object-count>{shown.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-label={previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Précisions en cours de calcul" : undefined} aria-pressed={unresolvedOpen} aria-controls={unresolvedOpen ? "composer-finances-title" : undefined} disabled={!model.presentation.unresolvedCount || previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} onClick={showUnresolved}>{previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Calcul…" : `${model.presentation.unresolvedCount} à préciser`}</button></span>}
+    {reconstruction && <h1 className="sr-only">{showingRealized ? "Cartes" : "Édition"} · {monthLabel(reconstruction.month)}</h1>}
+    <AppToolbarContent inline={!reconstruction} className={reconstruction ? styles.compactToolbar : styles.workspaceHeader}>
+      {displayedReconstruction && <RealizedFinancialTotals board={displayedReconstruction} pilot={!!julyPilot} />}
+      <div className={reconstruction ? undefined : styles.headerIdentity}>
+      {!reconstruction && <><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
+        <h1>Composer <span>· {monthLabel(model.semanticState.targetMonth)}</span></h1></>}
+      <div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<ComposerSaveStatus status={durable.status} durable={!!draftTransport} suspended={relationSession} raw={!!inlineEdits.count} />
+        {!reconstruction && <span data-object-count>{shown.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-label={previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Précisions en cours de calcul" : undefined} aria-pressed={unresolvedOpen} aria-controls={unresolvedOpen ? "composer-finances-title" : undefined} disabled={!model.presentation.unresolvedCount || previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} onClick={showUnresolved}>{previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Calcul…" : `${model.presentation.unresolvedCount} à préciser`}</button></span>}
         {model.activeRevisionNumber > 0 && <small data-official-revision>Plan · révision {model.activeRevisionNumber}</small>}
         {!relationSession && previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
       {!reconstruction && <div className={styles.hudContainer} data-compare-header>{comparison && <div className={styles.compareCurrent}><span>Actuel</span><strong>{money(comparison.model.board.cockpit.plan.economicMonthEndRemainder)}</strong></div>}
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails}
         retry={previewStatus === "FAILED" && !busy ? retryPreview : undefined} /></div>}
-      {showingRealized && displayedReconstruction && <RealizedFinancialTotals board={displayedReconstruction} pilot={!!julyPilot} />}
       {!showingRealized && <div className={styles.toolbar}>
         {resumableContext && <button type="button" className={styles.financialLink} disabled={busy} onClick={() => {
           setResumeContext(null); stableLibraryOpen(resumableContext.id);
@@ -1320,7 +1324,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       </nav>}
       {!reconstruction && forecastWindowMonths.includes(model.semanticState.targetMonth) && <a className={styles.reconstructionLink}
         href={composerCalendarHref(model.semanticState.targetMonth)}>Calendrier</a>}
-    </header>
+    </AppToolbarContent>
     {tripStatus && <p className={styles.draftRecovery} role="status" data-july-trip-status>{tripStatus}</p>}
     {saveIssue && <section className={styles.draftRecovery} aria-label="Récupération du brouillon">
       <p data-save-message role="status">{durable.message}</p>
