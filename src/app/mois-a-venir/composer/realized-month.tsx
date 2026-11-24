@@ -380,6 +380,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds, initialCardI
   const paymentCardId = !byCategory && selection?.paymentId ? realizedOperationCardId(selection.paymentId) : undefined;
   const selectedView = indexed.find(({ card }) => card.id === paymentCardId)?.view
     ?? indexed.find(({ card }) => card.id === selection?.cardId)?.view
+    ?? indexed.find(({ view }) => view.source.id === selection?.cardId)?.view
     ?? (selection?.paymentId ? indexed.find(({ card }) => card.payments.some(payment => payment.id === selection.paymentId))?.view : undefined);
   const selected = selectedView?.card;
   const visibleKeys = `${sortOrder}:${fillColumns}:${visible.map(({ card }) => card.id).join("|")}`;

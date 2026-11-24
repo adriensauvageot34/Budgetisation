@@ -8,14 +8,15 @@ import { parseLocalDate } from "@/core/time";
 export const calendarMoney = (value: string) => new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2,
 }).format(Number(value));
-export const calendarBudgetLabel = (item: Pick<CalendarItem, "expense" | "amount">) => item.amount === null ? "Voir le Plan"
+export const calendarBudgetLabel = (item: Pick<CalendarItem, "expense" | "amount" | "composerStatus">) => item.amount === null ? item.composerStatus ? "—" : "Voir le Plan"
   : item.expense?.context.project?.unpricedComponents?.length
     ? Number(item.amount) === 0 ? "À préciser" : `≥ ${calendarMoney(item.amount)}` : calendarMoney(item.amount);
 export const calendarDate = (date: string) => new Intl.DateTimeFormat("fr-FR", {
   day: "numeric", month: "long", timeZone: "UTC",
 }).format(new Date(`${date}T12:00:00Z`));
 
-export const calendarStateLabel = (item: Pick<CalendarItem, "expense" | "nature" | "fixedState">) => item.nature === "PLAN_MOMENT" ? "Prévu · Plan appliqué"
+const composerStates = { confirmed: "Validé", pending: "Passé · à valider", planned: "Prévu", observed: "Documenté" } as const;
+export const calendarStateLabel = (item: Pick<CalendarItem, "expense" | "nature" | "fixedState" | "composerStatus">) => item.composerStatus ? composerStates[item.composerStatus] : item.nature === "PLAN_MOMENT" ? "Prévu · Plan appliqué"
   : item.fixedState === "OBSERVED" ? "Débit observé" : item.expense?.observedMatch
   ? item.expense.observedMatch.declared ? "Observée · réalisation déclarée conservée" : "Observée"
   : item.nature === "DECLARED_REALIZED"
@@ -51,7 +52,7 @@ export function calendarDaySummary(items: readonly CalendarItem[], date?: string
 }
 
 export const calendarItemRange = (item: CalendarItem) => item.expense ? getPlannedExpenseDateRange(item.expense)
-  : { startDate: item.date, endDate: item.date, isRange: false, hasReturn: false };
+  : { startDate: item.date, endDate: item.endDate ?? item.date, isRange: !!item.date && !!item.endDate && item.endDate > item.date, hasReturn: false };
 export function calendarItemsOnDate(items: readonly CalendarItem[], date: string) {
   return items.filter(item => { const r = calendarItemRange(item); return !!r.startDate && !!r.endDate && date >= r.startDate && date <= r.endDate; });
 }

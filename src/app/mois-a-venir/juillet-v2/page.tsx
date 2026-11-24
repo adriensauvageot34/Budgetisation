@@ -19,9 +19,9 @@ import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { money, monthLabel, plannedDayLabel } from "../composer/display";
 import { detailedRealizedCards } from "../composer/realized-card-view";
+import { composerCalendarHref } from "../month-entry";
 import { CalendarEventIcon, MonthCalendar } from "../month-calendar";
-import type { CalendarArtwork } from "../calendar-metadata";
-import { clayAssetArtwork, clayBuilderArtwork, clayContextArtwork, clayV22Artwork } from "../clay-v22-media";
+import { composerCalendarArtwork } from "../calendar-artwork";
 import type { CalendarEntry } from "../planned-expenses-projection";
 import material from "../month-material.module.css";
 import pilotStyles from "../composer/realized-month.module.css";
@@ -69,6 +69,7 @@ export default async function JulyV2Page() {
       <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-4xl font-black tracking-tight sm:text-5xl">Juillet V2</h1>
         <nav aria-label="Accès du mois de juillet" className="flex flex-wrap gap-2">
+          {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} prefetch={false} className={button}>Calendrier pleine page</Link>}
           {composerEnabled && board && <Link href={JULY_COMPOSER_HREF} prefetch={false} className={`${material.clayPrimary} inline-flex items-center px-4 py-2 text-sm font-bold`}>Voir les cartes</Link>}
           {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} prefetch={false} className={button}>Éditer le brouillon</Link>}
           {board && <Link href={composerEnabled ? JULY_COMPOSER_FULL_HREF : `/historique/${JULY_COMPOSER_MONTH}`} prefetch={false} className={button}>Bilan complet</Link>}
@@ -154,37 +155,12 @@ export default async function JulyV2Page() {
 
 type JulyBudget = ReturnType<typeof readJulyBudget>;
 
-function julyCalendarArtwork(item: JulyBudget["fixedCalendar"][number] | JulyBudget["plannedCalendar"][number]): CalendarArtwork {
-  if ("badge" in item) {
-    const badge = item.badge?.sources.find(src => src.startsWith("/"));
-    if (badge) return { src: badge, kind: "badge" };
-  }
-  const merchandise = "/planned-visuals/commerce/categories";
-  const label = "family" in item ? `${item.label} ${item.family}` : item.label;
-  if (item.category === "groceries") return { src: `${merchandise}/groceries.webp`, kind: "badge" };
-  if (/mini[- ]golf|\bgolfy\b/iu.test(label)) return { src: `${merchandise}/mini-golf.webp`, kind: "badge" };
-  const categoryAssets: Readonly<Record<string, string>> = {
-    fuel: "transport:fuel_usage", "adrien-work-coffee": "scene:coffee",
-    "adrien-work-meals": "scene:work_meal", "manon-work-meals": "scene:work_meal",
-  };
-  const categoryArt = clayAssetArtwork(categoryAssets[item.category])?.src;
-  const specific = /cano[eëé]|kayak/iu.test(label) ? clayV22Artwork("v22-art:extra:kayak-activity")?.src
-    : /titres?[- ]restau|carte ticket restaurant/iu.test(label) ? `${merchandise}/tickets.webp` : undefined;
-  const commerce = item.category === "tobacco-vape" ? `${merchandise}/tobacco.webp`
-    : item.category === "fixed" && /r[ée]gie|\beau\b/iu.test(label) ? `${merchandise}/public-services.webp` : undefined;
-  const { artwork } = item;
-  const src = specific ?? categoryArt ?? commerce ?? artwork.src ?? clayAssetArtwork(artwork.assetKey)?.src
-    ?? (artwork.assetKey ? clayBuilderArtwork(artwork.assetKey, "compact")?.src : undefined)
-    ?? clayContextArtwork(artwork.templateKey)?.src ?? clayContextArtwork("activity")!.src;
-  return { src, kind: "clay" };
-}
-
 function BudgetCalendar({ items, projects, dailyTotals }: {
   items: JulyBudget["fixedCalendar"]; projects: JulyBudget["plannedCalendar"]; dailyTotals: JulyBudget["dailyCalendarTotals"];
 }) {
   const chargeEntries = items.map(item => ({
     key: item.id, label: item.label, date: item.date, amount: item.amount, nature: "CERTAIN_OUTFLOW" as const,
-    artwork: julyCalendarArtwork(item),
+    artwork: composerCalendarArtwork({ label: item.label + " " + item.family, art: item.artwork, badge: item.badge, category: item.category }),
     group: item.family, status: item.status,
     dateCertainty: item.status === "confirmed" ? "DECLARED" as const : "HISTORICAL_ESTIMATE" as const,
     fixedState: item.status === "confirmed" ? "OBSERVED" as const : "UPCOMING" as const,
@@ -192,7 +168,7 @@ function BudgetCalendar({ items, projects, dailyTotals }: {
   const charges: CalendarEntry[] = chargeEntries.flatMap(item => item.date ? [{ ...item, date: item.date }] : []);
   const projectEntries: CalendarEntry[] = projects.map(project => ({
     key: project.id, label: project.label, date: project.date, amount: project.amount, nature: "PLANNED_EXPENSE", dateCertainty: "DECLARED",
-    artwork: julyCalendarArtwork(project),
+    artwork: composerCalendarArtwork({ label: project.label, art: project.artwork, category: project.category }),
   }));
   return <div className="mt-4">
     <MonthCalendar targetMonth={JULY_COMPOSER_MONTH} entries={[...charges, ...projectEntries]} undated={[]} dailyTotals={dailyTotals} today={JULY_PILOT_DATE} compactArtwork />

@@ -62,8 +62,10 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   }));
   const { model, drafts, rootRelationAccess, reconstruction } = observed.value;
   const initialJulyStatus = reconstruction ? julyPilotStatuses.find(status => status === params.statut) : undefined;
+  const julyPilot = reconstruction ? projectJulyPilot(reconstruction) : undefined;
+  const initialJulyCard = typeof params.carte === "string" && julyPilot?.cards.some(card => card.id === params.carte) ? params.carte : undefined;
   return <><ComposerShell key={rootRelationAccess?.scopeKey ?? month} rootRelationAccess={rootRelationAccess} initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
-    durableDraftHttp={!!drafts} reconstruction={reconstruction ?? undefined} julyPilot={reconstruction ? projectJulyPilot(reconstruction) : undefined}
-    initialReconstructionEditing={isReconstruction && params.view === "edition"} initialJulyStatus={initialJulyStatus} />
+    durableDraftHttp={!!drafts} reconstruction={reconstruction ?? undefined} julyPilot={julyPilot}
+    initialReconstructionEditing={isReconstruction && params.view === "edition"} initialJulyStatus={initialJulyStatus} initialJulyCard={initialJulyCard} />
     {observed.metrics && <span hidden data-snap-server={JSON.stringify(observed.metrics)} />}</>;
 }
