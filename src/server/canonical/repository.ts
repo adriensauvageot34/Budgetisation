@@ -2663,6 +2663,36 @@ export class CanonicalRepository {
     return { allocations, items, paymentComponents, cashUses };
   }
 
+  loadLifeEventObservedTravelRows(lifeEventIds: readonly string[]): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(lifeEventIds);
+    if (!ids.length) return Promise.resolve([]);
+    return this.readRowsByInBatches(
+      `life-event-observed-travel:${ids.join(",")}`, "life_events", ids,
+      ["life_event_id", "localization_id"], ["life_event_id", "localization_id"],
+      batch => this.client.from("life_event_localizations")
+        .select("life_event_id,localization_id,note")
+        .in("life_event_id", batch)
+        .in("role", ["Arrivée", "Départ"])
+        .like("note", "google-timeline:%")
+        .order("life_event_id", { ascending: true }).order("localization_id", { ascending: true }),
+    );
+  }
+
+  loadRealizedConfirmedOperationPlaces(operationIds: readonly string[]): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(operationIds);
+    if (!ids.length) return Promise.resolve([]);
+    return this.readRowsByInBatches(
+      `realized-confirmed-operation-places:${ids.join(",")}`, "places", ids,
+      ["operation_place_link_id"], ["operation_id", "operation_place_link_id"],
+      batch => this.client.from("operation_place_links")
+        .select("operation_place_link_id,operation_id,place_id")
+        .in("operation_id", batch)
+        .eq("validation_status", "Confirmé")
+        .in("relation_type", ["etablissement_exact_confirme", "etablissement_exact_deduit"])
+        .order("operation_id", { ascending: true }).order("operation_place_link_id", { ascending: true }),
+    );
+  }
+
   /** Explicit Canonical LifeEvent-to-Place links. Place visits are not a substitute. */
   async loadLifeEventLocalizationRows(
     lifeEventIds: readonly string[],
