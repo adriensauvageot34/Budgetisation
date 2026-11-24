@@ -6,7 +6,7 @@
 }
 .toolbar { flex: 1; min-width: 0; }
 .toolbar:empty { display: none; }
-.period { min-width: 0; }
+.period { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
 .account { margin-inline-start: auto; flex: none; }
 .bar:has(.toolbar:not(:empty)) .account > button { min-height: 34px; padding-block: 6px; }
 
