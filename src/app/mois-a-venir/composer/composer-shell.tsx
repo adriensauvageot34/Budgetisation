@@ -24,7 +24,7 @@ import { catalogBasketArticleTarget, type GuidedCatalogChoice } from "./catalog-
 import { isPurchaseBasket, type BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { assetEditorTarget, editorOccurrenceId, admittedProjectMove } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
-import { JULY_V2_HREF, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
+import { reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import { composerCalendarHref, forecastWindowMonths } from "../month-entry";
 import type { JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
@@ -1265,7 +1265,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }}
     onKeyDown={event=>{if(event.key==='Escape'&&!event.defaultPrevented&&livingBarId&&!document.querySelector('dialog[open],[popover]:popover-open')){event.preventDefault();closeDialog();}}}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
-    <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={reconstruction ? JULY_V2_HREF : `/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> {reconstruction ? "Prévisions de juillet" : "Centre de contrôle"}</a>
+    <header className={styles.workspaceHeader}><div className={styles.headerIdentity}>{!reconstruction && <a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>}
       <h1>Composer <span>· {monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<ComposerSaveStatus status={durable.status} durable={!!draftTransport} suspended={relationSession} raw={!!inlineEdits.count} />
         {reconstruction ? <span data-object-count>{showingRealized ? `${displayedReconstruction?.operationCount} opérations bancaires${julyPilot ? " au 15 juillet" : ""}` : `${shown.board.contexts.filter(card => !card.parentContextOccurrenceId).length} cartes du brouillon`}</span>
           : <span data-object-count>{shown.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-label={previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Précisions en cours de calcul" : undefined} aria-pressed={unresolvedOpen} aria-controls={unresolvedOpen ? "composer-finances-title" : undefined} disabled={!model.presentation.unresolvedCount || previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} onClick={showUnresolved}>{previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Calcul…" : `${model.presentation.unresolvedCount} à préciser`}</button></span>}
