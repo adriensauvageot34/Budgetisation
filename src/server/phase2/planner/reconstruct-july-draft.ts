@@ -8,7 +8,7 @@ import { emptyPlanSemanticState, parsePlanSemanticState, type PlannedContextStat
 import { validateContextGraph } from "./context-selections";
 import type { RealizedBoard, RealizedCard, RealizedPayment } from "./realized-month";
 
-type DraftLine = { key: string; label: string; amount: string };
+type DraftLine = { key: string; label: string; amount: string; paymentId: string };
 type Recipe = { template: string; preset?: string; main?: readonly [string, string]; extras?: readonly [string, string] };
 
 function recipe(card: RealizedCard, lineCount: number): Recipe {
@@ -37,7 +37,7 @@ function recipe(card: RealizedCard, lineCount: number): Recipe {
 
 /** A confirmed partial payment can seed its own intention. Its value is
  * removed from the source draft line, so the full bank amount is never counted twice. */
-function draftLines(board: RealizedBoard) {
+export function julyReconstructedLines(board: RealizedBoard) {
   const debits = new Map<string, { card: RealizedCard; payment: RealizedPayment; balance: Big }>(board.cards.flatMap(card => card.payments.filter(payment => payment.flow === "expense")
     .map(payment => [payment.id, { card, payment, balance: new Big(payment.amount).abs() }] as const)));
   const assignments = new Map<string, { card: RealizedCard; reference: NonNullable<RealizedCard["relatedPayments"]>[number] }[]>();
@@ -60,19 +60,19 @@ function draftLines(board: RealizedBoard) {
     const amount = new Big(component.amount!);
     if (!source || source.card.id === card.id || !amount.gt(0) || amount.gt(source.balance)) continue;
     source.balance = source.balance.minus(amount);
-    add(card, { key: component.key, label: reference.label, amount: amount.toFixed(2) });
+    add(card, { key: component.key, label: reference.label, amount: amount.toFixed(2), paymentId: source.payment.id });
   }
   for (const { card, payment, balance } of debits.values()) {
     if (balance.eq(0) && !new Big(payment.amount).eq(0)) continue;
     const label = [payment.label, payment.category !== payment.label ? payment.category : undefined,
       card.payments.length > 1 ? `${payment.date.slice(8, 10)}/${payment.date.slice(5, 7)}` : undefined].filter(Boolean).join(" · ");
-    add(card, { key: payment.id, label, amount: balance.toFixed(2) });
+    add(card, { key: payment.id, label, amount: balance.toFixed(2), paymentId: payment.id });
   }
   return lines;
 }
 
 export function reconstructJulyDraft(board: RealizedBoard) {
-  const linesByCard = draftLines(board);
+  const linesByCard = julyReconstructedLines(board);
   const contexts: PlannedContextState[] = [];
   for (const card of board.cards) {
     if (card.section === "flows") continue;

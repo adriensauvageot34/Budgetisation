@@ -315,11 +315,12 @@ function RealizedDetail({ card, month, terms, open }: {
   </>;
 }
 
-export function RealizedComposerMonth({ board, onEdit, editableIds, initialCardId, pilot = false }: {
+export function RealizedComposerMonth({ board, onEdit, editableIds, initialCardId, pilot = false, initialStatus }: {
   board: RealizedBoard; onEdit?: (cardId: string) => void; editableIds?: ReadonlySet<string>; initialCardId?: string; pilot?: boolean;
+  initialStatus?: JulyPilotStatus;
 }) {
   const [sortOrder, setSortOrder] = useState<SortOrder>(pilot ? "date" : "amount-desc");
-  const [statusFilter, setStatusFilter] = useState<JulyPilotStatus | "">("");
+  const [statusFilter, setStatusFilter] = useState<JulyPilotStatus | "">(initialStatus ?? "");
   const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<{ cardId: string; paymentId?: string; componentId?: string } | null>(
     () => initialCardId ? { cardId: initialCardId } : null,
