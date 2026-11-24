@@ -161,8 +161,10 @@ function julyCalendarArtwork(item: JulyBudget["fixedCalendar"][number] | JulyBud
   }
   const merchandise = "/planned-visuals/commerce/categories";
   const label = "family" in item ? `${item.label} ${item.family}` : item.label;
+  if (item.category === "groceries") return { src: `${merchandise}/groceries.webp`, kind: "badge" };
+  if (/mini[- ]golf|\bgolfy\b/iu.test(label)) return { src: `${merchandise}/mini-golf.webp`, kind: "badge" };
   const categoryAssets: Readonly<Record<string, string>> = {
-    groceries: "intent:groceries", fuel: "transport:fuel_usage", "adrien-work-coffee": "scene:coffee",
+    fuel: "transport:fuel_usage", "adrien-work-coffee": "scene:coffee",
     "adrien-work-meals": "scene:work_meal", "manon-work-meals": "scene:work_meal",
   };
   const categoryArt = clayAssetArtwork(categoryAssets[item.category])?.src;
