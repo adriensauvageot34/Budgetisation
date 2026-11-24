@@ -24,7 +24,7 @@ import { catalogBasketArticleTarget, type GuidedCatalogChoice } from "./catalog-
 import { isPurchaseBasket, type BasketConcept } from "@/domain/phase2/planner/purchase-basket";
 import { assetEditorTarget, editorOccurrenceId, admittedProjectMove } from "./asset-editor-routing";
 import { ComposerSaveStatus } from "./composer-save-status";
-import { JULY_COMPOSER_FULL_HREF, JULY_V2_HREF, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
+import { JULY_V2_HREF, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import { composerCalendarHref, forecastWindowMonths } from "../month-entry";
 import type { JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
@@ -1319,7 +1319,6 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         <a href={composerCalendarHref(model.semanticState.targetMonth)} className={styles.reconstructionLink}>Calendrier</a>
         <button type="button" aria-pressed={showingRealized} disabled={busy} onClick={showRealized}>{julyPilot ? "Au 15 juillet" : "Réalisé"}</button>
         <button type="button" aria-pressed={!showingRealized} disabled={busy} onClick={() => setReconstructionEditing(true)}>Édition</button>
-        {julyPilot && <a href={JULY_COMPOSER_FULL_HREF} className={styles.reconstructionLink}>Bilan complet</a>}
       </nav>}
       {!reconstruction && forecastWindowMonths.includes(model.semanticState.targetMonth) && <a className={styles.reconstructionLink}
         href={composerCalendarHref(model.semanticState.targetMonth)}>Calendrier</a>}

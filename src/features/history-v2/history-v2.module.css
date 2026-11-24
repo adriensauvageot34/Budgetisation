@@ -1,6 +1,8 @@
-.page {
+.page, .composerPage {
   --history-card-radius: 14px;
   width: 100%;
+}
+.page {
   min-width: 1040px;
   color: var(--color-ink);
 }
@@ -203,6 +205,55 @@ button.ribbon:hover, button.ribbon:focus-visible { outline: 2px solid #31564f; o
 .momentMedia span { max-width: 100%; overflow: hidden; padding: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .placeRail { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
 .placeRail > * { scroll-snap-align: start; }
+
+.glassBalance { display: grid; gap: 16px; }
+.glassModule {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  padding: clamp(14px, 2.5vw, 26px);
+  --color-border: #cfc1de90;
+  --color-muted: var(--muted);
+  --color-ink: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.glassModule > header h2 { font-size: clamp(1.15rem, 2vw, 1.45rem); font-weight: 850; }
+.glassModule .actualCard {
+  border: 1px solid var(--glass-border);
+  background: var(--glass-violet);
+  box-shadow: var(--depth-1);
+}
+.glassModule .actualCard > span:first-child,
+.glassModule .marginMetric > span:first-child,
+.glassModule .matrixToggle { color: var(--accent-projection); font-weight: 750; }
+.glassModule :is(.referenceCards > div, .referenceButton, .comparisonRow > *, .axisCard, .marginMatrix, .activityCard, .momentCard, .placeCard) {
+  min-width: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-secondary);
+  box-shadow: var(--depth-1);
+  overflow-wrap: anywhere;
+}
+.glassModule .marginMetric, .glassModule .momentMedia[data-fallback] {
+  background: var(--glass-violet);
+  color: var(--accent-projection);
+}
+.glassModule .localTabs { flex-wrap: wrap; max-width: 100%; background: var(--glass-violet); }
+.glassModule .localTabs button[aria-selected="true"] { background: #fff9; color: var(--accent-projection); }
+.glassModule .categoryRow { grid-template-columns: minmax(0, 1fr) auto auto 1rem; gap: clamp(6px, 2vw, 18px); }
+.glassModule .categoryRow > svg { grid-column: -2; }
+.glassModule :is(.axisCard, .activityGrid, .momentRow, .placeRow) h3 { font-weight: 750; }
+.glassModule button:hover { background-color: #eee6f977; }
+.glassModule button:focus-visible { outline: 2px solid var(--accent-focus); outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  .glassModule :is(.axisCards, .momentRow, .placeRow) { grid-template-columns: minmax(0, 1fr); }
+  .glassModule :is(.activityGrid, .comparisonRow, .matrixGrid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 440px) {
+  .glassModule :is(.referenceCards, .marginValues, .activityGrid, .matrixGrid) { grid-template-columns: minmax(0, 1fr); }
+  .glassModule .categoryRow { font-size: .8rem; }
+}
 
 .overviewBackdrop, .minimalBackdrop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: start center; padding-top: 105px; background: rgb(27 39 36 / .08); }
 .overviewPopover { width: min(780px, calc(100vw - 48px)); max-height: calc(100vh - 140px); overflow: auto; border: 1px solid var(--color-border); border-radius: 16px; padding: 20px; background: white; box-shadow: 0 24px 70px rgb(36 50 47 / .18); }

@@ -7,6 +7,7 @@ const root = process.cwd();
 const read = (path) => readFileSync(join(root, path), "utf8");
 const featureFiles = [
   "src/app/historique/[month]/page.tsx",
+  "src/app/history-balance-data.ts",
   "src/app/historique/[month]/loading.tsx",
   "src/features/history-v2/index.ts",
   "src/features/history-v2/history-v2-page.tsx",
@@ -94,6 +95,9 @@ new Function("module", "exports", "require", routeStateJavaScript)(
         : { preset: "all", tags: input.show.split(","), amount: "ALL" },
     };
     if (request === "@/core/time") return { parseLocalDate: (value) => value };
+    if (request === "@/app/mois-a-venir/month-entry") return {
+      composerBalanceHref: (month) => `/mois-a-venir/composer/bilan?month=${month}`,
+    };
     if (request === "@/query-api") return { queryResourceKeys: {
       historyDayJournal: "history_day_journal",
       historyMomentDetail: "history_moment_detail",
@@ -104,6 +108,12 @@ new Function("module", "exports", "require", routeStateJavaScript)(
   },
 );
 const { historyV2Href, parseHistoryCalendarFilters } = routeStateModule.exports;
+assert.equal(historyV2Href({
+  month: "2026-06",
+  view: "balance",
+  surface: "composer",
+  overlay: { kind: "segment", params: { axis: "behavior", bucket: "FIXED" } },
+}), "/mois-a-venir/composer/bilan?month=2026-06&entity=segment&axis=behavior&bucket=FIXED");
 
 const marker = (index, filterTag = "GROCERY") => ({
   calendarItemId: `marker-${index}`,
@@ -358,10 +368,11 @@ assert.doesNotMatch(overlay, /classificationViews[^\n]+(?:reduce|groupBy|sort)/,
 assert.match(shell, />Calendrier<\/button>[\s\S]+>Bilan<\/button>/, "Le toggle local Calendrier/Bilan doit être présent.");
 assert.match(page, /BalanceMonthView/);
 assert.match(page, /historyMinimalPreview/, "MinimalPreview doit rester un drill-down lazy.");
+const balanceData = read("src/app/history-balance-data.ts");
 for (const resource of ["historyMonthBalanceSummary", "historyMonthCategories", "historyMonthSpendingNature", "historyMonthLifeMoney"]) {
-  assert.match(canonicalRoute, new RegExp(`queryResourceKeys\\.${resource}\\b`), `${resource} doit être chargé uniquement pour Bilan.`);
+  assert.match(balanceData, new RegExp(`queryResourceKeys\\.${resource}\\b`), `${resource} doit être chargé par le Bilan partagé.`);
 }
-assert.match(canonicalRoute, /if \(view === "calendar"\)[\s\S]+historyMonthCalendar[\s\S]+historyWeek[\s\S]+historyMonthOverview[\s\S]+else \{[\s\S]+historyMonthOverview[\s\S]+historyMonthBalanceSummary[\s\S]+historyMonthCategories[\s\S]+historyMonthSpendingNature[\s\S]+historyMonthLifeMoney/,
+assert.match(canonicalRoute, /if \(view === "calendar"\)[\s\S]+historyMonthCalendar[\s\S]+historyWeek[\s\S]+historyMonthOverview[\s\S]+else \{\s*initialState = await readHistoryBalance\(month\)/,
   "La route doit séparer strictement les chargements Calendar/Week et Bilan.");
 assert.match(canonicalRoute, /historyMonthOverview/);
 assert.match(routeState, /calendarFilterPresetRegistry/);

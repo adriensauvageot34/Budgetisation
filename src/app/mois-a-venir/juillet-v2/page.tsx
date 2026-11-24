@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { parseYearMonth } from "@/core/time";
 import { julyPilotLabels, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
-import { JULY_COMPOSER_EDIT_HREF, JULY_COMPOSER_FULL_HREF, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH, JULY_PILOT_DATE } from "@/domain/phase2/planner/realized-month-entry";
+import { JULY_COMPOSER_EDIT_HREF, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH, JULY_PILOT_DATE } from "@/domain/phase2/planner/realized-month-entry";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { resolveRealBankBalance } from "@/server/phase2/bank-cash-projection";
@@ -72,7 +72,6 @@ export default async function JulyV2Page() {
           {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} prefetch={false} className={button}>Calendrier pleine page</Link>}
           {composerEnabled && board && <Link href={JULY_COMPOSER_HREF} prefetch={false} className={`${material.clayPrimary} inline-flex items-center px-4 py-2 text-sm font-bold`}>Voir les cartes</Link>}
           {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} prefetch={false} className={button}>Éditer le brouillon</Link>}
-          {board && <Link href={composerEnabled ? JULY_COMPOSER_FULL_HREF : `/historique/${JULY_COMPOSER_MONTH}`} prefetch={false} className={button}>Bilan complet</Link>}
         </nav>
       </div>
     </header>

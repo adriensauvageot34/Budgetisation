@@ -2,17 +2,14 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { addDays, parseLocalDate, parseYearMonth, yearMonthOf, type YearMonth } from "@/core/time";
 import type {
-  MonthBalanceSummaryReadModel,
   MonthCalendarReadModel,
-  MonthCategoriesReadModel,
-  MonthLifeMoneyReadModel,
   MonthQuickOverviewReadModel,
-  MonthSpendingNatureReadModel,
   WeekReadModel,
 } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
 import { executeAuthenticatedQueries } from "@/server/query/runtime";
 import { queryResultToState, withProductAuthentication } from "@/app/product-query";
+import { readHistoryBalance } from "@/app/history-balance-data";
 import { HistoryV2Page, parseHistoryCalendarFilters, parseHistoryOverlaySearch, type HistoryV2InitialState } from "@/features/history-v2";
 
 export const metadata: Metadata = { title: "Historique" };
@@ -72,21 +69,7 @@ export default async function HistoryMonthRoute({
       ? { kind: "calendar", state: queryResultToState<MonthCalendarReadModel>(results[0]!), overview }
       : { kind: "week", weekStart, state: queryResultToState<WeekReadModel>(results[0]!), overview };
   } else {
-    const results = await withProductAuthentication(() => executeAuthenticatedQueries([
-      { resource: queryResourceKeys.historyMonthOverview, scope, params: {} },
-      { resource: queryResourceKeys.historyMonthBalanceSummary, scope, params: {} },
-      { resource: queryResourceKeys.historyMonthCategories, scope, params: {} },
-      { resource: queryResourceKeys.historyMonthSpendingNature, scope, params: {} },
-      { resource: queryResourceKeys.historyMonthLifeMoney, scope, params: {} },
-    ]));
-    initialState = {
-      kind: "balance",
-      overview: queryResultToState<MonthQuickOverviewReadModel>(results[0]!),
-      summary: queryResultToState<MonthBalanceSummaryReadModel>(results[1]!),
-      categories: queryResultToState<MonthCategoriesReadModel>(results[2]!),
-      spendingNature: queryResultToState<MonthSpendingNatureReadModel>(results[3]!),
-      lifeMoney: queryResultToState<MonthLifeMoneyReadModel>(results[4]!),
-    };
+    initialState = await readHistoryBalance(month);
   }
 
   return <HistoryV2Page month={scopeMonth} view={view} filters={parseHistoryCalendarFilters(rawSearch)} initialState={initialState} initialOverlay={parseHistoryOverlaySearch(rawSearch)} />;

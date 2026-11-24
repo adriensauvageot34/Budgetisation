@@ -5,6 +5,7 @@ import {
 import { parseLocalDate, type LocalDate, type YearMonth } from "@/core/time";
 import { queryResourceKeys, type QueryTargetRef } from "@/query-api";
 import type { HistoryCalendarFilterState, HistoryOverlayTarget, HistoryV2View } from "./types";
+import { composerBalanceHref } from "@/app/mois-a-venir/month-entry";
 
 type RawSearch = Readonly<Record<string, string | string[] | undefined>>;
 
@@ -88,11 +89,14 @@ export function historyV2Href(input: {
   readonly weekStart?: LocalDate;
   readonly overlay?: HistoryOverlayTarget;
   readonly filters?: HistoryCalendarFilterState;
+  readonly surface?: "history" | "composer";
 }): string {
   const query = new URLSearchParams();
-  if (input.view === "balance") query.set("view", "balance");
-  if (input.weekStart !== undefined && input.view === "calendar") query.set("week", input.weekStart);
-  if (input.filters !== undefined) {
+  if (input.surface !== "composer") {
+    if (input.view === "balance") query.set("view", "balance");
+    if (input.weekStart !== undefined && input.view === "calendar") query.set("week", input.weekStart);
+  }
+  if (input.surface !== "composer" && input.filters !== undefined) {
     if (input.filters.preset !== "all") query.set("preset", input.filters.preset);
     const presetTags = calendarFilterPresetRegistry[input.filters.preset].tags;
     if (input.filters.customSelection === true || input.filters.tags.join(",") !== presetTags.join(",")) query.set("show", input.filters.tags.join(","));
@@ -117,6 +121,7 @@ export function historyV2Href(input: {
     }
   }
   const suffix = query.toString();
+  if (input.surface === "composer") return `${composerBalanceHref(input.month)}${suffix ? `&${suffix}` : ""}`;
   return `/historique/${input.month}${suffix.length === 0 ? "" : `?${suffix}`}`;
 }
 

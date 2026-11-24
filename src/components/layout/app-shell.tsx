@@ -21,7 +21,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const runtime = useProductRuntime();
   const historyV2 = /^\/historique\/\d{4}-\d{2}$/.test(pathname);
   const julyV2 = pathname === JULY_V2_HREF;
-  const plannedMonth = pathname === "/mois-a-venir" || julyV2;
+  const composerBalance = pathname === "/mois-a-venir/composer/bilan";
+  const plannedMonth = pathname === "/mois-a-venir" || julyV2 || composerBalance;
   const composerCalendar = pathname === "/mois-a-venir/composer/calendrier";
   const composer = pathname === "/mois-a-venir/composer" || pathname === "/recette/bar-favoris";
 
@@ -81,7 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ref={runtime.backgroundRootRef}
         className={composerCalendar ? "w-full min-w-0 px-2 py-3 sm:px-5" : historyV2
           ? "min-h-[calc(100vh-73px)] py-6"
-          : pathname === "/mois-a-venir"
+          : pathname === "/mois-a-venir" || composerBalance
             ? "mx-auto min-h-[calc(100vh-73px)] max-w-[1360px] px-[var(--space-page)] py-8"
             : "mx-auto min-h-[calc(100vh-73px)] max-w-6xl px-[var(--space-page)] py-8"}
       >

@@ -18,6 +18,10 @@ export function composerCalendarHref(month: string) {
   return `/mois-a-venir/composer/calendrier?month=${month}`;
 }
 
+export function composerBalanceHref(month: string) {
+  return `/mois-a-venir/composer/bilan?month=${month}`;
+}
+
 export function showsArchivedForecast(targetMonth: string, currentMonth: string, view: unknown): boolean {
   return targetMonth < currentMonth && forecastWindowMonths.includes(targetMonth) && view !== "bilan";
 }

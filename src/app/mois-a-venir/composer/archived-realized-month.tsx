@@ -2,7 +2,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
 import { MonthPicker } from "../month-picker";
-import { composerCalendarHref } from "../month-entry";
+import { composerBalanceHref, composerCalendarHref } from "../month-entry";
 import { monthLabel, money } from "./display";
 import { RealizedComposerMonth } from "./realized-month";
 import styles from "./composer.module.css";
@@ -35,6 +35,7 @@ export function ArchivedRealizedMonth({ board, initialCardId }: { board: Realize
       <RealizedFinancialTotals board={board} />
       <nav className={styles.reconstructionModes} aria-label="Mois réalisés">
         <a className={styles.reconstructionLink} href={composerCalendarHref(board.month)}>Calendrier</a>
+        {!july && <a className={styles.reconstructionLink} href={composerBalanceHref(board.month)}>Bilan du mois</a>}
         {previous && <a className="p-1.5" href={realizedComposerHref(previous)} aria-label="Mois précédent"><ArrowLeft size={16} /></a>}
         <MonthPicker targetMonth={board.month} />
         {!july && <a className="p-1.5" href={realizedComposerHref(next)} aria-label="Mois suivant"><ArrowRight size={16} /></a>}
