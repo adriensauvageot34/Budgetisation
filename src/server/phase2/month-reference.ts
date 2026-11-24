@@ -93,7 +93,7 @@ export function referenceMobilityDays(legs: readonly MobilityReferenceLeg[]) {
 }
 
 export function buildMonthReference(evidence: MonthReferenceEvidence, targetMonth: string,
-  recurrenceDates: readonly { componentKey: string; date: string }[]): MonthReferencePlan {
+  recurrenceDates: readonly { componentKey: string; date: string }[], { allowPartial = false } = {}): MonthReferencePlan {
   const months = monthSequence(evidence.startMonth, evidence.endMonth);
   if (months.length !== 12) throw new TypeError("REFERENCE_TWELVE_MONTH_SUPPORT_REQUIRED");
   const rows = evidence.economicEntries.filter((entry) => entry.date.slice(0, 7) >= evidence.startMonth
@@ -121,10 +121,10 @@ export function buildMonthReference(evidence: MonthReferenceEvidence, targetMont
     adrienMealsRows.length, "MONTHLY_P25_MEDIAN_P75_12M", ["financial_economic_cost_canonical", "person:Adrien", "type:Repas du midi au travail"], null, true);
   const manonMealsRows = rows.filter((entry) => entry.subcategory === "Boulangerie"
     && entry.person === "Manon" && entry.preciseType === "Repas du midi au travail");
-  if (manonMealsRows.length === 0) throw new TypeError("MANON_MEAL_UNIT_COST_UNKNOWN");
+  if (!allowPartial && manonMealsRows.length === 0) throw new TypeError("MANON_MEAL_UNIT_COST_UNKNOWN");
   const days = workdays(targetMonth);
   const unitMealCost = new Big(manonMealsRows.reduce((sum, entry) => sum.plus(entry.amount), new Big(0)))
-    .div(manonMealsRows.length).round(2);
+    .div(manonMealsRows.length || 1).round(2);
   const manonMealHigh = unitMealCost.times(days);
   const manonMeals: StatisticalComponent = { key: "manon-work-meals", low: "0.00", central: cents(manonMealHigh.div(2)),
     high: integer(manonMealHigh.toNumber()), method: "WORKDAY_SCENARIO_OBSERVED_UNIT_COST",
@@ -137,9 +137,10 @@ export function buildMonthReference(evidence: MonthReferenceEvidence, targetMont
   const mobilityDays = referenceMobilityDays(evidence.mobilityLegs);
   const commutes = mobilityDays.map((day) => day.commute);
   const lunchDetours = mobilityDays.flatMap((day) => day.detour === null ? [] : [day.detour]);
-  if (commutes.length < 30 || lunchDetours.length === 0 || cafeDays.length < 30) throw new TypeError("REFERENCE_MOBILITY_OR_COFFEE_SUPPORT_INSUFFICIENT");
-  const dailyCommute = new Big(quantile(commutes, 0.5)).round(2);
-  const dailyLunchDetour = new Big(lunchDetours.reduce((sum, value) => sum + value, 0) / lunchDetours.length).round(2);
+  const hasMobility = commutes.length >= 30 && lunchDetours.length > 0;
+  if (!allowPartial && (!hasMobility || cafeDays.length < 30)) throw new TypeError("REFERENCE_MOBILITY_OR_COFFEE_SUPPORT_INSUFFICIENT");
+  const dailyCommute = new Big(commutes.length ? quantile(commutes, 0.5) : 0).round(2);
+  const dailyLunchDetour = new Big(lunchDetours.reduce((sum, value) => sum + value, 0) / (lunchDetours.length || 1)).round(2);
   const mobilityLow = dailyCommute.times(days);
   const mobilityHigh = dailyCommute.plus(dailyLunchDetour).times(days);
   const manonMobility: StatisticalComponent = { key: "manon-work-mobility",
@@ -147,15 +148,15 @@ export function buildMonthReference(evidence: MonthReferenceEvidence, targetMont
     high: integer(mobilityHigh.toNumber()), method: "CANONICAL_MOBILITY_WORKDAY_SCENARIO",
     observationCount: commutes.length, provenance: ["mobility_legs", "route:home-promotrans", "route:promotrans-lunch"],
     note: "Fuel usage, not observed fuel purchases; assumes five onsite workdays per week." };
-  const coffeeLow = new Big(days).times(2).div(5).times(quantile(cafeDays, 0.25));
-  const coffeeCentral = new Big(days).times(2.5).div(5).times(quantile(cafeDays, 0.5));
-  const coffeeHigh = new Big(days).times(3).div(5).times(Math.max(...cafeDays));
+  const coffeeLow = new Big(days).times(2).div(5).times(cafeDays.length ? quantile(cafeDays, 0.25) : 0);
+  const coffeeCentral = new Big(days).times(2.5).div(5).times(cafeDays.length ? quantile(cafeDays, 0.5) : 0);
+  const coffeeHigh = new Big(days).times(3).div(5).times(cafeDays.length ? Math.max(...cafeDays) : 0);
   const adrienCoffee: StatisticalComponent = { key: "adrien-work-coffee", low: integer(coffeeLow.toNumber()),
     central: cents(coffeeCentral), high: integer(coffeeHigh.toNumber()), method: "DECLARED_ATTRIBUTION_ONSITE_DAYS_X_DAILY_DISTRIBUTION",
     observationCount: cafeDays.length, provenance: ["financial_economic_cost_canonical", "subcategory:Café au travail", "declared:Bibal-attributed-to-Adrien"],
     note: "Attribution to Adrien is user declared; the operations have no person field." };
-  const necessary = [groceries, tobacco, manonMobility];
-  const flexible = [adrienMeals, manonMeals, adrienCoffee, restaurants];
+  const necessary = [groceries, tobacco, ...(hasMobility ? [manonMobility] : [])];
+  const flexible = [adrienMeals, ...(manonMealsRows.length ? [manonMeals] : []), ...(cafeDays.length >= 30 ? [adrienCoffee] : []), restaurants];
   const bySeries = new Map<string, number[]>();
   for (const entry of recurrenceDates) {
     const daysForSeries = bySeries.get(entry.componentKey) ?? [];

@@ -281,4 +281,53 @@ assert.match(pilotHtml, /data-pilot-status="pending"/u);
 assert.match(pilotHtml, /data-pilot-status="planned"/u);
 assert.match(pilotHtml, /Éléments budgétés/u);
 assert.doesNotMatch(pilotHtml, /Bancaire Repas/u);
+const { readJulyBudget } = require("@/server/phase2/planner/july-budget");
+const { reconstructedId } = require("@/domain/phase2/planner/realized-month-entry");
+const { reconstructJulyDraft } = require("@/server/phase2/planner/reconstruct-july-draft");
+const { componentId } = require("@/domain/phase2/planner/identity");
+const julySource = { ...board, month: "2026-07", cards: julyCards, groups: [], categoryCards: undefined };
+const historyMonths = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+const julyEvidence = {
+  history: { startMonth: "2025-07", endMonth: "2026-06", mobilityLegs: [], economicEntries: historyMonths.flatMap(month => [
+    { operationId: month + "-shop", date: month + "-19", amount: "120.00", subcategory: "Courses alimentaires" },
+    { operationId: month + "-fuel", date: month + "-22", amount: "90.00", subcategory: "Carburant" },
+  ]) },
+  currentEconomicEntries: [], currentMobilityLegs: [], observedThrough: "2026-07-15",
+  personNamesById: {}, completeMonthsBySource: { BANK: historyMonths },
+};
+const julyGlass = readJulyBudget(julySource, july, julyEvidence, null);
+assert.deepEqual(julyGlass.rows.find(row => row.key === "fuel").balance, { low: "90.00", central: "90.00", high: "90.00" });
+assert.equal(julyGlass.fixedPlanned, "25.00");
+assert.equal(julyGlass.fixedConfirmed, "60.00");
+const semanticState = reconstructJulyDraft(julySource);
+const fixedRoot = semanticState.contexts.find(context => context.contextOccurrenceId === reconstructedId(julySource.month, "fixed"));
+const savedItems = fixedRoot.slotSelections.item.items;
+const savedComponents = savedItems.map((item, index) => ({
+  componentId: componentId(fixedRoot.contextOccurrenceId, "item", item.selectionId), contextOccurrenceId: fixedRoot.contextOccurrenceId,
+  externalEntryId: null, label: item.label, plannedDate: null, evaluation: { economicAmount: index === 0 ? "1000.00" : "40.00" },
+}));
+const newId = reconstructedId(julySource.month, "fixture-new-intention");
+const newComponent = { componentId: "fixture-new", contextOccurrenceId: newId, externalEntryId: null, label: "Nouvel achat",
+  plannedDate: "2026-07-21", evaluation: { economicAmount: "12.00" }, binding: { relation: "EXTRA_TO_SLOT" } };
+const revisedGlass = readJulyBudget(julySource, july, julyEvidence, {
+  semanticState: { ...semanticState, contexts: [...semanticState.contexts, { contextOccurrenceId: newId, fields: { plannedDate: "2026-07-21" }, templateKey: "purchase" }] },
+  board: { contexts: [{ contextOccurrenceId: fixedRoot.contextOccurrenceId, label: fixedRoot.fields.label }] },
+  preview: { compiled: { components: [...savedComponents, newComponent], contexts: [{
+    contextOccurrenceId: fixedRoot.contextOccurrenceId, componentSlots: [{ slotKey: "item", selections: savedItems }],
+  }] } },
+});
+assert.equal(revisedGlass.fixedConfirmed, "60.00");
+assert.equal(revisedGlass.fixedPlanned, "40.00");
+assert.equal(revisedGlass.rows.find(row => row.key === "other").priced, "12.00");
+assert.equal(Number(revisedGlass.strictMinimum) - Number(julyGlass.strictMinimum), 15);
+assert.equal(Number(revisedGlass.totalExpenses.central) - Number(julyGlass.totalExpenses.central), 27);
+const grocery = { id: "careful-groceries", label: "Courses", section: "daily", art: { iconKey: "groceries" },
+  payments: [{ ...julyPayment("Courses prévues", "2026-07-19", "-1.00"), category: "Courses alimentaires" }] };
+const julyWithGroceries = { ...julySource, cards: [...julySource.cards, grocery] };
+const stockedGlass = readJulyBudget(julyWithGroceries, projectJulyPilot(julyWithGroceries), julyEvidence, null);
+const usualGroceries = julyGlass.rows.find(row => row.key === "groceries");
+const coveredGroceries = stockedGlass.rows.find(row => row.key === "groceries");
+assert.equal(coveredGroceries.priced, "1.00");
+assert.equal(Number(coveredGroceries.balance.central), Math.max(Number(usualGroceries.balance.central) - 1, 0));
+assert.equal(Number(coveredGroceries.total.central), Math.max(Number(usualGroceries.total.central), 1));
 console.log("PASS: eleven realized months, work cafés, family stays, cross-month event links, confirmed venue addresses, and consistent bank totals");

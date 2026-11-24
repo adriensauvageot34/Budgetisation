@@ -31,6 +31,7 @@ export type RealizedPayment = Readonly<{
   label: string;
   bankLabel: string;
   category: string | undefined;
+  preciseType?: string;
   amount: string;
   flow: Flow;
   badge: Badge | undefined;
@@ -685,6 +686,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       id: operation.operationId, date: row.bankDate, label: isCannabis ? "Retrait pour cannabis" : label, bankLabel: row.bankLabel,
       ...(july && purchaseDate ? { activityDate: purchaseDate } : {}),
       category: row.subcategory?.label ?? row.preciseType ?? row.category?.label, amount: operation.bankAmount, flow,
+      ...(july && operation.preciseType ? { preciseType: operation.preciseType } : {}),
       badge: badgeSources.length ? { label, sources: badgeSources } : undefined,
       art: isCannabis ? cannabis : specialized[subcategoryKey]?.item ?? specialized[subcategoryKey]?.art,
       ...(place ? { place } : {}),

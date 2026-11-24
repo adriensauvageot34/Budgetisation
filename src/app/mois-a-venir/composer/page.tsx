@@ -13,6 +13,7 @@ import { ComposerShell } from "./composer-shell";
 import { composerInteraction } from "./actions";
 import { observeSnapshot } from "@/server/phase2/planner/snapshot-observation";
 import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { julyPilotStatuses } from "@/domain/phase2/planner/july-pilot";
 import { ArchivedRealizedMonth } from "./archived-realized-month";
 import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
 import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
@@ -60,8 +61,9 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
     return { model, drafts, rootRelationAccess, reconstruction: null };
   }));
   const { model, drafts, rootRelationAccess, reconstruction } = observed.value;
+  const initialJulyStatus = reconstruction ? julyPilotStatuses.find(status => status === params.statut) : undefined;
   return <><ComposerShell key={rootRelationAccess?.scopeKey ?? month} rootRelationAccess={rootRelationAccess} initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
     durableDraftHttp={!!drafts} reconstruction={reconstruction ?? undefined} julyPilot={reconstruction ? projectJulyPilot(reconstruction) : undefined}
-    initialReconstructionEditing={isReconstruction && params.view === "edition"} />
+    initialReconstructionEditing={isReconstruction && params.view === "edition"} initialJulyStatus={initialJulyStatus} />
     {observed.metrics && <span hidden data-snap-server={JSON.stringify(observed.metrics)} />}</>;
 }
