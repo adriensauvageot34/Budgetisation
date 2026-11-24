@@ -10,8 +10,7 @@ import { BankStockCard } from "./bank-stock-card";
 import { ResourceEditor } from "./resource-editor";
 import { PlannedExpensesControl } from "./planned-expenses-control";
 import { MonthControlLink } from "./month-control-center";
-import { MonthCalendar } from "./month-calendar";
-import { projectMonthCalendar, type PlannedExpenseCard } from "./planned-expenses-projection";
+import { composerCalendarHref, forecastWindowMonths } from "./month-entry";
 import { MobilityEstimateSummary } from "./composer/mobility-estimate-summary";
 import { money, quantityLabel } from "./composer/display";
 import { AppliedPlanDetail, contextLabel, contextLabels, coverageLabel } from "./applied-plan-detail";
@@ -35,11 +34,11 @@ function DecisionGroup({ title, count, icon, children }: { title: string; count:
 }
 
 /** Display only: all money comes from B1/V2. Marginals and overlapping lenses are never summed. */
-export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, evidenceStatus = "EXACT", historicalRemainder = null, composerHref, today, calendarCarryovers = [], persons = [], mobility = [], places = [], comparison, embedded = false }: {
+export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, evidenceStatus = "EXACT", historicalRemainder = null, composerHref, today, persons = [], mobility = [], places = [], comparison, embedded = false }: {
   projection: PlanProjectionV1; semanticState: PlanSemanticStateV1; controls?: readonly AppliedPlanControl[]; plan: MonthEconomicPlan | null;
   external?: ComponentProps<typeof PlannedExpensesControl>; revision: number; evidenceStatus?: "EXACT" | "CHANGED_AUTHORITIES" | "NOT_APPLICABLE";
   historicalRemainder?: string | null; composerHref?: string; today: string; comparison?: OfficialPlanComparisonV1;
-  calendarCarryovers?: readonly PlannedExpenseCard[]; persons?: readonly { personId: string; displayName: string }[];
+  persons?: readonly { personId: string; displayName: string }[];
   mobility?: readonly ComposerMobilitySummary[]; places?: readonly import("@/domain/phase2/planned-places").PlannedPlaceOption[];
   embedded?: boolean;
 }) {
@@ -121,7 +120,7 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
     </details>
     {!embedded && <div className={styles.practicalGrid}>
       <details id="resources-title" className={styles.practical}><summary>Banque et ressources</summary><div className={styles.practicalBody}>{plan ? <><BankStockCard balance={plan.bankCash.currentRealBankBalance} /><div className={styles.resourceGrid}>{plan.resources.map(resource => <ResourceEditor key={resource.key} resource={resource} targetMonth={projection.targetMonth} controls={false} walletObservation={resource.key === "benefit:swile" ? plan.benefitWallets.SWILE.latestObservation : resource.key === "benefit:edenred" ? plan.benefitWallets.EDENRED.latestObservation : null} />)}</div></> : <p>Les ressources restent accessibles dans le Centre de contrôle.</p>}</div></details>
-      <details id="timeline-title" className={styles.practical}><summary>Calendrier du mois</summary><div className={styles.practicalBody}>{plan && external ? <MonthCalendar targetMonth={projection.targetMonth} today={today} {...projectMonthCalendar(plan.certainOutflows.items, [...external.expenses, ...calendarCarryovers])} /> : <p>Calendrier disponible après renseignement des ressources.</p>}</div></details>
+      {forecastWindowMonths.includes(projection.targetMonth) && <a className="button-secondary self-start" href={composerCalendarHref(projection.targetMonth)}>Calendrier du mois</a>}
     </div>}
     {external && (external.expenses.length > 0
       ? <details id="plan-external" className={styles.practical}><summary>Dépenses planifiées indépendantes · {external.expenses.length}</summary><div className={styles.practicalBody}><PlannedExpensesControl {...external} /></div></details>

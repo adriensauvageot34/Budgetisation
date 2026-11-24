@@ -7,9 +7,9 @@ import scene from "./planned-scroll-scene.module.css";
 import { usePlannedScrollScene } from "./use-planned-scroll-scene";
 import { usePlannedContentMotion } from "./use-planned-content-motion";
 
-const sections = [["resources-title", "Ressources"], ["outflows-title", "Charges"], ["timeline-title", "Calendrier"],
+const sections = [["resources-title", "Ressources"], ["outflows-title", "Charges"],
   ["planned-expense-title", "Projets"], ["necessary-title", "Quotidien"], ["flexible-title", "Extras"], ["final-projection", "Projection"]] as const;
-const appliedSections = [["resources-title", "Ressources"], ["outflows-title", "Charges"], ["timeline-title", "Calendrier"],
+const appliedSections = [["resources-title", "Ressources"], ["outflows-title", "Charges"],
   ["final-projection", "Mon Plan"], ["my-plan-title", "Décisions"], ["necessary-title", "Quotidien"],
   ["flexible-title", "Extras"], ["plan-external", "Projets externes"]] as const;
 

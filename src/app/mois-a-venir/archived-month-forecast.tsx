@@ -21,7 +21,6 @@ export function ArchivedMonthForecast({ entry, forecast, scenario, cutoff }: {
     <MonthDataStatus entry={entry} />
     <MonthStory readOnly scenario={scenario} reference={forecast.referencePlan} targetMonth={entry.targetMonth}
       plannedExpenses={[]} persons={[]} places={[]} vehicle={null} prices={[]} wallets={[]} today={cutoff}
-      settings={scenario.inputs.decision}
-      references={Object.fromEntries(forecast.components.map(part => [part.key, { freshnessDate: part.freshnessDate, confidence: part.confidence }]))} />
+      settings={scenario.inputs.decision} />
   </main>;
 }
