@@ -5,13 +5,13 @@ import { withProductAuthentication } from "@/app/product-query";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { planningDate } from "@/server/phase2/planning-date";
 import { ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
-import { composerCalendarHref, forecastWindowMonths, monthPlanningHref } from "../../month-entry";
+import { composerBalanceHref, composerCalendarHref, forecastWindowMonths, monthPlanningHref } from "../../month-entry";
 import { MonthPicker } from "../../month-picker";
 import { monthLabel } from "../display";
 import { ComposerCalendar } from "./calendar";
 import { readComposerCalendar } from "./calendar-data";
 import material from "../../month-material.module.css";
-import styles from "./calendar.module.css";
+import styles from "../month-view.module.css";
 
 const months = [...ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_MONTH, ...forecastWindowMonths];
 export const dynamic = "force-dynamic";
@@ -36,12 +36,13 @@ export default async function ComposerCalendarPage({ searchParams }: { searchPar
       </div>
       <nav aria-label="Naviguer entre les mois">
         {before && <Link className={button} prefetch={false} href={composerCalendarHref(before)} aria-label="Mois précédent"><ChevronLeft size={18} /></Link>}
-        <MonthPicker key={month} targetMonth={month} calendar />
+        <MonthPicker key={month} targetMonth={month} view="calendar" />
         {after && <Link className={button} prefetch={false} href={composerCalendarHref(after)} aria-label="Mois suivant"><ChevronRight size={18} /></Link>}
       </nav>
       <nav aria-label="Vues de Composer">
         <Link className={button} href={realizedComposerHref(month)} prefetch={false}>Cartes</Link>
         <span className={`${material.clayButton} ${styles.button}`} aria-current="page">Calendrier</span>
+        {mode === "realized" && <Link className={button} href={composerBalanceHref(month)} prefetch={false}>Bilan du mois</Link>}
         {mode !== "realized" && <Link className={button} prefetch={false} href={mode === "pilot" ? JULY_V2_HREF : monthPlanningHref(month)}>Prévisions</Link>}
       </nav>
     </header>

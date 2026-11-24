@@ -24,12 +24,14 @@ export function HistoryV2Page({
   filters,
   initialState: serverInitialState,
   initialOverlay,
+  surface = "history",
 }: {
   readonly month: YearMonth;
   readonly view: HistoryV2View;
   readonly filters: HistoryCalendarFilterState;
   readonly initialState: HistoryV2InitialState;
   readonly initialOverlay?: HistoryOverlayTarget;
+  readonly surface?: "history" | "composer";
 }) {
   const initialState = useHistoryPageState(month, serverInitialState);
   const router = useRouter();
@@ -54,7 +56,7 @@ export function HistoryV2Page({
   }, [initialOverlay]);
 
   const navigate = (nextMonth: YearMonth, nextView: HistoryV2View, nextWeek?: import("@/core/time").LocalDate, overlay?: HistoryOverlayTarget, replace = false, nextFilters = filters) => {
-    const href = historyV2Href({ month: nextMonth, view: nextView, filters: nextFilters, ...(nextWeek === undefined ? {} : { weekStart: nextWeek }), ...(overlay === undefined ? {} : { overlay }) });
+    const href = historyV2Href({ month: nextMonth, view: nextView, filters: nextFilters, surface, ...(nextWeek === undefined ? {} : { weekStart: nextWeek }), ...(overlay === undefined ? {} : { overlay }) });
     if (replace) router.replace(href, { scroll: false });
     else router.push(href, { scroll: false });
   };
@@ -99,8 +101,8 @@ export function HistoryV2Page({
   };
 
   return (
-    <div className={styles.page} data-history-v2="">
-      <HistoryShell
+    <div className={surface === "composer" ? styles.composerPage : styles.page} data-history-v2="">
+      {surface === "history" && <HistoryShell
         month={referenceMonth}
         view={view}
         overview={initialState.overview}
@@ -109,11 +111,11 @@ export function HistoryV2Page({
         onOverlay={openOverlay}
         onMonth={(nextMonth) => { window.dispatchEvent(new Event(historyTransientDismissEvent)); setStack([]); setMinimalOpen(false); navigate(nextMonth, view); }}
         onView={(nextView) => { window.dispatchEvent(new Event(historyTransientDismissEvent)); setStack([]); setMinimalOpen(false); navigate(referenceMonth, nextView); }}
-      />
+      />}
       <div className={styles.viewTransition} key={`${view}-${weekStart ?? "month"}`}>
         {initialState.kind === "calendar" ? <StateBoundary state={initialState.state}>{(model) => <CalendarMonthView model={model} filters={filters} onOverlay={openOverlay} onWeek={(nextWeek) => navigate(month, "calendar", nextWeek)} />}</StateBoundary> : null}
         {initialState.kind === "week" ? <StateBoundary state={initialState.state}>{(model) => <WeekView model={model} filters={filters} onOverlay={openOverlay} onMonth={() => navigate(month, "calendar")} onWeek={(nextWeek, nextReferenceMonth) => navigate(nextReferenceMonth, "calendar", nextWeek)} />}</StateBoundary> : null}
-        {initialState.kind === "balance" ? <BalanceMonthView {...initialState} onOverlay={openOverlay} onMinimal={() => { window.dispatchEvent(new Event(historyTransientDismissEvent)); minimalInvoker.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; setMinimalOpen(true); }} /> : null}
+        {initialState.kind === "balance" ? <BalanceMonthView {...initialState} glass={surface === "composer"} onOverlay={openOverlay} onMinimal={() => { window.dispatchEvent(new Event(historyTransientDismissEvent)); minimalInvoker.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; setMinimalOpen(true); }} /> : null}
       </div>
       <HistoryOverlayHost month={month} stack={stack} onClose={closeOverlay} onBack={backOverlay} onPush={openOverlay} onReplace={(target) => { setStack((current) => [...current.slice(0, -1), target]); navigate(month, view, weekStart, target, true); }} />
       <MinimalPreviewPopover month={month} open={minimalOpen} onClose={() => { setMinimalOpen(false); requestAnimationFrame(() => minimalInvoker.current?.focus()); }} />

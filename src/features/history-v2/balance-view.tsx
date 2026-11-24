@@ -13,6 +13,7 @@ import type {
   PlaceLifeMoneySummary,
 } from "@/query-api";
 import type { UiTransportState } from "@/ui";
+import material from "@/app/mois-a-venir/month-material.module.css";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import {
   formatCount,
@@ -32,6 +33,7 @@ export function BalanceMonthView({
   lifeMoney,
   onOverlay,
   onMinimal,
+  glass = false,
 }: {
   readonly summary: UiTransportState<MonthBalanceSummaryReadModel>;
   readonly categories: UiTransportState<MonthCategoriesReadModel>;
@@ -39,6 +41,7 @@ export function BalanceMonthView({
   readonly lifeMoney: UiTransportState<MonthLifeMoneyReadModel>;
   readonly onOverlay: (target: HistoryOverlayTarget) => void;
   readonly onMinimal: () => void;
+  readonly glass?: boolean;
 }) {
   const moduleData = [summary, categories, spendingNature, lifeMoney].flatMap((state) => {
     const data = state.status === "success" ? state.response.data : state.status === "error" ? state.previousData?.data : undefined;
@@ -50,12 +53,13 @@ export function BalanceMonthView({
   if (moduleData.length > 0 && !publicationCoherent) {
     return <div className={styles.errorState} role="alert"><strong>Publication incompatible</strong><p>Les quatre modules du Bilan ne proviennent pas de la même publication History V2. Rechargez la page.</p><button type="button" className="button-secondary" onClick={() => window.location.reload()}>Réessayer</button></div>;
   }
+  const section = glass ? `${styles.glassModule} ${material.glassPremium}` : styles.balanceModule;
   return (
-    <div className={styles.balanceSurface}>
-      <section className={styles.balanceModule} aria-labelledby="history-v2-m1"><header><h2 id="history-v2-m1">Le mois en un coup d’œil</h2></header><StateBoundary state={summary}>{(model) => <BalanceSummary model={model} onBridge={() => onOverlay({ kind: "bridge" })} onMinimal={onMinimal} />}</StateBoundary></section>
-      <section className={styles.balanceModule} aria-labelledby="history-v2-m2"><header><h2 id="history-v2-m2">Ce qui explique le mois</h2></header><StateBoundary state={categories}>{(model) => <CategoryAnalysis model={model} onCategory={(categoryId) => onOverlay({ kind: "category", categoryId })} />}</StateBoundary></section>
-      <section className={styles.balanceModule} aria-labelledby="history-v2-m3"><header><h2 id="history-v2-m3">Nature des dépenses et marges</h2></header><StateBoundary state={spendingNature}>{(model) => <SpendingNature model={model} onSegment={(params) => onOverlay({ kind: "segment", params })} />}</StateBoundary></section>
-      <section className={styles.balanceModule} aria-labelledby="history-v2-m4"><header><h2 id="history-v2-m4">Vie et argent</h2></header><StateBoundary state={lifeMoney}>{(model) => <LifeMoney model={model} onOverlay={onOverlay} />}</StateBoundary></section>
+    <div className={glass ? styles.glassBalance : styles.balanceSurface}>
+      <section className={section} aria-labelledby="history-v2-m1"><header><h2 id="history-v2-m1">Le mois en un coup d’œil</h2></header><StateBoundary state={summary}>{(model) => <BalanceSummary model={model} onBridge={() => onOverlay({ kind: "bridge" })} onMinimal={onMinimal} />}</StateBoundary></section>
+      <section className={section} aria-labelledby="history-v2-m2"><header><h2 id="history-v2-m2">Ce qui explique le mois</h2></header><StateBoundary state={categories}>{(model) => <CategoryAnalysis model={model} onCategory={(categoryId) => onOverlay({ kind: "category", categoryId })} />}</StateBoundary></section>
+      <section className={section} aria-labelledby="history-v2-m3"><header><h2 id="history-v2-m3">Nature des dépenses et marges</h2></header><StateBoundary state={spendingNature}>{(model) => <SpendingNature model={model} onSegment={(params) => onOverlay({ kind: "segment", params })} />}</StateBoundary></section>
+      <section className={section} aria-labelledby="history-v2-m4"><header><h2 id="history-v2-m4">Vie et argent</h2></header><StateBoundary state={lifeMoney}>{(model) => <LifeMoney model={model} onOverlay={onOverlay} />}</StateBoundary></section>
     </div>
   );
 }
