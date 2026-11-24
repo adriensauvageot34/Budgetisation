@@ -111,9 +111,13 @@ export function readJulyBudget(source: RealizedBoard, board: RealizedBoard, evid
   const forecast = forecastRemainingMonth(reference, evidence, "2026-07-16", [], {}, {}, "AS_OF_TEMPORAL");
   const intervals = new Map([...forecast.essential, ...forecast.optional].filter(item => item.observationCount > 0)
     .map(item => [item.key, item]));
-  const fuelMonths = (evidence.completeMonthsBySource?.BANK ?? []).filter(month => month <= evidence.history.endMonth).sort().slice(-5);
-  const fuelSamples = fuelMonths.map(month => sum(evidence.history.economicEntries
-    .filter(entry => entry.subcategory === "Carburant" && entry.date.startsWith(month)).map(entry => entry.amount)));
+  const fuelRows = evidence.history.economicEntries.filter(entry => entry.subcategory === "Carburant"
+    && entry.date.slice(0, 7) <= evidence.history.endMonth && Number(entry.amount) > 0);
+  const certifiedFuelMonths = (evidence.completeMonthsBySource?.BANK ?? []).filter(month => month <= evidence.history.endMonth).sort().slice(-5);
+  // Partial bank imports can provide an estimate on observed months, but missing months cannot be treated as zero.
+  const fuelMonths = certifiedFuelMonths.length >= 3 ? certifiedFuelMonths
+    : [...new Set(fuelRows.map(entry => entry.date.slice(0, 7)))].sort().slice(-5);
+  const fuelSamples = fuelMonths.map(month => sum(fuelRows.filter(entry => entry.date.startsWith(month)).map(entry => entry.amount)));
   const fuelReference = fuelSamples.length >= 3 && fuelSamples.some(value => Number(value) > 0)
     ? { low: referenceQuantile(fuelSamples.map(Number), .25), central: referenceQuantile(fuelSamples.map(Number), .5),
       high: referenceQuantile(fuelSamples.map(Number), .75) } : null;
@@ -129,7 +133,8 @@ export function readJulyBudget(source: RealizedBoard, board: RealizedBoard, evid
     const balance = estimate ? range(key => aboveZero(new Big(estimate[key]).minus(habitual))) : null;
     const total = range(key => new Big(recorded).plus(priced).plus(balance?.[key] ?? "0"));
     return { ...definition, recorded, priced, balance, total, plannedCount: new Set(intentions.map(line => line.owner)).size,
-      unpriced: intentions.filter(line => line.amount === null).length };
+      unpriced: intentions.filter(line => line.amount === null).length,
+      partialEstimate: definition.key === "fuel" && !!fuelReference && certifiedFuelMonths.length < 3 };
   });
 
   const fixed = confirmed.filter(line => line.category === "fixed"), upcoming = planned.filter(line => line.category === "fixed");

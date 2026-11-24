@@ -297,6 +297,9 @@ const julyEvidence = {
 };
 const julyGlass = readJulyBudget(julySource, july, julyEvidence, null);
 assert.deepEqual(julyGlass.rows.find(row => row.key === "fuel").balance, { low: "90.00", central: "90.00", high: "90.00" });
+const withPartialImports = readJulyBudget(julySource, july, { ...julyEvidence, completeMonthsBySource: {} }, null);
+assert.equal(withPartialImports.rows.find(row => row.key === "fuel").balance.central, "90.00");
+assert.equal(withPartialImports.rows.find(row => row.key === "fuel").partialEstimate, true);
 assert.equal(julyGlass.fixedPlanned, "25.00");
 assert.equal(julyGlass.fixedConfirmed, "60.00");
 const semanticState = reconstructJulyDraft(julySource);
