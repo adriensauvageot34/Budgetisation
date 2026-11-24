@@ -71,6 +71,11 @@ export function julyReconstructedLines(board: RealizedBoard) {
   return lines;
 }
 
+export function julyReconstructedDate(month: string, card: RealizedCard) {
+  const date = card.date ?? (card.payments.length === 1 ? card.payments[0]!.date : undefined);
+  return date?.startsWith(`${month}-`) ? date : undefined;
+}
+
 export function reconstructJulyDraft(board: RealizedBoard) {
   const linesByCard = julyReconstructedLines(board);
   const contexts: PlannedContextState[] = [];
@@ -78,8 +83,8 @@ export function reconstructJulyDraft(board: RealizedBoard) {
     if (card.section === "flows") continue;
     const id = reconstructedId(board.month, card.id), lines = linesByCard.get(card.id) ?? [];
     const shape = recipe(card, lines.length);
-    const date = card.date ?? (card.payments.length === 1 ? card.payments[0]!.date : undefined);
-    const dateFields: PlannerJsonObject = date?.startsWith(`${board.month}-`) ? { plannedDate: date } : {};
+    const date = julyReconstructedDate(board.month, card);
+    const dateFields: PlannerJsonObject = date ? { plannedDate: date } : {};
     const start = { contextOccurrenceId: id, templateKey: shape.template, status: "ACTIVE", provenance: "EXPLICIT_USER_DECISION" } as const;
     const item = (line: DraftLine, optionKey: string, basket = false): PlannerJsonObject => ({
       selectionId: reconstructedId(board.month, `${card.id}:${line.key}`), optionKey, kind: "COMPONENT", label: line.label.slice(0, 1024),
@@ -88,7 +93,7 @@ export function reconstructJulyDraft(board: RealizedBoard) {
     });
     const fields: PlannerJsonObject = {
       ...presetCreationFields(shape.template, shape.preset), label: card.label, ...dateFields,
-      ...(card.work ? { participantRefs: [card.work.participant],
+      ...(card.work ? { fieldSchemaVersion: "context-fields@v2", participantRefs: [card.work.participant],
         ...(card.places?.[0] ? { placeRef: { kind: "TEXT", label: card.places[0].label } } : {}) } : {}),
       ...(shape.template === "purchase" ? { fieldSchemaVersion: PURCHASE_BASKET_FIELDS,
         ...(shape.preset === "groceries-purchase" ? { basketCoverage: "EXTRA_TO_SLOT" } : {}) } : {}),

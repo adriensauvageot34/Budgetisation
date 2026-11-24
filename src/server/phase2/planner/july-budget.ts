@@ -6,7 +6,7 @@ import { JULY_COMPOSER_MONTH, JULY_PILOT_DATE, reconstructedId } from "@/domain/
 import { costItemCashTreatment } from "@/domain/phase2/planned-money";
 import { buildMonthReference, referenceQuantile } from "../month-reference";
 import { forecastRemainingMonth, matchesForecastCategory, type CostRange, type MonthPredictionEvidence } from "../remaining-month-forecast";
-import { julyReconstructedLines, reconstructJulyDraft } from "./reconstruct-july-draft";
+import { julyReconstructedDate, julyReconstructedLines } from "./reconstruct-july-draft";
 import type { RealizedBoard, RealizedCard, RealizedPayment } from "./realized-month";
 
 const rangeKeys = ["low", "central", "high"] as const;
@@ -71,7 +71,6 @@ function draftExpenses(source: RealizedBoard, board: RealizedBoard, model: Month
     .map(line => [reconstructedId(source.month, `${cardId}:${line.key}`), line.paymentId] as const)));
   const plannedByPayment = new Map(planned.map(line => [line.id, line]));
   const raw = new Map(model.semanticState.contexts.map(context => [context.contextOccurrenceId, context]));
-  const initialDates = new Map(reconstructJulyDraft(source).contexts.map(context => [context.contextOccurrenceId, context.fields.plannedDate]));
   const cards = new Map(model.board.contexts.map(card => [card.contextOccurrenceId, card]));
   const groups = new Map(source.cards.map(card => [reconstructedId(source.month, card.id), card]));
   const seedByComponent = new Map(model.preview.compiled.contexts.flatMap(context => (context.componentSlots ?? [])
@@ -89,7 +88,7 @@ function draftExpenses(source: RealizedBoard, board: RealizedBoard, model: Month
     const seed = sourcePayment ? plannedByPayment.get(sourcePayment) : null;
     if (sourcePayment && !seed) return []; // Booked and past pending facts do not become future intentions through editing.
     const currentDate = root.fields.plannedDate;
-    const moved = currentDate !== initialDates.get(root.contextOccurrenceId);
+    const moved = currentDate !== (base ? julyReconstructedDate(source.month, base) : undefined);
     const date = moved || !seed ? component.plannedDate ?? (typeof currentDate === "string" ? currentDate : null) : seed.date;
     if (date && !futureDate(date)) return [];
     const label = cards.get(id)?.label ?? component.label;

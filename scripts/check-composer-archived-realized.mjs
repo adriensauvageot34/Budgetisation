@@ -303,6 +303,12 @@ assert.equal(withPartialImports.rows.find(row => row.key === "fuel").partialEsti
 assert.equal(julyGlass.fixedPlanned, "25.00");
 assert.equal(julyGlass.fixedConfirmed, "60.00");
 const semanticState = reconstructJulyDraft(julySource);
+const workFixture = {
+  id: "work-fixture", date: "2026-07-09", label: "Travail sur site", section: "events", art: { iconKey: "activity" },
+  payments: [julyPayment("Repas du travail", "2026-07-09", "-10.00")],
+  work: { name: "Personne test", participant: { kind: "HOUSEHOLD_PERSON", personId: "a1234567-1111-4111-8111-111111111111" }, mode: "onsite", items: [] },
+};
+assert.doesNotThrow(() => reconstructJulyDraft({ ...julySource, cards: [...julySource.cards, workFixture] }));
 const fixedRoot = semanticState.contexts.find(context => context.contextOccurrenceId === reconstructedId(julySource.month, "fixed"));
 const savedItems = fixedRoot.slotSelections.item.items;
 const savedComponents = savedItems.map((item, index) => ({
