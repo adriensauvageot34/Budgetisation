@@ -186,6 +186,7 @@ function VariableCard({ row }: { row: JulyBudget["rows"][number] }) {
       <div className="flex justify-between gap-2"><dt>Prévu dans Composer{row.plannedCount > 0 && ` · ${row.plannedCount} ${row.plannedCount === 1 ? "carte" : "cartes"}`}</dt><dd className="font-bold">{money(row.priced)}</dd></div>
       {row.balance && <div className="flex justify-between gap-2"><dt>Reste estimé après les cartes</dt><dd className="font-bold">{money(row.balance.central)}</dd></div>}
     </dl>
+    {row.partialEstimate && <p className="mt-1 text-xs text-slate-600">Repère calculé sur les mois avec des pleins observés.</p>}
     {row.unpriced > 0 && <p className="mt-1 text-xs text-slate-600">{row.unpriced} {row.unpriced === 1 ? "montant à chiffrer" : "montants à chiffrer"}</p>}
   </article>;
 }
