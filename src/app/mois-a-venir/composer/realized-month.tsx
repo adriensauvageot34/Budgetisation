@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, Search, Utensils, X } from "lucide-react";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, realizedComposerHref, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
+import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import { julyPilotLabels, julyPilotStatuses, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import type { RealizedBoard, RealizedCard, RealizedCardGroup, RealizedPayment } from "@/server/phase2/planner/realized-month";
 import type { RealizedPlace } from "@/server/phase2/planner/realized-places";
@@ -194,6 +194,11 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
           ≈ {money(card.carTrip.estimatedFuel)}
         </strong>
       </span>}
+      {card.observedTravel?.[0] && <span className={styles.cardTrip} title={card.observedTravel[0]}>
+        <ComposerAssetVisual assetKey={carArtwork} iconKey="car" size={23} />
+        <span className={styles.cardTripRoute}>{card.observedTravel[0].split(" · ")[0]}</span>
+        <strong className={styles.cardTripCost}>{card.observedTravel[0].split(" · ").at(-1)}</strong>
+      </span>}
       {card.mobilityNote && <span className={styles.cardSubtitle}>{card.mobilityNote}</span>}
       {card.work && <WorkDayFooter work={card.work} portrait={portrait} />}
       {!card.work && card.participant && <span className={styles.cardParticipant}>
@@ -261,6 +266,10 @@ function RealizedDetail({ card, month, terms, open }: {
       </div>
     </section>}
     {card.mobilityNote && !card.payments.some(payment => payment.mobilityNote === card.mobilityNote) && <p>{card.mobilityNote}</p>}
+    {!!card.observedTravel?.length && <section className={styles.tripDetail} aria-label="Trajets détectés">
+      <h3>Trajets détectés</h3>
+      <ul className={styles.places}>{card.observedTravel.map(route => <li key={route}>{route}</li>)}</ul>
+    </section>}
     {!!card.reviewNotes?.length && <ul className={styles.places} aria-label="Détails de la carte">
       {card.reviewNotes.map(note => <li key={note}>{note}</li>)}
     </ul>}
@@ -270,7 +279,10 @@ function RealizedDetail({ card, month, terms, open }: {
         {card.reviewReferences.map(ref => <li key={ref.id}>
           <strong>{ref.label} · {money(ref.amount)}</strong><br />
           <small>{ref.role} · {fullDate.format(new Date(`${ref.date}T12:00:00Z`))}</small>
-          {ref.date.slice(0, 7) !== month && <small> · <a href={realizedComposerHref(ref.date.slice(0, 7), card.id)}>Voir le mois bancaire</a></small>}
+          {ref.date.slice(0, 7) !== month && <small> · <a
+            href={realizedComposerHref(ref.date.slice(0, 7), isImportedRealizedMonth(month) ? realizedOperationCardId(ref.id) : card.id)}>
+            {isImportedRealizedMonth(month) ? "Voir l’opération" : "Voir le mois bancaire"}
+          </a></small>}
         </li>)}
       </ul>
     </section>}
@@ -354,6 +366,7 @@ export function RealizedComposerMonth({ board, onEdit, editableIds, initialCardI
         ...(card.work?.items ?? []).map(item => searchText(card.label, item.label, searchableDate(card.date))),
         searchText(source.label, category?.label, category?.shortLabel),
         ...(card.carTrip ? [searchText(card.label, "trajet voiture essence", card.carTrip.route, card.carTrip.compactRoute)] : []),
+        ...(card.observedTravel ?? []).map(route => searchText(card.label, "trajet", route)),
         ...card.payments.map(payment => searchText(source.label, card.label, paymentSearch(payment))),
         ...(card.occurrences ?? []).map(occurrence => searchText(card.label, occurrence.label, occurrence.date, searchableDate(occurrence.date))),
         ...(card.relatedPayments ?? []).map(payment => searchText(card.label, payment.label, payment.cardLabel,

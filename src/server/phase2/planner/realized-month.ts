@@ -80,6 +80,7 @@ export type CardGroup = {
   occurrences?: Occurrence[];
   relatedPayments?: RelatedPayment[];
   carTrip?: RealizedCarTrip;
+  observedTravel?: readonly string[];
   mobilityNote?: string;
   participant?: JulyParticipant;
   keepPaymentsTogether?: boolean;
@@ -331,7 +332,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   }
   try {
     const image = JSON.parse(process.env.COMPOSER_COUPLE_PORTRAIT ?? "null");
-    if ((july || historical) && bootstrap.household && image?.householdId === bootstrap.household.householdId
+    if ((july || historical || imported) && bootstrap.household && image?.householdId === bootstrap.household.householdId
       && typeof image.portrait === "string" && image.portrait.length < 16_000 && /^[a-z\d+/]+={0,2}$/iu.test(image.portrait)) {
       julyPortraits.Couple = `data:image/webp;base64,${image.portrait}`;
     }
@@ -342,7 +343,14 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     return earliest ? repository.loadActivityOccurrences({ start: earliest, endExclusive: range.start }) : [];
   }) : [];
   const referenceRead = Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts));
-  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs, previousWork, participants, visits, tags, products, review] = await Promise.all([
+  const causalLinkRead = eventIds.then(ids => repository.loadActivityCausalFinancialLinkRows(ids)).then(parseActivityCausalFinancialLinks);
+  const linkedOperationsRead = imported ? Promise.all([operationRead, causalLinkRead]).then(([rows, links]) => {
+    const idsInMonth = new Set<string>(rows.map(row => row.operationId));
+    const ids = [...new Set(links.flatMap(({ canonicalComponentKey }) => canonicalComponentKey.startsWith("operation:")
+      ? [canonicalComponentKey.slice("operation:".length)] : []))].filter(id => !idsInMonth.has(id));
+    return ids.length ? repository.loadOperationsByIds(ids) : [];
+  }) : [];
+  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs, previousWork, participants, visits, tags, products, review, observedTravel, confirmedPlaces, outsideOperations] = await Promise.all([
     operationRead, factRead, occurrenceRead,
     referenceRead,
     historical ? Promise.all([eventIds, previousDates]).then(([ids, previous]) =>
@@ -351,7 +359,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     referenceRead.then(labels => repository.loadRealizedMerchantPlaceAliases([...labels.merchantIdentity.keys()])),
     operationRead.then(rows => repository.loadFinancialLinkRowsByOperationIds(rows.map(operation => operation.operationId))),
     eventIds.then(ids => repository.loadMomentLifeEventRowsByLifeEventIds(ids)),
-    eventIds.then(ids => repository.loadActivityCausalFinancialLinkRows(ids)).then(parseActivityCausalFinancialLinks),
+    causalLinkRead,
     july ? readJulyCarLegs(repository) : historical
       ? repository.loadMobilityLegFacts(range).then(legs => legs.filter(leg => leg.source.status === "CERTIFIED_SOURCE")) : [],
     previousDates,
@@ -364,6 +372,9 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     historical && people.profiles.length ? operationRead.then(rows =>
       repository.loadRealizedProductPeople(rows.filter(operation => operation.raw.flux === "Dépense").map(operation => operation.operationId))) : [],
     reviewRead,
+    imported ? eventIds.then(ids => repository.loadLifeEventObservedTravelRows(ids)) : [],
+    imported ? operationRead.then(rows => repository.loadRealizedConfirmedOperationPlaces(rows.map(row => row.operationId))) : [],
+    linkedOperationsRead,
   ]);
 
   const mealTiming = new Map(participants.map(row => [`${row.life_event_id}:${row.person_id}`, row]));
@@ -393,6 +404,18 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const eventById = new Map(eventDetails.map(row => [String(row.life_event_id), row]));
   const localizationIdsByEvent: Links = new Map();
   for (const row of localizations) link(localizationIdsByEvent, String(row.life_event_id), String(row.place_id));
+  const travelByEvent = new Map<string, string[]>();
+  for (const row of observedTravel) {
+    const note = optionalCanonicalString(row, ["note"]);
+    if (!note?.startsWith("google-timeline:")) continue;
+    const travel = note.slice("google-timeline:".length).trim();
+    if (!travel || travel.length > 120) continue;
+    const id = String(row.life_event_id);
+    const prior = travelByEvent.get(id) ?? [];
+    if (!prior.includes(travel)) prior.push(travel);
+    travelByEvent.set(id, prior);
+  }
+  const confirmedOperationPlaces = new Set(confirmedPlaces.map(place => `${place.operation_id}:${place.place_id}`));
   const aliasesByMerchant = new Map<string, typeof aliases[number][]>();
   for (const alias of aliases) {
     const id = String(alias.merchant_id);
@@ -506,6 +529,12 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       ...(visual.recurring ? { occurrences: [] } : { date: event.startDate, endDate: event.endDate, eventStatus: event.validationStatus }),
       ...(carTrip ? { carTrip } : {}),
     };
+    if (imported && !visual.recurring && event.participantIds.length === 1) {
+      card.participant = people.profiles.find(person => person.ref.personId === event.participantIds[0])?.name;
+      card.keepPaymentsTogether = true;
+    }
+    const observedRoutes = travelByEvent.get(event.lifeEventId);
+    if (observedRoutes?.length) card.observedTravel = observedRoutes;
     if (july && !visual.recurring) {
       const names = people.profiles.filter(profile => event.participantIds.includes(profile.ref.personId as typeof event.participantIds[number])).map(profile => profile.name);
       const family = event.activityId === "visite_famille" && /servian|fontès/iu.test(title);
@@ -588,7 +617,8 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       link(during, canonicalString(row, ["operation_id"], "financial_links"), canonicalString(row, ["life_event_id"], "financial_links"));
       continue;
     }
-    if (row.relation_type !== "Paiement_activite" && row.relation_type !== "Cause_par_evenement" && row.relation_type !== "Preparation") continue;
+    const observedEventExpense = imported && row.relation_type === "Effectue_pendant" && row.validation_status === "Confirmé";
+    if (!observedEventExpense && row.relation_type !== "Paiement_activite" && row.relation_type !== "Cause_par_evenement" && row.relation_type !== "Preparation") continue;
     link(explicit, canonicalString(row, ["operation_id"], "financial_links"), canonicalString(row, ["life_event_id"], "financial_links"));
   }
   for (const row of momentLinks) {
@@ -637,7 +667,8 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const alias = row.merchant && flow === "expense" && !row.canonicalPlace
       ? merchantPlaceAlias(aliasesByMerchant.get(row.merchant.id) ?? [], row.bankLabel, row.bankDate) : undefined;
     const publicPlace = flow === "expense" && row.merchantIdentityKind === "commercial" ? probableMerchantPlace(label, row.bankLabel) : undefined;
-    const sourcedPlace = row.canonicalPlace ? placeOf(row.canonicalPlace.id, imported ? "probable" : "confirmed")
+    const placeConfirmed = row.canonicalPlace && confirmedOperationPlaces.has(`${operation.operationId}:${row.canonicalPlace.id}`);
+    const sourcedPlace = row.canonicalPlace ? placeOf(row.canonicalPlace.id, imported && !placeConfirmed ? "probable" : "confirmed")
       : (alias && placeOf(alias.id, alias.certainty))
         ?? publicPlace;
     const place = historical && publicPlace && sourcedPlace?.certainty === "town"
@@ -833,6 +864,25 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       });
     }
   }
+  if (outsideOperations.length) {
+    const byId = new Map<string, ReturnType<typeof operationFromCanonicalRow>>(outsideOperations.map(raw => {
+      const operation = operationFromCanonicalRow(raw);
+      return [operation.operationId, operation];
+    }));
+    for (const link of causalLinks) {
+      if (!link.canonicalComponentKey.startsWith("operation:")) continue;
+      const payment = byId.get(link.canonicalComponentKey.slice("operation:".length));
+      const card = eventCards.get(link.lifeEventId);
+      if (!payment || !card || card.reviewReferences?.some(ref => ref.id === payment.operationId)) continue;
+      card.reviewReferences = [...(card.reviewReferences ?? []), {
+        id: payment.operationId,
+        date: payment.bankDate,
+        label: optionalCanonicalString(payment.raw, ["marchand"]) ?? payment.label,
+        amount: payment.bankAmount,
+        role: "Paiement enregistré dans un autre mois",
+      }];
+    }
+  }
   if (review) {
     const byEvent = new Map(observedEvents.map(observed => [String(observed.event.lifeEventId), observed]));
     const byLeg = new Map(carLegs.map(leg => [leg.legId, leg]));
@@ -868,7 +918,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const coffeePerson = coffeeCards.get(card.id);
     const meals = work?.meals.filter(meal => !paidMeals.has(meal.id)) ?? [];
     if (work && !card.payments.length && !card.relatedPayments?.length && (historical || !meals.length)) return [];
-    if ((july || historical) && ["events-lecon_conduite", "events-journee_maison"].includes(card.id)
+    if ((july || historical || imported) && ["events-lecon_conduite", "events-journee_maison"].includes(card.id)
       && !card.payments.length && !card.relatedPayments?.length) return [];
     const peopleOnPayments = new Set(card.payments.flatMap(payment => payment.participant ?? []));
     const participant = card.participant ?? (card.id === groceriesCardId ? "Couple"

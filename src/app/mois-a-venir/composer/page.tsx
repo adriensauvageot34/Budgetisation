@@ -15,6 +15,7 @@ import { observeSnapshot } from "@/server/phase2/planner/snapshot-observation";
 import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import { julyPilotStatuses } from "@/domain/phase2/planner/july-pilot";
 import { ArchivedRealizedMonth } from "./archived-realized-month";
+import { realizedOperationCardId } from "./realized-card-view";
 import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
 import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
 import { reconstructJulyDraft } from "@/server/phase2/planner/reconstruct-july-draft";
@@ -34,7 +35,8 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
       return readRealizedMonth(context, parseYearMonth(month));
     });
     const cardId = params.carte;
-    const initialCardId = typeof cardId === "string" && board.cards.some(card => card.id === cardId) ? cardId : undefined;
+    const initialCardId = typeof cardId === "string" && board.cards.some(card => card.id === cardId ||
+      card.payments.some(payment => realizedOperationCardId(payment.id) === cardId)) ? cardId : undefined;
     return <ArchivedRealizedMonth key={month} board={board} initialCardId={initialCardId} />;
   }
   const observed = await observeSnapshot(() => withProductAuthentication(async () => {
