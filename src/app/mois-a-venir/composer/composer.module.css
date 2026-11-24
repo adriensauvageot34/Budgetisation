@@ -808,7 +808,13 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
   min-width: 0;
   color: var(--ink);
 }
-.compactToolbar > .reconstructionModes { margin-inline-start: auto; max-width: 100%; flex-wrap: wrap; }
+.compactToolbar > .reconstructionModes { margin-inline-start: auto; max-width: 100%; flex-wrap: wrap; gap: 2px; padding: 2px; }
+.compactToolbar .reconstructionModes :is(button, .reconstructionLink) {
+  min-height: 32px;
+  padding: 4px 8px;
+  font-size: .875rem;
+  white-space: nowrap;
+}
 .compactToolbar > .toolbar + .reconstructionModes { margin-inline-start: 0; }
 .compactToolbar > .toolbar { width: auto; }
 .compactToolbar button:enabled { cursor: pointer; }
@@ -828,6 +834,11 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 .realizedTotals dt { color: #5e546c; font-size: .7rem; line-height: 1.2; }
 .realizedTotals dd { margin: 0; color: #292338; font-size: 1rem; font-weight: 750; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .realizedNet { border-radius: 8px; padding: 3px 7px; background: #eee4f6; }
+@media (min-width:1121px) and (max-width:1440px) {
+  .compactToolbar { column-gap: 8px; }
+  .realizedTotals { column-gap: 8px; padding-inline: 6px; }
+  .compactToolbar > .toolbar > .iconButton > span { display: none; }
+}
 @media (max-width:560px) {
   .reconstructionModes button { padding-inline: 7px; font-size: .85rem; }
   .realizedTotals { flex: 1 0 100%; grid-auto-columns: minmax(0, 1fr); }
