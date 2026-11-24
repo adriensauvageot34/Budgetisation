@@ -26,7 +26,7 @@ import type { CalendarEntry } from "../planned-expenses-projection";
 import material from "../month-material.module.css";
 import pilotStyles from "../composer/realized-month.module.css";
 
-export const metadata = { title: "Juillet V2" };
+export const metadata = { title: "Prévisions de juillet 2026" };
 export const dynamic = "force-dynamic";
 const button = `${material.clayButton} inline-flex items-center px-4 py-2 text-sm font-bold`;
 
@@ -67,7 +67,7 @@ export default async function JulyV2Page() {
     <header className={`${material.glassPremium} ${material.glassHero} px-6 py-5 sm:px-8`}>
       <p className="eyebrow">Simulation · <time dateTime={JULY_PILOT_DATE}>15 juillet 2026</time></p>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-4xl font-black tracking-tight sm:text-5xl">Juillet V2</h1>
+        <h1 className="text-4xl font-black tracking-tight sm:text-5xl">Juillet 2026</h1>
         <nav aria-label="Accès du mois de juillet" className="flex flex-wrap gap-2">
           {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} prefetch={false} className={button}>Calendrier pleine page</Link>}
           {composerEnabled && board && <Link href={JULY_COMPOSER_HREF} prefetch={false} className={`${material.clayPrimary} inline-flex items-center px-4 py-2 text-sm font-bold`}>Voir les cartes</Link>}

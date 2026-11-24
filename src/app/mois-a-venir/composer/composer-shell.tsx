@@ -30,7 +30,6 @@ import type { JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
 import { RealizedComposerMonth } from "./realized-month";
 import { RealizedFinancialTotals } from "./archived-realized-month";
-import { MonthPicker } from "../month-picker";
 import { JulyPilotCardStatuses, ReconstructedCards } from "./reconstructed-cards";
 import { proposeJulyCarTrips } from "./actions";
 import { composerContextProgress, ContextProgress } from "./context-progress";
@@ -1271,8 +1270,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         {reconstruction ? <span data-object-count>{showingRealized ? `${displayedReconstruction?.operationCount} opérations bancaires${julyPilot ? " au 15 juillet" : ""}` : `${shown.board.contexts.filter(card => !card.parentContextOccurrenceId).length} cartes du brouillon`}</span>
           : <span data-object-count>{shown.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-label={previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Précisions en cours de calcul" : undefined} aria-pressed={unresolvedOpen} aria-controls={unresolvedOpen ? "composer-finances-title" : undefined} disabled={!model.presentation.unresolvedCount || previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} onClick={showUnresolved}>{previewStatus !== "FRESH" && previewStatus !== "BLOCKED" ? "Calcul…" : `${model.presentation.unresolvedCount} à préciser`}</button></span>}
         {model.activeRevisionNumber > 0 && <small data-official-revision>Plan · révision {model.activeRevisionNumber}</small>}
-        {!relationSession && previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}
-        {reconstruction && <MonthPicker targetMonth={reconstruction.month} />}</div></div>
+        {!relationSession && previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
       {!reconstruction && <div className={styles.hudContainer} data-compare-header>{comparison && <div className={styles.compareCurrent}><span>Actuel</span><strong>{money(comparison.model.board.cockpit.plan.economicMonthEndRemainder)}</strong></div>}
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails}

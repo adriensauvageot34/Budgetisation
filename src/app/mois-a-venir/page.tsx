@@ -48,6 +48,14 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     redirect(JULY_V2_HREF);
   }
   if (isArchivedRealizedMonth(targetMonth)) redirect(realizedComposerHref(targetMonth));
+  if (params.month !== targetMonth) {
+    const query = new URLSearchParams({ month: targetMonth });
+    for (const [key, raw] of Object.entries(params)) {
+      if (key === "month" || raw === undefined) continue;
+      for (const value of Array.isArray(raw) ? raw : [raw]) query.append(key, value);
+    }
+    redirect(`/mois-a-venir?${query}`);
+  }
   const client = createCanonicalReadClient();
   const householdId = context.household.householdId;
   const archivedForecast = showsArchivedForecast(targetMonth, currentMonth, params.vue);

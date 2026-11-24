@@ -26,9 +26,7 @@
 .shell .header {
   position: relative;
   z-index: 30;
-  margin: 12px clamp(12px, 1.5vw, 24px) 0;
-  border: 1px solid #ffffffad;
-  border-radius: 22px;
+  border-bottom: 1px solid #ffffffad;
   background: linear-gradient(155deg, #ffffffb0, #fffaf78c);
   /* A moving, full-width blurred header repaints its backdrop on every scroll frame. */
   box-shadow: 0 7px 24px #54416a12, inset 0 1px 0 #ffffffe0;

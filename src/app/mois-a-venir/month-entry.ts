@@ -1,4 +1,4 @@
-import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { addMonths, parseYearMonth } from "@/core/time";
 import type { BootstrapAnalysisPeriod } from "@/server/bootstrap/types";
 
@@ -20,6 +20,20 @@ export function composerCalendarHref(month: string) {
 
 export function composerBalanceHref(month: string) {
   return `/mois-a-venir/composer/bilan?month=${month}`;
+}
+
+export const globalAnalysisHref = "/analyse-globale";
+
+export function workspacePeriodHref(period: string, pathname: string) {
+  if (period === "global") return globalAnalysisHref;
+  const realized = isArchivedRealizedMonth(period);
+  const pilot = period === JULY_COMPOSER_MONTH;
+  if (pathname === "/mois-a-venir/composer/bilan" && realized) return composerBalanceHref(period);
+  if (pathname === "/mois-a-venir/composer/calendrier" && (realized || pilot || forecastWindowMonths.includes(period))) {
+    return composerCalendarHref(period);
+  }
+  if (realized) return realizedComposerHref(period);
+  return pilot ? JULY_V2_HREF : monthPlanningHref(period);
 }
 
 export function showsArchivedForecast(targetMonth: string, currentMonth: string, view: unknown): boolean {

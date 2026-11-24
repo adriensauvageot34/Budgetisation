@@ -227,10 +227,10 @@ const materializationStore = read("src/server/analytics/materialization/store.ts
 assert.match(canonicalRoute, /<HistoryV2Page\b/, "La route canonique /historique/[month] doit rendre History V2.");
 assert.doesNotMatch(canonicalRoute, /@\/features\/calendar|historyCalendarMonth|historyDayDetail/, "La route canonique ne doit importer aucun frontend/ReadModel History V1.");
 assert.match(routeState, /return `\/historique\/\$\{input\.month\}/, "Les deep links V2 doivent utiliser /historique.");
-assert.match(mainNavigation, /href: "\/historique", label: "Historique"/, "La navigation principale doit viser /historique.");
+assert.match(mainNavigation, /<MonthPicker\s*\/>/, "La navigation principale passe par le sélecteur de période.");
 assert.match(rootHistoryRoute, /`\/historique\/\$\{latestMonth\}`/, "L'index Historique doit entrer dans la route canonique V2.");
 assert.match(rootHistoryRoute, /resolveLatestPublishedHistoryV2Month/, "L'index Historique doit utiliser la publication V2 active.");
-assert.match(rootRoute, /resolveLatestPublishedHistoryV2Month/, "La racine produit doit utiliser la même publication V2 active.");
+assert.match(rootRoute, /redirect\("\/mois-a-venir"\)/, "La racine produit doit ouvrir l’espace Composer.");
 assert.doesNotMatch(`${rootHistoryRoute}\n${rootRoute}`, /eligibleHistoryMonths|periods\.at\(-1\)/, "Les routes sans mois ne doivent plus utiliser la dernière période Bootstrap.");
 assert.match(queryRuntime, /export async function resolveLatestPublishedHistoryV2Month/, "Le resolver authentifié doit être partagé.");
 assert.match(materializationStore, /async readLatestPublishedHistoryV2Month/, "La matérialisation doit porter la lecture du dernier mois publié.");

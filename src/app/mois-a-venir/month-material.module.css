@@ -79,15 +79,8 @@
 .projection dt { color: var(--accent-projection); }
 .data { font-variant-numeric: tabular-nums; color: var(--ink); text-shadow: none; }
 .money { display: inline-block; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.monthHeader { padding-block: 1.25rem 1.75rem; }
-.monthLink { transition: background var(--motion-fast), color var(--motion-fast); border-radius: var(--radius-md); }
-.monthLink:hover { background: #ffffff80; color: var(--ink); }
 .composerInvitation { margin:.7rem 0 1rem; color:var(--muted); font-size:.8rem; line-height:1.55; }
 .composerInvitation a { color:var(--accent-primary); font-weight:650; text-decoration:underline; text-underline-offset:3px; }
-.page .monthHeader { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr); gap:.5rem; padding-block:.75rem 1rem; }
-.page .monthHeader h1 { order:0; width:auto; font-size:clamp(1.15rem,3vw,2rem); line-height:1.2; overflow-wrap:anywhere; }
-.page .monthLink { padding:.5rem; font-size:clamp(.65rem,1vw,.8rem); overflow-wrap:anywhere; }
-.page .monthLink:last-child { text-align:right; }
 @media(max-width:767px) {
   .page [data-month-actions] { flex-wrap:wrap; gap:.4rem; justify-content:flex-end; }
   .page [data-month-actions] :is(a,button) { padding:.55rem .65rem; font-size:.7rem; white-space:normal; }
@@ -137,7 +130,7 @@
 .iconButton { display: inline-flex; min-width: 2rem; min-height: 2rem; align-items: center; justify-content: center; border-radius: 50%; }
 .field { border: 1px solid #b6c1cc; border-radius: var(--radius-sm); background: #fffffff0; color: var(--ink); }
 .clayButton:focus-visible, .clayChip:focus-visible, .clayPrimary:focus-visible, .iconButton:focus-visible,
-.tab:focus-visible, .monthLink:focus-visible, .disclosure > summary:focus-visible, .calendarEvent:focus-visible, .precisionAction > summary:focus-visible, .field:focus-visible {
+.tab:focus-visible, .disclosure > summary:focus-visible, .calendarEvent:focus-visible, .precisionAction > summary:focus-visible, .field:focus-visible {
   outline: 2px solid var(--accent-focus); outline-offset: 3px;
 }
 .resourceCard { transition: transform var(--motion-normal) var(--ease-premium), box-shadow var(--motion-normal), border-color var(--motion-normal); }
@@ -292,8 +285,6 @@
   .glassPrimary, .glassPremium, .glassSecondary, .glassSoft, .nav, .popover, .calendar, .resourceCard { background: #f1f0ec; }
 }
 @media (max-width: 700px) {
-  .monthHeader { flex-wrap: wrap; gap: .75rem; }
-  .monthHeader h1 { order: -1; width: 100%; font-size: 1.75rem; }
   .nav { flex-wrap: wrap; justify-content: flex-end; }
   .nav > div { flex-basis: 100%; }
   .dataSection > div:last-child, .glassPrimary > dl, .glassPremium > dl { grid-template-columns: 1fr; }
@@ -309,7 +300,7 @@
   .projectCard:hover :global([data-project-hero]) img, .projectCard:focus-within :global([data-project-hero]) img,
   .projectCard:hover :global([data-project-image]), .projectCard:focus-within :global([data-project-image]) { transform: none; }
   .calendarContent:not(:empty), .resultEnter { animation: none; }
-  .clayButton, .clayChip, .clayPrimary, .iconButton, .tab, .resourceCard, .brandBadge, .chargeRow, .monthLink, .calendarEvent, .precisionAction > summary { transition: none; }
+  .clayButton, .clayChip, .clayPrimary, .iconButton, .tab, .resourceCard, .brandBadge, .chargeRow, .calendarEvent, .precisionAction > summary { transition: none; }
   .clayButton:not(:disabled):hover, .clayChip:not(:disabled):hover, .clayPrimary:not(:disabled):hover, .iconButton:not(:disabled):hover,
   .clayButton:not(:disabled):active, .clayChip:not(:disabled):active, .clayPrimary:not(:disabled):active, .iconButton:not(:disabled):active,
   .resourceCard:hover, .resourceCard:hover .brandBadge, .calendarEvent:hover, .calendarEvent:active, .precisionAction > summary:hover, .precisionAction > summary:active { transform: none; }
