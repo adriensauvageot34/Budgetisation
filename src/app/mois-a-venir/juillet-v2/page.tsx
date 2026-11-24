@@ -32,7 +32,9 @@ async function savedJulyComposer() {
   const planner = await authorizedPlanner();
   const draft = await readActiveComposerDraft(planner, JULY_COMPOSER_MONTH);
   if (!draft) return null;
-  return readMonthComposer(planner.deps, planner.householdId, JULY_COMPOSER_MONTH, draft.semanticState);
+  const { deps, householdId } = planner;
+  return readMonthComposer({ ...deps, readWorld: deps.readComposerWorld ?? deps.readWorld },
+    householdId, JULY_COMPOSER_MONTH, draft.semanticState);
 }
 
 export default async function JulyV2Page() {
