@@ -2,6 +2,7 @@ import "server-only";
 import Big from "big.js";
 import { componentId } from "@/domain/phase2/planner/identity";
 import type { MonthComposerReadModel } from "@/domain/phase2/planner/composer-contract";
+import { presetForContext, presetIllustrationPath } from "@/domain/phase2/planner/composer-presets";
 import { JULY_COMPOSER_MONTH, JULY_PILOT_DATE, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import { costItemCashTreatment } from "@/domain/phase2/planned-money";
 import { buildMonthReference, referenceQuantile } from "../month-reference";
@@ -24,6 +25,7 @@ type Category = typeof categories[number]["key"];
 type BudgetLine = {
   id: string; owner: string; label: string; family: string;
   category: Category | "fixed"; date: string | null; amount: string | null; extra?: boolean;
+  artwork: RealizedCard["art"]; badge?: RealizedPayment["badge"];
 };
 
 function sum(values: Iterable<string | null>) {
@@ -61,6 +63,7 @@ function expenseLines(board: RealizedBoard, status: "confirmed" | "planned") {
       id: payment.id, owner: card.id, label: payment.label, family: card.label, category: paymentCategory(payment, card),
       date: status === "confirmed" ? payment.date : payment.activityDate ?? payment.date,
       amount: new Big(payment.amount).abs().toFixed(2),
+      artwork: payment.art ?? card.art, badge: payment.badge,
     } satisfies BudgetLine)));
 }
 
@@ -92,12 +95,16 @@ function draftExpenses(source: RealizedBoard, board: RealizedBoard, model: Month
     const date = moved || !seed ? component.plannedDate ?? (typeof currentDate === "string" ? currentDate : null) : seed.date;
     if (date && !futureDate(date)) return [];
     const label = cards.get(id)?.label ?? component.label;
+    const preset = presetForContext(root);
     const category = seed?.category ?? (base?.section === "fixed" ? "fixed" : root.fields.budgetDomain === "groceries" ? "groceries"
       : ["restaurant", "fast-food", "delivery"].includes(root.templateKey) ? "household-restaurants" : "other");
     return [{
       id: component.componentId, owner: root.contextOccurrenceId, label: component.label, family: label,
       date, category, amount: component.evaluation.economicAmount,
       extra: !seed && component.binding.relation === "EXTRA_TO_SLOT",
+      artwork: preset ? { src: presetIllustrationPath(preset), iconKey: "activity" }
+        : seed?.artwork ?? base?.art ?? { templateKey: root.templateKey, iconKey: "activity" },
+      badge: seed?.badge,
     } satisfies BudgetLine];
   });
 }
@@ -164,6 +171,7 @@ export function readJulyBudget(source: RealizedBoard, board: RealizedBoard, evid
   const plannedCalendar = [...datedProjects].map(([id, lines]) => ({
     id, label: lines[0]!.family, date: lines[0]!.date!,
     amount: lines.every(line => line.amount !== null) ? sum(lines.map(line => line.amount)) : null,
+    category: lines[0]!.category, artwork: lines[0]!.artwork,
   }));
   const dailyCalendarTotals: Record<string, string> = {};
   for (const entry of [...fixedCalendar, ...plannedCalendar]) if (entry.date && entry.amount !== null) {
