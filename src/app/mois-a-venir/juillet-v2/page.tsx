@@ -19,7 +19,9 @@ import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { money, monthLabel, plannedDayLabel } from "../composer/display";
 import { detailedRealizedCards } from "../composer/realized-card-view";
-import { MonthCalendar } from "../month-calendar";
+import { CalendarEventIcon, MonthCalendar } from "../month-calendar";
+import type { CalendarArtwork } from "../calendar-metadata";
+import { clayAssetArtwork, clayBuilderArtwork, clayContextArtwork, clayV22Artwork } from "../clay-v22-media";
 import type { CalendarEntry } from "../planned-expenses-projection";
 import material from "../month-material.module.css";
 import pilotStyles from "../composer/realized-month.module.css";
@@ -152,25 +154,54 @@ export default async function JulyV2Page() {
 
 type JulyBudget = ReturnType<typeof readJulyBudget>;
 
+function julyCalendarArtwork(item: JulyBudget["fixedCalendar"][number] | JulyBudget["plannedCalendar"][number]): CalendarArtwork {
+  if ("badge" in item) {
+    const badge = item.badge?.sources.find(src => src.startsWith("/"));
+    if (badge) return { src: badge, kind: "badge" };
+  }
+  const merchandise = "/planned-visuals/commerce/categories";
+  const label = "family" in item ? `${item.label} ${item.family}` : item.label;
+  const categoryAssets: Readonly<Record<string, string>> = {
+    groceries: "intent:groceries", fuel: "transport:fuel_usage", "adrien-work-coffee": "scene:coffee",
+    "adrien-work-meals": "scene:work_meal", "manon-work-meals": "scene:work_meal",
+  };
+  const categoryArt = clayAssetArtwork(categoryAssets[item.category])?.src;
+  const specific = /cano[eëé]|kayak/iu.test(label) ? clayV22Artwork("v22-art:extra:kayak-activity")?.src
+    : /titres?[- ]restau|carte ticket restaurant/iu.test(label) ? `${merchandise}/tickets.webp` : undefined;
+  const commerce = item.category === "tobacco-vape" ? `${merchandise}/tobacco.webp`
+    : item.category === "fixed" && /r[ée]gie|\beau\b/iu.test(label) ? `${merchandise}/public-services.webp` : undefined;
+  const { artwork } = item;
+  const src = specific ?? categoryArt ?? commerce ?? artwork.src ?? clayAssetArtwork(artwork.assetKey)?.src
+    ?? (artwork.assetKey ? clayBuilderArtwork(artwork.assetKey, "compact")?.src : undefined)
+    ?? clayContextArtwork(artwork.templateKey)?.src ?? clayContextArtwork("activity")!.src;
+  return { src, kind: "clay" };
+}
+
 function BudgetCalendar({ items, projects, dailyTotals }: {
   items: JulyBudget["fixedCalendar"]; projects: JulyBudget["plannedCalendar"]; dailyTotals: JulyBudget["dailyCalendarTotals"];
 }) {
-  const charges: CalendarEntry[] = items.flatMap(item => item.date ? [{
-    key: item.id, label: item.label, date: item.date, amount: item.amount, nature: "CERTAIN_OUTFLOW",
-    dateCertainty: item.status === "confirmed" ? "DECLARED" : "HISTORICAL_ESTIMATE",
-    fixedState: item.status === "confirmed" ? "OBSERVED" : "UPCOMING",
-  }] : []);
+  const chargeEntries = items.map(item => ({
+    key: item.id, label: item.label, date: item.date, amount: item.amount, nature: "CERTAIN_OUTFLOW" as const,
+    artwork: julyCalendarArtwork(item),
+    group: item.family, status: item.status,
+    dateCertainty: item.status === "confirmed" ? "DECLARED" as const : "HISTORICAL_ESTIMATE" as const,
+    fixedState: item.status === "confirmed" ? "OBSERVED" as const : "UPCOMING" as const,
+  }));
+  const charges: CalendarEntry[] = chargeEntries.flatMap(item => item.date ? [{ ...item, date: item.date }] : []);
   const projectEntries: CalendarEntry[] = projects.map(project => ({
     key: project.id, label: project.label, date: project.date, amount: project.amount, nature: "PLANNED_EXPENSE", dateCertainty: "DECLARED",
+    artwork: julyCalendarArtwork(project),
   }));
   return <div className="mt-4">
-    <MonthCalendar targetMonth={JULY_COMPOSER_MONTH} entries={[...charges, ...projectEntries]} undated={[]} dailyTotals={dailyTotals} today={JULY_PILOT_DATE} />
+    <MonthCalendar targetMonth={JULY_COMPOSER_MONTH} entries={[...charges, ...projectEntries]} undated={[]} dailyTotals={dailyTotals} today={JULY_PILOT_DATE} compactArtwork />
     <details className="mt-3 rounded-xl border border-slate-200 p-3">
       <summary className="cursor-pointer text-sm font-bold">Toutes les échéances du mois</summary>
       <ol className="mt-2 divide-y divide-slate-200">
-        {items.map(item => <li key={item.id} className="grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-2 py-2.5 sm:grid-cols-[6rem_minmax(0,1fr)_7rem_7rem]">
+        {chargeEntries.map(item => <li key={item.key} className="grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-2 py-2.5 sm:grid-cols-[6rem_minmax(0,1fr)_7rem_7rem]">
           {item.date ? <time className="text-sm font-bold" dateTime={item.date}>{plannedDayLabel(item.date)}</time> : <span className="text-sm">À dater</span>}
-          <div className="min-w-0 text-sm"><strong>{item.label}</strong><span className="block text-xs text-slate-600">{item.family}</span></div>
+          <div className="flex min-w-0 items-center gap-2 text-sm"><CalendarEventIcon item={item} size={30} />
+            <div className="min-w-0"><strong>{item.label}</strong><span className="block text-xs text-slate-600">{item.group}</span></div>
+          </div>
           <StateBadge status={item.status} />
           <strong className="col-start-2 text-sm sm:col-start-auto sm:text-right">{item.amount === null ? "À chiffrer" : money(item.amount)}</strong>
         </li>)}

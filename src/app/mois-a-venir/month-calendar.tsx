@@ -29,7 +29,13 @@ const categoryIcons = { Maison: House, Télécom: Smartphone, Assurances: Shield
 const brandWidths: Record<string, number> = { sfr: 28, edf: 28, google: 22, "credit-agricole": 22,
   max: 30, pacifica: 44, nexity: 40, openai: 42 };
 
-function EventIcon({ item, size = 24 }: { item: CalendarItem; size?: number }) {
+export function CalendarEventIcon({ item, size = 24 }: { item: CalendarItem; size?: number }) {
+  const [failed, setFailed] = useState<string>();
+  const artwork = item.artwork;
+  if (artwork && artwork.src !== failed) return <span className={material.calendarArtwork} data-calendar-artwork={artwork.kind} aria-hidden="true"
+    style={{ width: size, height: size }}>
+    <img src={artwork.src} alt="" width={size} height={size} loading="lazy" decoding="async" onError={() => setFailed(artwork.src)} />
+  </span>;
   const icon = calendarIcon(item);
   const CategoryIcon = !item.expense ? item.calendarLabel === "Eau" ? Droplets : categoryIcons[item.group as keyof typeof categoryIcons] : undefined;
   return <span data-brand-key={icon.brandKey ?? undefined} className="inline-flex shrink-0 items-center justify-center" aria-hidden="true">
@@ -48,7 +54,7 @@ export function CalendarEventDetails({ item, onAction, onNavigate, expanded = fa
   return <article data-expense-id={expense?.id} className="space-y-2 border-b border-slate-100 py-3 last:border-0">
     <button type="button" aria-expanded={revealed} aria-controls={detailId} onClick={() => setRevealed(!revealed)}
       className="grid w-full cursor-pointer grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-2 rounded text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-700">
-      <span className="flex justify-center"><EventIcon item={item} /></span><span className="break-words text-sm font-bold">{calendarEventLabel(item)}</span>
+      <span className="flex justify-center"><CalendarEventIcon item={item} size={item.artwork ? 32 : 24} /></span><span className="break-words text-sm font-bold">{calendarEventLabel(item)}</span>
       <strong className="whitespace-nowrap text-sm tabular-nums">{calendarBudgetLabel(item)}</strong></button>
     {(expense || item.planContextId || item.fixedState === "OBSERVED") && <p className={`text-xs font-semibold ${eventTone(item)}`}>{calendarStateLabel(item)}</p>}
     {expense && (calendarItemRange(item).hasReturn || calendarItemRange(item).isRange) ? <div className="text-xs text-slate-600" data-project-temporal-summary>{plannedExpenseTemporalSummary(expense).map(line => <p key={line}>{line}</p>)}</div> : <p className="text-xs text-slate-600">{item.dateCertainty === "HISTORICAL_ESTIMATE"
@@ -98,8 +104,9 @@ export function CalendarEventDetails({ item, onAction, onNavigate, expanded = fa
 }
 
 type Filter = "ALL" | "PROJECTS" | "CHARGES";
-export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, today = "" }: { targetMonth: string;
-  entries: readonly CalendarEntry[]; undated: readonly CalendarItem[]; dailyTotals: Readonly<Record<string, string>>; today?: string }) {
+export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, today = "", compactArtwork = false }: { targetMonth: string;
+  entries: readonly CalendarEntry[]; undated: readonly CalendarItem[]; dailyTotals: Readonly<Record<string, string>>;
+  today?: string; compactArtwork?: boolean }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const [activeDay, setActiveDay] = useState(() => calendarInitialDay(targetMonth, today, entries));
@@ -161,7 +168,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
   const create = (date: string) => onAction?.({ action: "CREATE", plannedDate: date });
 
   return <div className="min-w-0">
-    <div className={`${material.calendar} overflow-hidden [&_button]:text-xs!`}>
+    <div className={`${material.calendar} ${compactArtwork ? material.calendarArtworkMode : ""} overflow-hidden [&_button]:text-xs!`}>
     <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-1.5"><h2 className="text-sm font-bold">Calendrier</h2>
       <LiquidSelectionGroup value={filter} ariaLabel="Éléments affichés">{([ ["ALL", "Tout"], ["PROJECTS", "Projets"], ["CHARGES", "Charges"] ] as const).map(([value, label]) =>
         <button key={value} type="button" data-liquid-key={value} aria-pressed={filter === value} onClick={() => setFilter(value)} className={`${material.clayButton} ${material.calendarFilter} px-2 py-0.5 text-xs font-medium`}>{label}</button>)}</LiquidSelectionGroup>
@@ -197,17 +204,25 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
                 {!allDay.length && interactions && <span className={`${material.calendarCreate} absolute inset-x-0 top-9 text-center text-xs font-medium text-sky-700`}>+ Prévoir</span>}
               </button>
               {lanes > 0 && <div style={{ height: lanes * 25 }} aria-hidden="true" />}
-              <div key={filter} data-calendar-content className={`${material.calendarContent} grid grid-cols-[40px_minmax(0,1fr)_max-content] gap-x-1.5`}>
-              {visible.map((item) => <button key={item.key} type="button" tabIndex={-1} data-calendar-event={item.key}
+              <div key={filter} data-calendar-content className={`${material.calendarContent} grid ${compactArtwork ? material.calendarArtworkContent : "grid-cols-[40px_minmax(0,1fr)_max-content] gap-x-1.5"}`}>
+              {visible.map((item) => {
+                const confirmed = item.expense?.observedMatch || item.nature === "DECLARED_REALIZED" || item.fixedState === "OBSERVED";
+                const planned = item.nature === "PLANNED_EXPENSE" || item.nature === "PLAN_MOMENT" || compactArtwork && item.fixedState === "UPCOMING";
+                const marker = item.expense?.needsRealityConfirmation ? "!" : confirmed ? "✓" : planned ? "●" : "";
+                return <button key={item.key} type="button" tabIndex={-1} data-calendar-event={item.key}
                 title={`${calendarEventLabel(item)} · ${calendarBudgetLabel(item)}`}
                 aria-label={`${calendarEventLabel(item)}, ${calendarBudgetLabel(item)}, ${calendarStateLabel(item)}`}
                 aria-haspopup="dialog" aria-expanded={selected === date && focusedKey === item.key}
-                onClick={(event) => open(date, event.currentTarget, item.key)} className={`${material.calendarEvent} col-span-3 mb-0.5 grid h-6 w-full min-w-0 grid-cols-subgrid cursor-pointer items-center gap-x-1.5 rounded text-left text-xs focus-visible:bg-slate-100 ${eventTone(item)}`}>
-                <span className="relative flex w-10 items-center justify-center"><span aria-hidden="true" data-calendar-state={item.nature} className="absolute -left-1.5 w-2 text-center text-xs">
-                  {item.expense?.needsRealityConfirmation ? "!" : item.expense?.observedMatch || item.nature === "DECLARED_REALIZED" || item.fixedState === "OBSERVED" ? "✓" : item.nature === "PLANNED_EXPENSE" || item.nature === "PLAN_MOMENT" ? "●" : ""}</span><EventIcon item={item} /></span>
-                <span className="min-w-0 truncate">{calendarEventLabel(item)}</span>
-                <strong className="shrink-0 whitespace-nowrap font-semibold tabular-nums">{calendarBudgetLabel(item)}</strong>
-              </button>)}</div>
+                onClick={(event) => open(date, event.currentTarget, item.key)} className={`${material.calendarEvent} col-span-3 mb-0.5 grid w-full min-w-0 grid-cols-subgrid cursor-pointer items-center rounded text-left text-xs focus-visible:bg-slate-100 ${compactArtwork ? "h-7" : "h-6 gap-x-1.5"} ${eventTone(item)}`}>
+                <span className={`relative flex items-center justify-center ${compactArtwork ? material.calendarArtworkSlot : "w-10"}`}>
+                  <CalendarEventIcon item={item} size={compactArtwork ? 25 : 24} />
+                  {marker && <span aria-hidden="true" data-calendar-state={item.nature} data-confirmed={!!confirmed}
+                    className={compactArtwork ? material.calendarArtworkState : "absolute -left-1.5 w-2 text-center text-xs"}>{marker}</span>}
+                </span>
+                <span className="min-w-0 truncate" data-calendar-caption>{calendarEventLabel(item)}</span>
+                <strong className="shrink-0 whitespace-nowrap font-semibold tabular-nums" data-calendar-amount>{calendarBudgetLabel(item)}</strong>
+              </button>;
+              })}</div>
               {dayEntries.length - visible.length + overflow > 0 && <button type="button" tabIndex={-1} aria-haspopup="dialog" onClick={(event) => open(date, event.currentTarget)} className="block cursor-pointer rounded px-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-indigo-700 focus-visible:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700">+{dayEntries.length - visible.length + overflow} {dayEntries.length - visible.length + overflow > 1 ? "autres" : "autre"} <span aria-hidden="true">→</span></button>}
             </div>;
           })}
@@ -234,7 +249,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
     </div></div>
     {projects.length > 0 && <section className="mt-3" aria-label="À placer dans le calendrier"><h3 className="text-xs font-semibold text-slate-600">À placer dans le calendrier</h3>
       <ul className="mt-1 divide-y divide-slate-100">{orderCalendarItems(projects).map((item) => <li key={item.key}><button type="button" className="flex w-full items-center gap-2 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-indigo-700" aria-haspopup="dialog" onClick={(event) => open(`undated:${item.key}`, event.currentTarget, item.key)}>
-        <EventIcon item={item} /><span className="min-w-0 flex-1">{item.calendarLabel ?? item.label} <span className="text-xs text-slate-500">· {calendarStateLabel(item)}</span></span><strong className="tabular-nums">{calendarBudgetLabel(item)}</strong></button></li>)}</ul>
+        <CalendarEventIcon item={item} /><span className="min-w-0 flex-1">{item.calendarLabel ?? item.label} <span className="text-xs text-slate-500">· {calendarStateLabel(item)}</span></span><strong className="tabular-nums">{calendarBudgetLabel(item)}</strong></button></li>)}</ul>
     </section>}
     {monthly.length > 0 && <UndatedMonthlyItems items={monthly} />}
     {selected && <div ref={panel} popover="auto" role="dialog" aria-modal="false" aria-labelledby="calendar-panel-title" aria-describedby="calendar-panel-summary"
@@ -260,7 +275,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
 function UndatedMonthlyItems({ items }: { items: readonly CalendarItem[] }) {
   const title = `Sans jour précis (${items.length})`;
   const rows = <ul className="mt-1 divide-y divide-slate-100">{items.map((item) => <li key={item.key} className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-2 py-1 text-xs text-slate-600" title={item.fullLabel ?? item.label}>
-    <span className="flex justify-center"><EventIcon item={item} /></span><span>{item.calendarLabel ?? item.label}{item.kind === "SAVINGS" && <span className="block text-slate-500">Objectif du mois</span>}</span>
+    <span className="flex justify-center"><CalendarEventIcon item={item} /></span><span>{item.calendarLabel ?? item.label}{item.kind === "SAVINGS" && <span className="block text-slate-500">Objectif du mois</span>}</span>
     <strong className="whitespace-nowrap tabular-nums">{calendarBudgetLabel(item)}</strong></li>)}</ul>;
   return <section className="mt-2" aria-label="Sans jour précis">{items.length > 1 ? <details><summary className="cursor-pointer text-xs font-semibold text-slate-600 focus-visible:outline-2 focus-visible:outline-indigo-700">{title}</summary>{rows}</details>
     : <><h3 className="text-xs font-semibold text-slate-600">{title}</h3>{rows}</>}</section>;

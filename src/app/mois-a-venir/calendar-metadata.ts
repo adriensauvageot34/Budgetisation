@@ -1,6 +1,9 @@
-/** Calendar captions only. Never infer an owner or a contract's use from its amount. */
+export type CalendarArtwork = Readonly<{ src: string; kind: "badge" | "clay" }>;
+
+/** Calendar presentation only. Never infer an owner or a contract's use from its amount. */
 export type CalendarMetadata = Readonly<{ fullLabel?: string; calendarLabel?: string;
   brandKey?: string | null; group?: string; kind?: string; provenance?: string;
+  artwork?: CalendarArtwork;
   dateEvidenceCount?: number; freshnessDate?: string | null; confidence?: string }>;
 
 const brands = [
