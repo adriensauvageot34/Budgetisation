@@ -22,6 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const historyV2 = /^\/historique\/\d{4}-\d{2}$/.test(pathname);
   const julyV2 = pathname === JULY_V2_HREF;
   const plannedMonth = pathname === "/mois-a-venir" || julyV2;
+  const composerCalendar = pathname === "/mois-a-venir/composer/calendrier";
   const composer = pathname === "/mois-a-venir/composer" || pathname === "/recette/bar-favoris";
 
   if (pathname === "/connexion" || pathname === "/acces-refuse") {
@@ -33,8 +34,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     style={{ height: "100dvh", padding: "12px 24px 20px", overflow: "hidden", background: "#fdfcfb" }}>{children}</main>;
 
   return (
-    <div data-planned-shell={plannedMonth ? "" : undefined} className={composer ? "flex h-dvh flex-col overflow-hidden" : plannedMonth ? scene.shell : "min-h-screen"}>
-      {plannedMonth && <div data-planned-background className={scene.background} aria-hidden="true" />}
+    <div data-planned-shell={plannedMonth || composerCalendar ? "" : undefined} className={plannedMonth || composerCalendar ? scene.shell : "min-h-screen"}>
+      {(plannedMonth || composerCalendar) && <div data-planned-background className={scene.background} aria-hidden="true" />}
       <header data-planned-header={plannedMonth ? "" : undefined} className={plannedMonth ? scene.header : "border-b border-[var(--color-border)] bg-white"}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-[var(--space-page)] py-4">
           <Link href="/historique" className="mr-auto flex items-center gap-3">
@@ -78,7 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main
         ref={runtime.backgroundRootRef}
-        className={composer ? "min-h-0 flex-1 px-6 py-4" : historyV2
+        className={composerCalendar ? "w-full min-w-0 px-2 py-3 sm:px-5" : historyV2
           ? "min-h-[calc(100vh-73px)] py-6"
           : pathname === "/mois-a-venir"
             ? "mx-auto min-h-[calc(100vh-73px)] max-w-[1360px] px-[var(--space-page)] py-8"

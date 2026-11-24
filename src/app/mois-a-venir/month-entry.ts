@@ -14,6 +14,10 @@ export function monthPlanningHref(month: string, view?: "bilan") {
   return `/mois-a-venir?month=${month}${view ? `&vue=${view}` : ""}`;
 }
 
+export function composerCalendarHref(month: string) {
+  return `/mois-a-venir/composer/calendrier?month=${month}`;
+}
+
 export function showsArchivedForecast(targetMonth: string, currentMonth: string, view: unknown): boolean {
   return targetMonth < currentMonth && forecastWindowMonths.includes(targetMonth) && view !== "bilan";
 }

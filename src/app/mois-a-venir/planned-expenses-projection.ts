@@ -18,6 +18,10 @@ export type CalendarItem = Readonly<{ key: string; label: string; amount: string
   nature: "CERTAIN_OUTFLOW" | "PLANNED_EXPENSE" | "DECLARED_REALIZED" | "PLAN_MOMENT";
   fixedState?: CalendarOutflow["state"];
   planContextId?: string;
+  endDate?: string;
+  composerStatus?: "confirmed" | "pending" | "planned" | "observed";
+  composerHref?: string;
+  participants?: readonly string[];
   dateCertainty: "DECLARED" | "HISTORICAL_ESTIMATE" | "UNKNOWN";
   expense?: PlannedExpenseCard }> & CalendarMetadata;
 export type CalendarEntry = CalendarItem & { readonly date: string };

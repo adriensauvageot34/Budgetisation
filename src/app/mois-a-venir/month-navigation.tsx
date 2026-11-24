@@ -1,6 +1,6 @@
 import { addMonths, parseYearMonth } from "@/core/time";
 import { monthLabel } from "./composer/display";
-import { monthPlanningHref } from "./month-entry";
+import { composerCalendarHref, forecastWindowMonths, monthPlanningHref } from "./month-entry";
 import { MonthPicker } from "./month-picker";
 import material from "./month-material.module.css";
 
@@ -11,6 +11,7 @@ export function MonthNavigation({ targetMonth }: { targetMonth: string }) {
     <div className="flex min-w-0 flex-col items-center gap-2">
       <h1 className="text-center text-4xl font-black uppercase tracking-tight">{monthLabel(month)}</h1>
       <MonthPicker key={month} targetMonth={month} />
+      {forecastWindowMonths.includes(month) && <a className={`${material.clayButton} px-3 py-1.5`} href={composerCalendarHref(month)}>Calendrier pleine page</a>}
     </div>
     <a className={`${material.monthLink} text-slate-600`} href={monthPlanningHref(addMonths(month, 1))}>Mois suivant ›</a>
   </nav>;
