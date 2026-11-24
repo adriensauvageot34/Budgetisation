@@ -136,7 +136,7 @@ export default async function JulyV2Page() {
           <h2 id="july-pending" className="text-xl font-black">À vérifier au 15 juillet</h2>
           {composerEnabled && <Link href={`${JULY_COMPOSER_HREF}&statut=pending`} prefetch={false} className={button}>Voir les cartes à valider</Link>}
         </div>
-        <p className="mt-1 text-sm text-slate-600">{pendingCount} cartes passées à valider. {Number(pilot.pendingExpenses) !== 0 && `${money(Math.abs(Number(pilot.pendingExpenses)))} de paiements identifiés restent à confirmer.`}</p>
+        <p className="mt-1 text-sm text-slate-600">{pendingCount} cartes passées à valider. {Number(pilot.pendingExpenses) !== 0 && `${money(pilot.pendingExpenses.replace(/^-/, ""))} de paiements identifiés restent à confirmer.`}</p>
       </section>}
       <section className={`${material.glassPremium} p-5 sm:p-6`} aria-labelledby="july-end">
         <h2 id="july-end" className="text-xl font-black">Projection de fin de mois</h2>
