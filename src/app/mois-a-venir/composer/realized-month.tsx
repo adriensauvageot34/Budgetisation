@@ -71,6 +71,9 @@ function RealizedElement({ payment, highlighted }: { payment: RealizedPayment; h
       {payment.bankLabel !== payment.label && <small>{payment.bankLabel}</small>}
       {payment.inferredEvent && <small>Rattachement estimé à cet événement</small>}
       {payment.place && <PlaceLink place={payment.place} detail />}
+      {payment.shopper && <small>{payment.shopperInferred ? "Courses probablement faites par" : "Courses faites par"} {payment.shopper}</small>}
+      {payment.recipient && <small>Cadeau pour {payment.recipient}</small>}
+      {payment.mobilityNote && <small>{payment.mobilityNote}</small>}
     </div>
     <b className={styles.amount}>{money(payment.amount)}</b>
     {payment.components.length > 0 && <dl className={styles.components} aria-label="Détail économique de l’opération">
@@ -185,6 +188,7 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
           ≈ {money(card.carTrip.estimatedFuel)}
         </strong>
       </span>}
+      {card.mobilityNote && <span className={styles.cardSubtitle}>{card.mobilityNote}</span>}
       {card.work && <WorkDayFooter work={card.work} portrait={portrait} />}
       {!card.work && card.participant && <span className={styles.cardParticipant}>
         <ParticipantBadge name={card.participant} portrait={portrait} />
@@ -242,11 +246,13 @@ function RealizedDetail({ card, month, terms, open }: {
         {card.carTrip.legs?.length ? <ul className={styles.places}>
           {card.carTrip.legs.map(leg => <li key={leg.id}>
             <strong>{leg.route}</strong><br />
-            <small>{[days(leg.date), leg.participant, `${distance.format(Number(leg.distanceKm))} km`, `≈ ${money(leg.estimatedFuel)}`].filter(Boolean).join(" · ")}</small>
+            <small>{[days(leg.date), leg.driver && `${leg.driver} · conductrice habituelle`, leg.participant === "Couple" ? "Couple" : undefined,
+              `${distance.format(Number(leg.distanceKm))} km`, `≈ ${money(leg.estimatedFuel)}`].filter(Boolean).join(" · ")}</small>
           </li>)}
         </ul> : null}
       </div>
     </section>}
+    {card.mobilityNote && !card.payments.some(payment => payment.mobilityNote === card.mobilityNote) && <p>{card.mobilityNote}</p>}
     {card.transferAmounts && <dl className={styles.transferTotals}>
       <div><dt>Transferts entrants</dt><dd>{money(card.transferAmounts.incoming)}</dd></div>
       <div><dt>Transferts sortants</dt><dd>{money(card.transferAmounts.outgoing)}</dd></div>

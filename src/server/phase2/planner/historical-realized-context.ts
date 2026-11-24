@@ -3,6 +3,7 @@ import type { ActivityOccurrenceFact, MobilityLegFact, PlaceVisitFact } from "@/
 import { addDays } from "@/core/time";
 import type { JulyParticipant } from "./july-realized-decisions";
 import { realizedPlaceKey, realizedTown, type RealizedPlace } from "./realized-places";
+import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonical/record";
 
 type ObservedEvent = Readonly<{ event: ActivityOccurrenceFact; title: string; places: readonly RealizedPlace[]; placeIds: readonly string[] }>;
 type ParticipantIds = { adrien?: string; manon?: string };
@@ -16,6 +17,7 @@ const sessionKinds = new Set(["voyage_sejour", "visite_famille", "visite_ami", "
 const tripKinds = new Set([...sessionKinds, "activite_loisir", "spectacle_culture", "sortie_soiree", "deplacement_pro"]);
 const activityKinds = new Set(["courses_alimentaires", "repas_restaurant", "activite_loisir", "shopping_commerce",
   "visite_famille", "visite_ami", "spectacle_culture", "soin_personnel"]);
+const coupleDefaults = new Set(["voyage_sejour", "sortie_soiree", "spectacle_culture", "celebration", "activite_loisir", "repas_restaurant", "journee_maison"]);
 const townKey = (place?: RealizedPlace) => realizedPlaceKey(place?.town ?? "");
 const eventTown = (item: ObservedEvent) => townKey(item.places.find(place => place.town));
 const within = (day: string, start: string, end: string) => day >= start && day <= end;
@@ -64,6 +66,29 @@ export function buildHistoricalRealizedContext(items: readonly ObservedEvent[], 
       current = parents.get(current)!;
     }
     return visited.has(current) ? id : current;
+  }
+  function participant(ids: readonly string[]): JulyParticipant | undefined {
+    const adrien = people.adrien && ids.includes(people.adrien);
+    const manon = people.manon && ids.includes(people.manon);
+    return adrien && manon ? "Couple" : adrien ? "Adrien" : manon ? "Manon" : undefined;
+  }
+  function elsewhere(personId: string | undefined, item: ObservedEvent, timing: readonly CanonicalRecord[]) {
+    const town = eventTown(item);
+    if (!personId || !town) return false;
+    const bounds = timing.flatMap(row => {
+      const start = Date.parse(optionalCanonicalString(row, ["start_at"]) ?? "");
+      const end = Date.parse(optionalCanonicalString(row, ["end_at"]) ?? "");
+      return Number.isFinite(start) && end > start ? [{ start, end }] : [];
+    });
+    const overlap = visits.filter(visit => visit.personId === personId && visit.interval?.kind === "known" && bounds.some(({ start, end }) =>
+      visit.interval.kind === "known" && Math.min(Date.parse(visit.interval.endedAt), end) - Math.max(Date.parse(visit.interval.startedAt), start) >= 30 * 60_000));
+    const observedTowns = new Set(overlap.map(visit => townKey(lookup(visit.placeId))).filter(Boolean));
+    if (observedTowns.size) return !observedTowns.has(town);
+    const recorded = seen.get(`${personId}:${item.event.startDate}`);
+    // A precisely located overnight stay can disambiguate a visit when no hours are available.
+    return item.event.startDate < item.event.endDate && ["fontes", "servian", "paris"].includes(town)
+      && !!recorded?.size && !recorded.has(town)
+      && !!seen.get(`${personId}:${item.event.endDate}`)?.size && !personIn(personId, item.event.endDate, town);
   }
   const hasFamilyConnection = (first: ObservedEvent, second: ObservedEvent) => {
     const from = eventTown(first), to = eventTown(second);
@@ -177,10 +202,47 @@ export function buildHistoricalRealizedContext(items: readonly ObservedEvent[], 
         }));
       return matches.length === 1 ? matches[0]!.root.event.lifeEventId : undefined;
     },
-    participant(ids: readonly string[]): JulyParticipant | undefined {
-      const adrien = people.adrien && ids.includes(people.adrien);
-      const manon = people.manon && ids.includes(people.manon);
-      return adrien && manon ? "Couple" : adrien ? "Adrien" : manon ? "Manon" : undefined;
+    participant,
+    eventParticipant(item: ObservedEvent, ids: readonly string[], timing: readonly CanonicalRecord[], afterWork = false) {
+      const confirmed = participant(timing.filter(row => row.participation_status === "Confirmée").map(row => String(row.person_id)));
+      const recorded = participant(ids);
+      if (confirmed || recorded === "Couple") return confirmed === "Couple" || recorded === "Couple" ? "Couple" : confirmed;
+      const { activityId, startDate } = item.event;
+      const title = realizedPlaceKey(item.title);
+      const town = eventTown(item);
+      if (activityId === "visite_famille" && familyTowns.has(town)) {
+        if (recorded === "Adrien") return "Adrien";
+        return personIn(people.adrien, startDate, town) && !elsewhere(people.adrien, item, timing) ? "Couple" : recorded ?? (people.manon ? "Manon" : undefined);
+      }
+      if (activityId === "repas_restaurant" && (item.event.parentLifeEventId || recorded && !afterWork)) return recorded;
+      if (coupleDefaults.has(activityId) && people.adrien && people.manon) {
+        if (elsewhere(people.adrien, item, timing) && recorded !== "Adrien") return "Manon";
+        if (elsewhere(people.manon, item, timing) && recorded !== "Manon") return "Adrien";
+        return "Couple";
+      }
+      if (recorded) return recorded;
+      if (people.manon && (activityId === "deplacement_pro" || activityId === "visite_ami" && /\bamandine\b/u.test(title))) return "Manon";
+      if (people.adrien && activityId === "pharmacie" && item.places.some(place => /^pharmacie richter\b/u.test(realizedPlaceKey(place.label)))) return "Adrien";
+    },
+    groceryShopper(day: string, place?: RealizedPlace) {
+      if (!place || place.certainty === "town") return undefined;
+      const matches = items.filter(item => item.event.activityId === "courses_alimentaires"
+        && item.event.startDate === day && item.placeIds.includes(place.key));
+      const who = matches.length === 1 ? participant(matches[0]!.event.participantIds) : undefined;
+      return who === "Adrien" || who === "Manon" ? who : undefined;
+    },
+    deliveryParticipant(day: PlaceVisitFact["localDate"]) {
+      const weekday = new Date(`${day}T12:00:00Z`).getUTCDay();
+      if (weekday !== 0 && weekday !== 6) return "Couple";
+      const otherDay = addDays(day, weekday === 6 ? 1 : -1);
+      const reachedHome = (personId: string | undefined) => personIn(personId, day, "montpellier");
+      const away = (personId: string | undefined) => [day, otherDay].every(date => {
+        const visited = seen.get(`${personId}:${date}`);
+        return personId && visited?.size && [...visited].every(town => !localTowns.has(town));
+      });
+      if (reachedHome(people.adrien) && away(people.manon)) return "Adrien";
+      if (reachedHome(people.manon) && away(people.adrien)) return "Manon";
+      return "Couple";
     },
     familyParticipant(day: string, town: string): JulyParticipant | undefined {
       return familyTowns.has(town) && people.manon

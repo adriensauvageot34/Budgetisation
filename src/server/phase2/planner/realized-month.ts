@@ -18,6 +18,7 @@ import { cashActivityPlace, distinctRealizedPlaces, merchantPlaceAlias, probable
 import { realizedWorkDays, realizedWorkPeople, workDayItems, workPurchaseDate, type ObservedWorkMeal, type RealizedWork, type WorkDay } from "./realized-work";
 import { julyEventParticipant, julyPaymentParticipant, type JulyParticipant } from "./july-realized-decisions";
 import { buildHistoricalRealizedContext } from "./historical-realized-context";
+import { groceryDetour, groceryShopper, historicalMealPerson, historicalPaymentParticipant, historicalProjectTags, isUberRide } from "./historical-realized-patterns";
 
 type Art = Readonly<{ assetKey?: string; templateKey?: string; iconKey: string; src?: string }>;
 type Badge = Readonly<{ label: string; sources: readonly string[] }>;
@@ -34,6 +35,10 @@ export type RealizedPayment = Readonly<{
   art: Art | undefined;
   place?: RealizedPlace;
   participant?: JulyParticipant;
+  shopper?: "Adrien" | "Manon";
+  shopperInferred?: boolean;
+  recipient?: string;
+  mobilityNote?: string;
   inferredEvent?: boolean;
   components: readonly { id: string; label: string; amount: string }[];
 }>;
@@ -54,7 +59,7 @@ type RealizedCarTrip = Readonly<{
   compactRoute: string;
   distanceKm: string;
   estimatedFuel: string;
-  legs?: readonly { id: string; date: string; route: string; distanceKm: string; estimatedFuel: string; participant?: JulyParticipant }[];
+  legs?: readonly { id: string; date: string; route: string; distanceKm: string; estimatedFuel: string; participant?: JulyParticipant; driver?: "Manon" }[];
 }>;
 type CardGroup = {
   id: string;
@@ -69,6 +74,7 @@ type CardGroup = {
   occurrences?: Occurrence[];
   relatedPayments?: RelatedPayment[];
   carTrip?: RealizedCarTrip;
+  mobilityNote?: string;
   participant?: JulyParticipant;
   keepPaymentsTogether?: boolean;
 };
@@ -268,7 +274,7 @@ function realizedCarTrips(trips: ReturnType<typeof matchJulyCarTrips>, places: A
 }
 
 function historicalCarTrip(legs: readonly MobilityLegFact[], places: ReadonlyMap<string, CanonicalRecord>,
-  participant: (leg: MobilityLegFact) => JulyParticipant | undefined): RealizedCarTrip {
+  participant: (leg: MobilityLegFact) => JulyParticipant | undefined, driver?: "Manon"): RealizedCarTrip {
   const endpointLabel = (endpoint: MobilityLegFact["origin"]) => {
     const place = endpoint.placeId ? places.get(endpoint.placeId) : undefined;
     if (!place) return endpoint.sourceLabel ?? "Lieu à préciser";
@@ -281,7 +287,7 @@ function historicalCarTrip(legs: readonly MobilityLegFact[], places: ReadonlyMap
   const entries = [...legs].sort((a, b) => a.date.localeCompare(b.date)
     || (a.time.observedTime ?? "").localeCompare(b.time.observedTime ?? "") || a.legId.localeCompare(b.legId)).map(leg => ({
     id: leg.legId, date: leg.date, route: `${endpointLabel(leg.origin)} → ${endpointLabel(leg.destination)}`,
-    distanceKm: new Big(leg.distanceKm).toFixed(2), estimatedFuel: new Big(leg.estimatedFuelCost).toFixed(2), participant: participant(leg),
+    distanceKm: new Big(leg.distanceKm).toFixed(2), estimatedFuel: new Big(leg.estimatedFuelCost).toFixed(2), participant: participant(leg), driver,
   }));
   return {
     route: entries.map(entry => entry.route).join(" · "),
@@ -320,7 +326,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     return earliest ? repository.loadActivityOccurrences({ start: earliest, endExclusive: range.start }) : [];
   }) : [];
   const referenceRead = Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts));
-  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs, previousWork, mealParticipants, visits] = await Promise.all([
+  const [operations, facts, occurrences, labels, eventDetails, localizations, aliases, directLinks, momentLinks, causalLinks, carLegs, previousWork, participants, visits, tags, products] = await Promise.all([
     operationRead, factRead, occurrenceRead,
     referenceRead,
     historical ? Promise.all([eventIds, previousDates]).then(([ids, previous]) =>
@@ -334,12 +340,39 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       ? repository.loadMobilityLegFacts(range).then(legs => legs.filter(leg => leg.source.status === "CERTIFIED_SOURCE")) : [],
     previousDates,
     people.profiles.length ? occurrenceRead.then(events => repository.loadLifeEventParticipationRows(
-      events.filter(event => event.activityId === "repas_restaurant").map(event => event.lifeEventId),
+      events.filter(event => historical || event.activityId === "repas_restaurant").map(event => event.lifeEventId),
     )) : [],
     july || historical ? repository.loadPlaceVisits(range) : [],
+    historical && people.profiles.length ? operationRead.then(rows =>
+      repository.loadRealizedOperationTags(rows.map(operation => operation.operationId), historicalProjectTags)) : [],
+    historical && people.profiles.length ? operationRead.then(rows =>
+      repository.loadRealizedProductPeople(rows.filter(operation => operation.raw.flux === "Dépense").map(operation => operation.operationId))) : [],
   ]);
 
-  const mealTiming = new Map(mealParticipants.map(row => [`${row.life_event_id}:${row.person_id}`, row]));
+  const mealTiming = new Map(participants.map(row => [`${row.life_event_id}:${row.person_id}`, row]));
+  const timingByEvent = new Map<string, CanonicalRecord[]>();
+  for (const row of participants) {
+    const key = String(row.life_event_id);
+    const entries = timingByEvent.get(key) ?? [];
+    entries.push(row);
+    timingByEvent.set(key, entries);
+  }
+  const tagKeysByOperation = new Map<string, string[]>();
+  for (const row of tags) {
+    const key = String(row.operation_id);
+    const tag = optionalCanonicalString((row.tags ?? {}) as CanonicalRecord, ["tag_key"]);
+    if (!tag) continue;
+    const entries = tagKeysByOperation.get(key) ?? [];
+    entries.push(tag);
+    tagKeysByOperation.set(key, entries);
+  }
+  const productPeople = new Map<string, (string | undefined)[]>();
+  for (const row of products) {
+    const key = String(row.operation_id);
+    const entries = productPeople.get(key) ?? [];
+    entries.push(optionalCanonicalString(row, ["person_id"]));
+    productPeople.set(key, entries);
+  }
   const eventById = new Map(eventDetails.map(row => [String(row.life_event_id), row]));
   const localizationIdsByEvent: Links = new Map();
   for (const row of localizations) link(localizationIdsByEvent, String(row.life_event_id), String(row.place_id));
@@ -393,7 +426,8 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     return town && sessions ? sessions.familyParticipant(leg.date, town) : undefined;
   }
   const trips = realizedCarTrips(matchedTrips, places);
-  for (const [eventId, legs] of assigned?.result ?? []) trips.set(eventId, historicalCarTrip(legs, placeById, tripParticipant));
+  const driver = manon ? "Manon" : undefined;
+  for (const [eventId, legs] of assigned?.result ?? []) trips.set(eventId, historicalCarTrip(legs, placeById, tripParticipant, driver));
   const cards = new Map<string, CardGroup>();
   const eventCards = new Map<string, CardGroup>();
   const workCards = new Map<string, { day: WorkDay; meals: ObservedWorkMeal[] }>();
@@ -413,7 +447,14 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const orderedEvents = sessions ? [...observedEvents].sort((a, b) =>
     Number(sessions.rootId(a.event.lifeEventId) !== a.event.lifeEventId)
     - Number(sessions.rootId(b.event.lifeEventId) !== b.event.lifeEventId)) : observedEvents;
-  for (const { event, title, places: eventPlaces } of orderedEvents) {
+  const nightReturns = new Map<string, Set<CardGroup>>();
+  const homeClock = new Intl.DateTimeFormat("fr-CA", { timeZone: bootstrap.household?.timezone ?? "Europe/Paris",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const travelNumber = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
+  const travelMoney = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+  const onsite = historical ? occurrences.filter(event => event.activityId === "travail_site") : [];
+  for (const observed of orderedEvents) {
+    const { event, title, places: eventPlaces } = observed;
     const visual = eventVisuals[event.activityId] ?? { label: "Événement", art: activity };
     const groceryEvent = event.activityId === "courses_alimentaires"
       ? paymentCard("expense", false, visual.label, "alimentation", "alimentation__courses_alimentaires") : null;
@@ -425,7 +466,11 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     if (worked || lunch) {
       const card = getWorkCard((worked ?? lunch)!);
       eventCards.set(event.lifeEventId, card);
-      if (lunch) workCards.get(card.id)!.meals.push({ id: event.lifeEventId, place: eventPlaces[0] });
+      if (lunch) {
+        workCards.get(card.id)!.meals.push({ id: event.lifeEventId, place: eventPlaces[0] });
+        if (historical) card.mobilityNote = lunch.person.name === "Adrien"
+          ? "Pause de midi · marche habituelle" : "Pause de midi · voiture habituelle, essence à préciser";
+      }
       continue;
     }
     const root = sessions?.rootId(event.lifeEventId);
@@ -437,7 +482,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       eventCards.set(event.lifeEventId, parentCard);
       continue;
     }
-    if (historical && ["travail_site", "teletravail", "journee_maison"].includes(event.activityId)) continue;
+    if (historical && ["travail_site", "teletravail"].includes(event.activityId)) continue;
     const card: CardGroup = cards.get(id) ?? {
       ...(groceryEvent ?? { id, section: "events", label: visual.recurring ? visual.label : title, art: visual.art, payments: [] }),
       ...(visual.recurring ? { occurrences: [] } : { date: event.startDate, endDate: event.endDate, eventStatus: event.validationStatus }),
@@ -458,12 +503,46 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     }
     if (sessions && !visual.recurring) {
       const group = sessions.groups.get(event.lifeEventId);
-      const observedLegs = assigned?.result.get(event.lifeEventId) ?? [];
-      const driving = new Set(observedLegs.flatMap(leg => tripParticipant(leg) ?? []));
       const participants = group?.members.flatMap(member => member.event.participantIds) ?? event.participantIds;
-      const town = realizedPlaceKey(eventPlaces.find(place => place.town)?.town ?? "");
-      card.participant = driving.size === 1 && event.startDate === event.endDate ? [...driving][0]
-        : sessions.participant(participants) ?? sessions.familyParticipant(event.startDate, town);
+      const timing = timingByEvent.get(event.lifeEventId) ?? [];
+      const afterWork = timing.some(row => {
+        const start = Date.parse(optionalCanonicalString(row, ["start_at"]) ?? "");
+        return Number.isFinite(start) && Number(homeClock.formatToParts(start).find(part => part.type === "hour")?.value) >= 17;
+      });
+      card.participant = sessions.eventParticipant(observed, participants, timing, afterWork);
+      if (["sortie_soiree", "repas_restaurant", "spectacle_culture"].includes(event.activityId) && !carTrip) {
+        const departures = timing.flatMap(row => {
+          const start = Date.parse(optionalCanonicalString(row, ["start_at"]) ?? "");
+          const person = people.profiles.find(profile => profile.ref.personId === row.person_id);
+          if (!person || !Number.isFinite(start) || !["Confirmée", "Déduite"].includes(String(row.participation_status))) return [];
+          const eligible = onsite.some(work => work.startDate === event.startDate && work.participantIds.includes(person.ref.personId as typeof work.participantIds[number])
+            && timingByEvent.get(work.lifeEventId)?.some(part => {
+              const end = Date.parse(optionalCanonicalString(part, ["end_at"]) ?? "");
+              return part.person_id === row.person_id && end <= start && start - end <= 60 * 60_000;
+            }));
+          return eligible ? [`${person.name} · départ possible depuis le travail`] : [];
+        });
+        if (departures.length) card.mobilityNote = [...new Set(departures)].join(" · ");
+      }
+      if (event.activityId === "sortie_soiree") {
+        const returns = new Set(timing.flatMap(row => {
+          if (row.participation_status !== "Confirmée" && row.participation_status !== "Déduite") return [];
+          const end = Date.parse(optionalCanonicalString(row, ["end_at"]) ?? "");
+          if (!Number.isFinite(end)) return [];
+          const parts = Object.fromEntries(homeClock.formatToParts(end).map(part => [part.type, part.value]));
+          const hour = Number(parts.hour), minute = Number(parts.minute);
+          return (hour > 2 || hour === 2 && minute > 0) && hour < 7 ? [`${parts.year}-${parts.month}-${parts.day}`] : [];
+        }));
+        if (returns.size === 1) {
+          const day = [...returns][0]!;
+          const candidates = nightReturns.get(day) ?? new Set();
+          candidates.add(card);
+          nightReturns.set(day, candidates);
+          const note = /\bmelomane\b/u.test(realizedPlaceKey(title))
+            ? "Retour à pied ou en Uber · à préciser" : "Retour nocturne · Uber probable, coût à confirmer";
+          card.mobilityNote = [card.mobilityNote, note].filter(Boolean).join(" · ");
+        }
+      }
       if (group && group.members.length > 1) {
         card.endDate = group.end;
         card.label = group.title ?? card.label;
@@ -478,7 +557,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     eventCards.set(event.lifeEventId, card);
   }
   for (const leg of assigned?.standalone ?? []) {
-    const route = historicalCarTrip([leg], placeById, tripParticipant);
+    const route = historicalCarTrip([leg], placeById, tripParticipant, driver);
     const town = sessions?.familyLegTown(leg);
     const id = `certified-trip-${leg.legId}`;
     cards.set(id, { id, section: "events", label: town === "fontes" ? "Trajet vers / depuis Fontès" : "Trajet vers / depuis Servian",
@@ -508,6 +587,15 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const links = componentLinksByOperation.get(source.id) ?? [];
     links.push(relation);
     componentLinksByOperation.set(source.id, links);
+  }
+  const ridesByDay = new Map<string, number>();
+  if (historical) for (const operation of operations) {
+    const day = workPurchaseDate(operation.raw);
+    const merchant = labels.merchantKeys.get(String(operation.raw.merchant_id)) ?? "";
+    const subcategory = labels.subcategoryKeys.get(String(operation.raw.subcategory_id)) ?? "";
+    if (day && operation.raw.flux === "Dépense" && isUberRide(merchant, subcategory)) {
+      ridesByDay.set(day, (ridesByDay.get(day) ?? 0) + 1);
+    }
   }
   const payments: RealizedPayment[] = [];
   for (const operation of operations) {
@@ -551,8 +639,33 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const explicitPeople = [...new Set(operationFacts.flatMap(fact => fact.person.kind === "resolved" ? [String(fact.person.id)] : []))];
     const historicalPeople = explicitPeople.length ? explicitPeople : people.profiles.filter(person => namedPerson
       && namedPerson.trim().toLowerCase() === person.name.toLowerCase()).map(person => person.ref.personId);
+    const canonicalParticipant = sessions?.participant(historicalPeople);
+    const hasPersonConflict = operationFacts.some(fact => fact.person.kind === "conflict" || fact.person.kind === "partial");
+    const shared = operationFacts.flatMap(fact => fact.person.kind === "shared" ? fact.person.shares.map(share => String(share.personId)) : []);
+    const bothPeople = sessions?.participant(shared) === "Couple";
+    const groceryPurchase = historical && flow === "expense" && subcategoryKey === "alimentation__courses_alimentaires";
+    const productOwners = productPeople.get(operation.operationId) ?? [];
+    const personalProduct = !groceryPurchase && operation.raw.operation_mixte !== true && productOwners[0]
+      && productOwners.every(person => person === productOwners[0]) ? sessions?.participant([productOwners[0]]) : undefined;
+    const defaultParticipant = historical && adrien && manon && !hasPersonConflict
+      ? historicalPaymentParticipant({ merchant, bankLabel: row.bankLabel, subcategory: subcategoryKey, flow, fixed,
+        preciseType: operation.preciseType, tags: tagKeysByOperation.get(operation.operationId) })
+      : undefined;
+    const deliveryParticipant = merchant === "uber_eats" && flow === "expense" && purchaseDate && adrien && manon
+      ? sessions?.deliveryParticipant(purchaseDate) : undefined;
+    const recipient = historical && flow === "expense" && categoryKey === "cadeaux" ? namedPerson : undefined;
     const participant = july ? julyPaymentParticipant({ merchant, subcategory: subcategoryKey, fixed, place, bankLabel: row.bankLabel })
-      : sessions?.participant(historicalPeople);
+      : flow === "transfer" && defaultParticipant ? defaultParticipant
+        : hasPersonConflict ? undefined : bothPeople ? "Couple" : (recipient ? undefined : canonicalParticipant) ?? personalProduct ?? deliveryParticipant ?? defaultParticipant;
+    const observedShopper = groceryPurchase && purchaseDate ? sessions?.groceryShopper(purchaseDate, place) : undefined;
+    const shopper = groceryPurchase && !hasPersonConflict && !bothPeople
+      ? observedShopper ?? groceryShopper(place, operation.preciseType ?? "", row.bankLabel) : undefined;
+    const weekday = purchaseDate ? new Date(`${purchaseDate}T12:00:00Z`).getUTCDay() : 0;
+    const localShop = /^(montpellier|castelnau le lez)$/u.test(realizedPlaceKey(place?.town ?? ""));
+    const detour = groceryPurchase && purchaseDate && place && shopper !== "Adrien" ? groceryDetour(purchaseDate, place, carLegs) : undefined;
+    const mobilityNote = detour
+      ? `Détour estimé · ${travelNumber.format(Number(detour.distance))} km · ${travelMoney.format(Number(detour.fuel))} d’essence comprise dans le trajet`
+      : shopper === "Adrien" && weekday > 0 && weekday < 6 && localShop ? "Tram habituel · 0 € estimé" : undefined;
     const payment = {
       id: operation.operationId, date: row.bankDate, label: isCannabis ? "Retrait pour cannabis" : label, bankLabel: row.bankLabel,
       category: row.subcategory?.label ?? row.preciseType ?? row.category?.label, amount: operation.bankAmount, flow,
@@ -560,6 +673,9 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       art: isCannabis ? cannabis : specialized[subcategoryKey]?.item ?? specialized[subcategoryKey]?.art,
       ...(place ? { place } : {}),
       ...(participant ? { participant } : {}),
+      ...(recipient ? { recipient } : {}),
+      ...(shopper ? { shopper, shopperInferred: !observedShopper } : {}),
+      ...(mobilityNote ? { mobilityNote } : {}),
       components,
     } satisfies RealizedPayment;
     payments.push(payment);
@@ -573,6 +689,17 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       .filter(card => directEvents || !contextualCards.has(card)));
     let card = flow === "expense" && !fixed && linkedCards.size === 1 ? [...linkedCards][0] : undefined;
     let inferredEvent = false;
+    if (historical && flow === "expense" && purchaseDate && isUberRide(merchant, subcategoryKey)) {
+      const returns = nightReturns.get(purchaseDate);
+      const matched = returns?.size === 1 ? [...returns][0] : undefined;
+      if (matched && card === matched) card.mobilityNote = "Retour nocturne · Uber associé";
+      if (!card && matched && ridesByDay.get(purchaseDate) === 1 && !linkedCards.size && !componentLinks.length
+        && !contextualCards.has(matched)) {
+        card = matched;
+        card.mobilityNote = "Retour nocturne · Uber probablement associé";
+        inferredEvent = true;
+      }
+    }
     if (july && flow === "expense" && !fixed && purchaseDate) {
       const matchingEvent = (test: (event: ActivityOccurrenceFact, title: string) => boolean) => {
         const candidates = occurrences.filter(event => test(event, String(eventById.get(event.lifeEventId)?.title ?? "")));
@@ -598,22 +725,29 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
         card = matchingEvent((event, title) => event.startDate === purchaseDate && /servian|fontès/iu.test(title)
           && trips.has(event.lifeEventId)) ?? card;
       }
-      if (subcategoryKey === "soins_personnels__coiffure") {
-        const linkedCash = componentLinks.filter(relation => relation.relationType === "Paiement_activite"
-          && factsByKey.get(relation.canonicalComponentKey)?.sourceKind === "Cash_economic_use"
-          && relation.economicAmountLinked !== null && new Big(relation.economicAmountLinked).abs().eq(new Big(payment.amount).abs()));
-        if (linkedCash.length === 1) {
-          const target = eventCards.get(linkedCash[0]!.lifeEventId);
-          if (target) {
-            card = target;
-            card.participant = "Adrien";
-          }
-        }
+    }
+    if ((july || historical && merchant === "coiffeur_paiement_en_especes") && flow === "expense" && !fixed && purchaseDate
+      && subcategoryKey === "soins_personnels__coiffure") {
+      const linkedCash = componentLinks.filter(relation => relation.relationType === "Paiement_activite"
+        && factsByKey.get(relation.canonicalComponentKey)?.sourceKind === "Cash_economic_use"
+        && relation.economicAmountLinked !== null && new Big(relation.economicAmountLinked).abs().eq(new Big(payment.amount).abs()));
+      const target = linkedCash.length === 1 ? eventCards.get(linkedCash[0]!.lifeEventId) : undefined;
+      if (target && (july || !card || card === target)) {
+        card = target;
+        card.participant = july ? "Adrien" : card.participant ?? "Adrien";
       }
     }
     if (!card && flow === "expense" && !fixed) {
       const workDay = workDays.forPayment(operation.raw, operationFacts, subcategoryKey, operation.preciseType);
       if (workDay) card = getWorkCard(workDay);
+      if (!card && historical && purchaseDate && place && !linkedCards.size && !componentLinks.length && !hasPersonConflict
+        && subcategoryKey.startsWith("alimentation__")) {
+        const mealPerson = historicalMealPerson(place);
+        const siteMeals = [...workCards.entries()].filter(([, work]) => work.day.day === purchaseDate
+          && work.day.person.name === mealPerson && (!canonicalParticipant || canonicalParticipant === mealPerson)
+          && work.meals.some(meal => meal.place?.key === place.key));
+        if (siteMeals.length === 1) card = cards.get(siteMeals[0]![0]);
+      }
     }
     if (!card && sessions && flow === "expense" && !fixed && purchaseDate && !componentLinks.length && !linkedCards.size
       && !/retrait\b/iu.test(row.bankLabel)) {
@@ -676,7 +810,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const realizedCards: RealizedCard[] = [...cards.values()].flatMap(card => {
     const work = workCards.get(card.id);
     const meals = work?.meals.filter(meal => !paidMeals.has(meal.id)) ?? [];
-    if (work && !card.payments.length && !meals.length && !card.relatedPayments?.length) return [];
+    if (work && !card.payments.length && !card.relatedPayments?.length && (historical || !meals.length)) return [];
     if ((july || historical) && ["events-lecon_conduite", "events-journee_maison"].includes(card.id)
       && !card.payments.length && !card.relatedPayments?.length) return [];
     const peopleOnPayments = new Set(card.payments.flatMap(payment => payment.participant ?? []));

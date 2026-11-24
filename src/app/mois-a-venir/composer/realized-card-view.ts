@@ -29,6 +29,7 @@ export function detailedRealizedCards(source: RealizedCard): RealizedCardView[] 
         payments: [operation],
         amount: operation.amount,
         participant: operation.participant ?? source.participant,
+        mobilityNote: operation.mobilityNote,
       } satisfies RealizedCard,
     }));
     if (!datedEvent) return operations;

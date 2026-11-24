@@ -2578,6 +2578,40 @@ export class CanonicalRepository {
         .order("type_key", { ascending: true }));
   }
 
+  loadRealizedOperationTags(
+    operationIds: readonly string[], tagKeys: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(operationIds);
+    if (!ids.length || !tagKeys.length) return Promise.resolve([]);
+    return this.readRowsByInBatches(
+      `operations:realized-tags:${tagKeys.join(",")}:${ids.join(",")}`,
+      "operations",
+      ids,
+      ["operation_tag_id"],
+      ["operation_id", "operation_tag_id"],
+      (batch) => this.client.from("operation_tags")
+        .select("operation_tag_id,operation_id,tags!inner(tag_key)")
+        .in("operation_id", batch).in("tags.tag_key", tagKeys)
+        .order("operation_id", { ascending: true }).order("operation_tag_id", { ascending: true }),
+    );
+  }
+
+  loadRealizedProductPeople(operationIds: readonly string[]): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(operationIds);
+    if (!ids.length) return Promise.resolve([]);
+    return this.readRowsByInBatches(
+      `operations:realized-product-people:${ids.join(",")}`,
+      "operations",
+      ids,
+      ["observation_id"],
+      ["operation_id", "observation_id"],
+      (batch) => this.client.from("product_observations")
+        .select("observation_id,operation_id,person_id")
+        .in("operation_id", batch)
+        .order("operation_id", { ascending: true }).order("observation_id", { ascending: true }),
+    );
+  }
+
   loadLifeEventParticipationRows(
     lifeEventIds: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {
