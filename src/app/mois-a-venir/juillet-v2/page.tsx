@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
+import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { parseYearMonth } from "@/core/time";
 import { julyPilotLabels, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import { JULY_COMPOSER_EDIT_HREF, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH, JULY_PILOT_DATE } from "@/domain/phase2/planner/realized-month-entry";
@@ -24,6 +25,7 @@ import { CalendarEventIcon } from "../month-calendar";
 import { composerCalendarArtwork } from "../calendar-artwork";
 import material from "../month-material.module.css";
 import pilotStyles from "../composer/realized-month.module.css";
+import composerStyles from "../composer/composer.module.css";
 
 export const metadata = { title: "Prévisions de juillet 2026" };
 export const dynamic = "force-dynamic";
@@ -63,17 +65,16 @@ export default async function JulyV2Page() {
   const unpricedCards = !draft ? displayed.filter(card => card.pilotStatus === "planned" && card.amount === null).length : 0;
 
   return <div className={`${material.page} mx-auto max-w-6xl space-y-5`}>
-    <header className={`${material.glassPremium} ${material.glassHero} px-6 py-5 sm:px-8`}>
-      <p className="eyebrow">Simulation · <time dateTime={JULY_PILOT_DATE}>15 juillet 2026</time></p>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-4xl font-black tracking-tight sm:text-5xl">Juillet 2026</h1>
-        <nav aria-label="Accès du mois de juillet" className="flex flex-wrap gap-2">
-          {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} prefetch={false} className={button}>Calendrier</Link>}
-          {composerEnabled && board && <Link href={JULY_COMPOSER_HREF} prefetch={false} className={`${material.clayPrimary} inline-flex items-center px-4 py-2 text-sm font-bold`}>Voir les cartes</Link>}
-          {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} prefetch={false} className={button}>Éditer le brouillon</Link>}
-        </nav>
-      </div>
-    </header>
+    <h1 className="sr-only">Prévisions · Juillet 2026</h1>
+    <AppToolbarContent className={composerStyles.compactToolbar}>
+      <span className="text-xs font-semibold">Simulation au <time dateTime={JULY_PILOT_DATE}>15 juillet</time></span>
+      <nav aria-label="Vues de Composer" className={composerStyles.reconstructionModes}>
+        {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} prefetch={false} className={composerStyles.reconstructionLink}>Calendrier</Link>}
+        {composerEnabled && board && <Link href={JULY_COMPOSER_HREF} prefetch={false} className={composerStyles.reconstructionLink}>Au 15 juillet</Link>}
+        {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} prefetch={false} className={composerStyles.reconstructionLink}>Édition</Link>}
+        <span className={composerStyles.reconstructionLink} aria-current="page">Prévisions</span>
+      </nav>
+    </AppToolbarContent>
     {budget && board && pilot ? <>
       <section className={`${material.glassPremium} p-5 sm:p-6`} aria-labelledby="july-income">
         <h2 id="july-income" className="text-xl font-black">Entrées d’argent</h2>

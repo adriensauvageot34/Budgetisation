@@ -797,42 +797,46 @@ body:has(.restaurantInspector[data-basket-suggestions], [data-mascara-suggestion
 /* L3: one creative workspace, a compact official HUD and an optional inspector. */
 .workspaceHeader { gap:8px 14px; min-height:72px; padding:0 2px 8px; align-content:center; }
 .headerIdentity { flex:0 0 280px; min-width:240px; }
-.workspace[data-reconstruction-mode] .workspaceHeader {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
-  grid-template-areas: "identity details modes";
+.compactToolbar {
+  --ink: #292338;
+  --muted: #5e546c;
+  --z-popover: 40;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-width: 0;
+  color: var(--ink);
 }
-.workspace[data-reconstruction-mode] .headerIdentity { grid-area: identity; min-width: 0; }
-.workspace[data-reconstruction-mode] .workspaceHeader > .toolbar { grid-area: details; }
-.workspace[data-reconstruction-mode] .reconstructionModes { grid-area: modes; justify-self: end; }
+.compactToolbar > .reconstructionModes { margin-inline-start: auto; max-width: 100%; flex-wrap: wrap; }
+.compactToolbar > .toolbar + .reconstructionModes { margin-inline-start: 0; }
+.compactToolbar > .toolbar { width: auto; }
+.compactToolbar button:enabled { cursor: pointer; }
+.compactToolbar button:disabled { opacity: .48; }
+.compactToolbar :is(button, a, summary):focus-visible { outline: 2px solid #7448d8; outline-offset: 2px; }
 .realizedTotals {
-  grid-area: details;
-  justify-self: start;
   display: grid;
   grid-auto-flow: column;
   align-items: center;
-  gap: 4px clamp(10px, 1.4vw, 20px);
+  gap: 3px clamp(8px, 1.1vw, 16px);
   margin: 0;
-  padding: 5px 9px;
+  padding: 3px 8px;
   border: 1px solid #ece1f3;
   border-radius: 12px;
   background: linear-gradient(130deg, #fffc, #f7f0f9);
 }
-.realizedTotals dt { color: #5e546c; font-size: .75rem; line-height: 1.3; }
-.realizedTotals dd { margin: 0; color: #292338; font-size: 1.1rem; font-weight: 750; line-height: 1.25; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.realizedTotals dt { color: #5e546c; font-size: .7rem; line-height: 1.2; }
+.realizedTotals dd { margin: 0; color: #292338; font-size: 1rem; font-weight: 750; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .realizedNet { border-radius: 8px; padding: 3px 7px; background: #eee4f6; }
-@media (max-width:960px) {
-  .workspace[data-reconstruction-mode] .workspaceHeader {
-    grid-template-columns: minmax(0, 1fr) max-content;
-    grid-template-areas: "identity modes" "details details";
-  }
-  .realizedTotals { justify-self: stretch; }
-}
 @media (max-width:560px) {
-  .workspace[data-reconstruction-mode] .workspaceHeader h1 { font-size: 1rem; white-space: normal; }
   .reconstructionModes button { padding-inline: 7px; font-size: .85rem; }
+  .realizedTotals { flex: 1 0 100%; grid-auto-columns: minmax(0, 1fr); }
+  .realizedTotals dd { font-size: .88rem; }
+  .compactToolbar > .toolbar { order: 1; }
+  .compactToolbar > .toolbar + .reconstructionModes { margin-inline-start: auto; }
+}
+@media (max-width:365px) {
   .realizedTotals { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .realizedTotals dd { font-size: 1rem; }
 }
 .workspaceHeader h1 { font-size:20px; letter-spacing:-.6px; margin:4px 0 6px; }
 .headerMeta { flex-wrap:wrap; gap:5px 9px; font-size:11px; white-space:normal; }
@@ -2090,7 +2094,6 @@ button.contextReferenceChip:hover { background:#f0e6f8; border-color:#c8b3db; }
 }
 @media (max-width:760px) {
   .workspace[data-reconstruction-mode] { display:flex; overflow:hidden; padding-bottom:0; }
-  .workspace[data-reconstruction-mode] .workspaceHeader { padding:2px 0 8px; gap:6px 8px; }
   .workspace[data-reconstruction-mode] .columns { flex:1; min-height:0; height:auto; gap:6px; }
   .workspace[data-reconstruction-mode] .library { flex:0 0 clamp(106px, 23dvh, 175px); height:auto; }
   .workspace[data-reconstruction-mode] .board { flex:1; min-height:0; height:auto; }
