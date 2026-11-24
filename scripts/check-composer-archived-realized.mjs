@@ -3,6 +3,7 @@ import Module from "node:module";
 import { require } from "./lib/phase2-ts-loader.mjs";
 
 const { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, realizedComposerHref } = require("@/domain/phase2/planner/realized-month-entry");
+const { forecastWindowMonths, workspacePeriodHref } = require("@/app/mois-a-venir/month-entry");
 const { realizedPlace, probableMerchantPlace } = require("@/server/phase2/planner/realized-places");
 const { buildHistoricalRealizedContext } = require("@/server/phase2/planner/historical-realized-context");
 const { detailedRealizedCards } = require("@/app/mois-a-venir/composer/realized-card-view");
@@ -20,6 +21,16 @@ assert.equal(ARCHIVED_REALIZED_MONTHS.length, 11);
 for (const month of ARCHIVED_REALIZED_MONTHS) assert.equal(realizedComposerHref(month), `/mois-a-venir/composer?month=${month}`);
 assert.ok(["2026-03", "2026-04", "2026-05", "2026-06"].every(isArchivedRealizedMonth));
 assert.equal(isArchivedRealizedMonth("2026-07"), false);
+assert.equal(forecastWindowMonths.length, 14);
+assert.equal(forecastWindowMonths[0], "2026-08");
+assert.equal(forecastWindowMonths.at(-1), "2027-09");
+assert.equal(workspacePeriodHref("global", "/mois-a-venir"), "/analyse-globale");
+assert.equal(workspacePeriodHref("2025-08", "/analyse-globale"), "/mois-a-venir/composer?month=2025-08");
+assert.equal(workspacePeriodHref("2026-07", "/analyse-globale"), "/mois-a-venir/juillet-v2");
+assert.equal(workspacePeriodHref("2026-05", "/mois-a-venir/composer/bilan"), "/mois-a-venir/composer/bilan?month=2026-05");
+assert.equal(workspacePeriodHref("2026-07", "/mois-a-venir/composer/bilan"), "/mois-a-venir/juillet-v2");
+assert.equal(workspacePeriodHref("2027-09", "/mois-a-venir/composer/bilan"), "/mois-a-venir?month=2027-09");
+assert.equal(workspacePeriodHref("2027-09", "/mois-a-venir/composer/calendrier"), "/mois-a-venir/composer/calendrier?month=2027-09");
 assert.match(probableMerchantPlace("Maison Regnier", "Paiement par carte - X1111 MAISON REGNIER CHAUD")?.address ?? "", /Chaudes-Aigues/);
 
 const person = { adrien: "person-a", manon: "person-m" };
@@ -221,11 +232,9 @@ const reviewedHtml = renderToStaticMarkup(createElement(AppRouterContext.Provide
 assert.match(reviewedHtml, /Avoir test/);
 assert.match(reviewedHtml, /Voir le mois bancaire/);
 assert.match(html, /Mois réalisé · 5 opérations bancaires/);
-assert.match(html, /href="\/historique\/2025-10"/);
-assert.match(html, /value="2025-12"/);
-assert.match(html, /value="2026-01"/);
-assert.match(html, /value="2026-03"/);
-assert.match(html, /value="2026-06"/);
+assert.match(html, /href="\/mois-a-venir\/composer\/calendrier\?month=2025-10"/);
+assert.match(html, /href="\/mois-a-venir\/composer\/bilan\?month=2025-10"/);
+assert.doesNotMatch(html, /Choisir un mois|Mois précédent|Mois suivant/);
 assert.doesNotMatch(html, /Modifier dans le brouillon|Enregistrer le Plan/);
 const ski = { ...weekend, id: "event-ski", date: "2026-02-26", endDate: "2026-03-01", label: "Séjour ski" };
 const march = { ...board, month: "2026-03", cards: [ski] };
@@ -237,9 +246,6 @@ const trip = { ...weekend, id: "event-spring-trip", date: "2026-03-31", endDate:
 const aprilHtml = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: {} },
   createElement(ArchivedRealizedMonth, { board: { ...board, month: "2026-04", cards: [trip] }, initialCardId: trip.id })));
 assert.match(aprilHtml, /href="\/mois-a-venir\/composer\?month=2026-03&amp;carte=event-spring-trip"/);
-const juneHtml = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: {} },
-  createElement(ArchivedRealizedMonth, { board: { ...board, month: "2026-06" } })));
-assert.match(juneHtml, /href="\/mois-a-venir\/composer\?month=2026-07" aria-label="Mois suivant"/);
 
 const { julyPilotForecast, projectJulyPilot } = require("@/server/phase2/planner/july-pilot");
 const { RealizedComposerMonth } = require("@/app/mois-a-venir/composer/realized-month");

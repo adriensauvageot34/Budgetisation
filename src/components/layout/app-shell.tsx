@@ -1,20 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { Landmark } from "lucide-react";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 import { useProductRuntime } from "@/components/runtime";
 import { JULY_V2_HREF } from "@/domain/phase2/planner/realized-month-entry";
+import { MonthPicker } from "@/app/mois-a-venir/month-picker";
 import scene from "@/app/mois-a-venir/planned-scroll-scene.module.css";
-
-const modules = [
-  { href: "/historique", label: "Historique" },
-  { href: "/mois-a-venir", label: "Composer" },
-  { href: "/analyse-globale", label: "Analyse globale" },
-  { href: "/operations", label: "Opérations" },
-  { href: JULY_V2_HREF, label: "Juillet V2" },
-];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,67 +17,45 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const composerBalance = pathname === "/mois-a-venir/composer/bilan";
   const plannedMonth = pathname === "/mois-a-venir" || julyV2 || composerBalance;
   const composerCalendar = pathname === "/mois-a-venir/composer/calendrier";
-  const composer = pathname === "/mois-a-venir/composer" || pathname === "/recette/bar-favoris";
+  const composer = pathname === "/mois-a-venir/composer";
+  const glass = plannedMonth || composerCalendar;
 
-  if (pathname === "/connexion" || pathname === "/acces-refuse") {
+  if (pathname === "/connexion" || pathname === "/acces-refuse" || pathname === "/mentions-places") {
     return children;
   }
 
-  // The Composer owns its compact navigation; other routes retain the full shell.
-  if (composer) return <main ref={runtime.backgroundRootRef} data-composer-app-shell
+  if (pathname === "/recette/bar-favoris") return <main ref={runtime.backgroundRootRef} data-composer-app-shell
     style={{ height: "100dvh", padding: "12px 24px 20px", overflow: "hidden", background: "#fdfcfb" }}>{children}</main>;
 
   return (
-    <div data-planned-shell={plannedMonth || composerCalendar ? "" : undefined} className={plannedMonth || composerCalendar ? scene.shell : "min-h-screen"}>
-      {(plannedMonth || composerCalendar) && <div data-planned-background className={scene.background} aria-hidden="true" />}
+    <div data-planned-shell={glass ? "" : undefined} className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? scene.shell : "min-h-screen"}>
+      {glass && <div data-planned-background className={scene.background} aria-hidden="true" />}
       <header data-planned-header={plannedMonth ? "" : undefined} className={plannedMonth ? scene.header : "border-b border-[var(--color-border)] bg-white"}>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-[var(--space-page)] py-4">
-          <Link href="/historique" className="mr-auto flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white">
-              <Landmark size={20} />
+        <div className="flex items-center gap-3 px-3 py-1.5 sm:px-6">
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-[var(--color-primary)] text-white">
+              <Landmark size={17} aria-hidden />
             </span>
-            <span>
-              <span className="block font-black">Budgetisation V2</span>
-              <span className="block text-xs text-[var(--color-muted)]">
-                Historique · Analyse · Opérations
-              </span>
-            </span>
-          </Link>
-
-          <nav className="flex flex-wrap gap-1" aria-label="Navigation principale">
-            {modules.map((module) => {
-              const active = julyV2 ? module.href === JULY_V2_HREF : pathname.startsWith(module.href);
-              return (
-                <Link
-                  key={module.href}
-                  href={module.href}
-                  prefetch={module.href === JULY_V2_HREF ? false : undefined}
-                  aria-current={active ? "page" : undefined}
-                  className={`rounded-xl px-3 py-2 text-sm font-bold transition ${
-                    active
-                      ? "bg-[var(--color-surface-soft)] text-[var(--color-primary-deep)]"
-                      : "text-[var(--color-muted)] hover:bg-[var(--color-surface-soft)]"
-                  }`}
-                >
-                  {module.label}
-                </Link>
-              );
-            })}
+            <span className="sr-only font-bold sm:not-sr-only">Budgetisation</span>
+          </div>
+          <nav className="mr-auto min-w-0" aria-label="Période de Budgetisation">
+            <Suspense fallback={<span aria-hidden className="block h-8 w-28 sm:w-56" />}>
+              <MonthPicker />
+            </Suspense>
           </nav>
-
-          <Link href="/diagnostic" className="button-ghost text-xs">Diagnostic</Link>
-
           <SignOutButton compact />
         </div>
       </header>
 
       <main
         ref={runtime.backgroundRootRef}
-        className={composerCalendar ? "w-full min-w-0 px-2 py-3 sm:px-5" : historyV2
-          ? "min-h-[calc(100vh-73px)] py-6"
+        data-composer-app-shell={composer ? "" : undefined}
+        className={composer ? "min-h-0 min-w-0 overflow-hidden bg-[#fdfcfb] px-3 pb-4 pt-2 sm:px-6"
+          : composerCalendar ? "w-full min-w-0 px-2 py-3 sm:px-5" : historyV2
+          ? "py-6"
           : pathname === "/mois-a-venir" || composerBalance
-            ? "mx-auto min-h-[calc(100vh-73px)] max-w-[1360px] px-[var(--space-page)] py-8"
-            : "mx-auto min-h-[calc(100vh-73px)] max-w-6xl px-[var(--space-page)] py-8"}
+            ? "mx-auto max-w-[1360px] px-[var(--space-page)] py-4 sm:py-6"
+            : "mx-auto max-w-6xl px-[var(--space-page)] py-4 sm:py-6"}
       >
         {children}
       </main>

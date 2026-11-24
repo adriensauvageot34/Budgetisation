@@ -2136,4 +2136,4 @@ button.contextReferenceChip:hover { background:#f0e6f8; border-color:#c8b3db; }
   font-size: .85rem;
   color: #644586;
 }
-.reconstructionLink:hover { background: #efe4f7; }
+.reconstructionLink:is(a:hover, [aria-current="page"]) { background: #efe4f7; }

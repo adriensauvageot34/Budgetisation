@@ -1,30 +1,50 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useOptimistic, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { monthLabel } from "./composer/display";
-import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH, ARCHIVED_REALIZED_MONTHS, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
-import { composerBalanceHref, composerCalendarHref, forecastWindowMonths, monthPlanningHref } from "./month-entry";
+import { isArchivedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, ARCHIVED_REALIZED_MONTHS } from "@/domain/phase2/planner/realized-month-entry";
+import { forecastWindowMonths, globalAnalysisHref, workspacePeriodHref } from "./month-entry";
 import material from "./month-material.module.css";
 
-export function MonthPicker({ targetMonth, view }: { targetMonth: string; view?: "calendar" | "balance" }) {
+const yearMonthPattern = /^\d{4}-(0[1-9]|1[0-2])$/u;
+
+export function MonthPicker() {
   const router = useRouter();
-  const isRealized = isArchivedRealizedMonth(targetMonth) || targetMonth === JULY_COMPOSER_MONTH;
-  const months = isRealized || forecastWindowMonths.includes(targetMonth) ? forecastWindowMonths : [...forecastWindowMonths, targetMonth].sort();
-  return <select aria-label="Choisir un mois" value={targetMonth}
+  const pathname = usePathname();
+  const search = useSearchParams();
+  const month = pathname === JULY_V2_HREF ? JULY_COMPOSER_MONTH : search.get("month") ?? "";
+  const period = pathname === globalAnalysisHref ? "global" : yearMonthPattern.test(month) ? month : "";
+  const [selection, selectPeriod] = useOptimistic(period);
+  const [pending, startTransition] = useTransition();
+  const outsideRange = yearMonthPattern.test(period) && !isArchivedRealizedMonth(period)
+    && period !== JULY_COMPOSER_MONTH && !forecastWindowMonths.includes(period);
+  return <select aria-label="Choisir une période" value={selection} aria-busy={pending}
     onChange={event => {
-      const month = event.currentTarget.value;
-      router.push(view === "balance" ? composerBalanceHref(month) : view === "calendar" ? composerCalendarHref(month)
-        : isArchivedRealizedMonth(month) || month === JULY_COMPOSER_MONTH ? realizedComposerHref(month) : monthPlanningHref(month));
+      const nextPeriod = event.currentTarget.value;
+      const href = workspacePeriodHref(nextPeriod, pathname);
+      // The editor uses the browser's unload guard for unsaved drafts and card edits.
+      if (pathname === "/mois-a-venir/composer" && !isArchivedRealizedMonth(month)) {
+        window.location.assign(href);
+        return;
+      }
+      startTransition(() => {
+        selectPeriod(nextPeriod);
+        router.push(href);
+      });
     }}
-    className={`${material.field} max-w-full px-3 py-2 text-sm font-semibold capitalize`}>
+    className={`${material.field} w-full min-w-0 px-3 py-1.5 text-sm font-semibold capitalize sm:w-56`}>
+    <option value="global">Global</option>
+    <option value="" disabled hidden>Période</option>
     <optgroup label="Mois réalisés">
       {ARCHIVED_REALIZED_MONTHS.map(month => <option key={month} value={month}>{monthLabel(month)}</option>)}
     </optgroup>
-    {view !== "balance" && <>
-      <option value={JULY_COMPOSER_MONTH}>Juillet 2026 · mois test</option>
-      <optgroup label="Prévisions">
-        {months.map(month => <option key={month} value={month}>{monthLabel(month)}</option>)}
-      </optgroup>
-    </>}
+    <optgroup label="Simulation">
+      <option value={JULY_COMPOSER_MONTH}>Juillet 2026</option>
+    </optgroup>
+    <optgroup label="Prévisions">
+      {forecastWindowMonths.map(month => <option key={month} value={month}>{monthLabel(month)}</option>)}
+    </optgroup>
+    {outsideRange && <option value={period} disabled hidden>{monthLabel(period)}</option>}
   </select>;
 }

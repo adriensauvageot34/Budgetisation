@@ -1,7 +1,5 @@
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
-import { MonthPicker } from "../month-picker";
 import { composerBalanceHref, composerCalendarHref } from "../month-entry";
 import { monthLabel, money } from "./display";
 import { RealizedComposerMonth } from "./realized-month";
@@ -17,28 +15,19 @@ export function RealizedFinancialTotals({ board, pilot = false }: { board: Reali
 }
 
 export function ArchivedRealizedMonth({ board, initialCardId }: { board: RealizedBoard; initialCardId?: string }) {
-  const index = ARCHIVED_REALIZED_MONTHS.findIndex(month => month === board.month);
   const july = board.month === JULY_COMPOSER_MONTH;
-  const previous = ARCHIVED_REALIZED_MONTHS[index - 1];
-  const next = ARCHIVED_REALIZED_MONTHS[index + 1] ?? JULY_COMPOSER_MONTH;
   return <div className={styles.workspace} data-composer data-reconstruction-mode="realized">
     <header className={styles.workspaceHeader}>
       <div className={styles.headerIdentity}>
-        <nav className="flex flex-wrap gap-x-3" aria-label="Accès au mois">
-          <a href={july ? JULY_V2_HREF : "/mois-a-venir"} className={styles.backLink}><ArrowLeft size={14} /> Prévisions</a>
-          {july && <a href={JULY_COMPOSER_HREF} className={styles.backLink}>Simulation au 15 juillet</a>}
-          <a href={`/historique/${board.month}`} className={styles.backLink}>Historique du mois</a>
-        </nav>
+        {july && <a href={JULY_COMPOSER_HREF} className={styles.backLink}>Simulation au 15 juillet</a>}
         <h1>Composer <span>· {monthLabel(board.month)}</span></h1>
         <p className={styles.headerMeta}>{july ? "Bilan complet" : "Mois réalisé"} · {board.operationCount} opérations bancaires</p>
       </div>
       <RealizedFinancialTotals board={board} />
-      <nav className={styles.reconstructionModes} aria-label="Mois réalisés">
+      <nav className={styles.reconstructionModes} aria-label="Vues de Composer">
+        <span className={styles.reconstructionLink} aria-current="page">Cartes</span>
         <a className={styles.reconstructionLink} href={composerCalendarHref(board.month)}>Calendrier</a>
         {!july && <a className={styles.reconstructionLink} href={composerBalanceHref(board.month)}>Bilan du mois</a>}
-        {previous && <a className="p-1.5" href={realizedComposerHref(previous)} aria-label="Mois précédent"><ArrowLeft size={16} /></a>}
-        <MonthPicker targetMonth={board.month} />
-        {!july && <a className="p-1.5" href={realizedComposerHref(next)} aria-label="Mois suivant"><ArrowRight size={16} /></a>}
       </nav>
     </header>
     <RealizedComposerMonth board={board} initialCardId={initialCardId} />
