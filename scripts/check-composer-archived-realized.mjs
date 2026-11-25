@@ -268,6 +268,18 @@ assert.match(aprilHtml, /href="\/mois-a-venir\/composer\?month=2026-03&amp;carte
 
 const { julyPilotForecast, projectJulyPilot } = require("@/server/phase2/planner/july-pilot");
 const { RealizedComposerMonth } = require("@/app/mois-a-venir/composer/realized-month");
+const { realizedBoardOverview } = require("@/app/mois-a-venir/composer/realized-overview");
+const { matches, searchText } = require("@/app/mois-a-venir/composer/realized-card-text");
+const { overview: compact, initialDetail: linkedDetail } = realizedBoardOverview(reviewed, splitCard.id);
+assert.equal(linkedDetail.card.id, splitCard.id);
+assert.equal(realizedBoardOverview(reviewed).initialDetail, undefined);
+assert.equal(compact.flatKeys.length, reviewed.cards.flatMap(detailedRealizedCards).length);
+assert.equal(compact.categoryKeys.length, (reviewed.categoryCards ?? reviewed.cards).length);
+const compactCard = compact.cards[linkedDetail.key];
+assert.equal(compactCard.amount, splitCard.amount);
+assert.ok(compactCard.search.some(line => matches(line, searchText("Avoir test").split(" "))));
+assert.ok(!("payments" in compactCard) && !("occurrences" in compactCard)
+  && !("reviewNotes" in compactCard) && !("reviewReferences" in compactCard));
 const julyPayment = (id, date, amount, flow = "expense", activityDate) => ({
   id, date, activityDate, label: id, bankLabel: `Bancaire ${id}`, amount, flow, components: [],
 });
@@ -299,7 +311,7 @@ assert.equal(july.cards.find(card => card.id === "undated-pilot-undated").pilotS
 assert.equal(july.cards.flatMap(card => card.payments).length, 4);
 assert.equal(julyPilotForecast(july, null).projectedCash, null);
 const pilotHtml = renderToStaticMarkup(createElement(RealizedComposerMonth, {
-  board: july, pilot: true, initialCardId: "late-pilot-pending",
+  ...realizedBoardOverview(july, "late-pilot-pending"), pilot: true, initialCardId: "late-pilot-pending",
 }));
 assert.match(pilotHtml, /data-pilot-status="confirmed"/u);
 assert.match(pilotHtml, /data-pilot-status="pending"/u);

@@ -4,15 +4,16 @@ import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, Search, Utensils, 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { julyPilotLabels, julyPilotStatuses, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
-import type { RealizedBoard, RealizedCard, RealizedCardGroup, RealizedPayment } from "@/server/phase2/planner/realized-month";
+import type { RealizedCard, RealizedPayment } from "@/server/phase2/planner/realized-month";
 import type { RealizedPlace } from "@/server/phase2/planner/realized-places";
-import type { RealizedWork } from "@/server/phase2/planner/realized-work";
 import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { money, monthLabel, plannedDayLabel } from "./display";
 import { RealizedBadge } from "./realized-badge";
 import { JulyPilotChip } from "./reconstructed-cards";
 import { JulyEditLink } from "./july-edit-link";
-import { detailedRealizedCards, packRealizedCards, packRealizedCategories, realizedOperationCardId, type PackedCardPosition, type RealizedCardView } from "./realized-card-view";
+import { packRealizedCards, packRealizedCategories, realizedOperationCardId, type PackedCardPosition } from "./realized-card-view";
+import { days, matches, paymentSearch, searchableDate, searchText } from "./realized-card-text";
+import type { InitialRealizedDetail, RealizedBoardOverview, RealizedCardSummary } from "./realized-overview";
 import styles from "./realized-month.module.css";
 
 const sortOptions = [
@@ -22,32 +23,8 @@ const sortOptions = [
   { id: "category", label: "Par catégorie" },
 ] as const;
 type SortOrder = typeof sortOptions[number]["id"];
-const fullDate = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const distance = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
 const carArtwork = "option:activity:transport:car";
-
-function days(date: string, end?: string) {
-  const start = plannedDayLabel(date);
-  return end && end !== date ? `${start} – ${plannedDayLabel(end)}` : start;
-}
-
-function searchText(...values: readonly (string | undefined | null)[]) {
-  return values.join(" ").normalize("NFD").replace(/\p{Diacritic}/gu, "")
-    .toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-}
-
-function searchableDate(date: string | undefined) {
-  return date ? fullDate.format(new Date(`${date}T12:00:00Z`)) : undefined;
-}
-
-function paymentSearch(payment: RealizedPayment) {
-  return searchText(payment.label, payment.bankLabel, payment.category, payment.date, searchableDate(payment.date), days(payment.date),
-    payment.place?.label, payment.place?.address, payment.amount, money(payment.amount), ...payment.components.map(component => component.label));
-}
-
-function matches(text: string, terms: readonly string[]) {
-  return terms.every(term => text.includes(term));
-}
 
 const placeStatus = { confirmed: "Confirmé", probable: "Lieu probable", town: "Commune" } as const;
 
@@ -94,15 +71,6 @@ function CardArtwork({ card, size }: { card: Pick<RealizedCard, "art">; size: nu
     iconKey={card.art.iconKey} className={styles.cardVisual} scale={size > 48 ? "CARD" : "LIBRARY"} size={size} />;
 }
 
-function cardCaption(card: RealizedCard, date: string | null | undefined = card.date) {
-  const number = card.occurrences?.length;
-  const count = card.payments.length;
-  const estimated = card.pilotStatus && card.pilotStatus !== "confirmed";
-  return [date ? days(date, card.endDate) : null,
-    number ? `${number} ${number === 1 ? "occurrence" : "occurrences"}` : null,
-    count ? `${count} ${estimated ? count === 1 ? "élément budgété" : "éléments budgétés" : count === 1 ? "opération" : "opérations"}` : null].filter(Boolean).join(" · ");
-}
-
 function CardDate({ date, end }: { date: string; end?: string }) {
   const hasRange = end && end !== date;
   const sameMonth = hasRange && date.slice(0, 7) === end.slice(0, 7);
@@ -119,7 +87,7 @@ function ParticipantBadge({ name, portrait }: { name: string; portrait?: string 
   </span>;
 }
 
-function WorkDayFooter({ work, portrait }: { work: RealizedWork; portrait?: string }) {
+function WorkDayFooter({ work, portrait }: { work: NonNullable<RealizedCardSummary["work"]>; portrait?: string }) {
   return <span className={styles.workFooter}>
     <span className={styles.workItems}>
       {work.items.map(item => <span key={item.id} className={styles.workItem} data-work-item={item.count}>
@@ -132,27 +100,19 @@ function WorkDayFooter({ work, portrait }: { work: RealizedWork; portrait?: stri
   </span>;
 }
 
-const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open, date, position, portrait }: {
-  view: RealizedCardView; category?: RealizedCardGroup; open: (cardId: string) => void; date?: string;
+const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open, date, position, portrait }: {
+  card: RealizedCardSummary; category?: RealizedBoardOverview["groups"][number]; open: (cardId: string) => void; date?: string;
   position?: PackedCardPosition; portrait?: string;
 }) {
-  const { card, operation, source } = view;
-  const badges = [...new Map(card.payments.flatMap(payment => payment.badge
-    ? [[payment.badge.label, payment.badge] as const] : [])).values()];
-  const linked = card.relatedPayments?.length;
-  const reviewed = card.reviewReferences?.length;
+  const { badges, relatedCount, caption, trip, travel } = card;
   const visibleDate = card.date ?? date;
-  const operationCaption = operation?.category ?? source.label;
-  const caption = operation
-    ? (operationCaption !== card.label ? operationCaption : undefined)
-    : cardCaption(card, null);
   const firstPlace = card.places?.[0];
   const additionalPlaces = (card.places?.length ?? 0) - 1;
   const location = firstPlace ? firstPlace.label : card.label === "Restaurant" && card.eventStatus ? "Lieu à confirmer" : undefined;
   return <button id={card.id} type="button" className={styles.card} data-realized-card={card.section}
     data-realized-category={category?.id} data-card-date={visibleDate} data-pilot-status={card.pilotStatus}
-    data-operation-id={card.payments.length === 1 ? card.payments[0]?.id : undefined}
-    data-operation-count={card.payments.length} data-card-amount={card.amount ?? undefined}
+    data-operation-id={card.paymentIds.length === 1 ? card.paymentIds[0] : undefined}
+    data-operation-count={card.paymentIds.length} data-card-amount={card.amount ?? undefined}
     data-multiple-badges={!card.work && badges.length > 1 || undefined}
     data-realized-work={card.work?.mode}
     style={position ? { "--card-column": position.column, insetBlockStart: position.top, minHeight: position.height } as CSSProperties : undefined}
@@ -173,7 +133,7 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
         <strong className={styles.cardTitle} title={card.label}>{card.label}</strong>
         {card.pilotStatus && <JulyPilotChip status={card.pilotStatus} />}
         {card.amount !== null && <span className={styles.cardTotal} data-positive={Number(card.amount) > 0 || undefined}>
-          {money(card.amount)}{card.transferAmounts && <small>Solde des transferts</small>}
+          {money(card.amount)}{card.hasTransfers && <small>Solde des transferts</small>}
         </span>}
         {location && <span className={styles.cardLocation} data-place-certainty={firstPlace?.certainty}
           data-confirmed={firstPlace?.certainty === "confirmed"}
@@ -183,22 +143,22 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
           {additionalPlaces > 0 && <small aria-label={`${additionalPlaces} autres lieux`}>+{additionalPlaces}</small>}
         </span>}
         {caption && <span className={styles.cardSubtitle}>{caption}</span>}
-        {card.amount === null && (linked || reviewed || !card.carTrip) && <span className={styles.cardSubtitle}>
-          {linked || reviewed ? `${(linked ?? 0) + (reviewed ?? 0)} ${(linked ?? 0) + (reviewed ?? 0) === 1 ? "opération associée" : "opérations associées"}`
+        {card.amount === null && (relatedCount > 0 || !trip) && <span className={styles.cardSubtitle}>
+          {relatedCount ? `${relatedCount} ${relatedCount === 1 ? "opération associée" : "opérations associées"}`
             : card.work || card.pilotStatus === "planned" ? "Montant non renseigné" : "Aucun paiement rattaché"}
         </span>}
       </span>
-      {card.carTrip && <span className={styles.cardTrip} data-realized-car-trip title={card.carTrip.route}>
+      {trip && <span className={styles.cardTrip} data-realized-car-trip title={trip.route}>
         <ComposerAssetVisual assetKey={carArtwork} iconKey="car" size={23} />
-        <span className={styles.cardTripRoute}>{card.carTrip.compactRoute}</span>
-        <strong className={styles.cardTripCost} aria-label={`${money(card.carTrip.estimatedFuel)} d’essence estimée`} title="Essence estimée">
-          ≈ {money(card.carTrip.estimatedFuel)}
+        <span className={styles.cardTripRoute}>{trip.compactRoute}</span>
+        <strong className={styles.cardTripCost} aria-label={`${money(trip.estimatedFuel)} d’essence estimée`} title="Essence estimée">
+          ≈ {money(trip.estimatedFuel)}
         </strong>
       </span>}
-      {card.observedTravel?.[0] && <span className={styles.cardTrip} title={card.observedTravel[0]}>
+      {travel && <span className={styles.cardTrip} title={travel}>
         <ComposerAssetVisual assetKey={carArtwork} iconKey="car" size={23} />
-        <span className={styles.cardTripRoute}>{card.observedTravel[0].split(" · ")[0]}</span>
-        <strong className={styles.cardTripCost}>{card.observedTravel[0].split(" · ").at(-1)}</strong>
+        <span className={styles.cardTripRoute}>{travel.split(" · ")[0]}</span>
+        <strong className={styles.cardTripCost}>{travel.split(" · ").at(-1)}</strong>
       </span>}
       {card.mobilityNote && <span className={styles.cardSubtitle}>{card.mobilityNote}</span>}
       {card.work && <WorkDayFooter work={card.work} portrait={portrait} />}
@@ -208,14 +168,6 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ view, category, open
     </span>
   </button>;
 });
-
-function earliestDate(card: RealizedCard): string | undefined {
-  return card.date ?? [
-    ...card.payments.map(payment => payment.date),
-    ...(card.occurrences ?? []).map(item => item.date),
-    ...(card.relatedPayments ?? []).map(payment => payment.date),
-  ].sort()[0];
-}
 
 function RealizedDetail({ card, month, terms, open }: {
   card: RealizedCard;
@@ -279,7 +231,7 @@ function RealizedDetail({ card, month, terms, open }: {
       <ul className={styles.places}>
         {card.reviewReferences.map(ref => <li key={ref.id}>
           <strong>{ref.label} · {money(ref.amount)}</strong><br />
-          <small>{ref.role} · {fullDate.format(new Date(`${ref.date}T12:00:00Z`))}</small>
+          <small>{ref.role} · {searchableDate(ref.date)}</small>
           {ref.date.slice(0, 7) !== month && <small> · <a
             href={realizedComposerHref(ref.date.slice(0, 7), isImportedRealizedMonth(month) ? realizedOperationCardId(ref.id) : card.id)}>
             {isImportedRealizedMonth(month) ? "Voir l’opération" : "Voir le mois bancaire"}
@@ -328,8 +280,8 @@ function RealizedDetail({ card, month, terms, open }: {
   </>;
 }
 
-export function RealizedComposerMonth({ board, editableSourceIds, initialCardId, pilot = false, initialStatus }: {
-  board: RealizedBoard; editableSourceIds?: readonly string[]; initialCardId?: string; pilot?: boolean;
+export function RealizedComposerMonth({ overview, initialDetail, editableSourceIds, initialCardId, pilot = false, initialStatus }: {
+  overview: RealizedBoardOverview; initialDetail?: InitialRealizedDetail; editableSourceIds?: readonly string[]; initialCardId?: string; pilot?: boolean;
   initialStatus?: JulyPilotStatus;
 }) {
   const [sortOrder, setSortOrder] = useState<SortOrder>(pilot ? "date" : "amount-desc");
@@ -338,6 +290,9 @@ export function RealizedComposerMonth({ board, editableSourceIds, initialCardId,
   const [selection, setSelection] = useState<{ cardId: string; paymentId?: string; componentId?: string } | null>(
     () => initialCardId ? { cardId: initialCardId } : null,
   );
+  const [loaded, setLoaded] = useState<ReadonlyMap<string, RealizedCard>>(() => new Map());
+  const [failedKey, setFailedKey] = useState<string>();
+  const [retry, setRetry] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -350,35 +305,14 @@ export function RealizedComposerMonth({ board, editableSourceIds, initialCardId,
   const terms = searchText(query).split(" ").filter(Boolean);
   const byCategory = sortOrder === "category";
   const fillColumns = !byCategory && terms.length === 0;
-  const categoryByCard = useMemo(() => new Map(board.groups.flatMap(item =>
-    item.cardIds.map(id => [id, item] as const))), [board.groups]);
-  const views = useMemo(() => byCategory ? (board.categoryCards ?? board.cards).map(card => ({
-    card, source: board.cards.find(source => source.id === card.id) ?? card,
-  } satisfies RealizedCardView)) : board.cards.flatMap(detailedRealizedCards), [board.cards, board.categoryCards, byCategory]);
-  const indexed = useMemo(() => views.map(view => {
-    const { card, source } = view;
-    const category = categoryByCard.get(source.id);
-    return {
-      card, view, category,
-      date: earliestDate(card),
-      lines: [
-        searchText(card.label, card.date, card.endDate, searchableDate(card.date), cardCaption(card), card.participant),
-        ...(card.places ?? []).map(place => searchText(card.label, place.label, place.address, searchableDate(card.date))),
-        ...(card.work?.items ?? []).map(item => searchText(card.label, item.label, searchableDate(card.date))),
-        searchText(source.label, category?.label, category?.shortLabel),
-        ...(card.carTrip ? [searchText(card.label, "trajet voiture essence", card.carTrip.route, card.carTrip.compactRoute)] : []),
-        ...(card.observedTravel ?? []).map(route => searchText(card.label, "trajet", route)),
-        ...card.payments.map(payment => searchText(source.label, card.label, paymentSearch(payment))),
-        ...(card.occurrences ?? []).map(occurrence => searchText(card.label, occurrence.label, occurrence.date, searchableDate(occurrence.date))),
-        ...(card.relatedPayments ?? []).map(payment => searchText(card.label, payment.label, payment.cardLabel,
-          payment.date, searchableDate(payment.date), payment.component?.amount)),
-        ...(card.reviewReferences ?? []).map(ref => searchText(card.label, ref.label, ref.role, searchableDate(ref.date))),
-      ],
-    };
-  }), [views, categoryByCard]);
-  const visible = indexed.filter(({ card, lines }) => (!statusFilter || card.pilotStatus === statusFilter)
-    && (!terms.length || lines.some(line => matches(line, terms)))).sort((a, b) => {
-      const byDate = () => (a.date ?? "9999").localeCompare(b.date ?? "9999") || a.card.label.localeCompare(b.card.label, "fr")
+  const categoryById = useMemo(() => new Map(overview.groups.map(group => [group.id, group])), [overview.groups]);
+  const indexed = useMemo(() => (byCategory ? overview.categoryKeys : overview.flatKeys).map(key => {
+    const card = overview.cards[key]!;
+    return { key, card, category: card.categoryId ? categoryById.get(card.categoryId) : undefined };
+  }), [byCategory, overview, categoryById]);
+  const visible = indexed.filter(({ card }) => (!statusFilter || card.pilotStatus === statusFilter)
+    && (!terms.length || card.search.some(line => matches(line, terms)))).sort((a, b) => {
+      const byDate = () => (a.card.sortDate ?? "9999").localeCompare(b.card.sortDate ?? "9999") || a.card.label.localeCompare(b.card.label, "fr")
         || a.card.id.localeCompare(b.card.id);
       if (sortOrder === "date") return byDate();
       const left = a.card.amount, right = b.card.amount;
@@ -386,20 +320,42 @@ export function RealizedComposerMonth({ board, editableSourceIds, initialCardId,
       const difference = Math.abs(Number(left)) - Math.abs(Number(right));
       return (sortOrder === "amount-asc" ? difference : -difference) || byDate();
     });
-  const visibleCategories = byCategory ? board.groups.flatMap(category => {
+  const visibleCategories = byCategory ? overview.groups.flatMap(category => {
     const entries = visible.filter(entry => entry.category?.id === category.id);
     return entries.length ? [{ category, entries }] : [];
   }) : [];
   const visibleCount = visible.length;
-  const paymentCardId = !byCategory && selection?.paymentId ? realizedOperationCardId(selection.paymentId) : undefined;
-  const selectedView = indexed.find(({ card }) => card.id === paymentCardId)?.view
-    ?? indexed.find(({ card }) => card.id === selection?.cardId)?.view
-    ?? indexed.find(({ view }) => view.source.id === selection?.cardId)?.view
-    ?? (selection?.paymentId ? indexed.find(({ card }) => card.payments.some(payment => payment.id === selection.paymentId))?.view : undefined);
+  const selectedPaymentId = selection?.paymentId;
+  const paymentCardId = !byCategory && selectedPaymentId ? realizedOperationCardId(selectedPaymentId) : undefined;
+  const selectedView = selection && (indexed.find(({ card }) => card.id === paymentCardId)
+    ?? indexed.find(({ card }) => card.id === selection.cardId)
+    ?? indexed.find(({ card }) => card.sourceId === selection.cardId)
+    ?? (selectedPaymentId ? indexed.find(({ card }) => card.paymentIds.includes(selectedPaymentId)) : undefined));
   const selected = selectedView?.card;
+  const detailKey = selectedView?.key;
+  const detailId = selected?.id;
+  const detail = detailKey ? loaded.get(detailKey) ?? (initialDetail?.key === detailKey ? initialDetail.card : undefined) : undefined;
   const visibleKeys = `${sortOrder}:${fillColumns}:${visible.map(({ card }) => card.id).join("|")}`;
   const packing = layout?.key === visibleKeys ? layout.packing : undefined;
   const groupedPacking = byCategory ? packing : undefined;
+
+  useEffect(() => {
+    if (!detailKey || !detailId || detail) return;
+    const controller = new AbortController();
+    const view = detailKey.startsWith("category:") ? "category" : "flat";
+    const params = new URLSearchParams({ month: overview.month, card: detailId, mode: pilot ? "pilot" : "realized", view });
+    fetch(`/api/composer/realized-card?${params}`, { signal: controller.signal, cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("CARD_DETAIL_UNAVAILABLE");
+        const card = await response.json() as RealizedCard;
+        if (card.id !== detailId) throw new Error("CARD_DETAIL_MISMATCH");
+        if (!controller.signal.aborted) setLoaded(previous => new Map(previous).set(detailKey, card));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setFailedKey(detailKey);
+      });
+    return () => controller.abort();
+  }, [detail, detailId, detailKey, overview.month, pilot, retry]);
 
   useLayoutEffect(() => {
     const node = rail.current;
@@ -454,9 +410,15 @@ export function RealizedComposerMonth({ board, editableSourceIds, initialCardId,
 
   useEffect(() => {
     const panel = dialog.current;
-    if (!selection || !panel) return;
+    if (!selection || !selected || !panel) return;
     if (!panel.open) panel.showModal();
     if (body.current) body.current.scrollTop = 0;
+    closeButton.current?.focus();
+  }, [selection, selected]);
+
+  useEffect(() => {
+    const panel = dialog.current;
+    if (!detail || !selection?.paymentId || !panel?.open) return;
     const row = [...panel.querySelectorAll<HTMLElement>("[data-realized-operation]")]
       .find(row => row.dataset.realizedOperation === selection.paymentId);
     const target = row && ([...row.querySelectorAll<HTMLElement>("[data-realized-component]")]
@@ -464,29 +426,28 @@ export function RealizedComposerMonth({ board, editableSourceIds, initialCardId,
     if (target) {
       target.focus({ preventScroll: true });
       target.scrollIntoView({ block: "nearest" });
-    } else {
-      closeButton.current?.focus();
     }
-  }, [selection, selected?.id]);
+  }, [selection, detail]);
 
   const open = useCallback((cardId: string, paymentId?: string, componentId?: string) => {
+    setFailedKey(undefined);
     setSelection({ cardId, paymentId, componentId });
   }, []);
   function renderGrid(key: string, entries: typeof visible) {
     const flatPacking = !byCategory && packing;
     return <div className={styles.grid} data-realized-grid={key} data-packed={Boolean(flatPacking)}
       style={flatPacking ? { "--packed-columns": flatPacking.columns, height: flatPacking.height } as CSSProperties : undefined}>
-      {entries.map(({ card, view, category, date }) => {
+      {entries.map(({ card, category }) => {
         const position = packing?.positions[card.id];
-        return <RealizedMonthCard key={card.id} view={view} category={category} position={position}
-          date={sortOrder === "date" ? date : undefined}
-          portrait={card.work ? board.participantPortraits[card.work.participant.personId]
-            : card.participant && board.julyPortraits[card.participant]} open={open} />;
+        return <RealizedMonthCard key={card.id} card={card} category={category} position={position}
+          date={sortOrder === "date" ? card.sortDate : undefined}
+          portrait={card.work ? overview.participantPortraits[card.work.participant.personId]
+            : card.participant && overview.julyPortraits[card.participant]} open={open} />;
       })}
     </div>;
   }
 
-  return <div className={styles.board} data-realized-month={board.month}>
+  return <div className={styles.board} data-realized-month={overview.month}>
     <div className={styles.toolbar}>
       <select className={styles.sort} aria-label="Trier les cartes" value={sortOrder}
         onChange={event => { setSortOrder(event.target.value as SortOrder); startRail(); }}>
@@ -519,7 +480,7 @@ export function RealizedComposerMonth({ board, editableSourceIds, initialCardId,
         if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault(); scrollRail(event.key === "ArrowRight" ? 1 : -1);
       }}>
-      {visibleCount === 0 && <p className={styles.empty}>{board.cards.length ? "Aucune carte ne correspond à cette recherche."
+      {visibleCount === 0 && <p className={styles.empty}>{overview.flatKeys.length ? "Aucune carte ne correspond à cette recherche."
         : "Aucune opération ni événement importé pour ce mois."}</p>}
       {visibleCount > 0 && !byCategory && renderGrid("all", visible)}
       {visibleCategories.length > 0 && <div className={styles.groupedBoard} data-realized-grouped-grid data-packed={Boolean(groupedPacking)}
@@ -543,7 +504,7 @@ export function RealizedComposerMonth({ board, editableSourceIds, initialCardId,
           <CardArtwork card={selected} size={56} />
           <div>
             <h2 id="realized-dialog-title">{selected.label}</h2>
-            <p>{[cardCaption(selected), selected.eventStatus].filter(Boolean).join(" · ")}</p>
+            <p>{[selected.dialogCaption, selected.eventStatus].filter(Boolean).join(" · ")}</p>
             {selected.pilotStatus && <JulyPilotChip status={selected.pilotStatus} />}
             {selected.amount !== null && <strong>{money(selected.amount)}</strong>}
           </div>
@@ -551,12 +512,16 @@ export function RealizedComposerMonth({ board, editableSourceIds, initialCardId,
             <X size={20} aria-hidden="true" />
           </button>
         </header>
-        <div ref={body} className={styles.panelBody}>
-          {editableSourceIds?.includes(selectedView.source.pilotSourceId ?? selectedView.source.id) && <JulyEditLink
-            cardId={selectedView.source.pilotSourceId ?? selectedView.source.id} className={styles.editCard}>
+        <div ref={body} className={styles.panelBody} aria-busy={!detail && failedKey !== detailKey}>
+          {editableSourceIds?.includes(selected.pilotSourceId ?? selected.sourceId) && <JulyEditLink
+            cardId={selected.pilotSourceId ?? selected.sourceId} className={styles.editCard}>
             <Pencil size={15} aria-hidden="true" /> Modifier dans le brouillon
           </JulyEditLink>}
-          <RealizedDetail card={selected} month={board.month} terms={terms} open={open} />
+          {detail ? <RealizedDetail card={detail} month={overview.month} terms={terms} open={open} />
+            : failedKey && failedKey === detailKey ? <div>
+              <p role="alert">Les détails de cette carte sont indisponibles.</p>
+              <button type="button" className={styles.editCard} onClick={() => { setFailedKey(undefined); setRetry(value => value + 1); }}>Réessayer</button>
+            </div> : <p role="status">Chargement des détails…</p>}
         </div>
       </div>}
     </dialog>

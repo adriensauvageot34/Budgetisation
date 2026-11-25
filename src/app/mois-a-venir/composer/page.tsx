@@ -17,13 +17,9 @@ import { julyPilotStatuses } from "@/domain/phase2/planner/july-pilot";
 import { ArchivedRealizedMonth } from "./archived-realized-month";
 import { JulyPilotMonth } from "./july-pilot-month";
 import { realizedOperationCardId } from "./realized-card-view";
-import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
-import { archivedComposerBoard } from "@/server/phase2/planner/realized-snapshots";
+import { readComposerRealizedBoard } from "@/server/phase2/planner/read-composer-realized-board";
 import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
 import { reconstructJulyDraft } from "@/server/phase2/planner/reconstruct-july-draft";
-import { getBootstrapSession } from "@/server/bootstrap/context";
-import { createMonthSourceCache } from "@/server/phase2/month-source-cache";
-import { parseYearMonth } from "@/core/time";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Composer mon mois" };
 export default async function ComposerPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -32,12 +28,7 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   const month = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : new Date().toISOString().slice(0, 7);
   const isReconstruction = month === JULY_COMPOSER_MONTH;
   async function readBoard() {
-    const { context, session } = await getBootstrapSession();
-    if (!context.household) notFound();
-    const cache = createMonthSourceCache(session.supabase, context, month);
-    const target = parseYearMonth(month);
-    return isArchivedRealizedMonth(month) ? (await archivedComposerBoard(context, target, cache)).value
-      : readRealizedMonth(context, target, cache);
+    return await readComposerRealizedBoard(month) ?? notFound();
   }
   if (isArchivedRealizedMonth(month) || isImportedRealizedMonth(month) && params.view !== "edition" || isReconstruction && params.view === "bilan") {
     const board = await withProductAuthentication(readBoard);

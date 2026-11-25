@@ -8,16 +8,14 @@ const source = { month, cards: [{ id: cardId, section: "events", payments: [] }]
 const pilotCardId = `${cardId}-pilot-confirmed`;
 const calls = [];
 const model = {};
+const { BootstrapAuthenticationRequiredError } = require("@/server/bootstrap/errors");
+let authenticated = true;
 function JulyPilotMonth() {}
 function ComposerEditor() {}
 function ArchivedRealizedMonth() {}
 
 const mocks = {
   "@/app/product-query": { withProductAuthentication: work => work() },
-  "@/server/bootstrap/context": {
-    getBootstrapSession: async () => ({ context: { household: {} }, session: { supabase: {} } }),
-  },
-  "@/server/phase2/month-source-cache": { createMonthSourceCache: () => ({}) },
   "@/server/phase2/planner/cutover": { plannerComposerEnabled: () => true },
   "@/server/phase2/planner/runtime": {
     authorizedPlanner: async () => { calls.push("planner"); return {}; },
@@ -33,12 +31,15 @@ const mocks = {
   "@/server/phase2/planner/composer-service": {},
   "@/server/phase2/planner/reconstruct-july-draft": {},
   "@/server/phase2/planner/snapshot-observation": { observeSnapshot: async work => ({ value: await work() }) },
-  "@/server/phase2/planner/realized-month": {
-    readRealizedMonth: async () => { calls.push("realized"); return source; },
+  "@/server/phase2/planner/read-composer-realized-board": {
+    readComposerRealizedBoard: async () => {
+      if (!authenticated) throw new BootstrapAuthenticationRequiredError();
+      calls.push("realized");
+      return source;
+    },
   },
-  "@/server/phase2/planner/realized-snapshots": {},
   "@/server/phase2/planner/july-pilot": {
-    projectJulyPilot: board => ({ ...board, cards: [{ id: pilotCardId, pilotSourceId: cardId }] }),
+    projectJulyPilot: board => ({ ...board, cards: [{ ...board.cards[0], id: pilotCardId, pilotSourceId: cardId }] }),
   },
   "./actions": {},
   "./archived-realized-month": { ArchivedRealizedMonth },
@@ -48,7 +49,8 @@ const mocks = {
 
 const load = Module._load;
 Module._load = function (name, parent, ...args) {
-  if (parent?.filename.endsWith("composer/page.tsx") || parent?.filename.endsWith("composer\\page.tsx")) {
+  const path = parent?.filename.replaceAll("\\", "/");
+  if (path?.endsWith("composer/page.tsx") || path?.endsWith("composer/realized-card/route.ts")) {
     if (Object.hasOwn(mocks, name)) return mocks[name];
   }
   return load.call(this, name, parent, ...args);
@@ -74,7 +76,19 @@ try {
   const balance = await page({ searchParams: Promise.resolve({ month, view: "bilan" }) });
   assert.equal(balance.type, ArchivedRealizedMonth);
   assert.deepEqual(calls, ["realized"]);
+
+  const { GET } = require("@/app/api/composer/realized-card/route");
+  const request = (mode, id, view = "flat") => new Request(
+    `https://fixture.test/api/composer/realized-card?month=${month}&mode=${mode}&card=${id}&view=${view}`,
+  );
+  const full = await GET(request("realized", cardId, "category"));
+  assert.equal(full.headers.get("cache-control"), "private, no-store");
+  assert.deepEqual(await full.json(), source.cards[0]);
+  assert.equal((await GET(request("pilot", cardId))).status, 404);
+  assert.equal((await GET(request("pilot", pilotCardId))).status, 200);
+  authenticated = false;
+  assert.equal((await GET(request("realized", cardId))).status, 401);
 } finally {
   Module._load = load;
 }
-console.log("PASS: July consultation, direct edit link, and full realized view.");
+console.log("PASS: July consultation, edit link, full view, and private card details.");
