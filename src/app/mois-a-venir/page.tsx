@@ -90,14 +90,12 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     const scenario = deriveMonthScenario({ ...forecast, forecastMemory: [] }, { ...inputs, openingBalance }, null, cutoff);
     return <ArchivedMonthForecast entry={entry} forecast={forecast} scenario={scenario} cutoff={cutoff} />;
   }
-  const [storedRead, expensesRead, personsResult] = await Promise.all([
+  const [storedRead, expensesRead] = await Promise.all([
     readMonthInputs(supabase, context.household.householdId, targetMonth),
     readPlannedExpenses(supabase, context.household.householdId, targetMonth),
-    supabase.from("persons").select("person_id,display_name,status").eq("household_id", context.household.householdId).order("display_name"),
   ]);
-  if (personsResult.error) throw personsResult.error;
-  const activePersons = (personsResult.data ?? []).filter((person) => person.status === "active")
-    .map((person) => ({ personId: person.person_id, displayName: person.display_name }));
+  const activePersons = context.persons.filter((person) => person.status === "active")
+    .map(({ personId, displayName }) => ({ personId: String(personId), displayName }));
   const currentPersonId = restaurantSoloPerson(activePersons, {
     personId: typeof context.user.app_metadata?.person_id === "string" ? context.user.app_metadata.person_id : undefined,
     displayName: typeof context.user.user_metadata?.display_name === "string" ? context.user.user_metadata.display_name : undefined,

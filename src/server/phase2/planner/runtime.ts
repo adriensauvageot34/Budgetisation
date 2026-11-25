@@ -1,7 +1,7 @@
 import "server-only";
 import { parseInstant } from "@/core/time";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
-import { getBootstrapContext } from "@/server/bootstrap/context";
+import { getBootstrapContextForSession } from "@/server/bootstrap/context";
 import { createAuthorizedRuntimeContext } from "@/server/canonical/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { CanonicalRepository } from "@/server/canonical/repository";
@@ -16,9 +16,9 @@ import { createMonthSourceCache } from "../month-source-cache";
 
 /** Never accepts a household, user, client or authority from the browser. */
 export async function authorizedPlanner(options: { readCacheMonth?: string } = {}) {
-  const { supabase, user } = await snapshotWork("Authentication", () => getAuthenticatedBootstrapClient());
-  const bootstrap = await snapshotWork("Bootstrap_CanonicalContext", () => getBootstrapContext());
-  if (bootstrap.user.id !== user.id) throw new TypeError("PLANNER_SESSION_CHANGED");
+  const session = await snapshotWork("Authentication", getAuthenticatedBootstrapClient);
+  const { supabase, user } = session;
+  const bootstrap = await snapshotWork("Bootstrap_CanonicalContext", () => getBootstrapContextForSession(session));
   const now = new Date().toISOString();
   const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(now));
   const canonicalClient = createCanonicalReadClient();
