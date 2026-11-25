@@ -22,6 +22,7 @@ import type {
 } from "@/query-api/global-v2";
 import { PERSONA_PUBLISHED_PROFILE_CONTRACT_VERSION, parseGlobalBackgroundRhythmMonthDetailReadModel, parseGlobalBackgroundRhythmsReadModel, parseGlobalLifeTimelineReadModel } from "@/query-api/global-v2";
 import { buildPersonaDirectModel, type PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
+import { globalV2PersonaPanelResource } from "@/query-api/global-v2/persona-panel";
 import { globalModulePresentation, globalModulePresentations } from "./catalog";
 import type { GlobalV2UiRequest, GlobalV2UiTransport } from "./visit-runtime";
 
@@ -815,6 +816,7 @@ export function createGlobalV2FixtureTransport(bundle: GlobalV2FixtureBundle, sc
     attempts.set(request.resource, count);
     if (scenario === "local-error" && request.resource === "analysis_global_relationships" && count === 1) throw new Error("SNAPSHOT_TEMPORARILY_UNAVAILABLE");
     if (request.resource === "analysis_global_manifest") return { data: bundle.initial, publicationMeta };
+    if (request.resource === globalV2PersonaPanelResource) return { data: { persona: bundle.persona }, publicationMeta };
     if (request.resource === "analysis_global_summary_ai") return { data: bundle.summary, publicationMeta };
     if (request.resource === "analysis_global_life_timeline") return { data: lifeTimelineFixture(), publicationMeta };
     if (request.resource === "analysis_global_background_rhythms") return { data: backgroundRhythmsFixture(), publicationMeta };

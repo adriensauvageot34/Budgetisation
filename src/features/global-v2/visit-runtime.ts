@@ -1,7 +1,8 @@
 import type { GlobalReadModelPublicationMeta, GlobalReadModelTransportState, GlobalV2QueryResourceName } from "@/query-api/global-v2";
+import type { globalV2PersonaPanelResource } from "@/query-api/global-v2/persona-panel";
 
 export type GlobalV2UiRequest = {
-  readonly resource: GlobalV2QueryResourceName;
+  readonly resource: GlobalV2QueryResourceName | typeof globalV2PersonaPanelResource;
   readonly params: Readonly<Record<string, string>>;
 };
 
