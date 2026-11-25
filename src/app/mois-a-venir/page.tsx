@@ -7,8 +7,8 @@ import { ArchivedMonthForecast } from "./archived-month-forecast";
 import { appliedPlanRevisionControls } from "@/server/phase2/planner/applied-plan-read";
 import { projectMonthControlCenter } from "@/server/phase2/month-control-center";
 import { monthControlSection, monthControlDestination, type MonthControlSectionInput } from "@/domain/phase2/month-control-contract";
-import { getBootstrapContext } from "@/server/bootstrap/context";
-import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
+import { getBootstrapSession } from "@/server/bootstrap/context";
+import { createMonthSourceCache } from "@/server/phase2/month-source-cache";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { monthEntry, showsArchivedForecast } from "./month-entry";
@@ -38,7 +38,7 @@ export const metadata = { title: "Notre mois à venir" };
 export const dynamic = "force-dynamic";
 
 export default async function MonthForecastPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const context = await withProductAuthentication(() => getBootstrapContext());
+  const { context, session } = await withProductAuthentication(getBootstrapSession);
   if (context.household === null) notFound();
   const params = await searchParams;
   const today = planningDate(context.household.timezone);
@@ -59,11 +59,13 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     redirect(`/mois-a-venir?${query}`);
   }
   const client = createCanonicalReadClient();
-  const householdId = context.household.householdId;
+  const { supabase } = session;
+  const { householdId, timezone } = context.household;
+  const cache = createMonthSourceCache(supabase, context, targetMonth);
   const archivedForecast = showsArchivedForecast(targetMonth, currentMonth, params.vue);
   async function readPastReview(referenceAvailable = true) {
     const [evidence, memory] = await Promise.all([
-      readMonthPredictionEvidence(client, householdId, targetMonth, true),
+      readMonthPredictionEvidence(client, householdId, targetMonth, true, { asOfDate: today, timezone, cache }),
       readForecastMemory(client, householdId, targetMonth),
     ]);
     return <PastMonthView targetMonth={targetMonth} entry={entry} review={projectPastMonthReview(targetMonth, evidence, memory)} referenceAvailable={referenceAvailable} />;
@@ -72,20 +74,16 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
 
   let forecast:Awaited<ReturnType<typeof readPlanningMonthForecast>>;
   const cutoff = archivedForecast ? addDays(parseLocalDate(`${targetMonth}-01`), -1) : null;
-  const openingEvidence = cutoff ? readMonthPredictionEvidence(client, householdId, targetMonth, true,
-    { asOfDate: cutoff, timezone: context.household.timezone }) : undefined;
+  const openingEvidence = readMonthPredictionEvidence(client, householdId, targetMonth, cutoff !== null,
+    { asOfDate: cutoff ?? today, timezone, cache });
+  void openingEvidence.catch(() => undefined);
   try {
-    if (openingEvidence) {
-      [forecast] = await Promise.all([readPlanningMonthForecast(client, householdId, targetMonth, openingEvidence), openingEvidence]);
-    } else {
-      forecast = await readPlanningMonthForecast(client, householdId, targetMonth);
-    }
+    forecast = await readPlanningMonthForecast(client, householdId, targetMonth, openingEvidence, "full", cache);
   } catch (error) {
     if (!(error instanceof Error) || error.message !== "FORECAST_TARGET_MONTH_NOT_FUTURE") throw error;
     if (archivedForecast) return readPastReview(false);
     return <section className="card mx-auto max-w-3xl p-8"><h1 className="text-2xl font-black">Ce mois ne fait pas partie des prévisions</h1><p className="mt-3">Choisissez un mois après la période historique de référence.</p><a className="mt-4 inline-block font-bold underline" href="/mois-a-venir">Revenir au mois à venir</a></section>;
   }
-  const { supabase } = await getAuthenticatedBootstrapClient();
   if (cutoff) {
     const { inputs } = await readMonthInputs(supabase, householdId, targetMonth);
     const openingBalance = inputs.openingBalance && inputs.openingBalance.asOfDate <= cutoff ? inputs.openingBalance : null;

@@ -20,6 +20,7 @@ import { julyEventParticipant, julyPaymentParticipant, type JulyParticipant } fr
 import { buildHistoricalRealizedContext } from "./historical-realized-context";
 import { groceryDetour, groceryShopper, historicalMealPerson, historicalPaymentParticipant, historicalProjectTags, isUberRide } from "./historical-realized-patterns";
 import { applyRealizedReview, parseRealizedReview, type ReviewReference } from "./realized-review";
+import type { MonthSourceCache } from "../month-source-cache";
 
 type Art = Readonly<{ assetKey?: string; templateKey?: string; iconKey: string; src?: string }>;
 type Badge = Readonly<{ label: string; sources: readonly string[] }>;
@@ -322,13 +323,19 @@ function historicalCarTrip(legs: readonly MobilityLegFact[], places: ReadonlyMap
 type RealizedBootstrap = Awaited<ReturnType<typeof getBootstrapContext>>;
 
 // Keep ownership, work-day rules and reviewed memberships shared between the two views.
-async function readRealizedMonthData(bootstrap: RealizedBootstrap, month: YearMonth, includeCardDetails: boolean) {
+async function readRealizedMonthData(bootstrap: RealizedBootstrap, month: YearMonth, includeCardDetails: boolean, cache?: MonthSourceCache) {
   const range = { start: parseLocalDate(`${month}-01`), endExclusive: parseLocalDate(`${addMonths(month, 1)}-01`) };
   const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(new Date().toISOString()));
   const repository = new CanonicalRepository(createCanonicalReadClient(), context, { shareEconomicReads: true });
-  const operationRead = repository.loadOperationsByBankRange(range).then(rows => rows.map(operationFromCanonicalRow));
-  const factRead = repository.loadEconomicFacts(range);
-  const occurrenceRead = repository.loadActivityOccurrences(range);
+  // These reads use only the transactional historical basis sources. Reviews,
+  // taxonomy presentation, aliases and other enrichment are still read live.
+  function readBasis<T>(source: string, read: () => Promise<T>) {
+    return cache ? cache.read(source, read) : read();
+  }
+  const operationRead = readBasis("realized-operations", () => repository.loadOperationsByBankRange(range))
+    .then(rows => rows.map(operationFromCanonicalRow));
+  const factRead = readBasis("realized-economics", () => repository.loadEconomicFacts(range));
+  const occurrenceRead = readBasis("realized-occurrences", () => repository.loadActivityOccurrences(range));
   const eventIds = occurrenceRead.then(events => events.map(event => event.lifeEventId));
   const july = month === JULY_COMPOSER_MONTH;
   const historical = isArchivedRealizedMonth(month);
@@ -926,8 +933,8 @@ async function readRealizedMonthData(bootstrap: RealizedBootstrap, month: YearMo
   return { visibleCards, payments, separateInCategory, historical, people };
 }
 
-export async function readRealizedCalendarSource(bootstrap: RealizedBootstrap, month: YearMonth): Promise<RealizedCalendarSource> {
-  const { visibleCards } = await readRealizedMonthData(bootstrap, month, false);
+export async function readRealizedCalendarSource(bootstrap: RealizedBootstrap, month: YearMonth, cache?: MonthSourceCache): Promise<RealizedCalendarSource> {
+  const { visibleCards } = await readRealizedMonthData(bootstrap, month, false, cache);
   return { month, cards: visibleCards.flatMap(({ card, participant, work, coffeePerson }) => {
     if (card.section === "flows") return [];
     const person = work?.day.person ?? coffeePerson;
@@ -941,8 +948,8 @@ export async function readRealizedCalendarSource(bootstrap: RealizedBootstrap, m
   }) };
 }
 
-export async function readRealizedMonth(bootstrap: RealizedBootstrap, month: YearMonth): Promise<RealizedBoard> {
-  const { visibleCards, payments, separateInCategory, historical, people } = await readRealizedMonthData(bootstrap, month, true);
+export async function readRealizedMonth(bootstrap: RealizedBootstrap, month: YearMonth, cache?: MonthSourceCache): Promise<RealizedBoard> {
+  const { visibleCards, payments, separateInCategory, historical, people } = await readRealizedMonthData(bootstrap, month, true, cache);
   const julyPortraits: Partial<Record<JulyParticipant, string>> = {};
   for (const profile of people.profiles) {
     if (people.portraits[profile.ref.personId]) julyPortraits[profile.name] = people.portraits[profile.ref.personId];

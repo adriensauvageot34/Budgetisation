@@ -11,6 +11,7 @@ import {
 } from "@/query-api/global-v2";
 import { assembleMonthForecast, type ForecastAuthorities, type ForecastOperation, type ForecastRecurrence, type MonthForecast } from "./month-forecast";
 import { REFERENCE_SUBCATEGORIES, type EconomicReferenceEntry, type MobilityReferenceLeg } from "./month-reference";
+import type { MonthSourceCache } from "./month-source-cache";
 
 const RESOURCES = [
   "analysis_global_background_rhythms", "analysis_global_economic_recurrence_detail",
@@ -51,7 +52,7 @@ export async function loadPlanningBaselineGlobalContext(client: SupabaseClient, 
   return { publication, background };
 }
 
-export async function loadMonthForecastAuthorities(client: SupabaseClient, householdId: string): Promise<ForecastAuthorities> {
+export async function loadMonthForecastAuthorities(client: SupabaseClient, householdId: string, cache?: MonthSourceCache): Promise<ForecastAuthorities> {
   const publication = await activeGlobalPublication(client, householdId);
 
   const { data: snapshots, error: snapshotError } = await snapshotWork("Global_PublishedSnapshots", () => client.from("analytics_query_snapshots")
@@ -109,6 +110,23 @@ export async function loadMonthForecastAuthorities(client: SupabaseClient, house
   if ((recurrenceOperationsResult.data?.length ?? 0) === 1000 || (incomeOperationsResult.data?.length ?? 0) === 1000) {
     throw new TypeError("FORECAST_OPERATION_PAGE_LIMIT_REACHED");
   }
+  const readReference = () => readForecastReferenceHistory(client, householdId, start, endExclusive);
+  const history = cache ? await cache.read(`forecast-reference:${publication.publication_id}:${start}:${endExclusive}`, readReference)
+    : await readReference();
+  const referenceStart = new Date(`${background.period.endMonth}-01T12:00:00Z`);
+  referenceStart.setUTCMonth(referenceStart.getUTCMonth() - 11);
+  return {
+    publication, background, recurrenceDetails, categoryNeedDetails, routineDetails,
+    transformation: { visibility: (one("analysis_global_transformations") as { visibility: string }).visibility },
+    recurrences: (seriesResult.data ?? []) as ForecastRecurrence[],
+    recurrenceOperations: (recurrenceOperationsResult.data ?? []) as ForecastOperation[],
+    incomeOperations: (incomeOperationsResult.data ?? []) as ForecastOperation[],
+    categories: categoriesResult.data ?? [], needs: needsResult.data ?? [],
+    referenceEvidence: { startMonth: referenceStart.toISOString().slice(0, 7), endMonth: background.period.endMonth, ...history },
+  };
+}
+
+async function readForecastReferenceHistory(client: SupabaseClient, householdId: string, start: string, endExclusive: string) {
   const subcategoryResult = await snapshotWork("Global_ReferenceSubcategories", () => client.from("subcategories").select("subcategory_id,nom_canonique")
     .in("nom_canonique", [...REFERENCE_SUBCATEGORIES]));
   if (subcategoryResult.error) throw subcategoryResult.error;
@@ -149,18 +167,7 @@ export async function loadMonthForecastAuthorities(client: SupabaseClient, house
   const mobilityLegs: MobilityReferenceLeg[] = (mobilityResult.data ?? []).filter((row) => row.estimated_fuel_cost !== null)
     .map((row) => ({ date: row.travel_date, origin: row.origin_source_label, destination: row.destination_source_label,
       fuelCost: String(row.estimated_fuel_cost) }));
-  const referenceStart = new Date(`${background.period.endMonth}-01T12:00:00Z`);
-  referenceStart.setUTCMonth(referenceStart.getUTCMonth() - 11);
-  return {
-    publication, background, recurrenceDetails, categoryNeedDetails, routineDetails,
-    transformation: { visibility: (one("analysis_global_transformations") as { visibility: string }).visibility },
-    recurrences: (seriesResult.data ?? []) as ForecastRecurrence[],
-    recurrenceOperations: (recurrenceOperationsResult.data ?? []) as ForecastOperation[],
-    incomeOperations: (incomeOperationsResult.data ?? []) as ForecastOperation[],
-    categories: categoriesResult.data ?? [], needs: needsResult.data ?? [],
-    referenceEvidence: { startMonth: referenceStart.toISOString().slice(0, 7), endMonth: background.period.endMonth,
-      economicEntries, mobilityLegs },
-  };
+  return { economicEntries, mobilityLegs };
 }
 
 /** Builds a prospective month in memory from the current Global publication. */

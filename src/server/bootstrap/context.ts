@@ -10,9 +10,13 @@ import {
 } from "@/server/bootstrap/queries";
 
 export async function getBootstrapContext() {
+  return (await getBootstrapSession()).context;
+}
+
+export async function getBootstrapSession() {
   const session = await getAuthenticatedBootstrapClient();
   const household = await getCurrentHousehold(session.supabase);
-  return getBootstrapContextFromHousehold(session, household);
+  return { session, context: await getBootstrapContextFromHousehold(session, household) };
 }
 
 export async function getBootstrapContextFromHousehold(

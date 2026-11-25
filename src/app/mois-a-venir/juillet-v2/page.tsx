@@ -5,7 +5,8 @@ import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { parseYearMonth } from "@/core/time";
 import { julyPilotLabels, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import { JULY_COMPOSER_EDIT_HREF, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH, JULY_PILOT_DATE } from "@/domain/phase2/planner/realized-month-entry";
-import { getBootstrapContext } from "@/server/bootstrap/context";
+import { getBootstrapSession } from "@/server/bootstrap/context";
+import { createMonthSourceCache } from "@/server/phase2/month-source-cache";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { resolveRealBankBalance } from "@/server/phase2/bank-cash-projection";
 import { readMonthPredictionEvidence } from "@/server/phase2/month-prediction-evidence";
@@ -41,16 +42,17 @@ async function savedJulyComposer() {
 }
 
 export default async function JulyV2Page() {
-  const context = await withProductAuthentication(() => getBootstrapContext());
+  const { context, session } = await withProductAuthentication(getBootstrapSession);
   if (!context.household) notFound();
   const { householdId, timezone } = context.household;
   const july = context.periods.find(period => period.month === `${JULY_COMPOSER_MONTH}-01`);
   const observed = july?.financeStatus === "complete" || july?.financeStatus === "partial";
   const composerEnabled = plannerComposerEnabled();
+  const cache = createMonthSourceCache(session.supabase, context, JULY_COMPOSER_MONTH);
   const [source, evidence, draft] = observed ? await Promise.all([
-    readRealizedMonth(context, parseYearMonth(JULY_COMPOSER_MONTH)),
+    readRealizedMonth(context, parseYearMonth(JULY_COMPOSER_MONTH), cache),
     readMonthPredictionEvidence(createCanonicalReadClient(), householdId, JULY_COMPOSER_MONTH, true,
-      { asOfDate: JULY_PILOT_DATE, timezone }),
+      { asOfDate: JULY_PILOT_DATE, timezone, cache }),
     composerEnabled && composerDraftAutosaveEnabledFor(context.user.id) ? withProductAuthentication(savedJulyComposer) : null,
   ]) : [null, null, null];
   const board = source ? projectJulyPilot(source) : null;

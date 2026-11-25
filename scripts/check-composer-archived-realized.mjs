@@ -184,17 +184,22 @@ Module._load = (name, ...args) => stubs[name] ?? originalLoad.call(Module, name,
 const { readRealizedMonth, readRealizedCalendarSource } = require("@/server/phase2/planner/realized-month");
 const bootstrap = { household: { householdId: "test", timezone: "Europe/Paris" },
   persons: [{ personId: person.adrien, displayName: "Adrien Test" }, { personId: person.manon, displayName: "Manon Test" }] };
-const board = await readRealizedMonth(bootstrap, "2025-10");
-const calendarSource = await readRealizedCalendarSource(bootstrap, "2025-10");
+const basisEntries = new Map();
+const basis = { async read(source, readLive) {
+  if (!basisEntries.has(source)) basisEntries.set(source, await readLive());
+  return basisEntries.get(source);
+} };
+const board = await readRealizedMonth(bootstrap, "2025-10", basis);
+const calendarSource = await readRealizedCalendarSource(bootstrap, "2025-10", basis);
 reviewFixture = { version: 1, cards: [{
   id: "review-split", label: "Sortie test individualisée", date: next, activity: "activite_loisir",
   participant: "Manon", operationIds: ["shop"], legIds: ["back"],
   references: [{ id: "earlier-refund", role: "Avoir d’un autre mois" }],
   groups: { shop: "Achat de la sortie" }, notes: ["Trajet documenté"],
 }], participants: { shop: "Couple" }, purchaseActors: { shop: "Courses faites par Manon" } };
-const reviewed = await readRealizedMonth(bootstrap, "2025-10");
+const reviewed = await readRealizedMonth(bootstrap, "2025-10", basis);
 assert.equal(externalOperationReads, 1);
-const reviewedCalendarSource = await readRealizedCalendarSource(bootstrap, "2025-10");
+const reviewedCalendarSource = await readRealizedCalendarSource(bootstrap, "2025-10", basis);
 assert.equal(externalOperationReads, 1, "Calendar does not read references to payments in other months");
 Module._load = originalLoad;
 assert.deepEqual(reviewed.totals, board.totals);
