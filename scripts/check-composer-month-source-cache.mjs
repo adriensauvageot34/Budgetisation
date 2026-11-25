@@ -68,4 +68,32 @@ covered = false;
 assert.deepEqual(await read("2026-04"), { sequence: 8 }, "Missing coverage reads the live source");
 assert.deepEqual(await read("2026-04"), { sequence: 9 });
 assert.equal(entries.size, before + 1);
-console.log("PASS: monthly cache hits, source revisions, publications, authorization, household isolation and concurrent writes");
+
+covered = true;
+let extraRevision = "place-and-review-v1";
+const extra = async () => extraRevision;
+const july = (build = origin, readExtra = extra) =>
+  createMonthSourceCache(client, bootstrap, "2026-07").read("realized-july-board", build, readExtra);
+const board = await july();
+assert.deepEqual(await july(), board, "The board and a later detail request share a version");
+allowed = other.household.householdId;
+await assert.rejects(july(), error => error.code === "42501", "A warm board still requires access");
+allowed = household.householdId;
+extraRevision = "place-and-review-v2";
+assert.notDeepEqual(await july(), board, "Presentation corrections invalidate the board");
+
+const beforeJulyRace = entries.size;
+extraRevision = "place-and-review-v3";
+const racedBoard = await july(async () => {
+  extraRevision = "place-and-review-v4";
+  return origin();
+});
+assert.equal(entries.size, beforeJulyRace);
+assert.notDeepEqual(await july(), racedBoard, "A projection built across a correction is not cached");
+
+const beforeUnavailable = entries.size;
+const withoutProof = await july(origin, async () => null);
+const withFailedProof = await july(origin, async () => { throw new Error("Unavailable"); });
+assert.notDeepEqual(withoutProof, withFailedProof, "Unavailable presentation proof reads live");
+assert.equal(entries.size, beforeUnavailable);
+console.log("PASS: monthly cache reuse, source and presentation revisions, access checks and concurrent corrections");
