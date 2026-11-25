@@ -9,7 +9,7 @@
 .rhythmCards { display: grid; gap: clamp(24px, 4vw, 40px); }
 .backgroundRhythms[data-workspace-rhythm] { gap: 4px; margin: 0; padding: 0; border: 0; }
 .backgroundRhythms[data-workspace-rhythm] .backgroundHeader { justify-content: end; }
-.backgroundRhythms[data-workspace-rhythm] .rhythmCard { padding: 12px 16px; gap: 8px; }
+.backgroundRhythms[data-workspace-rhythm] .rhythmCard { padding: 12px 16px; gap: 8px; background: linear-gradient(150deg, #fffdfb, #fffcff 62%, #f3e8fc); box-shadow: var(--global-clay-shadow); }
 .backgroundRhythms[data-workspace-rhythm] .rhythmCardHeader > div > p,
 .backgroundRhythms[data-workspace-rhythm] .cardEyebrow { display: none; }
 @media (min-width: 768px) {
@@ -33,23 +33,23 @@
 .legend { display: flex; flex-wrap: wrap; gap: 10px 20px; color: var(--color-muted); font-size: 11px; font-weight: 680; }
 .legend > span { display: inline-flex; align-items: center; gap: 7px; flex-wrap: wrap; min-width: 0; }
 .legend > span::before { width: 10px; height: 10px; border-radius: 50%; background: var(--legend-color); content: ""; }
-.legend span[data-tone="food-courses"] { --legend-color: #315f49; }
-.legend span[data-tone="food-restaurants"] { --legend-color: #8eae8e; }
-.legend span[data-tone="food-deliveries"] { --legend-color: #d8b989; }
+.legend span[data-tone="food-courses"] { --legend-color: #7546ae; }
+.legend span[data-tone="food-restaurants"] { --legend-color: #c19de1; }
+.legend span[data-tone="food-deliveries"] { --legend-color: #edc2d9; }
 .legend > .swileOverlayLegend::before { width: 13px; border: 1px solid #c69a55; border-radius: 2px; background: repeating-linear-gradient(35deg, rgb(224 190 122 / .2) 0 4px, rgb(211 164 91 / .65) 4px 6px, rgb(224 190 122 / .2) 6px 9px); }
-.legend span[data-tone="car-work"] { --legend-color: #365f76; }
-.legend span[data-tone="car-outside"] { --legend-color: #719999; }
-.legend span[data-tone="car-unresolved"] { --legend-color: #d9d5ca; }
+.legend span[data-tone="car-work"] { --legend-color: #7963b0; }
+.legend span[data-tone="car-outside"] { --legend-color: #ba9ed9; }
+.legend span[data-tone="car-unresolved"] { --legend-color: #ece0f4; }
 .annualVisualBody { position: relative; min-width: 0; padding-top: 76px; }
 .annualRiver { display: block; width: 100%; height: 268px; overflow: visible; }
 .annualRiver > path { stroke: rgb(255 255 255 / .34); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 .swileFundingOverlay { pointer-events: none; }
-.foodCourses { fill: #315f49; }
-.foodRestaurants { fill: #8eae8e; }
-.foodDeliveries { fill: #d8b989; }
-.carWork { fill: #365f76; }
-.carOutside { fill: #719999; }
-.carUnresolved { fill: #d9d5ca; }
+.foodCourses { fill: #7546ae; }
+.foodRestaurants { fill: #c19de1; }
+.foodDeliveries { fill: #edc2d9; }
+.carWork { fill: #7963b0; }
+.carOutside { fill: #ba9ed9; }
+.carUnresolved { fill: #ece0f4; }
 .monthInteractionLayer { position: absolute; z-index: 4; top: 76px; right: 0; left: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); height: 268px; }
 .monthAnchor { position: relative; min-width: 0; border: 0; border-radius: 7px; padding: 0; background: transparent; color: var(--color-muted); cursor: pointer; }
 .monthAnchor::after { position: absolute; top: 0; right: 4px; bottom: 30px; left: 4px; border: 1px solid transparent; border-radius: 8px; content: ""; transition: border-color 130ms ease, background 130ms ease; }
@@ -57,8 +57,8 @@
 .monthAnchor[data-selected="true"]::after { border-color: var(--color-primary-deep); box-shadow: 0 0 0 2px rgb(255 255 255 / .84); }
 .monthAnchor > span { position: absolute; right: 0; bottom: 4px; left: 0; overflow: hidden; font-size: 10px; font-weight: 760; text-align: center; text-overflow: clip; text-transform: capitalize; white-space: nowrap; }
 .monthAnchor:focus-visible { z-index: 2; outline: 3px solid var(--color-primary); outline-offset: 2px; }
-.selectedMonthGuide { position: absolute; z-index: 3; top: 76px; width: 1px; height: calc(100% - 34px); background: linear-gradient(to bottom, var(--color-primary-deep), rgb(46 83 69 / .18)); pointer-events: none; }
-.chartTooltip { position: absolute; z-index: 7; top: 0; display: grid; width: 205px; gap: 3px; border: 1px solid rgb(36 50 47 / .1); border-radius: 12px; padding: 12px 14px; background: rgb(255 255 255 / .96); box-shadow: 0 12px 32px rgb(36 50 47 / .13); color: var(--color-muted); font-size: 11px; line-height: 1.35; pointer-events: none; transform: translateX(-50%); }
+.selectedMonthGuide { position: absolute; z-index: 3; top: 76px; width: 1px; height: calc(100% - 34px); background: linear-gradient(to bottom, var(--color-primary-deep), rgb(112 69 153 / .18)); pointer-events: none; }
+.chartTooltip { position: absolute; z-index: 7; top: 0; display: grid; width: 205px; gap: 3px; border: 1px solid rgb(83 49 111 / .1); border-radius: 12px; padding: 12px 14px; background: rgb(255 255 255 / .96); box-shadow: 0 12px 32px rgb(83 49 111 / .13); color: var(--color-muted); font-size: 11px; line-height: 1.35; pointer-events: none; transform: translateX(-50%); }
 .chartTooltip[data-edge="start"] { transform: none; }
 .chartTooltip[data-edge="end"] { transform: translateX(-100%); }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
@@ -76,7 +76,7 @@
 .fuelPaidRail > header > strong span { color: var(--color-muted); font-size: 10px; font-weight: 680; }
 .fuelPaidRail > div { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); height: 68px; gap: 3px; }
 .fuelPaidRail > div > span { position: relative; display: flex; min-width: 0; align-items: end; justify-content: center; border-radius: 3px 3px 0 0; background: var(--color-surface-soft); }
-.fuelPaidRail i { display: block; width: min(20px, 48%); min-height: 0; border-radius: 3px 3px 0 0; background: #879aa4; }
+.fuelPaidRail i { display: block; width: min(20px, 48%); min-height: 0; border-radius: 3px 3px 0 0; background: #aa88cd; }
 .fuelPaidRail small { position: absolute; top: calc(100% + 3px); overflow: hidden; width: 100%; color: transparent; font-size: 7px; text-align: center; white-space: nowrap; }
 .monthFocusRegion { display: grid; gap: 20px; padding: 4px 0 12px; }
 .monthFocusHeader { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 28px; }
@@ -123,10 +123,10 @@
 .carDetailGroup li p, .carDetailGroup li small { margin: 0; color: var(--color-muted); font-size: 11px; line-height: 1.45; }
 .carDetailGroup li small { display: block; margin-top: 3px; }
 .carDetailGroup li > button { align-self: center; font-size: 11px; text-align: right; }
-.contextOnlyRow { background: linear-gradient(90deg, transparent, rgb(46 83 69 / .025)); }
+.contextOnlyRow { background: linear-gradient(90deg, transparent, rgb(112 69 153 / .025)); }
 .suppressedRemainder { margin: 0; border-top: 1px solid var(--color-border); padding-top: 14px; color: var(--color-muted); font-size: 12px; font-weight: 700; }
 .carDetailSkeleton { display: grid; gap: 12px; }
-.carDetailSkeleton span, .backgroundSkeleton span { display: block; border-radius: 999px; background: linear-gradient(100deg, rgb(46 83 69 / .07) 20%, rgb(255 255 255 / .82) 40%, rgb(46 83 69 / .07) 60%); background-size: 200% 100%; animation: rhythmShimmer 1.3s ease-in-out infinite; }
+.carDetailSkeleton span, .backgroundSkeleton span { display: block; border-radius: 999px; background: linear-gradient(100deg, rgb(112 69 153 / .07) 20%, rgb(255 255 255 / .82) 40%, rgb(112 69 153 / .07) 60%); background-size: 200% 100%; animation: rhythmShimmer 1.3s ease-in-out infinite; }
 .carDetailSkeleton span { width: 88%; height: 52px; }
 .carDetailSkeleton span:nth-child(2) { width: 72%; }
 .carDetailSkeleton span:nth-child(3) { width: 80%; }
@@ -178,5 +178,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .monthAnchor::after { transition: none; }
-  .carDetailSkeleton span, .backgroundSkeleton span { animation: none; background: rgb(46 83 69 / .07); }
+  .carDetailSkeleton span, .backgroundSkeleton span { animation: none; background: rgb(112 69 153 / .07); }
 }

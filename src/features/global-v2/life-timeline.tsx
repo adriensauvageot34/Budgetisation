@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { GlobalClayIcon, type GlobalClayIconName } from "./global-clay-icon";
 import {
   BadgeCheck,
   BedDouble,
@@ -92,42 +93,36 @@ const legacyTimelineIcons: Readonly<Record<string, TimelineIcon>> = Object.freez
 });
 
 /** Presentation mapping only: keys are supplied by the semantic taxonomy. */
-const semanticCloseIcons: Readonly<Record<string, TimelineIcon>> = Object.freeze({
-  anniversaire: Cake,
-  club_boite_de_nuit: Music,
-  concert_spectacle_musical: Music,
-  controle_technique: CarFront,
-  deplacement_professionnel_avec_nuitee: BriefcaseBusiness,
-  fete_annuelle_familiale: PartyPopper,
-  journee_plage_baignade: Waves,
-  obseques_funerailles: Flower2,
-  parcours_permis_de_conduire: BadgeCheck,
-  projet_seance_photo: Camera,
-  reparation: TriangleAlert,
-  soiree_bars_tournee_de_bars: Music,
-  soiree_techno_rave: Music,
-  voyage_vacances_a_l_etranger: Plane,
-  week_end_escapade_regionale: Plane,
+const semanticCloseIcons: Readonly<Partial<Record<string, GlobalClayIconName>>> = Object.freeze({
+  anniversaire: "celebration",
+  club_boite_de_nuit: "night",
+  concert_spectacle_musical: "concert",
+  controle_technique: "car",
+  deplacement_professionnel_avec_nuitee: "travel",
+  fete_annuelle_familiale: "celebration",
+  journee_plage_baignade: "beach",
+  parcours_permis_de_conduire: "car",
+  projet_seance_photo: "photo",
+  soiree_techno_rave: "night",
+  voyage_vacances_a_l_etranger: "travel",
+  week_end_escapade_regionale: "travel",
 });
 
-const semanticIntermediateIcons: Readonly<Record<string, TimelineIcon>> = Object.freeze({
-  celebrations_privees: PartyPopper,
-  culture_et_evenements_publics: Music,
-  demarches_administratives_et_juridiques: BadgeCheck,
-  evenements_familiaux_marquants: Users,
-  evenements_professionnels: BriefcaseBusiness,
-  loisirs_et_activites: Sparkles,
-  missions_et_interventions_professionnelles: BriefcaseBusiness,
-  permis_et_apprentissages: BadgeCheck,
-  projets_creatifs: Camera,
-  projets_maison: House,
-  sante_medicale: Flower2,
-  sorties_festives_et_nocturnes: Music,
-  sorties_restauration_et_gourmandes: MapPin,
-  vacances_et_voyages: Plane,
-  vehicule: CarFront,
-  visites_et_temps_avec_les_proches: Users,
-  week_ends_et_escapades: Plane,
+const semanticIntermediateIcons: Readonly<Partial<Record<string, GlobalClayIconName>>> = Object.freeze({
+  celebrations_privees: "celebration",
+  culture_et_evenements_publics: "concert",
+  evenements_familiaux_marquants: "family",
+  loisirs_et_activites: "events",
+  permis_et_apprentissages: "car",
+  projets_creatifs: "photo",
+  projets_maison: "home",
+  sante_medicale: "health",
+  sorties_festives_et_nocturnes: "night",
+  sorties_restauration_et_gourmandes: "restaurant",
+  vacances_et_voyages: "travel",
+  vehicule: "car",
+  visites_et_temps_avec_les_proches: "family",
+  week_ends_et_escapades: "travel",
 });
 
 const moneyFormatter = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -400,9 +395,9 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, focused, f
   const rowRef = useRef<HTMLLIElement>(null);
   const cardButtonRef = useRef<HTMLButtonElement>(null);
   const cardArticleRef = useRef<HTMLElement>(null);
-  const Icon = semanticCloseIcons[event.semanticClassification.close.key]
+  const icon = semanticCloseIcons[event.semanticClassification.close.key]
     ?? semanticIntermediateIcons[event.semanticClassification.intermediate.key]
-    ?? Circle;
+    ?? "events";
   const distinctive = event.distinctiveComparisonLevel !== undefined;
   const comparisonAvailable = hasTimelineComparisonAffordance(event);
   const isMomentDetail = event.sourceKind === "MOMENT" && event.momentDetailAvailable;
@@ -455,7 +450,7 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, focused, f
   }, [canExpand, focused]);
   const content = <>
     <time className={styles.timelineDay} dateTime={event.startDate}>{dayFormatter.format(timelineDate(event.startDate))}</time>
-    <span className={styles.timelineMarker} aria-hidden><Icon size={19} aria-hidden /></span>
+    <span className={styles.timelineMarker} aria-hidden><GlobalClayIcon name={icon} size={33} /></span>
     <span className={styles.timelineEventBody}>
       <span className={styles.timelineEventHeading}><strong>{event.canonicalName}</strong>{distinctive ? <em>Se distingue côté dépenses</em> : null}</span>
       <span className={styles.timelineEventMeta}>{event.primaryPlaceLabel === undefined ? null : <><span className={styles.timelinePlaceLabel}>{event.primaryPlaceLabel}</span><span aria-hidden> · </span></>}<span>{event.semanticClassification.close.label}</span></span>
