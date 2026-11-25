@@ -29,8 +29,8 @@ import { reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import { composerCalendarHref, forecastWindowMonths } from "../month-entry";
 import type { JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
-import { RealizedComposerMonth } from "./realized-month";
-import { RealizedFinancialTotals } from "./archived-realized-month";
+import { RealizedFinancialTotals } from "./realized-financial-totals";
+import { JulyEditorNavigation } from "./july-editor-navigation";
 import { JulyPilotCardStatuses, ReconstructedCards } from "./reconstructed-cards";
 import { proposeJulyCarTrips } from "./actions";
 import { composerContextProgress, ContextProgress } from "./context-progress";
@@ -88,19 +88,15 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
-export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false, previewHttp = false, rootRelationAccess = null, rootRelationTransport = rootRelationHttp, reconstruction, julyPilot, initialReconstructionEditing = false, initialJulyStatus, initialJulyCard }: {
+export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport: suppliedDraftTransport = null, durableDraftHttp = false, snapshotMetrics = false, previewHttp = false, rootRelationAccess = null, rootRelationTransport = rootRelationHttp, reconstruction, julyPilot, initialEditCard }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null; durableDraftHttp?: boolean;
   snapshotMetrics?: boolean; previewHttp?: boolean;
   rootRelationAccess?: RootRelationAccess | null; rootRelationTransport?: RootRelationTransport;
   reconstruction?: RealizedBoard;
   julyPilot?: RealizedBoard;
-  initialJulyStatus?: JulyPilotStatus;
-  initialJulyCard?: string;
-  initialReconstructionEditing?: boolean;
+  initialEditCard?: string;
 }) {
-  const [reconstructionEditing, setReconstructionEditing] = useState(initialReconstructionEditing);
-  const showingRealized = !!reconstruction && !reconstructionEditing;
   const displayedReconstruction = julyPilot ?? reconstruction;
   const julyStatuses = useMemo(() => {
     if (!julyPilot) return undefined;
@@ -559,24 +555,26 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
   }, [durable.unsaved, shown.board.draft.dirty, draftTransport, inlineEdits.count]);
   const monthNavigationGuard = useContext(ComposerMonthNavigationContext);
-  const monthChangeBlocker = useCommittedEvent(() => {
-    if (inlineEdits.registry.count()) return "Valide ou annule la saisie en cours avant de changer de mois.";
-    if (rootWorkspacePending || relationSessionRef.current) return "Termine ou abandonne l’organisation locale avant de changer de mois.";
-    if (comparison) return "Quitte la comparaison avant de changer de mois.";
+  const monthChangeBlocker = useCommittedEvent((leavingEditor = false) => {
+    const destination = leavingEditor ? "quitter l’édition" : "changer de mois";
+    if (inlineEdits.registry.count()) return `Valide ou annule la saisie en cours avant de ${destination}.`;
+    if (rootWorkspacePending || relationSessionRef.current) return `Termine ou abandonne l’organisation locale avant de ${destination}.`;
+    if (comparison) return `Quitte la comparaison avant de ${destination}.`;
     if (busyRef.current || pendingApply || draftConfirmationBusy || importingTrips) {
-      return "Vérifie que l’action en cours est terminée avant de changer de mois.";
+      return `Vérifie que l’action en cours est terminée avant de ${destination}.`;
     }
     return null;
   });
-  const changeMonth = useCommittedEvent((navigate: () => void): string | null => {
-    const blocker = monthChangeBlocker();
+  const changeMonth = useCommittedEvent((navigate: () => void, leavingEditor = false): string | null => {
+    const blocker = monthChangeBlocker(leavingEditor);
+    const destination = leavingEditor ? "quitter l’édition" : "changer de mois";
     if (blocker) return blocker;
     const digest = semanticStateDigest(localDraft.current);
     if (draftTransport) {
-      if (durable.status === "CONFLICT") return "Résous le conflit de versions du brouillon avant de changer de mois.";
-      if (durable.status === "ERROR") return "Réessaie la sauvegarde du brouillon avant de changer de mois.";
-      if (durable.status === "OFFLINE") return "Reconnecte-toi pour sauvegarder le brouillon avant de changer de mois.";
-      if (!durable.canLeaveWith(digest)) return "Attends la confirmation de sauvegarde avant de changer de mois.";
+      if (durable.status === "CONFLICT") return `Résous le conflit de versions du brouillon avant de ${destination}.`;
+      if (durable.status === "ERROR") return `Réessaie la sauvegarde du brouillon avant de ${destination}.`;
+      if (durable.status === "OFFLINE") return `Reconnecte-toi pour sauvegarder le brouillon avant de ${destination}.`;
+      if (!durable.canLeaveWith(digest)) return `Attends la confirmation de sauvegarde avant de ${destination}.`;
       navigate();
       return null;
     }
@@ -587,11 +585,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       return null;
     }
     confirmationRequest.current({
-      message: "Ce brouillon est conservé dans cette page. Changer de mois fera perdre les modifications locales.",
-      acceptLabel: "Abandonner et changer de mois",
+      message: leavingEditor ? "Ce brouillon est conservé dans cette page. Quitter l’édition fera perdre les modifications locales."
+        : "Ce brouillon est conservé dans cette page. Changer de mois fera perdre les modifications locales.",
+      acceptLabel: leavingEditor ? "Abandonner et quitter" : "Abandonner et changer de mois",
       cancelLabel: "Rester dans Composer",
       accept: () => {
-        if (!monthChangeBlocker() && semanticStateDigest(localDraft.current) === digest) navigate();
+        if (!monthChangeBlocker(leavingEditor) && semanticStateDigest(localDraft.current) === digest) navigate();
       },
     });
     return null;
@@ -1285,24 +1284,29 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           if (editor.equipment) setEditor(current => current ? { ...current, values: { ...current.values, [field]: value }, raw: true } : current);
           else { const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`); if (input) { input.value = value; input.focus(); } }
         }} /> : null;
-  function showRealized() {
-    if (busyRef.current || !inlineEdits.registry.guard(showRealized)) return;
-    inlineEdits.registry.flushPending();
-    closeDialog();
-    setReconstructionEditing(false);
+  function leaveJulyEditor(navigate: () => void) {
+    const blocked = changeMonth(navigate, true);
+    if (blocked) setMessage(blocked);
   }
-  function editReconstructedCard(cardId: string) {
-    const id = reconstructedId(model.semanticState.targetMonth, cardId);
+  const openInitialEditCard = useCommittedEvent((id: string) => {
     const card = shown.board.contexts.find(item => item.contextOccurrenceId === id);
-    if (!card) return;
-    setReconstructionEditing(true);
+    if (!card) {
+      setMessage("Cette carte n’est plus dans le brouillon.");
+      return;
+    }
     navigateDecision(id);
     editBoardContext(card);
-  }
+  });
+  const openedEditCard = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!initialEditCard || openedEditCard.current === initialEditCard) return;
+    openedEditCard.current = initialEditCard;
+    openInitialEditCard(initialEditCard);
+  }, [initialEditCard, openInitialEditCard]);
   return <JulyPilotCardStatuses.Provider value={julyStatuses}><ReconstructedCards.Provider value={reconstructedCards}><PersonalizationProvider><ProjectCompletionPreference.Provider value={projectSuggestionPreference}><BudgetPreviewStatus.Provider value={previewStatus}><ContextProgress.Provider value={contextProgress}><OpenMonthlyFinances.Provider value={stableDetails}><WorkshopNavigationContext.Provider value={intentionNavigation}><WorkshopConfirmationProvider requestRef={confirmationRequest}><WorkshopChoicesProvider><InlineEditContext.Provider value={inlineEdits.registry}><ComposerInteractionContext.Provider value={interactionView}>
   <CatalogDiscoveryProvider model={shown} busy={busy} openContext={openCatalogContext} revealControl={stableRevealFocus} choose={chooseCatalogSocket} choosePreset={stablePresetChoose}
     prepareBasketArticle={prepareCatalogBasketArticle}><CommerceLibraryProvider model={shown}>
-  <div className={styles.workspace} data-composer data-reconstruction-mode={reconstruction ? showingRealized ? "realized" : "edit" : undefined} data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
+  <div className={styles.workspace} data-composer data-reconstruction-mode={reconstruction ? "edit" : undefined} data-root-session={relationSession} data-root-count={relations.length} data-root-digest={relationSession ? composerLocalFrameDigest({ draft: draftState, relations }) : undefined} data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={relationSession ? "MEMORY" : durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onClickCapture={event=>{
       if(!livingBarId||!(event.target instanceof Element)||event.target.closest('[data-bar-living-card],[data-bar-dock],[data-commerce-dock],[data-bar-place-suggestions],[data-catalog-open],[popover],dialog'))return;
       // Capture the click across the whole Composer, including the Library.
@@ -1312,7 +1316,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     }}
     onKeyDown={event=>{if(event.key==='Escape'&&!event.defaultPrevented&&livingBarId&&!document.querySelector('dialog[open],[popover]:popover-open')){event.preventDefault();closeDialog();}}}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
-    {reconstruction && <h1 className="sr-only">{showingRealized ? "Cartes" : "Édition"} · {monthLabel(reconstruction.month)}</h1>}
+    {reconstruction && <h1 className="sr-only">Édition · {monthLabel(reconstruction.month)}</h1>}
     <AppToolbarContent inline={!reconstruction} className={reconstruction ? styles.compactToolbar : styles.workspaceHeader}>
       {displayedReconstruction && <RealizedFinancialTotals board={displayedReconstruction} pilot={!!julyPilot} />}
       <div className={reconstruction ? undefined : styles.headerIdentity}>
@@ -1326,7 +1330,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails}
         retry={previewStatus === "FAILED" && !busy ? retryPreview : undefined} /></div>}
-      {!showingRealized && <div className={styles.toolbar}>
+      <div className={styles.toolbar}>
         {resumableContext && <button type="button" className={styles.financialLink} disabled={busy} onClick={() => {
           setResumeContext(null); stableLibraryOpen(resumableContext.id);
         }}>{resumedCard && isComposerProject(resumedCard) ? "Ouvrir le projet" : "Reprendre l’intention"}</button>}
@@ -1362,12 +1366,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         </div>}</div>}</AtomicPopover>
         {previewStatus === "FAILED" && savedReloadSafe && <button data-reload-saved-preview onClick={reloadSavedComposer}>
           Recharger avec mon brouillon sauvegardé</button>}
-      </div>}
-      {reconstruction && <nav className={styles.reconstructionModes} aria-label="Mode de juillet">
-        <a href={composerCalendarHref(model.semanticState.targetMonth)} className={styles.reconstructionLink}>Calendrier</a>
-        <button type="button" aria-pressed={showingRealized} disabled={busy} onClick={showRealized}>{julyPilot ? "Au 15 juillet" : "Réalisé"}</button>
-        <button type="button" aria-pressed={!showingRealized} disabled={busy} onClick={() => setReconstructionEditing(true)}>Édition</button>
-      </nav>}
+      </div>
+      {reconstruction && <JulyEditorNavigation busy={busy} leave={leaveJulyEditor} />}
       {!reconstruction && forecastWindowMonths.includes(model.semanticState.targetMonth) && <a className={styles.reconstructionLink}
         href={composerCalendarHref(model.semanticState.targetMonth)}>Calendrier</a>}
     </AppToolbarContent>
@@ -1386,9 +1386,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     {relationOpen && rootRelationsAvailable && <RootRelationCommands model={shown} relations={relations} capabilities={relationCaps} busy={busy} error={errorMessage}
       command={(mutation, focusId) => admitRelation(mutation, undefined, "push", focusId)} close={() => setRelationOpen(false)} abandon={discardRelations}
       undo={() => stage({ kind: "READ" }, "undo", past.at(-1))} redo={() => stage({ kind: "READ" }, "redo", future.at(-1))} canUndo={!!past.length} canRedo={!!future.length} />}
-    {showingRealized && displayedReconstruction ? <RealizedComposerMonth board={displayedReconstruction} pilot={!!julyPilot} initialStatus={initialJulyStatus} initialCardId={initialJulyCard} onEdit={editReconstructedCard}
-      editableIds={new Set(shown.board.contexts.map(card => card.contextOccurrenceId))} />
-      : <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag}
+    <div className={styles.columns} data-workshop-columns data-bar-living-open={!!livingBarId} data-night-workshop-open={!!(editor?.nightContextId || editor?.familyContextId || editor?.stayContextId || editor?.giftContextId || editor?.catalogContextId || editor?.equipment)} data-inspector-open={projectionOpen || unresolvedOpen}><ComposerLibrary model={shown} busy={busy} selected={selected} choose={stableLibraryChoose} choosePreset={stablePresetChoose} drag={stableLibraryDrag}
       prepareProject={!relationSession && !comparison && !pendingApply ? prepareProject : undefined} />
       {livingBarId && barHost && createPortal(BarLivingEditor ? <BarLivingEditor key={livingBarId} initialTarget={editor?.barTarget} targetRequest={editor?.barTargetRequest}
           initialBarView={barViews.current.get(`${draftState.targetMonth}:${livingBarId}`)} onViewChange={rememberCurrentBarView}
@@ -1416,7 +1414,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
         busy={busy || !!comparison || !!relationSession || durable.status === "CONFLICT"} decide={stage}
         returnTo={financeReturn ? { label: financeReturn.label, open: () => stableLibraryOpen(financeReturn.id) } : undefined}
         retry={!busy && previewStatus !== "PENDING" && !comparison && !relationSession ? retryPreview : undefined}
-        focus={navigateDecision} close={() => { setProjectionOpen(false); setUnresolvedOpen(false); setCompletenessFocus(false); }} />}</div>}
+        focus={navigateDecision} close={() => { setProjectionOpen(false); setUnresolvedOpen(false); setCompletenessFocus(false); }} />}</div>
     {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}
     <div ref={dragImage} className={styles.dragPreview} data-drag-preview data-protected={grabbed?.protected} aria-hidden="true">{[...new Set(Object.values(shown.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{grabbed?.protected ? <><LockKeyhole size={11} /> Protégée</> : money(grabbed?.economicAmount ?? null)}</small></span></div>

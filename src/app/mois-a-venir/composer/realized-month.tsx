@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, Search, Utensils, X } from "lucide-react";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
+import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { julyPilotLabels, julyPilotStatuses, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import type { RealizedBoard, RealizedCard, RealizedCardGroup, RealizedPayment } from "@/server/phase2/planner/realized-month";
 import type { RealizedPlace } from "@/server/phase2/planner/realized-places";
@@ -11,6 +11,7 @@ import { ComposerAssetVisual } from "./compact-catalog-visual";
 import { money, monthLabel, plannedDayLabel } from "./display";
 import { RealizedBadge } from "./realized-badge";
 import { JulyPilotChip } from "./reconstructed-cards";
+import { JulyEditLink } from "./july-edit-link";
 import { detailedRealizedCards, packRealizedCards, packRealizedCategories, realizedOperationCardId, type PackedCardPosition, type RealizedCardView } from "./realized-card-view";
 import styles from "./realized-month.module.css";
 
@@ -327,8 +328,8 @@ function RealizedDetail({ card, month, terms, open }: {
   </>;
 }
 
-export function RealizedComposerMonth({ board, onEdit, editableIds, initialCardId, pilot = false, initialStatus }: {
-  board: RealizedBoard; onEdit?: (cardId: string) => void; editableIds?: ReadonlySet<string>; initialCardId?: string; pilot?: boolean;
+export function RealizedComposerMonth({ board, editableSourceIds, initialCardId, pilot = false, initialStatus }: {
+  board: RealizedBoard; editableSourceIds?: readonly string[]; initialCardId?: string; pilot?: boolean;
   initialStatus?: JulyPilotStatus;
 }) {
   const [sortOrder, setSortOrder] = useState<SortOrder>(pilot ? "date" : "amount-desc");
@@ -551,8 +552,10 @@ export function RealizedComposerMonth({ board, onEdit, editableIds, initialCardI
           </button>
         </header>
         <div ref={body} className={styles.panelBody}>
-          {onEdit && editableIds?.has(reconstructedId(board.month, selectedView.source.pilotSourceId ?? selectedView.source.id)) && <button type="button" className={styles.editCard}
-            onClick={() => { dialog.current?.close(); onEdit(selectedView.source.pilotSourceId ?? selectedView.source.id); }}><Pencil size={15} aria-hidden="true" /> Modifier dans le brouillon</button>}
+          {editableSourceIds?.includes(selectedView.source.pilotSourceId ?? selectedView.source.id) && <JulyEditLink
+            cardId={selectedView.source.pilotSourceId ?? selectedView.source.id} className={styles.editCard}>
+            <Pencil size={15} aria-hidden="true" /> Modifier dans le brouillon
+          </JulyEditLink>}
           <RealizedDetail card={selected} month={board.month} terms={terms} open={open} />
         </div>
       </div>}

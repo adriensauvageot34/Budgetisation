@@ -23,6 +23,7 @@ import { money, monthLabel, plannedDayLabel } from "../composer/display";
 import { detailedRealizedCards } from "../composer/realized-card-view";
 import { composerCalendarHref } from "../month-entry";
 import { CalendarEventIcon } from "../month-calendar";
+import { JulyEditLink } from "../composer/july-edit-link";
 import { composerCalendarArtwork } from "../calendar-artwork";
 import material from "../month-material.module.css";
 import pilotStyles from "../composer/realized-month.module.css";
@@ -73,7 +74,7 @@ export default async function JulyV2Page() {
       <nav aria-label="Vues de Composer" className={composerStyles.reconstructionModes}>
         {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} className={composerStyles.reconstructionLink}>Calendrier</Link>}
         {composerEnabled && board && <Link href={JULY_COMPOSER_HREF} className={composerStyles.reconstructionLink}>Au 15 juillet</Link>}
-        {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} className={composerStyles.reconstructionLink}>Édition</Link>}
+        {composerEnabled && <JulyEditLink className={composerStyles.reconstructionLink}>Édition</JulyEditLink>}
         <span className={composerStyles.reconstructionLink} aria-current="page">Prévisions</span>
       </nav>
     </AppToolbarContent>

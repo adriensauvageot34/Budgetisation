@@ -3,18 +3,10 @@ import { isImportedRealizedMonth, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { composerBalanceHref, composerCalendarHref, monthPlanningHref } from "../month-entry";
-import { monthLabel, money } from "./display";
+import { monthLabel } from "./display";
 import { RealizedComposerMonth } from "./realized-month";
+import { RealizedFinancialTotals } from "./realized-financial-totals";
 import styles from "./composer.module.css";
-
-export function RealizedFinancialTotals({ board, pilot = false }: { board: RealizedBoard; pilot?: boolean }) {
-  return <dl className={styles.realizedTotals} aria-label={pilot ? "Flux bancaires jusqu’au 15 juillet" : "Bilan financier du mois"}>
-    <div><dt>Revenus encaissés</dt><dd>{money(board.totals.income.amount)}</dd></div>
-    <div><dt>Dépenses débitées</dt><dd>{money(board.totals.expense.amount)}</dd></div>
-    {board.totals.refund.count > 0 && <div><dt>Remboursements reçus</dt><dd>{money(board.totals.refund.amount)}</dd></div>}
-    <div className={styles.realizedNet}><dt>Net hors transferts</dt><dd>{money(board.net)}</dd></div>
-  </dl>;
-}
 
 export function ArchivedRealizedMonth({ board, initialCardId }: { board: RealizedBoard; initialCardId?: string }) {
   const july = board.month === JULY_COMPOSER_MONTH;

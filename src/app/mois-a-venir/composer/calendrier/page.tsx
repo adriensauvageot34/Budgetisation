@@ -6,11 +6,12 @@ import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { getBootstrapContextFromHousehold, getBootstrapHousehold } from "@/server/bootstrap/context";
 import { planningDate } from "@/server/phase2/planning-date";
-import { ARCHIVED_REALIZED_MONTHS, isImportedRealizedMonth, JULY_COMPOSER_EDIT_HREF, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { ARCHIVED_REALIZED_MONTHS, isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { composerBalanceHref, composerCalendarHref, forecastWindowMonths, monthPlanningHref } from "../../month-entry";
 import { monthLabel } from "../display";
 import { ComposerCalendar } from "./calendar";
 import { readComposerCalendar } from "./calendar-data";
+import { JulyEditLink } from "../july-edit-link";
 import { createMonthSourceCache, type MonthSourceCache } from "@/server/phase2/month-source-cache";
 import styles from "../composer.module.css";
 import clay from "./calendar.module.css";
@@ -54,7 +55,7 @@ export default async function ComposerCalendarPage({ searchParams }: { searchPar
         </span>
         {mode === "pilot" && <>
           <Link className={button} href={realizedComposerHref(month)}>Au 15 juillet</Link>
-          <Link className={button} href={JULY_COMPOSER_EDIT_HREF}>Édition</Link>
+          <JulyEditLink className={button}>Édition</JulyEditLink>
         </>}
         {mode === "realized" && !imported && <Link className={button} href={composerBalanceHref(month)}>Bilan du mois</Link>}
         {(mode !== "realized" || imported) && <Link className={button} href={mode === "pilot" ? JULY_V2_HREF : monthPlanningHref(month, imported ? "previsions" : undefined)}>Prévisions</Link>}
