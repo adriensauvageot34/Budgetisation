@@ -1,14 +1,14 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { OverlayFrame } from "@/ui";
 import styles from "./background-rhythms.module.css";
 
-export function RhythmMonthFocusRegion({ domain, labelledBy, connectorPosition, children }: {
+export function RhythmMonthFocusRegion({ domain, labelledBy, onClose, children }: {
   readonly domain: "food" | "car";
   readonly labelledBy: string;
-  readonly connectorPosition: number;
+  readonly onClose: () => void;
   readonly children: ReactNode;
 }) {
-  return <section className={styles.monthFocusRegion} data-domain={domain} aria-labelledby={labelledBy} aria-live="polite" style={{ "--focus-connector-position": `${connectorPosition}%` } as CSSProperties}>
-    <span className={styles.focusConnector} aria-hidden />
-    {children}
-  </section>;
+  return <OverlayFrame kind="exploration" title={domain === "food" ? "Alimentation du mois" : "Déplacements du mois"} closeAction={{ kind: "callback", onAction: onClose }} closeOnBackdrop>
+    <section className={styles.monthFocusRegion} data-domain={domain} aria-labelledby={labelledBy}>{children}</section>
+  </OverlayFrame>;
 }

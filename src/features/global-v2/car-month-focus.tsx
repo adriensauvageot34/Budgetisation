@@ -68,21 +68,20 @@ function CarDetailSkeleton() {
   return <div className={styles.carDetailSkeleton} role="status" aria-label="Chargement des déplacements" aria-busy="true"><span /><span /><span /></div>;
 }
 
-export function CarMonthFocus({ month, detail, detailStatus, connectorPosition, retry, onClose, onTimelineDestination }: {
+export function CarMonthFocus({ month, detail, detailStatus, retry, onClose, onTimelineDestination }: {
   readonly month: GlobalBackgroundCarMonthSummary;
   readonly detail?: GlobalBackgroundRhythmMonthDetailReadModel;
   readonly detailStatus: "IDLE" | "LOADING" | "READY" | "ERROR";
-  readonly connectorPosition: number;
   readonly retry: () => void;
   readonly onClose: () => void;
   readonly onTimelineDestination: (eventRef: string) => void;
 }) {
   const titleId = `car-focus-${month.month}`;
   const partial = month.usageComposition.classificationStatus !== "COMPLETE";
-  return <RhythmMonthFocusRegion domain="car" labelledBy={titleId} connectorPosition={connectorPosition}>
+  return <RhythmMonthFocusRegion domain="car" labelledBy={titleId} onClose={onClose}>
     <header className={styles.monthFocusHeader}>
       <div><span>{monthLabel(month.month).toLocaleUpperCase("fr-FR")}</span><h5 id={titleId}>≈{formatMoney(month.modeledUsage.estimatedFuelCost)}</h5><p>de carburant estimé pour nos déplacements</p><small>{formatInteger(month.modeledUsage.distanceKm)} km · ≈{formatInteger(month.modeledUsage.estimatedFuelLiters)} L estimés</small></div>
-      <div className={styles.focusPaid}><strong>{formatMoney(month.observedFuelPaid.amount, true)}</strong><span>payés à la pompe ce mois-ci</span><button type="button" onClick={onClose}>Revenir à l’année <span aria-hidden>→</span></button></div>
+      <div className={styles.focusPaid}><strong>{formatMoney(month.observedFuelPaid.amount, true)}</strong><span>payés à la pompe ce mois-ci</span></div>
     </header>
     <div className={styles.carSummaryBand}>
       <section><h6>Usage du mois</h6><strong>≈{formatMoney(month.modeledUsage.estimatedFuelCost)}</strong><p>{formatInteger(month.modeledUsage.distanceKm)} km reconstitués</p></section>

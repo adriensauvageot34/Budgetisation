@@ -193,13 +193,25 @@ function Outings({ name, outings }: { readonly name: "Adrien" | "Manon"; readonl
   return <div className={styles.outingLine} data-person={name.toLowerCase()}><Moon aria-hidden="true" size={20} /><strong>{name}</strong><span>{integer.format(outings.length)} sorties</span><div>{outings.map((outing) => <span key={outing.eventRef}>{outingTitle(outing.title) || outing.place || "Sortie"}</span>)}</div></div>;
 }
 
-export function PersonaEditorialView({ model, direct, headingId }: { readonly model: PersonaEditorialModel; readonly direct: PersonaDirectModel; readonly headingId: string }) {
+export const editorialTopics = [
+  { key: "portraits", label: "Portraits" },
+  { key: "work", label: "Travail" },
+  { key: "car", label: "Voiture" },
+  { key: "projects", label: "Projets" },
+  { key: "habits", label: "Habitudes" },
+  { key: "visits", label: "Famille & amis" },
+  { key: "outings", label: "Sorties" },
+] as const;
+
+export function PersonaEditorialView({ model, direct, headingId, topic }: { readonly model: PersonaEditorialModel; readonly direct: PersonaDirectModel; readonly headingId: string; readonly topic: typeof editorialTopics[number]["key"] }) {
   const months = monthKeys(model.period.first, model.period.certifiedThrough);
   return <div className={styles.root}>
-    <ProfileHeader model={model} headingId={headingId} />
-    <Section id="persona-work-title" title="Nos journées de travail"><div className={styles.workGrid}><Peugeot model={model} /><Permit person={model.persons[0]} /><WorkMeals person="adrien" meal={model.persons[0].work.workMeals} /><WorkMeals person="manon" meal={model.persons[1].work.workMeals} /></div></Section>
-    <Section id="persona-universes-title" title="Nos univers personnels"><div className={styles.universesGrid}><AdrienUniverses person={model.persons[0]} direct={direct} /><ManonUniverses person={model.persons[1]} months={months} /></div></Section>
-    <Section id="persona-habits-title" title="Nos habitudes qui reviennent"><div className={styles.habitsGrid}><Grooming person={model.persons[0]} /><Beauty person={model.persons[1]} /><Tobacco person={model.persons[0]} /><Vape person={model.persons[1]} /><Cigarettes person={model.persons[1]} /></div></Section>
-    <Section id="persona-social-title" title="Notre vie sociale, chacun de son côté"><div className={styles.socialGrid}><Family person={model.persons[1]} months={months} /><Friends person={model.persons[1]} months={months} /><div className={styles.outingsPair}><Outings name="Adrien" outings={model.persons[0].socialLife.outingsWithoutPartnerParticipation} /><Outings name="Manon" outings={model.persons[1].socialLife.outingsWithoutPartnerParticipation} /></div></div></Section>
+    {topic === "portraits" && <ProfileHeader model={model} headingId={headingId} />}
+    {topic === "work" && <Section id="persona-work-title" title="Nos journées de travail"><div className={styles.workGrid}><Permit person={model.persons[0]} /><WorkMeals person="adrien" meal={model.persons[0].work.workMeals} /><WorkMeals person="manon" meal={model.persons[1].work.workMeals} /></div></Section>}
+    {topic === "car" && <Peugeot model={model} />}
+    {topic === "projects" && <Section id="persona-universes-title" title="Nos univers personnels"><div className={styles.universesGrid}><AdrienUniverses person={model.persons[0]} direct={direct} /><ManonUniverses person={model.persons[1]} months={months} /></div></Section>}
+    {topic === "habits" && <Section id="persona-habits-title" title="Nos habitudes qui reviennent"><div className={styles.habitsGrid}><Grooming person={model.persons[0]} /><Beauty person={model.persons[1]} /><Tobacco person={model.persons[0]} /><Vape person={model.persons[1]} /><Cigarettes person={model.persons[1]} /></div></Section>}
+    {topic === "visits" && <Section id="persona-social-title" title="Famille et amis"><div className={styles.socialGrid}><Family person={model.persons[1]} months={months} /><Friends person={model.persons[1]} months={months} /></div></Section>}
+    {topic === "outings" && <Section id="persona-outings-title" title="Nos sorties"><div className={styles.outingsPair}><Outings name="Adrien" outings={model.persons[0].socialLife.outingsWithoutPartnerParticipation} /><Outings name="Manon" outings={model.persons[1].socialLife.outingsWithoutPartnerParticipation} /></div></Section>}
   </div>;
 }

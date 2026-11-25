@@ -10,7 +10,7 @@ import { FoodRhythmRiver } from "./food-rhythm-river";
 import { CarMobilityRoute } from "./car-mobility-route";
 import styles from "./background-rhythms.module.css";
 
-export function BackgroundRhythms({ runtime, onMethod }: { readonly runtime: GlobalV2VisitRuntime; readonly onMethod: () => void }) {
+export function BackgroundRhythms({ runtime, onMethod, view }: { readonly runtime: GlobalV2VisitRuntime; readonly onMethod: () => void; readonly view: "food" | "car" }) {
   const nearViewport = useNearViewport("100% 0px");
   const request = useMemo(() => ({ resource: "analysis_global_background_rhythms" as const, params: {} }), []);
   const result = useGlobalV2Resource<GlobalBackgroundRhythmsReadModel>(runtime, request, nearViewport.near, "BACKGROUND");
@@ -19,8 +19,8 @@ export function BackgroundRhythms({ runtime, onMethod }: { readonly runtime: Glo
   const focusTimelineDestination = (eventRef: string) => {
     window.dispatchEvent(new CustomEvent("global-v2:focus-life-event", { detail: { eventRef } }));
   };
-  return <section ref={nearViewport.ref} className={styles.backgroundRhythms} aria-labelledby="background-rhythms-title">
-    <header className={styles.backgroundHeader}><div><span>Habitudes récurrentes</span><h3 id="background-rhythms-title">Nos rythmes de fond</h3><p>Ce qui revient dans notre quotidien et la manière dont nos dépenses s’organisent autour.</p></div><button type="button" onClick={onMethod}><Info aria-hidden size={15} /> Fiabilité & méthode</button></header>
-    {model === undefined || food === undefined ? result.state.status === "ERROR" ? <div className={styles.backgroundError} role="alert"><p>Nos rythmes de fond n’ont pas pu être chargés. La Timeline reste disponible.</p><button type="button" onClick={result.retry}>Réessayer</button></div> : <BackgroundRhythmsSkeleton /> : <div className={styles.rhythmCards}><FoodRhythmRiver food={food} /><CarMobilityRoute car={model.carMobility} runtime={runtime} onTimelineDestination={focusTimelineDestination} /></div>}
+  return <section ref={nearViewport.ref} className={styles.backgroundRhythms} data-workspace-rhythm aria-label={view === "food" ? "Alimentation" : "Voiture"}>
+    <header className={styles.backgroundHeader}><button type="button" onClick={onMethod}><Info aria-hidden size={15} /> Fiabilité & méthode</button></header>
+    {model === undefined || food === undefined ? result.state.status === "ERROR" ? <div className={styles.backgroundError} role="alert"><p>Ces données n’ont pas pu être chargées.</p><button type="button" onClick={result.retry}>Réessayer</button></div> : <BackgroundRhythmsSkeleton /> : <div className={styles.rhythmCards}>{view === "food" ? <FoodRhythmRiver food={food} /> : <CarMobilityRoute car={model.carMobility} runtime={runtime} onTimelineDestination={focusTimelineDestination} />}</div>}
   </section>;
 }

@@ -22,10 +22,9 @@ function HighlightGroup({ title, items }: { readonly title: string; readonly ite
   return <section className={styles.foodHighlightGroup}><h6>{title}</h6>{items.length === 0 ? <p>Aucun élément éditorial publié.</p> : <ul>{items.map((item) => <FoodHighlight key={item.stableSourceId} item={item} />)}</ul>}</section>;
 }
 
-export function FoodMonthFocus({ month, annotations, connectorPosition, onClose }: {
+export function FoodMonthFocus({ month, annotations, onClose }: {
   readonly month: GlobalBackgroundFoodSemanticMonth;
   readonly annotations: GlobalBackgroundFoodSemantic["annotations"];
-  readonly connectorPosition: number;
   readonly onClose: () => void;
 }) {
   const { month: monthKey, money, grocery, restaurant, deliveryPurchaseCount, highlights } = month;
@@ -33,10 +32,9 @@ export function FoodMonthFocus({ month, annotations, connectorPosition, onClose 
   const [, restaurantOccurrences] = restaurant;
   const observation = annotations.find(({ toMonth }) => toMonth === monthKey)?.text;
   const titleId = `food-focus-${monthKey}`;
-  return <RhythmMonthFocusRegion domain="food" labelledBy={titleId} connectorPosition={connectorPosition}>
+  return <RhythmMonthFocusRegion domain="food" labelledBy={titleId} onClose={onClose}>
     <header className={styles.monthFocusHeader}>
       <div><span>{monthLabel(monthKey).toLocaleUpperCase("fr-FR")}</span><h5 id={titleId}><span aria-hidden="true">{formatFoodMoney(money.total)}</span><span className={styles.srOnly}>{foodMoneyAccessibleLabel(money.total)}</span></h5><p>consacrés à cette lecture de l’alimentation</p>{month.showBenefitFunding && month.monthlyBenefitFunding !== null ? <small>Swile · {formatMoney(month.monthlyBenefitFunding, true)} financés en titres-restaurant</small> : null}{month.benefitCoverage === "OUT_OF_COVERAGE" ? <small>Source titres-restaurant non observée pour ce mois</small> : null}</div>
-      <button type="button" onClick={onClose}>Revenir à l’année <span aria-hidden>→</span></button>
     </header>
     <div className={styles.foodSummaryBand}>
       <section><h6>Composition</h6><dl><div><dt>Courses</dt><dd>{formatFoodMoney(money.courses)}</dd></div><div><dt>Restaurants</dt><dd>{formatFoodMoney(money.restaurants)}</dd></div><div><dt>Livraisons</dt><dd>{formatFoodMoney(money.deliveries)}</dd></div></dl></section>
