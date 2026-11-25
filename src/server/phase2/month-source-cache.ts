@@ -9,7 +9,7 @@ import { activityHistoryScope } from "./planner/activity-history-artifact";
 import { createHistoricalBasisStore, HISTORICAL_BASIS_METHOD, HISTORICAL_BASIS_SHARED_COVERAGE, validBasisProof } from "./planner/historical-basis";
 
 export type MonthSourceCache = {
-  read<T>(source: string, readLive: () => Promise<T>): Promise<T>;
+  read<T>(source: string, readLive: () => Promise<T>, readAdditionalRevision?: () => Promise<string | null>): Promise<T>;
 };
 
 class SkipCacheWrite extends Error {
@@ -46,8 +46,13 @@ export function createMonthSourceCache(sessionClient: SupabaseClient, bootstrap:
 
   let admission: ReturnType<typeof readRevision> | undefined;
   return {
-    async read<T>(source: string, readLive: () => Promise<T>): Promise<T> {
-      const revision = await (admission ??= readRevision());
+    async read<T>(source: string, readLive: () => Promise<T>, readAdditionalRevision?: () => Promise<string | null>): Promise<T> {
+      const proof = async (basis: Promise<string | null>) => {
+        if (!readAdditionalRevision) return basis;
+        const [revision, extra] = await Promise.all([basis, readAdditionalRevision().catch(() => null)]);
+        return revision && extra ? plannerDigest({ revision, extra }) : null;
+      };
+      const revision = await proof(admission ??= readRevision());
       if (!revision) return readLive();
       const key = plannerDigest({ source, scopeKey, revision, data: context.dataRevision, analytics: context.analyticsRevision,
         deploy: process.env.VERCEL_DEPLOYMENT_ID ?? process.env.VERCEL_GIT_COMMIT_SHA ?? "local",
@@ -56,7 +61,7 @@ export function createMonthSourceCache(sessionClient: SupabaseClient, bootstrap:
         return await unstable_cache(async () => {
           const value = await readLive();
           // An import or correction committed during the read must never populate an older cache key.
-          if (await readRevision() !== revision || Buffer.byteLength(JSON.stringify(value)) > 1_500_000) {
+          if (await proof(readRevision()) !== revision || Buffer.byteLength(JSON.stringify(value)) > 1_500_000) {
             throw new SkipCacheWrite(value);
           }
           return value;
