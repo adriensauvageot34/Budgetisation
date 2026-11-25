@@ -10,6 +10,7 @@ import { loadMonthForecastAuthorities } from "./live-month-forecast";
 import { readMonthPredictionEvidence } from "./month-prediction-evidence";
 import type { MonthPredictionEvidence } from "./remaining-month-forecast";
 import { readForecastMemory, type ForecastCheckpoint } from "./forecast-memory";
+import type { MonthSourceCache } from "./month-source-cache";
 
 export const MONTH_FORECAST_RESOURCE = "phase2_month_forecast" as const;
 const sha256 = (value: unknown): string => createHash("sha256").update(canonicalSerializeGlobal(value), "utf8").digest("hex");
@@ -116,10 +117,11 @@ export async function queryMonthForecast(client: SupabaseClient, householdId: st
 /** A report target may not have a published monthly cache yet. Resolve its own
  * month from the current canonical authorities, without writing a snapshot. */
 export async function resolvePlanningMonthForecast(client: SupabaseClient, householdId: string,
-  targetMonth: string, predictionEvidencePromise?: Promise<MonthPredictionEvidence>, mode: MonthForecastReadMode = "full"): Promise<MonthForecastSnapshot> {
+  targetMonth: string, predictionEvidencePromise?: Promise<MonthPredictionEvidence>, mode: MonthForecastReadMode = "full",
+  cache?: MonthSourceCache): Promise<MonthForecastSnapshot> {
   parseGlobalV2QueryParams(MONTH_FORECAST_RESOURCE, { targetMonth });
   const [authorities, identity] = await Promise.all([
-    loadMonthForecastAuthorities(client, householdId), activeIdentity(client, householdId),
+    loadMonthForecastAuthorities(client, householdId, cache), activeIdentity(client, householdId),
   ]);
   if (authorities.publication.publication_id !== identity.publication.publication_id)
     throw new TypeError("FORECAST_GENERATION_CHANGED_DURING_BUILD");

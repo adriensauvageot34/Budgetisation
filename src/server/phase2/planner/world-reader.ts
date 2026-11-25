@@ -20,11 +20,13 @@ import { resolveJourneyRequirements } from "./journey-resolver";
 import type { ActivityHistoryStore } from "./activity-history-artifact";
 import { snapshotWork, snapshotSync } from "./snapshot-observation";
 import type { HistoricalBasisStore } from "./historical-basis";
+import type { MonthSourceCache } from "../month-source-cache";
 
 /** Canonical may use its trusted read client; Plan writes always use the authenticated
  * household client supplied separately by the authorized server entry point. */
 export function createPlannerDependencies(canonical: CanonicalRepository, authenticatedClient: SupabaseClient,
-  clock: () => string = () => new Date().toISOString(), activityHistory?: ActivityHistoryStore, historicalBasis?: HistoricalBasisStore): EffectiveMonthDependencies {
+  clock: () => string = () => new Date().toISOString(), activityHistory?: ActivityHistoryStore,
+  historicalBasis?: HistoricalBasisStore, opening?: { month: string; cache: MonthSourceCache }): EffectiveMonthDependencies {
   const scope = (householdId: string) => {
     if (householdId !== String(canonical.context.householdId)) throw new TypeError("PLANNER_AUTHORIZED_HOUSEHOLD_MISMATCH");
   };
@@ -35,15 +37,16 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
   const loadWorldWithStore = async (householdId: string, targetMonth: string, history?: ActivityHistoryStore, basis?: HistoricalBasisStore) => {
     return snapshotWork("World", async () => {
     scope(householdId);
+    const cache = opening?.month === targetMonth ? opening.cache : undefined;
     const cutoff = Temporal.Instant.from(clock()), asOfDate = cutoff.toZonedDateTimeISO(canonical.context.timezone).toPlainDate().toString();
     // Forecast requires history; Baseline permits empty history. When the two readers
     // use the same household day, a successful strict read satisfies both contracts.
     // A clock crossing the calendar boundary keeps the original independent reads.
     const predictionEvidence = asOfDate === planningDate(canonical.context.timezone)
       ? snapshotWork("PredictionEvidence", () => readMonthPredictionEvidence(canonical.client, householdId, targetMonth, false,
-        { asOfDate, timezone: canonical.context.timezone })) : undefined;
+        { asOfDate, timezone: canonical.context.timezone, cache })) : undefined;
     predictionEvidence?.catch(() => undefined);
-    const forecastPromise = snapshotWork("Forecast", () => readPlanningMonthForecast(canonical.client, householdId, targetMonth, predictionEvidence));
+    const forecastPromise = snapshotWork("Forecast", () => readPlanningMonthForecast(canonical.client, householdId, targetMonth, predictionEvidence, "full", cache));
     const sourcesPromise = snapshotWork("BaselineSources", () => readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(),
       { simpleOccurrences: true, renewals: true, forecast: forecastPromise, ...(history ? { activityHistory: history } : {}),
         ...(basis ? { historicalBasis: basis } : {}),

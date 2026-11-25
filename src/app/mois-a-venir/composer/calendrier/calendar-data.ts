@@ -9,6 +9,7 @@ import { createCanonicalReadClient } from "@/server/canonical/client";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { projectFixedForecastSchedule } from "@/server/phase2/month-scenario";
+import type { MonthSourceCache } from "@/server/phase2/month-source-cache";
 import { readMonthPredictionEvidence } from "@/server/phase2/month-prediction-evidence";
 import { planningDate } from "@/server/phase2/planning-date";
 import { readActiveComposerDraft } from "@/server/phase2/planner/composer-draft-service";
@@ -26,8 +27,8 @@ import { projectFixedCalendarItem, type CalendarEntry, type CalendarItem } from 
 
 type Bootstrap = Awaited<ReturnType<typeof getBootstrapContext>>;
 type CalendarRead =
-  | { mode: "realized" | "pilot"; context: Bootstrap }
-  | { mode: "forecast"; household: BootstrapHousehold; supabase: SupabaseClient };
+  | { mode: "realized" | "pilot"; context: Bootstrap; cache: MonthSourceCache }
+  | { mode: "forecast"; household: BootstrapHousehold; supabase: SupabaseClient; cache: MonthSourceCache };
 const categories = "/planned-visuals/commerce/categories";
 
 export function observedCalendarItems(board: RealizedCalendarSource, pilot: boolean): CalendarItem[] {
@@ -63,11 +64,11 @@ export function observedCalendarItems(board: RealizedCalendarSource, pilot: bool
   });
 }
 
-async function julyItems(context: Bootstrap) {
+async function julyItems(context: Bootstrap, cache: MonthSourceCache) {
   const { householdId, timezone } = context.household!;
   const [source, evidence, model] = await Promise.all([
-    readRealizedMonth(context, parseYearMonth(JULY_COMPOSER_MONTH)),
-    readMonthPredictionEvidence(createCanonicalReadClient(), householdId, JULY_COMPOSER_MONTH, true, { asOfDate: JULY_PILOT_DATE, timezone }),
+    readRealizedMonth(context, parseYearMonth(JULY_COMPOSER_MONTH), cache),
+    readMonthPredictionEvidence(createCanonicalReadClient(), householdId, JULY_COMPOSER_MONTH, true, { asOfDate: JULY_PILOT_DATE, timezone, cache }),
     composerDraftAutosaveEnabledFor(context.user.id) ? withProductAuthentication(async () => {
       const planner = await authorizedPlanner();
       const draft = await readActiveComposerDraft(planner, JULY_COMPOSER_MONTH);
@@ -98,14 +99,14 @@ async function julyItems(context: Bootstrap) {
   return items;
 }
 
-async function fixedForecastItems({ household, supabase }: Extract<CalendarRead, { mode: "forecast" }>, month: string): Promise<CalendarItem[]> {
+async function fixedForecastItems({ household, supabase, cache }: Extract<CalendarRead, { mode: "forecast" }>, month: string): Promise<CalendarItem[]> {
   const { householdId, timezone } = household;
   const client = createCanonicalReadClient();
   // In the Composer timeline these months are forecasts, as viewed from the July pilot.
   const now = planningDate(timezone);
   const cutoff = month <= now.slice(0, 7) ? addDays(parseLocalDate(`${month}-01`), -1) : now;
   const [forecast, { inputs }] = await Promise.all([
-    readPlanningMonthForecast(client, householdId, month, undefined, "reference"), readMonthInputs(supabase, householdId, month),
+    readPlanningMonthForecast(client, householdId, month, undefined, "reference", cache), readMonthInputs(supabase, householdId, month),
   ]);
   return projectFixedForecastSchedule(forecast, inputs, cutoff).map(charge => {
     const item = projectFixedCalendarItem(charge);
@@ -120,8 +121,8 @@ async function fixedForecastItems({ household, supabase }: Extract<CalendarRead,
 
 export async function readComposerCalendar(input: CalendarRead, month: string) {
   const raw = input.mode === "forecast" ? await fixedForecastItems(input, month)
-    : input.mode === "pilot" ? await julyItems(input.context)
-      : observedCalendarItems(await readRealizedCalendarSource(input.context, parseYearMonth(month)), false);
+    : input.mode === "pilot" ? await julyItems(input.context, input.cache)
+      : observedCalendarItems(await readRealizedCalendarSource(input.context, parseYearMonth(month), input.cache), false);
   const entries = raw.filter((item): item is CalendarEntry => item.date !== null);
   const first = new Date(`${month}-01T12:00:00Z`);
   const weekday = (first.getUTCDay() + 6) % 7;

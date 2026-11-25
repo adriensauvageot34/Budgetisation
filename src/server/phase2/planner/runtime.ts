@@ -12,9 +12,10 @@ import { createHistoricalBasisStore } from "./historical-basis";
 import { JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import { reconstructionWorld } from "./reconstruction-world";
 import { readJulyCarLegs } from "./july-car-trips";
+import { createMonthSourceCache } from "../month-source-cache";
 
 /** Never accepts a household, user, client or authority from the browser. */
-export async function authorizedPlanner() {
+export async function authorizedPlanner(options: { readCacheMonth?: string } = {}) {
   const { supabase, user } = await snapshotWork("Authentication", () => getAuthenticatedBootstrapClient());
   const bootstrap = await snapshotWork("Bootstrap_CanonicalContext", () => getBootstrapContext());
   if (bootstrap.user.id !== user.id) throw new TypeError("PLANNER_SESSION_CHANGED");
@@ -33,8 +34,10 @@ export async function authorizedPlanner() {
   const history = process.env.COMPOSER_P14_SNAP1_ACTIVITY_HISTORY === "1"
     ? createActivityHistoryStore(supabase) : undefined;
   if (history) history.trace = snapshotHistoryTrace;
+  const opening = options.readCacheMonth ? { month: options.readCacheMonth,
+    cache: createMonthSourceCache(supabase, bootstrap, options.readCacheMonth) } : undefined;
   const deps = createPlannerDependencies(canonical, supabase, () => now, history,
-    process.env.COMPOSER_P14_SNAP3_HISTORICAL_BASIS === "1" ? createHistoricalBasisStore(supabase) : undefined);
+    process.env.COMPOSER_P14_SNAP3_HISTORICAL_BASIS === "1" ? createHistoricalBasisStore(supabase) : undefined, opening);
   const householdId = String(context.householdId), readComposerWorld = deps.readComposerWorld ?? deps.readWorld;
   const prepareWorld: NonNullable<typeof deps.prepareWorld> = async (world, state, historical) => {
     const useJulyLegs = world.reconstruction && state.contexts.some(context => {

@@ -12,6 +12,7 @@ import { composerBalanceHref, composerCalendarHref, forecastWindowMonths, monthP
 import { monthLabel } from "../display";
 import { ComposerCalendar } from "./calendar";
 import { readComposerCalendar } from "./calendar-data";
+import { createMonthSourceCache, type MonthSourceCache } from "@/server/phase2/month-source-cache";
 import styles from "../composer.module.css";
 import clay from "./calendar.module.css";
 
@@ -30,9 +31,17 @@ export default async function ComposerCalendarPage({ searchParams }: { searchPar
   const imported = isImportedRealizedMonth(month);
   const mode = month === JULY_COMPOSER_MONTH ? "pilot" : !imported && forecastWindowMonths.includes(month) ? "forecast" : "realized";
   const calendar = await withProductAuthentication(async () => {
-    if (mode === "forecast") return readComposerCalendar({ mode, household, supabase: session.supabase }, month);
+    if (mode === "forecast") {
+      // Published forecasts already use their own snapshot. Bootstrap the cache
+      // scope only if this calendar has to resolve a forecast from live sources.
+      const cache: MonthSourceCache = { async read(source, readLive) {
+        const context = await getBootstrapContextFromHousehold(session, household);
+        return createMonthSourceCache(session.supabase, context, month).read(source, readLive);
+      } };
+      return readComposerCalendar({ mode, household, supabase: session.supabase, cache }, month);
+    }
     const context = await getBootstrapContextFromHousehold(session, household);
-    return readComposerCalendar({ mode, context }, month);
+    return readComposerCalendar({ mode, context, cache: createMonthSourceCache(session.supabase, context, month) }, month);
   });
   const button = styles.reconstructionLink;
   return <div className={clay.workspace}>

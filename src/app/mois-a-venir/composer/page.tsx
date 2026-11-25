@@ -19,7 +19,8 @@ import { realizedOperationCardId } from "./realized-card-view";
 import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
 import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
 import { reconstructJulyDraft } from "@/server/phase2/planner/reconstruct-july-draft";
-import { getBootstrapContext } from "@/server/bootstrap/context";
+import { getBootstrapSession } from "@/server/bootstrap/context";
+import { createMonthSourceCache } from "@/server/phase2/month-source-cache";
 import { parseYearMonth } from "@/core/time";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Composer mon mois" };
@@ -30,9 +31,9 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   const isReconstruction = month === JULY_COMPOSER_MONTH;
   if (isArchivedRealizedMonth(month) || isImportedRealizedMonth(month) && params.view !== "edition" || isReconstruction && params.view === "bilan") {
     const board = await withProductAuthentication(async () => {
-      const context = await getBootstrapContext();
+      const { context, session } = await getBootstrapSession();
       if (!context.household) notFound();
-      return readRealizedMonth(context, parseYearMonth(month));
+      return readRealizedMonth(context, parseYearMonth(month), createMonthSourceCache(session.supabase, context, month));
     });
     const cardId = params.carte;
     const initialCardId = typeof cardId === "string" && board.cards.some(card => card.id === cardId ||
@@ -40,14 +41,15 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
     return <ArchivedRealizedMonth key={month} board={board} initialCardId={initialCardId} />;
   }
   const observed = await observeSnapshot(() => withProductAuthentication(async () => {
-    const { deps, householdId, userId, supabase } = await authorizedPlanner();
+    const { deps, householdId, userId, supabase } = await authorizedPlanner({ readCacheMonth: month });
     const draftEnabled = composerDraftAutosaveEnabledFor(userId);
     const rootRelationAccess = !isReconstruction && draftEnabled ? {
       scopeKey: createHash("sha256").update(`${userId}:${householdId}:${month}`).digest("hex"), enabled: composerRootRelationsEnabled(),
     } : null;
     const readDrafts = () => draftEnabled ? readComposerDrafts({ supabase, userId, householdId }, month) : Promise.resolve(null);
     if (isReconstruction) {
-      const realizedRead = getBootstrapContext().then(context => readRealizedMonth(context, parseYearMonth(month)));
+      const realizedRead = getBootstrapSession().then(({ session, context }) =>
+        readRealizedMonth(context, parseYearMonth(month), createMonthSourceCache(session.supabase, context, month)));
       const [opening, reconstruction] = await Promise.all([
         readComposerOpening(deps, householdId, month, readDrafts, async () => reconstructJulyDraft(await realizedRead)),
         realizedRead,

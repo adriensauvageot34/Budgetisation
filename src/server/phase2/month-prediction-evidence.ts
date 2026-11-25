@@ -11,6 +11,7 @@ import type { MonthPredictionEvidence } from "./remaining-month-forecast";
 import { BENEFIT_PROVIDERS, type BenefitProvider } from "@/domain/phase2/benefit-wallets";
 import type { CanonicalBenefitWallet, BenefitLedgerEntry } from "./benefit-wallet-funding";
 import { monthInputsSchema } from "./month-scenario";
+import type { MonthSourceCache } from "./month-source-cache";
 
 /** Purchase identity replaces its bank components; funding never adds a second cost. */
 export function mergePredictionPurchases(bank: readonly EconomicReferenceEntry[], purchases: readonly {
@@ -28,7 +29,7 @@ export function mergePredictionPurchases(bank: readonly EconomicReferenceEntry[]
 /** Read-only adapter. The singleton control authorizes legacy relations without household_id.
  * Modern relations are additionally scoped. No writes, fallbacks or partial page reads. */
 export async function readMonthPredictionEvidence(client: SupabaseClient, householdId: string, targetMonth: string,
-  allowEmptyHistory = false, options: { asOfDate?: string; timezone?: string } = {}): Promise<MonthPredictionEvidence> {
+  allowEmptyHistory = false, options: { asOfDate?: string; timezone?: string; cache?: MonthSourceCache } = {}): Promise<MonthPredictionEvidence> {
   const scope = await snapshotWork("Evidence_Scope", () => client.from("canonical_household_scope_control").select("household_count,household_id,status").limit(2));
   if (scope.error) throw scope.error;
   if (scope.data?.length !== 1 || parseCanonicalHouseholdScope(scope.data[0]) !== householdId)
@@ -70,8 +71,9 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
     page("Evidence_LiveBalances", offset => client.from("phase2_month_inputs").select("payload,target_month").eq("household_id", householdId)
       .order("target_month", { ascending: false }).range(offset, offset + 999)),
   ]));
-  // Both groups depend only on the admitted scope and dates, not on each other.
-  const historyPromise = snapshotWork("Evidence_HistoryBarrier", () => Promise.all([
+  // Funding, coverage and balances have their own writers. Only reuse the
+  // canonical rows covered by the historical proof.
+  const readHistoricalRows = () => Promise.all([
     page("Evidence_BankOperations", offset => client.from("operations").select("operation_id,date_bancaire,personne_concernee,type_precis,marchand,merchant_id,need_id,montant,flux,recurrence_series_id,reference_contrat,transfert_associe_operation_id,source_system")
       .gte("date_bancaire", startDate).lt("date_bancaire", endExclusive).lte("date_bancaire", asOf).order("operation_id").range(offset, offset + 999)),
     page("Evidence_CanonicalCosts", offset => client.from("financial_economic_cost_canonical").select("operation_id,subcategory_id,canonical_economic_net,canonical_component_key")
@@ -82,11 +84,14 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
       .eq("household_id", householdId).order("purchase_event_membership_id").range(offset, offset + 999)),
     page("Evidence_PurchaseTiming", offset => client.from("purchase_event_timing_assertions").select("purchase_event_id,timing_authority,timing_precision,economic_date,economic_month,evidence_refs")
       .eq("household_id", householdId).eq("is_active", true).order("purchase_event_timing_assertion_id").range(offset, offset + 999)),
-    page("Evidence_PurchaseFunding", offset => client.from("purchase_funding_components").select("purchase_event_id,funding_kind,amount,amount_status,benefit_wallet_id,bank_operation_id")
-      .eq("household_id", householdId).order("purchase_funding_component_id").range(offset, offset + 999)),
     page("Evidence_MobilityLegs", offset => client.from("mobility_legs").select("travel_date,origin_source_label,destination_source_label,estimated_fuel_cost,mobility_leg_id")
       .eq("household_id", householdId).eq("status", "CERTIFIED_SOURCE").gte("travel_date", startDate).lt("travel_date", endExclusive)
       .lte("travel_date", asOf).order("mobility_leg_id").range(offset, offset + 999)),
+  ]);
+  const historyPromise = snapshotWork("Evidence_HistoryBarrier", () => Promise.all([
+    options.cache ? options.cache.read(`prediction-history:${startDate}:${asOf}`, readHistoricalRows) : readHistoricalRows(),
+    page("Evidence_PurchaseFunding", offset => client.from("purchase_funding_components").select("purchase_event_id,funding_kind,amount,amount_status,benefit_wallet_id,bank_operation_id")
+      .eq("household_id", householdId).order("purchase_funding_component_id").range(offset, offset + 999)),
     page("Evidence_LiveWalletLedger", offset => client.from("benefit_wallet_ledger_entries").select("benefit_wallet_ledger_entry_id,benefit_wallet_id,event_date,entry_kind,amount,currency,purchase_event_id")
       .eq("household_id", householdId).gte("event_date", startDate).lte("event_date", asOf)
       .order("benefit_wallet_ledger_entry_id").range(offset, offset + 999)),
@@ -104,7 +109,7 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
   const needById = new Map((needs.data ?? []).map(r => [r.need_id, r]));
   const personNamesById = Object.fromEntries((people.data ?? []).map(r => [r.person_id, r.display_name]));
   const walletById = new Map((wallets.data ?? []).map(r => [r.benefit_wallet_id, r]));
-  const [operations, costs, events, memberships, timings, funding, legs, benefitLedger] = await historyPromise;
+  const [[operations, costs, events, memberships, timings, legs], funding, benefitLedger] = await historyPromise;
   return snapshotSync("Evidence_Join_Coverage", () => {
   const operationById = new Map(operations.map(r => [r.operation_id, r]));
   const bank: EconomicReferenceEntry[] = costs.flatMap(cost => {

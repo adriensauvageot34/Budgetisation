@@ -35,7 +35,8 @@ export interface ActivityHistoryStore {
 export type ActivityHistoryTrace = (event: Readonly<{ status: "HIT" | "MISS" | "OFF" | "PUBLISHED" | "PUBLICATION_REJECTED";
   validationMs?: number; decodeMs?: number; directMs?: number; preparationMs?: number; reason?: string }>) => void;
 
-export function activityHistoryScope(repository: CanonicalRepository, range: CanonicalDateRange, cutoffDate: string,
+export function activityHistoryScope(repository: { context: Pick<CanonicalRepository["context"], "userId" | "householdId" | "personIds" | "timezone" | "contractVersion"> },
+  range: CanonicalDateRange, cutoffDate: string,
   method = ACTIVITY_HISTORY_METHOD): ActivityHistoryScope {
   return { userId: plannerUuid(repository.context.userId), householdId: plannerUuid(repository.context.householdId),
     personIds: repository.context.personIds.map(plannerUuid).sort(), timezone: repository.context.timezone,
