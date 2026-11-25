@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, CalendarDays, ChevronRight, ExternalLink, Info, LayoutGrid, PieChart, RefreshCw, Sparkles, Users } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { parseMetricId } from "@/core/identity";
 import { parseMoney, type Money } from "@/core/money";
@@ -36,6 +36,7 @@ import { ComparisonRange } from "./comparison-range";
 import { economicMetric, economicStructureGroups, economicStructureLabel } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { GlobalModuleBoundary } from "./module-boundary";
+import { GlobalClayIcon, type GlobalClayIconName } from "./global-clay-icon";
 import { LifeTimeline, TimelineComparator } from "./life-timeline";
 import type { TimelineDensityMode } from "./life-timeline-presentation";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
@@ -74,12 +75,18 @@ const storyOrder = Object.freeze([
 ] as const satisfies readonly GlobalPrimaryModuleKey[]);
 
 const internalNavigation = Object.freeze([
-  { label: "Synthèse", anchor: "synthese", icon: LayoutGrid },
-  { label: "Nos dépenses", anchor: "economie", icon: BarChart3 },
-  { label: "Catégories", anchor: "categories", icon: PieChart },
-  { label: "Vie & dépenses", anchor: "rythmes", icon: CalendarDays },
-  { label: "Profils", anchor: "profils", icon: Users },
+  { label: "Synthèse", anchor: "synthese", icon: "overview" },
+  { label: "Nos dépenses", anchor: "economie", icon: "expenses" },
+  { label: "Catégories", anchor: "categories", icon: "categories" },
+  { label: "Vie & dépenses", anchor: "rythmes", icon: "events" },
+  { label: "Profils", anchor: "profils", icon: "profiles" },
 ] as const);
+
+const rhythmViews = [
+  { key: "timeline", label: "Événements", icon: "events" },
+  { key: "food", label: "Alimentation", icon: "groceries" },
+  { key: "car", label: "Voiture", icon: "car" },
+] as const satisfies readonly { key: string; label: string; icon: GlobalClayIconName }[];
 
 const moduleTabs: Readonly<Record<GlobalPrimaryModuleKey, readonly { readonly key: GlobalExpandedSectionKey; readonly label: string }[]>> = Object.freeze({
   ECONOMIC: [{ key: "OVERVIEW", label: "Résumé" }, { key: "EVOLUTION", label: "Évolution" }, { key: "BREAKDOWN", label: "Répartition" }, { key: "PATTERNS", label: "Dépenses récurrentes" }],
@@ -1136,7 +1143,7 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
   const openMethod = () => { onOverlay(methodOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_methodology_opened", { moduleKey }); };
   return <section ref={nearViewport.ref} id={moduleSlugs[moduleKey]} className={styles.module} data-module={moduleKey} aria-labelledby={`${moduleSlugs[moduleKey]}-title`}>
     <header className={styles.moduleHeader}>
-      <h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>
+      <h2 id={`${moduleSlugs[moduleKey]}-title`} className={styles.clayHeading}><GlobalClayIcon name={moduleKey === "ECONOMIC" ? "expenses" : "categories"} size={31} />{presentation.title}</h2>
       <nav className={styles.workspaceChoices} aria-label={`Détails · ${presentation.title}`}>
         {moduleTabs[moduleKey].filter(({ key }) => key !== (moduleKey === "ECONOMIC" ? "OVERVIEW" : "BREAKDOWN")).map(({ key, label }) => (
           <button key={key} type="button" onClick={() => onOverlay(moduleOverlayTarget(moduleKey, key))}>{label}</button>
@@ -1150,7 +1157,7 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
 function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: GlobalV2VisitRuntime; readonly onOverlay: (target: OverlayTarget) => void }) {
   const presentation = globalModulePresentation("RHYTHM");
   const [density, setDensity] = useState<TimelineDensityMode>("PRINCIPAL");
-  const [view, setView] = useState<"timeline" | "food" | "car">("timeline");
+  const [view, setView] = useState<typeof rhythmViews[number]["key"]>("timeline");
   useEffect(() => {
     const showTimeline = () => setView("timeline");
     window.addEventListener("global-v2:focus-life-event", showTimeline);
@@ -1161,8 +1168,8 @@ function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: Glo
     <header className={`${styles.moduleHeader} ${styles.timelineModuleHeader}`}>
       <h2 id="rythmes-title">{presentation.title}</h2>
       <nav className={styles.workspaceChoices} aria-label="Vues de la vie et des dépenses">
-        {([["timeline", "Événements"], ["food", "Alimentation"], ["car", "Voiture"]] as const).map(([key, label]) => (
-          <button key={key} type="button" aria-pressed={view === key} onClick={() => setView(key)}>{label}</button>
+        {rhythmViews.map(({ key, label, icon }) => (
+          <button key={key} type="button" aria-pressed={view === key} onClick={() => setView(key)}><GlobalClayIcon name={icon} size={24} />{label}</button>
         ))}
       </nav>
       {view === "timeline" && <button
@@ -1217,9 +1224,9 @@ function DashboardSummary({ runtime, certifiedThrough, onNavigate, onOverlay, na
       </>}</ExpandedPreview>
     </div>
     <div className={styles.summaryShortcuts}>
-      {navigation.filter(({ anchor }) => anchor !== "synthese").map(({ anchor, label, icon: Icon }) => (
-        <button type="button" key={anchor} onClick={() => onNavigate(anchor)}>
-          <span className={styles.summaryIcon}><Icon size={19} aria-hidden /></span>
+      {navigation.filter(({ anchor }) => anchor !== "synthese").map(({ anchor, label, icon }) => (
+        <button type="button" key={anchor} data-topic={anchor} onClick={() => onNavigate(anchor)}>
+          <GlobalClayIcon name={icon} size={64} className={styles.summaryIcon} />
           <span>{label}</span><ChevronRight size={17} aria-hidden />
         </button>
       ))}
@@ -1275,9 +1282,9 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   };
 
   return <div className={styles.page} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId}>
-    <header className={styles.workspaceHeader}><h1>Analyse globale</h1><p>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p><button type="button" className={styles.methodButton} onClick={() => openOverlay(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={16} /> Méthode</button></header>
+    <header className={styles.workspaceHeader}><GlobalClayIcon name="overview" size={38} className={styles.workspaceIcon} /><h1>Analyse globale</h1><p>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p><button type="button" className={styles.methodButton} onClick={() => openOverlay(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={16} /> Méthode</button></header>
     {bundle.newerPublication === undefined ? null : <aside className={styles.generationBanner} role="status" aria-live="polite"><div><strong>Une version plus récente est disponible.</strong><span>Notre lecture actuelle reste stable jusqu’à l’actualisation.</span></div><button type="button" className="button-primary" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={16} /> Actualiser</button></aside>}
-    <nav className={styles.stickyNav} role="tablist" aria-label="Navigation dans l’analyse globale">{navigation.map(({ label, anchor, icon: Icon }, index) => (
+    <nav className={styles.stickyNav} role="tablist" aria-label="Navigation dans l’analyse globale">{navigation.map(({ label, anchor, icon }, index) => (
       <button key={anchor} id={`global-tab-${anchor}`} type="button" role="tab" aria-selected={activeAnchor === anchor}
         tabIndex={activeAnchor === anchor ? 0 : -1} aria-controls="global-workspace-panel" onClick={() => goTo(anchor)}
         onKeyDown={(event) => {
@@ -1289,7 +1296,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
           const target = navigation[next]!.anchor;
           goTo(target);
           document.getElementById(`global-tab-${target}`)?.focus();
-        }}><Icon size={16} aria-hidden />{label}</button>
+        }}><GlobalClayIcon name={icon} size={25} />{label}</button>
     ))}</nav>
     <div ref={workspaceBodyRef} className={styles.workspaceBody} id="global-workspace-panel" role="tabpanel" aria-labelledby={`global-tab-${activeAnchor}`} tabIndex={0}>
       <GlobalModuleBoundary key={activeAnchor}>

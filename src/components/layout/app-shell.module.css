@@ -8,7 +8,74 @@
 .toolbar:empty { display: none; }
 .period { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
 .account { margin-inline-start: auto; flex: none; }
-.globalShell { min-height: 100dvh; background: #f5f6f2; }
+.globalShell {
+  --ui-color-surface-canvas: #f4edf9;
+  --ui-color-surface-base: #fffdfd;
+  --ui-color-surface-subtle: #f1e7fa;
+  --ui-color-surface-raised: #faf4ff;
+  --ui-color-surface-overlay: #fffafd;
+  --ui-color-text-primary: #2e2144;
+  --ui-color-text-secondary: #625271;
+  --ui-color-text-muted: #746384;
+  --ui-color-border-subtle: #eee3f6;
+  --ui-color-border-default: #e1d3ef;
+  --ui-color-border-strong: #bba3d3;
+  --ui-color-border-focus: #7145ad;
+  --ui-color-action-primary: #7546b6;
+  --ui-color-action-primary-hover: #51317d;
+  --ui-color-action-secondary: #fbf6ff;
+  --ui-color-action-quiet: #eee2fa;
+  --ui-color-chart-series-1: #7847b6;
+  --ui-color-chart-series-2: #b06387;
+  --ui-color-chart-series-3: #a96a42;
+  --ui-color-chart-series-4: #6a70ab;
+  --ui-color-chart-series-5: #a078ba;
+  --ui-color-chart-sequential-low: #eadef8;
+  --ui-color-chart-sequential-medium: #bb97e1;
+  --ui-color-chart-sequential-high: #613899;
+  --ui-color-chart-diverging-low: #7766a9;
+  --ui-color-chart-diverging-center: #f1e7fa;
+  --ui-color-chart-diverging-high: #a25a81;
+  --ui-color-overlay-backdrop: rgb(37 22 56 / .42);
+  --ui-elevation-surface: 0 2px 8px rgb(88 48 125 / .08);
+  --ui-elevation-raised: 0 10px 36px rgb(88 48 125 / .14);
+  --ui-elevation-overlay: 0 24px 70px rgb(45 23 72 / .22);
+  --ui-focus-ring: 0 0 0 3px rgb(117 70 182 / .25);
+  --color-ink: var(--ui-color-text-primary);
+  --color-muted: var(--ui-color-text-secondary);
+  --color-faint: var(--ui-color-text-muted);
+  --color-canvas: var(--ui-color-surface-canvas);
+  --color-surface: var(--ui-color-surface-base);
+  --color-surface-soft: var(--ui-color-surface-subtle);
+  --color-border: var(--ui-color-border-default);
+  --color-primary: var(--ui-color-action-primary);
+  --color-primary-deep: var(--ui-color-action-primary-hover);
+  --color-primary-soft: var(--ui-color-chart-sequential-low);
+  --color-accent: var(--ui-color-chart-diverging-high);
+  --chart-1: var(--ui-color-chart-series-1);
+  --chart-2: var(--ui-color-chart-series-2);
+  --chart-3: var(--ui-color-chart-series-3);
+  --chart-4: var(--ui-color-chart-series-4);
+  --chart-5: var(--ui-color-chart-series-5);
+  --shadow-sm: var(--ui-elevation-surface);
+  --shadow-md: var(--ui-elevation-raised);
+  --global-clay-shadow: 0 7px 18px #63389512, inset 0 1px 0 #fff, inset 0 -2px 2px #7c42a70e;
+  min-height: 100dvh;
+  color: var(--color-ink);
+  background: radial-gradient(ellipse at 5% 7%, #fffaf4 0, transparent 52%),
+    radial-gradient(ellipse at 94% 0, #eaddfa 0, transparent 56%),
+    linear-gradient(145deg, #f8f2fb, #f3ebfa 62%, #f9eff6);
+}
+.globalShell > header {
+  border-color: #e8d9f3;
+  background: #fefbffdc;
+  box-shadow: 0 2px 12px #512e7809;
+}
+.globalShell .period :is(select, a), .globalShell .account button {
+  border-color: var(--color-border);
+  background: #fffafd;
+  color: var(--color-primary-deep);
+}
 .globalMain { min-width: 0; padding: 12px clamp(12px, 2vw, 28px); }
 @media (min-width: 768px) {
   .globalShell { display: grid; height: 100dvh; grid-template-rows: auto minmax(0, 1fr); overflow: clip; }
