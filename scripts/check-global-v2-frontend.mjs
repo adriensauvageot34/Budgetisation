@@ -184,9 +184,9 @@ const globalDetailOverlaySource = pageSource.slice(pageSource.indexOf("function 
 const storyOrderSource = pageSource.slice(pageSource.indexOf("const storyOrder"), pageSource.indexOf("const internalNavigation"));
 const navigationSource = pageSource.slice(pageSource.indexOf("const internalNavigation"), pageSource.indexOf("const moduleTabs"));
 const moduleTabsSource = pageSource.slice(pageSource.indexOf("const moduleTabs"), pageSource.indexOf("function moduleForSlug"));
-const summarySource = pageSource.slice(pageSource.indexOf("function ContextualSummaryPlaceholder"), pageSource.indexOf("export function GlobalV2Page"));
+const summarySource = pageSource.slice(pageSource.indexOf("function DashboardSummary"), pageSource.indexOf("export function GlobalV2Page"));
 const moduleContentSource = pageSource.slice(pageSource.indexOf("function ModuleContent"), pageSource.indexOf("function GlobalModulePanel"));
-check(() => assert.match(pageSource, /IntersectionObserver/u));
+check(() => assert.match(pageSource, /useNearViewport\(\)/u));
 check(() => assert.match(pageSource, /Alternative textuelle/u));
 check(() => assert.match(pageSource, /global_module_viewed/u));
 check(() => assert.match(pageSource, /global_module_expanded/u));
@@ -281,15 +281,15 @@ check(() => assert.match(pageSource, /role: "tabpanel"[\s\S]*aria-labelledby/u))
 check(() => assert.match(cssSource, /\.m2DetailMetrics[\s\S]*@media \(max-width: 767px\)/u));
 
 // P2: human narrative, module-aware composition and overlay-only details.
-check(() => assert.match(shellSource, /Historique[\s\S]*Analyse globale[\s\S]*Opérations/u));
-check(() => assert.match(pageSource, /Notre vie, dans son ensemble/u));
+check(() => assert.match(shellSource, /MonthPicker[\s\S]*globalShell/u));
+check(() => assert.match(pageSource, /<h1>Analyse globale<\/h1>/u));
 check(() => assert.match(pageSource, /12 mois analysés/u));
 check(() => assert.match(pageSource, /> Méthode</u));
 check(() => assert.doesNotMatch(pageSource, /ANALYSE GLOBALE · NOUVELLE ARCHITECTURE|synthèse non importée|Non importée/u));
 check(() => assert.match(navigationSource, /Synthèse[\s\S]*Nos dépenses[\s\S]*Catégories[\s\S]*Vie & dépenses[\s\S]*Profils/u));
 check(() => assert.doesNotMatch(navigationSource, /Lieux|Achats|Moments|Autres analyses|Relations/u));
-check(() => assert.match(summarySource, /id="synthese"[\s\S]*>Synthèse<[\s\S]*En attente du résumé contextuel/u));
-check(() => assert.doesNotMatch(summarySource, /SummarySlot|data-summary-slot|L’essentiel de notre année|Notre argent|moduleKey:/u));
+check(() => assert.match(summarySource, /id="synthese"[\s\S]*sectionKey="OVERVIEW"[\s\S]*sectionKey="EVOLUTION"/u));
+check(() => assert.match(pageSource, /role="tablist"[\s\S]*aria-selected=\{activeAnchor === anchor\}[\s\S]*role="tabpanel"/u));
 check(() => assert.match(pageSource, /RankingBar/u));
 check(() => assert.match(pageSource, /MultiSeriesMonetaryEvolution/u));
 check(() => assert.doesNotMatch(pageSource, /Aucun changement durable clairement identifié/u));
@@ -307,7 +307,7 @@ check(() => assert.match(pageSource, /MODULE_DETAIL[\s\S]*OverlayFrame/u));
 check(() => assert.match(pageSource, /Analyse partielle/u));
 check(() => assert.doesNotMatch(pageSource, /global\.placeholder\.unknown_required_value/u));
 check(() => assert.match(catalogSource, /return "Information disponible"/u));
-check(() => assert.match(cssSource, /grid-template-columns:\s*repeat\(12/u));
+check(() => assert.match(cssSource, /\.workspaceBody\s*\{[^}]*flex:\s*1 1 auto/u));
 check(() => assert.match(cssSource, /data-module="RHYTHM"[^\n]*span 12/u));
 check(() => assert.match(cssSource, /data-module="TOGETHER"[\s\S]*span 7/u));
 check(() => assert.match(cssSource, /data-module="PERSONAS"[\s\S]*span 12/u));
@@ -330,7 +330,7 @@ check(() => assert.ok(query.globalPrimaryModuleCatalog.some(({ moduleKey, resour
 const lifePrimarySource = [backgroundSource, foodRiverSource, foodFocusSource, carRouteSource, carFocusSource, monthInteractionSource].join("\n");
 check(() => assert.match(backgroundSource, /analysis_global_background_rhythms/u));
 check(() => assert.doesNotMatch(lifePrimarySource, /Explorer l’analyse|LifeInsightList|sectionTabs|moduleTabs|LifeNarrative|Hero/u));
-check(() => assert.match(lifePrimarySource, /Nos rythmes de fond[\s\S]*Notre alimentation[\s\S]*Notre mobilité en voiture/u));
+check(() => assert.match(lifePrimarySource, /Notre alimentation[\s\S]*Notre mobilité en voiture/u));
 check(() => assert.match(lifeSource, /primaryInsight[\s\S]*secondaryInsights[\s\S]*slice\(0, 3\)/u));
 check(() => assert.match(pageSource, /patternsAvailable[\s\S]*momentsAvailable[\s\S]*evolutionAvailable/u));
 check(() => assert.match(pageSource, /Habitudes & dépenses[\s\S]*Moments[\s\S]*Changements/u));
@@ -655,7 +655,7 @@ check(() => assert.doesNotMatch(pageSource, /@\/analytics|@\/server|CanonicalRep
 const timelineFixture = await transport({ resource: "analysis_global_life_timeline", params: {} });
 check(() => assert.equal(query.globalLifeTimelineReadModelSchema.safeParse(timelineFixture.data).success, true));
 check(() => assert.equal(timelineFixture.data.events.some((event) => event.causalCost.status === "KNOWN" && event.causalCost.value.value === "0"), true));
-check(() => assert.match(pageSource, /moduleKey === "RHYTHM" \? <GlobalLifeTimelinePanel/u));
+check(() => assert.match(pageSource, /activeAnchor === "rythmes" && <GlobalLifeTimelinePanel/u));
 check(() => assert.match(lifeTimelineSource, /resource: "analysis_global_life_timeline"/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /analysis_global_rhythm|displayValue|numericDisplay|parseFloat|\.sort\(/u));
 check(() => assert.match(lifeTimelineSource, /Sequential projection only: the Query order remains authoritative/u));
@@ -680,7 +680,7 @@ check(() => assert.match(lifeTimelineSource, /expandedEventRef[\s\S]*onToggle=\{
 check(() => assert.doesNotMatch(lifeTimelineSource.slice(lifeTimelineSource.indexOf("function TimelineV2EventRow"), lifeTimelineSource.indexOf("function TimelineEventRow")), /familySource|typeKey/u));
 check(() => assert.match(lifeTimelineSource, /timelineComparisonRequest\(event\.eventRef, "SAME_SERIES"\)[\s\S]*timelineComparisonRequest\(event\.eventRef, "SAME_CLOSE_FAMILY"\)[\s\S]*timelineComparisonRequest\(event\.eventRef, "SAME_INTERMEDIATE_FAMILY"\)/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /medianMoney|moneyQuartiles|MedianAbsoluteDeviation|buildTimelineSemanticComparator/u));
-check(() => assert.match(lifeTimelineSource, /timeline-year-[\s\S]*timeline-month-/u));
+check(() => assert.match(lifeTimelineSource, /Mois des événements[\s\S]*Événements précédents[\s\S]*Événements suivants/u));
 check(() => assert.match(cssSource, /\.timelineScroller\s*\{[^}]*height:\s*clamp\(520px, 62vh, 680px\)[^}]*scrollbar-gutter:\s*stable/u));
 check(() => assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.timelineScroller\s*\{[^}]*height:\s*64dvh/u));
 check(() => assert.match(cssSource, /\.timelineMonth > h4\s*\{[^}]*position:\s*sticky/u));
@@ -689,7 +689,7 @@ check(() => assert.match(cssSource, /\.timelineFocusControl\[data-expanded="true
 check(() => assert.doesNotMatch(cssSource, /\.timelineLifeEventDetails/u));
 
 // D8: published background rhythms complete the timeline-first chapter without React analytics.
-const timelinePanelSource = pageSource.slice(pageSource.indexOf("function GlobalLifeTimelinePanel"), pageSource.indexOf("function ContextualSummaryPlaceholder"));
+const timelinePanelSource = pageSource.slice(pageSource.indexOf("function GlobalLifeTimelinePanel"), pageSource.indexOf("function DashboardSummary"));
 check(() => assert.match(timelinePanelSource, /<LifeTimeline[\s\S]*<BackgroundRhythms/u));
 check(() => assert.match(backgroundSource, /resource: "analysis_global_background_rhythms"[\s\S]*nearViewport\.near[\s\S]*"BACKGROUND"/u));
 check(() => assert.match(foodRiverSource, /food\.months\.map[\s\S]*AnnualMonthInteractionLayer[\s\S]*FoodMonthFocus/u));
@@ -706,7 +706,7 @@ check(() => assert.match(backgroundCssSource, /@media \(max-width: 600px\)[\s\S]
 check(() => assert.match(backgroundCssSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation:\s*none/u));
 check(() => assert.match(`${annualMonthFocusSource}\n${monthInteractionSource}`, /ArrowRight[\s\S]*ArrowLeft[\s\S]*Home[\s\S]*End[\s\S]*Enter[\s\S]*Escape/u));
 check(() => assert.match(monthInteractionSource, /tabIndex=\{state\.rovingMonth === index \? 0 : -1\}/u));
-check(() => assert.match(backgroundCssSource, /\.focusConnector\s*\{[^}]*left:\s*var\(--focus-connector-position/u));
+check(() => assert.match(fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-month-focus-region.tsx"), "utf8"), /<OverlayFrame kind="exploration"[\s\S]*onAction: onClose/u));
 check(() => assert.match(carFocusSource, /Voir le séjour dans notre Timeline/u));
 check(() => assert.match(lifeTimelineSource, /function LegacyTimelineEventRow\(\{ event, focusRequest[\s\S]*data-global-entity-ref=\{event\.eventRef\}/u));
 check(() => assert.doesNotMatch(lifePrimarySource, /role="dialog"|modal|drawer|bottom sheet|carousel|horizontal/u));

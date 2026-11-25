@@ -56,6 +56,6 @@ export function FoodRhythmRiver({ food }: { readonly food: GlobalBackgroundFoodS
       <AnnualMonthInteractionLayer domain="food" months={months} state={interaction.state} buttonRefs={interaction.monthButtons} onPreview={interaction.preview} onSelect={interaction.select} onMove={interaction.move} onClose={() => interaction.close()} />
     </div>
     {food.annotations.length === 0 ? null : <div className={styles.rhythmAnnotations}>{food.annotations.map((annotation) => <RhythmAnnotation key={annotation.annotationId} text={annotation.text} />)}</div>}
-    {selected === undefined ? null : <FoodMonthFocus month={selected} annotations={food.annotations} connectorPosition={selectedIndex / 11 * 100} onClose={() => interaction.close()} />}
+    {selected === undefined ? null : <FoodMonthFocus month={selected} annotations={food.annotations} onClose={() => interaction.close()} />}
   </article>;
 }

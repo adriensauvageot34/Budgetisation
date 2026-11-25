@@ -7,6 +7,17 @@
 .backgroundHeader button, .monthFocusHeader button, .carDetailGroup li > button, .localDetailError button, .backgroundError button { display: inline-flex; align-items: center; gap: 7px; border: 0; padding: 7px 0; background: transparent; color: var(--color-primary-deep); font-size: 13px; font-weight: 780; cursor: pointer; }
 .backgroundHeader button:focus-visible, .monthFocusHeader button:focus-visible, .carDetailGroup li > button:focus-visible, .localDetailError button:focus-visible, .backgroundError button:focus-visible { border-radius: 5px; outline: 2px solid var(--color-primary); outline-offset: 4px; }
 .rhythmCards { display: grid; gap: clamp(24px, 4vw, 40px); }
+.backgroundRhythms[data-workspace-rhythm] { gap: 4px; margin: 0; padding: 0; border: 0; }
+.backgroundRhythms[data-workspace-rhythm] .backgroundHeader { justify-content: end; }
+.backgroundRhythms[data-workspace-rhythm] .rhythmCard { padding: 12px 16px; gap: 8px; }
+.backgroundRhythms[data-workspace-rhythm] .rhythmCardHeader > div > p,
+.backgroundRhythms[data-workspace-rhythm] .cardEyebrow { display: none; }
+@media (min-width: 768px) {
+  .backgroundRhythms[data-workspace-rhythm] .annualVisualBody { padding-top: 39px; }
+  .backgroundRhythms[data-workspace-rhythm] .annualRiver, .backgroundRhythms[data-workspace-rhythm] .monthInteractionLayer { height: clamp(130px, 24dvh, 240px); }
+  .backgroundRhythms[data-workspace-rhythm] .monthInteractionLayer, .backgroundRhythms[data-workspace-rhythm] .selectedMonthGuide { top: 39px; }
+  .backgroundRhythms[data-workspace-rhythm] .fuelPaidRail { margin-top: 6px; padding-top: 8px; gap: 5px; }
+}
 .rhythmCard { display: grid; min-width: 0; gap: 20px; border: 1px solid var(--color-border); border-radius: 22px; padding: clamp(20px, 3vw, 30px); background: var(--color-surface); box-shadow: var(--shadow-sm); }
 .rhythmCardHeader { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 360px); align-items: start; gap: 34px; }
 .rhythmCardHeader h4 { margin: 4px 0 0; font-size: clamp(24px, 3vw, 32px); letter-spacing: -.035em; }
@@ -63,9 +74,7 @@
 .fuelPaidRail > div > span { position: relative; display: flex; min-width: 0; align-items: end; justify-content: center; border-radius: 3px 3px 0 0; background: var(--color-surface-soft); }
 .fuelPaidRail i { display: block; width: min(20px, 48%); min-height: 0; border-radius: 3px 3px 0 0; background: #879aa4; }
 .fuelPaidRail small { position: absolute; top: calc(100% + 3px); overflow: hidden; width: 100%; color: transparent; font-size: 7px; text-align: center; white-space: nowrap; }
-.monthFocusRegion { position: relative; display: grid; gap: 26px; margin: 10px calc(clamp(20px, 3vw, 30px) * -1) calc(clamp(20px, 3vw, 30px) * -1); border-top: 1px solid var(--color-border); border-radius: 0 0 22px 22px; padding: clamp(24px, 4vw, 38px) clamp(20px, 3vw, 30px); background: linear-gradient(180deg, var(--color-surface-soft), var(--color-surface)); animation: focusReveal 180ms ease-out both; }
-.focusConnector { position: absolute; top: -36px; left: var(--focus-connector-position, 50%); width: 1px; height: 36px; background: var(--color-primary); opacity: .42; }
-@keyframes focusReveal { from { opacity: 0; transform: translateY(-6px); } }
+.monthFocusRegion { display: grid; gap: 20px; padding: 4px 0 12px; }
 .monthFocusHeader { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 28px; }
 .monthFocusHeader > div:first-child { display: grid; gap: 2px; }
 .monthFocusHeader > div:first-child > span { color: var(--color-primary-deep); font-size: 11px; font-weight: 850; letter-spacing: .12em; }
@@ -152,7 +161,7 @@
   .fuelPaidRail > header { grid-template-columns: 1fr; }
   .fuelPaidRail > header > strong { justify-items: start; }
   .fuelPaidRail > div { height: 56px; }
-  .monthFocusRegion { margin-inline: -14px; margin-bottom: -18px; border-radius: 0 0 16px 16px; padding: 24px 14px; }
+  .monthFocusRegion { padding-inline: 0; }
   .monthFocusHeader { grid-template-columns: 1fr; gap: 18px; }
   .focusPaid { justify-items: start; max-width: none; text-align: left; }
   .foodSummaryBand, .carSummaryBand { grid-template-columns: 1fr; }
@@ -165,6 +174,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .monthAnchor::after { transition: none; }
-  .monthFocusRegion { animation: none; }
   .carDetailSkeleton span, .backgroundSkeleton span { animation: none; background: rgb(46 83 69 / .07); }
 }

@@ -1,7 +1,5 @@
 "use client";
 
-// Deployment retrigger only: no runtime behavior change.
-
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import {
   BadgeCheck,
@@ -509,6 +507,8 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
   const [expandedEventRef, setExpandedEventRef] = useState<GlobalTimelineV2Event["eventRef"] | undefined>(undefined);
   const [focusedEventRef, setFocusedEventRef] = useState<GlobalTimelineV2Event["eventRef"] | undefined>(undefined);
   const [eventFocus, setEventFocus] = useState<TimelineEventFocusRequest | undefined>(undefined);
+  const [selectedMonth, setSelectedMonth] = useState<string>();
+  const [page, setPage] = useState(0);
   const request = useMemo(() => ({ resource: "analysis_global_life_timeline" as const, params: {} }), []);
   const result = useGlobalV2Resource<TimelineTransportReadModel>(runtime, request, true, "DIRECT");
   const model = result.state.status === "READY" ? result.state.data : result.state.status === "ERROR" ? result.state.previousData : undefined;
@@ -519,6 +519,18 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
       : model.events;
   }, [density, model]);
   const years = useMemo(() => groupTimelineEvents(displayedEvents), [displayedEvents]);
+  const months = years.flatMap((year) => year.months);
+  const focusedMonth = eventFocus && months.find((month) => month.events.some(({ eventRef }) => eventRef === eventFocus.eventRef));
+  const currentMonth = focusedMonth ?? months.find(({ key }) => key === selectedMonth) ?? months.at(-1);
+  const pageSize = 4;
+  const eventCount = currentMonth?.events.length ?? 0;
+  const lastPage = Math.max(0, Math.ceil(eventCount / pageSize) - 1);
+  const focusedIndex = focusedMonth?.events.findIndex(({ eventRef }) => eventRef === eventFocus?.eventRef) ?? -1;
+  const shownPage = focusedIndex >= 0 ? Math.floor(focusedIndex / pageSize) : Math.min(lastPage, page);
+  const selectedEvent = currentMonth?.events.find(({ eventRef }) => eventRef === expandedEventRef);
+  const visible = selectedEvent === undefined
+    ? currentMonth?.events.slice(shownPage * pageSize, (shownPage + 1) * pageSize) ?? []
+    : [selectedEvent];
   useEffect(() => {
     const focus = (raw: Event) => {
       const detail = (raw as CustomEvent<{ readonly eventRef?: unknown; readonly visibilityTier?: unknown }>).detail;
@@ -551,22 +563,37 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
     setEventFocus((current) => ({ eventRef: peer.eventRef, requestId: (current?.requestId ?? 0) + 1 }));
   };
 
+  const choose = (month: string | undefined, nextPage: number) => {
+    setSelectedMonth(month);
+    setPage(nextPage);
+    setEventFocus(undefined);
+    setExpandedEventRef(undefined);
+    setFocusedEventRef(undefined);
+  };
+
   return <div className={styles.timelineExperience} data-timeline-resource={model.resource}>
-    <div className={styles.timelineScroller} data-focus-active={focusedEventRef !== undefined} tabIndex={0} aria-label="Timeline de notre vie, du plus ancien au plus récent">
-      {years.length === 0 ? <p className={styles.timelineEmpty}>Aucun événement n’est disponible.</p> : years.map((year) => {
-        const containsFocus = year.months.some((month) => month.events.some(({ eventRef }) => eventRef === focusedEventRef));
-        return <section key={year.key} className={styles.timelineYear} data-contains-focus={containsFocus} aria-labelledby={`timeline-year-${year.key}`}>
-          <h3 id={`timeline-year-${year.key}`}>{year.key}</h3>
-          <div>{year.months.map((month) => <section key={month.key} className={styles.timelineMonth} aria-labelledby={`timeline-month-${month.key}`}>
-            <h4 id={`timeline-month-${month.key}`} data-timeline-month={month.key}>{month.label}</h4>
-            <ol>{month.events.map((event) => <TimelineEventRow key={event.eventRef} event={event} runtime={runtime} focusRequest={eventFocus} expanded={expandedEventRef === event.eventRef} focused={focusedEventRef === event.eventRef} focusMode={focusedEventRef !== undefined} onToggle={() => {
-              const nextRef = focusedEventRef === event.eventRef ? undefined : event.eventRef as GlobalTimelineV2Event["eventRef"];
+    {currentMonth && <div className={styles.timelinePager}>
+      <select value={currentMonth.key} aria-label="Mois des événements" onChange={(event) => choose(event.target.value, 0)}>
+        {months.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
+      </select>
+      {selectedEvent ? <button type="button" onClick={() => choose(currentMonth.key, shownPage)}>← Événements du mois</button>
+        : <div aria-label="Pages d’événements">
+          <button type="button" aria-label="Événements précédents" disabled={shownPage === 0} onClick={() => choose(currentMonth.key, shownPage - 1)}>←</button>
+          <span aria-live="polite">{shownPage * pageSize + 1}–{Math.min((shownPage + 1) * pageSize, eventCount)} / {eventCount}</span>
+          <button type="button" aria-label="Événements suivants" disabled={shownPage === lastPage} onClick={() => choose(currentMonth.key, shownPage + 1)}>→</button>
+        </div>}
+    </div>}
+    <div className={styles.timelineScroller} data-event-detail={selectedEvent !== undefined} aria-label="Timeline de notre vie, du plus ancien au plus récent">
+      {currentMonth === undefined ? <p className={styles.timelineEmpty}>Aucun événement n’est disponible.</p>
+        : <section key={currentMonth.key} className={styles.timelineMonth} aria-label={currentMonth.label}>
+          <ol>{visible.map((event) => <TimelineEventRow key={event.eventRef} event={event} runtime={runtime} focusRequest={eventFocus}
+            expanded={expandedEventRef === event.eventRef} focused={focusedEventRef === event.eventRef} focusMode={false} onToggle={() => {
+              if (selectedEvent) { choose(currentMonth.key, shownPage); return; }
+              const nextRef = event.eventRef as GlobalTimelineV2Event["eventRef"];
               setExpandedEventRef(nextRef);
               setFocusedEventRef(nextRef);
             }} onMomentDetail={onMomentDetail} onTimelinePeer={focusTimelinePeer} />)}</ol>
-          </section>)}</div>
-        </section>;
-      })}
+        </section>}
     </div>
   </div>;
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, CalendarDays, ChevronRight, ExternalLink, Info, LayoutGrid, PieChart, RefreshCw, Sparkles, Users } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { parseMetricId } from "@/core/identity";
 import { parseMoney, type Money } from "@/core/money";
@@ -41,7 +41,7 @@ import type { TimelineDensityMode } from "./life-timeline-presentation";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
 import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
 import { PersonaView } from "./persona/persona-view";
-import { PersonaEditorialView } from "./persona/persona-editorial-view";
+import { editorialTopics, PersonaEditorialView } from "./persona/persona-editorial-view";
 import { BackgroundRhythms } from "./background-rhythms";
 import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import type { PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
@@ -74,11 +74,11 @@ const storyOrder = Object.freeze([
 ] as const satisfies readonly GlobalPrimaryModuleKey[]);
 
 const internalNavigation = Object.freeze([
-  { label: "Synthèse", anchor: "synthese" },
-  { label: "Nos dépenses", anchor: "economie" },
-  { label: "Catégories", anchor: "categories" },
-  { label: "Vie & dépenses", anchor: "rythmes" },
-  { label: "Profils", anchor: "profils" },
+  { label: "Synthèse", anchor: "synthese", icon: LayoutGrid },
+  { label: "Nos dépenses", anchor: "economie", icon: BarChart3 },
+  { label: "Catégories", anchor: "categories", icon: PieChart },
+  { label: "Vie & dépenses", anchor: "rythmes", icon: CalendarDays },
+  { label: "Profils", anchor: "profils", icon: Users },
 ] as const);
 
 const moduleTabs: Readonly<Record<GlobalPrimaryModuleKey, readonly { readonly key: GlobalExpandedSectionKey; readonly label: string }[]>> = Object.freeze({
@@ -1086,7 +1086,14 @@ function M2CompactCard({ model, runtime, certifiedThrough, onDetail, onEntityDet
 }
 
 function PersonaPanel({ persona, editorial }: { readonly persona: PersonaDirectModel; readonly editorial?: PersonaEditorialModel }) {
-  return editorial === undefined ? <PersonaView model={persona} headingId={`${moduleSlugs.PERSONAS}-title`} /> : <PersonaEditorialView model={editorial} direct={persona} headingId={`${moduleSlugs.PERSONAS}-title`} />;
+  const [topic, setTopic] = useState<typeof editorialTopics[number]["key"]>("portraits");
+  if (editorial === undefined) return <PersonaView model={persona} headingId="profils-title" />;
+  return <>
+    <nav className={styles.workspaceChoices} aria-label="Thèmes des profils">
+      {editorialTopics.map(({ key, label }) => <button key={key} type="button" aria-pressed={topic === key} onClick={() => setTopic(key)}>{label}</button>)}
+    </nav>
+    <PersonaEditorialView model={editorial} direct={persona} headingId="profils-title" topic={topic} />
+  </>;
 }
 
 function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
@@ -1128,7 +1135,14 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
   };
   const openMethod = () => { onOverlay(methodOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_methodology_opened", { moduleKey }); };
   return <section ref={nearViewport.ref} id={moduleSlugs[moduleKey]} className={styles.module} data-module={moduleKey} aria-labelledby={`${moduleSlugs[moduleKey]}-title`}>
-    {moduleKey === "PERSONAS" ? null : <header className={styles.moduleHeader}><div>{presentation.eyebrow.length === 0 ? null : <span className="eyebrow">{presentation.eyebrow}</span>}<h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>{presentation.description.length === 0 ? null : <p>{presentation.description}</p>}</div></header>}
+    <header className={styles.moduleHeader}>
+      <h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>
+      <nav className={styles.workspaceChoices} aria-label={`Détails · ${presentation.title}`}>
+        {moduleTabs[moduleKey].filter(({ key }) => key !== (moduleKey === "ECONOMIC" ? "OVERVIEW" : "BREAKDOWN")).map(({ key, label }) => (
+          <button key={key} type="button" onClick={() => onOverlay(moduleOverlayTarget(moduleKey, key))}>{label}</button>
+        ))}
+      </nav>
+    </header>
     {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onEntityDetail={openEntityDetail} onMethod={openMethod} />}
   </section>;
 }
@@ -1136,55 +1150,28 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
 function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: GlobalV2VisitRuntime; readonly onOverlay: (target: OverlayTarget) => void }) {
   const presentation = globalModulePresentation("RHYTHM");
   const [density, setDensity] = useState<TimelineDensityMode>("PRINCIPAL");
-  const [focusInvitation, setFocusInvitation] = useState(false);
-  const focusControlRef = useRef<HTMLButtonElement>(null);
-  const focusInvitationPlayed = useRef(false);
+  const [view, setView] = useState<"timeline" | "food" | "car">("timeline");
   useEffect(() => {
-    const control = focusControlRef.current;
-    if (control === null || density !== "PRINCIPAL" || focusInvitationPlayed.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let visible = false;
-    let hasScrolled = false;
-    let invitationTimer: number | undefined;
-    let resetTimer: number | undefined;
-    const invite = () => {
-      if (!visible || !hasScrolled || focusInvitationPlayed.current) return;
-      focusInvitationPlayed.current = true;
-      invitationTimer = window.setTimeout(() => {
-        setFocusInvitation(true);
-        resetTimer = window.setTimeout(() => setFocusInvitation(false), 420);
-      }, 120);
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      visible = entry?.isIntersecting === true && entry.intersectionRatio >= .75;
-      invite();
-    }, { threshold: [.75] });
-    const handleScroll = (event: Event) => {
-      const target = event.target;
-      const scrollDepth = target instanceof HTMLElement ? target.scrollTop : window.scrollY;
-      if (scrollDepth < 48) return;
-      hasScrolled = true;
-      invite();
-    };
-    observer.observe(control);
-    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", handleScroll, true);
-      if (invitationTimer !== undefined) window.clearTimeout(invitationTimer);
-      if (resetTimer !== undefined) window.clearTimeout(resetTimer);
-    };
-  }, [density]);
+    const showTimeline = () => setView("timeline");
+    window.addEventListener("global-v2:focus-life-event", showTimeline);
+    return () => window.removeEventListener("global-v2:focus-life-event", showTimeline);
+  }, []);
   const expanded = density === "EXTENDED";
   return <section id={moduleSlugs.RHYTHM} className={styles.module} data-module="RHYTHM" aria-labelledby="rythmes-title">
-    <header className={`${styles.moduleHeader} ${styles.timelineModuleHeader}`}><div className={styles.timelineTitleRow}><h2 id="rythmes-title">{presentation.title}</h2><button
-      ref={focusControlRef}
+    <header className={`${styles.moduleHeader} ${styles.timelineModuleHeader}`}>
+      <h2 id="rythmes-title">{presentation.title}</h2>
+      <nav className={styles.workspaceChoices} aria-label="Vues de la vie et des dépenses">
+        {([["timeline", "Événements"], ["food", "Alimentation"], ["car", "Voiture"]] as const).map(([key, label]) => (
+          <button key={key} type="button" aria-pressed={view === key} onClick={() => setView(key)}>{label}</button>
+        ))}
+      </nav>
+      {view === "timeline" && <button
       type="button"
       className={styles.timelineFocusControl}
       data-expanded={expanded}
-      data-invitation={focusInvitation}
       aria-pressed={expanded}
       aria-label={expanded ? "Recentrer la timeline sur les événements principaux" : "Élargir la timeline aux événements étendus"}
-      onClick={() => { setFocusInvitation(false); setDensity(expanded ? "PRINCIPAL" : "EXTENDED"); }}
+      onClick={() => setDensity(expanded ? "PRINCIPAL" : "EXTENDED")}
     >
       <span className={styles.timelineFocusFrame} aria-hidden>
         <i /><i /><i /><i />
@@ -1193,24 +1180,50 @@ function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: Glo
           <span className={styles.timelineFocusRecenter} data-active={expanded}>Recentrer</span>
         </span>
       </span>
-    </button></div></header>
-    <LifeTimeline runtime={runtime} density={density} onDensityChange={setDensity} onMomentDetail={(eventRef, title) => {
+    </button>}</header>
+    <div hidden={view !== "timeline"}><LifeTimeline runtime={runtime} density={density} onDensityChange={setDensity} onMomentDetail={(eventRef, title) => {
       const target = entityOverlayTarget("RHYTHM", eventRef, title, undefined, "NARRATIVE");
       if (target === undefined) return;
       onOverlay(target);
       emitGlobalV2UxEvent("global_entity_opened", { moduleKey: "RHYTHM" });
-    }} />
-    <BackgroundRhythms runtime={runtime} onMethod={() => {
+    }} /></div>
+    {view !== "timeline" && <BackgroundRhythms view={view} runtime={runtime} onMethod={() => {
       onOverlay(methodOverlayTarget("RHYTHM"));
       emitGlobalV2UxEvent("global_methodology_opened", { moduleKey: "RHYTHM" });
-    }} />
+    }} />}
   </section>;
 }
 
-function ContextualSummaryPlaceholder() {
-  return <section id="synthese" className={styles.summary} aria-labelledby="global-summary-title">
-    <h2 id="global-summary-title">Synthèse</h2>
-    <div className={styles.summaryPlaceholder}>En attente du résumé contextuel</div>
+function DashboardSummary({ runtime, certifiedThrough, onNavigate, onOverlay, navigation }: {
+  readonly runtime: GlobalV2VisitRuntime;
+  readonly certifiedThrough: string;
+  readonly onNavigate: (anchor: string) => void;
+  readonly onOverlay: (target: OverlayTarget) => void;
+  readonly navigation: readonly typeof internalNavigation[number][];
+}) {
+  return <section id="synthese" className={styles.dashboardSummary} aria-label="Synthèse">
+    <div className={styles.summaryFinancial} data-module="ECONOMIC">
+      <div className={styles.summaryHeading}><h2>Nos dépenses sur 12 mois</h2><button type="button" className={styles.exploreLink}
+        onClick={() => onOverlay(moduleOverlayTarget("ECONOMIC", "EVOLUTION"))}>Évolution détaillée <ChevronRight size={16} aria-hidden /></button></div>
+      <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="OVERVIEW">{(overview) => <>
+        <div className={styles.dashboardFigures}>
+          <div><span>{analysisPeriod(certifiedThrough).targetLabel}</span><EconomicMetricValue metric={economicMetric(overview, "actual")} /></div>
+          <div><span>Mois habituel</span><EconomicMetricValue metric={economicMetric(overview, "typical-state")} /></div>
+          <div><span>Dépenses minimum</span><EconomicMetricValue metric={economicMetric(overview, "minimal-state")} /></div>
+        </div>
+        <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="EVOLUTION">{(evolution) =>
+          <EconomicChart evolution={evolution} overview={overview} certifiedThrough={certifiedThrough} compact />
+        }</ExpandedPreview>
+      </>}</ExpandedPreview>
+    </div>
+    <div className={styles.summaryShortcuts}>
+      {navigation.filter(({ anchor }) => anchor !== "synthese").map(({ anchor, label, icon: Icon }) => (
+        <button type="button" key={anchor} onClick={() => onNavigate(anchor)}>
+          <span className={styles.summaryIcon}><Icon size={19} aria-hidden /></span>
+          <span>{label}</span><ChevronRight size={17} aria-hidden />
+        </button>
+      ))}
+    </div>
   </section>;
 }
 
@@ -1218,57 +1231,76 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const mobile = useMobileGlobalLayout();
   const runtime = useMemo(() => new GlobalV2VisitRuntime(bundle.initial.publicationMeta, transport, 2), [bundle.initial.publicationMeta, transport]);
   const visibleModules = useMemo(() => new Set(bundle.initial.navigation.filter((entry) => entry.visibility !== "HIDDEN").map(({ moduleKey }) => moduleKey)), [bundle.initial.navigation]);
-  const orderedModules = useMemo(() => storyOrder.filter((moduleKey) => visibleModules.has(moduleKey)), [visibleModules]);
-  const [directModule, setDirectModule] = useState<GlobalPrimaryModuleKey | undefined>();
+  const navigation = internalNavigation.filter(({ anchor }) => {
+    const moduleKey = moduleForSlug(anchor);
+    return moduleKey === undefined || visibleModules.has(moduleKey);
+  });
   const [activeAnchor, setActiveAnchor] = useState("synthese");
   const [overlay, setOverlay] = useState<OverlayTarget | null>(null);
+  const workspaceBodyRef = useRef<HTMLDivElement>(null);
   const overlayInvokerRef = useRef<HTMLElement | null>(null);
-  const deepLinkApplied = useRef(false);
   const openOverlay = useCallback((target: OverlayTarget) => {
     overlayInvokerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setOverlay(target);
   }, []);
 
   useEffect(() => {
-    if (deepLinkApplied.current) return;
-    deepLinkApplied.current = true;
-    const deepLink = parseGlobalDeepLink(window.location.hash);
-    if (deepLink === null || deepLink.anchor === "synthese") return;
-    const [slug, rawSection] = deepLink.anchor.split(/-(?=overview|evolution|breakdown|patterns|comparisons$)/u);
-    const moduleKey = moduleForSlug(slug);
-    if (moduleKey === undefined) return;
-    setDirectModule(moduleKey);
-    const section = rawSection === undefined ? undefined : rawSection.toUpperCase() as GlobalExpandedSectionKey;
-    if (section !== undefined && moduleKey !== "RHYTHM") openOverlay(moduleOverlayTarget(moduleKey, section));
-    requestAnimationFrame(() => document.getElementById(slug)?.scrollIntoView({ block: "start" }));
-  }, [openOverlay]);
-
-  useEffect(() => {
-    const elements = internalNavigation.map(({ anchor }) => document.getElementById(anchor)).filter((entry): entry is HTMLElement => entry !== null);
-    if (!("IntersectionObserver" in window)) return;
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((left, right) => left.boundingClientRect.top - right.boundingClientRect.top)[0];
-      if (visible?.target.id) setActiveAnchor(visible.target.id);
-    }, { rootMargin: "-25% 0px -62% 0px" });
-    elements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
-  }, []);
+    function followHash() {
+      const deepLink = parseGlobalDeepLink(window.location.hash);
+      const [slug, rawSection] = (deepLink?.anchor ?? "synthese").split(/-(?=overview|evolution|breakdown|patterns|comparisons$)/u);
+      const moduleKey = moduleForSlug(slug);
+      const valid = moduleKey !== undefined && visibleModules.has(moduleKey);
+      setActiveAnchor(valid ? slug : "synthese");
+      if (valid && rawSection !== undefined && moduleKey !== "RHYTHM") {
+        openOverlay(moduleOverlayTarget(moduleKey, rawSection.toUpperCase() as GlobalExpandedSectionKey));
+      } else setOverlay(null);
+    }
+    followHash();
+    window.addEventListener("hashchange", followHash);
+    return () => window.removeEventListener("hashchange", followHash);
+  }, [openOverlay, visibleModules]);
 
   const goTo = useCallback((anchor = "synthese") => {
-    const moduleKey = moduleForSlug(anchor);
-    if (moduleKey !== undefined) setDirectModule(moduleKey);
-    window.history.replaceState(window.history.state, "", `#${anchor}`);
-    document.getElementById(anchor)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    if (window.location.hash !== `#${anchor}`) window.history.pushState(window.history.state, "", `#${anchor}`);
+    setActiveAnchor(anchor);
   }, []);
+  useEffect(() => {
+    workspaceBodyRef.current?.scrollTo(0, 0);
+  }, [activeAnchor]);
+  const closeOverlay = () => {
+    if (window.location.hash && window.location.hash !== `#${activeAnchor}`) {
+      window.history.replaceState(window.history.state, "", `#${activeAnchor}`);
+    }
+    setOverlay(null);
+  };
 
   return <div className={styles.page} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId}>
-    <header className={styles.hero}><div><h1>Notre vie, dans son ensemble</h1><p className={styles.period}>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p><p>Une vue d’ensemble de nos dépenses, habitudes, moments et lieux sur l’année.</p><button type="button" className={styles.methodButton} onClick={() => openOverlay(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={17} /> Méthode</button></div></header>
+    <header className={styles.workspaceHeader}><h1>Analyse globale</h1><p>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p><button type="button" className={styles.methodButton} onClick={() => openOverlay(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={16} /> Méthode</button></header>
     {bundle.newerPublication === undefined ? null : <aside className={styles.generationBanner} role="status" aria-live="polite"><div><strong>Une version plus récente est disponible.</strong><span>Notre lecture actuelle reste stable jusqu’à l’actualisation.</span></div><button type="button" className="button-primary" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={16} /> Actualiser</button></aside>}
-    <nav className={styles.stickyNav} aria-label="Navigation dans l’analyse globale">{internalNavigation.map(({ label, anchor }) => <button key={anchor} type="button" aria-current={activeAnchor === anchor ? "location" : undefined} onClick={() => goTo(anchor)}>{label}</button>)}</nav>
-    <ContextualSummaryPlaceholder />
-    <main className={styles.story}>{orderedModules.map((moduleKey, index) => <GlobalModuleBoundary key={moduleKey}>{moduleKey === "RHYTHM" ? <GlobalLifeTimelinePanel runtime={runtime} onOverlay={openOverlay} /> : moduleKey === "PERSONAS" ? <section id="profils" className={styles.module} data-module="PERSONAS" aria-labelledby="profils-title"><PersonaPanel persona={bundle.persona} editorial={bundle.personaEditorial} /></section> : <GlobalModulePanel moduleKey={moduleKey} runtime={runtime} certifiedThrough={certifiedThrough} eager={index < 2} direct={directModule === moduleKey} onOverlay={openOverlay} />}</GlobalModuleBoundary>)}</main>
-    <button type="button" className={styles.backToTop} onClick={() => goTo()}><ArrowUp aria-hidden size={17} /> Retour au sommet</button>
-    {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} certifiedThrough={certifiedThrough} restoreFocusRef={overlayInvokerRef} onReplace={(target) => { setOverlay(target); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: target.moduleKey }); }} onClose={() => setOverlay(null)} />}
+    <nav className={styles.stickyNav} role="tablist" aria-label="Navigation dans l’analyse globale">{navigation.map(({ label, anchor, icon: Icon }, index) => (
+      <button key={anchor} id={`global-tab-${anchor}`} type="button" role="tab" aria-selected={activeAnchor === anchor}
+        tabIndex={activeAnchor === anchor ? 0 : -1} aria-controls="global-workspace-panel" onClick={() => goTo(anchor)}
+        onKeyDown={(event) => {
+          const last = navigation.length - 1;
+          const next = event.key === "ArrowRight" ? (index + 1) % navigation.length : event.key === "ArrowLeft" ? (index + last) % navigation.length
+            : event.key === "Home" ? 0 : event.key === "End" ? last : undefined;
+          if (next === undefined) return;
+          event.preventDefault();
+          const target = navigation[next]!.anchor;
+          goTo(target);
+          document.getElementById(`global-tab-${target}`)?.focus();
+        }}><Icon size={16} aria-hidden />{label}</button>
+    ))}</nav>
+    <div ref={workspaceBodyRef} className={styles.workspaceBody} id="global-workspace-panel" role="tabpanel" aria-labelledby={`global-tab-${activeAnchor}`} tabIndex={0}>
+      <GlobalModuleBoundary key={activeAnchor}>
+        {activeAnchor === "economie" && <GlobalModulePanel moduleKey="ECONOMIC" runtime={runtime} certifiedThrough={certifiedThrough} eager direct onOverlay={openOverlay} />}
+        {activeAnchor === "categories" && <GlobalModulePanel moduleKey="CATEGORIES_NEEDS" runtime={runtime} certifiedThrough={certifiedThrough} eager direct onOverlay={openOverlay} />}
+        {activeAnchor === "rythmes" && <GlobalLifeTimelinePanel runtime={runtime} onOverlay={openOverlay} />}
+        {activeAnchor === "profils" && <section id="profils" className={styles.module} data-module="PERSONAS" aria-label="Profils"><PersonaPanel persona={bundle.persona} editorial={bundle.personaEditorial} /></section>}
+        {activeAnchor === "synthese" && <DashboardSummary runtime={runtime} certifiedThrough={certifiedThrough} onNavigate={goTo} onOverlay={openOverlay} navigation={navigation} />}
+      </GlobalModuleBoundary>
+    </div>
+    {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} certifiedThrough={certifiedThrough} restoreFocusRef={overlayInvokerRef} onReplace={(target) => { setOverlay(target); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: target.moduleKey }); }} onClose={closeOverlay} />}
   </div>;
 }
 

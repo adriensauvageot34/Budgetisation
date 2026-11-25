@@ -25,17 +25,22 @@ function PortraitSection({ profile, collection, title }: { readonly profile: Per
 export function PersonaView({ model, headingId }: { readonly model: PersonaDirectModel; readonly headingId: string }) {
   const profiles = model.profiles.slice(0, 2);
   const [activePersonId, setActivePersonId] = useState<string | undefined>(profiles[0]?.personId);
+  const [activeCollection, setActiveCollection] = useState<Collection>("daily");
+  const activeSection = sections.find(({ collection }) => collection === activeCollection)!;
   return <div className={styles.personaView}>
     <header className={styles.personaModuleHeader}>
-      <div><span className="eyebrow">Portraits personnels</span><h2 id={headingId}>Nos profils</h2><p className={styles.personaHeroLead}>Deux quotidiens, deux façons de dépenser.</p></div>
+      <h2 id={headingId}>Nos profils</h2>
     </header>
+    <nav className={styles.workspaceChoices} aria-label="Thèmes des profils">
+      {sections.map(({ collection, title }) => <button key={collection} type="button" aria-pressed={activeCollection === collection} onClick={() => setActiveCollection(collection)}>{title}</button>)}
+    </nav>
     <nav className={styles.personaMobileSwitch} aria-label="Personne affichée sur mobile">
       {profiles.map((profile) => <button key={profile.personId} type="button" aria-pressed={activePersonId === profile.personId} onClick={() => setActivePersonId(profile.personId)}>{profile.name}</button>)}
     </nav>
     <section className={`${styles.personaEditorialColumns} ${styles.personaProfileColumns}`} aria-label="Portraits personnels en parallèle" data-column-count={profiles.length}>
       {profiles.map((profile, index) => <article key={profile.personId} className={styles.personaProfileColumn} data-persona-column={index + 1} data-mobile-active={activePersonId === profile.personId} aria-labelledby={`persona-portrait-${index + 1}`}>
         <header className={styles.personaPersonHeader}><h2 id={`persona-portrait-${index + 1}`}>{profile.name}</h2></header>
-        {sections.map((section) => <PortraitSection key={section.collection} profile={profile} {...section} />)}
+        <PortraitSection key={activeCollection} profile={profile} {...activeSection} />
       </article>)}
     </section>
   </div>;

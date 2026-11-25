@@ -24,6 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const plannedMonth = pathname === "/mois-a-venir" || julyV2 || composerBalance;
   const composerCalendar = pathname === "/mois-a-venir/composer/calendrier";
   const composer = pathname === "/mois-a-venir/composer";
+  const globalAnalysis = pathname === "/analyse-globale";
   const glass = plannedMonth || composerCalendar;
   const compactWorkspace = composer || glass;
 
@@ -35,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     style={{ height: "100dvh", padding: "12px 24px 20px", overflow: "hidden", background: "#fdfcfb" }}>{children}</main>;
 
   return (
-    <div ref={compactWorkspace ? setBackgroundRoot : undefined} data-planned-shell={glass ? "" : undefined} className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? scene.shell : "min-h-screen"}>
+    <div ref={compactWorkspace ? setBackgroundRoot : undefined} data-planned-shell={glass ? "" : undefined} className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? scene.shell : globalAnalysis ? styles.globalShell : "min-h-screen"}>
       {glass && <div data-planned-background className={scene.background} aria-hidden="true" />}
       <header data-planned-header={plannedMonth ? "" : undefined} className={plannedMonth ? scene.header : "border-b border-[var(--color-border)] bg-white"}>
         <div className={styles.bar}>
@@ -59,7 +60,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ref={compactWorkspace ? undefined : setBackgroundRoot}
         data-composer-app-shell={composer ? "" : undefined}
         className={composer ? "min-h-0 min-w-0 overflow-hidden bg-[#fdfcfb] px-3 pb-4 pt-2 sm:px-6"
-          : composerCalendar ? "w-full min-w-0 px-2 pb-3 pt-2 sm:px-5" : historyV2
+          : globalAnalysis ? styles.globalMain : composerCalendar ? "w-full min-w-0 px-2 pb-3 pt-2 sm:px-5" : historyV2
           ? "py-6"
           : pathname === "/mois-a-venir" || composerBalance
             ? "mx-auto max-w-[1360px] px-[var(--space-page)] py-4 sm:py-6"
