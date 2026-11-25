@@ -112,7 +112,7 @@ const semanticIntermediateIcons: Readonly<Partial<Record<string, GlobalClayIconN
   celebrations_privees: "celebration",
   culture_et_evenements_publics: "concert",
   evenements_familiaux_marquants: "family",
-  loisirs_et_activites: "events",
+  loisirs_et_activites: "activity",
   permis_et_apprentissages: "car",
   projets_creatifs: "photo",
   projets_maison: "home",
