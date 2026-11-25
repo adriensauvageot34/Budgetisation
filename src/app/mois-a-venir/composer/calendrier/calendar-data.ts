@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, parseLocalDate, parseYearMonth } from "@/core/time";
-import { isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { withProductAuthentication } from "@/app/product-query";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import type { BootstrapHousehold } from "@/server/bootstrap/types";
@@ -18,6 +18,7 @@ import { readJulyBudget } from "@/server/phase2/planner/july-budget";
 import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
 import { readMonthComposer } from "@/server/phase2/planner/read-model";
 import { readRealizedCalendarSource, readRealizedMonth, type RealizedCalendarSource } from "@/server/phase2/planner/realized-month";
+import { archivedComposerCalendar } from "@/server/phase2/planner/realized-snapshots";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import { composerCalendarArtwork } from "../../calendar-artwork";
@@ -119,10 +120,18 @@ async function fixedForecastItems({ household, supabase, cache }: Extract<Calend
   });
 }
 
+async function realizedItems(input: Extract<CalendarRead, { context: Bootstrap }>, month: string) {
+  const target = parseYearMonth(month);
+  const source = isArchivedRealizedMonth(month)
+    ? (await archivedComposerCalendar(input.context, target, input.cache)).value
+    : await readRealizedCalendarSource(input.context, target, input.cache);
+  return observedCalendarItems(source, false);
+}
+
 export async function readComposerCalendar(input: CalendarRead, month: string) {
   const raw = input.mode === "forecast" ? await fixedForecastItems(input, month)
     : input.mode === "pilot" ? await julyItems(input.context, input.cache)
-      : observedCalendarItems(await readRealizedCalendarSource(input.context, parseYearMonth(month), input.cache), false);
+      : await realizedItems(input, month);
   const entries = raw.filter((item): item is CalendarEntry => item.date !== null);
   const first = new Date(`${month}-01T12:00:00Z`);
   const weekday = (first.getUTCDay() + 6) % 7;
