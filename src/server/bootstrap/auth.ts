@@ -1,7 +1,7 @@
 import "server-only";
 
-import { cache } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { cacheForServerRender } from "@/lib/server-render-cache";
 import { createClient } from "@/lib/supabase/server";
 import {
   BootstrapAuthenticationRequiredError,
@@ -13,8 +13,7 @@ export type BootstrapSession = {
   user: User;
 };
 
-// React scopes this memoization to the current server render.
-export const getAuthenticatedBootstrapClient = cache(async (): Promise<BootstrapSession> => {
+export const getAuthenticatedBootstrapClient = cacheForServerRender(async (): Promise<BootstrapSession> => {
   const supabase = await createClient();
   const {
     data: { user },

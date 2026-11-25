@@ -1,6 +1,6 @@
 import "server-only";
 
-import { cache } from "react";
+import { cacheForServerRender } from "@/lib/server-render-cache";
 import { getAuthenticatedBootstrapClient, type BootstrapSession } from "@/server/bootstrap/auth";
 import type { BootstrapHousehold } from "@/server/bootstrap/types";
 import {
@@ -14,12 +14,12 @@ export async function getBootstrapContext() {
   return (await getBootstrapSession()).context;
 }
 
-export const getBootstrapSession = cache(async () => {
+export const getBootstrapSession = cacheForServerRender(async () => {
   const session = await getAuthenticatedBootstrapClient();
   return { session, context: await getBootstrapContextForSession(session) };
 });
 
-export const getBootstrapHousehold = cache((session: BootstrapSession) =>
+export const getBootstrapHousehold = cacheForServerRender((session: BootstrapSession) =>
   getCurrentHousehold(session.supabase));
 
 export async function getBootstrapContextForSession(session: BootstrapSession) {
@@ -27,7 +27,7 @@ export async function getBootstrapContextForSession(session: BootstrapSession) {
   return getBootstrapContextFromHousehold(session, household);
 }
 
-export const getBootstrapContextFromHousehold = cache(async (
+export const getBootstrapContextFromHousehold = cacheForServerRender(async (
   { supabase, user }: BootstrapSession,
   household: BootstrapHousehold | null,
 ) => {
