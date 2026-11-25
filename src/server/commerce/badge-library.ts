@@ -168,27 +168,34 @@ export class BadgeLibrary {
     return { key, label: badgeLabel(merchantDisplayName(row) ?? row.nom_canonique), ...(policy !== "normal" ? { policy } : {}) };
   }
 
+  private async suggestionMedia(keys?: readonly string[]) {
+    const query = () => this.client.from("composer_badge_visuals").select(columns).eq("user_id", this.userId);
+    if (keys) {
+      if (!keys.length) return [];
+      const result = await query().in("identity_key", keys);
+      storageError(result.error);
+      return (result.data as Row[]).map(visual);
+    }
+    const rows: PersonalBadge[] = [];
+    for (let offset = 0; ; offset += 500) {
+      const result = await query().like("identity_key", "merchant:%").order("identity_key").range(offset, offset + 499);
+      storageError(result.error);
+      rows.push(...(result.data as Row[]).map(visual));
+      if (result.data!.length < 500) return rows;
+    }
+  }
+
   async merchantCatalog() {
-    const media = async () => {
-      const rows: PersonalBadge[] = [];
-      for (let offset = 0; ; offset += 500) {
-        const result = await this.client.from("composer_badge_visuals").select(columns).eq("user_id", this.userId)
-          .like("identity_key", "merchant:%").order("identity_key").range(offset, offset + 499);
-        storageError(result.error);
-        rows.push(...(result.data as Row[]).map(visual));
-        if (result.data!.length < 500) return rows;
-      }
-    };
     const canonical = await this.canonical();
-    return readMerchantSuggestions(canonical, media());
+    return readMerchantSuggestions(canonical, () => this.suggestionMedia());
   }
 
   async suggestions(keys: unknown) {
     if (!Array.isArray(keys) || keys.length > 32 || keys.some(key => clayBadgeAsset(key)?.type !== "generic"))
       throw new TypeError("BADGE_SUGGESTIONS_INVALID");
     const activities = merchantSuggestionActivities(keys);
-    if (!activities.size) return [];
-    return (await this.merchantCatalog()).filter(merchant => activities.has(merchant.activityKey));
+    if (keys.length && !activities.size) return [];
+    return readMerchantSuggestions(await this.canonical(), identities => this.suggestionMedia(identities), { activities, limit: 8 });
   }
 
   async confirm(raw: { identityKey?: unknown; newLabel?: unknown; anchor?: unknown; expectedBindingVersion?: unknown }) {

@@ -1,11 +1,10 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Settings2, Store, X } from "lucide-react";
 import { clayBadgeAsset, clayBadgeCatalog, type ClayBadgeAsset } from "@/domain/phase2/commerce-badge-catalog";
 import { normalizeLibrarySearch } from "@/domain/phase2/planner/composer-library-index";
-import { merchantSuggestionActivities } from "@/domain/phase2/planner/merchant-suggestion-activities";
-import { badgeCommand, resolveBadgeMedia, useCommerceLibrary } from "./commerce-library";
+import { badgeCommand, merchantCatalogScope, merchantSuggestionScope, resolveBadgeMedia, useCommerceLibrary } from "./commerce-library";
 import styles from "./commerce-library.module.css";
 
 export function CommerceDock({ library }: { library: NonNullable<ReturnType<typeof useCommerceLibrary>> }) {
@@ -24,13 +23,19 @@ export function CommerceDock({ library }: { library: NonNullable<ReturnType<type
   const [saving, setSaving] = useState(false), [error, setError] = useState("");
   const rail = useRef<HTMLDivElement>(null), root = useRef<HTMLElement>(null);
   const terms = normalizeLibrarySearch(query).split(" ").filter(Boolean);
-  const activities = merchantSuggestionActivities(badge.merchantSuggestionKeys ?? suggestedKeys);
   const matches = (label: string) => terms.every(term => normalizeLibrarySearch(label).includes(term));
-  const merchants = mode === "merchant" ? library.catalog?.filter(merchant =>
-    (!suggestedKeys.length || activities.has(merchant.activityKey)) && matches(merchant.label + " " + merchant.activity)) : undefined;
+  const suggestionScope = merchantSuggestionScope(badge.merchantSuggestionKeys ?? suggestedKeys);
+  const scope = terms.length ? merchantCatalogScope : suggestionScope;
+  const choices = library.merchantChoices[scope];
+  const loadMerchantChoices = library.loadMerchantChoices;
+  const merchants = mode === "merchant" ? choices?.items?.filter(merchant => matches(merchant.label + " " + merchant.activity)) : undefined;
   const genericAssets = mode === "generic" ? clayBadgeCatalog.filter(item => item.type === "generic"
     && (allGeneric || suggestedKeys.includes(item.key)) && matches(item.label)) : [];
   const disabled = saving || !library.available;
+
+  useEffect(() => {
+    if (mode === "merchant" && !choices) loadMerchantChoices(scope);
+  }, [mode, scope, choices, loadMerchantChoices]);
 
   useLayoutEffect(() => {
     root.current?.focus({ preventScroll: true });
@@ -76,9 +81,9 @@ export function CommerceDock({ library }: { library: NonNullable<ReturnType<type
     {mode === "generic" && suggestedKeys.length > 0 && <button className={styles.dockFilter} type="button" aria-pressed={allGeneric} disabled={saving} onClick={() => setAllGeneric(value => !value)}>
       {allGeneric ? "Badges adaptés à la carte" : "Tous les badges génériques"}
     </button>}
-    {mode === "merchant" && library.catalogError && !merchants && <p role="status">Marchands indisponibles. <button type="button" onClick={library.loadCatalog}>Réessayer</button></p>}
-    {mode === "merchant" && !library.catalogError && !merchants && <p role="status">Chargement des marchands…</p>}
-    {mode === "merchant" && merchants?.length === 0 && <p role="status">Aucun marchand correspondant.</p>}
+    {mode === "merchant" && choices?.error && <p role="status">Marchands indisponibles. <button type="button" onClick={() => loadMerchantChoices(scope)}>Réessayer</button></p>}
+    {mode === "merchant" && !choices?.error && !merchants && <p role="status">Chargement des marchands…</p>}
+    {mode === "merchant" && merchants?.length === 0 && <p role="status">{terms.length ? "Aucun marchand correspondant." : "Aucun marchand suggéré pour cette carte."}</p>}
     {mode === "generic" && !genericAssets.length && <p role="status">Aucun badge correspondant.</p>}
     <div className={styles.dockRail}>
       <button type="button" aria-label="Choix précédents" onClick={() => scroll(-1)} hidden={(merchants?.length ?? genericAssets.length) < 2}><ChevronLeft size={16} /></button>

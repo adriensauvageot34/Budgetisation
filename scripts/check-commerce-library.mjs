@@ -10,6 +10,7 @@ const { badgeRequest } = require("@/server/commerce/badge-http");
 const { clayBadgeCatalog } = require("@/domain/phase2/commerce-badge-catalog");
 const { monthlyCommerceBadges } = require("@/domain/phase2/planner/commerce-badge-profiles");
 const { resolveBadgeMedia } = require("@/app/mois-a-venir/composer/commerce-library");
+const { readMerchantSuggestions } = require("@/server/commerce/merchant-suggestions");
 const fixture = await commerceLibraryFixture();
 const a = fixture.service(fixture.userId), b = fixture.service(fixture.other);
 const anchor = commerceAnchor(uuid(97205), "seller", "Atelier Homonyme");
@@ -18,6 +19,17 @@ const second = commerceAnchor(uuid(97206), "seller", "Atelier Homonyme");
 try {
   const courses = await a.suggestions(["categories:groceries"]);
   assert.deepEqual(courses.map(item => [item.label, item.purchaseCount]), [["E.Leclerc", 1]]);
+  const ranked = Array.from({ length: 14 }, (_, index) => ({
+    merchant_id: uuid(97300 + index), label: `Marchand ${index}`,
+    activity_key: index === 0 ? "BAR" : "SUPERMARKET", activity: "Commerce",
+    badge_policy: "normal", visual_brand_merchant_id: null, generic_badge_category: null, purchase_count: 30 - index,
+  }));
+  const suggestions = await readMerchantSuggestions({ rpc: async () => ({ data: ranked, error: null }) },
+    async keys => {
+      assert.deepEqual(keys, ranked.slice(1, 9).map(row => `merchant:${row.merchant_id}`));
+      return [];
+    }, { activities: new Set(["SUPERMARKET"]), limit: 8 });
+  assert.deepEqual(suggestions.map(item => item.purchaseCount), [29, 28, 27, 26, 25, 24, 23, 22]);
   assert.equal((await a.merchantCatalog())[0].activityKey, "SUPERMARKET");
   await assert.rejects(a.suggestions(["merchant:invalid"]), /BADGE_SUGGESTIONS_INVALID/u);
   await assert.rejects(fixture.asUser(fixture.other, () => fixture.pg.db.query("select * from public.composer_merchant_suggestions()")), /permission denied/u);
