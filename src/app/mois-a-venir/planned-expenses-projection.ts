@@ -41,11 +41,15 @@ export const projectPlannedExpenseCards = (expenses: readonly PlannedExpense[], 
     grossCost: observedMatch?.observedEconomic ?? expense.costItems.reduce((sum, item) => sum.plus(plannedLineGross(item)), new Big(0)).toFixed(2) };
   });
 
+export function projectFixedCalendarItem(item: CalendarOutflow): CalendarItem {
+  return { ...calendarMetadata(item.label, item), ...item, fixedState: item.state, nature: "CERTAIN_OUTFLOW" };
+}
+
 export function projectMonthCalendar(outflows: readonly CalendarOutflow[],
   expenses: readonly PlannedExpenseCard[], planMoments: readonly PlanCalendarMoment[] = []): { entries: CalendarEntry[]; undated: CalendarItem[];
     dailyTotals: Record<string, string> } {
   const items: CalendarItem[] = [
-    ...outflows.map(item => ({ ...calendarMetadata(item.label, item), ...item, fixedState: item.state, nature: "CERTAIN_OUTFLOW" as const })),
+    ...outflows.map(projectFixedCalendarItem),
     ...expenses.map(item => {
       const date = getPlannedExpenseDateRange(item).startDate;
       return { fullLabel: item.title, calendarLabel: getPlannedExpenseCalendarLabel(item), brandKey: null, key: item.id, label: item.title,

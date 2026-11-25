@@ -193,25 +193,7 @@ const outflowGroup = (label: string): string => /Nexity|EDF|eau|loyer|veolia/iu.
   : /SFR/iu.test(label) ? "Télécom" : /Pacifica/iu.test(label) ? "Assurances"
     : /Crédit Agricole/iu.test(label) ? "Banque" : "Abonnements";
 
-/** Shared inputs for the monthly dashboard and the complete economic projection. */
-function deriveMonthPlanningReference(forecast: MonthForecastSnapshot, inputs: MonthInputs, asOf: ReturnType<typeof makeAsOfContext>, asOfDate: string) {
-  const incomeKeys = [
-    ["income:Digital Learning Contest", "Salaire Adrien"],
-    ["income:Promotrans", "Salaire Manon"],
-  ] as const;
-  const resources: MonthResourceReference[] = incomeKeys.map(([key, label]) => {
-    const sourceAmount = forecast.income.components.find(part => part.key === key)?.central ?? null;
-    const override = sourceAmount === null ? undefined : inputs.resourceOverrides[key];
-    return { key, label, sourceAmount, amount: override ?? sourceAmount,
-      provenance: override === undefined ? "SNAPSHOT" : "MONTH_OVERRIDE", pocket: "BANK_CASH" };
-  });
-  for (const [key, label] of [["benefit:swile", "Swile"], ["benefit:edenred", "Edenred"]] as const) {
-    const sourceAmount = inputs.declaredResources[key] ?? null;
-    const override = sourceAmount === null ? undefined : inputs.resourceOverrides[key];
-    resources.push({ key, label, sourceAmount, amount: override ?? sourceAmount,
-      provenance: override === undefined ? "USER_DECLARED" : "MONTH_OVERRIDE", pocket: "MEAL_BENEFIT" });
-  }
-  const evidence = forecast.predictionEvidence;
+function scheduledFixedOutflows(forecast: MonthForecastSnapshot, inputs: MonthInputs): PlanOutflow[] {
   const items: PlanOutflow[] = [];
   const month = forecast.meta.targetMonth;
   const lastDay = new Date(`${month}-01T12:00:00Z`);
@@ -234,9 +216,74 @@ function deriveMonthPlanningReference(forecast: MonthForecastSnapshot, inputs: M
     items.push({ key: obligation.componentKey, label: component?.label ?? "Échéance confirmée", amount: obligation.amount,
       group: "Permis", date: obligation.dueDate, dateCertainty: "DECLARED", provenance: "USER_DECLARED", kind: "INSTALLMENT" });
   }
-  const fixedOccurrences = reconcileFixedOccurrences(items, evidence?.bankObservations ?? [], forecast.meta.targetMonth, asOfDate,
+  return items;
+}
+
+function validateFixedDecisions(forecast: MonthForecastSnapshot, inputs: MonthInputs) {
+  for (const obligation of inputs.confirmedObligations) {
+    const component = forecast.components.find(part => part.key === obligation.componentKey);
+    if (!component || component.knowledgeState !== "CONDITIONAL_UNKNOWN"
+      || !/Ornikar|Alma/iu.test(component.label) || !obligation.dueDate.startsWith(forecast.meta.targetMonth))
+      throw new TypeError("CONFIRMED_OBLIGATION_TARGET_INVALID");
+  }
+  if (new Set(inputs.confirmedObligations.map(part => part.componentKey)).size !== inputs.confirmedObligations.length)
+    throw new TypeError("CONFIRMED_OBLIGATION_DUPLICATE");
+  for (const [key, override] of Object.entries(inputs.fixedAmountOverrides)) {
+    if (!forecast.components.some(part => part.key === key && part.nature === "CONTRACTUAL_EXPECTED"
+      && part.additiveGroup === "obligations" && part.central !== null)
+      || (override.dueDate !== null && !override.dueDate.startsWith(forecast.meta.targetMonth)))
+      throw new TypeError("FIXED_OVERRIDE_TARGET_INVALID");
+  }
+  return inputs.excludedFixedObligations.reduce((total, key) => {
+    const component = forecast.components.find(part => part.key === key);
+    if (!component) return total; // An obsolete monthly decision must not break a newer publication.
+    if (component.nature !== "CONTRACTUAL_EXPECTED" || component.additiveGroup !== "obligations"
+      || component.central === null || component.low !== component.central || component.high !== component.central)
+      throw new TypeError("FIXED_EXCLUSION_TARGET_INVALID");
+    return total.plus(component.central);
+  }, new Big(0));
+}
+
+/** A pre-month calendar cannot match a debit from the target month. */
+export function projectFixedForecastSchedule(forecast: MonthForecastSnapshot, inputs: MonthInputs, asOfDate: string): PlanOutflow[] {
+  parseDate(asOfDate);
+  if (asOfDate >= `${forecast.meta.targetMonth}-01`) throw new TypeError("FIXED_SCHEDULE_REQUIRES_FUTURE_MONTH");
+  validateFixedDecisions(forecast, inputs);
+  return fixedOutflowsWithObservations(forecast, inputs, asOfDate, []).items;
+}
+
+function fixedOutflowsWithObservations(forecast: MonthForecastSnapshot, inputs: MonthInputs, asOfDate: string,
+  bank: Parameters<typeof reconcileFixedOccurrences>[1], bankSafeThrough: string | null = null) {
+  const scheduled = scheduledFixedOutflows(forecast, inputs);
+  const fixedOccurrences = reconcileFixedOccurrences(scheduled, bank, forecast.meta.targetMonth, asOfDate, bankSafeThrough);
+  const items = scheduled.map((item, index) => {
+    const occurrence = fixedOccurrences[index]!;
+    return { ...item, amount: occurrence.amount, state: occurrence.state, observedAmount: occurrence.observedAmount };
+  });
+  return { items, fixedOccurrences };
+}
+
+/** Shared inputs for the monthly dashboard and the complete economic projection. */
+function deriveMonthPlanningReference(forecast: MonthForecastSnapshot, inputs: MonthInputs, asOf: ReturnType<typeof makeAsOfContext>, asOfDate: string) {
+  const incomeKeys = [
+    ["income:Digital Learning Contest", "Salaire Adrien"],
+    ["income:Promotrans", "Salaire Manon"],
+  ] as const;
+  const resources: MonthResourceReference[] = incomeKeys.map(([key, label]) => {
+    const sourceAmount = forecast.income.components.find(part => part.key === key)?.central ?? null;
+    const override = sourceAmount === null ? undefined : inputs.resourceOverrides[key];
+    return { key, label, sourceAmount, amount: override ?? sourceAmount,
+      provenance: override === undefined ? "SNAPSHOT" : "MONTH_OVERRIDE", pocket: "BANK_CASH" };
+  });
+  for (const [key, label] of [["benefit:swile", "Swile"], ["benefit:edenred", "Edenred"]] as const) {
+    const sourceAmount = inputs.declaredResources[key] ?? null;
+    const override = sourceAmount === null ? undefined : inputs.resourceOverrides[key];
+    resources.push({ key, label, sourceAmount, amount: override ?? sourceAmount,
+      provenance: override === undefined ? "USER_DECLARED" : "MONTH_OVERRIDE", pocket: "MEAL_BENEFIT" });
+  }
+  const evidence = forecast.predictionEvidence;
+  const { items, fixedOccurrences } = fixedOutflowsWithObservations(forecast, inputs, asOfDate, evidence?.bankObservations ?? [],
     asOf.coverageBySource.BANK.coverageStatus === "FULL" ? asOf.coverageBySource.BANK.safeThrough : null);
-  items.forEach((item, index) => { const occurrence = fixedOccurrences[index]!; items[index] = { ...item, amount: occurrence.amount, state: occurrence.state, observedAmount: occurrence.observedAmount }; });
   const certainOutflows = items.reduce((sum, item) => sum.plus(item.amount), new Big(0));
   const groups = [...new Set(items.map((item) => item.group))].map((label) => {
     const groupItems = items.filter((item) => item.group === label);
@@ -410,20 +457,7 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     throw new TypeError("WHAT_IF_COVERAGE_EXCEEDS_PURCHASE");
   if (purchase && parent && (parent.central === null || new Big(purchase.amountAlreadyCoveredByParentEnvelope).gt(parent.central)))
     throw new TypeError("WHAT_IF_COVERAGE_EXCEEDS_PARENT");
-  for (const obligation of inputs.confirmedObligations) {
-    const component = forecast.components.find((part) => part.key === obligation.componentKey);
-    if (!component || component.knowledgeState !== "CONDITIONAL_UNKNOWN"
-      || !/Ornikar|Alma/iu.test(component.label) || !obligation.dueDate.startsWith(forecast.meta.targetMonth))
-      throw new TypeError("CONFIRMED_OBLIGATION_TARGET_INVALID");
-  }
-  if (new Set(inputs.confirmedObligations.map((part) => part.componentKey)).size !== inputs.confirmedObligations.length)
-    throw new TypeError("CONFIRMED_OBLIGATION_DUPLICATE");
-  for (const [key, override] of Object.entries(inputs.fixedAmountOverrides)) {
-    if (!forecast.components.some((part) => part.key === key && part.nature === "CONTRACTUAL_EXPECTED"
-      && part.additiveGroup === "obligations" && part.central !== null)
-      || (override.dueDate !== null && !override.dueDate.startsWith(forecast.meta.targetMonth)))
-      throw new TypeError("FIXED_OVERRIDE_TARGET_INVALID");
-  }
+  const excludedFixedTotal = validateFixedDecisions(forecast, inputs);
   if (new Set(inputs.declaredOutflows.map((item) => item.id)).size !== inputs.declaredOutflows.length
     || inputs.declaredOutflows.some((item) => item.dueDate !== null && !item.dueDate.startsWith(forecast.meta.targetMonth)))
     throw new TypeError("DECLARED_OUTFLOW_MONTH_INVALID");
@@ -435,14 +469,6 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     const component = forecast.components.find((part) => part.key === key);
     if (component && component.knowledgeState !== "CONDITIONAL_UNKNOWN") throw new TypeError("CONDITIONAL_DECISION_TARGET_INVALID");
   }
-  const excludedFixedTotal = inputs.excludedFixedObligations.reduce((total, key) => {
-    const component = forecast.components.find((part) => part.key === key);
-    if (!component) return total; // An obsolete monthly decision must not break a newer publication.
-    if (component.nature !== "CONTRACTUAL_EXPECTED" || component.additiveGroup !== "obligations"
-      || component.central === null || component.low !== component.central || component.high !== component.central)
-      throw new TypeError("FIXED_EXCLUSION_TARGET_INVALID");
-    return total.plus(component.central);
-  }, new Big(0));
   const confirmedObligations = inputs.confirmedObligations.reduce((total, item) => total.plus(item.amount), new Big(0));
   const rawImpact = purchase ? new Big(purchase.amount).minus(purchase.amountAlreadyCoveredByParentEnvelope) : new Big(0);
   const additiveImpact = rawImpact.gt(0) ? rawImpact : new Big(0);

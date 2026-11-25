@@ -111,6 +111,14 @@ export type RealizedBoard = Readonly<{
   participantPortraits: Readonly<Record<string, string>>;
   julyPortraits: Readonly<Partial<Record<JulyParticipant, string>>>;
 }>;
+export type RealizedCalendarSource = Readonly<{
+  month: YearMonth;
+  cards: readonly (Pick<RealizedCard, "id" | "section" | "label" | "art" | "date" | "endDate" | "participant" | "pilotStatus"> & {
+    work?: Pick<RealizedWork, "name">;
+    occurrences?: readonly Pick<Occurrence, "id" | "label" | "date" | "endDate">[];
+    payments: readonly Pick<RealizedPayment, "id" | "date" | "activityDate" | "label" | "category" | "amount" | "flow" | "badge" | "art" | "participant">[];
+  })[];
+}>;
 
 const purchase = { templateKey: "purchase", iconKey: "activity" };
 const groceries = { assetKey: "intent:groceries", iconKey: "groceries" };
@@ -311,7 +319,10 @@ function historicalCarTrip(legs: readonly MobilityLegFact[], places: ReadonlyMap
   };
 }
 
-export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof getBootstrapContext>>, month: YearMonth): Promise<RealizedBoard> {
+type RealizedBootstrap = Awaited<ReturnType<typeof getBootstrapContext>>;
+
+// Keep ownership, work-day rules and reviewed memberships shared between the two views.
+async function readRealizedMonthData(bootstrap: RealizedBootstrap, month: YearMonth, includeCardDetails: boolean) {
   const range = { start: parseLocalDate(`${month}-01`), endExclusive: parseLocalDate(`${addMonths(month, 1)}-01`) };
   const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(new Date().toISOString()));
   const repository = new CanonicalRepository(createCanonicalReadClient(), context, { shareEconomicReads: true });
@@ -325,26 +336,17 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
   const reviewRead = (july || historical) && bootstrap.household
     ? repository.loadRealizedReview(bootstrap.household.householdId, month).then(parseRealizedReview)
     : Promise.resolve(undefined);
-  const people = july || historical || imported ? realizedWorkPeople(bootstrap.household, bootstrap.persons) : { profiles: [], portraits: {} };
-  const julyPortraits: Partial<Record<JulyParticipant, string>> = {};
-  for (const profile of people.profiles) {
-    if (people.portraits[profile.ref.personId]) julyPortraits[profile.name] = people.portraits[profile.ref.personId];
-  }
-  try {
-    const image = JSON.parse(process.env.COMPOSER_COUPLE_PORTRAIT ?? "null");
-    if ((july || historical || imported) && bootstrap.household && image?.householdId === bootstrap.household.householdId
-      && typeof image.portrait === "string" && image.portrait.length < 16_000 && /^[a-z\d+/]+={0,2}$/iu.test(image.portrait)) {
-      julyPortraits.Couple = `data:image/webp;base64,${image.portrait}`;
-    }
-  } catch { /* A missing configured portrait has a text fallback. */ }
+  const people = july || historical || imported ? realizedWorkPeople(bootstrap.household, bootstrap.persons, includeCardDetails) : { profiles: [], portraits: {} };
   const previousDates = (july || historical) && people.profiles.length ? operationRead.then(operations => {
     const earliest = operations.flatMap(operation => workPurchaseDate(operation.raw) ?? [])
       .filter(date => date < range.start && date >= addDays(range.start, -7)).sort()[0];
     return earliest ? repository.loadActivityOccurrences({ start: earliest, endExclusive: range.start }) : [];
   }) : [];
-  const referenceRead = Promise.all([operationRead, factRead]).then(([rows, facts]) => loadOperationReferenceLabels(repository, rows, facts));
+  // Payments resolve their venues alongside the event and trip venues in one read.
+  const referenceRead = Promise.all([operationRead, factRead]).then(([rows, facts]) =>
+    loadOperationReferenceLabels(repository, rows, facts, { includePlaceLabels: false }));
   const causalLinkRead = eventIds.then(ids => repository.loadActivityCausalFinancialLinkRows(ids)).then(parseActivityCausalFinancialLinks);
-  const linkedOperationsRead = imported ? Promise.all([operationRead, causalLinkRead]).then(([rows, links]) => {
+  const linkedOperationsRead = imported && includeCardDetails ? Promise.all([operationRead, causalLinkRead]).then(([rows, links]) => {
     const idsInMonth = new Set<string>(rows.map(row => row.operationId));
     const ids = [...new Set(links.flatMap(({ canonicalComponentKey }) => canonicalComponentKey.startsWith("operation:")
       ? [canonicalComponentKey.slice("operation:".length)] : []))].filter(id => !idsInMonth.has(id));
@@ -372,7 +374,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     historical && people.profiles.length ? operationRead.then(rows =>
       repository.loadRealizedProductPeople(rows.filter(operation => operation.raw.flux === "Dépense").map(operation => operation.operationId))) : [],
     reviewRead,
-    imported ? eventIds.then(ids => repository.loadLifeEventObservedTravelRows(ids)) : [],
+    imported && includeCardDetails ? eventIds.then(ids => repository.loadLifeEventObservedTravelRows(ids)) : [],
     imported ? operationRead.then(rows => repository.loadRealizedConfirmedOperationPlaces(rows.map(row => row.operationId))) : [],
     linkedOperationsRead,
   ]);
@@ -430,7 +432,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     ...eventDetails.flatMap(row => optionalCanonicalString(row, ["primary_place_id"]) ?? []),
     ...localizations.map(row => String(row.place_id)),
     ...aliases.map(row => String(row.place_id)),
-    ...labels.places.keys(),
+    ...labels.placeIds,
     ...matchedTrips.flatMap(trip => trip.placeIds),
     ...visits.filter(visit => historical || visit.personId === adrien).map(visit => visit.placeId),
     ...(historical || july ? carLegs.flatMap(leg => [leg.origin.placeId, leg.destination.placeId].flatMap(id => id ?? [])) : []),
@@ -557,7 +559,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
         return Number.isFinite(start) && Number(homeClock.formatToParts(start).find(part => part.type === "hour")?.value) >= 17;
       });
       card.participant = sessions.eventParticipant(observed, participants, timing, afterWork);
-      if (["sortie_soiree", "repas_restaurant", "spectacle_culture"].includes(event.activityId) && !carTrip) {
+      if (includeCardDetails && ["sortie_soiree", "repas_restaurant", "spectacle_culture"].includes(event.activityId) && !carTrip) {
         const departures = timing.flatMap(row => {
           const start = Date.parse(optionalCanonicalString(row, ["start_at"]) ?? "");
           const person = people.profiles.find(profile => profile.ref.personId === row.person_id);
@@ -675,8 +677,8 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       && realizedPlaceKey(sourcedPlace.town ?? "") === realizedPlaceKey(publicPlace.town ?? "") ? publicPlace
       : sourcedPlace ?? (flow === "expense" && !fixed && purchaseDate ? sessions?.purchaseTown(purchaseDate, row.bankLabel) : undefined);
     const componentLinks = componentLinksByOperation.get(operation.operationId) ?? [];
-    const showComponents = componentLinks.length > 0 || operationFacts.length > 1 || operationFacts.some(fact =>
-      fact.sourceKind === "Allocation" || fact.sourceKind === "Item" || fact.sourceKind === "Cash_economic_use");
+    const showComponents = includeCardDetails && (componentLinks.length > 0 || operationFacts.length > 1 || operationFacts.some(fact =>
+      fact.sourceKind === "Allocation" || fact.sourceKind === "Item" || fact.sourceKind === "Cash_economic_use"));
     const components = showComponents ? operationFacts.map(fact => ({
         id: fact.canonicalComponentKey,
         label: (fact.subcategory.kind === "resolved" ? labels.subcategories.get(fact.subcategory.id) : undefined)
@@ -709,12 +711,12 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       : flow === "transfer" && defaultParticipant ? defaultParticipant
         : hasPersonConflict ? undefined : bothPeople ? "Couple" : (recipient ? undefined : canonicalParticipant)
           ?? documentedPerson?.name ?? personalProduct ?? deliveryParticipant ?? defaultParticipant;
-    const observedShopper = groceryPurchase && purchaseDate ? sessions?.groceryShopper(purchaseDate, place) : undefined;
-    const shopper = groceryPurchase && !hasPersonConflict && !bothPeople
+    const observedShopper = includeCardDetails && groceryPurchase && purchaseDate ? sessions?.groceryShopper(purchaseDate, place) : undefined;
+    const shopper = includeCardDetails && groceryPurchase && !hasPersonConflict && !bothPeople
       ? observedShopper ?? groceryShopper(place, operation.preciseType ?? "", row.bankLabel) : undefined;
     const weekday = purchaseDate ? new Date(`${purchaseDate}T12:00:00Z`).getUTCDay() : 0;
     const localShop = /^(montpellier|castelnau le lez)$/u.test(realizedPlaceKey(place?.town ?? ""));
-    const detour = groceryPurchase && purchaseDate && place && shopper !== "Adrien" ? groceryDetour(purchaseDate, place, carLegs) : undefined;
+    const detour = includeCardDetails && groceryPurchase && purchaseDate && place && shopper !== "Adrien" ? groceryDetour(purchaseDate, place, carLegs) : undefined;
     const mobilityNote = detour
       ? `Détour estimé · ${travelNumber.format(Number(detour.distance))} km · ${travelMoney.format(Number(detour.fuel))} d’essence comprise dans le trajet`
       : shopper === "Adrien" && weekday > 0 && weekday < 6 && localShop ? "Tram habituel · 0 € estimé" : undefined;
@@ -889,7 +891,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const references = new Map(payments.map(payment => [payment.id, payment]));
     const referenceIds = [...new Set(review.cards.flatMap(card => card.references?.map(reference => reference.id) ?? []))]
       .filter(id => !references.has(id));
-    const external = referenceIds.length ? await repository.loadOperationsByIds(referenceIds) : [];
+    const external = includeCardDetails && referenceIds.length ? await repository.loadOperationsByIds(referenceIds) : [];
     const lines = new Map<string, Omit<ReviewReference, "role">>(references);
     for (const raw of external) {
       const operation = operationFromCanonicalRow(raw);
@@ -909,11 +911,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
       },
     });
   }
-  const totals = Object.fromEntries((["expense", "income", "refund", "transfer", "other"] as const).map(flow => {
-    const items = payments.filter(payment => payment.flow === flow);
-    return [flow, { amount: realizedBankSum(items), count: items.length }];
-  })) as RealizedBoard["totals"];
-  const realizedCards: RealizedCard[] = [...cards.values()].flatMap(card => {
+  const visibleCards = [...cards.values()].flatMap(card => {
     const work = workCards.get(card.id);
     const coffeePerson = coffeeCards.get(card.id);
     const meals = work?.meals.filter(meal => !paidMeals.has(meal.id)) ?? [];
@@ -923,7 +921,46 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
     const peopleOnPayments = new Set(card.payments.flatMap(payment => payment.participant ?? []));
     const participant = card.participant ?? (card.id === groceriesCardId ? "Couple"
       : peopleOnPayments.size === 1 && card.payments.every(payment => payment.participant) ? [...peopleOnPayments][0] : undefined);
-    return [{
+    return [{ card, work, coffeePerson, meals, participant }];
+  });
+  return { visibleCards, payments, separateInCategory, historical, people };
+}
+
+export async function readRealizedCalendarSource(bootstrap: RealizedBootstrap, month: YearMonth): Promise<RealizedCalendarSource> {
+  const { visibleCards } = await readRealizedMonthData(bootstrap, month, false);
+  return { month, cards: visibleCards.flatMap(({ card, participant, work, coffeePerson }) => {
+    if (card.section === "flows") return [];
+    const person = work?.day.person ?? coffeePerson;
+    return [{ id: card.id, section: card.section, label: card.label, art: card.art, date: card.date, endDate: card.endDate,
+      participant, work: person && { name: person.name },
+      occurrences: card.occurrences?.map(({ id, label, date, endDate }) => ({ id, label, date, endDate })),
+      payments: card.payments.map(({ id, date, activityDate, label, category, amount, flow, badge, art, participant }) => ({
+        id, date, activityDate, label, category, amount, flow, badge, art, participant,
+      })),
+    }];
+  }) };
+}
+
+export async function readRealizedMonth(bootstrap: RealizedBootstrap, month: YearMonth): Promise<RealizedBoard> {
+  const { visibleCards, payments, separateInCategory, historical, people } = await readRealizedMonthData(bootstrap, month, true);
+  const julyPortraits: Partial<Record<JulyParticipant, string>> = {};
+  for (const profile of people.profiles) {
+    if (people.portraits[profile.ref.personId]) julyPortraits[profile.name] = people.portraits[profile.ref.personId];
+  }
+  try {
+    const image = JSON.parse(process.env.COMPOSER_COUPLE_PORTRAIT ?? "null");
+    if ((month === JULY_COMPOSER_MONTH || historical || isImportedRealizedMonth(month)) && bootstrap.household
+      && image?.householdId === bootstrap.household.householdId
+      && typeof image.portrait === "string" && image.portrait.length < 16_000 && /^[a-z\d+/]+={0,2}$/iu.test(image.portrait)) {
+      julyPortraits.Couple = `data:image/webp;base64,${image.portrait}`;
+    }
+  } catch { /* A missing configured portrait has a text fallback. */ }
+  const totals = Object.fromEntries((["expense", "income", "refund", "transfer", "other"] as const).map(flow => {
+    const items = payments.filter(payment => payment.flow === flow);
+    return [flow, { amount: realizedBankSum(items), count: items.length }];
+  })) as RealizedBoard["totals"];
+  const realizedCards: RealizedCard[] = visibleCards.map(({ card, work, coffeePerson, meals, participant }) => {
+    return {
       ...card,
       ...(participant ? { participant } : {}),
       places: historical ? distinctRealizedPlaces([...(card.places ?? []), ...card.payments.flatMap(payment => payment.place ?? [])])
@@ -939,7 +976,7 @@ export async function readRealizedMonth(bootstrap: Awaited<ReturnType<typeof get
           outgoing: realizedBankSum(card.payments.filter(payment => new Big(payment.amount).lt(0))),
         },
       } : {}),
-    }];
+    };
   });
   const categoryCards = separateInCategory.size ? realizedCards.flatMap(card => {
     const standalone = card.payments.filter(payment => separateInCategory.has(payment.id));

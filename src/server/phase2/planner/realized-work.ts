@@ -31,7 +31,7 @@ function firstName(label: string) {
   return label.trim().split(/\s+/u)[0]?.toLowerCase();
 }
 
-export function realizedWorkPeople(household: BootstrapHousehold | null, people: readonly BootstrapPerson[]) {
+export function realizedWorkPeople(household: BootstrapHousehold | null, people: readonly BootstrapPerson[], includePortraits = true) {
   const portraits: Record<string, string> = {};
   const siteAddresses = new Map<string, string>();
   try {
@@ -39,7 +39,7 @@ export function realizedWorkPeople(household: BootstrapHousehold | null, people:
     if (household && stored?.householdId === household.householdId && Array.isArray(stored.profiles)) {
       for (const item of stored.profiles) {
         if (!item || typeof item.personId !== "string" || !people.some(p => p.personId === item.personId)) continue;
-        if (typeof item.portrait === "string" && item.portrait.length < 16_000 && /^[a-z\d+/]+={0,2}$/iu.test(item.portrait)) {
+        if (includePortraits && typeof item.portrait === "string" && item.portrait.length < 16_000 && /^[a-z\d+/]+={0,2}$/iu.test(item.portrait)) {
           portraits[item.personId] = `data:image/webp;base64,${item.portrait}`;
         }
         if (typeof item.site?.address === "string" && item.site.address.length < 160) {
