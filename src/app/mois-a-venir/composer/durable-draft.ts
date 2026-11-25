@@ -163,5 +163,6 @@ export function useDurableDraft(transport: DraftTransport | null, initial: Compo
   };
   const suspendNow = () => { if (inFlight.current) return false; suspension.current = true; clearTimer(); return true; };
   return { snapshot, status, message, online, retry, refresh, lifecycle, suspendNow,
+    canLeaveWith: (digest: string) => !inFlight.current && !blocked.current && digest === confirmed.current,
     unsaved: !!transport && stateDigest !== confirmed.current, enabled: !!transport };
 }

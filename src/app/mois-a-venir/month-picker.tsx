@@ -1,10 +1,11 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useContext, useId, useOptimistic, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { monthLabel } from "./composer/display";
-import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, ARCHIVED_REALIZED_MONTHS, IMPORTED_REALIZED_MONTHS } from "@/domain/phase2/planner/realized-month-entry";
+import { isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_V2_HREF, ARCHIVED_REALIZED_MONTHS, IMPORTED_REALIZED_MONTHS } from "@/domain/phase2/planner/realized-month-entry";
+import { ComposerMonthNavigationContext } from "./composer/month-navigation-guard";
 import { composerCalendarHref, forecastWindowMonths, globalAnalysisHref, isWorkspaceMonth, workspacePeriodHref } from "./month-entry";
 import material from "./month-material.module.css";
 
@@ -19,23 +20,30 @@ export function MonthPicker() {
   const period = global ? "global" : yearMonthPattern.test(month) ? month : "";
   const [selection, selectPeriod] = useOptimistic(period);
   const [pending, startTransition] = useTransition();
+  const guard = useContext(ComposerMonthNavigationContext);
+  const noticeId = useId();
+  const [notice, setNotice] = useState<{ period: string; message: string } | null>(null);
+  const noticeMessage = pathname === "/mois-a-venir/composer" && notice?.period === period ? notice.message : null;
   const outsideRange = yearMonthPattern.test(period) && !isWorkspaceMonth(period);
   const returnMonth = global && isWorkspaceMonth(month) ? month : null;
   const returnLabel = returnMonth ? `Revenir à ${monthLabel(returnMonth)}` : "Revenir au mois courant";
   return <>
-    <select aria-label="Choisir une période" value={selection} aria-busy={pending}
+    <select aria-label="Choisir une période" aria-describedby={noticeMessage ? noticeId : undefined}
+      value={selection} aria-busy={pending}
       onChange={event => {
         const nextPeriod = event.currentTarget.value;
         const href = workspacePeriodHref(nextPeriod, pathname, month);
-        // The editor uses the browser's unload guard for unsaved drafts and card edits.
-        if (pathname === "/mois-a-venir/composer" && !isArchivedRealizedMonth(month)) {
-          window.location.assign(href);
-          return;
-        }
-        startTransition(() => {
+        setNotice(null);
+        const navigate = () => startTransition(() => {
           selectPeriod(nextPeriod);
           router.push(href);
         });
+        if (pathname === "/mois-a-venir/composer" && guard?.current) {
+          const message = guard.current(navigate);
+          if (message) setNotice({ period, message });
+        } else {
+          navigate();
+        }
       }}
       className={`${material.field} w-full min-w-0 px-3 py-1.5 text-sm font-semibold capitalize sm:w-56`}>
       <option value="global">Global</option>
@@ -54,6 +62,7 @@ export function MonthPicker() {
       </optgroup>
       {outsideRange && <option value={period} disabled hidden>{monthLabel(period)}</option>}
     </select>
+    {noticeMessage && <p id={noticeId} role="alert" className="max-w-64 text-xs font-medium text-amber-900">{noticeMessage}</p>}
     {global && <div className="flex min-w-0 flex-wrap items-center gap-2">
       <Link prefetch={false} className="button-secondary px-3 py-1.5 text-sm"
         href={returnMonth ? workspacePeriodHref(returnMonth, pathname) : "/mois-a-venir"}>

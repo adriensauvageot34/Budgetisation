@@ -4,7 +4,7 @@ import {createPortal} from "react-dom";
 import {BarLivingMount,useBarLivingHost} from "./bar-living-mount";
 import {rememberBarView,type BarViewMemory} from "./bar-view-memory";
 import {startBarReceptionProbe} from "./bar-reception-probe";
-import { useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
+import { useContext, useState, useRef, useEffect, useLayoutEffect, useMemo, type DragEvent } from "react";
 import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField } from "@/domain/phase2/planner/composer-ui-contract";
@@ -66,6 +66,7 @@ import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2
 import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
 import type { ComposerApplyReceipt } from "@/domain/phase2/planner/composer-ui-contract";
 import { useCommittedEvent } from "./use-committed-event";
+import { ComposerMonthNavigationContext } from "./month-navigation-guard";
 import { EquipmentComponentEditor } from "./equipment-component-editor";
 import { isBeautyProductContext, beautyProductEquipment } from "./beauty-product-edit";
 import { WorkshopChoicesProvider } from "./workshop-choices";
@@ -557,6 +558,51 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     const warn = (event: BeforeUnloadEvent) => { if (!skipUnloadWarning.current) event.preventDefault(); };
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
   }, [durable.unsaved, shown.board.draft.dirty, draftTransport, inlineEdits.count]);
+  const monthNavigationGuard = useContext(ComposerMonthNavigationContext);
+  const monthChangeBlocker = useCommittedEvent(() => {
+    if (inlineEdits.registry.count()) return "Valide ou annule la saisie en cours avant de changer de mois.";
+    if (rootWorkspacePending || relationSessionRef.current) return "Termine ou abandonne l’organisation locale avant de changer de mois.";
+    if (comparison) return "Quitte la comparaison avant de changer de mois.";
+    if (busyRef.current || pendingApply || draftConfirmationBusy || importingTrips) {
+      return "Vérifie que l’action en cours est terminée avant de changer de mois.";
+    }
+    return null;
+  });
+  const changeMonth = useCommittedEvent((navigate: () => void): string | null => {
+    const blocker = monthChangeBlocker();
+    if (blocker) return blocker;
+    const digest = semanticStateDigest(localDraft.current);
+    if (draftTransport) {
+      if (durable.status === "CONFLICT") return "Résous le conflit de versions du brouillon avant de changer de mois.";
+      if (durable.status === "ERROR") return "Réessaie la sauvegarde du brouillon avant de changer de mois.";
+      if (durable.status === "OFFLINE") return "Reconnecte-toi pour sauvegarder le brouillon avant de changer de mois.";
+      if (!durable.canLeaveWith(digest)) return "Attends la confirmation de sauvegarde avant de changer de mois.";
+      navigate();
+      return null;
+    }
+    const currentDraft = current.current.board.draft;
+    if (digest === initialModel.board.draft.semanticStateDigest
+      || (!currentDraft.dirty && digest === currentDraft.semanticStateDigest)) {
+      navigate();
+      return null;
+    }
+    confirmationRequest.current({
+      message: "Ce brouillon est conservé dans cette page. Changer de mois fera perdre les modifications locales.",
+      acceptLabel: "Abandonner et changer de mois",
+      cancelLabel: "Rester dans Composer",
+      accept: () => {
+        if (!monthChangeBlocker() && semanticStateDigest(localDraft.current) === digest) navigate();
+      },
+    });
+    return null;
+  });
+  useLayoutEffect(() => {
+    if (!monthNavigationGuard) return;
+    monthNavigationGuard.current = changeMonth;
+    return () => {
+      if (monthNavigationGuard.current === changeMonth) monthNavigationGuard.current = null;
+    };
+  }, [changeMonth, monthNavigationGuard]);
   function archiveDraft(returnToCenter: boolean) {
     if (relationSessionRef.current) { setMessage("Abandonnez explicitement l’organisation locale avant de remplacer ou archiver le brouillon."); return; }
     const active = durable.snapshot?.active;
