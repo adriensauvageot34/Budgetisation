@@ -17,7 +17,6 @@ export async function readComposerRealizedBoard(month: string) {
   if (target !== JULY_COMPOSER_MONTH) return readRealizedMonth(context, target, cache);
 
   const canonical = createCanonicalReadClient();
-  // Next.js bypasses cache hits nested inside another unstable_cache callback.
   return cache.read("realized-july-board", () => readRealizedMonth(context, target), async () => {
     const { data, error } = await canonical.rpc("composer_july_projection_revision_v1", { p_household: household.householdId });
     return !error && typeof data === "string" && /^[a-f0-9]{64}$/u.test(data) ? data : null;

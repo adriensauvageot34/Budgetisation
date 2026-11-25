@@ -1,5 +1,7 @@
 import "server-only";
 
+import { gunzipSync, gzipSync } from "node:zlib";
+import { getCache } from "@vercel/functions";
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addMonths, parseInstant, parseLocalDate, parseYearMonth } from "@/core/time";
@@ -19,6 +21,26 @@ class SkipCacheWrite extends Error {
     this.#value = value;
   }
   get value() { return this.#value; }
+}
+
+async function readSharedProjection<T>(key: string, readLive: () => Promise<T>, isCurrent: () => Promise<boolean>) {
+  // The page and route handler must use the same key across independently compiled functions.
+  const cache = getCache({ namespace: "budgetisation:composer-month-projection:v1", keyHashFunction: digest => digest });
+  try {
+    const packed = await cache.get(key);
+    if (typeof packed === "string") {
+      return JSON.parse(gunzipSync(Buffer.from(packed, "base64")).toString("utf8")) as T;
+    }
+  } catch { /* A cache failure falls back to the live projection. */ }
+
+  const value = await readLive();
+  if (await isCurrent()) {
+    const packed = gzipSync(JSON.stringify(value)).toString("base64");
+    if (packed.length <= 1_500_000) {
+      await cache.set(key, packed, { ttl: 1800, name: "Composer monthly projection" }).catch(() => {});
+    }
+  }
+  return value;
 }
 
 export function createMonthSourceCache(sessionClient: SupabaseClient, bootstrap: Parameters<typeof createAuthorizedRuntimeContext>[0],
@@ -57,6 +79,7 @@ export function createMonthSourceCache(sessionClient: SupabaseClient, bootstrap:
       const key = plannerDigest({ source, scopeKey, revision, data: context.dataRevision, analytics: context.analyticsRevision,
         deploy: process.env.VERCEL_DEPLOYMENT_ID ?? process.env.VERCEL_GIT_COMMIT_SHA ?? "local",
         project: process.env.SUPABASE_URL ?? "" });
+      if (readAdditionalRevision) return readSharedProjection(key, readLive, async () => await proof(readRevision()) === revision);
       try {
         return await unstable_cache(async () => {
           const value = await readLive();

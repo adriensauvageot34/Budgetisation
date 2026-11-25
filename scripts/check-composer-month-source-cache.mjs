@@ -3,8 +3,22 @@ import Module from "node:module";
 import { require } from "./lib/phase2-ts-loader.mjs";
 
 const entries = new Map();
+const sharedEntries = new Map();
+let sharedUnavailable = false;
 const originalLoad = Module._load;
 Module._load = function load(name, ...args) {
+  if (name === "@vercel/functions") {
+    return { getCache: () => ({
+      async get(key) {
+        if (sharedUnavailable) throw new Error("Cache unavailable");
+        return sharedEntries.get(key);
+      },
+      async set(key, value) {
+        if (sharedUnavailable) throw new Error("Cache unavailable");
+        sharedEntries.set(key, value);
+      },
+    }) };
+  }
   if (name !== "next/cache") return originalLoad.call(this, name, ...args);
   return { unstable_cache: (build, keys) => async () => {
     const key = JSON.stringify(keys);
@@ -82,18 +96,22 @@ allowed = household.householdId;
 extraRevision = "place-and-review-v2";
 assert.notDeepEqual(await july(), board, "Presentation corrections invalidate the board");
 
-const beforeJulyRace = entries.size;
+const beforeJulyRace = sharedEntries.size;
 extraRevision = "place-and-review-v3";
 const racedBoard = await july(async () => {
   extraRevision = "place-and-review-v4";
   return origin();
 });
-assert.equal(entries.size, beforeJulyRace);
+assert.equal(sharedEntries.size, beforeJulyRace);
 assert.notDeepEqual(await july(), racedBoard, "A projection built across a correction is not cached");
 
-const beforeUnavailable = entries.size;
+const beforeUnavailable = sharedEntries.size;
 const withoutProof = await july(origin, async () => null);
 const withFailedProof = await july(origin, async () => { throw new Error("Unavailable"); });
 assert.notDeepEqual(withoutProof, withFailedProof, "Unavailable presentation proof reads live");
-assert.equal(entries.size, beforeUnavailable);
+assert.equal(sharedEntries.size, beforeUnavailable);
+sharedUnavailable = true;
+const liveWithoutCache = await july();
+assert.ok(liveWithoutCache.sequence > withFailedProof.sequence, "A cache outage still serves the live board");
+assert.equal(sharedEntries.size, beforeUnavailable);
 console.log("PASS: monthly cache reuse, source and presentation revisions, access checks and concurrent corrections");
