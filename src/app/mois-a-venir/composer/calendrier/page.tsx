@@ -33,16 +33,16 @@ export default async function ComposerCalendarPage({ searchParams }: { searchPar
     <AppToolbarContent className={styles.compactToolbar}>
       {imported && <small>Données bancaires partielles</small>}
       <nav aria-label="Vues de Composer" className={styles.reconstructionModes}>
-        {mode !== "pilot" && <Link className={button} href={realizedComposerHref(month)} prefetch={false}>Cartes</Link>}
+        {mode !== "pilot" && <Link className={button} href={realizedComposerHref(month)}>Cartes</Link>}
         <span className={`${button} ${clay.activeView}`} aria-current="page">
           <Image src="/analyse-globale/clay/events.webp" alt="" width={22} height={22} unoptimized />Calendrier
         </span>
         {mode === "pilot" && <>
-          <Link className={button} href={realizedComposerHref(month)} prefetch={false}>Au 15 juillet</Link>
-          <Link className={button} href={JULY_COMPOSER_EDIT_HREF} prefetch={false}>Édition</Link>
+          <Link className={button} href={realizedComposerHref(month)}>Au 15 juillet</Link>
+          <Link className={button} href={JULY_COMPOSER_EDIT_HREF}>Édition</Link>
         </>}
-        {mode === "realized" && !imported && <Link className={button} href={composerBalanceHref(month)} prefetch={false}>Bilan du mois</Link>}
-        {(mode !== "realized" || imported) && <Link className={button} prefetch={false} href={mode === "pilot" ? JULY_V2_HREF : monthPlanningHref(month, imported ? "previsions" : undefined)}>Prévisions</Link>}
+        {mode === "realized" && !imported && <Link className={button} href={composerBalanceHref(month)}>Bilan du mois</Link>}
+        {(mode !== "realized" || imported) && <Link className={button} href={mode === "pilot" ? JULY_V2_HREF : monthPlanningHref(month, imported ? "previsions" : undefined)}>Prévisions</Link>}
       </nav>
     </AppToolbarContent>
     <ComposerCalendar key={month} calendar={calendar} month={month} today={mode === "pilot" ? JULY_PILOT_DATE : now} />

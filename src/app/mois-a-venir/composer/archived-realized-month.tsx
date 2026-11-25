@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { isImportedRealizedMonth, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedBoard } from "@/server/phase2/planner/realized-month";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
@@ -24,12 +25,12 @@ export function ArchivedRealizedMonth({ board, initialCardId }: { board: Realize
       <RealizedFinancialTotals board={board} />
       {imported && <small>Données bancaires partielles</small>}
       <nav className={styles.reconstructionModes} aria-label="Vues de Composer">
-        {july && <a href={JULY_COMPOSER_HREF} className={styles.reconstructionLink}>Au 15 juillet</a>}
+        {july && <Link href={JULY_COMPOSER_HREF} className={styles.reconstructionLink}>Au 15 juillet</Link>}
         <span className={styles.reconstructionLink} aria-current="page">Cartes</span>
-        <a className={styles.reconstructionLink} href={composerCalendarHref(board.month)}>Calendrier</a>
+        <Link className={styles.reconstructionLink} href={composerCalendarHref(board.month)}>Calendrier</Link>
         {imported
-          ? <a className={styles.reconstructionLink} href={monthPlanningHref(board.month, "previsions")}>Prévisions</a>
-          : !july && <a className={styles.reconstructionLink} href={composerBalanceHref(board.month)}>Bilan du mois</a>}
+          ? <Link className={styles.reconstructionLink} href={monthPlanningHref(board.month, "previsions")}>Prévisions</Link>
+          : !july && <Link className={styles.reconstructionLink} href={composerBalanceHref(board.month)}>Bilan du mois</Link>}
       </nav>
     </AppToolbarContent>
     <RealizedComposerMonth board={board} initialCardId={initialCardId} />

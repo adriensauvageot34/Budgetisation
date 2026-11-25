@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { isImportedRealizedMonth, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { monthLabel } from "./composer/display";
@@ -9,8 +10,9 @@ export function MonthNavigation({ targetMonth }: { targetMonth: string }) {
     <h1 className="sr-only">{monthLabel(targetMonth)}</h1>
     {forecastWindowMonths.includes(targetMonth) && <AppToolbarContent className={styles.compactToolbar}>
       <nav aria-label="Vues de Composer" className={styles.reconstructionModes}>
-        {isImportedRealizedMonth(targetMonth) && <a className={styles.reconstructionLink} href={realizedComposerHref(targetMonth)}>Cartes</a>}
-        <a className={styles.reconstructionLink} href={composerCalendarHref(targetMonth)}>Calendrier</a>
+        {isImportedRealizedMonth(targetMonth) && <Link className={styles.reconstructionLink} href={realizedComposerHref(targetMonth)}>Cartes</Link>}
+        <Link className={styles.reconstructionLink} href={composerCalendarHref(targetMonth)}>Calendrier</Link>
+        <span className={styles.reconstructionLink} aria-current="page">Prévisions</span>
       </nav>
     </AppToolbarContent>}
   </>;
