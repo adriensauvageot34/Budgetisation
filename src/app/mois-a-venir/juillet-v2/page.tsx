@@ -2,23 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
-import { parseYearMonth } from "@/core/time";
 import { julyPilotLabels, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import { JULY_COMPOSER_EDIT_HREF, JULY_COMPOSER_HREF, JULY_COMPOSER_MONTH, JULY_PILOT_DATE } from "@/domain/phase2/planner/realized-month-entry";
 import { getBootstrapSession } from "@/server/bootstrap/context";
-import { createMonthSourceCache } from "@/server/phase2/month-source-cache";
-import { createCanonicalReadClient } from "@/server/canonical/client";
-import { resolveRealBankBalance } from "@/server/phase2/bank-cash-projection";
-import { readMonthPredictionEvidence } from "@/server/phase2/month-prediction-evidence";
 import type { CostRange } from "@/server/phase2/remaining-month-forecast";
-import { readActiveComposerDraft } from "@/server/phase2/planner/composer-draft-service";
-import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
 import { plannerComposerEnabled } from "@/server/phase2/planner/cutover";
-import { readJulyBudget } from "@/server/phase2/planner/july-budget";
-import { julyPilotForecast, projectJulyPilot } from "@/server/phase2/planner/july-pilot";
-import { readMonthComposer } from "@/server/phase2/planner/read-model";
-import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
-import { authorizedPlanner } from "@/server/phase2/planner/runtime";
+import type { readJulyBudget } from "@/server/phase2/planner/july-budget";
+import { readJulyPlanning } from "@/server/phase2/planner/read-july-planning";
 import { money, monthLabel, plannedDayLabel } from "../composer/display";
 import { detailedRealizedCards } from "../composer/realized-card-view";
 import { composerCalendarHref } from "../month-entry";
@@ -33,39 +23,17 @@ export const metadata = { title: "Prévisions de juillet 2026" };
 export const dynamic = "force-dynamic";
 const button = `${material.clayButton} inline-flex items-center px-4 py-2 text-sm font-bold`;
 
-async function savedJulyComposer() {
-  const planner = await authorizedPlanner();
-  const draft = await readActiveComposerDraft(planner, JULY_COMPOSER_MONTH);
-  if (!draft) return null;
-  const { deps, householdId } = planner;
-  return readMonthComposer({ ...deps, readWorld: deps.readComposerWorld ?? deps.readWorld },
-    householdId, JULY_COMPOSER_MONTH, draft.semanticState);
-}
-
 export default async function JulyV2Page() {
   const { context, session } = await withProductAuthentication(getBootstrapSession);
   if (!context.household) notFound();
-  const { householdId, timezone } = context.household;
   const july = context.periods.find(period => period.month === `${JULY_COMPOSER_MONTH}-01`);
   const observed = july?.financeStatus === "complete" || july?.financeStatus === "partial";
   const composerEnabled = plannerComposerEnabled();
-  const cache = createMonthSourceCache(session.supabase, context, JULY_COMPOSER_MONTH);
-  const [source, evidence, draft] = observed ? await Promise.all([
-    readRealizedMonth(context, parseYearMonth(JULY_COMPOSER_MONTH), cache),
-    readMonthPredictionEvidence(createCanonicalReadClient(), householdId, JULY_COMPOSER_MONTH, true,
-      { asOfDate: JULY_PILOT_DATE, timezone, cache }),
-    composerEnabled && composerDraftAutosaveEnabledFor(context.user.id) ? withProductAuthentication(savedJulyComposer) : null,
-  ]) : [null, null, null];
-  const board = source ? projectJulyPilot(source) : null;
-  const balance = evidence && resolveRealBankBalance({
-    observation: evidence.manualBankBalanceObservation ?? null, today: JULY_PILOT_DATE,
-    bank: evidence.bankObservations ?? [], intervals: evidence.bankCoverageIntervals,
-  });
-  const pilot = board ? julyPilotForecast(board, balance?.amount ?? null) : null;
-  const budget = source && board && evidence ? readJulyBudget(source, board, evidence, draft) : null;
+  const planning = observed ? await withProductAuthentication(() => readJulyPlanning(context, session.supabase)) : null;
+  const { board, pilot, budget } = planning ?? {};
   const displayed = board?.cards.flatMap(detailedRealizedCards).map(({ card }) => card) ?? [];
   const pendingCount = displayed.filter(card => card.pilotStatus === "pending").length;
-  const unpricedCards = !draft ? displayed.filter(card => card.pilotStatus === "planned" && card.amount === null).length : 0;
+  const unpricedCards = !budget?.hasSavedDraft ? displayed.filter(card => card.pilotStatus === "planned" && card.amount === null).length : 0;
 
   return <div className={`${material.page} mx-auto max-w-6xl space-y-5`}>
     <h1 className="sr-only">Prévisions · Juillet 2026</h1>

@@ -41,6 +41,7 @@ export default async function ComposerCalendarPage({ searchParams }: { searchPar
       return readComposerCalendar({ mode, household, supabase: session.supabase, cache }, month);
     }
     const context = await getBootstrapContextFromHousehold(session, household);
+    if (mode === "pilot") return readComposerCalendar({ mode, context, supabase: session.supabase }, month);
     return readComposerCalendar({ mode, context, cache: createMonthSourceCache(session.supabase, context, month) }, month);
   });
   const button = styles.reconstructionLink;

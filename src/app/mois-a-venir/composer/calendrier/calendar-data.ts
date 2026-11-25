@@ -1,8 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, parseLocalDate, parseYearMonth } from "@/core/time";
-import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
-import { withProductAuthentication } from "@/app/product-query";
+import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import type { BootstrapHousehold } from "@/server/bootstrap/types";
 import { createCanonicalReadClient } from "@/server/canonical/client";
@@ -10,16 +9,10 @@ import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { projectFixedForecastSchedule } from "@/server/phase2/month-scenario";
 import type { MonthSourceCache } from "@/server/phase2/month-source-cache";
-import { readMonthPredictionEvidence } from "@/server/phase2/month-prediction-evidence";
 import { planningDate } from "@/server/phase2/planning-date";
-import { readActiveComposerDraft } from "@/server/phase2/planner/composer-draft-service";
-import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
-import { readJulyBudget } from "@/server/phase2/planner/july-budget";
-import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
-import { readMonthComposer } from "@/server/phase2/planner/read-model";
-import { readRealizedCalendarSource, readRealizedMonth, type RealizedCalendarSource } from "@/server/phase2/planner/realized-month";
+import { readJulyPlanning } from "@/server/phase2/planner/read-july-planning";
+import { readRealizedCalendarSource, type RealizedCalendarSource } from "@/server/phase2/planner/realized-month";
 import { archivedComposerCalendar } from "@/server/phase2/planner/realized-snapshots";
-import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import { composerCalendarArtwork } from "../../calendar-artwork";
 import { calendarMetadata } from "../../calendar-metadata";
@@ -28,7 +21,8 @@ import { projectFixedCalendarItem, type CalendarEntry, type CalendarItem } from 
 
 type Bootstrap = Awaited<ReturnType<typeof getBootstrapContext>>;
 type CalendarRead =
-  | { mode: "realized" | "pilot"; context: Bootstrap; cache: MonthSourceCache }
+  | { mode: "realized"; context: Bootstrap; cache: MonthSourceCache }
+  | { mode: "pilot"; context: Bootstrap; supabase: SupabaseClient }
   | { mode: "forecast"; household: BootstrapHousehold; supabase: SupabaseClient; cache: MonthSourceCache };
 const categories = "/planned-visuals/commerce/categories";
 
@@ -65,20 +59,8 @@ export function observedCalendarItems(board: RealizedCalendarSource, pilot: bool
   });
 }
 
-async function julyItems(context: Bootstrap, cache: MonthSourceCache) {
-  const { householdId, timezone } = context.household!;
-  const [source, evidence, model] = await Promise.all([
-    readRealizedMonth(context, parseYearMonth(JULY_COMPOSER_MONTH), cache),
-    readMonthPredictionEvidence(createCanonicalReadClient(), householdId, JULY_COMPOSER_MONTH, true, { asOfDate: JULY_PILOT_DATE, timezone, cache }),
-    composerDraftAutosaveEnabledFor(context.user.id) ? withProductAuthentication(async () => {
-      const planner = await authorizedPlanner();
-      const draft = await readActiveComposerDraft(planner, JULY_COMPOSER_MONTH);
-      return draft ? readMonthComposer({ ...planner.deps, readWorld: planner.deps.readComposerWorld ?? planner.deps.readWorld },
-        householdId, JULY_COMPOSER_MONTH, draft.semanticState) : null;
-    }) : null,
-  ]);
-  const pilot = projectJulyPilot(source);
-  const budget = readJulyBudget(source, pilot, evidence, model);
+async function julyItems({ context, supabase }: Extract<CalendarRead, { mode: "pilot" }>) {
+  const { board: pilot, budget } = await readJulyPlanning(context, supabase);
   const items = observedCalendarItems(pilot, true);
   for (const charge of budget.fixedCalendar) if (charge.status === "planned") items.push({
     key: charge.id, label: charge.label, calendarLabel: calendarMetadata(charge.label).calendarLabel, amount: charge.amount, date: charge.date,
@@ -90,7 +72,7 @@ async function julyItems(context: Bootstrap, cache: MonthSourceCache) {
     dateCertainty: "DECLARED", artwork: composerCalendarArtwork({ label: entry.label, art: entry.artwork, category: entry.category }),
   });
   const plannedNames = new Set(budget.plannedCalendar.map(item => `${item.date}:${item.label}`));
-  if (!model) for (const card of pilot.cards.filter(card => card.pilotStatus === "planned" && card.section === "events" && !card.payments.length)) {
+  if (!budget.hasSavedDraft) for (const card of pilot.cards.filter(card => card.pilotStatus === "planned" && card.section === "events" && !card.payments.length)) {
     if (card.date && !plannedNames.has(`${card.date}:${card.label}`)) items.push({
       key: card.id, label: card.label, date: card.date, endDate: card.endDate, amount: null, nature: "PLANNED_EXPENSE",
       composerStatus: "planned", dateCertainty: "DECLARED",
@@ -120,7 +102,7 @@ async function fixedForecastItems({ household, supabase, cache }: Extract<Calend
   });
 }
 
-async function realizedItems(input: Extract<CalendarRead, { context: Bootstrap }>, month: string) {
+async function realizedItems(input: Extract<CalendarRead, { mode: "realized" }>, month: string) {
   const target = parseYearMonth(month);
   const source = isArchivedRealizedMonth(month)
     ? (await archivedComposerCalendar(input.context, target, input.cache)).value
@@ -130,7 +112,7 @@ async function realizedItems(input: Extract<CalendarRead, { context: Bootstrap }
 
 export async function readComposerCalendar(input: CalendarRead, month: string) {
   const raw = input.mode === "forecast" ? await fixedForecastItems(input, month)
-    : input.mode === "pilot" ? await julyItems(input.context, input.cache)
+    : input.mode === "pilot" ? await julyItems(input)
       : await realizedItems(input, month);
   const entries = raw.filter((item): item is CalendarEntry => item.date !== null);
   const first = new Date(`${month}-01T12:00:00Z`);
