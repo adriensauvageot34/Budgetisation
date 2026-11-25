@@ -14,6 +14,7 @@ import { JulyEditLink } from "./july-edit-link";
 import { packRealizedCards, packRealizedCategories, realizedOperationCardId, type PackedCardPosition } from "./realized-card-view";
 import { days, matches, paymentSearch, searchableDate, searchText } from "./realized-card-text";
 import type { InitialRealizedDetail, RealizedBoardOverview, RealizedCardSummary } from "./realized-overview";
+import { unpackRealizedOverview, type PackedRealizedOverview } from "./realized-overview-wire";
 import styles from "./realized-month.module.css";
 
 const sortOptions = [
@@ -280,10 +281,11 @@ function RealizedDetail({ card, month, terms, open }: {
   </>;
 }
 
-export function RealizedComposerMonth({ overview, initialDetail, editableSourceIds, initialCardId, pilot = false, initialStatus }: {
-  overview: RealizedBoardOverview; initialDetail?: InitialRealizedDetail; editableSourceIds?: readonly string[]; initialCardId?: string; pilot?: boolean;
+export function RealizedComposerMonth({ overview: packed, initialDetail, editableSourceIds, initialCardId, pilot = false, initialStatus }: {
+  overview: PackedRealizedOverview; initialDetail?: InitialRealizedDetail; editableSourceIds?: readonly string[]; initialCardId?: string; pilot?: boolean;
   initialStatus?: JulyPilotStatus;
 }) {
+  const overview = useMemo(() => unpackRealizedOverview(packed), [packed]);
   const [sortOrder, setSortOrder] = useState<SortOrder>(pilot ? "date" : "amount-desc");
   const [statusFilter, setStatusFilter] = useState<JulyPilotStatus | "">(initialStatus ?? "");
   const [query, setQuery] = useState("");
