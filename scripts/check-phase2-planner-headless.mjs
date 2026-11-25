@@ -251,12 +251,21 @@ try {
   });
   await test('C7-EXTRA-SERVER-AUTH', async () => {
     const semantic = await loadFixture(simpleMonth()), originalLoad = Module._load, writes = pg.rpcCalls;
-    const auth = { changed: false, denied: false };
+    const auth = { denied: false, sessionReads: 0, contextReads: 0 };
     const supabase = pg.client, user = { id: uuid(900) };
+    const session = { supabase, user };
     Module._load = function(request, parent, isMain) {
-      if (request === '@/server/bootstrap/auth') return { getAuthenticatedBootstrapClient: async () => { if (auth.denied) throw new TypeError('AUTH_REQUIRED'); return { supabase, user }; } };
-      if (request === '@/server/bootstrap/context') return { getBootstrapContext: async () => ({ user: { id: auth.changed ? uuid(901) : user.id },
-        household: { householdId, timezone: 'Europe/Paris' }, persons: [], periods: [], revision: { dataRevision: 1, analyticsRevision: 1 } }) };
+      if (request === '@/server/bootstrap/auth') return { getAuthenticatedBootstrapClient: async () => {
+        auth.sessionReads++;
+        if (auth.denied) throw new TypeError('AUTH_REQUIRED');
+        return session;
+      } };
+      if (request === '@/server/bootstrap/context') return { getBootstrapContextForSession: async (verifiedSession) => {
+        auth.contextReads++;
+        assert.strictEqual(verifiedSession, session);
+        return { user, household: { householdId, timezone: 'Europe/Paris' }, persons: [], periods: [],
+          revision: { dataRevision: 1, analyticsRevision: 1 } };
+      } };
       if (request === '@/server/canonical/client') return { createCanonicalReadClient: () => ({}) };
       if (request === '@/server/canonical/repository') return { CanonicalRepository: class { constructor(client, context) { this.client = client; this.context = context; } } };
       if (request === '@/server/phase2/planner/world-reader') return { createPlannerDependencies: (canonical, client) => {
@@ -268,13 +277,15 @@ try {
       const composerActions = require('@/app/mois-a-venir/composer/actions');
       const composer = await composerActions.composerInteraction({ kind: 'READ', targetMonth: '2026-11', sequence: 0, draft: semantic });
       assert.equal(composer.ok, true); assert.equal(pg.rpcCalls, writes);
+      assert.equal(auth.sessionReads, 1);
+      assert.equal(auth.contextReads, 1);
       const model = await actions.readMonthComposer('2026-11', semantic), p = await actions.previewPlanScenario('2026-11', semantic);
       assert.equal(model.preview.projectionDigest, p.projectionDigest);
       await actions.readPlanBalanceSuggestions('2026-11', semantic);
-      auth.changed = true; await assert.rejects(() => actions.readMonthComposer('2026-11'), /SESSION_CHANGED/);
-      await assert.rejects(() => composerActions.composerInteraction({ kind: 'READ', targetMonth: '2026-11', sequence: 1 }), /SESSION_CHANGED/);
-      auth.changed = false; auth.denied = true; await assert.rejects(() => actions.applyPlanScenario('2026-11', semantic, command(p)), /AUTH_REQUIRED/);
+      const contextReads = auth.contextReads;
+      auth.denied = true; await assert.rejects(() => actions.applyPlanScenario('2026-11', semantic, command(p)), /AUTH_REQUIRED/);
       await assert.rejects(() => composerActions.composerInteraction({ kind: 'READ', targetMonth: '2026-11', sequence: 2 }), /AUTH_REQUIRED/);
+      assert.equal(auth.contextReads, contextReads);
       await assert.rejects(() => actions.previewPlanScenario('2026-12', semantic), /DRAFT_MONTH_INVALID/);
       assert.equal(pg.rpcCalls, writes);
       auth.denied = false;

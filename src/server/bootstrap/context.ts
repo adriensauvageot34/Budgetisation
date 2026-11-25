@@ -1,6 +1,7 @@
 import "server-only";
 
-import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
+import { cache } from "react";
+import { getAuthenticatedBootstrapClient, type BootstrapSession } from "@/server/bootstrap/auth";
 import type { BootstrapHousehold } from "@/server/bootstrap/types";
 import {
   getAnalysisPeriods,
@@ -13,16 +14,23 @@ export async function getBootstrapContext() {
   return (await getBootstrapSession()).context;
 }
 
-export async function getBootstrapSession() {
+export const getBootstrapSession = cache(async () => {
   const session = await getAuthenticatedBootstrapClient();
-  const household = await getCurrentHousehold(session.supabase);
-  return { session, context: await getBootstrapContextFromHousehold(session, household) };
+  return { session, context: await getBootstrapContextForSession(session) };
+});
+
+export const getBootstrapHousehold = cache((session: BootstrapSession) =>
+  getCurrentHousehold(session.supabase));
+
+export async function getBootstrapContextForSession(session: BootstrapSession) {
+  const household = await getBootstrapHousehold(session);
+  return getBootstrapContextFromHousehold(session, household);
 }
 
-export async function getBootstrapContextFromHousehold(
-  { supabase, user }: Awaited<ReturnType<typeof getAuthenticatedBootstrapClient>>,
+export const getBootstrapContextFromHousehold = cache(async (
+  { supabase, user }: BootstrapSession,
   household: BootstrapHousehold | null,
-) {
+) => {
   if (!household) {
     return { user, household: null, persons: [], periods: [], revision: null };
   }
@@ -34,4 +42,4 @@ export async function getBootstrapContextFromHousehold(
   ]);
 
   return { user, household, persons, periods, revision };
-}
+});
