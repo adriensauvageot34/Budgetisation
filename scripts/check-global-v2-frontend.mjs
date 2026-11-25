@@ -159,6 +159,8 @@ const rhythmDetailRoutingSource = fs.readFileSync(path.join(root, "src/features/
 const rhythmNarrativeSource = fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-narrative.ts"), "utf8");
 const lifeTimelineSource = fs.readFileSync(path.join(root, "src/features/global-v2/life-timeline.tsx"), "utf8");
 const productionLoaderSource = fs.readFileSync(path.join(root, "src/server/query/global-v2-production-loader.ts"), "utf8");
+const initialBundleSource = productionLoaderSource.slice(productionLoaderSource.indexOf("export async function loadGlobalV2ProductionBundle"),
+  productionLoaderSource.indexOf("export async function readGlobalV2PersonaPanel"));
 const backgroundSource = fs.readFileSync(path.join(root, "src/features/global-v2/background-rhythms.tsx"), "utf8");
 const foodRiverSource = fs.readFileSync(path.join(root, "src/features/global-v2/food-rhythm-river.tsx"), "utf8");
 const foodFocusSource = fs.readFileSync(path.join(root, "src/features/global-v2/food-month-focus.tsx"), "utf8");
@@ -168,7 +170,7 @@ const monthInteractionSource = fs.readFileSync(path.join(root, "src/features/glo
 const annualMonthFocusSource = fs.readFileSync(path.join(root, "src/features/global-v2/annual-month-focus.ts"), "utf8");
 const backgroundCssSource = fs.readFileSync(path.join(root, "src/features/global-v2/background-rhythms.module.css"), "utf8");
 const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function LifeInsightList"));
-const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaPanel"));
+const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("const PersonaPanel"));
 const m2InsightSource = pageSource.slice(pageSource.indexOf("function M2CompactRecentInsight"), pageSource.indexOf("function M2CompactCard"));
 const m2ComparisonsSource = pageSource.slice(pageSource.indexOf("function M2Comparisons"), pageSource.indexOf("function M2NeedsContent"));
 const m2ExpandedSource = pageSource.slice(pageSource.indexOf("function M2ExpandedContent"), pageSource.indexOf("function LifeInsightList"));
@@ -200,6 +202,8 @@ check(() => assert.match(cssSource, /@media \(max-width: 767px\)/u));
 check(() => assert.match(routeSource, /NODE_ENV === "production"/u));
 check(() => assert.doesNotMatch(routeSource, /GlobalV2ActivationPending|GLOBAL_V2_ROUTE_ACTIVE/u));
 check(() => assert.match(routeSource, /loadGlobalV2ProductionBundle/u));
+check(() => assert.match(initialBundleSource, /resource: "analysis_global_manifest"/u));
+check(() => assert.doesNotMatch(initialBundleSource, /analysis_global_persona|readPersona|analytics_artifacts/u));
 check(() => assert.doesNotMatch(pageSource, /@\/analytics|@\/server|CanonicalRepository|FactSourceResolver/u));
 check(() => assert.doesNotMatch(pageSource, /fixture-data|createGlobalV2FixtureTransport|31 juillet 2026/u));
 check(() => assert.match(pageSource, /certifiedThrough/u));
@@ -288,7 +292,7 @@ check(() => assert.match(pageSource, /> Méthode</u));
 check(() => assert.doesNotMatch(pageSource, /ANALYSE GLOBALE · NOUVELLE ARCHITECTURE|synthèse non importée|Non importée/u));
 check(() => assert.match(navigationSource, /Synthèse[\s\S]*Nos dépenses[\s\S]*Catégories[\s\S]*Vie & dépenses[\s\S]*Profils/u));
 check(() => assert.doesNotMatch(navigationSource, /Lieux|Achats|Moments|Autres analyses|Relations/u));
-check(() => assert.match(summarySource, /id="synthese"[\s\S]*sectionKey="OVERVIEW"[\s\S]*sectionKey="EVOLUTION"/u));
+check(() => assert.match(summarySource, /useExpandedModule\(runtime, "ECONOMIC", "OVERVIEW", enabled\)[\s\S]*useExpandedModule\(runtime, "ECONOMIC", "EVOLUTION", enabled\)/u));
 check(() => assert.match(pageSource, /role="tablist"[\s\S]*aria-selected=\{activeAnchor === anchor\}[\s\S]*role="tabpanel"/u));
 check(() => assert.match(pageSource, /RankingBar/u));
 check(() => assert.match(pageSource, /MultiSeriesMonetaryEvolution/u));

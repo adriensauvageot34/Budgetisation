@@ -11,6 +11,7 @@ import {
 } from "@/query-api/global-v2";
 import { buildPersonaDirectModel, personaDirectDetailKey, selectPersonaDirectOwnerRefs, type PersonaDirectLabels } from "@/query-api/global-v2/persona-direct-presentation";
 import type { PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
+import type { GlobalV2PersonaPanelModel } from "@/query-api/global-v2/persona-panel";
 import { PERSONA_EDITORIAL_SCHEMA_VERSION, type resolveGlobalPersonaEditorial } from "@/server/analytics/global-v2-persona-editorial";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { createAuthorizedRuntimeContext, type AuthorizedRuntimeContext } from "@/server/canonical/context";
@@ -97,23 +98,37 @@ export async function readGlobalV2ProductionSnapshot(input: {
 }
 
 export async function loadGlobalV2ProductionBundle() {
-  const started = performance.now();
   const runtime = await createGlobalV2ProductionRuntime();
   const initial = await readGlobalV2ProductionSnapshot({ runtime, resource: "analysis_global_manifest", params: {} });
-  const overview = (await readGlobalV2ProductionSnapshot({ runtime, resource: "analysis_global_personas_expanded", params: { sectionKey: "OVERVIEW" } })).data as GlobalExpandedReadModel;
-  const personIds = (overview.profile?.profiles ?? []).filter((profile) => profile.scope === "PERSONAL" && profile.subject.kind === "PERSON").slice(0, 2).map((profile) => String(profile.subject.personId));
-  const indexRequests = personIds.map((personId) => ({ resource: "analysis_global_persona_detail" as const, params: { entityRef: `person:${personId}` } }));
-  await runtime.services.primeSnapshotRows(indexRequests);
-  const indexResults = await Promise.all(indexRequests.map((request) => readGlobalV2ProductionSnapshot({ runtime, ...request })));
-  const indices = indexResults.map((result) => (result.data as GlobalExpandedReadModel).personaDetailIndex).filter((index) => index !== undefined);
-  if (indices.length !== personIds.length) throw new TypeError("GLOBAL_PERSONA_DETAIL_INDEX_MISSING");
-  const { data: labelArtifacts, error: labelsError } = await runtime.client.from("analytics_artifacts")
+  return {
+    bundle: { initial: initial.data as GlobalInitialReadModel },
+    certifiedThrough: runtime.generation.scope.time.certifiedThrough,
+  };
+}
+
+export async function readGlobalV2PersonaPanel(runtime: Awaited<ReturnType<typeof createGlobalV2ProductionRuntime>>) {
+  const started = performance.now();
+  const overviewRead = readGlobalV2ProductionSnapshot({ runtime, resource: "analysis_global_personas_expanded", params: { sectionKey: "OVERVIEW" } })
+    .then(({ data }) => data as GlobalExpandedReadModel);
+  const indicesRead = overviewRead.then(async (overview) => {
+    const personIds = (overview.profile?.profiles ?? []).filter((profile) => profile.scope === "PERSONAL" && profile.subject.kind === "PERSON").slice(0, 2).map((profile) => String(profile.subject.personId));
+    const indexRequests = personIds.map((personId) => ({ resource: "analysis_global_persona_detail" as const, params: { entityRef: `person:${personId}` } }));
+    await runtime.services.primeSnapshotRows(indexRequests);
+    const indexResults = await Promise.all(indexRequests.map((request) => readGlobalV2ProductionSnapshot({ runtime, ...request })));
+    const indices = indexResults.map((result) => (result.data as GlobalExpandedReadModel).personaDetailIndex).filter((index) => index !== undefined);
+    if (indices.length !== personIds.length) throw new TypeError("GLOBAL_PERSONA_DETAIL_INDEX_MISSING");
+    return indices;
+  });
+  const labelsRead = runtime.client.from("analytics_artifacts")
     .select("payload")
     .eq("household_id", runtime.context.householdId)
     .eq("publication_id", runtime.generation.publicationId)
     .eq("artifact_family", "global_presentation_labels")
     .eq("is_active", true)
     .is("invalidated_at", null);
+  const [overview, indices, { data: labelArtifacts, error: labelsError }, editorial] = await Promise.all([
+    overviewRead, indicesRead, labelsRead, readPersonaEditorialArtifact(runtime),
+  ]);
   if (labelsError !== null) throw labelsError;
   if (labelArtifacts?.length !== 1) throw new TypeError("GLOBAL_PERSONA_PRESENTATION_LABELS_MISSING");
   const labelsPayload = labelArtifacts[0]!.payload as { readonly publicationMeta?: GlobalReadModelPublicationMeta; readonly presentationLabels?: PersonaDirectLabels };
@@ -125,16 +140,11 @@ export async function loadGlobalV2ProductionBundle() {
   const refs = selectPersonaDirectOwnerRefs({ overview, indices, labels: labelsPayload.presentationLabels });
   const ownerRequests = refs.map((ref) => ({ resource: ref.resource, params: { entityRef: ref.entityRef } }));
   await runtime.services.primeSnapshotRows(ownerRequests);
-  const [ownerResults, editorial] = await Promise.all([
-    Promise.all(ownerRequests.map((request) => readGlobalV2ProductionSnapshot({ runtime, ...request }))),
-    readPersonaEditorialArtifact(runtime),
-  ]);
+  const ownerResults = await Promise.all(ownerRequests.map((request) => readGlobalV2ProductionSnapshot({ runtime, ...request })));
   const details = new Map(refs.map((ref, index) => [personaDirectDetailKey(ref), ownerResults[index]!.data as GlobalExpandedReadModel]));
   const persona = buildPersonaDirectModel({ overview, indices, details, labels: labelsPayload.presentationLabels, ownerDetailResolutionsInitial: refs.length, serverBuildMs: Math.round(performance.now() - started) });
-  return {
-    bundle: { initial: initial.data as GlobalInitialReadModel, persona, personaEditorial: editorial },
-    certifiedThrough: runtime.generation.scope.time.certifiedThrough,
-  };
+  const data: GlobalV2PersonaPanelModel = { persona, personaEditorial: editorial };
+  return { data, publicationMeta: runtime.generation.publicationMeta };
 }
 
 /** Compact, generation-pinned P4.8-A read model for the next Persona UI lot. */

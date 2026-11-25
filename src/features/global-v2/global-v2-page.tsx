@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { parseMetricId } from "@/core/identity";
@@ -41,19 +41,14 @@ import { LifeTimeline, TimelineComparator } from "./life-timeline";
 import type { TimelineDensityMode } from "./life-timeline-presentation";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
 import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
-import { PersonaView } from "./persona/persona-view";
-import { editorialTopics, PersonaEditorialView } from "./persona/persona-editorial-view";
+import { globalV2PersonaPanelResource, type GlobalV2PersonaPanelModel } from "@/query-api/global-v2/persona-panel";
 import { BackgroundRhythms } from "./background-rhythms";
-import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
-import type { PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
 import { GlobalV2VisitRuntime, parseGlobalDeepLink, type GlobalV2UiRequest, type GlobalV2UiTransport } from "./visit-runtime";
 import styles from "./global-v2.module.css";
 
 export type GlobalV2PageBundle = {
   readonly initial: GlobalInitialReadModel;
-  readonly persona: PersonaDirectModel;
-  readonly personaEditorial?: PersonaEditorialModel;
   readonly newerPublication?: GlobalReadModelPublicationMeta;
 };
 
@@ -348,7 +343,7 @@ type EconomicChartDatum = {
   readonly typical: number | null;
 };
 
-function EconomicChartTooltip({ active, payload, overview, targetMonth }: { readonly active?: boolean; readonly payload?: readonly { readonly payload?: EconomicChartDatum }[]; readonly overview: GlobalExpandedReadModel; readonly targetMonth: string }) {
+function EconomicChartTooltip({ active, payload, overview, targetMonth }: { readonly active?: boolean; readonly payload?: readonly { readonly payload?: EconomicChartDatum }[]; readonly overview?: GlobalExpandedReadModel; readonly targetMonth: string }) {
   const datum = payload?.[0]?.payload;
   if (!active || datum === undefined) return null;
   const isTarget = datum.period === targetMonth;
@@ -358,12 +353,12 @@ function EconomicChartTooltip({ active, payload, overview, targetMonth }: { read
     <dl>
       <div><dt>Dépenses réelles</dt><dd>{formatMoney(datum.actual ?? undefined)}</dd></div>
       <div><dt>Niveau habituel</dt><dd>{formatMoney(datum.typical ?? undefined)}</dd></div>
-      {isTarget ? <><div><dt>Niveau habituel avant {targetMonthName}</dt><dd>{formatMoney(economicNumber(economicMetric(overview, "typical-reference")))}</dd></div><div><dt>Écart</dt><dd>{formatMoney(economicNumber(economicMetric(overview, "actual-reference-delta")), { signed: true })}</dd></div></> : null}
+      {isTarget && overview !== undefined ? <><div><dt>Niveau habituel avant {targetMonthName}</dt><dd>{formatMoney(economicNumber(economicMetric(overview, "typical-reference")))}</dd></div><div><dt>Écart</dt><dd>{formatMoney(economicNumber(economicMetric(overview, "actual-reference-delta")), { signed: true })}</dd></div></> : null}
     </dl>
   </div>;
 }
 
-function EconomicChart({ evolution, overview, certifiedThrough, compact = false }: { readonly evolution: GlobalExpandedReadModel; readonly overview: GlobalExpandedReadModel; readonly certifiedThrough: string; readonly compact?: boolean }) {
+function EconomicChart({ evolution, overview, certifiedThrough, compact = false }: { readonly evolution: GlobalExpandedReadModel; readonly overview?: GlobalExpandedReadModel; readonly certifiedThrough: string; readonly compact?: boolean }) {
   const actual = evolution.series.find(({ seriesId }) => seriesId === "economic:actual");
   const typical = evolution.series.find(({ seriesId }) => seriesId === "economic:typical-state");
   if (actual === undefined || actual.points.length === 0) return <p className={styles.qualityNote}>L’évolution n’est pas disponible sur cette période.</p>;
@@ -1050,10 +1045,14 @@ function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restor
   </OverlayFrame>;
 }
 
-function ExpandedPreview({ runtime, moduleKey, sectionKey, children }: { readonly runtime: GlobalV2VisitRuntime; readonly moduleKey: GlobalPrimaryModuleKey; readonly sectionKey: GlobalExpandedSectionKey; readonly children: (model: GlobalExpandedReadModel) => React.ReactNode }) {
+function useExpandedModule(runtime: GlobalV2VisitRuntime, moduleKey: GlobalPrimaryModuleKey, sectionKey: GlobalExpandedSectionKey, enabled = true) {
   const resource = globalModulePresentation(moduleKey).expandedResource;
   const request = useMemo(() => ({ resource, params: { sectionKey } }), [resource, sectionKey]);
-  const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "BACKGROUND");
+  return useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, enabled, "BACKGROUND");
+}
+
+function ExpandedPreview({ runtime, moduleKey, sectionKey, children }: { readonly runtime: GlobalV2VisitRuntime; readonly moduleKey: GlobalPrimaryModuleKey; readonly sectionKey: GlobalExpandedSectionKey; readonly children: (model: GlobalExpandedReadModel) => React.ReactNode }) {
+  const result = useExpandedModule(runtime, moduleKey, sectionKey);
   const model = transportData(result.state);
   if (model !== undefined) return children(model);
   if (result.state.status === "ERROR") return <LocalError retry={result.retry} />;
@@ -1092,15 +1091,16 @@ function M2CompactCard({ model, runtime, certifiedThrough, onDetail, onEntityDet
   </div>;
 }
 
-function PersonaPanel({ persona, editorial }: { readonly persona: PersonaDirectModel; readonly editorial?: PersonaEditorialModel }) {
-  const [topic, setTopic] = useState<typeof editorialTopics[number]["key"]>("portraits");
-  if (editorial === undefined) return <PersonaView model={persona} headingId="profils-title" />;
-  return <>
-    <nav className={styles.workspaceChoices} aria-label="Thèmes des profils">
-      {editorialTopics.map(({ key, label }) => <button key={key} type="button" aria-pressed={topic === key} onClick={() => setTopic(key)}>{label}</button>)}
-    </nav>
-    <PersonaEditorialView model={editorial} direct={persona} headingId="profils-title" topic={topic} />
-  </>;
+const PersonaPanel = lazy(() => import("./persona/persona-panel"));
+const personaPanelRequest = { resource: globalV2PersonaPanelResource, params: {} } as const;
+
+function GlobalPersonaTab({ runtime }: { readonly runtime: GlobalV2VisitRuntime }) {
+  const result = useGlobalV2Resource<GlobalV2PersonaPanelModel>(runtime, personaPanelRequest, true, "DIRECT");
+  const model = transportData(result.state);
+  const placeholder = result.state.status === "ERROR" ? <LocalError retry={result.retry} /> : <LoadingCard label="Profils" />;
+  return <section id="profils" className={styles.module} data-module="PERSONAS" aria-label="Profils">
+    <Suspense fallback={placeholder}><PersonaPanel model={model} placeholder={placeholder} /></Suspense>
+  </section>;
 }
 
 function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
@@ -1201,27 +1201,32 @@ function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: Glo
   </section>;
 }
 
-function DashboardSummary({ runtime, certifiedThrough, onNavigate, onOverlay, navigation }: {
+function DashboardSummary({ runtime, certifiedThrough, onNavigate, onOverlay, navigation, enabled }: {
   readonly runtime: GlobalV2VisitRuntime;
   readonly certifiedThrough: string;
   readonly onNavigate: (anchor: string) => void;
   readonly onOverlay: (target: OverlayTarget) => void;
   readonly navigation: readonly typeof internalNavigation[number][];
+  readonly enabled: boolean;
 }) {
+  const figures = useExpandedModule(runtime, "ECONOMIC", "OVERVIEW", enabled);
+  const chart = useExpandedModule(runtime, "ECONOMIC", "EVOLUTION", enabled);
+  const overview = transportData(figures.state);
+  const evolution = transportData(chart.state);
   return <section id="synthese" className={styles.dashboardSummary} aria-label="Synthèse">
     <div className={styles.summaryFinancial} data-module="ECONOMIC">
       <div className={styles.summaryHeading}><h2>Nos dépenses sur 12 mois</h2><button type="button" className={styles.exploreLink}
         onClick={() => onOverlay(moduleOverlayTarget("ECONOMIC", "EVOLUTION"))}>Évolution détaillée <ChevronRight size={16} aria-hidden /></button></div>
-      <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="OVERVIEW">{(overview) => <>
+      {overview === undefined ? figures.state.status === "ERROR" ? <LocalError retry={figures.retry} />
+        : <LoadingCard label="chiffres clés" compact /> :
         <div className={styles.dashboardFigures}>
           <div><span>{analysisPeriod(certifiedThrough).targetLabel}</span><EconomicMetricValue metric={economicMetric(overview, "actual")} /></div>
           <div><span>Mois habituel</span><EconomicMetricValue metric={economicMetric(overview, "typical-state")} /></div>
           <div><span>Dépenses minimum</span><EconomicMetricValue metric={economicMetric(overview, "minimal-state")} /></div>
-        </div>
-        <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="EVOLUTION">{(evolution) =>
-          <EconomicChart evolution={evolution} overview={overview} certifiedThrough={certifiedThrough} compact />
-        }</ExpandedPreview>
-      </>}</ExpandedPreview>
+        </div>}
+      {evolution === undefined ? chart.state.status === "ERROR" ? <LocalError retry={chart.retry} />
+        : <LoadingCard label="graphique des dépenses" compact /> :
+        <EconomicChart evolution={evolution} overview={overview} certifiedThrough={certifiedThrough} compact />}
     </div>
     <div className={styles.summaryShortcuts}>
       {navigation.filter(({ anchor }) => anchor !== "synthese").map(({ anchor, label, icon }) => (
@@ -1242,7 +1247,9 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     const moduleKey = moduleForSlug(anchor);
     return moduleKey === undefined || visibleModules.has(moduleKey);
   });
-  const [activeAnchor, setActiveAnchor] = useState("synthese");
+  // The browser hash is only available after hydration. Resolve it before fetching a tab.
+  const [resolvedAnchor, setActiveAnchor] = useState<string | null>(null);
+  const activeAnchor = resolvedAnchor ?? "synthese";
   const [overlay, setOverlay] = useState<OverlayTarget | null>(null);
   const workspaceBodyRef = useRef<HTMLDivElement>(null);
   const overlayInvokerRef = useRef<HTMLElement | null>(null);
@@ -1303,8 +1310,8 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
         {activeAnchor === "economie" && <GlobalModulePanel moduleKey="ECONOMIC" runtime={runtime} certifiedThrough={certifiedThrough} eager direct onOverlay={openOverlay} />}
         {activeAnchor === "categories" && <GlobalModulePanel moduleKey="CATEGORIES_NEEDS" runtime={runtime} certifiedThrough={certifiedThrough} eager direct onOverlay={openOverlay} />}
         {activeAnchor === "rythmes" && <GlobalLifeTimelinePanel runtime={runtime} onOverlay={openOverlay} />}
-        {activeAnchor === "profils" && <section id="profils" className={styles.module} data-module="PERSONAS" aria-label="Profils"><PersonaPanel persona={bundle.persona} editorial={bundle.personaEditorial} /></section>}
-        {activeAnchor === "synthese" && <DashboardSummary runtime={runtime} certifiedThrough={certifiedThrough} onNavigate={goTo} onOverlay={openOverlay} navigation={navigation} />}
+        {activeAnchor === "profils" && <GlobalPersonaTab runtime={runtime} />}
+        {activeAnchor === "synthese" && <DashboardSummary runtime={runtime} certifiedThrough={certifiedThrough} onNavigate={goTo} onOverlay={openOverlay} navigation={navigation} enabled={resolvedAnchor !== null} />}
       </GlobalModuleBoundary>
     </div>
     {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} certifiedThrough={certifiedThrough} restoreFocusRef={overlayInvokerRef} onReplace={(target) => { setOverlay(target); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: target.moduleKey }); }} onClose={closeOverlay} />}
