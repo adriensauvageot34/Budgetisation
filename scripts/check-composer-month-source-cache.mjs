@@ -5,8 +5,39 @@ import { require } from "./lib/phase2-ts-loader.mjs";
 const entries = new Map();
 const sharedEntries = new Map();
 let sharedUnavailable = false;
+const fingerprint = n => String(n).padStart(64, "0");
+let savedRevision = fingerprint(1);
+let forecastRevision = fingerprint(1);
+let reconstructed = 0;
+const evidence = { manualBankBalanceObservation: null, bankCoverageIntervals: [] };
 const originalLoad = Module._load;
 Module._load = function load(name, ...args) {
+  if (args[0]?.filename?.endsWith("read-july-planning.ts")) {
+    const dependencies = {
+      "@/server/canonical/client": { createCanonicalReadClient: () => ({ async rpc(name) {
+        assert.equal(name, "composer_july_planning_revision_v1");
+        return { data: forecastRevision };
+      } }) },
+      "../bank-cash-projection": { resolveRealBankBalance: () => null },
+      "../month-prediction-evidence": { readMonthPredictionEvidence: (_, __, month, ___, options) => {
+        assert.equal(month, "2026-07");
+        assert.equal(options.asOfDate, "2026-07-15");
+        return evidence;
+      } },
+      "./composer-draft-cutover": { composerDraftAutosaveEnabledFor: () => true },
+      "./composer-draft-service": { readActiveComposerDraft: () => ({ semanticState: {} }) },
+      "./cutover": { plannerComposerEnabled: () => true },
+      "./july-budget": { readJulyBudget: (_, __, input, draft) => {
+        assert.equal(input, evidence);
+        return { hasSavedDraft: !!draft, calculation: draft.calculation };
+      } },
+      "./july-pilot": { projectJulyPilot: board => board, julyPilotForecast: () => ({ cashAtCutoff: null }) },
+      "./read-composer-realized-board": { readJulyRealizedBoard: () => ({ cards: [] }) },
+      "./read-model": { readMonthComposer: () => ({ calculation: ++reconstructed }) },
+      "./runtime": { authorizedPlanner: () => ({ deps: {} }) },
+    };
+    if (Object.hasOwn(dependencies, name)) return dependencies[name];
+  }
   if (name === "@vercel/functions") {
     return { getCache: () => ({
       async get(key) {
@@ -29,6 +60,7 @@ Module._load = function load(name, ...args) {
   } };
 };
 const { createMonthSourceCache } = require("@/server/phase2/month-source-cache");
+const { readJulyPlanning } = require("@/server/phase2/planner/read-july-planning");
 Module._load = originalLoad;
 
 const uuid = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -114,4 +146,20 @@ sharedUnavailable = true;
 const liveWithoutCache = await july();
 assert.ok(liveWithoutCache.sequence > withFailedProof.sequence, "A cache outage still serves the live board");
 assert.equal(sharedEntries.size, beforeUnavailable);
+
+sharedUnavailable = false;
+const planningClient = { ...client, async rpc(name, args) {
+  if (name === "composer_july_saved_revision_v1") {
+    assert.equal(args.p_household, household.householdId);
+    return { data: savedRevision };
+  }
+  return client.rpc(name, args);
+} };
+const calendar = await readJulyPlanning(bootstrap, planningClient);
+assert.deepEqual(await readJulyPlanning(bootstrap, planningClient), calendar, "Forecasts reuse the calendar calculation");
+assert.equal(reconstructed, 1);
+savedRevision = fingerprint(2);
+assert.equal((await readJulyPlanning(bootstrap, planningClient)).budget.calculation, 2, "A new saved draft rebuilds the model");
+forecastRevision = fingerprint(2);
+assert.equal((await readJulyPlanning(bootstrap, planningClient)).budget.calculation, 3, "A corrected forecast input rebuilds the model");
 console.log("PASS: monthly cache reuse, source and presentation revisions, access checks and concurrent corrections");
