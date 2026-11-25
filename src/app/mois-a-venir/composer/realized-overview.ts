@@ -4,6 +4,7 @@ import type { RealizedPlace } from "@/server/phase2/planner/realized-places";
 import type { RealizedWork, RealizedWorkItem } from "@/server/phase2/planner/realized-work";
 import { realizedCardViews, type RealizedCardView } from "./realized-card-view";
 import { cardCaption, paymentSearch, searchableDate, searchText } from "./realized-card-text";
+import { packRealizedOverview } from "./realized-overview-wire";
 
 type Category = Pick<RealizedCardGroup, "id" | "label" | "shortLabel">;
 export type RealizedCardSummary = Pick<RealizedCard,
@@ -106,5 +107,5 @@ export function realizedBoardOverview(board: RealizedBoard, initialCardId?: stri
   const target = initialCardId && (flatById.get(initialCardId) ?? flat.find(view => view.source.id === initialCardId));
   const initialDetail = target ? { key: `flat:${target.card.id}`, card: target.card } : undefined;
   const overview = { month, participantPortraits, julyPortraits, cards, flatKeys, categoryKeys, groups } satisfies RealizedBoardOverview;
-  return { overview, initialDetail };
+  return { overview: packRealizedOverview(overview), initialDetail };
 }

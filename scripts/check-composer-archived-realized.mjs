@@ -270,7 +270,9 @@ const { julyPilotForecast, projectJulyPilot } = require("@/server/phase2/planner
 const { RealizedComposerMonth } = require("@/app/mois-a-venir/composer/realized-month");
 const { realizedBoardOverview } = require("@/app/mois-a-venir/composer/realized-overview");
 const { matches, searchText } = require("@/app/mois-a-venir/composer/realized-card-text");
-const { overview: compact, initialDetail: linkedDetail } = realizedBoardOverview(reviewed, splitCard.id);
+const { unpackRealizedOverview } = require("@/app/mois-a-venir/composer/realized-overview-wire");
+const { overview: packed, initialDetail: linkedDetail } = realizedBoardOverview(reviewed, splitCard.id);
+const compact = unpackRealizedOverview(packed);
 assert.equal(linkedDetail.card.id, splitCard.id);
 assert.equal(realizedBoardOverview(reviewed).initialDetail, undefined);
 assert.equal(compact.flatKeys.length, reviewed.cards.flatMap(detailedRealizedCards).length);
