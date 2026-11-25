@@ -17,6 +17,7 @@ import { julyPilotStatuses } from "@/domain/phase2/planner/july-pilot";
 import { ArchivedRealizedMonth } from "./archived-realized-month";
 import { realizedOperationCardId } from "./realized-card-view";
 import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
+import { archivedComposerBoard } from "@/server/phase2/planner/realized-snapshots";
 import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
 import { reconstructJulyDraft } from "@/server/phase2/planner/reconstruct-july-draft";
 import { getBootstrapSession } from "@/server/bootstrap/context";
@@ -33,7 +34,10 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
     const board = await withProductAuthentication(async () => {
       const { context, session } = await getBootstrapSession();
       if (!context.household) notFound();
-      return readRealizedMonth(context, parseYearMonth(month), createMonthSourceCache(session.supabase, context, month));
+      const cache = createMonthSourceCache(session.supabase, context, month);
+      const target = parseYearMonth(month);
+      return isArchivedRealizedMonth(month) ? (await archivedComposerBoard(context, target, cache)).value
+        : readRealizedMonth(context, target, cache);
     });
     const cardId = params.carte;
     const initialCardId = typeof cardId === "string" && board.cards.some(card => card.id === cardId ||

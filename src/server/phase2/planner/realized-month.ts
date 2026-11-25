@@ -320,7 +320,9 @@ function historicalCarTrip(legs: readonly MobilityLegFact[], places: ReadonlyMap
   };
 }
 
-type RealizedBootstrap = Awaited<ReturnType<typeof getBootstrapContext>>;
+export type RealizedBootstrap = Omit<Awaited<ReturnType<typeof getBootstrapContext>>, "user"> & {
+  user: { id: string };
+};
 
 // Keep ownership, work-day rules and reviewed memberships shared between the two views.
 async function readRealizedMonthData(bootstrap: RealizedBootstrap, month: YearMonth, includeCardDetails: boolean, cache?: MonthSourceCache) {
