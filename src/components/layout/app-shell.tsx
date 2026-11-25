@@ -1,12 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Landmark } from "lucide-react";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 import { useProductRuntime } from "@/components/runtime";
 import { JULY_V2_HREF } from "@/domain/phase2/planner/realized-month-entry";
 import { MonthPicker } from "@/app/mois-a-venir/month-picker";
+import { ComposerMonthNavigationContext, type ComposerMonthNavigationGuard } from "@/app/mois-a-venir/composer/month-navigation-guard";
 import scene from "@/app/mois-a-venir/planned-scroll-scene.module.css";
 import { AppToolbarTarget } from "./app-toolbar";
 import styles from "./app-shell.module.css";
@@ -18,6 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     backgroundRootRef.current = element;
   }, [backgroundRootRef]);
   const [toolbarTarget, setToolbarTarget] = useState<HTMLDivElement | null>(null);
+  const monthNavigationGuard = useRef<ComposerMonthNavigationGuard | null>(null);
   const historyV2 = /^\/historique\/\d{4}-\d{2}$/.test(pathname);
   const julyV2 = pathname === JULY_V2_HREF;
   const composerBalance = pathname === "/mois-a-venir/composer/bilan";
@@ -35,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (pathname === "/recette/bar-favoris") return <main ref={setBackgroundRoot} data-composer-app-shell
     style={{ height: "100dvh", padding: "12px 24px 20px", overflow: "hidden", background: "#fdfcfb" }}>{children}</main>;
 
-  return (
+  return <ComposerMonthNavigationContext.Provider value={monthNavigationGuard}>
     <div ref={compactWorkspace ? setBackgroundRoot : undefined} data-planned-shell={glass ? "" : undefined}
       className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? scene.shell
         : globalAnalysis ? `${styles.clayShell} ${styles.globalShell}`
@@ -72,5 +74,5 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <AppToolbarTarget.Provider value={toolbarTarget}>{children}</AppToolbarTarget.Provider>
       </main>
     </div>
-  );
+  </ComposerMonthNavigationContext.Provider>;
 }
