@@ -9,12 +9,13 @@ import { composerUiModel } from "@/server/phase2/planner/composer-service";
 import { readComposerOpening } from "@/server/phase2/planner/composer-opening";
 import { readComposerDrafts } from "@/server/phase2/planner/composer-draft-service";
 import { plannerComposerEnabled } from "@/server/phase2/planner/cutover";
-import { ComposerShell } from "./composer-shell";
+import { ComposerEditor } from "./composer-editor";
 import { composerInteraction } from "./actions";
 import { observeSnapshot } from "@/server/phase2/planner/snapshot-observation";
-import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH } from "@/domain/phase2/planner/realized-month-entry";
+import { isArchivedRealizedMonth, isImportedRealizedMonth, JULY_COMPOSER_MONTH, reconstructedId } from "@/domain/phase2/planner/realized-month-entry";
 import { julyPilotStatuses } from "@/domain/phase2/planner/july-pilot";
 import { ArchivedRealizedMonth } from "./archived-realized-month";
+import { JulyPilotMonth } from "./july-pilot-month";
 import { realizedOperationCardId } from "./realized-card-view";
 import { readRealizedMonth } from "@/server/phase2/planner/realized-month";
 import { archivedComposerBoard } from "@/server/phase2/planner/realized-snapshots";
@@ -30,19 +31,33 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   const params = await searchParams;
   const month = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : new Date().toISOString().slice(0, 7);
   const isReconstruction = month === JULY_COMPOSER_MONTH;
+  async function readBoard() {
+    const { context, session } = await getBootstrapSession();
+    if (!context.household) notFound();
+    const cache = createMonthSourceCache(session.supabase, context, month);
+    const target = parseYearMonth(month);
+    return isArchivedRealizedMonth(month) ? (await archivedComposerBoard(context, target, cache)).value
+      : readRealizedMonth(context, target, cache);
+  }
   if (isArchivedRealizedMonth(month) || isImportedRealizedMonth(month) && params.view !== "edition" || isReconstruction && params.view === "bilan") {
-    const board = await withProductAuthentication(async () => {
-      const { context, session } = await getBootstrapSession();
-      if (!context.household) notFound();
-      const cache = createMonthSourceCache(session.supabase, context, month);
-      const target = parseYearMonth(month);
-      return isArchivedRealizedMonth(month) ? (await archivedComposerBoard(context, target, cache)).value
-        : readRealizedMonth(context, target, cache);
-    });
+    const board = await withProductAuthentication(readBoard);
     const cardId = params.carte;
     const initialCardId = typeof cardId === "string" && board.cards.some(card => card.id === cardId ||
       card.payments.some(payment => realizedOperationCardId(payment.id) === cardId)) ? cardId : undefined;
     return <ArchivedRealizedMonth key={month} board={board} initialCardId={initialCardId} />;
+  }
+  if (isReconstruction && params.view !== "edition") {
+    const source = await withProductAuthentication(readBoard);
+    const board = projectJulyPilot(source);
+    const initialStatus = julyPilotStatuses.find(status => status === params.statut);
+    const cardId = params.carte;
+    const initialCardId = typeof cardId === "string"
+      ? board.cards.find(card => card.id === cardId)?.id
+        ?? board.cards.find(card => card.pilotSourceId === cardId)?.id
+      : undefined;
+    const editableSourceIds = source.cards.filter(card => card.section !== "flows").map(card => card.id);
+    return <JulyPilotMonth board={board} initialStatus={initialStatus} initialCardId={initialCardId}
+      editableSourceIds={editableSourceIds} />;
   }
   const observed = await observeSnapshot(() => withProductAuthentication(async () => {
     const { deps, householdId, userId, supabase } = await authorizedPlanner({ readCacheMonth: month });
@@ -52,8 +67,7 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
     } : null;
     const readDrafts = () => draftEnabled ? readComposerDrafts({ supabase, userId, householdId }, month) : Promise.resolve(null);
     if (isReconstruction) {
-      const realizedRead = getBootstrapSession().then(({ session, context }) =>
-        readRealizedMonth(context, parseYearMonth(month), createMonthSourceCache(session.supabase, context, month)));
+      const realizedRead = readBoard();
       const [opening, reconstruction] = await Promise.all([
         readComposerOpening(deps, householdId, month, readDrafts, async () => reconstructJulyDraft(await realizedRead)),
         realizedRead,
@@ -69,11 +83,11 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
     return { model, drafts, rootRelationAccess, reconstruction: null };
   }));
   const { model, drafts, rootRelationAccess, reconstruction } = observed.value;
-  const initialJulyStatus = reconstruction ? julyPilotStatuses.find(status => status === params.statut) : undefined;
   const julyPilot = reconstruction ? projectJulyPilot(reconstruction) : undefined;
-  const initialJulyCard = typeof params.carte === "string" && julyPilot?.cards.some(card => card.id === params.carte) ? params.carte : undefined;
-  return <><ComposerShell key={rootRelationAccess?.scopeKey ?? month} rootRelationAccess={rootRelationAccess} initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
+  const initialEditCard = typeof params.carte === "string" && reconstruction?.cards.some(card => card.id === params.carte && card.section !== "flows")
+    ? reconstructedId(month, params.carte) : undefined;
+  return <><ComposerEditor key={rootRelationAccess?.scopeKey ?? month} rootRelationAccess={rootRelationAccess} initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
     durableDraftHttp={!!drafts} reconstruction={reconstruction ?? undefined} julyPilot={julyPilot}
-    initialReconstructionEditing={isReconstruction && params.view === "edition"} initialJulyStatus={initialJulyStatus} initialJulyCard={initialJulyCard} />
+    initialEditCard={initialEditCard} />
     {observed.metrics && <span hidden data-snap-server={JSON.stringify(observed.metrics)} />}</>;
 }
