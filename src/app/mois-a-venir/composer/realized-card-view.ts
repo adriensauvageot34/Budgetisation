@@ -1,4 +1,4 @@
-import type { RealizedCard, RealizedPayment } from "@/server/phase2/planner/realized-month";
+import type { RealizedBoard, RealizedCard, RealizedPayment } from "@/server/phase2/planner/realized-month";
 
 export type RealizedCardView = Readonly<{
   card: RealizedCard;
@@ -61,6 +61,12 @@ export function detailedRealizedCards(source: RealizedCard): RealizedCardView[] 
       ...(source.pilotStatus ? { pilotStatus: source.pilotStatus } : {}),
     },
   }));
+}
+
+export function realizedCardViews(board: RealizedBoard, byCategory: boolean): RealizedCardView[] {
+  if (!byCategory) return board.cards.flatMap(detailedRealizedCards);
+  const sourceById = new Map(board.cards.map(card => [card.id, card]));
+  return (board.categoryCards ?? board.cards).map(card => ({ card, source: sourceById.get(card.id) ?? card }));
 }
 
 export type PackedCardPosition = Readonly<{ column: number; top: number; height: number }>;

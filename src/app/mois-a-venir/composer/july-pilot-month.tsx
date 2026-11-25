@@ -6,6 +6,7 @@ import { composerCalendarHref } from "../month-entry";
 import { RealizedFinancialTotals } from "./realized-financial-totals";
 import { JulyEditLink } from "./july-edit-link";
 import { RealizedComposerMonth } from "./realized-month";
+import { realizedBoardOverview } from "./realized-overview";
 import styles from "./composer.module.css";
 
 export function JulyPilotMonth({ board, initialStatus, initialCardId, editableSourceIds }: {
@@ -21,7 +22,7 @@ export function JulyPilotMonth({ board, initialStatus, initialCardId, editableSo
         <JulyEditLink className={styles.reconstructionLink}>Édition</JulyEditLink>
       </nav>
     </AppToolbarContent>
-    <RealizedComposerMonth key={`${initialStatus ?? ""}:${initialCardId ?? ""}`} board={board} pilot
+    <RealizedComposerMonth key={`${initialStatus ?? ""}:${initialCardId ?? ""}`} {...realizedBoardOverview(board, initialCardId)} pilot
       initialStatus={initialStatus} initialCardId={initialCardId} editableSourceIds={editableSourceIds} />
   </div>;
 }
