@@ -1,25 +1,27 @@
 import Image from "next/image";
 
-const composerClay = "/planned-visuals/builder/clay";
+const globalClay = "/analyse-globale/clay";
+const composerCompact = "/planned-visuals/builder/clay/v22/compact";
 const composerPresets = "/planned-visuals/composer/presets";
 
 const clayIcons = {
-  overview: "/analyse-globale/clay/overview.webp",
-  expenses: "/analyse-globale/clay/expenses.webp",
-  categories: "/analyse-globale/clay/categories.webp",
-  events: `${composerClay}/intent/activity.webp`,
-  profiles: `${composerClay}/social/group.webp`,
-  groceries: `${composerClay}/intent/groceries.webp`,
-  car: `${composerClay}/transport/car.webp`,
-  family: `${composerClay}/social/family.webp`,
-  travel: `${composerClay}/intent/travel.webp`,
+  overview: `${globalClay}/overview.webp`,
+  expenses: `${globalClay}/expenses.webp`,
+  categories: `${globalClay}/categories.webp`,
+  events: `${globalClay}/events.webp`,
+  profiles: `${globalClay}/profiles.webp`,
+  car: `${globalClay}/car.webp`,
+  activity: `${composerCompact}/v22-art-extra-activity-intent.webp`,
+  groceries: `${composerCompact}/v22-art-extra-groceries-intent.webp`,
+  family: `${composerCompact}/v22-art-extra-family-visit.webp`,
+  travel: `${composerCompact}/v22-art-extra-travel-intent.webp`,
   home: `${composerPresets}/home-evening.webp`,
   night: `${composerPresets}/techno-night.webp`,
   concert: `${composerPresets}/concert.webp`,
   beach: `${composerPresets}/beach-day.webp`,
-  celebration: `${composerClay}/social/birthday.webp`,
-  restaurant: `${composerClay}/intent/restaurant.webp`,
-  photo: `${composerClay}/activities/photo.webp`,
+  celebration: `${composerCompact}/v22-art-extra-birthday-occasion.webp`,
+  restaurant: `${composerCompact}/v22-art-extra-restaurant-intent.webp`,
+  photo: `${composerCompact}/v22-art-extra-photo-activity.webp`,
   health: "/planned-visuals/commerce/categories/pharmacy.webp",
 } as const;
 
