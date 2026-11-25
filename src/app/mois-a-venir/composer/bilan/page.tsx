@@ -33,8 +33,8 @@ export default async function ComposerBalancePage({
     <h1 className="sr-only">Bilan du mois · {monthLabel(month)}</h1>
     <AppToolbarContent className={styles.compactToolbar}>
       <nav aria-label="Vues de Composer" className={styles.reconstructionModes}>
-        <Link className={button} href={realizedComposerHref(month)} prefetch={false}>Cartes</Link>
-        <Link className={button} href={composerCalendarHref(month)} prefetch={false}>Calendrier</Link>
+        <Link className={button} href={realizedComposerHref(month)}>Cartes</Link>
+        <Link className={button} href={composerCalendarHref(month)}>Calendrier</Link>
         <span className={button} aria-current="page">Bilan du mois</span>
       </nav>
     </AppToolbarContent>

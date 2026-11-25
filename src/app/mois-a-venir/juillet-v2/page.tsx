@@ -69,9 +69,9 @@ export default async function JulyV2Page() {
     <AppToolbarContent className={composerStyles.compactToolbar}>
       <span className="text-xs font-semibold">Simulation au <time dateTime={JULY_PILOT_DATE}>15 juillet</time></span>
       <nav aria-label="Vues de Composer" className={composerStyles.reconstructionModes}>
-        {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} prefetch={false} className={composerStyles.reconstructionLink}>Calendrier</Link>}
-        {composerEnabled && board && <Link href={JULY_COMPOSER_HREF} prefetch={false} className={composerStyles.reconstructionLink}>Au 15 juillet</Link>}
-        {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} prefetch={false} className={composerStyles.reconstructionLink}>Édition</Link>}
+        {board && <Link href={composerCalendarHref(JULY_COMPOSER_MONTH)} className={composerStyles.reconstructionLink}>Calendrier</Link>}
+        {composerEnabled && board && <Link href={JULY_COMPOSER_HREF} className={composerStyles.reconstructionLink}>Au 15 juillet</Link>}
+        {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} className={composerStyles.reconstructionLink}>Édition</Link>}
         <span className={composerStyles.reconstructionLink} aria-current="page">Prévisions</span>
       </nav>
     </AppToolbarContent>
