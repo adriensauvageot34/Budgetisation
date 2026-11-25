@@ -24,6 +24,11 @@ export async function badgeCommand(command: unknown) {
 }
 
 type DockSelection = { badge: CommerceBadge; invoker: HTMLElement; cluster: boolean };
+type MerchantChoices = { items?: readonly MerchantBadgeSuggestion[]; error?: true };
+export const merchantCatalogScope = "catalog";
+export function merchantSuggestionScope(keys: readonly string[]) {
+  return JSON.stringify([...new Set(keys)].sort());
+}
 type LibraryState = BadgeLibraryRead & {
   available: boolean;
   open: (badge: CommerceBadge, invoker: HTMLElement) => void;
@@ -31,9 +36,8 @@ type LibraryState = BadgeLibraryRead & {
   closeDock: (restoreFocus?: boolean) => void;
   openAdvanced: () => void;
   refresh: () => void;
-  catalog: readonly MerchantBadgeSuggestion[] | null;
-  catalogError: boolean;
-  loadCatalog: () => void;
+  merchantChoices: Readonly<Record<string, MerchantChoices>>;
+  loadMerchantChoices: (scope: string) => void;
 };
 const LibraryContext = createContext<LibraryState | null>(null);
 export const useCommerceLibrary = () => useContext(LibraryContext);
@@ -79,19 +83,22 @@ export function CommerceLibraryProvider({ model, children }: { model: ComposerUi
   const [available, setAvailable] = useState(false), [generation, setGeneration] = useState(0);
   const [dock, setDock] = useState<DockSelection | null>(null);
   const [advanced, setAdvanced] = useState<CommerceBadge | null>(null);
-  const [catalog, setCatalog] = useState<readonly MerchantBadgeSuggestion[] | null>(null);
-  const [catalogError, setCatalogError] = useState(false);
-  const pendingCatalog = useRef(false);
-  const loadCatalog = useCallback(() => {
-    if (pendingCatalog.current) return;
-    pendingCatalog.current = true;
-    setCatalogError(false);
-    void badgeCommand({ kind: "MERCHANT_CATALOG" })
-      .then(result => setCatalog(result.merchants as readonly MerchantBadgeSuggestion[]))
-      .catch(() => setCatalogError(true))
-      .finally(() => { pendingCatalog.current = false; });
+  const [merchantChoices, setMerchantChoices] = useState<Readonly<Record<string, MerchantChoices>>>({});
+  const merchantRequests = useRef(new Map<string, Promise<unknown>>());
+  const loadMerchantChoices = useCallback((scope: string) => {
+    if (merchantRequests.current.has(scope)) return;
+    const command = scope === merchantCatalogScope ? { kind: "MERCHANT_CATALOG" }
+      : { kind: "SUGGEST_MERCHANTS", keys: JSON.parse(scope) as string[] };
+    const request = badgeCommand(command);
+    merchantRequests.current.set(scope, request);
+    setMerchantChoices(current => ({ ...current, [scope]: {} }));
+    const apply = (result: MerchantChoices) => {
+      if (merchantRequests.current.get(scope) !== request) return;
+      merchantRequests.current.delete(scope);
+      setMerchantChoices(current => ({ ...current, [scope]: result }));
+    };
+    void request.then(result => apply({ items: result.merchants as readonly MerchantBadgeSuggestion[] }), () => apply({ error: true }));
   }, []);
-  useEffect(() => { loadCatalog(); }, [loadCatalog]);
   useEffect(() => {
     const request = JSON.parse(signature) as { keys: string[]; anchors: NonNullable<CommerceBadge["anchor"]>[] };
     let cancelled = false;
@@ -117,8 +124,7 @@ export function CommerceLibraryProvider({ model, children }: { model: ComposerUi
   const open = useCallback((badge: CommerceBadge, invoker: HTMLElement) => {
     if (!badge.anchor) { setAdvanced(badge); return; }
     setDock({ badge, invoker, cluster: !!invoker.closest("[data-cluster-overlay]") });
-    if (badge.kind !== "platform" && !catalog) loadCatalog();
-  }, [catalog, loadCatalog]);
+  }, []);
   const closeDock = useCallback((restoreFocus = false) => {
     if (restoreFocus && dock?.invoker.isConnected && document.activeElement?.closest("[data-commerce-dock]"))
       dock.invoker.focus({ preventScroll: true });
@@ -126,11 +132,15 @@ export function CommerceLibraryProvider({ model, children }: { model: ComposerUi
   }, [dock]);
   const openAdvanced = useCallback(() => { if (dock) setAdvanced(dock.badge); }, [dock]);
   const refresh = useCallback(() => setGeneration(current => current + 1), []);
-  const value = useMemo(() => ({ ...library, available, open, dock, closeDock, openAdvanced, refresh, catalog, catalogError, loadCatalog }),
-    [library, available, open, dock, closeDock, openAdvanced, refresh, catalog, catalogError, loadCatalog]);
+  const value = useMemo(() => ({ ...library, available, open, dock, closeDock, openAdvanced, refresh, merchantChoices, loadMerchantChoices }),
+    [library, available, open, dock, closeDock, openAdvanced, refresh, merchantChoices, loadMerchantChoices]);
   return <LibraryContext.Provider value={value}>{children}
     {advanced && <Suspense fallback={<p role="status">Ouverture de la bibliothèque…</p>}>
-      <LibraryEditor badge={advanced} library={value} refresh={() => { refresh(); loadCatalog(); }} close={() => setAdvanced(null)} />
+      <LibraryEditor badge={advanced} library={value} refresh={() => {
+        refresh();
+        merchantRequests.current.clear();
+        setMerchantChoices({});
+      }} close={() => setAdvanced(null)} />
     </Suspense>}
   </LibraryContext.Provider>;
 }

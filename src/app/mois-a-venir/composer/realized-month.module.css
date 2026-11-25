@@ -53,6 +53,9 @@
 .rail {
   --card-width: min(236px, calc(100vw - 55px));
   --card-gap: 8px;
+  --frame-inset: 9px;
+  --frame-heading: 24px;
+  position: relative;
   display: flex;
   align-items: flex-start;
   flex: 1;
@@ -60,13 +63,13 @@
   gap: 14px;
   overflow: auto;
   overscroll-behavior-x: contain;
+  overflow-anchor: none;
   padding: 4px 4px 8px;
   scrollbar-color: #c8b1da #f9f3fc;
 }
+.railWidthProbe { position: absolute; inline-size: var(--card-width); block-size: 0; pointer-events: none; }
 .empty { margin: 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
 .groupedBoard {
-  --frame-inset: 9px;
-  --frame-heading: 24px;
   --frame-width: calc(var(--card-width) + 2 * var(--frame-inset));
   --frame-step: calc(var(--frame-width) + var(--card-gap));
   display: flex;

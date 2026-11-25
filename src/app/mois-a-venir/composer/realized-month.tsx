@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, Search, Utensils, X } from "lucide-react";
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { julyPilotLabels, julyPilotStatuses, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import type { RealizedCard, RealizedPayment } from "@/server/phase2/planner/realized-month";
@@ -11,10 +11,11 @@ import { money, monthLabel, plannedDayLabel } from "./display";
 import { RealizedBadge } from "./realized-badge";
 import { JulyPilotChip } from "./reconstructed-cards";
 import { JulyEditLink } from "./july-edit-link";
-import { packRealizedCards, packRealizedCategories, realizedOperationCardId, type PackedCardPosition } from "./realized-card-view";
+import { realizedOperationCardId, type PackedCardPosition } from "./realized-card-view";
 import { days, matches, paymentSearch, searchableDate, searchText } from "./realized-card-text";
 import type { InitialRealizedDetail, RealizedBoardOverview, RealizedCardSummary } from "./realized-overview";
 import { unpackRealizedOverview, type PackedRealizedOverview } from "./realized-overview-wire";
+import { useRealizedRailLayout } from "./realized-rail-layout";
 import styles from "./realized-month.module.css";
 
 const sortOptions = [
@@ -118,7 +119,7 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open
     data-realized-work={card.work?.mode}
     style={position ? { "--card-column": position.column, insetBlockStart: position.top, minHeight: position.height } as CSSProperties : undefined}
     aria-haspopup="dialog" onClick={() => open(card.id)}>
-    <span className={styles.cardContent}>
+    <span className={styles.cardContent} data-realized-card-content>
       <span className={styles.cardVisuals}>
         <CardArtwork card={card} size={42} />
         {!card.work && badges.length > 0 && <span className={styles.badges}>
@@ -300,11 +301,7 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
   const closeButton = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const rail = useRef<HTMLDivElement>(null);
-  const [layout, setLayout] = useState<{
-    key: string;
-    packing: ReturnType<typeof packRealizedCards> & Partial<Pick<ReturnType<typeof packRealizedCategories>, "frames">>;
-  }>();
-  const terms = searchText(query).split(" ").filter(Boolean);
+  const terms = useMemo(() => searchText(query).split(" ").filter(Boolean), [query]);
   const byCategory = sortOrder === "category";
   const fillColumns = !byCategory && terms.length === 0;
   const categoryById = useMemo(() => new Map(overview.groups.map(group => [group.id, group])), [overview.groups]);
@@ -312,7 +309,7 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
     const card = overview.cards[key]!;
     return { key, card, category: card.categoryId ? categoryById.get(card.categoryId) : undefined };
   }), [byCategory, overview, categoryById]);
-  const visible = indexed.filter(({ card }) => (!statusFilter || card.pilotStatus === statusFilter)
+  const visible = useMemo(() => indexed.filter(({ card }) => (!statusFilter || card.pilotStatus === statusFilter)
     && (!terms.length || card.search.some(line => matches(line, terms)))).sort((a, b) => {
       const byDate = () => (a.card.sortDate ?? "9999").localeCompare(b.card.sortDate ?? "9999") || a.card.label.localeCompare(b.card.label, "fr")
         || a.card.id.localeCompare(b.card.id);
@@ -321,11 +318,11 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
       if (left === null || right === null) return left === right ? byDate() : left === null ? 1 : -1;
       const difference = Math.abs(Number(left)) - Math.abs(Number(right));
       return (sortOrder === "amount-asc" ? difference : -difference) || byDate();
-    });
-  const visibleCategories = byCategory ? overview.groups.flatMap(category => {
+    }), [indexed, sortOrder, statusFilter, terms]);
+  const visibleCategories = useMemo(() => byCategory ? overview.groups.flatMap(category => {
     const entries = visible.filter(entry => entry.category?.id === category.id);
     return entries.length ? [{ category, entries }] : [];
-  }) : [];
+  }) : [], [byCategory, overview.groups, visible]);
   const visibleCount = visible.length;
   const selectedPaymentId = selection?.paymentId;
   const paymentCardId = !byCategory && selectedPaymentId ? realizedOperationCardId(selectedPaymentId) : undefined;
@@ -337,8 +334,12 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
   const detailKey = selectedView?.key;
   const detailId = selected?.id;
   const detail = detailKey ? loaded.get(detailKey) ?? (initialDetail?.key === detailKey ? initialDetail.card : undefined) : undefined;
-  const visibleKeys = `${sortOrder}:${fillColumns}:${visible.map(({ card }) => card.id).join("|")}`;
-  const packing = layout?.key === visibleKeys ? layout.packing : undefined;
+  const groups = useMemo(() => byCategory ? visibleCategories.map(({ category, entries }) => ({ id: category.id, entries }))
+    : visible.length ? [{ id: "all", entries: visible }] : [], [byCategory, visibleCategories, visible]);
+  const visibleKeys = useMemo(() => `${sortOrder}:${fillColumns}:${visible.map(({ card }) => card.id).join("|")}`,
+    [sortOrder, fillColumns, visible]);
+  const { probe, packing, containsColumn, isMounted, setFocusedId, updateWindow } =
+    useRealizedRailLayout(rail, groups, visibleKeys, byCategory, fillColumns);
   const groupedPacking = byCategory ? packing : undefined;
 
   useEffect(() => {
@@ -358,43 +359,6 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
       });
     return () => controller.abort();
   }, [detail, detailId, detailKey, overview.month, pilot, retry]);
-
-  useLayoutEffect(() => {
-    const node = rail.current;
-    if (!node) return;
-    const grids = [...node.querySelectorAll<HTMLElement>("[data-realized-grid]")];
-    if (!grids.length) return;
-    const groupedBoard = node.querySelector<HTMLElement>("[data-realized-grouped-grid]");
-
-    function measure() {
-      if (!node || !node.clientHeight) return;
-      const railStyle = getComputedStyle(node);
-      const available = node.clientHeight - parseFloat(railStyle.paddingTop) - parseFloat(railStyle.paddingBottom) - 1;
-      const gap = parseFloat(railStyle.getPropertyValue("--card-gap"));
-      const groups = grids.map(grid => ({
-        id: grid.dataset.realizedGrid!,
-        cards: [...grid.children].map(element => {
-          const card = element as HTMLElement;
-          // Measure the contents so height added to align the column cannot affect the next packing pass.
-          const height = (card.firstElementChild?.getBoundingClientRect().height ?? 0) + card.offsetHeight - card.clientHeight;
-          return { id: card.id, height: Math.ceil(height) };
-        }),
-      }));
-      const groupStyle = groupedBoard && getComputedStyle(groupedBoard);
-      const next = groupStyle
-        ? packRealizedCategories(groups, available, gap, parseFloat(groupStyle.getPropertyValue("--frame-inset")),
-          parseFloat(groupStyle.getPropertyValue("--frame-heading")))
-        : packRealizedCards(groups[0]!.cards, available, gap, fillColumns);
-      setLayout(previous => previous?.key === visibleKeys && JSON.stringify(previous.packing) === JSON.stringify(next)
-        ? previous : { key: visibleKeys, packing: next });
-    }
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    const contents = grids.flatMap(grid => [...grid.querySelectorAll(`.${styles.cardContent}`)]);
-    for (const element of [node, ...contents]) observer.observe(element, { box: "border-box" });
-    return () => observer.disconnect();
-  }, [visibleKeys, fillColumns]);
 
   function scrollRail(direction: number) {
     const node = rail.current;
@@ -441,6 +405,7 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
       style={flatPacking ? { "--packed-columns": flatPacking.columns, height: flatPacking.height } as CSSProperties : undefined}>
       {entries.map(({ card, category }) => {
         const position = packing?.positions[card.id];
+        if (!isMounted(card.id, position)) return null;
         return <RealizedMonthCard key={card.id} card={card} category={category} position={position}
           date={sortOrder === "date" ? card.sortDate : undefined}
           portrait={card.work ? overview.participantPortraits[card.work.participant.personId]
@@ -476,12 +441,17 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
         <button type="button" aria-label="Défiler à droite" onClick={() => scrollRail(1)}><ArrowRight size={16} aria-hidden="true" /></button>
       </div>
     </div>
-    <div ref={rail} className={styles.rail}
+    <div ref={rail} className={styles.rail} onScroll={updateWindow}
       tabIndex={0} aria-label="Cartes réalisées, défilement horizontal" data-realized-rail
+      onFocusCapture={event => {
+        const card = (event.target as HTMLElement).closest<HTMLElement>("[data-realized-card]");
+        if (card) setFocusedId(card.id);
+      }}
       onKeyDown={event => {
         if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault(); scrollRail(event.key === "ArrowRight" ? 1 : -1);
       }}>
+      <span ref={probe} className={styles.railWidthProbe} aria-hidden="true" />
       {visibleCount === 0 && <p className={styles.empty}>{overview.flatKeys.length ? "Aucune carte ne correspond à cette recherche."
         : "Aucune opération ni événement importé pour ce mois."}</p>}
       {visibleCount > 0 && !byCategory && renderGrid("all", visible)}
@@ -490,7 +460,7 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
         {visibleCategories.map(({ category, entries }) => <section key={category.id} className={styles.category}
           data-realized-category={category.id} aria-labelledby={`realized-category-${category.id}`}>
           <h2 id={`realized-category-${category.id}`}>{category.label}</h2>
-          {groupedPacking?.frames?.[category.id]?.map(frame => <div key={frame.column} className={styles.groupFrame}
+          {groupedPacking?.frames?.[category.id]?.filter(frame => containsColumn(frame.column)).map(frame => <div key={frame.column} className={styles.groupFrame}
             data-category-frame={category.id} aria-hidden="true"
             style={{ "--card-column": frame.column, insetBlockStart: frame.top, height: frame.height } as CSSProperties}>
             <span className={styles.groupFrameTitle}>{category.label}</span>

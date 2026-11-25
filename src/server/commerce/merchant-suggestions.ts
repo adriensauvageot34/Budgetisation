@@ -7,11 +7,27 @@ import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 type MerchantRow = { merchant_id: string; label: string; activity_key: string; activity: string;
   badge_policy: string; visual_brand_merchant_id: string | null; generic_badge_category: string | null; purchase_count: number };
 
-export async function readMerchantSuggestions(client: SupabaseClient, media: Promise<readonly PersonalBadge[]>): Promise<readonly MerchantBadgeSuggestion[]> {
-  const [{ data, error }, images] = await Promise.all([client.rpc("composer_merchant_suggestions"), media]);
-  if (error || !data) throw new TypeError("BADGE_LIBRARY_UNAVAILABLE");
+export async function readMerchantSuggestions(
+  client: SupabaseClient,
+  readMedia: (keys?: readonly string[]) => Promise<readonly PersonalBadge[]>,
+  selection?: { activities: ReadonlySet<string>; limit: number },
+): Promise<readonly MerchantBadgeSuggestion[]> {
+  const readRows = async () => {
+    const { data, error } = await client.rpc("composer_merchant_suggestions");
+    if (error || !data) throw new TypeError("BADGE_LIBRARY_UNAVAILABLE");
+    const rows = data as MerchantRow[];
+    if (!selection) return rows;
+    return (selection.activities.size ? rows.filter(row => selection.activities.has(row.activity_key)) : rows)
+      .slice(0, selection.limit);
+  };
+  const rowsRead = readRows();
+  const imagesRead = selection ? rowsRead.then(rows => readMedia([...new Set(rows.flatMap(row => [
+    "merchant:" + row.merchant_id,
+    ...(row.visual_brand_merchant_id ? ["merchant:" + row.visual_brand_merchant_id] : []),
+  ]))])) : readMedia();
+  const [rows, images] = await Promise.all([rowsRead, imagesRead]);
   const visuals = new Map(images.map(image => [image.key, image]));
-  return (data as MerchantRow[]).map(row => {
+  return rows.map(row => {
     const key = "merchant:" + row.merchant_id;
     const sharedKey = row.visual_brand_merchant_id ? "merchant:" + row.visual_brand_merchant_id : undefined;
     const policy = merchantBadgePolicy(row.badge_policy);

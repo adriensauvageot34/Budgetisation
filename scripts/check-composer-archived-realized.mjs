@@ -269,6 +269,21 @@ assert.match(aprilHtml, /href="\/mois-a-venir\/composer\?month=2026-03&amp;carte
 const { julyPilotForecast, projectJulyPilot } = require("@/server/phase2/planner/july-pilot");
 const { RealizedComposerMonth } = require("@/app/mois-a-venir/composer/realized-month");
 const { realizedBoardOverview } = require("@/app/mois-a-venir/composer/realized-overview");
+const { realizedColumnWindow, preserveRealizedRailOffset } = require("@/app/mois-a-venir/composer/realized-rail-layout");
+assert.deepEqual(realizedColumnWindow(0, 740, 244, 25), { first: 0, last: 5 });
+assert.deepEqual(realizedColumnWindow(5100, 740, 244, 25), { first: 18, last: 24 });
+assert.equal(preserveRealizedRailOffset(980, 740, {
+  step: 244, packing: { columns: 14, positions: { event: { column: 4 } } },
+}, {
+  step: 244, packing: { columns: 15, positions: { event: { column: 5 } } },
+}), 1224);
+const dense = { ...board, cards: Array.from({ length: 120 }, (_, index) => ({
+  id: `dense-${index}`, label: `Dépense ${index}`, amount: "-1.00",
+  section: "daily", art: { iconKey: "activity" }, payments: [],
+})), groups: [], categoryCards: undefined };
+const denseHtml = renderToStaticMarkup(createElement(RealizedComposerMonth, realizedBoardOverview(dense)));
+assert.equal([...denseHtml.matchAll(/data-realized-card="/gu)].length, 18);
+assert.match(denseHtml, /120 cartes/u);
 const { matches, searchText } = require("@/app/mois-a-venir/composer/realized-card-text");
 const { unpackRealizedOverview } = require("@/app/mois-a-venir/composer/realized-overview-wire");
 const { overview: packed, initialDetail: linkedDetail } = realizedBoardOverview(reviewed, splitCard.id);
