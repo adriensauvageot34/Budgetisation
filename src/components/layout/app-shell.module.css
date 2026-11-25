@@ -8,7 +8,7 @@
 .toolbar:empty { display: none; }
 .period { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
 .account { margin-inline-start: auto; flex: none; }
-.globalShell {
+.clayShell {
   --ui-color-surface-canvas: #f4edf9;
   --ui-color-surface-base: #fffdfd;
   --ui-color-surface-subtle: #f1e7fa;
@@ -66,17 +66,20 @@
     radial-gradient(ellipse at 94% 0, #eaddfa 0, transparent 56%),
     linear-gradient(145deg, #f8f2fb, #f3ebfa 62%, #f9eff6);
 }
-.globalShell > header {
+.clayShell > header {
   border-color: #e8d9f3;
   background: #fefbffdc;
   box-shadow: 0 2px 12px #512e7809;
 }
-.globalShell .period :is(select, a), .globalShell .account button {
+.clayShell .period :is(select, a), .clayShell .account button {
   border-color: var(--color-border);
   background: #fffafd;
   color: var(--color-primary-deep);
 }
 .globalMain { min-width: 0; padding: 12px clamp(12px, 2vw, 28px); }
+.calendarShell { display: grid; grid-template-rows: auto 1fr; }
+.calendarShell > header { position: sticky; z-index: 35; top: 0; }
+.calendarMain { min-width: 0; padding: 8px clamp(7px, 1.1vw, 20px) 12px; }
 @media (min-width: 768px) {
   .globalShell { display: grid; height: 100dvh; grid-template-rows: auto minmax(0, 1fr); overflow: clip; }
   .globalMain { min-height: 0; overflow: clip; }
