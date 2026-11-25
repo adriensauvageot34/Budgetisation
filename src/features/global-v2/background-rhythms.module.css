@@ -18,6 +18,10 @@
   .backgroundRhythms[data-workspace-rhythm] .monthInteractionLayer, .backgroundRhythms[data-workspace-rhythm] .selectedMonthGuide { top: 39px; }
   .backgroundRhythms[data-workspace-rhythm] .fuelPaidRail { margin-top: 6px; padding-top: 8px; gap: 5px; }
 }
+@media (min-width: 768px) and (max-height: 820px) {
+  .backgroundRhythms[data-workspace-rhythm] .carAnnualVisual :is(.annualRiver, .monthInteractionLayer) { height: clamp(112px, 20dvh, 164px); }
+  .backgroundRhythms[data-workspace-rhythm] .fuelPaidRail > div { height: 58px; }
+}
 .rhythmCard { display: grid; min-width: 0; gap: 20px; border: 1px solid var(--color-border); border-radius: 22px; padding: clamp(20px, 3vw, 30px); background: var(--color-surface); box-shadow: var(--shadow-sm); }
 .rhythmCardHeader { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 360px); align-items: start; gap: 34px; }
 .rhythmCardHeader h4 { margin: 4px 0 0; font-size: clamp(24px, 3vw, 32px); letter-spacing: -.035em; }
