@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
@@ -9,8 +10,8 @@ import { composerBalanceHref, composerCalendarHref, forecastWindowMonths, monthP
 import { monthLabel } from "../display";
 import { ComposerCalendar } from "./calendar";
 import { readComposerCalendar } from "./calendar-data";
-import material from "../../month-material.module.css";
 import styles from "../composer.module.css";
+import clay from "./calendar.module.css";
 
 const months = [...ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_MONTH, ...forecastWindowMonths];
 export const dynamic = "force-dynamic";
@@ -27,13 +28,15 @@ export default async function ComposerCalendarPage({ searchParams }: { searchPar
   const mode = month === JULY_COMPOSER_MONTH ? "pilot" : !imported && forecastWindowMonths.includes(month) ? "forecast" : "realized";
   const calendar = await withProductAuthentication(() => readComposerCalendar(context, month, mode));
   const button = styles.reconstructionLink;
-  return <div className={`${material.page} grid gap-3`}>
+  return <div className={clay.workspace}>
     <h1 className="sr-only">Calendrier · {monthLabel(month)}</h1>
     <AppToolbarContent className={styles.compactToolbar}>
       {imported && <small>Données bancaires partielles</small>}
       <nav aria-label="Vues de Composer" className={styles.reconstructionModes}>
         {mode !== "pilot" && <Link className={button} href={realizedComposerHref(month)} prefetch={false}>Cartes</Link>}
-        <span className={button} aria-current="page">Calendrier</span>
+        <span className={`${button} ${clay.activeView}`} aria-current="page">
+          <Image src="/analyse-globale/clay/events.webp" alt="" width={22} height={22} unoptimized />Calendrier
+        </span>
         {mode === "pilot" && <>
           <Link className={button} href={realizedComposerHref(month)} prefetch={false}>Au 15 juillet</Link>
           <Link className={button} href={JULY_COMPOSER_EDIT_HREF} prefetch={false}>Édition</Link>
@@ -42,6 +45,6 @@ export default async function ComposerCalendarPage({ searchParams }: { searchPar
         {(mode !== "realized" || imported) && <Link className={button} prefetch={false} href={mode === "pilot" ? JULY_V2_HREF : monthPlanningHref(month, imported ? "previsions" : undefined)}>Prévisions</Link>}
       </nav>
     </AppToolbarContent>
-    <ComposerCalendar key={month} calendar={calendar} month={month} today={mode === "pilot" ? JULY_PILOT_DATE : ""} />
+    <ComposerCalendar key={month} calendar={calendar} month={month} today={mode === "pilot" ? JULY_PILOT_DATE : now} />
   </div>;
 }
