@@ -26,7 +26,7 @@ require.extensions[".ts"] = (module, filename) => module._compile(ts.transpileMo
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true }, fileName: filename,
 }).outputText, filename);
 
-const { defaultMonthInputs, deriveMonthScenario } = require(path.resolve(root, "src/server/phase2/month-scenario.ts"));
+const { defaultMonthInputs, deriveMonthScenario, projectFixedForecastSchedule } = require(path.resolve(root, "src/server/phase2/month-scenario.ts"));
 const { buildMonthReference, RESTAURANT_SUBCATEGORIES } = require(path.resolve(root, "src/server/phase2/month-reference.ts"));
 const months = Array.from({ length: 12 }, (_, index) => {
   const date = new Date(Date.UTC(2025, 7 + index, 1));
@@ -109,6 +109,19 @@ const inputs = { ...defaultMonthInputs(), declaredResources: { "benefit:swile": 
 const plan = (current = inputs) => deriveMonthScenario(forecast, current, null, "2026-09-28").economicPlan;
 const baseline = plan();
 assert.ok(baseline);
+assert.deepEqual(projectFixedForecastSchedule(forecast, inputs, "2026-09-28"), baseline.certainOutflows.items,
+  "Calendar preserves declared dates, amount overrides, exclusions and confirmed installments");
+const { forecastWindowMonths } = require(path.resolve(root, "src/app/mois-a-venir/month-entry.ts"));
+for (const month of forecastWindowMonths) {
+  const monthReference = buildMonthReference(referenceEvidence, month, ["2026-03-31", "2026-05-31", "2026-07-31"]
+    .map(date => ({ componentKey: "obligation:edf", date })));
+  const monthForecast = { ...forecast, meta: { ...forecast.meta, targetMonth: month }, referencePlan: monthReference };
+  const asOf = new Date(Date.parse(`${month}-01T00:00:00Z`) - 86400000).toISOString().slice(0, 10);
+  const settings = defaultMonthInputs();
+  const schedule = projectFixedForecastSchedule(monthForecast, settings, asOf);
+  assert.deepEqual(schedule, deriveMonthScenario(monthForecast, settings, null, asOf).planningReference.certainOutflows.items);
+  assert.equal(schedule.find(item => item.key === "obligation:edf").date.slice(0, 7), month);
+}
 assert.deepEqual(baseline.resources.map((item) => item.amount), ["1988.39", "1560.60", "190.00", "190.00"]);
 assert.equal(baseline.salaryCash, "3548.99");
 assert.equal(baseline.mealBenefits, "380.00");

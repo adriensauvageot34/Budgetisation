@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
+import type { BootstrapHousehold } from "@/server/bootstrap/types";
 import {
   getAnalysisPeriods,
   getCurrentHousehold,
@@ -9,9 +10,15 @@ import {
 } from "@/server/bootstrap/queries";
 
 export async function getBootstrapContext() {
-  const { supabase, user } = await getAuthenticatedBootstrapClient();
-  const household = await getCurrentHousehold(supabase);
+  const session = await getAuthenticatedBootstrapClient();
+  const household = await getCurrentHousehold(session.supabase);
+  return getBootstrapContextFromHousehold(session, household);
+}
 
+export async function getBootstrapContextFromHousehold(
+  { supabase, user }: Awaited<ReturnType<typeof getAuthenticatedBootstrapClient>>,
+  household: BootstrapHousehold | null,
+) {
   if (!household) {
     return { user, household: null, persons: [], periods: [], revision: null };
   }

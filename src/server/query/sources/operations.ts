@@ -286,6 +286,7 @@ export async function loadOperationReferenceLabels(
   repository: CanonicalRepository,
   operations: readonly CanonicalOperation[],
   facts: readonly EconomicComponentFact[],
+  options: { includePlaceLabels?: boolean } = {},
 ) {
   const categoryIds = [...new Set([
     ...operations.flatMap(({ categoryId }) => categoryId === undefined ? [] : [categoryId]),
@@ -306,7 +307,7 @@ export async function loadOperationReferenceLabels(
     repository.loadTaxonomyRows("categories", categoryIds),
     repository.loadTaxonomyRows("subcategories", subcategoryIds),
     repository.loadEntityRows("merchants", "merchant_id", merchantIds),
-    repository.loadEntityRows("places", "place_id", placeIds),
+    options.includePlaceLabels === false ? [] : repository.loadEntityRows("places", "place_id", placeIds),
   ]);
   const loadedMerchantIds = new Set(merchants.map(row => row.merchant_id));
   const extraVisualIds = [...new Set(merchants.flatMap(row =>
@@ -346,6 +347,7 @@ export async function loadOperationReferenceLabels(
       return [[row.merchant_id, { kind, visualId, genericCategory, policy }] as const];
     })),
     places: canonicalLabelMap(places, ["place_id", "id"]),
+    placeIds,
   };
 }
 

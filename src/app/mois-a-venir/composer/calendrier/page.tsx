@@ -3,7 +3,9 @@ import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
-import { getBootstrapContext } from "@/server/bootstrap/context";
+import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
+import { getBootstrapContextFromHousehold } from "@/server/bootstrap/context";
+import { getCurrentHousehold } from "@/server/bootstrap/queries";
 import { planningDate } from "@/server/phase2/planning-date";
 import { ARCHIVED_REALIZED_MONTHS, isImportedRealizedMonth, JULY_COMPOSER_EDIT_HREF, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, JULY_V2_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { composerBalanceHref, composerCalendarHref, forecastWindowMonths, monthPlanningHref } from "../../month-entry";
@@ -18,15 +20,20 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Calendrier de Composer" };
 
 export default async function ComposerCalendarPage({ searchParams }: { searchParams: Promise<{ month?: string | string[] }> }) {
-  const [context, params] = await Promise.all([withProductAuthentication(getBootstrapContext), searchParams]);
-  if (!context.household) notFound();
-  const now = planningDate(context.household.timezone);
+  const [session, params] = await Promise.all([withProductAuthentication(getAuthenticatedBootstrapClient), searchParams]);
+  const household = await getCurrentHousehold(session.supabase);
+  if (!household) notFound();
+  const now = planningDate(household.timezone);
   const month = typeof params.month === "string" ? params.month : months.includes(now.slice(0, 7)) ? now.slice(0, 7) : JULY_COMPOSER_MONTH;
   if (!months.includes(month)) redirect(composerCalendarHref(JULY_COMPOSER_MONTH));
   if (params.month !== month) redirect(composerCalendarHref(month));
   const imported = isImportedRealizedMonth(month);
   const mode = month === JULY_COMPOSER_MONTH ? "pilot" : !imported && forecastWindowMonths.includes(month) ? "forecast" : "realized";
-  const calendar = await withProductAuthentication(() => readComposerCalendar(context, month, mode));
+  const calendar = await withProductAuthentication(async () => {
+    if (mode === "forecast") return readComposerCalendar({ mode, household, supabase: session.supabase }, month);
+    const context = await getBootstrapContextFromHousehold(session, household);
+    return readComposerCalendar({ mode, context }, month);
+  });
   const button = styles.reconstructionLink;
   return <div className={clay.workspace}>
     <h1 className="sr-only">Calendrier · {monthLabel(month)}</h1>

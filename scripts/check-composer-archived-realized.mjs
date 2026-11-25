@@ -135,12 +135,14 @@ const bank = [
 }));
 const labels = {
   categoryKeys: new Map([["food", "alimentation"]]), subcategoryKeys: new Map(bank.map(item => [item.row.subcategory.id, item.row.subcategory.id])),
-  merchantIdentity: new Map(), places: new Map(), merchantKeys: new Map([["merchant-ride", "uber"]]),
+  merchantIdentity: new Map(), placeIds: bank.flatMap(item => item.row.canonicalPlace?.id ?? []), merchantKeys: new Map([["merchant-ride", "uber"]]),
 };
 let reviewFixture;
+let externalOperationReads = 0;
 class Repo {
   async loadRealizedReview() { return reviewFixture; }
   async loadOperationsByIds(ids) {
+    externalOperationReads++;
     return ids.includes("earlier-refund") ? [{ operationId: "earlier-refund", bankDate: "2025-09-17", bankAmount: "3.00", label: "Avoir test" }] : [];
   }
   async loadOperationsByBankRange() { return bank; }
@@ -179,10 +181,11 @@ const stubs = {
 };
 const originalLoad = Module._load;
 Module._load = (name, ...args) => stubs[name] ?? originalLoad.call(Module, name, ...args);
-const { readRealizedMonth } = require("@/server/phase2/planner/realized-month");
+const { readRealizedMonth, readRealizedCalendarSource } = require("@/server/phase2/planner/realized-month");
 const bootstrap = { household: { householdId: "test", timezone: "Europe/Paris" },
   persons: [{ personId: person.adrien, displayName: "Adrien Test" }, { personId: person.manon, displayName: "Manon Test" }] };
 const board = await readRealizedMonth(bootstrap, "2025-10");
+const calendarSource = await readRealizedCalendarSource(bootstrap, "2025-10");
 reviewFixture = { version: 1, cards: [{
   id: "review-split", label: "Sortie test individualisée", date: next, activity: "activite_loisir",
   participant: "Manon", operationIds: ["shop"], legIds: ["back"],
@@ -190,6 +193,9 @@ reviewFixture = { version: 1, cards: [{
   groups: { shop: "Achat de la sortie" }, notes: ["Trajet documenté"],
 }], participants: { shop: "Couple" }, purchaseActors: { shop: "Courses faites par Manon" } };
 const reviewed = await readRealizedMonth(bootstrap, "2025-10");
+assert.equal(externalOperationReads, 1);
+const reviewedCalendarSource = await readRealizedCalendarSource(bootstrap, "2025-10");
+assert.equal(externalOperationReads, 1, "Calendar does not read references to payments in other months");
 Module._load = originalLoad;
 assert.deepEqual(reviewed.totals, board.totals);
 assert.deepEqual(reviewed.cards.flatMap(card => card.payments.map(payment => payment.id)).sort(),
@@ -360,5 +366,7 @@ assert.equal(julyCalendar.find(item => item.label === "Sortie passée").composer
 assert.ok(julyCalendar.filter(item => item.amount !== null).every(item => item.date <= "2026-07-15"));
 assert.equal(julyCalendar.filter(item => item.amount !== null).length, 1);
 const historicalCalendar = observedCalendarItems(board, false);
+assert.deepEqual(observedCalendarItems(calendarSource, false), historicalCalendar);
+assert.deepEqual(observedCalendarItems(reviewedCalendarSource, false), observedCalendarItems(reviewed, false));
 assert.equal(historicalCalendar.filter(item => item.amount !== null).length, board.totals.expense.count);
 console.log("PASS: eleven realized months, work cafés, family stays, cross-month event links, confirmed venue addresses, and consistent bank totals");

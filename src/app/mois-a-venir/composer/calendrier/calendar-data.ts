@@ -1,13 +1,14 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, parseLocalDate, parseYearMonth } from "@/core/time";
 import { isImportedRealizedMonth, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { withProductAuthentication } from "@/app/product-query";
 import { getBootstrapContext } from "@/server/bootstrap/context";
-import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
+import type { BootstrapHousehold } from "@/server/bootstrap/types";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
-import { deriveMonthScenario } from "@/server/phase2/month-scenario";
+import { projectFixedForecastSchedule } from "@/server/phase2/month-scenario";
 import { readMonthPredictionEvidence } from "@/server/phase2/month-prediction-evidence";
 import { planningDate } from "@/server/phase2/planning-date";
 import { readActiveComposerDraft } from "@/server/phase2/planner/composer-draft-service";
@@ -15,18 +16,21 @@ import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/compose
 import { readJulyBudget } from "@/server/phase2/planner/july-budget";
 import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
 import { readMonthComposer } from "@/server/phase2/planner/read-model";
-import { readRealizedMonth, type RealizedBoard, type RealizedCard, type RealizedPayment } from "@/server/phase2/planner/realized-month";
+import { readRealizedCalendarSource, readRealizedMonth, type RealizedCalendarSource } from "@/server/phase2/planner/realized-month";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import { composerCalendarArtwork } from "../../calendar-artwork";
 import { calendarMetadata } from "../../calendar-metadata";
 import { calendarDaySummary, calendarItemsOnDate, calendarRibbonWeeks, orderCalendarItems } from "../../calendar-presentation";
-import { projectMonthCalendar, type CalendarEntry, type CalendarItem } from "../../planned-expenses-projection";
+import { projectFixedCalendarItem, type CalendarEntry, type CalendarItem } from "../../planned-expenses-projection";
 
 type Bootstrap = Awaited<ReturnType<typeof getBootstrapContext>>;
+type CalendarRead =
+  | { mode: "realized" | "pilot"; context: Bootstrap }
+  | { mode: "forecast"; household: BootstrapHousehold; supabase: SupabaseClient };
 const categories = "/planned-visuals/commerce/categories";
 
-export function observedCalendarItems(board: RealizedBoard, pilot: boolean): CalendarItem[] {
+export function observedCalendarItems(board: RealizedCalendarSource, pilot: boolean): CalendarItem[] {
   const imported = isImportedRealizedMonth(board.month);
   const first = `${board.month}-01`;
   const last = new Date(Date.UTC(Number(board.month.slice(0, 4)), Number(board.month.slice(5, 7)), 0)).toISOString().slice(0, 10);
@@ -94,20 +98,17 @@ async function julyItems(context: Bootstrap) {
   return items;
 }
 
-async function fixedForecastItems(context: Bootstrap, month: string): Promise<CalendarItem[]> {
-  const { householdId, timezone } = context.household!;
-  const auth = await getAuthenticatedBootstrapClient();
+async function fixedForecastItems({ household, supabase }: Extract<CalendarRead, { mode: "forecast" }>, month: string): Promise<CalendarItem[]> {
+  const { householdId, timezone } = household;
   const client = createCanonicalReadClient();
   // In the Composer timeline these months are forecasts, as viewed from the July pilot.
-  const cutoff = month <= planningDate(timezone).slice(0, 7)
-    ? addDays(parseLocalDate(`${month}-01`), -1) : planningDate(timezone);
-  const evidence = readMonthPredictionEvidence(client, householdId, month, true, { asOfDate: cutoff, timezone });
+  const now = planningDate(timezone);
+  const cutoff = month <= now.slice(0, 7) ? addDays(parseLocalDate(`${month}-01`), -1) : now;
   const [forecast, { inputs }] = await Promise.all([
-    readPlanningMonthForecast(client, householdId, month, evidence), readMonthInputs(auth.supabase, householdId, month),
+    readPlanningMonthForecast(client, householdId, month, undefined, "reference"), readMonthInputs(supabase, householdId, month),
   ]);
-  const { planningReference } = deriveMonthScenario({ ...forecast, forecastMemory: [] }, inputs, null, cutoff);
-  const charges = projectMonthCalendar(planningReference.certainOutflows.items, []);
-  return [...charges.entries, ...charges.undated].map(item => {
+  return projectFixedForecastSchedule(forecast, inputs, cutoff).map(charge => {
+    const item = projectFixedCalendarItem(charge);
     const label = item.label;
     const key = /google one/iu.test(label) ? "google-one" : item.brandKey;
     const badge = key && commerceBadgeImages({ identityKey: key })[0]?.src;
@@ -117,9 +118,10 @@ async function fixedForecastItems(context: Bootstrap, month: string): Promise<Ca
   });
 }
 
-export async function readComposerCalendar(context: Bootstrap, month: string, mode: "realized" | "pilot" | "forecast") {
-  const raw = mode === "pilot" ? await julyItems(context) : mode === "forecast" ? await fixedForecastItems(context, month)
-    : observedCalendarItems(await readRealizedMonth(context, parseYearMonth(month)), false);
+export async function readComposerCalendar(input: CalendarRead, month: string) {
+  const raw = input.mode === "forecast" ? await fixedForecastItems(input, month)
+    : input.mode === "pilot" ? await julyItems(input.context)
+      : observedCalendarItems(await readRealizedCalendarSource(input.context, parseYearMonth(month)), false);
   const entries = raw.filter((item): item is CalendarEntry => item.date !== null);
   const first = new Date(`${month}-01T12:00:00Z`);
   const weekday = (first.getUTCDay() + 6) % 7;
