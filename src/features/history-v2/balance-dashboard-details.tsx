@@ -11,6 +11,7 @@ import {
   type MonthLifeMoneyReadModel,
 } from "@/query-api";
 
+import { daysInBalanceMonth } from "./balance-dashboard-charts";
 import { AmountBars, DetailGroup, PagedRows, chartMaximum, formatDelta, metricValue, moneyAmount, visibleValue } from "./balance-dashboard-widgets";
 import { expenseDisplayTitle, formatCount, formatFrenchDate, formatFrenchDateRange, spendingPresentationLabel } from "./presentation";
 import { CollectionState, DisplayState, MoneyMetric, StateBoundary, formatMoney } from "./renderers";
@@ -57,9 +58,17 @@ export function BalanceDetail({ selection, month, subcategoryLabels, onOpen }: {
   }
 }
 
-function DetailLink({ label, end, onClick }: { readonly label: string; readonly end?: React.ReactNode; readonly onClick: () => void }) {
+function DetailLink({ label, end, onClick, fraction }: {
+  readonly label: string;
+  readonly end?: React.ReactNode;
+  readonly onClick: () => void;
+  readonly fraction?: number;
+}) {
   return <button type="button" className={styles.detailLink} onClick={onClick}>
     <span title={label}>{label}</span>{end}<ChevronRight size={14} aria-hidden />
+    {fraction !== undefined && <span className={`${styles.barTrack} ${styles.lifeMeter}`} aria-hidden>
+      <span style={{ width: `${Math.max(0, Math.min(1, fraction)) * 100}%` }} />
+    </span>}
   </button>;
 }
 
@@ -209,28 +218,39 @@ function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readon
   }</StateBoundary>;
 }
 
-export function BalanceLifeDetails({ model, onOpen }: { readonly model: MonthLifeMoneyReadModel; readonly onOpen: OpenDetail }) {
+export function BalanceLifeDetails({ model, month, onOpen, pageSize }: {
+  readonly model: MonthLifeMoneyReadModel;
+  readonly month: YearMonth;
+  readonly onOpen: OpenDetail;
+  readonly pageSize: number;
+}) {
+  const days = daysInBalanceMonth(month);
   return <div className={styles.detailColumns}>
     <DetailGroup title="Activités du mois">
-      <DisplayState node={model.activities}>{collection => <CollectionState collection={collection}>{items =>
-        <PagedRows label="Activités" items={items}>{rows => rows.map(row =>
+      <DisplayState node={model.activities}>{collection => <CollectionState collection={collection}>{items => {
+        const maximum = Math.max(1, ...items.map(row => row.occurrences));
+        return <PagedRows label="Activités" items={items} size={pageSize}>{rows => rows.map(row =>
           <DetailLink key={row.activityTypeKey} label={row.label} end={formatCount(row.occurrences, "fois", "fois")}
+            fraction={row.occurrences / maximum}
             onClick={() => onOpen({ target: { kind: "activity", activityTypeKey: row.activityTypeKey }, label: row.label })} />
-        )}</PagedRows>
-      }</CollectionState>}</DisplayState>
+        )}</PagedRows>;
+      }}</CollectionState>}</DisplayState>
     </DetailGroup>
     <DetailGroup title="Moments marquants">
       <DisplayState node={model.moments}>{collection => <CollectionState collection={collection}>{items =>
-        <PagedRows label="Moments" items={items}>{rows => rows.map(row =>
-          <DetailLink key={row.momentId} label={row.title} end={formatFrenchDateRange(row.startDate, row.endDate, false)}
+        <PagedRows label="Moments" items={items} size={pageSize}>{rows => rows.map(row =>
+          <DetailLink key={row.momentId} label={row.title} end={<span className={styles.momentFigures}>
+            {formatFrenchDateRange(row.startDate, row.endDate, false)}
+            {metricValue(row.causalCost) !== undefined && <MoneyMetric metric={row.causalCost} partialDisplay="value-only" />}
+          </span>}
             onClick={() => onOpen({ target: { kind: "moment", momentId: row.momentId }, label: row.title })} />
         )}</PagedRows>
       }</CollectionState>}</DisplayState>
     </DetailGroup>
     <DetailGroup title="Lieux fréquentés">
       <DisplayState node={model.places}>{collection => <CollectionState collection={collection}>{items =>
-        <PagedRows label="Lieux" items={items}>{rows => rows.map(row =>
-          <DetailLink key={row.placeId} label={row.label} end={formatCount(row.presenceDays, "jour")}
+        <PagedRows label="Lieux" items={items} size={pageSize}>{rows => rows.map(row =>
+          <DetailLink key={row.placeId} label={row.label} end={formatCount(row.presenceDays, "jour")} fraction={row.presenceDays / days}
             onClick={() => onOpen({ target: { kind: "place", placeId: row.placeId }, label: row.label })} />
         )}</PagedRows>
       }</CollectionState>}</DisplayState>

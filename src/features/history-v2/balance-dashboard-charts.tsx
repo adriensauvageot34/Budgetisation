@@ -51,14 +51,18 @@ export function CategoryRing({ shares }: { readonly shares: readonly (number | u
   }}><span>Part<br />du total</span></div>;
 }
 
+export function daysInBalanceMonth(month: YearMonth) {
+  const first = new Date(`${month}-01T00:00:00Z`);
+  return new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+}
+
 export function MonthTimeline({ month, moments, activeId, onOpen }: {
   readonly month: YearMonth;
   readonly moments: readonly MomentLifeMoneySummary[];
   readonly activeId?: string;
   readonly onOpen: (moment: MomentLifeMoneySummary) => void;
 }) {
-  const first = new Date(`${month}-01T00:00:00Z`);
-  const days = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+  const days = daysInBalanceMonth(month);
   const positions = new Map<number, MomentLifeMoneySummary>();
   const spans: { id: string; start: number; end: number }[] = [];
   const percent = (day: number) => (day - 1) / (days - 1) * 100;
