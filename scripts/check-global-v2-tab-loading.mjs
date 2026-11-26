@@ -12,7 +12,7 @@ const load = Module._load;
 Module._load = function loadTestComponent(name, ...args) {
   if (name === "react") return React;
   if (name === "react/jsx-runtime") return jsxRuntime;
-  // Exercise the actual data and tab components without a layout engine.
+  // Exercise the actual dashboard and detail components without a layout engine.
   if (name === "recharts") return new Proxy({}, { get: () => () => null });
   return load.call(this, name, ...args);
 };
@@ -28,6 +28,8 @@ globalThis.window = {
   addEventListener() {}, removeEventListener() {},
   matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
 };
+globalThis.document = { activeElement: null };
+globalThis.HTMLElement = class HTMLElement {};
 const requestKey = ({ resource, params }) => params.sectionKey ?? resource;
 let root, pending;
 
@@ -42,7 +44,7 @@ async function mount(hash) {
   });
 }
 const requests = () => pending.map(({ request }) => requestKey(request));
-const select = id => act(async () => root.root.findByProps({ id: `global-tab-${id}` }).props.onClick());
+const click = (props) => act(async () => root.root.findByProps(props).props.onClick());
 async function reply(entry) {
   const value = await fixtureTransport(entry.request);
   await act(async () => { entry.resolve(value); });
@@ -50,30 +52,43 @@ async function reply(entry) {
 
 try {
   await mount("");
-  assert.deepEqual(requests(), ["OVERVIEW", "EVOLUTION"], "Both Synthèse requests start before either response");
+  assert.deepEqual(requests(), ["OVERVIEW", "EVOLUTION"], "Both financial reads start together");
+  assert.equal(root.root.findAllByProps({ role: "tablist" }).length, 0);
+  assert.deepEqual(root.root.findAllByType("h2").map(({ props }) => props.id), ["economie-title", "categories-title", "rythmes-title", "profils-title"]);
   await reply(pending[1]);
   assert.equal(root.root.findAllByProps({ "aria-label": "Dépenses réelles et niveau habituel sur douze mois" }).length, 1);
   assert.equal(root.root.findAllByProps({ "aria-label": "Chargement de chiffres clés" }).length, 1);
   await reply(pending[0]);
+  await reply(pending.find(({ request }) => request.params.sectionKey === "BREAKDOWN"));
+  await reply(pending.find(({ request }) => request.resource === "analysis_global_life_timeline"));
+  assert.ok(!requests().includes(globalV2PersonaPanelResource), "Portraits do not trigger a profile read");
 
-  await select("profils");
-  assert.deepEqual(requests(), ["OVERVIEW", "EVOLUTION", globalV2PersonaPanelResource]);
+  const selectPortrait = () => act(async () => {
+    const portrait = root.root.findAllByType("button").find(({ props }) => props.children?.[1]?.props?.children?.[0]?.props?.children === "Adrien");
+    assert.ok(portrait);
+    portrait.props.onClick();
+  });
+  await selectPortrait();
+  assert.equal(requests().at(-1), globalV2PersonaPanelResource);
   assert.ok(root.root.findByProps({ "aria-label": "Chargement de Profils" }));
-  await reply(pending[2]);
-  assert.ok(root.root.findByProps({ id: "profils-title" }));
-  await select("synthese");
-  await select("profils");
-  assert.equal(pending.length, 3, "The pinned visit reuses the profile on re-entry");
+  await reply(pending.at(-1));
+  await click({ "aria-label": "Fermer le détail" });
+  const completed = pending.length;
+  await selectPortrait();
+  assert.equal(pending.length, completed, "The pinned visit reuses profile data on re-entry");
   await act(async () => root.unmount());
 
   await mount("#profils");
-  assert.deepEqual(requests(), [globalV2PersonaPanelResource], "A profile deep link skips the Synthèse reads");
-  await act(async () => pending[0].reject(new Error("SNAPSHOT_TEMPORARILY_UNAVAILABLE")));
-  await act(async () => root.root.findByProps({ role: "alert" }).findByType("button").props.onClick());
-  assert.deepEqual(requests(), [globalV2PersonaPanelResource, globalV2PersonaPanelResource]);
+  await reply(pending[0]);
   await reply(pending[1]);
-  assert.ok(root.root.findByProps({ id: "profils-title" }));
-  console.log("PASS: parallel Synthèse, independent loading, lazy Profils, visit reuse, deep link and retry");
+  const profileRead = pending.find(({ request }) => request.resource === globalV2PersonaPanelResource);
+  assert.ok(profileRead, "The profile deep link opens its inline detail");
+  await act(async () => profileRead.reject(new Error("SNAPSHOT_TEMPORARILY_UNAVAILABLE")));
+  await act(async () => root.root.findByProps({ role: "alert" }).findByType("button").props.onClick());
+  await reply(pending.find(({ request }) => request.params.sectionKey === "BREAKDOWN"));
+  await reply(pending.find(({ request }) => request.resource === "analysis_global_life_timeline"));
+  assert.equal(requests().filter((key) => key === globalV2PersonaPanelResource).length, 2);
+  console.log("PASS: concurrent financial reads, fixed headings, lazy profiles, visit reuse, deep link and retry");
 } finally {
   await act(async () => root?.unmount());
   Module._load = load;
