@@ -45,6 +45,7 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
     const initialCardId = typeof cardId === "string"
       ? board.cards.find(card => card.id === cardId)?.id
         ?? board.cards.find(card => card.pilotSourceId === cardId)?.id
+        ?? (board.cards.some(card => card.payments.some(payment => realizedOperationCardId(payment.id) === cardId)) ? cardId : undefined)
       : undefined;
     const editableSourceIds = source.cards.filter(card => card.section !== "flows").map(card => card.id);
     return <JulyPilotMonth board={board} initialStatus={initialStatus} initialCardId={initialCardId}

@@ -106,7 +106,12 @@ await test("SAVE-013", () => {
 
 /** Exercise real persistence/authenticated actions against only in-memory prospective tables. */
 const h = planningHarness(), originalFrom = h.client.from.bind(h.client);
+const savingsRows = { phase2_savings_goal_month_entries: [], phase2_savings_purchases: [] };
 h.client.from = table => {
+  if (Object.hasOwn(savingsRows, table)) return {
+    select() { return this; }, eq() { return this; }, gte() { return this; }, lt() { return this; }, order() { return this; },
+    then(resolve) { return Promise.resolve({ data: savingsRows[table], error: null }).then(resolve); },
+  };
   if (table !== "phase2_month_inputs") return originalFrom(table);
   const filters = {};
   return {
@@ -129,6 +134,25 @@ require("@/server/phase2/planning-date.ts").planningDate = () => "2026-10-18";
 require("@/server/phase2/month-forecast-snapshot.ts").queryMonthForecast = async () => live;
 const actions = require("@/app/mois-a-venir/actions.ts");
 const form = values => { const form = new FormData(); for (const [key, value] of Object.entries({ targetMonth: "2026-10", ...values })) form.set(key, value); return form; };
+await test("SAVE-LINKED-PURCHASE", async () => {
+  savingsRows.phase2_savings_goal_month_entries = [{
+    goal_id: "gift", label: "Noël", project: "christmas", deadline: null, id: "reserve",
+    target_month: "2026-10", cents: 10000, status: "planned", accounted: false,
+  }];
+  savingsRows.phase2_savings_purchases = [
+    { operation_id: "payment", goal_id: "gift", payment_date: "2026-10-09", payment_label: "Cadeau", cents: 3500 },
+  ];
+  try {
+    const read = async () => (await realReadInputs(h.client, h.householdId, "2026-10")).inputs.declaredOutflows
+      .find(item => item.annualGoalRef === "cagnotte:gift");
+    assert.equal((await read()).amount, "65.00");
+    savingsRows.phase2_savings_purchases = [];
+    assert.equal((await read()).amount, "100.00");
+  } finally {
+    savingsRows.phase2_savings_goal_month_entries = [];
+    savingsRows.phase2_savings_purchases = [];
+  }
+});
 await test("SAVE-015", async () => {
   const stored = await realReadInputs(h.client, h.householdId, "2026-10");
   assert.equal(stored.inputs.declaredOutflows[0].adjustability, "PROTECTED");

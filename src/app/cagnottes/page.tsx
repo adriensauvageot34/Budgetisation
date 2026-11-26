@@ -13,8 +13,10 @@ import { readActiveComposerDraft } from "@/server/phase2/planner/composer-draft-
 import { resolveEffectiveMonthScenario } from "@/server/phase2/planner/effective-month-scenario";
 import { readMonthComposer } from "@/server/phase2/planner/read-model";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
-import { savingsEuros, savingsGoalProgress, savingsMoney, savingsProgressPercent, savingsProjects, savingsStatuses, savingsTemplates,
+import { effectiveSavingsAllocations, savingsEuros, savingsGoalProgress, savingsMoney, savingsProgressPercent, savingsProjects, savingsStatuses, savingsTemplates,
   summarizeSavingsGoals, type SavingsGoal, type SavingsGoalAllocation } from "@/domain/phase2/savings-goals";
+import { JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
+import { realizedOperationCardId } from "@/app/mois-a-venir/composer/realized-card-view";
 import { addSavingsTemplates, changeSavingsAllocation, saveSavingsGoal } from "./actions";
 import { GoalProjectFields } from "./goal-project-fields";
 import { FundingTrack, goalArt, projectArt, ProjectSummary, savingsProjectKeys, savingsTravelTopicKeys, TravelTopicSummary } from "./savings-presentation";
@@ -28,6 +30,11 @@ const monthLabel = (month: string) => new Intl.DateTimeFormat("fr-FR", { month: 
 const dateLabel = (date: string) => new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
   .format(new Date(`${date}T12:00:00Z`));
 const composerHref = (month: string) => `/mois-a-venir/composer?month=${month}&view=edition`;
+function purchaseHref(date: string, operationId: string) {
+  const month = date.slice(0, 7);
+  const href = realizedComposerHref(month, realizedOperationCardId(operationId));
+  return month === JULY_COMPOSER_MONTH && date > JULY_PILOT_DATE ? `${href}&view=bilan` : href;
+}
 const notices: Record<string, string> = {
   saved: "Modifications enregistrées.",
   amount: "Renseigne un montant positif avec deux décimales au maximum.",
@@ -50,7 +57,7 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
   const visible = completed ? filled : goals.filter(goal => !savingsGoalProgress(goal).complete);
   const totals = summarizeSavingsGoals(goals);
   const projects = savingsProjectKeys.filter(project => goals.some(goal => goal.project === project));
-  const assigned = goals.flatMap(goal => goal.allocations).filter(row => row.month === month && !row.accounted)
+  const assigned = goals.flatMap(effectiveSavingsAllocations).filter(row => row.month === month && !row.accounted)
     .reduce((sum, row) => sum + row.cents, 0);
   const notice = typeof params.notice === "string" && Object.hasOwn(notices, params.notice) ? notices[params.notice] : undefined;
   const hasNewTemplates = savingsTemplates.some(template => !goals.some(goal => goal.templateKey === template.key));
@@ -149,7 +156,7 @@ function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal;
   const target = goal.targetCents ?? 0;
   const percent = savingsProgressPercent(progress.funded, target);
   const payableMonths = months.filter(item => !goal.deadline || item <= goal.deadline.slice(0, 7));
-  const allocations = [...goal.allocations].sort((a, b) => a.month.localeCompare(b.month) || a.id.localeCompare(b.id));
+  const allocations = effectiveSavingsAllocations(goal).sort((a, b) => a.month.localeCompare(b.month) || a.id.localeCompare(b.id));
   const Heading = goal.project === "travel" ? "h4" : "h3";
   return <article className={styles.card} data-project={goal.project}>
     <div className={styles.cardIntro}>
@@ -159,14 +166,24 @@ function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal;
           {goal.deadline ? dateLabel(goal.deadline) : "Échéance à préciser"}</p></div>
     </div>
     <div className={styles.cardMoney}>
-      <strong>{target ? savingsMoney(progress.funded) : "Objectif à chiffrer"}</strong>
+      <strong>{target || progress.purchased ? savingsMoney(progress.funded) : "Objectif à chiffrer"}</strong>
+      {!target && progress.purchased > 0 && <span>achetés · objectif à chiffrer</span>}
       {target > 0 && <><span>sur {savingsMoney(target)}</span><span className={styles.percentChip}>{percent} % financés</span></>}
     </div>
     <FundingTrack budget={target} {...progress} label={`Financement · ${goal.label}`} />
-    <p className={styles.footnote}>{progress.complete ? "Remplie" : (progress.unassigned ?? 0) > 0 ? `${savingsMoney(progress.unassigned!)} à affecter`
+    <p className={styles.footnote}>{target > 0 && progress.purchased > target ? `${savingsMoney(progress.purchased - target)} au-dessus du budget`
+      : progress.complete ? "Remplie" : (progress.unassigned ?? 0) > 0 ? `${savingsMoney(progress.unassigned!)} à affecter`
       : progress.planned > 0 ? `${savingsMoney(progress.planned)} prévus` : "Montant à renseigner"}</p>
     <details open={selected || undefined} className={styles.details}>
-      <summary>{target ? "Affectations et suivi" : "Configurer la cagnotte"} <ChevronDown size={15} aria-hidden /></summary>
+      <summary>{target || goal.purchases?.length ? "Affectations et suivi" : "Configurer la cagnotte"} <ChevronDown size={15} aria-hidden /></summary>
+      {!!goal.purchases?.length && <ul className={styles.purchaseLinks} aria-label="Achats liés">
+        {goal.purchases.map(purchase => <li key={purchase.operationId}>
+          <Link prefetch={false} href={purchaseHref(purchase.date, purchase.operationId)}>
+            {purchase.label} <ArrowUpRight size={13} aria-hidden />
+          </Link>
+          <span>{dateLabel(purchase.date)}</span><strong>{savingsMoney(purchase.cents)}</strong>
+        </li>)}
+      </ul>}
       {allocations.length > 0 && <div className={styles.allocations}>{allocations.map(row =>
         <Allocation key={row.id} goal={goal} row={row} months={payableMonths} currentMonth={month} />)}</div>}
       {(progress.unassigned ?? 0) > 0 && payableMonths.length > 0 && <form action={changeSavingsAllocation} className={styles.form}>

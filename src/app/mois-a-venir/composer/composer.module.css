@@ -1487,6 +1487,9 @@ body:has([data-workshop-navigation]) .questionPalette[data-dock-nature="DECISION
 /* R5: an empty scene does not reserve a passive dock. The portal host stays mounted. */
 .columns[data-bar-living-open=true] .paletteDock:not(:has([data-bar-dock],[data-commerce-dock])) { display:none; }
 .board .paletteDock[hidden],.clusterDialog .paletteDock[hidden] { display:none; }
+.columns[data-bar-living-open=true] .paletteDock[data-savings-palette] { display:block; }
+.paletteDock[data-savings-palette] { height:auto; flex-basis:auto; }
+.savingsDockTrigger { display:flex; align-items:center; gap:6px; margin:6px 10px; padding:5px 9px; border:1px solid #dbc9ec; border-radius:8px; background:#f8f1fd; color:#553678; font-size:.8rem; }
 .board .paletteDock:has([data-commerce-dock]) { margin-inline:0; }
 
 /* R5: stable choice artwork box; no card or Board sizing changes. */

@@ -7,7 +7,7 @@ import { withProductAuthentication } from "@/app/product-query";
 import { forecastWindowMonths } from "@/app/mois-a-venir/month-entry";
 import { parseLocalDate } from "@/core/time";
 import { plannerUuid } from "@/domain/phase2/planner/json";
-import { maxSavingsCents, savingsGoalProgress, savingsProjects, savingsStatuses, savingsTemplates, savingsTravelTopics,
+import { effectiveSavingsAllocations, parseSavingsCents, savingsGoalProgress, savingsProjects, savingsStatuses, savingsTemplates, savingsTravelTopics,
   type SavingsGoalAllocation, type SavingsProject, type SavingsStatus } from "@/domain/phase2/savings-goals";
 import { getBootstrapSession } from "@/server/bootstrap/context";
 import { planningDate } from "@/server/phase2/planning-date";
@@ -15,10 +15,8 @@ import { readSavingsGoal } from "@/server/phase2/savings-goals";
 
 const field = (form: FormData, name: string) => String(form.get(name) ?? "").trim();
 function cents(text: string): number {
-  if (!/^\d{1,6}(?:[,.]\d{1,2})?$/u.test(text)) throw new TypeError("amount");
-  const [whole, decimal = ""] = text.replace(",", ".").split(".");
-  const value = Number(whole) * 100 + Number(decimal.padEnd(2, "0"));
-  if (value <= 0 || value > maxSavingsCents) throw new TypeError("amount");
+  const value = parseSavingsCents(text);
+  if (value === null) throw new TypeError("amount");
   return value;
 }
 
@@ -100,6 +98,7 @@ export async function changeSavingsAllocation(form: FormData) {
     const action = field(form, "operation");
     const allocationId = field(form, "allocationId");
     const row = goal.allocations.find(allocation => allocation.id === allocationId);
+    const available = effectiveSavingsAllocations(goal).find(allocation => allocation.id === allocationId);
     const remaining = goal.allocations.filter(allocation => allocation.id !== allocationId);
     const validateMonth = (month: string) => {
       if (month < owner.currentMonth || !forecastWindowMonths.includes(month)
@@ -112,22 +111,24 @@ export async function changeSavingsAllocation(form: FormData) {
       if (!amount || amount <= 0) throw new TypeError("amount");
       allocations = [...goal.allocations, { id: randomUUID(), month: validateMonth(field(form, "month")), cents: amount, status: "planned", accounted: false }];
     } else {
-      if (!row) throw new TypeError("stale");
+      if (!row || !available) throw new TypeError("stale");
       if (action === "status") {
         const status = field(form, "status") as SavingsStatus;
         if (!Object.hasOwn(savingsStatuses, status)) throw new TypeError("fields");
         const accounted = status !== "planned" && form.get("accounted") === "on";
         const amount = cents(field(form, "amount"));
-        if (amount > row.cents) throw new TypeError("allocation");
+        if (amount > available.cents) throw new TypeError("allocation");
         allocations = amount === row.cents ? [...remaining, { ...row, status, accounted }]
           : [...remaining, { ...row, cents: row.cents - amount }, { ...row, id: randomUUID(), cents: amount, status, accounted }];
       } else if (action === "move" && row.status === "planned") {
         const month = validateMonth(field(form, "month"));
         const amount = cents(field(form, "amount"));
-        if (amount > row.cents) throw new TypeError("allocation");
+        if (amount > available.cents) throw new TypeError("allocation");
         allocations = amount === row.cents ? [...remaining, { ...row, month }]
           : [...remaining, { ...row, cents: row.cents - amount }, { ...row, id: randomUUID(), month, cents: amount }];
-      } else if (action === "release" && row.status === "planned") allocations = remaining;
+      } else if (action === "release" && row.status === "planned") {
+        allocations = available.cents === row.cents ? remaining : [...remaining, { ...row, cents: row.cents - available.cents }];
+      }
       else throw new TypeError("fields");
     }
     if (goal.targetCents === null || allocations.reduce((sum, allocation) => sum + allocation.cents, 0) > goal.targetCents) throw new TypeError("allocation");
