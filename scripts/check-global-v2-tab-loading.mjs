@@ -20,6 +20,32 @@ Module._load = function loadTestComponent(name, ...args) {
 const { GlobalV2Page } = require("@/features/global-v2/global-v2-page");
 const { createGlobalV2FixtureBundle, createGlobalV2FixtureTransport } = require("@/features/global-v2/fixture-data");
 const { globalV2PersonaPanelResource } = require("@/query-api/global-v2/persona-panel");
+const { profileBlocks } = require("@/features/global-v2/persona/profile-content");
+
+const subscription = { typicalPayment: null, cadence: null, observedPaymentCount: 0 };
+const project = { purchaseCount: 1, grossCost: "10", netCost: "10", netCertifiedByRefundLink: false };
+const social = (title) => ({ outingsWithoutPartnerParticipation: [{ eventRef: `event:${title}`, title, date: "2026-06-15", place: null }] });
+const ownerFixture = {
+  persons: [
+    {
+      personId: "adrien", socialLife: social("Concert Adrien"),
+      work: { workMeals: {}, commute: { directCost: "0" } },
+      personalUniverses: { permit: { cost: "10" }, photo: project, musicHeadphones: project, googleAiPro: subscription },
+      recurringHabits: { qobuz: subscription, hairdresser: { places: [] }, stylingWax: {} },
+    },
+    {
+      personId: "manon", socialLife: social("Cinéma Manon"),
+      work: { workMeals: {}, primaryWorkPlaces: [], professionalInterventions: {} },
+      personalUniverses: { products: [], sunoFatherSong: project },
+      recurringHabits: { netflix: subscription, max: subscription, vape: {} },
+    },
+  ],
+};
+const directProfile = (personId) => ({ personId, daily: [], recurring: [], phases: [] });
+const outingTitles = (personId) => profileBlocks(directProfile(personId), ownerFixture).find(({ key }) => key === "outings")?.items.map(({ title }) => title);
+assert.deepEqual(outingTitles("manon"), ["Cinéma Manon"]);
+assert.deepEqual(outingTitles("adrien"), ["Concert Adrien"]);
+assert.equal(outingTitles("autre"), undefined);
 const fixture = createGlobalV2FixtureBundle("contract");
 const fixtureTransport = createGlobalV2FixtureTransport(fixture, "contract");
 globalThis.window = {
