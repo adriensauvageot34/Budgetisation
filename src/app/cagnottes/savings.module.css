@@ -13,9 +13,16 @@
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
-.hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.hero {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px;
+  margin-bottom: 13px; min-height: 143px; padding: clamp(14px, 2.4vw, 28px);
+  border: 1px solid #e1cde9; border-radius: 25px; background-color: #f4eafa;
+  background-image: linear-gradient(90deg, #faf2fd 28%, #f4eafa 56%, #f4eafa00 83%), url("/cagnottes/clay/other.webp");
+  background-size: 100% 100%, auto 117%; background-position: center, right center; background-repeat: no-repeat;
+  box-shadow: 0 9px 23px #71459618, inset 0 1px 0 #fff;
+}
 .hero h1 { font-size: clamp(1.85rem, 3vw, 2.8rem); font-weight: 850; letter-spacing: -.05em; line-height: 1.06; }
-.hero p { color: var(--muted); margin-top: 5px; }
+.hero p { color: var(--muted); margin-top: 5px; max-width: 32ch; }
 .primary, .quiet {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   width: fit-content; min-height: 34px; padding: 5px 11px;
@@ -59,26 +66,96 @@
 .tabs a { display: inline-flex; gap: 6px; align-items: center; padding: 5px 10px; color: var(--muted); font-size: .85rem; font-weight: 750; border-radius: 9px; }
 .tabs a[aria-current] { background: #fffaff; color: var(--accent); box-shadow: 0 2px 7px #5b358520; }
 .tabs a span { font-size: .72rem; padding: 1px 4px; background: #eaddf5; border-radius: 6px; }
-.group { margin-block: 14px 19px; }
-.group h2 { font-size: 1.06rem; font-weight: 850; margin-bottom: 7px; }
+.projectNav { display: flex; flex-wrap: wrap; gap: 5px; }
+.projectNav a {
+  border: 1px solid var(--theme-line); border-radius: 999px; padding: 4px 9px;
+  color: var(--theme-ink); background: var(--theme-surface);
+  font-weight: 720; font-size: .8rem;
+}
+.projectNav a:hover { text-decoration: underline; }
+.workspace [data-project] {
+  --theme-ink: #653887;
+  --theme-line: #e1cde9;
+  --theme-surface: #f7edfc;
+  --theme-progress: #a066c6;
+  --theme-pending: #d9bee9;
+  --theme-image: url("/cagnottes/clay/other.webp");
+}
+.workspace [data-project="birthday"] {
+  --theme-ink: #8b3f69;
+  --theme-line: #ecc9db;
+  --theme-surface: #fcf0f5;
+  --theme-progress: #b76898;
+  --theme-pending: #eabed3;
+  --theme-image: url("/cagnottes/clay/birthday.webp");
+}
+.workspace [data-project="christmas"] {
+  --theme-ink: #813751;
+  --theme-line: #e9c9cf;
+  --theme-surface: #fff2ed;
+  --theme-progress: #9c4260;
+  --theme-pending: #e8aeb8;
+  --theme-image: url("/cagnottes/clay/christmas.webp");
+}
+.workspace [data-project="travel"] {
+  --theme-ink: #494086;
+  --theme-line: #d8d2f0;
+  --theme-surface: #f1effb;
+  --theme-progress: #7368bd;
+  --theme-pending: #c4b9ed;
+  --theme-image: url("/cagnottes/clay/travel.webp");
+}
+.group {
+  margin-block: 15px 20px; padding: 10px; border: 1px solid var(--theme-line); border-radius: 23px;
+  background: var(--theme-surface); box-shadow: 0 6px 20px #56367411, inset 0 1px white;
+}
+.projectHeader {
+  border: 1px solid var(--theme-line); border-radius: 16px; padding: 12px 14px;
+  background-color: var(--theme-surface);
+  background-image: linear-gradient(90deg, #ffffffd4 0%, var(--theme-surface) 51%, transparent 79%), var(--theme-image);
+  background-size: 100% 100%, auto 111%; background-position: center, right center; background-repeat: no-repeat;
+  box-shadow: inset 0 1px #ffffff93; min-height: 143px;
+}
+.projectHeading, .topicTitle { display: flex; align-items: center; gap: 8px; }
+.projectHeading img, .topicTitle img { object-fit: contain; flex: none; }
+.projectHeading h2 { font-size: clamp(1.35rem, 2vw, 1.8rem); letter-spacing: -.032em; font-weight: 850; color: var(--theme-ink); scroll-margin-top: 14px; }
+.projectTotals {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px;
+  width: min(570px, 66%); padding: 6px 0; margin-top: 3px;
+  border: 1px solid #fffcffce; border-radius: 12px; background: #fffbffbc;
+}
+.projectTotals div { padding-inline: 9px; }
+.projectTotals div + div { border-inline-start: 1px solid var(--theme-line); }
+.projectTotals dt { color: var(--muted); font-size: .72rem; line-height: 1.3; }
+.projectTotals dd { font-size: clamp(.9rem, 2.15vw, 1.18rem); color: var(--theme-ink); font-weight: 850; line-height: 1.3; font-variant-numeric: tabular-nums; margin: 0; }
+.projectProgress { width: min(570px, 66%); margin-top: 7px; }
+.projectProgress p { display: flex; gap: 4px 12px; flex-wrap: wrap; }
+.projectProgress p span { font-size: .745rem; color: var(--theme-ink); font-weight: 680; background: #fffbffca; border-radius: 6px; padding: 1px 4px; }
+.projectProgress p:empty { display: none; }
+.group > .cards, .topics { margin-top: 9px; }
+.topics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 9px; align-items: start; }
+.topic { min-width: 0; border: 1px solid var(--theme-line); border-radius: 16px; background: #ffffff70; padding: 8px; }
+.topicHeader { padding: 3px 5px 6px; }
+.topicTitle h3 { color: var(--theme-ink); font-size: 1.04rem; font-weight: 840; line-height: 1.2; }
+.topicBudget { display:flex; align-items: baseline; flex-wrap:wrap; gap: 4px 8px; margin: 3px 0 5px; }
+.topicBudget strong { color: var(--theme-ink); font-weight: 830; font-variant-numeric: tabular-nums; }
+.topicBudget span { color: var(--muted); font-size: .77rem; }
 .cards { display: grid; align-items: start; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 11px; }
+.topic .cards { grid-template-columns: repeat(auto-fit, minmax(min(100%, 188px), 1fr)); gap: 7px; margin-top: 4px; }
 .card {
-  --card-background: #f8f0fc;
-  border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(150deg, #fffcff, var(--card-background));
+  border: 1px solid var(--theme-line); border-radius: 16px; background: linear-gradient(150deg, #fffcff 44%, var(--theme-surface));
   padding: 11px 13px; box-shadow: 0 5px 12px #67458212, inset 0 1px white; min-width: 0;
 }
-.card[data-project="birthday"] { --card-background: #fbecf3; }
-.card[data-project="christmas"] { --card-background: #fbf1e4; }
-.card[data-project="travel"] { --card-background: #eef0fe; }
 .cardIntro { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .cardIntro > img { object-fit: contain; flex: none; }
-.cardIntro h3 { font-size: 1rem; font-weight: 850; overflow-wrap: anywhere; line-height: 1.22; }
+.cardIntro :is(h3,h4) { font-size: 1rem; font-weight: 850; overflow-wrap: anywhere; line-height: 1.22; }
 .cardMoney { margin-block: 7px 4px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 3px 6px; }
 .cardMoney strong { font-size: 1.2rem; font-weight: 850; font-variant-numeric: tabular-nums; }
 .cardMoney span, .muted, .footnote { font-size: .79rem; color: var(--muted); }
+.cardMoney .percentChip { font-weight: 740; color: var(--theme-ink); border: 1px solid var(--theme-line); border-radius: 999px; padding: 1px 5px; }
 .track { display: flex; height: 7px; border-radius: 12px; overflow: hidden; background: #e8dff0; margin-bottom: 5px; }
-.track span:first-child { background: #7244ad; }
-.track span:last-child { background: #be9edc; }
+.track span:first-child { background: var(--theme-progress); }
+.track span:last-child { background: var(--theme-pending); }
 .details { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 6px; }
 .details > summary, .allocation > summary { display: flex; align-items: center; justify-content: space-between; gap: 6px; color: var(--accent); font-size: .82rem; font-weight: 750; }
 .details[open] > summary svg { rotate: 180deg; }
@@ -104,7 +181,11 @@
 .empty h2 { font-weight: 850; font-size: 1.1rem; }
 .empty p { font-size: .88rem; color: var(--muted); margin-top: 3px; }
 @media (max-width: 760px) {
+  .hero { min-height: 120px; background-size: 100% 100%, auto 96%; }
+  .hero p { max-width: 24ch; }
   .overview { grid-template-columns: 1fr; }
   .newGoal > .form { position: static; }
   .totals { padding: 9px 6px; }
+  .projectHeader { background-size: 100% 100%, auto 102%; }
+  .projectTotals, .projectProgress { width: 100%; }
 }
