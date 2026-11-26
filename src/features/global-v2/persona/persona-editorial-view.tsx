@@ -211,11 +211,11 @@ export const editorialTopics = [
 ] as const;
 
 export function PersonaEditorialView({ model, direct, headingId, topic }: { readonly model: PersonaEditorialModel; readonly direct: PersonaDirectModel; readonly headingId: string; readonly topic: typeof editorialTopics[number]["key"] }) {
+  if (topic === "car") return <PersonaVehicleModule vehicle={model.vehicle} />;
   const months = monthKeys(model.period.first, model.period.certifiedThrough);
   return <div className={styles.root}>
     {topic === "portraits" && <ProfileHeader model={model} headingId={headingId} />}
     {topic === "work" && <Section id="persona-work-title" title="Nos journées de travail"><div className={styles.workGrid}><Permit person={model.persons[0]} /><WorkMeals person="adrien" meal={model.persons[0].work.workMeals} /><WorkMeals person="manon" meal={model.persons[1].work.workMeals} /></div></Section>}
-    {topic === "car" && <PersonaVehicleModule vehicle={model.vehicle} />}
     {topic === "projects" && <Section id="persona-universes-title" title="Nos univers personnels"><div className={styles.universesGrid}><AdrienUniverses person={model.persons[0]} direct={direct} /><ManonUniverses person={model.persons[1]} months={months} /></div></Section>}
     {topic === "habits" && <Section id="persona-habits-title" title="Nos habitudes qui reviennent"><div className={styles.habitsGrid}><Grooming person={model.persons[0]} /><Beauty person={model.persons[1]} /><Tobacco person={model.persons[0]} /><Vape person={model.persons[1]} /><Cigarettes person={model.persons[1]} /></div></Section>}
     {topic === "visits" && <Section id="persona-social-title" title="Famille et amis"><div className={styles.socialGrid}><Family person={model.persons[1]} months={months} /><Friends person={model.persons[1]} months={months} /></div></Section>}
