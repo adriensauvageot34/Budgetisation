@@ -7,16 +7,18 @@ import { withProductAuthentication } from "@/app/product-query";
 import { forecastWindowMonths } from "@/app/mois-a-venir/month-entry";
 import { parseLocalDate } from "@/core/time";
 import { plannerDigest, plannerUuid } from "@/domain/phase2/planner/json";
-import { effectiveSavingsAllocations, parseSavingsCents, savingsGoalProgress, savingsPriorities, savingsProjects, savingsStatuses, savingsTemplates, savingsTravelTopics,
+import { effectiveSavingsAllocations, parseSavingsCents, savingsBudgetKinds, savingsGoalProgress, savingsPriorities, savingsProjects, savingsStatuses, savingsTemplates, savingsTravelTopics, seasonalSavingsProject,
   type SavingsGoalAllocation, type SavingsProject, type SavingsStatus } from "@/domain/phase2/savings-goals";
 import { changeSavingsSchedule, savingsDeadlineGap, savingsFundingDate, savingsFundingMonths, savingsScheduleDeltas, suggestSavingsMoves,
   type SavingsGoalChange, type SavingsMargin, type SavingsScheduleRequest } from "@/domain/phase2/savings-schedule";
 import { getBootstrapSession } from "@/server/bootstrap/context";
+import { createCanonicalReadClient } from "@/server/canonical/client";
 import { planningDate } from "@/server/phase2/planning-date";
 import { readSavingsGoal, readSavingsGoals } from "@/server/phase2/savings-goals";
 import { readSavingsMargin, readSavingsMargins } from "@/server/phase2/savings-margin";
 
 const field = (form: FormData, name: string) => String(form.get(name) ?? "").trim();
+const validYear = (year: number) => Number.isInteger(year) && year >= 2000 && year <= 2099;
 function cents(text: string): number {
   const value = parseSavingsCents(text);
   if (value === null) throw new TypeError("amount");
@@ -33,6 +35,7 @@ async function scope() {
 async function updateGoal(owner: Awaited<ReturnType<typeof scope>>, id: string, revision: number, values: Record<string, unknown>) {
   const { data, error } = await owner.client.from("phase2_savings_goals").update({ ...values, revision: revision + 1 })
     .eq("household_id", owner.householdId).eq("goal_id", id).eq("revision", revision).select("goal_id").maybeSingle();
+  if (error?.message === "LIVRET_EXCEEDED") throw new TypeError("livret");
   if (error?.code === "23514") throw new TypeError("allocation");
   if (error) throw error;
   if (!data) throw new TypeError("stale");
@@ -44,6 +47,8 @@ async function mutate(form: FormData, operation: (owner: Awaited<ReturnType<type
   const goal = field(form, "goalId");
   const query = new URLSearchParams();
   if (forecastWindowMonths.includes(month)) query.set("month", month);
+  const season = field(form, "returnSeason");
+  if (validYear(Number(season))) query.set("season", season);
   try {
     const changedGoal = await operation(owner);
     if (changedGoal) query.set("goal", changedGoal);
@@ -54,16 +59,17 @@ async function mutate(form: FormData, operation: (owner: Awaited<ReturnType<type
   } catch (error) {
     const code = error instanceof TypeError ? error.message : "";
     if (/^[a-f0-9-]{36}$/u.test(goal)) query.set("goal", goal);
-    query.set("notice", ["amount", "allocation", "month", "stale", "fields"].includes(code) ? code : "unavailable");
+    query.set("notice", ["amount", "allocation", "month", "stale", "fields", "livret", "season"].includes(code) ? code : "unavailable");
   }
-  redirect(`/cagnottes?${query}`);
+  redirect(`/cagnottes?${query}${query.has("goal") ? `#cagnotte-${query.get("goal")}` : ""}`);
 }
 
 export async function addSavingsTemplates(form: FormData) {
-  await mutate(form, async ({ client, householdId }) => {
+  await mutate(form, async ({ client, householdId, currentMonth }) => {
     const { error } = await client.from("phase2_savings_goals").upsert(savingsTemplates.map(template => ({
       household_id: householdId, label: template.label, project: template.project, deadline: template.deadline, template_key: template.key,
       travel_topic: template.travelTopic ?? null, priority: template.priority ?? "normal",
+      season_year: seasonalSavingsProject(template.project) ? Number(template.deadline?.slice(0, 4) ?? currentMonth.slice(0, 4)) : null,
     })), { onConflict: "household_id,template_key", ignoreDuplicates: true });
     if (error) throw error;
   });
@@ -85,9 +91,16 @@ export async function saveSavingsGoal(form: FormData) {
     const priority = field(form, "priority") || "normal";
     if (!Object.hasOwn(savingsPriorities, priority) || deadline && plannedPurchaseDate && plannedPurchaseDate > deadline) throw new TypeError("fields");
     const amount = field(form, "target");
+    const budgetKind = field(form, "budgetKind") || "estimate";
+    const recipient = field(form, "recipient");
+    const season = seasonalSavingsProject(project)
+      ? Number(field(form, "season") || deadline?.slice(0, 4) || owner.currentMonth.slice(0, 4)) : null;
+    if (!Object.hasOwn(savingsBudgetKinds, budgetKind) || recipient.length > 80
+      || season !== null && (!validYear(season) || deadline && Number(deadline.slice(0, 4)) !== season)) throw new TypeError("fields");
     const travelTopic = project === "travel" ? field(form, "travelTopic") || "other" : null;
     if (travelTopic !== null && !Object.hasOwn(savingsTravelTopics, travelTopic)) throw new TypeError("fields");
-    const values = { label, project, deadline, planned_purchase_date: plannedPurchaseDate, priority, target_cents: amount ? cents(amount) : null, travel_topic: travelTopic };
+    const values = { label, project, deadline, planned_purchase_date: plannedPurchaseDate, priority, target_cents: amount ? cents(amount) : null,
+      travel_topic: travelTopic, budget_kind: budgetKind, recipient: recipient || null, season_year: season, optional: form.get("optional") === "on" };
     const id = field(form, "goalId");
     if (id) {
       await updateGoal(owner, plannerUuid(id), Number(field(form, "revision")), values);
@@ -104,7 +117,7 @@ export async function changeSavingsAllocation(form: FormData) {
   await mutate(form, async owner => {
     const id = plannerUuid(field(form, "goalId"));
     const goal = await readSavingsGoal(owner.client, owner.householdId, id);
-    if (!goal || goal.revision !== Number(field(form, "revision"))) throw new TypeError("stale");
+    if (!goal || goal.abandoned || goal.revision !== Number(field(form, "revision"))) throw new TypeError("stale");
     const action = field(form, "operation");
     const allocationId = field(form, "allocationId");
     const row = goal.allocations.find(allocation => allocation.id === allocationId);
@@ -144,6 +157,50 @@ export async function changeSavingsAllocation(form: FormData) {
     if (goal.targetCents === null || allocations.reduce((sum, allocation) => sum + allocation.cents, 0) > goal.targetCents) throw new TypeError("allocation");
     await updateGoal(owner, id, goal.revision, { allocations });
     return id;
+  });
+}
+
+export async function setSavingsPurchaseComplete(form: FormData) {
+  await mutate(form, async owner => {
+    const id = plannerUuid(field(form, "goalId"));
+    const goal = await readSavingsGoal(owner.client, owner.householdId, id);
+    if (!goal || goal.abandoned || goal.revision !== Number(field(form, "revision"))) throw new TypeError("stale");
+    await updateGoal(owner, id, goal.revision, { purchased_complete: field(form, "complete") === "yes" });
+    return id;
+  });
+}
+
+export async function abandonSavingsGoal(form: FormData) {
+  await mutate(form, async owner => {
+    const id = plannerUuid(field(form, "goalId"));
+    const revision = Number(field(form, "revision"));
+    const target = field(form, "destinationId");
+    const { error } = await createCanonicalReadClient().rpc("abandon_phase2_savings_goal", {
+      p_household: owner.householdId, p_goal: id, p_revision: revision, p_destination: target ? plannerUuid(target) : null,
+    });
+    if (error?.code === "40001") throw new TypeError("stale");
+    if (error?.code === "23514") throw new TypeError("livret");
+    if (error?.code === "22023") throw new TypeError("fields");
+    if (error) throw error;
+    return id;
+  });
+}
+
+export async function duplicateSavingsSeason(form: FormData) {
+  await mutate(form, async owner => {
+    const project = field(form, "project") as SavingsProject;
+    const from = Number(field(form, "fromSeason")), to = Number(field(form, "returnSeason"));
+    if (!seasonalSavingsProject(project) || !validYear(from) || !validYear(to) || to <= from) throw new TypeError("season");
+    const goals = (await readSavingsGoals(owner.client, owner.householdId)).filter(goal =>
+      !goal.abandoned && goal.project === project && goal.season === from && goal.seriesKey);
+    if (!goals.length) throw new TypeError("season");
+    const { error } = await owner.client.from("phase2_savings_goals").upsert(goals.map(goal => {
+      const source = goal.deadline?.slice(5);
+      const deadline = source ? `${to}-${source === "02-29" && to % 4 !== 0 ? "02-28" : source}` : null;
+      return { household_id: owner.householdId, project, season_year: to, series_key: goal.seriesKey, deadline,
+        label: goal.label, recipient: goal.recipient, priority: goal.priority ?? "normal", optional: Boolean(goal.optional) };
+    }), { onConflict: "household_id,project,season_year,series_key", ignoreDuplicates: true });
+    if (error) throw error;
   });
 }
 

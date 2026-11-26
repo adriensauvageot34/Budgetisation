@@ -69,7 +69,7 @@ export function savingsScheduleDeltas(changes: readonly SavingsGoalChange[]) {
 
 export function savingsDeadlineGap(goal: SavingsGoal) {
   const date = savingsFundingDate(goal);
-  if (goal.targetCents === null || !date) return null;
+  if (goal.targetCents === null || !date || goal.abandoned || goal.purchasedComplete) return null;
   const { funded } = savingsGoalProgress(goal);
   const byDate = effectiveSavingsAllocations(goal).filter(row => row.status === "planned" && row.month <= date.slice(0, 7))
     .reduce((sum, row) => sum + row.cents, 0);
