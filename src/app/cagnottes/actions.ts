@@ -46,6 +46,8 @@ async function mutate(form: FormData, operation: (owner: Awaited<ReturnType<type
   const month = field(form, "returnMonth");
   const goal = field(form, "goalId");
   const query = new URLSearchParams();
+  const project = field(form, "returnProject");
+  if (Object.hasOwn(savingsProjects, project)) query.set("project", project);
   if (forecastWindowMonths.includes(month)) query.set("month", month);
   const season = field(form, "returnSeason");
   if (validYear(Number(season))) query.set("season", season);

@@ -20,6 +20,8 @@ import { realizedOperationCardId } from "./realized-card-view";
 import { readComposerRealizedBoard } from "@/server/phase2/planner/read-composer-realized-board";
 import { projectJulyPilot } from "@/server/phase2/planner/july-pilot";
 import { reconstructJulyDraft } from "@/server/phase2/planner/reconstruct-july-draft";
+import { getBootstrapSession } from "@/server/bootstrap/context";
+import { readSavingsGoal } from "@/server/phase2/savings-goals";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Composer mon mois" };
 export default async function ComposerPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -30,12 +32,19 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   async function readBoard() {
     return await readComposerRealizedBoard(month) ?? notFound();
   }
-  if (isArchivedRealizedMonth(month) || isImportedRealizedMonth(month) && params.view !== "edition" || isReconstruction && params.view === "bilan") {
-    const board = await withProductAuthentication(readBoard);
+  const savingsId = typeof params.cagnotte === "string" && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/iu.test(params.cagnotte)
+    ? params.cagnotte : undefined;
+  if (isArchivedRealizedMonth(month) || isImportedRealizedMonth(month) && params.view !== "edition" || isReconstruction && (params.view === "bilan" || savingsId)) {
+    const [board, savingsTarget] = await withProductAuthentication(async () => Promise.all([readBoard(), savingsId ? (async () => {
+      const { context, session } = await getBootstrapSession();
+      if (!context.household) return undefined;
+      const goal = await readSavingsGoal(session.supabase, context.household.householdId, savingsId);
+      return goal && !goal.abandoned && !goal.purchasedComplete ? { id: goal.goalId, label: goal.label } : undefined;
+    })() : undefined]));
     const cardId = params.carte;
     const initialCardId = typeof cardId === "string" && board.cards.some(card => card.id === cardId ||
       card.payments.some(payment => realizedOperationCardId(payment.id) === cardId)) ? cardId : undefined;
-    return <ArchivedRealizedMonth key={month} board={board} initialCardId={initialCardId} />;
+    return <ArchivedRealizedMonth key={month} board={board} initialCardId={initialCardId} savingsTarget={savingsTarget} />;
   }
   if (isReconstruction && params.view !== "edition") {
     const source = await withProductAuthentication(readBoard);
