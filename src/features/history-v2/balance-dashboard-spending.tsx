@@ -14,7 +14,7 @@ import {
   type SpendingNatureBucketProjection,
   type SpendingSegment,
 } from "@/query-api";
-import { AmountBar, chartMaximum, metricValue, moneyAmount, visibleValue } from "./balance-dashboard-widgets";
+import { AmountBar, chartMaximum, metricValue, moneyAmount, useShortBalance, visibleValue } from "./balance-dashboard-widgets";
 import { spendingPresentationLabel } from "./presentation";
 import { DisplayState, StateBoundary, formatMoney } from "./renderers";
 import styles from "./balance-dashboard.module.css";
@@ -49,6 +49,7 @@ export function SpendingBreakdown({ model, month }: {
   readonly month: YearMonth;
 }) {
   const [openKey, setOpenKey] = useState<string>();
+  const previewSize = useShortBalance() ? 1 : 2;
   const collection = "segments" in model ? visibleValue(model.segments) : undefined;
   const projections = new Map(collection?.status === "KNOWN" || collection?.status === "PARTIAL"
     ? collection.items.map(projection => [segmentKey(projection.segment), projection])
@@ -58,7 +59,7 @@ export function SpendingBreakdown({ model, month }: {
   function renderBucket(bucket: SpendingBucket, params: HistorySpendingSegmentDetailParams, maximum: number, showPreview = true) {
     const key = segmentKey(params);
     return <BreakdownBucket key={key} bucket={bucket} maximum={maximum} projection={projections.get(key)}
-      params={params} month={month} showPreview={showPreview} open={openKey === key}
+      params={params} month={month} previewSize={showPreview ? previewSize : 0} open={openKey === key}
       onToggle={() => setOpenKey(current => current === key ? undefined : key)} />;
   }
 
@@ -87,13 +88,13 @@ export function SpendingBreakdown({ model, month }: {
   </div>;
 }
 
-function BreakdownBucket({ bucket, maximum, projection, params, month, showPreview, open, onToggle }: {
+function BreakdownBucket({ bucket, maximum, projection, params, month, previewSize, open, onToggle }: {
   readonly bucket: SpendingBucket;
   readonly maximum: number;
   readonly projection?: SpendingNatureBucketProjection;
   readonly params: HistorySpendingSegmentDetailParams;
   readonly month: YearMonth;
-  readonly showPreview: boolean;
+  readonly previewSize: number;
   readonly open: boolean;
   readonly onToggle: () => void;
 }) {
@@ -101,15 +102,15 @@ function BreakdownBucket({ bucket, maximum, projection, params, month, showPrevi
   const label = spendingPresentationLabel(bucket.key);
   const items = projection ? itemsOf(projection) : undefined;
   const other = metricValue(visibleValue(projection?.otherAmount));
-  const preview = showPreview ? items?.slice(0, 2) ?? [] : [];
+  const preview = items?.slice(0, previewSize) ?? [];
   const remaining = items?.slice(preview.length) ?? [];
   const hasMore = items === undefined || remaining.length > 0 || (other !== undefined && Number(other) !== 0);
   return <div className={styles.spendingBucket} data-expanded={open}>
     <AmountBar row={{ id, label, amount: moneyAmount(bucket.amount), share: bucket.shareOfActual }} maximum={maximum} />
     {preview.length > 0 && <ContributorRows items={preview} />}
     {hasMore && <button type="button" className={styles.spendingToggle} aria-expanded={open} aria-controls={id}
-      aria-label={`${open ? "Replier" : "Développer"} · ${label}`} onClick={onToggle}>
-      <ChevronDown size={13} aria-hidden />{open ? "Replier" : showPreview ? "Voir le reste" : "Voir les postes"}
+      aria-label={`${open ? "Replier" : "Développer"} · ${label}`} title={open ? "Replier" : "Voir les dépenses restantes"} onClick={onToggle}>
+      <ChevronDown size={13} aria-hidden />{open ? "Replier" : previewSize ? "Voir le reste" : "Voir les postes"}
     </button>}
     <div className={styles.spendingFold} id={id} data-open={open} inert={!open} aria-hidden={!open}>
       <div>
