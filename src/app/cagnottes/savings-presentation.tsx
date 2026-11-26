@@ -12,9 +12,9 @@ export const projectArt: Record<SavingsProject, string> = {
 
 const travelArt: Record<SavingsTravelTopic, string> = {
   flights: "/planned-visuals/builder/clay/transport/plane.webp",
-  bags: projectArt.travel,
+  bags: "/planned-visuals/builder/clay/clothing/bag.webp",
   equipment: "/analyse-globale/clay/categories.webp",
-  documents: "/planned-visuals/builder/clay/misc/document.webp",
+  documents: "/cagnottes/clay/passport.webp",
   other: projectArt.travel,
 };
 
@@ -62,13 +62,15 @@ function ProgressSummary({ total, label }: { total: ReturnType<typeof summarizeS
   </div>;
 }
 
-export function ProjectSummary({ project, goals, season }: { project: SavingsProject; goals: readonly SavingsGoal[]; season?: number }) {
+export function ProjectSummary({ project, goals, season, compact, matching }: {
+  project: SavingsProject; goals: readonly SavingsGoal[]; season?: number; compact?: boolean; matching?: number;
+}) {
   const total = summarizeSavingsGoals(goals);
-  return <header className={styles.projectHeader}>
-    <div className={styles.projectHeading}>
-      <Image src={projectArt[project]} alt="" width={48} height={48} unoptimized />
-      <h2 id={`savings-${project}`}>{savingsProjects[project]}{season && ` ${season}`}</h2>
-    </div>
+  return <header className={styles.projectHeader} data-compact={compact || undefined}>
+    {!compact && <div className={styles.projectHeading}>
+      <h2>{savingsProjects[project]}{season && ` ${season}`}</h2>
+      {matching !== undefined && <span>{matching} {matching === 1 ? "poste" : "postes"}</span>}
+    </div>}
     <ProjectAmounts total={total} />
     <ProgressSummary total={total} label={savingsProjects[project]} />
   </header>;

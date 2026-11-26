@@ -52,8 +52,8 @@ export function savingsGoalHref(id: string) {
   return `/cagnottes?goal=${id}#cagnotte-${id}`;
 }
 
-export function SavingsDock({ cardLabel, payments, close, onSaved }: {
-  cardLabel: string; payments: readonly RealizedPayment[]; close: () => void; onSaved?: () => void;
+export function SavingsDock({ cardLabel, payments, close, onSaved, goalId }: {
+  cardLabel: string; payments: readonly RealizedPayment[]; close: () => void; onSaved?: () => void; goalId?: string;
 }) {
   const [paymentId, setPaymentId] = useState(payments.length === 1 ? payments[0].id : "");
   const payment = payments.find(item => item.id === paymentId);
@@ -68,11 +68,11 @@ export function SavingsDock({ cardLabel, payments, close, onSaved }: {
         {payments.map(item => <option key={item.id} value={item.id}>{item.label} · {savingsMoney(paymentAmount(item))}</option>)}
       </select>
     </label>}
-    {payment && <PurchaseItems key={payment.id} payment={payment} cardLabel={cardLabel} onSaved={onSaved} />}
+    {payment && <PurchaseItems key={payment.id} payment={payment} cardLabel={cardLabel} onSaved={onSaved} goalId={goalId} />}
   </section>;
 }
 
-function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayment; cardLabel: string; onSaved?: () => void }) {
+function PurchaseItems({ payment, cardLabel, onSaved, goalId }: { payment: RealizedPayment; cardLabel: string; onSaved?: () => void; goalId?: string }) {
   const cents = paymentAmount(payment);
   const [workspace, setWorkspace] = useState<Workspace | null>();
   const [rows, setRows] = useState<DraftItem[]>([]);
@@ -98,13 +98,14 @@ function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayme
         setActive(undefined);
       } else {
         const id = crypto.randomUUID();
-        setRows([{ id, article: payment.label.slice(0, 120), recipient: payment.recipient?.slice(0, 80) ?? "",
-          goalId: null, gross: inputAmount(cents), refunded: "", livret: "" }]);
-        setActive(id);
+        const suggested = value.choices.find(choice => choice.id === goalId && !choice.abandoned && !choice.complete);
+        setRows([{ id, article: payment.label.slice(0, 120), recipient: (suggested?.recipient ?? payment.recipient)?.slice(0, 80) ?? "",
+          goalId: suggested?.id ?? null, gross: inputAmount(cents), refunded: "", livret: "" }]);
+        setActive(suggested ? undefined : id);
       }
     }, () => { if (mounted) setWorkspace(null); });
     return () => { mounted = false; };
-  }, [payment.id, payment.label, payment.recipient, cents, attempt]);
+  }, [payment.id, payment.label, payment.recipient, cents, attempt, goalId]);
 
   const activeRow = rows.find(row => row.id === active);
   const parsed = rows.map(row => ({ id: row.id, goalId: row.goalId, article: row.article.trim(), recipient: row.recipient.trim() || null,
@@ -121,7 +122,7 @@ function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayme
       && (!choice.complete || choice.id === activeRow.goalId || terms.length > 0)
       && terms.every(term => normalize([choice.label, savingsProjects[choice.project],
         choice.topic && savingsTravelTopics[choice.topic], choice.season, choice.recipient].filter(Boolean).join(" ")).includes(term)))
-    .map(choice => ({ choice, score: rank(choice, payment, cardLabel, activeRow) }))
+    .map(choice => ({ choice, score: rank(choice, payment, cardLabel, activeRow) + (choice.id === goalId ? 500 : 0) }))
     .sort((a, b) => b.score - a.score || (a.choice.deadline ?? "9999").localeCompare(b.choice.deadline ?? "9999")
       || a.choice.label.localeCompare(b.choice.label, "fr")) : [];
   const visible = terms.length ? ranked : ranked.slice(0, 8);

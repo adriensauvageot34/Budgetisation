@@ -57,6 +57,20 @@ export function realizedWorkPeople(household: BootstrapHousehold | null, people:
   return { portraits, profiles };
 }
 
+
+export function householdCouplePortrait(household: BootstrapHousehold | null) {
+  if (!household) return undefined;
+  try {
+    const image = JSON.parse(process.env.COMPOSER_COUPLE_PORTRAIT ?? "null");
+    if (image?.householdId === household.householdId && typeof image.portrait === "string"
+      && image.portrait.length < 16_000 && /^[a-z\d+/]+={0,2}$/iu.test(image.portrait)) {
+      return `data:image/webp;base64,${image.portrait}`;
+    }
+  } catch { /* Use the person's label when a portrait is unavailable. */ }
+  return undefined;
+}
+
+
 export function workPurchaseDate(row: CanonicalRecord) {
   const date = optionalCanonicalString(row, ["date_transaction_reelle"]);
   return row.date_transaction_precision === "Jour exact" && date ? parseLocalDate(date) : undefined;

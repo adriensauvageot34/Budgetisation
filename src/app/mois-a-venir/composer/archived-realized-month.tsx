@@ -9,7 +9,9 @@ import { realizedBoardOverview } from "./realized-overview";
 import { RealizedFinancialTotals } from "./realized-financial-totals";
 import styles from "./composer.module.css";
 
-export function ArchivedRealizedMonth({ board, initialCardId }: { board: RealizedBoard; initialCardId?: string }) {
+export function ArchivedRealizedMonth({ board, initialCardId, savingsTarget }: {
+  board: RealizedBoard; initialCardId?: string; savingsTarget?: { id: string; label: string };
+}) {
   const july = board.month === JULY_COMPOSER_MONTH;
   const imported = isImportedRealizedMonth(board.month);
   return <div className={styles.workspace} data-composer data-reconstruction-mode="realized">
@@ -26,6 +28,7 @@ export function ArchivedRealizedMonth({ board, initialCardId }: { board: Realize
           : !july && <Link className={styles.reconstructionLink} href={composerBalanceHref(board.month)}>Bilan du mois</Link>}
       </nav>
     </AppToolbarContent>
-    <RealizedComposerMonth key={initialCardId} {...realizedBoardOverview(board, initialCardId)} initialCardId={initialCardId} />
+    <RealizedComposerMonth key={initialCardId ?? savingsTarget?.id} {...realizedBoardOverview(board, initialCardId)}
+      initialCardId={initialCardId} savingsTarget={savingsTarget} />
   </div>;
 }

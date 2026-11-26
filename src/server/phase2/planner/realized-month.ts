@@ -15,7 +15,7 @@ import { operationFromCanonicalRow } from "@/server/query/sources/shared";
 import { commerceBadgeImages } from "@/ui/media/commerce-illustrations";
 import { matchJulyCarTrips, readJulyCarLegs } from "./july-car-trips";
 import { cashActivityPlace, distinctRealizedPlaces, merchantPlaceAlias, probableMerchantPlace, realizedPlace, realizedPlaceKey, type RealizedPlace } from "./realized-places";
-import { realizedWorkDays, realizedWorkPeople, workDayItems, workPurchaseDate, type ObservedWorkMeal, type RealizedWork, type WorkDay } from "./realized-work";
+import { realizedWorkDays, realizedWorkPeople, householdCouplePortrait, workDayItems, workPurchaseDate, type ObservedWorkMeal, type RealizedWork, type WorkDay } from "./realized-work";
 import { julyEventParticipant, julyPaymentParticipant, type JulyParticipant } from "./july-realized-decisions";
 import { buildHistoricalRealizedContext } from "./historical-realized-context";
 import { groceryDetour, groceryShopper, historicalMealPerson, historicalPaymentParticipant, historicalProjectTags, isUberRide } from "./historical-realized-patterns";
@@ -956,14 +956,9 @@ export async function readRealizedMonth(bootstrap: RealizedBootstrap, month: Yea
   for (const profile of people.profiles) {
     if (people.portraits[profile.ref.personId]) julyPortraits[profile.name] = people.portraits[profile.ref.personId];
   }
-  try {
-    const image = JSON.parse(process.env.COMPOSER_COUPLE_PORTRAIT ?? "null");
-    if ((month === JULY_COMPOSER_MONTH || historical || isImportedRealizedMonth(month)) && bootstrap.household
-      && image?.householdId === bootstrap.household.householdId
-      && typeof image.portrait === "string" && image.portrait.length < 16_000 && /^[a-z\d+/]+={0,2}$/iu.test(image.portrait)) {
-      julyPortraits.Couple = `data:image/webp;base64,${image.portrait}`;
-    }
-  } catch { /* A missing configured portrait has a text fallback. */ }
+  const couple = month === JULY_COMPOSER_MONTH || historical || isImportedRealizedMonth(month)
+    ? householdCouplePortrait(bootstrap.household) : undefined;
+  if (couple) julyPortraits.Couple = couple;
   const totals = Object.fromEntries((["expense", "income", "refund", "transfer", "other"] as const).map(flow => {
     const items = payments.filter(payment => payment.flow === flow);
     return [flow, { amount: realizedBankSum(items), count: items.length }];

@@ -285,9 +285,10 @@ function RealizedDetail({ card, month, terms, open }: {
   </>;
 }
 
-export function RealizedComposerMonth({ overview: packed, initialDetail, editableSourceIds, initialCardId, pilot = false, initialStatus }: {
+export function RealizedComposerMonth({ overview: packed, initialDetail, editableSourceIds, initialCardId, pilot = false, initialStatus, savingsTarget }: {
   overview: PackedRealizedOverview; initialDetail?: InitialRealizedDetail; editableSourceIds?: readonly string[]; initialCardId?: string; pilot?: boolean;
   initialStatus?: JulyPilotStatus;
+  savingsTarget?: { id: string; label: string };
 }) {
   const overview = useMemo(() => unpackRealizedOverview(packed), [packed]);
   const [sortOrder, setSortOrder] = useState<SortOrder>(pilot ? "date" : "amount-desc");
@@ -439,6 +440,9 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
           <X size={16} aria-hidden="true" />
         </button>}
       </div>
+      {savingsTarget && <Link className={styles.editCard} href={savingsGoalHref(savingsTarget.id)} prefetch={false}>
+        <PiggyBank size={15} aria-hidden /> Lier une dépense à {savingsTarget.label}
+      </Link>}
       <p className={styles.resultCount} role="status">{visibleCount} {visibleCount === 1 ? "carte" : "cartes"}</p>
       <div className={styles.railArrows}>
         <button type="button" aria-label="Défiler à gauche" onClick={() => scrollRail(-1)}><ArrowLeft size={16} aria-hidden="true" /></button>
@@ -499,14 +503,14 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
               <button type="button" className={styles.editCard} onClick={() => { setFailedKey(undefined); setRetry(value => value + 1); }}>Réessayer</button>
             </div> : <p role="status">Chargement des détails…</p>}
         </div>
-        {detail && <SavingsFooter key={detail.id} card={detail} />}
+        {detail && <SavingsFooter key={detail.id} card={detail} goalId={savingsTarget?.id} />}
       </div>}
     </dialog>
   </div>;
 }
 
-function SavingsFooter({ card }: { card: RealizedCard }) {
-  const [expanded, setExpanded] = useState(false);
+function SavingsFooter({ card, goalId }: { card: RealizedCard; goalId?: string }) {
+  const [expanded, setExpanded] = useState(Boolean(goalId));
   const [links, setLinks] = useState<Awaited<ReturnType<typeof readCardSavingsLinks>>>([]);
   const [revision, setRevision] = useState(0);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -528,7 +532,7 @@ function SavingsFooter({ card }: { card: RealizedCard }) {
         {links.map(goal => <Link key={goal.id} href={savingsGoalHref(goal.id)} prefetch={false}>{goal.label} <ExternalLink size={12} aria-hidden /></Link>)}
       </div>}
     </div>}
-    {expanded && <SavingsDock cardLabel={card.label} payments={payments} onSaved={() => setRevision(value => value + 1)} close={() => {
+    {expanded && <SavingsDock cardLabel={card.label} payments={payments} goalId={goalId} onSaved={() => setRevision(value => value + 1)} close={() => {
       setExpanded(false);
       requestAnimationFrame(() => trigger.current?.focus());
     }} />}
