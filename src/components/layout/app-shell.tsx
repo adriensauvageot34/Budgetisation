@@ -44,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return <ComposerMonthNavigationContext.Provider value={monthNavigationGuard}>
     <div ref={compactWorkspace ? setBackgroundRoot : undefined} data-planned-shell={glass ? "" : undefined}
-      className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? scene.shell
+      className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? `${scene.shell}${composerBalance ? ` ${styles.balanceShell}` : ""}`
         : globalAnalysis ? `${styles.clayShell} ${styles.globalShell}`
           : cagnottes ? styles.clayShell
           : composerCalendar ? `${styles.clayShell} ${styles.calendarShell}` : "min-h-screen"}>
@@ -97,9 +97,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         data-composer-app-shell={composer ? "" : undefined}
         className={composer ? "min-h-0 min-w-0 overflow-hidden bg-[#fdfcfb] px-3 pb-4 pt-2 sm:px-6"
           : cagnottes ? "min-w-0 px-4 py-4 sm:px-7"
-          : globalAnalysis ? styles.globalMain : composerCalendar ? styles.calendarMain : historyV2
+          : globalAnalysis ? styles.globalMain : composerCalendar ? styles.calendarMain : composerBalance ? styles.balanceMain : historyV2
           ? "py-6"
-          : pathname === "/mois-a-venir" || composerBalance
+          : pathname === "/mois-a-venir"
             ? "mx-auto max-w-[1360px] px-[var(--space-page)] py-4 sm:py-6"
             : "mx-auto max-w-6xl px-[var(--space-page)] py-4 sm:py-6"}
       >
