@@ -821,7 +821,7 @@ type AtomicFocus =
   | { readonly kind: "query"; readonly slot: AtomicSlot; readonly target: OverlayTarget }
   | { readonly kind: "month"; readonly slot: "spending"; readonly month: string; readonly title: string }
   | { readonly kind: "event"; readonly slot: "life"; readonly event: DashboardEvent }
-  | { readonly kind: "person"; readonly slot: "profiles"; readonly person?: "adrien" | "manon" }
+  | { readonly kind: "person"; readonly slot: "profiles"; readonly person?: "adrien" | "manon"; readonly vehicle?: boolean }
   | { readonly kind: "rhythm"; readonly slot: "life"; readonly view: "food" | "car" };
 
 type DashboardTimeline = GlobalLifeTimelineReadModel | GlobalLifeTimelineV2ReadModel | GlobalLifeTimelineV3ReadModel;
@@ -948,11 +948,11 @@ function AtomicEventDetail({ event, runtime, certifiedThrough, open }: { readonl
   </>;
 }
 
-function AtomicProfiles({ runtime, person }: { readonly runtime: GlobalV2VisitRuntime; readonly person?: "adrien" | "manon" }) {
+function AtomicProfiles({ runtime, person, vehicle }: { readonly runtime: GlobalV2VisitRuntime; readonly person?: "adrien" | "manon"; readonly vehicle?: boolean }) {
   const result = useGlobalV2Resource<GlobalV2PersonaPanelModel>(runtime, personaPanelRequest, true, "DIRECT");
   const model = transportData(result.state);
   const placeholder = result.state.status === "ERROR" ? <LocalError retry={result.retry} /> : <LoadingCard label="Profils" compact />;
-  return model === undefined ? placeholder : <Suspense fallback={placeholder}><AtomicPersona model={model} person={person} /></Suspense>;
+  return model === undefined ? placeholder : <Suspense fallback={placeholder}><AtomicPersona model={model} person={person} vehicle={vehicle} /></Suspense>;
 }
 
 const slotForModule: Partial<Record<GlobalPrimaryModuleKey, AtomicSlot>> = {
@@ -1039,7 +1039,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
       : focus.kind === "month" ? focus.title
       : focus.kind === "event" ? focus.event.canonicalName
       : focus.kind === "rhythm" ? focus.view === "car" ? "Dépenses et trajets en voiture" : "Rythme des courses et des repas"
-      : focus.person ? capitalize(focus.person) : "Adrien et Manon";
+      : focus.vehicle ? "Voiture du foyer" : focus.person ? capitalize(focus.person) : "Adrien et Manon";
     const point = focus.kind === "month" ? chartMonths.find(({ unitKey }) => unitKey === focus.month) : undefined;
     const reference = focus.kind === "month" ? typical?.points.find(({ unitKey }) => unitKey === focus.month) : undefined;
     return <Atom name="detail" priority={240} minimum={1}>
@@ -1049,10 +1049,10 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
           <h3 tabIndex={-1} id="global-detail-title" ref={detailHeading}>{title}</h3>
           <button type="button" onClick={close} aria-label="Fermer le détail"><X size={17} /></button>
         </header>
-        <AtomicDetailPages key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "month" ? focus.month : focus.kind === "rhythm" ? focus.view : focus.person ?? "profiles"}>
+        <AtomicDetailPages key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "month" ? focus.month : focus.kind === "rhythm" ? focus.view : focus.vehicle ? "vehicle" : focus.person ?? "profiles"}>
           {focus.kind === "query" ? <AtomicQueryDetail target={focus.target} slot={slot} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
             : focus.kind === "event" ? <AtomicEventDetail event={focus.event} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
-            : focus.kind === "person" ? <AtomicProfiles runtime={runtime} person={focus.person} />
+            : focus.kind === "person" ? <AtomicProfiles runtime={runtime} person={focus.person} vehicle={focus.vehicle} />
             : focus.kind === "rhythm" ? <BackgroundRhythms runtime={runtime} view={focus.view} onMethod={() => open({ kind: "query", slot, target: methodOverlayTarget("RHYTHM") })} />
             : <div className={atomic.monthDetail}>
               <div className={atomic.figures}><div><span>Dépenses réelles</span><strong>{formatMoney(economicNumber(point))}</strong></div><div><span>Niveau habituel</span><strong>{formatMoney(economicNumber(reference))}</strong></div></div>
@@ -1138,7 +1138,10 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             <span><strong>{capitalize(person)}</strong><small>Travail, habitudes et projets</small></span><ChevronRight size={16} aria-hidden />
           </button>)}
         </div></Atom>
-        <Atom name="shared-portraits" priority={52}><div className={atomic.actions}><FocusLink onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer les portraits</FocusLink></div></Atom>
+        <Atom name="shared-portraits" priority={52} minimum={1}><div className={atomic.actions}>
+          <FocusLink onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer les portraits</FocusLink>
+          <FocusLink onClick={() => open({ kind: "person", slot: "profiles", vehicle: true })}>Voiture du foyer</FocusLink>
+        </div></Atom>
       </AtomicSection>}
     </div>
   </div>;

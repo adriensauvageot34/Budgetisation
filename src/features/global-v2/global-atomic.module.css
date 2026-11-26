@@ -205,3 +205,7 @@
 .timelineSummary .barWell i { background: linear-gradient(#ceabca,#8a62b0); }
 .timelineSummary .barWell { border-color: #d8c4e8; background: none; }
 .atom[data-density="1"] .timelineSummary .barWell { height: 14px; }
+
+.detailPages:has([data-persona-vehicle]) .detailViewport { height: auto; overflow: visible; }
+.detailColumns:has([data-persona-vehicle]) { height: auto; column-count: auto; }
+.detailColumns [data-persona-vehicle] :is(p, ul) { margin: 0; }

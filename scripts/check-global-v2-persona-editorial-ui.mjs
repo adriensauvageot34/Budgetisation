@@ -9,7 +9,7 @@ const loader = fs.readFileSync("src/server/query/global-v2-production-loader.ts"
 const portraitRoute = fs.readFileSync("src/app/api/persona-portrait/[name]/route.ts", "utf8");
 const portraitMigration = fs.readFileSync("supabase/migrations/20260923131239_private_persona_portraits.sql", "utf8");
 
-for (const heading of ["Nos profils", "Nos journées de travail", "Nos univers personnels", "Nos habitudes qui reviennent", "Notre vie sociale, chacun de son côté", "Le permis", "Notre Peugeot", "Repas au travail", "Séries & divertissement", "Barbe & cheveux", "Ses produits fidèles", "Famille", "Amis", "Vape", "Cigarettes", "Tabac"]) {
+for (const heading of ["Nos profils", "Nos journées de travail", "Nos univers personnels", "Nos habitudes qui reviennent", "Nos sorties", "Le permis", "Bilan de la voiture du foyer", "Repas au travail", "Séries & divertissement", "Barbe & cheveux", "Ses produits fidèles", "Famille", "Amis", "Vape", "Cigarettes", "Tabac"]) {
   assert.ok(view.includes(heading), `missing profile story: ${heading}`);
 }
 assert.match(view, /Image src="\/api\/persona-portrait\/adrien" alt="Portrait d’Adrien"/);
@@ -19,6 +19,9 @@ assert.match(css, /object-fit: cover/);
 assert.match(view, /button type="button" disabled aria-label="Nous deux, bientôt disponible"/);
 assert.match(view, /permit\.monthlyCost[^\n]+\.slice\(0, 3\)/);
 assert.doesNotMatch(page, /"PERSONAS", "TOGETHER"/);
+assert.match(view, /<PersonaVehicleModule vehicle=\{model\.vehicle\}/);
+assert.match(page, /vehicle: true[\s\S]*Voiture du foyer/);
+assert.match(view, /usage\.distanceKm[\s\S]*insurance\.currentMonthlyCost[\s\S]*maintenance\.totalIdentifiedCost/);
 assert.match(view, /meal\.allPurchaseHabitSummary/);
 assert.match(server, /allPurchaseHabitSummary/);
 assert.match(view, /vape\.equipmentCost/);
@@ -31,7 +34,7 @@ assert.match(server, /mobility\(manon, "FRIEND_VISIT"\)/);
 assert.match(server, /visitEpisodeStarts/);
 assert.match(server, /videoObservedCost/);
 assert.match(view, /videoObservedCost/);
-assert.match(css, /--adrien-bg: #ebf3f8/);
+assert.match(css, /--adrien-bg: #f0e8fa/);
 assert.match(css, /--manon-bg: #f8edf1/);
 assert.match(portraitRoute, /getAuthenticatedBootstrapClient/);
 assert.match(portraitRoute, /getCurrentHousehold/);
