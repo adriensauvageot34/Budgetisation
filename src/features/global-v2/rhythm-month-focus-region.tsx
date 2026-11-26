@@ -1,5 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
-import { OverlayFrame } from "@/ui";
+import { X } from "lucide-react";
 import styles from "./background-rhythms.module.css";
 
 export function RhythmMonthFocusRegion({ domain, labelledBy, onClose, children }: {
@@ -8,7 +10,13 @@ export function RhythmMonthFocusRegion({ domain, labelledBy, onClose, children }
   readonly onClose: () => void;
   readonly children: ReactNode;
 }) {
-  return <OverlayFrame kind="exploration" title={domain === "food" ? "Alimentation du mois" : "Déplacements du mois"} closeAction={{ kind: "callback", onAction: onClose }} closeOnBackdrop>
-    <section className={styles.monthFocusRegion} data-domain={domain} aria-labelledby={labelledBy}>{children}</section>
-  </OverlayFrame>;
+  return <section className={styles.monthFocusRegion} data-rhythm-month={domain} aria-labelledby={labelledBy}
+    onKeyDown={(event) => {
+      if (event.key !== "Escape") return;
+      event.stopPropagation();
+      onClose();
+    }}>
+    <button type="button" className={styles.monthClose} aria-label="Fermer le mois" onClick={onClose}><X aria-hidden size={15} /></button>
+    {children}
+  </section>;
 }

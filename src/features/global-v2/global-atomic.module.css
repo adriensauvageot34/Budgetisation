@@ -42,8 +42,8 @@
 .grid[data-focus-size="compact"] { --primary: 1.10fr; --secondary: .90fr; --large: 1.36fr; --small: .64fr; }
 .grid:is([data-focus="spending"], [data-focus="life"]) { grid-template-columns: minmax(0,var(--primary)) minmax(0,var(--secondary)); }
 .grid:is([data-focus="categories"], [data-focus="profiles"]) { grid-template-columns: minmax(0,var(--secondary)) minmax(0,var(--primary)); }
-.grid[data-focus="spending"] .column[data-side="left"]:has(> :nth-child(2)),
-.grid[data-focus="categories"] .column[data-side="right"]:has(> :nth-child(2)) { grid-template-rows: minmax(0,var(--large)) minmax(85px,var(--small)); }
+.grid[data-focus="spending"] .column[data-side="left"]:has(> :nth-child(2)) { grid-template-rows: minmax(0,var(--large)) minmax(85px,var(--small)); }
+.grid[data-focus="categories"] .column[data-side="right"]:has(> :nth-child(2)) { grid-template-rows: minmax(0,1.58fr) minmax(85px,.42fr); }
 .grid[data-focus="life"] .column[data-side="left"]:has(> :nth-child(2)) { grid-template-rows: minmax(104px,.38fr) minmax(0,1.62fr); }
 .grid[data-focus="profiles"] .column[data-side="right"]:has(> :nth-child(2)) { grid-template-rows: minmax(100px,.56fr) minmax(0,1.44fr); }
 .section { min-height: 0; min-width: 0; overflow: clip; padding: clamp(5px, 1dvh, 13px) 0; border-top: 1px solid var(--atomic-line); }
@@ -427,3 +427,19 @@
   overflow: auto hidden; scrollbar-width: thin; scrollbar-color: #bca0d4 transparent; gap: 5px;
 }
 .detailColumns :is([class*="lifeActivityGrid"], [class*="lifeComparisonGrid"]) > :is(button, article) { padding: 6px; }
+
+.detailColumns [data-workspace-rhythm] [data-rhythm-domain]:has([data-rhythm-month]) :is(
+  [class*="rhythmCardHeader"], [class*="rhythmAnnotations"], [class*="fuelPaidRail"]
+) { display: none; }
+.detailColumns [data-workspace-rhythm] [data-rhythm-domain]:has([data-rhythm-month]) :is(
+  [class*="annualRiver"], [class*="monthInteractionLayer"]
+) { height: 45px; }
+.detailColumns [data-workspace-rhythm] [data-rhythm-month] {
+  position: relative; padding: 5px 0 1px; border-top: 1px solid var(--atomic-line);
+}
+.detailColumns [data-workspace-rhythm] [data-rhythm-month] [class*="monthFocusHeader"] { padding-inline-end: 28px; }
+.detailColumns [data-workspace-rhythm] [data-rhythm-month] [class*="monthClose"] {
+  position: absolute; z-index: 1; top: 5px; right: 0; display: grid; place-items: center;
+  width: 24px; height: 24px; padding: 0; border: 1px solid var(--atomic-line); border-radius: 6px;
+  color: var(--atomic-primary); background: #f8efff; cursor: pointer;
+}
