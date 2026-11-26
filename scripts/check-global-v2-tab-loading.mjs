@@ -111,8 +111,17 @@ try {
   await act(async () => lastEvent.props.onClick());
   assert.equal(root.root.findByProps({ id: "global-detail-title" }).props.children, events.at(-1).canonicalName);
   await click({ "aria-label": "Fermer le détail" });
-  await reply(pending.find(({ request }) => request.params.sectionKey === "PATTERNS" && request.resource === "analysis_global_categories_needs_expanded"));
-  await reply(pending.find(({ request }) => request.params.sectionKey === "COMPARISONS"));
+  const recurringRegion = root.root.findAllByType("section").find(({ props }) => props["aria-label"] === "Dépenses récurrentes");
+  assert.ok(recurringRegion.findAllByType("article").length > 0);
+  assert.equal(recurringRegion.findAllByType("button").length, 0);
+  const modes = root.root.findAllByType("div").find(({ props }) => props["aria-label"] === "Mode de répartition").findAllByType("button");
+  assert.equal(modes.length, 4);
+  await act(async () => modes[1].props.onClick());
+  const structure = pending.find(({ request }) => request.resource === "analysis_global_economic_expanded" && request.params.sectionKey === "BREAKDOWN");
+  assert.ok(structure, "Structural distributions request the canonical economic breakdown");
+  await reply(structure);
+  assert.ok(root.root.findAllByType("ul").some(({ props }) => props["aria-label"] === "Fixes et variables"));
+  await act(async () => modes[0].props.onClick());
   assert.ok(!requests().includes(globalV2PersonaPanelResource), "Portraits do not trigger a profile read");
 
   const selectPortrait = () => act(async () => {
