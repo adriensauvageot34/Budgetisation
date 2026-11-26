@@ -38,6 +38,8 @@ export async function commerceLibraryFixture(extraTables = []) {
     grant select on public.composer_fixture_operations, public.merchants, public.merchant_activities to service_role;`);
   await pg.db.exec(fs.readFileSync("supabase/migrations/20261117221627_composer_merchant_suggestions.sql", "utf8")
     .replace("public.operations", "public.composer_fixture_operations"));
+  await pg.db.exec(fs.readFileSync("supabase/migrations/20261126090412_composer_merchant_suggestions_sql_limit.sql", "utf8")
+    .replace("public.operations", "public.composer_fixture_operations"));
   for (const [id, name] of [[uuid(97001), "E.Leclerc"], [uuid(97002), "Atelier Homonyme"], [uuid(97003), "Atelier Homonyme"]])
     await pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at, identity_source)
       values($1,$2,'commercial',now(),'owner_confirmed')`, [id, name]);
@@ -62,11 +64,17 @@ export async function commerceLibraryFixture(extraTables = []) {
   };
   function client(actor) {
     return {
-      rpc(name) {
-        if (name !== "composer_merchant_suggestions") throw Error("FIXTURE_RPC");
+      rpc(name, params) {
+        const limited = name === "composer_merchant_suggestions_v2";
+        if (!limited && name !== "composer_merchant_suggestions") throw Error("FIXTURE_RPC");
         const task = queue.then(async () => {
           await pg.db.exec("reset role; set role service_role");
-          try { return { data: (await pg.db.query("select * from public.composer_merchant_suggestions()")).rows, error: null }; }
+          try {
+            const result = limited
+              ? await pg.db.query("select * from public.composer_merchant_suggestions_v2($1,$2)", [params.p_activity_keys, params.p_limit])
+              : await pg.db.query("select * from public.composer_merchant_suggestions()");
+            return { data: result.rows, error: null };
+          }
           finally { await pg.db.exec("reset role"); }
         });
         queue = task.catch(() => {});

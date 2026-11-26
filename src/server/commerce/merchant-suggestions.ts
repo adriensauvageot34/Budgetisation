@@ -13,12 +13,13 @@ export async function readMerchantSuggestions(
   selection?: { activities: ReadonlySet<string>; limit: number },
 ): Promise<readonly MerchantBadgeSuggestion[]> {
   const readRows = async () => {
-    const { data, error } = await client.rpc("composer_merchant_suggestions");
+    const { data, error } = await (selection
+      ? client.rpc("composer_merchant_suggestions_v2", {
+        p_activity_keys: [...selection.activities], p_limit: selection.limit,
+      })
+      : client.rpc("composer_merchant_suggestions"));
     if (error || !data) throw new TypeError("BADGE_LIBRARY_UNAVAILABLE");
-    const rows = data as MerchantRow[];
-    if (!selection) return rows;
-    return (selection.activities.size ? rows.filter(row => selection.activities.has(row.activity_key)) : rows)
-      .slice(0, selection.limit);
+    return data as MerchantRow[];
   };
   const rowsRead = readRows();
   const imagesRead = selection ? rowsRead.then(rows => readMedia([...new Set(rows.flatMap(row => [

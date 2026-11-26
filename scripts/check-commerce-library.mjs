@@ -24,15 +24,28 @@ try {
     activity_key: index === 0 ? "BAR" : "SUPERMARKET", activity: "Commerce",
     badge_policy: "normal", visual_brand_merchant_id: null, generic_badge_category: null, purchase_count: 30 - index,
   }));
-  const suggestions = await readMerchantSuggestions({ rpc: async () => ({ data: ranked, error: null }) },
+  const suggestions = await readMerchantSuggestions({ rpc: async (name, params) => {
+    assert.equal(name, "composer_merchant_suggestions_v2");
+    assert.deepEqual(params, { p_activity_keys: ["SUPERMARKET"], p_limit: 8 });
+    return { data: ranked.slice(1, 9), error: null };
+  } },
     async keys => {
       assert.deepEqual(keys, ranked.slice(1, 9).map(row => `merchant:${row.merchant_id}`));
       return [];
     }, { activities: new Set(["SUPERMARKET"]), limit: 8 });
   assert.deepEqual(suggestions.map(item => item.purchaseCount), [29, 28, 27, 26, 25, 24, 23, 22]);
-  assert.equal((await a.merchantCatalog())[0].activityKey, "SUPERMARKET");
+  const fullCatalog = await a.merchantCatalog();
+  assert.equal(fullCatalog[0].activityKey, "SUPERMARKET");
+  assert.equal(fullCatalog.length, 3);
+  assert.deepEqual(await a.suggestions([]), fullCatalog);
+  assert.deepEqual(await a.suggestions(["categories:bar"]), []);
+  const firstRanked = await fixture.client(fixture.userId).rpc("composer_merchant_suggestions_v2", {
+    p_activity_keys: [], p_limit: 1,
+  });
+  assert.deepEqual(firstRanked.data.map(row => row.label), ["E.Leclerc"]);
   await assert.rejects(a.suggestions(["merchant:invalid"]), /BADGE_SUGGESTIONS_INVALID/u);
   await assert.rejects(fixture.asUser(fixture.other, () => fixture.pg.db.query("select * from public.composer_merchant_suggestions()")), /permission denied/u);
+  await assert.rejects(fixture.asUser(fixture.other, () => fixture.pg.db.query("select * from public.composer_merchant_suggestions_v2('{}',8)")), /permission denied/u);
   await fixture.pg.db.exec("reset role");
   const aliasId = uuid(97004);
   await fixture.pg.db.query(`insert into public.merchants (merchant_id, nom_canonique, identity_kind, identity_classified_at,
