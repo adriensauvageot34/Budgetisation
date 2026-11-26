@@ -276,7 +276,7 @@ check(() => assert.doesNotMatch(pageSource, /currentPage|Événements précéden
 check(() => assert.match(pageSource, /Ouvrir un événement[\s\S]*events\.map[\s\S]*event\.canonicalName/u));
 check(() => assert.doesNotMatch(detailNavigationSource, /Page précédente|Page suivante|className=\{styles\.pagination\}/u));
 check(() => assert.match(detailNavigationSource, /Aller directement à[\s\S]*item\.label/u));
-check(() => assert.match(profileNavigationSource, /aria-pressed=\{selection === id\}[\s\S]*\{block\.title\}[\s\S]*<PersonaEditorialBlock block=\{current\.block\}/u));
+check(() => assert.match(profileNavigationSource, /aria-pressed=\{selection === id\}[\s\S]*\{block\.title\}[\s\S]*<ProfileTopicDetail block=\{current\.block\}/u));
 check(() => assert.doesNotMatch(profileNavigationSource, /Informations du profil|<select|<PersonaEditorialView/u));
 check(() => assert.match(pageSource, /sectionKey: section[\s\S]*target\.resource, params/u));
 check(() => assert.match(pageSource, /trail\.slice\(0, -1\)[\s\S]*Fermer le détail/u));
