@@ -61,7 +61,7 @@ export function useBalanceDensity() {
           const previous = Number(node.dataset.density);
           if (previous !== target - 1) continue;
           node.dataset.density = String(target);
-          if (content!.offsetHeight > available + 1) node.dataset.density = String(previous);
+          if (content!.offsetHeight > available) node.dataset.density = String(previous);
         }
       }
 

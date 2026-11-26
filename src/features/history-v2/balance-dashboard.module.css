@@ -33,8 +33,6 @@
 }
 .pageHeader > span { color: var(--muted-label); font-size: .88rem; text-transform: capitalize; }
 .panel {
-  display: grid;
-  align-content: start;
   min-height: 0;
   min-width: 0;
   padding: 0;
