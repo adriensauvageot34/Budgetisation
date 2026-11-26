@@ -90,7 +90,7 @@ export function PagedRows<T>({ items, size = 3, label, children }: {
 }) {
   const [offset, setOffset] = useState(0);
   const compact = useShortBalance();
-  const pageSize = Math.min(size, compact ? 2 : 3);
+  const pageSize = compact ? Math.min(size, 2) : size;
   const pages = Math.ceil(items.length / pageSize);
   const page = Math.max(0, Math.min(Math.floor(offset / pageSize), pages - 1));
   if (!items.length) return <p className={styles.note}>Aucun élément pour ce mois.</p>;

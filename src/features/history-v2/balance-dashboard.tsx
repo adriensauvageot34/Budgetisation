@@ -9,7 +9,7 @@ import type { MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeM
 import { BalanceBankDetail, BalanceDetail, BalanceLifeDetails, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
 import { AmountBar, PagedRows, chartMaximum, formatDelta, metricValue, stateValue, visibleValue } from "./balance-dashboard-widgets";
 import { CategoryRing, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
-import { formatCount, formatFrenchDateRange, formatHistoricalRank } from "./presentation";
+import { formatCount, formatFrenchDateRange, formatHistoricalRank, spendingPresentationLabel } from "./presentation";
 import { SpendingBreakdown } from "./balance-dashboard-spending";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import { MoneyMetric, formatMoney } from "./renderers";
@@ -183,13 +183,13 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
                 setStack(items => [...items, selection]);
                 requestAnimationFrame(() => nestedTitle.current?.focus({ preventScroll: true }));
               }} />
-        </div>
+          </div>
         </div>
       </div>}
     </Panel>;
   }
 
-  return <div ref={dashboard} className={styles.dashboard} data-detail-open={activePanel !== undefined} data-detail-deep={current !== undefined}
+  return <div ref={dashboard} className={styles.dashboard} data-detail-open={activePanel !== undefined}
     onKeyDown={event => {
       if (event.key !== "Escape" || activePanel === undefined) return;
       event.preventDefault();
@@ -204,37 +204,34 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
     </header>
 
     <div className={styles.panelGrid}>
-      <div className={styles.band} data-active={activePanel === "summary" || activePanel === "categories"}>
-        {renderPanel("summary", "Dépenses du mois", <Wallet size={19} aria-hidden />,
-          summary ? <SummaryCard model={summary} expanded={activePanel === "summary"} onOpen={showDetail} /> : <DataStatus failed={state.summary.status === "error"} />,
-          summary && <div className={styles.summaryDetails}>
-            <BalanceBankDetail month={month} headingId={`${id}-bank-heading`} />
-            {summary.importedSummary.text && <section className={styles.panelExtension} aria-labelledby={`${id}-editorial-heading`}>
-              <h3 id={`${id}-editorial-heading`}>{summary.importedSummary.freshness === "STALE" ? "Résumé à actualiser" : "Résumé du mois"}</h3>
-              <PagedRows size={1} label="Résumé du mois" items={summary.importedSummary.text.match(/.{1,210}(?:\s+|$)|\S+/gu) ?? [summary.importedSummary.text]}>
-                {rows => <p className={styles.longNote}>{rows[0]}</p>}
-              </PagedRows>
-            </section>}
-          </div>)}
-        {renderPanel("categories", "Dépenses par catégorie", <ChartNoAxesColumn size={19} aria-hidden />,
-          categories ? <CategoryCard model={categories} total={metricValue(actual)}
-            expanded={activePanel === "categories"} activeId={current?.target.kind === "category" ? current.target.categoryId : undefined}
-            onOpen={showDetail} onExpand={() => selectPanel("categories")} detailId={`${id}-categories-specific`} />
-            : <DataStatus failed={state.categories.status === "error"} />)}
-      </div>
-      <div className={styles.band} data-active={activePanel === "spending" || activePanel === "life"}>
-        {renderPanel("spending", "Marges du mois", <SlidersHorizontal size={19} aria-hidden />,
-          spending ? <MarginCard model={spending} /> : <DataStatus failed={state.spendingNature.status === "error"} />,
-          spending && <section className={styles.panelExtension} aria-labelledby={`${id}-spending-breakdown`}>
-            <h3 id={`${id}-spending-breakdown`}>Répartition des dépenses</h3>
-            <SpendingBreakdown model={spending} month={month} />
-          </section>)}
-        {renderPanel("life", "Vie et argent", <Sparkles size={19} aria-hidden />,
-          life ? <LifeCard model={life} month={month} expanded={activePanel === "life"}
-            activeId={current?.target.kind === "moment" ? current.target.momentId : undefined}
-            onOpen={showDetail} /> : <DataStatus failed={state.lifeMoney.status === "error"} />,
-          life && <BalanceLifeDetails model={life} onOpen={showDetail} />)}
-      </div>
+      {renderPanel("summary", "Dépenses du mois", <Wallet size={19} aria-hidden />,
+        summary ? <SummaryCard model={summary} expanded={activePanel === "summary"} onOpen={showDetail} /> : <DataStatus failed={state.summary.status === "error"} />,
+        summary && <div className={styles.summaryDetails}>
+          <BalanceBankDetail month={month} headingId={`${id}-bank-heading`} />
+          {summary.importedSummary.text && <section className={styles.panelExtension} aria-labelledby={`${id}-editorial-heading`}>
+            <h3 id={`${id}-editorial-heading`}>{summary.importedSummary.freshness === "STALE" ? "Résumé à actualiser" : "Résumé du mois"}</h3>
+            <PagedRows size={1} label="Résumé du mois" items={summary.importedSummary.text.match(/.{1,210}(?:\s+|$)|\S+/gu) ?? [summary.importedSummary.text]}>
+              {rows => <p className={styles.longNote}>{rows[0]}</p>}
+            </PagedRows>
+          </section>}
+        </div>)}
+      {renderPanel("categories", "Dépenses par catégorie", <ChartNoAxesColumn size={19} aria-hidden />,
+        categories ? <CategoryCard model={categories} total={metricValue(actual)}
+          expanded={activePanel === "categories"} activeId={current?.target.kind === "category" ? current.target.categoryId : undefined}
+          onOpen={showDetail} onExpand={() => selectPanel("categories")} detailId={`${id}-categories-specific`} />
+          : <DataStatus failed={state.categories.status === "error"} />)}
+
+      {renderPanel("spending", "Marges du mois", <SlidersHorizontal size={19} aria-hidden />,
+        spending ? <MarginCard model={spending} expanded={activePanel === "spending"} /> : <DataStatus failed={state.spendingNature.status === "error"} />,
+        spending && <section className={styles.panelExtension} aria-labelledby={`${id}-spending-breakdown`}>
+          <h3 id={`${id}-spending-breakdown`}>Répartition des dépenses</h3>
+          <SpendingBreakdown model={spending} month={month} />
+        </section>)}
+      {renderPanel("life", "Vie et argent", <Sparkles size={19} aria-hidden />,
+        life ? <LifeCard model={life} month={month} expanded={activePanel === "life"}
+          activeId={current?.target.kind === "moment" ? current.target.momentId : undefined}
+          onOpen={showDetail} /> : <DataStatus failed={state.lifeMoney.status === "error"} />,
+        life && <BalanceLifeDetails model={life} month={month} onOpen={showDetail} pageSize={current ? 3 : 5} />)}
     </div>
   </div>;
 }
@@ -256,7 +253,7 @@ function Panel({ kind, title, icon, selected, collapsed, onOpen, detailId, compa
       <span className={styles.panelIcon}>{icon}</span><span className={styles.headingLabel}>{title}</span>
       <ChevronDown className={styles.chevron} size={16} aria-hidden />
     </button>{collapsed && compact && <span className={styles.compactFigure}>{compact}</span>}</h2>
-    <div className={styles.panelSummary} id={detailId} aria-hidden={collapsed} inert={collapsed}>
+    <div className={styles.panelSummary} id={detailId}>
       <div className={styles.panelSummaryClip}><div className={styles.panelBody}>{children}</div></div>
     </div>
   </section>;
@@ -324,7 +321,7 @@ function CategoryCard({ model, total, expanded, activeId, onOpen, onExpand, deta
 }) {
   const collection = visibleValue(model.categories);
   const items = collection?.status === "KNOWN" || collection?.status === "PARTIAL" ? collection.items : [];
-  const rows = (expanded ? items : items.slice(0, 4)).map(item => ({
+  const rows = items.map(item => ({
     id: item.categoryId, label: item.label, amount: item.actual, share: metricValue(item.shareOfActual), delta: metricValue(item.delta),
   }));
   const maximum = chartMaximum(rows);
@@ -356,16 +353,21 @@ function CategoryCard({ model, total, expanded, activeId, onOpen, onExpand, deta
     <div className={styles.panelFoot}>
       {other && Number(metricValue(other) ?? 0) !== 0 && <span className={styles.zone}>Autres catégories <strong><MoneyMetric metric={other} /></strong></span>}
       {expanded && unclassified && Number(metricValue(unclassified) ?? 0) !== 0 && <span className={styles.zone}>Non classé <strong><MoneyMetric metric={unclassified} /></strong></span>}
-      {!expanded && items.length > rows.length && <button type="button" className={styles.textButton} onClick={onExpand}>
+      {!expanded && items.length > 4 && <button type="button" className={`${styles.textButton} ${styles.moreCategories}`} onClick={onExpand}>
         Voir les {items.length} postes détaillés
       </button>}
     </div>
   </>;
 }
 
-function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel }) {
+const necessityColors: Record<string, string> = { CONSTRAINED: "#7650b5", INDISPENSABLE: "#798cc1", OPTIONAL: "#c279a0" };
+
+function MarginCard({ model, expanded }: { readonly model: MonthSpendingNatureReadModel; readonly expanded: boolean }) {
   const matrix = visibleValue(model.matrix);
   const fixedVariable = metricValue(visibleValue(model.behavior)?.result);
+  const necessity = visibleValue(model.necessity);
+  const buckets = metricValue(necessity?.result);
+  const lifeScope = metricValue(visibleValue(model.lifeScope)?.result);
   return <>
     <div className={styles.marginStats}>
       <div><span>Ajustable maintenant</span><MarginAmount metric={matrix?.immediateMargin} /></div>
@@ -382,6 +384,32 @@ function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel })
         </span>)}
       </div>
     </div> : <p className={styles.note}>Répartition fixe et variable indisponible.</p>}
+    {!expanded && buckets?.length && <div className={styles.necessityPreview}>
+      <h3>Degré de nécessité</h3>
+      <ul>
+        {buckets.map(bucket => <li key={bucket.key} style={{ "--bucket-color": necessityColors[bucket.key] ?? "#807995" } as CSSProperties}>
+          <span>{spendingPresentationLabel(bucket.key)}</span><strong>{formatMoney(bucket.amount)}</strong>
+          {bucket.shareOfActual !== undefined && <>
+            <small>{Math.round(bucket.shareOfActual * 100)} %</small>
+            <span className={styles.necessityMeter} aria-hidden><i style={{ width: `${Math.max(0, Math.min(1, bucket.shareOfActual)) * 100}%` }} /></span>
+          </>}
+        </li>)}
+      </ul>
+      {necessity && Number(necessity.unclassifiedAmount) !== 0 && <p className={styles.note}>{formatMoney(necessity.unclassifiedAmount)} non classés</p>}
+    </div>}
+    {!expanded && lifeScope?.length && <div className={styles.scopePreview}>
+      <h3>Quotidien et hors quotidien</h3>
+      <div className={styles.stack} aria-hidden>
+        {lifeScope.map(bucket => bucket.shareOfActual === undefined ? null : <span key={bucket.key}
+          data-variable={bucket.key === "OUT_OF_DAILY"} style={{ width: `${Math.max(0, Math.min(1, bucket.shareOfActual)) * 100}%` }} />)}
+      </div>
+      <div className={styles.legend}>
+        {lifeScope.map(bucket => <span key={bucket.key} data-variable={bucket.key === "OUT_OF_DAILY"}>
+          <i aria-hidden /> {spendingPresentationLabel(bucket.key)} <strong>{formatMoney(bucket.amount)}</strong>
+          {bucket.shareOfActual !== undefined && <small>{Math.round(bucket.shareOfActual * 100)} %</small>}
+        </span>)}
+      </div>
+    </div>}
   </>;
 }
 
@@ -409,25 +437,35 @@ function LifeCard({ model, month, activeId, onOpen, expanded }: {
   const places = visibleValue(model.places);
   const activity = activities?.status === "KNOWN" || activities?.status === "PARTIAL" ? activities.items[0] : undefined;
   const momentList = moments?.status === "KNOWN" || moments?.status === "PARTIAL" ? moments.items : [];
-  const moment = momentList[0];
+
   const place = places?.status === "KNOWN" || places?.status === "PARTIAL" ? places.items[0] : undefined;
   return <>
     <MonthTimeline month={month} moments={momentList} activeId={activeId}
       onOpen={item => onOpen({ target: { kind: "moment", momentId: item.momentId }, label: item.title })} />
-    {!expanded && <ul className={styles.lifeRows}>
-    {moment && <li><button type="button" onClick={() => onOpen({ target: { kind: "moment", momentId: moment.momentId }, label: moment.title })}>
-      <Sparkles size={16} aria-hidden /><span><small>Moment marquant</small><strong title={moment.title}>{moment.title}</strong></span>
-      <span>{metricValue(moment.causalCost) === undefined ? formatFrenchDateRange(moment.startDate, moment.endDate, false) : <MoneyMetric metric={moment.causalCost} />}</span>
-    </button></li>}
-    {activity && <li><button type="button" onClick={() => onOpen({ target: { kind: "activity", activityTypeKey: activity.activityTypeKey }, label: activity.label })}>
-      <ChartNoAxesColumn size={16} aria-hidden /><span><small>Activité du mois</small><strong title={activity.label}>{activity.label}</strong></span>
-      <span>{metricValue(activity.cost) === undefined ? formatCount(activity.occurrences, "fois", "fois") : <MoneyMetric metric={activity.cost} />}</span>
-    </button></li>}
-    {place && <li><button type="button" onClick={() => onOpen({ target: { kind: "place", placeId: place.placeId }, label: place.label })}>
-      <MapPin size={16} aria-hidden /><span><small>Lieu fréquenté</small><strong title={place.label}>{place.label}</strong></span>
-      <span>{formatCount(place.presenceDays, "jour")}</span>
-    </button></li>}
-    {!moment && !activity && !place && <li className={styles.note}>Aucune activité, aucun moment ni lieu renseigné.</li>}
-    </ul>}
+    {!expanded && <div className={styles.lifePreview}>
+      {momentList.length > 0 && <div className={styles.lifeMoments}>
+        <h3>Moments marquants</h3>
+        <ul className={styles.lifeRows}>
+          {momentList.slice(0, 5).map(moment => <li key={moment.momentId}>
+            <button type="button" onClick={() => onOpen({ target: { kind: "moment", momentId: moment.momentId }, label: moment.title })}>
+              <span className={styles.dateChip}>{formatFrenchDateRange(moment.startDate, moment.endDate, false)}</span>
+              <strong title={moment.title}>{moment.title}</strong>
+              {metricValue(moment.causalCost) !== undefined && <MoneyMetric metric={moment.causalCost} partialDisplay="value-only" />}
+            </button>
+          </li>)}
+        </ul>
+      </div>}
+      {(activity || place) && <ul className={`${styles.lifeRows} ${styles.lifeFacts}`}>
+        {activity && <li><button type="button" onClick={() => onOpen({ target: { kind: "activity", activityTypeKey: activity.activityTypeKey }, label: activity.label })}>
+          <ChartNoAxesColumn size={16} aria-hidden /><span><small>Activité du mois</small><strong title={activity.label}>{activity.label}</strong></span>
+          <span>{formatCount(activity.occurrences, "fois", "fois")}</span>
+        </button></li>}
+        {place && <li><button type="button" onClick={() => onOpen({ target: { kind: "place", placeId: place.placeId }, label: place.label })}>
+          <MapPin size={16} aria-hidden /><span><small>Lieu fréquenté</small><strong title={place.label}>{place.label}</strong></span>
+          <span>{formatCount(place.presenceDays, "jour")}</span>
+        </button></li>}
+      </ul>}
+      {!momentList.length && !activity && !place && <p className={styles.note}>Aucune activité, aucun moment ni lieu renseigné.</p>}
+    </div>}
   </>;
 }
