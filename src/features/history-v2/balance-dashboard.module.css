@@ -644,7 +644,7 @@
   border-top: 1px solid #d8c7e8a0;
 }
 .dashboard[data-detail-open="false"] .panelHeading { margin-bottom: clamp(6px, 1.2vh, 13px); }
-.dashboard[data-detail-open="false"] .comparisonPlot { height: clamp(44px, calc(100cqh - 159px), 360px); }
+.dashboard[data-detail-open="false"] .comparisonPlot { height: clamp(44px, calc(100cqh - 177px), 360px); }
 .dashboard[data-detail-open="false"] .categoryRing { width: clamp(76px, min(24cqw, 72cqh), 238px); }
 
 .dashboard[data-detail-open="true"] .panelGrid {
@@ -668,7 +668,7 @@
 
 .panel[data-selected="false"] .categoryPlot li:nth-child(n+5),
 .panel[data-selected="false"] .lifeMoments li:nth-child(n+3),
-.necessityPreview, .scopePreview { display: none; }
+.necessityPreview, .scopePreview, .deviationPreview, .extraPlace { display: none; }
 .panel[data-collapsed="true"] .panelSummary {
   grid-template-rows: 0fr;
   visibility: hidden;
@@ -676,12 +676,12 @@
   transition: grid-template-rows 230ms cubic-bezier(.24,.72,.24,1), opacity 170ms ease, visibility 230ms allow-discrete;
 }
 
-.necessityPreview, .scopePreview {
+.necessityPreview, .scopePreview, .deviationPreview {
   gap: 4px;
   padding-top: 7px;
   border-top: 1px solid var(--border);
 }
-.necessityPreview h3, .scopePreview h3, .lifeMoments h3 {
+.necessityPreview h3, .scopePreview h3, .deviationPreview h3, .lifeMoments h3 {
   margin: 0;
   color: var(--strong);
   font-size: .84rem;
@@ -707,6 +707,9 @@
 
 .lifePreview, .lifeMoments { display: grid; gap: 6px; min-width: 0; }
 .lifeFacts { align-content: start; }
+.lifeFacts strong { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.lifeFacts li, .lifeMoments li { min-width: 0; }
+.lifeFacts button, .lifeMoments button { width: 100%; }
 .lifeMoments button {
   grid-template-columns: minmax(48px, auto) minmax(0, 1fr) auto;
   padding: 5px 7px;
@@ -723,21 +726,36 @@
 @container balance-section (min-width: 510px) {
   .lifePreview:has(.lifeMoments):has(.lifeFacts) { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 12px; }
 }
-@container balance-section (min-height: 223px) {
+@container balance-section (max-height: 409px) {
+  .panel[data-selected="false"] .necessityPreview ul { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+  .panel[data-selected="false"] .necessityPreview li { grid-template-columns: minmax(0, 1fr) auto; gap: 1px 4px; font-size: .72rem; }
+  .panel[data-selected="false"] .necessityPreview li > :first-child { grid-column: 1 / -1; }
+}
+@container balance-section (min-height: 220px) and (min-width: 350px) {
   .panel[data-selected="false"] .necessityPreview { display: grid; }
 }
-@container balance-section (min-height: 248px) {
+@container balance-section (min-height: 222px) and (min-width: 510px) {
   .panel[data-selected="false"] .lifeMoments li:nth-child(-n+3) { display: list-item; }
 }
-@container balance-section (min-height: 292px) {
+@container balance-section (min-height: 248px) and (min-width: 510px) {
+  .panel[data-selected="false"] .lifeMoments li:nth-child(-n+4) { display: list-item; }
+  .panel[data-selected="false"] .extraPlace { display: list-item; }
+}
+@container balance-section (min-height: 285px) and (min-width: 510px) {
   .panel[data-selected="false"] .lifeMoments li:nth-child(-n+5) { display: list-item; }
 }
-@container balance-section (min-height: 326px) {
+@container balance-section (min-height: 285px) and (min-width: 460px) {
+  .panel[data-selected="false"] .categoryPlot li:nth-child(-n+6) { display: list-item; }
+}
+@container balance-section (min-height: 325px) {
   .panel[data-selected="false"] .scopePreview { display: grid; }
 }
 @container balance-section (min-height: 340px) and (min-width: 460px) {
   .panel[data-selected="false"] .categoryPlot li:nth-child(n+5) { display: list-item; }
   .panel[data-selected="false"] .moreCategories { display: none; }
+}
+@container balance-section (min-height: 445px) and (min-width: 460px) {
+  .panel[data-selected="false"] .deviationPreview { display: grid; }
 }
 @container balance-section (min-height: 119px) {
   .panel[data-collapsed="true"] .panelSummary {
@@ -754,20 +772,29 @@
   .panel[data-collapsed="true"] .categoryPlot button { padding: 3px; }
 }
 @container balance-section (min-height: 190px) {
-  .panel[data-collapsed="true"] :is(.marginStats, .lifeFacts, .lifeMoments h3) { display: revert; }
-  .panel[data-collapsed="true"] .marginStats, .panel[data-collapsed="true"] .lifeFacts { display: grid; }
-  .panel[data-collapsed="true"] .marginStats > div { padding: 5px; }
-  .panel[data-collapsed="true"] .marginStats > div > :last-child { font-size: .86rem; }
+  .panel[data-collapsed="true"] .lifeMoments h3 { display: block; }
+  .panel[data-collapsed="true"] .lifeFacts { display: grid; }
+  .panel[data-collapsed="true"] .extraPlace { display: none; }
   .panel[data-collapsed="true"] .categoryPlot li:nth-child(-n+4),
   .panel[data-collapsed="true"] .lifeMoments li:nth-child(-n+2) { display: list-item; }
 }
 @container balance-section (min-height: 260px) {
   .panel[data-collapsed="true"] .panelFoot { display: flex; }
-  .panel[data-collapsed="true"] .comparisonPlot { height: clamp(88px, calc(100cqh - 146px), 270px); }
+  .panel[data-collapsed="true"] .comparisonPlot { height: clamp(88px, calc(100cqh - 119px), 360px); }
+  .panel[data-collapsed="true"] .categoryPlot li:nth-child(-n+6) { display: list-item; }
+}
+@container balance-section (min-height: 308px) and (min-width: 350px) {
+  .panel[data-collapsed="true"] .marginStats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panel[data-collapsed="true"] .marginStats > div { padding: 5px; }
+  .panel[data-collapsed="true"] .marginStats > div > :last-child { font-size: .86rem; }
 }
 @container balance-section (min-height: 320px) {
   .panel[data-collapsed="true"] .lifeMoments li:nth-child(-n+4) { display: list-item; }
-  .panel[data-collapsed="true"] .categoryPlot li:nth-child(-n+6) { display: list-item; }
+}
+@container balance-section (min-height: 365px) and (min-width: 405px) {
+  .panel[data-collapsed="true"] .categoryPlot li:nth-child(-n+8) { display: list-item; }
+  .panel[data-collapsed="true"] .categoryRing { width: clamp(82px, 24cqw, 172px); }
+  .panel[data-collapsed="true"] .extraPlace { display: list-item; }
 }
 
 .reveal {

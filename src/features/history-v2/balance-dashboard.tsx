@@ -325,6 +325,9 @@ function CategoryCard({ model, total, expanded, activeId, onOpen, onExpand, deta
     id: item.categoryId, label: item.label, amount: item.actual, share: metricValue(item.shareOfActual), delta: metricValue(item.delta),
   }));
   const maximum = chartMaximum(rows);
+  const deviations = rows.flatMap(row => row.delta !== undefined && Number(row.delta) !== 0 ? [{ label: row.label, delta: row.delta, id: row.id }] : [])
+    .sort((left, right) => Math.abs(Number(right.delta)) - Math.abs(Number(left.delta))).slice(0, 3);
+  const maximumDeviation = Math.max(1, ...deviations.map(row => Math.abs(Number(row.delta))));
   const other = visibleValue(model.otherAmount);
   const unclassified = visibleValue(model.unclassifiedAmount);
   return <>
@@ -357,6 +360,16 @@ function CategoryCard({ model, total, expanded, activeId, onOpen, onExpand, deta
         Voir les {items.length} postes détaillés
       </button>}
     </div>
+    {!expanded && deviations.length > 0 && <div className={styles.deviationPreview}>
+      <h3>Plus grands écarts à l’habitude</h3>
+      <ul className={styles.adjustments}>
+        {deviations.map(row => <li key={row.id}>
+          <span>{row.label}</span><strong>{formatDelta(row.delta)}</strong>
+          <span className={styles.adjustmentTrack} aria-hidden><i data-negative={Number(row.delta) < 0}
+            style={{ width: `${Math.abs(Number(row.delta)) / maximumDeviation * 50}%` }} /></span>
+        </li>)}
+      </ul>
+    </div>}
   </>;
 }
 
@@ -438,7 +451,7 @@ function LifeCard({ model, month, activeId, onOpen, expanded }: {
   const activity = activities?.status === "KNOWN" || activities?.status === "PARTIAL" ? activities.items[0] : undefined;
   const momentList = moments?.status === "KNOWN" || moments?.status === "PARTIAL" ? moments.items : [];
 
-  const place = places?.status === "KNOWN" || places?.status === "PARTIAL" ? places.items[0] : undefined;
+  const placeList = places?.status === "KNOWN" || places?.status === "PARTIAL" ? places.items.slice(0, 3) : [];
   return <>
     <MonthTimeline month={month} moments={momentList} activeId={activeId}
       onOpen={item => onOpen({ target: { kind: "moment", momentId: item.momentId }, label: item.title })} />
@@ -455,17 +468,19 @@ function LifeCard({ model, month, activeId, onOpen, expanded }: {
           </li>)}
         </ul>
       </div>}
-      {(activity || place) && <ul className={`${styles.lifeRows} ${styles.lifeFacts}`}>
+      {(activity || placeList.length > 0) && <ul className={`${styles.lifeRows} ${styles.lifeFacts}`}>
         {activity && <li><button type="button" onClick={() => onOpen({ target: { kind: "activity", activityTypeKey: activity.activityTypeKey }, label: activity.label })}>
           <ChartNoAxesColumn size={16} aria-hidden /><span><small>Activité du mois</small><strong title={activity.label}>{activity.label}</strong></span>
           <span>{formatCount(activity.occurrences, "fois", "fois")}</span>
         </button></li>}
-        {place && <li><button type="button" onClick={() => onOpen({ target: { kind: "place", placeId: place.placeId }, label: place.label })}>
-          <MapPin size={16} aria-hidden /><span><small>Lieu fréquenté</small><strong title={place.label}>{place.label}</strong></span>
-          <span>{formatCount(place.presenceDays, "jour")}</span>
-        </button></li>}
+        {placeList.map((place, index) => <li key={place.placeId} className={index > 0 ? styles.extraPlace : undefined}>
+          <button type="button" onClick={() => onOpen({ target: { kind: "place", placeId: place.placeId }, label: place.label })}>
+            <MapPin size={16} aria-hidden /><span><small>Lieu fréquenté</small><strong title={place.label}>{place.label}</strong></span>
+            <span>{formatCount(place.presenceDays, "jour")}</span>
+          </button>
+        </li>)}
       </ul>}
-      {!momentList.length && !activity && !place && <p className={styles.note}>Aucune activité, aucun moment ni lieu renseigné.</p>}
+      {!momentList.length && !activity && !placeList.length && <p className={styles.note}>Aucune activité, aucun moment ni lieu renseigné.</p>}
     </div>}
   </>;
 }
