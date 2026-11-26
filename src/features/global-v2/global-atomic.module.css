@@ -326,4 +326,11 @@
 .profileItems li { min-width: 0; padding-block: 3px; border-top: 1px solid var(--atomic-line); }
 .profileItems li > strong { display: block; margin-bottom: 2px; font-size: .76rem; line-height: 1.16; }
 .atom[data-density="1"] .profileOverview[data-profile-open] .profileBlockIcon { display: none; }
-.atom[data-density="1"] .profileOverview[data-profile-open] .profileSummary button { grid-template-columns: minmax(0,1fr); min-height: 20px; }
+.atom[data-density="1"] .profileOverview[data-profile-open] .profileSummary button { grid-template-columns: minmax(0,1fr); }
+@media (max-height: 820px) {
+  .section[data-global-section="profiles"]:has(.profileOverview[data-profile-open] .profileSummary:nth-child(2)) [data-balance-atom="portraits"] {
+    display: none;
+  }
+}
+.atom[data-density="1"] .profileOverview[data-profile-open] .profileSummary ul { gap: 2px 4px; }
+.atom[data-density="1"] .profileOverview[data-profile-open] .profileSummary button { min-height: 18px; }
