@@ -187,6 +187,20 @@
 .linkedPayment li small { grid-column:1 / -1; color:#5b4a70; }
 .purchaseLinks a { overflow-wrap:anywhere; text-decoration:underline; }
 .purchaseLinks a svg { display:inline; }
+.priority { display:inline-block; margin-top:4px; padding:2px 7px; border-radius:999px; background:#eadbf6; color:#573678; font-size:.72rem; font-weight:700; }
+.planner, .scheduleResult { display:grid; gap:8px; min-width:0; }
+.scheduleResult { padding:9px; border:1px solid #dfcfe9; border-radius:11px; background:#fcf8ff; overflow-x:auto; font-size:.78rem; }
+.scheduleResult p { margin:0; }
+.monthBalance .scheduleResult p { display:block; }
+.monthBalance .scheduleMoves strong { white-space:normal; }
+.scheduleResult button { justify-self:start; }
+.scheduleMoves { display:grid; gap:5px; margin:0; padding:0; list-style:none; }
+.scheduleMoves li { display:grid; gap:2px; padding:5px 6px; border-radius:7px; background:#f1e7f9; }
+.scheduleTable { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+.scheduleTable caption { margin-bottom:4px; text-align:left; font-weight:750; }
+.scheduleTable th, .scheduleTable td { padding:5px 4px; border-bottom:1px solid #e5d8ee; text-align:left; vertical-align:top; }
+.scheduleTable th small { display:block; font-weight:400; }
+.scheduleMonths { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:6px; }
 .allocation .check { display: flex; align-items: center; gap: 5px; }
 .allocationFooter { justify-content: space-between; margin-top: 7px; }
 .empty { text-align: center; padding: 30px 12px; background: #fcf7fe; border: 1px dashed #d0b6e5; border-radius: 18px; }

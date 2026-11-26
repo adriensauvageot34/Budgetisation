@@ -14,6 +14,7 @@ const { parseMonthDecisionSettings } = require("@/domain/phase2/month-decision-c
 const { makeForecastCheckpoint, explainForecastChange, readForecastMemory } = require("@/server/phase2/forecast-memory.ts");
 const { forecastTemporalPolicy } = require("@/server/phase2/forecast-temporal-policy.ts");
 const { projectMonthCalendar } = require("@/app/mois-a-venir/planned-expenses-projection.ts");
+const { changeSavingsSchedule, savingsScheduleDeltas, suggestSavingsMoves } = require("@/domain/phase2/savings-schedule.ts");
 const monthly = require("@/server/phase2/month-inputs.ts");
 const realReadInputs = monthly.readMonthInputs, realSaveInputs = monthly.saveMonthInputs;
 const results = [], writes = [];
@@ -23,6 +24,22 @@ delete process.env.PHASE2_FORECAST_TEMPORAL_MODE;
 const run = (current = inputs, snapshot = forecast, date = "2026-09-28") => deriveMonthScenario(snapshot, current, null, date).economicPlan;
 const baseline = run();
 const legacyPayload = structuredClone(inputs);
+
+await test("SAVE-PLANNING-MILESTONES", () => {
+  const months = ["2026-11", "2026-12", "2027-01", "2027-02"];
+  const goal = { goalId: "trip", label: "Matériel", targetCents: 15001, priority: "flexible", revision: 1,
+    deadline: "2027-02-28", plannedPurchaseDate: "2027-01-20", allocations: [] };
+  const spread = changeSavingsSchedule(goal, { kind: "plan", goalId: goal.goalId, revision: 1,
+    mode: "spread", month: months[0], deposits: [] }, months, randomUUID);
+  assert.deepEqual(savingsScheduleDeltas([spread]), [[months[0], -5001], [months[1], -5000], [months[2], -5000]]);
+  const flexible = { ...goal, allocations: [{ id: "part", month: months[0], cents: 8000, status: "planned", accounted: false }] };
+  const essential = { ...flexible, goalId: "passport", priority: "essential" };
+  const report = suggestSavingsMoves([essential, flexible], months[0], 6000,
+    [{ month: months[1], cents: 3500 }, { month: months[2], cents: 5000 }, { month: months[3], cents: 10000 }]);
+  assert.equal(report.remaining, 0);
+  assert.deepEqual(report.moves.map(row => [row.goalId, row.to, row.cents]),
+    [[goal.goalId, months[1], 3500], [goal.goalId, months[2], 2500]]);
+});
 
 await test("SAVE-001", () => assert.equal(monthInputsSchema.parse(legacyPayload).declaredOutflows[0].adjustability, "PROTECTED"));
 await test("SAVE-002", () => {

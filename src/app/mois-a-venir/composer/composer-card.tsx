@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LockKeyhole, SlidersHorizontal, Pin, Link2, MoreHorizontal } from "lucide-react";
 import type { ComposerCardView } from "@/domain/phase2/planner/composer-contract";
 import type { SemanticMutation } from "@/domain/phase2/planner/adjustment-contract";
@@ -16,15 +17,20 @@ import { controlMainDimension, controlValuePresentation, controlValueSummary } f
 import { MonthlyCommerceBadge } from "./commerce-badges";
 import { savingsGoalRef } from "@/domain/phase2/savings-goals";
 
-export function ComposerCard({ card, presentation, busy, preserved, focused = false, focus = () => {}, edit, preserve, mutate, hover, details }: {
+export function ComposerCard({ card, presentation, busy, preserved, focused = false, focus = () => {}, edit, preserve, mutate, hover, details, month }: {
   card: ComposerCardView; presentation: ComposerObjectPresentation; busy: boolean; preserved: boolean; focused?: boolean; focus?: () => void;
+  month?: string;
   details: () => void; edit: () => void; preserve: () => void; mutate: (mutation: SemanticMutation) => void; hover: (mutation: SemanticMutation | null) => void }) {
   const locked = card.capability?.flexibility === "LOCKED", editable = !!card.capability?.actions.length && !locked, count = card.value.count;
   const gauge = presentation.reservationGauge ?? presentation.choiceGauge;
   const interaction = useComposerInteractions(), handle = useDragHandle(presentation.protectedSavings || preserved ? `control:${card.targetRef}` : undefined);
   const assistantTarget = interaction?.canTarget(card.targetRef);
   const label = presentationLabel(card.label), valuePresentation = controlValuePresentation(card);
-  const projectSavings = typeof card.value.annualGoalRef === "string" && card.value.annualGoalRef.startsWith(savingsGoalRef);
+  const goalId = typeof card.value.annualGoalRef === "string" && card.value.annualGoalRef.startsWith(savingsGoalRef)
+    ? card.value.annualGoalRef.slice(savingsGoalRef.length) : null;
+  const allocationId = card.targetRef.startsWith("savings:") ? card.targetRef.slice("savings:".length) : null;
+  const projectSavings = goalId !== null;
+  const goalHref = goalId && `/cagnottes?goal=${goalId}${month ? `&month=${month}` : ""}`;
   return <article className={styles.card} data-compact-card data-control={card.targetRef} data-variant={presentation.variant} data-focused={focused} data-protected={presentation.protectedSavings} data-card-family={locked ? "PROTECTED" : card.kind === "SAVINGS" ? "RESERVATION" : "ADJUSTABLE"}
     data-state={valuePresentation.kind === "DECISION" ? "chosen" : valuePresentation.kind === "UNKNOWN" ? "unresolved" : "derived"} data-value-status={valuePresentation.kind} {...handle}
     data-compatible={assistantTarget} data-unresolved={interaction?.unresolvedRefs.includes(card.targetRef)} data-snap={interaction?.motionTarget === card.targetRef ? interaction.motion : undefined}
@@ -69,9 +75,13 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
       {presentation.occurrenceStack.overflow !== null && <small>+{presentation.occurrenceStack.overflow}</small>}</div>}
     {presentation.variant === "SAVINGS" && gauge?.percent !== null && gauge && <div className={styles.reservationGauge}><div className={styles.gaugeTrack} role="progressbar" aria-label={`${card.label}, réservation par rapport au repère initial, pas une progression d’objectif`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={gauge.percent} aria-valuetext={`${money(gauge.referenceAmount)} → ${money(card.value.amount)}`}><span style={{ width: `${gauge.percent}%` }} /></div></div>}
     {presentation.variant === "SAVINGS" && <small className={styles.reservationLabel}>
-      {projectSavings ? "Cagnotte · gérée depuis le menu Budgetisation"
+      {projectSavings ? "Réservé ce mois"
         : locked ? "Réservation protégée · lecture seule" : `Ajustable · déclaré ${money(card.value.declaredAmount as string ?? null)}`}
       {!projectSavings && gauge && " · réservation / repère initial"}
     </small>}
+    {goalHref && <nav className={styles.savingsCardLinks} aria-label={`Gérer ${card.label}`}>
+      <Link prefetch={false} href={`${goalHref}#cagnotte-${goalId}`}>Objectif</Link>
+      {allocationId && <Link prefetch={false} href={`${goalHref}&report=${allocationId}#reservation-${allocationId}`}>Reporter</Link>}
+    </nav>}
   </article>;
 }
