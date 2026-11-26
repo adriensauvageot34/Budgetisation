@@ -225,7 +225,7 @@ export function BalanceLifeDetails({ model, month, onOpen, pageSize }: {
   readonly pageSize: number;
 }) {
   const days = daysInBalanceMonth(month);
-  return <div className={styles.detailColumns}>
+  return <div className={`${styles.detailColumns} ${styles.lifeIndex}`}>
     <DetailGroup title="Activités du mois">
       <DisplayState node={model.activities}>{collection => <CollectionState collection={collection}>{items => {
         const maximum = Math.max(1, ...items.map(row => row.occurrences));

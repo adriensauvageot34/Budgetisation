@@ -985,7 +985,8 @@
 
 .dashboard[data-active-panel="life"] .panelGrid {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  grid-template-rows: minmax(54px, 1fr) max-content;
+  grid-template-rows: minmax(54px, 1.09fr) minmax(max-content, .91fr);
+  row-gap: clamp(8px, 1.6vh, 18px);
 }
 .dashboard[data-active-panel="life"] .panel[data-panel="summary"] { grid-area: 1 / 1; }
 .dashboard[data-active-panel="life"] .panel[data-panel="categories"] { grid-area: 1 / 2; }
@@ -997,11 +998,12 @@
 }
 .dashboard[data-active-panel="life"] :is([data-panel="categories"], [data-panel="life"]) {
   border-inline-start: 1px solid #d8c7e8a0;
+  padding-inline-start: clamp(12px, 2vw, 30px);
   padding-inline-end: 0;
 }
 .dashboard[data-active-panel="life"] :is([data-panel="spending"], [data-panel="life"]) {
   border-top: 1px solid #cdb8e1;
-  padding-top: 7px;
+  padding-top: clamp(8px, 1.55vh, 17px);
 }
 .panel[data-panel="life"][data-selected="true"] .detailColumns {
   grid-auto-flow: row;
@@ -1024,9 +1026,17 @@
   .panel[data-panel="life"][data-selected="true"] .detailGroup h3 { font-size: .87rem; }
   .panel[data-panel="life"][data-selected="true"] .detailLink { padding-block: 3px; font-size: .74rem; }
   .panel[data-panel="life"][data-selected="true"] :is(.detailGroup, .detailColumns) { gap: 4px; }
+  .panel[data-panel="life"][data-selected="true"]:has(.inlineDetail) .lifeIndex { display: none; }
   .panel[data-selected="true"] .dailyPlot { height: 58px; }
 }
 .panel[data-collapsed="true"] :is(.dailyTrend, .bankFlows) { display: none; }
+@container balance-section (max-height: 323px) {
+  .panel[data-panel="summary"][data-selected="false"] .overviewGraph { gap: 4px; }
+  .panel[data-panel="summary"][data-selected="false"] .dailyPlot { height: 48px; }
+  .panel[data-panel="summary"][data-selected="false"] .rangePlot { height: 21px; }
+  .panel[data-panel="summary"][data-selected="false"] .panelFoot .zone { display: none; }
+  .panel[data-panel="summary"][data-selected="false"] .panelFoot .textButton { min-height: 18px; padding-block: 1px; }
+}
 @container balance-section (max-height: 239px) {
   .panel[data-selected="false"] .dailyTrend { display: none; }
 }
