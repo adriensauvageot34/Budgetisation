@@ -341,24 +341,6 @@ function EconomicEvolution({ model, overview, certifiedThrough }: { readonly mod
   return <EconomicChart evolution={model} overview={overview} certifiedThrough={certifiedThrough} />;
 }
 
-function EconomicSignals({ model }: { readonly model: GlobalExpandedReadModel }) {
-  const items = [
-    { id: "trend-slope", label: "Tendance sur l’année", description: "Orientation générale malgré les variations mensuelles.", trend: true, arrow: "↘ " },
-    { id: "recent-delta", label: "Hausse récente", description: "3 derniers mois vs 3 précédents", perMonth: true, signed: true },
-    { id: "dispersion-amplitude", label: "Écart entre nos mois extrêmes", description: `${formatMoney(economicNumber(economicMetric(model, "dispersion-min")))} au plus bas · ${formatMoney(economicNumber(economicMetric(model, "dispersion-max")))} au plus haut` },
-  ] as const;
-  const detailed = [
-    { id: "dispersion-median", label: "Notre mois habituel", note: "Médiane des 12 mois analysés." },
-    { id: "dispersion-min", label: "Mois le moins coûteux" },
-    { id: "dispersion-max", label: "Mois le plus coûteux" },
-    { id: "dispersion-mad", label: "Écart autour de notre mois habituel" },
-  ] as const;
-  return <section className={styles.economicSignals} aria-label="Lectures de l’évolution">
-    <div className={styles.signalGrid}>{items.map((item) => { const metric = economicMetric(model, item.id); const value = economicNumber(metric); return <article key={item.id}><span>{item.label}</span><strong>{"arrow" in item ? item.arrow : ""}{"trend" in item ? formatTrend(value) : formatMoney(value, { perMonth: "perMonth" in item && item.perMonth, signed: "signed" in item && item.signed })}</strong><small>{item.description}</small></article>; })}</div>
-    <details className={styles.statistics}><summary>Statistiques détaillées <ChevronRight aria-hidden size={16} /></summary><div>{detailed.map((item) => <article key={item.id}><span>{item.label}</span><strong>{formatMoney(economicNumber(economicMetric(model, item.id)))}</strong>{"note" in item ? <small>{item.note}</small> : null}</article>)}</div><p>La moitié de nos mois s’écartent de {formatMoney(economicNumber(economicMetric(model, "dispersion-mad")))} ou moins de notre niveau habituel.</p></details>
-  </section>;
-}
-
 function rowPercentage(row: GlobalDetailRow): number | undefined {
   const match = row.displayValue?.match(/(\d+(?:[.,]\d+)?)\s*%/u);
   return match === null || match === undefined ? undefined : Number(match[1]!.replace(",", "."));
@@ -585,6 +567,7 @@ function M2EntityDetail({ model, entityRef, certifiedThrough }: { readonly model
 function M2ExpandedContent({ model, onDetail, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow, title?: string) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
   if (model.sectionKey === "BREAKDOWN") return <div className={styles.m2TabContent}><header><h3>Quels postes structurent nos dépenses sur la période ?</h3></header><M2MoneyRows rows={model.rows} onDetail={onDetail} /></div>;
   if (model.sectionKey === "PATTERNS") return <M2NeedsContent model={model} onDetail={onDetail} />;
+  if (model.sectionKey === "COMPARISONS") return <M2Comparisons model={model} onDetail={onDetail} certifiedThrough={certifiedThrough} />;
   if (model.sectionKey === "EVOLUTION") return <M2EvolutionContent model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} />;
   return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={onDetail} /><HumanQualityNote quality={model.quality} /></div>;
 }
@@ -787,7 +770,7 @@ function GlobalExpandedContent({ model, entityRef, onDetail, onOpenPeer, onOpenT
   if (model.moduleKey === "RHYTHM" || model.resource === "analysis_global_moment_experience_detail") return <LifeExpandedContent model={model} entityRef={entityRef} onDetail={onDetail} onOpenPeer={onOpenPeer} onOpenTimelinePeer={onOpenTimelinePeer} runtime={runtime} />;
   if (model.resource === "analysis_global_economic_expanded") return <div className={styles.expandedContent}>
     {model.sectionKey === "OVERVIEW" ? <EconomicSummary model={model} certifiedThrough={certifiedThrough} /> : null}
-    {model.sectionKey === "EVOLUTION" ? <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="OVERVIEW">{(overview) => <><EconomicEvolution model={model} overview={overview} certifiedThrough={certifiedThrough} /><EconomicSignals model={model} /></>}</ExpandedPreview> : null}
+    {model.sectionKey === "EVOLUTION" ? <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="OVERVIEW">{(overview) => <><EconomicEvolution model={model} overview={overview} certifiedThrough={certifiedThrough} /><SpendingSignals model={model} /></>}</ExpandedPreview> : null}
     {model.sectionKey === "BREAKDOWN" ? <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="OVERVIEW">{(overview) => <EconomicStructure model={model} overview={overview} certifiedThrough={certifiedThrough} />}</ExpandedPreview> : null}
     {model.sectionKey === "PATTERNS" ? <EconomicRecurrences model={model} onDetail={onDetail} /> : null}
   </div>;
@@ -819,7 +802,6 @@ function ExpandedPreview({ runtime, moduleKey, sectionKey, children }: { readonl
 type AtomicSlot = "spending" | "categories" | "life" | "profiles";
 type AtomicFocus =
   | { readonly kind: "query"; readonly slot: AtomicSlot; readonly target: OverlayTarget }
-  | { readonly kind: "month"; readonly slot: "spending"; readonly month: string; readonly title: string }
   | { readonly kind: "event"; readonly slot: "life"; readonly event: DashboardEvent }
   | { readonly kind: "person"; readonly slot: "profiles"; readonly person?: "adrien" | "manon"; readonly vehicle?: boolean }
   | { readonly kind: "rhythm"; readonly slot: "life"; readonly view: "food" | "car" };
@@ -868,52 +850,103 @@ function dashboardEventValue(event: DashboardEvent) {
   return cost.status === "KNOWN" || cost.status === "PARTIAL" ? `${formatLifeMoney(Number(cost.value.value))}${cost.status === "PARTIAL" ? " · Partiel" : ""}` : "Coût à renseigner";
 }
 
-function AtomicTimeline({ model, open, selectedEvent }: { readonly model: DashboardTimeline; readonly open: OpenFocus; readonly selectedEvent?: DashboardEvent }) {
+
+function SpendingSignals({ model }: { readonly model: GlobalExpandedReadModel }) {
+  const value = (id: string) => economicNumber(economicMetric(model, id));
+  const trend = value("trend-slope");
+  const recent = value("recent-delta");
+  const recentLevel = value("recent-current");
+  const previousLevel = value("recent-previous");
+  const levelMax = Math.max(recentLevel ?? 0, previousLevel ?? 0, 1);
+  const min = value("dispersion-min");
+  const max = value("dispersion-max");
+  const median = value("dispersion-median");
+  const q1 = value("dispersion-q1");
+  const q3 = value("dispersion-q3");
+  const spread = value("dispersion-mad");
+  if ([trend, recent, min, max, spread].every((number) => number === undefined)) return null;
+  const position = (point: number | undefined) => min !== undefined && max !== undefined && point !== undefined
+    ? (max > min ? Math.max(0, Math.min(100, (point - min) / (max - min) * 100)) : 50)
+    : undefined;
+  const medianPosition = position(median);
+  const lowerQuartile = position(q1);
+  const upperQuartile = position(q3);
+
+  return <div className={atomic.spendingSignals} aria-label="Tendance et écarts sur la période">
+    {([[trend, "Tendance sur la période"], [recent, "3 derniers mois vs 3 précédents"]] as const).map(([amount, label]) =>
+      amount === undefined ? null : <article key={label}>
+        <span>{label}</span>
+        <strong>{amount < 0 ? <ArrowDown aria-hidden size={14} /> : amount > 0 ? <ArrowUp aria-hidden size={14} /> : null}{formatMoney(amount, { signed: true, perMonth: true })}</strong>
+        {label.startsWith("3 derniers mois") && previousLevel !== undefined && recentLevel !== undefined && <div className={atomic.levelComparison}
+          role="img" aria-label={`Niveau précédent ${formatMoney(previousLevel)}, niveau récent ${formatMoney(recentLevel)}`}>
+          <i style={{ width: `${previousLevel / levelMax * 100}%` }} /><i style={{ width: `${recentLevel / levelMax * 100}%` }} />
+        </div>}
+      </article>)}
+    {min !== undefined && max !== undefined && <article className={atomic.spendRange}>
+      <span>Du mois le moins cher au plus cher</span>
+      <div className={atomic.rangeTrack} aria-hidden>
+        {lowerQuartile !== undefined && upperQuartile !== undefined && <b style={{ left: `${lowerQuartile}%`, width: `${Math.max(0, upperQuartile - lowerQuartile)}%` }} />}
+        {medianPosition !== undefined && <i style={{ left: `${medianPosition}%` }} />}</div>
+      <div><strong>{formatMoney(min)}</strong><strong>{formatMoney(max)}</strong></div>
+      {spread !== undefined && <small>La moitié des mois à ± {formatMoney(spread)} du mois habituel</small>}
+    </article>}
+  </div>;
+}
+
+function RecurringPayments({ model, active, onSelect }: {
+  readonly model: GlobalExpandedReadModel;
+  readonly active?: string;
+  readonly onSelect: (row: GlobalDetailRow) => void;
+}) {
+  const rows = model.rows.filter((row) => (row.knowledgeState === "KNOWN" || row.knowledgeState === "PARTIAL") && economicNumber(row) !== undefined)
+    .toSorted((a, b) => (economicNumber(b) ?? 0) - (economicNumber(a) ?? 0));
+  return <section aria-label="Dépenses récurrentes">
+    <div className={atomic.historyTitle}><h3>Dépenses récurrentes</h3><span>Montant habituel par paiement</span></div>
+    {rows.length === 0 ? <p className={atomic.note}>Aucun paiement récurrent suffisamment renseigné.</p> : <div className={atomic.recurrenceRail}>
+      {rows.map((row) => {
+        const [merchant, ...rest] = humanLabel(row.labelKey).split(/\s+[–—]\s+/u);
+        const [count, dates] = recurrencePresentation(row).detail.split(" · ");
+        const content = <><span>{merchant}</span>{rest.length > 0 && <span title={rest.join(" · ")}>{rest.join(" · ")}</span>}
+          <strong>{formatMoney(economicNumber(row), { approximate: true })}</strong>
+          {count && <small>{count}</small>}{dates && <small>{dates}</small>}</>;
+        return row.entityRef ? <button key={row.rowId} type="button" aria-expanded={row.entityRef === active} onClick={() => onSelect(row)}>{content}</button>
+          : <article key={row.rowId}>{content}</article>;
+      })}
+    </div>}
+  </section>;
+}
+
+function AtomicTimeline({ model, open, selectedEvent, onPeriodChange }: {
+  readonly model: DashboardTimeline;
+  readonly open: OpenFocus;
+  readonly selectedEvent?: DashboardEvent;
+  readonly onPeriodChange: () => void;
+}) {
   const [selected, setSelected] = useState<string>();
-  const [all, setAll] = useState(false);
-  const months = groupTimelineEvents(model.events.filter((event) => all || !("visibilityTier" in event) || event.visibilityTier === "PRINCIPAL")).flatMap((year) => year.months);
-  const current = months.find(({ key }) => key === selected) ?? months.at(-1);
+  const months = useMemo(() => groupTimelineEvents(model.events).flatMap((year) => year.months), [model.events]);
+  const current = months.find(({ key }) => key === selected);
   const busiestMonth = Math.max(1, ...months.map(({ events }) => events.length));
-  const events = current?.events ?? [];
-  const highlighted = events.find(({ eventRef }) => eventRef === selectedEvent?.eventRef);
-  const preview = events.slice(0, 4);
-  const visible = highlighted && !preview.includes(highlighted) ? [...preview.slice(0, 3), highlighted] : preview;
+  const events = current?.events ?? model.events;
   return <>
-    {months.length > 1 && <Atom name="event-months" priority={35}>
+    {months.length > 0 && <Atom name="event-months" priority={78} minimum={1}>
       <div className={atomic.timelineSummary}>
-        <h3>Événements par mois</h3>
+        <div className={atomic.historyTitle}><h3>Événements par mois</h3><span>{current ? capitalize(frenchMonth(current.key)) : "Période entière"} · {events.length} {events.length === 1 ? "événement" : "événements"}</span></div>
         <div className={atomic.ruler}>{months.map(({ key, events }) =>
           <button key={key} type="button" aria-pressed={current?.key === key} aria-label={`${capitalize(frenchMonth(key))} · ${events.length} événements`}
-            onClick={() => setSelected(key)}>
+            onClick={() => {
+              setSelected((month) => month === key ? undefined : key);
+              onPeriodChange();
+            }}>
             <span className={atomic.barWell}><i style={{ height: `${events.length / busiestMonth * 100}%` }} /></span>
             <small>{frenchMonth(key, true).split(" ")[0]}</small>
           </button>)}</div>
       </div>
     </Atom>}
     <Atom name="timeline" priority={68} minimum={1}>
-      <div className={atomic.timelineControls}>
-        <label className={atomic.monthLabel}>Événements <select aria-label="Mois des événements" value={current?.key ?? ""} onChange={(event) => setSelected(event.currentTarget.value)}>
-          {months.length === 0 && <option value="">Aucun mois renseigné</option>}
-          {months.map(({ key }) => <option key={key} value={key}>{capitalize(frenchMonth(key))}</option>)}
-        </select></label>
-        <label className={atomic.checkbox}><input type="checkbox" checked={all} onChange={(event) => setAll(event.currentTarget.checked)} /> Tous les événements</label>
-      </div>
-      {events.length === 0 ? <p className={atomic.note}>Aucun événement dans cette sélection.</p> : <div className={atomic.timelineStrip} aria-label="Événements au fil du mois">
-        {visible.map((event) => <button type="button" key={event.eventRef} aria-pressed={selectedEvent?.eventRef === event.eventRef} aria-label={`${event.canonicalName} · ${dashboardEventValue(event)}`}
+      {events.length === 0 ? <p className={atomic.note}>Aucun événement sur cette période.</p> : <div className={atomic.timelineStrip} aria-label="Événements sur la période" key={current?.key ?? "all"}>
+        {events.map((event) => <button type="button" key={event.eventRef} aria-pressed={selectedEvent?.eventRef === event.eventRef} aria-label={`${event.canonicalName} · ${dashboardEventValue(event)}`}
           onClick={() => open({ kind: "event", slot: "life", event })}><i aria-hidden /><time dateTime={event.startDate}>{lifeMomentDates(event.startDate, false)?.split(" ").slice(0, 2).join(" ")}</time><strong title={event.canonicalName}>{event.canonicalName}</strong><small>{dashboardEventValue(event)}</small></button>)}
       </div>}
-      {events.length > preview.length && <label className={atomic.eventPicker}>
-        Ouvrir un événement
-        <select value={highlighted?.eventRef ?? ""} onChange={(event) => {
-          const item = events.find(({ eventRef }) => eventRef === event.currentTarget.value);
-          if (item) open({ kind: "event", slot: "life", event: item });
-        }}>
-          <option value="" disabled>Choisir par date ou par nom</option>
-          {events.map((event) => <option key={event.eventRef} value={event.eventRef}>
-            {lifeMomentDates(event.startDate, false)} · {event.canonicalName}
-          </option>)}
-        </select>
-      </label>}
     </Atom>
   </>;
 }
@@ -971,6 +1004,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const visible = useMemo(() => new Set(bundle.initial.navigation.filter(({ visibility }) => visibility !== "HIDDEN").map(({ moduleKey }) => moduleKey)), [bundle.initial.navigation]);
   const [trail, setTrail] = useState<readonly AtomicFocus[]>([]);
   const focus = trail.at(-1);
+  const [selectedMonth, setSelectedMonth] = useState<string>();
   const origin = useRef<HTMLElement | null>(null);
   const detailRef = useRef<HTMLElement>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null);
@@ -995,6 +1029,12 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const history = useExpandedModule(runtime, "ECONOMIC", "EVOLUTION", visible.has("ECONOMIC"));
   const categoriesResult = useExpandedModule(runtime, "CATEGORIES_NEEDS", "BREAKDOWN", visible.has("CATEGORIES_NEEDS"));
   const timelineResult = useGlobalV2Resource<DashboardTimeline>(runtime, timelineRequest, visible.has("RHYTHM"), "BACKGROUND");
+  const recurrences = useExpandedModule(runtime, "ECONOMIC", "PATTERNS", visible.has("ECONOMIC"));
+  const needsResult = useExpandedModule(runtime, "CATEGORIES_NEEDS", "PATTERNS", visible.has("CATEGORIES_NEEDS"));
+  const changesResult = useExpandedModule(runtime, "CATEGORIES_NEEDS", "COMPARISONS", visible.has("CATEGORIES_NEEDS"));
+  const recurring = transportData(recurrences.state);
+  const needs = transportData(needsResult.state);
+  const changes = transportData(changesResult.state);
   const overview = transportData(figures.state);
   const evolution = transportData(history.state);
   const categories = transportData(categoriesResult.state);
@@ -1035,20 +1075,28 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const actual = evolution?.series.find(({ seriesId }) => seriesId === "economic:actual");
   const typical = evolution?.series.find(({ seriesId }) => seriesId === "economic:typical-state");
   const chartMax = Math.max(1, ...(actual?.points.map((point) => economicNumber(point) ?? 0) ?? []), ...(typical?.points.map((point) => economicNumber(point) ?? 0) ?? []));
-  const selectedMonth = focus?.kind === "month" ? focus.month : undefined;
   const visibleRows = (categories?.rows ?? []).filter((row) => m2TypedNumber(row) !== undefined);
   const categoryMaximum = Math.max(1, ...visibleRows.map((row) => m2TypedNumber(row) ?? 0));
   const chartMonths = actual?.points ?? [];
+  const monthActual = economicNumber(chartMonths.find(({ unitKey }) => unitKey === selectedMonth));
+  const monthTypical = economicNumber(typical?.points.find(({ unitKey }) => unitKey === selectedMonth));
+  const activeCategory = focus?.kind === "query" && focus.slot === "categories" ? focus.target.entityRef : undefined;
+  const categoryIsInline = visibleRows.some((row) => row.entityRef && row.entityRef === activeCategory);
+  const activeRecurrence = focus?.kind === "query" && focus.slot === "spending" ? focus.target.entityRef : undefined;
+  const selectSection = (slot: AtomicSlot, moduleKey: GlobalPrimaryModuleKey, section: GlobalExpandedSectionKey, title: string) => {
+    if (focus?.kind === "query" && focus.slot === slot && focus.target.initialSection === section && !focus.target.entityRef) close();
+    else query(slot, moduleKey, section, title);
+  };
+  const coverage = needs?.metrics.find(({ metricId }) => metricId === "needs-monetary-coverage");
+  const leadingChange = changes?.rows.find((row) => m2TypedNumber(row) !== undefined);
+  const leadingChangeValue = m2TypedNumber(leadingChange);
 
   function detail(slot: AtomicSlot) {
     if (focus?.slot !== slot) return undefined;
     const title = focus.kind === "query" ? focus.target.title
-      : focus.kind === "month" ? focus.title
       : focus.kind === "event" ? focus.event.canonicalName
       : focus.kind === "rhythm" ? focus.view === "car" ? "Dépenses et trajets en voiture" : "Rythme des courses et des repas"
       : focus.vehicle ? "Voiture du foyer" : focus.person ? capitalize(focus.person) : "Adrien et Manon";
-    const point = focus.kind === "month" ? chartMonths.find(({ unitKey }) => unitKey === focus.month) : undefined;
-    const reference = focus.kind === "month" ? typical?.points.find(({ unitKey }) => unitKey === focus.month) : undefined;
     return <Atom name="detail" priority={240} minimum={1}>
       <article className={atomic.detail} ref={detailRef} aria-labelledby="global-detail-title">
         <header className={atomic.detailHeader}>
@@ -1056,16 +1104,11 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
           <h3 tabIndex={-1} id="global-detail-title" ref={detailHeading}>{title}</h3>
           <button type="button" onClick={close} aria-label="Fermer le détail"><X size={17} /></button>
         </header>
-        <AtomicDetailPages key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "month" ? focus.month : focus.kind === "rhythm" ? focus.view : focus.vehicle ? "vehicle" : focus.person ?? "profiles"}>
+        <AtomicDetailPages key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "rhythm" ? focus.view : focus.vehicle ? "vehicle" : focus.person ?? "profiles"}>
           {focus.kind === "query" ? <AtomicQueryDetail target={focus.target} slot={slot} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
             : focus.kind === "event" ? <AtomicEventDetail event={focus.event} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
             : focus.kind === "person" ? <AtomicProfiles runtime={runtime} person={focus.person} vehicle={focus.vehicle} />
-            : focus.kind === "rhythm" ? <BackgroundRhythms runtime={runtime} view={focus.view} onMethod={() => open({ kind: "query", slot, target: methodOverlayTarget("RHYTHM") })} />
-            : <div className={atomic.monthDetail}>
-              <div className={atomic.figures}><div><span>Dépenses réelles</span><strong>{formatMoney(economicNumber(point))}</strong></div><div><span>Niveau habituel</span><strong>{formatMoney(economicNumber(reference))}</strong></div></div>
-              <FocusLink onClick={() => query(slot, "ECONOMIC", "EVOLUTION", "Évolution des dépenses")}>Voir l’évolution sur la période</FocusLink>
-              <Link className={atomic.focusLink} href={`/mois-a-venir/composer?month=${encodeURIComponent(focus.month)}`}>Voir les cartes de {focus.title.toLocaleLowerCase("fr-FR")} <ChevronRight size={14} aria-hidden /></Link>
-            </div>}
+            : <BackgroundRhythms runtime={runtime} view={focus.view} onMethod={() => open({ kind: "query", slot, target: methodOverlayTarget("RHYTHM") })} />}
         </AtomicDetailPages>
       </article>
     </Atom>;
@@ -1078,78 +1121,108 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
       {visible.has("ECONOMIC") && <button type="button" className={atomic.method} onClick={() => open({ kind: "query", slot: "spending", target: methodOverlayTarget("ECONOMIC") })}><Info aria-hidden size={15} /> Méthode</button>}
     </header>
     {bundle.newerPublication && <aside className={atomic.banner} role="status"><strong>Une version plus récente est disponible.</strong><button type="button" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={15} /> Actualiser</button></aside>}
-    <div className={atomic.grid} data-focus={focus?.slot}>
-      {visible.has("ECONOMIC") && <AtomicSection slot="spending" detail={detail("spending")}>
-        <Atom name="financial-markers" priority={95} minimum={1}>{overview ? <div className={atomic.figures}>
-          {([["actual", period.targetLabel, "OVERVIEW", "Dépenses du dernier mois"], ["typical-state", "Mois habituel", "BREAKDOWN", "Répartition du mois habituel"], ["minimal-state", "Dépenses minimum", "BREAKDOWN", "Dépenses minimum"]] as const).map(([id, label, section, title]) =>
-            <button key={id} type="button" onClick={() => query("spending", "ECONOMIC", section, title)}><span>{label}</span><EconomicMetricValue metric={economicMetric(overview, id)} /></button>)}
-        </div> : figures.state.status === "ERROR" ? <LocalError retry={figures.retry} /> : <LoadingCard label="chiffres clés" compact />}</Atom>
-        <Atom name="monthly-history" priority={84} minimum={1}>
-          {evolution === undefined ? history.state.status === "ERROR" ? <LocalError retry={history.retry} /> : <LoadingCard label="graphique des dépenses" compact /> :
-            chartMonths.length === 0 ? <p className={atomic.note}>Évolution indisponible sur cette période.</p> :
-              <section className={atomic.history} aria-label="Dépenses réelles et niveau habituel sur douze mois">
-                <div className={atomic.historyTitle}><h3>Dépenses par mois</h3><span><i />Niveau habituel</span></div>
-                <div className={atomic.ruler}>{chartMonths.map((point) => {
-                  const value = economicNumber(point);
-                  const habitual = economicNumber(typical?.points.find(({ unitKey }) => unitKey === point.unitKey));
-                  const title = capitalize(frenchMonth(point.unitKey));
-                  return <button type="button" key={point.unitKey} aria-label={`${title} · ${formatMoney(value)}`} aria-pressed={selectedMonth === point.unitKey}
-                    onClick={() => open({ kind: "month", slot: "spending", month: point.unitKey, title })}>
-                    <span className={atomic.barWell}><i style={{ height: `${((value ?? 0) / chartMax) * 100}%` }} />
-                    {habitual !== undefined && <b style={{ bottom: `${(habitual / chartMax) * 100}%` }} />}</span>
-                    <small>{frenchMonth(point.unitKey, true).split(" ")[0]}</small>
-                  </button>;
-                })}</div>
-              </section>}
-        </Atom>
-        <Atom name="spending-context" priority={32}><div className={atomic.actions}>
-          <FocusLink onClick={() => query("spending", "ECONOMIC", "EVOLUTION", "Évolution des dépenses")}>Tendance et écarts</FocusLink>
-          <FocusLink onClick={() => query("spending", "ECONOMIC", "PATTERNS", "Dépenses récurrentes")}>Dépenses récurrentes</FocusLink>
-        </div></Atom>
-      </AtomicSection>}
-      {visible.has("CATEGORIES_NEEDS") && <AtomicSection slot="categories" detail={detail("categories")}>
-        <Atom name="category-ranking" priority={75} minimum={1}>
-          {categories === undefined ? categoriesResult.state.status === "ERROR" ? <LocalError retry={categoriesResult.retry} /> : <LoadingCard label="catégories" compact /> :
-            visibleRows.length === 0 ? <p className={atomic.note}>Aucune dépense classée sur cette période.</p> :
-              <ul className={atomic.ranking}>{visibleRows.slice(0, 6).map((row, index) => {
-                const label = humanLabel(row.labelKey);
-                const value = m2TypedNumber(row) ?? 0;
-                const target = row.entityRef && entityOverlayTarget("CATEGORIES_NEEDS", row.entityRef, label, "BREAKDOWN");
-                const item = <><span>{label}</span><strong>{formatMoney(value)}</strong><i><b style={{ width: `${Math.max(0, (value / categoryMaximum) * 100)}%`, background: categoryColors[index] }} /></i></>;
-                return <li key={row.rowId}>{target ? <button type="button" aria-pressed={focus?.kind === "query" && focus.target.entityRef === row.entityRef} onClick={() => open({ kind: "query", slot: "categories", target })}>{item}</button> : <div>{item}</div>}</li>;
-              })}</ul>}
-        </Atom>
-        <Atom name="category-context" priority={70} minimum={1}><div className={atomic.actions}>
-          <FocusLink onClick={() => query("categories", "CATEGORIES_NEEDS", "BREAKDOWN", "Répartition de toutes les dépenses")}>Tous les postes</FocusLink>
-          <FocusLink onClick={() => query("categories", "CATEGORIES_NEEDS", "PATTERNS", "Besoins renseignés")}>Besoins renseignés</FocusLink>
-          <FocusLink onClick={() => query("categories", "CATEGORIES_NEEDS", "EVOLUTION", "Écarts et évolution par catégorie")}>Écarts à l’habitude</FocusLink>
-        </div></Atom>
-      </AtomicSection>}
-      {visible.has("RHYTHM") && <AtomicSection slot="life" detail={detail("life")}>
-        {timeline === undefined ? <Atom name="timeline-status" priority={65}>{timelineResult.state.status === "ERROR" ? <LocalError retry={timelineResult.retry} /> : <LoadingCard label="événements" compact />}</Atom> :
-          <AtomicTimeline model={timeline} open={open} selectedEvent={focus?.kind === "event" ? focus.event : undefined} />}
-        <Atom name="everyday-rhythms" priority={63} minimum={1}><div className={atomic.actions}>
-          <FocusLink onClick={() => open({ kind: "rhythm", slot: "life", view: "food" })}><GlobalClayIcon name="groceries" size={27} /> Alimentation</FocusLink>
-          <FocusLink onClick={() => open({ kind: "rhythm", slot: "life", view: "car" })}><GlobalClayIcon name="car" size={27} /> Voiture</FocusLink>
-          <FocusLink onClick={() => query("life", "RHYTHM", "PATTERNS", "Coûts des habitudes")}>Coûts des habitudes</FocusLink>
-        </div></Atom>
-      </AtomicSection>}
-      {visible.has("PERSONAS") && <AtomicSection slot="profiles" detail={detail("profiles")}>
-        <Atom name="portraits" priority={86} minimum={1}><div className={atomic.portraits}>
-          {(["adrien", "manon"] as const).map((person) => <button type="button" key={person} aria-pressed={focus?.kind === "person" && focus.person === person}
-            onClick={() => open({ kind: "person", slot: "profiles", person })}>
-            <span className={atomic.portraitImage} aria-hidden>
-              <GlobalClayIcon name="profiles" size={84} />
-              <Image src={`/api/persona-portrait/${person}`} alt="" width={84} height={84} unoptimized onError={(event) => { event.currentTarget.hidden = true; }} />
-            </span>
-            <span><strong>{capitalize(person)}</strong><small>Travail, habitudes et projets</small></span><ChevronRight size={16} aria-hidden />
-          </button>)}
-        </div></Atom>
-        <Atom name="shared-portraits" priority={52} minimum={focus?.slot === "profiles" ? 0 : 1}><div className={atomic.actions}>
-          <FocusLink onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer les portraits</FocusLink>
-          <FocusLink onClick={() => open({ kind: "person", slot: "profiles", vehicle: true })}>Voiture du foyer</FocusLink>
-        </div></Atom>
-      </AtomicSection>}
+    <div className={atomic.grid} data-focus={focus?.slot} data-focus-size={activeRecurrence || (focus?.kind === "event" && !("eventCost" in focus.event)) ? "compact" : undefined}>
+      <div className={atomic.column} data-side="left">
+        {visible.has("ECONOMIC") && <AtomicSection slot="spending" detail={detail("spending")}>
+          <Atom name="financial-markers" priority={95} minimum={1}>{overview ? <div className={atomic.figures}>
+            <div><span>{selectedMonth ? capitalize(frenchMonth(selectedMonth)) : period.targetLabel}</span>
+              {selectedMonth ? <strong>{formatMoney(monthActual)}</strong> : <EconomicMetricValue metric={economicMetric(overview, "actual")} unknownText="Indisponible" />}
+            </div>
+            <div><span>{selectedMonth ? "Référence de ce mois" : "Mois habituel"}</span>
+              {selectedMonth ? <strong>{formatMoney(monthTypical)}</strong> : <EconomicMetricValue metric={economicMetric(overview, "typical-state")} unknownText="Indisponible" />}
+            </div>
+            {selectedMonth ? <div><span>Écart à la référence</span><strong>{formatMoney(monthActual !== undefined && monthTypical !== undefined ? monthActual - monthTypical : undefined, { signed: true })}</strong></div>
+              : <button type="button" aria-expanded={focus?.kind === "query" && focus.slot === "spending" && focus.target.initialSection === "BREAKDOWN"}
+                onClick={() => selectSection("spending", "ECONOMIC", "BREAKDOWN", "Répartition des dépenses")}><span>Dépenses minimum</span><EconomicMetricValue metric={economicMetric(overview, "minimal-state")} unknownText="Indisponible" /></button>}
+          </div> : figures.state.status === "ERROR" ? <LocalError retry={figures.retry} /> : <LoadingCard label="chiffres clés" compact />}</Atom>
+          <Atom name="monthly-history" priority={84} minimum={1}>
+            {evolution === undefined ? history.state.status === "ERROR" ? <LocalError retry={history.retry} /> : <LoadingCard label="graphique des dépenses" compact /> :
+              chartMonths.length === 0 ? <p className={atomic.note}>Évolution indisponible sur cette période.</p> :
+                <section className={atomic.history} aria-label="Dépenses réelles et niveau habituel sur douze mois">
+                  <div className={atomic.historyTitle}><h3>Dépenses par mois</h3><span><i />Niveau habituel</span></div>
+                  <div className={atomic.ruler}>{chartMonths.map((point) => {
+                    const value = economicNumber(point);
+                    const habitual = economicNumber(typical?.points.find(({ unitKey }) => unitKey === point.unitKey));
+                    const title = capitalize(frenchMonth(point.unitKey));
+                    return <button type="button" key={point.unitKey} aria-label={`${title} · ${formatMoney(value)}`} aria-pressed={selectedMonth === point.unitKey}
+                      onClick={() => setSelectedMonth((month) => month === point.unitKey ? undefined : point.unitKey)}>
+                      <span className={atomic.barWell}><i style={{ height: `${((value ?? 0) / chartMax) * 100}%` }} />
+                      {habitual !== undefined && <b style={{ bottom: `${(habitual / chartMax) * 100}%` }} />}</span>
+                      <small>{frenchMonth(point.unitKey, true).split(" ")[0]}</small>
+                    </button>;
+                  })}</div>
+                  {selectedMonth && <Link className={atomic.monthLink} href={`/mois-a-venir/composer?month=${encodeURIComponent(selectedMonth)}`}>Cartes de {frenchMonth(selectedMonth)} <ChevronRight size={13} aria-hidden /></Link>}
+                </section>}
+          </Atom>
+          {evolution && <Atom name="trend" priority={75} minimum={1}><SpendingSignals model={evolution} /></Atom>}
+          <Atom name="recurring-payments" priority={66} minimum={1}>
+            {recurring ? <RecurringPayments model={recurring} active={activeRecurrence} onSelect={(row) => {
+              if (activeRecurrence === row.entityRef) { close(); return; }
+              const target = row.entityRef && entityOverlayTarget("ECONOMIC", row.entityRef, humanLabel(row.labelKey), "PATTERNS");
+              if (target) open({ kind: "query", slot: "spending", target });
+            }} /> : recurrences.state.status === "ERROR" ? <LocalError retry={recurrences.retry} /> : <LoadingCard label="dépenses récurrentes" compact />}
+          </Atom>
+        </AtomicSection>}
+        {visible.has("RHYTHM") && <AtomicSection slot="life" detail={detail("life")}>
+          {timeline === undefined ? <Atom name="timeline-status" priority={65}>{timelineResult.state.status === "ERROR" ? <LocalError retry={timelineResult.retry} /> : <LoadingCard label="événements" compact />}</Atom> :
+            <AtomicTimeline model={timeline} open={(next) => {
+              if (next.kind === "event" && focus?.kind === "event" && next.event.eventRef === focus.event.eventRef) close();
+              else open(next);
+            }} selectedEvent={focus?.kind === "event" ? focus.event : undefined} onPeriodChange={() => { if (focus?.kind === "event") close(); }} />}
+          <Atom name="everyday-rhythms" priority={63} minimum={1}><div className={atomic.topics}>
+            <button type="button" aria-expanded={focus?.kind === "rhythm" && focus.view === "food"} onClick={() => focus?.kind === "rhythm" && focus.view === "food" ? close() : open({ kind: "rhythm", slot: "life", view: "food" })}><GlobalClayIcon name="groceries" size={33} /><strong>Courses et repas</strong><small>Rythme des dépenses</small></button>
+            <button type="button" aria-expanded={focus?.kind === "rhythm" && focus.view === "car"} onClick={() => focus?.kind === "rhythm" && focus.view === "car" ? close() : open({ kind: "rhythm", slot: "life", view: "car" })}><GlobalClayIcon name="car" size={33} /><strong>Voiture</strong><small>Trajets et carburant</small></button>
+            <button type="button" aria-expanded={focus?.kind === "query" && focus.slot === "life" && focus.target.initialSection === "PATTERNS"} onClick={() => selectSection("life", "RHYTHM", "PATTERNS", "Coûts des habitudes")}><GlobalClayIcon name="activity" size={33} /><strong>Coûts des habitudes</strong><small>Fréquence et coût observé</small></button>
+          </div></Atom>
+        </AtomicSection>}
+      </div>
+      <div className={atomic.column} data-side="right">
+        {visible.has("CATEGORIES_NEEDS") && <AtomicSection slot="categories" detail={categoryIsInline ? undefined : detail("categories")}>
+          <Atom name="category-ranking" priority={75} minimum={1}>
+            {categories === undefined ? categoriesResult.state.status === "ERROR" ? <LocalError retry={categoriesResult.retry} /> : <LoadingCard label="catégories" compact /> :
+              visibleRows.length === 0 ? <p className={atomic.note}>Aucune dépense classée sur cette période.</p> :
+                <ul className={atomic.ranking} data-expanded={categoryIsInline || undefined} aria-label="Dépenses par catégorie">{visibleRows.map((row, index) => {
+                  const label = humanLabel(row.labelKey);
+                  const value = m2TypedNumber(row) ?? 0;
+                  const target = row.entityRef && entityOverlayTarget("CATEGORIES_NEEDS", row.entityRef, label, "BREAKDOWN");
+                  const expanded = target && activeCategory === row.entityRef;
+                  const item = <><span>{label}</span><strong>{formatMoney(value)}</strong><i aria-hidden><b style={{ width: `${Math.max(0, (value / categoryMaximum) * 100)}%`, background: categoryColors[index % categoryColors.length] }} /></i></>;
+                  return <li key={row.rowId} data-expanded={expanded ? true : undefined}>
+                    {target ? <button type="button" aria-expanded={Boolean(expanded)} onClick={() => expanded ? close() : open({ kind: "query", slot: "categories", target })}>{item}</button> : <div className={atomic.passiveBar}>{item}</div>}
+                    {expanded && detail("categories")}
+                  </li>;
+                })}</ul>}
+          </Atom>
+          {(coverage || leadingChange) && <Atom name="category-context" priority={59} minimum={1}><div className={atomic.dataCards}>
+            {coverage && <button type="button" aria-expanded={focus?.kind === "query" && focus.slot === "categories" && focus.target.initialSection === "PATTERNS"}
+              onClick={() => selectSection("categories", "CATEGORIES_NEEDS", "PATTERNS", "Besoins renseignés")}>
+              <span>Besoins renseignés</span><strong>{formatM2Ratio(m2TypedNumber(coverage))}</strong>
+              <span className={atomic.coverageTrack} aria-hidden><i style={{ width: `${Math.min(100, Math.max(0, (m2TypedNumber(coverage) ?? 0) * 100))}%` }} /></span>
+            </button>}
+            {leadingChange && <button type="button" aria-expanded={focus?.kind === "query" && focus.slot === "categories" && focus.target.initialSection === "COMPARISONS"}
+              onClick={() => selectSection("categories", "CATEGORIES_NEEDS", "COMPARISONS", "Écarts à l’habitude")}>
+              <span>Écart en {period.targetLabel.toLocaleLowerCase("fr-FR")}</span><strong>{formatMoney(leadingChangeValue, { signed: true })}</strong>
+              <small>{humanLabel(leadingChange.labelKey).replace(/^(?:Hausse|Baisse|Stable) · /u, "")}</small>
+            </button>}
+          </div></Atom>}
+        </AtomicSection>}
+        {visible.has("PERSONAS") && <AtomicSection slot="profiles" detail={detail("profiles")}>
+          <Atom name="portraits" priority={86} minimum={1}><div className={atomic.portraits}>
+            {(["adrien", "manon"] as const).map((person) => <button type="button" key={person} aria-pressed={focus?.kind === "person" && focus.person === person}
+              onClick={() => focus?.kind === "person" && focus.person === person ? close() : open({ kind: "person", slot: "profiles", person })}>
+              <span className={atomic.portraitImage} aria-hidden>
+                <GlobalClayIcon name="profiles" size={84} />
+                <Image src={`/api/persona-portrait/${person}`} alt="" width={84} height={84} unoptimized onError={(event) => { event.currentTarget.hidden = true; }} />
+              </span>
+              <span><strong>{capitalize(person)}</strong><small>Travail, habitudes et projets</small></span><ChevronRight size={16} aria-hidden />
+            </button>)}
+          </div></Atom>
+          <Atom name="shared-portraits" priority={52} minimum={focus?.slot === "profiles" ? 0 : 1}><div className={atomic.actions}>
+            <FocusLink onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer les portraits</FocusLink>
+            <FocusLink onClick={() => open({ kind: "person", slot: "profiles", vehicle: true })}>Voiture du foyer</FocusLink>
+          </div></Atom>
+        </AtomicSection>}
+      </div>
     </div>
   </div>;
 }
