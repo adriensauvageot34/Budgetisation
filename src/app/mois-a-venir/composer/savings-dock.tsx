@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight, PiggyBank, Plus, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { parseSavingsCents, savingsEuros, savingsMoney, savingsProjects, savingsPurchaseTotals, savingsTravelTopics,
+import { parseSavingsCents, savingsEuros, savingsLivretUsed, savingsMoney, savingsProjects, savingsPurchaseTotals, savingsTravelTopics,
   type SavingsPurchaseItem } from "@/domain/phase2/savings-goals";
 import type { RealizedCard, RealizedPayment } from "@/server/phase2/planner/realized-month";
 import { loadSavingsChoices, saveSavingsPurchase } from "./savings-dock-actions";
@@ -11,8 +11,8 @@ import styles from "./savings-dock.module.css";
 
 type Workspace = NonNullable<Awaited<ReturnType<typeof loadSavingsChoices>>>;
 type Choice = Workspace["choices"][number];
-type DraftItem = Omit<SavingsPurchaseItem, "grossCents" | "refundedCents" | "recipient"> & {
-  recipient: string; gross: string; refunded: string;
+type DraftItem = Omit<SavingsPurchaseItem, "grossCents" | "refundedCents" | "livretCents" | "recipient"> & {
+  recipient: string; gross: string; refunded: string; livret: string;
 };
 const normalize = (value: string) => value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()
   .replace(/[^a-z0-9]+/gu, " ").trim();
@@ -40,6 +40,7 @@ function rank(choice: Choice, payment: RealizedPayment, cardLabel: string, item:
     && /\b(amazon|cadeau|cadeaux|coffret|jouet)\b/u.test(source))) score += 28;
   if (choice.project === "birthday" && tokens.has("anniversaire")) score += 24;
   if (choice.project === "travel" && tokens.has("voyage")) score += 12;
+  if (choice.season === Number(payment.date.slice(0, 4))) score += 16;
   if (choice.deadline) {
     const days = (Date.parse(choice.deadline) - Date.parse(payment.date)) / 86_400_000;
     if (days >= 0 && days <= 30) score += Math.ceil((31 - days) / 4);
@@ -92,12 +93,13 @@ function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayme
       setWorkspace(value);
       if (!value) return;
       if (value.items.length) {
-        setRows(value.items.map(item => ({ ...item, recipient: item.recipient ?? "", gross: inputAmount(item.grossCents), refunded: inputAmount(item.refundedCents) })));
+        setRows(value.items.map(item => ({ ...item, recipient: item.recipient ?? "", gross: inputAmount(item.grossCents),
+          refunded: inputAmount(item.refundedCents), livret: inputAmount(item.livretCents ?? 0) })));
         setActive(undefined);
       } else {
         const id = crypto.randomUUID();
         setRows([{ id, article: payment.label.slice(0, 120), recipient: payment.recipient?.slice(0, 80) ?? "",
-          goalId: null, gross: inputAmount(cents), refunded: "" }]);
+          goalId: null, gross: inputAmount(cents), refunded: "", livret: "" }]);
         setActive(id);
       }
     }, () => { if (mounted) setWorkspace(null); });
@@ -106,16 +108,19 @@ function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayme
 
   const activeRow = rows.find(row => row.id === active);
   const parsed = rows.map(row => ({ id: row.id, goalId: row.goalId, article: row.article.trim(), recipient: row.recipient.trim() || null,
-    grossCents: parseSavingsCents(row.gross.trim()) ?? 0, refundedCents: parseSavingsCents(row.refunded.trim()) ?? 0 }));
+    grossCents: parseSavingsCents(row.gross.trim()) ?? 0, refundedCents: parseSavingsCents(row.refunded.trim()) ?? 0,
+    livretCents: parseSavingsCents(row.livret.trim()) ?? 0 }));
   const totals = savingsPurchaseTotals(parsed, cents);
   const invalid = parsed.some((item, index) => !item.article || !item.grossCents
     || Boolean(rows[index].refunded.trim()) && !/^(?:0(?:[,.]0{1,2})?)$/u.test(rows[index].refunded.trim()) && !item.refundedCents
-    || item.refundedCents > item.grossCents);
+    || Boolean(rows[index].livret.trim()) && !/^(?:0(?:[,.]0{1,2})?)$/u.test(rows[index].livret.trim()) && !item.livretCents
+    || item.refundedCents > item.grossCents || item.livretCents > item.grossCents);
   const terms = normalize(query).split(" ").filter(Boolean);
   const ranked = activeRow && workspace ? workspace.choices
-    .filter(choice => (!choice.complete || choice.id === activeRow.goalId || terms.length > 0)
+    .filter(choice => (!choice.abandoned || choice.id === activeRow.goalId)
+      && (!choice.complete || choice.id === activeRow.goalId || terms.length > 0)
       && terms.every(term => normalize([choice.label, savingsProjects[choice.project],
-        choice.topic && savingsTravelTopics[choice.topic]].filter(Boolean).join(" ")).includes(term)))
+        choice.topic && savingsTravelTopics[choice.topic], choice.season, choice.recipient].filter(Boolean).join(" ")).includes(term)))
     .map(choice => ({ choice, score: rank(choice, payment, cardLabel, activeRow) }))
     .sort((a, b) => b.score - a.score || (a.choice.deadline ?? "9999").localeCompare(b.choice.deadline ?? "9999")
       || a.choice.label.localeCompare(b.choice.label, "fr")) : [];
@@ -140,12 +145,18 @@ function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayme
     try {
       const result = await saveSavingsPurchase({ operationId: payment.id, previous: workspace.items, items: parsed });
       if (result === "saved") {
-        setWorkspace({ ...workspace, items: parsed });
+        setWorkspace({ ...workspace, items: parsed, choices: workspace.choices.map(choice => ({
+          ...choice, livretAvailable: choice.livretAvailable
+            + workspace.items.filter(row => row.goalId === choice.id).reduce((sum, row) => sum + savingsLivretUsed(row), 0)
+            - parsed.filter(row => row.goalId === choice.id).reduce((sum, row) => sum + savingsLivretUsed(row), 0),
+        })) });
         setMessage("Ventilation enregistrée.");
         onSaved?.();
       } else if (result === "stale") {
         setStale(true);
         setMessage("Cette ventilation a changé depuis son ouverture.");
+      } else if (result === "livret") {
+        setMessage("La part payée avec le livret dépasse le solde disponible de la cagnotte.");
       } else if (result === "amount" || result === "invalid") {
         setMessage("Vérifie les prix des articles et les montants remboursés.");
       } else setMessage("Impossible d’enregistrer la ventilation. Réessaie.");
@@ -190,6 +201,14 @@ function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayme
             {choice && <Link href={savingsGoalHref(choice.id)} prefetch={false}>
               Ouvrir la cagnotte <ArrowUpRight size={13} aria-hidden />
             </Link>}
+            {choice && <details className={styles.refund} open={!!row.livret || undefined}>
+              <summary>{parsed[index].livretCents ? `${savingsMoney(savingsLivretUsed(parsed[index]))} du livret` : "Payé avec le livret"}</summary>
+              <label className={styles.field}>Part du livret (€)
+                <input inputMode="decimal" value={row.livret} disabled={busy} placeholder="0,00"
+                  onChange={event => update(row.id, { livret: event.target.value })} />
+              </label>
+              <small>{savingsMoney(choice.livretAvailable)} encore disponibles sur cet objectif avant cette modification.</small>
+            </details>}
             <details className={styles.refund}>
               <summary>{row.refunded && parsed[index].refundedCents > 0 ? `${savingsMoney(parsed[index].refundedCents)} remboursés` : "Remboursement"}</summary>
               <label className={styles.field}>Total reçu (€)
@@ -205,15 +224,15 @@ function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayme
             <div className={styles.filters}>
               <input ref={search} type="search" aria-label="Rechercher une cagnotte" placeholder="Rechercher une cagnotte"
                 value={query} onChange={event => setQuery(event.target.value)} />
-              <button type="button" disabled={busy} onClick={() => { update(row.id, { goalId: null }); setActive(undefined); }}>
+              <button type="button" disabled={busy} onClick={() => { update(row.id, { goalId: null, livret: "" }); setActive(undefined); }}>
                 Laisser hors cagnotte
               </button>
             </div>
             {!!visible.length && <ul className={styles.goals} aria-label={terms.length ? "Résultats de recherche" : "Cagnottes proposées"}>
               {visible.map(({ choice: option }) => <li key={option.id}>
                 <button type="button" className={styles.goal} data-project={option.project} disabled={busy} aria-pressed={row.goalId === option.id}
-                  onClick={() => { update(row.id, { goalId: option.id }); setActive(undefined); }}>
-                  <small>{savingsProjects[option.project]}{option.topic && ` · ${savingsTravelTopics[option.topic]}`}</small>
+                  onClick={() => { update(row.id, { goalId: option.id, recipient: row.recipient || option.recipient || "" }); setActive(undefined); }}>
+                  <small>{savingsProjects[option.project]}{option.season && ` · ${option.season}`}{option.topic && ` · ${savingsTravelTopics[option.topic]}`}</small>
                   <strong>{option.label}</strong>
                 </button>
               </li>)}
@@ -226,14 +245,14 @@ function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayme
     <div className={styles.formActions}>
       <button type="button" disabled={busy || rows.length >= 50} onClick={() => {
         setRows(current => [...current, { id: crypto.randomUUID(), article: "", recipient: "", goalId: null,
-          gross: inputAmount(Math.max(0, totals.remaining)), refunded: "" }]);
+          gross: inputAmount(Math.max(0, totals.remaining)), refunded: "", livret: "" }]);
         setMessage("");
       }}><Plus size={15} aria-hidden /> Ajouter un article</button>
       <button type="submit" className={styles.primary} disabled={busy || invalid || totals.remaining < 0 || stale}>
         {busy ? "Enregistrement…" : "Enregistrer la ventilation"}
       </button>
     </div>
-    {invalid && <p className={styles.notice}>Renseigne chaque article et vérifie que son remboursement ne dépasse pas son prix.</p>}
+    {invalid && <p className={styles.notice}>Vérifie le prix, le remboursement et la part du livret de chaque article.</p>}
     {message && <p role="status">{message} {stale && <button type="button" onClick={reload}>Recharger la ventilation</button>}</p>}
   </form>;
 }

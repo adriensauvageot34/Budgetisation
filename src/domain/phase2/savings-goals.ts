@@ -9,11 +9,14 @@ export const savingsTravelTopics = {
 export type SavingsTravelTopic = keyof typeof savingsTravelTopics;
 export const savingsPriorities = { essential: "Indispensable", normal: "Normale", flexible: "Souple" } as const;
 export type SavingsPriority = keyof typeof savingsPriorities;
+export const savingsBudgetKinds = { estimate: "Estimé", exact: "Exact" } as const;
+export type SavingsBudgetKind = keyof typeof savingsBudgetKinds;
+export const seasonalSavingsProject = (project: SavingsProject) => project === "christmas" || project === "birthday";
 export const savingsStatuses = { planned: "Prévu", saved: "Sur le livret", purchased: "Acheté" } as const;
 export type SavingsStatus = keyof typeof savingsStatuses;
 export type SavingsGoalAllocation = { id: string; month: string; cents: number; status: SavingsStatus; accounted: boolean };
 export type SavingsPurchaseItem = {
-  id: string; goalId: string | null; article: string; recipient: string | null; grossCents: number; refundedCents: number;
+  id: string; goalId: string | null; article: string; recipient: string | null; grossCents: number; refundedCents: number; livretCents?: number;
 };
 export type SavingsPurchase = SavingsPurchaseItem & { operationId: string; goalId: string; date: string; label: string; cents: number };
 export type SavingsGoal = {
@@ -22,6 +25,14 @@ export type SavingsGoal = {
   purchases?: readonly SavingsPurchase[];
   priority?: SavingsPriority;
   plannedPurchaseDate?: string | null;
+  budgetKind?: SavingsBudgetKind;
+  optional?: boolean;
+  purchasedComplete?: boolean;
+  abandoned?: boolean;
+  recipient?: string | null;
+  season?: number | null;
+  seriesKey?: string;
+  livretTransfers?: number;
 };
 export type SavingsMonthEntry = SavingsGoalAllocation & Pick<SavingsGoal, "goalId" | "label" | "project">;
 
@@ -65,19 +76,28 @@ export function savingsAllocationsAfterPurchases<T extends SavingsGoalAllocation
 }
 
 export function effectiveSavingsAllocations(goal: SavingsGoal) {
-  return savingsAllocationsAfterPurchases([...goal.allocations].sort((a, b) => a.id.localeCompare(b.id)),
+  const active = goal.purchasedComplete || goal.abandoned ? goal.allocations.filter(row => row.status !== "planned") : goal.allocations;
+  return savingsAllocationsAfterPurchases([...active].sort((a, b) => a.id.localeCompare(b.id)),
     goal.purchases ?? [], () => goal.goalId);
 }
 
+export const savingsLivretUsed = (item: Pick<SavingsPurchaseItem, "livretCents" | "grossCents" | "refundedCents">) =>
+  Math.min(item.livretCents ?? 0, Math.max(0, item.grossCents - item.refundedCents));
+
 export function savingsGoalProgress(goal: SavingsGoal) {
   const planned = effectiveSavingsAllocations(goal).filter(row => row.status === "planned").reduce((sum, row) => sum + row.cents, 0);
-  const saved = goal.allocations.filter(row => row.status === "saved").reduce((sum, row) => sum + row.cents, 0);
+  const deposited = goal.allocations.filter(row => row.status === "saved").reduce((sum, row) => sum + row.cents, 0);
+  const used = (goal.purchases ?? []).reduce((sum, row) => sum + savingsLivretUsed(row), 0);
+  const saved = deposited + (goal.livretTransfers ?? 0) - used;
   const purchased = goal.allocations.filter(row => row.status === "purchased").reduce((sum, row) => sum + row.cents, 0)
     + (goal.purchases ?? []).reduce((sum, row) => sum + row.cents, 0);
   const funded = saved + purchased;
-  return { planned, saved, purchased, funded,
-    unassigned: goal.targetCents === null ? null : goal.targetCents - funded - planned,
-    complete: goal.targetCents !== null && funded >= goal.targetCents };
+  const closed = Boolean(goal.purchasedComplete || goal.abandoned);
+  const remaining = closed ? 0 : goal.targetCents === null ? null : Math.max(0, goal.targetCents - funded);
+  return { planned, saved, used, purchased, funded, remaining,
+    exceeded: goal.targetCents === null ? 0 : Math.max(0, purchased - goal.targetCents),
+    unassigned: remaining === null ? null : Math.max(0, remaining - planned),
+    complete: Boolean(goal.purchasedComplete), fundedComplete: goal.targetCents !== null && funded >= goal.targetCents };
 }
 
 export const savingsProgressPercent = (funded: number, budget: number) =>
@@ -85,18 +105,25 @@ export const savingsProgressPercent = (funded: number, budget: number) =>
 
 export function summarizeSavingsGoals(goals: readonly SavingsGoal[]) {
   const totals = goals.reduce((total, goal) => {
-    const { saved, purchased, planned, funded } = savingsGoalProgress(goal);
-    const budget = goal.targetCents ?? 0;
+    const { saved, purchased, planned, funded, remaining, exceeded } = savingsGoalProgress(goal);
+    const budget = goal.abandoned ? 0 : goal.targetCents ?? 0;
     return {
       budget: total.budget + budget,
-      unpriced: total.unpriced + (goal.targetCents === null ? 1 : 0),
+      unpriced: total.unpriced + Number(!goal.abandoned && goal.targetCents === null),
       saved: total.saved + saved,
       purchased: total.purchased + purchased,
       planned: total.planned + planned,
+      remaining: total.remaining + (remaining ?? 0),
+      exceeded: total.exceeded + exceeded,
+      optional: total.optional + Number(!goal.abandoned && Boolean(goal.optional)),
+      estimated: total.estimated + Number(budget > 0 && goal.budgetKind !== "exact"),
+      count: total.count + Number(!goal.abandoned),
+      completed: total.completed + Number(!goal.abandoned && Boolean(goal.purchasedComplete)),
       covered: total.covered + Math.min(budget, funded),
       plannedWithinTarget: total.plannedWithinTarget + Math.min(Math.max(0, budget - funded), planned),
     };
-  }, { budget: 0, unpriced: 0, saved: 0, purchased: 0, planned: 0, covered: 0, plannedWithinTarget: 0 });
+  }, { budget: 0, unpriced: 0, saved: 0, purchased: 0, planned: 0, remaining: 0, exceeded: 0,
+    optional: 0, estimated: 0, count: 0, completed: 0, covered: 0, plannedWithinTarget: 0 });
   const funded = totals.saved + totals.purchased;
   return { ...totals, funded, percent: savingsProgressPercent(totals.covered, totals.budget) };
 }

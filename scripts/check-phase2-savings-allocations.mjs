@@ -15,6 +15,7 @@ const { makeForecastCheckpoint, explainForecastChange, readForecastMemory } = re
 const { forecastTemporalPolicy } = require("@/server/phase2/forecast-temporal-policy.ts");
 const { projectMonthCalendar } = require("@/app/mois-a-venir/planned-expenses-projection.ts");
 const { changeSavingsSchedule, savingsScheduleDeltas, suggestSavingsMoves } = require("@/domain/phase2/savings-schedule.ts");
+const { savingsGoalProgress, summarizeSavingsGoals } = require("@/domain/phase2/savings-goals.ts");
 const monthly = require("@/server/phase2/month-inputs.ts");
 const realReadInputs = monthly.readMonthInputs, realSaveInputs = monthly.saveMonthInputs;
 const results = [], writes = [];
@@ -24,6 +25,19 @@ delete process.env.PHASE2_FORECAST_TEMPORAL_MODE;
 const run = (current = inputs, snapshot = forecast, date = "2026-09-28") => deriveMonthScenario(snapshot, current, null, date).economicPlan;
 const baseline = run();
 const legacyPayload = structuredClone(inputs);
+
+await test("SAVE-LIVRET-PURCHASE-PROGRESS", () => {
+  const goal = { goalId: "present", label: "Cadeau", targetCents: 10000, budgetKind: "exact",
+    allocations: [{ id: "livret", month: "2026-11", cents: 10000, status: "saved", accounted: true }],
+    purchases: [{ goalId: "present", date: "2026-12-05", cents: 8000, grossCents: 8000, refundedCents: 0, livretCents: 8000 }] };
+  const progress = savingsGoalProgress(goal);
+  assert.deepEqual([progress.saved, progress.purchased, progress.funded, progress.fundedComplete, progress.complete], [2000, 8000, 10000, true, false]);
+  const refund = { ...goal.purchases[0], cents: 6000, refundedCents: 2000 };
+  assert.equal(savingsGoalProgress({ ...goal, purchases: [refund] }).saved, 4000);
+  const summary = summarizeSavingsGoals([{ ...goal, purchasedComplete: true },
+    { ...goal, goalId: "unpriced", optional: true, targetCents: null, allocations: [], purchases: [] }]);
+  assert.deepEqual([summary.percent, summary.completed, summary.count, summary.unpriced, summary.optional], [100, 1, 2, 1, 1]);
+});
 
 await test("SAVE-PLANNING-MILESTONES", () => {
   const months = ["2026-11", "2026-12", "2027-01", "2027-02"];

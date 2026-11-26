@@ -22,7 +22,8 @@ export async function loadSavingsChoices(operationId: string) {
       choices: goals.map(goal => {
         const progress = savingsGoalProgress(goal);
         return { id: goal.goalId, label: goal.label, project: goal.project, topic: goal.travelTopic,
-          deadline: goal.deadline, complete: progress.complete };
+          deadline: goal.deadline, complete: progress.complete, abandoned: Boolean(goal.abandoned), season: goal.season,
+          recipient: goal.recipient, livretAvailable: progress.saved };
       }),
     };
   } catch {
@@ -60,17 +61,21 @@ export async function saveSavingsPurchase(input: { operationId: string; previous
       recipient: item.recipient?.trim() || null,
       grossCents: item.grossCents,
       refundedCents: item.refundedCents,
+      livretCents: item.livretCents ?? 0,
     }));
     if (new Set(items.map(item => item.id)).size !== items.length || items.some(item =>
       !item.article || item.article.length > 120 || (item.recipient?.length ?? 0) > 80
       || !Number.isSafeInteger(item.grossCents) || item.grossCents <= 0 || item.grossCents > maxSavingsCents
-      || !Number.isSafeInteger(item.refundedCents) || item.refundedCents < 0 || item.refundedCents > item.grossCents)) return "invalid";
+      || !Number.isSafeInteger(item.refundedCents) || item.refundedCents < 0 || item.refundedCents > item.grossCents
+      || !Number.isSafeInteger(item.livretCents) || item.livretCents < 0 || item.livretCents > item.grossCents
+      || item.livretCents > 0 && item.goalId === null)) return "invalid";
 
     const { error } = await createCanonicalReadClient().rpc("set_phase2_savings_purchase_items", {
       p_household: context.household.householdId, p_operation: plannerUuid(input.operationId),
       p_expected: input.previous, p_items: items,
     });
     if (error) {
+      if (error.message === "LIVRET_EXCEEDED") return "livret";
       if (error.code === "23514") return "amount";
       if (error.code === "40001") return "stale";
       return "unavailable";
